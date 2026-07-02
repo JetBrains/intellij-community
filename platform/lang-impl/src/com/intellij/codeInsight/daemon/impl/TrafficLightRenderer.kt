@@ -157,7 +157,7 @@ open class TrafficLightRenderer private constructor(
   )
 
   @RequiresReadLock
-  private fun  getPsiFile(): PsiFile? {
+  private fun getPsiFile(): PsiFile? {
     val context = getContext()
     return PsiDocumentManager.getInstance(project).getPsiFile(document, context)
   }

@@ -1807,6 +1807,8 @@
               topic="com.intellij.ide.ui.VirtualFileAppearanceListener"/>
     <listener class="com.intellij.codeInsight.daemon.impl.DaemonFusReporter"
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
+    <listener class="com.intellij.codeInsight.daemon.impl.DaemonInitialActivityReporter"
+              topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
     <listener class="com.intellij.codeInsight.inline.completion.InlineCompletionLookupManagerListener"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
     <listener class="com.intellij.codeInsight.inline.completion.TabEnterUsageDetector"

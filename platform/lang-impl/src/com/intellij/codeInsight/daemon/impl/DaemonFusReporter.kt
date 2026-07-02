@@ -2,9 +2,6 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.diagnostic.Activity
-import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.StartUpPerformanceService
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.BooleanEventField
@@ -16,7 +13,6 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -24,33 +20,36 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFileWithId
-import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicLong
+import org.jetbrains.annotations.TestOnly
 import kotlin.math.log10
 import kotlin.math.pow
 
-private val docPreviousAnalysisStatus: Key<AnalysisStatus> = Key.create("docPreviousAnalysisStatus")
-private val sessionSegmentsTotalDurationMs: Key<AtomicLong> = Key.create("sessionSegmentsTotalDurationMs")
+internal class DaemonFusReporter(private val project: Project, val coroutineScope: CoroutineScope) : DaemonCodeAnalyzer.DaemonListener {
+  private val sessions = ContainerUtil.createConcurrentWeakMap<FileEditor, SessionData>()
 
-private data class AnalysisStatus(@JvmField val stamp: Long, @JvmField val isDumbMode: Boolean)
+  private data class SessionData(
+    @JvmField val daemonStartTime: Long = -1L,
+    @JvmField val documentStartedHash: Int = 0,
+    @JvmField val isDumbMode: Boolean = false,
+    @JvmField var sessionSegmentTotalDurationMs: Long = 0,
+    @JvmField var docPreviousStamp: Long
+  )
 
-private data class SessionData(
-  @JvmField val daemonStartTime: Long = -1L,
-  @JvmField val documentStartedHash: Int = 0,
-  @JvmField val isDumbMode: Boolean = false,
-)
-
-internal open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.DaemonListener {
-  @Volatile
-  private var initialEntireFileHighlightingActivity: Activity? = null
-  @Volatile
-  private var initialEntireFileHighlightingReported: Boolean = false
-
-  private val currentSessionSegments = ConcurrentHashMap<FileEditor, SessionData>()
+  init {
+    coroutineScope.launch {
+      fusEvents.collect {
+        if (it != null) {
+          doReport(it.project, it.fileEditor, it.sessionData)
+        }
+      }
+    }
+  }
 
   override fun daemonStarting(fileEditors: Collection<FileEditor>) {
     val fileEditor = fileEditors.asSequence().filterIsInstance<TextEditor>().firstOrNull() ?: return
@@ -61,17 +60,12 @@ internal open class DaemonFusReporter(private val project: Project) : DaemonCode
 
     val document = editor.document
 
-    currentSessionSegments.put(fileEditor, SessionData(
+    sessions.compute(fileEditor) { _, oldData -> SessionData(
       daemonStartTime = System.currentTimeMillis(),
       documentStartedHash = document.hashCode(),
-      isDumbMode = DumbService.isDumb(project) // it's important to check for dumb mode here because state can change to opposite in daemonFinished
-    ))
-
-    if (!initialEntireFileHighlightingReported) {
-      initialEntireFileHighlightingActivity = StartUpMeasurer.startActivity("initial entire file highlighting")
-    }
-
-    ConcurrencyUtil.computeIfAbsent(editor, sessionSegmentsTotalDurationMs) { AtomicLong() }
+      isDumbMode = DumbService.isDumb(project), // it's important to check for dumb mode here because state can change to opposite in daemonFinished
+      docPreviousStamp = oldData?.docPreviousStamp?:-1
+    )}
   }
 
   override fun daemonCanceled(reason: String, fileEditors: Collection<FileEditor>) {
@@ -90,62 +84,73 @@ internal open class DaemonFusReporter(private val project: Project) : DaemonCode
     }
 
     val document = editor.document
-    val sessionData = currentSessionSegments.remove(fileEditor) ?: return
+    val sessionData = sessions[fileEditor] ?: return
     if (sessionData.documentStartedHash != document.hashCode()) {
-      editor.putUserData(sessionSegmentsTotalDurationMs, AtomicLong())
+      sessionData.sessionSegmentTotalDurationMs = 0
       // unmatched starting/finished events? bail out just in case
       return
     }
 
-    if (editor.getUserData(docPreviousAnalysisStatus) == AnalysisStatus(document.modificationStamp, sessionData.isDumbMode)) {
-      editor.putUserData(sessionSegmentsTotalDurationMs, AtomicLong())
+    if (sessionData.docPreviousStamp == document.modificationStamp) {
+      sessionData.sessionSegmentTotalDurationMs = 0
       // Don't report 'finished' event in case of no changes in the document and dumb mode status was not changed
       // since such sessions are always fast to perform.
       return
     }
 
-    val analyzer = (editor.markupModel as? EditorMarkupModel)?.errorStripeRenderer as? TrafficLightRenderer
-    val errorCounts = analyzer?.errorCountsForFus
-    val registrar = SeverityRegistrar.getSeverityRegistrar(project)
-    val errorIndex = registrar.getSeverityIdx(HighlightSeverity.ERROR)
-    val warningIndex = registrar.getSeverityIdx(HighlightSeverity.WARNING)
-    val errorCount = errorCounts?.getOrNull(errorIndex) ?: -1
-    val warningCount = errorCounts?.getOrNull(warningIndex) ?: -1
-    val lines = document.lineCount.roundToOneSignificantDigit()
-    val segmentElapsedTime = System.currentTimeMillis() - sessionData.daemonStartTime
-    val virtualFile = FileDocumentManager.getInstance().getFile(document)
-    val fileType = virtualFile?.fileType
-    val highlightingCompleted = DaemonCodeAnalyzerImpl.isHighlightingCompleted(fileEditor, project)
+    fusEvents.tryEmit(FUSData(project, fileEditor, sessionData))
+  }
 
-    if (highlightingCompleted && !initialEntireFileHighlightingReported) {
-      initialEntireFileHighlightingReported = true
-      initialEntireFileHighlightingActivity!!.end()
-      initialEntireFileHighlightingActivity = null
-      StartUpMeasurer.addInstantEvent("editor highlighting completed")
-      (project as ComponentManagerEx).getCoroutineScope().launch {
-        StartUpPerformanceService.getInstance().editorRestoringTillHighlighted()
+  companion object {
+    private data class FUSData(val project: Project, val fileEditor: TextEditor, val sessionData: SessionData)
+    private val fusEvents: MutableSharedFlow<FUSData?> = MutableSharedFlow(extraBufferCapacity = 1000, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    @TestOnly
+    fun drain() {
+      assert(ApplicationManager.getApplication().isUnitTestMode)
+      // if this (null) element is removed from the flow, it means the previous was processed (doReport() finished for it),
+      // so to make sure all events are reported, it's enough to wait for this null element to be just removed from the flow, not necessarily processed
+      fusEvents.tryEmit(null)
+
+      while (!fusEvents.replayCache.isEmpty()) {
+        Thread.yield()
       }
     }
 
-    val previousSegmentsTotalDuration = editor.getUserData(sessionSegmentsTotalDurationMs)!!
-    val currentSegmentsTotalDuration = previousSegmentsTotalDuration.addAndGet(segmentElapsedTime)
+    private fun doReport(project: Project, fileEditor: TextEditor, sessionData: SessionData) {
+      if (!fileEditor.isValid || project.isDisposed) return
+      val document = fileEditor.editor.document
+      val analyzer = (fileEditor.editor.markupModel as? EditorMarkupModel)?.errorStripeRenderer as? TrafficLightRenderer
+      val errorCounts = analyzer?.errorCountsForFus
+      val registrar = SeverityRegistrar.getSeverityRegistrar(project)
+      val errorIndex = registrar.getSeverityIdx(HighlightSeverity.ERROR)
+      val warningIndex = registrar.getSeverityIdx(HighlightSeverity.WARNING)
+      val errorCount = errorCounts?.getOrNull(errorIndex) ?: -1
+      val warningCount = errorCounts?.getOrNull(warningIndex) ?: -1
+      val lines = document.lineCount.roundToOneSignificantDigit()
+      val segmentElapsedTime = System.currentTimeMillis() - sessionData.daemonStartTime
+      val virtualFile = FileDocumentManager.getInstance().getFile(document)
+      val fileType = virtualFile?.fileType
+      val highlightingCompleted = DaemonCodeAnalyzerImpl.isHighlightingCompleted(fileEditor, project)
 
-    DaemonFusCollector.FINISHED.log(
-      project,
-      DaemonFusCollector.SEGMENT_DURATION with segmentElapsedTime,
-      DaemonFusCollector.FULL_DURATION with currentSegmentsTotalDuration,
-      DaemonFusCollector.ERRORS with errorCount,
-      DaemonFusCollector.WARNINGS with warningCount,
-      DaemonFusCollector.LINES with lines,
-      EventFields.FileType with fileType,
-      DaemonFusCollector.HIGHLIGHTING_COMPLETED with highlightingCompleted,
-      DaemonFusCollector.DUMB_MODE with sessionData.isDumbMode,
-      DaemonFusCollector.FILE_ID with (virtualFile as? VirtualFileWithId)?.id
-    )
+      sessionData.sessionSegmentTotalDurationMs += segmentElapsedTime
 
-    if (highlightingCompleted) {
-      editor.putUserData(docPreviousAnalysisStatus, AnalysisStatus(document.modificationStamp, sessionData.isDumbMode))
-      editor.putUserData(sessionSegmentsTotalDurationMs, AtomicLong())
+      DaemonFusCollector.FINISHED.log(
+        project,
+        DaemonFusCollector.SEGMENT_DURATION with segmentElapsedTime,
+        DaemonFusCollector.FULL_DURATION with sessionData.sessionSegmentTotalDurationMs,
+        DaemonFusCollector.ERRORS with errorCount,
+        DaemonFusCollector.WARNINGS with warningCount,
+        DaemonFusCollector.LINES with lines,
+        EventFields.FileType with fileType,
+        DaemonFusCollector.HIGHLIGHTING_COMPLETED with highlightingCompleted,
+        DaemonFusCollector.DUMB_MODE with sessionData.isDumbMode,
+        DaemonFusCollector.FILE_ID with (virtualFile as? VirtualFileWithId)?.id
+      )
+
+      if (highlightingCompleted) {
+        sessionData.docPreviousStamp = document.modificationStamp
+        sessionData.sessionSegmentTotalDurationMs = 0
+      }
     }
   }
 }
