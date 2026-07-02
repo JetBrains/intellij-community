@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.issue.BuildIssueException;
+import com.intellij.openapi.externalSystem.service.internal.ExternalSystemPartialResolutionException;
 import com.intellij.openapi.externalSystem.model.LocationAwareExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
@@ -48,6 +49,7 @@ import com.intellij.ui.content.MessageView;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.DebouncedUpdates;
@@ -189,8 +191,9 @@ public final class ExternalSystemNotificationManager implements Disposable {
   private static boolean isInternalError(@NotNull Throwable error,
                                          @NotNull ProjectSystemId externalSystemId) {
     if (RemoteUtil.unwrap(error) instanceof BuildIssueException) return false;
-    return ExternalSystemNotificationExtension.EP_NAME.getExtensionList().stream()
-      .anyMatch(extension -> externalSystemId.equals(extension.getTargetExternalSystemId()) && extension.isInternalError(error));
+    if (RemoteUtil.unwrap(error) instanceof ExternalSystemPartialResolutionException) return true;
+    return ContainerUtil.exists(ExternalSystemNotificationExtension.EP_NAME.getExtensionList(), it ->
+      externalSystemId.equals(it.getTargetExternalSystemId()) && it.isInternalError(error));
   }
 
   public boolean isNotificationActive(@NotNull Key<String> notificationKey) {

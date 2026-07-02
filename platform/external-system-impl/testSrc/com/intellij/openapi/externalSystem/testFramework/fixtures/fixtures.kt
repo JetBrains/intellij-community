@@ -2,9 +2,23 @@
 package com.intellij.openapi.externalSystem.testFramework.fixtures
 
 import com.intellij.openapi.externalSystem.testFramework.fixtures.impl.MultiProjectTestFixtureImpl
+import com.intellij.openapi.project.Project
+import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
+import java.nio.file.Path
 
 fun multiProjectFixture(): TestFixture<MultiProjectTestFixture> = testFixture {
   initialized(MultiProjectTestFixtureImpl()) {}
+}
+
+fun TestFixture<MultiProjectTestFixture>.projectFixture(
+  projectRootFixture: TestFixture<Path>,
+): TestFixture<Project> = testFixture {
+  val gradle = this@projectFixture.init()
+  val projectRoot = projectRootFixture.init()
+  val project = gradle.openProject(projectRoot)
+  initialized(project) {
+    project.closeProjectAsync()
+  }
 }
