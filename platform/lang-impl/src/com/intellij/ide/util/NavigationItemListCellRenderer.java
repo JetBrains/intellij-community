@@ -30,6 +30,7 @@ import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.Icon;
 import javax.swing.JComponent;
@@ -86,7 +87,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
       spacer.setBackground(isSelected ? UIUtil.getListSelectionBackground(true) : listBg);
       add(spacer, BorderLayout.CENTER);
     }
-    getAccessibleContext().setAccessibleName(accessibleName);
+    putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, accessibleName);
     return this;
   }
 

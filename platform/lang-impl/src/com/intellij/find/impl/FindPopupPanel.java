@@ -2278,7 +2278,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       myFileAndLineNumber.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       setBackground(getBackgroundColor(table, value));
       setSelectionColor(isSelected ? RenderingUtil.getBackground(table, true) : null);
-      getAccessibleContext().setAccessibleName(FindBundle.message("find.popup.found.element.accesible.name", myUsageRenderer.getAccessibleContext().getAccessibleName(), myFileAndLineNumber.getAccessibleContext().getAccessibleName()));
+      putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY,
+                        FindBundle.message("find.popup.found.element.accesible.name", myUsageRenderer.getAccessibleContext().getAccessibleName(), myFileAndLineNumber.getAccessibleContext().getAccessibleName()));
       return this;
     }
 
