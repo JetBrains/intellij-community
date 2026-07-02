@@ -1,9 +1,12 @@
 
+/*comments3*/
 /**
  * comments
- */ /*comments2*/ /*comments3*/
+ */
+/*comments2*/
 void main(/*test*/) {
     //comments4
     IO.println("Hello, world!");
 }
+
 //comments5

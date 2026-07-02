@@ -1,6 +1,7 @@
 import p.List;
 
-void main(String[] args) {
-    List <caret>a = null;
+<caret>void main(String[] args) {
+    List a = null;
     IO.println("Hello, world!" + args);
 }
+

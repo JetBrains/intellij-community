@@ -1,4 +1,4 @@
-
-void main() {
-    I<caret>O.println((Runnable) () -> IO.println("Hello"));
+<caret>void main() {
+    IO.println((Runnable) () -> IO.println("Hello"));
 }
+
