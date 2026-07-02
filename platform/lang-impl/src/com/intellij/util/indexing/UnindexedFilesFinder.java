@@ -7,7 +7,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.progress.Cancellation;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
@@ -35,10 +34,6 @@ import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-/**
- * {@link #getFileStatus(VirtualFile)} is the only public method: provides a description of file indexing status.
- * @see UnindexedFileStatus
- */
 final class UnindexedFilesFinder {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesFinder.class);
 
@@ -186,7 +181,6 @@ final class UnindexedFilesFinder {
   }
 
   private @Nullable UnindexedFileStatusBuilder evaluateFileStatus(@NotNull VirtualFile file) {
-    ProgressManager.checkCanceled(); // give a chance to suspend indexing
     if (!file.isValid() || !(file instanceof VirtualFileWithId)) {
       return null;
     }
