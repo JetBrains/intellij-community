@@ -31,7 +31,7 @@ internal class KaScriptModuleImpl(
     override val snapshot: ImmutableEntityStorage,
 ) : KaScriptModuleBase(project, virtualFile) {
     val kotlinScriptEntity by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        snapshot.scriptEntitiesByUrl(virtualFile.toVirtualFileUrl(virtualFileUrlManager)).singleOrNull()
+        snapshot.scriptEntitiesByUrl(virtualFile.toVirtualFileUrl(virtualFileUrlManager)).firstOrNull()
     }
 
     private val importedScriptUrls: List<VirtualFileUrl> by lazy(LazyThreadSafetyMode.PUBLICATION) {
