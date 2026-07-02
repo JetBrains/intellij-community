@@ -17,6 +17,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus
@@ -164,8 +165,14 @@ private fun logMissingIdErrorWithDiagnostic(problem: Problem,
   val mgr = ProblemLifetimeManager.getInstance(project)
   val history = mgr.getProblemHistory(problem)
 
+  val productMode = when {
+    IdeProductMode.isBackend -> "backend"
+    IdeProductMode.isMonolith -> "monolith"
+    else -> "should be backend/monolith"
+  }
+
   val message = buildString {
-    appendLine("Problem ID not found for $eventType event (sourceFlow=$sourceFlow).")
+    appendLine("Problem ID not found for $eventType event (sourceFlow=$sourceFlow, productMode=$productMode).")
 
     appendLine("Problem:")
     appendLine("  type=${problem.javaClass.name}")
@@ -196,5 +203,5 @@ private fun logMissingIdErrorWithDiagnostic(problem: Problem,
     appendLine("Lifetime: active=${lifetime.coroutineScope.isActive}, scope=${lifetime.coroutineScope}")
   }
 
-  LOG.error(message)
+  MissingProblemIdErrorAccumulator.getInstance(project).record(message)
 }
