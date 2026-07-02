@@ -205,13 +205,27 @@ function normalizeFileUrl(filepath) {
   return `file://${filepath}`
 }
 
-export function updateModulesXmlContent(text, projectHome, modulesXmlPath, modulePaths) {
+function isProjectDirFilepathInsideProject(filepath, projectHome) {
+  const prefix = "$PROJECT_DIR$/"
+  if (!filepath.startsWith(prefix)) {
+    return true
+  }
+  const absolutePath = resolve(projectHome, filepath.slice(prefix.length))
+  return absolutePath === projectHome || isInsidePath(absolutePath, projectHome)
+}
+
+export function updateModulesXmlContent(text, projectHome, modulesXmlPath, modulePaths, options = {}) {
   const parsed = parseModulesXml(text, modulesXmlPath)
+  const dropEntriesOutsideProjectHome = options.dropEntriesOutsideProjectHome ?? false
   const diagnostics = []
   const entryByFilepath = new Map()
   const keptEntries = []
 
   for (const entry of parsed.entries) {
+    if (dropEntriesOutsideProjectHome && !isProjectDirFilepathInsideProject(entry.filepath, projectHome)) {
+      diagnostics.push(`removed entry outside project for ${entry.filepath}`)
+      continue
+    }
     if (entryByFilepath.has(entry.filepath)) {
       diagnostics.push(`removed duplicate entry for ${entry.filepath}`)
       continue
@@ -289,10 +303,20 @@ function createProjectUpdates(imlPaths, runtime) {
   }
 
   const updates = [
-    {projectHome: rootDir, modulesXmlPath: resolve(rootDir, ".idea/modules.xml"), modulePaths: rootModules},
+    {
+      projectHome: rootDir,
+      modulesXmlPath: resolve(rootDir, ".idea/modules.xml"),
+      modulePaths: rootModules,
+      dropEntriesOutsideProjectHome: false,
+    },
   ]
   if (communityModules.length > 0) {
-    updates.push({projectHome: communityHome, modulesXmlPath: resolve(communityHome, ".idea/modules.xml"), modulePaths: communityModules})
+    updates.push({
+      projectHome: communityHome,
+      modulesXmlPath: resolve(communityHome, ".idea/modules.xml"),
+      modulePaths: communityModules,
+      dropEntriesOutsideProjectHome: true,
+    })
   }
   return updates
 }
@@ -307,7 +331,13 @@ export function runOperation(args, runtime = createDefaultRuntime(), io = create
       throw new Error(`Project modules file does not exist: ${formatRel(update.modulesXmlPath, runtime.rootDir)}`)
     }
     const currentContent = runtime.readFile(update.modulesXmlPath)
-    const result = updateModulesXmlContent(currentContent, update.projectHome, formatRel(update.modulesXmlPath, runtime.rootDir), update.modulePaths)
+    const result = updateModulesXmlContent(
+      currentContent,
+      update.projectHome,
+      formatRel(update.modulesXmlPath, runtime.rootDir),
+      update.modulePaths,
+      {dropEntriesOutsideProjectHome: update.dropEntriesOutsideProjectHome},
+    )
     if (!result.changed) {
       continue
     }

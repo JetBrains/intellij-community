@@ -248,6 +248,34 @@ describe("jps-module CLI", () => {
     }
   })
 
+  it("removes non-community module entries from the community project", async () => {
+    const rootDir = await createFixtureRoot()
+    try {
+      await writeTextFile(join(rootDir, ".idea/modules.xml"), createModulesXml([]))
+      await writeTextFile(join(rootDir, "community/.idea/modules.xml"), createModulesXml([
+        "$PROJECT_DIR$/../plugins/ultimate/intellij.ultimate.iml",
+      ]))
+      await writeTextFile(join(rootDir, "community/plugins/a/intellij.a.iml"), "<module></module>")
+
+      const {runtime, writes} = createRuntime(rootDir)
+      const {io, stdout} = createRecordingIo()
+      const exitCode = await runCli(["register", "community/plugins/a/intellij.a.iml"], {runtime, io})
+
+      equal(exitCode, 0)
+      deepEqual(writes.map((path) => path.replace(rootDir, "<root>")), [
+        "<root>/.idea/modules.xml",
+        "<root>/community/.idea/modules.xml",
+      ])
+      match(stdout.join("\n"), /removed entry outside project/)
+      deepEqual(moduleLines(await readFile(join(rootDir, "community/.idea/modules.xml"), "utf8")), [
+        "<module fileurl=\"file://$PROJECT_DIR$/plugins/a/intellij.a.iml\" filepath=\"$PROJECT_DIR$/plugins/a/intellij.a.iml\" />",
+      ])
+    }
+    finally {
+      await rm(rootDir, {recursive: true, force: true})
+    }
+  })
+
   it("resolves CLI iml paths relative to cwd while using the detected root project", async () => {
     const rootDir = await createFixtureRoot()
     try {
