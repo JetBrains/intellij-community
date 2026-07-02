@@ -2,6 +2,7 @@
 package com.intellij.dev.leakDetection
 
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
@@ -16,8 +17,11 @@ import com.intellij.util.ref.DebugReflectionUtil
 import com.jetbrains.JBR
 import kotlinx.coroutines.delay
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
+import java.awt.Frame
+import java.awt.KeyboardFocusManager
+import java.awt.Window
 import java.util.IdentityHashMap
-import java.util.Vector
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -54,6 +58,13 @@ data class LeakInfo(
  * Runtime detector for leaked (disposed-but-still-referenced) [com.intellij.openapi.project.Project] and
  * [com.intellij.openapi.editor.Editor] instances. A custom, production-callable variant of the test-only
  * `com.intellij.testFramework.LeakHunter`, built on the public [DebugReflectionUtil.walkObjects].
+ *
+ * ### Coverage limitations
+ * Detection walks the strong-reference graph from a best-effort set of GC roots (see [buildRoots]), so it cannot
+ * find leaks anchored only by references the JVM does not expose to reflection:
+ * - **Thread stack-frame locals** — a project pinned solely by a local variable in a running background task or
+ *   coroutine frame is invisible. Only thread objects and their thread-locals are reachable, not stack slots.
+ * - **Native / JNI global references** — anything pinned from native code (AWT peers, native handles, etc.).
  *
  * [detect] is heavy (forces a full GC and walks the object graph) and must be called off the EDT.
  */
@@ -109,27 +120,98 @@ class ProjectLeakDetector(
 
   // Disposer.getTree() is @TestOnly, but it is the canonical retention root and this is an internal dev-only diagnostic.
   @Suppress("TestOnlyProblems")
-  private fun buildRoots(): Map<Any, String> {
+  @VisibleForTesting
+  fun buildRoots(): Map<Any, String> {
     val roots = IdentityHashMap<Any, String>()
     ApplicationManager.getApplication()?.let { roots[it] = "ApplicationManager.getApplication()" }
     roots[Disposer.getTree()] = "Disposer.getTree()"
     roots[IdeEventQueue.getInstance()] = "IdeEventQueue.getInstance()"
     roots[Thread.getAllStackTraces().keys] = "all live threads"
-    addLoadedClassesStaticsRoot(roots)
+    addAwtRoots(roots)
+    addLoadedClassesStaticsRoots(roots)
     return roots
   }
 
-  /** Best-effort: statics of all loaded classes (via the classloader's internal `classes` field). May be unavailable on some runtimes. */
-  private fun addLoadedClassesStaticsRoot(roots: MutableMap<Any, String>) {
+  /**
+   * AWT keeps live windows in static lists ([Window.getWindows], [Frame.getFrames]) and focus state in the
+   * [KeyboardFocusManager]; these are not reachable through [IdeEventQueue]. Add them explicitly so components
+   * (and the projects/editors they transitively reference) pinned only by AWT are found.
+   */
+  private fun addAwtRoots(roots: MutableMap<Any, String>) {
     try {
-      val classLoader = ProjectLeakDetector::class.java.classLoader ?: return
-      val classes = ReflectionUtil.getField(classLoader.javaClass, classLoader, Vector::class.java, "classes")
-      if (classes != null) {
-        roots[classes] = "all loaded classes statics"
+      roots[Window.getWindows()] = "java.awt.Window.getWindows()"
+      roots[Frame.getFrames()] = "java.awt.Frame.getFrames()"
+      KeyboardFocusManager.getCurrentKeyboardFocusManager()?.let {
+        roots[it] = "KeyboardFocusManager.getCurrentKeyboardFocusManager()"
       }
     }
     catch (t: Throwable) {
-      LOG.warn("Cannot access loaded-classes statics root; leak detection will skip it", t)
+      LOG.warn("Cannot access AWT window roots; leak detection will skip them", t)
+    }
+
+    // sun.awt.AppContext holds additional AWT statics; reach it best-effort (may be blocked by JPMS access rules).
+    try {
+      val appContext = Class.forName("sun.awt.AppContext").getMethod("getAppContext").invoke(null)
+      if (appContext != null) {
+        roots[appContext] = "sun.awt.AppContext.getAppContext()"
+      }
+    }
+    catch (t: Throwable) {
+      LOG.debug("sun.awt.AppContext root unavailable; skipping", t)
+    }
+  }
+
+  /**
+   * The classloaders whose static fields we try to cover: this plugin, the platform core, the system loader, every
+   * loaded plugin, and every thread's context loader.
+   */
+  @VisibleForTesting
+  fun staticsRootClassLoaders(): Set<ClassLoader> {
+    val classLoaders = LinkedHashSet<ClassLoader>()
+
+    ProjectLeakDetector::class.java.classLoader?.let { classLoaders.add(it) }
+    ApplicationManager::class.java.classLoader?.let { classLoaders.add(it) }
+
+    try {
+      ClassLoader.getSystemClassLoader()?.let { classLoaders.add(it) }
+    }
+    catch (t: Throwable) {
+      LOG.debug("Cannot access the system classloader", t)
+    }
+
+    try {
+      for (plugin in PluginManagerCore.loadedPlugins) {
+        plugin.pluginClassLoader?.let { classLoaders.add(it) }
+      }
+    }
+    catch (t: Throwable) {
+      LOG.debug("Cannot enumerate plugin classloaders", t)
+    }
+
+    for (thread in Thread.getAllStackTraces().keys) {
+      try {
+        thread.contextClassLoader?.let { classLoaders.add(it) }
+      }
+      catch (_: SecurityException) {
+      }
+    }
+
+    return classLoaders
+  }
+
+  /**
+   * Best-effort statics roots: the `classes` collection of each [staticsRootClassLoaders] entry, which pins every
+   * class that loader defined and thus reaches their static fields.
+   */
+  private fun addLoadedClassesStaticsRoots(roots: MutableMap<Any, String>) {
+    for (classLoader in staticsRootClassLoaders()) {
+      try {
+        val classes = ReflectionUtil.getField<Any>(classLoader.javaClass, classLoader, null, "classes") ?: continue
+        roots[classes] = "statics of classes loaded by $classLoader"
+      }
+      catch (t: Throwable) {
+        LOG.debug("Cannot access loaded-classes statics for ${classLoader.javaClass.name}", t)
+      }
     }
   }
 
