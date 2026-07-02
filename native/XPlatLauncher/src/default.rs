@@ -99,6 +99,10 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
         }
     }
 
+    fn get_app_user_model_id(&self) -> Option<String> {
+        Some(self.product_info.app_user_model_id())
+    }
+
     fn prepare_for_launch(&self, _: bool) -> Result<(PathBuf, &str, Option<PathBuf>)> {
         let jre_home = self.locate_runtime()?.strip_ns_prefix()?;
         Ok((jre_home, &self.launch_info.mainClass, None))
