@@ -1,7 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +10,6 @@ import java.awt.Rectangle;
 import java.awt.font.TextHitInfo;
 import java.awt.im.InputMethodRequests;
 import java.text.AttributedCharacterIterator;
-
 
 final class EditorInputMethodHandleSwingThreadWrapper implements InputMethodRequests {
 
@@ -61,6 +59,6 @@ final class EditorInputMethodHandleSwingThreadWrapper implements InputMethodRequ
   }
 
   private static <T> T execute(@NotNull ThrowableComputable<T, RuntimeException> computable) {
-    return UIUtil.invokeAndWaitIfNeeded(() -> EditorThreading.compute(computable));
+    return UIUtil.invokeAndWaitIfNeeded(() -> computable.compute());
   }
 }
