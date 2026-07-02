@@ -418,10 +418,16 @@ def __analyze_numeric_column(column):
             else:
                 return round(x, 3)
 
-        counts, bin_edges = np.histogram(column.dropna(), bins=ColumnVisualisationUtils.NUM_BINS)
+        counts, bin_edges, bins = [0], [0, 0], ColumnVisualisationUtils.NUM_BINS
+        try:
+            counts, bin_edges = np.histogram(column.dropna(), bins=bins)
+        except ValueError as e:
+            if "Too many bins for data range." in str(e):
+                bins = 1
+                counts, bin_edges = np.histogram(column.dropna(), bins=bins)
 
         # so the long dash will be correctly viewed both on Mac and Windows
-        bin_labels = ['{} {} {}'.format(format_function(bin_edges[i]), DASH_SYMBOL, format_function(bin_edges[i+1])) for i in range(ColumnVisualisationUtils.NUM_BINS)]
+        bin_labels = ['{} {} {}'.format(format_function(bin_edges[i]), DASH_SYMBOL, format_function(bin_edges[i+1])) for i in range(bins)]
         res = zip(bin_labels, counts)
     return __add_custom_key_value_separator(res)
 
