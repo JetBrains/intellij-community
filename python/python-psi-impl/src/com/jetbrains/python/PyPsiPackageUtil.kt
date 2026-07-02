@@ -31,7 +31,7 @@ object PyPsiPackageUtil {
   }
 
   fun moduleToPackageName(module: String, default: String = module): String {
-    return PyPackageName.normalizePackageName(PACKAGES_TOPLEVEL.getOrDefault(module, default))
+    return PyPackageName.from(PACKAGES_TOPLEVEL.getOrDefault(module, default)).name
   }
 
   private fun loadPackageAliases(): Map<String, String> {

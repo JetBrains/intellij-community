@@ -169,7 +169,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
     waitForInit()
 
-    val normalizedPackagesNames = packages.map { PyPackageName.normalizePackageName(it) }
+    val normalizedPackagesNames = packages.map { PyPackageName.from(it).name }
     uninstallPackageCommand(*normalizedPackagesNames.toTypedArray(), workspaceMember = workspaceMember).getOr { return it }
     return reloadPackages()
   }

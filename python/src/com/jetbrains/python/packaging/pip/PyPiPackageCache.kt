@@ -253,7 +253,7 @@ class PyPiPackageCache : PythonPackageCache {
     @CheckReturnValue
     fun loadPackages(): Result<List<String>, FailedToFetchPackages> =
       try {
-        val pypiPackages = loadPackagesFromPypi().map { PyPackageName.normalizePackageName(it) }.sorted().toList()
+        val pypiPackages = loadPackagesFromPypi().map { PyPackageName.from(it).name }.sorted().toList()
         Result.success(pypiPackages)
       }
       catch (e: IOException) {

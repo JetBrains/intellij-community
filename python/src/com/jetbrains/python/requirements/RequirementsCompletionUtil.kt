@@ -38,7 +38,7 @@ fun completeVersions(name: String, project: Project, sdk: Sdk, result: Completio
   val versions = ApplicationUtil.runWithCheckCanceled({
                                                         runBlockingCancellable {
                                                           repositoryManager.getVersions(
-                                                            PyPackageName.normalizePackageName(name), null)
+                                                            PyPackageName.from(name).name, null)
                                                           ?: emptyList()
                                                         }
                                                       }, EmptyProgressIndicator.notNullize(ProgressManager.getInstance().progressIndicator))

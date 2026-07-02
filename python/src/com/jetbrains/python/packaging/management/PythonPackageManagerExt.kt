@@ -46,7 +46,7 @@ internal fun PythonPackageManager.reloadPackagesBlocking() {
 suspend fun PythonPackageManager.installPackages(vararg packages: String): PyResult<List<PythonPackage>> {
   waitForInit()
   val specifications = packages.map {
-    val packageName = PyPackageName.normalizePackageName(it)
+    val packageName = PyPackageName.from(it).name
     findPackageSpecification(packageName) ?: let {
       val repository = repositoryManager.repositories.firstOrNull()
       repository ?: return@let null
@@ -59,7 +59,7 @@ suspend fun PythonPackageManager.installPackages(vararg packages: String): PyRes
 
 @ApiStatus.Internal
 fun PythonPackageManager.getInstalledPackageSnapshot(packageName: String, version: String? = null): PythonPackage? {
-  val normalizedPackage = PyPackageName.normalizePackageName(packageName)
+  val normalizedPackage = PyPackageName.from(packageName).name
   return listInstalledPackagesSnapshot().firstOrNull { it.name == normalizedPackage && (version == null || version == it.version) }
 }
 

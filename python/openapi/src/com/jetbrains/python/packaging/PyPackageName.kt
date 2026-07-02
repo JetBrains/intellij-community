@@ -11,6 +11,9 @@ value class PyPackageName private constructor(val name: @NlsSafe String) {
     fun from(name: String): PyPackageName =
       PyPackageName(normalizePackageName(name))
 
+    @JvmStatic
+    fun normalize(name: String): String = from(name).name
+
     /**
      * Normalizes a project name according to
      * https://packaging.python.org/en/latest/specifications/name-normalization/#name-format
@@ -27,8 +30,7 @@ value class PyPackageName private constructor(val name: @NlsSafe String) {
         .trim('-')
     }
 
-    @JvmStatic
-    fun normalizePackageName(packageName: String): String {
+    private fun normalizePackageName(packageName: String): String {
       var name = packageName.trim()
         .removePrefix("\"")
         .removeSuffix("\"")

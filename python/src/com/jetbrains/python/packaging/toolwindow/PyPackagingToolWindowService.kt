@@ -146,7 +146,7 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
       StringUtil.containsIgnoreCase(pkg.name, query)
     }
     else {
-      StringUtil.containsIgnoreCase(PyPackageName.normalizePackageName(pkg.name), PyPackageName.normalizePackageName(query))
+      StringUtil.containsIgnoreCase(PyPackageName.from(pkg.name).name, PyPackageName.from(query).name)
     }
   }
 

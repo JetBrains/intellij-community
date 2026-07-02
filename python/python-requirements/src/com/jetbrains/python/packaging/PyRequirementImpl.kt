@@ -36,7 +36,7 @@ class PyRequirementImpl(
   }
 
   override fun match(packageName: PyPackage): Boolean {
-    return name == PyPackageName.normalizePackageName(packageName.name) && versionSpecs
+    return name == PyPackageName.from(packageName.name).name && versionSpecs
       .all { it.matches(packageName.version) }
   }
 
@@ -46,7 +46,7 @@ class PyRequirementImpl(
     }
 
     return when (other) {
-      is String -> name == PyPackageName.normalizePackageName(other)
+      is String -> name == PyPackageName.from(other).name
       is PyRequirementImpl -> name == other.name && versionSpecs == other.versionSpecs
       else -> false
     }

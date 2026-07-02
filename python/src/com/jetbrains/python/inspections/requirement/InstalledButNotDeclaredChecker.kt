@@ -15,26 +15,25 @@ internal class InstalledButNotDeclaredChecker(
   private val ignoredPackages: Collection<PyPackageName>,
   private val declared: List<PythonPackage>,
 ) {
-  fun getUndeclaredPackageName(importedPyModule: String): String? {
-    val packageName = PyPsiPackageUtil.moduleToPackageName(importedPyModule)
-    if (isIgnoredOrStandardPackage(importedPyModule))
+  fun getUndeclaredPackageName(importedPyModule: String): PyPackageName? {
+    val packageName = PyPackageName.from(PyPsiPackageUtil.moduleToPackageName(importedPyModule))
+    if (isIgnoredOrStandardPackage(packageName, importedPyModule))
       return null
 
     val pyPiCacheService = ApplicationManager.getApplication().service<PyPiPackageCache>()
 
-    if (packageName !in pyPiCacheService)
+    if (packageName.name !in pyPiCacheService)
       return null
 
-    val requirements = declared.toRequirements()
-    if (requirements.any { it.name == packageName }) {
+    if (declared.toRequirements().any { it.packageName == packageName }) {
       return null
     }
 
     return packageName
   }
 
-  private fun isIgnoredOrStandardPackage(packageName: String): Boolean =
-    ignoredPackages.contains(PyPackageName.from(packageName)) ||
-    packageName == PyPackageUtil.SETUPTOOLS ||
-    PyStdlibUtil.getPackages()?.contains(packageName) == true
+  private fun isIgnoredOrStandardPackage(packageName: PyPackageName, rawModuleName: String): Boolean =
+    ignoredPackages.contains(packageName) ||
+    packageName.name == PyPackageUtil.SETUPTOOLS ||
+    PyStdlibUtil.getPackages()?.contains(rawModuleName) == true
 }

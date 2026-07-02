@@ -33,9 +33,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class PyRequirementVisitor(
   holder: ProblemsHolder?,
-  val ignoredPackages: Collection<String>,
+  ignoredPackages: Collection<String>,
   context: TypeEvalContext,
 ) : PyInspectionVisitor(holder, context) {
+  private val ignoredPyPackageNames: Set<PyPackageName> = ignoredPackages.mapTo(mutableSetOf()) { PyPackageName.from(it) }
+
   override fun visitPyFromImportStatement(node: PyFromImportStatement) {
     val importSource = node.importSource ?: return
     checkPackageNameInRequirements(importSource)
@@ -63,12 +65,12 @@ class PyRequirementVisitor(
     val manager = PythonPackageManager.forSdk(module.project, sdk)
     val declared = manager.listDeclaredPackagesAsync() ?: return
 
-    val installedNotDeclaredChecker = InstalledButNotDeclaredChecker(ignoredPackages.mapTo(mutableSetOf()) { PyPackageName.from(it) }, declared)
+    val installedNotDeclaredChecker = InstalledButNotDeclaredChecker(ignoredPyPackageNames, declared)
     val packageName = installedNotDeclaredChecker.getUndeclaredPackageName(importedPyModule = importedPyModule) ?: return
 
 
-    val fixes = arrayOf(PyAddToDeclaredPackagesQuickFix(manager, packageName),
-                        IgnoreRequirementFix(setOf(packageName)))
+    val fixes = arrayOf(PyAddToDeclaredPackagesQuickFix(manager, packageName.name),
+                        IgnoreRequirementFix(setOf(packageName.name)))
 
     registerProblem(
       packageReferenceExpression,
@@ -91,7 +93,7 @@ class PyRequirementVisitor(
     val sdk = PythonSdkUtil.findPythonSdk(module) ?: return
     val manager = PythonPackageManager.forSdk(module.project, sdk)
 
-    val declaredNotInstalledChecker = DeclaredButNotInstalledPackagesChecker(ignoredPackages)
+    val declaredNotInstalledChecker = DeclaredButNotInstalledPackagesChecker(ignoredPyPackageNames)
     val unsatisfied = declaredNotInstalledChecker.findUnsatisfiedRequirements(module, manager)
     if (unsatisfied.isEmpty())
       return

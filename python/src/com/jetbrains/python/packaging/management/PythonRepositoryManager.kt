@@ -31,7 +31,7 @@ internal interface PythonRepositoryManager {
 
   @RequiresBackgroundThread
   fun searchPackages(repository: PyPackageRepository, needle: String, pageSize: Int = 100): PythonPackageSearchResult {
-    val normalizedNeedle = PyPackageName.normalizePackageName(needle)
+    val normalizedNeedle = PyPackageName.from(needle).name
     return repository.search(normalizedNeedle, pageSize)
   }
 

@@ -14,9 +14,9 @@ import com.jetbrains.python.packaging.management.listInstalledPackagesAsync
 import com.jetbrains.python.psi.PyUtil
 
 class DeclaredButNotInstalledPackagesChecker(
-  ignoredPackages: Collection<String>,
+  ignoredPackages: Collection<PyPackageName>,
 ) {
-  private val ignoredPackageNames: Set<String> = ignoredPackages.mapTo(mutableSetOf()) { PyPackageName.normalizePackageName(it) }
+  private val ignoredPackageNames: Set<PyPackageName> = ignoredPackages.toHashSet()
 
   @RequiresBackgroundThread
   fun findUnsatisfiedRequirements(module: Module, manager: PythonPackageManager): List<PyRequirement> {
@@ -40,7 +40,7 @@ class DeclaredButNotInstalledPackagesChecker(
     installedPackages: List<PythonPackage>,
     modulePackages: List<PythonPackage>,
   ): Boolean {
-    if (requirement.name in ignoredPackageNames) {
+    if (requirement.packageName in ignoredPackageNames) {
       return false
     }
 
