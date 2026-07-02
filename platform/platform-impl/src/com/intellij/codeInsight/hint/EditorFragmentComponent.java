@@ -17,6 +17,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.HintHint;
+import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -26,6 +27,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -46,6 +48,7 @@ import java.awt.Point;
 import java.awt.Window;
 import java.awt.image.BufferedImage;
 import java.lang.ref.WeakReference;
+import java.util.EventObject;
 
 public final class EditorFragmentComponent extends JPanel {
   private static final Logger LOG = Logger.getInstance(EditorFragmentComponent.class);
@@ -57,6 +60,7 @@ public final class EditorFragmentComponent extends JPanel {
   private final int myEndLine;
   private final boolean myShowFolding;
   private final boolean myShowGutter;
+  private @Nullable FragmentImageComponent myImageComponent;
 
   private EditorFragmentComponent(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
     editor.setPurePaintingMode(true);
@@ -123,7 +127,6 @@ public final class EditorFragmentComponent extends JPanel {
       }
       else {
         markersImageWidth = 0;
-        rowHeader = null;
         markersImage = null;
       }
 
@@ -141,23 +144,9 @@ public final class EditorFragmentComponent extends JPanel {
       }
     }
 
-    JComponent component = new JComponent() {
-      @Override
-      public Dimension getPreferredSize() {
-        return new Dimension(textImageWidth + markersImageWidth, textImageHeight);
-      }
-
-      @Override
-      protected void paintComponent(Graphics graphics) {
-        if (markersImage != null) {
-          StartupUiUtil.drawImage(graphics, markersImage, 0, 0, null);
-          StartupUiUtil.drawImage(graphics, textImage, rowHeader.getWidth(), 0, null);
-        }
-        else {
-          StartupUiUtil.drawImage(graphics, textImage, 0, 0, null);
-        }
-      }
-    };
+    FragmentImageComponent component = new FragmentImageComponent(textImage, markersImage, markersImageWidth,
+                                                                  textImageWidth + markersImageWidth, textImageHeight);
+    myImageComponent = component;
 
     setLayout(new BorderLayout());
     add(component);
@@ -196,6 +185,16 @@ public final class EditorFragmentComponent extends JPanel {
     if (screenWidth > 0) return screenWidth;
     Window window = SwingUtilities.getWindowAncestor(component);
     return window == null ? Integer.MAX_VALUE : window.getWidth();
+  }
+
+  private void releaseImages() {
+    FragmentImageComponent imageComponent = myImageComponent;
+    if (imageComponent == null) return;
+    myImageComponent = null;
+    imageComponent.releaseImages();
+    remove(imageComponent);
+    revalidate();
+    repaint();
   }
 
   /**
@@ -258,6 +257,11 @@ public final class EditorFragmentComponent extends JPanel {
                                                      0, false, new HintHint(editor, p));
     editor.putUserData(CURRENT_HINT, new WeakReference<>(hint));
     return hint;
+  }
+
+  @TestOnly
+  public static @NotNull LightweightHint createEditorFragmentHintForTest(@NotNull EditorFragmentComponent fragmentComponent) {
+    return new MyComponentHint(fragmentComponent);
   }
 
   public static EditorFragmentComponent createEditorFragmentComponent(Editor editor,
@@ -339,18 +343,82 @@ public final class EditorFragmentComponent extends JPanel {
   }
 
   private static final class MyComponentHint extends LightweightHint {
-    MyComponentHint(JComponent component) {
+    private final EditorFragmentComponent myFragmentComponent;
+
+    MyComponentHint(EditorFragmentComponent component) {
       super(component);
+      myFragmentComponent = component;
       setForceLightweightPopup(true);
+      // Use the hidden event as the lifecycle boundary. This hint is forced to layered-pane mode, so the usual popup
+      // cancellation hook is not used; some paths, for example ESC, hide it without calling hide(boolean).
+      addHintListener(new HintListener() {
+        @Override
+        public void hintHidden(@NotNull EventObject event) {
+          myFragmentComponent.releaseImages();
+        }
+      });
     }
 
     @Override
     public void hide() {
       // needed for Alt-Q multiple times
       // Q: not good?
-      SwingUtilities.invokeLater(
-        () -> super.hide()
-      );
+      SwingUtilities.invokeLater(() -> hide(false));
+    }
+
+  }
+
+  private static final class FragmentImageComponent extends JComponent {
+    private @Nullable BufferedImage myTextImage;
+    private @Nullable BufferedImage myMarkersImage;
+    private final int myMarkersImageWidth;
+    private final int myPreferredWidth;
+    private final int myPreferredHeight;
+
+    private FragmentImageComponent(@NotNull BufferedImage textImage,
+                                   @Nullable BufferedImage markersImage,
+                                   int markersImageWidth,
+                                   int preferredWidth,
+                                   int preferredHeight) {
+      myTextImage = textImage;
+      myMarkersImage = markersImage;
+      myMarkersImageWidth = markersImageWidth;
+      myPreferredWidth = preferredWidth;
+      myPreferredHeight = preferredHeight;
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return new Dimension(myPreferredWidth, myPreferredHeight);
+    }
+
+    @Override
+    protected void paintComponent(Graphics graphics) {
+      BufferedImage textImage = myTextImage;
+      if (textImage == null) return;
+
+      BufferedImage markersImage = myMarkersImage;
+      if (markersImage != null) {
+        StartupUiUtil.drawImage(graphics, markersImage, 0, 0, null);
+        StartupUiUtil.drawImage(graphics, textImage, myMarkersImageWidth, 0, null);
+      }
+      else {
+        StartupUiUtil.drawImage(graphics, textImage, 0, 0, null);
+      }
+    }
+
+    private void releaseImages() {
+      BufferedImage textImage = myTextImage;
+      if (textImage != null) {
+        textImage.flush();
+        myTextImage = null;
+      }
+
+      BufferedImage markersImage = myMarkersImage;
+      if (markersImage != null) {
+        markersImage.flush();
+        myMarkersImage = null;
+      }
     }
   }
 }
