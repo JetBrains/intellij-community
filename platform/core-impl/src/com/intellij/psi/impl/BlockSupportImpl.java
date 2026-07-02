@@ -289,7 +289,7 @@ public final class BlockSupportImpl extends BlockSupport {
 
     ASTNode newFileElement = PsiVersioningService.createVersionedPsiElements(oldFileNode, () -> newFile.getNode());
     if (lastCommittedText.length() != oldFileNode.getTextLength()) {
-      throw new IncorrectOperationException(viewProvider.toString());
+      throw new IncorrectOperationException("Last committed text length: " + lastCommittedText.length() + ", old file node length: " + oldFileNode.getTextLength() + ", viewProvider: " + viewProvider.toString());
     }
     DiffLog diffLog = mergeTrees(fileImpl, oldFileNode, newFileElement, indicator, lastCommittedText);
 
