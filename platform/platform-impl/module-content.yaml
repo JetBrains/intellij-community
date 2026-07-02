@@ -1,11 +1,4 @@
 - name: dist.all/lib/intellij.platform.ide.impl.jar
-  projectLibraries:
-  - name: jetbrains.intellij.deps.java.atk.wrapper.linux
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/263/intellij-deps-java-atk-wrapper-263.jar
-  - name: zip-signer
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/marketplace-zip-signer/0/marketplace-zip-signer-0.jar
   modules:
   - name: intellij.platform.buildData
   - name: intellij.platform.codeStyle.impl
@@ -28,3 +21,6 @@
   - name: intellij.platform.syntax.psi
   - name: intellij.platform.syntax.tree
   - name: intellij.platform.syntax.util
+  library: zip-signer
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/marketplace-zip-signer/0/marketplace-zip-signer-0.jar
