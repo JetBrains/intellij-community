@@ -167,6 +167,16 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("BooleanIsPropertyGetterPrefix.java")
+        public void testBooleanIsPropertyGetterPrefix() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/BooleanIsPropertyGetterPrefix.java");
+        }
+
+        @TestMetadata("BooleanIsPropertySetterPrefix.java")
+        public void testBooleanIsPropertySetterPrefix() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/BooleanIsPropertySetterPrefix.java");
+        }
+
         @TestMetadata("CrossinlineParameter.java")
         public void testCrossinlineParameter() throws Exception {
             runTest("../../completion/testData/inJava/extensions/CrossinlineParameter.java");
@@ -220,6 +230,46 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
         @TestMetadata("ExtensionProperty.java")
         public void testExtensionProperty() throws Exception {
             runTest("../../completion/testData/inJava/extensions/ExtensionProperty.java");
+        }
+
+        @TestMetadata("FunctionMismatchGetPrefixAbsent.java")
+        public void testFunctionMismatchGetPrefixAbsent() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/FunctionMismatchGetPrefixAbsent.java");
+        }
+
+        @TestMetadata("FunctionMismatchSetPrefixAbsent.java")
+        public void testFunctionMismatchSetPrefixAbsent() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/FunctionMismatchSetPrefixAbsent.java");
+        }
+
+        @TestMetadata("FunctionNamedGetWithGetPrefix.java")
+        public void testFunctionNamedGetWithGetPrefix() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/FunctionNamedGetWithGetPrefix.java");
+        }
+
+        @TestMetadata("GetterPartialAccessorPrefix.java")
+        public void testGetterPartialAccessorPrefix() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/GetterPartialAccessorPrefix.java");
+        }
+
+        @TestMetadata("GetterPrefixNoUnrelatedMatch.java")
+        public void testGetterPrefixNoUnrelatedMatch() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/GetterPrefixNoUnrelatedMatch.java");
+        }
+
+        @TestMetadata("GetterPrefixValProperty.java")
+        public void testGetterPrefixValProperty() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/GetterPrefixValProperty.java");
+        }
+
+        @TestMetadata("GetterPrefixVarProperty.java")
+        public void testGetterPrefixVarProperty() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/GetterPrefixVarProperty.java");
+        }
+
+        @TestMetadata("GetterShortPrefix.java")
+        public void testGetterShortPrefix() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/GetterShortPrefix.java");
         }
 
         @TestMetadata("HideSuspendFunction.java")
@@ -290,6 +340,26 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
         @TestMetadata("PrivateExtension.java")
         public void testPrivateExtension() throws Exception {
             runTest("../../completion/testData/inJava/extensions/PrivateExtension.java");
+        }
+
+        @TestMetadata("SetterPartialAccessorPrefix.java")
+        public void testSetterPartialAccessorPrefix() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/SetterPartialAccessorPrefix.java");
+        }
+
+        @TestMetadata("SetterPrefixNoUnrelatedMatch.java")
+        public void testSetterPrefixNoUnrelatedMatch() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/SetterPrefixNoUnrelatedMatch.java");
+        }
+
+        @TestMetadata("SetterPrefixValAbsent.java")
+        public void testSetterPrefixValAbsent() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/SetterPrefixValAbsent.java");
+        }
+
+        @TestMetadata("SetterPrefixVarProperty.java")
+        public void testSetterPrefixVarProperty() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/SetterPrefixVarProperty.java");
         }
 
         @TestMetadata("SimpleFunction.java")

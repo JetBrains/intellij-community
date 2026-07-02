@@ -60,11 +60,16 @@ import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinCompletionImplK2Bundle
+import org.jetbrains.kotlin.idea.completion.impl.k2.java.KotlinExtensionCompletionProvider.matchesDeclaration
+import org.jetbrains.kotlin.idea.completion.impl.k2.java.KotlinExtensionCompletionProvider.mightMatchExtensionName
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CompletionShortNamesRenderer
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TailTextProvider
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TypeTextProvider.getTypeTextForCallable
 import org.jetbrains.kotlin.idea.configuration.hasKotlinPluginEnabled
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -229,19 +234,57 @@ private object KotlinExtensionCompletionProvider : CompletionProvider<Completion
 
     private val enabledUserDataKey = Key.create<CachedValue<Boolean>>("KOTLIN_PLUGIN_ENABLED")
 
+    /**
+     * Checks if the name of an extension might match the prefix of the prefix matcher.
+     * This method takes into account that extension properties are called from Java using either
+     * the `get` or `set` prefixes.
+     * So the name `someProperty` will also match for a prefix `getP`.
+     * This function is only provided the [name] so it cannot know for sure if the name is a match and there
+     * can be false positives.
+     * See [matchesDeclaration] for the definitive answer once the PSI is available.
+     */
+    private fun PrefixMatcher.mightMatchExtensionName(name: Name): Boolean {
+        val nameString = name.asString()
+
+        return prefixMatches(nameString) ||
+                prefixMatches(JvmAbi.getterName(nameString)) ||
+                prefixMatches(JvmAbi.setterName(nameString))
+    }
+
+    /**
+     * See [mightMatchExtensionName] but this function also takes into account whether the
+     * given [declaration] is actually a property that has a corresponding getter or setter from the JVM side.
+     */
+    private fun PrefixMatcher.matchesDeclaration(declaration: KtCallableDeclaration): Boolean {
+        val name = declaration.name ?: return false
+        if (prefixMatches(name)) return true
+
+        if (declaration !is KtProperty) return false
+
+        // If the prefix matches the setter name, and we have a `var` property, then we have a match
+        if (prefixMatches(JvmAbi.setterName(name)) && declaration.isVar) {
+            return true
+        }
+
+        // Otherwise, we might still have a match for the getter
+        return prefixMatches(JvmAbi.getterName(name))
+    }
+
     context(_: KaSession)
     private fun KaType.processApplicableExtensions(
         prefixMatcher: PrefixMatcher,
         processor: (extension: KaCallableSymbol, methodWrapper: PsiMethod) -> Unit
     ) {
         val extensionsFromIndex = KtSymbolFromIndexProvider(file = null).getExtensionCallableSymbolsByNameFilter(
-            { prefixMatcher.prefixMatches(it.asString()) },
+            { prefixMatcher.mightMatchExtensionName(it) },
             listOf(this)
         ) psiFilter@{ extension ->
             // We only support top-level extensions
             if (extension.containingClassOrObject != null) return@psiFilter false
             // We do not want to show suspend methods
             if (extension.hasModifier(KtTokens.SUSPEND_KEYWORD)) return@psiFilter false
+            // Ensure that the prefix matches the declaration definitively
+            if (!prefixMatcher.matchesDeclaration(extension)) return@psiFilter false
 
             // Hide non-visible extensions or ones that cannot be analyzed in the current session
             extension.isVisibleIgnoringProtected(useSiteModule) && extension.canBeAnalysed()
