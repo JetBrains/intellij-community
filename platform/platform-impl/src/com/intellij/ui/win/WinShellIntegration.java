@@ -2,7 +2,6 @@
 package com.intellij.ui.win;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.Service;
@@ -105,9 +104,6 @@ final class WinShellIntegration implements Disposable {
         return;
       }
 
-      var appId = ApplicationInfo.getInstance().getFullApplicationName();
-      setAppUserModelIdNative(appId);
-
       initializeNative();
 
       nativeIsInitialized = true;
@@ -117,6 +113,7 @@ final class WinShellIntegration implements Disposable {
     private boolean nativeIsInitialized = false;
 
     // NB: does not require native to be initialized
+    @SuppressWarnings("unused")
     private native void setAppUserModelIdNative(String appUserModelId);
 
     private native void initializeNative();
