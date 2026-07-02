@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.minimap
 
 import com.intellij.ide.minimap.model.MinimapFileSupportPolicy
 import com.intellij.ide.minimap.model.MinimapSupportLevel
 import com.intellij.ide.minimap.settings.MinimapSettings
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -14,8 +13,6 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.BorderLayout
@@ -93,19 +90,11 @@ class MinimapService(private val scope: CoroutineScope) : Disposable {
     if (!MinimapAvailability.isAvailable()) return false
     if (!settings.state.enabled) return false
 
-    val virtualFile = getEditorVirtualFile(editorImpl)
+    val virtualFile = FileDocumentManager.getInstance().getFile(editorImpl.document)
                       ?: return false
 
     val supportLevel = MinimapFileSupportPolicy.forFileType(virtualFile.fileType)
     return supportLevel != MinimapSupportLevel.UNSUPPORTED
-  }
-
-  private fun getEditorVirtualFile(editorImpl: EditorImpl): VirtualFile? {
-    val project = editorImpl.project ?: return FileDocumentManager.getInstance().getFile(editorImpl.document)
-    val document = editorImpl.document
-    return WriteIntentReadAction.compute<VirtualFile?> {
-      PsiDocumentManager.getInstance(project).getPsiFile(document)?.virtualFile
-    } ?: FileDocumentManager.getInstance().getFile(document)
   }
 
   private fun updateMinimap(editorImpl: EditorImpl) {
