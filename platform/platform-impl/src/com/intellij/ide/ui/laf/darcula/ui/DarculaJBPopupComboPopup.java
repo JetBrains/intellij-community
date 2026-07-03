@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.DataManager;
@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.ui.awt.AnchoredPoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ComboBoxPopup;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -29,7 +30,9 @@ import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.IllegalComponentStateException;
+import java.awt.Point;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyListener;
@@ -139,8 +142,17 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
 
     myPopup.getSpeedSearch().installSupplyTo(myComboBox, false);
 
-    myPopup.setMinimumSize(myComboBox.getSize());
-    myPopup.showUnderneathOf(myComboBox);
+    //IJPL-249224 Combobox popup items are not horizontally aligned with the combobox content
+    int shift = myComboBox.getUI() instanceof DarculaComboBoxUI darculaUi ? darculaUi.getPopupHorizontalShift() : 0;
+    Dimension minSize = myComboBox.getSize();
+    minSize.width -= 2 * shift;
+    myPopup.setMinimumSize(minSize);
+    if (shift == 0) {
+      myPopup.showUnderneathOf(myComboBox);
+    }
+    else {
+      myPopup.show(new AnchoredPoint(AnchoredPoint.Anchor.BOTTOM_LEFT, myComboBox, new Point(shift, 0)));
+    }
   }
 
   @Override

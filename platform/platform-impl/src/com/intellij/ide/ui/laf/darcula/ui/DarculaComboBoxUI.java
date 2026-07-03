@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
@@ -248,6 +248,28 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   public static boolean hasSwingPopup(JComponent component) {
     return component.getClientProperty(DarculaJBPopupComboPopup.CLIENT_PROP) == null;
+  }
+
+  /**
+   * Horizontal offset (in pixels, relative to the combobox origin) that a popup
+   * should be shifted by so that item text/icons in the popup line up with the
+   * text/icon painted inside the collapsed combobox button.
+   *
+   * <p>New UI popup items are drawn with an extra left inset of
+   * {@code LEFT_RIGHT_INSET + innerInsets.left} to leave room for the rounded
+   * selection background. The button places its content at
+   * {@code insets.left + padding.left}. Without this compensation, popup content
+   * sits further to the right than the button label.
+   */
+  @ApiStatus.Internal
+  public int getPopupHorizontalShift() {
+    if (!ComboBoxPopup.isRendererWithInsets(comboBox.getRenderer())) {
+      return 0;
+    }
+    Insets buttonInsets = comboBox.getInsets();
+    int buttonContentLeft = buttonInsets.left + (padding == null ? 0 : padding.left);
+    int popupContentLeft = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() + JBUI.CurrentTheme.Popup.Selection.innerInsets().left;
+    return buttonContentLeft - popupContentLeft;
   }
 
   @ApiStatus.Internal
@@ -967,13 +989,16 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         list.setBorder(JBUI.Borders.empty(getListVerticalInset()));
       }
 
+      //IJPL-249224 Combobox popup items are not horizontally aligned with the combobox content
+      int shift = comboBox.getUI() instanceof DarculaComboBoxUI darculaUi ? darculaUi.getPopupHorizontalShift() : 0;
       if (comboBox instanceof ComboBoxWithWidePopup<?> comboBoxWithWidePopup) {
         Dimension popupSize = comboBox.getSize();
         int minPopupWidth = comboBoxWithWidePopup.getMinimumPopupWidth();
         Insets insets = getInsets();
 
         popupSize.width = Math.max(popupSize.width, minPopupWidth);
-        popupSize.setSize(popupSize.width - (insets.right + insets.left), getPopupHeightForRowCount(comboBox.getMaximumRowCount()));
+        popupSize.setSize(popupSize.width - (insets.right + insets.left) - 2 * shift,
+                          getPopupHeightForRowCount(comboBox.getMaximumRowCount()));
 
         scroller.setMaximumSize(popupSize);
         scroller.setPreferredSize(popupSize);
@@ -982,7 +1007,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         list.revalidate();
       }
 
-      super.show(invoker, x, y);
+      super.show(invoker, x + shift, y);
     }
 
     @Override
