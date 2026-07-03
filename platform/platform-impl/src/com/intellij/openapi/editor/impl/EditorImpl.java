@@ -2202,7 +2202,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (myScrollingPositionKeeper != null) myScrollingPositionKeeper.savePosition();
 
-    myCaretModel.onBulkDocumentUpdateStarted();
     mySoftWrapModel.onBulkDocumentUpdateStarted();
     myFoldingModel.onBulkDocumentUpdateStarted();
   }
