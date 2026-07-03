@@ -229,25 +229,6 @@ object DynamicPlugins {
     }
   }
 
-  @RequiresEdt(generateAssertion = false)
-  fun unloadPluginWithProgress(pluginDescriptor: PluginMainDescriptor): Boolean {
-    return runWithModalProgressBlocking(
-      ModalTaskOwner.guess(),
-      IdeBundle.message("modal.progress.title.unloading.plugin", pluginDescriptor.name),
-      cancellation = TaskCancellation.nonCancellable()
-    ) {
-      val newState = computeNewPluginsState(emptyList(), listOf(pluginDescriptor))
-      // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
-      val resolvedPluginSet = newState.resolvedPluginSet ?: error("resolved plugin set is not set")
-      expectPluginsState(expectNotToLoad = listOf(pluginDescriptor.pluginId)).validate(resolvedPluginSet)?.let {
-        LOG.info("new plugins state did not meet expectations: $it")
-        return@runWithModalProgressBlocking false
-      }
-      val result = DynamicPluginsSupport.getInstance().performDynamicReconfiguration(newState)
-      result is DynamicPluginsReconfigurationResult.Success
-    }
-  }
-
   @Deprecated("use checkCanLoadWithoutRestart or checkCanUnloadWithoutRestart instead")
   @RequiresBackgroundThread(generateAssertion = false)
   @JvmStatic

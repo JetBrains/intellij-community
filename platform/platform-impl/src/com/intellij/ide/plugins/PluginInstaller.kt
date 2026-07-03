@@ -112,12 +112,7 @@ object PluginInstaller {
     parentComponent: JComponent?,
     pluginDescriptor: PluginMainDescriptor,
   ): Boolean {
-    return if (parentComponent != null) {
-      DynamicPlugins.unloadPluginWithProgress(pluginDescriptor)
-    }
-    else {
-      DynamicPlugins.unloadPlugin(pluginDescriptor)
-    }
+    return DynamicPlugins.unloadPlugin(pluginDescriptor)
   }
 
   @ApiStatus.Internal
