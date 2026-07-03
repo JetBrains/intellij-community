@@ -34,6 +34,7 @@ import java.nio.ByteBuffer
 import java.nio.channels.AsynchronousSocketChannel
 import java.nio.channels.DatagramChannel
 import java.nio.channels.FileChannel
+import java.nio.channels.InterruptibleChannel
 import java.nio.channels.Pipe
 import java.nio.channels.ReadableByteChannel
 import java.nio.channels.SelectableChannel
@@ -61,7 +62,6 @@ internal class NioReadToEelAdapter(
     }
   }
 
-  @OptIn(DelicateCoroutinesApi::class)
   override suspend fun receive(dst: ByteBuffer): ReadResult {
     if (!dst.hasRemaining()) return ReadResult.NOT_EOF
     return withContext(dispatcher) {
@@ -81,7 +81,7 @@ internal class NioReadToEelAdapter(
           while (read == 0)
         }
         else {
-          read = computeDetached(dispatcher) {
+          read = computeMaybeDetached(readableByteChannel is InterruptibleChannel, dispatcher) {
             try {
               runInterruptible {
                 readableByteChannel.read(dst)
@@ -147,7 +147,6 @@ internal class NioWriteToEelAdapter(
 
   override val isClosed: Boolean get() = !writableByteChannel.isOpen
 
-  @OptIn(DelicateCoroutinesApi::class)
   @EelSendApi
   override suspend fun send(src: ByteBuffer) {
     if (!src.hasRemaining()) return
@@ -163,7 +162,7 @@ internal class NioWriteToEelAdapter(
           while (writableByteChannel.write(src) == 0)
         }
         else {
-          computeDetached(dispatcher) {
+          computeMaybeDetached(writableByteChannel is InterruptibleChannel, dispatcher) {
             try {
               runInterruptible {
                 writableByteChannel.write(src)
@@ -398,4 +397,24 @@ private fun selectorForNioChannel(channel: java.nio.channels.Channel): Selector?
     returnsNotNull() implies (channel is SelectableChannel)
   }
   return if (channel is SelectableChannel) selectorPool.borrow() else null
+}
+
+@OptIn(DelicateCoroutinesApi::class)
+private suspend fun <T> computeMaybeDetached(undispatched: Boolean, dispatcher: CoroutineContext, action: suspend () -> T): T {
+  return if (undispatched) {
+    calledDirectly(action)
+  }
+  else {
+    computeDetached(dispatcher) { calledFromComputeDetached(action) }
+  }
+}
+
+/** This thin wrapper exists only to explain data flow in stacktraces better. */
+private suspend fun <T> calledFromComputeDetached(action: suspend () -> T): T {
+  return action()
+}
+
+/** This thin wrapper exists only to explain data flow in stacktraces better. */
+private suspend fun <T> calledDirectly(action: suspend () -> T): T {
+  return action()
 }
