@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service
 
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager.Companion.getInstance
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -22,6 +24,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.application
 import com.intellij.util.containers.ContainerUtil
 import org.gradle.util.GradleVersion
@@ -34,6 +37,7 @@ import org.jetbrains.plugins.gradle.service.execution.LocalBuildLayoutParameters
 import org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleJvmLookupProvider
 import org.jetbrains.plugins.gradle.util.resolveGradleJvmInfo
@@ -142,12 +146,24 @@ open class GradleInstallationManager : Disposable.Default {
     val settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedProjectPath) ?: return getAvailableJavaHome(project)
     val gradleJvm = settings.gradleJvm
     val sdkLookupProvider = getGradleJvmLookupProvider(project, settings)
-    val sdkInfo = runBlockingCancellable { sdkLookupProvider.resolveGradleJvmInfo(project, linkedProjectPath, gradleJvm) }
+    val sdkInfo = sdkLookupProvider.invokeSdkLookup(project, linkedProjectPath, gradleJvm)
     if (sdkInfo is SdkLookupProvider.SdkInfo.Resolved) {
       return sdkInfo.homePath
     }
     return null
   }
+
+  private fun SdkLookupProvider.invokeSdkLookup(project: Project, linkedProjectPath: String, gradleJvm: String?) =
+    if (ApplicationManager.getApplication().isDispatchThread) {
+      runWithModalProgressBlocking(project, GradleBundle.message("gradle.jvm.is.being.resolved")) {
+        resolveGradleJvmInfo(project, linkedProjectPath, gradleJvm)
+      }
+    }
+    else {
+      runBlockingCancellable {
+        resolveGradleJvmInfo(project, linkedProjectPath, gradleJvm)
+      }
+    }
 
   /**
    * Tries to discover the Gradle installation path from the configured system path.
