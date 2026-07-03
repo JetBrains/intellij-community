@@ -199,7 +199,6 @@
   - name: intellij.kotlin.projectWizard.compose
   - name: intellij.kotlin.featuresTrainer
   - name: intellij.kotlin.jvm.decompiler
-  - name: kotlin.jvm.shared
   - name: intellij.kotlin.jvm
   - name: intellij.kotlin.base.scripting
   - name: intellij.kotlin.base.scripting.main.kts
@@ -344,6 +343,9 @@
 - name: lib/modules/intellij.kotlin.internal.jar
   contentModules:
   - name: intellij.kotlin.internal
+- name: lib/modules/kotlin.jvm.shared.jar
+  contentModules:
+  - name: kotlin.jvm.shared
 - name: lib/vavr.jar
   library: vavr
   files:

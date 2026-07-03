@@ -50,7 +50,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.base.statistics",
       "intellij.kotlin.ide",
       "kotlin.fir.frontend-independent",
-      "kotlin.jvm.shared",
       "intellij.kotlin.jvm",
       "intellij.kotlin.compilerReferenceIndex",
       "intellij.kotlin.compilerPlugins.parcelize.common",

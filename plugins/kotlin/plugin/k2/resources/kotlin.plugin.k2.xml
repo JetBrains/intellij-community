@@ -79,7 +79,6 @@
 
     <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.fir.extensions.KtCompilerPluginsProviderIdeImpl"/>
-    <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.compiler.KotlinCompilableFileTypesProvider" />
     <!-- fir-specific -->
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider"
                         serviceImplementation="org.jetbrains.kotlin.idea.fir.plugin.K2KotlinPluginModeProvider"/>
@@ -181,7 +180,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.compiler.configuration.KotlinBuildProcessParametersProvider"/>
 
     <configurationType implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationType"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer" id="kotlinMain"/>

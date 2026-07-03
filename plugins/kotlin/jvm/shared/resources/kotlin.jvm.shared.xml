@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.jvm.shared">
+<idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java.execution.impl"/>
@@ -33,6 +33,8 @@
     <action id="ConfigureKotlinInProject" class="org.jetbrains.kotlin.idea.jvm.shared.actions.ConfigureKotlinInProjectAction">
       <add-to-group group-id="KotlinToolsGroup"/>
     </action>
+    <action id="Kotlin.ClearScratch" class="org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ClearScratchAction" icon="AllIcons.Actions.GC"/>
+    <action id="Kotlin.StopScratch" class="org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.StopScratchAction" icon="AllIcons.Actions.Suspend"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
