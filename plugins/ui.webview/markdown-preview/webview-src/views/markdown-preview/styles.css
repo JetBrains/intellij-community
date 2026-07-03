@@ -50,6 +50,10 @@ body {
   overflow-wrap: break-word;
 }
 
+.markdownPreviewContent {
+  display: contents;
+}
+
 html[data-theme="light"] .markdownPreview {
   --markdown-code-builtin: #174AD4;
   --markdown-code-function: #7A3E9D;
@@ -419,6 +423,27 @@ html[data-theme="light"] .markdownPreview {
 
 .markdownPreview a:hover {
   text-decoration: underline;
+}
+
+.markdownPreview .markdownPathLink {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--ij-accent);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: inherit;
+}
+
+.markdownPreview .markdownPathLink:hover,
+.markdownPreview .markdownPathLink:focus-visible {
+  text-decoration: underline;
+}
+
+.markdownPreview .markdownPathLink:focus-visible {
+  outline: none;
+  box-shadow: var(--ij-focus-ring);
 }
 
 .markdownPreview strong {

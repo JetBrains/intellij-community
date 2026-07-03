@@ -5,11 +5,14 @@ import { defineWebViewMock } from "@jetbrains/intellij-webview-testkit"
 import type {
   MarkdownChangedBlockDescriptor,
   MarkdownCommandDescriptor,
+  MarkdownNavigatePathLinkRequest,
+  MarkdownResolvePathLinksRequest,
+  MarkdownResolvedPathLinksResponse,
   MarkdownResolveRunCommandsRequest,
   MarkdownResolvedRunCommandsResponse,
   MarkdownRunCommandRequest,
   MarkdownSourceRange,
-} from "./MarkdownPreviewApp"
+} from "./markdownPreviewTypes"
 
 interface MarkdownContentChangedParams {
   markdown: string
@@ -42,6 +45,8 @@ interface MarkdownPreviewHostApi extends WebViewCallable {
   openLink(params: MarkdownOpenLinkParams): Promise<void>
   resolveRunCommands(params: MarkdownResolveRunCommandsRequest): Promise<MarkdownResolvedRunCommandsResponse>
   runCommand(params: MarkdownRunCommandRequest): Promise<void>
+  resolvePathLinks(params: MarkdownResolvePathLinksRequest): Promise<MarkdownResolvedPathLinksResponse>
+  navigatePathLink(params: MarkdownNavigatePathLinkRequest): Promise<void>
 }
 
 interface MarkdownOpenLinkParams {
@@ -54,6 +59,7 @@ const changes: MarkdownChangedBlockDescriptor[] = [
   { kind: "ADDED", startLine: 9, endLine: 13 },
   { kind: "MODIFIED", startLine: 20, endLine: 23 },
 ]
+const resolvedPathLinks = new Set(["docs/guide.md:12", "src/Main.kt", "src\\WindowsPath.kt", "index.h", "index.html", "style.css", "requirements.txt", "my_django_project/", "my_django_app/"])
 
 export default defineWebViewMock(({ host, page, theme }) => {
   const toolbar = installMockToolbar()
@@ -103,6 +109,16 @@ export default defineWebViewMock(({ host, page, theme }) => {
     },
     async runCommand(params) {
       toolbar.log.textContent = `run ${params.id}`
+    },
+    async resolvePathLinks(request) {
+      return {
+        resolvedIds: request.candidates
+          .filter(candidate => resolvedPathLinks.has(candidate.rawPath))
+          .map(candidate => candidate.id),
+      }
+    },
+    async navigatePathLink(params) {
+      toolbar.log.textContent = JSON.stringify({ kind: "navigatePathLink", ...params })
     },
   })
 })
@@ -165,20 +181,54 @@ const sampleMarkdown = `# Markdown Preview Mock
 
 This page runs the real Markdown preview entry through the WebView testkit mock bridge.
 
-[External link](https://www.jetbrains.com) and an inline command: \`echo inline\`.
+[External link](https://www.jetbrains.com), an inline command: \`echo inline\`, and a path \`docs/guide.md:12\`.
+
+Inline math \\(a+b\\) and display math $$c=d$$.
 
 ## Runnable Code
 
 \`\`\`bash
 echo first line
+cat src/Main.kt
+cat src\\WindowsPath.kt
+cat missing/Nope.kt
 echo second line
+\`\`\`
+
+## Project Tree
+
+\`\`\`text
+.venv/
+app/
+  init.py
+  main.py
+  routes.py
+templates/
+  index.html
+static/
+style.css
+requirements.txt
+\`\`\`
+
+## Django Tree
+
+\`\`\`
+my_django_project/
+  manage.py
+  ...
+  my_django_app/
+    migrations/
+    templates/
+    models.py
+    urls.py
+    ...
 \`\`\`
 
 ## Mermaid
 
 \`\`\`mermaid
 flowchart LR
-  A[Markdown] --> B[Preview]
+  A[src/Mermaid.kt] --> B[Preview]
 \`\`\`
 
 ## Table

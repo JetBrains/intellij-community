@@ -96,4 +96,52 @@ internal class MarkdownPreviewPageApiTest : TestCase() {
     val command = payload.getValue("commands").jsonArray.single().jsonObject
     assertEquals("command-id", command.getValue("id").jsonPrimitive.content)
   }
+
+  fun `test resolve path links payload includes path candidates`() {
+    val payload = Json.encodeToJsonElement(
+      MarkdownResolvePathLinksParams.serializer(),
+      MarkdownResolvePathLinksParams(
+        contentVersion = 42,
+        candidates = listOf(
+          MarkdownPathLinkCandidate(
+            id = "path-id",
+            rawPath = "src/Main.kt:10:5",
+          ),
+        ),
+      ),
+    ).jsonObject
+
+    val candidate = payload.getValue("candidates").jsonArray.single().jsonObject
+    assertEquals("42", payload.getValue("contentVersion").jsonPrimitive.content)
+    assertEquals("path-id", candidate.getValue("id").jsonPrimitive.content)
+    assertEquals("src/Main.kt:10:5", candidate.getValue("rawPath").jsonPrimitive.content)
+  }
+
+  fun `test resolved path links payload includes resolved ids`() {
+    val payload = Json.encodeToJsonElement(
+      MarkdownResolvedPathLinksParams.serializer(),
+      MarkdownResolvedPathLinksParams(
+        resolvedIds = listOf("path-id"),
+      ),
+    ).jsonObject
+
+    assertEquals("path-id", payload.getValue("resolvedIds").jsonArray.single().jsonPrimitive.content)
+  }
+
+  fun `test navigate path link payload includes path and coordinates`() {
+    val payload = Json.encodeToJsonElement(
+      MarkdownNavigatePathLinkParams.serializer(),
+      MarkdownNavigatePathLinkParams(
+        contentVersion = 42,
+        rawPath = "src/Main.kt#L10",
+        clientX = 12,
+        clientY = 34,
+      ),
+    ).jsonObject
+
+    assertEquals("42", payload.getValue("contentVersion").jsonPrimitive.content)
+    assertEquals("src/Main.kt#L10", payload.getValue("rawPath").jsonPrimitive.content)
+    assertEquals("12", payload.getValue("clientX").jsonPrimitive.content)
+    assertEquals("34", payload.getValue("clientY").jsonPrimitive.content)
+  }
 }

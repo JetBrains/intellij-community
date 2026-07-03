@@ -32,6 +32,10 @@ interface MarkdownPreviewHostApi : WebViewImplementable {
 
   suspend fun runCommand(params: MarkdownRunCommandParams)
 
+  suspend fun resolvePathLinks(params: MarkdownResolvePathLinksParams): MarkdownResolvedPathLinksParams
+
+  suspend fun navigatePathLink(params: MarkdownNavigatePathLinkParams)
+
   companion object {
     val ID: WebViewApiId<MarkdownPreviewHostApi> = WebViewApiId.of("markdown.preview")
   }
@@ -73,6 +77,26 @@ data class MarkdownPreviewSourceRange(
 @ApiStatus.Internal
 @Serializable
 data class MarkdownOpenLinkParams(val href: String)
+
+@ApiStatus.Internal
+@Serializable
+data class MarkdownResolvePathLinksParams(
+  val contentVersion: Int,
+  val candidates: List<MarkdownPathLinkCandidate>,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class MarkdownResolvedPathLinksParams(
+  val resolvedIds: List<String>,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class MarkdownPathLinkCandidate(
+  val id: String,
+  val rawPath: String,
+)
 
 @ApiStatus.Internal
 @Serializable
@@ -143,6 +167,15 @@ enum class MarkdownChangedBlockKind {
 data class MarkdownRunCommandParams(
   val contentVersion: Int,
   val id: String,
+  val clientX: Int,
+  val clientY: Int,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class MarkdownNavigatePathLinkParams(
+  val contentVersion: Int,
+  val rawPath: String,
   val clientX: Int,
   val clientY: Int,
 )

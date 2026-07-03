@@ -55,6 +55,8 @@ class WebViewMarkdownPreviewPanel(
     .coroutineScope
     .childScope("Markdown WebView preview")
 
+  private val pathLinkResolver = project?.let { MarkdownPreviewPathLinkResolver(it, coroutineScope) }
+
   private val rootComponent = JPanel(BorderLayout())
 
   @Volatile
@@ -175,7 +177,37 @@ class WebViewMarkdownPreviewPanel(
       override suspend fun runCommand(params: MarkdownRunCommandParams) {
         runMarkdownCommand(params)
       }
+
+      override suspend fun resolvePathLinks(params: MarkdownResolvePathLinksParams): MarkdownResolvedPathLinksParams {
+        return MarkdownResolvedPathLinksParams(resolveMarkdownPathLinks(params))
+      }
+
+      override suspend fun navigatePathLink(params: MarkdownNavigatePathLinkParams) {
+        navigateMarkdownPathLink(params)
+      }
     }
+  }
+
+  private suspend fun resolveMarkdownPathLinks(params: MarkdownResolvePathLinksParams): List<String> {
+    val update = lastUpdate ?: return emptyList()
+    if (params.contentVersion != update.contentVersion) return emptyList()
+    val resolver = pathLinkResolver ?: return emptyList()
+
+    val resolvedRawPaths = LinkedHashSet<String>()
+    for ((_, rawPath) in params.candidates.distinctBy { it.rawPath }) {
+      if (resolver.resolve(rawPath, update.document).isNotEmpty()) {
+        resolvedRawPaths.add(rawPath)
+      }
+    }
+    return params.candidates.mapNotNull { candidate -> candidate.id.takeIf { candidate.rawPath in resolvedRawPaths } }
+  }
+
+  private suspend fun navigateMarkdownPathLink(params: MarkdownNavigatePathLinkParams) {
+    val update = lastUpdate ?: return
+    if (params.contentVersion != update.contentVersion) return
+    val resolver = pathLinkResolver ?: return
+
+    resolver.navigate(params.rawPath, update.document, rootComponent, params.clientX, params.clientY)
   }
 
   private fun resolveMarkdownRunCommands(params: MarkdownResolveRunCommandsParams): MarkdownRunCommandSession {

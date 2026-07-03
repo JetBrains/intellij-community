@@ -2,15 +2,18 @@
 
 import { createRoot } from "react-dom/client"
 import { apiId, webView, webViewTheme, type WebViewCallable, type WebViewImplementable } from "@jetbrains/intellij-webview"
-import {
-  MarkdownPreviewApp,
-  scrollMarkdownPreviewToLine,
-  type MarkdownChangedBlockDescriptor,
-  type MarkdownResolveRunCommandsRequest,
-  type MarkdownResolvedRunCommandsResponse,
-  type MarkdownRunCommandRequest,
-  type MarkdownSourceRange,
-} from "./MarkdownPreviewApp"
+import { MarkdownPreviewApp, scrollMarkdownPreviewToLine } from "./MarkdownPreviewApp"
+import { decorateSourceBlocks } from "./markdownSourcePositions"
+import type {
+  MarkdownChangedBlockDescriptor,
+  MarkdownNavigatePathLinkRequest,
+  MarkdownResolvePathLinksRequest,
+  MarkdownResolvedPathLinksResponse,
+  MarkdownResolveRunCommandsRequest,
+  MarkdownResolvedRunCommandsResponse,
+  MarkdownRunCommandRequest,
+  MarkdownSourceRange,
+} from "./markdownPreviewTypes"
 
 interface MarkdownContentChangedParams {
   markdown: string
@@ -43,6 +46,8 @@ interface MarkdownPreviewHostApi extends WebViewCallable {
   openLink(params: MarkdownOpenLinkParams): Promise<void>
   resolveRunCommands(params: MarkdownResolveRunCommandsRequest): Promise<MarkdownResolvedRunCommandsResponse>
   runCommand(params: MarkdownRunCommandRequest): Promise<void>
+  resolvePathLinks(params: MarkdownResolvePathLinksRequest): Promise<MarkdownResolvedPathLinksResponse>
+  navigatePathLink(params: MarkdownNavigatePathLinkRequest): Promise<void>
 }
 
 interface MarkdownOpenLinkParams {
@@ -75,7 +80,7 @@ webView.implement(markdownPreviewPageApiId, {
   },
   selectionChanged(params) {
     selection = params.selection ?? undefined
-    renderPreview()
+    decorateSourceBlocks(selection, changes)
   },
 })
 
@@ -99,6 +104,8 @@ function renderPreview(): void {
       onOpenLink={openMarkdownLink}
       onResolveRunCommands={resolveMarkdownRunCommands}
       onRunCommand={runMarkdownCommand}
+      onResolvePathLinks={resolveMarkdownPathLinks}
+      onNavigatePathLink={navigateMarkdownPathLink}
     />
   )
 }
@@ -113,6 +120,14 @@ function resolveMarkdownRunCommands(request: MarkdownResolveRunCommandsRequest):
 
 function runMarkdownCommand(request: MarkdownRunCommandRequest): void {
   void markdownPreviewHostApi.runCommand(request)
+}
+
+function resolveMarkdownPathLinks(request: MarkdownResolvePathLinksRequest): Promise<MarkdownResolvedPathLinksResponse> {
+  return markdownPreviewHostApi.resolvePathLinks(request)
+}
+
+function navigateMarkdownPathLink(request: MarkdownNavigatePathLinkRequest): void {
+  void markdownPreviewHostApi.navigatePathLink(request)
 }
 
 function applyTheme(theme: "light" | "dark"): void {

@@ -3054,6 +3054,236 @@ function cssVariable(name, fallback) {
 	return (getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback).replace(/^#([0-9a-fA-F]{6})[0-9a-fA-F]{2}$/, "#$1");
 }
 //#endregion
+//#region views/acp-chat/src/components/markdownHastUtils.ts
+function codeNodeFromPreNode(node) {
+	return node?.children?.find((child) => child.tagName === "code");
+}
+function hastClassNames(node) {
+	const className = node?.properties?.className;
+	if (Array.isArray(className)) return className.filter((name) => typeof name === "string");
+	if (typeof className === "string") return className.split(/\s+/);
+	return [];
+}
+function hastText(node) {
+	if (!node) return "";
+	if (typeof node.value === "string") return node.value;
+	return node.children?.map(hastText).join("") ?? "";
+}
+//#endregion
+//#region views/acp-chat/src/components/markdownPathLinks.tsx
+function collectPathLinkCandidates(markdown) {
+	const codeSegments = markdownCodeSegments(markdown);
+	const candidates = [];
+	const seen = /* @__PURE__ */ new Set();
+	for (const codeSegment of codeSegments) for (const token of pathTokens(codeSegment)) {
+		if (seen.has(token.rawPath)) continue;
+		seen.add(token.rawPath);
+		candidates.push({
+			id: `path-${candidates.length}`,
+			rawPath: token.rawPath
+		});
+	}
+	return candidates;
+}
+function renderPathLinks(node, resolvedRawPaths, keyPrefix, onNavigatePathLink) {
+	const content = pathTextContent(node);
+	const tokens = pathTokens(content.text).filter((token) => resolvedRawPaths.has(token.rawPath));
+	if (tokens.length === 0) return node;
+	const parts = [];
+	let offset = 0;
+	for (const [index, token] of tokens.entries()) {
+		if (token.start < offset) continue;
+		if (offset < token.start) parts.push(...renderPathTextRange(content.leaves, offset, token.start, `${keyPrefix}-text-${index}`));
+		parts.push(/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+			type: "button",
+			className: "acpMarkdownPathLink",
+			onClick: (event) => {
+				event.preventDefault();
+				event.stopPropagation();
+				onNavigatePathLink({
+					rawPath: token.rawPath,
+					clientX: event.clientX,
+					clientY: event.clientY
+				});
+			},
+			children: renderPathTextRange(content.leaves, token.start, token.end, `${keyPrefix}-link-${index}`)
+		}, `${keyPrefix}-${token.start}-${index}`));
+		offset = token.end;
+	}
+	if (offset < content.text.length) parts.push(...renderPathTextRange(content.leaves, offset, content.text.length, `${keyPrefix}-text-end`));
+	return parts;
+}
+function markdownCodeSegments(markdown) {
+	const segments = [];
+	const markdownWithoutFencedCode = markdown.replace(FENCED_CODE_BLOCK_PATTERN, (match, _prefix, _fence, info, code) => {
+		if (String(info).trim().split(/\s+/)[0]?.toLowerCase() !== "mermaid") segments.push(String(code));
+		return " ".repeat(match.length);
+	});
+	for (const match of markdownWithoutFencedCode.matchAll(INLINE_CODE_PATTERN)) segments.push(match[1]);
+	return segments;
+}
+function pathTextContent(node) {
+	const leaves = [];
+	let text = "";
+	function collect(current, wrappers) {
+		if (typeof current === "string" || typeof current === "number") {
+			const value = String(current);
+			if (value.length === 0) return;
+			const start = text.length;
+			text += value;
+			leaves.push({
+				text: value,
+				start,
+				end: text.length,
+				wrappers
+			});
+			return;
+		}
+		if (Array.isArray(current)) {
+			current.forEach((child) => collect(child, wrappers));
+			return;
+		}
+		if ((0, import_react.isValidElement)(current)) {
+			const element = current;
+			if (element.props.children == null) return;
+			collect(element.props.children, [...wrappers, element]);
+		}
+	}
+	collect(node, []);
+	return {
+		text,
+		leaves
+	};
+}
+function renderPathTextRange(leaves, start, end, keyPrefix) {
+	const parts = [];
+	for (const leaf of leaves) {
+		const sliceStart = Math.max(start, leaf.start);
+		const sliceEnd = Math.min(end, leaf.end);
+		if (sliceStart >= sliceEnd) continue;
+		parts.push(renderPathTextLeafSlice(leaf, sliceStart, sliceEnd, `${keyPrefix}-${parts.length}`));
+	}
+	return parts;
+}
+function renderPathTextLeafSlice(leaf, start, end, key) {
+	let result = leaf.text.slice(start - leaf.start, end - leaf.start);
+	for (let index = leaf.wrappers.length - 1; index >= 0; index--) result = (0, import_react.cloneElement)(leaf.wrappers[index], void 0, result);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_react.Fragment, { children: result }, key);
+}
+function pathTokens(text) {
+	const tokens = [];
+	let lineStart = 0;
+	while (lineStart <= text.length) {
+		const nextLineBreak = text.indexOf("\n", lineStart);
+		const lineEnd = nextLineBreak < 0 ? text.length : nextLineBreak;
+		tokens.push(...pathTokensInLine(text, lineStart, lineEnd));
+		if (nextLineBreak < 0) break;
+		lineStart = nextLineBreak + 1;
+	}
+	return tokens;
+}
+function pathTokensInLine(text, lineStart, lineEnd) {
+	const contentStart = firstNonWhitespaceOffset(text, lineStart, lineEnd);
+	if (contentStart === void 0) return [];
+	const contentEnd = lastNonWhitespaceOffset(text, contentStart, lineEnd);
+	const lineText = text.slice(contentStart, contentEnd);
+	const linePath = trimPathCandidate(lineText);
+	if (isStandalonePathLine(linePath)) {
+		const start = contentStart + lineText.indexOf(linePath);
+		return [{
+			rawPath: linePath,
+			start,
+			end: start + linePath.length
+		}];
+	}
+	return pathTokenChunks(text, lineStart, lineEnd);
+}
+function pathTokenChunks(text, startOffset, endOffset) {
+	const tokens = [];
+	let chunkStart;
+	for (let offset = startOffset; offset <= endOffset; offset++) {
+		if (offset < endOffset && !isPathTokenSeparator(text[offset])) {
+			chunkStart ??= offset;
+			continue;
+		}
+		if (chunkStart === void 0) continue;
+		const chunk = text.slice(chunkStart, offset);
+		const rawPath = trimPathCandidate(chunk);
+		if (rawPath && isPathLike(rawPath)) {
+			const leadingTrim = chunk.indexOf(rawPath);
+			const start = chunkStart + leadingTrim;
+			tokens.push({
+				rawPath,
+				start,
+				end: start + rawPath.length
+			});
+		}
+		chunkStart = void 0;
+	}
+	return tokens;
+}
+function firstNonWhitespaceOffset(text, startOffset, endOffset) {
+	for (let offset = startOffset; offset < endOffset; offset++) if (!isWhitespace(text[offset])) return offset;
+}
+function lastNonWhitespaceOffset(text, startOffset, endOffset) {
+	let offset = endOffset;
+	while (offset > startOffset && isWhitespace(text[offset - 1])) offset--;
+	return offset;
+}
+function trimPathCandidate(candidate) {
+	let start = 0;
+	let end = candidate.length;
+	while (start < end && PATH_TRIM_START.has(candidate[start])) start++;
+	while (end > start && PATH_TRIM_END.has(candidate[end - 1])) end--;
+	return candidate.slice(start, end);
+}
+function isPathLike(rawPath) {
+	return !URL_SCHEME_PATTERN.test(rawPath) && (rawPath.includes("/") || rawPath.includes("\\") || FILE_EXTENSION_PATTERN.test(rawPath));
+}
+function isStandalonePathLine(rawPath) {
+	return rawPath.length > 0 && !HAS_WHITESPACE_PATTERN.test(rawPath) && isPathLike(rawPath);
+}
+function isPathTokenSeparator(char) {
+	return isWhitespace(char) || PATH_TOKEN_SEPARATORS.has(char);
+}
+function isWhitespace(char) {
+	return WHITESPACE_PATTERN.test(char);
+}
+var FENCED_CODE_BLOCK_PATTERN = /(^|\n)(`{3,}|~{3,})([^\n]*)\n([\s\S]*?)\n\2(?=\n|$)/g;
+var INLINE_CODE_PATTERN = /`([^`\n]+)`/g;
+var FILE_EXTENSION_PATTERN = /\.[A-Za-z0-9]+(?:#L\d+|:\d+(?::\d+)?)?$/;
+var WHITESPACE_PATTERN = /\s/;
+var HAS_WHITESPACE_PATTERN = /\s/;
+var PATH_TOKEN_SEPARATORS = new Set([
+	"`",
+	"<",
+	">",
+	"\"",
+	"'",
+	"(",
+	")",
+	"[",
+	"]",
+	"{",
+	"}"
+]);
+var PATH_TRIM_START = new Set([
+	"(",
+	"[",
+	"{",
+	"<"
+]);
+var PATH_TRIM_END = new Set([
+	")",
+	"]",
+	"}",
+	">",
+	".",
+	",",
+	";"
+]);
+var URL_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:\/\//i;
+//#endregion
 //#region views/acp-chat/src/components/markdownSanitizeSchema.ts
 var defaultAttributes = defaultSchema.attributes || {};
 var markdownSanitizeSchema = {
@@ -3170,7 +3400,9 @@ function MarkdownRenderer({ text, streaming = false, className = "acpMarkdown" }
 					});
 				},
 				code({ className, children, ...props }) {
-					const linkedChildren = streaming ? children : renderPathLinks(children, resolvedRawPaths, "code");
+					const linkedChildren = streaming ? children : renderPathLinks(children, resolvedRawPaths, "code", (request) => {
+						acpBridgeHost.navigatePathLink(request);
+					});
 					return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", {
 						className,
 						...props,
@@ -3183,130 +3415,9 @@ function MarkdownRenderer({ text, streaming = false, className = "acpMarkdown" }
 		})
 	});
 }
-function codeNodeFromPreNode(node) {
-	return node?.children?.find((child) => child.tagName === "code");
-}
-function hastClassNames(node) {
-	const className = node?.properties?.className;
-	if (Array.isArray(className)) return className.filter((name) => typeof name === "string");
-	if (typeof className === "string") return className.split(/\s+/);
-	return [];
-}
-function hastText(node) {
-	if (!node) return "";
-	if (typeof node.value === "string") return node.value;
-	return node.children?.map(hastText).join("") ?? "";
-}
-function collectPathLinkCandidates(markdown) {
-	const codeSegments = markdownCodeSegments(markdown);
-	const candidates = [];
-	const seen = /* @__PURE__ */ new Set();
-	for (const codeSegment of codeSegments) for (const token of pathTokens(codeSegment)) {
-		if (seen.has(token.rawPath)) continue;
-		seen.add(token.rawPath);
-		candidates.push({
-			id: `path-${candidates.length}`,
-			rawPath: token.rawPath
-		});
-	}
-	return candidates;
-}
-function markdownCodeSegments(markdown) {
-	const segments = [];
-	const markdownWithoutFencedCode = markdown.replace(FENCED_CODE_BLOCK_PATTERN, (match, _prefix, _fence, info, code) => {
-		if (String(info).trim().split(/\s+/)[0]?.toLowerCase() !== "mermaid") segments.push(String(code));
-		return " ".repeat(match.length);
-	});
-	for (const match of markdownWithoutFencedCode.matchAll(INLINE_CODE_PATTERN)) segments.push(match[1]);
-	return segments;
-}
-function renderPathLinks(node, resolvedRawPaths, keyPrefix) {
-	if (typeof node === "string") return renderTextPathLinks(node, resolvedRawPaths, keyPrefix);
-	if (Array.isArray(node)) return node.map((child, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_react.Fragment, { children: renderPathLinks(child, resolvedRawPaths, `${keyPrefix}-${index}`) }, `${keyPrefix}-${index}`));
-	if ((0, import_react.isValidElement)(node)) {
-		const element = node;
-		if (element.props.children == null) return element;
-		return (0, import_react.cloneElement)(element, void 0, renderPathLinks(element.props.children, resolvedRawPaths, keyPrefix));
-	}
-	return node;
-}
-function renderTextPathLinks(text, resolvedRawPaths, keyPrefix) {
-	const tokens = pathTokens(text).filter((token) => resolvedRawPaths.has(token.rawPath));
-	if (tokens.length === 0) return text;
-	const parts = [];
-	let offset = 0;
-	for (const [index, token] of tokens.entries()) {
-		if (token.start < offset) continue;
-		if (offset < token.start) parts.push(text.slice(offset, token.start));
-		const label = text.slice(token.start, token.end);
-		parts.push(/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-			type: "button",
-			className: "acpMarkdownPathLink",
-			onClick: (event) => {
-				event.preventDefault();
-				event.stopPropagation();
-				acpBridgeHost.navigatePathLink({
-					rawPath: token.rawPath,
-					clientX: event.clientX,
-					clientY: event.clientY
-				});
-			},
-			children: label
-		}, `${keyPrefix}-${token.start}-${index}`));
-		offset = token.end;
-	}
-	if (offset < text.length) parts.push(text.slice(offset));
-	return parts;
-}
-function pathTokens(text) {
-	const tokens = [];
-	for (const match of text.matchAll(PATH_CANDIDATE_PATTERN)) {
-		const matchText = match[0];
-		const rawPath = trimPathCandidate(matchText);
-		if (!rawPath || !isPathLike(rawPath)) continue;
-		const leadingTrim = matchText.indexOf(rawPath);
-		const start = (match.index ?? 0) + leadingTrim;
-		tokens.push({
-			rawPath,
-			start,
-			end: start + rawPath.length
-		});
-	}
-	return tokens;
-}
-function trimPathCandidate(candidate) {
-	let start = 0;
-	let end = candidate.length;
-	while (start < end && PATH_TRIM_START.has(candidate[start])) start++;
-	while (end > start && PATH_TRIM_END.has(candidate[end - 1])) end--;
-	return candidate.slice(start, end);
-}
-function isPathLike(rawPath) {
-	return !URL_SCHEME_PATTERN.test(rawPath) && (rawPath.includes("/") || rawPath.includes("\\") || FILE_EXTENSION_PATTERN.test(rawPath));
-}
 function classNames(...names) {
 	return names.filter(Boolean).join(" ");
 }
-var FENCED_CODE_BLOCK_PATTERN = /(^|\n)(`{3,}|~{3,})([^\n]*)\n([\s\S]*?)\n\2(?=\n|$)/g;
-var INLINE_CODE_PATTERN = /`([^`\n]+)`/g;
-var FILE_EXTENSION_PATTERN = /\.[A-Za-z0-9]+(?:#L\d+|:\d+(?::\d+)?)?$/;
-var PATH_CANDIDATE_PATTERN = /(?:(?:(?:~|\.{1,2})[\\/]|[\\/]|[A-Za-z]:[\\/]|[A-Za-z0-9_.-]+[\\/])[^\s`<>"']+|[A-Za-z0-9_.-]+\.(?:bazel|bzl|c|cmd|cpp|cs|css|go|gradle|h|hpp|html|iml|java|js|jsx|json|kt|kts|md|mjs|properties|py|rs|scss|sh|ts|tsx|txt|xml|yaml|yml))(?:#L\d+|:\d+(?::\d+)?)?/gi;
-var PATH_TRIM_START = new Set([
-	"(",
-	"[",
-	"{",
-	"<"
-]);
-var PATH_TRIM_END = new Set([
-	")",
-	"]",
-	"}",
-	">",
-	".",
-	",",
-	";"
-]);
-var URL_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:\/\//i;
 //#endregion
 //#region views/acp-chat/src/components/ModelSelector.tsx
 var ModelSelectorContext = (0, import_react.createContext)(null);

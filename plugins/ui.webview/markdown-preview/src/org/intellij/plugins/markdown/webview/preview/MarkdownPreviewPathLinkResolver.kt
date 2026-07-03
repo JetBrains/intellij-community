@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.webview.demo.acp
+package org.intellij.plugins.markdown.webview.preview
 
 import com.intellij.ide.DataManager
 import com.intellij.model.Pointer
@@ -27,27 +27,28 @@ import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
-import com.intellij.ui.webview.demo.WebViewDemoBundle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.MarkdownBundle
 import java.awt.Point
 import java.nio.file.Path
 import javax.swing.JComponent
 import kotlin.math.min
 
-// Keep this in sync with community/plugins/ui.webview/markdown-preview/src/org/intellij/plugins/markdown/webview/preview/MarkdownPreviewPathLinkResolver.kt; extraction is intentionally deferred.
-internal class AcpPathLinkResolver(
+// Keep this in sync with community/plugins/ui.webview/demo/src/com/intellij/ui/webview/demo/acp/AcpPathLinkResolver.kt; extraction is intentionally deferred.
+internal class MarkdownPreviewPathLinkResolver(
   private val project: Project,
   private val scope: CoroutineScope,
 ) {
-  suspend fun resolve(rawPath: String): List<PathNavigationTarget> {
+  suspend fun resolve(rawPath: String, sourceFile: VirtualFile?): List<PathNavigationTarget> {
     val parsedPath = parsePath(rawPath) ?: return emptyList()
     val absoluteFile = withContext(Dispatchers.IO) { findAbsoluteFile(parsedPath.path) }
 
     return readAction {
       val baseDirectories = project.getBaseDirectories()
+      val sourceDirectory = sourceFile?.parent?.takeIf { it.isValid }
       val baseProjectDirectories = BaseProjectDirectories.getInstance(project)
       val fileIndex = ProjectFileIndex.getInstance(project)
       val psiManager = PsiManager.getInstance(project)
@@ -64,14 +65,14 @@ internal class AcpPathLinkResolver(
         )
       }
 
-      findExactFiles(parsedPath.path, baseDirectories, absoluteFile).forEach(::add)
+      findExactFiles(parsedPath.path, sourceDirectory, baseDirectories, absoluteFile).forEach(::add)
       findIndexedFiles(parsedPath.path, baseDirectories).forEach(::add)
       candidates.values.toList()
     }
   }
 
-  suspend fun navigate(rawPath: String, component: JComponent, clientX: Double, clientY: Double) {
-    val candidates = resolve(rawPath)
+  suspend fun navigate(rawPath: String, sourceFile: VirtualFile?, component: JComponent, clientX: Int, clientY: Int) {
+    val candidates = resolve(rawPath, sourceFile)
     if (candidates.isEmpty()) return
 
     withContext(Dispatchers.EDT) {
@@ -82,11 +83,11 @@ internal class AcpPathLinkResolver(
 
       val popup = JBPopupFactory.getInstance()
         .createPopupChooserBuilder(candidates)
-        .setTitle(WebViewDemoBundle.message("webview.acp.chat.path.link.popup.title"))
+        .setTitle(MarkdownBundle.message("markdown.preview.path.link.popup.title"))
         .setRenderer(textListCellRenderer { it.displayPath })
         .setItemChosenCallback { scope.launch { navigateTo(it, component) } }
         .createPopup()
-      popup.show(RelativePoint(component, Point(clientX.toInt(), clientY.toInt())))
+      popup.show(RelativePoint(component, Point(clientX, clientY)))
     }
   }
 
@@ -98,7 +99,12 @@ internal class AcpPathLinkResolver(
     }
   }
 
-  private fun findExactFiles(path: String, baseDirectories: Set<VirtualFile>, absoluteFile: VirtualFile?): List<VirtualFile> {
+  private fun findExactFiles(
+    path: String,
+    sourceDirectory: VirtualFile?,
+    baseDirectories: Set<VirtualFile>,
+    absoluteFile: VirtualFile?,
+  ): List<VirtualFile> {
     val normalizedPath = expandUserHome(FileUtil.toSystemIndependentName(path))
     if (normalizedPath.isEmpty()) return emptyList()
 
@@ -107,6 +113,7 @@ internal class AcpPathLinkResolver(
       if (!FileUtil.isAbsolute(normalizedPath)) {
         val relativePath = normalizedPath.removePrefix("./").trimStart('/')
         if (relativePath.isNotEmpty()) {
+          sourceDirectory?.findFileByRelativePath(relativePath)?.let { add(it) }
           baseDirectories.mapNotNullTo(this) { it.findFileByRelativePath(relativePath) }
         }
       }
