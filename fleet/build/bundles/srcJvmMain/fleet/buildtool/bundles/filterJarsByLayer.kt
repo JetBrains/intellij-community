@@ -60,15 +60,15 @@ private fun filterConflictingJars(
   jars: Iterable<Path>,
   logger: Logger,
 ): Set<Path> {
-  val alreadyIncludedJarNames = alreadyIncludedJars.mapTo(mutableSetOf()) { jar -> jar.moduleName }
+  val alreadyIncludedJarModuleNames = alreadyIncludedJars.mapTo(mutableSetOf()) { jar -> jar.moduleName }
   val (ok, conflicting) = jars.associateWith { jar -> jar.moduleName }.entries.partition { (jar, moduleName) ->
     logger.debug("Processing module '{}' from '{}'", moduleName, jar)
     val alreadyExisting = when (moduleName) {
       "annotations", "org.jetbrains.annotations" -> true // already provided by Kotlin?
       // TODO: is it actually an ok assumption?
-      "kotlin.stdlib.jdk8", "kotlin.stdlib.jdk7" -> "kotlin.stdlib" in alreadyIncludedJarNames || moduleName in alreadyIncludedJarNames
+      "kotlin.stdlib.jdk8", "kotlin.stdlib.jdk7" -> "kotlin.stdlib" in alreadyIncludedJarModuleNames || moduleName in alreadyIncludedJarModuleNames
 
-      else -> moduleName in alreadyIncludedJarNames
+      else -> moduleName in alreadyIncludedJarModuleNames
     }
     !alreadyExisting
   }

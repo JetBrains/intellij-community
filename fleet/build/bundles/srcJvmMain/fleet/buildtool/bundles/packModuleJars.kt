@@ -5,11 +5,15 @@ import fleet.buildtool.codecache.ModuleToPack
 import fleet.buildtool.codecache.specs.NativeLibraryExtractor
 import fleet.buildtool.codecache.specs.MoveFileSpec
 import fleet.bundles.LayerSelector
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.slf4j.Logger
 import java.nio.file.Path
 import kotlin.collections.toList
 
-fun Map<LayerSelector, Collection<Path>>.packModuleJars(
+suspend fun Map<LayerSelector, Collection<Path>>.packModuleJars(
   outputDirectory: Path,
   logger: Logger,
   pluginId: String,
@@ -25,9 +29,13 @@ fun Map<LayerSelector, Collection<Path>>.packModuleJars(
     moveFileSpecs = listOf(FleetPluginResourceMoveSpec)
   )
 
-  return this.mapValues { (layerSelector, jars) ->
-    val moduleName = "$pluginId.${layerSelector.selector}"
-    packModule(moduleName, jars, packer)
+  return coroutineScope {
+    entries.map { (layerSelector, jars) ->
+      async(Dispatchers.IO) {
+        val moduleName = "$pluginId.${layerSelector.selector}"
+        layerSelector to packModule(moduleName, jars, packer)
+      }
+    }.awaitAll().toMap()
   }
 }
 

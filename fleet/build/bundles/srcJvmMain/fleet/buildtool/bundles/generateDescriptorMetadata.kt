@@ -16,6 +16,10 @@ import fleet.bundles.PluginVersion
 import fleet.bundles.eliminateIntersections
 import fleet.codecache.CodeCacheHasher
 import fleet.codecache.resourceUrl
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
@@ -34,7 +38,7 @@ import kotlin.io.path.name
 import kotlin.io.path.outputStream
 
 @OptIn(ExperimentalSerializationApi::class)
-fun generateDescriptorMetadata(
+suspend fun generateDescriptorMetadata(
   pluginVersion: PluginVersion,
   pluginName: PluginName,
   originalMetadata: Map<String, String>,
@@ -78,7 +82,7 @@ fun generateDescriptorMetadata(
   ).toMap()
 }
 
-fun resolvePartsCoordinates(
+suspend fun resolvePartsCoordinates(
   pluginName: PluginName,
   pluginVersion: PluginVersion,
   outputModuleJarsByLayer: Map<LayerSelector, Collection<Path>>,
@@ -96,48 +100,68 @@ fun resolvePartsCoordinates(
   }
 
   return pluginPartsFileOutput.toCoordinates(pluginName, pluginVersion, marketplaceUrl, remoteName = partsJsonFilename)?.coordinates
-    ?: error("failed to create `partsCoordinates`, $pluginPartsFileOutput must exist")
+         ?: error("failed to create `partsCoordinates`, $pluginPartsFileOutput must exist")
 }
 
-private fun generatePluginParts(
+private suspend fun generatePluginParts(
   pluginName: PluginName,
   pluginVersion: PluginVersion,
   outputModuleJarsByLayer: Map<LayerSelector, Collection<Path>>,
   resources: List<FleetResource>,
   resourcesUsedInDescriptor: Path,
   marketplaceUrl: String,
-) = PluginParts(layers = outputModuleJarsByLayer.map { (layerSelector, moduleJars) ->
-  val resourceFileToMetadata = resources.filter { it.layer == layerSelector.selector }.flatMap { resource ->
-    val metadata = when (val p = resource.platforms) {
-      null -> emptyMap()
-      else -> mapOf(KnownCoordinatesMeta.Platforms to Json.encodeToString(ListSerializer(CoordinatesPlatform.serializer()), p))
+): PluginParts {
+  val layers = outputModuleJarsByLayer.map { (layerSelector, moduleJars) ->
+    val resourceFileToMetadata = resources.filter { it.layer == layerSelector.selector }.flatMap { resource ->
+      val metadata = when (val p = resource.platforms) {
+        null -> emptyMap()
+        else -> mapOf(KnownCoordinatesMeta.Platforms to Json.encodeToString(ListSerializer(CoordinatesPlatform.serializer()), p))
+      }
+      resource.files.map { file -> file to metadata }
+    }.toMap()
+    val resourcesCoordinates = resourceFileToMetadata.entries.mapNotNull { (file, metadata) ->
+      file.toCoordinates(pluginName,
+                         pluginVersion,
+                         marketplaceUrl,
+                         file.name,
+                         metadata = metadata)?.coordinates // TODO: maybe we should warn about non existing resources file?
+    }.toSet()
+    resourceFileToMetadata.keys.forEach { file ->
+      file.copyTo(resourcesUsedInDescriptor.resolve(file.name), overwrite = false)
     }
-    resource.files.map { file -> file to metadata }
+
+    // Analyze each module jar concurrently: SHA-256 hashing, module-descriptor extraction and the
+    // Fleet-runtime relevance zip scan are all per-jar and I/O + CPU bound. `awaitAll()` keeps the
+    // original jar order, so the sets below stay deterministic and the output stays reproducible.
+    val analyzedModuleJars = coroutineScope {
+      moduleJars
+        .map { jar ->
+          async(Dispatchers.IO) {
+            when {
+              jar.exists() -> {
+                val descriptor = findModuleDescriptor(jar)
+                AnalyzedModuleJar(
+                  jar = jar,
+                  hash = CodeCacheHasher().hash(jar),
+                  descriptor = descriptor,
+                )
+              }
+              else -> null
+            }
+          }
+        }
+        .awaitAll()
+        .filterNotNull()
+    }
+
+    layerSelector to PluginLayer(
+      modulePath = analyzedModuleJars.mapNotNull { it.toCoordinates(pluginName, pluginVersion, marketplaceUrl) }.toSet(),
+      modules = analyzedModuleJars.filter { it.isRelevantToFleetRuntime() }.map { it.descriptor.name() }.toSet(),
+      resources = resourcesCoordinates,
+    )
   }.toMap()
-  val resourcesCoordinates = resourceFileToMetadata.entries.mapNotNull { (file, metadata) ->
-    file.toCoordinates(pluginName,
-                       pluginVersion,
-                       marketplaceUrl,
-                       file.name,
-                       metadata = metadata)?.coordinates // TODO: maybe we should warn about non existing resources file?
-  }.toSet()
-  resourceFileToMetadata.keys.forEach { file ->
-    file.copyTo(resourcesUsedInDescriptor.resolve(file.name), overwrite = false)
-  }
-
-  val analyzedModuleJars = moduleJars.mapNotNull { jar ->
-    when {
-      jar.exists() -> AnalyzedModuleJar(jar = jar, hash = CodeCacheHasher().hash(jar), descriptor = findModuleDescriptor(jar))
-      else -> null
-    }
-  }
-
-  layerSelector to PluginLayer(
-    modulePath = analyzedModuleJars.map { it.toModuleCoordinates(pluginName, pluginVersion, marketplaceUrl) }.toSet(),
-    modules = analyzedModuleJars.filter { it.isRelevantToFleetRuntime() }.map { it.descriptor.name() }.toSet(),
-    resources = resourcesCoordinates,
-  )
-}.toMap()).eliminateIntersections()
+  return PluginParts(layers = layers).eliminateIntersections()
+}
 
 private class AnalyzedModuleJar(
   val jar: Path,
@@ -145,15 +169,20 @@ private class AnalyzedModuleJar(
   val descriptor: ModuleDescriptor,
 )
 
-private fun AnalyzedModuleJar.toModuleCoordinates(
+private fun AnalyzedModuleJar.toCoordinates(
   pluginName: PluginName,
   pluginVersion: PluginVersion,
   marketplaceUrl: String,
-): ModuleCoordinates {
-  val targetJdkVersionFeature = 21
-  val fileUrl = resourceUrl(marketplaceUrl, pluginName, pluginVersion, jar.name)
-  val coord = Coordinates.Remote(url = fileUrl, hash = hash, meta = emptyMap())
-  return ModuleCoordinates(coordinates = coord, serializedModuleDescriptor = descriptor.serialize(targetJdkVersionFeature))
+): ModuleCoordinates? {
+  return jar.toCoordinates(
+    pluginName = pluginName,
+    pluginVersion = pluginVersion,
+    marketplaceUrl = marketplaceUrl,
+    remoteName = jar.name,
+    jarHasher = { hash },
+    // jdkVersionFeature is a target JDK version
+    jarSerializedDescriptorExtractor = { descriptor.serialize(jdkVersionFeature = 21) },
+  )
 }
 
 private const val entityDescriptorFileHeuristic: String = "entityTypes.txt"
@@ -165,6 +194,8 @@ private fun Path.toCoordinates(
   pluginVersion: PluginVersion,
   marketplaceUrl: String,
   remoteName: String,
+  jarHasher: (Path) -> String = { CodeCacheHasher().hash(it) },
+  jarSerializedDescriptorExtractor: (() -> String)? = null,
   metadata: Map<String, String> = emptyMap(),
 ): ModuleCoordinates? {
   if (!exists()) {
@@ -172,14 +203,14 @@ private fun Path.toCoordinates(
   }
 
   val filepath = this
-  val hash = CodeCacheHasher().hash(filepath)
+  val hash = jarHasher(filepath)
   val moduleDescriptor = when (filepath.extension) {
     "jar" -> {
-      val targetJdkVersionFeature = 21
-      HashedJar.fromFile(
+      jarSerializedDescriptorExtractor?.invoke() ?: HashedJar.fromFile(
         file = filepath,
         hash = hash,
-        jdkVersionFeature = targetJdkVersionFeature,
+        // jdkVersionFeature is a target JDK version
+        jdkVersionFeature = 21,
       ).moduleDescriptor
     }
     else -> null
