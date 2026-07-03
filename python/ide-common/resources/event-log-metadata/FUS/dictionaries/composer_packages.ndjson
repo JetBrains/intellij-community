@@ -35,6 +35,7 @@ a9f/fractor-xml
 a9f/fractor-yaml                                                          
 a9f/typo3-fractor                                                         
 aacotroneo/laravel-saml2                                                  
+aarondfrancis/urlcrypt                                                    
 aaronfrancis/airdrop                                                      
 aaronfrancis/fast-paginate                                                
 aaronfrancis/pulse-outdated                                               
@@ -146,6 +147,7 @@ ajaxray/php-watermark
 ajcastro/eager-load-pivot-relations                                       
 ajgarlag/psr-http-message-bundle                                          
 ajgl/breakpoint-twig-extension                                            
+ajgl/csv-rfc                                                              
 ajthinking/archetype                                                      
 akamai-open/edgegrid-auth                                                 
 akamai-open/edgegrid-client                                               
@@ -338,6 +340,7 @@ amphp/windows-registry
 amplitude/experiment-php-server                                           
 ampproject/amp-toolbox                                                    
 amrshawky/currency                                                        
+amzn-spapi/sdk                                                            
 amzn/amazon-pay-api-sdk-php                                               
 amzn/amazon-pay-magento-2-module                                          
 amzn/amazon-pay-sdk-php                                                   
@@ -356,6 +359,7 @@ andersondanilo/cnab_php
 andersondanilo/cnab_yaml                                                  
 andersundsehr/phpstan-git-files                                           
 andersundsehr/rector-p                                                    
+andreapollastri/checkpoint                                                
 andreaselia/laravel-api-to-postman                                        
 andreiio/blade-iconoir                                                    
 andreiio/blade-remix-icon                                                 
@@ -366,6 +370,7 @@ andrewsville/php-token-reflection
 anhskohbo/no-captcha                                                      
 anil-gupta/akamai                                                         
 ankitpokhrel/tus-php                                                      
+ankurk91/fcm-notification-channel                                         
 ankurk91/laravel-eloquent-relationships                                   
 anlutro/curl                                                              
 anlutro/l4-settings                                                       
@@ -414,6 +419,7 @@ api-skeletons/oauth2-doctrine
 api2pdf/api2pdf.php                                                       
 apiato/container-installer                                                
 apiato/core                                                               
+apiato/documentation-generator-container                                  
 apideck-libraries/php-sdk                                                 
 apigee/apigee-client-php                                                  
 apility/laravel-fcm                                                       
@@ -443,6 +449,7 @@ archilex/filament-toggle-icon-column
 archipro/revolt-event-dispatcher                                          
 archipro/silverstripe-db-json                                             
 archipro/silverstripe-revolt-event-dispatcher                             
+archipro/silverstripe-smart-enum                                          
 archipro/silverstripe-wellknown                                           
 archtechx/enums                                                           
 archtechx/helpers                                                         
@@ -452,6 +459,7 @@ arcturial/clickatell
 ardagnsrn/ollama-php                                                      
 ardenexal/fhir-bundle                                                     
 ardenexal/fhir-code-generation                                            
+ardenexal/fhir-metadata                                                   
 ardenexal/fhir-models                                                     
 ardenexal/fhir-path                                                       
 ardenexal/fhir-serialization                                              
@@ -501,6 +509,7 @@ ashhitch/wp-graphql-yoast-seo
 asika/agent                                                               
 asika/autolink                                                            
 asika/simple-console                                                      
+asikam/simple-qrcode                                                      
 asimlqt/php-google-spreadsheet-client                                     
 asispts/http-accept                                                       
 askdkc/breezejp                                                           
@@ -514,6 +523,7 @@ aspera/xlsx-reader
 aspose-cloud/aspose-words-cloud                                           
 aspose/slides-sdk-php                                                     
 ass/xmlsecurity                                                           
+assada/laravel-achievements                                               
 assertwell/phpunit-global-state                                           
 assetic/framework                                                         
 assurance-maladie/nir-validation                                          
@@ -606,6 +616,7 @@ avadim/fast-excel-templator
 avadim/fast-excel-writer                                                  
 avaibooksports/doctrine-migrations-multiple-database-bundle               
 avalara/avataxclient                                                      
+aveiv/mixed-value                                                         
 aveiv/open-exchange-rates-api                                             
 avstudnitz/scopehint2                                                     
 awcodes/filament-badgeable-column                                         
@@ -626,6 +637,7 @@ aws/aws-sdk-php
 aws/aws-sdk-php-laravel                                                   
 aws/aws-sdk-php-resources                                                 
 aws/aws-sdk-php-symfony                                                   
+awt/apilogger                                                             
 awurth/slim-validation                                                    
 axepress/wp-graphql-cs                                                    
 axepress/wp-graphql-stubs                                                 
@@ -642,6 +654,7 @@ azimolabs/apple-sign-in-php-sdk
 azjezz/psl                                                                
 azure-oss/identity                                                        
 azure-oss/storage                                                         
+azure-oss/storage-blob                                                    
 azure-oss/storage-blob-flysystem                                          
 azure-oss/storage-blob-laravel                                            
 azure-oss/storage-common                                                  
@@ -684,6 +697,7 @@ bacon/bacon-qr-code
 badcow/dns                                                                
 badcow/lorem-ipsum                                                        
 badinansoft/nova-language-switch                                          
+bagisto/bagisto-package-generator                                         
 bagisto/image-cache                                                       
 bagisto/laravel-datafaker                                                 
 bakame/laravel-domain-parser                                              
@@ -701,6 +715,7 @@ bandwidth/sdk
 bantu/ini-get-wrapper                                                     
 baopham/dynamodb                                                          
 barbieswimcrew/zip-code-validator                                         
+barnabywalters/carddav                                                    
 barryvdh/elfinder-flysystem-driver                                        
 barryvdh/laravel-cors                                                     
 barryvdh/laravel-debugbar                                                 
@@ -766,6 +781,7 @@ bellangelo/phpstan-migration-rules
 bellangelo/type-coverage-updater                                          
 beluga-php/docker-php                                                     
 beluga-php/docker-php-api                                                 
+benestar/asparagus                                                        
 benjacho/belongs-to-many-field                                            
 benjaminfavre/oauth2-http-client                                          
 benjaminhirsch/nova-slug-field                                            
@@ -815,6 +831,7 @@ bezhansalleh/filament-panel-switch
 bezhansalleh/filament-plugin-essentials                                   
 bezhansalleh/filament-shield                                              
 bgalati/monolog-sentry-handler                                            
+bherila/auth-laravel                                                      
 biblys/isbn                                                               
 bigbank/digidoc                                                           
 bigbluebutton/bigbluebutton-api-php                                       
@@ -850,10 +867,12 @@ bitworking/mimeparse
 bizley/jwt                                                                
 bjeavons/zxcvbn-php                                                       
 bk2k/bootstrap-package                                                    
+bkvfoundry/utility-belt                                                   
 bkwld/cloner                                                              
 bkwld/croppa                                                              
 blackbonjour/stdlib                                                       
 blackfire/php-sdk                                                         
+blackfireio/blackfire-symfony-meta                                        
 blade-ui-kit/blade-heroicons                                              
 blade-ui-kit/blade-icons                                                  
 blade-ui-kit/blade-ui-kit                                                 
@@ -869,9 +888,11 @@ bluelibraries/dns
 bluem/tree                                                                
 bluepsyduck/symfony-process-manager                                       
 blueways/bw-captcha                                                       
+blundergoat/gruff-php                                                     
 bmitch/churn-php                                                          
 bnf/phpstan-psr-container                                                 
 bobey/geoip2-geolite2-composer                                            
+bobthecow/faker                                                           
 bogardo/mailgun                                                           
 boldcommerce/magento2-ordercomments                                       
 bolechen/nova-activitylog                                                 
@@ -883,6 +904,7 @@ bosnadev/database
 botman/botman                                                             
 botman/driver-telegram                                                    
 botman/driver-web                                                         
+boundwize/jsonrecast                                                      
 boundwize/structarmed                                                     
 box/spout                                                                 
 boxblinkracer/phpunuhi                                                    
@@ -900,6 +922,7 @@ brandembassy/coding-standard
 brandembassy/file-type-detector                                           
 brandembassy/slim-nette-extension                                         
 braze/sdk                                                                 
+bref/api-gateway-websocket-client                                         
 bref/bref                                                                 
 bref/extra-php-extensions                                                 
 bref/laravel-bridge                                                       
@@ -911,6 +934,7 @@ bref/symfony-bridge
 bref/symfony-messenger                                                    
 bretterer/iso_duration_converter                                          
 brian2694/laravel-toastr                                                  
+brianhenryie/simple-php-code-parser                                       
 brianhenryie/strauss                                                      
 brianium/habitat                                                          
 brianium/paratest                                                         
@@ -923,6 +947,7 @@ brick/money
 brick/phonenumber                                                         
 brick/postcode                                                            
 brick/reflection                                                          
+brick/schema                                                              
 brick/structured-data                                                     
 brick/varexporter                                                         
 brightcove/api                                                            
@@ -953,6 +978,7 @@ bulkgate/php-sdk
 bummzack/sortablefile                                                     
 bunny/bunny                                                               
 bunq/sdk_php                                                              
+bursteri/socialstream                                                     
 burtds/laravel-vatnumber-checker                                          
 bushbaby/flysystem                                                        
 butschster/cron-expression-generator                                      
@@ -973,6 +999,7 @@ byjg/uri
 byjg/webrequest                                                           
 byjg/xmlutil                                                              
 bynder/bynder-php-sdk                                                     
+byte5/laravel-passgenerator                                               
 bytestream/horde-crypt-blowfish                                           
 bytestream/horde-exception                                                
 bytestream/horde-idna                                                     
@@ -1058,6 +1085,7 @@ canducci/cep
 candy-chat/xmpp-prebind-php                                               
 canvural/larastan-strict-rules                                            
 cap60552/php-sip2                                                         
+capsulescodes/inertia-mailable                                            
 captainhook/captainhook                                                   
 captainhook/captainhook-phar                                              
 captainhook/hook-installer                                                
@@ -1131,9 +1159,11 @@ chelout/laravel-relationship-events
 cheprasov/php-redis-client                                                
 chesscom/chess-game                                                       
 chi-teck/drupal-code-generator                                            
+chieftools/php-cs-fixer                                                   
 chieftools/sdk                                                            
 chiiya/laravel-passes                                                     
 chiiya/passes                                                             
+chillerlan/php-cache                                                      
 chillerlan/php-qrcode                                                     
 chillerlan/php-settings-container                                         
 chillerlan/php-traits                                                     
@@ -1180,6 +1210,7 @@ civicrm/composer-compile-lib
 civicrm/composer-compile-plugin                                           
 civicrm/composer-downloads-plugin                                         
 civicrm/gitignore                                                         
+cjmellor/browser-sessions                                                 
 cjmellor/level-up                                                         
 ckeditor/ckeditor                                                         
 ckfinder/ckfinder-laravel-package                                         
@@ -1253,6 +1284,7 @@ cobweb/svconnector
 coconutcraig/laravel-postmark                                             
 cocur/background-process                                                  
 cocur/slugify                                                             
+codacy/coverage                                                           
 code-lts/u2f-php-server                                                   
 code-rhapsodie/oauth2-apple                                               
 codeat3/blade-carbon-icons                                                
@@ -1266,6 +1298,7 @@ codeat3/blade-line-awesome-icons
 codeat3/blade-phosphor-icons                                              
 codeat3/blade-simple-icons                                                
 codeat3/blade-teeny-icons                                                 
+codeat3/blade-unicons                                                     
 codebot/laravel-response-builder                                          
 codeception/aspect-mock                                                   
 codeception/assert-throws                                                 
@@ -1331,6 +1364,7 @@ codelicious/php-coda-parser
 codeliner/array-reader                                                    
 codementality/flysystem-stream-wrapper                                    
 codementality/stream-util                                                 
+codemix/yii2-excelexport                                                  
 codemix/yii2-localeurls                                                   
 codemix/yii2-streamlog                                                    
 codename/parquet                                                          
@@ -1584,6 +1618,7 @@ craftcms/plugin-installer
 craftcms/rector                                                           
 craftcms/redactor                                                         
 craftcms/server-check                                                     
+craftcms/url-validator                                                    
 craftsys/msg91-php                                                        
 craigpotter/barstool                                                      
 craigpotter/fca-php-sdk                                                   
@@ -1681,6 +1716,7 @@ cybercog/laravel-clickhouse
 cybercog/laravel-love                                                     
 cybersource/rest-client-php                                               
 cybersource/sdk-php                                                       
+cybertroniankelvin/graper                                                 
 cycle/annotated                                                           
 cycle/database                                                            
 cycle/entity-behavior                                                     
@@ -1712,6 +1748,8 @@ damienharper/adf-tools
 damienharper/auditor                                                      
 damienharper/auditor-bundle                                               
 damienharper/auditor-doctrine-provider                                    
+dan-wolf-at/apiato-core                                                   
+dan-wolf-at/apiato-documentation-generator-container                      
 danestves/laravel-polar                                                   
 dangl/avacloud                                                            
 danharrin/date-format-converter                                           
@@ -1720,6 +1758,7 @@ daniel-zahariev/php-aws-ses
 danielbachhuber/wp-cli-reset-post-date-command                            
 danielebarbaro/laravel-vat-eu-validator                                   
 danielme85/laravel-log-to-db                                              
+danielmewes/php-rql                                                       
 danielsreichenbach/geoip2-update                                          
 danielstieber/coda-php                                                    
 danielstjules/stringy                                                     
@@ -1758,6 +1797,7 @@ darsyn/ip
 darsyn/ip-doctrine                                                        
 daryledesilva/markdown-to-mrkdwn-php                                      
 dasprid/enum                                                              
+dasundev/livewire-dropzone                                                
 data-dog/audit-bundle                                                     
 data-values/common                                                        
 data-values/data-values                                                   
@@ -1772,6 +1812,7 @@ datomatic/laravel-enum-helper
 datomatic/nova-detached-actions                                           
 datomatic/nova-enum-field                                                 
 datto/json-rpc                                                            
+datto/json-rpc-http                                                       
 daursu/laravel-zero-downtime-migration                                    
 davaxi/sparkline                                                          
 dave-liddament/php-language-extensions                                    
@@ -1830,8 +1871,12 @@ dekor/php-array-table
 dektrium/yii2-user                                                        
 deliciousbrains/wp-background-processing                                  
 deliciousbrains/wp-migrations                                             
+delight-im/auth                                                           
+delight-im/base64                                                         
 delight-im/cookie                                                         
+delight-im/db                                                             
 delight-im/http                                                           
+delight-im/otp                                                            
 delighted/delighted                                                       
 denis660/laravel-centrifugo                                               
 denissimon/formula-parser                                                 
@@ -1842,6 +1887,7 @@ deployer/deployer
 deployer/dist                                                             
 deployer/phar-update                                                      
 deployer/recipes                                                          
+depotwarehouse/oauth2-twitch                                              
 deptrac/deptrac                                                           
 derekcodes/turnstile-laravel                                              
 dereuromark/cakephp-calendar                                              
@@ -1856,8 +1902,10 @@ dereuromark/media-embed
 derhansen/form_crshield                                                   
 derhansen/sf_event_mgt                                                    
 desarrolla2/cache                                                         
+desilva/microserve                                                        
 detectlanguage/detectlanguage                                             
 deutschepost/sdk-api-addressfactory                                       
+deutschepost/sdk-api-autocomplete-authentication                          
 devanych/mime-types                                                       
 devcycle/php-server-sdk                                                   
 devdojo/app                                                               
@@ -1953,6 +2001,9 @@ diablomedia/zendframework1-wildfire
 diablomedia/zendframework1-xml                                            
 dibi/dibi                                                                 
 dibukeu/client-php                                                        
+dicebear/core                                                             
+dicebear/schema                                                           
+dicebear/styles                                                           
 diff/diff                                                                 
 digilist/dependency-graph                                                 
 digital-creative/collapsible-resource-manager                             
@@ -1988,6 +2039,7 @@ discoverydesign/filament-gaze
 disqus/disqus-php                                                         
 divineomega/do-file-cache                                                 
 divineomega/do-file-cache-psr-6                                           
+divineomega/laravel-password-exposed-validation-rule                      
 divineomega/password_exposed                                              
 divineomega/psr-18-guzzle-adapter                                         
 divinity76/cloudflare-ip-validator                                        
@@ -2197,6 +2249,7 @@ dxw/php-cs-fixer-config
 dxw/rubbishthorclone                                                      
 dxw/whippet                                                               
 dymantic/laravel-instagram-feed                                           
+dynata/iabtcf                                                             
 dyrynda/laravel-cascade-soft-deletes                                      
 dyrynda/laravel-model-uuid                                                
 e0ipso/amazon-sqs-php-extended-client-lib                                 
@@ -2217,6 +2270,7 @@ ebanx/ebanx
 ebay/digital-signature-php-sdk                                            
 ebess/advanced-nova-media-library                                         
 ebics-api/cfonb-php                                                       
+ebics-api/ebics-client-php                                                
 ebizmarts/mailchimp-lib                                                   
 ec-cube/plugin-installer                                                  
 echolabsdev/prism                                                         
@@ -2237,8 +2291,10 @@ ecomailcz/webareal-client
 ecommpay/paymentpage-sdk                                                  
 ecomphp/tiktokshop-php                                                    
 econea/nusoap                                                             
+ecotone/dbal                                                              
 ecotone/ecotone                                                           
 ecotone/enqueue                                                           
+ecotone/symfony-bundle                                                    
 ecpay/sdk                                                                 
 ecphp/cas-lib                                                             
 edamov/pushok                                                             
@@ -2289,6 +2345,8 @@ elasticsearch/elasticsearch
 elazar/flystream                                                          
 elcobvg/laravel-opcache                                                   
 electrolinux/phpquery                                                     
+elegantly/laravel-money                                                   
+elegantly/laravel-translator                                              
 elegantweb/sanitizer                                                      
 element-34/php-webdriver                                                  
 elementor/elementor-editor-testing                                        
@@ -2298,6 +2356,7 @@ elephantio/elephant.io
 elephox/mimey                                                             
 elgentos/magento2-rumvision                                               
 elgentos/regenerate-catalog-urls                                          
+elgg/login_as                                                             
 elgg/sniffs                                                               
 elgigi/commonmark-emoji                                                   
 elhebert/laravel-sri                                                      
@@ -2327,6 +2386,8 @@ eloquent/pops
 eluceo/ical                                                               
 elvanto/litemoji                                                          
 emag-tech-labs/messenger-mongo-bundle                                     
+emailsherlock/email-guard-bundle                                          
+emailsherlock/email-guard-core                                            
 emargareten/inertia-modal                                                 
 embed/embed                                                               
 embedly/embedly-php                                                       
@@ -2372,6 +2433,7 @@ enqueue/sns
 enqueue/snsqs                                                             
 enqueue/sqs                                                               
 enshrined/svg-sanitize                                                    
+entropy/entropy                                                           
 envms/fluentpdo                                                           
 enygma/cmd                                                                
 enygma/yubikey                                                            
@@ -2435,6 +2497,7 @@ essence/essence
 essence/http                                                              
 estahn/phpunit-json-assertions                                            
 estrato/edifact                                                           
+eta-orionis/composer-json-manipulator                                     
 ethanyehuda/magento2-cronjobmanager                                       
 eugenganshorn/guzzle-bundle-retry-plugin                                  
 euskadi31/opengraph                                                       
@@ -2451,6 +2514,7 @@ eventsauce/backoff
 eventsauce/clock                                                          
 eventsauce/eventsauce                                                     
 eventsauce/id-encoding                                                    
+eventsauce/message-outbox                                                 
 eventsauce/message-repository-for-doctrine                                
 eventsauce/message-repository-for-illuminate                              
 eventsauce/message-repository-table-schema                                
@@ -2498,8 +2562,11 @@ facade/flare-client-php
 facade/ignition                                                           
 facade/ignition-contracts                                                 
 facebook/capi-param-builder-php                                           
+facebook/difflib                                                          
 facebook/facebook-for-magento2                                            
+facebook/fbexpect                                                         
 facebook/graph-sdk                                                        
+facebook/hh-clilib                                                        
 facebook/php-ads-sdk                                                      
 facebook/php-business-sdk                                                 
 facebook/php-sdk-v4                                                       
@@ -2539,6 +2606,7 @@ felixdorn/php-color
 felixfbecker/advanced-json-rpc                                            
 felixfbecker/language-server-protocol                                     
 felixkiss/uniquewith-validator                                            
+felixmuhoro/laravel-mpesa                                                 
 fengyuanchen/cropper                                                      
 ffraenz/private-composer-installer                                        
 fg/parkour                                                                
@@ -2624,6 +2692,7 @@ flarum/testing
 flat3/lodata                                                              
 flexihash/flexihash                                                       
 flipbox/lumen-generator                                                   
+flipt-io/flipt                                                            
 flix-tech/avro-php                                                        
 flix-tech/avro-serde-php                                                  
 flix-tech/confluent-schema-registry-api                                   
@@ -2662,13 +2731,16 @@ flugger/laravel-responder
 fluidtypo3/flux                                                           
 fluidtypo3/vhs                                                            
 flutterwavedev/flutterwave-v3                                             
+flux-se/sylius-stripe-plugin                                              
 fly-apps/dockerfile-laravel                                               
 flyingmana/composer-config-reader                                         
 flynsarmy/csv-seeder                                                      
+flynsarmy/db-blade-compiler                                               
 fmizzell/maquina                                                          
 fmonts/ffmpeg-bundle                                                      
 fntneves/laravel-transactional-events                                     
 fof/best-answer                                                           
+fof/byobu                                                                 
 fof/extend                                                                
 fof/oauth                                                                 
 fof/upload                                                                
@@ -2678,12 +2750,14 @@ fooman/emailattachments-m2
 fooman/printorderpdf-implementation-m2                                    
 fooman/printorderpdf-m2                                                   
 fooman/tcpdf                                                              
+for/http-middleware-psr15-adapter                                         
 formal/access-layer                                                       
 foroco/php-browser-detection                                              
 fortawesome/font-awesome                                                  
 fossar/htmlawed                                                           
 fourstacks/nova-repeatable-fields                                         
 foxworth42/oauth2-okta                                                    
+foysal50x/h3-php                                                          
 fp4php/functional                                                         
 fpdf/fpdf                                                                 
 fpn/doctrine-extensions-taggable                                          
@@ -2695,6 +2769,7 @@ franzose/closure-table
 franzose/doctrine-bulk-insert                                             
 freedsx/asn1                                                              
 freedsx/socket                                                            
+freelancehunt/fresque                                                     
 freelancehunt/php-credit-card-validator                                   
 freemius/wordpress-sdk                                                    
 freespee/freespee-php-api-client                                          
@@ -2744,6 +2819,7 @@ friendsofsymfony/http-cache-bundle
 friendsofsymfony/jsrouting-bundle                                         
 friendsofsymfony/oauth-server-bundle                                      
 friendsofsymfony/oauth2-php                                               
+friendsofsymfony/rest                                                     
 friendsofsymfony/rest-bundle                                              
 friendsofsymfony/user-bundle                                              
 friendsofsymfony1/doctrine1                                               
@@ -2780,6 +2856,7 @@ fuko-php/masked
 fukuball/jieba-php                                                        
 fumeapp/modeltyper                                                        
 functional-php/fantasy-land                                               
+functional-php/pattern-matching                                           
 funeralzone/valueobjects                                                  
 funkjedi/composer-include-files                                           
 fusionauth/fusionauth-client                                              
@@ -2793,6 +2870,7 @@ gabrielelana/byte-units
 gacela-project/container                                                  
 gacela-project/gacela                                                     
 gajus/dindent                                                             
+galahad/laravel-addressing                                                
 galbar/jsonpath                                                           
 gamegos/jws                                                               
 gamez/ramsey-uuid-normalizer                                              
@@ -2808,6 +2886,7 @@ gaufrette/extras
 gaufrette/phpseclib-sftp-adapter                                          
 gboquizosanchez/filament-log-viewer                                       
 gbprod/uuid-normalizer                                                    
+gburtini/distributions                                                    
 gctc-ntgc/laravel-scout-postgres-tsvector                                 
 gecche/laravel-multidomain                                                
 gecko-packages/gecko-php-unit                                             
@@ -2885,6 +2964,7 @@ geshi/geshi
 get-stream/stream                                                         
 get-stream/stream-chat                                                    
 get-stream/stream-laravel                                                 
+getartisanflow/wireflow                                                   
 getbrevo/brevo-php                                                        
 getdkan/contracts                                                         
 getdkan/csv-parser                                                        
@@ -2958,6 +3038,7 @@ globtec/phpadr
 glorand/laravel-model-settings                                            
 glpi-project/inventory_format                                             
 glpi-project/phpstan-glpi                                                 
+glpi-project/rector-glpi                                                  
 glpi-project/tools                                                        
 glushkovds/clickhouse-builder                                             
 glushkovds/php-clickhouse-schema-builder                                  
@@ -3017,6 +3098,7 @@ google/cloud-osconfig
 google/cloud-pubsub                                                       
 google/cloud-recaptcha-enterprise                                         
 google/cloud-recommendations-ai                                           
+google/cloud-resource-manager                                             
 google/cloud-retail                                                       
 google/cloud-run                                                          
 google/cloud-scheduler                                                    
@@ -3076,6 +3158,7 @@ gotoandplay/gravityforms-composer-installer
 gpressutto5/laravel-slack                                                 
 gpslab/compressor                                                         
 gpslab/geoip2                                                             
+graham-campbell/analyzer                                                  
 graham-campbell/bounded-cache                                             
 graham-campbell/digitalocean                                              
 graham-campbell/exceptions                                                
@@ -3132,6 +3215,7 @@ grkamil/laravel-telegram-logging
 grosv/laravel-passwordless-login                                          
 growthbook/growthbook                                                     
 grpc/grpc                                                                 
+gsteel/dot                                                                
 guava/calendar                                                            
 guava/filament-icon-picker                                                
 guava/filament-knowledge-base                                             
@@ -3204,6 +3288,8 @@ haspadar/piqule
 hassankhan/config                                                         
 hautelook/alice-bundle                                                    
 haydenpierce/class-finder                                                 
+hdvinnie/laravel-joypixel-emojis                                          
+hdvinnie/laravel-security-headers                                         
 hedii/laravel-gelf-logger                                                 
 hekmatinasser/jalali                                                      
 hekmatinasser/notowo                                                      
@@ -3238,6 +3324,11 @@ heureka/overeno-zakazniky
 hexydec/agentzero                                                         
 hfig/mapi                                                                 
 hflabs/dadata                                                             
+hhvm/hacktest                                                             
+hhvm/hhvm-autoload                                                        
+hhvm/hsl                                                                  
+hhvm/hsl-experimental                                                     
+hhvm/type-assert                                                          
 hiddeco/transip                                                           
 hidehalo/nanoid-php                                                       
 highsolutions/laravel-lang-import-export                                  
@@ -3320,11 +3411,14 @@ hughcube/static-instance
 hugomyb/filament-media-action                                             
 huluti/breadcrumbs-bundle                                                 
 humanmade/asset-loader                                                    
+humanmade/asset-manager-framework                                         
 humanmade/batcache                                                        
 humanmade/coding-standards                                                
 humanmade/psalm-plugin-wordpress                                          
 humanmade/s3-uploads                                                      
 humanmade/tachyon-plugin                                                  
+humanmade/two-factor                                                      
+humanmade/wp-simple-saml                                                  
 humbug/box                                                                
 humbug/php-scoper                                                         
 hwi/oauth-bundle                                                          
@@ -3465,6 +3559,7 @@ ibexa/test-core
 ibexa/twig-components                                                     
 ibexa/user                                                                
 ibexa/website-skeleton                                                    
+icamys/php-sitemap-generator                                              
 icanboogie/inflector                                                      
 icanhazstring/composer-unused                                             
 icecave/parity                                                            
@@ -3536,6 +3631,7 @@ ilovepdf/ilovepdf-php
 imagecow/imagecow                                                         
 imagekit/imagekit                                                         
 imagex/swat                                                               
+imagick/imagick                                                           
 imaginaerum/magento2-language-fr-fr                                       
 imagine/imagine                                                           
 imangazaliev/didom                                                        
@@ -3584,6 +3680,7 @@ infinitypaul/laravel-password-history-validation
 influxdata/influxdb-client-php                                            
 influxdb/influxdb-php                                                     
 infobip/infobip-api-php-client                                            
+infostreams/excel-merge                                                   
 infusionsoft/php-sdk                                                      
 infyomlabs/adminlte-templates                                             
 infyomlabs/laravel-generator                                              
@@ -3630,6 +3727,7 @@ inspheric/nova-email-field
 inspheric/nova-indicator-field                                            
 inspheric/nova-url-field                                                  
 inspirum/balikobot                                                        
+instaclick/php-code-sniffer                                               
 instaclick/php-webdriver                                                  
 instamojo/instamojo-php                                                   
 instana/instana-php-sdk                                                   
@@ -3703,6 +3801,7 @@ itsdamien/laravel-model-transformer
 itsgoingd/clockwork                                                       
 itsmejoshua/novaspatiepermissions                                         
 itspire/monolog-loki                                                      
+ivanmitrikeski/laravel-shipping                                           
 ivome/graphql-relay-php                                                   
 ivopetkov/html5-dom-document-php                                          
 ivory/google-map                                                          
@@ -3782,6 +3881,7 @@ jawira/case-converter
 jawira/db-draw                                                            
 jawira/doctrine-diagram-bundle                                            
 jawira/doctrine-diagram-contracts                                         
+jawira/emoji-catalog                                                      
 jawira/plantuml                                                           
 jawira/plantuml-client                                                    
 jawira/plantuml-encoding                                                  
@@ -3794,6 +3894,7 @@ jbelien/phpstan-sarif-formatter
 jblond/twig-trans                                                         
 jbouzekri/phumbor-bundle                                                  
 jbroadway/urlify                                                          
+jbtronics/2fa-webauthn                                                    
 jbtronics/settings-bundle                                                 
 jbzoo/cli                                                                 
 jbzoo/composer-diff                                                       
@@ -3849,6 +3950,7 @@ jgrygierek/sonata-batch-entity-import-bundle
 jhut89/mailchimp3php                                                      
 jield-webdev/laminas-assetmanager                                         
 jijunair/laravel-referral                                                 
+jikan-me/jikan                                                            
 jimdo/prometheus_client_php                                               
 jimmiw/php-time-ago                                                       
 jimtools/jwt-auth                                                         
@@ -3935,6 +4037,10 @@ joomla/string
 joomla/test                                                               
 joomla/uri                                                                
 joomla/utilities                                                          
+jord-jd/do-file-cache                                                     
+jord-jd/do-file-cache-psr-6                                               
+jord-jd/password_exposed                                                  
+jord-jd/psr-18-guzzle-adapter                                             
 jordanbrauer/unit-converter                                               
 jorenvanhocht/laravel-share                                               
 jorijn/laravel-security-checker                                           
@@ -3978,6 +4084,7 @@ jtl-software/opsgenie-client
 juanisorondo/validate.uy                                                  
 juanisorondo/yii2-drift                                                   
 juanparati/iso-codes                                                      
+jubaer/zoom-laravel                                                       
 jubeki/laravel-code-style                                                 
 jubeki/nova-card-linkable                                                 
 jucksearm/php-barcode                                                     
@@ -4123,6 +4230,7 @@ kevinpapst/tabler-bundle
 kevinrob/guzzle-cache-middleware                                          
 kg-bot/laravel-localization-to-vue                                        
 khaled.alshamaa/ar-php                                                    
+khalin/nova-link-field                                                    
 khanamiryan/qrcode-detector-decoder                                       
 khatabwedaa/blade-css-icons                                               
 kherge/version                                                            
@@ -4130,6 +4238,8 @@ khill/lavacharts
 khill/php-duration                                                        
 kickbox/kickbox                                                           
 kielabokkie/bitcoin-address-validator                                     
+kielabokkie/ipdata                                                        
+kielabokkie/laravel-ipdata                                                
 kigaroo/snapshot-testing                                                  
 kigkonsult/icalcreator                                                    
 kinde-oss/kinde-auth-php                                                  
@@ -4257,6 +4367,7 @@ kount/kount-ris-php-sdk
 kovah/laravel-socialite-oidc                                              
 kozz/laravel-guzzle-provider                                              
 kphoen/rulerz                                                             
+kporras07/composer-symlinks                                               
 kra8/laravel-snowflake                                                    
 kraken-io/kraken-php                                                      
 krayin/krayin-package-generator                                           
@@ -4280,6 +4391,7 @@ ksubileau/color-thief-php
 ktamas77/firebase-php                                                     
 kub-at/php-simple-html-dom-parser                                         
 kubawerlos/php-cs-fixer-custom-fixers                                     
+kucharovic/czech-holidays                                                 
 kucrut/vite-for-wp                                                        
 kudm761/martinez-rueda-php                                                
 kunalvarma05/dropbox-php-sdk                                              
@@ -4368,6 +4480,7 @@ laminas/laminas-http
 laminas/laminas-httphandlerrunner                                         
 laminas/laminas-hydrator                                                  
 laminas/laminas-i18n                                                      
+laminas/laminas-i18n-phone-number                                         
 laminas/laminas-i18n-resources                                            
 laminas/laminas-inputfilter                                               
 laminas/laminas-json                                                      
@@ -4420,6 +4533,7 @@ laminas/laminas-xmlrpc
 laminas/laminas-zendframework-bridge                                      
 landrok/language-detector                                                 
 lanfix/goaop-parser-reflection                                            
+langleyfoxall/laravel-nist-password-rules                                 
 langleyfoxall/math_eval                                                   
 langleyfoxall/xero-laravel                                                
 lanin/laravel-api-debugger                                                
@@ -4576,6 +4690,7 @@ laravel/vue-starter-kit
 laravel/wayfinder                                                         
 laravel/workos                                                            
 laravelbook/ardent                                                        
+laravelcm/livewire-slide-overs                                            
 laravelcollective/html                                                    
 laraveldaily/filacheck                                                    
 laraveldaily/laravel-invoices                                             
@@ -4601,6 +4716,7 @@ latte/latte
 laudis/neo4j-php-client                                                   
 laudis/typed-enum                                                         
 launchdarkly/launchdarkly-php                                             
+launchdarkly/openfeature-server                                           
 launchdarkly/server-sdk                                                   
 launchdarkly/server-sdk-dynamodb                                          
 launchdarkly/server-sdk-redis-phpredis                                    
@@ -4619,6 +4735,7 @@ lbuchs/webauthn
 lcharette/webpack-encore-twig                                             
 lchrusciel/api-test-case                                                  
 lcobucci/clock                                                            
+lcobucci/coding-standard                                                  
 lcobucci/jwt                                                              
 lctrs/psalm-psr-container-plugin                                          
 leafo/lessphp                                                             
@@ -4776,6 +4893,7 @@ lkrms/dice
 lkrms/pretty-php                                                          
 llagerlof/moodlerest                                                      
 llaski/nova-scheduled-jobs                                                
+llm/skills                                                                
 lm-commons/lmc-cors                                                       
 lm-commons/lmc-rbac                                                       
 lm-commons/lmc-rbac-mvc                                                   
@@ -4853,6 +4971,7 @@ lullabot/twig-cs-fixer-drupal
 lunarphp/core                                                             
 lunarphp/filament3-2fa                                                    
 lunarphp/lunar                                                            
+lunarphp/nestedset                                                        
 lunarstorm/laravel-ddd                                                    
 lupecode/php-trader-native                                                
 luracast/restler                                                          
@@ -4983,13 +5102,16 @@ mailjet/laravel-mailjet
 mailjet/mailjet-apiv3-php                                                 
 mailjet/mailjet-swiftmailer                                               
 mailosaur/mailosaur                                                       
+mailslurp/mailslurp-client-php                                            
 maize-tech/laravel-markable                                               
 makasim/temp-file                                                         
 makinacorpus/db-tools-bundle                                              
 makinacorpus/php-lucene                                                   
 makinacorpus/query-builder                                                
 maknz/slack                                                               
+maksekeskus/maksekeskus-php                                               
 malhal/laravel-geographical                                               
+malico/laravel-nanoid                                                     
 malios/php-to-ascii-table                                                 
 malkusch/lock                                                             
 mallardduck/blade-boxicons                                                
@@ -5004,6 +5126,7 @@ mammatus/cron-attributes
 mammatus/cron-contracts                                                   
 mammatus/groups                                                           
 mammatus/healthz-vhost                                                    
+mammatus/http-server                                                      
 mammatus/http-server-attributes                                           
 mammatus/http-server-contracts                                            
 mammatus/http-server-webroot                                              
@@ -5028,6 +5151,7 @@ mantix/livewire-jodit-text-editor
 mantle-framework/contracts                                                
 mantle-framework/support                                                  
 mantle-framework/testing-dependencies                                     
+manukminasyan/blade-mdi                                                   
 mapkit/jwt                                                                
 marc-mabe/php-enum                                                        
 marc-mabe/php-enum-phpstan                                                
@@ -5038,8 +5162,10 @@ marcelweidum/filament-passkeys
 marcin-orlowski/laravel-api-response-builder                              
 marcj/optimistic-locking-behavior                                         
 marcj/topsort                                                             
+marcocesarato/minifier                                                    
 marcocesarato/php-conventional-changelog                                  
 marcorieser/statamic-livewire                                             
+marcortola/behat-seo-contexts                                             
 marcreichel/igdb-laravel                                                  
 marcusschwarz/lesserphp                                                   
 marein/symfony-lock-doctrine-migrations-bundle                            
@@ -5081,6 +5207,7 @@ mastani/laravel-google-static-map
 mastercard/oauth1-signer                                                  
 masterexploder/phpthumb                                                   
 masterminds/html5                                                         
+masterro/laravel-xss-filter                                               
 matanyadaev/laravel-eloquent-spatial                                      
 matchish/laravel-scout-elasticsearch                                      
 mateusjunges/avro-serde-php                                               
@@ -5129,11 +5256,13 @@ maxmind/web-service-common
 maxserv/frontend-request                                                  
 mayflower/mo4-coding-standard                                             
 mayflower/php-codebrowser                                                 
+mazedlx/laravel-feature-policy                                            
 mbezhanov/faker-provider-collection                                       
 mcamara/laravel-localization                                              
 mcaskill/composer-exclude-files                                           
 mck89/peast                                                               
 mckenziearts/blade-untitledui-icons                                       
+mckenziearts/filament-untitledui-icons                                    
 mckenziearts/laravel-notify                                               
 mcordingley/linearalgebra                                                 
 mcordingley/regression                                                    
@@ -5222,6 +5351,7 @@ mibe/feedwriter
 michael/laravelpagseguro                                                  
 michaelachrisco/readonly                                                  
 michaeldegroot/doctrine-encrypt-bundle                                    
+michaelhue/li3_flash_message                                              
 michaelpetri/typed-input                                                  
 micheh/phpcs-gitlab                                                       
 michelf/php-markdown                                                      
@@ -5260,6 +5390,7 @@ mihaildev/yii2-ckeditor
 mihaildev/yii2-elfinder                                                   
 mihasicehcek/php_salesforce_soql_builder                                  
 mika56/spfcheck                                                           
+mika56/spfcheck-dns-direct                                                
 mike-bronner/laravel-model-caching                                        
 mike182uk/paypal-ipn-listener                                             
 mike42/escpos-php                                                         
@@ -5339,6 +5470,7 @@ mlocati/idna
 mlocati/ip-lib                                                            
 mlocati/ocsp                                                              
 mlocati/spf-lib                                                           
+mlocati/vat-lib                                                           
 mlsolutions/nova-phone-field                                              
 mmaher/address-string-parser                                              
 mmeyer2k/dcrypt                                                           
@@ -5411,6 +5543,7 @@ mortexa/laravel-arkitect
 mossadal/math-parser                                                      
 mostafaznv/larupload                                                      
 mostafaznv/nova-ckeditor                                                  
+mostafaznv/nova-map-field                                                 
 mostafaznv/nova-video                                                     
 mostafaznv/pdf-optimizer                                                  
 motomedialab/laravel-vite-helper                                          
@@ -5464,6 +5597,7 @@ muffin/slug
 muffin/throttle                                                           
 muffin/trash                                                              
 muhammadhuzaifa/telescope-guzzle-watcher                                  
+multiavatar/multiavatar-php                                               
 multiplex/multiplex                                                       
 multiplex/socket                                                          
 multisafepay/magento2                                                     
@@ -5475,6 +5609,7 @@ multisafepay/magento2-msi
 multisafepay/php-sdk                                                      
 munafio/chatify                                                           
 mundschenk-at/php-typography                                              
+munusphp/munus                                                            
 murtukov/php-code-generator                                               
 musonza/chat                                                              
 mustache/mustache                                                         
@@ -5527,6 +5662,7 @@ natxet/cssmin
 nayjest/manipulator                                                       
 nayjest/str-case-converter                                                
 nb/oxymel                                                                 
+nben/filament-record-nav                                                  
 nbgrp/onelogin-saml-bundle                                                
 ncjoes/office-converter                                                   
 nehero/friendlytimezone                                                   
@@ -5546,6 +5682,7 @@ nelmio/security-bundle
 nelmio/solarium-bundle                                                    
 nembie/iban-rule                                                          
 nemiah/php-fints                                                          
+nemiah/php-sepa-xml                                                       
 neomerx/cors-psr7                                                         
 neomerx/json-api                                                          
 neos/behat                                                                
@@ -5606,17 +5743,25 @@ netcarver/textile
 netflie/laravel-notification-whatsapp                                     
 netflie/whatsapp-cloud-api                                                
 netgen/query-translator                                                   
+netglue/laminas-messenger                                                 
+netglue/primo                                                             
+netglue/prismic-cli                                                       
+netglue/prismic-client                                                    
+netglue/prismic-doctype-client                                            
+netglue/sitemap-builder                                                   
 netinventors/shopware6-plugin-installer                                   
 netlogix/cli-increasedatabasetimeout                                      
 netlogix/coding-guidelines-php                                            
 netlogix/doctrine-upsert                                                  
 netlogix/jobqueue-fast-rabbit                                             
+netlogix/jobqueue-polling                                                 
 netlogix/jobqueue-pool                                                    
 netlogix/jobqueue-scheduled                                               
 netlogix/jsonapiorg                                                       
 netlogix/jsonapiorg-annotationgenerics                                    
 netlogix/jsonapiorg-consumer                                              
 netlogix/migrations                                                       
+netlogix/migrations-jobqueue                                              
 netlogix/retry                                                            
 netlogix/sentry                                                           
 netlogix/supervisor                                                       
@@ -5676,6 +5821,7 @@ newrelic/monolog-enricher
 nexmo/client                                                              
 nexmo/client-core                                                         
 nexmo/laravel                                                             
+nextapps/unique-codes                                                     
 nextcloud/coding-standard                                                 
 nextcloud/horde-managesieve                                               
 nextcloud/horde-smtp                                                      
@@ -5701,6 +5847,7 @@ nfephp-org/sped-mdfe
 nfephp-org/sped-nfe                                                       
 nicebooks/isbn                                                            
 nick322/secure-spreadsheet                                                
+nickcernis/html-to-markdown                                               
 nickcv/yii2-encrypter                                                     
 nickcv/yii2-mandrill                                                      
 nickdnk/graph-sdk                                                         
@@ -5823,6 +5970,7 @@ obydul/laraskrill
 ocramius/code-generator-utils                                             
 ocramius/doctrine-batch-utils                                             
 ocramius/generated-hydrator                                               
+ocramius/lazy-property                                                    
 ocramius/ocra-cached-view-resolver                                        
 ocramius/package-versions                                                 
 ocramius/proxy-manager                                                    
@@ -5900,6 +6048,7 @@ ondrejmirtes/simple-downgrader
 onecentlin/laravel-adminer                                                
 oneduo/nova-file-manager                                                  
 oneduo/nova-time-field                                                    
+onelearningcommunity/laravel-model-explorer                               
 onelogin/php-saml                                                         
 onesignal/onesignal-php-api                                               
 onesky/api-library-php5                                                   
@@ -6072,6 +6221,7 @@ oskarstark/symfony-http-responder
 oskarstark/trimmed-non-empty-string                                       
 osteel/openapi-httpfoundation-testing                                     
 otgs/icons                                                                
+otgs/ui                                                                   
 ourcodeworld/name-that-color                                              
 outerweb/settings                                                         
 outhebox/blade-flags                                                      
@@ -6106,6 +6256,7 @@ overtrue/qcloud-cos-client
 overtrue/socialite                                                        
 overtrue/wechat                                                           
 ovh/ovh                                                                   
+ovh/php-ovh-sms                                                           
 owasp/csrf-protector-php                                                  
 owebia/magento2-module-advanced-shipping                                  
 owebia/magento2-module-shared-php-config                                  
@@ -6189,6 +6340,7 @@ paragonie/paseto
 paragonie/pharaoh                                                         
 paragonie/random-lib                                                      
 paragonie/random_compat                                                   
+paragonie/seedspring                                                      
 paragonie/sodium_compat                                                   
 paragonie/sodium_compat_ext_sodium                                        
 paragraph1/php-fcm                                                        
@@ -6199,6 +6351,8 @@ parsecsv/php-parsecsv
 parsedown/laravel                                                         
 parsedown/parsedown                                                       
 parsica-php/parsica                                                       
+part-db/exchanger                                                         
+part-db/swap                                                              
 particle/filter                                                           
 particle/validator                                                        
 partitech/doctrine-pgvector                                               
@@ -6219,6 +6373,7 @@ patricktalmadge/bootstrapper
 paulo-hortelan/requests-graph-pulse                                       
 paulzi/yii2-json-behavior                                                 
 paveljanda/happy                                                          
+pavlakis/allowed-emails                                                   
 pavloniym/nova-action-buttons                                             
 pawlox/video-thumbnail                                                    
 pay-now/paynow-php-sdk                                                    
@@ -6270,6 +6425,7 @@ pdmfc/nova-action-button
 pdphilip/elasticsearch                                                    
 pdphilip/omniterm                                                         
 pdphilip/opensearch                                                       
+pds/skeleton                                                              
 pear/archive_tar                                                          
 pear/auth_sasl                                                            
 pear/cache_lite                                                           
@@ -6302,6 +6458,7 @@ pear/pear_exception
 pear/spreadsheet_excel_writer                                             
 pear/structures_graph                                                     
 pear/system_daemon                                                        
+pear/text_languagedetect                                                  
 pear/validate_finance_creditcard                                          
 pear/versioncontrol_git                                                   
 pear/xml_parser                                                           
@@ -6357,6 +6514,8 @@ phalcon/devtools
 phalcon/ide-stubs                                                         
 phalcon/incubator                                                         
 phalcon/migrations                                                        
+phalcon/traits                                                            
+phalcon/volt                                                              
 phalcon/zephir                                                            
 phan/phan                                                                 
 phan/tolerant-php-parser                                                  
@@ -6382,6 +6541,7 @@ phing/phing
 phlak/config                                                              
 phlak/semver                                                              
 phlib/sms-length                                                          
+phlib/xss-sanitizer                                                       
 phly/phly-event-dispatcher                                                
 phootwork/collection                                                      
 phootwork/lang                                                            
@@ -6507,6 +6667,7 @@ php-standard-library/file
 php-standard-library/filesystem                                           
 php-standard-library/foundation                                           
 php-standard-library/fun                                                  
+php-standard-library/hash                                                 
 php-standard-library/interoperability                                     
 php-standard-library/io                                                   
 php-standard-library/iter                                                 
@@ -6648,6 +6809,7 @@ phpro/mage2-module-translations
 phpro/resource-stream                                                     
 phpro/soap-client                                                         
 phpro/zf-doctrine-hydration-module                                        
+phprtflite/phprtflite                                                     
 phpsa/laravel-api-controller                                              
 phpseclib/bcmath_compat                                                   
 phpseclib/mcrypt_compat                                                   
@@ -7020,10 +7182,12 @@ pxlrbt/filament-environment-indicator
 pxlrbt/filament-excel                                                     
 pxlrbt/filament-spotlight                                                 
 pyrech/composer-changelogs                                                
+pyurin/yii2-redis-ha                                                      
 pzs/nav-online-invoice                                                    
 qafoo/ser-pretty                                                          
 qandidate/symfony-json-request-transformer                                
 qandidate/toggle                                                          
+qase/pest-reporter                                                        
 qase/php-commons                                                          
 qase/qase-api-client                                                      
 qase/qase-api-v2-client                                                   
@@ -7056,6 +7220,7 @@ rackspace/php-opencloud
 radebatz/openapi-verifier                                                 
 radebatz/type-info-extras                                                 
 rafaellaurindo/laravel-brasilapi                                          
+rahulhaque/laravel-filepond                                               
 railsware/mailtrap-php                                                    
 raiym/instagram-php-scraper                                               
 rajentrivedi/tokenizer-x                                                  
@@ -7088,6 +7253,7 @@ rapidwebltd/php-uk-bank-holidays
 rappasoft/laravel-authentication-log                                      
 rappasoft/laravel-helpers                                                 
 rappasoft/laravel-livewire-tables                                         
+rappasoft/lockout                                                         
 rarst/phpcs-cognitive-complexity                                          
 rase/socket.io-emitter                                                    
 ratchet/pawl                                                              
@@ -7114,9 +7280,11 @@ ray/web-param-module
 razorpay/razorpay                                                         
 rbdwllr/reallysimplejwt                                                   
 rcrowe/twigbridge                                                         
+rcsofttech/audit-trail-bundle                                             
 rdlowrey/auryn                                                            
 rdx/behat-variables                                                       
 rdx/laravelcollective-html                                                
+react-parallel/event-loop                                                 
 react/async                                                               
 react/cache                                                               
 react/child-process                                                       
@@ -7147,6 +7315,7 @@ rebing/graphql-laravel
 rebuy/amqp-php-consumer                                                   
 rebuy/ean-isbn-library                                                    
 recca0120/laravel-erd                                                     
+recca0120/laravel-parallel                                                
 recombee/php-api-client                                                   
 rector/behastan                                                           
 rector/extension-installer                                                
@@ -7158,6 +7327,7 @@ rector/rector-downgrade-php
 rector/rector-laravel                                                     
 rector/rector-phpoffice                                                   
 rector/rector-phpunit                                                     
+rector/rector-src                                                         
 rector/rector-symfony                                                     
 rector/release-notes-generator                                            
 rector/swiss-knife                                                        
@@ -7176,6 +7346,7 @@ reedware/laravel-relation-joins
 reedware/nova-text-filter                                                 
 reefki/laravel-device-detector                                            
 reelworx/rx-shariff                                                       
+regex-guard/regex-guard                                                   
 reinbier/laravel-unique-with                                              
 reindert-vetter/api-version-control                                       
 reinink/advanced-eloquent                                                 
@@ -7217,7 +7388,10 @@ revolt/event-loop
 revolt/event-loop-adapter-react                                           
 revolution/laravel-google-sheets                                          
 revolution/socialite-mastodon                                             
+rexlabs/array-object                                                      
 rexlabs/enum                                                              
+rexlabs/hyper-http                                                        
+rexlabs/utility-belt                                                      
 rexxars/html-validator                                                    
 rg/avro-php                                                               
 rhukster/dom-sanitizer                                                    
@@ -7254,6 +7428,7 @@ rlanvin/php-ip
 rlanvin/php-rrule                                                         
 rmccue/requests                                                           
 rmrevin/yii2-fontawesome                                                  
+rmrevin/yii2-minify-view                                                  
 rmsramos/activitylog                                                      
 rnd-cosoft/laminas-console                                                
 rnd-cosoft/laminas-mvc-console                                            
@@ -7364,6 +7539,7 @@ runroom-packages/sortable-behavior-bundle
 runtime/frankenphp-symfony                                                
 runz0rd/common-php                                                        
 runz0rd/mapper-php                                                        
+rupadana/filament-api-service                                             
 rustici-software/scormcloud-api-v2-client-php                             
 rutorika/sortable                                                         
 ruudk/code-generator                                                      
@@ -7447,6 +7623,8 @@ sammyjo20/laravel-haystack
 sammyjo20/lasso                                                           
 sammyk/laravel-facebook-sdk                                               
 san/san-session-toolbar                                                   
+sandeepshetty/shopify_api                                                 
+sandeepshetty/wcurl                                                       
 sandermuller/laravel-fluent-validation                                    
 sandermuller/package-boost                                                
 sandersander/composer-link                                                
@@ -7498,6 +7676,7 @@ scn/evalanche-soap-api-struct
 scn/hydrator                                                              
 scn/hydrator-property-values                                              
 scotteh/php-dom-wrapper                                                   
+script-development/phpstan-warroom-rules                                  
 scriptfusion/byte-formatter                                               
 scriptfusion/static-class                                                 
 scrivo/highlight.php                                                      
@@ -7604,6 +7783,7 @@ serialization/serialization
 serialssolutions/summon                                                   
 sermepa/sermepa                                                           
 serversideup/spin                                                         
+servicerunner/li3_assetic                                                 
 servo/fluidxml                                                            
 seshac/otp-generator                                                      
 setasign/fpdf                                                             
@@ -7614,12 +7794,15 @@ setasign/fpdi-tcpdf
 setasign/tfpdf                                                            
 setbased/exception                                                        
 setbased/rijksregisternummer                                              
+setono/bot-detection-bundle                                               
 setono/composite-compiler-pass                                            
 setono/doctrine-orm-batcher                                               
 setono/doctrine-orm-batcher-bundle                                        
 setono/doctrine-orm-trait                                                 
 setono/sylius-feed-plugin                                                 
 setono/symfony-main-request-trait                                         
+sevaske/php-zatca-xml                                                     
+sevaske/zatca-api                                                         
 sg/datatablesbundle                                                       
 sgalinski/sg-cookie-optin                                                 
 sgoettsch/monolog-datadog                                                 
@@ -7630,6 +7813,7 @@ shapecode/cron-bundle
 shapecode/hidden-entity-type-bundle                                       
 shardj/zf1-extras-future                                                  
 shardj/zf1-future                                                         
+shetabit/multipay                                                         
 shetabit/visitor                                                          
 shift4/shift4-php                                                         
 shiftonelabs/laravel-cascade-deletes                                      
@@ -7660,6 +7844,7 @@ shish/safe
 shitware-ltd/flysystem-msgraph                                            
 shivas/versioning-bundle                                                  
 shivella/laravel-bitly                                                    
+shopblocks/php-ico                                                        
 shopify/shopify-api                                                       
 shoppingfeed/coding-style-php                                             
 shopsys/phpunit-injector                                                  
@@ -7765,6 +7950,7 @@ silviolleite/laravelpwa
 simonbackx/slack-php-webhook                                              
 simonhamp/laravel-nova-csv-import                                         
 simonhamp/the-og                                                          
+simonschaufi/laravel-dkim                                                 
 simonschaufi/pretty-xml                                                   
 simple-as-fuck/php-validator                                              
 simple-bus/asynchronous                                                   
@@ -7855,6 +8041,7 @@ sk-id-solutions/smart-id-php-client
 skagarwal/google-places-api                                               
 skorp/detect-incompatible-samesite-useragents                             
 skyfox/propel-bundle                                                      
+skywarth/chaotic-schedule                                                 
 slack-php/slack-block-kit                                                 
 slam/php-cs-fixer-extensions                                              
 slam/phpstan-extensions                                                   
@@ -7892,6 +8079,7 @@ smi2/phpclickhouse
 smile-identity/smile-identity-core                                        
 smile/elasticsuite                                                        
 smile/module-elasticsuite-cms-search                                      
+smile/module-elasticsuite-shared-catalog                                  
 sminnee/callbacklist                                                      
 smknstd/fakerphp-picsum-images                                            
 smolblog/oauth2-twitter                                                   
@@ -8215,6 +8403,7 @@ spatie/pdf-to-image
 spatie/pdf-to-text                                                        
 spatie/period                                                             
 spatie/pest-expectations                                                  
+spatie/pest-plugin-route-testing                                          
 spatie/pest-plugin-snapshots                                              
 spatie/pest-plugin-test-time                                              
 spatie/php-attribute-reader                                               
@@ -8338,6 +8527,7 @@ spryker-feature/file-manager
 spryker-feature/inventory-management                                      
 spryker-feature/invoice                                                   
 spryker-feature/mailing-notifications                                     
+spryker-feature/marketplace-agent-assist                                  
 spryker-feature/marketplace-cart                                          
 spryker-feature/marketplace-inventory-management                          
 spryker-feature/marketplace-merchant                                      
@@ -8595,13 +8785,17 @@ spryker/acl-entity
 spryker/acl-entity-data-import                                            
 spryker/acl-entity-extension                                              
 spryker/acl-extension                                                     
+spryker/acl-merchant-agent                                                
 spryker/acl-merchant-portal                                               
 spryker/acl-merchant-portal-extension                                     
 spryker/agent                                                             
 spryker/agent-auth-rest-api                                               
+spryker/agent-dashboard-merchant-portal-gui                               
 spryker/agent-dashboard-merchant-portal-gui-extension                     
 spryker/agent-extension                                                   
 spryker/agent-gui                                                         
+spryker/agent-security-blocker-merchant-portal                            
+spryker/agent-security-blocker-merchant-portal-gui                        
 spryker/agent-security-merchant-portal-gui                                
 spryker/alternative-products-rest-api                                     
 spryker/analytics-gui                                                     
@@ -9273,6 +9467,7 @@ spryker/product-offer-reservation-gui
 spryker/product-offer-sales                                               
 spryker/product-offer-sales-rest-api                                      
 spryker/product-offer-service-point-storage-extension                     
+spryker/product-offer-shipment-type                                       
 spryker/product-offer-shipment-type-storage-extension                     
 spryker/product-offer-shopping-list                                       
 spryker/product-offer-shopping-list-data-import                           
@@ -9399,6 +9594,7 @@ spryker/sales-product-configuration-gui-extension
 spryker/sales-product-connector                                           
 spryker/sales-quantity                                                    
 spryker/sales-quantity-extension                                          
+spryker/sales-quote-request-connector                                     
 spryker/sales-reclamation                                                 
 spryker/sales-reclamation-gui                                             
 spryker/sales-return                                                      
@@ -9442,6 +9638,9 @@ spryker/security-oauth-user-extension
 spryker/security-system-user                                              
 spryker/sequence-number                                                   
 spryker/service-point                                                     
+spryker/service-point-search                                              
+spryker/service-point-search-extension                                    
+spryker/service-point-storage                                             
 spryker/session                                                           
 spryker/session-customer-validation-extension                             
 spryker/session-extension                                                 
@@ -9465,9 +9664,13 @@ spryker/shipment-extension
 spryker/shipment-gui                                                      
 spryker/shipment-gui-extension                                            
 spryker/shipment-type                                                     
+spryker/shipment-type-cart                                                
 spryker/shipment-type-data-import                                         
+spryker/shipment-type-service-point                                       
+spryker/shipment-type-service-point-storage                               
 spryker/shipment-type-storage                                             
 spryker/shipment-type-storage-extension                                   
+spryker/shipment-types-rest-api                                           
 spryker/shipments-rest-api                                                
 spryker/shipments-rest-api-extension                                      
 spryker/shopping-list                                                     
@@ -9583,6 +9786,7 @@ spryker/zed-request-extension
 spryker/zed-ui                                                            
 spryng/rest-api-php                                                       
 sqids/sqids                                                               
+sqlftw/sqlftw                                                             
 square/connect                                                            
 square/square                                                             
 square1/laravel-idempotency                                               
@@ -9606,6 +9810,7 @@ ssch/typo3-rector
 ssch/typo3-rector-testing-framework                                       
 ssddanbrown/htmldiff                                                      
 sserbin/twig-linter                                                       
+ssilence/php-imap-client                                                  
 ssnepenthe/color-utils                                                    
 sspat/es-query-sanitizer                                                  
 sspooky13/yaml-standards                                                  
@@ -9656,9 +9861,11 @@ stayallive/laravel-eloquent-uuid
 stayallive/lighthouse-graphql-hive                                        
 stayallive/random-tokens                                                  
 stayallive/wp-sentry                                                      
+staysafe/password-policy-builder                                          
 stduritemplate/stduritemplate                                             
 stechstudio/backoff                                                       
 stechstudio/filament-impersonate                                          
+stechstudio/filament-opcache                                              
 stechstudio/laravel-jwt                                                   
 stechstudio/laravel-metrics                                               
 stechstudio/laravel-zipstream                                             
@@ -9667,6 +9874,7 @@ stefanak-michal/bolt
 stefandoorn/google-tag-manager-plugin                                     
 stefandoorn/sitemap-plugin                                                
 stefanzweifel/laravel-stats-phploc                                        
+steffenbrand/in-time                                                      
 stefk/jval                                                                
 stella-maris/clock                                                        
 stella-maris/intl-daterange-formatter                                     
@@ -9740,6 +9948,7 @@ storyous/bucket-determinator
 stoutlogic/acf-builder                                                    
 stripe/stripe-php                                                         
 strobotti/php-jwk                                                         
+strscan/strscan                                                           
 struggle-for-php/sfp-phpstan-psr-log                                      
 studio-42/elfinder                                                        
 studio/laravel-totem                                                      
@@ -9753,6 +9962,10 @@ stymiee/email-validator
 su-sws/stanford-caravan                                                   
 submitty/php-codesniffer                                                  
 suenerds/nova-searchable-belongs-to-filter                                
+sugarcraft/candy-buffer                                                   
+sugarcraft/candy-core                                                     
+sugarcraft/candy-input                                                    
+sugarcraft/candy-layout                                                   
 sugarcraft/candy-pty                                                      
 suin/php-rss-writer                                                       
 suin/phpcs-psr4-sniff                                                     
@@ -9760,6 +9973,7 @@ sulu/form-bundle
 sulu/messenger                                                            
 sulu/sulu                                                                 
 sulu/sulu-rector                                                          
+sulu/symfony-intl-fix                                                     
 sumup/sumup-ecom-php-sdk                                                  
 suncat/mobile-detect-bundle                                               
 suncat/php-mobile-detect                                                  
@@ -9785,6 +9999,7 @@ swaggest/php-code-builder
 swarrot/swarrot                                                           
 swarrot/swarrot-bundle                                                    
 swayok/alternative-laravel-cache                                          
+sweelix/yii2-webpack                                                      
 sweetrdf/easyrdf                                                          
 sweetrdf/rdf-helpers                                                      
 sweetrdf/rdf-interface                                                    
@@ -9804,6 +10019,7 @@ swissspidy/phpstan-no-private
 swissup/module-codemirror                                                 
 swissup/module-marketplace                                                
 swissup/module-rtl                                                        
+swissup/module-tippyjs                                                    
 swoole/ide-helper                                                         
 swow/psr7-plus                                                            
 swow/swow                                                                 
@@ -9883,6 +10099,7 @@ symfony-cmf/testing
 symfony/acl-bundle                                                        
 symfony/ai-agent                                                          
 symfony/ai-anthropic-platform                                             
+symfony/ai-azure-platform                                                 
 symfony/ai-bedrock-platform                                               
 symfony/ai-bundle                                                         
 symfony/ai-chat                                                           
@@ -9896,6 +10113,7 @@ symfony/ai-monolog-mate-extension
 symfony/ai-ollama-platform                                                
 symfony/ai-open-ai-platform                                               
 symfony/ai-open-responses-platform                                        
+symfony/ai-open-router-platform                                           
 symfony/ai-platform                                                       
 symfony/ai-store                                                          
 symfony/ai-symfony-mate-extension                                         
@@ -9956,6 +10174,7 @@ symfony/http-client
 symfony/http-client-contracts                                             
 symfony/http-foundation                                                   
 symfony/http-kernel                                                       
+symfony/icu                                                               
 symfony/inflector                                                         
 symfony/infobip-notifier                                                  
 symfony/intl                                                              
@@ -10031,6 +10250,7 @@ symfony/property-info
 symfony/proxy-manager-bridge                                              
 symfony/psr-http-message-bridge                                           
 symfony/psr7-meta                                                         
+symfony/pushover-notifier                                                 
 symfony/rate-limiter                                                      
 symfony/redis-messenger                                                   
 symfony/remote-event                                                      
@@ -10078,6 +10298,7 @@ symfony/ux-autocomplete
 symfony/ux-chartjs                                                        
 symfony/ux-cropperjs                                                      
 symfony/ux-dropzone                                                       
+symfony/ux-google-map                                                     
 symfony/ux-icons                                                          
 symfony/ux-lazy-image                                                     
 symfony/ux-leaflet-map                                                    
@@ -10167,6 +10388,7 @@ tanmuhittin/laravel-google-translate
 tapp/filament-auditing                                                    
 tapp/filament-authentication-log                                          
 tapp/filament-google-autocomplete-field                                   
+tapp/filament-maillog                                                     
 tapp/filament-timezone-field                                              
 tapp/filament-value-range-filter                                          
 tapp/laravel-airtable                                                     
@@ -10186,6 +10408,7 @@ tcdent/php-restclient
 tcg/voyager                                                               
 team-reflex/discord-php                                                   
 teamtnt/laravel-scout-tntsearch-driver                                    
+teamtnt/php-stripe-webhook-tester                                         
 teamtnt/tntsearch                                                         
 teapot/status-code                                                        
 tebazil/db-seeder                                                         
@@ -10240,6 +10463,20 @@ terminal42/notification_center
 terminal42/service-annotation-bundle                                      
 testcontainers/testcontainers                                             
 testflowlabs/doctest                                                      
+testo/assert                                                              
+testo/bench                                                               
+testo/bridge-infection                                                    
+testo/bridge-symfony-console                                              
+testo/codecov                                                             
+testo/convention                                                          
+testo/data                                                                
+testo/filter                                                              
+testo/inline                                                              
+testo/lifecycle                                                           
+testo/repeat                                                              
+testo/retry                                                               
+testo/test                                                                
+testo/testo                                                               
 tetranz/select2entity-bundle                                              
 textalk/websocket                                                         
 texy/texy                                                                 
@@ -10248,6 +10485,7 @@ tgalopin/html-sanitizer-bundle
 th3n3rd/cartesian-product                                                 
 thamtech/yii2-ratelimiter-advanced                                        
 tharos/schematic                                                          
+the-events-calendar/tec-testing-facilities                                
 the-tinderbox/clickhouse-builder                                          
 the-tinderbox/clickhouse-php-client                                       
 theanik/laravel-more-command                                              
@@ -10269,6 +10507,7 @@ thenetworg/oauth2-azure
 thenextweb/passgenerator                                                  
 thenorthmemory/xml                                                        
 theodo-group/llphant                                                      
+theodorejb/polycast                                                       
 theofidry/alice-data-fixtures                                             
 theofidry/psysh-bundle                                                    
 thepay/api-client                                                         
@@ -10317,7 +10556,12 @@ tightenco/parental
 tightenco/tlint                                                           
 tightenco/ziggy                                                           
 tigitz/php-spellchecker                                                   
+tiime/cross-industry-invoice                                              
+tiime/en-16931                                                            
+tiime/factur-x                                                            
 tiime/newrelic-bundle                                                     
+tiime/universal-business-language                                         
+tiimepdp/cdar                                                             
 tijsverkoyen/convert-to-junit-xml                                         
 tijsverkoyen/css-to-inline-styles                                         
 tilleuls/forgot-password-bundle                                           
@@ -10344,6 +10588,7 @@ tio/laravel
 titasgailius/search-relations                                             
 tivie/htaccess-parser                                                     
 tivie/php-os-detector                                                     
+tmaiaroto/li3_access                                                      
 tmilos/lexer                                                              
 tmilos/scim-filter-parser                                                 
 tmilos/scim-schema                                                        
@@ -10399,6 +10644,7 @@ torann/currency
 torann/geoip                                                              
 torann/json-ld                                                            
 torann/laravel-asana                                                      
+torchlight/torchlight-commonmark                                          
 torchlight/torchlight-laravel                                             
 tormjens/eventy                                                           
 toshy/bunnynet-php                                                        
@@ -10415,6 +10661,7 @@ tpetry/laravel-query-expressions
 tplaner/when                                                              
 tpwd/ke_search                                                            
 tpyo/amazon-s3-php-class                                                  
+traceway/opentelemetry-symfony                                            
 tractorcow/classproxy                                                     
 tractorcow/silverstripe-autocomplete                                      
 tractorcow/silverstripe-fluent                                            
@@ -10559,6 +10806,7 @@ ublaboo/api-router
 ublaboo/datagrid                                                          
 ublaboo/responses                                                         
 ucan-lab/laravel-dacapo                                                   
+ucloud/ucloud-sdk-php                                                     
 udger/udger-php-v4                                                        
 ueberdosis/html-to-prosemirror                                            
 ueberdosis/pandoc                                                         
@@ -10586,6 +10834,9 @@ undefinedoffset/sortablegridfield
 unicodeveloper/laravel-password                                           
 unicodeveloper/laravel-paystack                                           
 unified/unified-to                                                        
+unionofrad/li3_docs                                                       
+unionofrad/li3_fixtures                                                   
+unionofrad/li3_quality                                                    
 unionofrad/lithium                                                        
 unisharp/laravel-filemanager                                              
 univapay/php-sdk                                                          
@@ -10604,6 +10855,13 @@ usmanhalalit/laracsv
 usmanhalalit/pixie                                                        
 usmanhalalit/viocon                                                       
 usystems/webling-api-php                                                  
+utexas/forty_acres                                                        
+utexas/utdk_profile                                                       
+utexas/utevent                                                            
+utexas/utexas_pantheon_logs_http                                          
+utexas/utexas_saml_auth_helper                                            
+utexas/utnews                                                             
+utexas/utprof                                                             
 utopia-php/abuse                                                          
 utopia-php/agents                                                         
 utopia-php/analytics                                                      
@@ -10633,6 +10891,7 @@ utopia-php/logger
 utopia-php/messaging                                                      
 utopia-php/migration                                                      
 utopia-php/mongo                                                          
+utopia-php/orchestration                                                  
 utopia-php/pay                                                            
 utopia-php/platform                                                       
 utopia-php/pools                                                          
@@ -10653,6 +10912,7 @@ utopia-php/websocket
 vaimo/composer-patches                                                    
 vaimo/topological-sort                                                    
 vaites/php-apache-tika                                                    
+vakata/jstree                                                             
 valentin-morice/filament-json-column                                      
 valorin/pwned-validator                                                   
 valorin/random                                                            
@@ -10676,7 +10936,9 @@ vanilo/properties
 vanilo/support                                                            
 vardot/blazy                                                              
 vardot/ckeditor5-anchor-drupal                                            
+vardot/module-installer-factory                                           
 vardot/slick                                                              
+vardot/varbase-patches                                                    
 vdbelt/oauth2-revolut                                                     
 vectorface/googleauthenticator                                            
 vectorface/whip                                                           
@@ -10701,6 +10963,7 @@ verschuur/laravel-robotstxt
 veryfi/veryfi-php                                                         
 vgrem/php-spo                                                             
 vich/uploader-bundle                                                      
+victor-prdh/recaptcha-bundle                                              
 videlalvaro/php-amqplib                                                   
 vierbergenlars/php-semver                                                 
 vierge-noire/cakephp-fixture-factories                                    
@@ -10782,6 +11045,7 @@ vyuldashev/nova-permission
 vyuldashev/xml-to-array                                                   
 w7corp/easywechat                                                         
 wa72/htmlpagedom                                                          
+wallacemartinss/filament-icon-picker                                      
 wallee/sdk                                                                
 wamania/php-stemmer                                                       
 wapmorgan/morphos                                                         
@@ -10891,6 +11155,7 @@ wendelladriel/laravel-validated-dto
 werneckbh/laravel-qr-code                                                 
 werneckbh/qr-code                                                         
 wesbos/burner-email-providers                                             
+wezlo/filament-search-spotlight                                           
 wgenial/numeroporextenso                                                  
 what3words/w3w-php-wrapper                                                
 whichbrowser/parser                                                       
@@ -11004,6 +11269,7 @@ workerman/gateway-worker
 workerman/mysql                                                           
 workerman/phpsocket.io                                                    
 workerman/redis                                                           
+workerman/redis-queue                                                     
 workerman/webman-framework                                                
 workerman/workerman                                                       
 workos/workos-php                                                         
@@ -11100,17 +11366,20 @@ wp-media/rocket-lazyload-common
 wp-media/wp-imagify-partner                                               
 wp-media/wp-mixpanel                                                      
 wp-media/wp-rocket                                                        
+wp-php-toolkit/blockparser                                                
 wp-php-toolkit/bytestream                                                 
 wp-php-toolkit/data-liberation                                            
 wp-php-toolkit/encoding                                                   
 wp-php-toolkit/filesystem                                                 
 wp-php-toolkit/html                                                       
 wp-php-toolkit/http-client                                                
+wp-php-toolkit/markdown                                                   
 wp-php-toolkit/reprint-exporter                                           
 wp-php-toolkit/reprint-importer                                           
 wp-php-toolkit/xml                                                        
 wp-phpunit/wp-phpunit                                                     
 wpb/string-blade-compiler                                                 
+wpml/collect                                                              
 wpscholar/url                                                             
 wpsyntex/polylang-stubs                                                   
 wptrt/wpthemereview                                                       
@@ -11139,6 +11408,7 @@ wyrihaximus/generative-composer-plugin-tooling
 wyrihaximus/get-in-packages-composer.jason                                
 wyrihaximus/html-compress                                                 
 wyrihaximus/js-compress                                                   
+wyrihaximus/json-utilities                                                
 wyrihaximus/list-classes-in-directory                                     
 wyrihaximus/makefiles                                                     
 wyrihaximus/metrics                                                       
@@ -11146,6 +11416,8 @@ wyrihaximus/metrics-tactician
 wyrihaximus/monolog-factory                                               
 wyrihaximus/monolog-formatted-psr-handler                                 
 wyrihaximus/monolog-processors                                            
+wyrihaximus/msgpack                                                       
+wyrihaximus/phpstan-no-safe                                               
 wyrihaximus/phpstan-react                                                 
 wyrihaximus/phpstan-rules-wrapper                                         
 wyrihaximus/psr-3-callable-throwable-logger                               
@@ -11179,6 +11451,7 @@ xethron/laravel-4-generators
 xethron/migrations-generator                                              
 xj/yii2-jplayer-widget                                                    
 xkerman/restricted-unserialize                                            
+xpaw/php-source-query-class                                               
 xrstf/composer-php52                                                      
 xxtime/flysystem-aliyun-oss                                               
 xynnn/google-tag-manager-bundle                                           
@@ -11227,8 +11500,10 @@ yii2-extensions/phpstan
 yii2-framework/core                                                       
 yii2mod/yii2-editable                                                     
 yii2mod/yii2-enum                                                         
+yii2mod/yii2-swagger                                                      
 yii2tech/ar-linkmany                                                      
 yii2tech/ar-softdelete                                                    
+yii2tech/authlog                                                          
 yii2tech/behavior-trait                                                   
 yii2tech/csv-grid                                                         
 yii2tech/html2pdf                                                         
@@ -11238,14 +11513,17 @@ yiisoft/access
 yiisoft/aliases                                                           
 yiisoft/arrays                                                            
 yiisoft/assets                                                            
+yiisoft/auth                                                              
 yiisoft/cache                                                             
 yiisoft/cache-file                                                        
 yiisoft/code-style                                                        
 yiisoft/config                                                            
 yiisoft/cookies                                                           
 yiisoft/csrf                                                              
+yiisoft/data                                                              
 yiisoft/data-response                                                     
 yiisoft/db                                                                
+yiisoft/db-migration                                                      
 yiisoft/db-sqlite                                                         
 yiisoft/definitions                                                       
 yiisoft/di                                                                
@@ -11271,6 +11549,7 @@ yiisoft/profiler
 yiisoft/proxy                                                             
 yiisoft/psr-dummy-provider                                                
 yiisoft/psr-emitter                                                       
+yiisoft/rbac                                                              
 yiisoft/request-provider                                                  
 yiisoft/router                                                            
 yiisoft/router-fastroute                                                  
@@ -11483,16 +11762,27 @@ zf1/zend-uri
 zf1/zend-validate                                                         
 zf1/zend-xml                                                              
 zf1s/zend-acl                                                             
+zf1s/zend-application                                                     
+zf1s/zend-auth                                                            
 zf1s/zend-barcode                                                         
 zf1s/zend-cache                                                           
+zf1s/zend-captcha                                                         
 zf1s/zend-config                                                          
+zf1s/zend-console-getopt                                                  
 zf1s/zend-controller                                                      
 zf1s/zend-crypt                                                           
+zf1s/zend-currency                                                        
 zf1s/zend-date                                                            
+zf1s/zend-db                                                              
+zf1s/zend-debug                                                           
+zf1s/zend-dom                                                             
 zf1s/zend-exception                                                       
 zf1s/zend-feed                                                            
+zf1s/zend-file                                                            
+zf1s/zend-file-transfer                                                   
 zf1s/zend-filter                                                          
 zf1s/zend-form                                                            
+zf1s/zend-gdata                                                           
 zf1s/zend-http                                                            
 zf1s/zend-json                                                            
 zf1s/zend-layout                                                          
@@ -11500,18 +11790,41 @@ zf1s/zend-loader
 zf1s/zend-locale                                                          
 zf1s/zend-log                                                             
 zf1s/zend-mail                                                            
+zf1s/zend-measure                                                         
 zf1s/zend-memory                                                          
 zf1s/zend-mime                                                            
+zf1s/zend-navigation                                                      
+zf1s/zend-oauth                                                           
+zf1s/zend-paginator                                                       
 zf1s/zend-pdf                                                             
+zf1s/zend-queue                                                           
+zf1s/zend-reflection                                                      
 zf1s/zend-registry                                                        
+zf1s/zend-rest                                                            
+zf1s/zend-search                                                          
+zf1s/zend-search-lucene                                                   
+zf1s/zend-serializer                                                      
 zf1s/zend-server                                                          
 zf1s/zend-service                                                         
+zf1s/zend-service-akismet                                                 
+zf1s/zend-service-delicious                                               
+zf1s/zend-service-flickr                                                  
+zf1s/zend-service-recaptcha                                               
+zf1s/zend-service-twitter                                                 
+zf1s/zend-session                                                         
+zf1s/zend-soap                                                            
+zf1s/zend-stdlib                                                          
+zf1s/zend-tag                                                             
+zf1s/zend-test                                                            
+zf1s/zend-text                                                            
 zf1s/zend-translate                                                       
 zf1s/zend-uri                                                             
 zf1s/zend-validate                                                        
 zf1s/zend-version                                                         
 zf1s/zend-view                                                            
+zf1s/zend-wildfire                                                        
 zf1s/zend-xml                                                             
+zf1s/zend-xmlrpc                                                          
 zfcampus/zf-development-mode                                              
 zfr/rbac                                                                  
 zfr/zfr-cors                                                              
@@ -11546,4 +11859,4 @@ zubzet/password-hash-utilities
 zumba/amplitude-php                                                       
 zumba/json-serializer                                                     
 zytzagoo/smtp-validate-email                                              
-{"blockSize":75,"length":866100,"version":"7289"}
+{"blockSize":75,"length":889575,"version":"7439"}
