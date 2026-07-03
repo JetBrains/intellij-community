@@ -4,6 +4,7 @@ package com.intellij.codeInsight.navigation.actions
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.actions.BaseCodeInsightAction
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.navigation.CtrlMouseAction
 import com.intellij.codeInsight.navigation.CtrlMouseData
 import com.intellij.codeInsight.navigation.PsiTargetNavigator
@@ -23,9 +24,12 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.ex.ActionUtil.getActionUnavailableMessage
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorGutter
+import com.intellij.openapi.editor.elf.Elf
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -37,6 +41,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.PsiElementProcessor
+import com.intellij.psi.util.PsiUtilBase
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
@@ -84,6 +89,14 @@ open class GotoDeclarationAction : BaseCodeInsightAction(), DumbAware, CtrlMouse
         event.getData(EditorGutter.KEY) != null ||
         !isMouseShortcut && event.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE) == true
     ) {
+      LOG.trace {
+        val reason = when {
+          event.project == null -> "noProject"
+          event.getData(EditorGutter.KEY) != null -> "gutter"
+          else -> "virtualSpace"
+        }
+        "GotoDeclarationAction disabled: reason=$reason, place=${event.place}, isMouseShortcut=$isMouseShortcut"
+      }
       event.presentation.setEnabled(false)
       return
     }
@@ -95,6 +108,7 @@ open class GotoDeclarationAction : BaseCodeInsightAction(), DumbAware, CtrlMouse
           EditorUtil.isPointOverText(editor, RelativePoint(inputEvent).getPoint(editor.getContentComponent()))
         } != true)
     ) {
+      LOG.trace { "GotoDeclarationAction disabled: reason=pointNotOverText, place=${event.place}" }
       event.presentation.setEnabled(false)
       return
     }
@@ -107,6 +121,67 @@ open class GotoDeclarationAction : BaseCodeInsightAction(), DumbAware, CtrlMouse
     }
 
     super.update(event)
+
+    // Diagnostic logging for IJPL: GotoDeclaration intermittently disabled while it should be available
+    // (notably when switching to an existing file from another). All output is TRACE-only and off by
+    // default; enable #com.intellij.codeInsight.navigation.actions.GotoDeclarationAction:trace to collect it.
+    if (!event.presentation.isEnabled) {
+      LOG.trace {
+        val project = event.project
+        val baseEditor = event.getData(CommonDataKeys.EDITOR)
+        val psiInteractionAllowed = Elf.getElf().isPsiInteractionAllowed()
+        val inElfScope = Elf.getElf().isInElfScope()
+        val lookupActive = project != null && LookupManager.getInstance(project).activeLookup != null
+        val document = baseEditor?.document
+        val pdm = project?.let { PsiDocumentManager.getInstance(it) }
+        val committed = if (pdm != null && document != null) pdm.isCommitted(document) else null
+        // Sub-causes of a null result from getPsiFileInEditor, computed with public APIs:
+        val cachedPsi = if (pdm != null && document != null) pdm.getCachedPsiFile(document) else null
+        val psiForDoc = if (pdm != null && document != null) pdm.getPsiFile(document) else null // classic, no context
+        // Identities let us confirm the SAME document/file keeps failing across caret moves (stickiness):
+        val editorId = if (baseEditor == null) 0 else System.identityHashCode(baseEditor)
+        val docId = if (document == null) 0 else System.identityHashCode(document)
+        val vFile = if (document == null) null else FileDocumentManager.getInstance().getFile(document)
+        // getPsiFileInEditor may THROW on an invalid file (ensureValid) — that is itself the disable cause:
+        var psiInEditorError: String? = null
+        val psiInEditor = try {
+          val f = if (project != null && baseEditor != null && psiInteractionAllowed) {
+            PsiUtilBase.getPsiFileInEditor(baseEditor, project)
+          }
+          else null
+          if (f == null) "null" else "${f.language.id},valid=${f.isValid}"
+        }
+        catch (t: Throwable) {
+          psiInEditorError = "${t.javaClass.name}: ${t.message}"
+          "THREW"
+        }
+        val caretOffset = baseEditor?.caretModel?.offset ?: -1
+        "GotoDeclarationAction disabled (post-super): " +
+        "place=${event.place}" +
+        ", updateThread=${Thread.currentThread().name}" +
+        ", inputEvent=${inputEvent?.javaClass?.simpleName ?: "null"}" +
+        ", isMouseShortcut=$isMouseShortcut" +
+        ", fromContextMenu=${event.isFromContextMenu}" +
+        ", fromActionToolbar=${event.isFromActionToolbar}" +
+        ", project=${project != null}" +
+        ", editor=${baseEditor != null}@$editorId" +
+        ", editorClass=${baseEditor?.javaClass?.name ?: "null"}" +
+        ", document@$docId" +
+        ", file=${vFile?.name ?: "null"}" +
+        ", caretOffset=$caretOffset" +
+        ", psiInteractionAllowed=$psiInteractionAllowed" +
+        ", inElfScope=$inElfScope" +
+        ", lookupActive=$lookupActive" +
+        ", documentCommitted=$committed" +
+        ", cachedPsiFile=${if (cachedPsi == null) "null" else "${cachedPsi.language.id},valid=${cachedPsi.isValid}"}" +
+        ", getPsiFile(doc)=${if (psiForDoc == null) "null" else "${psiForDoc.language.id},valid=${psiForDoc.isValid}"}" +
+        ", getPsiFileInEditor=$psiInEditor" +
+        (if (psiInEditorError == null) "" else ", getPsiFileInEditorError=$psiInEditorError")
+      }
+    }
+    else {
+      LOG.trace { "GotoDeclarationAction enabled: place=${event.place}" }
+    }
   }
 
   override fun isValidForLookup(): Boolean = true
@@ -272,4 +347,3 @@ open class GotoDeclarationAction : BaseCodeInsightAction(), DumbAware, CtrlMouse
 private val LOG = Logger.getInstance(GotoDeclarationAction::class.java)
 private var ourCurrentEventData: List<EventPair<*>>? = null // accessed from EDT only
 private val GO_TO_DECLARATION_REPORTER_DATA_KEY = DataKey.create<GotoDeclarationReporter>("GoToDeclarationReporterKey")
-
