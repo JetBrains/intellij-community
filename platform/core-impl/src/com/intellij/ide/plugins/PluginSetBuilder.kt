@@ -3,7 +3,6 @@
 
 package com.intellij.ide.plugins
 
-import com.intellij.core.CoreBundle
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.containers.Java11Shim
@@ -12,7 +11,6 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.Arrays
-import java.util.function.Supplier
 
 @ApiStatus.Internal
 class PluginSetBuilder(
@@ -312,36 +310,6 @@ class PluginSetBuilder(
         }
         PluginModuleVisibilityCheckOption.DISABLED -> null
       }
-    }
-
-    internal fun createCyclePluginLoadingError(component: Collection<PluginModuleDescriptor>, getDependencies: (PluginModuleDescriptor) -> Iterator<PluginModuleDescriptor>): PluginLoadingError {
-      val pluginString =
-        component.joinToString(separator = ", ") { "'${it.name} (${it.pluginId.idString}${if (it.contentModuleName != null) ":" + it.contentModuleName else ""})'" }
-      val detailedMessage = StringBuilder()
-      val pluginToString: (IdeaPluginDescriptorImpl) -> String = { "id = ${it.pluginId.idString}@${it.contentModuleName} (${it.name})" }
-      detailedMessage.append("Detected plugin dependencies cycle details (only related dependencies are included):\n")
-      component
-        .asSequence()
-        .map { Pair(it, pluginToString(it)) }
-        .sortedWith(Comparator.comparing({ it.second }, String.CASE_INSENSITIVE_ORDER))
-        .forEach {
-          detailedMessage.append("  ").append(it.second).append(" depends on:\n")
-          getDependencies(it.first).asSequence()
-            .filter { o: IdeaPluginDescriptorImpl -> component.contains(o) }
-            .map(pluginToString)
-            .sortedWith(java.lang.String.CASE_INSENSITIVE_ORDER)
-            .forEach { dep: String? ->
-              detailedMessage.append("    ").append(dep).append("\n")
-            }
-        }
-      PluginManagerCore.logger.info(detailedMessage.toString())
-      return PluginLoadingError(
-        reason = null,
-        messageSupplier = Supplier {
-          CoreBundle.message("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginString)
-        },
-        error = null,
-      )
     }
   }
 }

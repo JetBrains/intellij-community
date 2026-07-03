@@ -725,10 +725,40 @@ object PluginManagerCore {
     descriptor: IdeaPluginDescriptorImpl,
     cycleErrors: ArrayList<PluginLoadingError>,
   ) {
+    fun createCyclePluginLoadingError(component: Collection<PluginModuleDescriptor>, getDependencies: (PluginModuleDescriptor) -> Iterator<PluginModuleDescriptor>): PluginLoadingError {
+      val pluginString =
+        component.joinToString(separator = ", ") { "'${it.name} (${it.pluginId.idString}${if (it.contentModuleName != null) ":" + it.contentModuleName else ""})'" }
+      val detailedMessage = StringBuilder()
+      val pluginToString: (IdeaPluginDescriptorImpl) -> String = { "id = ${it.pluginId.idString}@${it.contentModuleName} (${it.name})" }
+      detailedMessage.append("Detected plugin dependencies cycle details (only related dependencies are included):\n")
+      component
+        .asSequence()
+        .map { Pair(it, pluginToString(it)) }
+        .sortedWith(Comparator.comparing({ it.second }, String.CASE_INSENSITIVE_ORDER))
+        .forEach {
+          detailedMessage.append("  ").append(it.second).append(" depends on:\n")
+          getDependencies(it.first).asSequence()
+            .filter { o: IdeaPluginDescriptorImpl -> component.contains(o) }
+            .map(pluginToString)
+            .sortedWith(java.lang.String.CASE_INSENSITIVE_ORDER)
+            .forEach { dep: String? ->
+              detailedMessage.append("    ").append(dep).append("\n")
+            }
+        }
+      logger.info(detailedMessage.toString())
+      return PluginLoadingError(
+        reason = null,
+        messageSupplier = Supplier {
+          CoreBundle.message("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginString)
+        },
+        error = null,
+      )
+    }
+
     val exclusionReason = resolvedPluginSet.getExclusionReason(descriptor)
     when (exclusionReason) {
       is PartOfDependencyCycle -> {
-        val error = PluginSetBuilder.createCyclePluginLoadingError(exclusionReason.dependencyCycle.nodesWithDependenciesOnCycle.keys.filterIsInstance<PluginModuleDescriptor>()) {
+        val error = createCyclePluginLoadingError(exclusionReason.dependencyCycle.nodesWithDependenciesOnCycle.keys.filterIsInstance<PluginModuleDescriptor>()) {
           emptySequence<Nothing>().iterator() // lost diagnostics on cycle chain – doesn't matter since the cycle is logged properly by logExclusionTree
         }
         if (cycleErrors.none { it.htmlMessage.toString() == error.htmlMessage.toString() }) { // slow path anyway
@@ -738,7 +768,7 @@ object PluginManagerCore {
       is PartOfRuntimeModuleGroupDependencyCycle -> {
         val cycle = exclusionReason.dependencyCycle.nodesWithDependenciesOnCycle.keys.asSequence()
           .flatMap { it.sortedDescriptors }.distinct().filterIsInstance<PluginModuleDescriptor>().toList()
-        val error = PluginSetBuilder.createCyclePluginLoadingError(cycle) { emptySequence<Nothing>().iterator() }
+        val error = createCyclePluginLoadingError(cycle) { emptySequence<Nothing>().iterator() }
         if (cycleErrors.none { it.htmlMessage.toString() == error.htmlMessage.toString() }) { // slow path anyway
           cycleErrors.add(error)
         }
