@@ -361,7 +361,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return withContext(Dispatchers.EDT) {
       val pluginEnabler = PluginEnabler.getInstance()
       val disabledWithoutRestart = if (pluginEnabler is DynamicPluginEnabler) {
-        pluginEnabler.disable(descriptors, project, null)
+        pluginEnabler.disable(descriptors, project)
       }
       else {
         pluginEnabler.disable(descriptors)
@@ -437,7 +437,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     session.dynamicPluginsToInstall.clear()
     session.pluginsToRemoveOnCancel.clear()
 
-    needRestart = needRestart or !applyEnableDisablePlugins(session, pluginEnabler, parent, project)
+    needRestart = needRestart or !applyEnableDisablePlugins(session, pluginEnabler, project)
     session.dynamicPluginsToUninstall.clear()
     session.statesDiff.clear()
 
@@ -889,7 +889,6 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   private fun applyEnableDisablePlugins(
     session: PluginManagerSession,
     pluginEnabler: PluginEnabler,
-    parentComponent: JComponent?,
     project: Project?,
   ): Boolean {
     val descriptorsByAction = EnumMap<PluginEnableDisableAction, MutableList<IdeaPluginDescriptor>>(PluginEnableDisableAction::class.java)
@@ -918,7 +917,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
       val applied: Boolean
       if (pluginEnabler is DynamicPluginEnabler) {
-        applied = if (enable) pluginEnabler.enable(descriptors, project) else pluginEnabler.disable(descriptors, project, parentComponent)
+        applied = if (enable) pluginEnabler.enable(descriptors, project) else pluginEnabler.disable(descriptors, project)
       }
       else {
         applied = if (enable) pluginEnabler.enable(descriptors) else pluginEnabler.disable(descriptors)

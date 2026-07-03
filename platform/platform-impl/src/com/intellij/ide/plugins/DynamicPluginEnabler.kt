@@ -12,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.swing.JComponent
 
 private val LOG = logger<DynamicPluginEnabler>()
 
@@ -93,13 +92,12 @@ class DynamicPluginEnabler : PluginEnabler {
   fun disable(
     descriptors: Collection<IdeaPluginDescriptor>,
     project: Project? = null,
-    parentComponent: JComponent? = null,
   ): Boolean {
     PluginManagerUsageCollector.pluginsStateChanged(descriptors, enable = false, project)
 
     PluginEnabler.HEADLESS.disable(descriptors)
     val installedDescriptors = findInstalledPlugins(descriptors) ?: return false
-    val pluginsUnloaded = DynamicPlugins.unloadPlugins(installedDescriptors, project, parentComponent)
+    val pluginsUnloaded = DynamicPlugins.unloadPlugins(installedDescriptors, project)
     for (listener in pluginEnableStateChangedListeners) {
       try {
         listener.stateChanged(descriptors, false)

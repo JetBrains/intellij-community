@@ -193,8 +193,6 @@ object DynamicPlugins {
   fun unloadPlugins(
     plugins: List<PluginMainDescriptor>,
     project: Project? = null,
-    parentComponent: JComponent? = null,
-    options: UnloadPluginOptions = UnloadPluginOptions(disable = true),
   ): Boolean {
     return runWithModalProgressBlocking(
       project?.let { ModalTaskOwner.project(it) } ?: ModalTaskOwner.guess(),
