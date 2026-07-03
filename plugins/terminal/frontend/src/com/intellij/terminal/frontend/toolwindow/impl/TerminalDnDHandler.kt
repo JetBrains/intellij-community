@@ -135,7 +135,7 @@ internal object TerminalDnDHandler {
 
     coroutineScope.launch {
       val droppedFiles = if (data.virtualFiles.isNotEmpty()) {
-        data.virtualFiles.mapNotNull { it.toNioPathOrNull() }
+        data.virtualFiles.mapNotNull { getNioPathForFile(it, window.project.getEelDescriptor()) }
       }
       else data.paths
 
