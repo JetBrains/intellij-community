@@ -5,6 +5,8 @@ package org.jetbrains.kotlin.idea.base.compilerPreferences.configuration;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.ModuleManager;
@@ -300,12 +302,15 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
     }
   }
 
-  private void fetchAvailableJpsCompilersAsync(Consumer<? super @NlsSafe @Nullable Collection<IdeKotlinVersion>> onFinish) {
+  private void fetchAvailableJpsCompilersAsync(@NotNull ModalityState modality,
+                                               Consumer<? super @NlsSafe @Nullable Collection<IdeKotlinVersion>> onFinish) {
+    Consumer<? super @NlsSafe @Nullable Collection<IdeKotlinVersion>> onEdt =
+      result -> ApplicationManager.getApplication().invokeLater(() -> onFinish.accept(result), modality);
     JarRepositoryManager.getAvailableVersions(project, RepositoryLibraryDescription.findDescription(
         KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID, KotlinArtifactConstants.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID))
       .onProcessed(distVersions -> {
         if (distVersions == null) {
-          onFinish.accept(null);
+          onEdt.accept(null);
           return;
         }
         JarRepositoryManager.getAvailableVersions(project, RepositoryLibraryDescription.findDescription(
@@ -313,7 +318,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
             KotlinArtifactConstants.KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID))
           .onProcessed(jpsClassPathVersions -> {
             if (jpsClassPathVersions == null) {
-              onFinish.accept(null);
+              onEdt.accept(null);
               return;
             }
 
@@ -332,7 +337,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
               }
             }
 
-            onFinish.accept(ideKotlinVersions);
+            onEdt.accept(ideKotlinVersions);
           });
       });
   }
@@ -366,7 +371,9 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         @Override
         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
           ui.kotlinJpsPluginVersionComboBox.removePopupMenuListener(this);
+          ModalityState modality = ModalityState.stateForComponent(ui.kotlinJpsPluginVersionComboBox);
           fetchAvailableJpsCompilersAsync(
+            modality,
             availableVersions -> {
               ui.kotlinJpsPluginVersionComboBox.removeItem(loadingItem);
               if (availableVersions == null) {
