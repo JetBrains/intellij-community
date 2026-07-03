@@ -168,9 +168,6 @@
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.KotlinLibraryToSourceAnalysisStateComponent"/>
 
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.util.FirPluginOracleService"
-                    serviceImplementation="org.jetbrains.kotlin.idea.util.FirPluginOracleServiceFirImpl"/>
-
     <!--suppress LightServiceMigrationXML -->
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService"/>
 
