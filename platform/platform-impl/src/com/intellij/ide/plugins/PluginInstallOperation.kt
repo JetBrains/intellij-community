@@ -242,21 +242,13 @@ class PluginInstallOperation(
       }
       val allowNoRestart = myAllowInstallWithoutRestart &&
                            runBlockingCancellable {
-                             if (DynamicPluginsSupport.getInstance() != null) {
-                               DynamicPlugins.checkCanReconfigureWithoutRestart(
-                                 addNewCustomPlugins = newPluginVersions,
-                                 forceRemovePlugins = emptyList(),
-                                 extraStateValidator = DynamicPlugins.expectPluginsState(expectToLoad = newPluginVersions.map { it.pluginId }),
-                                 pretendEnabled = emptyList(),
-                                 pretendDisabled = emptyList(),
-                               )
-                             }
-                             else {
-                               DynamicPlugins.allowLoadUnloadWithoutRestart(
-                                 descriptor, null,
-                                 myPendingDynamicPluginInstalls.map { pluginInstall -> pluginInstall.pluginDescriptor },
-                               )
-                             }
+                             DynamicPlugins.checkCanReconfigureWithoutRestart(
+                               addNewCustomPlugins = newPluginVersions,
+                               forceRemovePlugins = emptyList(),
+                               extraStateValidator = DynamicPlugins.expectPluginsState(expectToLoad = newPluginVersions.map { it.pluginId }),
+                               pretendEnabled = emptyList(),
+                               pretendDisabled = emptyList(),
+                             )
                            }
       if (allowNoRestart) {
         myPendingDynamicPluginInstalls.add(PendingDynamicPluginInstall(downloader.getFilePath(), descriptor))
