@@ -146,23 +146,17 @@ export function MarkdownPreviewApp({
         const sourcePosition = sourcePositionFromPreNode(node)
         return (
           <section className="frontmatterBlock" data-sourcepos={sourcePosition ? positionKey(sourcePosition) : undefined}>
-            <div className="frontmatterHeader">
-              <h1 className="frontmatterTitle">{frontmatterBlock.title}</h1>
-              {frontmatterBlock.subtitle && <p className="frontmatterSubtitle">{frontmatterBlock.subtitle}</p>}
-            </div>
-            {frontmatterBlock.metadata.length > 0 && (
-              <details className="frontmatterMetadata">
-                <summary>Metadata</summary>
-                <dl>
-                  {frontmatterBlock.metadata.map((entry, index) => (
-                    <div className="frontmatterMetadataEntry" key={`${entry.key}-${index}`}>
-                      <dt>{entry.key}</dt>
-                      <dd>{entry.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </details>
-            )}
+            <details className="frontmatterMetadata">
+              <summary>Frontmatter metadata</summary>
+              <dl>
+                {frontmatterBlock.metadata.map((entry, index) => (
+                  <div className="frontmatterMetadataEntry" key={`${entry.key}-${index}`}>
+                    <dt>{entry.key}</dt>
+                    <dd>{entry.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </details>
           </section>
         )
       }

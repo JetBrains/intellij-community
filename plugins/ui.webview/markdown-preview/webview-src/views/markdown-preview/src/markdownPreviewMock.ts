@@ -214,13 +214,11 @@ function closestFontSize(fontSize: number, options: number[]): number {
 }
 
 const sampleMarkdown = `---
-title: Markdown Preview Frontmatter
-subtitle: WebView testkit bridge
-author: JetBrains
-tags: [webview, markdown]
-draft: false
-nested:
-  hidden: true
+project: IntelliJ IDEA Platform
+languages: [Kotlin, Java]
+framework: IntelliJ Platform SDK
+build-system: Bazel
+repository: monorepo
 ---
 
 # Markdown Preview Mock

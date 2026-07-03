@@ -1817,28 +1817,11 @@ html[data-theme="light"] .markdownPreview {
   height: 1em;
 }
 .markdownPreview .frontmatterBlock {
-  padding-bottom: 18px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--ij-border);
 }
-.markdownPreview .frontmatterHeader {
-  display: grid;
-  gap: 6px;
-}
-.markdownPreview .frontmatterTitle {
-  margin: 0;
-  color: var(--ij-text-primary);
-  font-size: 2em;
-  font-weight: 600;
-  line-height: 1.2;
-}
-.markdownPreview .frontmatterSubtitle {
-  margin: 0;
-  color: var(--ij-text-secondary);
-  font-size: 1.08em;
-  line-height: 1.45;
-}
 .markdownPreview .frontmatterMetadata {
-  margin: 14px 0 0;
+  margin: 0;
   padding: 0;
   border: 0;
   border-radius: 0;

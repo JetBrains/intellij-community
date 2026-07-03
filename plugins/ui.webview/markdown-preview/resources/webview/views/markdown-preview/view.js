@@ -1102,12 +1102,6 @@ function base64UrlEncode(value) {
 }
 //#endregion
 //#region views/markdown-preview/src/markdownRemarkPlugins.ts
-var frontmatterSubtitleKeys = [
-	"subtitle",
-	"description",
-	"summary"
-];
-var frontmatterHeaderKeys = new Set(["title", ...frontmatterSubtitleKeys]);
 function remarkFrontmatterBlocks() {
 	return (tree) => transformFrontmatterNodes(tree);
 }
@@ -1122,16 +1116,8 @@ function frontmatterBlockFromPreNode(node) {
 	const language = frontmatterLanguageFromPreNode(node);
 	if (!language) return void 0;
 	const entries = parseFrontmatterEntries(hastText(codeNodeFromPreNode(node)), language);
-	const title = frontmatterValue(entries, ["title"]);
-	if (!title) return void 0;
-	return {
-		title,
-		subtitle: frontmatterValue(entries, frontmatterSubtitleKeys),
-		metadata: entries.filter((entry) => !frontmatterHeaderKeys.has(entry.normalizedKey)).map(({ key, value }) => ({
-			key,
-			value
-		}))
-	};
+	if (entries.length === 0) return void 0;
+	return { metadata: entries };
 }
 function transformFrontmatterNodes(node) {
 	if (!node.children) return;
@@ -1174,7 +1160,6 @@ function parseFrontmatterEntry(line, language) {
 	if (!value) return void 0;
 	return {
 		key,
-		normalizedKey: key.toLowerCase(),
 		value
 	};
 }
@@ -1231,9 +1216,6 @@ function unquoteFrontmatterValue(value) {
 	const quote = value[0];
 	const trimmedValue = ((quote === "\"" || quote === "'") && value.endsWith(quote) ? value.substring(1, value.length - 1) : value).trim();
 	return trimmedValue.length > 0 ? trimmedValue : void 0;
-}
-function frontmatterValue(entries, keys) {
-	return entries.find((entry) => keys.includes(entry.normalizedKey))?.value;
 }
 function addSourcePositionAttributes(node) {
 	const position = node.position;
@@ -2145,25 +2127,16 @@ function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, sel
 				const frontmatterBlock = frontmatterBlockFromPreNode(node);
 				if (!frontmatterBlock) return null;
 				const sourcePosition = sourcePositionFromPreNode(node);
-				return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+				return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
 					className: "frontmatterBlock",
 					"data-sourcepos": sourcePosition ? positionKey(sourcePosition) : void 0,
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "frontmatterHeader",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-							className: "frontmatterTitle",
-							children: frontmatterBlock.title
-						}), frontmatterBlock.subtitle && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "frontmatterSubtitle",
-							children: frontmatterBlock.subtitle
-						})]
-					}), frontmatterBlock.metadata.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("details", {
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("details", {
 						className: "frontmatterMetadata",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("summary", { children: "Metadata" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dl", { children: frontmatterBlock.metadata.map((entry, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("summary", { children: "Frontmatter metadata" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dl", { children: frontmatterBlock.metadata.map((entry, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 							className: "frontmatterMetadataEntry",
 							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: entry.key }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: entry.value })]
 						}, `${entry.key}-${index}`)) })]
-					})]
+					})
 				});
 			}
 			const sourcePosition = sourcePositionFromPreNode(node);

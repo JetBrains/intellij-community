@@ -101,8 +101,8 @@ test("renders frontmatter as an article header with collapsed metadata", async (
     return {
       isFirstBlock: content?.firstElementChild === block,
       hasPre: block?.querySelector("pre") != null,
-      title: block?.querySelector(".frontmatterTitle")?.textContent ?? "",
-      subtitle: block?.querySelector(".frontmatterSubtitle")?.textContent ?? "",
+      hasTitle: block?.querySelector(".frontmatterTitle") != null,
+      summary: details?.querySelector("summary")?.textContent ?? "",
       hasDetails: details != null,
       detailsOpen: details?.open ?? true,
       metadataLabels,
@@ -112,19 +112,20 @@ test("renders frontmatter as an article header with collapsed metadata", async (
 
   expect(frontmatterState.isFirstBlock).toBe(true)
   expect(frontmatterState.hasPre).toBe(false)
-  expect(frontmatterState.title === "Markdown Preview Frontmatter").toBe(true)
-  expect(frontmatterState.subtitle === "WebView testkit bridge").toBe(true)
+  expect(frontmatterState.hasTitle).toBe(false)
+  expect(frontmatterState.summary === "Frontmatter metadata").toBe(true)
   expect(frontmatterState.hasDetails).toBe(true)
   expect(frontmatterState.detailsOpen).toBe(false)
-  expect(frontmatterState.metadataLabels.includes("author")).toBe(true)
-  expect(frontmatterState.metadataLabels.includes("tags")).toBe(true)
-  expect(frontmatterState.metadataLabels.includes("draft")).toBe(true)
-  expect(frontmatterState.metadataLabels.includes("title")).toBe(false)
-  expect(frontmatterState.metadataLabels.includes("subtitle")).toBe(false)
-  expect(frontmatterState.metadataLabels.includes("nested")).toBe(false)
-  expect(frontmatterState.metadataValues.includes("JetBrains")).toBe(true)
-  expect(frontmatterState.metadataValues.includes("webview, markdown")).toBe(true)
-  expect(frontmatterState.metadataValues.includes("false")).toBe(true)
+  expect(frontmatterState.metadataLabels.includes("project")).toBe(true)
+  expect(frontmatterState.metadataLabels.includes("languages")).toBe(true)
+  expect(frontmatterState.metadataLabels.includes("framework")).toBe(true)
+  expect(frontmatterState.metadataLabels.includes("build-system")).toBe(true)
+  expect(frontmatterState.metadataLabels.includes("repository")).toBe(true)
+  expect(frontmatterState.metadataValues.includes("IntelliJ IDEA Platform")).toBe(true)
+  expect(frontmatterState.metadataValues.includes("Kotlin, Java")).toBe(true)
+  expect(frontmatterState.metadataValues.includes("IntelliJ Platform SDK")).toBe(true)
+  expect(frontmatterState.metadataValues.includes("Bazel")).toBe(true)
+  expect(frontmatterState.metadataValues.includes("monorepo")).toBe(true)
 })
 
 test("changes preview font size from floating settings", async ({ page }) => {

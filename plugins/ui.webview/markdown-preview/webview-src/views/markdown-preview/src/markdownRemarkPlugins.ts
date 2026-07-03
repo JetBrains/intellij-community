@@ -24,8 +24,6 @@ interface MarkdownNode {
 }
 
 export interface FrontmatterBlock {
-  title: string
-  subtitle?: string
   metadata: FrontmatterMetadataEntry[]
 }
 
@@ -33,13 +31,6 @@ export interface FrontmatterMetadataEntry {
   key: string
   value: string
 }
-
-interface FrontmatterEntry extends FrontmatterMetadataEntry {
-  normalizedKey: string
-}
-
-const frontmatterSubtitleKeys = ["subtitle", "description", "summary"]
-const frontmatterHeaderKeys = new Set(["title", ...frontmatterSubtitleKeys])
 
 export function remarkFrontmatterBlocks() {
   return (tree: unknown) => transformFrontmatterNodes(tree as MarkdownNode)
@@ -60,15 +51,10 @@ export function frontmatterBlockFromPreNode(node: unknown): FrontmatterBlock | u
   if (!language) return undefined
 
   const entries = parseFrontmatterEntries(hastText(codeNodeFromPreNode(node)), language)
-  const title = frontmatterValue(entries, ["title"])
-  if (!title) return undefined
+  if (entries.length === 0) return undefined
 
   return {
-    title,
-    subtitle: frontmatterValue(entries, frontmatterSubtitleKeys),
-    metadata: entries
-      .filter(entry => !frontmatterHeaderKeys.has(entry.normalizedKey))
-      .map(({ key, value }) => ({ key, value })),
+    metadata: entries,
   }
 }
 
@@ -105,13 +91,13 @@ function frontmatterCodeNode(node: MarkdownNode): MarkdownNode {
   }
 }
 
-function parseFrontmatterEntries(source: string, language: string): FrontmatterEntry[] {
+function parseFrontmatterEntries(source: string, language: string): FrontmatterMetadataEntry[] {
   return source.split(/\r?\n/)
     .map(line => parseFrontmatterEntry(line, language))
-    .filter((entry): entry is FrontmatterEntry => entry !== undefined)
+    .filter((entry): entry is FrontmatterMetadataEntry => entry !== undefined)
 }
 
-function parseFrontmatterEntry(line: string, language: string): FrontmatterEntry | undefined {
+function parseFrontmatterEntry(line: string, language: string): FrontmatterMetadataEntry | undefined {
   if (line.startsWith(" ") || line.startsWith("\t")) return undefined
 
   const trimmedLine = line.trim()
@@ -126,7 +112,7 @@ function parseFrontmatterEntry(line: string, language: string): FrontmatterEntry
   const value = formatFrontmatterValue(match[2])
   if (!value) return undefined
 
-  return { key, normalizedKey: key.toLowerCase(), value }
+  return { key, value }
 }
 
 function formatFrontmatterValue(value: string): string | undefined {
@@ -195,10 +181,6 @@ function unquoteFrontmatterValue(value: string): string | undefined {
     : value
   const trimmedValue = unquoted.trim()
   return trimmedValue.length > 0 ? trimmedValue : undefined
-}
-
-function frontmatterValue(entries: FrontmatterEntry[], keys: string[]): string | undefined {
-  return entries.find(entry => keys.includes(entry.normalizedKey))?.value
 }
 
 function addSourcePositionAttributes(node: MarkdownNode): void {
