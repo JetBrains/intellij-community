@@ -5,9 +5,6 @@ import com.intellij.codeInsight.daemon.impl.InspectionVisitorOptimizer
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.PerformanceWatcher
-import com.intellij.diagnostic.hprof.action.SystemTempFilenameSupplier
-import com.intellij.diagnostic.hprof.analysis.AnalyzeClassloaderReferencesGraph
-import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
 import com.intellij.ide.DataManager
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.cl.PluginClassLoader
@@ -22,10 +19,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
@@ -46,9 +40,6 @@ import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.xmlb.clearPropertyCollectorCache
 import java.awt.KeyboardFocusManager
 import java.awt.Window
-import java.nio.channels.FileChannel
-import java.nio.file.Paths
-import java.nio.file.StandardOpenOption
 import javax.swing.ToolTipManager
 
 private val LOG = logger<DynamicPlugins>()
@@ -120,18 +111,6 @@ internal object DynamicPluginsLegacyImpl {
           }
         }
       }
-    }
-  }
-
-  internal fun analyzeSnapshot(hprofPath: String, pluginId: PluginId): String {
-    FileChannel.open(Paths.get(hprofPath), StandardOpenOption.READ).use { channel ->
-      val analysis = HProfAnalysis(channel, SystemTempFilenameSupplier()) { analysisContext, listProvider, progressIndicator ->
-        AnalyzeClassloaderReferencesGraph(analysisContext, listProvider, pluginId.idString).analyze(progressIndicator).mainReport.toString()
-      }
-      analysis.onlyStrongReferences = true
-      analysis.includeClassesAsRoots = false
-      analysis.setIncludeMetaInfo(false)
-      return analysis.analyze(ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator())
     }
   }
 
