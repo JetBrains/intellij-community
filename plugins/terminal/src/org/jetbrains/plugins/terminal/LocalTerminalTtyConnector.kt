@@ -93,7 +93,7 @@ class LocalTerminalTtyConnector internal constructor(
 
     when {
       ptyProcess is UnixPtyProcess -> {
-        terminateLocalPosixProcess(ptyProcess)
+        terminateLocalPosixProcess(shellEelProcess, ptyProcess)
       }
       ptyProcess is IjentChildPtyProcessAdapter && shellProcessHolder.isPosix -> {
         terminateRemotePosixProcess(shellEelProcess)
@@ -107,14 +107,16 @@ class LocalTerminalTtyConnector internal constructor(
     }
   }
 
-  private suspend fun terminateLocalPosixProcess(process: UnixPtyProcess) {
-    process.hangup()
-    if (process.awaitExit(1.seconds) == null) {
-      LOG.info("Terminal hasn't been terminated by SIGHUP, performing default termination (SIGTERM)")
-      process.destroy()
-      if (process.awaitExit(1.seconds) == null) {
-        LOG.warn("Terminal hasn't been terminated by SIGTERM, performing forceful termination (SIGKILL!!!)")
-        process.destroyForcibly()
+  private suspend fun terminateLocalPosixProcess(process: ShellEelProcess, ptyProcess: UnixPtyProcess) {
+    LOG.debug { "Sending SIGHUP to ${processInfo(process)}" }
+
+    ptyProcess.hangup()
+    if (ptyProcess.awaitExit(1.seconds) == null) {
+      LOG.info("${processInfo(process)} hasn't been terminated by SIGHUP, performing default termination (SIGTERM)")
+      ptyProcess.destroy()
+      if (ptyProcess.awaitExit(1.seconds) == null) {
+        LOG.warn("${processInfo(process)} hasn't been terminated by SIGTERM, performing forceful termination (SIGKILL!!!)")
+        ptyProcess.destroyForcibly()
       }
     }
   }
@@ -142,7 +144,7 @@ class LocalTerminalTtyConnector internal constructor(
         killProcess.awaitProcessResult()
       }
       if (ptyProcess.isAlive) {
-        LOG.info("${processInfo(process)} hasn't been terminated by SIGHUP, performing forceful termination. " +
+        LOG.warn("${processInfo(process)} hasn't been terminated by SIGHUP, performing forceful termination (SIGKILL!!!)\n" +
                  "\"kill -HUP $shellPid\" => ${killProcessResult?.stringify()}")
         ptyProcess.destroyForcibly()
       }
@@ -167,7 +169,7 @@ class LocalTerminalTtyConnector internal constructor(
         outputStream.flush()
       }
       catch (e: IOException) {
-        LOG.info("Failed to send Ctrl+C to ${ptyProcess.javaClass.getSimpleName()}, alive:${ptyProcess.isAlive}", e)
+        LOG.warn("Failed to send Ctrl+C to ${ptyProcess.javaClass.getSimpleName()}, alive:${ptyProcess.isAlive}", e)
       }
     }
   }
