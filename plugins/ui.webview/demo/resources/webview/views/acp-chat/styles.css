@@ -1751,7 +1751,7 @@ body {
   font-weight: 600;
 }
 .acpChatListNew,
-.acpChatListDrawerTrigger,
+.acpChatListToggle,
 .acpChatListDelete {
   display: inline-flex;
   align-items: center;
@@ -1769,8 +1769,8 @@ body {
 }
 .acpChatListNew:hover,
 .acpChatListNew:focus-visible,
-.acpChatListDrawerTrigger:hover,
-.acpChatListDrawerTrigger:focus-visible,
+.acpChatListToggle:hover:not(:disabled),
+.acpChatListToggle:focus-visible,
 .acpChatListDelete:hover,
 .acpChatListDelete:focus-visible {
   border-color: var(--acp-border);
@@ -1859,14 +1859,25 @@ body {
   cursor: default;
   opacity: 0.6;
 }
-.acpChatListDrawerTrigger {
-  position: absolute;
-  top: 8px;
-  left: 8px;
+.acpChatListToggle {
+  box-sizing: border-box;
+  align-self: stretch;
+  flex: 0 0 10px;
   z-index: 20;
+  width: 10px;
+  height: auto;
+  min-height: 0;
   background: var(--acp-bg-alt);
+  border-width: 0 1px 0 0;
   border-color: var(--acp-border);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  border-radius: 0;
+}
+.acpChatListToggle:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+.acpChatListSidebarTrigger {
+  display: none;
 }
 .acpChatListOverlay {
   position: absolute;
@@ -1890,25 +1901,38 @@ body {
 .acpChatListOverlay[data-open="true"] .acpChatListBackdrop {
   opacity: 1;
 }
-.acpChatListDrawer {
+.acpChatListDrawerShell {
   position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
+  display: flex;
+  transform: translateX(-100%);
+  transition: transform 140ms ease;
+}
+.acpChatListDrawer {
+  position: relative;
   width: min(280px, 82vw);
   max-width: 100%;
   border-right: 1px solid var(--acp-border);
   background: var(--acp-bg-alt);
   box-shadow: 8px 0 24px rgba(0, 0, 0, 0.28);
-  transform: translateX(-100%);
-  transition: transform 140ms ease;
 }
-.acpChatListOverlay[data-open="true"] .acpChatListDrawer {
+.acpChatListDrawerCloseTrigger {
+  z-index: 1;
+  border-width: 0 1px 0 0;
+  box-shadow: 8px 0 24px rgba(0, 0, 0, 0.28);
+}
+.acpChatListOverlay[data-open="true"] .acpChatListDrawerShell {
   transform: translateX(0);
 }
 @container (min-width: 860px) {
-  .acpChatListSidebar {
+  .acpChatListSidebar[data-open="true"] {
     display: flex;
+  }
+
+  .acpChatListSidebarTrigger {
+    display: inline-flex;
   }
 
   .acpChatListDrawerTrigger,

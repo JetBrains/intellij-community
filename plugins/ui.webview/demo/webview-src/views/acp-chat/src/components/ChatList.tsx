@@ -10,6 +10,9 @@ type ChatListProps = {
 
 export function ChatList({ chat }: ChatListProps) {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const chatListAvailable = chat.chatListSupported
+  const sidebarExpanded = chatListAvailable && sidebarOpen
 
   useEffect(() => {
     if (!drawerOpen) return
@@ -20,29 +23,63 @@ export function ChatList({ chat }: ChatListProps) {
     return () => document.removeEventListener("keydown", onKeyDown)
   }, [drawerOpen])
 
-  if (!chat.chatListSupported) return null
+  useEffect(() => {
+    if (!chatListAvailable) setDrawerOpen(false)
+  }, [chatListAvailable])
 
   const closeDrawer = () => setDrawerOpen(false)
+  const openDrawer = () => {
+    if (chatListAvailable) setDrawerOpen(true)
+  }
+  const toggleSidebar = () => {
+    if (chatListAvailable) setSidebarOpen(open => !open)
+  }
   return (
     <>
-      <aside className="acpChatListSidebar" aria-label="Chats">
-        <ChatListPanel chat={chat} />
-      </aside>
+      {chatListAvailable ? (
+        <aside className="acpChatListSidebar" data-open={sidebarOpen ? "true" : "false"} aria-label="Chats">
+          <ChatListPanel chat={chat} />
+        </aside>
+      ) : null}
       <button
         type="button"
-        className="acpChatListDrawerTrigger"
+        className="acpChatListToggle acpChatListSidebarTrigger"
+        aria-label={sidebarExpanded ? "Close chats" : "Open chats"}
+        title={sidebarExpanded ? "Close chats" : "Open chats"}
+        aria-expanded={sidebarExpanded}
+        disabled={!chatListAvailable}
+        onClick={toggleSidebar}
+      >
+        {sidebarExpanded ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+      </button>
+      <button
+        type="button"
+        className="acpChatListToggle acpChatListDrawerTrigger"
         aria-label="Open chats"
         title="Open chats"
         aria-expanded={drawerOpen}
-        onClick={() => setDrawerOpen(true)}
+        disabled={!chatListAvailable}
+        onClick={openDrawer}
       >
-        <SidebarIcon />
+        <ChevronRightIcon />
       </button>
       <div className="acpChatListOverlay" data-open={drawerOpen ? "true" : "false"} aria-hidden={!drawerOpen}>
         <button type="button" className="acpChatListBackdrop" aria-label="Close chats" onClick={closeDrawer} />
-        <aside className="acpChatListDrawer" aria-label="Chats">
-          <ChatListPanel chat={chat} onNavigate={closeDrawer} />
-        </aside>
+        <div className="acpChatListDrawerShell">
+          <aside className="acpChatListDrawer" aria-label="Chats">
+            {chatListAvailable ? <ChatListPanel chat={chat} onNavigate={closeDrawer} /> : null}
+          </aside>
+          <button
+            type="button"
+            className="acpChatListToggle acpChatListDrawerCloseTrigger"
+            aria-label="Close chats"
+            title="Close chats"
+            aria-expanded={drawerOpen}
+            onClick={closeDrawer}
+          >
+            <ChevronLeftIcon />
+          </button>
+        </div>
       </div>
     </>
   )
@@ -89,11 +126,18 @@ function ChatListItem(props: { canDelete: boolean; onNavigate?: () => void }) {
   )
 }
 
-function SidebarIcon() {
+function ChevronRightIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-      <path d="M3 2.5h10A1.5 1.5 0 0 1 14.5 4v8a1.5 1.5 0 0 1-1.5 1.5H3A1.5 1.5 0 0 1 1.5 12V4A1.5 1.5 0 0 1 3 2.5Zm3.5 0v11" fill="none" stroke="currentColor" strokeWidth="1.2" />
-      <path d="M4.3 5.2 2.9 8l1.4 2.8" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="8" height="16" viewBox="0 0 8 16" aria-hidden="true" focusable="false">
+      <path d="M2.25 4.5 5.75 8 2.25 11.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function ChevronLeftIcon() {
+  return (
+    <svg width="8" height="16" viewBox="0 0 8 16" aria-hidden="true" focusable="false">
+      <path d="M5.75 4.5 2.25 8 5.75 11.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }

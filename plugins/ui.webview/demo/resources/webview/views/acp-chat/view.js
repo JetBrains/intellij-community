@@ -2576,6 +2576,9 @@ function ApprovalPrompt({ permission }) {
 //#region views/acp-chat/src/components/ChatList.tsx
 function ChatList({ chat }) {
 	const [drawerOpen, setDrawerOpen] = (0, import_react.useState)(false);
+	const [sidebarOpen, setSidebarOpen] = (0, import_react.useState)(true);
+	const chatListAvailable = chat.chatListSupported;
+	const sidebarExpanded = chatListAvailable && sidebarOpen;
 	(0, import_react.useEffect)(() => {
 		if (!drawerOpen) return;
 		const onKeyDown = (event) => {
@@ -2584,22 +2587,42 @@ function ChatList({ chat }) {
 		document.addEventListener("keydown", onKeyDown);
 		return () => document.removeEventListener("keydown", onKeyDown);
 	}, [drawerOpen]);
-	if (!chat.chatListSupported) return null;
+	(0, import_react.useEffect)(() => {
+		if (!chatListAvailable) setDrawerOpen(false);
+	}, [chatListAvailable]);
 	const closeDrawer = () => setDrawerOpen(false);
+	const openDrawer = () => {
+		if (chatListAvailable) setDrawerOpen(true);
+	};
+	const toggleSidebar = () => {
+		if (chatListAvailable) setSidebarOpen((open) => !open);
+	};
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("aside", {
+		chatListAvailable ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("aside", {
 			className: "acpChatListSidebar",
+			"data-open": sidebarOpen ? "true" : "false",
 			"aria-label": "Chats",
 			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChatListPanel, { chat })
+		}) : null,
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+			type: "button",
+			className: "acpChatListToggle acpChatListSidebarTrigger",
+			"aria-label": sidebarExpanded ? "Close chats" : "Open chats",
+			title: sidebarExpanded ? "Close chats" : "Open chats",
+			"aria-expanded": sidebarExpanded,
+			disabled: !chatListAvailable,
+			onClick: toggleSidebar,
+			children: sidebarExpanded ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChevronLeftIcon, {}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChevronRightIcon, {})
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 			type: "button",
-			className: "acpChatListDrawerTrigger",
+			className: "acpChatListToggle acpChatListDrawerTrigger",
 			"aria-label": "Open chats",
 			title: "Open chats",
 			"aria-expanded": drawerOpen,
-			onClick: () => setDrawerOpen(true),
-			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SidebarIcon, {})
+			disabled: !chatListAvailable,
+			onClick: openDrawer,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChevronRightIcon, {})
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 			className: "acpChatListOverlay",
@@ -2610,13 +2633,24 @@ function ChatList({ chat }) {
 				className: "acpChatListBackdrop",
 				"aria-label": "Close chats",
 				onClick: closeDrawer
-			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("aside", {
-				className: "acpChatListDrawer",
-				"aria-label": "Chats",
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChatListPanel, {
-					chat,
-					onNavigate: closeDrawer
-				})
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "acpChatListDrawerShell",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("aside", {
+					className: "acpChatListDrawer",
+					"aria-label": "Chats",
+					children: chatListAvailable ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChatListPanel, {
+						chat,
+						onNavigate: closeDrawer
+					}) : null
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					className: "acpChatListToggle acpChatListDrawerCloseTrigger",
+					"aria-label": "Close chats",
+					title: "Close chats",
+					"aria-expanded": drawerOpen,
+					onClick: closeDrawer,
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChevronLeftIcon, {})
+				})]
 			})]
 		})
 	] });
@@ -2679,26 +2713,38 @@ function ChatListItem(props) {
 		}) : null]
 	});
 }
-function SidebarIcon() {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
-		width: "16",
+function ChevronRightIcon() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		width: "8",
 		height: "16",
-		viewBox: "0 0 16 16",
+		viewBox: "0 0 8 16",
 		"aria-hidden": "true",
 		focusable: "false",
-		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
-			d: "M3 2.5h10A1.5 1.5 0 0 1 14.5 4v8a1.5 1.5 0 0 1-1.5 1.5H3A1.5 1.5 0 0 1 1.5 12V4A1.5 1.5 0 0 1 3 2.5Zm3.5 0v11",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M2.25 4.5 5.75 8 2.25 11.5",
 			fill: "none",
 			stroke: "currentColor",
-			strokeWidth: "1.2"
-		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
-			d: "M4.3 5.2 2.9 8l1.4 2.8",
-			fill: "none",
-			stroke: "currentColor",
-			strokeWidth: "1.2",
+			strokeWidth: "1.4",
 			strokeLinecap: "round",
 			strokeLinejoin: "round"
-		})]
+		})
+	});
+}
+function ChevronLeftIcon() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		width: "8",
+		height: "16",
+		viewBox: "0 0 8 16",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M5.75 4.5 2.25 8 5.75 11.5",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.4",
+			strokeLinecap: "round",
+			strokeLinejoin: "round"
+		})
 	});
 }
 function PlusIcon() {

@@ -559,41 +559,88 @@ test("keeps ACP tool calls in the assistant event order", async ({ page }) => {
 test("shows the ACP chat list as a sidebar on wide panels", async ({page}) => {
   await page.setViewportSize({width: 1000, height: 700})
   await openPreview(page)
+
+  const sidebarTrigger = page.locator(".acpChatListSidebarTrigger")
+  await expect(sidebarTrigger).toBeVisible()
+  expect(await page.evaluate(() => (document.querySelector(".acpChatListSidebarTrigger") as HTMLButtonElement | null)?.disabled === true)).toBe(true)
+
   await startMockAgent(page)
 
+  expect(await page.evaluate(() => (document.querySelector(".acpChatListSidebarTrigger") as HTMLButtonElement | null)?.disabled === false)).toBe(true)
   await expect(page.getByRole("button", {name: "Loaded session one"})).toBeVisible()
   const layout = await page.evaluate(() => {
     const sidebar = document.querySelector(".acpChatListSidebar")
-    const trigger = document.querySelector(".acpChatListDrawerTrigger")
+    const drawerTrigger = document.querySelector(".acpChatListDrawerTrigger")
+    const sidebarTrigger = document.querySelector(".acpChatListSidebarTrigger")
     return {
       sidebarVisible: sidebar != null && getComputedStyle(sidebar).display !== "none" && sidebar.getBoundingClientRect().width >= 239,
-      triggerHidden: trigger != null && getComputedStyle(trigger).display === "none",
+      drawerTriggerHidden: drawerTrigger != null && getComputedStyle(drawerTrigger).display === "none",
+      sidebarTriggerVisible: sidebarTrigger != null && getComputedStyle(sidebarTrigger).display !== "none",
+      sidebarTriggerWidth: sidebarTrigger?.getBoundingClientRect().width ?? 0,
     }
   })
   expect(layout.sidebarVisible).toBe(true)
-  expect(layout.triggerHidden).toBe(true)
+  expect(layout.drawerTriggerHidden).toBe(true)
+  expect(layout.sidebarTriggerVisible).toBe(true)
+  expect(layout.sidebarTriggerWidth <= 12).toBe(true)
+
+  await sidebarTrigger.click()
+  expect(await page.evaluate(() => document.querySelector(".acpChatListSidebarTrigger")?.getAttribute("aria-expanded") === "false")).toBe(true)
+  const collapsed = await page.evaluate(() => {
+    const sidebar = document.querySelector(".acpChatListSidebar")
+    return sidebar != null && getComputedStyle(sidebar).display === "none"
+  })
+  expect(collapsed).toBe(true)
+
+  await sidebarTrigger.click()
+  expect(await page.evaluate(() => document.querySelector(".acpChatListSidebarTrigger")?.getAttribute("aria-expanded") === "true")).toBe(true)
 })
 
 test("opens the ACP chat list as a drawer on narrow panels", async ({page}) => {
   await page.setViewportSize({width: 620, height: 700})
   await openPreview(page)
+
+  const drawerTrigger = page.locator(".acpChatListDrawerTrigger")
+  await expect(drawerTrigger).toBeVisible()
+  expect(await page.evaluate(() => (document.querySelector(".acpChatListDrawerTrigger") as HTMLButtonElement | null)?.disabled === true)).toBe(true)
+
   await startMockAgent(page)
 
+  expect(await page.evaluate(() => (document.querySelector(".acpChatListDrawerTrigger") as HTMLButtonElement | null)?.disabled === false)).toBe(true)
   const compactLayout = await page.evaluate(() => {
     const sidebar = document.querySelector(".acpChatListSidebar")
     const trigger = document.querySelector(".acpChatListDrawerTrigger")
     return {
       sidebarHidden: sidebar != null && getComputedStyle(sidebar).display === "none",
       triggerVisible: trigger != null && getComputedStyle(trigger).display !== "none",
+      triggerWidth: trigger?.getBoundingClientRect().width ?? 0,
     }
   })
   expect(compactLayout.sidebarHidden).toBe(true)
   expect(compactLayout.triggerVisible).toBe(true)
+  expect(compactLayout.triggerWidth <= 12).toBe(true)
 
-  await page.getByRole("button", {name: "Open chats"}).click()
+  await drawerTrigger.click()
   await expect(page.getByRole("button", {name: "Loaded session one"})).toBeVisible()
-  const drawerOpen = await page.evaluate(() => document.querySelector(".acpChatListOverlay")?.getAttribute("data-open") === "true")
-  expect(drawerOpen).toBe(true)
+  const drawerOpen = await page.evaluate(() => {
+    const drawer = document.querySelector(".acpChatListDrawer")
+    const closeTrigger = document.querySelector(".acpChatListDrawerCloseTrigger")
+    const drawerRect = drawer?.getBoundingClientRect()
+    const closeTriggerRect = closeTrigger?.getBoundingClientRect()
+    return {
+      open: document.querySelector(".acpChatListOverlay")?.getAttribute("data-open") === "true",
+      closeTriggerVisible: closeTrigger != null && getComputedStyle(closeTrigger).display !== "none",
+      closeTriggerRightOfDrawer: drawerRect != null && closeTriggerRect != null && closeTriggerRect.left >= drawerRect.right,
+      closeTriggerWidth: closeTriggerRect?.width ?? 0,
+    }
+  })
+  expect(drawerOpen.open).toBe(true)
+  expect(drawerOpen.closeTriggerVisible).toBe(true)
+  expect(drawerOpen.closeTriggerRightOfDrawer).toBe(true)
+  expect(drawerOpen.closeTriggerWidth <= 12).toBe(true)
+
+  await page.locator(".acpChatListDrawerCloseTrigger").click()
+  await page.waitForFunction(() => document.querySelector(".acpChatListOverlay")?.getAttribute("data-open") === "false")
 })
 
 test("loads ACP sessions into the assistant-ui thread list and replays selected history", async ({page}) => {
