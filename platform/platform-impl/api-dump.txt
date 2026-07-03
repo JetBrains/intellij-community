@@ -1031,6 +1031,7 @@ com.intellij.ide.dnd.TransferableWrapper
 - a:getPsiElements():com.intellij.psi.PsiElement[]
 - a:getTreeNodes():javax.swing.tree.TreeNode[]
 - getTreePaths():javax.swing.tree.TreePath[]
+- getVirtualFiles():com.intellij.openapi.vfs.VirtualFile[]
 c:com.intellij.ide.dnd.aware.DnDAwareTree
 - com.intellij.ui.treeStructure.Tree
 - com.intellij.ide.dnd.DnDAware
