@@ -561,7 +561,7 @@ public final class GradleExecutionHelper {
 
         buildEnvironment = modelBuilder.get();
       }
-      catch (ExternalSystemException e) {
+      catch (ExternalSystemException | CancellationException e) {
         throw e;
       }
       catch (Exception ex) {
