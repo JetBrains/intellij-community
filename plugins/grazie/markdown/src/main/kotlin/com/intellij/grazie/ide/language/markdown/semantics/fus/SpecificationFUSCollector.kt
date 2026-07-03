@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 internal object SpecificationFUSCollector: CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("grazie.semantics", 3)
+  private val GROUP = EventLogGroup("grazie.semantics", 4)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -55,6 +55,7 @@ internal object SpecificationFUSCollector: CounterUsagesCollector() {
     "specification.analysis",
     ANALYZER_FIELD,
     TEXT_LENGTH_FIELD,
+    FILE_COUNT_FIELD,
     COST_FIELD,
     TIME_FIELD,
     ISSUES_FIELD,
