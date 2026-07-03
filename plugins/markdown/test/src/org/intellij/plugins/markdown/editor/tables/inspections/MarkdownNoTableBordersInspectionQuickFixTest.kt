@@ -61,6 +61,23 @@ class MarkdownNoTableBordersInspectionQuickFixTest: LightPlatformCodeInsightFixt
     doTest(before, after)
   }
 
+  @Test
+  fun `works on table inside blockquote with missing trailing separator`() {
+    // language=Markdown
+    val before = """
+    > |     |     |
+    > |-----|-----<caret>
+    > |     |     |
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    > |     |     |
+    > |-----|-----|
+    > |     |     |
+    """.trimIndent()
+    doTest(before, after)
+  }
+
   private fun doTest(content: String, after: String) {
     myFixture.configureByText("some.md", content)
     myFixture.enableInspections(MarkdownNoTableBordersInspection())

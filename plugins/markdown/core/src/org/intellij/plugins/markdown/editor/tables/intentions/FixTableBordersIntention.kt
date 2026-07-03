@@ -14,6 +14,7 @@ import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCor
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.isCorrectlyFormatted
 import org.intellij.plugins.markdown.editor.tables.TableProps
 import org.intellij.plugins.markdown.editor.tables.TableUtils
+import org.intellij.plugins.markdown.editor.tables.TableUtils.calculateActualTextRange
 import org.intellij.plugins.markdown.editor.tables.TableUtils.columnsCount
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
@@ -54,8 +55,11 @@ internal class FixTableBordersIntention: PsiElementBaseIntentionAction() {
   }
 
   private fun fixSeparatorRow(separatorRow: MarkdownTableSeparatorRow) {
-    val currentText = separatorRow.text
+    val actualRange = separatorRow.calculateActualTextRange().shiftLeft(separatorRow.startOffset)
+    val prefix = separatorRow.text.substring(0, actualRange.startOffset)
+    val currentText = actualRange.substring(separatorRow.text)
     val newText = buildString {
+      append(prefix)
       if (!currentText.startsWith(TableProps.SEPARATOR_CHAR)) {
         append(TableProps.SEPARATOR_CHAR)
       }
@@ -64,7 +68,7 @@ internal class FixTableBordersIntention: PsiElementBaseIntentionAction() {
         append(TableProps.SEPARATOR_CHAR)
       }
     }
-    separatorRow.replace(MarkdownPsiElementFactory.createTableSeparatorRow(separatorRow.project, newText))
+    separatorRow.replaceWithText(newText)
   }
 
   private fun fixRow(row: MarkdownTableRow, columnsCount: Int) {
