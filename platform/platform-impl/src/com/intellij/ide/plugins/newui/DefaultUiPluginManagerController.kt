@@ -191,7 +191,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
           deletePluginFiles(descriptor.pluginId)
         }
         else if (allowLoadUnloadSynchronously(descriptor.pluginId)) {
-          installWithoutRestart = uninstallDynamicPlugin(parentComponent, sessionId, descriptor.pluginId, true)
+          installWithoutRestart = uninstallDynamicPlugin(sessionId, descriptor.pluginId)
         }
         else {
           uninstallPlugin = true
@@ -394,7 +394,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       val pluginId: PluginId = pluginDescriptor.getPluginId()
 
       if (!needRestart) {
-        needRestart = !uninstallDynamicPlugin(parent, session.sessionId, pluginDescriptor.getPluginId(), false)
+        needRestart = !uninstallDynamicPlugin(session.sessionId, pluginDescriptor.getPluginId())
       }
 
       if (needRestart) {
@@ -467,7 +467,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     session.statesDiff.clear();
 
     session.pluginsToRemoveOnCancel.forEach {
-      PluginInstaller.uninstallDynamicPlugin(parentComponent, it.getMainDescriptor(), false)
+      PluginInstaller.uninstallDynamicPlugin(it.getMainDescriptor())
     }
     session.pluginsToRemoveOnCancel.clear()
     if (removeSession) {
@@ -594,10 +594,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return uninstalledPlugin == null
   }
 
-  private fun uninstallDynamicPlugin(parentComponent: JComponent?, sessionId: String, pluginId: PluginId, isUpdate: Boolean): Boolean {
+  private fun uninstallDynamicPlugin(sessionId: String, pluginId: PluginId): Boolean {
     val session = findSession(sessionId) ?: return true
     val plugin = PluginManagerCore.findPlugin(pluginId)?.getMainDescriptor() ?: return false
-    val uninstalledWithoutRestart = PluginInstaller.uninstallDynamicPlugin(parentComponent, plugin, isUpdate)
+    val uninstalledWithoutRestart = PluginInstaller.uninstallDynamicPlugin(plugin)
     session.needRestart = session.needRestart || !uninstalledWithoutRestart
     return uninstalledWithoutRestart
   }

@@ -109,7 +109,6 @@ object PluginInstaller {
   @ApiStatus.Internal
   @JvmStatic
   fun unloadDynamicPlugin(
-    parentComponent: JComponent?,
     pluginDescriptor: PluginMainDescriptor,
   ): Boolean {
     return DynamicPlugins.unloadPlugin(pluginDescriptor)
@@ -118,15 +117,13 @@ object PluginInstaller {
   @ApiStatus.Internal
   @JvmStatic
   fun uninstallDynamicPlugin(
-    parentComponent: JComponent?,
     pluginDescriptor: PluginMainDescriptor,
-    isUpdate: Boolean,
   ): Boolean {
     if (pluginDescriptor.isBundled()) {
       throw IllegalArgumentException("Plugin is bundled: " + pluginDescriptor.getPluginId())
     }
 
-    var uninstalledWithoutRestart = !pluginDescriptor.isEnabled() || unloadDynamicPlugin(parentComponent, pluginDescriptor)
+    var uninstalledWithoutRestart = !pluginDescriptor.isEnabled() || unloadDynamicPlugin(pluginDescriptor)
     if (uninstalledWithoutRestart) {
       try {
         LOG.debug("Deleting dynamic plugin from disk: " + pluginDescriptor.getPluginPath())
