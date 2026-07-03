@@ -12951,6 +12951,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/replaceInfixOrOperatorCall/array.kt");
         }
 
+        @TestMetadata("arrayAccessInNullableParameter.kt")
+        public void testArrayAccessInNullableParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceInfixOrOperatorCall/arrayAccessInNullableParameter.kt");
+        }
+
         @TestMetadata("arraySet.kt")
         public void testArraySet() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/replaceInfixOrOperatorCall/arraySet.kt");
@@ -13338,9 +13343,39 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/replaceWithSafeCall/noReplaceWithSafeCallForImplicitReceiver.kt");
         }
 
+        @TestMetadata("nonNullablePair.kt")
+        public void testNonNullablePair() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceWithSafeCall/nonNullablePair.kt");
+        }
+
+        @TestMetadata("nonNullableReturnExpression.kt")
+        public void testNonNullableReturnExpression() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceWithSafeCall/nonNullableReturnExpression.kt");
+        }
+
         @TestMetadata("normal.kt")
         public void testNormal() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/replaceWithSafeCall/normal.kt");
+        }
+
+        @TestMetadata("nullablePair.kt")
+        public void testNullablePair() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceWithSafeCall/nullablePair.kt");
+        }
+
+        @TestMetadata("nullableParameter.kt")
+        public void testNullableParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceWithSafeCall/nullableParameter.kt");
+        }
+
+        @TestMetadata("nullablePropertyInitializer.kt")
+        public void testNullablePropertyInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceWithSafeCall/nullablePropertyInitializer.kt");
+        }
+
+        @TestMetadata("nullableReturnExpression.kt")
+        public void testNullableReturnExpression() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceWithSafeCall/nullableReturnExpression.kt");
         }
 
         @TestMetadata("return.kt")

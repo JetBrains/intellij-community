@@ -7,7 +7,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -18,10 +17,10 @@ import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
@@ -50,7 +49,7 @@ abstract class ReplaceCallFix(
 
         val replacement = element.replace(newExpression)
         if (elvis.isNotEmpty()) {
-            replacement.moveCaretToEnd(project, updater)
+            replacement.startTemplateForElvisTodo(updater)
         }
 
         return replacement as? KtExpression
@@ -77,7 +76,7 @@ class ReplaceImplicitReceiverCallFix(
         val newExpression = KtPsiFactory(context.project).createExpressionByPattern("this?.$0$elvis", element)
         val replacement = element.replace(newExpression)
         if (elvis.isNotEmpty()) {
-            replacement.moveCaretToEnd(context.project, updater)
+            replacement.startTemplateForElvisTodo(updater)
         }
     }
 }
@@ -130,13 +129,16 @@ class ReplaceWithDotCallFix(
 fun KtExpression.elvisOrEmpty(notNullNeeded: Boolean): String {
     if (!notNullNeeded) return ""
     val binaryExpression = getStrictParentOfType<KtBinaryExpression>()
-    return if (binaryExpression?.left == this && binaryExpression.operationToken == KtTokens.ELVIS) "" else "?:"
+    return if (binaryExpression?.left == this && binaryExpression.operationToken == KtTokens.ELVIS) "" else " ?: TODO()"
 }
 
-fun PsiElement.moveCaretToEnd(project: Project, updater: ModPsiUpdater) {
-    val document = containingFile.fileDocument
-    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document)
-    val endOffset = if (text.endsWith(")")) endOffset - 1 else endOffset
-    document.insertString(endOffset, " ")
-    updater.moveCaretTo(endOffset + 1)
+fun PsiElement.startTemplateForElvisTodo(updater: ModPsiUpdater) {
+    val expression = this as? KtExpression ?: return
+    val unwrapped = KtPsiUtil.deparenthesize(expression)
+    val todoExpression = (unwrapped as? KtBinaryExpression)
+        ?.takeIf { it.operationToken == KtTokens.ELVIS }
+        ?.right
+        ?: return
+    updater.moveCaretTo(todoExpression)
+    updater.templateBuilder().field(todoExpression, todoExpression.text)
 }

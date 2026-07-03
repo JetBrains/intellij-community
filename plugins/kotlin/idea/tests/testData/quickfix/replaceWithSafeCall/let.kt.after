@@ -3,7 +3,7 @@
 // K2_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'String?'.
 fun foo(a: String?) {
     a.let {
-        it?.length ?: <caret>
+        it?.length ?: TODO()
     }
 }
 

@@ -5,7 +5,7 @@ var i = 0
 
 fun foo(a: String?) {
     a.run {
-        i = this?.length ?: <caret>
+        i = this?.length ?: TODO()
     }
 }
 
