@@ -4,6 +4,7 @@
   <dependencies>
     <module name="intellij.platform.backend"/>
     <module name="intellij.java"/>
+    <module name="intellij.java.backend"/>
     <module name="intellij.java.compiler.impl"/>
     <module name="intellij.java.debugger"/>
     <module name="intellij.java.debugger.impl"/>
