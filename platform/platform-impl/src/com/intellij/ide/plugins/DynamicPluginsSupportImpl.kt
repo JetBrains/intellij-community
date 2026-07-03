@@ -5,10 +5,10 @@ import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveProjectsAndApp
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.clearCachedValues
 import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.clearCachesAfterUnload
-import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.registerDescriptors
-import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.unloadModuleDescriptorNotRecursively
+import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.createDisposeTreePredicate
 import com.intellij.ide.plugins.DynamicPluginsValidators.IssueReporter
 import com.intellij.ide.plugins.DynamicPluginsValidators.validateGroupCanBeLoaded
 import com.intellij.ide.plugins.DynamicPluginsValidators.validateGroupCanBeUnloaded
@@ -17,25 +17,39 @@ import com.intellij.ide.plugins.DynamicPluginsValidators.validateProductRulesPer
 import com.intellij.ide.plugins.DynamicPluginsValidators.validateProductRulesPermitUnloading
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader.UNLOAD_IN_PROGRESS
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.extensions.ExtensionDescriptor
+import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointDeferredListenersNotification
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.progress.SequentialProgressReporter
 import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.platform.util.progress.withProgressText
+import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.util.SystemProperties
 import com.intellij.util.application
 import com.intellij.util.concurrency.TransferredWriteActionService
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.WeakList
+import com.intellij.util.messages.impl.MessageBusEx
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
@@ -48,6 +62,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.util.function.Predicate
 import kotlin.time.Duration.Companion.seconds
 
 private val LOG = Logger.getInstance(DynamicPluginsSupportImpl::class.java)
@@ -542,14 +557,155 @@ internal class DynamicPluginsSupportImpl(
       }
     }
   }
-}
 
-private fun <R> runSafe(body: () -> R): R? {
-  try {
-    return body()
+  internal fun unloadModuleDescriptorNotRecursively(module: IdeaPluginDescriptorImpl) {
+    val app = ApplicationManager.getApplication() as ApplicationImpl
+    (ActionManager.getInstance() as ActionManagerImpl).unloadActions(module)
+
+    val openedProjects = ProjectUtil.getOpenProjects().toMutableList()
+    @Suppress("TestOnlyProblems")
+    if (ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized) {
+      openedProjects.add(ProjectManagerEx.getInstanceEx().defaultProject)
+    }
+
+    val appExtensionArea = app.extensionArea
+    val priorityUnloadListeners = mutableListOf<Runnable>()
+    val unloadListeners = mutableListOf<Runnable>()
+    unregisterExtensions(
+      extensionMap = module.extensions,
+      pluginDescriptor = module,
+      appExtensionArea = appExtensionArea,
+      openedProjects = openedProjects,
+      priorityUnloadListeners = priorityUnloadListeners,
+      unloadListeners = unloadListeners
+    )
+
+    for (priorityUnloadListener in priorityUnloadListeners) {
+      priorityUnloadListener.run()
+    }
+    for (unloadListener in unloadListeners) {
+      unloadListener.run()
+    }
+
+    // first, reset all plugin extension points before unregistering, so that listeners don't see plugin in semi-torn-down state
+    processExtensionPoints(module, openedProjects) { points, area ->
+      area.resetExtensionPoints(points, module)
+    }
+    // unregister plugin extension points
+    processExtensionPoints(module, openedProjects) { points, area ->
+      area.unregisterExtensionPoints(points, module)
+    }
+
+    val appMessageBus = app.messageBus as MessageBusEx
+    app.unloadServices(module, module.appContainerDescriptor.services)
+    appMessageBus.unsubscribeLazyListeners(module, module.appContainerDescriptor.listeners)
+
+    for (project in openedProjects) {
+      (project as ComponentManagerEx).unloadServices(module, module.projectContainerDescriptor.services)
+      (project.messageBus as MessageBusEx).unsubscribeLazyListeners(module, module.projectContainerDescriptor.listeners)
+
+      val moduleServices = module.moduleContainerDescriptor.services
+      for (ideaModule in ModuleManager.getInstance(project).modules) {
+        (ideaModule as ComponentManagerEx).unloadServices(module, moduleServices)
+        createDisposeTreePredicate(module)?.let { Disposer.disposeChildren(ideaModule, it) }
+      }
+
+      createDisposeTreePredicate(module)?.let { Disposer.disposeChildren(project, it) }
+    }
+
+    appMessageBus.disconnectPluginConnections(Predicate { aClass ->
+      (aClass.classLoader as? PluginClassLoader)?.pluginDescriptor === module
+    })
+
+    createDisposeTreePredicate(module)?.let { Disposer.disposeChildren(ApplicationManager.getApplication(), it) }
+
+    val pluginClassLoader = module.pluginClassLoader as? PluginClassLoader
+    if (pluginClassLoader != null) {
+      Language.unregisterAllLanguagesIn(pluginClassLoader, module)
+    }
   }
-  catch (e: Throwable) {
-    if (e !is CancellationException) LOG.error(e)
-    return null
+
+  internal fun unregisterExtensions(
+    extensionMap: Map<String, List<ExtensionDescriptor>>,
+    pluginDescriptor: IdeaPluginDescriptorImpl,
+    appExtensionArea: ExtensionsAreaImpl,
+    openedProjects: List<Project>,
+    priorityUnloadListeners: MutableList<Runnable>,
+    unloadListeners: MutableList<Runnable>,
+  ) {
+    for (epName in extensionMap.keys) {
+      val isAppLevelEp = appExtensionArea.unregisterExtensions(epName, pluginDescriptor, priorityUnloadListeners,
+                                                               unloadListeners)
+      if (isAppLevelEp) {
+        continue
+      }
+
+      for (project in openedProjects) {
+        val isProjectLevelEp = (project.extensionArea as ExtensionsAreaImpl)
+          .unregisterExtensions(epName, pluginDescriptor, priorityUnloadListeners, unloadListeners)
+        if (!isProjectLevelEp) {
+          for (module in ModuleManager.getInstance(project).modules) {
+            (module.extensionArea as ExtensionsAreaImpl)
+              .unregisterExtensions(epName, pluginDescriptor, priorityUnloadListeners, unloadListeners)
+          }
+        }
+      }
+    }
+  }
+
+  internal fun processExtensionPoints(
+    pluginDescriptor: IdeaPluginDescriptorImpl,
+    projects: List<Project>,
+    processor: (points: List<ExtensionPointDescriptor>, area: ExtensionsAreaImpl) -> Unit,
+  ) {
+    pluginDescriptor.appContainerDescriptor.extensionPoints.takeIf { it.isNotEmpty() }?.let {
+      processor(it, ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
+    }
+    pluginDescriptor.projectContainerDescriptor.extensionPoints.takeIf { it.isNotEmpty() }?.let { extensionPoints ->
+      for (project in projects) {
+        processor(extensionPoints, project.extensionArea as ExtensionsAreaImpl)
+      }
+    }
+    pluginDescriptor.moduleContainerDescriptor.extensionPoints.takeIf { it.isNotEmpty() }?.let { extensionPoints ->
+      for (project in projects) {
+        for (module in ModuleManager.getInstance(project).modules) {
+          processor(extensionPoints, module.extensionArea as ExtensionsAreaImpl)
+        }
+      }
+    }
+  }
+
+  internal fun registerDescriptors(
+    app: ApplicationImpl,
+    descriptors: Sequence<IdeaPluginDescriptorImpl>,
+    listenerCallbacks: MutableList<ExtensionPointDeferredListenersNotification>,
+  ) {
+    app.registerComponents(descriptors = descriptors, app = app, listenerCallbacks = listenerCallbacks)
+
+    val openedProjects = ProjectUtil.getOpenProjects().toMutableList()
+    @Suppress("TestOnlyProblems")
+    if (ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized) {
+      openedProjects.add(ProjectManagerEx.getInstanceEx().defaultProject)
+    }
+
+    for (openProject in openedProjects) {
+      openProject.getComponentManagerImpl().registerComponents(descriptors = descriptors, app = app, listenerCallbacks = listenerCallbacks)
+
+      for (module in ModuleManager.getInstance(openProject).modules) {
+        module.getComponentManagerImpl().registerComponents(descriptors = descriptors, app = app, listenerCallbacks = listenerCallbacks)
+      }
+    }
+
+    (ActionManager.getInstance() as ActionManagerImpl).registerActions(descriptors)
+  }
+
+  private fun <R> runSafe(body: () -> R): R? {
+    try {
+      return body()
+    }
+    catch (e: Throwable) {
+      if (e !is CancellationException) LOG.error(e)
+      return null
+    }
   }
 }
