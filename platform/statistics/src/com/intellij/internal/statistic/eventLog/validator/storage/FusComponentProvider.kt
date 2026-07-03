@@ -220,8 +220,7 @@ object FusComponentProvider {
     val eventLogProvider = getEventLogProvider(recorderId)
     val isUnitTest = ApplicationManager.getApplication().isUnitTestMode()
 
-    // TODO: change isInternal to lambda so it is evaluated dynamically
-    val isInternal = applicationInfo.isInternal
+    val isInternal = { applicationInfo.isInternal }
     val systemLogGroupId = "${recorderId.lowercase(Locale.ENGLISH)}.event.log"
     val systemCollector = eventLogProvider.eventLogSystemLogger
     val recorderConfig = EventLogConfiguration.getInstance()
@@ -330,7 +329,7 @@ object FusComponentProvider {
             excludedFields = FeatureUsageData.platformDataKeys,
             utilRulesProducer = CustomRuleProducer(recorderId)
           )
-          val effective: MetadataStorage<EventLogBuild> = if (isInternal) {
+          val effective: MetadataStorage<EventLogBuild> = if (isInternal()) {
             CompositeValidationRulesStorage(storage, ValidationTestRulesPersistedStorage(recorderId))
           } else {
             storage

@@ -15,10 +15,12 @@ import com.jetbrains.fus.reporting.REMOTE_CONFIG_OPTIONS_UPDATED
 import com.jetbrains.fus.reporting.RegionCode
 import com.jetbrains.fus.reporting.RemoteConfig
 import com.jetbrains.fus.reporting.defaults.NoOpLoggerFactory
+import com.jetbrains.fus.reporting.defaults.dispatcher.EventLogBuildType
 import com.jetbrains.fus.reporting.defaults.dispatcher.EventQueue
 import com.jetbrains.fus.reporting.defaults.dispatcher.SendInformationAggregator
 import com.jetbrains.fus.reporting.defaults.dispatcher.SendResult
 import com.jetbrains.fus.reporting.defaults.dispatcher.SimpleLegacyReportDispatcher
+import com.jetbrains.fus.reporting.model.config.v4.ConfigurationReleaseFilter
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.lion3.LogEventAction
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
@@ -74,7 +76,7 @@ class FusDispatcherThrottleTest {
         IntellijReportValidator(recorderId),
         eventQueue,
         "test-device",
-        false,
+        { false },
         "$recorderId.event.log".lowercase(),
       )
 
@@ -150,7 +152,7 @@ class FusDispatcherThrottleTest {
         IntellijReportValidator(recorderId),
         RecordingEventQueue(),
         "test-device",
-        false,
+        { false },
         "$recorderId.event.log".lowercase(),
       )
 
@@ -181,6 +183,8 @@ private class NoOptionsRemoteConfig : RemoteConfig {
   override suspend fun update(): Boolean = true
   override suspend fun scheduleUpdate() = Unit
   override fun isUnreachable(): Boolean = false
+  override fun provideReleaseFilters(): List<ConfigurationReleaseFilter> = emptyList()
+  override fun provideReleaseFilters(releaseType: String?): List<ConfigurationReleaseFilter> = emptyList()
 }
 
 private class NoOpHttpClient : FusHttpClient {
@@ -192,6 +196,7 @@ private class NoOpHttpClient : FusHttpClient {
 /** Captures everything the dispatcher enqueues (post merge/throttle/validate); [dequeue] is never exercised. */
 private class RecordingEventQueue : EventQueue<LogEvent> {
   val enqueued: MutableList<LogEvent> = CopyOnWriteArrayList()
+  override val buildType = EventLogBuildType.ALL
 
   override lateinit var sendInformationAggregator: SendInformationAggregator
   override val defaultDelay: Duration = 1.hours

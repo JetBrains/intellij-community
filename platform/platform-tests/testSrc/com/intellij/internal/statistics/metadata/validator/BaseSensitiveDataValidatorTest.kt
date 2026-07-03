@@ -28,6 +28,7 @@ import com.jetbrains.fus.reporting.RegionCode
 import com.jetbrains.fus.reporting.RemoteConfig
 import com.jetbrains.fus.reporting.defaults.DefaultMetadataStorage
 import com.jetbrains.fus.reporting.defaults.NoOpLoggerFactory
+import com.jetbrains.fus.reporting.model.config.v4.ConfigurationReleaseFilter
 import java.io.File
 import java.nio.file.Files
 import kotlin.test.assertTrue
@@ -128,6 +129,8 @@ abstract class BaseSensitiveDataValidatorTest  : UsefulTestCase() {
       override suspend fun update(): Boolean = true
       override suspend fun scheduleUpdate() = Unit
       override fun isUnreachable(): Boolean = false
+      override fun provideReleaseFilters(): List<ConfigurationReleaseFilter> = emptyList()
+      override fun provideReleaseFilters(releaseType: String?): List<ConfigurationReleaseFilter> = emptyList()
     }
 
     val fusConfig = FusClientConfig(
