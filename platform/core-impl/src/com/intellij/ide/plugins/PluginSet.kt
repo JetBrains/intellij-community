@@ -46,8 +46,6 @@ class PluginSet internal constructor(
     return sortedModulesWithDependencies.directDependencies.getOrDefault(moduleDescriptor, Collections.emptyList())
   }
 
-  fun getModuleTopologicalComparator(): Comparator<PluginModuleDescriptor> = topologicalComparator
-
   @TestOnly
   fun getUnsortedEnabledModules(): Collection<ContentModuleDescriptor> = Java11Shim.INSTANCE.copyOf(enabledModuleMap.values)
 
@@ -62,53 +60,6 @@ class PluginSet internal constructor(
   fun findEnabledModule(moduleId: PluginModuleId): ContentModuleDescriptor? = enabledModuleMap.get(moduleId)
 
   fun isModuleEnabled(id: PluginModuleId): Boolean = enabledModuleMap.containsKey(id)
-
-  fun withPlugin(plugin: PluginMainDescriptor): PluginSetBuilder? {
-    // in tests or on plugin installation it is not present in a plugin list, may exist on plugin update, though
-    // linear search is ok here - not a hot method
-    val oldPlugin = enabledPlugins.find { it.legacyEquals(plugin) } // todo may exist on update
-    PluginManagerCore.logger.assertTrue(oldPlugin == null || !oldPlugin.isMarkedForLoading, "$oldPlugin is still loaded")
-    PluginManagerCore.logger.assertTrue(plugin.isMarkedForLoading, "$plugin is not marked for loading")
-
-    val unsortedPlugins = LinkedHashSet(allPlugins)
-    unsortedPlugins.removeIf { it.pluginId == plugin.pluginId }
-    unsortedPlugins.add(plugin)
-
-    // just follows the existing logic
-    val newDiscoveryResult = PluginsDiscoveryResult.build(
-      input.discoveryResult.pluginLists.map {
-        val filteredList = it.plugins.filter { !it.legacyEquals(plugin) }
-        DiscoveredPluginsList(filteredList, it.source)
-      } + DiscoveredPluginsList(listOf(plugin), PluginsSourceContext.Custom) // should be fine for now...
-    )
-
-    // FIXME handle potential conflict
-    // FIXME this method loses information (takes only currently loaded plugins)
-    val newUnambiguousPluginSet = UnambiguousPluginSet.tryBuild(unsortedPlugins.toList())
-                                  ?: return null
-    return PluginSetBuilder(PluginInitContextFactory.getInstance().createActualContext(), newUnambiguousPluginSet, newDiscoveryResult)
-  }
-
-  fun withoutPlugin(plugin: PluginMainDescriptor, disable: Boolean = true): PluginSetBuilder {
-    val newAllPlugins = if (disable) {
-      allPlugins
-    } else {
-      val newAllPlugins = LinkedHashSet(allPlugins)
-      newAllPlugins.removeIf { it.legacyEquals(plugin) }
-      newAllPlugins
-    }
-    // just follows the existing logic
-    val newDiscoveryResult = if (disable) input.discoveryResult else {
-      PluginsDiscoveryResult.build(
-        input.discoveryResult.pluginLists.map {
-          val filteredList = it.plugins.filter { !it.legacyEquals(plugin) }
-          DiscoveredPluginsList(filteredList, it.source)
-        }
-      )
-    }
-    val newUnambiguousPluginSet = UnambiguousPluginSet.tryBuild(newAllPlugins.toList())!!
-    return PluginSetBuilder(PluginInitContextFactory.getInstance().createActualContext(), newUnambiguousPluginSet, newDiscoveryResult)
-  }
 
   /**
    * Returns a map from plugin ID and plugin aliases to the corresponding plugin or module descriptors from all plugins, not only enabled.
@@ -178,10 +129,6 @@ class PluginSet internal constructor(
       append("PluginSet(resolvedPlugins=${resolvedPluginsCount}, resolvedContentModules=${resolvedContentModulesCount}, excludedModules=${excludedModulesCount})")
     }
   }
-}
-
-private fun IdeaPluginDescriptorImpl.legacyEquals(other: Any?): Boolean {
-  return this === other || other is IdeaPluginDescriptorImpl && pluginId == other.pluginId && descriptorPath == other.descriptorPath
 }
 
 @ApiStatus.Internal
