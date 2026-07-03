@@ -7,7 +7,6 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -70,23 +69,13 @@ class DynamicPluginEnabler : PluginEnabler {
       // nothing to do
       pluginsLoaded = true
     }
-    else if (
-      progressTitle == null
-      || DynamicPluginsSupport.getInstance() != null // FIXME disregards custom title, `PotemkinProgress` causes a deadlock with the new support enabled
-    ) {
+    else {
+      // FIXME disregards custom title
       val loaded = AtomicBoolean(false)
       runInEdt {
         loaded.set(DynamicPlugins.loadPlugins(installedDescriptors, project))
       }
       pluginsLoaded = loaded.get()
-    }
-    else {
-      val progress = PotemkinProgress(progressTitle, project, null, null)
-      var result = false
-      progress.runInSwingThread {
-        result = DynamicPlugins.loadPlugins(installedDescriptors, project)
-      }
-      pluginsLoaded = result
     }
 
     for (listener in pluginEnableStateChangedListeners) {
