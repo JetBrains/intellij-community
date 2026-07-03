@@ -217,7 +217,7 @@ private class PluginSetConstraintsResolver(
       }
       else if (tryAddDependency(target)) {
         if (target is ContentModuleDescriptor && dependencyRef is DependencyRef.ContentModule) {
-          val visibilityViolation = PluginSetBuilder.checkVisibilityAndReturnErrorMessage(
+          val visibilityViolation = PluginModuleVisibility.checkVisibilityAndReturnErrorMessage(
             candidate as? ContentModuleDescriptor ?: candidate.getMainDescriptor(),
             target
           )
