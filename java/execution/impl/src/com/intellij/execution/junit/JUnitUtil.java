@@ -415,7 +415,7 @@ public final class JUnitUtil {
 
   private static boolean hasInheritedTest(@Nullable PsiClass psiClass, @NotNull PsiMethod method) {
     if (psiClass == null) return false;
-    return ClassInheritorsSearch.search(psiClass)
+    return ClassInheritorsSearch.search(psiClass, GlobalSearchScope.projectScope(psiClass.getProject()), true)
       .filtering(subClass -> !subClass.hasModifierProperty(PsiModifier.ABSTRACT))
       .mapping(subClass -> subClass.findMethodBySignature(method, false))
       .filtering(override -> override != null && !override.hasModifierProperty(PsiModifier.ABSTRACT))
