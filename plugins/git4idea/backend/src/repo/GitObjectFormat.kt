@@ -3,7 +3,7 @@ package git4idea.repo
 
 enum class GitObjectFormat(
   val value: String,
-  val hashLength: Int,
+  val hexSize: Int,
 ) {
   SHA1("sha1", 40),
   SHA256("sha256", 64);

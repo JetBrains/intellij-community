@@ -7,7 +7,6 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitCommit
@@ -221,7 +220,7 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     }
     fun getRandomHash(): Hash = HashImpl.build(
       buildString {
-        repeat(GitObjectFormat.SHA1.hashLength) {
+        repeat(GitObjectFormat.SHA1.hexSize) {
           val randomHexChar = kotlin.random.Random.nextInt(0 until 16).toString(16)
           append(randomHexChar)
         }

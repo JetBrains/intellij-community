@@ -229,9 +229,9 @@ abstract class GitObjectRepositoryTestBase(
     val tree = repository.findTree(commit.treeOid)
     val blob = repository.findBlob(tree.entries[GitObject.Tree.FileName("test.txt")]!!.oid)
 
-    assertEquals(objectFormat.hashLength, commit.oid.hex().length)
-    assertEquals(objectFormat.hashLength, tree.oid.hex().length)
-    assertEquals(objectFormat.hashLength, blob.oid.hex().length)
+    assertEquals(objectFormat.hexSize, commit.oid.hex().length)
+    assertEquals(objectFormat.hexSize, tree.oid.hex().length)
+    assertEquals(objectFormat.hexSize, blob.oid.hex().length)
 
     val newBlob = repository.createBlob("new content".toByteArray())
     val newTree = repository.createTree(
@@ -239,8 +239,8 @@ abstract class GitObjectRepositoryTestBase(
     )
     repository.persistObject(newTree)
 
-    assertEquals(objectFormat.hashLength, newBlob.oid.hex().length)
-    assertEquals(objectFormat.hashLength, newTree.oid.hex().length)
+    assertEquals(objectFormat.hexSize, newBlob.oid.hex().length)
+    assertEquals(objectFormat.hexSize, newTree.oid.hex().length)
 
     val newCommitOid = repository.commitTree(newTree.oid,
                                              listOf(commit.oid),
@@ -248,7 +248,7 @@ abstract class GitObjectRepositoryTestBase(
                                              SAMPLE_AUTHOR)
     val newCommit = repository.findCommit(newCommitOid)
 
-    assertEquals(objectFormat.hashLength, newCommit.oid.hex().length)
+    assertEquals(objectFormat.hexSize, newCommit.oid.hex().length)
   }
 
   private fun createTreeEntries(blob: GitObject.Blob): Map<GitObject.Tree.FileName, GitObject.Tree.Entry> {

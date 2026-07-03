@@ -65,14 +65,14 @@ class GitLogProviderTest : GitLogProviderTestBase() {
   fun test_full_hash_check_sha1_repository() {
     val sha1Repo = createRepository(project, testNioRoot.resolve("sha1-repo"), makeInitialCommit = true)
     val headHash = last()
-    assertEquals(GitObjectFormat.SHA1.hashLength, headHash.length)
+    assertEquals(GitObjectFormat.SHA1.hexSize, headHash.length)
 
     assertTrue(myLogProvider.isFullHash(sha1Repo.root, headHash))
 
     val hashPrefix = headHash.take(7)
     assertFalse(myLogProvider.isFullHash(sha1Repo.root, hashPrefix))
 
-    val notHex = "z".repeat(GitObjectFormat.SHA1.hashLength)
+    val notHex = "z".repeat(GitObjectFormat.SHA1.hexSize)
     assertFalse(myLogProvider.isFullHash(sha1Repo.root, notHex))
   }
 
@@ -80,7 +80,7 @@ class GitLogProviderTest : GitLogProviderTestBase() {
     val sha256Repo = createRepository(project, testNioRoot.resolve("sha256-repo"), makeInitialCommit = true,
                                       objectFormat = GitObjectFormat.SHA256)
     val headHash = last()
-    assertEquals(GitObjectFormat.SHA256.hashLength, headHash.length)
+    assertEquals(GitObjectFormat.SHA256.hexSize, headHash.length)
 
     assertTrue(myLogProvider.isFullHash(sha256Repo.root, headHash))
 

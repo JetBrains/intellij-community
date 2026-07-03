@@ -154,7 +154,7 @@ class GitRepositoryImpl private constructor(
   }
 
   override fun getFullHashLength(): Int {
-    return objectFormat.hashLength
+    return objectFormat.hexSize
   }
 
   override fun getVcs(): GitVcs {
