@@ -22,6 +22,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.psi.PsiClass
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
@@ -37,6 +39,7 @@ import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.utils.coroutines.waitCoroutinesBlocking
 import com.intellij.ui.ChooserInterceptor
 import com.intellij.ui.UiInterceptors
+import com.intellij.util.FileContentUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
 
@@ -160,6 +163,26 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   fun testNormalizedOnSwitchRule() = doTest()
   fun testExpressionStatementInSwitchExpression() = doTest()
   fun testExpressionStatementInSwitchStatement() = doTest()
+
+  fun testTargetClassSurvivesReparse() {
+    configureFromFileText("Reparse2.java", """
+      class Test {
+          void a() { helper(); }
+          void helper() {}
+      }
+    """.trimIndent())
+    val cls = PsiTreeUtil.findChildOfType(file, PsiClass::class.java)!!
+    val elements = cls.findMethodsByName("a", false).first().body!!.statements.toList()
+    val extractor = DuplicatesMethodExtractor.create(cls, elements, "extracted", false)
+
+    FileContentUtil.reparseFiles(project, listOf(file.virtualFile), true)
+
+    val targetFile = extractor.targetFile
+    assertNotNull("targetFile pointer must re-resolve after reparse", targetFile)
+    assertTrue("targetFile must be valid after reparse", targetFile!!.isValid)
+    assertTrue("targetClass pointer must re-resolve to a valid class after reparse", extractor.targetClass.isValid)
+  }
+
   fun testIDEA278872() = doTest()
   fun testLocalAssignmentDuplicates() = doTest()
   fun testWrongLocalAssignmentDuplicates() = doTest()

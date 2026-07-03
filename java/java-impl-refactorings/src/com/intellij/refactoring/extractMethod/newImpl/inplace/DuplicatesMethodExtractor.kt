@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.codeInsight.PsiEquivalenceUtil
@@ -58,12 +58,24 @@ import com.siyeh.ig.psiutils.SideEffectChecker.mayHaveSideEffects
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetClass: PsiClass, val rangeToReplace: RangeMarker) {
+class DuplicatesMethodExtractor(val extractOptions: ExtractOptions,
+                                targetClass: PsiClass,
+                                val rangeToReplace: RangeMarker) {
+
+
+  private val targetClassPointer = SmartPointerManager.createPointer(targetClass)
+  private val targetFilePointer = SmartPointerManager.createPointer(targetClass.containingFile)
+
+  val targetClass: PsiClass
+    get() = targetClassPointer.element ?: throw IllegalStateException()
+
+  val targetFile: PsiFile?
+    get() = targetFilePointer.element
 
   val rangeToReplaceOriginal = rangeToReplace.textRange
 
   internal fun getElements(): List<PsiElement> {
-    val file = targetClass.containingFile
+    val file = targetFile ?: return emptyList()
     val range = rangeToReplace.textRange
     require(rangeToReplace.isValid)
     return ExtractSelector().suggestElementsToExtract(file, range)
@@ -91,7 +103,7 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
   }
 
   suspend fun extract(): ExtractedElements {
-    val file = readAction { targetClass.containingFile }
+    val file = targetFile ?: throw IllegalStateException()
     val project = file.project
     val elements = readAction { getElements() }
 
@@ -377,7 +389,7 @@ fun DuplicatesMethodExtractor.extractInDialog() {
     mappedExtractor.extract()
   }
   MethodExtractor.sendRefactoringDoneEvent(method)
-  val editor = PsiEditorUtil.findEditor(targetClass) ?: return
+  val editor = PsiEditorUtil.findEditor(method.containingFile) ?: return
   runWithModalProgressBlocking(extractOptions.project, ExtractMethodHandler.getRefactoringName()) {
     mappedExtractor.replaceDuplicates(editor, method)
   }
