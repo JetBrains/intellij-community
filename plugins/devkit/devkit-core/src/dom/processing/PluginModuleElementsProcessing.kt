@@ -5,9 +5,48 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.xml.DomUtil
 import org.jetbrains.idea.devkit.dom.Extension
+import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter
+
+/**
+ * Returns the classes *registered* in the plugin or module descriptor: extensions, extension points, actions, listeners.
+ * The result doesn't include classes that are *referenced* in the descriptor: interfaces of registered services, extension point
+ * interfaces of registered extensions.
+ */
+@RequiresReadLock
+internal fun collectRegisteredClasses(root: IdeaPlugin): Set<PsiClass> {
+  val result = mutableSetOf<PsiClass>()
+  root.extensionPoints.flatMapTo(result) { points ->
+    points.extensionPoints.asSequence().mapNotNull { it.effectiveClass }
+  }
+  root.extensions.flatMapTo(result) { extensions ->
+    extensions.collectExtensions().asSequence().flatMap { extension ->
+      collectClassesRegisteredInExtension(extension)
+    }
+  }
+  root.actions.flatMapTo(result) { actions ->
+    actions.actions.asSequence().mapNotNull { it.clazz.value }
+  }
+  root.applicationListeners.flatMapTo(result) { listeners ->
+    listeners.listeners.asSequence().mapNotNull { it.listenerClassName.value }
+  }
+  root.projectListeners.flatMapTo(result) { listeners ->
+    listeners.listeners.asSequence().mapNotNull { it.listenerClassName.value }
+  }
+  root.applicationComponents.flatMapTo(result) { components ->
+    components.components.asSequence().mapNotNull { it.implementationClass.value }
+  }
+  root.projectComponents.flatMapTo(result) { components ->
+    components.components.asSequence().mapNotNull { it.implementationClass.value }
+  }
+  root.moduleComponents.flatMapTo(result) { components ->
+    components.components.asSequence().mapNotNull { it.implementationClass.value }
+  }
+  return result
+}
 
 /**
  * Returns the list of classes that are *registered* by the extension.
