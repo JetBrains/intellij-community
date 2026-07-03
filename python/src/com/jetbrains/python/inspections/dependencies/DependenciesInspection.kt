@@ -88,13 +88,14 @@ class DependenciesInspection : LocalInspectionTool() {
         return
       }
 
-      val dependenciesExporter = packageManager.dependenciesExporter ?: return
+      val dependenciesExporter = packageManager.dependenciesExporter
+      val fixes = dependenciesExporter?.let { arrayOf(ExportDependenciesQuickFix(it)) } ?: emptyArray()
 
       holder.registerProblem(
         psiFile,
         provider.emptyFileInspectionMessage,
         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-        ExportDependenciesQuickFix(dependenciesExporter),
+        *fixes,
       )
     }
 

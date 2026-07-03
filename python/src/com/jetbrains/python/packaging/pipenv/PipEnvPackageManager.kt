@@ -15,13 +15,11 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.sdk.associatedModulePath
-import com.jetbrains.python.sdk.pipenv.PIP_FILE_LOCK
+import com.jetbrains.python.sdk.pipenv.PIP_FILE
 import com.jetbrains.python.sdk.pipenv.runPipEnv
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import com.jetbrains.python.sdk.pipenv.PipEnvParser as SdkPipEnvParser
 
-@ApiStatus.Internal
 internal class PipEnvPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   private val modulePath: Path?
     get() = sdk.associatedModulePath?.let { Path.of(it) }
@@ -73,9 +71,10 @@ internal class PipEnvPackageManager(project: Project, sdk: Sdk) : PythonPackageM
   }
 
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> {
-    //There is no normal way to get outdated packages
-    //https://github.com/pypa/pipenv/issues/1490
-    return PyResult.success(emptyList())
+    val output = runPipEnv(modulePath, "update", "--dry-run").getOr { return it }
+    val outdated = PipEnvParser.parseOutdatedPackagesOutput(output)
+
+    return PyResult.success(outdated)
   }
 
   override suspend fun listDeclaredPackages(): PyResult<List<PythonPackage>>? {
@@ -85,7 +84,6 @@ internal class PipEnvPackageManager(project: Project, sdk: Sdk) : PythonPackageM
   }
 
   override val dependenciesFilesRelativePaths: List<Path>
-    get() = listOf(
-      Path.of(PIP_FILE_LOCK),
-    )
+    get() =
+      listOf(Path.of(PIP_FILE))
 }

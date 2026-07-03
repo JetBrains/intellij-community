@@ -36,7 +36,7 @@ class CondaDependenciesInspectionProviderTest : PythonDependencyTestCase() {
     initTestPackageManager(provider)
 
     myFixture.copyDirectoryToProject(getTestName(false), "")
-    markEnvironmentYmlAsDependencyRoot()
+    setDependencyRoot(RequirementsProviderType.ENVIRONMENT_YML)
     myFixture.configureFromTempProjectFile("environment.yml")
 
     myFixture.enableInspections(DependenciesInspection::class.java)

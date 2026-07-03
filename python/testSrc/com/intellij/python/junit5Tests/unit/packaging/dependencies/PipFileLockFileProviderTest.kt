@@ -2,8 +2,8 @@
 package com.intellij.python.junit5Tests.unit.packaging.dependencies
 
 import com.intellij.testFramework.LightVirtualFile
-import com.jetbrains.python.sdk.pipenv.PipFileLockFile
-import com.jetbrains.python.sdk.pipenv.PipFileLockFileProvider
+import com.jetbrains.python.sdk.pipenv.PipfileFile
+import com.jetbrains.python.sdk.pipenv.PipfileFileProvider
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -12,12 +12,12 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
 internal class PipFileLockFileProviderTest {
-  private val provider = PipFileLockFileProvider()
+  private val provider = PipfileFileProvider()
 
   @Test
   fun `recognises Pipfile_lock`() = runBlocking {
     val file = LightVirtualFile("Pipfile.lock")
-    assertEquals(PipFileLockFile(file), provider.fromFile(file))
+    assertEquals(PipfileFile(file), provider.fromFile(file))
   }
 
   @ParameterizedTest
