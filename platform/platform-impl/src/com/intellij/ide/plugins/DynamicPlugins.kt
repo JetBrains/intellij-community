@@ -229,22 +229,6 @@ object DynamicPlugins {
     }
   }
 
-  @Deprecated("use checkCanLoadWithoutRestart or checkCanUnloadWithoutRestart instead")
-  @RequiresBackgroundThread(generateAssertion = false)
-  @JvmStatic
-  @JvmOverloads
-  fun allowLoadUnloadWithoutRestart(descriptor: IdeaPluginDescriptorImpl,
-                                    baseDescriptor: IdeaPluginDescriptorImpl? = null,
-                                    context: List<IdeaPluginDescriptorImpl> = emptyList()): Boolean {
-    require(descriptor is PluginMainDescriptor) { "PluginMainDescriptor expected" }
-    if (context.any { it !is PluginMainDescriptor }) throw IllegalArgumentException("Context must contain only PluginMainDescriptor instances")
-    @Suppress("UNCHECKED_CAST")
-    val newState = computeNewPluginsState(context as List<PluginMainDescriptor>, listOf(descriptor)) // treat as unload
-    return runBlockingMaybeCancellable {
-      DynamicPluginsSupport.getInstance().validateDynamicReconfigurationPossible(newState) == null
-    }
-  }
-
   /**
    * @return non-null message explaining why unloading is not possible, null otherwise
    */

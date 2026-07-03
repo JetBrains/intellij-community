@@ -175,7 +175,7 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
    * Tries including transitive dependencies as loadable without a restart when possible.
    *
    * @param this The list of plugins to analyze for determining loadability without requiring a restart.
-   * Acts as a context in [DynamicPlugins.allowLoadUnloadWithoutRestart]
+   * Acts as a context in [DynamicPlugins.findMaxLoadableSubsetApproximation]
    */
   private suspend fun List<PluginMainDescriptor>.splitPlugins(): Pair<List<PluginMainDescriptor>, List<PluginMainDescriptor>> {
     val loadablePluginIds = DynamicPlugins.findMaxLoadableSubsetApproximation(this.map { it.pluginId }).toSet()
