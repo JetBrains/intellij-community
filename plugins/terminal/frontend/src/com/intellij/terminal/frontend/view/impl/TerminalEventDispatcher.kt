@@ -26,7 +26,9 @@ import com.intellij.terminal.frontend.view.TerminalAllowedActionsProvider
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalEscapeBehaviorChangeNotification
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import java.awt.AWTEvent
@@ -312,7 +314,9 @@ internal fun setupKeyEventsHandling(
   editor.contentComponent.addKeyListener(TerminalKeyListener(settings, eventsHandler))
 }
 
-internal fun setupMouseEventsHandling(
+@ApiStatus.Internal
+@VisibleForTesting
+fun setupMouseEventsHandling(
   editor: EditorEx,
   sessionModel: TerminalSessionModel,
   settings: JBTerminalSystemSettingsProviderBase,
