@@ -111,7 +111,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     myLineBreakpointManager = new XLineBreakpointManager(project, coroutineScope, !SplitDebuggerMode.isSplitDebugger(),
                                                          MonolithBreakpointManagerKt.asProxy(this));
 
-    XBreakpointType.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+    XBreakpointType.EXTENSION_POINT_NAME.addExtensionPointListener(coroutineScope, new ExtensionPointListener<>() {
       @SuppressWarnings("unchecked")
       @Override
       public void extensionAdded(@NotNull XBreakpointType type, @NotNull PluginDescriptor pluginDescriptor) {
@@ -143,7 +143,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
           myDefaultBreakpoints.remove(type);
         });
       }
-    }, debuggerManager);
+    });
 
     messageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileUrlChangeAdapter() {
       @Override
