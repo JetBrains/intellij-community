@@ -23,7 +23,6 @@ class PluginSet internal constructor(
   private val enabledModuleMap: Map<PluginModuleId, ContentModuleDescriptor>,
   private val enabledPluginAndV1ModuleMap: Map<PluginId, PluginModuleDescriptor>,
   private val enabledModules: List<PluginModuleDescriptor>,
-  private val topologicalComparator: Comparator<PluginModuleDescriptor>,
   val resolvedPluginSet: ResolvedPluginSet,
   val input: PluginSubsystemInput,
 ) {

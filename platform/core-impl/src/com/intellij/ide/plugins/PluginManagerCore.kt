@@ -713,7 +713,6 @@ object PluginManagerCore {
       enabledModuleMap = resolvedModules.keys.asSequence().filterIsInstance<ContentModuleDescriptor>().associateBy { it.moduleId },
       enabledPluginAndV1ModuleMap = enabledPluginAndV1ModuleMap,
       enabledModules = resolvedModules.keys.toList(),
-      topologicalComparator = topologicalComparator,
       resolvedPluginSet = resolvedPluginSet,
       input = input,
     )
