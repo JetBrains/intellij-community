@@ -20,7 +20,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import javax.swing.JComponent
 
 private val LOG = Logger.getInstance(DynamicPlugins::class.java)
 
@@ -231,12 +230,9 @@ object DynamicPlugins {
   }
 
   @RequiresEdt(generateAssertion = false)
-  fun unloadPluginWithProgress(project: Project? = null,
-                               parentComponent: JComponent?,
-                               pluginDescriptor: PluginMainDescriptor,
-                               options: UnloadPluginOptions): Boolean {
+  fun unloadPluginWithProgress(pluginDescriptor: PluginMainDescriptor): Boolean {
     return runWithModalProgressBlocking(
-      project?.let { ModalTaskOwner.project(it) } ?: ModalTaskOwner.guess(),
+      ModalTaskOwner.guess(),
       IdeBundle.message("modal.progress.title.unloading.plugin", pluginDescriptor.name),
       cancellation = TaskCancellation.nonCancellable()
     ) {
