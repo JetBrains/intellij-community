@@ -5,18 +5,19 @@ import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeImplicitArgumentValue
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -53,7 +54,14 @@ internal object NoContextParameterFixFactory {
             if (surroundingCall != null) {
                 if (!candidates.isEmpty()) {
                     candidates.forEach { candidateName ->
-                        add(AddContextParameterToExistingContextFix(surroundingCall, candidateName, requiredTypeText, requiredTypeFqNameText))
+                        add(
+                            AddContextParameterToExistingContextFix(
+                                surroundingCall,
+                                candidateName,
+                                requiredTypeText,
+                                requiredTypeFqNameText
+                            )
+                        )
                     }
                 } else {
                     add(AddContextParameterToExistingContextFix(surroundingCall, null, requiredTypeText, requiredTypeFqNameText))
@@ -81,8 +89,7 @@ internal object NoContextParameterFixFactory {
                     AddContextParameterFix.ForEnclosingFunction(
                         element = expression,
                         contextParameter =
-                            AddContextParameterFix.ContextParameter(name = null, type = requiredTypeText)
-                        ,
+                            AddContextParameterFix.ContextParameter(name = null, type = requiredTypeText),
                     )
                 )
             }
@@ -110,7 +117,8 @@ internal object NoContextParameterFixFactory {
         requiredType: KaType,
     ): Set<String> {
         if (surroundingContextCall != null &&
-            innerContextScopeAlreadyContainsType(useSite, surroundingContextCall, requiredType)) return emptySet()
+            innerContextScopeAlreadyContainsType(useSite, surroundingContextCall, requiredType)
+        ) return emptySet()
 
         val scopeContext = useSite.containingKtFile.scopeContext(useSite)
         return buildSet {
@@ -167,6 +175,8 @@ internal object NoContextParameterFixFactory {
 
         val missingContextParams = contextParamSignatures.filter { it.symbol.name !in existingArgNames }
         if (missingContextParams.isEmpty()) return null
+        // Bail out for _: Anonymous
+        if (missingContextParams.any { it.symbol.name.isSpecial }) return null
 
         // Emit the fix only once per call site.
         if (missingContextParams.first().symbol.name != currentSymbol.name) return null
@@ -186,7 +196,7 @@ internal object NoContextParameterFixFactory {
             if (!canSpareOne) return null
 
             val matchIndex = renamableArguments.indexOfFirst { (_, argument) ->
-                argument.getArgumentExpression()?.expressionType?.isSubtypeOf(paramReturnType) == true
+                argument.getArgumentExpression()?.expressionType?.isSubtypeOf(paramReturnType, KaSubtypingErrorTypePolicy.STRICT) == true
             }
             return if (matchIndex >= 0) renamableArguments.removeAt(matchIndex) else null
         }
@@ -199,8 +209,8 @@ internal object NoContextParameterFixFactory {
                 AddExplicitContextArgumentFix.ContextParameterFix.AddArgumentName(name, renameTarget.index)
             } else {
                 val type = paramSignature.returnType.render(
-                    renderer = KaTypeRendererForSource.WITH_SHORT_NAMES,
-                    position = Variance.INVARIANT,
+                    KaTypeRendererForSource.WITH_SHORT_NAMES,
+                    Variance.INVARIANT
                 )
                 AddExplicitContextArgumentFix.ContextParameterFix.Insert(name, type)
             }

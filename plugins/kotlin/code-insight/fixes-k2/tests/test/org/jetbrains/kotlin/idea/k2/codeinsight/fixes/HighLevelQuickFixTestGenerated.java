@@ -3605,6 +3605,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/ambiguity.kt");
             }
 
+            @TestMetadata("anonymous.kt")
+            public void testAnonymous() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/anonymous.kt");
+            }
+
+            @TestMetadata("anonymous2.kt")
+            public void testAnonymous2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/anonymous2.kt");
+            }
+
             @TestMetadata("exhaustion.kt")
             public void testExhaustion() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/exhaustion.kt");
