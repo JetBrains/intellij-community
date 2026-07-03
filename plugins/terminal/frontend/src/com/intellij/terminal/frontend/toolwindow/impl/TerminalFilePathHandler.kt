@@ -18,7 +18,7 @@ internal object TerminalFilePathHandler {
   }
 
   fun formatPath(nioPath: Path, context: TerminalProcessContext): String {
-    val pathInMonolith = getPathInMonolith(nioPath, context.eelDescriptor)
+    val pathInMonolith = getPathInEnvironment(nioPath, context.eelDescriptor)
     return escapeShellArgument(pathInMonolith, context.shellName)
   }
 
@@ -28,8 +28,10 @@ internal object TerminalFilePathHandler {
     return fileMachine == eelMachine
   }
 
-  private fun getPathInMonolith(nioPath: Path, eelDescriptor: EelDescriptor): String =
-    TerminalLocalPathTranslator(eelDescriptor).translateAbsoluteLocalPathToRemote(nioPath)?.toString() ?: nioPath.asEelPath().toString()
+  private fun getPathInEnvironment(nioPath: Path, eelDescriptor: EelDescriptor): String {
+    return TerminalLocalPathTranslator(eelDescriptor).translateAbsoluteLocalPathToRemote(nioPath)?.toString()
+           ?: nioPath.asEelPath().toString()
+  }
 }
 
 internal data class TerminalProcessContext(

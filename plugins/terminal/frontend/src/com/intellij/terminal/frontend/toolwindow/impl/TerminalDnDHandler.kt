@@ -18,6 +18,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.terminal.frontend.toolwindow.impl.TerminalFilePathHandler.getPathAsText
@@ -88,7 +92,7 @@ internal object TerminalDnDHandler {
 
     terminalView.coroutineScope.launch {
       val text = when {
-        data.virtualFiles.isNotEmpty() -> handleVirtualFiles(data.virtualFiles, context)
+        data.virtualFiles.isNotEmpty() -> getVirtualFilesAsText(data.virtualFiles, context, project.getEelDescriptor())
         data.paths.isNotEmpty() -> getPathAsText(data.paths, context)
         else -> null
       }
@@ -161,20 +165,34 @@ internal object TerminalDnDHandler {
     return DataManager.getInstance().getDataContext(deepestComponent)
   }
 
-  private fun handleVirtualFiles(files: List<VirtualFile>, terminalContext: TerminalProcessContext): String {
-    // In RemDev frontend, only paths from the remote machine should be inserted.
-    // This proxy is intentionally conservative: it is not a perfect remote-file check,
-    // but it accepts files dropped from the remote Project View.
-    val isRemDev = IdeProductMode.isFrontend
-
+  private fun getVirtualFilesAsText(
+    files: List<VirtualFile>,
+    terminalContext: TerminalProcessContext,
+    projectEelDescriptor: EelDescriptor,
+  ): String {
     val paths = files.mapNotNull {
-      val nioPath = it.toNioPathOrNull()
-      if (nioPath != null)
-        TerminalFilePathHandler.formatPath(nioPath, terminalContext)
-      else
-        if (isRemDev) it.path else null
+      getNioPathForFile(it, projectEelDescriptor)
     }
-    return paths.joinToString(separator = " ")
+    return getPathAsText(paths, terminalContext)
+  }
+
+  private fun getNioPathForFile(file: VirtualFile, projectEelDescriptor: EelDescriptor): Path? {
+    file.toNioPathOrNull()?.let { return it }
+
+    // Handle the case of ThinClientNodeVirtualFile (file dropped from the Project View in RemDev).
+    // It doesn't implement [VirtualFile.toNioPathOrNull], so we need to reconstruct the path manually.
+    return if (IdeProductMode.isFrontend) {
+      try {
+        EelPath.parse(file.path, projectEelDescriptor).asNioPath()
+      }
+      catch (_: EelPathException) {
+        null
+      }
+      catch (_: IllegalArgumentException) {
+        null
+      }
+    }
+    else null
   }
 
   private fun getDirectory(filePath: Path?): Path? {
