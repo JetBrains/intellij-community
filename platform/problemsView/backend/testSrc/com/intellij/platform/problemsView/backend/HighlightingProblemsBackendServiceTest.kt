@@ -1,9 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.problemsView.backend
 
+import com.intellij.analysis.problemsView.Problem
+import com.intellij.analysis.problemsView.ProblemsCollector
+import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.analysis.problemsView.toolWindow.HighlightingProblem
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemEventDto
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemLifetime
+import com.intellij.analysis.problemsView.toolWindow.splitApi.GenericProblemDto
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
@@ -23,6 +27,8 @@ import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.psiFileFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
@@ -90,6 +96,15 @@ class HighlightingProblemsBackendServiceTest {
       }
     ) { "Expected $expectedCount events within $timeout, but got ${batches.flatten().size}" } }
 
+  private suspend fun waitForCondition(timeout: Duration = 3.seconds, condition: () -> Boolean) {
+    requireNotNull(
+      withTimeoutOrNull(timeout) {
+        while (!condition()) {
+          delay(10.milliseconds)
+        }
+      }
+    ) { "Condition was not met within $timeout" }
+  }
 
     private suspend fun closeFile(file: PsiFile, project: Project) {
     withContext(Dispatchers.EDT) {
@@ -279,11 +294,11 @@ class HighlightingProblemsBackendServiceTest {
       .filter { it.problemDto.id == problemId }
 
     val updated = withTimeoutOrNull(3.seconds) {
-        while (updatesOfProblem().isEmpty()) {
-          delay(50.milliseconds)
-        }
-        updatesOfProblem().first()
+      while (updatesOfProblem().isEmpty()) {
+        delay(50.milliseconds)
       }
+      updatesOfProblem().first()
+    }
 
     collectorJob.cancel()
 
@@ -334,4 +349,90 @@ class HighlightingProblemsBackendServiceTest {
       lifetimeScope.cancel()
     }
   }
+
+  @Test
+  fun `project error appeared during history replay is delivered`() = runBlocking {
+    val collector = ProblemsCollector.getInstance(project) as ProjectErrorsCollector
+    val provider = TestProblemsProvider(project)
+    val existingProblems = (1..10).map { TestProblem(provider, "existing problem $it") }
+    val lateProblem = TestProblem(provider, "late problem")
+    val markerProblem = existingProblems.first()
+
+    val receivedEvents = mutableListOf<ProblemEventDto>()
+    val historyReplayStarted = CompletableDeferred<Unit>()
+    val releaseHistoryReplay = CompletableDeferred<Unit>()
+    val liveMarkerEventReceived = CompletableDeferred<Unit>()
+    val lateProblemAppearedId = CompletableDeferred<String>()
+    val lateProblemDisappeared = CompletableDeferred<Unit>()
+    var collectorJob: Job? = null
+
+    fun ProblemEventDto.textOrNull(): String? = when (this) {
+      is ProblemEventDto.Appeared -> (problemDto as? GenericProblemDto)?.text
+      is ProblemEventDto.Updated -> (problemDto as? GenericProblemDto)?.text
+      is ProblemEventDto.Disappeared -> null
+    }
+
+    suspend fun waitForLiveEventsCollection() {
+      requireNotNull(withTimeoutOrNull(3.seconds) {
+        while (!liveMarkerEventReceived.isCompleted) {
+          collector.problemUpdated(markerProblem)
+          withTimeoutOrNull(10.milliseconds) { liveMarkerEventReceived.await() }
+        }
+      }) { "Live problem events were not collected" }
+    }
+
+    try {
+      existingProblems.forEach { collector.problemAppeared(it) }
+
+      collectorJob = launch {
+        collector.getProjectErrorsFlow().collect { batch ->
+          for (event in batch) {
+            val text = event.textOrNull()
+            if (event is ProblemEventDto.Appeared && text != lateProblem.text && !historyReplayStarted.isCompleted) {
+              historyReplayStarted.complete(Unit)
+              releaseHistoryReplay.await()
+            }
+            receivedEvents.add(event)
+            if (event is ProblemEventDto.Appeared && text == lateProblem.text) {
+              lateProblemAppearedId.complete(event.problemDto.id)
+            }
+            if (event is ProblemEventDto.Updated && text == markerProblem.text) {
+              liveMarkerEventReceived.complete(Unit)
+            }
+            if (event is ProblemEventDto.Disappeared && lateProblemAppearedId.isCompleted &&
+                event.problemId == lateProblemAppearedId.getCompleted()) {
+              lateProblemDisappeared.complete(Unit)
+            }
+          }
+        }
+      }
+
+      requireNotNull(withTimeoutOrNull(3.seconds) { historyReplayStarted.await() }) { "History replay did not start" }
+      collector.problemAppeared(lateProblem)
+      releaseHistoryReplay.complete(Unit)
+      waitForCondition {
+        receivedEvents.count { it is ProblemEventDto.Appeared && it.textOrNull() != lateProblem.text } == existingProblems.size
+      }
+
+      waitForLiveEventsCollection()
+
+      collector.problemDisappeared(lateProblem)
+      requireNotNull(withTimeoutOrNull(3.seconds) { lateProblemDisappeared.await() }) {
+        "Late problem Disappeared event was not delivered"
+      }
+
+      assertTrue(lateProblemAppearedId.isCompleted,
+                 "Problem appeared during initial history replay should be delivered by the time the corresponding Disappeared event is received")
+    }
+    finally {
+      releaseHistoryReplay.complete(Unit)
+      collectorJob?.cancel()
+      existingProblems.forEach { collector.problemDisappeared(it) }
+      collector.problemDisappeared(lateProblem)
+    }
+  }
+
+  private class TestProblemsProvider(override val project: Project) : ProblemsProvider
+
+  private class TestProblem(override val provider: ProblemsProvider, override val text: String) : Problem
 }
