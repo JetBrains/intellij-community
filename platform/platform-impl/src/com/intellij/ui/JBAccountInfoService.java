@@ -59,8 +59,25 @@ public interface JBAccountInfoService {
     return CompletableFuture.supplyAsync(() -> getIdToken(), AppExecutorUtil.getAppExecutorService());
   }
 
+  /**
+   * Returns the current user's JBA access token, or {@code null} if it cannot be obtained,
+   * whether because the user is not logged in or because the request failed.
+   * <p>
+   * Delegates to {@link #getGlobalAccessToken(String)} with the {@link #JBA_AUDIENCE} audience,
+   * collapsing both {@link AccessTokenResult.RequestFailed} and {@link AuthRequired} results
+   * into {@code null}. The call may involve network I/O.
+   * The future may also be cancelled in case of remote dev
+   * when the controlling client handling the request is disconnected.
+   *
+   * @deprecated Use {@link #getGlobalAccessToken(String)} with {@link #JBA_AUDIENCE} instead
+   * to distinguish the failure reason.
+   */
+  @Deprecated // kept because of external usages
   default @NotNull Future<String> getAccessToken() {
-    return CompletableFuture.completedFuture(null);
+    return getGlobalAccessToken(JBA_AUDIENCE)
+      .thenApply(result -> {
+        return result instanceof AccessTokenResult.AccessToken(String accessToken) ? accessToken : null;
+      });
   }
 
   default @NotNull CompletableFuture<@NotNull AccessTokenResult> getGlobalAccessToken(@NotNull String audience) {
@@ -307,6 +324,8 @@ public interface JBAccountInfoService {
     OPENSOURCE,
     CLASSROOM,
   }
+
+  String JBA_AUDIENCE = "jba";
 
   sealed interface LicenseListResult permits LicenseListResult.LicenseList,
                                              LicenseListResult.RequestFailed,
