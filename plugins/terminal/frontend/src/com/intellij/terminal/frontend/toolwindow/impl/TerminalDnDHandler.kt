@@ -20,7 +20,6 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.productMode.IdeProductMode
-import com.intellij.psi.PsiFileSystemItem
 import com.intellij.terminal.frontend.toolwindow.impl.TerminalFilePathHandler.getPathAsText
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModel
@@ -207,9 +206,8 @@ internal object TerminalDnDHandler {
 
 internal class TerminalDropData(event: DnDEvent) {
   val virtualFiles: List<VirtualFile> = (event.attachedObject as? TransferableWrapper)
-    ?.getPsiElements()
-    ?.filterIsInstance<PsiFileSystemItem>()
-    ?.map { it.virtualFile }
+    ?.getVirtualFiles()
+    ?.toList()
     ?: emptyList()
 
   val paths: List<Path> = if (virtualFiles.isEmpty()) {
