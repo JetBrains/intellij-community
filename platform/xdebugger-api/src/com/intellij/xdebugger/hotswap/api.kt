@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.xdebugger.XDebugProcess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.Serializable
@@ -179,7 +180,7 @@ interface SourceFileChangesListener {
   /**
    * Changes detected since the last reset, but they are not expected to be supported by HotSwap.
    */
-  fun onIncompatibleChanges(reason: String)
+  fun onIncompatibleChanges(reason: @NlsSafe String)
 
   /**
    * Modified files were reverted to the original state, so no changes currently available.

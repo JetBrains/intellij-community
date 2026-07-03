@@ -5,7 +5,8 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.HtmlChunk.text
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.debugger.impl.rpc.HotSwapVisibleStatus
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil
 import com.intellij.xdebugger.XDebuggerBundle
@@ -38,13 +39,13 @@ interface HotSwapUiExtension {
       XDebuggerBundle.message("xdebugger.hotswap.tooltip.apply")
     }
     val description = if (status is HotSwapVisibleStatus.ChangesNotHotSwappable) {
-      XDebuggerBundle.message("xdebugger.hotswap.tooltip.not.hot.swappable.description", status.reason)
+      formatHotSwapReasonForTooltip(status.reason)
     }
     else {
-      XDebuggerBundle.message("xdebugger.hotswap.tooltip.description")
+      HtmlChunk.text(XDebuggerBundle.message("xdebugger.hotswap.tooltip.description"))
     }
     tooltip.setPlainTextTitle(text)
-    tooltip.setDescription(text(description))
+    tooltip.setDescription(description)
   }
 
   val shouldAddHideButton: Boolean get() = true
@@ -82,3 +83,11 @@ interface HotSwapUiExtension {
     }
   }
 }
+
+internal fun formatHotSwapReasonForTooltip(reason: @NlsSafe String): HtmlChunk =
+  HtmlChunk.fragment(
+    HtmlChunk.raw(reason),
+    HtmlChunk.br(),
+    HtmlChunk.br(),
+    HtmlChunk.text(XDebuggerBundle.message("xdebugger.hotswap.tooltip.not.hot.swappable.description")),
+  )

@@ -105,7 +105,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { fun f(): Int = 1; fun g(): Int = 2 }
       """.trimIndent(),
-      "Method was added: A.g(): kotlin.Int",
+      "Method was added: <br/><code>A.g()</code>: <code>Int</code>",
     )
   }
 
@@ -123,7 +123,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
 
         class A { fun f(): Int = 1; fun g(): Int = 2 }
       """.trimIndent(),
-      "Method was added: A.g(): kotlin.Int",
+      "Method was added: <br/><code>A.g()</code>: <code>Int</code>",
     )
   }
 
@@ -137,7 +137,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { fun f(): Int = 1 }
       """.trimIndent(),
-      "Method was removed: A.g(): kotlin.Int",
+      "Method was removed: <br/><code>A.g()</code>: <code>Int</code>",
     )
   }
 
@@ -151,7 +151,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { fun f(value: Long): Int = 1 }
       """.trimIndent(),
-      "Method signature was changed from A.f(kotlin.Int): kotlin.Int to A.f(kotlin.Long): kotlin.Int",
+      "Method signature was changed from <code>A.f(Int)</code>: <code>Int</code> to <code>A.f(Long)</code>: <code>Int</code>",
     )
   }
 
@@ -178,7 +178,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { fun f(): Long = 1 }
       """.trimIndent(),
-      "Method return type was changed: A.f from kotlin.Int to kotlin.Long",
+      "Method return type was changed: <br/><code>A.f</code> from <code>Int</code> to <code>Long</code>",
     )
   }
 
@@ -205,7 +205,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         open class A { open fun f(): Int = 1 }
       """.trimIndent(),
-      "Method modifiers were changed: A.f: open added",
+      "Method modifiers were changed: <br/><code>A.f</code>: <code>open</code> added",
     )
   }
 
@@ -219,7 +219,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { val value: Int = 1; fun f(): Int = 1 }
       """.trimIndent(),
-      "Field was added: A.value: kotlin.Int",
+      "Field was added: <br/><code>A.value</code>: <code>Int</code>",
     )
   }
 
@@ -233,7 +233,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { fun f(): Int = 1 }
       """.trimIndent(),
-      "Field was removed: A.value: kotlin.Int",
+      "Field was removed: <br/><code>A.value</code>: <code>Int</code>",
     )
   }
 
@@ -247,7 +247,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { val value: Long = 1 }
       """.trimIndent(),
-      "Field type was changed: A.value from kotlin.Int to kotlin.Long",
+      "Field type was changed: <br/><code>A.value</code> from <code>Int</code> to <code>Long</code>",
     )
   }
 
@@ -274,7 +274,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { lateinit var value: String }
       """.trimIndent(),
-      "Field modifiers were changed: A.value: lateinit added",
+      "Field modifiers were changed: <br/><code>A.value</code>: <code>lateinit</code> added",
     )
   }
 
@@ -288,7 +288,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { var value: Int = 1 }
       """.trimIndent(),
-      "Field modifiers were changed: A.value: val removed, var added",
+      "Field modifiers were changed: <br/><code>A.value</code>: <code>val</code> removed, <code>var</code> added",
     )
   }
 
@@ -302,7 +302,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         var value: Int = 1
       """.trimIndent(),
-      "Field modifiers were changed: AKt.value: val removed, var added",
+      "Field modifiers were changed: <br/><code>AKt.value</code>: <code>val</code> removed, <code>var</code> added",
     )
   }
 
@@ -317,7 +317,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
         fun f(): Int = 1
         fun g(): Int = 2
       """.trimIndent(),
-      "Method was added: AKt.g(): kotlin.Int",
+      "Method was added: <br/><code>AKt.g()</code>: <code>Int</code>",
     )
   }
 
@@ -331,7 +331,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         val value: Long = 1
       """.trimIndent(),
-      "Field type was changed: AKt.value from kotlin.Int to kotlin.Long",
+      "Field type was changed: <br/><code>AKt.value</code> from <code>Int</code> to <code>Long</code>",
     )
   }
 
@@ -345,7 +345,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A(val value: Int)
       """.trimIndent(),
-      "Field was added: A.value: kotlin.Int",
+      "Field was added: <br/><code>A.value</code>: <code>Int</code>",
     )
   }
 
@@ -359,7 +359,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A(val value: Long)
       """.trimIndent(),
-      "Field type was changed: A.value from kotlin.Int to kotlin.Long",
+      "Field type was changed: <br/><code>A.value</code> from <code>Int</code> to <code>Long</code>",
     )
   }
 
@@ -373,7 +373,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A(private val value: Int)
       """.trimIndent(),
-      "Field modifiers were changed: A.value: private added",
+      "Field modifiers were changed: <br/><code>A.value</code>: <code>private</code> added",
     )
   }
 
@@ -387,7 +387,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A(var value: Int)
       """.trimIndent(),
-      "Field modifiers were changed: A.value: val removed, var added",
+      "Field modifiers were changed: <br/><code>A.value</code>: <code>val</code> removed, <code>var</code> added",
     )
   }
 
@@ -401,7 +401,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A(value: Long)
       """.trimIndent(),
-      "Method signature was changed from A(kotlin.Int) to A(kotlin.Long)",
+      "Method signature was changed from <code>A(Int)</code> to <code>A(Long)</code>",
     )
   }
 
@@ -415,7 +415,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { private constructor(value: Int) {} }
       """.trimIndent(),
-      "Method modifiers were changed: A: private added",
+      "Method modifiers were changed: <br/><code>A</code>: <code>private</code> added",
     )
   }
 
@@ -429,7 +429,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         open class A { fun f(): Int = 1 }
       """.trimIndent(),
-      "Class modifiers were changed: A: open added",
+      "Class modifiers were changed: <br/><code>A</code>: <code>open</code> added",
     )
   }
 
@@ -445,7 +445,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
         interface C
         class A : C { fun f(): Int = 1 }
       """.trimIndent(),
-      "Class supertypes were changed: A from B to C",
+      "Class supertypes were changed: <br/><code>A</code> from <code>B</code> to <code>C</code>",
     )
   }
 
@@ -478,7 +478,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         interface A { fun f(): Int }
       """.trimIndent(),
-      "Class kind was changed: A from class to interface",
+      "Class kind was changed: <br/><code>A</code> from <code>class</code> to <code>interface</code>",
     )
   }
 
@@ -492,7 +492,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { fun f(): Int = 1 }
       """.trimIndent(),
-      "Class kind was changed: A from object to class",
+      "Class kind was changed: <br/><code>A</code> from <code>object</code> to <code>class</code>",
     )
   }
 
@@ -506,7 +506,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A
       """.trimIndent(),
-      "Class kind was changed: A from enum to class",
+      "Class kind was changed: <br/><code>A</code> from <code>enum</code> to <code>class</code>",
     )
   }
 
@@ -520,7 +520,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A
       """.trimIndent(),
-      "Class kind was changed: A from annotation to class",
+      "Class kind was changed: <br/><code>A</code> from <code>annotation</code> to <code>class</code>",
     )
   }
 
@@ -534,7 +534,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         enum class A { ENTRY { fun f(): Int = 1; fun g(): Int = 2 } }
       """.trimIndent(),
-      "Method was added: ENTRY.g(): kotlin.Int",
+      "Method was added: <br/><code>ENTRY.g()</code>: <code>Int</code>",
     )
   }
 
@@ -548,7 +548,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { class Inner { fun f(): Int = 1; fun g(): Int = 2 } }
       """.trimIndent(),
-      "Method was added: Inner.g(): kotlin.Int",
+      "Method was added: <br/><code>Inner.g()</code>: <code>Int</code>",
     )
   }
 
@@ -562,7 +562,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { class Inner; fun f(): Int = 1 }
       """.trimIndent(),
-      "Inner classes were changed: A: Inner added",
+      "Inner classes were changed: <br/><code>A</code>: <code>Inner</code> added",
     )
   }
 
@@ -576,7 +576,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { fun f(): Int = 1 }
       """.trimIndent(),
-      "Inner classes were changed: A: Inner removed",
+      "Inner classes were changed: <br/><code>A</code>: <code>Inner</code> removed",
     )
   }
 
@@ -607,7 +607,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
         interface IntFactory { fun get(): Int }
         class A { fun f(): IntFactory = object : IntFactory { override fun get(): Int = 1; fun extra(): Int = 2 } }
       """.trimIndent(),
-      "Method was added: anonymous0.extra(): kotlin.Int",
+      "Method was added: <br/><code>anonymous0.extra()</code>: <code>Int</code>",
     )
   }
 
@@ -623,7 +623,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
         interface IntFactory { fun get(): Int }
         class A { fun f(first: Int, second: Int): IntFactory = object : IntFactory { override fun get(): Int = second } }
       """.trimIndent(),
-      "Field was removed: anonymous0.capture0first: kotlin.Int",
+      "Field was removed: <br/><code>anonymous0.capture0first</code>: <code>Int</code>",
     )
   }
 
@@ -650,7 +650,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { fun f(): (() -> Int)? = { 1 } }
       """.trimIndent(),
-      "Method was added: A.lambda0(): kotlin.Int",
+      "Method was added: <br/><code>A.lambda0()</code>: <code>Int</code>",
     )
   }
 
@@ -677,7 +677,7 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         enum class A { FIRST, SECOND }
       """.trimIndent(),
-      "Inner classes were changed: A: SECOND added",
+      "Inner classes were changed: <br/><code>A</code>: <code>SECOND</code> added",
     )
   }
 

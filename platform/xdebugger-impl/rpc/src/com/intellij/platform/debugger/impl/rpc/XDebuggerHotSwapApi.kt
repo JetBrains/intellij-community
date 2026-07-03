@@ -5,6 +5,7 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.xdebugger.hotswap.HotSwapSource
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -47,7 +48,7 @@ sealed interface HotSwapVisibleStatus {
   object ChangesReady : HotSwapVisibleStatus
 
   @Serializable
-  data class ChangesNotHotSwappable(val reason: String) : HotSwapVisibleStatus
+  data class ChangesNotHotSwappable(val reason: @NlsSafe String) : HotSwapVisibleStatus
 
   @Serializable
   object InProgress : HotSwapVisibleStatus

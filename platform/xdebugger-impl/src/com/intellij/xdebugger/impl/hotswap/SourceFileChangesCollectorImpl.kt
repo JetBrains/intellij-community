@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
@@ -202,7 +203,7 @@ sealed interface HotSwapChangesCompatibility : Comparable<HotSwapChangesCompatib
       get() = 20
   }
 
-  data class Incompatible(val reason: String) : HotSwapChangesCompatibility {
+  data class Incompatible(val reason: @NlsSafe String) : HotSwapChangesCompatibility {
     override val order: Int
       get() = 30
   }
@@ -384,7 +385,7 @@ data class SourceFileChange(val file: VirtualFile, val oldContent: CharSequence)
 
 private sealed interface SourceFileChangesStatus {
   data object NewChanges : SourceFileChangesStatus
-  data class IncompatibleChanges(val reason: String) : SourceFileChangesStatus
+  data class IncompatibleChanges(val reason: @NlsSafe String) : SourceFileChangesStatus
   data object ChangesCanceled : SourceFileChangesStatus
 }
 
