@@ -18,7 +18,6 @@ import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.branches
-import com.intellij.vcs.log.data.CommitIdByStringCondition
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.VcsLogGraphData
 import com.intellij.vcs.log.data.VcsLogStorage
@@ -28,6 +27,7 @@ import com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.VcsLogUiEx.JumpResult
 import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.util.iterateCommitsWithPrefix
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.VisiblePack.ErrorVisiblePack
 import kotlinx.coroutines.future.asCompletableFuture
@@ -256,35 +256,15 @@ object VcsLogNavigationUtil {
   private fun getCommitRow(vcsLogData: VcsLogData, visiblePack: VisiblePack, partialHash: String): VcsLogVisibleGraphIndex {
     val row = IntRef(VcsLogUiEx.COMMIT_NOT_FOUND)
 
-    val candidateHash = HashImpl.build(partialHash)
-    var isFullHashInAllRoots = true
-    for ((candidateRoot, provider) in vcsLogData.logProviders) {
-      if (!provider.isFullHash(candidateRoot, partialHash)) {
-        isFullHashInAllRoots = false
-        continue
+    vcsLogData.storage.iterateCommitsWithPrefix(partialHash, vcsLogData.logProviders) { candidate ->
+      val candidateRow = getCommitRow(vcsLogData.storage, visiblePack, candidate.hash, candidate.root)
+      if (candidateRow >= 0) {
+        row.set(candidateRow)
+        return@iterateCommitsWithPrefix false
       }
-      if (vcsLogData.storage.containsCommit(CommitId(candidateHash, candidateRoot))) {
-        val candidateRow = getCommitRow(vcsLogData.storage, visiblePack, candidateHash, candidateRoot)
-        if (candidateRow >= 0) {
-          return candidateRow
-        }
-        if (row.get() == VcsLogUiEx.COMMIT_NOT_FOUND) row.set(candidateRow)
-      }
-    }
 
-    if (!isFullHashInAllRoots) {
-      vcsLogData.storage.iterateCommits { candidate ->
-        if (CommitIdByStringCondition.matches(candidate, partialHash)) {
-          val candidateRow = getCommitRow(vcsLogData.storage, visiblePack, candidate.hash, candidate.root)
-          if (candidateRow >= 0) {
-            row.set(candidateRow)
-            return@iterateCommits false
-          }
-
-          if (row.get() == VcsLogUiEx.COMMIT_NOT_FOUND) row.set(candidateRow)
-        }
-        true
-      }
+      if (row.get() == VcsLogUiEx.COMMIT_NOT_FOUND) row.set(candidateRow)
+      true
     }
     return row.get()
   }

@@ -18,14 +18,13 @@ import com.intellij.vcs.log.data.ContainingBranchesGetter
 import com.intellij.vcs.log.data.VcsCommitExternalStatus
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.getLogProvider
-import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.refsToCommit
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.details.CommitDetailsListPanel
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel.RootColor
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.CommitPresentation
-import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.util.iterateCommitsWithPrefix
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -114,37 +113,15 @@ class VcsLogCommitSelectionListenerForDetails(
     detailsPanel.showOverflowLabelIfNeeded(MAX_COMMITS_TO_LOAD, 0)
   }
 
-  private fun doResolveHashes(presentations: List<CommitPresentation>,
-                              unResolvedHashes: MutableSet<String>): List<CommitPresentation> {
+  private fun doResolveHashes(
+    presentations: List<CommitPresentation>,
+    unResolvedHashes: MutableSet<String>,
+  ): List<CommitPresentation> {
     val resolvedHashes = MultiMap<String, CommitId>()
 
-    unResolvedHashes.removeAll { hash ->
-      var resolvedInSomeRoot = false
-      var isFullHashInAllRoots = true
-
-      for ((root, provider) in logData.logProviders) {
-        if (!provider.isFullHash(root, hash)) {
-          isFullHashInAllRoots = false
-          continue
-        }
-
-        val commitId = CommitId(HashImpl.build(hash), root)
-        if (logData.storage.containsCommit(commitId)) {
-          resolvedInSomeRoot = true
-          resolvedHashes.putValue(hash, commitId)
-        }
-      }
-
-      resolvedInSomeRoot || isFullHashInAllRoots
-    }
-
-    if (unResolvedHashes.isNotEmpty()) {
-      logData.storage.iterateCommits { commitId: CommitId ->
-        for (hashString in unResolvedHashes) {
-          if (commitId.hash.asString().startsWith(hashString, true)) {
-            resolvedHashes.putValue(hashString, commitId)
-          }
-        }
+    for (hash in unResolvedHashes) {
+      logData.storage.iterateCommitsWithPrefix(hash, logData.logProviders) { commitId ->
+        resolvedHashes.putValue(hash, commitId)
         true
       }
     }

@@ -113,7 +113,7 @@ class VcsLogFiltererTest {
       4() + null
     }
 
-    val provider = object : HashLengthAwareTestVcsLogProvider() {
+    val provider = object : TestVcsLogProvider(FULL_HASH_LENGTH) {
       override fun getCommitsMatchingFilter(
         root: VirtualFile, filterCollection: VcsLogFilterCollection, graphOptions: PermanentGraph.Options,
         maxCount: Int,
@@ -179,7 +179,7 @@ class VcsLogFiltererTest {
     val filters = VcsLogFilterObject.collection(VcsLogFilterObject.fromRange("master", "feature"),
                                                 VcsLogFilterObject.fromPaths(listOf(filePath)))
 
-    val provider = object : HashLengthAwareTestVcsLogProvider() {
+    val provider = object : TestVcsLogProvider(FULL_HASH_LENGTH) {
       override fun getCommitsMatchingFilter(
         root: VirtualFile, filterCollection: VcsLogFilterCollection, graphOptions: PermanentGraph.Options,
         maxCount: Int,
@@ -291,7 +291,7 @@ class VcsLogFiltererTest {
   inner class MultiRootGraph(private val graphsByRoots: Map<VirtualFile, SingleRootGraph>) {
 
     val roots = graphsByRoots.keys
-    var providers: Map<VirtualFile, TestVcsLogProvider> = graphsByRoots.mapValues { HashLengthAwareTestVcsLogProvider() }
+    var providers: Map<VirtualFile, TestVcsLogProvider> = graphsByRoots.mapValues { TestVcsLogProvider(FULL_HASH_LENGTH) }
 
     val commits: Map<VirtualFile, List<GraphCommit<VcsLogCommitStorageIndex>>> = graphsByRoots.mapValues { it.value.commits }
     val allCommits = commits.values.flatten()
@@ -399,10 +399,6 @@ class VcsLogFiltererTest {
     }
 
     fun done() = SingleRootGraph(commits, refs, data)
-  }
-
-  private open class HashLengthAwareTestVcsLogProvider : TestVcsLogProvider() {
-    override fun getFullHashLength(root: VirtualFile): Int = FULL_HASH_LENGTH
   }
 
   class ConstantVcsLogStorage(

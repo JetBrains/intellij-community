@@ -11,7 +11,6 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsLogAggregatedStoredRefs
@@ -29,7 +28,6 @@ import com.intellij.vcs.log.VcsLogRootStoredRefs
 import com.intellij.vcs.log.VcsLogStructureFilter
 import com.intellij.vcs.log.VcsLogTextFilter
 import com.intellij.vcs.log.VcsRef
-import com.intellij.vcs.log.data.CommitIdByStringCondition
 import com.intellij.vcs.log.data.TopCommitsCache
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.VcsLogGraphData
@@ -48,12 +46,12 @@ import com.intellij.vcs.log.history.FileHistory
 import com.intellij.vcs.log.history.FileHistoryBuilder
 import com.intellij.vcs.log.history.FileHistoryData
 import com.intellij.vcs.log.history.removeTrivialMerges
-import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.statistics.filtersToStringPresentation
 import com.intellij.vcs.log.statistics.vcsToStringPresentation
 import com.intellij.vcs.log.util.GraphOptionsUtil.kindName
 import com.intellij.vcs.log.util.IntCollectionUtil
 import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.util.iterateCommitsWithPrefix
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.keysToSet
 import com.intellij.vcs.log.visible.filters.matchesAll
@@ -330,24 +328,9 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   ): FilterByHashResult? {
     val hashFilterResult = IntOpenHashSet()
     for (partOfHash in hashFilter.hashes) {
-      var resolvedInSomeRoot = false
-      var isFullHashInAllRoots = true
-      for ((root, provider) in dataPack.logProviders) {
-        if (provider.isFullHash(root, partOfHash)) {
-          val hash = HashImpl.build(partOfHash)
-          if (storage.containsCommit(CommitId(hash, root))) {
-            resolvedInSomeRoot = true
-            hashFilterResult.add(storage.getCommitIndex(hash, root))
-          }
-        }
-        else {
-          isFullHashInAllRoots = false
-        }
-      }
-
-      if (!resolvedInSomeRoot && !isFullHashInAllRoots) {
-        val commitId = storage.findCommitId(CommitIdByStringCondition(partOfHash))
-        if (commitId != null) hashFilterResult.add(storage.getCommitIndex(commitId.hash, commitId.root))
+      storage.iterateCommitsWithPrefix(partOfHash, dataPack.logProviders) { commitId ->
+        hashFilterResult.add(storage.getCommitIndex(commitId.hash, commitId.root))
+        true
       }
     }
 
