@@ -42,6 +42,13 @@ export interface MarkdownChangedBlockDescriptor {
   endLine: number
 }
 
+export interface MarkdownPreviewSettings {
+  fontSize?: number | null
+  effectiveFontSize: number
+  defaultFontSize: number
+  fontSizeOptions: number[]
+}
+
 export interface MarkdownRunCommandRequest {
   contentVersion: number
   id: string
@@ -68,6 +75,10 @@ export interface MarkdownNavigatePathLinkRequest {
   rawPath: string
   clientX: number
   clientY: number
+}
+
+export interface MarkdownSetFontSizeRequest {
+  fontSize: number
 }
 
 export interface MarkdownSourceRange {

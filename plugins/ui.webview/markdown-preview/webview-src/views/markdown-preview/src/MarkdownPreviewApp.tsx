@@ -8,7 +8,7 @@ import rehypeSanitize from "rehype-sanitize"
 import rehypeSlug from "rehype-slug"
 import remarkFrontmatter from "remark-frontmatter"
 import remarkGfm from "remark-gfm"
-import { FloatingTableOfContents } from "./FloatingTableOfContents"
+import { FloatingMarkdownControls } from "./FloatingMarkdownControls"
 import { MarkdownImageBlock } from "./MarkdownImageBlock"
 import { MermaidBlock } from "./MermaidBlock"
 import { codeNodeFromPreNode, type HastNode } from "./markdownHastUtils"
@@ -18,6 +18,7 @@ import type {
   MarkdownChangedBlockDescriptor,
   MarkdownCommandCandidate,
   MarkdownCommandDescriptor,
+  MarkdownPreviewSettings,
   MarkdownNavigatePathLinkRequest,
   MarkdownResolvePathLinksRequest,
   MarkdownResolvedPathLinksResponse,
@@ -61,12 +62,14 @@ interface MarkdownPreviewAppProps {
   contentVersion: number
   changes: MarkdownChangedBlockDescriptor[]
   selection: MarkdownSourceRange | undefined
+  settings: MarkdownPreviewSettings
   theme: "light" | "dark"
   onOpenLink: (href: string) => void
   onResolveRunCommands: (request: MarkdownResolveRunCommandsRequest) => Promise<MarkdownResolvedRunCommandsResponse>
   onRunCommand: (request: MarkdownRunCommandRequest) => void
   onResolvePathLinks: (request: MarkdownResolvePathLinksRequest) => Promise<MarkdownResolvedPathLinksResponse>
   onNavigatePathLink: (request: MarkdownNavigatePathLinkRequest) => void
+  onSetFontSize: (fontSize: number) => void
 }
 
 const emptyPathSet = new Set<string>()
@@ -90,12 +93,14 @@ export function MarkdownPreviewApp({
   contentVersion,
   changes,
   selection,
+  settings,
   theme,
   onOpenLink,
   onResolveRunCommands,
   onRunCommand,
   onResolvePathLinks,
   onNavigatePathLink,
+  onSetFontSize,
 }: MarkdownPreviewAppProps) {
   const commandCandidates: MarkdownCommandCandidate[] = []
   const pathLinkCandidates = useMemo(() => collectPathLinkCandidates(markdown), [markdown])
@@ -272,7 +277,7 @@ export function MarkdownPreviewApp({
           {markdown}
         </ReactMarkdown>
       </div>
-      <FloatingTableOfContents markdown={markdown} />
+      <FloatingMarkdownControls markdown={markdown} settings={settings} onSetFontSize={onSetFontSize} />
     </>
   )
 }

@@ -1360,8 +1360,8 @@ html[data-theme="light"] .markdownPreview {
   border-radius: 4px;
   background: var(--markdown-vcs-removed-bg);
 }
-.markdownPreview .markdownTocRail,
-.markdownPreview .markdownTocPanel {
+.markdownPreview .markdownFloatingRail,
+.markdownPreview .markdownFloatingPanel {
   position: fixed;
   top: 12px;
   right: 12px;
@@ -1371,39 +1371,58 @@ html[data-theme="light"] .markdownPreview {
   opacity: 0.35;
   transition: opacity 120ms ease-in-out;
 }
-.markdownPreview .markdownTocRail,
-.markdownPreview .markdownTocCollapseButton {
+.markdownPreview .markdownFloatingRail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: transparent;
+  box-shadow: none;
+}
+.markdownPreview .markdownFloatingRailButton,
+.markdownPreview .markdownFloatingPanelCloseButton,
+.markdownPreview .markdownFontSizeButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   cursor: pointer;
 }
-.markdownPreview .markdownTocRail {
+.markdownPreview .markdownFloatingRailButton {
   width: 28px;
   height: 28px;
   border: 1px solid var(--ij-border-strong);
   border-radius: 4px;
   color: var(--ij-text-secondary);
+  background: var(--ij-bg-panel);
+  box-shadow: var(--ij-popup-shadow);
 }
-.markdownPreview .markdownTocRail:hover,
-.markdownPreview .markdownTocRail:focus-visible,
-.markdownPreview .markdownTocCollapseButton:hover,
+.markdownPreview .markdownFloatingRailButton:hover,
+.markdownPreview .markdownFloatingRailButton:focus-visible,
+.markdownPreview .markdownFloatingRailButton.is-active,
+.markdownPreview .markdownFloatingPanelCloseButton:hover,
+.markdownPreview .markdownFontSizeButton:hover:not(:disabled),
 .markdownPreview .markdownTocLink:hover {
   color: var(--ij-text-primary);
   background: var(--ij-bg-hover);
 }
-.markdownPreview .markdownTocRail:hover,
-.markdownPreview .markdownTocRail:focus-visible,
-.markdownPreview .markdownTocPanel:hover,
-.markdownPreview .markdownTocPanel:focus-within {
+.markdownPreview .markdownFloatingRail:hover,
+.markdownPreview .markdownFloatingRail:focus-within,
+.markdownPreview .markdownFloatingPanel:hover,
+.markdownPreview .markdownFloatingPanel:focus-within {
   opacity: 1;
 }
-.markdownPreview .markdownTocRail:focus-visible,
-.markdownPreview .markdownTocCollapseButton:focus-visible,
+.markdownPreview .markdownFloatingRailButton:focus-visible,
+.markdownPreview .markdownFloatingPanelCloseButton:focus-visible,
+.markdownPreview .markdownFontSizeButton:focus-visible,
+.markdownPreview .markdownFontSizeSlider:focus-visible,
 .markdownPreview .markdownTocLink:focus-visible {
   outline: none;
   box-shadow: var(--ij-focus-ring);
+}
+.markdownPreview .markdownFloatingRailIcon {
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
 }
 .markdownPreview .markdownTocRailIcon {
   position: relative;
@@ -1429,9 +1448,10 @@ html[data-theme="light"] .markdownPreview {
 .markdownPreview .markdownTocRailIcon::after {
   top: 5px;
 }
-.markdownPreview .markdownTocPanel {
+.markdownPreview .markdownFloatingPanel {
   display: flex;
   flex-direction: column;
+  right: 48px;
   width: min(320px, calc(100vw - 24px));
   max-height: min(480px, calc(100vh - 88px));
   overflow: hidden;
@@ -1439,7 +1459,7 @@ html[data-theme="light"] .markdownPreview {
   border-radius: 6px;
   color: var(--ij-text-primary);
 }
-.markdownPreview .markdownTocHeader {
+.markdownPreview .markdownFloatingPanelHeader {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1447,7 +1467,7 @@ html[data-theme="light"] .markdownPreview {
   padding: 4px 6px 4px 10px;
   border-bottom: 1px solid var(--ij-border);
 }
-.markdownPreview .markdownTocTitle {
+.markdownPreview .markdownFloatingPanelTitle {
   min-width: 0;
   flex: 1;
   overflow: hidden;
@@ -1457,7 +1477,7 @@ html[data-theme="light"] .markdownPreview {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.markdownPreview .markdownTocCollapseButton {
+.markdownPreview .markdownFloatingPanelCloseButton {
   flex: 0 0 auto;
   width: 24px;
   height: 24px;
@@ -1466,12 +1486,67 @@ html[data-theme="light"] .markdownPreview {
   color: var(--ij-text-secondary);
   background: transparent;
 }
-.markdownPreview .markdownTocCollapseIcon {
+.markdownPreview .markdownFloatingPanelCloseIcon {
   width: 8px;
   height: 8px;
   border-top: 1px solid currentColor;
   border-right: 1px solid currentColor;
   transform: rotate(45deg);
+}
+.markdownPreview .markdownFontSettingsPanel {
+  width: min(260px, calc(100vw - 24px));
+}
+.markdownPreview .markdownFontSettingsBody {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  padding: 10px;
+}
+.markdownPreview .markdownFontSetting {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+.markdownPreview .markdownFontSizeHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.markdownPreview .markdownFontSizeSliderLabel {
+  min-width: 0;
+  flex: 1;
+  color: var(--ij-text-secondary);
+  font-size: var(--ij-font-size-medium);
+}
+.markdownPreview .markdownFontSizeValue {
+  flex: 0 0 auto;
+  color: var(--ij-text-primary);
+  font-size: var(--ij-font-size);
+  font-weight: 600;
+}
+.markdownPreview .markdownFontSizeSlider {
+  width: 100%;
+  accent-color: var(--ij-accent);
+}
+.markdownPreview .markdownFontSizeButtons {
+  display: flex;
+  gap: 4px;
+}
+.markdownPreview .markdownFontSizeButton {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 4px;
+  color: var(--ij-text-primary);
+  background: transparent;
+}
+.markdownPreview .markdownFontSizeButton:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.markdownPreview .markdownFontSizeButton img {
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
 }
 .markdownPreview .markdownTocList {
   margin: 0;
@@ -1512,15 +1587,15 @@ html[data-theme="light"] .markdownPreview {
   white-space: nowrap;
 }
 @media (max-width: 520px) {
-  .markdownPreview .markdownTocRail {
+  .markdownPreview .markdownFloatingRail {
     top: 8px;
     right: 8px;
   }
 
-  .markdownPreview .markdownTocPanel {
+  .markdownPreview .markdownFloatingPanel {
     top: 8px;
-    right: 8px;
-    width: calc(100vw - 16px);
+    right: 44px;
+    width: calc(100vw - 52px);
     max-height: min(360px, calc(100vh - 72px));
   }
 }

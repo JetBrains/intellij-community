@@ -7,24 +7,22 @@ import { decorateSourceBlocks } from "./markdownSourcePositions"
 import type {
   MarkdownChangedBlockDescriptor,
   MarkdownNavigatePathLinkRequest,
+  MarkdownPreviewSettings,
   MarkdownResolvePathLinksRequest,
   MarkdownResolvedPathLinksResponse,
   MarkdownResolveRunCommandsRequest,
   MarkdownResolvedRunCommandsResponse,
   MarkdownRunCommandRequest,
+  MarkdownSetFontSizeRequest,
   MarkdownSourceRange,
 } from "./markdownPreviewTypes"
 
 interface MarkdownContentChangedParams {
   markdown: string
   scrollLine: number
-  settings: MarkdownPreviewSettingsParams
+  settings: MarkdownPreviewSettings
   contentVersion: number
   changes: MarkdownChangedBlockDescriptor[]
-}
-
-interface MarkdownPreviewSettingsParams {
-  fontSize?: number | null
 }
 
 interface MarkdownScrollToLineParams {
@@ -48,6 +46,7 @@ interface MarkdownPreviewHostApi extends WebViewCallable {
   runCommand(params: MarkdownRunCommandRequest): Promise<void>
   resolvePathLinks(params: MarkdownResolvePathLinksRequest): Promise<MarkdownResolvedPathLinksResponse>
   navigatePathLink(params: MarkdownNavigatePathLinkRequest): Promise<void>
+  setFontSize(params: MarkdownSetFontSizeRequest): Promise<void>
 }
 
 interface MarkdownOpenLinkParams {
@@ -64,13 +63,15 @@ let contentVersion = -1
 let changes: MarkdownChangedBlockDescriptor[] = []
 let selection: MarkdownSourceRange | undefined
 let theme = webViewTheme.current
+let previewSettings = defaultPreviewSettings()
 
 webView.implement(markdownPreviewPageApiId, {
   contentChanged(params) {
     markdown = params.markdown
     scrollLine = params.scrollLine
     contentVersion = params.contentVersion
-    applyPreviewSettings(params.settings)
+    previewSettings = normalizePreviewSettings(params.settings)
+    applyPreviewSettings(previewSettings)
     changes = params.changes ?? []
     renderPreview()
   },
@@ -100,12 +101,14 @@ function renderPreview(): void {
       contentVersion={contentVersion}
       changes={changes}
       selection={selection}
+      settings={previewSettings}
       theme={theme}
       onOpenLink={openMarkdownLink}
       onResolveRunCommands={resolveMarkdownRunCommands}
       onRunCommand={runMarkdownCommand}
       onResolvePathLinks={resolveMarkdownPathLinks}
       onNavigatePathLink={navigateMarkdownPathLink}
+      onSetFontSize={setMarkdownFontSize}
     />
   )
 }
@@ -130,11 +133,16 @@ function navigateMarkdownPathLink(request: MarkdownNavigatePathLinkRequest): voi
   void markdownPreviewHostApi.navigatePathLink(request)
 }
 
+function setMarkdownFontSize(fontSize: number): void {
+  if (fontSize === previewSettings.effectiveFontSize) return
+  void markdownPreviewHostApi.setFontSize({ fontSize })
+}
+
 function applyTheme(theme: "light" | "dark"): void {
   document.documentElement.dataset.theme = theme
 }
 
-function applyPreviewSettings(settings: MarkdownPreviewSettingsParams): void {
+function applyPreviewSettings(settings: MarkdownPreviewSettings): void {
   const fontSize = settings.fontSize
   if (typeof fontSize === "number" && Number.isFinite(fontSize) && fontSize > 0) {
     document.documentElement.style.setProperty("--markdown-preview-font-size", `${fontSize}px`)
@@ -142,6 +150,37 @@ function applyPreviewSettings(settings: MarkdownPreviewSettingsParams): void {
   else {
     document.documentElement.style.removeProperty("--markdown-preview-font-size")
   }
+}
+
+function defaultPreviewSettings(): MarkdownPreviewSettings {
+  const fontSize = 13
+  return {
+    fontSize: null,
+    effectiveFontSize: fontSize,
+    defaultFontSize: fontSize,
+    fontSizeOptions: [fontSize],
+  }
+}
+
+function normalizePreviewSettings(settings: MarkdownPreviewSettings): MarkdownPreviewSettings {
+  const effectiveFontSize = positiveFiniteNumber(settings.effectiveFontSize) ?? previewSettings.effectiveFontSize
+  const defaultFontSize = positiveFiniteNumber(settings.defaultFontSize) ?? previewSettings.defaultFontSize
+  const rawFontSizeOptions = Array.isArray(settings.fontSizeOptions) ? settings.fontSizeOptions : []
+  const fontSizeOptions = uniqueSortedNumbers([...rawFontSizeOptions, effectiveFontSize, defaultFontSize])
+  return {
+    fontSize: settings.fontSize,
+    effectiveFontSize,
+    defaultFontSize,
+    fontSizeOptions,
+  }
+}
+
+function positiveFiniteNumber(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : undefined
+}
+
+function uniqueSortedNumbers(values: number[]): number[] {
+  return Array.from(new Set(values.filter(value => Number.isFinite(value) && value > 0))).sort((left, right) => left - right)
 }
 
 function requiredElement<T extends HTMLElement>(id: string): T {

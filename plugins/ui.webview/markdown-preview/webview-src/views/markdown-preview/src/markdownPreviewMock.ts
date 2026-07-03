@@ -6,24 +6,22 @@ import type {
   MarkdownChangedBlockDescriptor,
   MarkdownCommandDescriptor,
   MarkdownNavigatePathLinkRequest,
+  MarkdownPreviewSettings,
   MarkdownResolvePathLinksRequest,
   MarkdownResolvedPathLinksResponse,
   MarkdownResolveRunCommandsRequest,
   MarkdownResolvedRunCommandsResponse,
   MarkdownRunCommandRequest,
+  MarkdownSetFontSizeRequest,
   MarkdownSourceRange,
 } from "./markdownPreviewTypes"
 
 interface MarkdownContentChangedParams {
   markdown: string
   scrollLine: number
-  settings: MarkdownPreviewSettingsParams
+  settings: MarkdownPreviewSettings
   contentVersion: number
   changes: MarkdownChangedBlockDescriptor[]
-}
-
-interface MarkdownPreviewSettingsParams {
-  fontSize?: number | null
 }
 
 interface MarkdownScrollToLineParams {
@@ -47,6 +45,7 @@ interface MarkdownPreviewHostApi extends WebViewCallable {
   runCommand(params: MarkdownRunCommandRequest): Promise<void>
   resolvePathLinks(params: MarkdownResolvePathLinksRequest): Promise<MarkdownResolvedPathLinksResponse>
   navigatePathLink(params: MarkdownNavigatePathLinkRequest): Promise<void>
+  setFontSize(params: MarkdownSetFontSizeRequest): Promise<void>
 }
 
 interface MarkdownOpenLinkParams {
@@ -60,16 +59,20 @@ const changes: MarkdownChangedBlockDescriptor[] = [
   { kind: "MODIFIED", startLine: 20, endLine: 23 },
 ]
 const resolvedPathLinks = new Set(["docs/guide.md:12", "src/Main.kt", "src\\WindowsPath.kt", "index.h", "index.html", "style.css", "requirements.txt", "my_django_project/", "my_django_app/"])
+const defaultFontSize = 13
+const fontSizeOptions = [8, 9, 10, 11, 12, defaultFontSize, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72]
 
 export default defineWebViewMock(({ host, page, theme }) => {
   const toolbar = installMockToolbar()
   let contentVersion = 1
+  let currentMarkdown = sampleMarkdown
+  let currentFontSize = defaultFontSize
 
   function updatePreview(): void {
     page.callable(markdownPreviewPageApiId).contentChanged({
-      markdown: sampleMarkdown,
+      markdown: currentMarkdown,
       scrollLine: 0,
-      settings: {},
+      settings: currentSettings(),
       contentVersion: contentVersion++,
       changes,
     })
@@ -81,6 +84,11 @@ export default defineWebViewMock(({ host, page, theme }) => {
   toolbar.toggleThemeButton.addEventListener("click", () => {
     const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark"
     theme.set(nextTheme)
+    updatePreview()
+  })
+
+  toolbar.shortMarkdownButton.addEventListener("click", () => {
+    currentMarkdown = shortMarkdown
     updatePreview()
   })
 
@@ -120,10 +128,27 @@ export default defineWebViewMock(({ host, page, theme }) => {
     async navigatePathLink(params) {
       toolbar.log.textContent = JSON.stringify({ kind: "navigatePathLink", ...params })
     },
+    async setFontSize(params) {
+      const normalizedFontSize = closestFontSize(params.fontSize, fontSizeOptions)
+      toolbar.log.textContent = JSON.stringify({ kind: "setFontSize", fontSize: normalizedFontSize })
+      if (normalizedFontSize === currentFontSize) return
+
+      currentFontSize = normalizedFontSize
+      updatePreview()
+    },
   })
+
+  function currentSettings(): MarkdownPreviewSettings {
+    return {
+      fontSize: currentFontSize === defaultFontSize ? null : currentFontSize,
+      effectiveFontSize: currentFontSize,
+      defaultFontSize,
+      fontSizeOptions,
+    }
+  }
 })
 
-function installMockToolbar(): { toggleThemeButton: HTMLButtonElement, log: HTMLSpanElement } {
+function installMockToolbar(): { toggleThemeButton: HTMLButtonElement, shortMarkdownButton: HTMLButtonElement, log: HTMLSpanElement } {
   const content = document.getElementById("content")
   if (!content) {
     throw new Error("Missing Markdown preview content element")
@@ -138,13 +163,18 @@ function installMockToolbar(): { toggleThemeButton: HTMLButtonElement, log: HTML
   toggleThemeButton.textContent = "Toggle theme"
   toolbar.append(toggleThemeButton)
 
+  const shortMarkdownButton = document.createElement("button")
+  shortMarkdownButton.type = "button"
+  shortMarkdownButton.textContent = "Short markdown"
+  toolbar.append(shortMarkdownButton)
+
   const log = document.createElement("span")
   log.id = "mock-run-log"
   toolbar.append(log)
 
   content.before(toolbar)
   installMockToolbarStyles()
-  return { toggleThemeButton, log }
+  return { toggleThemeButton, shortMarkdownButton, log }
 }
 
 function installMockToolbarStyles(): void {
@@ -175,6 +205,12 @@ function installMockToolbarStyles(): void {
     }
   `
   document.head.append(style)
+}
+
+function closestFontSize(fontSize: number, options: number[]): number {
+  return options.reduce((closest, candidate) => {
+    return Math.abs(candidate - fontSize) < Math.abs(closest - fontSize) ? candidate : closest
+  }, options[0] ?? fontSize)
 }
 
 const sampleMarkdown = `---
@@ -255,4 +291,9 @@ flowchart LR
 | --- | --- |
 | Icons | AllIcons |
 | Theme | Toggleable |
+`
+
+const shortMarkdown = `# Short Markdown
+
+This mock document has no table of contents.
 `

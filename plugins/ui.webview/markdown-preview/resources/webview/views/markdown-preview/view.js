@@ -110,6 +110,13 @@ function validateIconResourcePath(resourcePath) {
 function encodeIconResourcePath(resourcePath) {
 	return resourcePath.split("/").map((segment) => encodeURIComponent(segment)).join("/");
 }
+//#endregion
+//#region ../../webview-src/packages/api/src/focus.ts
+var WEBVIEW_FOCUS_LEAVE_EVENT = "wvi-focus-leave";
+function addWebViewFocusLeaveListener(listener) {
+	window.addEventListener(WEBVIEW_FOCUS_LEAVE_EVENT, listener);
+	return () => window.removeEventListener(WEBVIEW_FOCUS_LEAVE_EVENT, listener);
+}
 apiId()("webview.focus");
 apiId()("webview.focus");
 //#endregion
@@ -137,15 +144,18 @@ function createLazyWebViewBridge() {
 }
 var webView = createLazyWebViewBridge();
 //#endregion
-//#region views/markdown-preview/src/FloatingTableOfContents.tsx
+//#region views/markdown-preview/src/FloatingMarkdownControls.tsx
 var import_react = require_react();
 var import_jsx_runtime = require_jsx_runtime();
 var headingSelector = "h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]";
 var activeHeadingTopOffset = 80;
-function FloatingTableOfContents({ markdown }) {
+function FloatingMarkdownControls({ markdown, settings, onSetFontSize }) {
 	const [entries, setEntries] = (0, import_react.useState)([]);
-	const [expanded, setExpanded] = (0, import_react.useState)(false);
+	const [openPanel, setOpenPanel] = (0, import_react.useState)();
 	const [activeId, setActiveId] = (0, import_react.useState)();
+	const hasTableOfContents = entries.length >= 2;
+	const fontSizeOptions = (0, import_react.useMemo)(() => normalizedFontSizeOptions(settings), [settings]);
+	const currentFontSizeIndex = fontSizeIndex(settings.effectiveFontSize, fontSizeOptions);
 	(0, import_react.useEffect)(() => {
 		const nextEntries = collectTableOfContentsEntries();
 		setEntries(nextEntries);
@@ -179,19 +189,26 @@ function FloatingTableOfContents({ markdown }) {
 			window.removeEventListener("resize", scheduleUpdate);
 		};
 	}, [entries]);
-	if (entries.length < 2) return null;
-	if (!expanded) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-		type: "button",
-		className: "markdownTocRail",
-		title: "Table of contents",
-		"aria-label": "Show table of contents",
-		"aria-expanded": "false",
-		onClick: () => setExpanded(true),
-		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-			className: "markdownTocRailIcon",
-			"aria-hidden": "true"
-		})
-	});
+	(0, import_react.useEffect)(() => {
+		return addWebViewFocusLeaveListener(() => setOpenPanel(void 0));
+	}, []);
+	(0, import_react.useEffect)(() => {
+		if (openPanel === void 0) return;
+		const handleKeyDown = (event) => {
+			if (event.key === "Escape") setOpenPanel(void 0);
+		};
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, [openPanel]);
+	(0, import_react.useEffect)(() => {
+		if (!hasTableOfContents && openPanel === "toc") setOpenPanel(void 0);
+	}, [hasTableOfContents, openPanel]);
+	function togglePanel(panel) {
+		setOpenPanel((current) => current === panel ? void 0 : panel);
+	}
+	function closePanel() {
+		setOpenPanel(void 0);
+	}
 	function scrollToEntry(entry) {
 		const target = document.getElementById(entry.id);
 		if (!target) return;
@@ -201,47 +218,168 @@ function FloatingTableOfContents({ markdown }) {
 		});
 		setActiveId(entry.id);
 	}
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("nav", {
-		className: "markdownTocPanel",
-		"aria-label": "Table of contents",
-		onKeyDown: (event) => {
-			if (event.key === "Escape") setExpanded(false);
-		},
-		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-			className: "markdownTocHeader",
-			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-				className: "markdownTocTitle",
-				children: "Contents"
-			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+	function requestFontSize(fontSize) {
+		const normalizedFontSize = closestFontSize(fontSize, fontSizeOptions);
+		if (normalizedFontSize === settings.effectiveFontSize) return;
+		onSetFontSize(normalizedFontSize);
+	}
+	function handleSliderChange(event) {
+		const requestedFontSize = fontSizeOptions[Number(event.currentTarget.value)];
+		if (requestedFontSize !== void 0) requestFontSize(requestedFontSize);
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "markdownFloatingRail",
+			"aria-label": "Markdown preview controls",
+			children: [hasTableOfContents && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 				type: "button",
-				className: "markdownTocCollapseButton",
-				title: "Collapse",
-				"aria-label": "Collapse table of contents",
-				"aria-expanded": "true",
-				onClick: () => setExpanded(false),
+				className: classNames$1("markdownFloatingRailButton", openPanel === "toc" ? "is-active" : void 0),
+				title: "Table of contents",
+				"aria-label": "Show table of contents",
+				"aria-expanded": openPanel === "toc",
+				onClick: () => togglePanel("toc"),
 				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-					className: "markdownTocCollapseIcon",
+					className: "markdownTocRailIcon",
 					"aria-hidden": "true"
 				})
-			})]
-		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ol", {
-			className: "markdownTocList",
-			children: entries.map((entry) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", {
-				className: "markdownTocItem",
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					type: "button",
-					className: classNames$1("markdownTocLink", entry.id === activeId ? "is-active" : void 0),
-					style: { paddingLeft: `${8 + Math.max(0, entry.level - 1) * 12}px` },
-					"aria-current": entry.id === activeId ? "location" : void 0,
-					title: entry.text,
-					onClick: () => scrollToEntry(entry),
-					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-						className: "markdownTocText",
-						children: entry.text
-					})
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				className: classNames$1("markdownFloatingRailButton", openPanel === "settings" ? "is-active" : void 0),
+				title: "Font size settings",
+				"aria-label": "Show font size settings",
+				"aria-expanded": openPanel === "settings",
+				onClick: () => togglePanel("settings"),
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+					className: "markdownFloatingRailIcon",
+					src: AllIcons.src("general/settings.svg"),
+					alt: "",
+					draggable: false
 				})
-			}, entry.id))
+			})]
+		}),
+		openPanel === "toc" && hasTableOfContents && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("nav", {
+			className: "markdownFloatingPanel markdownTocPanel",
+			"aria-label": "Table of contents",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FloatingPanelHeader, {
+				title: "Contents",
+				closeLabel: "Collapse table of contents",
+				onClose: closePanel
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ol", {
+				className: "markdownTocList",
+				children: entries.map((entry) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", {
+					className: "markdownTocItem",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						className: classNames$1("markdownTocLink", entry.id === activeId ? "is-active" : void 0),
+						style: { paddingLeft: `${8 + Math.max(0, entry.level - 1) * 12}px` },
+						"aria-current": entry.id === activeId ? "location" : void 0,
+						title: entry.text,
+						onClick: () => scrollToEntry(entry),
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "markdownTocText",
+							children: entry.text
+						})
+					})
+				}, entry.id))
+			})]
+		}),
+		openPanel === "settings" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "markdownFloatingPanel markdownFontSettingsPanel",
+			"aria-label": "Options",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FloatingPanelHeader, {
+				title: "Options",
+				closeLabel: "Collapse font size settings",
+				onClose: closePanel
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "markdownFontSettingsBody",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "markdownFontSetting",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "markdownFontSizeHeader",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+								className: "markdownFontSizeSliderLabel",
+								htmlFor: "markdown-font-size-slider",
+								children: "Font size"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "markdownFontSizeValue",
+								children: [settings.effectiveFontSize, " px"]
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+							id: "markdown-font-size-slider",
+							type: "range",
+							className: "markdownFontSizeSlider",
+							min: 0,
+							max: Math.max(0, fontSizeOptions.length - 1),
+							step: 1,
+							value: currentFontSizeIndex,
+							disabled: fontSizeOptions.length < 2,
+							"aria-valuetext": `${settings.effectiveFontSize} px`,
+							onChange: handleSliderChange
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "markdownFontSizeButtons",
+							"aria-label": "Font size controls",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FontSizeButton, {
+									icon: "general/remove.svg",
+									label: "Decrease font size",
+									disabled: currentFontSizeIndex <= 0,
+									onClick: () => requestFontSize(fontSizeOptions[currentFontSizeIndex - 1] ?? settings.effectiveFontSize)
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FontSizeButton, {
+									icon: "general/reset.svg",
+									label: "Reset font size",
+									disabled: settings.effectiveFontSize === settings.defaultFontSize,
+									onClick: () => requestFontSize(settings.defaultFontSize)
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FontSizeButton, {
+									icon: "general/add.svg",
+									label: "Increase font size",
+									disabled: currentFontSizeIndex >= fontSizeOptions.length - 1,
+									onClick: () => requestFontSize(fontSizeOptions[currentFontSizeIndex + 1] ?? settings.effectiveFontSize)
+								})
+							]
+						})
+					]
+				})
+			})]
+		})
+	] });
+}
+function FloatingPanelHeader({ title, closeLabel, onClose }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "markdownFloatingPanelHeader",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: "markdownFloatingPanelTitle",
+			children: title
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+			type: "button",
+			className: "markdownFloatingPanelCloseButton",
+			title: "Collapse",
+			"aria-label": closeLabel,
+			onClick: onClose,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "markdownFloatingPanelCloseIcon",
+				"aria-hidden": "true"
+			})
 		})]
+	});
+}
+function FontSizeButton({ icon, label, disabled, onClick }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+		type: "button",
+		className: "markdownFontSizeButton",
+		title: label,
+		"aria-label": label,
+		disabled,
+		onClick,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+			src: AllIcons.src(icon),
+			alt: "",
+			draggable: false
+		})
 	});
 }
 function collectTableOfContentsEntries() {
@@ -264,6 +402,21 @@ function headingLevel(heading) {
 }
 function normalizeHeadingText(text) {
 	return text.replace(/\s+/g, " ").trim();
+}
+function normalizedFontSizeOptions(settings) {
+	return Array.from(new Set([
+		...settings.fontSizeOptions,
+		settings.effectiveFontSize,
+		settings.defaultFontSize
+	].filter((value) => Number.isFinite(value) && value > 0))).sort((left, right) => left - right);
+}
+function fontSizeIndex(fontSize, options) {
+	return Math.max(0, options.indexOf(closestFontSize(fontSize, options)));
+}
+function closestFontSize(fontSize, options) {
+	return options.reduce((closest, candidate) => {
+		return Math.abs(candidate - fontSize) < Math.abs(closest - fontSize) ? candidate : closest;
+	}, options[0] ?? fontSize);
 }
 function classNames$1(...names) {
 	return names.filter(Boolean).join(" ") || void 0;
@@ -1935,7 +2088,7 @@ var rehypePlugins = [
 		]
 	}]
 ];
-function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, selection, theme, onOpenLink, onResolveRunCommands, onRunCommand, onResolvePathLinks, onNavigatePathLink }) {
+function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, selection, settings, theme, onOpenLink, onResolveRunCommands, onRunCommand, onResolvePathLinks, onNavigatePathLink, onSetFontSize }) {
 	const commandCandidates = [];
 	const pathLinkCandidates = (0, import_react.useMemo)(() => collectPathLinkCandidates(markdown), [markdown]);
 	const [resolvedCommands, setResolvedCommands] = (0, import_react.useState)({
@@ -2148,7 +2301,11 @@ function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, sel
 			urlTransform: (url) => url,
 			children: markdown
 		})
-	}, contentVersion), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FloatingTableOfContents, { markdown })] });
+	}, contentVersion), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FloatingMarkdownControls, {
+		markdown,
+		settings,
+		onSetFontSize
+	})] });
 }
 function standaloneImageFromParagraphNode(node) {
 	const contentChildren = (node?.children ?? []).filter((child) => !isWhitespaceTextNode(child));
@@ -2180,12 +2337,14 @@ var contentVersion = -1;
 var changes = [];
 var selection;
 var theme = webViewTheme.current;
+var previewSettings = defaultPreviewSettings();
 webView.implement(markdownPreviewPageApiId, {
 	contentChanged(params) {
 		markdown = params.markdown;
 		scrollLine = params.scrollLine;
 		contentVersion = params.contentVersion;
-		applyPreviewSettings(params.settings);
+		previewSettings = normalizePreviewSettings(params.settings);
+		applyPreviewSettings(previewSettings);
 		changes = params.changes ?? [];
 		renderPreview();
 	},
@@ -2212,12 +2371,14 @@ function renderPreview() {
 		contentVersion,
 		changes,
 		selection,
+		settings: previewSettings,
 		theme,
 		onOpenLink: openMarkdownLink,
 		onResolveRunCommands: resolveMarkdownRunCommands,
 		onRunCommand: runMarkdownCommand,
 		onResolvePathLinks: resolveMarkdownPathLinks,
-		onNavigatePathLink: navigateMarkdownPathLink
+		onNavigatePathLink: navigateMarkdownPathLink,
+		onSetFontSize: setMarkdownFontSize
 	}));
 }
 function openMarkdownLink(href) {
@@ -2235,6 +2396,10 @@ function resolveMarkdownPathLinks(request) {
 function navigateMarkdownPathLink(request) {
 	markdownPreviewHostApi.navigatePathLink(request);
 }
+function setMarkdownFontSize(fontSize) {
+	if (fontSize === previewSettings.effectiveFontSize) return;
+	markdownPreviewHostApi.setFontSize({ fontSize });
+}
 function applyTheme(theme) {
 	document.documentElement.dataset.theme = theme;
 }
@@ -2242,6 +2407,36 @@ function applyPreviewSettings(settings) {
 	const fontSize = settings.fontSize;
 	if (typeof fontSize === "number" && Number.isFinite(fontSize) && fontSize > 0) document.documentElement.style.setProperty("--markdown-preview-font-size", `${fontSize}px`);
 	else document.documentElement.style.removeProperty("--markdown-preview-font-size");
+}
+function defaultPreviewSettings() {
+	const fontSize = 13;
+	return {
+		fontSize: null,
+		effectiveFontSize: fontSize,
+		defaultFontSize: fontSize,
+		fontSizeOptions: [fontSize]
+	};
+}
+function normalizePreviewSettings(settings) {
+	const effectiveFontSize = positiveFiniteNumber(settings.effectiveFontSize) ?? previewSettings.effectiveFontSize;
+	const defaultFontSize = positiveFiniteNumber(settings.defaultFontSize) ?? previewSettings.defaultFontSize;
+	const fontSizeOptions = uniqueSortedNumbers([
+		...Array.isArray(settings.fontSizeOptions) ? settings.fontSizeOptions : [],
+		effectiveFontSize,
+		defaultFontSize
+	]);
+	return {
+		fontSize: settings.fontSize,
+		effectiveFontSize,
+		defaultFontSize,
+		fontSizeOptions
+	};
+}
+function positiveFiniteNumber(value) {
+	return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : void 0;
+}
+function uniqueSortedNumbers(values) {
+	return Array.from(new Set(values.filter((value) => Number.isFinite(value) && value > 0))).sort((left, right) => left - right);
 }
 function requiredElement(id) {
 	const element = document.getElementById(id);

@@ -127,6 +127,62 @@ test("renders frontmatter as an article header with collapsed metadata", async (
   expect(frontmatterState.metadataValues.includes("false")).toBe(true)
 })
 
+test("changes preview font size from floating settings", async ({ page }) => {
+  if (!preview) {
+    throw new Error("Markdown preview mock preview server was not started")
+  }
+  await page.goto(preview.url)
+  await page.waitForSelector(".markdownFloatingRail")
+
+  await expect(page.getByRole("button", { name: "Show font size settings" })).toBeVisible()
+  await page.getByRole("button", { name: "Show font size settings" }).click()
+  await expect(page.getByRole("button", { name: "Increase font size" })).toBeVisible()
+  expect(await fontSettingsIconsLoaded(page)).toBe(true)
+
+  const initialCalls = await setFontSizeCallCount(page)
+  await page.getByRole("button", { name: "Increase font size" }).click()
+  await page.waitForFunction(() => getComputedStyle(document.querySelector(".markdownPreview")!).fontSize === "14px")
+  expect(await setFontSizeCallCount(page) === initialCalls + 1).toBe(true)
+
+  await page.getByRole("button", { name: "Decrease font size" }).click()
+  await page.waitForFunction(() => getComputedStyle(document.querySelector(".markdownPreview")!).fontSize === "13px")
+
+  await page.evaluate(() => {
+    const slider = document.querySelector<HTMLInputElement>("#markdown-font-size-slider")
+    if (!slider) throw new Error("Missing font size slider")
+    const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set
+    valueSetter?.call(slider, "7")
+    slider.dispatchEvent(new Event("input", { bubbles: true }))
+    slider.dispatchEvent(new Event("change", { bubbles: true }))
+  })
+  await page.waitForFunction(() => getComputedStyle(document.querySelector(".markdownPreview")!).fontSize === "16px")
+
+  await page.getByRole("button", { name: "Reset font size" }).click()
+  await page.waitForFunction(() => getComputedStyle(document.querySelector(".markdownPreview")!).fontSize === "13px")
+
+  const callsAfterUserChanges = await setFontSizeCallCount(page)
+  await page.getByRole("button", { name: "Toggle theme" }).click()
+  await waitForLateMockUpdates(page)
+  expect(await setFontSizeCallCount(page) === callsAfterUserChanges).toBe(true)
+})
+
+test("keeps font settings available without table of contents", async ({ page }) => {
+  if (!preview) {
+    throw new Error("Markdown preview mock preview server was not started")
+  }
+  await page.goto(preview.url)
+  await page.getByRole("button", { name: "Short markdown" }).click()
+  await page.waitForFunction(() => document.querySelector(".markdownPreview h1")?.textContent === "Short Markdown")
+
+  const railState = await page.evaluate(() => ({
+    tableOfContentsButtons: document.querySelectorAll('[aria-label="Show table of contents"]').length,
+    fontSettingsButtons: document.querySelectorAll('[aria-label="Show font size settings"]').length,
+  }))
+
+  expect(railState.tableOfContentsButtons === 0).toBe(true)
+  expect(railState.fontSettingsButtons === 1).toBe(true)
+})
+
 test("zooms, pans, and exposes native resize for Mermaid diagrams", async ({ page }) => {
   if (!preview) {
     throw new Error("Markdown preview mock preview server was not started")
@@ -328,6 +384,26 @@ function markdownImageToolbarIconsLoaded(page: Page): Promise<boolean> {
     const icons = Array.from(document.querySelectorAll<HTMLImageElement>(".markdownImageToolbar img"))
     return icons.length === 3 && icons.every(icon => icon.complete && icon.naturalWidth > 0 && icon.naturalHeight > 0)
   })
+}
+
+function fontSettingsIconsLoaded(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const icons = Array.from(document.querySelectorAll<HTMLImageElement>(".markdownFontSizeButton img, .markdownFloatingRailButton img"))
+    return icons.length >= 4 && icons.every(icon => icon.complete && icon.naturalWidth > 0 && icon.naturalHeight > 0)
+  })
+}
+
+function setFontSizeCallCount(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    const mock = (window as Window & {
+      __WVI_MOCK__?: { calls: { byMethod(method: string): readonly unknown[] } }
+    }).__WVI_MOCK__
+    return mock?.calls.byMethod("markdown.preview/setFontSize").length ?? 0
+  })
+}
+
+function waitForLateMockUpdates(page: Page): Promise<unknown> {
+  return page.evaluate(() => new Promise(resolve => setTimeout(resolve, 120)))
 }
 
 function markdownImageFillsViewport(page: Page): Promise<boolean> {

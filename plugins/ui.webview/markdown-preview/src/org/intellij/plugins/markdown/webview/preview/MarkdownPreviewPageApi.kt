@@ -36,6 +36,8 @@ interface MarkdownPreviewHostApi : WebViewImplementable {
 
   suspend fun navigatePathLink(params: MarkdownNavigatePathLinkParams)
 
+  suspend fun setFontSize(params: MarkdownSetFontSizeParams)
+
   companion object {
     val ID: WebViewApiId<MarkdownPreviewHostApi> = WebViewApiId.of("markdown.preview")
   }
@@ -55,6 +57,9 @@ data class MarkdownContentChangedParams(
 @Serializable
 data class MarkdownPreviewSettingsParams(
   val fontSize: Int?,
+  val effectiveFontSize: Int,
+  val defaultFontSize: Int,
+  val fontSizeOptions: List<Int>,
 )
 
 @ApiStatus.Internal
@@ -179,3 +184,7 @@ data class MarkdownNavigatePathLinkParams(
   val clientX: Int,
   val clientY: Int,
 )
+
+@ApiStatus.Internal
+@Serializable
+data class MarkdownSetFontSizeParams(val fontSize: Int)

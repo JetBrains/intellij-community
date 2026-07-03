@@ -36,6 +36,7 @@ import org.intellij.plugins.markdown.extensions.jcef.commandRunner.RunnerPlace
 import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
 import org.intellij.plugins.markdown.ui.preview.MarkdownContentPanel
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
+import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles
 import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
@@ -185,6 +186,10 @@ class WebViewMarkdownPreviewPanel(
       override suspend fun navigatePathLink(params: MarkdownNavigatePathLinkParams) {
         navigateMarkdownPathLink(params)
       }
+
+      override suspend fun setFontSize(params: MarkdownSetFontSizeParams) {
+        setMarkdownFontSize(params)
+      }
     }
   }
 
@@ -208,6 +213,18 @@ class WebViewMarkdownPreviewPanel(
     val resolver = pathLinkResolver ?: return
 
     resolver.navigate(params.rawPath, update.document, rootComponent, params.clientX, params.clientY)
+  }
+
+  private fun setMarkdownFontSize(params: MarkdownSetFontSizeParams) {
+    val previewSettings = service<MarkdownPreviewSettings>()
+    val currentFontSize = previewSettings.state.fontSize
+    val defaultFontSize = MarkdownPreviewSettings.State().fontSize
+    val normalizedFontSize = closestFontSize(params.fontSize, previewFontSizeOptions(currentFontSize, defaultFontSize))
+    if (normalizedFontSize == currentFontSize) return
+
+    previewSettings.update { settings ->
+      settings.state.fontSize = normalizedFontSize
+    }
   }
 
   private fun resolveMarkdownRunCommands(params: MarkdownResolveRunCommandsParams): MarkdownRunCommandSession {
@@ -318,7 +335,12 @@ class WebViewMarkdownPreviewPanel(
   private fun currentPreviewSettings(): MarkdownPreviewSettingsParams {
     val fontSize = service<MarkdownPreviewSettings>().state.fontSize
     val defaultFontSize = MarkdownPreviewSettings.State().fontSize
-    return MarkdownPreviewSettingsParams(fontSize = fontSize.takeIf { it != defaultFontSize })
+    return MarkdownPreviewSettingsParams(
+      fontSize = fontSize.takeIf { it != defaultFontSize },
+      effectiveFontSize = fontSize,
+      defaultFontSize = defaultFontSize,
+      fontSizeOptions = previewFontSizeOptions(fontSize, defaultFontSize),
+    )
   }
 
   override fun addScrollListener(listener: MarkdownHtmlPanel.ScrollListener) {
@@ -364,6 +386,17 @@ class WebViewMarkdownPreviewPanel(
         if (text[index] == '\n') line++
       }
       return line
+    }
+
+    private fun previewFontSizeOptions(vararg extraFontSizes: Int): List<Int> {
+      return (PreviewLAFThemeStyles.fontSizeOptions + extraFontSizes.asIterable())
+        .filter { it > 0 }
+        .distinct()
+        .sorted()
+    }
+
+    private fun closestFontSize(fontSize: Int, options: List<Int>): Int {
+      return options.minByOrNull { kotlin.math.abs(it - fontSize) } ?: fontSize.coerceAtLeast(1)
     }
   }
 }
