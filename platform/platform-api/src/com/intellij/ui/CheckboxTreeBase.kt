@@ -216,7 +216,7 @@ open class CheckboxTreeBase(
             return AccessibleContextUtil.combineAccessibleStrings(
               textRenderer.getAccessibleContext().getAccessibleName(),
               UIBundle.message(
-                if (checkbox.isSelected) "checkbox.tree.accessible.name.checked" else "checkbox.tree.accessible.name.not.checked"))
+                if (checkbox.isSelected) "checkbox.accessible.name.checked" else "checkbox.accessible.name.not.checked"))
           }
         }
       }
