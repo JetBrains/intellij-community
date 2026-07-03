@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.psi.PsiElement
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
@@ -28,15 +29,19 @@ class LanguageRef private constructor(
   constructor(id: String, displayName: @Nls String, icon: Icon?) : this(id, displayName, { icon })
 
   companion object {
+    private val cache = ContainerUtil.createConcurrentWeakMap<Language, LanguageRef>()
+
     @JvmStatic
-    fun forLanguage(lang: Language): LanguageRef =
-      (nonDependentLanguage(lang) ?: lang).let {
+    fun forLanguage(lang: Language): LanguageRef {
+      val language = nonDependentLanguage(lang) ?: lang
+      return cache.computeIfAbsent(language) {
         LanguageRef(it.id, it.displayName) {
           runCatching {
             it.associatedFileType?.icon
           }.getOrLogException(LOG)
         }
       }
+    }
 
     private fun nonDependentLanguage(lang: Language): Language? =
       if (lang is DependentLanguage) lang.baseLanguage else lang
@@ -88,12 +93,16 @@ class FileTypeRef private constructor(
   constructor(name: @NonNls String, displayName: @Nls String, icon: Icon?) : this(name, displayName, { icon })
 
   companion object {
+    private val cache = ContainerUtil.createConcurrentWeakMap<FileType, FileTypeRef>()
+
     @JvmStatic
     fun forFileType(fileType: FileType): FileTypeRef =
-      FileTypeRef(fileType.name, fileType.displayName) {
-        runCatching {
-          fileType.icon
-        }.getOrLogException(LOG)
+      cache.computeIfAbsent(fileType) {
+        FileTypeRef(it.name, it.displayName) {
+          runCatching {
+            it.icon
+          }.getOrLogException(LOG)
+        }
       }
 
     @JvmStatic

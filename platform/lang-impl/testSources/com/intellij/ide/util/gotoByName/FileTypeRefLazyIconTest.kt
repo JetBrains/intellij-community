@@ -5,6 +5,7 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.util.ui.EmptyIcon
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
@@ -51,5 +52,17 @@ class FileTypeRefLazyIconTest {
     val b = FileTypeRef("X", "display B", EmptyIcon.ICON_16)
     assertEquals(a, b)
     assertEquals(a.hashCode(), b.hashCode())
+  }
+
+  @Test
+  fun `forFileType interns one ref per file type and computes the icon at most once`() {
+    val calls = AtomicInteger()
+    val fileType = CountingFileType(calls)
+    val first = FileTypeRef.forFileType(fileType)
+    val second = FileTypeRef.forFileType(fileType)
+    assertSame(first, second, "forFileType must return the interned ref for the same file type")
+    first.icon
+    second.icon
+    assertEquals(1, calls.get(), "the interned ref must compute its icon at most once across calls")
   }
 }
