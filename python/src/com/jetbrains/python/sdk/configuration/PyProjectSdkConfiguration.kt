@@ -6,35 +6,18 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Disposer
 import com.intellij.python.community.common.tools.ToolId
-import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.pyproject.model.api.SuggestedSdk
 import com.intellij.python.pyproject.model.api.suggestSdk
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonPluginDisposable
-import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.sdk.configuration.suppressors.PyPackageRequirementsInspectionSuppressor
 import com.jetbrains.python.sdk.configuration.suppressors.TipOfTheDaySuppressor
 import com.jetbrains.python.sdk.configurePythonSdk
-import com.jetbrains.python.sdk.installExecutableViaPythonScript
-import com.jetbrains.python.errorProcessing.ErrorSink
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.nio.file.Path
 
 object PyProjectSdkConfiguration {
-  internal suspend fun installToolAndShowErrorIfNeeded(module: Module, pathPersister: (Path) -> Unit, toolToInstall: String) {
-    performToolInstallation(pathPersister, toolToInstall).errorOrNull?.also {
-      ErrorSink().emit(it, module.project)
-    }
-  }
-
-  private suspend fun performToolInstallation(pathPersister: (Path) -> Unit, toolToInstall: String): PyResult<Unit> {
-    val systemPython = SystemPythonService().findSystemPythons().firstOrNull()
-                       ?: return PyResult.localizedError(PyBundle.message("sdk.cannot.find.python"))
-    return installExecutableViaPythonScript(systemPython.asExecutablePython.binary, "-n", toolToInstall).mapSuccess(pathPersister)
-  }
-
   suspend fun setSdkUsingCreateSdkInfo(
     module: Module, createSdkInfoWithTool: CreateSdkInfoWithTool,
   ): Boolean = withContext(Dispatchers.Default) {

@@ -15,4 +15,8 @@
   <extensions defaultExtensionNs="com.intellij.python.pyproject.model">
     <pyprojectmanager implementation="com.intellij.python.uv.backend.UvPyProjectManager"/>
   </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <python.pytools.pyTool implementation="com.intellij.python.uv.backend.UvPyTool"/>
+    <python.pytools.pyToolManagerProvider implementation="com.intellij.python.uv.backend.UvToolManagerProvider" order="first"/>
+  </extensions>
 </idea-plugin>

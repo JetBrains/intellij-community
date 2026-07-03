@@ -23,18 +23,23 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiFile
-import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.model.api.ModuleCreateInfo
 import com.intellij.python.pyproject.model.api.autoConfigureSdkIfNeeded
 import com.intellij.python.pyproject.model.api.getModuleInfo
 import com.intellij.python.pyproject.statistics.PyProjectTomlCollector
+import com.intellij.python.pytools.PyTool
+import com.intellij.python.pytools.performToolInstallation
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.DropDownLink
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.inspections.InspectionRunnerResult
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.ModuleOrProject
@@ -190,14 +195,19 @@ private class UseProvidedInterpreterFix(private val myCreateSdkInfo: CreateSdkIn
 private class SuggestToolInstallationFix(
   private val myModule: Module,
   private val myCreateSdkInfo: CreateSdkInfo.WillInstallTool,
-  private val myTool: ToolId,
 ) : InterpreterFix {
   override fun createActionLink(module: Module, project: Project, psiFile: PsiFile, executor: BusyGuardExecutor): ActionLink {
     return ActionLink(myCreateSdkInfo.intentionName) {
+      val pyTool = PyTool.findByPackageName(myCreateSdkInfo.toolToInstall) ?: return@ActionLink
       executor.execute {
-        val lifetime = PyProjectSdkConfiguration.suppressTipAndInspectionsFor(myModule, myTool.id)
+        val lifetime = PyProjectSdkConfiguration.suppressTipAndInspectionsFor(myModule, myCreateSdkInfo.toolToInstall)
         withBackgroundProgress(project, myCreateSdkInfo.intentionName, false) {
-          lifetime.use { PyProjectSdkConfiguration.installToolAndShowErrorIfNeeded(myModule, myCreateSdkInfo.pathPersister, myCreateSdkInfo.toolToInstall) }
+          lifetime.use {
+            val eel = project.getEelDescriptor().toEelApi()
+            pyTool.performToolInstallation(eel).mapSuccess(myCreateSdkInfo.pathPersister).errorOrNull?.also {
+              ErrorSink().emit(it, project)
+            }
+          }
         }
       }
     }
@@ -219,7 +229,7 @@ private suspend fun Module.getQuickFixBySdkSuggestion(i: ModuleCreateInfo?): Fin
         }
         is CreateSdkInfo.WillInstallTool -> {
           logger.trace { "$this: Tool installation will be suggested to the user" }
-          FindQuickFixResult.ShowUserFix(SuggestToolInstallationFix(this, createSdkInfo, i.toolId))
+          FindQuickFixResult.ShowUserFix(SuggestToolInstallationFix(this, createSdkInfo))
         }
       }
     }

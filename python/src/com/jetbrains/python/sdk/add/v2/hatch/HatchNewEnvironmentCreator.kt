@@ -10,6 +10,8 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.hatch.HatchConfiguration
+import com.intellij.python.hatch.HatchPyTool
+import com.intellij.python.pytools.PyTool
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.getHatchService
 import com.intellij.ui.dsl.builder.Panel
@@ -35,8 +37,9 @@ import java.nio.file.Path
 internal class HatchNewEnvironmentCreator<P : PathHolder>(
   override val model: PythonMutableTargetAddInterpreterModel<P>,
   errorSink: ErrorSink,
-) : CustomNewEnvironmentCreator<P>("hatch", model, errorSink) {
+) : CustomNewEnvironmentCreator<P>(model, errorSink) {
   override val interpreterType: InterpreterType = InterpreterType.HATCH
+  override val pyTool: PyTool = HatchPyTool.getInstance()
   override val toolValidator: ToolValidator<P> = model.hatchViewModel.toolValidator
   private lateinit var hatchFormFields: HatchFormFields<P>
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.hatchViewModel.hatchExecutable
@@ -87,7 +90,7 @@ internal class HatchNewEnvironmentCreator<P : PathHolder>(
                    ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
     val basePythonBinaryEelPath = when (basePythonBinaryPath) {
       is PathHolder.Eel -> basePythonBinaryPath.path
-      else -> return PyResult.localizedError(PyBundle.message("target.is.not.supported", basePythonBinaryPath))
+      else -> return PyResult.localizedError(message("target.is.not.supported", basePythonBinaryPath))
     }
     val hatchExecutablePath = when (val hatchBinary = model.hatchViewModel.hatchExecutable.get()?.pathHolder) {
       is PathHolder.Eel -> hatchBinary.path

@@ -7,8 +7,12 @@
     <module name="intellij.platform.backend"/>
     <module name="intellij.python.community.impl.poetry.common"/>
     <module name="intellij.python.community.common"/>
+    <module name="intellij.python.pytools"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij.python.pyproject.model">
     <pyprojectmanager implementation="com.intellij.python.community.impl.poetry.backend.PoetryPyProjectManager"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <python.pytools.pyTool implementation="com.intellij.python.community.impl.poetry.backend.PoetryPyTool"/>
   </extensions>
 </idea-plugin>

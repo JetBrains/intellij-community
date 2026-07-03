@@ -31,6 +31,7 @@ jvm_library(
         "//python/python-pytools:pytools",
         "//python/python-exec-service:community-execService",
         "//platform/eel-provider",
+        "//python/python-sdk:sdk",
     ],
 )
 
@@ -55,6 +56,7 @@ jvm_library(
         "//python/python-pytools:pytools_test_lib",
         "//python/python-exec-service:community-execService_test_lib",
         "//platform/eel-provider:eel-provider_test_lib",
+        "//python/python-sdk:sdk_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.uv.backend` end

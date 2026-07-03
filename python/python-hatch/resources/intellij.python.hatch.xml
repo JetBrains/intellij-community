@@ -22,6 +22,7 @@
     <pyprojectmanager implementation="com.intellij.python.hatch.impl.HatchPyProjectManager"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
+    <python.pytools.pyTool implementation="com.intellij.python.hatch.HatchPyTool"/>
     <python.community.common.toolToIconMapper implementation="com.intellij.python.hatch.impl.HatchIdMapper"/>
     <python.processOutput.common.processOutputIconMapping implementation="com.intellij.python.hatch.impl.HatchIconMapping"/>
   </extensions>

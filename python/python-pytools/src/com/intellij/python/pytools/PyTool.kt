@@ -7,11 +7,15 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.pytools.statistics.PyToolFusSnapshot
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.Nls
+import javax.swing.Icon
 import com.intellij.openapi.util.Version as PlatformVersion
 
 interface PyTool {
   val presentableName: @NlsSafe String
   val packageName: PyPackageName
+
+  /** Icon representing the tool (e.g. status-bar widget, advertiser notification, External Tools table). */
+  val icon: Icon
 
   /**
    * One-line user-facing description of the tool (e.g. "Linter and code formatter for Python").
@@ -75,5 +79,10 @@ interface PyTool {
 
   companion object {
     val EP_NAME: ExtensionPointName<PyTool> = ExtensionPointName.create("com.intellij.python.pytools.pyTool")
+
+    fun findByPackageName(packageName: String): PyTool? {
+      val normalized = PyPackageName.from(packageName).name
+      return EP_NAME.extensionList.firstOrNull { it.packageName.name == normalized }
+    }
   }
 }

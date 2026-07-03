@@ -8,20 +8,27 @@ import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.PyToolsState
+import com.intellij.python.pytools.icons.PythonPyToolsIcons
 import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
-import com.intellij.python.pytools.ui.PyToolDetailConfigurableProvider
+import com.intellij.python.pytools.configuration.ConfigurablePyTool
 import com.intellij.python.black.PyBlackBundle.message
 import com.intellij.python.black.configuration.BlackFormatterConfigurable
 import com.intellij.python.black.configuration.BlackFormatterConfiguration
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.Icon
 import kotlin.io.path.Path
 
+/**
+ * [Black](https://black.readthedocs.io/) — the uncompromising Python code formatter maintained under
+ * the PSF. It reformats source into a single, consistent style, leaving little to configure.
+ */
 @ApiStatus.Internal
-class BlackPyTool : PyTool, PyToolDetailConfigurableProvider {
+class BlackPyTool : PyTool, ConfigurablePyTool {
   override val presentableName: String = "Black"
   override val description: String get() = message("black.tool.description")
   override val packageName: PyPackageName = PyPackageName.from("black")
+  override val icon: Icon get() = PythonPyToolsIcons.Logo
 
   /**
    * `--line-ranges` (fragment formatting) requires Black 23.11.0; older versions cannot honour

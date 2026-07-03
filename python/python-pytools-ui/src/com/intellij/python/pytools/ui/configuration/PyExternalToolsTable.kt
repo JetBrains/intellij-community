@@ -12,6 +12,7 @@ import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
 import com.intellij.python.pytools.statistics.PyToolUsagesCollector
 import com.intellij.python.pytools.statistics.PyToolActionSource
+import com.intellij.python.pytools.configuration.ConfigurablePyTool
 import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.intellij.python.pytools.ui.icons.PythonPytoolsUIIcons
 import com.intellij.ui.AnimatedIcon
@@ -57,11 +58,12 @@ import javax.swing.table.TableCellRenderer
  */
 internal class PyExternalToolsTable(
   override val project: Project,
-  private val uv: UvController,
+  private val uv: PyToolManagementController,
 ) : TooltipHost {
 
   /** Source-of-truth row list, materialised once from the [PyTool] extension point. */
   private val rows: List<ToolRow> = PyTool.EP_NAME.extensionList
+    .filter { it is ConfigurablePyTool }
     .sortedBy { it.presentableName.lowercase() }
     .map { ToolRow(it, snapshotOf(it)) }
 
@@ -77,18 +79,18 @@ internal class PyExternalToolsTable(
   override var hoveredRow: Int = -1
     private set
 
-  /** View row currently under the mouse for the Path column; -1 means no hover. Drives the install-via-uv icon. */
+  /** View row currently under the mouse for the Path column; -1 means no hover. Drives the install/upgrade icon. */
   override var pathHoveredRow: Int = -1
     private set
 
   override fun iconKindFor(toolRow: ToolRow?, pathFieldValue: PathFieldValue?): PathIconKind =
-    iconKindFor(toolRow, pathFieldValue, uv.uvAvailable.get(), uv::isUvManaged, uv::isUpgradeAvailable)
+    iconKindFor(toolRow, pathFieldValue, uv::isUpgradeAvailable)
 
   override fun latestVersionFor(toolRow: ToolRow): String? = uv.latestVersionFor(toolRow)
 
   /**
    * Per-step availability for the Lookup column glyphs. SDK comes from the row's enumerated
-   * project SDKs, PATH from the row's resolved [PathFieldValue], uvx from the [UvController].
+   * project SDKs, PATH from the row's resolved [PathFieldValue], uvx from the [PyToolManagementController].
    */
   override fun modeStatusFor(toolRow: ToolRow, mode: ExecutableDiscoveryMode): ChainStepStatus = when (mode) {
     ExecutableDiscoveryMode.INTERPRETER -> toolRow.sdkAvailability.toChainStatus()
@@ -258,8 +260,8 @@ internal class PyExternalToolsTable(
             // shouldn't trigger another install/upgrade when clicked.
             if (rows[viewRow].lastSuccessMessage != null) return
             when (pathIconAtHover(viewRow)) {
-              PathIconKind.INSTALL -> uv.installViaUv(rows[viewRow], PyToolActionSource.SETTINGS_TABLE)
-              PathIconKind.UPGRADE -> uv.upgradeViaUv(rows[viewRow], PyToolActionSource.SETTINGS_TABLE)
+              PathIconKind.INSTALL -> uv.installTool(rows[viewRow], PyToolActionSource.SETTINGS_TABLE)
+              PathIconKind.UPGRADE -> uv.upgradeTool(rows[viewRow], PyToolActionSource.SETTINGS_TABLE)
               PathIconKind.RESET -> resetPathFor(rows[viewRow])
               else -> Unit
             }
