@@ -95,7 +95,13 @@ internal object DynamicPluginsLegacyImpl {
     ActionToolbarImpl.updateAllToolbarsImmediately(true)
   }
 
-  internal fun resetFocusCycleRoot() {
+  internal fun clearCachedValues() {
+    for (project in ProjectUtil.getOpenProjects()) {
+      (CachedValuesManager.getManager(project) as? CachedValuesManagerImpl)?.clearCachedValues()
+    }
+  }
+
+  private fun resetFocusCycleRoot() {
     val focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
     var focusCycleRoot = focusManager.currentFocusCycleRoot
     if (focusCycleRoot != null) {
@@ -138,13 +144,7 @@ internal object DynamicPluginsLegacyImpl {
     }
   }
 
-  internal fun clearCachedValues() {
-    for (project in ProjectUtil.getOpenProjects()) {
-      (CachedValuesManager.getManager(project) as? CachedValuesManagerImpl)?.clearCachedValues()
-    }
-  }
-
-  internal fun hideTooltip() {
+  private fun hideTooltip() {
     try {
       val showMethod = ToolTipManager::class.java.declaredMethods.find { it.name == "show" }
       if (showMethod == null) {
@@ -159,7 +159,7 @@ internal object DynamicPluginsLegacyImpl {
     }
   }
 
-  internal fun clearNewFocusOwner() {
+  private fun clearNewFocusOwner() {
     val field = ReflectionUtil.getDeclaredField(KeyboardFocusManager::class.java, "newFocusOwner")
     if (field != null) {
       try {
@@ -170,26 +170,26 @@ internal object DynamicPluginsLegacyImpl {
       }
     }
   }
-}
 
-private fun clearTemporaryLostComponent() {
-  try {
-    val clearMethod = Window::class.java.declaredMethods.find { it.name == "setTemporaryLostComponent" }
-    if (clearMethod == null) {
-      LOG.info("setTemporaryLostComponent method not found")
-      return
-    }
-    clearMethod.isAccessible = true
-    loop@ for (frame in WindowManager.getInstance().allProjectFrames) {
-      val window = when (frame) {
-        is ProjectFrameHelper -> frame.frame
-        is Window -> frame
-        else -> continue@loop
+  private fun clearTemporaryLostComponent() {
+    try {
+      val clearMethod = Window::class.java.declaredMethods.find { it.name == "setTemporaryLostComponent" }
+      if (clearMethod == null) {
+        LOG.info("setTemporaryLostComponent method not found")
+        return
       }
-      clearMethod.invoke(window, null)
+      clearMethod.isAccessible = true
+      loop@ for (frame in WindowManager.getInstance().allProjectFrames) {
+        val window = when (frame) {
+          is ProjectFrameHelper -> frame.frame
+          is Window -> frame
+          else -> continue@loop
+        }
+        clearMethod.invoke(window, null)
+      }
     }
-  }
-  catch (e: Throwable) {
-    LOG.info("Failed to clear Window.temporaryLostComponent", e)
+    catch (e: Throwable) {
+      LOG.info("Failed to clear Window.temporaryLostComponent", e)
+    }
   }
 }
