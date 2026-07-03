@@ -220,6 +220,10 @@ com.intellij.lang.annotation.AnnotationBuilder
 - <init>(com.intellij.openapi.vfs.VirtualFile,java.lang.String,com.intellij.openapi.fileTypes.FileType):V
 - getParent():com.intellij.openapi.vfs.VirtualFile
 - isDirectory():Z
+*:com.intellij.modcommand.LocalQuickFixWithModCommandFallback
+- com.intellij.codeInspection.LocalQuickFix
+- a:getFallbackModCommandAction():com.intellij.modcommand.ModCommandAction
+- s:getFallbackModCommandActionFor(com.intellij.codeInspection.LocalQuickFix):com.intellij.modcommand.ModCommandAction
 com.intellij.modcommand.ModCommand
 - *s:chooseMultipleMembers(java.lang.String,java.util.List,java.util.List,java.util.function.Function):com.intellij.modcommand.ModCommand
 - *s:chooseMultipleMembers(java.lang.String,java.util.List,java.util.function.Function):com.intellij.modcommand.ModCommand
