@@ -61,32 +61,36 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * annotation (making {@code T} non-null), then maps the resulting nullable-return / null-assignment problems back onto the original PSI.
  */
 final class ParametricNullableBoundChecker {
-  private final @NotNull DataFlowInspectionBase myInspection;
-  private final @NotNull ProblemsHolder myHolder;
-
-  ParametricNullableBoundChecker(@NotNull DataFlowInspectionBase inspection, @NotNull ProblemsHolder holder) {
-    myInspection = inspection;
-    myHolder = holder;
+  private ParametricNullableBoundChecker() {
   }
 
-  void analyzeParametricNullableReturn(@NotNull PsiMethod method) {
+  /**
+   * @param reportUnspecifiedParametricNullness whether to also report type variables with an unspecified nullness
+   *                                            bound ({@code @NullnessUnspecified})
+   * @param ignoreAssertStatements              whether {@code assert} statements are ignored during data flow analysis
+   */
+  record ParametricNullableBoundOptions(boolean reportUnspecifiedParametricNullness, boolean ignoreAssertStatements) {
+  }
+
+  static @NotNull List<NullabilityProblem<?>> analyzeParametricNullableReturn(@NotNull PsiMethod method,
+                                                                              @NotNull ParametricNullableBoundChecker.ParametricNullableBoundOptions options) {
     PsiCodeBlock body = method.getBody();
-    if (body == null) return;
-    if (!(method.getReturnType() instanceof PsiClassType classType)) return;
-    BoundContext bound = getReportableBound(classType);
-    if (bound == null) return;
+    if (body == null) return Collections.emptyList();
+    if (!(method.getReturnType() instanceof PsiClassType classType)) return Collections.emptyList();
+    BoundContext bound = getReportableBound(classType, options);
+    if (bound == null) return Collections.emptyList();
 
     CloneFileContainer clone = getOrCreateNonNullBoundClone(bound.cloneContext());
-    if (clone == null) return;
+    if (clone == null) return Collections.emptyList();
     CloneMethodContainer methodContainer = clone.methods.get(method);
-    if (methodContainer == null) return;
+    if (methodContainer == null) return Collections.emptyList();
     PsiMethod cloneMethod = methodContainer.cloneMethod.dereference();
-    if (cloneMethod == null) return;
+    if (cloneMethod == null) return Collections.emptyList();
     PsiCodeBlock cloneBody = cloneMethod.getBody();
-    if (cloneBody == null) return;
+    if (cloneBody == null) return Collections.emptyList();
 
-    List<NullabilityProblem<?>> cloneProblems = collectNullableReturnProblems(myInspection, cloneBody);
-    if (cloneProblems.isEmpty()) return;
+    List<NullabilityProblem<?>> cloneProblems = collectNullableReturnProblems(options, cloneBody);
+    if (cloneProblems.isEmpty()) return Collections.emptyList();
 
     List<NullabilityProblem<?>> originalProblems = new ArrayList<>();
     for (NullabilityProblem<?> cloneProblem : cloneProblems) {
@@ -101,30 +105,29 @@ final class ParametricNullableBoundChecker {
         NullabilityProblemKind.nullableReturn.problem(originalAnchor, originalExpression);
       if (originalProblem != null) originalProblems.add(originalProblem);
     }
-    if (originalProblems.isEmpty()) return;
 
-    myInspection.reportNullableReturnsProblems(new DataFlowInspectionBase.ProblemReporter(myHolder, body), originalProblems,
-                                               Nullability.NOT_NULL, true, bound.boundAnnotation(),
-                                               NullableNotNullManager.getInstance(method.getProject()));
+    return originalProblems;
   }
 
-  void analyzeParametricField(@NotNull PsiClass aClass) {
-    if (aClass instanceof PsiTypeParameter) return;
+  static @NotNull List<NullabilityProblem<?>> analyzeParametricField(@NotNull PsiClass aClass,
+                                                                     @NotNull ParametricNullableBoundChecker.ParametricNullableBoundOptions options) {
+    if (aClass instanceof PsiTypeParameter) return Collections.emptyList();
     // Group candidate fields by the clone context: fields sharing a type parameter share one clone and one DFA run.
     Map<PsiElement, BoundContext> contextsByCloneAnchor = new LinkedHashMap<>();
     for (PsiField field : aClass.getFields()) {
       if (!field.isPhysical() || !(field.getType() instanceof PsiClassType classType)) continue;
-      BoundContext bound = getReportableBound(classType);
+      BoundContext bound = getReportableBound(classType, options);
       if (bound != null) contextsByCloneAnchor.putIfAbsent(bound.cloneContext(), bound);
     }
-    if (contextsByCloneAnchor.isEmpty()) return;
+    if (contextsByCloneAnchor.isEmpty()) return Collections.emptyList();
 
+    List<NullabilityProblem<?>> allProblems = new ArrayList<>();
     for (BoundContext bound : contextsByCloneAnchor.values()) {
       CloneFileContainer clone = getOrCreateNonNullBoundClone(bound.cloneContext());
       if (clone == null) continue;
       PsiClass cloneClass = PsiTreeUtil.findSameElementInCopy(aClass, clone.cloneFile);
 
-      List<NullabilityProblem<?>> cloneProblems = collectAssigningToNotNullProblems(myInspection, cloneClass);
+      List<NullabilityProblem<?>> cloneProblems = collectAssigningToNotNullProblems(options, cloneClass);
       if (cloneProblems.isEmpty()) continue;
 
       List<NullabilityProblem<?>> originalProblems = new ArrayList<>();
@@ -143,10 +146,9 @@ final class ParametricNullableBoundChecker {
           NullabilityProblemKind.assigningToNotNull.problem(originalAnchor, originalExpression);
         if (originalProblem != null) originalProblems.add(originalProblem);
       }
-      if (originalProblems.isEmpty()) continue;
-
-      myInspection.reportParametricAssignmentProblems(new DataFlowInspectionBase.ProblemReporter(myHolder, aClass), originalProblems);
+      allProblems.addAll(originalProblems);
     }
+    return allProblems;
   }
 
   /**
@@ -154,7 +156,8 @@ final class ParametricNullableBoundChecker {
    * non-null: a {@code @Nullable}/{@code @NullnessUnspecified} upper bound, or a plain unannotated type parameter.
    * Returns {@code null} when there is nothing to report (a not-null bound, or an opt-in-only case while the option is off).
    */
-  private @Nullable BoundContext getReportableBound(@NotNull PsiClassType classType) {
+  private static @Nullable BoundContext getReportableBound(@NotNull PsiClassType classType,
+                                                           @NotNull ParametricNullableBoundChecker.ParametricNullableBoundOptions options) {
     if (!(classType.resolve() instanceof PsiTypeParameter typeParameter)) return null;
     NullabilityAnnotationInfo info = classType.getNullability().toNullabilityAnnotationInfo();
 
@@ -178,7 +181,7 @@ final class ParametricNullableBoundChecker {
     else {
       return null;
     }
-    if (optInOnly && !myInspection.REPORT_UNSPECIFIED_PARAMETRIC_NULLNESS) return null;
+    if (optInOnly && !options.reportUnspecifiedParametricNullness()) return null;
     return new BoundContext(typeParameter, boundAnnotation);
   }
 
@@ -187,10 +190,10 @@ final class ParametricNullableBoundChecker {
    * {@link DataFlowInspectionBase}'s {@code visitClass}, and returns only the {@code assigningToNotNull} problems,
    * without reporting anything to a {@link ProblemsHolder}.
    */
-  private static @NotNull List<NullabilityProblem<?>> collectAssigningToNotNullProblems(@NotNull DataFlowInspectionBase inspection,
+  private static @NotNull List<NullabilityProblem<?>> collectAssigningToNotNullProblems(@NotNull ParametricNullableBoundChecker.ParametricNullableBoundOptions options,
                                                                                         @NotNull PsiClass cloneClass) {
     StandardDataFlowRunner runner =
-      new StandardDataFlowRunner(cloneClass.getProject(), ThreeState.fromBoolean(inspection.IGNORE_ASSERT_STATEMENTS));
+      new StandardDataFlowRunner(cloneClass.getProject(), ThreeState.fromBoolean(options.ignoreAssertStatements()));
     List<NullabilityProblem<?>> result = new ArrayList<>();
     DataFlowInstructionVisitor classVisitor =
       collectFromScope(runner, cloneClass, Collections.singletonList(runner.createMemoryState()), result);
@@ -254,10 +257,10 @@ final class ParametricNullableBoundChecker {
    * Runs data flow on the given (cloned) method body and returns only the {@code nullableReturn} problems,
    * without reporting anything to a {@link ProblemsHolder}.
    */
-  private static @NotNull List<NullabilityProblem<?>> collectNullableReturnProblems(@NotNull DataFlowInspectionBase inspection,
+  private static @NotNull List<NullabilityProblem<?>> collectNullableReturnProblems(@NotNull ParametricNullableBoundChecker.ParametricNullableBoundOptions options,
                                                                                     @NotNull PsiCodeBlock cloneBody) {
     StandardDataFlowRunner runner =
-      new StandardDataFlowRunner(cloneBody.getProject(), ThreeState.fromBoolean(inspection.IGNORE_ASSERT_STATEMENTS));
+      new StandardDataFlowRunner(cloneBody.getProject(), ThreeState.fromBoolean(options.ignoreAssertStatements()));
     // Report only definitely-nullable returns (a null literal or a @Nullable/union-null source). Treating unknown members as
     // nullable here (TREAT_UNKNOWN_MEMBERS_AS_NULLABLE) would turn merely-unspecified sources (@NullnessUnspecified) into
     // false mismatches, since those are "not enough information" rather than definitely null.

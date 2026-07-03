@@ -45,6 +45,12 @@ Integer square(@Nullable Integer input) {
     is not consistently annotated with nullability and contract annotations. That is why it can be useful for finding the most
     important problems in legacy code bases.
   </li>
+  <li>Use the <b>Report nullable values for type variables with unspecified nullness bound (returns and fields)</b> option to report
+    returning a <code>null</code> or nullable value from a method, or storing it into a field, whose type is a type variable
+    with an <i>unspecified</i> nullness bound. Such a type variable may be instantiated with a non-null type at the use site, so producing
+    a <code>null</code> value for it is potentially unsound. Type variables with an explicit <code>@Nullable</code> bound are always reported,
+    regardless of this option.
+  </li>
 </ul>
 <p>
   Before IntelliJ IDEA 2022.3, this inspection was part of the "Constant Conditions & Exceptions" inspection.

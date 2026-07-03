@@ -172,9 +172,6 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
-      private final ParametricNullableBoundChecker
-        myParametricNullableBoundChecker = new ParametricNullableBoundChecker(DataFlowInspectionBase.this, holder);
-
       @Override
       public void visitClass(@NotNull PsiClass aClass) {
         if (aClass instanceof PsiTypeParameter) return;
@@ -192,7 +189,8 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
           }
           analyzeMethod(method, runner, getConstructorInitialStates(aClass, method, runner, states));
         }
-        myParametricNullableBoundChecker.analyzeParametricField(aClass);
+        reportParametricAssignmentProblems(new ProblemReporter(holder, aClass),
+                                           ParametricNullableBoundChecker.analyzeParametricField(aClass, parametricOptions()));
       }
 
       @Override
@@ -210,7 +208,10 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
         analyzeDfaWithNestedClosures(scope, holder, runner, initialStates);
         analyzeNullLiteralMethodArguments(method, holder);
-        myParametricNullableBoundChecker.analyzeParametricNullableReturn(method);
+        reportNullableReturnsProblems(new ProblemReporter(holder, scope),
+                                      ParametricNullableBoundChecker.analyzeParametricNullableReturn(method, parametricOptions()),
+                                      Nullability.NOT_NULL, true, null,
+                                      NullableNotNullManager.getInstance(method.getProject()));
       }
 
       @Override
@@ -931,7 +932,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                                                List<NullabilityProblem<?>> problems,
                                                Nullability nullability,
                                                boolean parametricReturn,
-                                               PsiAnnotation anno,
+                                               @Nullable PsiAnnotation anno,
                                                NullableNotNullManager manager) {
     for (NullabilityProblem<PsiExpression> problem : StreamEx.of(problems).map(NullabilityProblemKind.nullableReturn::asMyProblem)
       .nonNull()) {
@@ -943,7 +944,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       if (!REPORT_UNSOUND_WARNINGS && !exactlyNull) continue;
       if (nullability == Nullability.NOT_NULL) {
         final String text;
-        if (parametricReturn) {
+        if (parametricReturn || anno == null) {
           // The return type is a (parametric) type variable that may be instantiated as non-null:
           // a @Nullable upper bound, an unspecified bound, or a plain unannotated type parameter.
           text = exactlyNull
@@ -980,11 +981,15 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     }
   }
 
+  private ParametricNullableBoundChecker.ParametricNullableBoundOptions parametricOptions() {
+    return new ParametricNullableBoundChecker.ParametricNullableBoundOptions(REPORT_UNSPECIFIED_PARAMETRIC_NULLNESS, IGNORE_ASSERT_STATEMENTS);
+  }
+
   /**
    * Reports {@code null} assignments to fields whose type is a type variable that may be instantiated as non-null
    * (parametric nullness).
    */
-  void reportParametricAssignmentProblems(@NotNull ProblemReporter reporter, @NotNull List<NullabilityProblem<?>> problems) {
+  private void reportParametricAssignmentProblems(@NotNull ProblemReporter reporter, @NotNull List<NullabilityProblem<?>> problems) {
     for (NullabilityProblem<?> problem : problems) {
       PsiExpression expression = problem.getDereferencedExpression();
       if (expression == null) continue;
