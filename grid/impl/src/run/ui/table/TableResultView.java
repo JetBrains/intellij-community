@@ -1094,6 +1094,19 @@ public final class TableResultView extends JBTableWithResizableCells
   }
 
   @Override
+  public void fitColumnsToViewport() {
+    TableColumnModel columnModel = getColumnModel();
+    int columnCount = columnModel.getColumnCount();
+    if (columnCount == 0) return;
+    int availableWidth = getParent() instanceof JViewport viewport ? viewport.getExtentSize().width : getWidth();
+    if (availableWidth <= 0) return;
+    int columnWidth = Math.max(JBUI.scale(40), availableWidth / columnCount);
+    for (int i = 0; i < columnCount; i++) {
+      ((ResultViewColumn)columnModel.getColumn(i)).setColumnWidth(columnWidth);
+    }
+  }
+
+  @Override
   public void resetRowHeights() {
     int defaultRowHeight = getRowHeight();
     for (int i = 0; i < getRowCount(); i++) {
