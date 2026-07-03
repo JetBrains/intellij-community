@@ -21,13 +21,12 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.jetbrains.annotations.ApiStatus
-import java.util.UUID
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
 abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
 
-  private fun reportProblem(holder: ProblemsHolder, file: PsiFile, id: UUID, issue: LlmIssue<T>) {
+  private fun reportProblem(holder: ProblemsHolder, file: PsiFile, issue: LlmIssue<T>) {
     if (issue.startOffset() == -1 && issue.endOffset() == -1) {
       thisLogger().warn("No occurrences found by ${javaClass.name} in text")
       return
@@ -37,7 +36,7 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
     val underline = SmartPointerManager.getInstance(file.project).createSmartPsiFileRangePointer(file, range)
     val replacements = issue.replacements
     val fixes = if (replacements.isNotEmpty()) {
-      SpecificationReplacementQuickFix(id, underline, replacements).getAllAsFixes().toTypedArray()
+      SpecificationReplacementQuickFix(underline, replacements).getAllAsFixes().toTypedArray()
     } else {
       emptyArray()
     }
@@ -69,8 +68,8 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
           return
         }
         val analyzer = getAnalyzer(file) ?: return
-        val (id, issues) = SpecificationAnalyzer.analyze(analyzer, file, client)
-        issues.forEach { reportProblem(holder, file, id, it) }
+        val issues = SpecificationAnalyzer.analyze(analyzer, file, client)
+        issues.forEach { reportProblem(holder, file, it) }
       }
     }
   }

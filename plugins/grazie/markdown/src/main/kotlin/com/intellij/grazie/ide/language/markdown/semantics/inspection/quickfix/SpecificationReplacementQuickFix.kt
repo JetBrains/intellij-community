@@ -19,10 +19,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiFileRange
 import org.jetbrains.annotations.Unmodifiable
-import java.util.UUID
 
 internal class SpecificationReplacementQuickFix(
-  private val id: UUID,
   private val underline: SmartPsiFileRange,
   private val replacements: List<String>,
 ) : DefaultIntentionActionWithChoice {
@@ -36,25 +34,25 @@ internal class SpecificationReplacementQuickFix(
   override fun getTitle(): ChoiceTitleIntentionAction = ReplacementTitle
 
   override fun getVariants(): @Unmodifiable List<ChoiceVariantIntentionAction> =
-    replacements.mapIndexed { index, replacement -> ReplacementVariant(id, index, replacements.size, underline, replacement) }
+    replacements.mapIndexed { index, replacement -> ReplacementVariant(index, replacements.size, underline, replacement) }
 
   open class ReplacementVariant(
-    private val id: UUID, override val index: Int, private val total: Int,
+    override val index: Int, private val total: Int,
     private val underline: SmartPsiFileRange, @NlsSafe private val replacement: String,
   ) : ChoiceVariantIntentionAction(), HighPriorityAction, DumbAware, EventTrackingIntentionAction {
 
     override fun getName(): @IntentionName String = replacement
     override fun getFamilyName(): @IntentionFamilyName String = Companion.familyName
-    override fun getFileModifierForPreview(target: PsiFile): FileModifier = ReplacementPreview(id, index, total, underline, replacement)
+    override fun getFileModifierForPreview(target: PsiFile): FileModifier = ReplacementPreview(index, total, underline, replacement)
     override fun isShowSubmenu(): Boolean = true
 
     override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
-      SpecificationFUSCollector.suggestionAccepted(id, index, total)
+      SpecificationFUSCollector.suggestionAccepted(index, total)
       performFix(project, file, replacement)
     }
 
     override fun suggestionShown(project: Project, editor: Editor, psiFile: PsiFile) =
-      SpecificationFUSCollector.suggestionShown(id, index, total)
+      SpecificationFUSCollector.suggestionShown(index, total)
 
     internal fun performFix(project: Project, file: PsiFile, replacement: String) {
       val document = file.viewProvider.document ?: return
@@ -67,9 +65,9 @@ internal class SpecificationReplacementQuickFix(
   private object ReplacementTitle : ChoiceTitleIntentionAction(familyName, familyName), HighPriorityAction, DumbAware
 
   private class ReplacementPreview(
-    id: UUID, index: Int, total: Int, underline: SmartPsiFileRange,
+    index: Int, total: Int, underline: SmartPsiFileRange,
     private val replacement: String,
-  ) : ReplacementVariant(id, index, total, underline, replacement), IntentionPreviewInfo {
+  ) : ReplacementVariant(index, total, underline, replacement), IntentionPreviewInfo {
     override fun applyFix(project: Project, file: PsiFile, editor: Editor?) = performFix(project, file, replacement)
   }
 }

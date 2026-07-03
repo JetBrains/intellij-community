@@ -20,28 +20,23 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.ExceptionUtil
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
 private typealias AnalyzerCacheKey<T> = Key<CachedValue<AtomicReference<Cached<LlmIssue<T>>>>>
 private val log = Logger.getInstance(SpecificationAnalyzer::class.java)
 
-data class LlmResults<T>(val id: UUID, val data: List<T>)
-
 internal object SpecificationAnalyzer {
-  private val idKey = Key.create<UUID>("specification id")
   private val mutexKeys = ConcurrentHashMap<String, Key<Mutex>>()
   private val cacheKeys = ConcurrentHashMap<String, AnalyzerCacheKey<LlmIssue<*>>>()
 
-  fun <T> analyze(analyzer: LlmAnalyzer<T>, file: PsiFile, client: SuspendableAPIGatewayClient): LlmResults<LlmIssue<T>> {
+  fun <T> analyze(analyzer: LlmAnalyzer<T>, file: PsiFile, client: SuspendableAPIGatewayClient): List<LlmIssue<T>> {
     @Suppress("UNCHECKED_CAST") val analyzerKey = cacheKeys
       .computeIfAbsent(analyzer.javaClass.name) { Key.create("cache key for ${analyzer.javaClass.name}") }
       as AnalyzerCacheKey<T>
     val ref = CachedValuesManager.getManager(file.project).getCachedValue(file, analyzerKey, {
       CachedValueProvider.Result.create(AtomicReference<Cached<LlmIssue<T>>>(), file)
     }, false)
-    val id = (file as UserDataHolderEx).getOrCreateUserData(idKey) { UUID.randomUUID() }
 
     try {
       var cached = ref.get()
@@ -49,7 +44,7 @@ internal object SpecificationAnalyzer {
       if (cached == null || cached.text != text) {
         return executeRequestWithLock(analyzer, file) {
           cached = ref.get()
-          if (cached != null && cached.text == text) return@executeRequestWithLock LlmResults(id, cached.data)
+          if (cached != null && cached.text == text) return@executeRequestWithLock cached.data
           val start = System.currentTimeMillis()
           val analyzerName = analyzer::class.simpleName
           log.info("$analyzerName starts executing request with lock")
@@ -62,11 +57,11 @@ internal object SpecificationAnalyzer {
           """.trimIndent())
           cached = Cached(text, analysis.data)
           ref.set(cached)
-          SpecificationFUSCollector.analysisCompleted(id, analyzerName!!, text.length, credits, timeMs, analysis.data.size)
-          LlmResults(id, cached.data)
+          SpecificationFUSCollector.analysisCompleted(analyzerName!!, text.length, credits, timeMs, analysis.data.size)
+          cached.data
         }
       }
-      return LlmResults(id, cached.data)
+      return cached.data
     }
     catch (e: Throwable) {
       val cause = ExceptionUtil.getRootCause(e)
@@ -80,7 +75,7 @@ internal object SpecificationAnalyzer {
   private fun <T> getSpecification(cache: Cached<LlmIssue<T>>?, text: String): Specification<T> =
     if (cache == null) Specification(text) else Specification(text, cache.text, cache.data)
 
-  private fun <T> executeRequestWithLock(analyzer: LlmAnalyzer<T>, file: PsiFile, action: suspend () -> LlmResults<LlmIssue<T>>): LlmResults<LlmIssue<T>> {
+  private fun <T> executeRequestWithLock(analyzer: LlmAnalyzer<T>, file: PsiFile, action: suspend () -> List<LlmIssue<T>>): List<LlmIssue<T>> {
     val mutexKey = mutexKeys.computeIfAbsent(analyzer.javaClass.name) { Key.create("mutex key for ${analyzer.javaClass.name}") }
     val mutex = (file as UserDataHolderEx).getOrCreateUserData(mutexKey) { Mutex() }
     return runWithCheckCanceled {
@@ -89,7 +84,7 @@ internal object SpecificationAnalyzer {
           action()
         }
       }
-    } ?: LlmResults(UUID.fromString("00000000-0000-0000-0000-0000000000"), emptyList())
+    } ?: emptyList()
   }
 }
 
