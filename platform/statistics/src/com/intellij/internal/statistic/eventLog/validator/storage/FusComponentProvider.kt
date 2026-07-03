@@ -22,6 +22,7 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
 import com.intellij.idea.AppMode
 import com.intellij.ide.plugins.ProductLoadingStrategy
+import com.intellij.internal.statistic.config.EventLogOptions
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.util.PlatformUtils
 import com.intellij.openapi.application.ApplicationManager
@@ -81,6 +82,7 @@ import com.jetbrains.fus.reporting.defaults.dispatcher.PersistentQueue
 import com.jetbrains.fus.reporting.defaults.dispatcher.SEND_INFORMATION_TOPIC
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.LICENSE_CODE_KEY
+import com.intellij.internal.statistic.eventLog.MachineId
 import com.intellij.internal.statistic.eventLog.StatisticsFileEventLogger
 import com.intellij.internal.statistic.eventLog.StatisticsSystemEventIdProvider
 import com.intellij.internal.statistic.eventLog.connection.metadata.createJvmHttpClient
@@ -127,7 +129,7 @@ object FusComponentProvider {
 
   @Throws(IOException::class)
   private fun getMetadataDir(recorderId: String): Path = getMetadataConfigRoot()
-    .resolve(StringUtil.toLowerCase(recorderId))
+    .resolve(StringUtil.toLowerCase(recorderId)) // TODO: can we remove lower case?
     .toAbsolutePath()
 
   private fun getMetadataConfigRoot(): Path {
@@ -215,12 +217,15 @@ object FusComponentProvider {
     )
     val eventLogProvider = getEventLogProvider(recorderId)
     val isUnitTest = ApplicationManager.getApplication().isUnitTestMode()
+
+    // TODO: change isInternal to lambda so it is evaluated dynamically
     val isInternal = applicationInfo.isInternal
     val systemLogGroupId = "${recorderId.lowercase(Locale.ENGLISH)}.event.log"
     val systemCollector = eventLogProvider.eventLogSystemLogger
-    val device = EventLogConfiguration.getInstance()
+    val recorderConfig = EventLogConfiguration.getInstance()
       .getOrCreate(recorderId = recorderId, alternativeRecorderId = if (eventLogProvider.useDefaultRecorderId) "FUS" else null)
-      .deviceId
+    val device = recorderConfig.deviceId
+    val machineId = recorderConfig.machineId
 
     // Inputs for the dispatcher's preEventWrite hook (system-field injection, moved out of StatisticsFileEventLogger).
     val isHeadless = ApplicationManager.getApplication()?.isHeadlessEnvironment == true
@@ -381,6 +386,10 @@ object FusComponentProvider {
                 }
               }
             }
+            preEventsSend = { events ->
+              val machineId = actualOrDisabledMachineId(machineId, remoteConfig.provideOptions())
+              events.onEach { fillMachineId(it, machineId) }
+            }
             // Start the out-of-process external uploader on IDE shutdown (was IntellijReportDispatcher.postClose).
             postClose = { ExternalUploadOrchestrator.tryStartExternalUpload() }
           }
@@ -389,6 +398,27 @@ object FusComponentProvider {
     }
 
     return FusComponents(metadataStorage = metadataStorageRef!!, fusClient = client)
+  }
+
+  /**
+   * Send-time machine-id resolution, formerly [com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService]'s
+   * `getActualOrDisabledMachineId`: the remote config can disable machine-id reporting via the `id_salt` option,
+   * so the decision must be made on every upload, not when the event is written.
+   */
+  private fun actualOrDisabledMachineId(machineId: MachineId, options: Map<String, String>): MachineId {
+    if (machineId == MachineId.DISABLED) return MachineId.DISABLED
+    if (options[EventLogOptions.MACHINE_ID_SALT] == EventLogOptions.MACHINE_ID_DISABLED) return MachineId.DISABLED
+    return machineId
+  }
+
+  /** Formerly [com.intellij.internal.statistic.eventLog.LogEventRecordRequest.fillMachineId]. */
+  private fun fillMachineId(event: LogEvent, machineId: MachineId) {
+    event.event.data["system_machine_id"] = machineId.id
+    if (machineId.revision != EventLogOptions.DEFAULT_ID_REVISION &&
+        machineId != MachineId.UNKNOWN &&
+        machineId != MachineId.DISABLED) {
+      event.event.data["system_id_revision"] = machineId.revision
+    }
   }
 
   /**
