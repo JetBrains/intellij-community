@@ -127,7 +127,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.migration",
       "kotlin.inspections",
       "intellij.kotlin.featuresTrainer",
-      "intellij.kotlin.analysis.platform",
       "intellij.kotlin.codeInsight.base",
       "intellij.kotlin.projectStructure",
       "intellij.kotlin.scripting",
