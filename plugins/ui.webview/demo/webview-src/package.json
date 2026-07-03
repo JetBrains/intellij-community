@@ -14,6 +14,7 @@
     "@assistant-ui/react": "^0.14.0",
     "@jetbrains/intellij-webview": "file:../../webview-src",
     "@jetbrains/intellij-webview-controls": "file:../../webview-src/packages/controls",
+    "@jetbrains/intellij-webview-react-controls": "file:../../webview-src/packages/react-controls",
     "@jetbrains/intellij-webview-testkit": "file:../../webview-src/packages/testkit",
     "cytoscape": "^3.33.1",
     "cytoscape-fcose": "^2.2.0",

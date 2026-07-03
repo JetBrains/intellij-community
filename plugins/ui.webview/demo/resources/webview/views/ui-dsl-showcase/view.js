@@ -1,4 +1,7 @@
+import { n as __toESM } from "./assets/rolldown-runtime.js";
 import { i, n as A, r as b, t as i$1 } from "./assets/lit.js";
+import { n as require_react, t as require_jsx_runtime } from "./assets/react.js";
+import { t as require_client } from "./assets/react-dom.js";
 //#region \0vite/modulepreload-polyfill.js
 (function polyfill() {
 	const relList = document.createElement("link").relList;
@@ -2112,6 +2115,8 @@ function defineAllControls(registry = customElements) {
 defineAllControls();
 //#endregion
 //#region ../../webview-src/packages/api/src/webViewApi.ts
+var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
+var import_client = require_client();
 function apiId() {
 	return function createApiId(namespace) {
 		validateApiNamespace(namespace);
@@ -2122,6 +2127,11 @@ function validateApiNamespace(namespace) {
 	if (typeof namespace !== "string" || namespace.length === 0) throw new Error("WebView API namespace must be a non-empty string");
 	if (namespace.startsWith(".") || namespace.endsWith(".") || namespace.startsWith("/") || namespace.endsWith("/")) throw new Error("WebView API namespace must not start or end with '.' or '/': " + namespace);
 	if (!/^[A-Za-z0-9_.-]+$/.test(namespace)) throw new Error("WebView API namespace contains unsupported characters: " + namespace);
+}
+//#endregion
+//#region ../../webview-src/packages/api/src/notifications.ts
+function defineWebViewNotification(method) {
+	return { method };
 }
 apiId()("webview.theme");
 apiId()("webview.theme");
@@ -2201,547 +2211,1082 @@ function createLazyWebViewBridge() {
 		}
 	});
 }
-createLazyWebViewBridge();
+var webView = createLazyWebViewBridge();
 //#endregion
-//#region views/controls-showcase/src/main.ts
+//#region views/ui-dsl-showcase/src/main.tsx
+var import_jsx_runtime = require_jsx_runtime();
 var root = document.getElementById("root");
 if (!root) throw new Error("#root missing");
-var iconSamples = [
+var openSourceNotification = defineWebViewNotification("demo/uiDslShowcase/openSource");
+var icons = {
+	add: AllIcons.src("expui/general/add.svg"),
+	bulb: AllIcons.src("expui/codeInsight/quickfixOffBulb.svg"),
+	expand: AllIcons.src("expui/inline/expand.svg"),
+	externalLink: AllIcons.src("expui/ide/externalLink.svg"),
+	folder: AllIcons.src("expui/nodes/folder.svg"),
+	gear: AllIcons.src("expui/general/moreVertical.svg"),
+	info: AllIcons.src("expui/status/info.svg")
+};
+var item1to3 = [
+	"Item 1",
+	"Item 2",
+	"Item 3"
+].map(toOption);
+var singleLineRadioItems = [
+	"Option 1",
+	"Option 2",
+	"Option 3"
+].map(toOption);
+var bindValueItems = [{
+	value: "value-1",
+	label: "Value = 1"
+}, {
+	value: "value-2",
+	label: "Value = 2"
+}];
+var componentsRadioItems = [
 	{
-		name: "Run",
-		path: "expui/run/run.svg"
+		value: "value-1",
+		label: "Value 1"
 	},
 	{
-		name: "Stop",
-		path: "expui/run/stop.svg"
+		value: "value-2",
+		label: "Value 2"
 	},
 	{
-		name: "Pause",
-		path: "expui/run/pause.svg"
-	},
-	{
-		name: "Gutter Run",
-		path: "expui/gutter/run.svg"
-	},
-	{
-		name: "Refresh",
-		path: "expui/actions/forceRefresh.svg"
-	},
-	{
-		name: "Play First",
-		path: "expui/actions/playFirst.svg"
-	},
-	{
-		name: "Play Back",
-		path: "expui/actions/playBack.svg"
-	},
-	{
-		name: "Play Forward",
-		path: "expui/actions/playForward.svg"
-	},
-	{
-		name: "Play Last",
-		path: "expui/actions/playLast.svg"
-	},
-	{
-		name: "Add",
-		path: "expui/general/add.svg"
-	},
-	{
-		name: "Remove",
-		path: "expui/general/remove.svg"
-	},
-	{
-		name: "Delete",
-		path: "expui/general/delete.svg"
-	},
-	{
-		name: "Edit",
-		path: "expui/general/edit.svg"
-	},
-	{
-		name: "Save",
-		path: "expui/general/save.svg"
-	},
-	{
-		name: "Close",
-		path: "expui/general/close.svg"
-	},
-	{
-		name: "Search",
-		path: "expui/general/search.svg"
-	},
-	{
-		name: "Filter",
-		path: "expui/general/filter.svg"
-	},
-	{
-		name: "Settings",
-		path: "expui/general/settings.svg"
-	},
-	{
-		name: "Help",
-		path: "expui/general/help.svg"
-	},
-	{
-		name: "Export",
-		path: "expui/general/export.svg"
-	},
-	{
-		name: "Layout",
-		path: "expui/general/layout.svg"
-	},
-	{
-		name: "User",
-		path: "expui/general/user.svg"
-	},
-	{
-		name: "Locked",
-		path: "expui/general/locked.svg"
-	},
-	{
-		name: "Commit",
-		path: "expui/vcs/commit.svg"
-	},
-	{
-		name: "Update",
-		path: "expui/vcs/update.svg"
-	},
-	{
-		name: "Diff",
-		path: "expui/vcs/diff.svg"
-	},
-	{
-		name: "VCS Remove",
-		path: "expui/vcs/remove.svg"
-	},
-	{
-		name: "Breakpoint",
-		path: "expui/breakpoints/breakpoint.svg"
-	},
-	{
-		name: "Info",
-		path: "expui/status/info.svg"
-	},
-	{
-		name: "Success",
-		path: "expui/status/success.svg"
-	},
-	{
-		name: "Warning",
-		path: "expui/status/warning.svg"
-	},
-	{
-		name: "Error",
-		path: "expui/status/error.svg"
-	},
-	{
-		name: "Folder",
-		path: "expui/nodes/folder.svg"
-	},
-	{
-		name: "Package",
-		path: "expui/nodes/package.svg"
-	},
-	{
-		name: "Function",
-		path: "expui/nodes/function.svg"
-	},
-	{
-		name: "Plugin",
-		path: "expui/nodes/plugin.svg"
-	},
-	{
-		name: "Unknown Node",
-		path: "expui/nodes/unknown.svg"
-	},
-	{
-		name: "YAML",
-		path: "expui/fileTypes/yaml.svg"
-	},
-	{
-		name: "Gradle",
-		path: "expui/fileTypes/gradle.svg"
-	},
-	{
-		name: "Docker",
-		path: "expui/fileTypes/docker.svg"
-	},
-	{
-		name: "SQL",
-		path: "expui/fileTypes/sql.svg"
-	},
-	{
-		name: "Properties",
-		path: "expui/fileTypes/properties.svg"
-	},
-	{
-		name: "Run Tool Window",
-		path: "expui/toolwindows/run.svg"
-	},
-	{
-		name: "Commit Tool Window",
-		path: "expui/toolwindows/commit.svg"
-	},
-	{
-		name: "Profiler Tool Window",
-		path: "expui/toolwindows/profiler.svg"
-	},
-	{
-		name: "Structure Tool Window",
-		path: "expui/toolwindows/structure.svg"
-	},
-	{
-		name: "Palette Tool Window",
-		path: "expui/toolwindows/palette.svg"
-	},
-	{
-		name: "External Link",
-		path: "expui/ide/externalLink.svg"
+		value: "value-3",
+		label: "Value 3"
 	}
 ];
-var sections = {
-	"components": {
-		title: "Components",
-		note: "Batch 1 primitives and first batch 2 composites rendered with Int UI Kit: Islands mapping.",
-		render: renderComponents
+var actionsItems = [{
+	value: "action-1",
+	label: "Action 1"
+}, {
+	value: "action-2",
+	label: "Action 2"
+}];
+var tabItems = [
+	{
+		value: "tab-1",
+		label: "Tab 1"
 	},
-	"icons": {
-		title: "AllIcons",
-		note: "Classpath icon resources rendered through IconSet.define(\"AllIcons\") and the WebView icon asset route.",
-		render: renderIcons
+	{
+		value: "tab-2",
+		label: "Tab 2"
 	},
-	"labels-help": {
-		title: "Labels and help text",
-		note: "Labeled input anatomy with inline help and context help affordances.",
-		render: renderLabelsAndHelp
-	},
-	"validation": {
-		title: "Validation",
-		note: "Field states for immediate error, warning, and required-input handling.",
-		render: renderValidation
-	},
-	"states": {
-		title: "Enabled, disabled, readonly, hidden",
-		note: "Primitive attributes reflected to Web Component hosts and native controls.",
-		render: renderStates
-	},
-	"groups-disclosure": {
-		title: "Groups and disclosure",
-		note: "Related fields, radio groups, separators, and progressive disclosure surfaces.",
-		render: renderGroupsAndDisclosure
-	},
-	"tabs-segmented": {
-		title: "Tabs and segmented controls",
-		note: "Selection patterns for compact mode switches and tabbed surfaces.",
-		render: renderTabsAndSegmented
-	},
-	"spacing-density": {
-		title: "Spacing, density, responsive layout",
-		note: "Default and compact control sizes with responsive wrapping.",
-		render: renderSpacingDensity
-	},
-	"theme-rendering": {
-		title: "Theme rendering",
-		note: "Controls consume semantic --jb-* tokens injected by the WebView runtime.",
-		render: renderThemeRendering
+	{
+		value: "last-tab",
+		label: "Last Tab"
 	}
-};
-var sectionId = normalizeSection(new URLSearchParams(window.location.search).get("section"));
-var section = sections[sectionId];
-document.body.dataset.section = sectionId;
-root.innerHTML = `
-  <header class="section-header">
-    <h1 class="section-title">${section.title}</h1>
-    <p class="section-note">${section.note}</p>
-  </header>
-  ${section.render()}
-`;
-hydrateControls(root);
-function normalizeSection(value) {
-	return value && value in sections ? value : "components";
+];
+var comboItems = [{
+	value: "item-1",
+	label: "Item 1"
+}, {
+	value: "item-2",
+	label: "Item 2"
+}];
+function useItemsControl(id, items, value) {
+	(0, import_react.useEffect)(() => {
+		const element = document.getElementById(id);
+		if (!element) return;
+		element.items = items;
+		element.value = value;
+	}, [
+		id,
+		items,
+		value
+	]);
 }
-function renderIcons() {
-	return `
-    <div class="showcase-grid icons-showcase-grid">
-      <section class="panel icons-panel">
-        <p class="panel-title">AllIcons resource paths</p>
-        <div class="icon-grid">
-          ${iconSamples.map((icon) => `
-    <div class="icon-sample">
-      <span class="icon-preview">${renderIconImage(icon.path)}</span>
-      <span class="icon-name">${icon.name}</span>
-      <code class="icon-path">${icon.path}</code>
-    </div>
-  `).join("")}
-        </div>
-      </section>
-      <section class="panel icons-panel">
-        <p class="panel-title">Inline usage</p>
-        <div class="form-stack">
-          <div class="inline-icon-row">${renderIconImage("expui/run/run.svg")}<jb-text>Run configuration</jb-text></div>
-          <div class="inline-icon-row">${renderIconImage("expui/vcs/update.svg")}<jb-text>Update project</jb-text></div>
-          <div class="inline-icon-row">${renderIconImage("expui/breakpoints/breakpoint.svg")}<jb-text>Line breakpoint</jb-text></div>
-          <jb-help-text>Switch the IDE theme to verify that dark icon variants are requested through a different URL.</jb-help-text>
-        </div>
-      </section>
-    </div>
-  `;
-}
-function renderIconImage(path) {
-	return `<jb-icon src="${AllIcons.src(path)}"></jb-icon>`;
-}
-function renderComponents() {
-	return `
-    <div class="showcase-grid">
-      <section class="panel">
-        <p class="panel-title">Buttons and toolbar actions</p>
-        <div class="row">
-          <jb-button variant="primary">Run</jb-button>
-          <jb-button>Cancel</jb-button>
-          <jb-button variant="danger">Delete</jb-button>
-          <jb-button variant="link">Open settings</jb-button>
-        </div>
-        <div class="toolbar-row">
-          <jb-action-button label="Back">&lt;</jb-action-button>
-          <jb-action-button label="Refresh">R</jb-action-button>
-          <jb-action-button label="Pinned" selected>P</jb-action-button>
-          <jb-menu-button id="toolbar-filter" label="Filter"></jb-menu-button>
-        </div>
-      </section>
-      <section class="panel">
-        <p class="panel-title">Inputs</p>
-        <div class="form-stack">
-          <jb-field label="Name:" help="Use sentence-style capitalization for labels."><jb-text-field value="Island controls"></jb-text-field></jb-field>
-          <jb-field label="Type:"><jb-select id="component-type" value="field"></jb-select></jb-field>
-          <jb-field label="Search:"><jb-combobox id="component-search" value="Button"></jb-combobox></jb-field>
-        </div>
-      </section>
-      <section class="panel">
-        <p class="panel-title">Selection</p>
-        <div class="form-stack">
-          <jb-checkbox checked>Enable preview</jb-checkbox>
-          <jb-checkbox indeterminate>Partial selection</jb-checkbox>
-          <jb-radio-group id="density-group" label="Density" value="default"></jb-radio-group>
-        </div>
-      </section>
-    </div>
-  `;
-}
-function renderLabelsAndHelp() {
-	return `
-    <div class="showcase-grid">
-      <section class="panel">
-        <p class="panel-title">Inline anatomy</p>
-        <div class="form-stack">
-          <jb-field label="Output path:" help="The field width follows the expected value length." required><jb-text-field placeholder="Select a directory"></jb-text-field></jb-field>
-          <jb-field label="Arguments:" help="Examples belong below the field, not in the placeholder."><jb-text-area value="--stacktrace"></jb-text-area></jb-field>
-        </div>
-      </section>
-      <section class="panel">
-        <p class="panel-title">Text roles</p>
-        <div class="form-stack">
-          <jb-label required>Project SDK:</jb-label>
-          <jb-help-text>Choose a configured SDK or add one from the project structure dialog.</jb-help-text>
-          <jb-help-text tone="warning">The selected SDK is deprecated.</jb-help-text>
-          <jb-help-text tone="error">The selected SDK is missing.</jb-help-text>
-          <div class="row"><jb-context-help text="Context help opens lightweight guidance without leaving the current control."></jb-context-help><jb-text tone="muted">Context help</jb-text></div>
-        </div>
-      </section>
-    </div>
-  `;
-}
-function renderValidation() {
-	return `
-    <div class="showcase-grid">
-      <section class="panel">
-        <p class="panel-title">Error and warning</p>
-        <div class="form-stack">
-          <jb-field label="Port:" error="Enter a port from 1024 to 65535."><jb-number-field invalid value="99"></jb-number-field></jb-field>
-          <jb-field label="Host:" warning="The host responds slowly."><jb-text-field value="staging.internal"></jb-text-field></jb-field>
-          <jb-field label="Token:" help="Required fields can keep the confirm action disabled in host UI." required><jb-password-field required placeholder="Required"></jb-password-field></jb-field>
-        </div>
-      </section>
-      <section class="panel">
-        <p class="panel-title">Validation-friendly controls</p>
-        <div class="form-stack">
-          <jb-field label="Memory:"><jb-slider value="64" min="0" max="128"></jb-slider></jb-field>
-          <jb-field label="Workers:"><jb-spinner value="4" min="1" max="16"></jb-spinner></jb-field>
-          <jb-field label="Mode:"><jb-select id="validation-mode" value="strict"></jb-select></jb-field>
-        </div>
-      </section>
-    </div>
-  `;
-}
-function renderStates() {
-	return `
-    <div class="showcase-grid">
-      <section class="panel">
-        <p class="panel-title">Primitive attrs</p>
-        <div class="form-stack">
-          <jb-field label="Enabled:"><jb-text-field value="Editable"></jb-text-field></jb-field>
-          <jb-field label="Readonly:"><jb-text-field readonly value="Read-only value"></jb-text-field></jb-field>
-          <jb-field label="Disabled:"><jb-text-field disabled value="Disabled value"></jb-text-field></jb-field>
-          <jb-button hidden>Hidden action</jb-button>
-          <p class="source-row">Hidden controls remain in markup but do not render.</p>
-        </div>
-      </section>
-      <section class="panel">
-        <p class="panel-title">Selection states</p>
-        <div class="form-stack">
-          <jb-checkbox checked>Checked</jb-checkbox>
-          <jb-checkbox readonly checked>Readonly checked</jb-checkbox>
-          <jb-checkbox disabled>Disabled unchecked</jb-checkbox>
-          <div class="row"><jb-button selected>Selected</jb-button><jb-button pressed>Pressed</jb-button><jb-action-button selected label="Selected">S</jb-action-button></div>
-        </div>
-      </section>
-    </div>
-  `;
-}
-function renderGroupsAndDisclosure() {
-	return `
-    <div class="showcase-grid">
-      <section class="panel">
-        <jb-field-group label="Build options">
-          <jb-field label="Target:"><jb-combobox id="build-target" value="intellij.platform.ui.webview"></jb-combobox></jb-field>
-          <jb-checkbox checked>Use remote cache</jb-checkbox>
-          <jb-separator></jb-separator>
-          <jb-radio-group id="build-kind" label="Build kind" value="incremental"></jb-radio-group>
-        </jb-field-group>
-      </section>
-      <section class="panel">
-        <p class="panel-title">Disclosure</p>
-        <jb-disclosure label="Advanced options" open>
-          <div class="form-stack">
-            <jb-field label="VM options:"><jb-expandable-text-field value="-Xmx4g"></jb-expandable-text-field></jb-field>
-            <jb-checkbox>Keep build logs</jb-checkbox>
-          </div>
-        </jb-disclosure>
-      </section>
-    </div>
-  `;
-}
-function renderTabsAndSegmented() {
-	return `
-    <div class="showcase-grid">
-      <section class="panel">
-        <p class="panel-title">Segmented control</p>
-        <jb-segmented-control id="view-mode" value="preview"></jb-segmented-control>
-        <div class="form-stack">
-          <jb-field label="Scope:"><jb-select id="scope-select" value="project"></jb-select></jb-field>
-        </div>
-      </section>
-      <section class="panel">
-        <p class="panel-title">Tabs</p>
-        <jb-tabs id="result-tabs" value="problems">
-          <div class="form-stack">
-            <jb-text weight="medium">Problems</jb-text>
-            <jb-text tone="muted">The active tab drives the content area below the tab bar.</jb-text>
-          </div>
-        </jb-tabs>
-      </section>
-    </div>
-  `;
-}
-function renderSpacingDensity() {
-	return `
-    <div class="showcase-grid">
-      <section class="panel">
-        <p class="panel-title">Density</p>
-        <div class="density-demo">
-          <div class="form-stack"><jb-text weight="medium">Default</jb-text><jb-button>Default Button</jb-button><jb-text-field value="Default field"></jb-text-field></div>
-          <div class="form-stack"><jb-text weight="medium">Compact</jb-text><jb-button size="small">Small Button</jb-button><div class="toolbar-row"><jb-action-button label="Run">R</jb-action-button><jb-action-button label="Stop">S</jb-action-button><jb-menu-button id="compact-menu" label="More"></jb-menu-button></div></div>
-        </div>
-      </section>
-      <section class="panel">
-        <p class="panel-title">Responsive wrap</p>
-        <div class="row">
-          <jb-button>Analyze</jb-button>
-          <jb-button>Inspect</jb-button>
-          <jb-button>Refactor</jb-button>
-          <jb-button variant="link">View source</jb-button>
-        </div>
-      </section>
-    </div>
-  `;
-}
-function renderThemeRendering() {
-	return `
-    <div class="showcase-grid">
-      <section class="panel">
-        <p class="panel-title">Token swatches</p>
-        <div class="token-grid">
-          <div class="token-swatch"><span class="swatch accent"></span><jb-text>Accent</jb-text></div>
-          <div class="token-swatch"><span class="swatch selected"></span><jb-text>Selected</jb-text></div>
-          <div class="token-swatch"><span class="swatch danger"></span><jb-text>Danger</jb-text></div>
-          <div class="token-swatch"><span class="swatch warning"></span><jb-text>Warning</jb-text></div>
-          <div class="token-swatch"><span class="swatch panel-bg"></span><jb-text>Panel</jb-text></div>
-          <div class="token-swatch"><span class="swatch input-bg"></span><jb-text>Input</jb-text></div>
-        </div>
-      </section>
-      <section class="panel">
-        <p class="panel-title">Controls on current theme</p>
-        <div class="form-stack">
-          <jb-field label="Theme name:"><jb-text-field value="Runtime current theme" readonly></jb-text-field></jb-field>
-          <div class="row"><jb-button variant="primary">Primary</jb-button><jb-button>Default</jb-button><jb-checkbox checked>Checked</jb-checkbox></div>
-        </div>
-      </section>
-    </div>
-  `;
-}
-function hydrateControls(container) {
-	setItems(container, "#toolbar-filter", [
-		"All",
-		"Enabled",
-		"Invalid"
-	].map(toOption), "All");
-	setItems(container, "#component-type", [
-		"field",
-		"button",
-		"selection",
-		"popup"
-	].map(toOption), "field");
-	setItems(container, "#component-search", [
-		"Button",
-		"Checkbox",
-		"Input Field",
-		"Segmented Control"
-	].map(toOption), "Button");
-	setItems(container, "#density-group", ["default", "compact"].map(toOption), "default");
-	setItems(container, "#validation-mode", ["strict", "lenient"].map(toOption), "strict");
-	setItems(container, "#build-target", ["intellij.platform.ui.webview", "intellij.platform.ui.webview.demo"].map(toOption), "intellij.platform.ui.webview");
-	setItems(container, "#build-kind", ["incremental", "full"].map(toOption), "incremental");
-	setItems(container, "#view-mode", [
-		"preview",
-		"source",
-		"diff"
-	].map(toOption), "preview");
-	setItems(container, "#scope-select", [
-		"project",
-		"module",
-		"file"
-	].map(toOption), "project");
-	setItems(container, "#result-tabs", [
-		"problems",
-		"preview",
-		"events"
-	].map(toOption), "problems");
-	setItems(container, "#compact-menu", [
-		"Pin",
-		"Detach",
-		"Close"
-	].map(toOption), "Pin");
-}
-function setItems(container, selector, items, value) {
-	const element = container.querySelector(selector);
-	if (!element) return;
-	element.items = items;
-	element.value = value;
-}
-function toOption(value) {
+function toOption(label) {
 	return {
-		value,
-		label: value.charAt(0).toUpperCase() + value.slice(1)
+		label,
+		value: label.toLowerCase().replace(/\s+/g, "-")
 	};
 }
+function boolAttr(value) {
+	return value ? "" : void 0;
+}
+function eventValue(event) {
+	return event.detail?.value ?? "";
+}
+function clamp(value, min, max) {
+	return Math.min(max, Math.max(min, value));
+}
+function formatDecimal(value) {
+	return value.toFixed(2);
+}
+function notifyOpenSource() {
+	try {
+		webView.notification(openSourceNotification).send({});
+	} catch (error) {
+		console.warn("UI DSL showcase source navigation is unavailable", error);
+	}
+}
+function Icon(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-icon", {
+		className: props.className ?? "dslSmallIcon",
+		src: props.src,
+		label: props.label ?? ""
+	});
+}
+function DslSection(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+		className: "dslSection",
+		"aria-labelledby": `${props.title.toLowerCase()}-section-title`,
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+			className: "dslSectionTitle",
+			id: `${props.title.toLowerCase()}-section-title`,
+			children: props.title
+		}), props.children]
+	});
+}
+function DslGroup(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+		className: "dslGroup",
+		"aria-label": props.title,
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "dslGroupTitle",
+			children: props.title
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "dslRows",
+			children: props.children
+		})]
+	});
+}
+function DslLabel(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: props.empty ? "dslLabel dslLabelEmpty" : "dslLabel",
+		children: props.children
+	});
+}
+function DslCell(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: [
+			"dslCell",
+			props.column ? "dslCellColumn" : "",
+			props.top ? "dslCellTop" : "",
+			props.className ?? ""
+		].filter(Boolean).join(" "),
+		children: props.children
+	});
+}
+function DslRightComment(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: "dslRightComment",
+		children: props.children
+	});
+}
+function DslRowComment(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: "dslRowComment",
+		children: props.children
+	});
+}
+function DslInlineHelp(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+		className: "dslInlineHelp",
+		children: [props.children, /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-context-help", { text: props.text })]
+	});
+}
+function DslRow(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: [
+			"dslRow",
+			props.noLabel ? "dslRowNoLabel" : "",
+			props.independent ? "dslRowIndependent" : "",
+			props.fullWidth ? "dslRowFullWidth" : "",
+			props.top ? "dslRowTop" : ""
+		].filter(Boolean).join(" "),
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslLabel, {
+				empty: props.noLabel,
+				children: props.label
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslCell, {
+				top: props.top,
+				className: props.cellClassName,
+				children: props.children
+			}),
+			props.rightComment ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRightComment, { children: props.rightComment }) : null,
+			props.rowComment ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRowComment, { children: props.rowComment }) : null
+		]
+	});
+}
+function BrowserLink(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
+		className: "dslBrowserLink",
+		href: props.href,
+		target: "_blank",
+		rel: "noreferrer",
+		children: [props.children, /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, {
+			className: "dslExternalIcon",
+			src: icons.externalLink,
+			label: "External link"
+		})]
+	});
+}
+function SegmentedButton(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: "dslSegmented",
+		role: "radiogroup",
+		"aria-label": "Segmented button",
+		children: [
+			{
+				value: "button-1",
+				label: "Button 1"
+			},
+			{
+				value: "button-2",
+				label: "Button 2"
+			},
+			{
+				value: "button-last",
+				label: "Button Last",
+				info: true
+			}
+		].map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+			"aria-checked": props.value === item.value,
+			className: props.value === item.value ? "dslSegment isSelected" : "dslSegment",
+			onClick: () => props.onChange(item.value),
+			role: "radio",
+			type: "button",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: item.label }), item.info ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, {
+				src: icons.info,
+				label: "Info"
+			}) : null]
+		}, item.value))
+	});
+}
+function TabbedPaneHeader(props) {
+	const activeLabel = tabItems.find((item) => item.value === props.value)?.label ?? "Tab 1";
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "dslTabs",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "dslTabList",
+			role: "tablist",
+			"aria-label": "Tabbed pane header",
+			children: tabItems.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				"aria-selected": props.value === item.value,
+				className: props.value === item.value ? "dslTab isSelected" : "dslTab",
+				onClick: () => props.onChange(item.value),
+				role: "tab",
+				type: "button",
+				children: item.label
+			}, item.value))
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "dslTabPanel",
+			role: "tabpanel",
+			children: ["Selected: ", activeLabel]
+		})]
+	});
+}
+function TextFieldWithBrowseButton() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "dslCompositeField",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-field", {
+			value: "C:/workspace/project",
+			"aria-label": "Path"
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-action-button", {
+			className: "dslBrowseButton",
+			label: "Browse",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, {
+				src: icons.folder,
+				label: "Browse"
+			})
+		})]
+	});
+}
+function ExpandableTextField() {
+	const [expanded, setExpanded] = (0, import_react.useState)(false);
+	const [value, setValue] = (0, import_react.useState)("one line expandable text");
+	(0, import_react.useEffect)(() => {
+		const element = document.getElementById("components-expandable-field");
+		if (!element) return;
+		const listener = (event) => setValue(eventValue(event));
+		element.addEventListener("jb-change", listener);
+		return () => element.removeEventListener("jb-change", listener);
+	}, []);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: expanded ? "dslCompositeFieldExpanded" : "dslCompositeField",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-field", {
+				id: "components-expandable-field",
+				value,
+				"aria-label": "Expandable text"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-action-button", {
+				className: "dslBrowseButton",
+				expanded: boolAttr(expanded),
+				label: expanded ? "Collapse" : "Expand",
+				onClick: () => setExpanded(!expanded),
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, {
+					src: icons.expand,
+					label: expanded ? "Collapse" : "Expand"
+				})
+			}),
+			expanded ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-area", {
+				className: "dslExpandedTextArea",
+				rows: "4",
+				value
+			}) : null
+		]
+	});
+}
+function ExtendableTextField() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "dslCompositeField dslExtendableField",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-field", {
+			value: "Text with extension",
+			"aria-label": "Extendable text"
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-action-button", {
+			className: "dslExtendButton",
+			label: "Add",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, {
+				src: icons.add,
+				label: "Add"
+			})
+		})]
+	});
+}
+function DslSpinner(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "dslSpinner",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-number-field", {
+			id: props.id,
+			value: props.value,
+			min: props.min,
+			max: props.max,
+			step: props.step
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+			className: "dslSpinnerButtons",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				className: "dslSpinnerButton",
+				type: "button",
+				"aria-label": "Increment",
+				onClick: () => props.onStep(1),
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "dslArrowUp",
+					"aria-hidden": "true"
+				})
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				className: "dslSpinnerButton",
+				type: "button",
+				"aria-label": "Decrement",
+				onClick: () => props.onStep(-1),
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "dslArrowDown",
+					"aria-hidden": "true"
+				})
+			})]
+		})]
+	});
+}
+function UiDslShowcase() {
+	const pageRef = (0, import_react.useRef)(null);
+	const [optionEnabled, setOptionEnabled] = (0, import_react.useState)(false);
+	const [singleLineRadio, setSingleLineRadio] = (0, import_react.useState)("option-1");
+	const [bindValueRadio, setBindValueRadio] = (0, import_react.useState)("value-outside-model");
+	const [componentsRadio, setComponentsRadio] = (0, import_react.useState)("value-2");
+	const [segmentedValue, setSegmentedValue] = (0, import_react.useState)("button-1");
+	const [tabValue, setTabValue] = (0, import_react.useState)("tab-1");
+	const [dropdownValue, setDropdownValue] = (0, import_react.useState)("item-1");
+	const [comboValue, setComboValue] = (0, import_react.useState)("item-1");
+	const [spinnerInt, setSpinnerInt] = (0, import_react.useState)("42");
+	const [spinnerDouble, setSpinnerDouble] = (0, import_react.useState)("42.00");
+	const [sliderValue, setSliderValue] = (0, import_react.useState)("5");
+	const [commentClickStatus, setCommentClickStatus] = (0, import_react.useState)("No comment link clicked");
+	const [intTextValue, setIntTextValue] = (0, import_react.useState)("42");
+	const [actionsStatus, setActionsStatus] = (0, import_react.useState)("No action selected");
+	useItemsControl("examples-single-line-radio", singleLineRadioItems, singleLineRadio);
+	useItemsControl("examples-bind-value-radio", bindValueItems, bindValueRadio);
+	useItemsControl("components-radio-group", componentsRadioItems, componentsRadio);
+	useItemsControl("components-actions-button", actionsItems, "");
+	useItemsControl("components-dropdown-link", item1to3, dropdownValue);
+	useItemsControl("components-combo-box", comboItems, comboValue);
+	const intTextInvalid = (0, import_react.useMemo)(() => {
+		if (intTextValue.trim() === "") return true;
+		const numeric = Number(intTextValue);
+		return Number.isNaN(numeric) || numeric < 0 || numeric > 100;
+	}, [intTextValue]);
+	(0, import_react.useEffect)(() => {
+		const element = pageRef.current;
+		if (!element) return;
+		const onJbChange = (event) => {
+			const target = event.target;
+			if (!target) return;
+			const value = eventValue(event);
+			switch (target.id) {
+				case "examples-single-line-radio":
+					setSingleLineRadio(value);
+					break;
+				case "examples-bind-value-radio":
+					setBindValueRadio(value);
+					break;
+				case "examples-option-checkbox":
+					setOptionEnabled(value !== "");
+					break;
+				case "components-radio-group":
+					setComponentsRadio(value);
+					break;
+				case "components-dropdown-link":
+					setDropdownValue(value);
+					break;
+				case "components-combo-box":
+					setComboValue(value);
+					break;
+				case "components-int-field":
+					setIntTextValue(normalizeIntegerText(value));
+					break;
+				case "components-spinner-int":
+					setSpinnerInt(normalizeIntegerText(value));
+					break;
+				case "components-spinner-double":
+					setSpinnerDouble(normalizeDecimalText(value));
+					break;
+				case "components-slider":
+					setSliderValue(value);
+					break;
+			}
+		};
+		const onJbSelect = (event) => {
+			const target = event.target;
+			if (!target) return;
+			const value = eventValue(event);
+			if (target.id === "components-actions-button") setActionsStatus(value === "action-2" ? "Action 2 selected" : "Action 1 selected");
+			else if (target.id === "components-dropdown-link") setDropdownValue(value);
+		};
+		element.addEventListener("jb-change", onJbChange);
+		element.addEventListener("jb-select", onJbSelect);
+		return () => {
+			element.removeEventListener("jb-change", onJbChange);
+			element.removeEventListener("jb-select", onJbSelect);
+		};
+	}, []);
+	function stepIntSpinner(direction) {
+		setSpinnerInt((current) => String(clamp((Number(current) || 0) + direction, 0, 100)));
+	}
+	function stepDoubleSpinner(direction) {
+		setSpinnerDouble((current) => formatDecimal(clamp((Number(current) || 0) + direction * .01, 0, 100)));
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "uiDslShowcasePage",
+		ref: pageRef,
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+			className: "uiDslHeader",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "uiDslHeaderTitle",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", { children: "UI DSL Showcase" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "WebView implementation of UI DSL Examples, Components, and Comments" })]
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				className: "uiDslSourceLink",
+				type: "button",
+				onClick: notifyOpenSource,
+				children: "View source"
+			})]
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "uiDslSections",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ExamplesSection, {
+					bindValueRadio,
+					optionEnabled
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ComponentsSection, {
+					actionsStatus,
+					comboValue,
+					componentsRadio,
+					dropdownValue,
+					intTextInvalid,
+					intTextValue,
+					segmentedValue,
+					setSegmentedValue,
+					setTabValue,
+					sliderValue,
+					spinnerDouble,
+					spinnerInt,
+					stepDoubleSpinner,
+					stepIntSpinner,
+					tabValue
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CommentsSection, {
+					commentClickStatus,
+					setCommentClickStatus
+				})
+			]
+		})]
+	});
+}
+function normalizeIntegerText(value) {
+	if (value.trim() === "") return value;
+	const numeric = Number(value);
+	if (Number.isNaN(numeric)) return value;
+	return String(clamp(Math.trunc(numeric), 0, 100));
+}
+function normalizeDecimalText(value) {
+	if (value.trim() === "") return value;
+	const numeric = Number(value);
+	if (Number.isNaN(numeric)) return value;
+	return formatDecimal(clamp(numeric, 0, 100));
+}
+function ExamplesSection(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DslSection, {
+		title: "Examples",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DslGroup, {
+				title: "Initializing components with extension functions",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+						noLabel: true,
+						rightComment: "'bold()' works for any component",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "dslTextStrong",
+							children: "Bold text"
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+						noLabel: true,
+						rightComment: "'selected(true)'",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-checkbox", {
+							checked: "",
+							children: "Selected CheckBox"
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DslRow, {
+						noLabel: true,
+						rightComment: "'selected(true)'",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-radio", {
+							name: "examples-initial-radio",
+							value: "radio",
+							children: "RadioButton"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-radio", {
+							name: "examples-initial-radio",
+							value: "selected",
+							checked: "",
+							children: "Selected RadioButton"
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+						noLabel: true,
+						rightComment: "'text(\"Initial text\")'",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-field", {
+							className: "dslFieldMedium",
+							value: "Initial text"
+						})
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DslGroup, {
+				title: "CheckBox/RadioButton examples",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DslRow, {
+						label: "CheckBox/RadioButton Group:",
+						cellClassName: "dslCellColumn",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "dslControlLine dslIndented",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-checkbox", {
+								checked: "",
+								children: "CheckBox 1"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslInlineHelp, { text: "Context help popup bound to CheckBox 1." })]
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "dslControlLine dslIndented",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-checkbox", { children: "CheckBox 2" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BrowserLink, {
+								href: "https://www.jetbrains.com/help/idea/settings.html",
+								children: "How it works"
+							})]
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+						label: "",
+						noLabel: true,
+						rightComment: "External links must be marked with the external link icon",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { "aria-hidden": "true" })
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DslRow, {
+						label: "Single line:",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-radio-group", {
+							id: "examples-single-line-radio",
+							value: "option-1"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslInlineHelp, { text: "Radio buttons in one row are mutually exclusive." })]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+						label: "Bind value:",
+						rightComment: "'buttonsGroup.bind'",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-radio-group", {
+							id: "examples-bind-value-radio",
+							value: props.bindValueRadio
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DslRow, {
+						label: "Option:",
+						rightComment: "'enabledIf'",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-checkbox", {
+								id: "examples-option-checkbox",
+								checked: boolAttr(props.optionEnabled),
+								children: "Option"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-field", {
+								className: "dslFieldMedium",
+								disabled: boolAttr(!props.optionEnabled),
+								value: "Enabled by option"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslInlineHelp, { text: "The text field follows the checkbox state live." })
+						]
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DslGroup, {
+				title: "TextField",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DslRow, {
+						label: "Default field:",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-field", {
+							className: "dslFieldMedium",
+							value: "Text"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslInlineHelp, { text: "Default text field with context help." })]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DslRow, {
+						noLabel: true,
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-field", {
+							className: "dslFieldFillHost",
+							value: "Text field fills the remaining row width"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslInlineHelp, { text: "Empty label row keeps shared alignment." })]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DslRow, {
+						label: "Don't align very long labels with short ones:",
+						independent: true,
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-field", {
+								className: "dslFieldMedium",
+								value: "15"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "seconds" }),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslInlineHelp, { text: "Independent rows can opt out of the shared label column." })
+						]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "dslParentGrid",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DslRow, {
+							label: "Row 1:",
+							rightComment: "RowLayout.PARENT_GRID",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-field", { value: "Parent grid field" }),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-button", {
+									className: "dslEqualButton dslTextButton",
+									children: "Test"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslInlineHelp, { text: "Rows share the same inner column sizing." })
+							]
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DslRow, {
+							label: "Row 2:",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-field", { value: "Second parent grid field" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "dslReservedButtonSlot",
+								"aria-hidden": "true"
+							})]
+						})]
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslGroup, {
+				title: "Comments",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DslRow, {
+					noLabel: true,
+					rightComment: "Requires restart",
+					rowComment: "It's important to connect comments to the related cells: they are displayed in the correct location with appropriate styling and used by the accessibility framework",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-checkbox", { children: "A very complex option" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslInlineHelp, { text: "Context help belongs to the option cell." })]
+				})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslGroup, {
+				title: "Buttons",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DslRow, {
+					noLabel: true,
+					rightComment: "'widthGroup'",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-button", {
+							className: "dslEqualButton dslTextButton",
+							variant: "primary",
+							children: "Default Button"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-button", {
+							className: "dslEqualButton dslTextButton",
+							children: "Button"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslInlineHelp, { text: "Width group keeps related buttons equal." })
+					]
+				})
+			})
+		]
+	});
+}
+function ComponentsSection(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DslSection, {
+		title: "Components",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DslGroup, {
+			title: "Basic components",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "checkBox:",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-checkbox", {
+						checked: "",
+						children: "checkBox"
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "threeStateCheckBox:",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-checkbox", {
+						indeterminate: "",
+						children: "threeStateCheckBox"
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "radioButton:",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-radio-group", {
+						id: "components-radio-group",
+						value: props.componentsRadio
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "button:",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-button", { children: "button" })
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "actionButton:",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-action-button", {
+						className: "dslIconButton",
+						label: "Quick fix off bulb",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, {
+							src: icons.bulb,
+							label: "Quick fix off bulb"
+						})
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "actionsButton:",
+					rowComment: props.actionsStatus,
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-menu-button", {
+						id: "components-actions-button",
+						label: "Actions",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, {
+							src: icons.gear,
+							label: "Actions"
+						})
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "segmentedButton:",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SegmentedButton, {
+						value: props.segmentedValue,
+						onChange: props.setSegmentedValue
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "tabbedPaneHeader:",
+					top: true,
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TabbedPaneHeader, {
+						value: props.tabValue,
+						onChange: props.setTabValue
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "label:",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-label", { children: "label" })
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "text:",
+					top: true,
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						className: "dslCommonInfo",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+							className: "dslCommonComment",
+							children: [
+								"Regular text with ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									className: "dslTextLink",
+									type: "button",
+									children: "link"
+								}),
+								", line break,",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
+								"and ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, {
+									src: icons.info,
+									label: "Info"
+								}),
+								" bundled info icon."
+							]
+						})
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "link:",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						className: "dslTextLink",
+						type: "button",
+						children: "Focusable link"
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "browserLink:",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BrowserLink, {
+						href: "https://www.jetbrains.com/help/idea/",
+						children: "Browser link"
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "dropDownLink:",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-dropdown-link", {
+						id: "components-dropdown-link",
+						label: "Item 1",
+						value: props.dropdownValue
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "icon:",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+						className: "dslInlineIconText",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, {
+							src: icons.info,
+							label: "Info"
+						}), " icon"]
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "contextHelp:",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-context-help", { text: "Context help related to the component, displayed in a popup" })
+				})
+			]
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DslGroup, {
+			title: "Input components",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "textField:",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-field", {
+						className: "dslFieldMedium",
+						value: "text"
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "passwordField:",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-password-field", {
+						className: "dslFieldMedium",
+						value: "password"
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "textFieldWithBrowseButton:",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextFieldWithBrowseButton, {})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "expandableTextField:",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ExpandableTextField, {})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "extendableTextField:",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ExtendableTextField, {})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "intTextField(0..100):",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-number-field", {
+						className: "dslFieldShort",
+						id: "components-int-field",
+						invalid: boolAttr(props.intTextInvalid),
+						max: "100",
+						min: "0",
+						value: props.intTextValue
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "spinner(0..100):",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslSpinner, {
+						id: "components-spinner-int",
+						value: props.spinnerInt,
+						min: 0,
+						max: 100,
+						step: 1,
+						onStep: props.stepIntSpinner
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "spinner(0.0..100.0, 0.01):",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslSpinner, {
+						id: "components-spinner-double",
+						value: props.spinnerDouble,
+						min: 0,
+						max: 100,
+						step: .01,
+						onStep: props.stepDoubleSpinner
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "slider(0, 10, 1, 5):",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "dslSliderBlock",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-slider", {
+							id: "components-slider",
+							min: "0",
+							max: "10",
+							step: "1",
+							value: props.sliderValue
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "dslSliderLabels",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "0" }),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "5" }),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "10" })
+							]
+						})]
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "textArea:",
+					top: true,
+					fullWidth: true,
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-area", {
+						className: "dslTextAreaWide",
+						rows: "5",
+						value: "Text area\\nwith several lines\\nand top-aligned label"
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "comboBox:",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-select", {
+						className: "dslSelectMedium",
+						id: "components-combo-box",
+						value: props.comboValue
+					})
+				})
+			]
+		})]
+	});
+}
+function CommentsSection(props) {
+	const longString = "A very long string ".repeat(16).trim();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DslSection, {
+		title: "Comments",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DslGroup, {
+				title: "Cell Comment",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					fullWidth: true,
+					noLabel: true,
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "dslArbitraryComment",
+						children: "Comments related to a cell must be assigned directly to that cell. This ensures proper layout placement and improves support for the accessibility framework"
+					})
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "Cells:",
+					top: true,
+					fullWidth: true,
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "dslThreeFields",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "dslCellInlineComment",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-field", { value: "textField1" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "dslRightComment",
+									children: "Right comment to textField1"
+								})]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "dslCellBlock",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-field", { value: "textField2" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "dslBottomComment",
+									children: "Bottom comment to textField2"
+								})]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "dslControlLine",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-field", { value: "textField3" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-context-help", { text: "Context help related to the component, displayed in a popup" })]
+							})
+						]
+					})
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslGroup, {
+				title: "Row Comment",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					label: "Text field:",
+					rowComment: "A row comment is placed below the row",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-field", {
+						className: "dslFieldMedium",
+						value: "textField"
+					})
+				})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslGroup, {
+				title: "Arbitrary Comment",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					fullWidth: true,
+					noLabel: true,
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "dslArbitraryComment",
+						children: "Arbitrary comments can be placed anywhere. They are not related to any cell or row"
+					})
+				})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslGroup, {
+				title: "Common Info",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslRow, {
+					top: true,
+					fullWidth: true,
+					noLabel: true,
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "dslCommonInfo",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+								className: "dslCommonComment",
+								children: [
+									"Comments can be an html text with some clickable\xA0",
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+										className: "dslTextLink",
+										type: "button",
+										onClick: () => props.setCommentClickStatus("First comment link clicked"),
+										children: "link"
+									}),
+									"\xA0and even several\xA0",
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+										className: "dslTextLink",
+										type: "button",
+										onClick: () => props.setCommentClickStatus("Second comment link clicked"),
+										children: "links"
+									}),
+									"."
+								]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "dslStatusText",
+								"aria-live": "polite",
+								children: props.commentClickStatus
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+								className: "dslCommonComment dslInfoLine",
+								children: [
+									"It's possible to use line breaks and bundled icons",
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, {
+										src: icons.info,
+										label: "Info"
+									}),
+									" bundled info icon"
+								]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "dslCommonComment dslWrappedComment",
+								children: longString
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "dslCommonComment dslNoWrapComment",
+								children: longString
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "dslCommonComment dslMaxLineComment",
+								children: longString
+							})
+						]
+					})
+				})
+			})
+		]
+	});
+}
+(0, import_client.createRoot)(root).render(/* @__PURE__ */ (0, import_jsx_runtime.jsx)(UiDslShowcase, {}));
 //#endregion

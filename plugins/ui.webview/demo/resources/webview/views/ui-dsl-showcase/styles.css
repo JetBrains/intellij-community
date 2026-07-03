@@ -1,0 +1,707 @@
+/* Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. */
+
+.ui-dsl-showcase-root {
+  background: var(--jb-bg-window, var(--ij-bg-window, #fff));
+  color: var(--jb-text-color, var(--ij-text-primary, #1f2328));
+  font-family: var(--jb-font-family, var(--ij-font-family, system-ui, sans-serif));
+  font-size: var(--jb-font-size, 13px);
+  line-height: var(--jb-line-height, 1.35);
+  margin: 0;
+  user-select: none;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.uiDslShowcasePage {
+  --dsl-label-column: clamp(136px, 19vw, 230px);
+  --dsl-row-gap: 8px;
+  --dsl-control-gap: 8px;
+  --dsl-width-group: 122px;
+  box-sizing: border-box;
+  display: grid;
+  gap: 18px;
+  min-height: 100vh;
+  min-width: 0;
+  padding: 14px 18px 28px;
+  width: 100%;
+}
+
+.uiDslShowcasePage *,
+.uiDslShowcasePage *::before,
+.uiDslShowcasePage *::after {
+  box-sizing: border-box;
+}
+
+.uiDslHeader {
+  align-items: start;
+  border-bottom: 1px solid var(--jb-border-color-muted, #d8dce3);
+  display: grid;
+  gap: 8px 16px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding-bottom: 12px;
+}
+
+.uiDslHeaderTitle {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.uiDslHeader h1 {
+  font-size: var(--jb-font-size-h2, 20px);
+  font-weight: var(--jb-font-weight-medium, 600);
+  line-height: var(--jb-line-height-heading, 1.25);
+  margin: 0;
+}
+
+.uiDslHeader p {
+  color: var(--jb-text-muted, var(--ij-text-secondary, #6b7280));
+  line-height: var(--jb-line-height-paragraph, 1.45);
+  margin: 0;
+  max-width: 760px;
+  user-select: text;
+}
+
+.uiDslSourceLink,
+.dslLinkButton {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--jb-accent-text-color, var(--ij-link-foreground, #1a73e8));
+  cursor: default;
+  font: inherit;
+  padding: 0;
+  text-align: left;
+  user-select: none;
+}
+
+.uiDslSourceLink:hover,
+.dslLinkButton:hover,
+.dslBrowserLink:hover,
+.dslTextLink:hover {
+  color: var(--jb-accent-hover-color, var(--ij-link-hover-foreground, #0b57d0));
+  text-decoration: underline;
+}
+
+.uiDslSourceLink:focus-visible,
+.dslLinkButton:focus-visible,
+.dslBrowserLink:focus-visible,
+.dslTextLink:focus-visible,
+.dslTab:focus-visible,
+.dslSegment:focus-visible,
+.dslSpinnerButton:focus-visible {
+  box-shadow: var(--jb-focus-ring, 0 0 0 2px rgba(53, 132, 228, 0.35));
+  outline: none;
+}
+
+.uiDslSections {
+  display: grid;
+  gap: 28px;
+  min-width: 0;
+}
+
+.dslSection {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.dslSectionTitle {
+  font-size: var(--jb-font-size-h3, 17px);
+  font-weight: var(--jb-font-weight-medium, 600);
+  line-height: var(--jb-line-height-heading, 1.25);
+  margin: 0;
+}
+
+.dslGroup {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dslGroupTitle {
+  align-items: center;
+  color: var(--jb-text-muted, var(--ij-text-secondary, #6b7280));
+  display: grid;
+  font-weight: var(--jb-font-weight-medium, 600);
+  gap: 10px;
+  grid-template-columns: auto minmax(24px, 1fr);
+  line-height: var(--jb-line-height, 1.35);
+}
+
+.dslGroupTitle::after {
+  background: var(--jb-border-color-muted, #d8dce3);
+  content: "";
+  height: 1px;
+}
+
+.dslRows {
+  display: grid;
+  gap: var(--dsl-row-gap);
+  min-width: 0;
+}
+
+.dslRow {
+  align-items: baseline;
+  display: grid;
+  gap: 4px var(--dsl-control-gap);
+  grid-template-columns: var(--dsl-label-column) minmax(0, 1fr) minmax(170px, max-content);
+  min-width: 0;
+}
+
+.dslRow.dslRowNoLabel {
+  grid-template-columns: var(--dsl-label-column) minmax(0, 1fr) minmax(170px, max-content);
+}
+
+.dslRow.dslRowIndependent {
+  grid-template-columns: minmax(max-content, 320px) minmax(180px, 360px) minmax(120px, max-content);
+}
+
+.dslRow.dslRowFullWidth {
+  grid-template-columns: var(--dsl-label-column) minmax(0, 1fr);
+}
+
+.dslRow.dslRowTop {
+  align-items: start;
+}
+
+.dslLabel {
+  color: var(--jb-text-color, var(--ij-text-primary, #1f2328));
+  justify-self: end;
+  min-width: 0;
+  padding-top: 3px;
+  text-align: right;
+  user-select: text;
+}
+
+.dslLabelEmpty {
+  color: transparent;
+  user-select: none;
+}
+
+.dslCell {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dsl-control-gap);
+  min-height: var(--jb-control-height, 28px);
+  min-width: 0;
+}
+
+.dslCell.dslCellColumn {
+  align-items: stretch;
+  display: grid;
+  gap: 4px;
+}
+
+.dslCell.dslCellTop {
+  align-items: flex-start;
+}
+
+.dslCellFill {
+  flex: 1 1 220px;
+  min-width: 120px;
+}
+
+.dslControlLine {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dsl-control-gap);
+  min-width: 0;
+}
+
+.dslIndented {
+  margin-left: 22px;
+}
+
+.dslRightComment,
+.dslRowComment,
+.dslInlineHelp,
+.dslArbitraryComment,
+.dslCommonComment,
+.dslBottomComment {
+  color: var(--jb-text-muted, var(--ij-text-secondary, #6b7280));
+  font-size: var(--jb-font-size-small, 12px);
+  line-height: var(--jb-line-height-paragraph, 1.45);
+  user-select: text;
+}
+
+.dslRightComment {
+  align-self: baseline;
+  min-width: 0;
+  padding-top: 3px;
+}
+
+.dslRowComment {
+  grid-column: 2 / -1;
+  margin-top: -2px;
+}
+
+.dslBottomComment {
+  display: block;
+}
+
+.dslInlineHelp {
+  align-items: center;
+  display: inline-flex;
+  gap: 4px;
+}
+
+.dslParentGrid {
+  display: grid;
+  gap: var(--dsl-row-gap);
+  grid-template-columns: var(--dsl-label-column) minmax(0, 1fr) auto minmax(170px, max-content);
+  min-width: 0;
+}
+
+.dslParentGrid .dslRow {
+  display: contents;
+}
+
+.dslParentGrid .dslLabel,
+.dslParentGrid .dslCell,
+.dslParentGrid .dslRightComment,
+.dslParentGrid .dslRowComment {
+  align-self: center;
+}
+
+.dslParentGrid .dslLabel {
+  grid-column: 1;
+}
+
+.dslParentGrid .dslCell {
+  display: grid;
+  grid-column: 2 / 4;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.dslParentGrid .dslRightComment {
+  grid-column: 4;
+}
+
+.dslParentGrid .dslReservedButtonSlot {
+  min-width: var(--dsl-width-group);
+}
+
+.dslTextStrong {
+  font-weight: var(--jb-font-weight-bold, 700);
+}
+
+.dslBrowserLink,
+.dslTextLink {
+  align-items: center;
+  color: var(--jb-accent-text-color, var(--ij-link-foreground, #1a73e8));
+  display: inline-flex;
+  gap: 3px;
+  text-decoration: none;
+  user-select: none;
+}
+
+.dslTextLink {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  cursor: default;
+  font: inherit;
+  padding: 0;
+}
+
+.dslExternalIcon {
+  height: 14px;
+  width: 14px;
+}
+
+.dslSmallIcon {
+  height: 16px;
+  width: 16px;
+}
+
+.dslInlineIconText {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+  min-height: var(--jb-control-height-compact, 22px);
+}
+
+.dslFieldShort {
+  width: 112px;
+}
+
+.dslFieldMedium {
+  width: min(100%, 240px);
+}
+
+.dslFieldWide {
+  width: min(100%, 420px);
+}
+
+.dslFieldFillHost {
+  flex: 1 1 220px;
+  min-width: 120px;
+}
+
+.dslFieldFillHost,
+.dslFieldMedium,
+.dslFieldShort,
+.dslFieldWide,
+.dslTextAreaWide,
+.dslSelectMedium,
+.dslComboMedium,
+.dslSpinner,
+.dslCompositeField {
+  min-width: 0;
+}
+
+.dslTextAreaWide {
+  width: 100%;
+}
+
+.dslSelectMedium,
+.dslComboMedium {
+  width: 180px;
+}
+
+.dslEqualButton::part(button) {
+  min-width: var(--dsl-width-group);
+}
+
+.dslIconButton::part(button),
+.dslBrowseButton::part(button),
+.dslExtendButton::part(button) {
+  height: var(--jb-control-height, 28px);
+  min-height: var(--jb-control-height, 28px);
+  min-width: var(--jb-control-height, 28px);
+  padding: 0;
+  width: var(--jb-control-height, 28px);
+}
+
+.dslTextButton::part(button) {
+  align-items: center;
+  justify-content: center;
+}
+
+.dslThreeFields {
+  align-items: start;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(170px, 1fr));
+  width: 100%;
+}
+
+.dslCellBlock {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.dslCellInlineComment {
+  align-items: baseline;
+  display: grid;
+  gap: 6px;
+  grid-template-columns: minmax(120px, 1fr) minmax(110px, max-content);
+}
+
+.dslCompositeField {
+  align-items: center;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: minmax(120px, 1fr) auto;
+  width: min(100%, 360px);
+}
+
+.dslCompositeFieldExpanded {
+  align-items: stretch;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: minmax(120px, 1fr) auto;
+  width: min(100%, 460px);
+}
+
+.dslCompositeFieldExpanded .dslExpandedTextArea {
+  grid-column: 1 / -1;
+}
+
+.dslExtendableField {
+  width: min(100%, 340px);
+}
+
+.dslSpinner {
+  align-items: center;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: minmax(72px, 1fr) auto;
+  width: 132px;
+}
+
+.dslSpinnerButtons {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  height: var(--jb-control-height, 28px);
+  width: 22px;
+}
+
+.dslSpinnerButton {
+  align-items: center;
+  appearance: none;
+  background: var(--jb-bg-control, #f7f8fa);
+  border: 1px solid var(--jb-border-color, #b8bcc4);
+  color: var(--jb-text-muted, #6b7280);
+  cursor: default;
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  min-height: 0;
+  padding: 0;
+}
+
+.dslSpinnerButton:first-child {
+  border-bottom-width: 0;
+  border-radius: var(--jb-control-radius, 4px) var(--jb-control-radius, 4px) 0 0;
+}
+
+.dslSpinnerButton:last-child {
+  border-radius: 0 0 var(--jb-control-radius, 4px) var(--jb-control-radius, 4px);
+}
+
+.dslSpinnerButton:hover:not(:disabled) {
+  background: var(--jb-bg-hover, #edf3ff);
+}
+
+.dslSpinnerButton:disabled {
+  color: var(--jb-text-disabled, #a2a8b3);
+  opacity: 0.72;
+}
+
+.dslArrowUp,
+.dslArrowDown {
+  border: solid currentColor;
+  display: inline-block;
+  height: 5px;
+  width: 5px;
+}
+
+.dslArrowUp {
+  border-width: 1.5px 0 0 1.5px;
+  transform: translateY(1px) rotate(45deg);
+}
+
+.dslArrowDown {
+  border-width: 0 1.5px 1.5px 0;
+  transform: translateY(-1px) rotate(45deg);
+}
+
+.dslSliderBlock {
+  display: grid;
+  gap: 2px;
+  width: min(100%, 340px);
+}
+
+.dslSliderLabels {
+  color: var(--jb-text-muted, #6b7280);
+  display: grid;
+  font-size: var(--jb-font-size-small, 12px);
+  grid-template-columns: repeat(3, 1fr);
+  line-height: var(--jb-line-height, 1.35);
+  user-select: text;
+}
+
+.dslSliderLabels span:nth-child(2) {
+  text-align: center;
+}
+
+.dslSliderLabels span:nth-child(3) {
+  text-align: right;
+}
+
+.dslSegmented {
+  align-items: center;
+  background: var(--jb-bg-control, #f7f8fa);
+  border: 1px solid var(--jb-border-color-muted, #d8dce3);
+  border-radius: var(--jb-control-radius, 4px);
+  display: inline-flex;
+  padding: 1px;
+}
+
+.dslSegment {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: var(--jb-text-color, #1f2328);
+  cursor: default;
+  display: inline-flex;
+  gap: 4px;
+  justify-content: center;
+  min-height: var(--jb-control-height, 28px);
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+.dslSegment:hover {
+  background: var(--jb-bg-hover, #edf3ff);
+}
+
+.dslSegment.isSelected {
+  background: var(--jb-bg-selected-muted, #dce8ff);
+  border-color: var(--jb-accent-soft-bg, #adc8ff);
+}
+
+.dslTabs {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  width: min(100%, 420px);
+}
+
+.dslTabList {
+  border-bottom: 1px solid var(--jb-border-color-muted, #d8dce3);
+  display: flex;
+  gap: 2px;
+}
+
+.dslTab {
+  appearance: none;
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: var(--jb-control-radius, 4px) var(--jb-control-radius, 4px) 0 0;
+  color: var(--jb-text-color, #1f2328);
+  cursor: default;
+  font: inherit;
+  margin-bottom: -1px;
+  min-height: var(--jb-control-height, 28px);
+  padding: 0 10px;
+}
+
+.dslTab:hover {
+  background: var(--jb-bg-hover, #edf3ff);
+}
+
+.dslTab.isSelected {
+  background: var(--jb-bg-window, #fff);
+  border-color: var(--jb-border-color-muted, #d8dce3);
+  color: var(--jb-text-color, #1f2328);
+}
+
+.dslTabPanel {
+  color: var(--jb-text-muted, #6b7280);
+  min-height: 36px;
+  user-select: text;
+}
+
+.dslCommonInfo {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dslCommonComment {
+  margin: 0;
+}
+
+.dslInfoLine {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+}
+
+.dslWrappedComment {
+  max-width: 620px;
+  overflow-wrap: anywhere;
+}
+
+.dslNoWrapComment {
+  max-width: 520px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dslMaxLineComment {
+  max-width: 60ch;
+}
+
+.dslStatusText {
+  color: var(--jb-text-muted, #6b7280);
+  font-size: var(--jb-font-size-small, 12px);
+  margin: 0;
+  user-select: text;
+}
+
+.dslHiddenAccessibleLabel {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.uiDslShowcasePage :where(jb-text-field, jb-password-field, jb-number-field, jb-text-area, jb-select, jb-combobox, jb-slider)::part(input),
+.uiDslShowcasePage :where(jb-text-field, jb-password-field, jb-number-field, jb-text-area, jb-select, jb-combobox, jb-slider)::part(select) {
+  user-select: text;
+}
+
+@media (max-width: 720px) {
+  .uiDslShowcasePage {
+    --dsl-label-column: minmax(0, 1fr);
+    padding: 10px;
+  }
+
+  .uiDslHeader {
+    grid-template-columns: 1fr;
+  }
+
+  .dslRow,
+  .dslRow.dslRowNoLabel,
+  .dslRow.dslRowIndependent,
+  .dslRow.dslRowFullWidth {
+    grid-template-columns: 1fr;
+  }
+
+  .dslLabel {
+    justify-self: start;
+    padding-top: 0;
+    text-align: left;
+  }
+
+  .dslRightComment,
+  .dslRowComment {
+    grid-column: 1;
+  }
+
+  .dslParentGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .dslParentGrid .dslRow {
+    display: grid;
+    gap: 4px;
+    grid-template-columns: 1fr;
+  }
+
+  .dslParentGrid .dslLabel,
+  .dslParentGrid .dslCell,
+  .dslParentGrid .dslRightComment {
+    grid-column: 1;
+  }
+
+  .dslParentGrid .dslCell {
+    grid-template-columns: 1fr;
+  }
+
+  .dslThreeFields {
+    grid-template-columns: 1fr;
+  }
+
+  .dslCellInlineComment {
+    grid-template-columns: 1fr;
+  }
+}
+
+/*$vite$:1*/

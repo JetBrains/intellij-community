@@ -101,6 +101,7 @@ i`
     display: inline-flex;
     gap: var(--jb-control-gap);
     justify-content: center;
+    line-height: var(--jb-line-height);
     min-height: var(--jb-control-height);
     min-width: var(--jb-control-height);
     outline: none;
@@ -185,17 +186,79 @@ i`
     padding-inline: var(--jb-space-sm);
   }
 
+  .button [part="label"] {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    line-height: var(--jb-line-height);
+    min-height: var(--jb-line-height);
+  }
+
+  .button .icon-slot.empty {
+    display: none;
+  }
+
+  .button-icon {
+    color: currentColor;
+    display: inline-flex;
+    flex: 0 0 auto;
+    height: 12px;
+    line-height: 1;
+    position: relative;
+    width: 12px;
+  }
+
+  .button-icon::before,
+  .button-icon::after {
+    background: currentColor;
+    border-radius: 1px;
+    content: "";
+    height: 1.5px;
+    left: 50%;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+  }
+
+  .button-icon.plus::after {
+    transform: translate(-50%, -50%) rotate(90deg);
+  }
+
+  .button-icon.minus::after {
+    display: none;
+  }
+
   .icon-slot,
   .chevron {
     align-items: center;
     display: inline-flex;
+    flex: 0 0 auto;
+    height: 12px;
     justify-content: center;
     line-height: 1;
+    position: relative;
+    width: 12px;
   }
 
   .chevron {
     color: var(--jb-text-muted);
-    font-size: var(--jb-font-size-small);
+  }
+
+  .chevron::before {
+    border: solid currentColor;
+    border-width: 0 1.5px 1.5px 0;
+    content: "";
+    height: 5px;
+    margin-top: -3px;
+    transform: rotate(45deg);
+    width: 5px;
+  }
+
+  .chevron.right::before {
+    margin-left: -3px;
+    margin-top: 0;
+    transform: rotate(-45deg);
   }
 `;
 i`
@@ -268,15 +331,18 @@ i`
   }
 
   .select-wrap::after {
+    border: solid currentColor;
+    border-width: 0 1.5px 1.5px 0;
     color: var(--jb-text-muted);
-    content: "v";
-    font-size: var(--jb-font-size-small);
+    content: "";
+    height: 5px;
     pointer-events: none;
     position: absolute;
     right: 9px;
     top: 50%;
-    transform: translateY(-52%);
+    transform: translateY(-65%) rotate(45deg);
     user-select: none;
+    width: 5px;
   }
 `;
 i`

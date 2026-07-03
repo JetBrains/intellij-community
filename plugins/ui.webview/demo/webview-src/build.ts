@@ -6,7 +6,14 @@ import { build } from "vite"
 import { defineWebViewViewConfigs, selectWebViewViewBuildEntries, withWebViewBuildWatch } from "@jetbrains/intellij-webview/vite"
 
 const webviewSrcDir = dirname(fileURLToPath(import.meta.url))
-const selectedViews = selectWebViewViewBuildEntries(["sample-panel", "controls-showcase", "markdown-link-graph", "acp-chat"])
+const selectedViews = selectWebViewViewBuildEntries([
+  "sample-panel",
+  "controls-showcase",
+  "react-controls-showcase",
+  "ui-dsl-showcase",
+  "markdown-link-graph",
+  "acp-chat",
+])
 
 for (const config of defineWebViewViewConfigs({ webviewSrcDir, views: selectedViews.views })) {
   await build(withWebViewBuildWatch(config, selectedViews.watch) as unknown as Parameters<typeof build>[0])

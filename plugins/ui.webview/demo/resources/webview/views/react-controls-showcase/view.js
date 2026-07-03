@@ -1,4 +1,7 @@
+import { n as __toESM } from "./assets/rolldown-runtime.js";
 import { i, n as A, r as b, t as i$1 } from "./assets/lit.js";
+import { A as Separator, B as MenuItem, C as PopoverDescription$1, D as PopoverPortal, E as PopoverPositioner, F as MenuRadioItem, G as require_jsx_runtime, H as MenuGroup$1, I as MenuRadioGroup$1, L as MenuPositioner, M as MenuTrigger, N as MenuRoot$1, O as PopoverTrigger, P as MenuRadioItemIndicator, R as MenuPortal, S as PopoverClose$1, T as PopoverPopup, U as MenuCheckboxItemIndicator, V as MenuGroupLabel$1, W as MenuCheckboxItem, _ as SelectPortal, a as TooltipTrigger, b as SelectTrigger, c as SelectGroup$1, d as SelectItemText, f as SelectItemIndicator, g as SelectPositioner, h as SelectPopup, i as TooltipPortal, j as MenuViewport, k as PopoverRoot$1, l as SelectScrollUpArrow, m as SelectList, n as TooltipPopup, o as TooltipRoot$1, p as SelectItem, q as require_react, r as TooltipPositioner, s as SelectGroupLabel$1, t as TooltipProvider$1, u as SelectScrollDownArrow, v as SelectIcon, w as PopoverTitle$1, x as SelectRoot$1, y as SelectValue$1, z as MenuPopup } from "./assets/base-ui-react.js";
+import { t as require_client } from "./assets/react-dom.js";
 //#region \0vite/modulepreload-polyfill.js
 (function polyfill() {
 	const relList = document.createElement("link").relList;
@@ -670,7 +673,7 @@ var JbCheckbox = class extends i$1 {
 };
 //#endregion
 //#region ../../webview-src/packages/controls/src/foundation/focus.ts
-var WEBVIEW_FOCUS_LEAVE_EVENT = "wvi-focus-leave";
+var WEBVIEW_FOCUS_LEAVE_EVENT$1 = "wvi-focus-leave";
 var WebViewFocusLeaveController = class {
 	onFocusLeave;
 	listener = () => this.onFocusLeave();
@@ -679,10 +682,10 @@ var WebViewFocusLeaveController = class {
 		host.addController(this);
 	}
 	hostConnected() {
-		window.addEventListener(WEBVIEW_FOCUS_LEAVE_EVENT, this.listener);
+		window.addEventListener(WEBVIEW_FOCUS_LEAVE_EVENT$1, this.listener);
 	}
 	hostDisconnected() {
-		window.removeEventListener(WEBVIEW_FOCUS_LEAVE_EVENT, this.listener);
+		window.removeEventListener(WEBVIEW_FOCUS_LEAVE_EVENT$1, this.listener);
 	}
 };
 //#endregion
@@ -919,7 +922,7 @@ var JbDisclosure = class extends i$1 {
 };
 //#endregion
 //#region ../../webview-src/packages/controls/src/elements/menu-button/menu-button.ts
-var JbMenuButton = class extends i$1 {
+var JbMenuButton$1 = class extends i$1 {
 	static properties = {
 		disabled: {
 			type: Boolean,
@@ -995,7 +998,7 @@ var JbMenuButton = class extends i$1 {
 };
 //#endregion
 //#region ../../webview-src/packages/controls/src/elements/dropdown-link/dropdown-link.ts
-var JbDropdownLink = class extends JbMenuButton {
+var JbDropdownLink = class extends JbMenuButton$1 {
 	variant = "link";
 };
 //#endregion
@@ -1569,7 +1572,7 @@ var JbSegmentedControl = class extends i$1 {
 };
 //#endregion
 //#region ../../webview-src/packages/controls/src/elements/select/select.ts
-var JbSelect = class extends i$1 {
+var JbSelect$1 = class extends i$1 {
 	static properties = {
 		disabled: {
 			type: Boolean,
@@ -2088,13 +2091,13 @@ var allControlDefinitions = {
 	"jb-help-text": JbHelpText,
 	"jb-icon": JbIcon,
 	"jb-label": JbLabel,
-	"jb-menu-button": JbMenuButton,
+	"jb-menu-button": JbMenuButton$1,
 	"jb-number-field": JbNumberField,
 	"jb-password-field": JbPasswordField,
 	"jb-radio": JbRadio,
 	"jb-radio-group": JbRadioGroup,
 	"jb-segmented-control": JbSegmentedControl,
-	"jb-select": JbSelect,
+	"jb-select": JbSelect$1,
 	"jb-separator": JbSeparator,
 	"jb-slider": JbSlider,
 	"jb-spinner": JbSpinner,
@@ -2111,6 +2114,20 @@ function defineAllControls(registry = customElements) {
 //#region ../../webview-src/packages/controls/src/define/all.ts
 defineAllControls();
 //#endregion
+//#region ../../webview-src/packages/react-controls/src/chrome/index.tsx
+var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
+var import_client = require_client();
+var import_jsx_runtime = require_jsx_runtime();
+function JbControlChrome({ className, compact, disabled, invalid, ...props }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+		...props,
+		className: ["jbReactControlChrome", className].filter(Boolean).join(" "),
+		"data-compact": compact ? "true" : void 0,
+		"data-disabled": disabled ? "true" : void 0,
+		"data-invalid": invalid ? "true" : void 0
+	});
+}
+//#endregion
 //#region ../../webview-src/packages/api/src/webViewApi.ts
 function apiId() {
 	return function createApiId(namespace) {
@@ -2123,625 +2140,1052 @@ function validateApiNamespace(namespace) {
 	if (namespace.startsWith(".") || namespace.endsWith(".") || namespace.startsWith("/") || namespace.endsWith("/")) throw new Error("WebView API namespace must not start or end with '.' or '/': " + namespace);
 	if (!/^[A-Za-z0-9_.-]+$/.test(namespace)) throw new Error("WebView API namespace contains unsupported characters: " + namespace);
 }
-apiId()("webview.theme");
-apiId()("webview.theme");
-function getWebViewTheme() {
-	return window.__WVI_THEME__;
-}
-function requireWebViewTheme() {
-	const theme = getWebViewTheme();
-	if (!theme) throw new Error("WebView theme is not installed. Load /__webview/wvi-platform-features.js after /__webview/wvi-bridge.js before theme-aware application code.");
-	return theme;
-}
-function createLazyWebViewTheme() {
-	return new Proxy({}, {
-		get(_target, property, receiver) {
-			return Reflect.get(requireWebViewTheme(), property, receiver);
-		},
-		set(_target, property, value, receiver) {
-			return Reflect.set(requireWebViewTheme(), property, value, receiver);
-		},
-		has(_target, property) {
-			return property in requireWebViewTheme();
-		}
-	});
-}
-var webViewTheme = createLazyWebViewTheme();
 //#endregion
-//#region ../../webview-src/packages/api/src/iconSet.ts
-var IconSet = /* @__PURE__ */ Object.freeze({ define(id) {
-	validateIconSetId(id);
-	return new DefinedIconSet(id);
-} });
-var DefinedIconSet = class {
-	id;
-	constructor(id) {
-		this.id = id;
-	}
-	src(resourcePath) {
-		validateIconResourcePath(resourcePath);
-		return `./__ij-icons/${this.id}/${webViewTheme.current}/${encodeIconResourcePath(resourcePath)}`;
-	}
-};
-var AllIcons = /* @__PURE__ */ IconSet.define("AllIcons");
-function validateIconSetId(id) {
-	if (!/^[A-Za-z][A-Za-z0-9._-]*$/.test(id)) throw new Error(`Invalid WebView icon set id: ${id}`);
-}
-function validateIconResourcePath(resourcePath) {
-	if (resourcePath.length === 0 || resourcePath.startsWith("/") || resourcePath.includes("\\")) throw new Error(`Invalid WebView icon resource path: ${resourcePath}`);
-	if (/^[A-Za-z][A-Za-z0-9+.-]*:/.test(resourcePath)) throw new Error(`Invalid WebView icon resource path: ${resourcePath}`);
-	if (resourcePath.split("/").some((segment) => segment.length === 0 || segment === "." || segment === "..")) throw new Error(`Invalid WebView icon resource path: ${resourcePath}`);
-	if (!resourcePath.endsWith(".svg") && !resourcePath.endsWith(".png")) throw new Error(`Unsupported WebView icon resource extension: ${resourcePath}`);
-}
-function encodeIconResourcePath(resourcePath) {
-	return resourcePath.split("/").map((segment) => encodeURIComponent(segment)).join("/");
+//#region ../../webview-src/packages/api/src/focus.ts
+var WEBVIEW_FOCUS_LEAVE_EVENT = "wvi-focus-leave";
+function addWebViewFocusLeaveListener(listener) {
+	window.addEventListener(WEBVIEW_FOCUS_LEAVE_EVENT, listener);
+	return () => window.removeEventListener(WEBVIEW_FOCUS_LEAVE_EVENT, listener);
 }
 apiId()("webview.focus");
 apiId()("webview.focus");
 //#endregion
-//#region ../../webview-src/packages/api/src/bridge.ts
-function getWebViewBridge() {
-	return window.__WVI__;
+//#region ../../webview-src/packages/react-controls/src/focus/index.ts
+function useWebViewFocusLeave(listener, enabled = true) {
+	const listenerRef = (0, import_react.useRef)(listener);
+	listenerRef.current = listener;
+	(0, import_react.useEffect)(() => {
+		if (!enabled) return;
+		return addWebViewFocusLeaveListener(() => listenerRef.current());
+	}, [enabled]);
 }
-function requireWebViewBridge() {
-	const bridge = getWebViewBridge();
-	if (!bridge) throw new Error("WebView bridge is not installed. Load /__webview/wvi-bridge.js before application code.");
-	return bridge;
+//#endregion
+//#region ../../webview-src/packages/react-controls/src/portal/index.ts
+var reactControlsPortalRootId = "jb-react-controls-portal-root";
+function getReactControlsPortalRoot() {
+	if (typeof document === "undefined") return null;
+	return document.getElementById(reactControlsPortalRootId);
 }
-function createLazyWebViewBridge() {
-	return new Proxy({}, {
-		get(_target, property, receiver) {
-			return Reflect.get(requireWebViewBridge(), property, receiver);
-		},
-		set(_target, property, value, receiver) {
-			return Reflect.set(requireWebViewBridge(), property, value, receiver);
-		},
-		has(_target, property) {
-			return property in requireWebViewBridge();
-		}
+function ensureReactControlsPortalRoot() {
+	if (typeof document === "undefined") return null;
+	const existing = getReactControlsPortalRoot();
+	if (existing) return existing;
+	const root = document.createElement("div");
+	root.id = reactControlsPortalRootId;
+	root.className = "jbReactControlsPortalRoot";
+	document.body.append(root);
+	return root;
+}
+var MenuGroup = MenuGroup$1;
+var MenuGroupLabel = MenuGroupLabel$1;
+var MenuRadioGroup = MenuRadioGroup$1;
+function JbMenuButton({ children, className, compact, contentClassName, disabled, icon, label, modal = false, onOpenChange, open, triggerAriaLabel }) {
+	const [uncontrolledOpen, setUncontrolledOpen] = (0, import_react.useState)(false);
+	const isOpen = open ?? uncontrolledOpen;
+	useWebViewFocusLeave(() => updateOpen(false), isOpen);
+	function updateOpen(nextOpen) {
+		setUncontrolledOpen(nextOpen);
+		onOpenChange?.(nextOpen);
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(MenuRoot$1, {
+		disabled,
+		modal,
+		open: isOpen,
+		onOpenChange: updateOpen,
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbControlChrome, {
+			className,
+			compact,
+			disabled,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(MenuTrigger, {
+				className: "jbReactMenuTrigger",
+				"aria-label": triggerAriaLabel,
+				disabled,
+				children: [
+					icon ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "jbReactMenuIcon",
+						"aria-hidden": "true",
+						children: icon
+					}) : null,
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "jbReactMenuTriggerText",
+						children: label
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "jbReactMenuIndicator",
+						"aria-hidden": "true",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuChevron, {})
+					})
+				]
+			})
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbMenuContent, {
+			className: contentClassName,
+			children
+		})]
 	});
 }
-createLazyWebViewBridge();
+function JbMenuContent({ className, children, positionerClassName, ...props }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuPortal, {
+		container: ensureReactControlsPortalRoot(),
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuPositioner, {
+			className: ["jbReactMenuPositioner", positionerClassName].filter(Boolean).join(" "),
+			sideOffset: 4,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuPopup, {
+				...props,
+				className: ["jbReactMenuPopup", className].filter(Boolean).join(" "),
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuViewport, {
+					className: "jbReactMenuViewport",
+					children
+				})
+			})
+		})
+	});
+}
+function JbMenuItem({ className, children, shortcut, ...props }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(MenuItem, {
+		...props,
+		className: ["jbReactMenuItem", className].filter(Boolean).join(" "),
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "jbReactMenuItemIndicator",
+				"aria-hidden": "true"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "jbReactMenuItemText",
+				children
+			}),
+			shortcut ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbMenuShortcut, { children: shortcut }) : null
+		]
+	});
+}
+function JbMenuCheckboxItem({ className, children, ...props }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(MenuCheckboxItem, {
+		...props,
+		className: ["jbReactMenuItem", className].filter(Boolean).join(" "),
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: "jbReactMenuItemIndicator",
+			"aria-hidden": "true",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuCheckboxItemIndicator, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuCheckIcon, {}) })
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: "jbReactMenuItemText",
+			children
+		})]
+	});
+}
+function JbMenuRadioItem({ className, children, ...props }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(MenuRadioItem, {
+		...props,
+		className: ["jbReactMenuItem", className].filter(Boolean).join(" "),
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: "jbReactMenuItemIndicator",
+			"aria-hidden": "true",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuRadioItemIndicator, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuCheckIcon, {}) })
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: "jbReactMenuItemText",
+			children
+		})]
+	});
+}
+function JbMenuSeparator(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Separator, {
+		...props,
+		className: ["jbReactMenuSeparator", props.className].filter(Boolean).join(" ")
+	});
+}
+function JbMenuShortcut(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+		...props,
+		className: ["jbReactMenuShortcut", props.className].filter(Boolean).join(" ")
+	});
+}
+function MenuChevron() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		className: "jbReactMenuChevron",
+		width: "12",
+		height: "12",
+		viewBox: "0 0 12 12",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M3 4.5L6 7.5L9 4.5",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.5",
+			strokeLinecap: "round",
+			strokeLinejoin: "round"
+		})
+	});
+}
+function MenuCheckIcon() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		width: "12",
+		height: "12",
+		viewBox: "0 0 12 12",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M2.5 6L5 8.5L9.5 3.5",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.5",
+			strokeLinecap: "round",
+			strokeLinejoin: "round"
+		})
+	});
+}
+var PopoverTitle = PopoverTitle$1;
+var PopoverDescription = PopoverDescription$1;
+var PopoverClose = PopoverClose$1;
+function JbPopover({ children, className, compact, contentClassName, disabled, modal = false, onOpenChange, open, trigger, triggerAriaLabel }) {
+	const [uncontrolledOpen, setUncontrolledOpen] = (0, import_react.useState)(false);
+	const isOpen = open ?? uncontrolledOpen;
+	useWebViewFocusLeave(() => updateOpen(false), isOpen);
+	function updateOpen(nextOpen) {
+		setUncontrolledOpen(nextOpen);
+		onOpenChange?.(nextOpen);
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(PopoverRoot$1, {
+		modal,
+		open: isOpen,
+		onOpenChange: updateOpen,
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbControlChrome, {
+			className,
+			compact,
+			disabled,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PopoverTrigger, {
+				className: "jbReactPopoverTrigger",
+				"aria-label": triggerAriaLabel,
+				disabled,
+				children: trigger
+			})
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbPopoverContent, {
+			className: contentClassName,
+			children
+		})]
+	});
+}
+function JbPopoverContent({ className, children, positionerClassName, ...props }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PopoverPortal, {
+		container: ensureReactControlsPortalRoot(),
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PopoverPositioner, {
+			className: ["jbReactPopoverPositioner", positionerClassName].filter(Boolean).join(" "),
+			sideOffset: 4,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PopoverPopup, {
+				...props,
+				className: ["jbReactPopoverPopup", className].filter(Boolean).join(" "),
+				children
+			})
+		})
+	});
+}
+var SelectGroup = SelectGroup$1;
+var SelectGroupLabel = SelectGroupLabel$1;
+function JbSelect({ children, className, compact, contentClassName, disabled, icon, invalid, modal = false, onOpenChange, onValueChange, open, options = [], placeholder, triggerAriaLabel, ...props }) {
+	const [uncontrolledOpen, setUncontrolledOpen] = (0, import_react.useState)(false);
+	const isOpen = open ?? uncontrolledOpen;
+	useWebViewFocusLeave(() => updateOpen(false), isOpen);
+	function updateOpen(nextOpen) {
+		setUncontrolledOpen(nextOpen);
+		onOpenChange?.(nextOpen);
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(SelectRoot$1, {
+		...props,
+		disabled,
+		modal,
+		open: isOpen,
+		onOpenChange: updateOpen,
+		onValueChange: (value) => onValueChange?.(value),
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbControlChrome, {
+			className,
+			compact,
+			disabled,
+			invalid,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(SelectTrigger, {
+				className: "jbReactSelectTrigger",
+				"aria-label": triggerAriaLabel,
+				"aria-invalid": invalid ? "true" : void 0,
+				children: [
+					icon ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "jbReactSelectIcon",
+						"aria-hidden": "true",
+						children: icon
+					}) : null,
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectValue$1, {
+						className: "jbReactSelectValue",
+						placeholder
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectIcon, {
+						className: "jbReactSelectIndicator",
+						"aria-hidden": "true",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectChevron, {})
+					})
+				]
+			})
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbSelectContent, {
+			className: contentClassName,
+			children: children ?? options.map((option) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbSelectItem, {
+				value: option.value,
+				disabled: option.disabled,
+				label: option.textValue,
+				children: option.label
+			}, option.value))
+		})]
+	});
+}
+function JbSelectContent({ className, children, positionerClassName, ...props }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectPortal, {
+		container: ensureReactControlsPortalRoot(),
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectPositioner, {
+			className: ["jbReactSelectPositioner", positionerClassName].filter(Boolean).join(" "),
+			sideOffset: 4,
+			alignItemWithTrigger: false,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(SelectPopup, {
+				...props,
+				className: ["jbReactSelectPopup", className].filter(Boolean).join(" "),
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectScrollUpArrow, {
+						className: "jbReactSelectScrollButton",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectChevron, { direction: "up" })
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectList, {
+						className: "jbReactSelectList",
+						children
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectScrollDownArrow, {
+						className: "jbReactSelectScrollButton",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectChevron, {})
+					})
+				]
+			})
+		})
+	});
+}
+function JbSelectItem({ className, children, ...props }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(SelectItem, {
+		...props,
+		className: ["jbReactSelectItem", className].filter(Boolean).join(" "),
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: "jbReactSelectItemIndicator",
+			"aria-hidden": "true",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectItemIndicator, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectCheckIcon, {}) })
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectItemText, { children })]
+	});
+}
+function JbSelectSeparator(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Separator, {
+		...props,
+		className: ["jbReactSelectSeparator", props.className].filter(Boolean).join(" ")
+	});
+}
+function SelectChevron({ direction = "down" }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		className: `jbReactSelectChevron jbReactSelectChevron--${direction}`,
+		width: "12",
+		height: "12",
+		viewBox: "0 0 12 12",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M3 4.5L6 7.5L9 4.5",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.5",
+			strokeLinecap: "round",
+			strokeLinejoin: "round"
+		})
+	});
+}
+function SelectCheckIcon() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		width: "12",
+		height: "12",
+		viewBox: "0 0 12 12",
+		"aria-hidden": "true",
+		focusable: "false",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M2.5 6L5 8.5L9.5 3.5",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: "1.5",
+			strokeLinecap: "round",
+			strokeLinejoin: "round"
+		})
+	});
+}
 //#endregion
-//#region views/controls-showcase/src/main.ts
+//#region ../../webview-src/packages/react-controls/src/tooltip/index.tsx
+var TooltipProvider = TooltipProvider$1;
+function JbTooltip({ children, className, contentClassName, disabled, onOpenChange, open, side = "top", trigger }) {
+	const [uncontrolledOpen, setUncontrolledOpen] = (0, import_react.useState)(false);
+	const isOpen = open ?? uncontrolledOpen;
+	useWebViewFocusLeave(() => updateOpen(false), isOpen);
+	function updateOpen(nextOpen) {
+		setUncontrolledOpen(nextOpen);
+		onOpenChange?.(nextOpen);
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(TooltipRoot$1, {
+		disabled,
+		open: isOpen,
+		onOpenChange: updateOpen,
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TooltipTrigger, {
+			className: ["jbReactTooltipTrigger", className].filter(Boolean).join(" "),
+			disabled,
+			children: trigger
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbTooltipContent, {
+			className: contentClassName,
+			side,
+			children
+		})]
+	});
+}
+function JbTooltipContent({ className, children, positionerClassName, side = "top", ...props }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TooltipPortal, {
+		container: ensureReactControlsPortalRoot(),
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TooltipPositioner, {
+			className: ["jbReactTooltipPositioner", positionerClassName].filter(Boolean).join(" "),
+			side,
+			sideOffset: 4,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TooltipPopup, {
+				...props,
+				className: ["jbReactTooltipPopup", className].filter(Boolean).join(" "),
+				children
+			})
+		})
+	});
+}
+//#endregion
+//#region views/react-controls-showcase/src/main.tsx
 var root = document.getElementById("root");
 if (!root) throw new Error("#root missing");
-var iconSamples = [
+var projectScopes = [
 	{
-		name: "Run",
-		path: "expui/run/run.svg"
+		value: "project",
+		label: "Project"
 	},
 	{
-		name: "Stop",
-		path: "expui/run/stop.svg"
+		value: "module",
+		label: "Module"
 	},
 	{
-		name: "Pause",
-		path: "expui/run/pause.svg"
-	},
-	{
-		name: "Gutter Run",
-		path: "expui/gutter/run.svg"
-	},
-	{
-		name: "Refresh",
-		path: "expui/actions/forceRefresh.svg"
-	},
-	{
-		name: "Play First",
-		path: "expui/actions/playFirst.svg"
-	},
-	{
-		name: "Play Back",
-		path: "expui/actions/playBack.svg"
-	},
-	{
-		name: "Play Forward",
-		path: "expui/actions/playForward.svg"
-	},
-	{
-		name: "Play Last",
-		path: "expui/actions/playLast.svg"
-	},
-	{
-		name: "Add",
-		path: "expui/general/add.svg"
-	},
-	{
-		name: "Remove",
-		path: "expui/general/remove.svg"
-	},
-	{
-		name: "Delete",
-		path: "expui/general/delete.svg"
-	},
-	{
-		name: "Edit",
-		path: "expui/general/edit.svg"
-	},
-	{
-		name: "Save",
-		path: "expui/general/save.svg"
-	},
-	{
-		name: "Close",
-		path: "expui/general/close.svg"
-	},
-	{
-		name: "Search",
-		path: "expui/general/search.svg"
-	},
-	{
-		name: "Filter",
-		path: "expui/general/filter.svg"
-	},
-	{
-		name: "Settings",
-		path: "expui/general/settings.svg"
-	},
-	{
-		name: "Help",
-		path: "expui/general/help.svg"
-	},
-	{
-		name: "Export",
-		path: "expui/general/export.svg"
-	},
-	{
-		name: "Layout",
-		path: "expui/general/layout.svg"
-	},
-	{
-		name: "User",
-		path: "expui/general/user.svg"
-	},
-	{
-		name: "Locked",
-		path: "expui/general/locked.svg"
-	},
-	{
-		name: "Commit",
-		path: "expui/vcs/commit.svg"
-	},
-	{
-		name: "Update",
-		path: "expui/vcs/update.svg"
-	},
-	{
-		name: "Diff",
-		path: "expui/vcs/diff.svg"
-	},
-	{
-		name: "VCS Remove",
-		path: "expui/vcs/remove.svg"
-	},
-	{
-		name: "Breakpoint",
-		path: "expui/breakpoints/breakpoint.svg"
-	},
-	{
-		name: "Info",
-		path: "expui/status/info.svg"
-	},
-	{
-		name: "Success",
-		path: "expui/status/success.svg"
-	},
-	{
-		name: "Warning",
-		path: "expui/status/warning.svg"
-	},
-	{
-		name: "Error",
-		path: "expui/status/error.svg"
-	},
-	{
-		name: "Folder",
-		path: "expui/nodes/folder.svg"
-	},
-	{
-		name: "Package",
-		path: "expui/nodes/package.svg"
-	},
-	{
-		name: "Function",
-		path: "expui/nodes/function.svg"
-	},
-	{
-		name: "Plugin",
-		path: "expui/nodes/plugin.svg"
-	},
-	{
-		name: "Unknown Node",
-		path: "expui/nodes/unknown.svg"
-	},
-	{
-		name: "YAML",
-		path: "expui/fileTypes/yaml.svg"
-	},
-	{
-		name: "Gradle",
-		path: "expui/fileTypes/gradle.svg"
-	},
-	{
-		name: "Docker",
-		path: "expui/fileTypes/docker.svg"
-	},
-	{
-		name: "SQL",
-		path: "expui/fileTypes/sql.svg"
-	},
-	{
-		name: "Properties",
-		path: "expui/fileTypes/properties.svg"
-	},
-	{
-		name: "Run Tool Window",
-		path: "expui/toolwindows/run.svg"
-	},
-	{
-		name: "Commit Tool Window",
-		path: "expui/toolwindows/commit.svg"
-	},
-	{
-		name: "Profiler Tool Window",
-		path: "expui/toolwindows/profiler.svg"
-	},
-	{
-		name: "Structure Tool Window",
-		path: "expui/toolwindows/structure.svg"
-	},
-	{
-		name: "Palette Tool Window",
-		path: "expui/toolwindows/palette.svg"
-	},
-	{
-		name: "External Link",
-		path: "expui/ide/externalLink.svg"
+		value: "file",
+		label: "Current file"
 	}
 ];
-var sections = {
-	"components": {
-		title: "Components",
-		note: "Batch 1 primitives and first batch 2 composites rendered with Int UI Kit: Islands mapping.",
-		render: renderComponents
-	},
-	"icons": {
-		title: "AllIcons",
-		note: "Classpath icon resources rendered through IconSet.define(\"AllIcons\") and the WebView icon asset route.",
-		render: renderIcons
-	},
-	"labels-help": {
-		title: "Labels and help text",
-		note: "Labeled input anatomy with inline help and context help affordances.",
-		render: renderLabelsAndHelp
-	},
-	"validation": {
-		title: "Validation",
-		note: "Field states for immediate error, warning, and required-input handling.",
-		render: renderValidation
-	},
-	"states": {
-		title: "Enabled, disabled, readonly, hidden",
-		note: "Primitive attributes reflected to Web Component hosts and native controls.",
-		render: renderStates
-	},
-	"groups-disclosure": {
-		title: "Groups and disclosure",
-		note: "Related fields, radio groups, separators, and progressive disclosure surfaces.",
-		render: renderGroupsAndDisclosure
-	},
-	"tabs-segmented": {
-		title: "Tabs and segmented controls",
-		note: "Selection patterns for compact mode switches and tabbed surfaces.",
-		render: renderTabsAndSegmented
-	},
-	"spacing-density": {
-		title: "Spacing, density, responsive layout",
-		note: "Default and compact control sizes with responsive wrapping.",
-		render: renderSpacingDensity
-	},
-	"theme-rendering": {
-		title: "Theme rendering",
-		note: "Controls consume semantic --jb-* tokens injected by the WebView runtime.",
-		render: renderThemeRendering
-	}
-};
-var sectionId = normalizeSection(new URLSearchParams(window.location.search).get("section"));
-var section = sections[sectionId];
-document.body.dataset.section = sectionId;
-root.innerHTML = `
-  <header class="section-header">
-    <h1 class="section-title">${section.title}</h1>
-    <p class="section-note">${section.note}</p>
-  </header>
-  ${section.render()}
-`;
-hydrateControls(root);
-function normalizeSection(value) {
-	return value && value in sections ? value : "components";
-}
-function renderIcons() {
-	return `
-    <div class="showcase-grid icons-showcase-grid">
-      <section class="panel icons-panel">
-        <p class="panel-title">AllIcons resource paths</p>
-        <div class="icon-grid">
-          ${iconSamples.map((icon) => `
-    <div class="icon-sample">
-      <span class="icon-preview">${renderIconImage(icon.path)}</span>
-      <span class="icon-name">${icon.name}</span>
-      <code class="icon-path">${icon.path}</code>
-    </div>
-  `).join("")}
-        </div>
-      </section>
-      <section class="panel icons-panel">
-        <p class="panel-title">Inline usage</p>
-        <div class="form-stack">
-          <div class="inline-icon-row">${renderIconImage("expui/run/run.svg")}<jb-text>Run configuration</jb-text></div>
-          <div class="inline-icon-row">${renderIconImage("expui/vcs/update.svg")}<jb-text>Update project</jb-text></div>
-          <div class="inline-icon-row">${renderIconImage("expui/breakpoints/breakpoint.svg")}<jb-text>Line breakpoint</jb-text></div>
-          <jb-help-text>Switch the IDE theme to verify that dark icon variants are requested through a different URL.</jb-help-text>
-        </div>
-      </section>
-    </div>
-  `;
-}
-function renderIconImage(path) {
-	return `<jb-icon src="${AllIcons.src(path)}"></jb-icon>`;
-}
-function renderComponents() {
-	return `
-    <div class="showcase-grid">
-      <section class="panel">
-        <p class="panel-title">Buttons and toolbar actions</p>
-        <div class="row">
-          <jb-button variant="primary">Run</jb-button>
-          <jb-button>Cancel</jb-button>
-          <jb-button variant="danger">Delete</jb-button>
-          <jb-button variant="link">Open settings</jb-button>
-        </div>
-        <div class="toolbar-row">
-          <jb-action-button label="Back">&lt;</jb-action-button>
-          <jb-action-button label="Refresh">R</jb-action-button>
-          <jb-action-button label="Pinned" selected>P</jb-action-button>
-          <jb-menu-button id="toolbar-filter" label="Filter"></jb-menu-button>
-        </div>
-      </section>
-      <section class="panel">
-        <p class="panel-title">Inputs</p>
-        <div class="form-stack">
-          <jb-field label="Name:" help="Use sentence-style capitalization for labels."><jb-text-field value="Island controls"></jb-text-field></jb-field>
-          <jb-field label="Type:"><jb-select id="component-type" value="field"></jb-select></jb-field>
-          <jb-field label="Search:"><jb-combobox id="component-search" value="Button"></jb-combobox></jb-field>
-        </div>
-      </section>
-      <section class="panel">
-        <p class="panel-title">Selection</p>
-        <div class="form-stack">
-          <jb-checkbox checked>Enable preview</jb-checkbox>
-          <jb-checkbox indeterminate>Partial selection</jb-checkbox>
-          <jb-radio-group id="density-group" label="Density" value="default"></jb-radio-group>
-        </div>
-      </section>
-    </div>
-  `;
-}
-function renderLabelsAndHelp() {
-	return `
-    <div class="showcase-grid">
-      <section class="panel">
-        <p class="panel-title">Inline anatomy</p>
-        <div class="form-stack">
-          <jb-field label="Output path:" help="The field width follows the expected value length." required><jb-text-field placeholder="Select a directory"></jb-text-field></jb-field>
-          <jb-field label="Arguments:" help="Examples belong below the field, not in the placeholder."><jb-text-area value="--stacktrace"></jb-text-area></jb-field>
-        </div>
-      </section>
-      <section class="panel">
-        <p class="panel-title">Text roles</p>
-        <div class="form-stack">
-          <jb-label required>Project SDK:</jb-label>
-          <jb-help-text>Choose a configured SDK or add one from the project structure dialog.</jb-help-text>
-          <jb-help-text tone="warning">The selected SDK is deprecated.</jb-help-text>
-          <jb-help-text tone="error">The selected SDK is missing.</jb-help-text>
-          <div class="row"><jb-context-help text="Context help opens lightweight guidance without leaving the current control."></jb-context-help><jb-text tone="muted">Context help</jb-text></div>
-        </div>
-      </section>
-    </div>
-  `;
-}
-function renderValidation() {
-	return `
-    <div class="showcase-grid">
-      <section class="panel">
-        <p class="panel-title">Error and warning</p>
-        <div class="form-stack">
-          <jb-field label="Port:" error="Enter a port from 1024 to 65535."><jb-number-field invalid value="99"></jb-number-field></jb-field>
-          <jb-field label="Host:" warning="The host responds slowly."><jb-text-field value="staging.internal"></jb-text-field></jb-field>
-          <jb-field label="Token:" help="Required fields can keep the confirm action disabled in host UI." required><jb-password-field required placeholder="Required"></jb-password-field></jb-field>
-        </div>
-      </section>
-      <section class="panel">
-        <p class="panel-title">Validation-friendly controls</p>
-        <div class="form-stack">
-          <jb-field label="Memory:"><jb-slider value="64" min="0" max="128"></jb-slider></jb-field>
-          <jb-field label="Workers:"><jb-spinner value="4" min="1" max="16"></jb-spinner></jb-field>
-          <jb-field label="Mode:"><jb-select id="validation-mode" value="strict"></jb-select></jb-field>
-        </div>
-      </section>
-    </div>
-  `;
-}
-function renderStates() {
-	return `
-    <div class="showcase-grid">
-      <section class="panel">
-        <p class="panel-title">Primitive attrs</p>
-        <div class="form-stack">
-          <jb-field label="Enabled:"><jb-text-field value="Editable"></jb-text-field></jb-field>
-          <jb-field label="Readonly:"><jb-text-field readonly value="Read-only value"></jb-text-field></jb-field>
-          <jb-field label="Disabled:"><jb-text-field disabled value="Disabled value"></jb-text-field></jb-field>
-          <jb-button hidden>Hidden action</jb-button>
-          <p class="source-row">Hidden controls remain in markup but do not render.</p>
-        </div>
-      </section>
-      <section class="panel">
-        <p class="panel-title">Selection states</p>
-        <div class="form-stack">
-          <jb-checkbox checked>Checked</jb-checkbox>
-          <jb-checkbox readonly checked>Readonly checked</jb-checkbox>
-          <jb-checkbox disabled>Disabled unchecked</jb-checkbox>
-          <div class="row"><jb-button selected>Selected</jb-button><jb-button pressed>Pressed</jb-button><jb-action-button selected label="Selected">S</jb-action-button></div>
-        </div>
-      </section>
-    </div>
-  `;
-}
-function renderGroupsAndDisclosure() {
-	return `
-    <div class="showcase-grid">
-      <section class="panel">
-        <jb-field-group label="Build options">
-          <jb-field label="Target:"><jb-combobox id="build-target" value="intellij.platform.ui.webview"></jb-combobox></jb-field>
-          <jb-checkbox checked>Use remote cache</jb-checkbox>
-          <jb-separator></jb-separator>
-          <jb-radio-group id="build-kind" label="Build kind" value="incremental"></jb-radio-group>
-        </jb-field-group>
-      </section>
-      <section class="panel">
-        <p class="panel-title">Disclosure</p>
-        <jb-disclosure label="Advanced options" open>
-          <div class="form-stack">
-            <jb-field label="VM options:"><jb-expandable-text-field value="-Xmx4g"></jb-expandable-text-field></jb-field>
-            <jb-checkbox>Keep build logs</jb-checkbox>
-          </div>
-        </jb-disclosure>
-      </section>
-    </div>
-  `;
-}
-function renderTabsAndSegmented() {
-	return `
-    <div class="showcase-grid">
-      <section class="panel">
-        <p class="panel-title">Segmented control</p>
-        <jb-segmented-control id="view-mode" value="preview"></jb-segmented-control>
-        <div class="form-stack">
-          <jb-field label="Scope:"><jb-select id="scope-select" value="project"></jb-select></jb-field>
-        </div>
-      </section>
-      <section class="panel">
-        <p class="panel-title">Tabs</p>
-        <jb-tabs id="result-tabs" value="problems">
-          <div class="form-stack">
-            <jb-text weight="medium">Problems</jb-text>
-            <jb-text tone="muted">The active tab drives the content area below the tab bar.</jb-text>
-          </div>
-        </jb-tabs>
-      </section>
-    </div>
-  `;
-}
-function renderSpacingDensity() {
-	return `
-    <div class="showcase-grid">
-      <section class="panel">
-        <p class="panel-title">Density</p>
-        <div class="density-demo">
-          <div class="form-stack"><jb-text weight="medium">Default</jb-text><jb-button>Default Button</jb-button><jb-text-field value="Default field"></jb-text-field></div>
-          <div class="form-stack"><jb-text weight="medium">Compact</jb-text><jb-button size="small">Small Button</jb-button><div class="toolbar-row"><jb-action-button label="Run">R</jb-action-button><jb-action-button label="Stop">S</jb-action-button><jb-menu-button id="compact-menu" label="More"></jb-menu-button></div></div>
-        </div>
-      </section>
-      <section class="panel">
-        <p class="panel-title">Responsive wrap</p>
-        <div class="row">
-          <jb-button>Analyze</jb-button>
-          <jb-button>Inspect</jb-button>
-          <jb-button>Refactor</jb-button>
-          <jb-button variant="link">View source</jb-button>
-        </div>
-      </section>
-    </div>
-  `;
-}
-function renderThemeRendering() {
-	return `
-    <div class="showcase-grid">
-      <section class="panel">
-        <p class="panel-title">Token swatches</p>
-        <div class="token-grid">
-          <div class="token-swatch"><span class="swatch accent"></span><jb-text>Accent</jb-text></div>
-          <div class="token-swatch"><span class="swatch selected"></span><jb-text>Selected</jb-text></div>
-          <div class="token-swatch"><span class="swatch danger"></span><jb-text>Danger</jb-text></div>
-          <div class="token-swatch"><span class="swatch warning"></span><jb-text>Warning</jb-text></div>
-          <div class="token-swatch"><span class="swatch panel-bg"></span><jb-text>Panel</jb-text></div>
-          <div class="token-swatch"><span class="swatch input-bg"></span><jb-text>Input</jb-text></div>
-        </div>
-      </section>
-      <section class="panel">
-        <p class="panel-title">Controls on current theme</p>
-        <div class="form-stack">
-          <jb-field label="Theme name:"><jb-text-field value="Runtime current theme" readonly></jb-text-field></jb-field>
-          <div class="row"><jb-button variant="primary">Primary</jb-button><jb-button>Default</jb-button><jb-checkbox checked>Checked</jb-checkbox></div>
-        </div>
-      </section>
-    </div>
-  `;
-}
-function hydrateControls(container) {
-	setItems(container, "#toolbar-filter", [
-		"All",
-		"Enabled",
-		"Invalid"
-	].map(toOption), "All");
-	setItems(container, "#component-type", [
-		"field",
-		"button",
-		"selection",
-		"popup"
-	].map(toOption), "field");
-	setItems(container, "#component-search", [
-		"Button",
-		"Checkbox",
-		"Input Field",
-		"Segmented Control"
-	].map(toOption), "Button");
-	setItems(container, "#density-group", ["default", "compact"].map(toOption), "default");
-	setItems(container, "#validation-mode", ["strict", "lenient"].map(toOption), "strict");
-	setItems(container, "#build-target", ["intellij.platform.ui.webview", "intellij.platform.ui.webview.demo"].map(toOption), "intellij.platform.ui.webview");
-	setItems(container, "#build-kind", ["incremental", "full"].map(toOption), "incremental");
-	setItems(container, "#view-mode", [
-		"preview",
-		"source",
-		"diff"
-	].map(toOption), "preview");
-	setItems(container, "#scope-select", [
-		"project",
-		"module",
-		"file"
-	].map(toOption), "project");
-	setItems(container, "#result-tabs", [
-		"problems",
-		"preview",
-		"events"
-	].map(toOption), "problems");
-	setItems(container, "#compact-menu", [
-		"Pin",
-		"Detach",
-		"Close"
-	].map(toOption), "Pin");
-}
-function setItems(container, selector, items, value) {
-	const element = container.querySelector(selector);
-	if (!element) return;
-	element.items = items;
-	element.value = value;
+var uiDslItems = [
+	"Project",
+	"Module",
+	"File"
+].map(toOption);
+var densityItems = [
+	"Default",
+	"Compact",
+	"Toolbar"
+].map(toOption);
+var statusItems = [
+	"Problems",
+	"Preview",
+	"Events"
+].map(toOption);
+var buildItems = [
+	"Incremental",
+	"Full",
+	"Rebuild"
+].map(toOption);
+function useItemsControl(id, items, value) {
+	(0, import_react.useEffect)(() => {
+		const element = document.getElementById(id);
+		if (!element) return;
+		element.items = items;
+		element.value = value;
+	}, [
+		id,
+		items,
+		value
+	]);
 }
 function toOption(value) {
 	return {
-		value,
-		label: value.charAt(0).toUpperCase() + value.slice(1)
+		value: value.toLowerCase().replace(/\s+/g, "-"),
+		label: value
 	};
 }
+function ReactControlsShowcase() {
+	const [scope, setScope] = (0, import_react.useState)("project");
+	const [runtime, setRuntime] = (0, import_react.useState)("jbr");
+	const [inspection, setInspection] = (0, import_react.useState)("syntax");
+	const [autoSave, setAutoSave] = (0, import_react.useState)(true);
+	const [highlightMode, setHighlightMode] = (0, import_react.useState)("changed");
+	const [lastAction, setLastAction] = (0, import_react.useState)("No menu action yet");
+	useItemsControl("react-lit-select", uiDslItems, "project");
+	useItemsControl("react-lit-combobox", uiDslItems, "module");
+	useItemsControl("react-lit-menu-button", buildItems, "incremental");
+	useItemsControl("react-lit-dropdown-link", buildItems, "full");
+	useItemsControl("react-lit-radio-group", densityItems, "default");
+	useItemsControl("react-lit-segmented", densityItems, "compact");
+	useItemsControl("react-lit-tabs", statusItems, "problems");
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TooltipProvider, {
+		delay: 250,
+		closeDelay: 80,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "reactShowcaseShell",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+				className: "reactShowcaseHeader",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", { children: "React controls" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "React consumption parity for the framework-neutral jb-* controls, plus Base UI-backed composite controls." })]
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "reactShowcaseGrid",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+						className: "reactShowcasePanel reactShowcaseWidePanel",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "reactShowcasePanelTitle",
+								children: "Basic actions and toolbar controls from jb-*"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "reactShowcaseButtonRow",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-button", {
+										variant: "primary",
+										children: "Run"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-button", { children: "Cancel" }),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-button", {
+										variant: "danger",
+										children: "Delete"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-button", {
+										variant: "link",
+										children: "Open Settings"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-button", {
+										size: "small",
+										children: "Small"
+									})
+								]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "reactShowcaseToolbarRow",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-action-button", {
+										label: "Back",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+											className: "reactShowcaseIcon reactShowcaseIconBack",
+											"aria-hidden": "true"
+										})
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-action-button", {
+										label: "Refresh",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+											className: "reactShowcaseIcon reactShowcaseIconRefresh",
+											"aria-hidden": "true"
+										})
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-action-button", {
+										label: "Pinned",
+										selected: true,
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+											className: "reactShowcaseIcon reactShowcaseIconPin",
+											"aria-hidden": "true"
+										})
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-menu-button", {
+										id: "react-lit-menu-button",
+										label: "Build"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-dropdown-link", {
+										id: "react-lit-dropdown-link",
+										label: "Profile"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-context-help", { text: "Context help is a framework-neutral jb-* control consumed directly from React." }),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+										className: "reactShowcaseIconText",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-icon", {
+											label: "Settings",
+											children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+												className: "reactShowcaseIcon reactShowcaseIconSettings",
+												"aria-hidden": "true"
+											})
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text", { children: "Icon" })]
+									})
+								]
+							})
+						]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+						className: "reactShowcasePanel reactShowcaseWidePanel",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "reactShowcasePanelTitle",
+							children: "Fields, labels, help text, and text inputs from jb-*"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "reactShowcaseTwoColumns",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "reactShowcaseFormStack",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-field", {
+										label: "Name:",
+										help: "Text field with label and help text.",
+										required: true,
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-field", { value: "WebView demo" })
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-field", {
+										label: "Password:",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-password-field", { value: "secret" })
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-field", {
+										label: "Arguments:",
+										warning: "Use warning state for recoverable configuration issues.",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-area", {
+											value: "--stacktrace",
+											rows: "3"
+										})
+									})
+								]
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "reactShowcaseFormStack",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-field", {
+										label: "Scope:",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-select", {
+											id: "react-lit-select",
+											value: "project"
+										})
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-field", {
+										label: "Chooser:",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-combobox", {
+											id: "react-lit-combobox",
+											value: "module"
+										})
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-field", {
+										label: "Expandable:",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-expandable-text-field", { value: "-Didea.is.internal=true" })
+									})
+								]
+							})]
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+						className: "reactShowcasePanel reactShowcaseWidePanel",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "reactShowcasePanelTitle",
+							children: "Choice, numeric, and range controls from jb-*"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "reactShowcaseTwoColumns",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "reactShowcaseFormStack",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-checkbox", {
+										checked: true,
+										children: "Enable preview"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-checkbox", {
+										indeterminate: true,
+										children: "Partial selection"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-checkbox", {
+										disabled: true,
+										children: "Disabled option"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-radio", {
+										name: "react-standalone-radio",
+										value: "one",
+										checked: true,
+										children: "Standalone radio"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-radio-group", {
+										id: "react-lit-radio-group",
+										label: "Density",
+										value: "default"
+									})
+								]
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "reactShowcaseFormStack",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-field", {
+										label: "Port:",
+										error: "Invalid values are rendered through shared field chrome.",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-number-field", {
+											invalid: true,
+											value: "99",
+											min: "1024",
+											max: "65535"
+										})
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-field", {
+										label: "Workers:",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-spinner", {
+											value: "4",
+											min: "1",
+											max: "16"
+										})
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-field", {
+										label: "Memory:",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-slider", {
+											value: "64",
+											min: "0",
+											max: "128"
+										})
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-segmented-control", {
+										id: "react-lit-segmented",
+										value: "compact"
+									})
+								]
+							})]
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+						className: "reactShowcasePanel reactShowcaseWidePanel",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "reactShowcasePanelTitle",
+							children: "Structure, text, tabs, and disclosure from jb-*"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "reactShowcaseTwoColumns",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-field-group", {
+								label: "Build options",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "reactShowcaseFieldGroupBody",
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-label", {
+											required: true,
+											children: "Target:"
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-help-text", { children: "Labels, help text, and regular text are framework-neutral custom elements." }),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text", {
+											weight: "medium",
+											children: "intellij.platform.ui.webview.demo"
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text", {
+											tone: "muted",
+											children: "Muted secondary text"
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-help-text", {
+											tone: "warning",
+											children: "Warning help text"
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-help-text", {
+											tone: "error",
+											children: "Error help text"
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-separator", {}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-disclosure", {
+											label: "Advanced options",
+											open: true,
+											children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: "reactShowcaseDisclosureBody",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-checkbox", {
+													checked: true,
+													children: "Use remote cache"
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-field", { value: "--keep-going" })]
+											})
+										})
+									]
+								})
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "reactShowcaseFormStack",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-tabs", {
+									id: "react-lit-tabs",
+									value: "problems",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "reactShowcaseTabBody",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text", {
+											weight: "medium",
+											children: "Problems"
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text", {
+											tone: "muted",
+											children: "The active tab controls the content area."
+										})]
+									})
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "reactShowcaseSeparatorBlock",
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Before separator" }),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-separator", {}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "After separator" })
+									]
+								})]
+							})]
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+						className: "reactShowcasePanel",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "reactShowcasePanelTitle",
+							children: "Select"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "reactShowcaseFormStack",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+								className: "reactShowcaseField",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Scope:" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbSelect, {
+									value: scope,
+									onValueChange: (value) => setScope(value ?? "project"),
+									options: projectScopes,
+									triggerAriaLabel: "Scope"
+								})]
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+								className: "reactShowcaseField",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Runtime:" }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(JbSelect, {
+									value: runtime,
+									onValueChange: (value) => setRuntime(value ?? "jbr"),
+									triggerAriaLabel: "Runtime",
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(SelectGroup, { children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectGroupLabel, {
+												className: "reactShowcaseGroupLabel",
+												children: "Bundled"
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbSelectItem, {
+												value: "jbr",
+												label: "JetBrains Runtime",
+												children: "JetBrains Runtime"
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbSelectItem, {
+												value: "webview2",
+												label: "WebView2",
+												children: "WebView2"
+											})
+										] }),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbSelectSeparator, {}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(SelectGroup, { children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectGroupLabel, {
+												className: "reactShowcaseGroupLabel",
+												children: "External"
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbSelectItem, {
+												value: "system",
+												label: "System browser",
+												children: "System browser"
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbSelectItem, {
+												value: "legacy",
+												label: "Legacy engine",
+												disabled: true,
+												children: "Legacy engine"
+											})
+										] })
+									]
+								})]
+							})]
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+						className: "reactShowcasePanel",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "reactShowcasePanelTitle",
+							children: "Menu"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "reactShowcaseFormStack",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "reactShowcaseInlineControls",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(JbMenuButton, {
+									label: "Actions",
+									triggerAriaLabel: "Actions menu",
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbMenuItem, {
+											shortcut: "Ctrl+R",
+											onClick: () => setLastAction("Run inspection"),
+											children: "Run inspection"
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbMenuItem, {
+											shortcut: "Ctrl+Alt+L",
+											onClick: () => setLastAction("Reformat selection"),
+											children: "Reformat selection"
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbMenuItem, {
+											disabled: true,
+											children: "Attach debugger"
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbMenuSeparator, {}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbMenuCheckboxItem, {
+											checked: autoSave,
+											onCheckedChange: setAutoSave,
+											children: "Auto-save results"
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbMenuSeparator, {}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(MenuGroup, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuGroupLabel, {
+											className: "reactShowcaseGroupLabel",
+											children: "Highlight"
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(MenuRadioGroup, {
+											value: highlightMode,
+											onValueChange: setHighlightMode,
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbMenuRadioItem, {
+													value: "changed",
+													children: "Changed files"
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbMenuRadioItem, {
+													value: "all",
+													children: "All files"
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbMenuRadioItem, {
+													value: "none",
+													children: "None"
+												})
+											]
+										})] })
+									]
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(JbMenuButton, {
+									label: "Compact",
+									compact: true,
+									triggerAriaLabel: "Compact menu",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbMenuItem, {
+										onClick: () => setLastAction("Compact menu item"),
+										children: "Compact action"
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbMenuItem, {
+										disabled: true,
+										children: "Disabled action"
+									})]
+								})]
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+								className: "reactShowcaseStatus",
+								children: [
+									lastAction,
+									"; auto-save ",
+									autoSave ? "on" : "off",
+									"; highlight ",
+									highlightMode
+								]
+							})]
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+						className: "reactShowcasePanel",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "reactShowcasePanelTitle",
+							children: "Popover"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "reactShowcaseInlineControls",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(JbPopover, {
+								trigger: "Build details",
+								triggerAriaLabel: "Build details",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PopoverTitle, { children: "Build details" }),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PopoverDescription, { children: "Popover content can hold richer controls while sharing portal and focus-leave behavior." }),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "reactShowcasePopoverRows",
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Target" }),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "@community//plugins/ui.webview/demo:demo" }),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Status" }),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Up to date" })
+										]
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PopoverClose, {
+										className: "reactShowcaseTextButton",
+										children: "Close"
+									})
+								]
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(JbPopover, {
+								trigger: "?",
+								compact: true,
+								triggerAriaLabel: "Compact popover",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PopoverTitle, { children: "Compact trigger" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PopoverDescription, { children: "The focus ring still belongs to the shared chrome." })]
+							})]
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+						className: "reactShowcasePanel",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "reactShowcasePanelTitle",
+							children: "Tooltip"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "reactShowcaseInlineControls",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbTooltip, {
+									trigger: "?",
+									children: "Tooltip popup in the shared portal root."
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbTooltip, {
+									trigger: "Top",
+									side: "top",
+									children: "Tooltip above the trigger."
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbTooltip, {
+									trigger: "Right",
+									side: "right",
+									children: "Tooltip on the right side."
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbTooltip, {
+									trigger: "Disabled",
+									disabled: true,
+									children: "Disabled tooltip does not open."
+								})
+							]
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+						className: "reactShowcasePanel",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "reactShowcasePanelTitle",
+							children: "States and chrome"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "reactShowcaseFormStack",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+									className: "reactShowcaseField",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Compact:" }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(JbSelect, {
+										value: inspection,
+										onValueChange: (value) => setInspection(value ?? "syntax"),
+										compact: true,
+										triggerAriaLabel: "Inspection",
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbSelectItem, {
+												value: "syntax",
+												label: "Syntax",
+												children: "Syntax"
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbSelectItem, {
+												value: "semantic",
+												label: "Semantic",
+												children: "Semantic"
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbSelectItem, {
+												value: "whole-project",
+												label: "Whole project",
+												children: "Whole project"
+											})
+										]
+									})]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+									className: "reactShowcaseField",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Disabled:" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbSelect, {
+										value: "locked",
+										disabled: true,
+										options: [{
+											value: "locked",
+											label: "Locked by host state"
+										}],
+										triggerAriaLabel: "Disabled state"
+									})]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+									className: "reactShowcaseField",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Invalid:" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbSelect, {
+										value: "missing",
+										invalid: true,
+										options: [{
+											value: "missing",
+											label: "Missing SDK"
+										}],
+										triggerAriaLabel: "Invalid state"
+									})]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+									className: "reactShowcaseField",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Chrome:" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(JbControlChrome, {
+										className: "reactShowcaseChromeSample",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Custom trigger surface" })
+									})]
+								})
+							]
+						})]
+					})
+				]
+			})]
+		})
+	});
+}
+(0, import_client.createRoot)(root).render(/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ReactControlsShowcase, {}));
 //#endregion

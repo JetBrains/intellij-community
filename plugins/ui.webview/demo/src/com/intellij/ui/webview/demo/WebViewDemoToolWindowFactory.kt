@@ -20,6 +20,8 @@ internal class WebViewDemoToolWindowFactory : ToolWindowFactory, DumbAware {
     val service = WebViewDemoProjectService.getInstance(project)
     toolWindow.addContent(service.createSamplePanelContent(), WebViewDemoBundle.message("toolwindow.tab.sample.panel"))
     toolWindow.addContent(service.createControlsShowcaseContent(), WebViewDemoBundle.message("toolwindow.tab.controls.showcase"))
+    toolWindow.addContent(service.createReactControlsShowcaseContent(), WebViewDemoBundle.message("toolwindow.tab.react.controls.showcase"))
+    toolWindow.addContent(service.createUiDslShowcaseContent(), WebViewDemoBundle.message("toolwindow.tab.ui.dsl.showcase"))
     toolWindow.addContent(service.createMarkdownLinkGraphContent(), WebViewDemoBundle.message("toolwindow.tab.markdown.link.graph"))
   }
 

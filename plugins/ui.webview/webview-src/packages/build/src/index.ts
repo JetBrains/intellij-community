@@ -109,6 +109,15 @@ export function defineWebViewViewConfig(options: WebViewViewConfigOptions): User
     root: sourceDir,
     base: "./",
     publicDir: false,
+    resolve: {
+      alias: [
+        { find: /^react$/, replacement: resolve(options.webviewSrcDir, "node_modules/react/index.js") },
+        { find: /^react\/jsx-runtime$/, replacement: resolve(options.webviewSrcDir, "node_modules/react/jsx-runtime.js") },
+        { find: /^react-dom$/, replacement: resolve(options.webviewSrcDir, "node_modules/react-dom/index.js") },
+        { find: /^react-dom\/client$/, replacement: resolve(options.webviewSrcDir, "node_modules/react-dom/client.js") },
+      ],
+      dedupe: ["react", "react-dom"],
+    },
     build: {
       outDir,
       emptyOutDir: true,

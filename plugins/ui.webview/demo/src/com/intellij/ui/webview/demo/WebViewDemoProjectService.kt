@@ -32,6 +32,16 @@ internal class WebViewDemoProjectService(
     WebViewDemoContentPanel(panel.component, panel::dispose)
   }
 
+  fun createReactControlsShowcaseContent(): WebViewDemoContent = createContent("WebViewDemoReactControlsShowcase(${project.name})") { scope ->
+    val panel = WebViewReactControlsShowcasePanel(scope)
+    WebViewDemoContentPanel(panel.component, panel::dispose)
+  }
+
+  fun createUiDslShowcaseContent(): WebViewDemoContent = createContent("WebViewDemoUiDslShowcase(${project.name})") { scope ->
+    val panel = WebViewUiDslShowcasePanel(project, scope)
+    WebViewDemoContentPanel(panel.component, panel::dispose)
+  }
+
   fun createMarkdownLinkGraphContent(): WebViewDemoContent = createContent("WebViewDemoMarkdownLinkGraph(${project.name})") { scope ->
     val panel = MarkdownLinkGraphPanel(project, scope)
     WebViewDemoContentPanel(panel.component, panel::dispose)

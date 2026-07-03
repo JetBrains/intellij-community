@@ -1,0 +1,52 @@
+{
+  "name": "@jetbrains/intellij-webview-react-controls",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./select": {
+      "types": "./src/select/index.tsx",
+      "default": "./src/select/index.tsx"
+    },
+    "./menu": {
+      "types": "./src/menu/index.tsx",
+      "default": "./src/menu/index.tsx"
+    },
+    "./popover": {
+      "types": "./src/popover/index.tsx",
+      "default": "./src/popover/index.tsx"
+    },
+    "./tooltip": {
+      "types": "./src/tooltip/index.tsx",
+      "default": "./src/tooltip/index.tsx"
+    },
+    "./chrome": {
+      "types": "./src/chrome/index.tsx",
+      "default": "./src/chrome/index.tsx"
+    },
+    "./portal": {
+      "types": "./src/portal/index.ts",
+      "default": "./src/portal/index.ts"
+    },
+    "./focus": {
+      "types": "./src/focus/index.ts",
+      "default": "./src/focus/index.ts"
+    },
+    "./styles.css": "./src/styles.css"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@base-ui/react": "1.6.0"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  }
+}

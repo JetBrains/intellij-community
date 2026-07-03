@@ -21,8 +21,12 @@ export class JbSpinner extends LitElement {
       grid-template-columns: minmax(64px, 1fr) auto auto;
     }
 
-    .step-button {
-      padding-inline: var(--jb-space-xs);
+    .button.step-button {
+      height: var(--jb-control-height);
+      min-height: var(--jb-control-height);
+      min-width: var(--jb-control-height);
+      padding: 0;
+      width: var(--jb-control-height);
     }
   `]
 
@@ -36,8 +40,12 @@ export class JbSpinner extends LitElement {
     return html`
       <span part="control" class="spinner">
         <input part="input" class="field-control" type="number" min=${Number.isFinite(this.min) ? this.min : nothing} max=${Number.isFinite(this.max) ? this.max : nothing} step=${this.step} .value=${this.value} ?disabled=${this.disabled} @input=${this.onInput} @change=${this.onChange}>
-        <button part="decrement-button" class="button toolbar step-button" type="button" ?disabled=${this.disabled} @click=${() => this.stepValue(-1)}>-</button>
-        <button part="increment-button" class="button toolbar step-button" type="button" ?disabled=${this.disabled} @click=${() => this.stepValue(1)}>+</button>
+        <button part="decrement-button" class="button toolbar step-button" type="button" ?disabled=${this.disabled} aria-label="Decrement" @click=${() => this.stepValue(-1)}>
+          <span class="button-icon minus" aria-hidden="true"></span>
+        </button>
+        <button part="increment-button" class="button toolbar step-button" type="button" ?disabled=${this.disabled} aria-label="Increment" @click=${() => this.stepValue(1)}>
+          <span class="button-icon plus" aria-hidden="true"></span>
+        </button>
       </span>
     `
   }

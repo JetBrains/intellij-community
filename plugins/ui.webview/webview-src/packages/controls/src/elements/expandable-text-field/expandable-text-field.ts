@@ -24,6 +24,14 @@ export class JbExpandableTextField extends LitElement {
     .expanded {
       grid-column: 1 / -1;
     }
+
+    .button.expand-button {
+      height: var(--jb-control-height);
+      min-height: var(--jb-control-height);
+      min-width: var(--jb-control-height);
+      padding: 0;
+      width: var(--jb-control-height);
+    }
   `]
 
   disabled = false
@@ -40,7 +48,17 @@ export class JbExpandableTextField extends LitElement {
         ` : html`
           <input part="input" class="field-control" type="text" placeholder=${this.placeholder || nothing} .value=${this.value} ?disabled=${this.disabled} ?readonly=${this.readOnly} @input=${this.onInput} @change=${this.onChange}>
         `}
-        <button part="expand-button" class="button toolbar" type="button" ?disabled=${this.disabled} @click=${() => this.expanded = !this.expanded}>${this.expanded ? "-" : "+"}</button>
+        <button
+          part="expand-button"
+          class="button toolbar expand-button"
+          type="button"
+          ?disabled=${this.disabled}
+          aria-label=${this.expanded ? "Collapse" : "Expand"}
+          aria-expanded=${String(this.expanded)}
+          @click=${() => this.expanded = !this.expanded}
+        >
+          <span class=${this.expanded ? "button-icon minus" : "button-icon plus"} aria-hidden="true"></span>
+        </button>
       </span>
     `
   }
