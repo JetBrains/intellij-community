@@ -183,9 +183,6 @@ com.intellij.openapi.editor.EditorSettings
 - *sf:Companion:com.intellij.openapi.editor.EditorThreading$Companion
 - *s:assertInteractionAllowed():V
 - *s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
-- a:doAssertInteractionAllowed():V
-- a:doCompute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
-- a:doRun(java.lang.Runnable):V
 - *s:run(java.lang.Runnable):V
 *f:com.intellij.openapi.editor.EditorThreading$Companion
 - f:assertInteractionAllowed():V

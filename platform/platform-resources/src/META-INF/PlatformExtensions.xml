@@ -19,11 +19,6 @@
             serviceImplementation="com.intellij.openapi.application.impl.TransferredWriteActionServiceImpl"
     />
 
-    <applicationService
-      serviceInterface="com.intellij.openapi.editor.EditorThreading"
-      serviceImplementation="com.intellij.openapi.editor.impl.EditorThreadingImpl"
-    />
-
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <applicationService serviceInterface="com.intellij.openapi.diagnostic.UnhandledReportSinkService"
                         serviceImplementation="com.intellij.diagnostic.UnhandledReportSinkServiceImpl"/>
