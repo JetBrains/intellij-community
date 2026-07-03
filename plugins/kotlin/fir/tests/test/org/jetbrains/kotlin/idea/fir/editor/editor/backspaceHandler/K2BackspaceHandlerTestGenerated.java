@@ -59,6 +59,36 @@ public abstract class K2BackspaceHandlerTestGenerated extends AbstractK2Backspac
             runTest("../../idea/tests/testData/editor/backspaceHandler/FileStart.kt");
         }
 
+        @TestMetadata("lambdaInline.kt")
+        public void testLambdaInline() throws Exception {
+            runTest("../../idea/tests/testData/editor/backspaceHandler/lambdaInline.kt");
+        }
+
+        @TestMetadata("lambdaMultiline.kt")
+        public void testLambdaMultiline() throws Exception {
+            runTest("../../idea/tests/testData/editor/backspaceHandler/lambdaMultiline.kt");
+        }
+
+        @TestMetadata("lambdaWithCode.kt")
+        public void testLambdaWithCode() throws Exception {
+            runTest("../../idea/tests/testData/editor/backspaceHandler/lambdaWithCode.kt");
+        }
+
+        @TestMetadata("lambdaWithComment.kt")
+        public void testLambdaWithComment() throws Exception {
+            runTest("../../idea/tests/testData/editor/backspaceHandler/lambdaWithComment.kt");
+        }
+
+        @TestMetadata("lambdaWithOneSpaceBeforeCaret.kt")
+        public void testLambdaWithOneSpaceBeforeCaret() throws Exception {
+            runTest("../../idea/tests/testData/editor/backspaceHandler/lambdaWithOneSpaceBeforeCaret.kt");
+        }
+
+        @TestMetadata("lambdaWithoutCloseBrace.kt")
+        public void testLambdaWithoutCloseBrace() throws Exception {
+            runTest("../../idea/tests/testData/editor/backspaceHandler/lambdaWithoutCloseBrace.kt");
+        }
+
         @TestMetadata("rawStringDelete.kt")
         public void testRawStringDelete() throws Exception {
             runTest("../../idea/tests/testData/editor/backspaceHandler/rawStringDelete.kt");

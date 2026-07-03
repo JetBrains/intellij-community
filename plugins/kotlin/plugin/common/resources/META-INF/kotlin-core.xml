@@ -440,6 +440,7 @@
     <lang.smartEnterProcessor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.KotlinSmartEnterHandler"/>
 
     <backspaceHandlerDelegate implementation="org.jetbrains.kotlin.idea.editor.KotlinBackspaceHandler"/>
+    <backspaceHandlerDelegate implementation="org.jetbrains.kotlin.idea.editor.KotlinLambdaBackspaceHandler"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.kotlin.idea.editor.KotlinStringTemplateBackspaceHandler"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.kotlin.idea.editor.KotlinRawStringBackspaceHandler"/>
 
