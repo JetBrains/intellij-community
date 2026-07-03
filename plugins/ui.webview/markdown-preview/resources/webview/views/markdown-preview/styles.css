@@ -1326,6 +1326,7 @@ html[data-theme="light"] .markdownPreview {
 .markdownPreview .is-source-selected pre,
 .markdownPreview .is-source-selected details,
 .markdownPreview .is-source-selected .frontmatterBlock,
+.markdownPreview .is-source-selected .markdownImageBlock,
 .markdownPreview .is-source-selected .mermaidBlock,
 .markdownPreview .is-source-selected th,
 .markdownPreview .is-vcs-added code,
@@ -1333,6 +1334,7 @@ html[data-theme="light"] .markdownPreview {
 .markdownPreview .is-vcs-added pre,
 .markdownPreview .is-vcs-added details,
 .markdownPreview .is-vcs-added .frontmatterBlock,
+.markdownPreview .is-vcs-added .markdownImageBlock,
 .markdownPreview .is-vcs-added .mermaidBlock,
 .markdownPreview .is-vcs-added th,
 .markdownPreview .is-vcs-modified code,
@@ -1340,6 +1342,7 @@ html[data-theme="light"] .markdownPreview {
 .markdownPreview .is-vcs-modified pre,
 .markdownPreview .is-vcs-modified details,
 .markdownPreview .is-vcs-modified .frontmatterBlock,
+.markdownPreview .is-vcs-modified .markdownImageBlock,
 .markdownPreview .is-vcs-modified .mermaidBlock,
 .markdownPreview .is-vcs-modified th {
   background: var(--markdown-current-decoration-bg);
@@ -1559,6 +1562,7 @@ html[data-theme="light"] .markdownPreview {
 .markdownPreview pre,
 .markdownPreview table,
 .markdownPreview .frontmatterBlock,
+.markdownPreview .markdownImageBlock,
 .markdownPreview .mermaidBlock,
 .markdownPreview .footnotes {
   margin: 16px 0;
@@ -1861,6 +1865,7 @@ html[data-theme="light"] .markdownPreview {
   white-space: nowrap;
   border: 0;
 }
+.markdownImageBlock,
 .mermaidBlock {
   min-height: 120px;
   padding: 12px;
@@ -1870,16 +1875,24 @@ html[data-theme="light"] .markdownPreview {
   color: var(--ij-text-secondary);
   background: var(--ij-bg-panel);
 }
+.markdownImageBlock.isInteractive,
 .mermaidBlock.isInteractive {
   position: relative;
-  height: clamp(200px, 34vw, 420px);
   min-height: 160px;
-  max-height: min(80vh, 720px);
   padding: 0;
   overflow: hidden;
   resize: vertical;
   user-select: none;
 }
+.markdownImageBlock.isInteractive {
+  width: 100%;
+  aspect-ratio: var(--markdown-image-aspect-ratio, 16 / 9);
+}
+.mermaidBlock.isInteractive {
+  height: clamp(200px, 34vw, 420px);
+  max-height: min(80vh, 720px);
+}
+.markdownImageViewport,
 .mermaidViewport {
   width: 100%;
   height: 100%;
@@ -1887,15 +1900,26 @@ html[data-theme="light"] .markdownPreview {
   cursor: grab;
   touch-action: none;
 }
+.markdownImageViewport:active,
 .mermaidViewport:active {
   cursor: grabbing;
+}
+.markdownImageViewport img.markdownImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: contain;
+  pointer-events: none;
+  transform-origin: 0 0;
+  will-change: transform;
 }
 .mermaidViewport svg {
   display: block;
   width: 100%;
   height: 100%;
 }
-.mermaidToolbar {
+.markdownZoomToolbar {
   position: absolute;
   top: 6px;
   right: 6px;
@@ -1907,7 +1931,7 @@ html[data-theme="light"] .markdownPreview {
   background: var(--ij-bg-panel);
   box-shadow: 0 2px 6px color-mix(in srgb, black 18%, transparent);
 }
-.mermaidToolbarButton {
+.markdownZoomToolbarButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1920,13 +1944,18 @@ html[data-theme="light"] .markdownPreview {
   background: transparent;
   cursor: pointer;
 }
-.mermaidToolbarButton:hover {
+.markdownZoomToolbarButton:hover,
+.markdownZoomToolbarButton:focus-visible {
   background: var(--ij-bg-hover, #00000012);
 }
-.mermaidToolbarButton:active {
+.markdownZoomToolbarButton:focus-visible {
+  outline: none;
+  box-shadow: var(--ij-focus-ring);
+}
+.markdownZoomToolbarButton:active {
   background: var(--ij-bg-pressed, #0000001f);
 }
-.mermaidToolbarButton img {
+.markdownZoomToolbarButton img {
   width: 16px;
   height: 16px;
   pointer-events: none;

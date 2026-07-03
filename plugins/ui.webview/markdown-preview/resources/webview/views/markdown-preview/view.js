@@ -269,12 +269,147 @@ function classNames$1(...names) {
 	return names.filter(Boolean).join(" ") || void 0;
 }
 //#endregion
+//#region views/markdown-preview/src/markdownReactUtils.ts
+function codeToString(node) {
+	if (typeof node === "string" || typeof node === "number") return String(node);
+	if (Array.isArray(node)) return node.map(codeToString).join("");
+	return "";
+}
+function classNames(...names) {
+	return names.filter(Boolean).join(" ") || void 0;
+}
+//#endregion
+//#region views/markdown-preview/src/MarkdownZoomControls.tsx
+var MARKDOWN_ZOOM_SCALE_EXTENT = [.25, 4];
+var MARKDOWN_ZOOM_BUTTON_FACTOR = 1.2;
+function MarkdownZoomToolbar({ targetLabel, className, onZoomOut, onResetZoom, onZoomIn }) {
+	const normalizedTargetLabel = targetLabel.toLowerCase();
+	const accessibleTargetLabel = `${normalizedTargetLabel.charAt(0).toUpperCase()}${normalizedTargetLabel.slice(1)}`;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: classNames("markdownZoomToolbar", className),
+		"aria-label": `${accessibleTargetLabel} zoom controls`,
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				className: "markdownZoomToolbarButton",
+				"aria-label": `Zoom out ${normalizedTargetLabel}`,
+				title: "Zoom out",
+				onClick: onZoomOut,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+					src: AllIcons.src("graph/zoomOut.svg"),
+					alt: "",
+					draggable: false
+				})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				className: "markdownZoomToolbarButton",
+				"aria-label": `Reset ${normalizedTargetLabel} zoom`,
+				title: "Reset zoom",
+				onClick: onResetZoom,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+					src: AllIcons.src("general/reset.svg"),
+					alt: "",
+					draggable: false
+				})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				className: "markdownZoomToolbarButton",
+				"aria-label": `Zoom in ${normalizedTargetLabel}`,
+				title: "Zoom in",
+				onClick: onZoomIn,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+					src: AllIcons.src("graph/zoomIn.svg"),
+					alt: "",
+					draggable: false
+				})
+			})
+		]
+	});
+}
+function shouldHandleZoomEvent(event) {
+	return event.type !== "wheel" || event.ctrlKey;
+}
+//#endregion
+//#region views/markdown-preview/src/MarkdownImageBlock.tsx
+function MarkdownImageBlock({ src, alt, title, className, style, ...props }) {
+	const viewportRef = (0, import_react.useRef)(null);
+	const imageRef = (0, import_react.useRef)(null);
+	const zoomBehaviorRef = (0, import_react.useRef)(null);
+	const [aspectRatio, setAspectRatio] = (0, import_react.useState)();
+	(0, import_react.useEffect)(() => {
+		const viewport = viewportRef.current;
+		const image = imageRef.current;
+		if (!viewport || !image) return;
+		const zoomBehavior = zoom_default().filter(shouldHandleZoomEvent).scaleExtent(MARKDOWN_ZOOM_SCALE_EXTENT).on("zoom", (event) => {
+			image.style.transform = `translate(${event.transform.x}px, ${event.transform.y}px) scale(${event.transform.k})`;
+		});
+		zoomBehaviorRef.current = zoomBehavior;
+		const viewportSelection = select_default(viewport);
+		viewportSelection.call(zoomBehavior);
+		viewportSelection.call(zoomBehavior.transform, identity);
+		return () => {
+			viewportSelection.on(".zoom", null);
+			image.style.removeProperty("transform");
+			zoomBehaviorRef.current = null;
+		};
+	}, [src]);
+	(0, import_react.useEffect)(() => {
+		updateAspectRatio();
+	}, [src]);
+	function zoomBy(factor) {
+		const viewport = viewportRef.current;
+		const zoomBehavior = zoomBehaviorRef.current;
+		if (!viewport || !zoomBehavior) return;
+		select_default(viewport).call(zoomBehavior.scaleBy, factor);
+	}
+	function resetZoom() {
+		const viewport = viewportRef.current;
+		const zoomBehavior = zoomBehaviorRef.current;
+		if (!viewport || !zoomBehavior) return;
+		select_default(viewport).call(zoomBehavior.transform, identity);
+	}
+	function updateAspectRatio() {
+		const image = imageRef.current;
+		const width = image?.naturalWidth ?? 0;
+		const height = image?.naturalHeight ?? 0;
+		setAspectRatio(width > 0 && height > 0 ? width / height : void 0);
+	}
+	const blockStyle = aspectRatio === void 0 ? style : {
+		...style,
+		"--markdown-image-aspect-ratio": String(aspectRatio)
+	};
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		...props,
+		className: classNames("markdownImageBlock", "isInteractive", className),
+		style: blockStyle,
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "markdownImageViewport",
+			ref: viewportRef,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+				className: "markdownImage",
+				ref: imageRef,
+				src,
+				alt: alt ?? "",
+				title,
+				draggable: false,
+				onLoad: updateAspectRatio
+			})
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MarkdownZoomToolbar, {
+			targetLabel: "image",
+			className: "markdownImageToolbar",
+			onZoomOut: () => zoomBy(1 / MARKDOWN_ZOOM_BUTTON_FACTOR),
+			onResetZoom: resetZoom,
+			onZoomIn: () => zoomBy(MARKDOWN_ZOOM_BUTTON_FACTOR)
+		})]
+	});
+}
+//#endregion
 //#region views/markdown-preview/src/MermaidBlock.tsx
 var mermaidBlockId = 0;
 var mermaidRenderId = 0;
 var mermaidModule;
-var ZOOM_SCALE_EXTENT = [.25, 4];
-var ZOOM_BUTTON_FACTOR = 1.2;
 var PRESERVED_SVG_TAGS = new Set([
 	"defs",
 	"style",
@@ -337,7 +472,7 @@ function RenderedMermaidDiagram({ svg }) {
 		const panZoomGroup = wrapSvgContent(svgElement, "mermaidPanZoom");
 		fitSvgViewBoxToContent(svgElement, panZoomGroup);
 		svgRef.current = svgElement;
-		const zoomBehavior = zoom_default().filter(shouldHandleZoomEvent).scaleExtent(ZOOM_SCALE_EXTENT).on("zoom", (event) => {
+		const zoomBehavior = zoom_default().filter(shouldHandleZoomEvent).scaleExtent(MARKDOWN_ZOOM_SCALE_EXTENT).on("zoom", (event) => {
 			panZoomGroup.setAttribute("transform", event.transform.toString());
 		});
 		zoomBehaviorRef.current = zoomBehavior;
@@ -368,47 +503,12 @@ function RenderedMermaidDiagram({ svg }) {
 		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 			className: "mermaidViewport",
 			ref: hostRef
-		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MarkdownZoomToolbar, {
+			targetLabel: "diagram",
 			className: "mermaidToolbar",
-			"aria-label": "Diagram zoom controls",
-			children: [
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					type: "button",
-					className: "mermaidToolbarButton",
-					"aria-label": "Zoom out diagram",
-					title: "Zoom out",
-					onClick: () => zoomBy(1 / ZOOM_BUTTON_FACTOR),
-					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-						src: AllIcons.src("graph/zoomOut.svg"),
-						alt: "",
-						draggable: false
-					})
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					type: "button",
-					className: "mermaidToolbarButton",
-					"aria-label": "Reset diagram zoom",
-					title: "Reset zoom",
-					onClick: resetZoom,
-					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-						src: AllIcons.src("general/reset.svg"),
-						alt: "",
-						draggable: false
-					})
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					type: "button",
-					className: "mermaidToolbarButton",
-					"aria-label": "Zoom in diagram",
-					title: "Zoom in",
-					onClick: () => zoomBy(ZOOM_BUTTON_FACTOR),
-					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-						src: AllIcons.src("graph/zoomIn.svg"),
-						alt: "",
-						draggable: false
-					})
-				})
-			]
+			onZoomOut: () => zoomBy(1 / MARKDOWN_ZOOM_BUTTON_FACTOR),
+			onResetZoom: resetZoom,
+			onZoomIn: () => zoomBy(MARKDOWN_ZOOM_BUTTON_FACTOR)
 		})]
 	});
 }
@@ -446,9 +546,6 @@ function fitSvgViewBoxToContent(svgElement, contentElement) {
 		const padding = 24;
 		svgElement.setAttribute("viewBox", `${box.x - padding} ${box.y - padding} ${box.width + padding * 2} ${box.height + padding * 2}`);
 	} catch {}
-}
-function shouldHandleZoomEvent(event) {
-	return event.type !== "wheel" || event.ctrlKey;
 }
 function svgDimension(value) {
 	if (!value) return void 0;
@@ -831,16 +928,6 @@ var PATH_TRIM_END = new Set([
 	";"
 ]);
 var URL_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:\/\//i;
-//#endregion
-//#region views/markdown-preview/src/markdownReactUtils.ts
-function codeToString(node) {
-	if (typeof node === "string" || typeof node === "number") return String(node);
-	if (Array.isArray(node)) return node.map(codeToString).join("");
-	return "";
-}
-function classNames(...names) {
-	return names.filter(Boolean).join(" ") || void 0;
-}
 //#endregion
 //#region views/markdown-preview/src/markdownResources.ts
 var markdownResourcePrefix = "./__markdown-preview-resource/";
@@ -1792,6 +1879,21 @@ function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, sel
 				alt
 			});
 		},
+		p({ node, className, children, ...props }) {
+			const image = standaloneImageFromParagraphNode(node);
+			if (image) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MarkdownImageBlock, {
+				...props,
+				className,
+				src: markdownResourceSrc(image.src) ?? image.src,
+				alt: image.alt,
+				title: image.title
+			});
+			return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				...props,
+				className,
+				children
+			});
+		},
 		pre({ node, className, children, ...props }) {
 			const frontmatterLanguage = frontmatterLanguageFromPreNode(node);
 			if (frontmatterLanguage) return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
@@ -1941,6 +2043,25 @@ function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, sel
 			children: markdown
 		})
 	}, contentVersion), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FloatingTableOfContents, { markdown })] });
+}
+function standaloneImageFromParagraphNode(node) {
+	const contentChildren = (node?.children ?? []).filter((child) => !isWhitespaceTextNode(child));
+	if (contentChildren.length !== 1) return void 0;
+	const imageNode = contentChildren[0];
+	if (imageNode.tagName !== "img") return void 0;
+	const src = stringProperty(imageNode.properties?.src);
+	if (!src) return void 0;
+	return {
+		src,
+		alt: stringProperty(imageNode.properties?.alt),
+		title: stringProperty(imageNode.properties?.title)
+	};
+}
+function isWhitespaceTextNode(node) {
+	return node.tagName === void 0 && (node.value ?? "").trim().length === 0;
+}
+function stringProperty(value) {
+	return typeof value === "string" ? value : void 0;
 }
 //#endregion
 //#region views/markdown-preview/src/main.tsx

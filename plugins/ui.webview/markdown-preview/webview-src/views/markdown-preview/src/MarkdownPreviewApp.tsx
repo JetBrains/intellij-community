@@ -9,8 +9,9 @@ import rehypeSlug from "rehype-slug"
 import remarkFrontmatter from "remark-frontmatter"
 import remarkGfm from "remark-gfm"
 import { FloatingTableOfContents } from "./FloatingTableOfContents"
+import { MarkdownImageBlock } from "./MarkdownImageBlock"
 import { MermaidBlock } from "./MermaidBlock"
-import { codeNodeFromPreNode } from "./markdownHastUtils"
+import { codeNodeFromPreNode, type HastNode } from "./markdownHastUtils"
 import { renderMarkdownLatex } from "./markdownLatex"
 import { collectPathLinkCandidates, renderPathLinks } from "./markdownPathLinks"
 import type {
@@ -122,6 +123,13 @@ export function MarkdownPreviewApp({
     },
     img({ src, alt, ...props }) {
       return <img {...props} src={markdownResourceSrc(src)} alt={alt} />
+    },
+    p({ node, className, children, ...props }) {
+      const image = standaloneImageFromParagraphNode(node)
+      if (image) {
+        return <MarkdownImageBlock {...props} className={className} src={markdownResourceSrc(image.src) ?? image.src} alt={image.alt} title={image.title} />
+      }
+      return <p {...props} className={className}>{children}</p>
     },
     pre({ node, className, children, ...props }) {
       const frontmatterLanguage = frontmatterLanguageFromPreNode(node)
@@ -247,4 +255,36 @@ export function MarkdownPreviewApp({
       <FloatingTableOfContents markdown={markdown} />
     </>
   )
+}
+
+interface MarkdownImageDescriptor {
+  src: string
+  alt?: string
+  title?: string
+}
+
+function standaloneImageFromParagraphNode(node: unknown): MarkdownImageDescriptor | undefined {
+  const children = (node as HastNode | undefined)?.children ?? []
+  const contentChildren = children.filter(child => !isWhitespaceTextNode(child))
+  if (contentChildren.length !== 1) return undefined
+
+  const imageNode = contentChildren[0]
+  if (imageNode.tagName !== "img") return undefined
+
+  const src = stringProperty(imageNode.properties?.src)
+  if (!src) return undefined
+
+  return {
+    src,
+    alt: stringProperty(imageNode.properties?.alt),
+    title: stringProperty(imageNode.properties?.title),
+  }
+}
+
+function isWhitespaceTextNode(node: HastNode): boolean {
+  return node.tagName === undefined && (node.value ?? "").trim().length === 0
+}
+
+function stringProperty(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined
 }

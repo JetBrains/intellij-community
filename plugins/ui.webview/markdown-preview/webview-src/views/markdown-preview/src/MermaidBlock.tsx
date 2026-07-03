@@ -1,10 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import { useEffect, useRef, useState } from "react"
-import { AllIcons } from "@jetbrains/intellij-webview"
 import { select } from "d3-selection"
 import { zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior } from "d3-zoom"
 import type mermaidApi from "mermaid"
+import {
+  MARKDOWN_ZOOM_BUTTON_FACTOR,
+  MARKDOWN_ZOOM_SCALE_EXTENT,
+  MarkdownZoomToolbar,
+  shouldHandleZoomEvent,
+} from "./MarkdownZoomControls"
 
 interface MermaidBlockProps {
   chart: string
@@ -19,8 +24,6 @@ type RenderState =
 let mermaidBlockId = 0
 let mermaidRenderId = 0
 let mermaidModule: Promise<Mermaid> | undefined
-const ZOOM_SCALE_EXTENT: [number, number] = [0.25, 4]
-const ZOOM_BUTTON_FACTOR = 1.2
 const PRESERVED_SVG_TAGS = new Set(["defs", "style", "title", "desc", "metadata", "marker"])
 
 export function MermaidBlock({ chart, theme }: MermaidBlockProps) {
@@ -91,7 +94,7 @@ function RenderedMermaidDiagram({ svg }: { svg: string }) {
 
     const zoomBehavior = zoom<SVGSVGElement, unknown>()
       .filter(shouldHandleZoomEvent)
-      .scaleExtent(ZOOM_SCALE_EXTENT)
+      .scaleExtent(MARKDOWN_ZOOM_SCALE_EXTENT)
       .on("zoom", (event: D3ZoomEvent<SVGSVGElement, unknown>) => {
         panZoomGroup.setAttribute("transform", event.transform.toString())
       })
@@ -126,17 +129,13 @@ function RenderedMermaidDiagram({ svg }: { svg: string }) {
   return (
     <div className="mermaidBlock isInteractive">
       <div className="mermaidViewport" ref={hostRef} />
-      <div className="mermaidToolbar" aria-label="Diagram zoom controls">
-        <button type="button" className="mermaidToolbarButton" aria-label="Zoom out diagram" title="Zoom out" onClick={() => zoomBy(1 / ZOOM_BUTTON_FACTOR)}>
-          <img src={AllIcons.src("graph/zoomOut.svg")} alt="" draggable={false} />
-        </button>
-        <button type="button" className="mermaidToolbarButton" aria-label="Reset diagram zoom" title="Reset zoom" onClick={resetZoom}>
-          <img src={AllIcons.src("general/reset.svg")} alt="" draggable={false} />
-        </button>
-        <button type="button" className="mermaidToolbarButton" aria-label="Zoom in diagram" title="Zoom in" onClick={() => zoomBy(ZOOM_BUTTON_FACTOR)}>
-          <img src={AllIcons.src("graph/zoomIn.svg")} alt="" draggable={false} />
-        </button>
-      </div>
+      <MarkdownZoomToolbar
+        targetLabel="diagram"
+        className="mermaidToolbar"
+        onZoomOut={() => zoomBy(1 / MARKDOWN_ZOOM_BUTTON_FACTOR)}
+        onResetZoom={resetZoom}
+        onZoomIn={() => zoomBy(MARKDOWN_ZOOM_BUTTON_FACTOR)}
+      />
     </div>
   )
 }
@@ -183,11 +182,6 @@ function fitSvgViewBoxToContent(svgElement: SVGSVGElement, contentElement: SVGGr
   catch {
     // Some SVG fragments cannot be measured until attached; keep Mermaid's viewBox in that case.
   }
-}
-
-function shouldHandleZoomEvent(event: Event): boolean {
-  // Chromium reports trackpad pinch as a ctrlKey wheel event; plain wheel must keep page scrolling.
-  return event.type !== "wheel" || (event as WheelEvent).ctrlKey
 }
 
 function svgDimension(value: string | null): number | undefined {

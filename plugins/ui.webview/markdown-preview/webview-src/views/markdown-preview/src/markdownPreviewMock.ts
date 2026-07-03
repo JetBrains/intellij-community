@@ -185,6 +185,14 @@ This page runs the real Markdown preview entry through the WebView testkit mock 
 
 Inline math \\(a+b\\) and display math $$c=d$$.
 
+## Images
+
+![Zoomable preview](images/zoomable-preview.svg)
+
+Inline image: ![Inline preview](images/inline-preview.svg) stays inline.
+
+[![Linked preview](images/linked-preview.svg)](https://www.jetbrains.com)
+
 ## Runnable Code
 
 \`\`\`bash

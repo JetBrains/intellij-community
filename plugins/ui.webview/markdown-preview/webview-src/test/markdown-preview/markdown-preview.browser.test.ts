@@ -24,6 +24,10 @@ type Mouse = {
   up(): Promise<void>
 }
 
+type Route = {
+  fulfill(options: { body: string; contentType: string; status?: number }): Promise<void>
+}
+
 type ConsoleMessage = {
   type(): string
   text(): string
@@ -33,6 +37,7 @@ type Page = {
   goto(url: string): Promise<void>
   getByRole(role: string, options?: { name?: string | RegExp; exact?: boolean }): Locator
   locator(selector: string): Locator
+  route(url: string | RegExp, handler: (route: Route) => Promise<void> | void): Promise<void>
   evaluate<Result>(pageFunction: () => Result | Promise<Result>): Promise<Result>
   on(event: "console", handler: (message: ConsoleMessage) => void): void
   on(event: "pageerror", handler: (error: Error) => void): void
@@ -62,6 +67,7 @@ const { expect, test } = await import(playwrightTestPackage) as unknown as Playw
 
 const testDir = dirname(fileURLToPath(import.meta.url))
 const webviewSrcDir = resolve(testDir, "../..")
+const mockMarkdownPreviewImageSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="960" height="480" viewBox="0 0 960 480"><rect width="960" height="480" fill="#f7f8fa"/><rect x="72" y="72" width="816" height="336" rx="24" fill="#ffffff" stroke="#3871e1" stroke-width="12"/><path d="M144 384l168-168 120 120 96-96 288 228H144z" fill="#6db083"/><circle cx="690" cy="174" r="72" fill="#f4b400"/></svg>`
 
 let preview: WebViewMockPreviewServer | undefined
 
@@ -108,20 +114,72 @@ test("zooms, pans, and exposes native resize for Mermaid diagrams", async ({ pag
   await page.locator(".mermaidViewport svg").dispatchEvent("wheel", { deltaY: -120, clientX: 80, clientY: 80, bubbles: true, cancelable: true })
   expect((await mermaidTransform(page)) === transformBeforeWheel).toBe(true)
 
-  const svg = page.locator(".mermaidViewport svg")
-  await svg.scrollIntoViewIfNeeded()
-  const box = await svg.boundingBox()
-  if (!box) throw new Error("Markdown Mermaid SVG does not have a rendered bounding box")
   const transformBeforeDrag = await mermaidTransform(page)
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
-  await page.mouse.down()
-  await page.mouse.move(box.x + box.width / 2 + 40, box.y + box.height / 2 + 28)
-  await page.mouse.up()
+  await dragLocatorCenter(page, page.locator(".mermaidViewport svg"), 40, 28, "Markdown Mermaid SVG does not have a rendered bounding box")
   await page.waitForFunction(() => {
     const transform = document.querySelector(".mermaidPanZoom")?.getAttribute("transform") ?? ""
     return transform.includes("translate(") && !transform.startsWith("translate(0,0)")
   })
   expect((await mermaidTransform(page)) !== transformBeforeDrag).toBe(true)
+})
+
+test("zooms standalone image blocks without changing inline or linked images", async ({ page }) => {
+  if (!preview) {
+    throw new Error("Markdown preview mock preview server was not started")
+  }
+  await page.route(/.*\/__markdown-preview-resource\/.*/, route => route.fulfill({ contentType: "image/svg+xml", body: mockMarkdownPreviewImageSvg }))
+  await page.goto(preview.url)
+  await page.waitForSelector(".markdownImageBlock img")
+  await page.waitForFunction(() => (document.querySelector<HTMLElement>(".markdownImage")?.style.transform ?? "") === "translate(0px, 0px) scale(1)")
+  await page.waitForFunction(() => document.querySelector<HTMLImageElement>(".markdownImageViewport img")?.naturalWidth === 960)
+
+  await expect(page.getByRole("button", { name: "Zoom in image" })).toBeVisible()
+  expect(await markdownImageToolbarIconsLoaded(page)).toBe(true)
+  const imageState = await page.evaluate(() => {
+    const block = document.querySelector(".markdownImageBlock.isInteractive")
+    const inlineImage = document.querySelector('img[alt="Inline preview"]')
+    const linkedImage = document.querySelector('a img[alt="Linked preview"]')
+    return {
+      resizeEnabled: block != null && getComputedStyle(block).resize === "vertical",
+      inlineHasZoomBlock: inlineImage?.closest(".markdownImageBlock") != null,
+      linkedHasZoomBlock: linkedImage?.closest(".markdownImageBlock") != null,
+      imageToolbarCount: document.querySelectorAll('[aria-label="Image zoom controls"]').length,
+    }
+  })
+  expect(imageState.resizeEnabled).toBe(true)
+  expect(imageState.inlineHasZoomBlock).toBe(false)
+  expect(imageState.linkedHasZoomBlock).toBe(false)
+  expect(imageState.imageToolbarCount === 1).toBe(true)
+  await page.waitForFunction(() => {
+    const block = document.querySelector(".markdownImageBlock")
+    const image = document.querySelector<HTMLImageElement>(".markdownImageViewport img")
+    if (!block || !image || image.naturalWidth <= 0 || image.naturalHeight <= 0) return false
+    const box = block.getBoundingClientRect()
+    const expectedHeight = box.width * image.naturalHeight / image.naturalWidth
+    return Math.abs(box.height - expectedHeight) <= 1
+  })
+  expect(await markdownImageFillsViewport(page)).toBe(true)
+
+  await page.getByRole("button", { name: "Zoom in image" }).click()
+  await page.waitForFunction(() => {
+    const transform = document.querySelector<HTMLElement>(".markdownImage")?.style.transform ?? ""
+    return transform.includes("scale(") && !transform.endsWith("scale(1)")
+  })
+
+  await page.getByRole("button", { name: "Reset image zoom" }).click()
+  await page.waitForFunction(() => (document.querySelector<HTMLElement>(".markdownImage")?.style.transform ?? "") === "translate(0px, 0px) scale(1)")
+
+  const transformBeforeWheel = await markdownImageTransform(page)
+  await page.locator(".markdownImageViewport img").dispatchEvent("wheel", { deltaY: -120, clientX: 80, clientY: 80, bubbles: true, cancelable: true })
+  expect((await markdownImageTransform(page)) === transformBeforeWheel).toBe(true)
+
+  const transformBeforeDrag = await markdownImageTransform(page)
+  await dragLocatorCenter(page, page.locator(".markdownImageViewport img"), 40, 28, "Markdown image does not have a rendered bounding box")
+  await page.waitForFunction(() => {
+    const transform = document.querySelector<HTMLElement>(".markdownImage")?.style.transform ?? ""
+    return transform.includes("translate(") && !transform.startsWith("translate(0px, 0px)")
+  })
+  expect((await markdownImageTransform(page)) !== transformBeforeDrag).toBe(true)
 })
 
 test("renders only host-resolved code paths as navigation buttons", async ({ page }) => {
@@ -191,6 +249,20 @@ function mermaidTransform(page: Page): Promise<string> {
   return page.evaluate(() => document.querySelector(".mermaidPanZoom")?.getAttribute("transform") ?? "")
 }
 
+async function dragLocatorCenter(page: Page, locator: Locator, deltaX: number, deltaY: number, missingBoxMessage: string): Promise<void> {
+  await locator.scrollIntoViewIfNeeded()
+  const box = await locator.boundingBox()
+  if (!box) throw new Error(missingBoxMessage)
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(box.x + box.width / 2 + deltaX, box.y + box.height / 2 + deltaY)
+  await page.mouse.up()
+}
+
+function markdownImageTransform(page: Page): Promise<string> {
+  return page.evaluate(() => document.querySelector<HTMLElement>(".markdownImage")?.style.transform ?? "")
+}
+
 function mermaidSvgFillsViewport(page: Page): Promise<boolean> {
   return page.evaluate(() => {
     const viewport = document.querySelector(".mermaidViewport")
@@ -204,6 +276,24 @@ function mermaidToolbarIconsLoaded(page: Page): Promise<boolean> {
   return page.evaluate(() => {
     const icons = Array.from(document.querySelectorAll<HTMLImageElement>(".mermaidToolbar img"))
     return icons.length === 3 && icons.every(icon => icon.complete && icon.naturalWidth > 0 && icon.naturalHeight > 0)
+  })
+}
+
+function markdownImageToolbarIconsLoaded(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const icons = Array.from(document.querySelectorAll<HTMLImageElement>(".markdownImageToolbar img"))
+    return icons.length === 3 && icons.every(icon => icon.complete && icon.naturalWidth > 0 && icon.naturalHeight > 0)
+  })
+}
+
+function markdownImageFillsViewport(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const viewport = document.querySelector(".markdownImageViewport")
+    const image = document.querySelector(".markdownImageViewport img")
+    if (!viewport || !image) return false
+    const viewportBox = viewport.getBoundingClientRect()
+    const imageBox = image.getBoundingClientRect()
+    return Math.abs(imageBox.width - viewportBox.width) <= 1 && Math.abs(imageBox.height - viewportBox.height) <= 1
   })
 }
 

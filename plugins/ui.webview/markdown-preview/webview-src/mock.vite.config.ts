@@ -13,10 +13,18 @@ const viewConfig = defineWebViewViewConfig({ webviewSrcDir, id: "markdown-previe
 
 export default withWebViewMockBridge({
   ...viewConfig,
-  plugins: [serveAllIconsPlugin(), ...asPluginArray(viewConfig.plugins)],
+  plugins: [serveAllIconsPlugin(), serveMarkdownPreviewResourcesPlugin(), ...asPluginArray(viewConfig.plugins)],
 } as Parameters<typeof withWebViewMockBridge>[0], {
   mock: resolve(webviewSrcDir, "views/markdown-preview/src/markdownPreviewMock.ts"),
 })
+
+const mockMarkdownPreviewImageSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="960" height="480" viewBox="0 0 960 480">
+  <rect width="960" height="480" fill="#f7f8fa"/>
+  <rect x="72" y="72" width="816" height="336" rx="24" fill="#ffffff" stroke="#3871e1" stroke-width="12"/>
+  <path d="M144 384l168-168 120 120 96-96 288 228H144z" fill="#6db083"/>
+  <circle cx="690" cy="174" r="72" fill="#f4b400"/>
+  <text x="480" y="104" text-anchor="middle" fill="#1f2328" font-family="system-ui, sans-serif" font-size="40" font-weight="700">Markdown Preview Image</text>
+</svg>`
 
 interface VitePluginLike {
   name: string
@@ -73,6 +81,26 @@ function serveAllIconsPlugin(): VitePluginLike {
         res.setHeader("Content-Type", actualPath.endsWith(".svg") ? "image/svg+xml" : "image/png")
         res.setHeader("Cache-Control", "no-cache")
         res.end(readFileSync(iconPath))
+      })
+    },
+  }
+}
+
+function serveMarkdownPreviewResourcesPlugin(): VitePluginLike {
+  return {
+    name: "markdown-preview-mock-resources",
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const requestPath = req.url?.split("?", 1)[0]
+        if (!requestPath?.includes("/__markdown-preview-resource/")) {
+          next()
+          return
+        }
+
+        res.statusCode = 200
+        res.setHeader("Content-Type", "image/svg+xml")
+        res.setHeader("Cache-Control", "no-cache")
+        res.end(mockMarkdownPreviewImageSvg)
       })
     },
   }
