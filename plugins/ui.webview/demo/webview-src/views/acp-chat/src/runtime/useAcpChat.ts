@@ -14,7 +14,8 @@ import {
 } from "@assistant-ui/react"
 import type { ContentBlock } from "@agentclientprotocol/sdk"
 import { AcpAuthRequiredError, AcpSession, type AcpEventSink, type StartOutcome } from "../acp/client"
-import { acpBridgeHost } from "../bridge/webviewApi"
+import { acpBridgeHost, type AgentDto } from "../bridge/webviewApi"
+import { acpIconSrc } from "../components/icons/AcpChatIconSet"
 import type {
   AcpSessionInfoUpdateView,
   AcpSessionInfoView,
@@ -114,7 +115,7 @@ export function useAcpChat(): AcpChat {
   useEffect(() => {
     let cancelled = false
     acpBridgeHost.listAgents()
-      .then(result => { if (!cancelled) setAgents(result.agents) })
+      .then(result => { if (!cancelled) setAgents(result.agents.map(agentInfoFromDto)) })
       .catch(error => { if (!cancelled) setStatus(errorText(error)) })
     return () => { cancelled = true }
   }, [])
@@ -1045,6 +1046,14 @@ function contentTypeForFileName(name: string): string {
 function extensionOf(name: string): string {
   const index = name.lastIndexOf(".")
   return index >= 0 ? name.slice(index + 1).toLocaleLowerCase() : ""
+}
+
+function agentInfoFromDto(agent: AgentDto): AgentInfo {
+  return {
+    id: agent.id,
+    name: agent.name,
+    iconSrc: agent.iconResourcePath ? acpIconSrc(agent.iconResourcePath) : undefined,
+  }
 }
 
 function errorText(error: unknown): string {

@@ -87,7 +87,7 @@ export interface SelectProps extends Pick<ComponentPropsWithoutRef<typeof Select
   onValueChange: (value: string) => void
   options: readonly SelectOption[]
   children?: ReactNode
-  placeholder?: string
+  placeholder?: ReactNode
   className?: string
   triggerAriaLabel?: string
 }

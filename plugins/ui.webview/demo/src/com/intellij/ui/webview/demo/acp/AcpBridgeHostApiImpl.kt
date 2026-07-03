@@ -24,7 +24,7 @@ internal class AcpBridgeHostApiImpl(
     val agents = runCatching { AcpConfig.loadAgents() }
       .onFailure { LOG.warn("Failed to read acp.json at ${AcpConfig.configPath()}", it) }
       .getOrDefault(emptyList())
-    AgentListDto(agents.map { AgentDto(id = it.id, name = it.name, icon = it.icon) })
+    AgentListDto(agents.map { AgentDto(id = it.id, name = it.name, iconResourcePath = it.iconResourcePath) })
   }
 
   override suspend fun startAgent(params: StartAgentRequest): StartAgentResult = withContext(Dispatchers.IO) {

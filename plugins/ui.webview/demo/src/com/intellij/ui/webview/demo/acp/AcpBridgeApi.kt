@@ -45,7 +45,7 @@ internal interface AcpBridgePageApi : WebViewCallable {
 }
 
 @Serializable
-internal data class AgentDto(val id: String, val name: String, val icon: String? = null)
+internal data class AgentDto(val id: String, val name: String, val iconResourcePath: String? = null)
 
 @Serializable
 internal data class AgentListDto(val agents: List<AgentDto>)

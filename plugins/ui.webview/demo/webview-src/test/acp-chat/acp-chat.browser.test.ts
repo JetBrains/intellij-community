@@ -106,23 +106,44 @@ test("shows hardcoded Junie first and opens acp.json from the agent selector", a
   }
   await page.goto(preview.url)
 
+  const placeholderState = await page.evaluate(() => {
+    const trigger = document.querySelector<HTMLElement>(".acpAgentSelect")
+    const placeholderIcon = trigger?.querySelector<HTMLElement>(".acpAgentSelectItemIcon > *")
+    return {
+      triggerText: trigger?.textContent?.trim(),
+      placeholderIconTagName: placeholderIcon?.tagName.toLowerCase(),
+      placeholderIconSrc: placeholderIcon?.getAttribute("src"),
+    }
+  })
+  expect(placeholderState.triggerText?.includes("Select an agent…") === true
+    && placeholderState.placeholderIconTagName === "jb-icon"
+    && placeholderState.placeholderIconSrc?.includes("/__ij-icons/AcpChatIcons/") === true
+    && placeholderState.placeholderIconSrc?.endsWith("/webview/views/acp-chat/assets/acpChatAgent.svg") === true).toBe(true)
+
   await page.locator(".acpAgentSelect").click()
   const selectorState = await page.evaluate(() => {
     const options = Array.from(document.querySelectorAll<HTMLElement>('[role="option"]'))
     const junieOption = options.find(option => option.textContent?.trim() === "Junie")
+    const mockOption = options.find(option => option.textContent?.trim() === "Mock Agent")
     const junieIcon = junieOption?.querySelector<HTMLElement>("[src*='acpChatJunie.svg']")
+    const mockIcon = mockOption?.querySelector<HTMLElement>("[src*='acpChatAgent.svg']")
     return {
       firstOptionText: options[0]?.textContent?.trim(),
       lastOptionText: options[options.length - 1]?.textContent?.trim(),
       junieIconTagName: junieIcon?.tagName.toLowerCase(),
       junieIconSrc: junieIcon?.getAttribute("src"),
+      mockIconTagName: mockIcon?.tagName.toLowerCase(),
+      mockIconSrc: mockIcon?.getAttribute("src"),
     }
   })
   expect(selectorState.firstOptionText === "Junie"
     && selectorState.lastOptionText === "Open acp.json"
     && selectorState.junieIconTagName === "jb-icon"
     && selectorState.junieIconSrc?.includes("/__ij-icons/AcpChatIcons/") === true
-    && selectorState.junieIconSrc?.endsWith("/webview/views/acp-chat/assets/acpChatJunie.svg") === true).toBe(true)
+    && selectorState.junieIconSrc?.endsWith("/webview/views/acp-chat/assets/acpChatJunie.svg") === true
+    && selectorState.mockIconTagName === "jb-icon"
+    && selectorState.mockIconSrc?.includes("/__ij-icons/AcpChatIcons/") === true
+    && selectorState.mockIconSrc?.endsWith("/webview/views/acp-chat/assets/acpChatAgent.svg") === true).toBe(true)
 
   await page.getByRole("option", {name: "Junie"}).click()
   await page.waitForFunction(() => {
@@ -263,6 +284,22 @@ test("shows env auth as an inline transcript card and authenticates from it", as
     return thread?.contains(auth) === true && document.querySelector(".acpApprovalOverlay .acpAuth") == null
   })
   expect(authCardInline).toBe(true)
+
+  const startingAgentSelect = await page.evaluate(() => {
+    const select = document.querySelector<HTMLElement>(".acpAgentSelect")
+    const selectStyle = select ? getComputedStyle(select) : null
+    const sweepStyle = select ? getComputedStyle(select, "::after") : null
+    return {
+      hasStartingClass: select?.classList.contains("acpAgentSelectStarting") === true,
+      cursor: selectStyle?.cursor,
+      sweepAnimationName: sweepStyle?.animationName,
+      startingTextVisible: document.body.textContent?.includes("Starting…") === true,
+    }
+  })
+  expect(startingAgentSelect.hasStartingClass
+    && startingAgentSelect.cursor === "progress"
+    && startingAgentSelect.sweepAnimationName === "acpAgentSelectSweep"
+    && !startingAgentSelect.startingTextVisible).toBe(true)
 
   await page.getByPlaceholder("value").fill("env-secret-token")
   await page.getByRole("button", {name: "Authenticate"}).click()
@@ -663,9 +700,9 @@ test("drives ACP composer config controls through the picker", async ({page}) =>
     const composerInput = document.querySelector(".acpComposerInput")
     const composerSend = document.querySelector(".acpComposerSend")
     const agentSelector = document.querySelector(".acpAgentSelector")
-    const agentIcon = document.querySelector(".acpAgentSelectorIcon")
-    const agentJbIcon = document.querySelector(".acpAgentSelectorIcon > *")
     const agentSelect = document.querySelector(".acpAgentSelect")
+    const agentItemIcon = document.querySelector(".acpAgentSelect .acpAgentSelectItemIcon")
+    const agentJbIcon = document.querySelector(".acpAgentSelect .acpAgentSelectItemIcon > *")
     const controlIds = ["mode", "model", "effort", "brave_mode", "think_more", "debug_mode"]
     const allControlsInsideComposer = composer != null && controlIds.every(id => {
       const control = document.querySelector(`[data-config-id="${id}"]`)
@@ -676,18 +713,22 @@ test("drives ACP composer config controls through the picker", async ({page}) =>
     const inputRect = composerInput?.getBoundingClientRect()
     const sendRect = composerSend?.getBoundingClientRect()
     const agentRect = agentSelector?.getBoundingClientRect()
+    const agentSelectRect = agentSelect?.getBoundingClientRect()
     return {
       legacyModeHidden: document.querySelector('[data-control-id="legacy-mode"]') == null
         && !document.body.textContent?.includes("No modes"),
       emptySelectHidden: document.querySelector('[data-config-id="empty_selector"]') == null,
-      agentTitleReplacedWithIcon: document.querySelector(".acpAgentSelectorLabel") == null
+      selectedAgentHasItemIcon: document.querySelector(".acpAgentSelectorIcon") == null
+        && document.querySelector(".acpAgentSelectorLabel") == null
+        && agentItemIcon != null
         && agentJbIcon != null
         && agentJbIcon.tagName.toLocaleLowerCase() === "jb-icon"
         && !Array.from(agentSelector?.children ?? []).some(child => child.classList.contains("acpAgentSelectorLabel") && child.textContent?.trim() === "Agent"),
-      agentIconWidth: agentIcon ? getComputedStyle(agentIcon).width : null,
+      agentIconWidth: agentItemIcon ? getComputedStyle(agentItemIcon).width : null,
       agentIconSvgWidth: agentJbIcon ? getComputedStyle(agentJbIcon).width : null,
       agentIconSrc: agentJbIcon?.getAttribute("src"),
       agentSelectAriaLabel: agentSelect?.getAttribute("aria-label"),
+      agentSelectAlignedWithComposer: composerRect != null && agentSelectRect != null && Math.abs(agentSelectRect.left - composerRect.left) <= 1,
       allControlsInsideComposer,
       controlsBelowInput: inputRect != null && controlsRect != null && controlsRect.top >= inputRect.bottom,
       sendPinnedBottomRight: composerRect != null && sendRect != null
@@ -700,13 +741,14 @@ test("drives ACP composer config controls through the picker", async ({page}) =>
   })
   expect(controlsLayout.legacyModeHidden).toBe(true)
   expect(controlsLayout.emptySelectHidden).toBe(true)
-  expect(controlsLayout.agentTitleReplacedWithIcon
+  expect(controlsLayout.selectedAgentHasItemIcon
     && controlsLayout.agentIconWidth === "16px"
     && controlsLayout.agentIconSvgWidth === "16px"
     && controlsLayout.agentIconSrc?.includes("/__ij-icons/AcpChatIcons/") === true
     && controlsLayout.agentIconSrc?.endsWith("/webview/views/acp-chat/assets/acpChatAgent.svg") === true
     && controlsLayout.agentSelectAriaLabel === "Agent: Mock Agent").toBe(true)
   expect(controlsLayout.allControlsInsideComposer).toBe(true)
+  expect(controlsLayout.agentSelectAlignedWithComposer).toBe(true)
   expect(controlsLayout.controlsBelowInput).toBe(true)
   expect(controlsLayout.sendPinnedBottomRight).toBe(true)
   expect(controlsLayout.agentSelectorBelowComposer).toBe(true)
@@ -782,7 +824,7 @@ test("drives ACP composer config controls through the picker", async ({page}) =>
 
   const iconResourcesLoad = await page.evaluate(async () => {
     const iconSources = [
-      document.querySelector(".acpAgentSelectorIcon > *")?.getAttribute("src"),
+      document.querySelector(".acpAgentSelect .acpAgentSelectItemIcon > *")?.getAttribute("src"),
       document.querySelector('[data-config-id="model"] .acpControlIcon > *')?.getAttribute("src"),
       document.querySelector('[data-config-id="effort"] .acpControlIcon > *')?.getAttribute("src"),
       document.querySelector('[data-config-id="think_more"] .acpControlIcon > *')?.getAttribute("src"),

@@ -1286,20 +1286,6 @@ body {
   max-width: 100%;
   flex-wrap: wrap;
 }
-.acpAgentSelectorIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  width: 16px;
-  height: 16px;
-  color: var(--acp-text-muted);
-}
-.acpAgentSelectorIcon > * {
-  display: block;
-  width: 16px;
-  height: 16px;
-}
 .acpAgentSelect {
   display: inline-flex;
   align-items: center;
@@ -1310,7 +1296,7 @@ body {
   background: var(--acp-bg-alt);
   color: var(--acp-text);
   border: 1px solid var(--acp-border);
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 3px 6px;
   font: inherit;
   cursor: pointer;
@@ -1318,6 +1304,49 @@ body {
 .acpAgentSelect:disabled {
   cursor: default;
   opacity: 0.6;
+}
+.acpAgentSelectStarting {
+  position: relative;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--acp-accent) 55%, var(--acp-border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--acp-accent) 20%, transparent);
+  animation: acpAgentSelectPulse 1400ms ease-in-out infinite;
+}
+.acpAgentSelectStarting:disabled {
+  cursor: progress;
+  opacity: 1;
+}
+.acpAgentSelectStarting::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 0%, transparent 35%, color-mix(in srgb, var(--acp-accent) 24%, transparent) 50%, transparent 65%, transparent 100%);
+  transform: translateX(-100%);
+  animation: acpAgentSelectSweep 1400ms ease-in-out infinite;
+}
+@keyframes acpAgentSelectPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--acp-accent) 16%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--acp-accent) 36%, transparent);
+  }
+}
+@keyframes acpAgentSelectSweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  60%, 100% {
+    transform: translateX(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .acpAgentSelectStarting,
+  .acpAgentSelectStarting::after {
+    animation: none;
+  }
 }
 .acpAgentSelect > span {
   min-width: 0;
@@ -1680,7 +1709,6 @@ body {
   background: #fff;
   transform: translateX(17px);
 }
-.acpAgentStarting,
 .acpChatStatus {
   color: var(--acp-text-muted);
   min-width: 0;

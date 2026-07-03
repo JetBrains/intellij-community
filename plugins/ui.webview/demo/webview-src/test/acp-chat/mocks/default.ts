@@ -70,7 +70,7 @@ export default defineWebViewMock((context) => {
     async listAgents() {
       return {
         agents: [
-          { id: "junie", name: "Junie", icon: "junie" },
+          { id: "junie", name: "Junie", iconResourcePath: "webview/views/acp-chat/assets/acpChatJunie.svg" },
           { id: "mock-agent", name: "Mock Agent" },
           { id: "env-auth-agent", name: "Env Auth Agent" },
           { id: "oauth-auth-agent", name: "OAuth Auth Agent" },

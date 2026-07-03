@@ -1230,6 +1230,105 @@ function messageOf(error) {
 	return error instanceof Error ? error.message : String(error);
 }
 //#endregion
+//#region views/acp-chat/src/icons/acpChatAgent.svg
+var acpChatAgent_default = "" + new URL("assets/acpChatAgent.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatAgent_dark.svg
+var acpChatAgent_dark_default = "" + new URL("assets/acpChatAgent_dark.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatBrain.svg
+var acpChatBrain_default = "" + new URL("assets/acpChatBrain.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatBrain_dark.svg
+var acpChatBrain_dark_default = "" + new URL("assets/acpChatBrain_dark.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatDebug.svg
+var acpChatDebug_default = "" + new URL("assets/acpChatDebug.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatDebug_dark.svg
+var acpChatDebug_dark_default = "" + new URL("assets/acpChatDebug_dark.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatEffort.svg
+var acpChatEffort_default = "" + new URL("assets/acpChatEffort.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatEffort_dark.svg
+var acpChatEffort_dark_default = "" + new URL("assets/acpChatEffort_dark.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatJunie.svg
+var acpChatJunie_default = "" + new URL("assets/acpChatJunie.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatMode.svg
+var acpChatMode_default = "" + new URL("assets/acpChatMode.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatMode_dark.svg
+var acpChatMode_dark_default = "" + new URL("assets/acpChatMode_dark.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatProcessor.svg
+var acpChatProcessor_default = "" + new URL("assets/acpChatProcessor.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatProcessor_dark.svg
+var acpChatProcessor_dark_default = "" + new URL("assets/acpChatProcessor_dark.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatSend.svg
+var acpChatSend_default = "" + new URL("assets/acpChatSend.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatSend_dark.svg
+var acpChatSend_dark_default = "" + new URL("assets/acpChatSend_dark.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatShield.svg
+var acpChatShield_default = "" + new URL("assets/acpChatShield.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatShield_dark.svg
+var acpChatShield_dark_default = "" + new URL("assets/acpChatShield_dark.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatToggle.svg
+var acpChatToggle_default = "" + new URL("assets/acpChatToggle.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/icons/acpChatToggle_dark.svg
+var acpChatToggle_dark_default = "" + new URL("assets/acpChatToggle_dark.svg", import.meta.url).href;
+//#endregion
+//#region views/acp-chat/src/components/icons/AcpChatIconSet.ts
+var ACP_CHAT_ICONS = IconSet.define("AcpChatIcons");
+var ACP_CHAT_ICON_RESOURCE_ROOT = "webview/views/acp-chat/assets";
+var AGENT_ICON_PATH = iconResourcePath(acpChatAgent_default, "acpChatAgent.svg");
+iconResourcePath(acpChatJunie_default, "acpChatJunie.svg");
+var SEND_ICON_PATH = iconResourcePath(acpChatSend_default, "acpChatSend.svg");
+var CONTROL_ICON_PATHS = {
+	mode: iconResourcePath(acpChatMode_default, "acpChatMode.svg"),
+	model: iconResourcePath(acpChatProcessor_default, "acpChatProcessor.svg"),
+	effort: iconResourcePath(acpChatEffort_default, "acpChatEffort.svg"),
+	shield: iconResourcePath(acpChatShield_default, "acpChatShield.svg"),
+	debug: iconResourcePath(acpChatDebug_default, "acpChatDebug.svg"),
+	brain: iconResourcePath(acpChatBrain_default, "acpChatBrain.svg"),
+	toggle: iconResourcePath(acpChatToggle_default, "acpChatToggle.svg")
+};
+keepBundledIconAssets([
+	iconResourcePath(acpChatAgent_dark_default, "acpChatAgent_dark.svg"),
+	iconResourcePath(acpChatBrain_dark_default, "acpChatBrain_dark.svg"),
+	iconResourcePath(acpChatDebug_dark_default, "acpChatDebug_dark.svg"),
+	iconResourcePath(acpChatEffort_dark_default, "acpChatEffort_dark.svg"),
+	iconResourcePath(acpChatMode_dark_default, "acpChatMode_dark.svg"),
+	iconResourcePath(acpChatProcessor_dark_default, "acpChatProcessor_dark.svg"),
+	iconResourcePath(acpChatSend_dark_default, "acpChatSend_dark.svg"),
+	iconResourcePath(acpChatShield_dark_default, "acpChatShield_dark.svg"),
+	iconResourcePath(acpChatToggle_dark_default, "acpChatToggle_dark.svg")
+]);
+function acpControlIconPath(kind) {
+	return CONTROL_ICON_PATHS[kind];
+}
+function acpIconSrc(path) {
+	return ACP_CHAT_ICONS.src(path);
+}
+function iconResourcePath(assetUrl, fileName) {
+	const cleanAssetUrl = assetUrl.split("?", 1)[0];
+	const assetsPathStart = cleanAssetUrl.lastIndexOf("/assets/");
+	if (assetsPathStart >= 0) return `${ACP_CHAT_ICON_RESOURCE_ROOT}/${cleanAssetUrl.substring(assetsPathStart + 8)}`;
+	return `${ACP_CHAT_ICON_RESOURCE_ROOT}/${fileName}`;
+}
+function keepBundledIconAssets(paths) {
+	if (paths.length === 0) throw new Error("ACP chat icon assets are missing");
+}
+//#endregion
 //#region views/acp-chat/src/runtime/useAcpChat.ts
 var emptyPromptCapabilities = {
 	image: false,
@@ -1273,7 +1372,7 @@ function useAcpChat() {
 	(0, import_react.useEffect)(() => {
 		let cancelled = false;
 		acpBridgeHost.listAgents().then((result) => {
-			if (!cancelled) setAgents(result.agents);
+			if (!cancelled) setAgents(result.agents.map(agentInfoFromDto));
 		}).catch((error) => {
 			if (!cancelled) setStatus(errorText(error));
 		});
@@ -2271,107 +2370,15 @@ function extensionOf(name) {
 	const index = name.lastIndexOf(".");
 	return index >= 0 ? name.slice(index + 1).toLocaleLowerCase() : "";
 }
+function agentInfoFromDto(agent) {
+	return {
+		id: agent.id,
+		name: agent.name,
+		iconSrc: agent.iconResourcePath ? acpIconSrc(agent.iconResourcePath) : void 0
+	};
+}
 function errorText(error) {
 	return error instanceof Error ? error.message : String(error);
-}
-//#endregion
-//#region views/acp-chat/src/icons/acpChatAgent.svg
-var acpChatAgent_default = "" + new URL("assets/acpChatAgent.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatAgent_dark.svg
-var acpChatAgent_dark_default = "" + new URL("assets/acpChatAgent_dark.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatBrain.svg
-var acpChatBrain_default = "" + new URL("assets/acpChatBrain.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatBrain_dark.svg
-var acpChatBrain_dark_default = "" + new URL("assets/acpChatBrain_dark.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatDebug.svg
-var acpChatDebug_default = "" + new URL("assets/acpChatDebug.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatDebug_dark.svg
-var acpChatDebug_dark_default = "" + new URL("assets/acpChatDebug_dark.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatEffort.svg
-var acpChatEffort_default = "" + new URL("assets/acpChatEffort.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatEffort_dark.svg
-var acpChatEffort_dark_default = "" + new URL("assets/acpChatEffort_dark.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatJunie.svg
-var acpChatJunie_default = "" + new URL("assets/acpChatJunie.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatMode.svg
-var acpChatMode_default = "" + new URL("assets/acpChatMode.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatMode_dark.svg
-var acpChatMode_dark_default = "" + new URL("assets/acpChatMode_dark.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatProcessor.svg
-var acpChatProcessor_default = "" + new URL("assets/acpChatProcessor.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatProcessor_dark.svg
-var acpChatProcessor_dark_default = "" + new URL("assets/acpChatProcessor_dark.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatSend.svg
-var acpChatSend_default = "" + new URL("assets/acpChatSend.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatSend_dark.svg
-var acpChatSend_dark_default = "" + new URL("assets/acpChatSend_dark.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatShield.svg
-var acpChatShield_default = "" + new URL("assets/acpChatShield.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatShield_dark.svg
-var acpChatShield_dark_default = "" + new URL("assets/acpChatShield_dark.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatToggle.svg
-var acpChatToggle_default = "" + new URL("assets/acpChatToggle.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatToggle_dark.svg
-var acpChatToggle_dark_default = "" + new URL("assets/acpChatToggle_dark.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/components/icons/AcpChatIconSet.ts
-var ACP_CHAT_ICONS = IconSet.define("AcpChatIcons");
-var ACP_CHAT_ICON_RESOURCE_ROOT = "webview/views/acp-chat/assets";
-var AGENT_ICON_PATH = iconResourcePath(acpChatAgent_default, "acpChatAgent.svg");
-var JUNIE_ICON_PATH = iconResourcePath(acpChatJunie_default, "acpChatJunie.svg");
-var SEND_ICON_PATH = iconResourcePath(acpChatSend_default, "acpChatSend.svg");
-var CONTROL_ICON_PATHS = {
-	mode: iconResourcePath(acpChatMode_default, "acpChatMode.svg"),
-	model: iconResourcePath(acpChatProcessor_default, "acpChatProcessor.svg"),
-	effort: iconResourcePath(acpChatEffort_default, "acpChatEffort.svg"),
-	shield: iconResourcePath(acpChatShield_default, "acpChatShield.svg"),
-	debug: iconResourcePath(acpChatDebug_default, "acpChatDebug.svg"),
-	brain: iconResourcePath(acpChatBrain_default, "acpChatBrain.svg"),
-	toggle: iconResourcePath(acpChatToggle_default, "acpChatToggle.svg")
-};
-keepBundledIconAssets([
-	iconResourcePath(acpChatAgent_dark_default, "acpChatAgent_dark.svg"),
-	iconResourcePath(acpChatBrain_dark_default, "acpChatBrain_dark.svg"),
-	iconResourcePath(acpChatDebug_dark_default, "acpChatDebug_dark.svg"),
-	iconResourcePath(acpChatEffort_dark_default, "acpChatEffort_dark.svg"),
-	iconResourcePath(acpChatMode_dark_default, "acpChatMode_dark.svg"),
-	iconResourcePath(acpChatProcessor_dark_default, "acpChatProcessor_dark.svg"),
-	iconResourcePath(acpChatSend_dark_default, "acpChatSend_dark.svg"),
-	iconResourcePath(acpChatShield_dark_default, "acpChatShield_dark.svg"),
-	iconResourcePath(acpChatToggle_dark_default, "acpChatToggle_dark.svg")
-]);
-function acpControlIconPath(kind) {
-	return CONTROL_ICON_PATHS[kind];
-}
-function acpIconSrc(path) {
-	return ACP_CHAT_ICONS.src(path);
-}
-function iconResourcePath(assetUrl, fileName) {
-	const cleanAssetUrl = assetUrl.split("?", 1)[0];
-	const assetsPathStart = cleanAssetUrl.lastIndexOf("/assets/");
-	if (assetsPathStart >= 0) return `${ACP_CHAT_ICON_RESOURCE_ROOT}/${cleanAssetUrl.substring(assetsPathStart + 8)}`;
-	return `${ACP_CHAT_ICON_RESOURCE_ROOT}/${fileName}`;
-}
-function keepBundledIconAssets(paths) {
-	if (paths.length === 0) throw new Error("ACP chat icon assets are missing");
 }
 //#endregion
 //#region views/acp-chat/src/components/Select.tsx
@@ -2477,67 +2484,61 @@ function Select({ options, children, placeholder, className, triggerAriaLabel, .
 //#region views/acp-chat/src/components/AgentSelector.tsx
 var OPEN_ACP_CONFIG_VALUE = "__open_acp_config__";
 function AgentSelector(props) {
-	const placeholder = props.agents.length ? "Select an agent…" : "No agents in ~/.jetbrains/acp.json";
+	const placeholderText = props.agents.length ? "Select an agent…" : "No agents in ~/.jetbrains/acp.json";
 	const selectedAgent = props.agents.find((agent) => agent.id === props.selectedAgentId);
 	const options = props.agents.map((agent) => ({
 		value: agent.id,
 		label: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelectItem, { agent }),
 		textValue: agent.name
 	}));
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 		className: "acpAgentSelector",
-		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-				className: "acpAgentSelectorIcon",
-				title: "Agent",
-				"aria-hidden": "true",
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-icon", { src: acpIconSrc(AGENT_ICON_PATH) })
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
-				className: "acpAgentSelect",
-				value: props.selectedAgentId ?? "",
-				disabled: props.starting,
-				placeholder,
-				triggerAriaLabel: `Agent: ${selectedAgent?.name ?? placeholder}`,
-				options,
-				onValueChange: (value) => {
-					if (value === OPEN_ACP_CONFIG_VALUE) props.onOpenConfig();
-					else if (value) props.onSelect(value);
-				},
-				children: [
-					props.agents.map((agent, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectItem, {
-						value: agent.id,
-						textValue: agent.name,
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelectItem, { agent })
-					}, `${agent.id}-${index}`)),
-					props.agents.length > 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectSeparator, {}) : null,
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectItem, {
-						value: OPEN_ACP_CONFIG_VALUE,
-						textValue: "Open acp.json",
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-							className: "acpAgentSelectConfigItem",
-							children: "Open acp.json"
-						})
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+			className: props.starting ? "acpAgentSelect acpAgentSelectStarting" : "acpAgentSelect",
+			value: props.selectedAgentId ?? "",
+			disabled: props.starting,
+			placeholder: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelectContent, { name: placeholderText }),
+			triggerAriaLabel: `Agent: ${selectedAgent?.name ?? placeholderText}`,
+			options,
+			onValueChange: (value) => {
+				if (value === OPEN_ACP_CONFIG_VALUE) props.onOpenConfig();
+				else if (value) props.onSelect(value);
+			},
+			children: [
+				props.agents.map((agent, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectItem, {
+					value: agent.id,
+					textValue: agent.name,
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelectItem, { agent })
+				}, `${agent.id}-${index}`)),
+				props.agents.length > 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectSeparator, {}) : null,
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectItem, {
+					value: OPEN_ACP_CONFIG_VALUE,
+					textValue: "Open acp.json",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "acpAgentSelectConfigItem",
+						children: "Open acp.json"
 					})
-				]
-			}),
-			props.starting && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-				className: "acpAgentStarting",
-				children: "Starting…"
-			})
-		]
+				})
+			]
+		})
 	});
 }
 function AgentSelectItem(props) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AgentSelectContent, {
+		name: props.agent.name,
+		iconSrc: props.agent.iconSrc
+	});
+}
+function AgentSelectContent(props) {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 		className: "acpAgentSelectItemContent",
-		children: [props.agent.icon === "junie" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 			className: "acpAgentSelectItemIcon",
 			"aria-hidden": "true",
-			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-icon", { src: acpIconSrc(JUNIE_ICON_PATH) })
-		}) : null, /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-icon", { src: props.iconSrc ?? acpIconSrc(AGENT_ICON_PATH) })
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 			className: "acpAgentSelectItemName",
-			children: props.agent.name
+			children: props.name
 		})]
 	});
 }

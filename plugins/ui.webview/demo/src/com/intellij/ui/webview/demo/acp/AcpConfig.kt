@@ -35,13 +35,13 @@ internal data class AcpAgent(
   val command: String,
   val args: List<String>,
   val env: Map<String, String>,
-  val icon: String? = null,
+  val iconResourcePath: String? = null,
 )
 
 internal object AcpConfig {
   private const val JUNIE_AGENT_ID = "junie"
   private const val JUNIE_AGENT_NAME = "Junie"
-  private const val JUNIE_AGENT_ICON = "junie"
+  private const val JUNIE_AGENT_ICON_RESOURCE_PATH = "webview/views/acp-chat/assets/acpChatJunie.svg"
   private const val DEFAULT_CONFIG_TEXT = """{
   "agent_servers": {}
 }
@@ -91,7 +91,7 @@ internal object AcpConfig {
       command = junieExecutable,
       args = listOf("--acp=true"),
       env = emptyMap(),
-      icon = JUNIE_AGENT_ICON,
+      iconResourcePath = JUNIE_AGENT_ICON_RESOURCE_PATH,
     )
   }
 

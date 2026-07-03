@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import type { AgentInfo } from "../model/types"
-import { acpIconSrc, AGENT_ICON_PATH, JUNIE_ICON_PATH } from "./icons/AcpChatIconSet"
+import { acpIconSrc, AGENT_ICON_PATH } from "./icons/AcpChatIconSet"
 import { Select, SelectItem, SelectSeparator } from "./Select"
 
 const OPEN_ACP_CONFIG_VALUE = "__open_acp_config__"
@@ -13,20 +13,17 @@ export function AgentSelector(props: {
   onSelect: (agentId: string) => void
   onOpenConfig: () => void
 }) {
-  const placeholder = props.agents.length ? "Select an agent…" : "No agents in ~/.jetbrains/acp.json"
+  const placeholderText = props.agents.length ? "Select an agent…" : "No agents in ~/.jetbrains/acp.json"
   const selectedAgent = props.agents.find(agent => agent.id === props.selectedAgentId)
   const options = props.agents.map(agent => ({ value: agent.id, label: <AgentSelectItem agent={agent} />, textValue: agent.name }))
   return (
     <div className="acpAgentSelector">
-      <span className="acpAgentSelectorIcon" title="Agent" aria-hidden="true">
-        <jb-icon src={acpIconSrc(AGENT_ICON_PATH)} />
-      </span>
       <Select
-        className="acpAgentSelect"
+        className={props.starting ? "acpAgentSelect acpAgentSelectStarting" : "acpAgentSelect"}
         value={props.selectedAgentId ?? ""}
         disabled={props.starting}
-        placeholder={placeholder}
-        triggerAriaLabel={`Agent: ${selectedAgent?.name ?? placeholder}`}
+        placeholder={<AgentSelectContent name={placeholderText} />}
+        triggerAriaLabel={`Agent: ${selectedAgent?.name ?? placeholderText}`}
         options={options}
         onValueChange={value => {
           if (value === OPEN_ACP_CONFIG_VALUE) {
@@ -47,20 +44,22 @@ export function AgentSelector(props: {
           <span className="acpAgentSelectConfigItem">Open acp.json</span>
         </SelectItem>
       </Select>
-      {props.starting && <span className="acpAgentStarting">Starting…</span>}
     </div>
   )
 }
 
 function AgentSelectItem(props: { agent: AgentInfo }) {
+  return <AgentSelectContent name={props.agent.name} iconSrc={props.agent.iconSrc} />
+}
+
+function AgentSelectContent(props: { name: string; iconSrc?: string }) {
+  const iconSrc = props.iconSrc ?? acpIconSrc(AGENT_ICON_PATH)
   return (
     <span className="acpAgentSelectItemContent">
-      {props.agent.icon === "junie" ? (
-        <span className="acpAgentSelectItemIcon" aria-hidden="true">
-          <jb-icon src={acpIconSrc(JUNIE_ICON_PATH)} />
-        </span>
-      ) : null}
-      <span className="acpAgentSelectItemName">{props.agent.name}</span>
+      <span className="acpAgentSelectItemIcon" aria-hidden="true">
+        <jb-icon src={iconSrc} />
+      </span>
+      <span className="acpAgentSelectItemName">{props.name}</span>
     </span>
   )
 }

@@ -7,7 +7,7 @@ import { apiId, webView, type WebViewCallable, type WebViewImplementable } from 
 export interface AgentDto {
   id: string
   name: string
-  icon?: "junie"
+  iconResourcePath?: string
 }
 
 export interface AgentListDto {
