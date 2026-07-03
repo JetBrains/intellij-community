@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.openapi.util.Key
@@ -21,6 +21,8 @@ import com.intellij.psi.PsiTypeElement
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.PsiVariable
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.util.PsiTreeUtil
 
@@ -38,7 +40,7 @@ data class Duplicate(val pattern: List<PsiElement>, val candidate: List<PsiEleme
 class JavaDuplicatesFinder(pattern: List<PsiElement>, private val parametrizedExpressions: Set<PsiExpression> = emptySet()) {
 
   companion object {
-    private val ELEMENT_IN_PHYSICAL_FILE = Key<PsiElement>("ELEMENT_IN_PHYSICAL_FILE")
+    private val ELEMENT_IN_PHYSICAL_FILE = Key<SmartPsiElementPointer<PsiElement>>("ELEMENT_IN_PHYSICAL_FILE")
 
     /**
      * Ensures that all [PsiMember] elements in copied [root] will be linked to [PsiMember] in the original [root] element.
@@ -46,11 +48,11 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val parametrizedEx
      */
     fun linkCopiedClassMembersWithOrigin(root: PsiElement) {
       SyntaxTraverser.psiTraverser(root).filter(PsiMember::class.java).forEach { member ->
-        member.putCopyableUserData(ELEMENT_IN_PHYSICAL_FILE, member)
+        member.putCopyableUserData(ELEMENT_IN_PHYSICAL_FILE, SmartPointerManager.createPointer(member))
       }
     }
 
-    private fun getElementInPhysicalFile(element: PsiElement): PsiElement? = element.getCopyableUserData(ELEMENT_IN_PHYSICAL_FILE)
+    private fun getElementInPhysicalFile(element: PsiElement): PsiElement? = element.getCopyableUserData(ELEMENT_IN_PHYSICAL_FILE)?.element
 
   }
 
@@ -179,7 +181,8 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val parametrizedEx
 
   private fun areElementsEquivalent(pattern: PsiElement?, candidate: PsiElement?): Boolean {
     if (pattern?.isValid != true || candidate?.isValid != true) return false
-    return pattern.manager.areElementsEquivalent(getElementInPhysicalFile(pattern) ?: pattern, candidate)
+    val physicalPattern = getElementInPhysicalFile(pattern) ?: pattern
+    return pattern.manager.areElementsEquivalent(physicalPattern, candidate)
   }
 
   private fun canBeReplaced(pattern: PsiElement, candidate: PsiElement): Boolean {
