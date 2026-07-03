@@ -10,21 +10,27 @@ import com.intellij.ide.dnd.TransferableWrapper
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.terminal.frontend.toolwindow.impl.TerminalFilePathHandler.getPathAsText
 import com.intellij.terminal.frontend.view.TerminalView
+import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModel
 import com.intellij.util.asDisposable
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.TerminalCommandUsageStatistics
 import org.jetbrains.plugins.terminal.fus.TerminalInsertedContentSource
@@ -57,17 +63,25 @@ internal object TerminalDnDHandler {
   private fun getDropHandler(window: ToolWindowEx, coroutineScope: CoroutineScope): DnDDropHandler = DnDDropHandler { event ->
     val dataContext = getDataContext(event) ?: return@DnDDropHandler
     val terminalView = dataContext.getData(TerminalView.DATA_KEY)
+    // Scrolling model can be absent in the alternate buffer
+    val scrollingModel = dataContext.terminalEditor?.getUserData(TerminalOutputScrollingModel.KEY)
     if (terminalView != null) {
-      handleDropOnTerminalView(window.project, event, terminalView)
+      handleDropOnTerminalView(window.project, event, terminalView, scrollingModel)
     }
     else {
       handleDropOnTab(window, coroutineScope, event, dataContext)
     }
   }
 
-  private fun handleDropOnTerminalView(project: Project, event: DnDEvent, terminalView: TerminalView) {
+  private fun handleDropOnTerminalView(
+    project: Project,
+    event: DnDEvent,
+    terminalView: TerminalView,
+    scrollingModel: TerminalOutputScrollingModel?,
+  ) {
     val data = TerminalDropData(event)
     val context = getTerminalContext(terminalView) ?: return
+    val modalityState = ModalityState.current()
     val fileSource = if (event.attachedObject is DnDNativeTarget.EventInfo) {
       TerminalInsertedContentSource.EXTERNAL_APP
     }
@@ -98,6 +112,11 @@ internal object TerminalDnDHandler {
         fileSource = fileSource,
         processExecutable = processExecutable,
       )
+
+      withContext(Dispatchers.UI + modalityState.asContextElement()) {
+        IdeFocusManager.getInstance(project).requestFocusInProject(terminalView.preferredFocusableComponent, project)
+        scrollingModel?.scrollToCursor(true)
+      }
     }
   }
 
