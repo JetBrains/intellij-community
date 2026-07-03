@@ -1506,7 +1506,6 @@
         <action id="UIFreeze" internal="true" class="com.intellij.internal.UIFreezeAction"/>
         <action id="PooledFreeze" internal="true" class="com.intellij.internal.PooledFreezeAction"/>
         <separator/>
-        <action id="UISandboxAction" internal="true" class="com.intellij.internal.ui.sandbox.UISandboxAction"/>
         <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction">
           <abbreviation value="uii"/>
           <mouse-shortcut keymap="$default" keystroke="control alt button1"/>
