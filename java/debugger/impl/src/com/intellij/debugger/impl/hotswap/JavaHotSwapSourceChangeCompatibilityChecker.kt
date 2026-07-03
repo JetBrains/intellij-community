@@ -16,6 +16,7 @@ import com.intellij.psi.PsiDisjunctionType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiLambdaExpression
@@ -45,6 +46,13 @@ class JavaHotSwapSourceChangeCompatibilityChecker(project: Project) :
     val javaFile = file as? PsiJavaFile ?: unknownClassShapes("Expected PsiJavaFile, got ${file::class.java.name}")
     val typeNames = PsiTreeUtil.collectElementsOfType(javaFile, PsiClass::class.java).mapNotNullTo(hashSetOf()) { it.qualifiedName }
     return ResolutionFingerprint(javaFile.packageName, javaFile.importList?.text.orEmpty(), typeNames)
+  }
+
+  override fun createOldPsiFile(currentFile: PsiFile, oldContent: CharSequence): PsiFile? {
+    val javaFile = currentFile as? PsiJavaFile ?: return null
+    return PsiFileFactory.getInstance(javaFile.project)
+      .createFileFromText(javaFile.name, javaFile.language, oldContent, false, true, false, javaFile.virtualFile)
+      .also { it.putUserData(PsiFileFactory.ORIGINAL_FILE, javaFile) }
   }
 
   context(_: Context)

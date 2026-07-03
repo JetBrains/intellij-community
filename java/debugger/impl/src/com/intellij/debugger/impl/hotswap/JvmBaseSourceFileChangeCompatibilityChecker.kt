@@ -42,7 +42,7 @@ abstract class JvmBaseSourceFileChangeCompatibilityChecker(
   private fun classify(project: Project, file: VirtualFile, oldContent: CharSequence): HotSwapChangesCompatibility {
     val currentFile = PsiManager.getInstance(project).findFile(file) ?: return HotSwapChangesCompatibility.Unknown
     return classify(currentFile) {
-      oldContentCache.fetchClassShapes(file, oldContent)
+      oldContentCache.fetchClassShapes(currentFile, oldContent)
     }
   }
 
@@ -68,6 +68,8 @@ abstract class JvmBaseSourceFileChangeCompatibilityChecker(
    */
   context(_: Context)
   protected abstract fun buildClassShapes(file: PsiFile): Map<String, HotSwapClassShape>
+
+  protected abstract fun createOldPsiFile(currentFile: PsiFile, oldContent: CharSequence): PsiFile?
 
   protected fun unknownClassShapes(reason: String): Nothing {
     LOG.debug("Cannot build class shapes: $reason")
@@ -185,13 +187,14 @@ abstract class JvmBaseSourceFileChangeCompatibilityChecker(
     private val classShapes = SLRUMap<Key, ClassShapesBuildResult>(10, 10)
 
     // Can be called from multiple threads, but the calls are sequential.
-    fun fetchClassShapes(file: VirtualFile, oldContent: CharSequence): ClassShapesBuildResult? {
-      val key = Key(file.name, oldContent.toString())
+    fun fetchClassShapes(currentFile: PsiFile, oldContent: CharSequence): ClassShapesBuildResult? {
+      val key = Key(currentFile.name, oldContent.toString())
       synchronized(classShapes) {
         classShapes.get(key)?.let { return it }
       }
 
-      val psiFile = PsiFileFactory.getInstance(project).createFileFromText(key.fileName, fileType, key.oldText)
+      val psiFile = createOldPsiFile(currentFile, key.oldText)
+                    ?: PsiFileFactory.getInstance(project).createFileFromText(currentFile.name, fileType, key.oldText)
       val result = computeClassShapesBuildResult(psiFile) ?: return null
       synchronized(classShapes) {
         classShapes.get(key)?.let { return it }

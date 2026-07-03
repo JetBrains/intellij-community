@@ -6,6 +6,7 @@ import com.intellij.debugger.impl.hotswap.HotSwapSourceChangeCompatibilityChecke
 import com.intellij.debugger.impl.hotswap.JvmBaseSourceFileChangeCompatibilityChecker
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.xdebugger.impl.hotswap.HotSwapChangesCompatibility
@@ -753,6 +754,10 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       context(_: Context)
       override fun buildClassShapes(file: PsiFile): Map<String, HotSwapClassShape> {
         throw IndexNotReadyException.create()
+      }
+
+      override fun createOldPsiFile(currentFile: PsiFile, oldContent: CharSequence): PsiFile {
+        return PsiFileFactory.getInstance(project).createFileFromText(currentFile.name, KotlinFileType.INSTANCE, oldContent)
       }
     }
     DumbModeTestUtils.runInDumbModeSynchronously(project) {

@@ -11,6 +11,7 @@ import com.intellij.debugger.impl.hotswap.JvmBaseSourceFileChangeCompatibilityCh
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.xdebugger.impl.hotswap.SourceFileChangeCompatibilityChecker
 import org.jetbrains.annotations.ApiStatus
@@ -18,6 +19,9 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.analyzeCopy
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
+import org.jetbrains.kotlin.analysis.api.projectStructure.copyOrigin
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
@@ -51,6 +55,7 @@ import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtObjectLiteralExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
@@ -71,6 +76,13 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
         PsiTreeUtil.collectElementsOfType(ktFile, KtClassOrObject::class.java).mapNotNullTo(typeNames) { it.fqName?.asString() }
         PsiTreeUtil.collectElementsOfType(ktFile, KtTypeAlias::class.java).mapNotNullTo(typeNames) { it.fqName?.asString() }
         return ResolutionFingerprint(ktFile.packageFqName.asString(), ktFile.importList?.text.orEmpty(), typeNames)
+    }
+
+    override fun createOldPsiFile(currentFile: PsiFile, oldContent: CharSequence): PsiFile? {
+        val ktFile = currentFile as? KtFile ?: return null
+        return KtPsiFactory.contextual(ktFile, markGenerated = false)
+            .createFile(ktFile.name, oldContent.toString())
+            .also { it.putUserData(PsiFileFactory.ORIGINAL_FILE, ktFile) }
     }
 
     context(_: Context)
@@ -319,7 +331,7 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
         else -> false
     }
 
-    private fun KtLambdaExpression.signature(): Pair<List<String>, String> = analyze(this) {
+    private fun KtLambdaExpression.signature(): Pair<List<String>, String> = analyzeInContext {
         val symbol = functionLiteral.symbol
         val receiverType = symbol.receiverParameter?.returnType?.renderTypeSignature("type for Kotlin lambda receiver")
         val parameterTypes = listOfNotNull(receiverType)
@@ -351,13 +363,22 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
 
     private fun KtValVarKeywordOwner.isMutableProperty(): Boolean = valOrVarKeyword?.node?.elementType == KtTokens.VAR_KEYWORD
 
-    private fun KtCallableDeclaration.resolvedTypeSignature(typeDescription: String): String = analyze(this) {
+    private fun KtCallableDeclaration.resolvedTypeSignature(typeDescription: String): String = analyzeInContext {
         (symbol as? KaCallableSymbol)?.returnType?.renderTypeSignature(typeDescription)
     } ?: unknownClassShapes("Cannot resolve $typeDescription")
 
-    private fun KtElement.resolvedTypeSignature(typeReference: KtTypeReference?, typeDescription: String): String = analyze(this) {
+    private fun KtElement.resolvedTypeSignature(typeReference: KtTypeReference?, typeDescription: String): String = analyzeInContext {
         typeReference?.type?.renderTypeSignature(typeDescription)
     } ?: unknownClassShapes("Cannot resolve $typeDescription")
+
+    @OptIn(KaExperimentalApi::class)
+    private inline fun <R> KtElement.analyzeInContext(crossinline action: KaSession.() -> R): R {
+        return if (containingKtFile.copyOrigin == null) {
+            analyze(this, action)
+        } else {
+            analyzeCopy(this, KaDanglingFileResolutionMode.PREFER_SELF, action)
+        }
+    }
 
     @OptIn(KaExperimentalApi::class, KaNonPublicApi::class)
     context(session: KaSession)
