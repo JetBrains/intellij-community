@@ -376,6 +376,11 @@ var popupStyles = i`
   }
 `;
 var choiceStyles = i`
+  :host {
+    display: inline-flex;
+    vertical-align: middle;
+  }
+
   .choice {
     align-items: flex-start;
     color: var(--jb-text-color);
@@ -408,6 +413,13 @@ var choiceStyles = i`
     width: 16px;
   }
 
+  .mark::before {
+    box-sizing: border-box;
+    content: "";
+    flex: 0 0 auto;
+    opacity: 0;
+  }
+
   .checkbox .mark {
     border-radius: 3px;
   }
@@ -432,8 +444,7 @@ var choiceStyles = i`
     opacity: 0.72;
   }
 
-  .checkbox .native-check:checked + .mark::before {
-    content: "";
+  .checkbox .mark::before {
     border: solid currentColor;
     border-width: 0 2px 2px 0;
     height: 8px;
@@ -442,19 +453,29 @@ var choiceStyles = i`
     width: 4px;
   }
 
+  .checkbox .native-check:checked + .mark::before {
+    opacity: 1;
+  }
+
   .checkbox .native-check:indeterminate + .mark::before {
     background: currentColor;
-    content: "";
+    border: 0;
     height: 2px;
+    margin-top: 0;
+    opacity: 1;
+    transform: none;
     width: 8px;
   }
 
-  .radio .native-check:checked + .mark::before {
+  .radio .mark::before {
     background: currentColor;
     border-radius: 50%;
-    content: "";
     height: 6px;
     width: 6px;
+  }
+
+  .radio .native-check:checked + .mark::before {
+    opacity: 1;
   }
 `;
 //#endregion
@@ -2364,6 +2385,7 @@ function DslCell(props) {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 		className: [
 			"dslCell",
+			"webviewDemoNoWrapControls",
 			props.column ? "dslCellColumn" : "",
 			props.top ? "dslCellTop" : "",
 			props.className ?? ""
@@ -2670,7 +2692,7 @@ function UiDslShowcase() {
 		setSpinnerDouble((current) => formatDecimal(clamp((Number(current) || 0) + direction * .01, 0, 100)));
 	}
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "uiDslShowcasePage",
+		className: "uiDslShowcasePage webviewDemoFixedCanvas",
 		ref: pageRef,
 		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
 			className: "uiDslHeader",
@@ -2781,13 +2803,13 @@ function ExamplesSection(props) {
 						label: "CheckBox/RadioButton Group:",
 						cellClassName: "dslCellColumn",
 						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "dslControlLine dslIndented",
+							className: "dslControlLine dslIndented webviewDemoNoWrapControls",
 							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-checkbox", {
 								checked: "",
 								children: "CheckBox 1"
 							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DslInlineHelp, { text: "Context help popup bound to CheckBox 1." })]
 						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "dslControlLine dslIndented",
+							className: "dslControlLine dslIndented webviewDemoNoWrapControls",
 							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-checkbox", { children: "CheckBox 2" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BrowserLink, {
 								href: "https://www.jetbrains.com/help/idea/settings.html",
 								children: "How it works"
@@ -3194,7 +3216,7 @@ function CommentsSection(props) {
 								})]
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "dslControlLine",
+								className: "dslControlLine webviewDemoNoWrapControls",
 								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-text-field", { value: "textField3" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("jb-context-help", { text: "Context help related to the component, displayed in a popup" })]
 							})
 						]

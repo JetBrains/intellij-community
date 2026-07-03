@@ -122,7 +122,7 @@ function DslLabel(props: { children?: React.ReactNode, empty?: boolean }) {
 }
 
 function DslCell(props: { children: React.ReactNode, column?: boolean, top?: boolean, className?: string }) {
-  const classes = ["dslCell", props.column ? "dslCellColumn" : "", props.top ? "dslCellTop" : "", props.className ?? ""]
+  const classes = ["dslCell", "webviewDemoNoWrapControls", props.column ? "dslCellColumn" : "", props.top ? "dslCellTop" : "", props.className ?? ""]
     .filter(Boolean)
     .join(" ")
   return <div className={classes}>{props.children}</div>
@@ -404,7 +404,7 @@ function UiDslShowcase() {
   }
 
   return (
-    <div className="uiDslShowcasePage" ref={pageRef}>
+    <div className="uiDslShowcasePage webviewDemoFixedCanvas" ref={pageRef}>
       <header className="uiDslHeader">
         <div className="uiDslHeaderTitle">
           <h1>UI DSL Showcase</h1>
@@ -477,11 +477,11 @@ function ExamplesSection(props: { optionEnabled: boolean, bindValueRadio: string
 
       <DslGroup title="CheckBox/RadioButton examples">
         <DslRow label="CheckBox/RadioButton Group:" cellClassName="dslCellColumn">
-          <div className="dslControlLine dslIndented">
+          <div className="dslControlLine dslIndented webviewDemoNoWrapControls">
             <jb-checkbox checked="">CheckBox 1</jb-checkbox>
             <DslInlineHelp text="Context help popup bound to CheckBox 1." />
           </div>
-          <div className="dslControlLine dslIndented">
+          <div className="dslControlLine dslIndented webviewDemoNoWrapControls">
             <jb-checkbox>CheckBox 2</jb-checkbox>
             <BrowserLink href="https://www.jetbrains.com/help/idea/settings.html">How it works</BrowserLink>
           </div>
@@ -687,7 +687,7 @@ function CommentsSection(props: { commentClickStatus: string, setCommentClickSta
               <jb-text-field value="textField2"></jb-text-field>
               <span className="dslBottomComment">Bottom comment to textField2</span>
             </div>
-            <div className="dslControlLine">
+            <div className="dslControlLine webviewDemoNoWrapControls">
               <jb-text-field value="textField3"></jb-text-field>
               <jb-context-help text="Context help related to the component, displayed in a popup"></jb-context-help>
             </div>

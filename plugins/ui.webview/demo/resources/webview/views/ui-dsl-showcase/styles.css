@@ -1,5 +1,32 @@
 /* Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. */
 
+/* Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. */
+
+.webviewDemoHorizontalScrollRoot {
+  overflow: auto;
+}
+
+.webviewDemoFixedCanvasRoot {
+  min-width: var(--webview-demo-fixed-canvas-width, 960px);
+}
+
+.webviewDemoFixedCanvas {
+  min-width: var(--webview-demo-fixed-canvas-width, 960px);
+  width: max(100%, var(--webview-demo-fixed-canvas-width, 960px));
+}
+
+.webviewDemoNoWrapControls {
+  flex-wrap: nowrap;
+}
+
+.webviewDemoNoWrapControls > * {
+  flex-shrink: 0;
+}
+
+.webviewDemoNoWrapText {
+  white-space: nowrap;
+}
+
 .ui-dsl-showcase-root {
   background: var(--jb-bg-window, var(--ij-bg-window, #fff));
   color: var(--jb-text-color, var(--ij-text-primary, #1f2328));
@@ -7,15 +34,12 @@
   font-size: var(--jb-font-size, 13px);
   line-height: var(--jb-line-height, 1.35);
   margin: 0;
+  --webview-demo-fixed-canvas-width: 960px;
   user-select: none;
 }
 
-#root {
-  min-height: 100vh;
-}
-
 .uiDslShowcasePage {
-  --dsl-label-column: clamp(136px, 19vw, 230px);
+  --dsl-label-column: 220px;
   --dsl-row-gap: 8px;
   --dsl-control-gap: 8px;
   --dsl-width-group: 122px;
@@ -23,9 +47,7 @@
   display: grid;
   gap: 18px;
   min-height: 100vh;
-  min-width: 0;
   padding: 14px 18px 28px;
-  width: 100%;
 }
 
 .uiDslShowcasePage *,
@@ -144,7 +166,7 @@
 }
 
 .dslRow {
-  align-items: baseline;
+  align-items: start;
   display: grid;
   gap: 4px var(--dsl-control-gap);
   grid-template-columns: var(--dsl-label-column) minmax(0, 1fr) minmax(170px, max-content);
@@ -184,7 +206,6 @@
 .dslCell {
   align-items: center;
   display: flex;
-  flex-wrap: wrap;
   gap: var(--dsl-control-gap);
   min-height: var(--jb-control-height, 28px);
   min-width: 0;
@@ -208,9 +229,13 @@
 .dslControlLine {
   align-items: center;
   display: flex;
-  flex-wrap: wrap;
   gap: var(--dsl-control-gap);
+  min-height: var(--jb-control-height-compact, 22px);
   min-width: 0;
+}
+
+.uiDslShowcasePage :where(jb-checkbox, jb-radio) {
+  flex: 0 0 auto;
 }
 
 .dslIndented {
@@ -233,6 +258,7 @@
   align-self: baseline;
   min-width: 0;
   padding-top: 3px;
+  white-space: nowrap;
 }
 
 .dslRowComment {
@@ -646,62 +672,4 @@
 .uiDslShowcasePage :where(jb-text-field, jb-password-field, jb-number-field, jb-text-area, jb-select, jb-combobox, jb-slider)::part(select) {
   user-select: text;
 }
-
-@media (max-width: 720px) {
-  .uiDslShowcasePage {
-    --dsl-label-column: minmax(0, 1fr);
-    padding: 10px;
-  }
-
-  .uiDslHeader {
-    grid-template-columns: 1fr;
-  }
-
-  .dslRow,
-  .dslRow.dslRowNoLabel,
-  .dslRow.dslRowIndependent,
-  .dslRow.dslRowFullWidth {
-    grid-template-columns: 1fr;
-  }
-
-  .dslLabel {
-    justify-self: start;
-    padding-top: 0;
-    text-align: left;
-  }
-
-  .dslRightComment,
-  .dslRowComment {
-    grid-column: 1;
-  }
-
-  .dslParentGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .dslParentGrid .dslRow {
-    display: grid;
-    gap: 4px;
-    grid-template-columns: 1fr;
-  }
-
-  .dslParentGrid .dslLabel,
-  .dslParentGrid .dslCell,
-  .dslParentGrid .dslRightComment {
-    grid-column: 1;
-  }
-
-  .dslParentGrid .dslCell {
-    grid-template-columns: 1fr;
-  }
-
-  .dslThreeFields {
-    grid-template-columns: 1fr;
-  }
-
-  .dslCellInlineComment {
-    grid-template-columns: 1fr;
-  }
-}
-
 /*$vite$:1*/
