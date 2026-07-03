@@ -427,7 +427,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       };
       myDialog.setUndecorated(true);
       if (WindowRoundedCornersManager.isAvailable()) {
-        WindowRoundedCornersManager.setRoundedCorners(myDialog.getWindow());
+        WindowRoundedCornersManager.configure(myDialog);
       }
       ApplicationManager.getApplication().getMessageBus().connect(myDialog.getDisposable()).subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
         @Override
