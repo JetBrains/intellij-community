@@ -27,7 +27,7 @@ public final class WindowRoundedCornersManager {
 
   public static void configure(@NotNull DialogWrapper dialog) {
     if (isAvailable()) {
-      if ((OS.CURRENT == OS.macOS && StartupUiUtil.INSTANCE.isDarkTheme()) || OS.CURRENT == OS.Windows) {
+      if ((OS.CURRENT == OS.macOS && StartupUiUtil.INSTANCE.isDarkTheme()) || OS.CURRENT == OS.Windows || StartupUiUtil.isWaylandToolkit()) {
         setRoundedCorners(dialog.getWindow(), JBUI.CurrentTheme.Popup.borderColor(true));
         dialog.getRootPane().setBorder(PopupBorder.Factory.createEmpty());
       }
