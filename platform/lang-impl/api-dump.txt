@@ -1481,20 +1481,30 @@ f:com.intellij.codeInsight.navigation.UtilKt
 c:com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 - com.intellij.codeInsight.actions.BaseCodeInsightAction
 - com.intellij.openapi.project.DumbAware
+- sf:Companion:com.intellij.codeInsight.navigation.actions.GotoDeclarationAction$Companion
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- s:chooseAmbiguousTarget(com.intellij.openapi.editor.Editor,I,com.intellij.psi.search.PsiElementProcessor,java.lang.String,com.intellij.psi.PsiElement[]):Z
-- s:findAllTargetElements(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I):com.intellij.psi.PsiElement[]
-- s:findElementToShowUsagesOf(com.intellij.openapi.editor.Editor,I):com.intellij.psi.PsiElement
-- s:findTargetElement(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I):com.intellij.psi.PsiElement
-- s:findTargetElementsNoVS(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,Z):com.intellij.psi.PsiElement[]
+- sf:chooseAmbiguousTarget(com.intellij.openapi.editor.Editor,I,com.intellij.psi.search.PsiElementProcessor,java.lang.String,com.intellij.psi.PsiElement[]):Z
+- sf:findAllTargetElements(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I):com.intellij.psi.PsiElement[]
+- sf:findElementToShowUsagesOf(com.intellij.openapi.editor.Editor,I):com.intellij.psi.PsiElement
+- sf:findTargetElement(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I):com.intellij.psi.PsiElement
+- sf:findTargetElementsNoVS(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,Z):com.intellij.psi.PsiElement[]
 - getCtrlMouseData(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I):com.intellij.codeInsight.navigation.CtrlMouseData
 - p:getHandler():com.intellij.codeInsight.CodeInsightActionHandler
 - p:getHandler(com.intellij.openapi.actionSystem.DataContext):com.intellij.codeInsight.CodeInsightActionHandler
 - p:isValidForLookup():Z
-- s:startFindUsages(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,com.intellij.psi.PsiElement):V
-- s:startFindUsages(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.ui.awt.RelativePoint):V
+- sf:startFindUsages(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,com.intellij.psi.PsiElement):V
+- sf:startFindUsages(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.ui.awt.RelativePoint):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.codeInsight.navigation.actions.GotoDeclarationAction$Companion
+- f:chooseAmbiguousTarget(com.intellij.openapi.editor.Editor,I,com.intellij.psi.search.PsiElementProcessor,java.lang.String,com.intellij.psi.PsiElement[]):Z
+- f:findAllTargetElements(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I):com.intellij.psi.PsiElement[]
+- f:findElementToShowUsagesOf(com.intellij.openapi.editor.Editor,I):com.intellij.psi.PsiElement
+- f:findTargetElement(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I):com.intellij.psi.PsiElement
+- f:findTargetElementsNoVS(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,Z):com.intellij.psi.PsiElement[]
+- f:startFindUsages(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,com.intellij.psi.PsiElement):V
+- f:startFindUsages(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.ui.awt.RelativePoint):V
+- bs:startFindUsages$default(com.intellij.codeInsight.navigation.actions.GotoDeclarationAction$Companion,com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.ui.awt.RelativePoint,I,java.lang.Object):V
 f:com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyAction
 - com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 - <init>():V

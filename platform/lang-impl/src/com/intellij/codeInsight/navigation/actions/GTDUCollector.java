@@ -41,7 +41,7 @@ final class GTDUCollector extends CounterUsagesCollector {
   }
 
   static void recordPerformed(@NotNull GTDUChoice choice) {
-    PERFORMED.log(ContainerUtil.append(GotoDeclarationAction.getCurrentEventData(), CHOICE.with(choice)).toArray(new EventPair[0]));
+    PERFORMED.log(ContainerUtil.append(GotoDeclarationAction.getCurrentEventData$intellij_platform_lang_impl(), CHOICE.with(choice)).toArray(new EventPair[0]));
   }
 
   static void recordNavigated(@NotNull List<@NotNull EventPair<?>> eventData, @NotNull Class<?> navigationProviderClass) {
