@@ -10,14 +10,18 @@ import com.intellij.platform.lsp.api.stopClients
 import com.intellij.python.pyrefly.lsp.PyreflyLspIntegrationProvider
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.lsp.PyLspTool
-import com.intellij.python.pytools.ui.PyToolDetailConfigurableProvider
+import com.intellij.python.pytools.configuration.ConfigurablePyTool
 import com.intellij.python.pytools.ui.pyLspToolFeaturesSummary
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
+/**
+ * [Pyrefly](https://pyrefly.org/) — a fast Python type checker written in Rust by Meta, providing type
+ * checking and IDE features through a language server.
+ */
 @ApiStatus.Internal
-class PyreflyPyTool : PyLspTool<PyreflyConfiguration>(), PyToolDetailConfigurableProvider {
+class PyreflyPyTool : PyLspTool<PyreflyConfiguration>(), ConfigurablePyTool {
   override val presentableName: String = "Pyrefly"
   override val description: String get() = PyreflyBundle.message("pyrefly.tool.description")
   override val packageName: PyPackageName = PyPackageName.from("pyrefly")

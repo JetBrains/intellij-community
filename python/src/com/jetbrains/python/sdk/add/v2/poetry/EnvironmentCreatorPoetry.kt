@@ -14,7 +14,9 @@ import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
 import com.intellij.python.community.impl.poetry.common.poetryPath
+import com.intellij.python.pytools.PyTool
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.platform.util.progress.withProgressText
@@ -54,10 +56,10 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
   model: PythonMutableTargetAddInterpreterModel<P>,
   private val module: Module?,
   errorSink: ErrorSink,
-) : CustomNewEnvironmentCreator<P>("poetry", model, errorSink) {
+) : CustomNewEnvironmentCreator<P>(model, errorSink) {
   override val interpreterType: InterpreterType = InterpreterType.POETRY
+  override val pyTool: PyTool = PoetryPyTool.getInstance()
   override val toolValidator: ToolValidator<P> = model.poetryViewModel.toolValidator
-  override val installationVersion: String = "1.8.0"
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.poetryViewModel.poetryExecutable
   override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
     savePathForEelOnly(pathHolder) { path -> PropertiesComponent.getInstance().poetryPath = path.toString() }
@@ -129,7 +131,7 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
           inProjectEnv = isInProjectEnvFlow.value,
         )
       }
-      else -> PyResult.localizedError(PyBundle.message("target.is.not.supported", basePythonBinaryPath))
+      else -> PyResult.localizedError(message("target.is.not.supported", basePythonBinaryPath))
     }
   }
 
@@ -147,7 +149,7 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
   private fun addInProjectCheckbox(panel: Panel) {
     with(panel) {
       row("") {
-        checkBox(PyBundle.message("python.sdk.poetry.dialog.add.new.environment.in.project.checkbox"))
+        checkBox(message("python.sdk.poetry.dialog.add.new.environment.in.project.checkbox"))
           .bindSelected(isInProjectEnvProp)
       }
     }

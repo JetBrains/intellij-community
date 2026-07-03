@@ -7,10 +7,14 @@
     <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.impl.poetry.common"/>
     <module name="intellij.python.pyproject"/>
+    <module name="intellij.python.pytools"/>
     <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="Pythonid">
     <pySdkProvider implementation="com.intellij.python.community.impl.poetry.backend.sdk.PoetrySdkProvider"/>
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.poetry.PyPoetrySdkFlavorProvider"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <python.pytools.pyTool implementation="com.intellij.python.community.impl.poetry.backend.PoetryPyTool"/>
   </extensions>
 </idea-plugin>

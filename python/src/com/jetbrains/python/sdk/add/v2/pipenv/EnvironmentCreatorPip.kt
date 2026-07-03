@@ -4,7 +4,9 @@ package com.jetbrains.python.sdk.add.v2.pipenv
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.community.impl.pipenv.PipEnvPyTool
 import com.intellij.python.community.impl.pipenv.pipenvPath
+import com.intellij.python.pytools.PyTool
 import com.intellij.platform.util.progress.withProgressText
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyBundle.message
@@ -21,8 +23,9 @@ import com.jetbrains.python.sdk.pipenv.setupPipEnvSdkWithProgressReport
 import com.jetbrains.python.statistics.InterpreterType
 import java.nio.file.Path
 
-internal class EnvironmentCreatorPip<P : PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, errorSink: ErrorSink) : CustomNewEnvironmentCreator<P>("pipenv", model, errorSink) {
+internal class EnvironmentCreatorPip<P : PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, errorSink: ErrorSink) : CustomNewEnvironmentCreator<P>(model, errorSink) {
   override val interpreterType: InterpreterType = InterpreterType.PIPENV
+  override val pyTool: PyTool = PipEnvPyTool.getInstance()
   override val toolValidator: ToolValidator<P> = model.pipenvViewModel.toolValidator
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.pipenvViewModel.pipenvExecutable
   override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
@@ -40,7 +43,7 @@ internal class EnvironmentCreatorPip<P : PathHolder>(model: PythonMutableTargetA
           installPackages = false
         )
       }
-      else -> PyResult.localizedError(PyBundle.message("target.is.not.supported", basePythonBinaryPath))
+      else -> PyResult.localizedError(message("target.is.not.supported", basePythonBinaryPath))
     }
   }
 }

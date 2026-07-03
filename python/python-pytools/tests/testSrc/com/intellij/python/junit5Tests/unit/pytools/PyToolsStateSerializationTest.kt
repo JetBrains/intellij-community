@@ -5,6 +5,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
+import com.intellij.python.pytools.icons.PythonPyToolsIcons
 import com.intellij.configurationStore.serialize
 import com.jetbrains.python.packaging.PyPackageName
 import com.intellij.util.xmlb.XmlSerializer
@@ -77,6 +78,7 @@ internal class PyToolsStateSerializationTest {
       override val presentableName: String = "ruff"
       override val packageName: PyPackageName = PyPackageName.from("ruff")
       override val description: String = "ruff"
+      override val icon = PythonPyToolsIcons.Logo
     }
 
     // All tools at their defaults -> nothing to persist -> no .idea/pyLspTools.xml.

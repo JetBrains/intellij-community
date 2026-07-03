@@ -215,7 +215,7 @@ private fun buildPathTooltip(
  */
 private fun actionHintFor(kind: PathIconKind, latestVersion: String?): String? = when (kind) {
   PathIconKind.NONE -> null
-  PathIconKind.INSTALL -> PyToolsUiBundle.message("settings.external.tools.install.via.uv.tooltip")
+  PathIconKind.INSTALL -> PyToolsUiBundle.message("settings.external.tools.install.tooltip")
   PathIconKind.RESET -> PyToolsUiBundle.message("settings.external.tools.path.reset.tooltip")
   PathIconKind.UPGRADE -> if (latestVersion != null) {
     PyToolsUiBundle.message("settings.external.tools.path.upgrade.to.version.tooltip", latestVersion)

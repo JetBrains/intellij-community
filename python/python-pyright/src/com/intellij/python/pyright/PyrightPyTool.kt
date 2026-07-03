@@ -5,14 +5,18 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.lsp.PyLspTool
-import com.intellij.python.pytools.ui.PyToolDetailConfigurableProvider
+import com.intellij.python.pytools.configuration.ConfigurablePyTool
 import com.intellij.python.pytools.ui.pyLspToolFeaturesSummary
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
+/**
+ * [Pyright](https://microsoft.github.io/pyright/) — a fast static type checker for Python from
+ * Microsoft, providing type checking and language-server features such as completions and hovers.
+ */
 @ApiStatus.Internal
-class PyrightPyTool : PyLspTool<PyrightConfiguration>(), PyToolDetailConfigurableProvider {
+class PyrightPyTool : PyLspTool<PyrightConfiguration>(), ConfigurablePyTool {
   override val presentableName: String = "Pyright"
   override val description: String get() = PyrightBundle.message("pyright.tool.description")
   override val packageName: PyPackageName = PyPackageName.from("pyright")

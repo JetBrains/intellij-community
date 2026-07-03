@@ -15,5 +15,7 @@
     <orderEntry type="module" module-name="intellij.python.sdk" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.python.processOutput.common" />
+    <orderEntry type="module" module-name="intellij.python.community" />
+    <orderEntry type="module" module-name="intellij.python.pytools" />
   </component>
 </module>

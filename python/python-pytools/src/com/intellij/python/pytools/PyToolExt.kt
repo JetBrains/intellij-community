@@ -2,6 +2,7 @@ package com.intellij.python.pytools
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asNioPath
@@ -136,4 +137,35 @@ private fun PyTool.findExecutableInPath(state: PyToolsState.ToolEntry, executabl
 fun PyTool.findExecutableInPath(
   executableName: String = packageName.name,
   osFamily: EelOsFamily = LocalEelDescriptor.osFamily,
+): Path? = resolveExecutableOnPath(executableName, osFamily)
+
+/**
+ * Looks up [executableName] on the system PATH by its OS-specific binary name. This is how the
+ * External Tools settings page resolves tool executables (via [findExecutableInPath]); shared so
+ * other callers can resolve an installed executable the same way.
+ */
+fun resolveExecutableOnPath(
+  executableName: String,
+  osFamily: EelOsFamily = LocalEelDescriptor.osFamily,
 ): Path? = PathEnvironmentVariableUtil.findInPath(osFamily.getOsSpecificBinaryName(executableName))?.toPath()
+
+/**
+ * Installs this tool's executable into the environment described by [eel], using the first available
+ * [PyToolManager] (`uv tool install` when uv is present, otherwise a pip install via a system Python).
+ * Returns the resolved executable path on success.
+ */
+suspend fun PyTool.performToolInstallation(eel: EelApi): PyResult<Path> {
+  val manager = PyToolManagerProvider.managerFor(eel)
+                ?: return PyResult.localizedError(message("python.tool.install.no.installer", presentableName))
+  return manager.install(this)
+}
+
+/**
+ * Upgrades this tool to the latest version in the environment described by [eel], using the first
+ * available [PyToolManager]. Returns the resolved executable path on success.
+ */
+suspend fun PyTool.performToolUpgrade(eel: EelApi): PyResult<Path> {
+  val manager = PyToolManagerProvider.managerFor(eel)
+                ?: return PyResult.localizedError(message("python.tool.install.no.installer", presentableName))
+  return manager.upgrade(this)
+}

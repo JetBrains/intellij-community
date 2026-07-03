@@ -6,14 +6,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.lsp.PyLspTool
-import com.intellij.python.pytools.ui.PyToolDetailConfigurableProvider
+import com.intellij.python.pytools.configuration.ConfigurablePyTool
 import com.intellij.python.pytools.ui.pyLspToolFeaturesSummary
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
+/**
+ * [ty](https://github.com/astral-sh/ty) — an extremely fast Python type checker and language server
+ * written in Rust by Astral (currently in preview).
+ */
 @ApiStatus.Internal
-class TyPyTool : PyLspTool<TyConfiguration>(), PyToolDetailConfigurableProvider {
+class TyPyTool : PyLspTool<TyConfiguration>(), ConfigurablePyTool {
   override val presentableName: String = "ty"
   override val description: String get() = TyBundle.message("ty.tool.description")
   override val packageName: PyPackageName = PyPackageName.from("ty")

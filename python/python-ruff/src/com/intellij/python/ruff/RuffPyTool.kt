@@ -7,15 +7,20 @@ import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.statistics.PyToolFusSnapshot
 import com.intellij.python.pytools.lsp.PyLspTool
-import com.intellij.python.pytools.ui.PyToolDetailConfigurableProvider
+import com.intellij.python.pytools.configuration.ConfigurablePyTool
 import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.intellij.python.ruff.server.RuffLspIntegrationProvider
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
+/**
+ * [Ruff](https://docs.astral.sh/ruff/) — an extremely fast Python linter and code formatter written in
+ * Rust by Astral. It combines linting, import sorting, and formatting in a single tool, aiming to
+ * replace Flake8, isort, pyupgrade, and Black.
+ */
 @ApiStatus.Internal
-class RuffPyTool : PyLspTool<RuffConfiguration>(), PyToolDetailConfigurableProvider {
+class RuffPyTool : PyLspTool<RuffConfiguration>(), ConfigurablePyTool {
   override val presentableName: String = "Ruff"
   override val description: String get() = RuffBundle.message("ruff.tool.description")
   override val packageName: PyPackageName = PyPackageName.from("ruff")

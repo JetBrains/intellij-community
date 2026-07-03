@@ -42,7 +42,7 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
         EnvCheckerResult.SuggestToolInstallation(
           toolToInstall = toolName,
           pathPersister = pathPersister,
-          intentionName = PyBundle.message("sdk.create.custom.venv.install.fix.title.using.pip", toolName)
+          intentionName = PyBundle.message("sdk.create.custom.venv.install.fix.title", toolName)
         )
       } else baseCheckResult
     }

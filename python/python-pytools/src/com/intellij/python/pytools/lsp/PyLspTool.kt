@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.statistics.PyToolFusSnapshot
-import javax.swing.Icon
 
 /**
  * Base for every LSP-backed [PyTool]. Captures the shared, non-UI wiring around a per-project
@@ -18,9 +17,6 @@ import javax.swing.Icon
 abstract class PyLspTool<C : PyLspToolConfiguration<*>> : PyTool {
   /** Per-project settings service backing this tool — the single source of its configuration. */
   abstract fun configuration(project: Project): C
-
-  /** Icon shown for this tool's LSP server (status-bar widget, advertiser notification, ...). */
-  abstract val icon: Icon
 
   override fun migrateLegacyState(project: Project): PyToolsState.ToolEntry = configuration(project).migrateToPyToolState()
 

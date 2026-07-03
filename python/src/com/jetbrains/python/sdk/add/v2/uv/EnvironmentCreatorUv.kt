@@ -11,7 +11,9 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
+import com.intellij.python.uv.backend.UvPyTool
 import com.intellij.python.uv.backend.setUvExecutableLocal
+import com.intellij.python.pytools.PyTool
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
@@ -70,8 +72,9 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
   model: PythonMutableTargetAddInterpreterModel<P>,
   private val module: Module?,
   errorSink: ErrorSink,
-) : CustomNewEnvironmentCreator<P>("uv", model, errorSink) {
+) : CustomNewEnvironmentCreator<P>(model, errorSink) {
   override val interpreterType: InterpreterType = InterpreterType.UV
+  override val pyTool: PyTool = UvPyTool.getInstance()
   override val toolValidator: ToolValidator<P> = model.uvViewModel.toolValidator
   private val executableFlow = MutableStateFlow(model.uvViewModel.uvExecutable.get())
   private val pythonVersion: ObservableMutableProperty<Version?> = propertyGraph.property(null)

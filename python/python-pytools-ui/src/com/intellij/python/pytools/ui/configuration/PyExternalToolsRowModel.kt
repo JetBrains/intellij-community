@@ -22,7 +22,7 @@ import com.intellij.python.pytools.findExecutableInPath
 import com.intellij.python.pytools.findExecutableInSdk
 import com.jetbrains.python.sdk.pyInterpreterPresentation
 import com.intellij.python.pytools.ui.PyToolsUiBundle
-import com.intellij.python.pytools.ui.PyToolDetailConfigurableProvider
+import com.intellij.python.pytools.configuration.ConfigurablePyTool
 import com.intellij.python.pytools.ui.icons.PythonPytoolsUIIcons
 import com.jetbrains.python.Result
 import com.intellij.python.pytools.validateCustomPath
@@ -94,7 +94,7 @@ internal class ToolRow(
   var sdkAvailability: SdkAvailability? = null,
 ) {
   /** This tool's detail-panel provider, or `null` when the tool has no detail configurable. */
-  val detailConfigurableProvider: PyToolDetailConfigurableProvider? = tool as? PyToolDetailConfigurableProvider
+  val detailConfigurableProvider: ConfigurablePyTool? = tool as? ConfigurablePyTool
 }
 
 /**
@@ -148,15 +148,12 @@ internal enum class PathIconKind(val icon: Icon?) {
 
 /**
  * Compute the hover-only icon for a Path cell given the row's current state. The function is
- * deliberately pure: the caller supplies the live uv-availability snapshot (`null` while
- * detection is in flight) and the "is this tool uv-managed" predicate, so the renderer doesn't
- * need to know how those are sourced.
+ * deliberately pure: the caller supplies the "is an upgrade available" predicate, so the renderer
+ * doesn't need to know how it is sourced.
  */
 internal fun iconKindFor(
   toolRow: ToolRow?,
   detected: PathFieldValue?,
-  uvAvailable: Boolean?,
-  isUvManaged: (ToolRow) -> Boolean,
   isUpgradeAvailable: (ToolRow) -> Boolean,
 ): PathIconKind = when {
   toolRow == null -> PathIconKind.NONE
@@ -164,10 +161,11 @@ internal fun iconKindFor(
   // action there is "revert to auto-detection". Skip install / upgrade / info — none of them
   // apply to a user-pointed-at executable.
   detected is PathFieldValue.Custom -> PathIconKind.RESET
-  detected is PathFieldValue.NotFound && uvAvailable == true -> PathIconKind.INSTALL
-  detected is PathFieldValue.NotFound -> PathIconKind.NONE
+  // Offer install for any undiscovered tool; the installer uses uv when present and otherwise
+  // falls back to a pip install into a system Python.
+  detected is PathFieldValue.NotFound -> PathIconKind.INSTALL
   toolRow.version == null -> PathIconKind.NONE
-  isUvManaged(toolRow) && isUpgradeAvailable(toolRow) -> PathIconKind.UPGRADE
+  isUpgradeAvailable(toolRow) -> PathIconKind.UPGRADE
   // Otherwise no actionable icon — the path text + version tooltip already conveys the state.
   else -> PathIconKind.NONE
 }

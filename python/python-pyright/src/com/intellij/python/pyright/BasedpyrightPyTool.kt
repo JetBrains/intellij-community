@@ -5,14 +5,18 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.lsp.PyLspTool
-import com.intellij.python.pytools.ui.PyToolDetailConfigurableProvider
+import com.intellij.python.pytools.configuration.ConfigurablePyTool
 import com.intellij.python.pytools.ui.pyLspToolFeaturesSummary
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
+/**
+ * [Basedpyright](https://docs.basedpyright.com/) — an open-source fork of Pyright that adds features
+ * such as stricter type inference and language-server capabilities otherwise exclusive to Pylance.
+ */
 @ApiStatus.Internal
-class BasedpyrightPyTool : PyLspTool<BasedpyrightConfiguration>(), PyToolDetailConfigurableProvider {
+class BasedpyrightPyTool : PyLspTool<BasedpyrightConfiguration>(), ConfigurablePyTool {
   override val presentableName: String = "Basedpyright"
   override val description: String get() = PyrightBundle.message("basedpyright.tool.description")
   override val packageName: PyPackageName = PyPackageName.from("basedpyright")

@@ -19,7 +19,7 @@ import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIcons
-import com.intellij.python.community.impl.pipenv.PIPENV_ICON
+import com.intellij.python.community.impl.pipenv.icons.PythonCommunityImplPipenvIcons
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImplPoetryCommonIcons
 import com.intellij.python.hatch.icons.PythonHatchIcons
@@ -145,7 +145,7 @@ enum class PythonSupportedEnvironmentManagers(
   VIRTUALENV(VENV_TOOL_ID, "sdk.create.custom.virtualenv", PythonVenvIcons.VirtualEnv, sshAutoUploadRequired = false, { true }),
   CONDA(CONDA_TOOL_ID, "sdk.create.custom.conda", PythonCommunityImplCondaIcons.Anaconda, sshAutoUploadRequired = false, { true }),
   POETRY(POETRY_TOOL_ID, "sdk.create.custom.poetry", PythonCommunityImplPoetryCommonIcons.Poetry, sshAutoUploadRequired = false),
-  PIPENV(PIPENV_TOOL_ID, "sdk.create.custom.pipenv", PIPENV_ICON, sshAutoUploadRequired = false),
+  PIPENV(PIPENV_TOOL_ID, "sdk.create.custom.pipenv", PythonCommunityImplPipenvIcons.PythonClosed, sshAutoUploadRequired = false),
   UV(UV_TOOL_ID, "sdk.create.custom.uv", PythonUvCommonIcons.UV, sshAutoUploadRequired = true, { true }),
   HATCH(HATCH_TOOL_ID, "sdk.create.custom.hatch", PythonHatchIcons.Logo, sshAutoUploadRequired = false),
   PYTHON(VENV_TOOL_ID, "sdk.create.custom.python", PythonParserIcons.PythonFile, sshAutoUploadRequired = false, { true })
