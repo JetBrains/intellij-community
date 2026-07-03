@@ -110,8 +110,12 @@ class LocalTerminalTtyConnector internal constructor(
   private suspend fun terminateLocalPosixProcess(process: UnixPtyProcess) {
     process.hangup()
     if (process.awaitExit(1.seconds) == null) {
-      LOG.info("Terminal hasn't been terminated by SIGHUP, performing default termination")
+      LOG.info("Terminal hasn't been terminated by SIGHUP, performing default termination (SIGTERM)")
       process.destroy()
+      if (process.awaitExit(1.seconds) == null) {
+        LOG.warn("Terminal hasn't been terminated by SIGTERM, performing forceful termination (SIGKILL!!!)")
+        process.destroyForcibly()
+      }
     }
   }
 
