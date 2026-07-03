@@ -448,42 +448,4 @@ object DynamicPlugins {
 
     return newState.first
   }
-
-  data class UnloadPluginOptions(
-    var disable: Boolean = true,
-    var isUpdate: Boolean = false,
-    var save: Boolean = true,
-    var requireMemorySnapshot: Boolean = false,
-    var waitForClassloaderUnload: Boolean = false,
-    var checkImplementationDetailDependencies: Boolean = true,
-    var unloadWaitTimeout: Int? = null,
-  ) {
-
-    fun withUpdate(isUpdate: Boolean): UnloadPluginOptions = also {
-      this.isUpdate = isUpdate
-    }
-
-    fun withWaitForClassloaderUnload(waitForClassloaderUnload: Boolean): UnloadPluginOptions = also {
-      this.waitForClassloaderUnload = waitForClassloaderUnload
-    }
-
-    fun withDisable(disable: Boolean): UnloadPluginOptions = also {
-      this.disable = disable
-    }
-
-    fun withRequireMemorySnapshot(requireMemorySnapshot: Boolean): UnloadPluginOptions = also {
-      this.requireMemorySnapshot = requireMemorySnapshot
-    }
-
-    fun withUnloadWaitTimeout(unloadWaitTimeout: Int): UnloadPluginOptions = also {
-      this.unloadWaitTimeout = unloadWaitTimeout
-    }
-
-    fun withSave(save: Boolean): UnloadPluginOptions = also {
-      this.save = save
-    }
-    fun withCheckImplementationDetailDependencies(checkImplementationDetailDependencies: Boolean): UnloadPluginOptions = also {
-      this.checkImplementationDetailDependencies = checkImplementationDetailDependencies
-    }
-  }
 }
