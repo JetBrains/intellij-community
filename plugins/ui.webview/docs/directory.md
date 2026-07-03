@@ -118,6 +118,7 @@ Use the same status legend everywhere; don't invent new icons.
 - ⬜ WebView IconSet loading for classloader-backed IntelliJ icons — [frontend/WebView-IconSet-Loading-Plan](frontend/WebView-IconSet-Loading-Plan.md)
 - ⬜ Frontend SDK Distribution (versioned npm + SDK tarball + compatibility check) — [frontend/WebView-Frontend-SDK-Distribution](frontend/WebView-Frontend-SDK-Distribution.md)
 - ⬜ Control Parity scaffold (`@jetbrains/intellij-webview-controls`) — [frontend/WebView-Control-Parity-Design](frontend/WebView-Control-Parity-Design.md)
+- ⬜ React Base UI controls package (`@jetbrains/intellij-webview-react-controls`) — [frontend/WebView-React-Base-UI-Controls-Plan](frontend/WebView-React-Base-UI-Controls-Plan.md)
 - ⬜ Bazel `webview_assets` rule (replace manual build) — [frontend/WebView-Frontend-Build-Strategy](frontend/WebView-Frontend-Build-Strategy.md)
 
 ### P3 — Strategic / long-term
@@ -157,6 +158,7 @@ Use the same status legend everywhere; don't invent new icons.
 - [Testability Without IDE](frontend/WebView-Frontend-Testability.md) — ⏳ browser mock testkit V1 implemented; covers `@jetbrains/intellij-webview-testkit`, TS/Bun preview entry points, package scripts, IDE Bun runtime setup, and Playwright smoke tests.
 - [IconSet Loading Plan](frontend/WebView-IconSet-Loading-Plan.md) — ⬜ design only.
 - [Control Parity Design](frontend/WebView-Control-Parity-Design.md) — ⬜ design only.
+- [React Base UI Controls Plan](frontend/WebView-React-Base-UI-Controls-Plan.md) — ⬜ design only for an optional React package layered over Base UI primitives.
 
 ### `interop/` — Swing ↔ WebView boundary
 - [Focus & Tab Interop](interop/WebView-Focus-Tab-Interop-Plan.md) — ✅ implemented (stages 1–6, 8); Stage 7 diagnostics ⏳.

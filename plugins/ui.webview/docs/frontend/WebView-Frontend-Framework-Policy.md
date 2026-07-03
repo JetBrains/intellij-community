@@ -14,7 +14,8 @@ The platform-level API should not force one application framework on every plugi
 @jetbrains/intellij-webview             framework-neutral runtime wrappers and types
 @jetbrains/intellij-webview-controls    shared controls as Web Components, implemented with Lit or plain custom elements
 @jetbrains/intellij-webview-preact      optional Preact helpers for JSX-based views
-@jetbrains/intellij-webview-react       optional React helpers only when React-specific integration is needed
+@jetbrains/intellij-webview-react          optional React helpers only when React-specific integration is needed
+@jetbrains/intellij-webview-react-controls optional React controls layered over Base UI primitives for complex React views
 ```
 
 The runtime package wraps the WebView bridge, not a UI framework.
@@ -178,6 +179,9 @@ The intended policy is to target modern IDE WebView engines with Lit 3 and no le
 - Lit is the preferred implementation tool for shared Web Components.
 - Preact is the preferred JSX authoring default for samples when a framework is helpful.
 - React is allowed for views with concrete React-only dependencies, but should not define the platform-wide control contract.
+- React-specific control packages must stay optional adapters; they may wrap React primitives such as Base UI, but must not replace the framework-neutral Web Component controls.
+- Inside a React view, prefer the framework-neutral `jb-*` Web Components for simple controls; reach for `@jetbrains/intellij-webview-react-controls` only for composite/portal controls (searchable combobox, menu, popover, dialog) that Base UI provides and the Web Component layer does not. Do not adopt React in a small IDE panel merely to obtain a basic control the Web Components already provide.
+- `@jetbrains/intellij-webview-react-controls` wraps Base UI, which is React-only, so it is a full-React adapter and does not target the Preact JSX default — another reason to keep simple controls on the neutral Web Component layer that Preact, Lit, and vanilla can all consume.
 
 ## References
 
