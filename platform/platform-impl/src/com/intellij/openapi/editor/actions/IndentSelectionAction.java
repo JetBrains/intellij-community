@@ -28,6 +28,7 @@ import java.util.List;
 public class IndentSelectionAction extends EditorAction {
   public IndentSelectionAction() {
     super(new Handler());
+    setInjectedContext(true);
   }
 
   private static final class Handler extends EditorWriteActionHandler.ForEachCaret {
