@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.k2.codeinsight">
+<idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java.frontback.psi"/>
@@ -356,6 +356,12 @@
                  description="Allows to disable usages and inheritors code vision for kotlin" />
     <applicationSettings service="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinEqualsHashCodeTemplatesManager"/>
     <applicationSettings service="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinToStringTemplatesManager"/>
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertFunctionTypeReceiverToParameterIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
   </extensions>
   <actions>
     <group id="KotlinGenerateGroup">

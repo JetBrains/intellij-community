@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.lombok.maven">
+<idea-plugin>
   <dependencies>
     <module name="intellij.maven"/>
     <module name="intellij.kotlin.maven"/>

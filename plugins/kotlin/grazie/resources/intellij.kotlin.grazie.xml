@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.grazie">
+<idea-plugin>
   <dependencies>
     <plugin id="tanvd.grazi"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->

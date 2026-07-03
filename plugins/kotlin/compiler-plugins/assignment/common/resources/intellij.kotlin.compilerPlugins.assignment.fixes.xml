@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.assignment">
+<idea-plugin>
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.psi"/>

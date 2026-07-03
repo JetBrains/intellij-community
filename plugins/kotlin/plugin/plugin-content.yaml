@@ -168,14 +168,7 @@
   - name: intellij.debugger.logpoints.kotlin
   - name: kotlin.plugin
   contentModules:
-  - name: intellij.kotlin.projectStructure
-  - name: intellij.kotlin.projectConfiguration.vcs
   - name: intellij.kotlin.scripting
-  - name: intellij.kotlin.copyright
-  - name: intellij.kotlin.coverage
-  - name: intellij.kotlin.i18n
-  - name: intellij.kotlin.git
-  - name: intellij.kotlin.grazie
   - name: intellij.kotlin.gradle.tooling
   - name: intellij.kotlin.lombok
   - name: intellij.kotlin.maven
@@ -197,50 +190,15 @@
   - name: intellij.kotlin.projectWizard.gradle
   - name: intellij.kotlin.projectWizard.maven
   - name: intellij.kotlin.projectWizard.compose
-  - name: intellij.kotlin.featuresTrainer
   - name: intellij.kotlin.jvm.decompiler
-  - name: intellij.kotlin.jvm
   - name: intellij.kotlin.base.scripting
   - name: intellij.kotlin.base.scripting.main.kts
   - name: intellij.kotlin.base.scripting.shared
   - name: intellij.kotlin.base.scripting.scratch.definition
-  - name: intellij.kotlin.codeInsight.fixes
-  - name: intellij.kotlin.codeInsight.intentions
-  - name: intellij.kotlin.codeInsight
-  - name: intellij.kotlin.codeInsight.liveTemplates
-  - name: intellij.kotlin.codeInsight.postfixTemplates
-  - name: intellij.kotlin.codeInsight.structuralSearch
-  - name: intellij.kotlin.completion.impl
   - name: intellij.kotlin.jvm.debugger.evaluation
-  - name: intellij.kotlin.searching
   - name: intellij.kotlin.refactorings
   - name: intellij.kotlin.refactorings.rename
   - name: intellij.kotlin.navigation
-  - name: intellij.kotlin.codeInsight.lineMarkers
-  - name: intellij.kotlin.highlighting
-  - name: intellij.kotlin.compilerReferenceIndex
-  - name: intellij.kotlin.compilerPlugins.assignment.fixes
-  - name: intellij.kotlin.compilerPlugins.scripting
-  - name: intellij.kotlin.compilerPlugins.support.gradle
-  - name: intellij.kotlin.compilerPlugins.support.maven
-  - name: intellij.kotlin.compilerPlugins.allopen.maven
-  - name: intellij.kotlin.compilerPlugins.noarg.maven
-  - name: intellij.kotlin.compilerPlugins.noarg.gradle
-  - name: intellij.kotlin.compilerPlugins.samWithReceiver.maven
-  - name: intellij.kotlin.compilerPlugins.kapt
-  - name: intellij.kotlin.compilerPlugins.serialization
-  - name: intellij.kotlin.compilerPlugins.serialization.gradle
-  - name: intellij.kotlin.compilerPlugins.serialization.maven
-  - name: intellij.kotlin.compilerPlugins.dataframe.maven
-  - name: intellij.kotlin.compilerPlugins.lombok.maven
-  - name: intellij.kotlin.compilerPlugins.lombok.gradle
-  - name: intellij.kotlin.compilerPlugins.assignment.maven
-  - name: intellij.kotlin.compilerPlugins.assignment.gradle
-  - name: intellij.kotlin.compilerPlugins.powerAssert.gradle
-  - name: intellij.kotlin.injection
-  - name: kotlin.base.injection
-  - name: intellij.kotlin.j2k
-  - name: intellij.kotlin.performanceExtendedPlugin
 - name: lib/kotlinc.allopen-compiler-plugin.jar
   library: kotlinc.allopen-compiler-plugin
   files:
@@ -331,18 +289,144 @@
 - name: lib/modules/intellij.kotlin.codeInsight.base.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.base
+- name: lib/modules/intellij.kotlin.codeInsight.fixes.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight.fixes
 - name: lib/modules/intellij.kotlin.codeInsight.inspections.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.inspections
+- name: lib/modules/intellij.kotlin.codeInsight.intentions.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight.intentions
+- name: lib/modules/intellij.kotlin.codeInsight.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight
+- name: lib/modules/intellij.kotlin.codeInsight.lineMarkers.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight.lineMarkers
+- name: lib/modules/intellij.kotlin.codeInsight.liveTemplates.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight.liveTemplates
+- name: lib/modules/intellij.kotlin.codeInsight.postfixTemplates.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight.postfixTemplates
+- name: lib/modules/intellij.kotlin.codeInsight.structuralSearch.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight.structuralSearch
+- name: lib/modules/intellij.kotlin.compilerPlugins.allopen.maven.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.allopen.maven
+- name: lib/modules/intellij.kotlin.compilerPlugins.assignment.fixes.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.assignment.fixes
+- name: lib/modules/intellij.kotlin.compilerPlugins.assignment.gradle.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.assignment.gradle
+- name: lib/modules/intellij.kotlin.compilerPlugins.assignment.maven.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.assignment.maven
+- name: lib/modules/intellij.kotlin.compilerPlugins.dataframe.maven.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.dataframe.maven
+- name: lib/modules/intellij.kotlin.compilerPlugins.kapt.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.kapt
+- name: lib/modules/intellij.kotlin.compilerPlugins.lombok.gradle.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.lombok.gradle
+- name: lib/modules/intellij.kotlin.compilerPlugins.lombok.maven.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.lombok.maven
+- name: lib/modules/intellij.kotlin.compilerPlugins.noarg.gradle.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.noarg.gradle
+- name: lib/modules/intellij.kotlin.compilerPlugins.noarg.maven.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.noarg.maven
+- name: lib/modules/intellij.kotlin.compilerPlugins.powerAssert.gradle.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.powerAssert.gradle
+- name: lib/modules/intellij.kotlin.compilerPlugins.samWithReceiver.maven.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.samWithReceiver.maven
+- name: lib/modules/intellij.kotlin.compilerPlugins.scripting.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.scripting
+- name: lib/modules/intellij.kotlin.compilerPlugins.serialization.gradle.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.serialization.gradle
+- name: lib/modules/intellij.kotlin.compilerPlugins.serialization.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.serialization
+- name: lib/modules/intellij.kotlin.compilerPlugins.serialization.maven.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.serialization.maven
+- name: lib/modules/intellij.kotlin.compilerPlugins.support.gradle.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.support.gradle
+- name: lib/modules/intellij.kotlin.compilerPlugins.support.maven.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.support.maven
+- name: lib/modules/intellij.kotlin.compilerReferenceIndex.jar
+  contentModules:
+  - name: intellij.kotlin.compilerReferenceIndex
+- name: lib/modules/intellij.kotlin.completion.impl.jar
+  contentModules:
+  - name: intellij.kotlin.completion.impl
 - name: lib/modules/intellij.kotlin.completion.ml.jar
   contentModules:
   - name: intellij.kotlin.completion.ml
     libraries:
       completion-ranking-kotlin:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0/completion-ranking-kotlin-0.jar
+- name: lib/modules/intellij.kotlin.copyright.jar
+  contentModules:
+  - name: intellij.kotlin.copyright
+- name: lib/modules/intellij.kotlin.coverage.jar
+  contentModules:
+  - name: intellij.kotlin.coverage
+- name: lib/modules/intellij.kotlin.featuresTrainer.jar
+  contentModules:
+  - name: intellij.kotlin.featuresTrainer
+- name: lib/modules/intellij.kotlin.git.jar
+  contentModules:
+  - name: intellij.kotlin.git
+- name: lib/modules/intellij.kotlin.grazie.jar
+  contentModules:
+  - name: intellij.kotlin.grazie
+- name: lib/modules/intellij.kotlin.highlighting.jar
+  contentModules:
+  - name: intellij.kotlin.highlighting
+- name: lib/modules/intellij.kotlin.i18n.jar
+  contentModules:
+  - name: intellij.kotlin.i18n
+- name: lib/modules/intellij.kotlin.injection.jar
+  contentModules:
+  - name: intellij.kotlin.injection
 - name: lib/modules/intellij.kotlin.internal.jar
   contentModules:
   - name: intellij.kotlin.internal
+- name: lib/modules/intellij.kotlin.j2k.jar
+  contentModules:
+  - name: intellij.kotlin.j2k
+- name: lib/modules/intellij.kotlin.jvm.jar
+  contentModules:
+  - name: intellij.kotlin.jvm
+- name: lib/modules/intellij.kotlin.performanceExtendedPlugin.jar
+  contentModules:
+  - name: intellij.kotlin.performanceExtendedPlugin
+- name: lib/modules/intellij.kotlin.projectConfiguration.vcs.jar
+  contentModules:
+  - name: intellij.kotlin.projectConfiguration.vcs
+- name: lib/modules/intellij.kotlin.projectStructure.jar
+  contentModules:
+  - name: intellij.kotlin.projectStructure
+- name: lib/modules/intellij.kotlin.searching.jar
+  contentModules:
+  - name: intellij.kotlin.searching
+- name: lib/modules/kotlin.base.injection.jar
+  contentModules:
+  - name: kotlin.base.injection
 - name: lib/modules/kotlin.jvm.shared.jar
   contentModules:
   - name: kotlin.jvm.shared

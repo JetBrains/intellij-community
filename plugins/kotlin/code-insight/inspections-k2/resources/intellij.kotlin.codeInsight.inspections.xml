@@ -1138,23 +1138,14 @@
                      language="kotlin"
                      key="inspection.unnecessary.variable.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeinsight.intentions.RemoveEmptyPrimaryConstructorInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
-                     enabledByDefault="true"
-                     cleanupTool="true"
-                     level="WEAK WARNING"
-                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
-                     key="inspection.remove.empty.primary.constructor.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.RedundantLambdaArrowInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
-                     enabledByDefault="true"
-                     cleanupTool="true"
-                     level="WARNING"
-                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
-                     key="redundant.lambda.arrow" bundle="messages.KotlinBundle"/>
+      <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.RedundantLambdaArrowInspection"
+                       groupPath="Kotlin"
+                       groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                       enabledByDefault="true"
+                       cleanupTool="true"
+                       level="WARNING"
+                       language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                       key="redundant.lambda.arrow" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.RemoveExplicitTypeArgumentsInspection"
                      groupPath="Kotlin"
