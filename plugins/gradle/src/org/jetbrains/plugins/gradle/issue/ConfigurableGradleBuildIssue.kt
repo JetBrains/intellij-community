@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.issue
 
 import com.intellij.build.issue.ConfigurableBuildIssue
@@ -12,10 +12,17 @@ import org.jetbrains.plugins.gradle.issue.quickfix.GradleRecreateToolchainDownlo
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleSettingsQuickFix
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix
 import org.jetbrains.plugins.gradle.util.GradleBundle
+import org.jetbrains.plugins.gradle.util.GradleUtil
+import java.nio.file.Path
 
 abstract class ConfigurableGradleBuildIssue : ConfigurableBuildIssue() {
 
-  fun addGradleVersionQuickFix(projectPath: String, gradleVersion: GradleVersion) {
+  /**
+   * Adds a quick fix to update the Gradle wrapper version only if a Gradle wrapper properties file exists
+   * according to [GradleUtil.findDefaultWrapperPropertiesFile].
+   */
+  fun addGradleWrapperVersionQuickFix(projectPath: String, gradleVersion: GradleVersion) {
+    GradleUtil.findDefaultWrapperPropertiesFile(Path.of(projectPath)) ?: return
     val quickFix = GradleVersionQuickFix(projectPath, gradleVersion, true)
     val hyperlinkReference = addQuickFix(quickFix)
     addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.gradle.version", hyperlinkReference, gradleVersion.version))

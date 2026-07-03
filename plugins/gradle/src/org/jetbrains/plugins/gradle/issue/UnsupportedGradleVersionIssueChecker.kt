@@ -87,16 +87,16 @@ private class UnsupportedGradleVersionIssue(gradleVersion: GradleVersion?, proje
     if (gradleVersion == null) {
       addDescription(GradleBundle.message("gradle.build.issue.gradle.unsupported.unknown.description"))
       addDescription(GradleBundle.message("gradle.build.issue.gradle.recommended.description", recommendedGradleVersion.version))
-      addGradleVersionQuickFix(projectPath, recommendedGradleVersion)
+      addGradleWrapperVersionQuickFix(projectPath, recommendedGradleVersion)
     }
     else {
       addDescription(GradleBundle.message("gradle.build.issue.gradle.unsupported.description", gradleVersion.version))
       if (gradleVersion < oldestSupportedGradleVersion) {
         addDescription(GradleBundle.message("gradle.build.issue.gradle.supported.description", oldestSupportedGradleVersion.version))
-        addGradleVersionQuickFix(projectPath, oldestSupportedGradleVersion)
+        addGradleWrapperVersionQuickFix(projectPath, oldestSupportedGradleVersion)
       } else if (gradleVersion < recommendedGradleVersion) {
         addDescription(GradleBundle.message("gradle.build.issue.gradle.recommended.description", recommendedGradleVersion.version))
-        addGradleVersionQuickFix(projectPath, recommendedGradleVersion)
+        addGradleWrapperVersionQuickFix(projectPath, recommendedGradleVersion)
       }
     }
   }
@@ -112,6 +112,6 @@ class DeprecatedGradleVersionIssue(gradleVersion: GradleVersion, projectPath: St
       "gradle.build.issue.gradle.recommended.at.least.description",
       oldestNonDeprecatedGradleVersion.version)
     )
-    addGradleVersionQuickFix(projectPath, oldestNonDeprecatedGradleVersion)
+    addGradleWrapperVersionQuickFix(projectPath, oldestNonDeprecatedGradleVersion)
   }
 }

@@ -98,7 +98,7 @@ class GradleLatestMinorVersionBuildIssueTaskExecutionTest : GradleExecutionTestC
           We recommend upgrading to Gradle version $newVersion.
           
           Possible solutions:
-           - Switch to Gradle $newVersion and re-sync
+           - Change Gradle wrapper version to $newVersion and re-sync
            - Edit inspection settings
           """.trimIndent()
         )
