@@ -381,7 +381,8 @@ public class CodeCompletionHandlerBase {
                                         long startingTime,
                                         @NotNull CompletionProgressIndicator indicator,
                                         @NotNull OffsetsInFile hostCopyOffsets) {
-    CompletionServiceImpl.setCompletionPhase(new CompletionPhase.Synchronous(indicator));
+    CompletionPhase.Synchronous syncPhase = new CompletionPhase.Synchronous(indicator);
+    CompletionServiceImpl.setCompletionPhase(syncPhase);
 
     var future = startContributorThread(initContext, indicator, hostCopyOffsets, hasModifiers);
     if (future == null) {
@@ -408,6 +409,15 @@ public class CodeCompletionHandlerBase {
         indicator.closeAndFinish(true);
         CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
       }
+      return;
+    }
+
+    // A reentrant scheduleRestart() (e.g. the remote-dev stale->actual swap) can run inside the
+    // blockingWaitForFinish() event pump above: it cancels this indicator and replaces our Synchronous
+    // phase with a CommittingDocuments restart phase. Moving to BgCalculation now would dispose that
+    // restart phase (CommittingDocuments.dispose -> closeAndFinish -> hideLookup), tear down the lookup
+    // the restart reuses, and showLookup() below would then hit a disposed lookup. Leave the restart alone.
+    if (CompletionServiceImpl.getCompletionPhase() != syncPhase) {
       return;
     }
 
