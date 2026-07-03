@@ -360,11 +360,10 @@ object FusComponentProvider {
             eventLogProvider.isCharsEscapingRequired,
             EventFieldIds.FieldsIgnoredByMerge.toSet()
           ) {
-            // System-field injection moved here from StatisticsFileEventLogger:
-            // every queued event (incl. throttle-generated ones) is augmented once, before validate/enqueue.
             val lastEventTime = AtomicLong(0L)
             val lastEventCreatedTime = AtomicLong(0L)
             preEventWrite = { event ->
+              lastEventCreatedTime.compareAndSet(0L, event.time)
               event.also {
                 applyFusEventExtensions(
                   it,
