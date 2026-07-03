@@ -4,6 +4,6 @@
 data class Product(val id: String, val productName: String, val price: Int, val category: String)
 
 fun test(product: Product) {
-    (val myN<caret>ame = productName, val myCategory = category) = product
+    (val myName = productName, val myCategory = category) = product
 }
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.DestructuringFormFactory$ConvertNameBasedDestructuringToFullFormFix

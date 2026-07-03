@@ -1,10 +1,13 @@
 // "Convert to a full name-based destructuring form" "true"
 // COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
 
-data class User(val name: String, val age: Int)
+data class Point(val x: Int, val y: Int)
 
-fun test(user: User) {
-    user.let { (val name, val otherName = age) -> }
+fun test(p: Point) {
+    (
+        val xVal = x,
+        val yVal = y
+    ) = p
 }
 
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.ConvertNameBasedDestructuringShortFormToFullFix

@@ -61,7 +61,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.NameBasedDestructuringForm
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
-import org.jetbrains.kotlin.idea.codeinsight.utils.buildNameBasedDestructuringText
+import org.jetbrains.kotlin.idea.codeinsight.utils.applyNameBasedDestructuringForm
 import org.jetbrains.kotlin.idea.codeinsight.utils.extractDataClassParameters
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameterSymbol
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
@@ -90,7 +90,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectLiteralExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
@@ -315,24 +314,9 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
     private fun convertToFullFormNameBasedDestructuring(
         declaration: KtDestructuringDeclaration,
         nameBasedDestructuringForm: NameBasedDestructuringForm,
-        useExplicitMappings: Boolean,
-        entryNames: List<String>? = null,
+        entryNames: List<String>? = null
     ): KtDestructuringDeclaration {
-        val newText =
-            declaration.buildNameBasedDestructuringText(nameBasedDestructuringForm, useExplicitMappings, entryNames)
-                ?.takeIf { it != declaration.text } ?: return declaration
-
-        val newDeclaration = KtPsiFactory(declaration.project)
-            .createFile("fun extracted() { $newText }")
-            .declarations
-            .singleOrNull()
-            ?.let { it as? KtNamedFunction }
-            ?.bodyBlockExpression
-            ?.allChildren
-            ?.filterIsInstance<KtDestructuringDeclaration>()
-            ?.singleOrNull()
-            ?: return declaration
-        return declaration.replace(newDeclaration) as KtDestructuringDeclaration
+        return declaration.applyNameBasedDestructuringForm(nameBasedDestructuringForm, entryNames) ?: declaration
     }
 
     private fun insertDestructuringDeclarationAfterProperty(
@@ -358,7 +342,6 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             convertToFullFormNameBasedDestructuring(
                 declaration,
                 nameBasedDestructuringForm,
-                useExplicitMappings = false,
                 entryNames = entryNames,
             )
         } else {
@@ -566,8 +549,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                             convertToFullFormNameBasedDestructuring(
                                 destructuringDeclaration,
                                 nameBasedDestructuringPropertyNames,
-                                useExplicitMappings = false,
-                                entryNames = selectedDestructuringEntryNames,
+                                entryNames = selectedDestructuringEntryNames
                             )
                         }
                     }
@@ -586,7 +568,6 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                                 convertToFullFormNameBasedDestructuring(
                                     declaration,
                                     nameBasedDestructuringPropertyNames,
-                                    useExplicitMappings = false,
                                     entryNames = selectedDestructuringEntryNames,
                                 )
                             }

@@ -8467,6 +8467,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("commentsPreserve.kt")
+        public void testCommentsPreserve() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/commentsPreserve.kt");
+        }
+
         @TestMetadata("customComponentBeyondProperties.kt")
         public void testCustomComponentBeyondProperties() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/customComponentBeyondProperties.kt");
@@ -8535,6 +8540,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("nonDataClass.kt")
         public void testNonDataClass() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/nonDataClass.kt");
+        }
+
+        @TestMetadata("preserveComments.kt")
+        public void testPreserveComments() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/preserveComments.kt");
+        }
+
+        @TestMetadata("preserveFormatting.kt")
+        public void testPreserveFormatting() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/preserveFormatting.kt");
         }
     }
 

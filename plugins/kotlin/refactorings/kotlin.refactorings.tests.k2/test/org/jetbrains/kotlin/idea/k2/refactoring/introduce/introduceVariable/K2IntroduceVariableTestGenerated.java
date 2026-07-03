@@ -908,6 +908,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceLambdaAndCreateBlock2.kt");
         }
 
+        @TestMetadata("IntroduceNameBasedDestructuringCommentSaver.kt")
+        public void testIntroduceNameBasedDestructuringCommentSaver() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceNameBasedDestructuringCommentSaver.kt");
+        }
+
         @TestMetadata("IntroduceNameBasedDestructuringDeclarationComplete.kt")
         public void testIntroduceNameBasedDestructuringDeclarationComplete() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceNameBasedDestructuringDeclarationComplete.kt");

@@ -7,21 +7,28 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
-import org.jetbrains.kotlin.idea.codeinsight.utils.buildFullNameBasedDestructuringFormText
+import org.jetbrains.kotlin.idea.codeinsight.utils.NameBasedDestructuringForm
+import org.jetbrains.kotlin.idea.codeinsight.utils.applyNameBasedDestructuringForm
+import org.jetbrains.kotlin.idea.codeinsight.utils.extractPrimaryParameters
+import org.jetbrains.kotlin.idea.codeinsight.utils.isPositionalDestructuringType
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
-import org.jetbrains.kotlin.psi.KtPsiFactory
 
 internal object DestructuringFormFactory {
     val convertToFullFormOnShortFormNameMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.DestructuringShortFormNameMismatch ->
         val entry = diagnostic.psi as? KtDestructuringDeclarationEntry ?: return@ModCommandBased emptyList()
         val declaration = entry.parent as? KtDestructuringDeclaration ?: return@ModCommandBased emptyList()
 
-        val destructuringText = buildFullNameBasedDestructuringFormText(declaration) ?: return@ModCommandBased emptyList()
-        listOf(ConvertNameBasedDestructuringToFullFormFix(destructuringText, declaration))
+        if (declaration.isPositionalDestructuringType()) return@ModCommandBased emptyList()
+        val propertyNames = extractPrimaryParameters(declaration)
+            ?.take(declaration.entries.size)
+            ?.map { it.name }
+            ?: return@ModCommandBased emptyList()
+        listOf(ConvertNameBasedDestructuringToFullFormFix(propertyNames, declaration))
     }
 
-    private class ConvertNameBasedDestructuringToFullFormFix(val destructuringText: String, declaration: KtDestructuringDeclaration) :
+    private class ConvertNameBasedDestructuringToFullFormFix(val propertyNames: List<Name>, declaration: KtDestructuringDeclaration) :
         KotlinPsiUpdateModCommandAction.ElementContextless<KtDestructuringDeclaration>(declaration) {
         override fun getFamilyName(): String = KotlinBundle.message("convert.to.full.name.based.form.destructing")
         override operator fun invoke(
@@ -29,9 +36,7 @@ internal object DestructuringFormFactory {
             element: KtDestructuringDeclaration,
             updater: ModPsiUpdater
         ) {
-            val psiFactory = KtPsiFactory(context.project)
-            val newDestructuringDeclaration = psiFactory.createDestructuringDeclaration(destructuringText)
-            element.replace(newDestructuringDeclaration)
+            element.applyNameBasedDestructuringForm(NameBasedDestructuringForm(propertyNames, positionBased = false, useFullForm = true))
         }
     }
 }
