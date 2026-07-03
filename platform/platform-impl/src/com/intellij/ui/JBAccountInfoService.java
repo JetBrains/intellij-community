@@ -63,6 +63,34 @@ public interface JBAccountInfoService {
     return CompletableFuture.completedFuture(null);
   }
 
+  default @NotNull CompletableFuture<@NotNull AccessTokenResult> getGlobalAccessToken(@NotNull String audience) {
+    return getGlobalAccessToken(audience, false);
+  }
+
+  /**
+   * Issues (or returns a cached) global access token for the given {@code audience}.
+   * <p>
+   * When {@code forceTokenReissue} is {@code true}, the cached token (if any) is bypassed: a new access token is
+   * requested from the server and the freshly issued value replaces the cached one.
+   */
+  default @NotNull CompletableFuture<@NotNull AccessTokenResult> getGlobalAccessToken(@NotNull String audience, boolean forceTokenReissue) {
+    throw new UnsupportedOperationException();
+  }
+
+  default @NotNull CompletableFuture<@NotNull AccessTokenResult> getOrgAccessToken(@NotNull String audience, @NotNull String workspaceId) {
+    return getOrgAccessToken(audience, workspaceId, false);
+  }
+
+  /**
+   * Issues (or returns a cached) organization access token for the given {@code audience} and {@code workspaceId}.
+   * <p>
+   * When {@code forceTokenReissue} is {@code true}, the cached token (if any) is bypassed: a new access token is
+   * requested from the server and the freshly issued value replaces the cached one.
+   */
+  default @NotNull CompletableFuture<@NotNull AccessTokenResult> getOrgAccessToken(@NotNull String audience, @NotNull String workspaceId, boolean forceTokenReissue) {
+    throw new UnsupportedOperationException();
+  }
+
   /**
    * @deprecated Use {@link #startLoginSession} instead.
    */
@@ -241,6 +269,13 @@ public interface JBAccountInfoService {
     record LogoutFailed(@NlsSafe @NotNull String errorMessage) implements LogoutResult { }
   }
 
+  sealed interface AccessTokenResult permits AccessTokenResult.AccessToken,
+                                             AccessTokenResult.RequestFailed,
+                                             AuthRequired {
+    record RequestFailed(@Nullable Integer httpStatusCode, @NlsSafe @NotNull String message) implements AccessTokenResult { }
+    record AccessToken(@NotNull String accessToken) implements AccessTokenResult { }
+  }
+
   record JbaLicense(
     @NlsSafe @NotNull String licenseId,
     @NotNull String jbaUserId,
@@ -293,7 +328,7 @@ public interface JBAccountInfoService {
    * Returned in cases the method returning it is called while unauthenticated,
    * or when the current auth credentials have expired and need to be revalidated by {@link #startLoginSession signing in} again.
    */
-  enum AuthRequired implements LicenseListResult, AgreementAcceptanceResult {
+  enum AuthRequired implements LicenseListResult, AgreementAcceptanceResult, AccessTokenResult {
     INSTANCE;
 
     @Override
