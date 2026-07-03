@@ -163,6 +163,8 @@ jvm_library(
         "//java/java-impl:impl_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//plugins/devkit:devkit-plugin-main-noKotlin",
+        "//plugins/devkit:devkit-plugin-main-noKotlin_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//libraries/junit5",
