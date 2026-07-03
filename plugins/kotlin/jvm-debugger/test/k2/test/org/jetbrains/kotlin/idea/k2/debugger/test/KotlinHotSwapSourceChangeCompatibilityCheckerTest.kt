@@ -698,12 +698,49 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
 
   @Test
   fun `old file syntax error`() {
-    assertUnknown(
+    assertUnknownOnOldFileFailure(
       """
         class A { fun f(): Int = 1
       """.trimIndent(),
       """
         class A { fun f(): Int = 2 }
+      """.trimIndent(),
+    )
+  }
+
+  @Test
+  fun `current inferred property error type`() {
+    assertUnknown(
+      """
+       class A { val value: Int = 1 }
+      """.trimIndent(),
+      """
+      class A { val value = missingValue }
+    """.trimIndent(),
+    )
+  }
+
+  @Test
+  fun `current unresolved supertype error type`() {
+    assertUnknown(
+      """
+        interface B
+        class A : B
+      """.trimIndent(),
+      """
+        class A : Missing
+      """.trimIndent(),
+    )
+  }
+
+  @Test
+  fun `current nested error type`() {
+    assertUnknown(
+      """
+        class A { val value: List<String> = emptyList() }
+      """.trimIndent(),
+      """
+        class A { val value: List<Missing> = emptyList() }
       """.trimIndent(),
     )
   }
@@ -800,8 +837,12 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
     assertEquals(name, reason, (compatibility as HotSwapChangesCompatibility.Incompatible).reason)
   }
 
-  private fun assertUnknown(before: String, after: String) {
+  private fun assertUnknownOnOldFileFailure(before: String, after: String) {
     assertSame(HotSwapChangesCompatibility.Unknown, classify(before, after, validateOriginal = false))
+  }
+
+  private fun assertUnknown(before: String, after: String) {
+    assertSame(HotSwapChangesCompatibility.Unknown, classify(before, after))
   }
 
   private fun classify(before: String, after: String, validateOriginal: Boolean = true): HotSwapChangesCompatibility =
