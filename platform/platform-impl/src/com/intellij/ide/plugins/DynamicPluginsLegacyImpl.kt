@@ -63,9 +63,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.project.impl.ProjectManagerImpl
-import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
@@ -780,14 +778,6 @@ internal object DynamicPluginsLegacyImpl {
     }
   }
 
-  internal fun notify(@NlsContexts.NotificationContent text: String, notificationType: NotificationType, vararg actions: AnAction) {
-    val notification = UpdateCheckerFacade.getInstance().getNotificationGroupForPluginUpdateResults().createNotification(text, notificationType)
-    for (action in actions) {
-      notification.addAction(action)
-    }
-    notification.notify(null)
-  }
-
   // PluginId cannot be used to unload related resources because one plugin descriptor may consist of several sub descriptors,
   // each of them depends on presense of another plugin, here not the whole plugin is unloaded, but only one part.
   internal fun unloadModuleDescriptorNotRecursively(module: IdeaPluginDescriptorImpl) {
@@ -1200,7 +1190,7 @@ private fun saveMemorySnapshot(pluginId: PluginId): Boolean {
     }
   }
 
-  DynamicPluginsLegacyImpl.notify(
+  DynamicPlugins.notify(
     IdeBundle.message("memory.snapshot.captured.text", snapshotPath),
     NotificationType.WARNING,
     object : AnAction(IdeBundle.message("ide.restart.action")), DumbAware {

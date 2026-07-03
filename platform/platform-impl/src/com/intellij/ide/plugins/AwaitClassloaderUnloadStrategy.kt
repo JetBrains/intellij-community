@@ -208,7 +208,7 @@ private fun saveMemorySnapshot(pluginId: PluginId) {
     }
   }
 
-  DynamicPluginsLegacyImpl.notify(
+  DynamicPlugins.notify(
     IdeBundle.message("memory.snapshot.captured.text", snapshotPath),
     NotificationType.WARNING,
     object : AnAction(IdeBundle.message("ide.restart.action")), DumbAware {
