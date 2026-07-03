@@ -2,18 +2,14 @@
 package org.jetbrains.plugins.gradle.connection
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
-import com.intellij.execution.target.value.TargetValue
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider
-import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
 import com.intellij.openapi.project.Project
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.task.RunConfigurationTaskState
 import com.intellij.util.ThreeState
 import com.intellij.util.application
 import org.gradle.initialization.BuildCancellationToken
@@ -21,45 +17,32 @@ import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.ProjectConnection
 import org.gradle.tooling.internal.consumer.CancellationTokenInternal
-import org.gradle.tooling.internal.consumer.DefaultGradleConnector
 import org.gradle.util.GradleVersion
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.plugins.gradle.connection.GradleConnectorService.Companion.DISABLE_STOP_OLD_IDLE_DAEMONS_KEY
 import org.jetbrains.plugins.gradle.connection.GradleConnectorService.Companion.USE_PRODUCTION_DISPOSE_FOR_TESTS_KEY
-import org.jetbrains.plugins.gradle.connection.GradleConnectorService.Companion.USE_PRODUCTION_TTL_FOR_TESTS_KEY
 import org.jetbrains.plugins.gradle.execution.target.TargetGradleConnector
-import org.jetbrains.plugins.gradle.execution.target.maybeConvertToRemote
 import org.jetbrains.plugins.gradle.internal.daemon.getDaemonsStatus
 import org.jetbrains.plugins.gradle.internal.daemon.gracefulStopDaemons
 import org.jetbrains.plugins.gradle.internal.daemon.stopDaemons
-import org.jetbrains.plugins.gradle.service.project.DistributionFactoryExt
-import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import java.io.File
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
 import java.util.function.Function
 
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Internal
 internal class GradleConnectorServiceImpl(project: Project) : GradleConnectorService, Disposable {
+
   private val connectorsMap = ConcurrentHashMap<String, GradleProjectConnection>()
   private val cancellationTokens = ConcurrentCollectionFactory.createConcurrentSet<BuildCancellationToken>()
   private val knownGradleUserHomes = ConcurrentCollectionFactory.createConcurrentSet<String>()
 
   @Volatile
   private var shutdownStarted = ThreeState.UNSURE
-
-  override fun getKnownGradleUserHomes(): Set<String> {
-    return knownGradleUserHomes
-  }
 
   init {
     Runtime.getRuntime().addShutdownHook(object : Thread("Shutdown hook to get to know whether shutdown is started") {
@@ -75,12 +58,44 @@ internal class GradleConnectorServiceImpl(project: Project) : GradleConnectorSer
       knownGradleUserHomes += it
     }
 
-    val listener = object : GradleSettingsListener {
+    project.messageBus.connect(this).subscribe(GradleSettingsListener.TOPIC, object : GradleSettingsListener {
       override fun onServiceDirectoryPathChange(oldPath: String?, newPath: String?) {
         newPath?.let { knownGradleUserHomes.add(it) }
       }
-    }
-    project.messageBus.connect(this).subscribe(GradleSettingsListener.TOPIC, listener)
+    })
+  }
+
+  override fun getKnownGradleUserHomes(): Set<String> {
+    return knownGradleUserHomes
+  }
+
+  override fun <R> withGradleConnection(
+    projectPath: String,
+    taskId: ExternalSystemTaskId?,
+    executionSettings: GradleExecutionSettings?,
+    listener: ExternalSystemTaskNotificationListener?,
+    cancellationToken: CancellationToken?,
+    function: Function<ProjectConnection, R>,
+  ): R {
+    return ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
+      .spanBuilder("GradleConnection")
+      .use {
+        val buildCancellationToken = (cancellationToken as? CancellationTokenInternal)?.token
+        buildCancellationToken?.let { cancellationTokens.add(it) }
+        try {
+          val connectionParams = ConnectorParams(projectPath, executionSettings)
+          val connection = getConnection(connectionParams, taskId, listener)
+          return@use if (connection is NonClosableConnection) {
+            function.apply(connection)
+          }
+          else {
+            connection.use(function::apply)
+          }
+        }
+        finally {
+          buildCancellationToken?.let { cancellationTokens.remove(it) }
+        }
+      }
   }
 
   override fun dispose() {
@@ -157,7 +172,7 @@ internal class GradleConnectorServiceImpl(project: Project) : GradleConnectorSer
           }
         }
       }
-      val newConnector = createConnector(connectorParams, taskId, listener)
+      val newConnector = GradleConnectorFactory.createConnector(connectorParams, taskId, listener)
       val newConnection = newConnector.connect()
       check(newConnection != null) {
         "Can't create connection to the target project via gradle tooling api. Project path: '${connectorParams.projectPath}'"
@@ -176,35 +191,6 @@ internal class GradleConnectorServiceImpl(project: Project) : GradleConnectorSer
     return connectorParams == projectConnection.params
   }
 
-  override fun <R> withGradleConnection(
-    projectPath: String,
-    taskId: ExternalSystemTaskId?,
-    executionSettings: GradleExecutionSettings?,
-    listener: ExternalSystemTaskNotificationListener?,
-    cancellationToken: CancellationToken?,
-    function: Function<ProjectConnection, R>,
-  ): R {
-    return ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
-      .spanBuilder("GradleConnection")
-      .use {
-        val buildCancellationToken = (cancellationToken as? CancellationTokenInternal)?.token
-        buildCancellationToken?.let { cancellationTokens.add(it) }
-        try {
-          val connectionParams = ConnectorParams(projectPath, executionSettings)
-          val connection = getConnection(connectionParams, taskId, listener)
-          return@use if (connection is NonClosableConnection) {
-            function.apply(connection)
-          }
-          else {
-            connection.use(function::apply)
-          }
-        }
-        finally {
-          buildCancellationToken?.let { cancellationTokens.remove(it) }
-        }
-      }
-  }
-
   private class GradleProjectConnection(val params: ConnectorParams, val connector: GradleConnector, val connection: ProjectConnection) {
     fun disconnect() {
       connector.disconnect()
@@ -217,110 +203,13 @@ internal class GradleConnectorServiceImpl(project: Project) : GradleConnectorSer
     }
   }
 
-  @ApiStatus.Internal
-  internal data class ConnectorParams(
-    val projectPath: String,
-    val serviceDirectory: String?,
-    val distributionType: DistributionType?,
-    val gradleHome: String?,
-    val javaHome: String?,
-    val wrapperPropertyFile: String?,
-    val verboseProcessing: Boolean?,
-    val ttlMs: Int?,
-    val environmentConfigurationProvider: TargetEnvironmentConfigurationProvider?,
-    val taskState: RunConfigurationTaskState?,
-  ) {
-    constructor(projectPath: String, executionSettings: GradleExecutionSettings?) : this(
-      projectPath,
-      executionSettings?.serviceDirectory,
-      executionSettings?.distributionType,
-      executionSettings?.gradleHome,
-      executionSettings?.javaHome,
-      executionSettings?.wrapperPropertyFile,
-      executionSettings?.isVerboseProcessing,
-      executionSettings?.remoteProcessIdleTtlInMs?.toInt(),
-      executionSettings?.getEnvironmentConfigurationProvider(),
-      executionSettings?.getUserData(RunConfigurationTaskState.KEY)
-    )
-  }
-
   companion object {
     private val LOG = logger<GradleConnectorServiceImpl>()
 
     /** disable stop IDLE Gradle daemons on IDE project close. Applicable for Gradle versions w/o disconnect support (older than 6.5). */
     private val DISABLE_STOP_OLD_IDLE_DAEMONS: Boolean get() = java.lang.Boolean.getBoolean(DISABLE_STOP_OLD_IDLE_DAEMONS_KEY)
 
-    /** Some longer running tests require a longer idle time. */
-    private val USE_PRODUCTION_TTL_FOR_TESTS: Boolean get() = java.lang.Boolean.getBoolean(USE_PRODUCTION_TTL_FOR_TESTS_KEY)
-
     /** Some tests need the production project-dispose cleanup without changing Gradle daemon TTL. */
     private val USE_PRODUCTION_DISPOSE_FOR_TESTS: Boolean get() = java.lang.Boolean.getBoolean(USE_PRODUCTION_DISPOSE_FOR_TESTS_KEY)
-
-    /** Must stay strictly below ThreadLeakTracker's per-thread wait timeout to let Gradle daemon helper threads exit before leak checks fail. */
-    private const val TTL_FOR_TESTS = 5_000
-
-    @ApiStatus.Internal
-    internal fun createConnector(
-      connectorParams: ConnectorParams,
-      taskId: ExternalSystemTaskId?,
-      listener: ExternalSystemTaskNotificationListener?,
-    ): GradleConnector {
-      val connector: GradleConnector
-      if (connectorParams.environmentConfigurationProvider != null) {
-        connector = TargetGradleConnector(connectorParams.environmentConfigurationProvider, taskId, listener, connectorParams.taskState)
-      }
-      else {
-        connector = GradleConnector.newConnector()
-      }
-      val projectDir = File(connectorParams.projectPath)
-      // GradleExecutionSettings.serviceDirectory contains the path in IDE "host" system file format
-      val localPathToGradleUserHome = connectorParams.serviceDirectory
-
-      if (connectorParams.distributionType == DistributionType.LOCAL) {
-        // GradleExecutionSettings.gradleHome contains the path in IDE "host" system file format for compatibility reasons
-        val localPathToGradleHome = connectorParams.gradleHome
-        if (localPathToGradleHome != null) {
-          if (connector is TargetGradleConnector) {
-            val targetPathMapper = connectorParams.environmentConfigurationProvider?.pathMapper
-            val targetGradleHomePath = targetPathMapper.maybeConvertToRemote(localPathToGradleHome)
-            // can not use system dependant java.io.File to pass the value to target Gradle runner i.e. GradleConnector#useInstallation(java.io.File)
-            connector.useInstallation(TargetValue.create(localPathToGradleHome, resolvedPromise(targetGradleHomePath)))
-          }
-          else {
-            connector.useInstallation(File(localPathToGradleHome))
-          }
-        }
-      }
-      else if (connectorParams.distributionType == DistributionType.WRAPPED) {
-        if (connectorParams.wrapperPropertyFile != null) {
-          DistributionFactoryExt.setWrappedDistribution(connector, connectorParams.wrapperPropertyFile)
-        }
-      }
-
-      // Setup Grade user home if necessary
-      if (localPathToGradleUserHome != null) {
-        if (connector is TargetGradleConnector) {
-          val targetPathMapper = connectorParams.environmentConfigurationProvider?.pathMapper
-          val targetGradleUserHomePath = targetPathMapper.maybeConvertToRemote(localPathToGradleUserHome)
-          // can not use system dependant java.io.File to pass the value to target Gradle runner i.e. GradleConnector#useInstallation(java.io.File)
-          connector.useGradleUserHomeDir(TargetValue.create(localPathToGradleUserHome, resolvedPromise(targetGradleUserHomePath)))
-        }
-        else {
-          connector.useGradleUserHomeDir(File(localPathToGradleUserHome))
-        }
-      }
-      // Setup logging if necessary
-      if (connectorParams.verboseProcessing == true && connector is DefaultGradleConnector) {
-        connector.setVerboseLogging(true)
-      }
-      // Use a short daemon TTL during test execution.
-      val ttl = if (!USE_PRODUCTION_TTL_FOR_TESTS && application.isUnitTestMode) TTL_FOR_TESTS else connectorParams.ttlMs ?: -1
-      if (ttl > 0 && connector is DefaultGradleConnector) {
-        connector.daemonMaxIdleTime(ttl, TimeUnit.MILLISECONDS)
-      }
-
-      connector.forProjectDirectory(projectDir)
-      return connector
-    }
   }
 }
