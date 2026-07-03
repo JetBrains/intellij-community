@@ -132,13 +132,18 @@ private class CBRenderer(val configurable: Boolean) : ListCellRenderer<ChildItem
     override fun getAccessibleContext(): AccessibleContext? {
       if (accessibleContext == null) {
         accessibleContext = object : AccessibleJPanel() {
-          override fun getAccessibleName(): String? =
-            AccessibleContextUtil.combineAccessibleStrings(
+          override fun getAccessibleName(): String? {
+            val checkboxStateAccessibleName = when {
+              !ch.isVisible -> null
+              ch.isSelected -> UIBundle.message("checkbox.accessible.name.checked")
+              else -> UIBundle.message("checkbox.accessible.name.not.checked")
+            }
+
+            return AccessibleContextUtil.combineAccessibleStrings(
               txt.accessibleContext.accessibleName,
-              UIBundle.message(
-                if (ch.isSelected) "checkbox.accessible.name.checked" else "checkbox.accessible.name.not.checked"
-              )
+              checkboxStateAccessibleName
             )
+          }
 
           override fun getAccessibleDescription(): String? = txt.accessibleContext.accessibleDescription
 
