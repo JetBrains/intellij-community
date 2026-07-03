@@ -278,7 +278,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   }
 
   @Override
-  protected ComboPopup createPopup() {
+  protected @NotNull ComboPopup createPopup() {
     return hasSwingPopup(comboBox) ? new CustomComboPopup(comboBox) : new DarculaJBPopupComboPopup<>(comboBox);
   }
 
