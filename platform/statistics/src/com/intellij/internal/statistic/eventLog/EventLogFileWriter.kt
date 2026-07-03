@@ -29,8 +29,8 @@ open class EventLogFileWriter(
   private val maxFileSizeInBytes: Int,
   private val logFilePathProvider: (dir: Path) -> File,
   private val maxFileAge: Duration = 7.days,
-  ) : AutoCloseable {
-  
+) : AutoCloseable {
+
   @ApiStatus.Internal
   constructor(
     dir: Path,
@@ -44,6 +44,7 @@ open class EventLogFileWriter(
   private val lock = Any() // protects all mutable fields
   private val currentFileData: FileData by lazy { FileData(dir, logFilePathProvider) }
   private var closed = false
+  @Volatile
   protected var oldestExistingFile = -1L
   private var logFilesSupplier: Supplier<List<File>> = Supplier {
     val files = dir.toFile().listFiles()
@@ -137,54 +138,72 @@ open class EventLogFileWriter(
     }
     val now = System.currentTimeMillis()
     val activeLog = getActiveLogName()
-    val capturedByPath = HashMap<String, CapturedFileInfo>()
+    var oldestFile: Long = -1
+    var failedDeletingFiles = 0
     for (file in logs) {
       if (StringUtil.equals(file.name, activeLog)) continue
-      if (file.lastModified() < oldestAcceptable) {
-        capturedByPath[file.path] = CapturedFileInfo(file.length(), EventLogFile(file).getType(), readFileStats(file))
-      }
-    }
-
-    synchronized(lock) {
-      var oldestFile: Long = -1
-      var failedDeletingFiles = 0
-      for (file in logs) {
-        if (StringUtil.equals(file.name, activeLog)) continue
-        val lastModified = file.lastModified()
-        if (lastModified < oldestAcceptable) {
-          if (!file.delete()) {
-            System.err.println("Failed deleting old FUS file $file")
-            failedDeletingFiles ++
-          }
-          else {
-            val captured = capturedByPath[file.path]
-            if (captured != null) {
-              val ageMs = if (captured.stats.firstEventMs > 0) now - captured.stats.firstEventMs else -1L
-              logDeletedFile(
-                ageMs, captured.sizeBytes, captured.stats.firstEventMs, captured.stats.lastEventMs, captured.stats.eventCount, captured.buildType
-              )
-            }
-          }
+      val lastModified = file.lastModified()
+      if (lastModified < oldestAcceptable) {
+        val sizeBytes = file.length()
+        val buildType = EventLogFile(file).getType()
+        val firstEventMs = getFirstEventMs(file)
+        if (!file.delete()) {
+          System.err.println("Failed deleting old FUS file $file")
+          failedDeletingFiles ++
         }
-        else if (lastModified < oldestFile || oldestFile == -1L) {
-          oldestFile = lastModified
+        else {
+          val ageMs = if (firstEventMs > 0) now - firstEventMs else -1L
+          logDeletedFile(ageMs, now - lastModified, sizeBytes, firstEventMs, lastModified, buildType)
         }
       }
-      oldestExistingFile = oldestFile
-      eventLogSystemCollector?.logDeletedFilesCalculated(logs.size, logs.size - failedDeletingFiles, failedDeletingFiles)
+      else if (lastModified < oldestFile || oldestFile == -1L) {
+        oldestFile = lastModified
+      }
     }
+    oldestExistingFile = oldestFile
+    eventLogSystemCollector?.logDeletedFilesCalculated(logs.size, logs.size - failedDeletingFiles, failedDeletingFiles)
   }
 
   /** Logs a single file removed by [cleanUpOldFiles]. Overridable so tests can capture the reported metrics. */
   protected open fun logDeletedFile(
     ageMs: Long,
+    queuedMs: Long,
     sizeBytes: Long,
     firstEventMs: Long,
     lastEventMs: Long,
-    eventCount: Int,
     buildType: EventLogBuildType,
   ) {
-    eventLogSystemCollector?.logFileDeleted(ageMs, sizeBytes, firstEventMs, lastEventMs, eventCount, buildType)
+    eventLogSystemCollector?.logFileDeleted(ageMs, queuedMs, sizeBytes, firstEventMs, lastEventMs, buildType)
+  }
+
+  /**
+   * Reads only the first non-blank line of [file] and returns the `time` of that event, i.e. the timestamp of the
+   * oldest event in the file. The timestamp comes from the event itself (set on the client at log time), so it is
+   * portable across operating systems, unlike file-system creation time. Returns -1 if the file cannot be read or
+   * the line cannot be parsed.
+   */
+  private fun getFirstEventMs(file: File): Long {
+    try {
+      file.bufferedReader().use { reader ->
+        var line = reader.readLine()
+        while (line != null) {
+          if (line.isNotBlank()) return parseEventTime(line)
+          line = reader.readLine()
+        }
+      }
+    }
+    catch (_: IOException) {
+    }
+    return -1L
+  }
+
+  private fun parseEventTime(line: String): Long {
+    return try {
+      SerializationHelper.deserializeLogEvent(line).time
+    }
+    catch (_: Exception) {
+      -1L
+    }
   }
 
   fun cleanUp() {
@@ -209,50 +228,6 @@ open class EventLogFileWriter(
       currentFileData.getCountingOutputStream().flush()
     }
   }
-
-  /**
-   * Reads [file] once and returns the number of events (lines) it contains plus the timestamps of its
-   * oldest and newest events. Timestamps are taken from the events themselves (each event carries a `time`
-   * field set on the client at log time), which is portable across operating systems, unlike file-system
-   * creation time. [FileStats.eventCount] is -1 and the timestamps are -1 when the file cannot be read.
-   */
-  private fun readFileStats(file: File): FileStats {
-    var count = 0
-    var firstLine: String? = null
-    var lastLine: String? = null
-    try {
-      file.bufferedReader().use { reader ->
-        var line = reader.readLine()
-        while (line != null) {
-          if (line.isNotBlank()) {
-            if (firstLine == null) firstLine = line
-            lastLine = line
-            count++
-          }
-          line = reader.readLine()
-        }
-      }
-    }
-    catch (_: IOException) {
-      return FileStats(-1, -1L, -1L)
-    }
-    return FileStats(count, parseEventTime(firstLine), parseEventTime(lastLine))
-  }
-
-  /** Returns the `time` of the serialized event in [line], or -1 if it is null or cannot be parsed. */
-  private fun parseEventTime(line: String?): Long {
-    if (line == null) return -1L
-    return try {
-      SerializationHelper.deserializeLogEvent(line).time
-    }
-    catch (_: Exception) {
-      -1L
-    }
-  }
-
-  private data class FileStats(val eventCount: Int, val firstEventMs: Long, val lastEventMs: Long)
-
-  private class CapturedFileInfo(val sizeBytes: Long, val buildType: EventLogBuildType, val stats: FileStats)
 }
 
 private class CountingOutputStream(private val delegate: OutputStream) : OutputStream() {

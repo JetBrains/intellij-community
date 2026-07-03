@@ -242,17 +242,17 @@ class EventLogFileWriterTest {
       fileWriter.cleanUpOldFiles()
 
       val report = fileWriter.deletedReports.single()
-      assertEquals(2, report.eventCount)
       assertEquals(1000L, report.firstEventMs)
-      assertEquals(5000L, report.lastEventMs)
+      assertEquals(file.lastModified(), report.lastEventMs)
       assertEquals(file.length(), report.sizeBytes)
       assertEquals(EventLogBuildType.EAP, report.buildType)
       assertTrue { report.ageMs > 0 }
+      assertTrue { report.queuedMs > 0 }
     }
   }
 
   @Test
-  fun `test deleted file ignores blank lines`() {
+  fun `test deleted file skips blank lines when reading first event`() {
     val dir = tempDir.createDir()
     val file = oldContentFile(dir, "events-release.log", "\n" + eventLine(2000L) + "\n\n" + eventLine(9000L) + "\n\n")
 
@@ -260,15 +260,13 @@ class EventLogFileWriterTest {
       fileWriter.cleanUpOldFiles()
 
       val report = fileWriter.deletedReports.single()
-      assertEquals(2, report.eventCount)
       assertEquals(2000L, report.firstEventMs)
-      assertEquals(9000L, report.lastEventMs)
       assertEquals(EventLogBuildType.RELEASE, report.buildType)
     }
   }
 
   @Test
-  fun `test deleted file with unreadable content reports unknown timestamps`() {
+  fun `test deleted file with unreadable content reports unknown first event`() {
     val dir = tempDir.createDir()
     val file = oldContentFile(dir, "events-eap.log", "not a serialized event\n")
 
@@ -276,9 +274,7 @@ class EventLogFileWriterTest {
       fileWriter.cleanUpOldFiles()
 
       val report = fileWriter.deletedReports.single()
-      assertEquals(1, report.eventCount)
       assertEquals(-1L, report.firstEventMs)
-      assertEquals(-1L, report.lastEventMs)
       assertEquals(-1L, report.ageMs)
     }
   }
@@ -326,13 +322,13 @@ class TestEventLogFileWriter(dir: Path, files: List<File>)
 
   public override fun logDeletedFile(
     ageMs: Long,
+    queuedMs: Long,
     sizeBytes: Long,
     firstEventMs: Long,
     lastEventMs: Long,
-    eventCount: Int,
     buildType: EventLogBuildType,
   ) {
-    deletedReports.add(DeletedFileReport(ageMs, sizeBytes, firstEventMs, lastEventMs, eventCount, buildType))
+    deletedReports.add(DeletedFileReport(ageMs, queuedMs, sizeBytes, firstEventMs, lastEventMs, buildType))
   }
 
   override fun getActiveLogName(): String {
@@ -342,10 +338,10 @@ class TestEventLogFileWriter(dir: Path, files: List<File>)
 
 data class DeletedFileReport(
   val ageMs: Long,
+  val queuedMs: Long,
   val sizeBytes: Long,
   val firstEventMs: Long,
   val lastEventMs: Long,
-  val eventCount: Int,
   val buildType: EventLogBuildType,
 )
 
