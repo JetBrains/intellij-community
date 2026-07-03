@@ -5,25 +5,18 @@ import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
 
 /**
- * Represents a 20-byte SHA-1 hash of a Git object.
+ * Represents a Git object id.
  */
 internal class Oid private constructor(private val bytes: ByteArray) {
-  init {
-    require(bytes.size == HASH_LENGTH) { "Expected 160-bit SHA1 hash, got ${bytes.size * 8} bits" }
-  }
-
   companion object {
-    const val HASH_LENGTH = 20
-
     fun fromByteArray(bytes: ByteArray): Oid {
       return Oid(bytes.copyOf())
     }
 
     fun fromHex(hexString: String): Oid {
-      if (hexString.length != HASH_LENGTH * 2) {
-        throw IllegalArgumentException("Expected 40-character hex string, got ${hexString.length}")
-      }
-      val bytes = ByteArray(HASH_LENGTH) { i ->
+      require(hexString.length % 2 == 0) { "Expected even-length hex object id, got ${hexString.length}" }
+
+      val bytes = ByteArray(hexString.length / 2) { i ->
         hexString.substring(i * 2, i * 2 + 2).toInt(16).toByte()
       }
       return Oid(bytes)

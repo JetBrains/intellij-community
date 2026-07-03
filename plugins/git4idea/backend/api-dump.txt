@@ -228,7 +228,7 @@ e:git4idea.repo.GitObjectFormat
 - sf:SHA1:git4idea.repo.GitObjectFormat
 - sf:SHA256:git4idea.repo.GitObjectFormat
 - s:getEntries():kotlin.enums.EnumEntries
-- f:getHashLength():I
+- f:getHexSize():I
 - f:getValue():java.lang.String
 - sf:parse(java.lang.String):git4idea.repo.GitObjectFormat
 - sf:parseOrNull(java.lang.String):git4idea.repo.GitObjectFormat
