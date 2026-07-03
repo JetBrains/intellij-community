@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.core;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -26,6 +26,7 @@ import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiPattern;
+import com.intellij.psi.PsiPatternVariable;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.PsiReferenceExpression;
@@ -33,6 +34,7 @@ import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiSwitchBlock;
 import com.intellij.psi.PsiSwitchLabelStatementBase;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeTestPattern;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.JavaPsiPatternUtil;
@@ -499,6 +501,20 @@ public final class JavaPsiSwitchUtil {
                         recordComponentClass,
                         skipDominatingElements)) {
         return true;
+      }
+    }
+
+    if (PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, deconstructionComponent) &&
+        deconstructionComponent instanceof PsiTypeTestPattern testPattern) {
+      PsiPatternVariable patternVariable = testPattern.getPatternVariable();
+      if (patternVariable != null && patternVariable.getType() instanceof PsiPrimitiveType) {
+        if (!hasDominated(switchBlock,
+                          topLevelDeconstruction,
+                          deconstructionComponent,
+                          recordComponentClass,
+                          skipDominatingElements)) {
+          return true;
+        }
       }
     }
     return false;
