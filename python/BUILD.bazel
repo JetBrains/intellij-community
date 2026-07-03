@@ -1418,6 +1418,8 @@ jvm_library(
         "//python/python-ruff:ruff_test_lib",
         "//python/python-pyright:pyright",
         "//python/python-pyright:pyright_test_lib",
+        "//plugins/toml/core",
+        "//plugins/toml/core:core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.tests` end

@@ -11,13 +11,17 @@ import com.jetbrains.python.PythonMockSdk
 import com.jetbrains.python.PythonTestUtil
 import com.jetbrains.python.fixtures.PyLightProjectDescriptor
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
+import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
+import com.jetbrains.python.packaging.management.RequirementsProviderType
 import com.jetbrains.python.packaging.management.TestPackageManagerProvider
 import com.jetbrains.python.packaging.management.TestPackageRepository
+import com.jetbrains.python.packaging.management.TestPythonPackageManager
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.pythonSdk
+import kotlinx.coroutines.runBlocking
 
 abstract class PythonDependencyTestCase : BasePlatformTestCase() {
 
@@ -82,5 +86,17 @@ abstract class PythonDependencyTestCase : BasePlatformTestCase() {
 
   override fun getBasePath(): String {
     return "/community/python/testData/requirements/"
+  }
+
+  fun setDependencyRoot(providerType: RequirementsProviderType) {
+    val sdk = myFixture.project.pythonSdk!!
+    sdk.putUserData(TestPythonPackageManager.REQUIREMENTS_PROVIDER_KEY, providerType)
+    val moduleDir = myFixture.findFileInTempDir(providerType.filename).parent
+    ApplicationManager.getApplication().runWriteAction {
+      val modificator = sdk.sdkModificator
+      (modificator.sdkAdditionalData as PythonSdkAdditionalData).associatedModulePath = moduleDir.path
+      modificator.commitChanges()
+    }
+    runBlocking { PythonPackageManager.forSdk(myFixture.project, sdk).waitForInit() }
   }
 }

@@ -6,6 +6,10 @@ import org.jetbrains.annotations.VisibleForTesting
 
 @ApiStatus.Internal
 @VisibleForTesting
-enum class RequirementsProviderType {
-  REQUIREMENTS_TXT, SETUP_PY, ENVIRONMENT_YML, PYPROJECT_TOML
+enum class RequirementsProviderType(val filename: String) {
+  REQUIREMENTS_TXT("requirements.txt"),
+  SETUP_PY("setup.py"),
+  ENVIRONMENT_YML("environment.yml"),
+  PYPROJECT_TOML("pyproject.toml"),
+  PIPFILE("Pipfile")
 }

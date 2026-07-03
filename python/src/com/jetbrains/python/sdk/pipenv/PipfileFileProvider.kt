@@ -4,11 +4,9 @@ package com.jetbrains.python.sdk.pipenv
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.requirements.PyDependenciesFile
 import com.jetbrains.python.requirements.PyDependenciesFileProvider
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-internal class PipFileLockFileProvider : PyDependenciesFileProvider {
+internal class PipfileFileProvider : PyDependenciesFileProvider {
   override suspend fun fromFile(file: VirtualFile): PyDependenciesFile? {
-    return file.takeIf { it.name == PIP_FILE_LOCK }?.let { PipFileLockFile(it) }
+    return file.takeIf { it.name == PIP_FILE }?.let { PipfileFile(it) }
   }
 }
