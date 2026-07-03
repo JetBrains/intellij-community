@@ -465,7 +465,7 @@ object PluginManagerCore {
       val matchedVersion = descriptor.version?.let { OS_ARCH_DEPENDENCY_VERSION.matchEntire(it) }
       val osTag = matchedVersion?.groupValues[2] ?: return null
 
-      LOG.debug("Inferred OS for version: ${descriptor.version} of ${descriptor.pluginId} is $osTag")
+      LOG.warn("Required OS for ${descriptor.pluginId} version: ${descriptor.version} is $osTag")
 
       return OS.fromString(osTag)
         .takeIf { it != OS.Other }
@@ -485,7 +485,7 @@ object PluginManagerCore {
       val matchedVersion = descriptor.version?.let { OS_ARCH_DEPENDENCY_VERSION.matchEntire(it) }
       val archTag = matchedVersion?.groupValues[3] ?: return null
 
-      LOG.debug("Inferred arch for version: ${descriptor.version} of ${descriptor.pluginId} is $archTag")
+      LOG.warn("Required arch for ${descriptor.pluginId} version: ${descriptor.version} is $archTag")
 
       return CpuArch.fromString(archTag)
         .takeIf { it != CpuArch.OTHER && it != CpuArch.UNKNOWN }
