@@ -17,21 +17,16 @@ create_kotlinc_options(
 jvm_library(
     name = "k2",
     srcs = glob(
-        [
-            "src/**/*.kt",
-            "src/**/*.java",
-            "src/**/*.form",
-        ],
+        [],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_k2",
     module_name = "intellij.devkit.workspaceModel.k2",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
+    runtime_deps = [
         # do not sort,
         "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
         "//platform/core-api:core",
@@ -41,8 +36,6 @@ jvm_library(
         "//java/java-indexing-api:indexing",
         "//platform/workspace/storage",
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-analysis-api-provided",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
         "@lib//:workspace-model-codegen",
         "//platform/core-impl",
         "//java/openapi:java",

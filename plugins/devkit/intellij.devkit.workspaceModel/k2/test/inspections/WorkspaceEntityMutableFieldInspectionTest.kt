@@ -3,5 +3,4 @@ package com.intellij.devkit.workspaceModel.k2.inspections
 
 import com.intellij.devkit.workspaceModel.inspections.WorkspaceEntityMutableFieldInspectionBaseTest
 
-class WorkspaceEntityMutableFieldInspectionTest : WorkspaceEntityMutableFieldInspectionBaseTest() {
-}
+class WorkspaceEntityMutableFieldInspectionTest : WorkspaceEntityMutableFieldInspectionBaseTest()

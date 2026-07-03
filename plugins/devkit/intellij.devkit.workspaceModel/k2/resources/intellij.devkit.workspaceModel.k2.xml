@@ -8,24 +8,4 @@
   </dependencies>
 
   <resource-bundle>messages.DevKitWorkspaceModelBundle</resource-bundle>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <localInspection language="kotlin"
-                     shortName="WorkspaceImplAbsent"
-                     projectType="INTELLIJ_PLUGIN"
-                     groupBundle="messages.DevKitWorkspaceModelBundle"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.workspace.model"
-                     runForWholeFile="true"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.devkit.workspaceModel.k2.inspections.WorkspaceCodeAbsentInspection"
-                     key="inspection.workspace.impl.generation.display.name"/>
-    <localInspection language="kotlin"
-                     projectType="INTELLIJ_PLUGIN"
-                     groupBundle="messages.DevKitWorkspaceModelBundle"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.workspace.model"
-                     runForWholeFile="true"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.devkit.workspaceModel.k2.inspections.WorkspaceImplObsoleteInspection"
-                     key="inspection.workspace.obsolete.model.display.name"/>
-  </extensions>
 </idea-plugin>

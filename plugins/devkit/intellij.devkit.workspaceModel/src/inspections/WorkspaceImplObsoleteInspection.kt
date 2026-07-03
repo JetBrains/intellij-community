@@ -22,9 +22,9 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
-private val LOG = logger<WorkspaceImplObsoleteInspectionBase>()
+private val LOG = logger<WorkspaceImplObsoleteInspection>()
 
-abstract class WorkspaceImplObsoleteInspectionBase : WorkspaceInspectionBase() {
+class WorkspaceImplObsoleteInspection : WorkspaceInspectionBase() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid = object : KtVisitorVoid() {
     override fun visitClass(klass: KtClass) {
       val psiElementForHighlighting = klass.getPsiElementForHighlighting() ?: return
@@ -82,10 +82,5 @@ private fun KtClass.getGeneratedAnnotationVersion(annotationFqName: String): Int
 
 private fun KtClass.getApiVersion(): Int? {
   val annotationFqName = GeneratedCodeApiVersion::class.qualifiedName!!
-  return getGeneratedAnnotationVersion(annotationFqName)
-}
-
-private fun KtClass.getImplVersion(): Int? {
-  val annotationFqName = GeneratedCodeImplVersion::class.simpleName!!
   return getGeneratedAnnotationVersion(annotationFqName)
 }

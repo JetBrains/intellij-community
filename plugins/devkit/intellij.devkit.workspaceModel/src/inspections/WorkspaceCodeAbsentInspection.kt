@@ -12,14 +12,19 @@ import com.intellij.platform.workspace.storage.metadata.impl.MetadataStorageBase
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.workspaceModel.codegen.engine.SKIPPED_TYPES
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
-abstract class WorkspaceCodeAbsentInspectionBase : WorkspaceInspectionBase() {
-  protected abstract fun belongToSameModule(ktClass: KtClassOrObject, otherKtClass: KtClassOrObject): Boolean
+class WorkspaceCodeAbsentInspection : WorkspaceInspectionBase() {
+  fun belongToSameModule(ktClass: KtClassOrObject, otherKtClass: KtClassOrObject): Boolean =
+    analyze(ktClass) {
+      ktClass.kaModule == otherKtClass.kaModule
+    }
   
   private fun entitySourceIsPresentInMetadata(ktClass: KtClassOrObject): Boolean {
     val jvmName = KotlinPsiHeuristics.getJvmName(ktClass) ?: return true
