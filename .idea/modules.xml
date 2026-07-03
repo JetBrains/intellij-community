@@ -825,6 +825,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/testFramework/intellij.kotlin.base.testFramework.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/testFramework/intellij.kotlin.base.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/util/intellij.kotlin.base.util.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/util/intellij.kotlin.base.util.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/util/intellij.kotlin.base.util.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/util/intellij.kotlin.base.util.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/build-tools-runtime/intellij.kotlin.buildToolsRuntime.iml" filepath="$PROJECT_DIR$/plugins/kotlin/build-tools-runtime/intellij.kotlin.buildToolsRuntime.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/code-insight/kotlin.code-insight.k2/intellij.kotlin.codeInsight.iml" filepath="$PROJECT_DIR$/plugins/kotlin/code-insight/kotlin.code-insight.k2/intellij.kotlin.codeInsight.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/code-insight/api/intellij.kotlin.codeInsight.api.iml" filepath="$PROJECT_DIR$/plugins/kotlin/code-insight/api/intellij.kotlin.codeInsight.api.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fir/code-insight/intellij.kotlin.codeInsight.base.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fir/code-insight/intellij.kotlin.codeInsight.base.iml" />

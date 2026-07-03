@@ -1,0 +1,79 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.kotlin.buildToolsRuntime` start
+jvm_provided_library(
+    name = "libraries_kotlin_libraries-kotlin-tooling-core_provided",
+    lib = "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
+)
+
+jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
+    lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+)
+
+jvm_library(
+    name = "build-tools-runtime",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.buildToolsRuntime",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["@lib//:kotlinc-kotlin-build-tools-impl"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinc-kotlin-build-tools-api",
+        "//platform/util-class-loader:util-classLoader",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//plugins/kotlin/jsr223",
+        ":libraries_kotlin_libraries-kotlin-tooling-core_provided",
+        ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
+    ],
+)
+
+content_module_jar(module = ":build-tools-runtime")
+
+jvm_library(
+    name = "build-tools-runtime_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.buildToolsRuntime",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":build-tools-runtime",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//platform/util-class-loader:util-classLoader_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//plugins/kotlin/jsr223:jsr223_test_lib",
+    ],
+)
+### auto-generated section `build intellij.kotlin.buildToolsRuntime` end
+
+### auto-generated section `iml intellij.kotlin.buildToolsRuntime` start
+exports_files(
+    [
+        "intellij.kotlin.buildToolsRuntime.iml",
+        "resources/intellij.kotlin.buildToolsRuntime.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.buildToolsRuntime` end

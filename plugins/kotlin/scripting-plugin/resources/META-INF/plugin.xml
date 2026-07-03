@@ -5,6 +5,8 @@
 
   <description><![CDATA[
     Provides Kotlin JSR223 Scripting support to the IDE: kotlin scripting console and other features depending on Kotlin JSR223 Scripting.
+    The plugin also ships a self-contained Kotlin compiler toolchain based on the Kotlin Build Tools API. Any plugin can
+    use the toolchain to compile Kotlin in the IDE, and does not have to bundle a compiler of its own.
     ]]></description>
 
   <!-- kotlin.jsr223 is included in kotlin plugin as well. To avoid conflicts, it's private and is not included in the common namespace -->
@@ -14,5 +16,9 @@
     <module name="intellij.libraries.kotlinc.kotlin.script.runtime" loading="embedded"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.common" loading="embedded"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.jvm" loading="embedded"/>
+  </content>
+
+  <content namespace="jetbrains">
+    <module name="intellij.kotlin.buildToolsRuntime" loading="embedded"/>
   </content>
 </idea-plugin>

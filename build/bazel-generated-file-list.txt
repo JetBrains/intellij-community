@@ -1413,6 +1413,7 @@ plugins/kotlin/base/scripting/scripting.scratch.definition
 plugins/kotlin/base/statistics
 plugins/kotlin/base/testFramework
 plugins/kotlin/base/util
+plugins/kotlin/build-tools-runtime
 plugins/kotlin/bundled-compiler-plugins-support
 plugins/kotlin/code-insight/api
 plugins/kotlin/code-insight/descriptions
