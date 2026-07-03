@@ -10,9 +10,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.idea.devkit.DevKitBundle
 
-internal class ExtractModuleFix(private val contentModuleName: @NlsSafe String) : LocalQuickFix {
+internal class ExtractContentModuleDescriptorToJpsModuleFix(private val contentModuleName: @NlsSafe String) : LocalQuickFix {
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    project.service<ExtractToJpsModuleService>().extractToContentModule(descriptor)
+    project.service<ExtractToJpsModuleService>().extractContentModuleToJpsModule(descriptor)
   }
 
   override fun getFamilyName(): @IntentionFamilyName String {

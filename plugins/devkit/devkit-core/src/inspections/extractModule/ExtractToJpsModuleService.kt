@@ -7,8 +7,8 @@ import com.intellij.ide.extractModule.TargetModuleCreator
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.javaSourceRoots
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -49,10 +49,10 @@ import kotlin.io.path.createDirectories
 
 @Service(Service.Level.PROJECT)
 internal class ExtractToJpsModuleService(private val project: Project, private val coroutineScope: CoroutineScope) {
-  fun extractToContentModule(problemDescriptor: ProblemDescriptor) {
+  fun extractContentModuleToJpsModule(problemDescriptor: ProblemDescriptor) {
     coroutineScope.launch {
       val originalData = readAction {
-        computeOriginalData(problemDescriptor)
+        computeOriginalDataForExtractionToJpsModule(problemDescriptor)
       } ?: return@launch
       val actualData = withContext(Dispatchers.EDT) {
         ExtractToJpsModuleDialog(originalData).showAndGetResult()
@@ -61,7 +61,7 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
     }
   }
 
-  private suspend fun runExtraction(data: ExtractToContentModuleData) {
+  private suspend fun runExtraction(data: ExtractToJpsModuleData) {
     val filesThatDependOnDescriptor = readAction {
       PluginIdDependenciesIndex.findDescriptorsWithReferenceInDependenciesTag(
         GlobalSearchScopesCore.projectProductionScope(project),
@@ -81,8 +81,8 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
         data.descriptor.rename(this, "${data.newModuleName}.xml")
       }
       executeCommand(project = project) {
-        updateReferenceInPluginXml(data.pluginXmlFile, data.originalContentModuleName, data.newModuleName)
-        updateReferencesInDependenciesTags(filesThatDependOnDescriptor, data.originalContentModuleName, data.newModuleName)
+        updateReferenceToContentModuleInPluginXml(data.pluginXmlFile, data.originalContentModuleName, data.newModuleName)
+        updateReferencesToContentModuleInDependenciesTags(filesThatDependOnDescriptor, data.originalContentModuleName, data.newModuleName)
       }
     }
     if (data.packageDirectory != null) {
@@ -114,7 +114,7 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
     project.scheduleSave()
   }
 
-  private fun updateReferencesInDependenciesTags(
+  private fun updateReferencesToContentModuleInDependenciesTags(
     filesThatDependOnDescriptor: Collection<VirtualFile>,
     originalContentModuleName: String,
     newModuleName: String,
@@ -129,7 +129,7 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
     }
   }
 
-  private fun updateReferenceInPluginXml(pluginXmlFile: VirtualFile, originalModuleName: String, newModuleName: String) {
+  private fun updateReferenceToContentModuleInPluginXml(pluginXmlFile: VirtualFile, originalModuleName: String, newModuleName: String) {
     val psiFile = pluginXmlFile.findPsiFile(project) as? XmlFile ?: return
     val domElement = DomManager.getDomManager(project).getFileElement(psiFile, IdeaPlugin::class.java)?.rootElement ?: return
     val moduleDescriptor =
@@ -140,7 +140,7 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
     }
   }
 
-  private suspend fun createModule(data: ExtractToContentModuleData) {
+  private suspend fun createModule(data: ExtractToJpsModuleData) {
     project.workspaceModel.update("Extract JPS module from content module") { builder ->
       val moduleDir = project.workspaceModel.getVirtualFileUrlManager().getOrCreateFromUrl(VfsUtil.pathToUrl(data.newModuleDirectoryPath))
       val entitySource = LegacyBridgeJpsEntitySourceFactory.getInstance(project)
@@ -184,10 +184,10 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
     }
   }
 
-  private val ExtractToContentModuleData.usePackagePrefix: Boolean
+  private val ExtractToJpsModuleData.usePackagePrefix: Boolean
     get() = packageName != null && packageName.startsWith("com.${newModuleName}")
 
-  private fun computeOriginalData(problemDescriptor: ProblemDescriptor): ExtractToContentModuleData? {
+  private fun computeOriginalDataForExtractionToJpsModule(problemDescriptor: ProblemDescriptor): ExtractToJpsModuleData? {
     val xmlElement = problemDescriptor.psiElement as? XmlTag ?: return null
     val domElement = DomManager.getDomManager(project).getDomElement(xmlElement) as? ContentDescriptor.ModuleDescriptor ?: return null
     val originalContentModuleName = domElement.name.stringValue ?: return null
@@ -203,7 +203,7 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
       else null
     val newModuleName = descriptor.nameWithoutExtension
     val newModuleDirectoryPath = contentRoot.path + "/" + newModuleName.removePrefix(originalModule.name + ".")
-    return ExtractToContentModuleData(
+    return ExtractToJpsModuleData(
       descriptor = descriptor,
       originalContentModuleName = originalContentModuleName,
       pluginXmlFile = pluginXmlFile,
@@ -220,7 +220,7 @@ private val LOG = logger<ExtractToJpsModuleService>()
 private const val RESOURCES_DIR_NAME = "resources"
 private const val SRC_DIRECTORY_NAME = "src"
 
-internal data class ExtractToContentModuleData(
+internal data class ExtractToJpsModuleData(
   val descriptor: VirtualFile,
   val originalContentModuleName: @NlsSafe String,
   val pluginXmlFile: VirtualFile,
