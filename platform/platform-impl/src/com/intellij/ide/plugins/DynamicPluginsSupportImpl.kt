@@ -8,7 +8,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.clearCachedValues
 import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.clearCachesAfterUnload
-import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.createDisposeTreePredicate
 import com.intellij.ide.plugins.DynamicPluginsValidators.IssueReporter
 import com.intellij.ide.plugins.DynamicPluginsValidators.validateGroupCanBeLoaded
 import com.intellij.ide.plugins.DynamicPluginsValidators.validateGroupCanBeUnloaded
@@ -18,6 +17,7 @@ import com.intellij.ide.plugins.DynamicPluginsValidators.validateProductRulesPer
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader.UNLOAD_IN_PROGRESS
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.lang.Language
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.application.ApplicationManager
@@ -697,6 +697,13 @@ internal class DynamicPluginsSupportImpl(
     }
 
     (ActionManager.getInstance() as ActionManagerImpl).registerActions(descriptors)
+  }
+
+  private fun createDisposeTreePredicate(pluginDescriptor: IdeaPluginDescriptorImpl): Predicate<Disposable>? {
+    val classLoader = pluginDescriptor.pluginClassLoader as? PluginClassLoader ?: return null
+    return Predicate {
+      it::class.java.classLoader === classLoader
+    }
   }
 
   private fun <R> runSafe(body: () -> R): R? {

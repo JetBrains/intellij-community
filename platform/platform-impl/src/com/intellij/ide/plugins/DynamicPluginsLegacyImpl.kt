@@ -14,7 +14,6 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.TopHitCache
 import com.intellij.idea.IdeaLogger
 import com.intellij.notification.impl.ApplicationNotificationsModel
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -50,7 +49,6 @@ import java.awt.Window
 import java.nio.channels.FileChannel
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
-import java.util.function.Predicate
 import javax.swing.ToolTipManager
 
 private val LOG = logger<DynamicPlugins>()
@@ -134,13 +132,6 @@ internal object DynamicPluginsLegacyImpl {
       analysis.includeClassesAsRoots = false
       analysis.setIncludeMetaInfo(false)
       return analysis.analyze(ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator())
-    }
-  }
-
-  internal fun createDisposeTreePredicate(pluginDescriptor: IdeaPluginDescriptorImpl): Predicate<Disposable>? {
-    val classLoader = pluginDescriptor.pluginClassLoader as? PluginClassLoader ?: return null
-    return Predicate {
-      it::class.java.classLoader === classLoader
     }
   }
 
