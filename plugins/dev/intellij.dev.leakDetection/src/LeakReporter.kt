@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
@@ -22,6 +21,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -41,7 +41,7 @@ private const val CAPTURE_MEMORY_SNAPSHOT_ACTION_ID = "CaptureMemorySnapShot"
 
 /** Surfaces [ProjectLeakDetector] results: a balloon notification (with actions) plus a `LOG.error` so Diogen collects them. */
 @ApiStatus.Internal
-object LeakReporter {
+class LeakReporter(private val coroutineScope: CoroutineScope) {
   fun report(project: Project?, leaks: List<LeakInfo>) {
     val group = NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
     if (leaks.isEmpty()) {
@@ -103,7 +103,7 @@ object LeakReporter {
    */
   private fun createTicket(project: Project?, leaks: List<LeakInfo>, report: String) {
     copyToClipboard(report)
-    service<LeakDetectionCoroutineScopeHolder>().coroutineScope.launch {
+    coroutineScope.launch {
       val snapshot = if (project != null) {
         withBackgroundProgress(project, DevLeakDetectionBundle.message("progress.title.capturing.snapshot"), cancellable = false) {
           captureSnapshot()

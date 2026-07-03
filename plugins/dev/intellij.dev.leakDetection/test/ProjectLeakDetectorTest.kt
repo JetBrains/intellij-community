@@ -13,7 +13,7 @@ class ProjectLeakDetectorTest : LightPlatformTestCase() {
       LeakInfo(LeakKind.PROJECT, "com.example.FooProject", 0x1234, "Project Foo", "created in test", null, "root -> Foo"),
       LeakInfo(LeakKind.EDITOR, "com.example.BarEditor", 0xabcd, "Editor Bar", null, 12_345L, "root -> Bar"),
     )
-    val report = LeakReporter.buildReport(leaks)
+    val report = LeakDetectionRunner.getInstance().reporter().buildReport (leaks)
     assertTrue(report.contains("2 leaked instance(s)"))
     assertTrue(report.contains("com.example.FooProject@1234"))
     assertTrue(report.contains("retained for: 12345 ms after disposal"))

@@ -15,6 +15,6 @@ internal class DetectProjectLeaksAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    runLeakDetectionInBackground(e.project)
+    LeakDetectionRunner.getInstance().runLeakDetectionInBackground(e.project)
   }
 }

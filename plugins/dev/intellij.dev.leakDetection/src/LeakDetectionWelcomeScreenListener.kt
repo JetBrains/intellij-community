@@ -43,7 +43,7 @@ internal class LeakDetectionWelcomeScreenListener : AppLifecycleListener {
         app.invokeLater {
           // Run only when the Welcome Screen is actually visible, e.g. not when closing one of several open projects.
           if (WelcomeFrame.getInstance() != null) {
-            runLeakDetectionInBackground(project = null)
+            LeakDetectionRunner.getInstance().runLeakDetectionInBackground(project = null)
           }
         }
       },
