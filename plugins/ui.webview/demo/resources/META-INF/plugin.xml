@@ -29,7 +29,7 @@
                 factoryClass="com.intellij.ui.webview.demo.WebViewDemoToolWindowFactory"
                 anchor="bottom"
                 secondary="true"
-                doNotActivateOnStart="false"
+                doNotActivateOnStart="true"
                 icon="/icons/toolWindowWebViewDemo.svg"/>
 
     <!--suppress SplitModeXmlApiUsage -->
@@ -39,4 +39,10 @@
                 doNotActivateOnStart="false"
                 icon="/icons/toolWindowWebViewDemo.svg"/>
   </extensions>
+
+  <actions>
+    <action id="ActivateWebViewDemoToolWindow"
+            class="com.intellij.ui.webview.demo.ActivateWebViewDemoToolWindowAction"
+            icon="/icons/toolWindowWebViewDemo.svg"/>
+  </actions>
 </idea-plugin>
