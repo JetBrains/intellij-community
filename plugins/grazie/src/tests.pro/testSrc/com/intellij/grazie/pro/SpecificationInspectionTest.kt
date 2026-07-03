@@ -3,6 +3,7 @@ package com.intellij.grazie.pro
 import ai.grazie.api.gateway.client.SuspendableAPIGatewayClient
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.LlmIssue
+import ai.grazie.rules.promptAnalysis.LlmAnalyzer.Replacement
 import com.google.gson.JsonObject
 import com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationBaseInspection
 import com.intellij.openapi.util.registry.Registry
@@ -83,7 +84,7 @@ internal class SpecificationInspectionTest : BaseTestCase() {
     override fun getIssue(): TestIssue = this
     override fun startOffset(): Int = issueStartOffset
     override fun endOffset(): Int = issueEndOffset
-    override fun getReplacements(): List<String> = issueReplacements
+    override fun getReplacements(): List<Replacement> = issueReplacements.map { Replacement(it) }
     override fun withOffsets(startOffset: Int, endOffset: Int): LlmIssue<TestIssue> =
       TestIssue(issueMessage, startOffset, endOffset, issueReplacements)
   }

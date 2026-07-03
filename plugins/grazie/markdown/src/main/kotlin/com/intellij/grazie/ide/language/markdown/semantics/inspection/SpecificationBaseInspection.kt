@@ -48,6 +48,11 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
     holder.registerProblem(descriptor)
   }
 
+  /**
+   * Returns the dependency set for a given file. The resulting set must always contain [root].
+   */
+  open fun getDependencies(root: PsiFile): Set<PsiFile> = setOf(root)
+
   abstract fun getAnalyzer(file: PsiFile): LlmAnalyzer<T>?
 
   final override fun buildVisitor(
@@ -68,13 +73,13 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
           return
         }
         val analyzer = getAnalyzer(file) ?: return
-        val issues = SpecificationAnalyzer.analyze(analyzer, file, client)
+        val issues = SpecificationAnalyzer.analyze(analyzer, file, getDependencies(file), client)
         issues.forEach { reportProblem(holder, file, it) }
       }
     }
   }
 
-  private fun isSpecificationLikeFile(file: PsiFile): Boolean {
+  internal fun isSpecificationLikeFile(file: PsiFile): Boolean {
     if (SPECIFICATION_LIKE_PATTERN.matches(file.name)) return true
     val pattern = Regex(Registry.stringValue("grazie.specification.semantics.specification.pattern"))
     return pattern.matches(file.virtualFile.path)

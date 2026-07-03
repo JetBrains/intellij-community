@@ -1,5 +1,6 @@
 package com.intellij.grazie.ide.language.markdown.semantics.inspection.quickfix
 
+import ai.grazie.rules.promptAnalysis.LlmAnalyzer.Replacement
 import com.intellij.codeInsight.intention.EventTrackingIntentionAction
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.HighPriorityAction
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.Unmodifiable
 
 internal class SpecificationReplacementQuickFix(
   private val underline: SmartPsiFileRange,
-  private val replacements: List<String>,
+  private val replacements: List<Replacement>,
 ) : DefaultIntentionActionWithChoice {
 
   companion object {
@@ -38,17 +39,17 @@ internal class SpecificationReplacementQuickFix(
 
   open class ReplacementVariant(
     override val index: Int, private val total: Int,
-    private val underline: SmartPsiFileRange, @NlsSafe private val replacement: String,
+    private val underline: SmartPsiFileRange, @NlsSafe private val replacement: Replacement,
   ) : ChoiceVariantIntentionAction(), HighPriorityAction, DumbAware, EventTrackingIntentionAction {
 
-    override fun getName(): @IntentionName String = replacement
+    override fun getName(): @IntentionName String = replacement.description ?: replacement.value
     override fun getFamilyName(): @IntentionFamilyName String = Companion.familyName
     override fun getFileModifierForPreview(target: PsiFile): FileModifier = ReplacementPreview(index, total, underline, replacement)
     override fun isShowSubmenu(): Boolean = true
 
     override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
       SpecificationFUSCollector.suggestionAccepted(index, total)
-      performFix(project, file, replacement)
+      performFix(project, file, replacement.value)
     }
 
     override fun suggestionShown(project: Project, editor: Editor, psiFile: PsiFile) =
@@ -66,8 +67,8 @@ internal class SpecificationReplacementQuickFix(
 
   private class ReplacementPreview(
     index: Int, total: Int, underline: SmartPsiFileRange,
-    private val replacement: String,
+    private val replacement: Replacement,
   ) : ReplacementVariant(index, total, underline, replacement), IntentionPreviewInfo {
-    override fun applyFix(project: Project, file: PsiFile, editor: Editor?) = performFix(project, file, replacement)
+    override fun applyFix(project: Project, file: PsiFile, editor: Editor?) = performFix(project, file, replacement.value)
   }
 }

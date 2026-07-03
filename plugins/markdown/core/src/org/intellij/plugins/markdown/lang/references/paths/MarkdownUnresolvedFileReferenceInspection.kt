@@ -24,31 +24,41 @@ class MarkdownUnresolvedFileReferenceInspection: LocalInspectionTool() {
   }
 
   private fun checkReference(element: PsiElement, holder: ProblemsHolder) {
-    val references = element.references.asSequence()
-    val fileReferences = references.filter { it is FileReferenceOwner }
-    val unresolvedReferences = fileReferences.filter { !shouldSkip(it) && isValidRange(it) && it.resolve() == null }
-    for (reference in unresolvedReferences) {
-      holder.registerProblem(
-        reference,
-        ProblemsHolder.unresolvedReferenceMessage(reference),
-        ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
-      )
-    }
+    resolveReferences(element)
+      .filter { it.target == null }
+      .map { it.reference }
+      .forEach { reference ->
+        holder.registerProblem(
+          reference,
+          ProblemsHolder.unresolvedReferenceMessage(reference),
+          ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
+        )
+      }
   }
+}
 
-  private fun isValidRange(reference: PsiReference): Boolean {
-    val elementRange = reference.element.textRange
-    return reference.rangeInElement.endOffset <= elementRange.endOffset - elementRange.startOffset
-  }
+data class ResolvedReference(val reference: PsiReference, val target: PsiElement?)
 
-  /**
-   * Since we resolve any username and any repository github wiki reference,
-   * even if the file is not present in this repository,
-   * the link may still refer to an existing file, so there must not be a warning.
-   *
-   * See [GithubWikiLocalFileReferenceProvider.linkPattern].
-   */
-  private fun shouldSkip(reference: PsiReference): Boolean {
-    return reference is GithubWikiLocalFileReference
-  }
+@ApiStatus.Internal
+fun resolveReferences(element: PsiElement): Sequence<ResolvedReference> {
+  val references = element.references.asSequence()
+  val fileReferences = references.filter { it is FileReferenceOwner }
+  return fileReferences.filter { !shouldSkip(it) && isValidRange(it) }
+    .map { ResolvedReference(it, it.resolve()) }
+}
+
+private fun isValidRange(reference: PsiReference): Boolean {
+  val elementRange = reference.element.textRange
+  return reference.rangeInElement.endOffset <= elementRange.endOffset - elementRange.startOffset
+}
+
+/**
+ * Since we resolve any username and any repository github wiki reference,
+ * even if the file is not present in this repository,
+ * the link may still refer to an existing file, so there must not be a warning.
+ *
+ * See [GithubWikiLocalFileReferenceProvider.linkPattern].
+ */
+private fun shouldSkip(reference: PsiReference): Boolean {
+  return reference is GithubWikiLocalFileReference
 }

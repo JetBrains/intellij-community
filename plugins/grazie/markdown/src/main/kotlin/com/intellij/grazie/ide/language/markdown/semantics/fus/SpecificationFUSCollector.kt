@@ -1,11 +1,14 @@
 package com.intellij.grazie.ide.language.markdown.semantics.fus
 
+import ai.grazie.rules.promptAnalysis.LlmAnalyzer.LlmIssue
+import ai.grazie.rules.promptAnalysis.LlmAnalyzer.Specification
+import ai.grazie.rules.promptAnalysis.LlmAnalyzer.WithSpending
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 internal object SpecificationFUSCollector: CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("grazie.semantics", 2)
+  private val GROUP = EventLogGroup("grazie.semantics", 3)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -17,6 +20,7 @@ internal object SpecificationFUSCollector: CounterUsagesCollector() {
   private val ISSUES_FIELD = EventFields.Int("issues")
   private val COST_FIELD = EventFields.Double("cost")
   private val TEXT_LENGTH_FIELD = EventFields.RoundedInt("textLength")
+  private val FILE_COUNT_FIELD = EventFields.RoundedInt("fileCount")
   private val INDEX_FIELD = EventFields.Int("index")
   private val TOTAL_FIELD = EventFields.Int("total")
 
@@ -31,13 +35,20 @@ internal object SpecificationFUSCollector: CounterUsagesCollector() {
     TOTAL_FIELD.with(total)
   )
 
-  fun analysisCompleted(analyzer: String, textLength: Int, cost: Double, time: Long, issues: Int) = analysisEvent.log(
-    ANALYZER_FIELD.with(analyzer),
-    TEXT_LENGTH_FIELD.with(textLength),
-    COST_FIELD.with(cost),
-    TIME_FIELD.with(time),
-    ISSUES_FIELD.with(issues),
-  )
+  fun <T> analysisCompleted(
+    analyzer: String, specifications: Set<Specification<T>>, analysis: WithSpending<Map<String, List<LlmIssue<T>>>>, timeMs: Long,
+  ) {
+    val textLength = specifications.sumOf { it.currentText.length }
+    val issues = analysis.data.values.sumOf { it.size }
+    analysisEvent.log(
+      ANALYZER_FIELD.with(analyzer),
+      TEXT_LENGTH_FIELD.with(textLength),
+      FILE_COUNT_FIELD.with(specifications.size),
+      COST_FIELD.with(analysis.spentCredits),
+      TIME_FIELD.with(timeMs),
+      ISSUES_FIELD.with(issues),
+    )
+  }
 
 
   private val analysisEvent = GROUP.registerVarargEvent(
