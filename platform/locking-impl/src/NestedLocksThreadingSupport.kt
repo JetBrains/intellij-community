@@ -1730,6 +1730,9 @@ class NestedLocksThreadingSupport : ThreadingSupport {
         hack_setThisLevelPermit(permit.writePermit)
         val currentWriteThreadAcquired = myWriteAcquired
         myWriteAcquired = Thread.currentThread()
+        if (!isWriteAccessAllowed()) {
+          logger.error("Unexpected write state: write access is now allowed. Current thread with WA: $myWriteAcquired. This thread: ${Thread.currentThread()}")
+        }
         try {
           action.run()
         }
