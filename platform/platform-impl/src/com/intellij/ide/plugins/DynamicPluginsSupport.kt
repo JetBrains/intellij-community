@@ -18,7 +18,9 @@ interface DynamicPluginsSupport {
 
   // TODO consider adding suspend fun runPreventingDynamicReconfiguration(body: suspend? () -> Unit)
 
-  companion object
+  companion object {
+    fun getInstance(): DynamicPluginsSupport = instance
+  }
 }
 
 @ApiStatus.Internal
@@ -57,14 +59,10 @@ private val instance: DynamicPluginsSupport by lazy {
   DynamicPluginsSupportImpl(classloaderUnloadStrategy)
 }
 
-@ApiStatus.Internal
-fun DynamicPluginsSupport.Companion.getInstance(): DynamicPluginsSupport? = instance
-
 private class DynamicReconfigurationIsNotPossibleReasonImpl(
   override val logMessage: @NonNls String,
   override val problematicPlugin: PluginMainDescriptor?,
 ): DynamicReconfigurationIsNotPossibleReason
 
-@ApiStatus.Internal
 @Service
 internal class DynamicPluginsSupportService(val coroutineScope: CoroutineScope)
