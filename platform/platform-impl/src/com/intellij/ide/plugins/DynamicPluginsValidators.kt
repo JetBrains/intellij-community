@@ -1,11 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.DynamicBundle.LanguageBundleEP
 import com.intellij.ide.plugins.DynamicPluginsValidators.IssueReporter
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.openapi.actionSystem.impl.canUnloadActionGroup
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.colors.impl.BundledColorSchemeEPName
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
+import com.intellij.openapi.keymap.impl.BundledKeymapBean
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement
 import com.intellij.serviceContainer.proxiedServicesList
@@ -16,10 +20,10 @@ import kotlinx.coroutines.CancellationException
 private val LOG get() = Logger.getInstance(DynamicPluginsValidators::class.java)
 
 internal object DynamicPluginsValidators {
+  /**
+   * may throw [AbortDynamicPluginIssuesComputation] to stop the computation (I know this is a smelly thing, but it's the cheapest option right now)
+   */
   fun interface IssueReporter {
-    /**
-     * may throw [AbortDynamicPluginIssuesComputation] to stop the computation (I know this is a smelly thing, but it's the cheapest option right now)
-     */
     fun reportIssue(reason: DynamicReconfigurationIsNotPossibleReason)
   }
 
@@ -241,6 +245,44 @@ internal object DynamicPluginsValidators {
             ))
           }
         }
+      }
+    }
+  }
+
+  fun IssueReporter.validatePluginIsUIOnlyAndDynamic(plugin: PluginMainDescriptor) {
+    validateDescriptorDoesNotRequireRestart(plugin)
+    if (plugin.contentModules.isNotEmpty()) {
+      reportIssue(DynamicReconfigurationIsNotPossibleReason.of(
+        "${plugin.shortLogDescription} is not UI-only because it declares content modules", plugin
+      ))
+    }
+    if (plugin.actions.isNotEmpty()) {
+      reportIssue(DynamicReconfigurationIsNotPossibleReason.of(
+        "${plugin.shortLogDescription} is not UI-only because it declares actions", plugin
+      ))
+    }
+    validateDescriptorHasNoComponents(plugin)
+    validateDescriptorHasNoServiceOverrides(plugin)
+    // TODO: should we also check listeners in scoped containers?
+    if (plugin.extensions.isEmpty()) {
+      reportIssue(DynamicReconfigurationIsNotPossibleReason.of(
+        "${plugin.shortLogDescription} is not UI-only because it does not declare any extensions", plugin
+      ))
+    }
+    validateOnlyUIBoundExtensionsAreUsed(plugin)
+  }
+
+  private fun IssueReporter.validateOnlyUIBoundExtensionsAreUsed(descriptor: IdeaPluginDescriptorImpl) {
+    for ((extensionFqn, _) in descriptor.extensions) {
+      val isUIOnly = extensionFqn == UIThemeProvider.EP_NAME.name ||
+                     extensionFqn == BundledKeymapBean.EP_NAME.name ||
+                     extensionFqn == LanguageBundleEP.EP_NAME.name ||
+                     extensionFqn == BundledColorSchemeEPName.name
+      if (!isUIOnly) {
+        reportIssue(DynamicReconfigurationIsNotPossibleReason.of(
+          "${descriptor.shortLogDescription} uses non-UI extension: ${extensionFqn}",
+          descriptor.getMainDescriptor()
+        ))
       }
     }
   }

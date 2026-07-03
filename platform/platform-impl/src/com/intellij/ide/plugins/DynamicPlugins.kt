@@ -283,7 +283,7 @@ object DynamicPlugins {
   // TODO migrate to isUIOnlyDynamicPlugin
   @JvmStatic
   fun allowLoadUnloadSynchronously(module: IdeaPluginDescriptorImpl): Boolean {
-    return DynamicPluginsLegacyImpl.allowLoadUnloadSynchronously(module)
+    return module is PluginMainDescriptor && isUIOnlyDynamicPlugin(module)
   }
 
   internal fun notify(@NlsContexts.NotificationContent text: String, notificationType: NotificationType, vararg actions: AnAction) {
@@ -301,12 +301,22 @@ object DynamicPlugins {
    */
   // TODO should we demand their "statelessness"?
   fun isUIOnlyDynamicPlugin(plugin: PluginMainDescriptor): Boolean {
-    return DynamicPluginsLegacyImpl.isUIOnlyDynamicPlugin(plugin)
-  }
-
-  // TODO imprecise naming
-  internal fun isUIOnlyExtension(extensionFqn: String): Boolean {
-    return DynamicPluginsLegacyImpl.isUIOnlyExtension(extensionFqn)
+    var cause: String? = null
+    val reporter = DynamicPluginsValidators.IssueReporter { reason ->
+      if (cause == null) {
+        cause = reason.logMessage
+      }
+      throw DynamicPluginsValidators.AbortDynamicPluginIssuesComputation()
+    }
+    try {
+      with(DynamicPluginsValidators) {
+        reporter.validatePluginIsUIOnlyAndDynamic(plugin)
+      }
+    }
+    catch (_: DynamicPluginsValidators.AbortDynamicPluginIssuesComputation) {
+    }
+    LOG.debug(cause)
+    return cause == null
   }
 
   fun onPluginUnload(parentDisposable: Disposable, callback: Runnable) {
