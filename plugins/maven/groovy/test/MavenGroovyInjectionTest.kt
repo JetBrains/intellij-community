@@ -1,15 +1,30 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.groovy
 
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5
-import com.intellij.testFramework.junit5.RunInEdt
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
+import com.intellij.openapi.application.EDT
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-@RunInEdt(writeIntent = true)
-class MavenGroovyInjectionTest : LightJavaCodeInsightFixtureTestCase5() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenGroovyInjectionTest(mavenVersion: String, modelVersion: String)  {
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+
     @Test
     fun testCompletion() {
-        fixture.configureByText(
+        maven.fixture.configureByText(
             "pom.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
       <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -59,15 +74,15 @@ class MavenGroovyInjectionTest : LightJavaCodeInsightFixtureTestCase5() {
       """.trimIndent()
         )
 
-        fixture.completeBasic()
+        maven.fixture.completeBasic()
 
-        val lookups = fixture.getLookupElementStrings()
-        assert(lookups!!.containsAll(ArrayList<String?>(mutableListOf<String?>("String", "StringBuffer", "StringBuilder"))))
+        val lookups = maven.fixture.getLookupElementStrings()
+        assert(lookups!!.containsAll(listOf("String", "StringBuffer", "StringBuilder")))
     }
 
     @Test
     fun testCompletion2() {
-        fixture.configureByText(
+        maven.fixture.configureByText(
             "pom.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
       <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -102,15 +117,15 @@ class MavenGroovyInjectionTest : LightJavaCodeInsightFixtureTestCase5() {
       """.trimIndent()
         )
 
-        fixture.completeBasic()
+        maven.fixture.completeBasic()
 
-        val lookups = fixture.getLookupElementStrings()
-        assert(lookups!!.containsAll(ArrayList<String?>(mutableListOf<String?>("String", "StringBuffer", "StringBuilder"))))
+        val lookups = maven.fixture.getLookupElementStrings()
+        assert(lookups!!.containsAll(listOf("String", "StringBuffer", "StringBuilder")))
     }
 
     @Test
     fun testCompletion3() {
-        fixture.configureByText(
+        maven.fixture.configureByText(
             "pom.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
       <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -145,15 +160,15 @@ class MavenGroovyInjectionTest : LightJavaCodeInsightFixtureTestCase5() {
       """.trimIndent()
         )
 
-        fixture.completeBasic()
+        maven.fixture.completeBasic()
 
-        val lookups = fixture.getLookupElementStrings()
-        assert(lookups!!.containsAll(ArrayList<String?>(mutableListOf<String?>("String", "StringBuffer", "StringBuilder"))))
+        val lookups = maven.fixture.getLookupElementStrings()
+        assert(lookups!!.containsAll(listOf("String", "StringBuffer", "StringBuilder")))
     }
 
     @Test
-    fun testInjectionVariables() {
-        fixture.configureByText(
+    fun testInjectionVariables() = runBlocking {
+        maven.fixture.configureByText(
             "pom.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
       <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -188,15 +203,16 @@ class MavenGroovyInjectionTest : LightJavaCodeInsightFixtureTestCase5() {
       """.trimIndent()
         )
 
-        val element = fixture.getElementAtCaret()
-
+      withContext(Dispatchers.EDT) {
+        val element = maven.fixture.elementAtCaret
         assert(element is GrVariable)
-        assert((element as GrVariable).getDeclaredType()!!.getPresentableText() == "MavenProject")
+        assert((element as GrVariable).declaredType!!.presentableText == "MavenProject")
+      }
     }
 
     @Test
     fun testHighlighting() {
-        fixture.configureByText(
+        maven.fixture.configureByText(
             "pom.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
       <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -234,6 +250,6 @@ class MavenGroovyInjectionTest : LightJavaCodeInsightFixtureTestCase5() {
       """.trimIndent()
         )
 
-        fixture.checkHighlighting(true, false, true)
+        maven.fixture.checkHighlighting(true, false, true)
     }
 }
