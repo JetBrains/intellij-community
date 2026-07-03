@@ -168,8 +168,6 @@
   - name: intellij.debugger.logpoints.kotlin
   - name: kotlin.plugin
   contentModules:
-  - name: intellij.kotlin.base.externalSystem
-  - name: intellij.kotlin.codeInsight.base
   - name: intellij.kotlin.projectStructure
   - name: intellij.kotlin.projectConfiguration.vcs
   - name: intellij.kotlin.scripting
@@ -209,7 +207,6 @@
   - name: intellij.kotlin.base.scripting.scratch.definition
   - name: intellij.kotlin.codeInsight.fixes
   - name: intellij.kotlin.codeInsight.intentions
-  - name: intellij.kotlin.codeInsight.inspections
   - name: intellij.kotlin.codeInsight
   - name: intellij.kotlin.codeInsight.liveTemplates
   - name: intellij.kotlin.codeInsight.postfixTemplates
@@ -329,6 +326,15 @@
 - name: lib/modules/intellij.kotlin.base.analysis.platform.jar
   contentModules:
   - name: intellij.kotlin.base.analysis.platform
+- name: lib/modules/intellij.kotlin.base.externalSystem.jar
+  contentModules:
+  - name: intellij.kotlin.base.externalSystem
+- name: lib/modules/intellij.kotlin.codeInsight.base.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight.base
+- name: lib/modules/intellij.kotlin.codeInsight.inspections.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight.inspections
 - name: lib/modules/intellij.kotlin.completion.ml.jar
   contentModules:
   - name: intellij.kotlin.completion.ml
