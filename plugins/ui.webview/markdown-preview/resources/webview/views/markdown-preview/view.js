@@ -949,6 +949,12 @@ function base64UrlEncode(value) {
 }
 //#endregion
 //#region views/markdown-preview/src/markdownRemarkPlugins.ts
+var frontmatterSubtitleKeys = [
+	"subtitle",
+	"description",
+	"summary"
+];
+var frontmatterHeaderKeys = new Set(["title", ...frontmatterSubtitleKeys]);
 function remarkFrontmatterBlocks() {
 	return (tree) => transformFrontmatterNodes(tree);
 }
@@ -959,8 +965,20 @@ function frontmatterLanguageFromPreNode(node) {
 	const language = codeNodeFromPreNode(node)?.properties?.dataFrontmatter;
 	return typeof language === "string" ? language : void 0;
 }
-function frontmatterTitle(language) {
-	return language === "toml" ? "Front matter (TOML)" : "Front matter (YAML)";
+function frontmatterBlockFromPreNode(node) {
+	const language = frontmatterLanguageFromPreNode(node);
+	if (!language) return void 0;
+	const entries = parseFrontmatterEntries(hastText(codeNodeFromPreNode(node)), language);
+	const title = frontmatterValue(entries, ["title"]);
+	if (!title) return void 0;
+	return {
+		title,
+		subtitle: frontmatterValue(entries, frontmatterSubtitleKeys),
+		metadata: entries.filter((entry) => !frontmatterHeaderKeys.has(entry.normalizedKey)).map(({ key, value }) => ({
+			key,
+			value
+		}))
+	};
 }
 function transformFrontmatterNodes(node) {
 	if (!node.children) return;
@@ -988,6 +1006,81 @@ function frontmatterCodeNode(node) {
 			}
 		}
 	};
+}
+function parseFrontmatterEntries(source, language) {
+	return source.split(/\r?\n/).map((line) => parseFrontmatterEntry(line, language)).filter((entry) => entry !== void 0);
+}
+function parseFrontmatterEntry(line, language) {
+	if (line.startsWith(" ") || line.startsWith("	")) return void 0;
+	const trimmedLine = line.trim();
+	if (!trimmedLine || trimmedLine.startsWith("#")) return void 0;
+	const match = language === "toml" ? trimmedLine.match(/^([A-Za-z0-9_.-]+)\s*=\s*(.+)$/) : trimmedLine.match(/^([A-Za-z0-9_.-]+):\s*(.*)$/);
+	if (!match) return void 0;
+	const key = match[1];
+	const value = formatFrontmatterValue(match[2]);
+	if (!value) return void 0;
+	return {
+		key,
+		normalizedKey: key.toLowerCase(),
+		value
+	};
+}
+function formatFrontmatterValue(value) {
+	const trimmedValue = value.trim();
+	if (!trimmedValue || trimmedValue === "|" || trimmedValue === ">" || trimmedValue.startsWith("{")) return void 0;
+	if (trimmedValue.startsWith("[") && trimmedValue.endsWith("]")) return formatFrontmatterArray(trimmedValue.substring(1, trimmedValue.length - 1));
+	if (trimmedValue.startsWith("[")) return void 0;
+	return unquoteFrontmatterValue(trimmedValue);
+}
+function formatFrontmatterArray(value) {
+	const items = [];
+	for (const item of splitFrontmatterArrayItems(value)) {
+		const trimmedItem = item.trim();
+		if (trimmedItem.startsWith("[") || trimmedItem.startsWith("{")) return void 0;
+		const formattedItem = unquoteFrontmatterValue(trimmedItem);
+		if (!formattedItem) return void 0;
+		items.push(formattedItem);
+	}
+	return items.length > 0 ? items.join(", ") : void 0;
+}
+function splitFrontmatterArrayItems(value) {
+	const items = [];
+	let start = 0;
+	let quote;
+	let escaped = false;
+	for (let index = 0; index < value.length; index++) {
+		const character = value[index];
+		if (escaped) {
+			escaped = false;
+			continue;
+		}
+		if (character === "\\" && quote === "\"") {
+			escaped = true;
+			continue;
+		}
+		if (quote) {
+			if (character === quote) quote = void 0;
+			continue;
+		}
+		if (character === "\"" || character === "'") {
+			quote = character;
+			continue;
+		}
+		if (character === ",") {
+			items.push(value.substring(start, index));
+			start = index + 1;
+		}
+	}
+	items.push(value.substring(start));
+	return items;
+}
+function unquoteFrontmatterValue(value) {
+	const quote = value[0];
+	const trimmedValue = ((quote === "\"" || quote === "'") && value.endsWith(quote) ? value.substring(1, value.length - 1) : value).trim();
+	return trimmedValue.length > 0 ? trimmedValue : void 0;
+}
+function frontmatterValue(entries, keys) {
+	return entries.find((entry) => keys.includes(entry.normalizedKey))?.value;
 }
 function addSourcePositionAttributes(node) {
 	const position = node.position;
@@ -1895,18 +1988,31 @@ function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, sel
 			});
 		},
 		pre({ node, className, children, ...props }) {
-			const frontmatterLanguage = frontmatterLanguageFromPreNode(node);
-			if (frontmatterLanguage) return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-				className: "frontmatterBlock",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-					className: "frontmatterHeader",
-					children: frontmatterTitle(frontmatterLanguage)
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("pre", {
-					className: classNames("frontmatterPre", className),
-					...props,
-					children
-				})]
-			});
+			if (frontmatterLanguageFromPreNode(node)) {
+				const frontmatterBlock = frontmatterBlockFromPreNode(node);
+				if (!frontmatterBlock) return null;
+				const sourcePosition = sourcePositionFromPreNode(node);
+				return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+					className: "frontmatterBlock",
+					"data-sourcepos": sourcePosition ? positionKey(sourcePosition) : void 0,
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "frontmatterHeader",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+							className: "frontmatterTitle",
+							children: frontmatterBlock.title
+						}), frontmatterBlock.subtitle && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "frontmatterSubtitle",
+							children: frontmatterBlock.subtitle
+						})]
+					}), frontmatterBlock.metadata.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("details", {
+						className: "frontmatterMetadata",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("summary", { children: "Metadata" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dl", { children: frontmatterBlock.metadata.map((entry, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "frontmatterMetadataEntry",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: entry.key }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: entry.value })]
+						}, `${entry.key}-${index}`)) })]
+					})]
+				});
+			}
 			const sourcePosition = sourcePositionFromPreNode(node);
 			const codeNode = codeNodeFromPreNode(node);
 			const isMermaidFence = codeNode ? isMermaidCodeNode(codeNode) : false;

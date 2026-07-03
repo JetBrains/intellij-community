@@ -26,9 +26,9 @@ import type {
   MarkdownRunCommandRequest,
   MarkdownSourceRange,
 } from "./markdownPreviewTypes"
-import { classNames, codeToString } from "./markdownReactUtils"
+import { codeToString } from "./markdownReactUtils"
 import { markdownResourceSrc } from "./markdownResources"
-import { frontmatterLanguageFromPreNode, frontmatterTitle, remarkFrontmatterBlocks, remarkSourcePositionAttributes } from "./markdownRemarkPlugins"
+import { frontmatterBlockFromPreNode, frontmatterLanguageFromPreNode, remarkFrontmatterBlocks, remarkSourcePositionAttributes } from "./markdownRemarkPlugins"
 import {
   CodeFenceRunGutter,
   RunCommandButton,
@@ -47,6 +47,7 @@ import {
   cancelScheduledMarkdownPreviewScroll,
   clearSourceDecorations,
   decorateSourceBlocks,
+  positionKey,
   scrollMarkdownPreviewToLine,
   sourcePositionFromHastNode,
   sourcePositionFromPreNode,
@@ -134,10 +135,29 @@ export function MarkdownPreviewApp({
     pre({ node, className, children, ...props }) {
       const frontmatterLanguage = frontmatterLanguageFromPreNode(node)
       if (frontmatterLanguage) {
+        const frontmatterBlock = frontmatterBlockFromPreNode(node)
+        if (!frontmatterBlock) return null
+
+        const sourcePosition = sourcePositionFromPreNode(node)
         return (
-          <section className="frontmatterBlock">
-            <div className="frontmatterHeader">{frontmatterTitle(frontmatterLanguage)}</div>
-            <pre className={classNames("frontmatterPre", className)} {...props}>{children}</pre>
+          <section className="frontmatterBlock" data-sourcepos={sourcePosition ? positionKey(sourcePosition) : undefined}>
+            <div className="frontmatterHeader">
+              <h1 className="frontmatterTitle">{frontmatterBlock.title}</h1>
+              {frontmatterBlock.subtitle && <p className="frontmatterSubtitle">{frontmatterBlock.subtitle}</p>}
+            </div>
+            {frontmatterBlock.metadata.length > 0 && (
+              <details className="frontmatterMetadata">
+                <summary>Metadata</summary>
+                <dl>
+                  {frontmatterBlock.metadata.map((entry, index) => (
+                    <div className="frontmatterMetadataEntry" key={`${entry.key}-${index}`}>
+                      <dt>{entry.key}</dt>
+                      <dd>{entry.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </details>
+            )}
           </section>
         )
       }

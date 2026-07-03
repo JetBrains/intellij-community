@@ -177,7 +177,17 @@ function installMockToolbarStyles(): void {
   document.head.append(style)
 }
 
-const sampleMarkdown = `# Markdown Preview Mock
+const sampleMarkdown = `---
+title: Markdown Preview Frontmatter
+subtitle: WebView testkit bridge
+author: JetBrains
+tags: [webview, markdown]
+draft: false
+nested:
+  hidden: true
+---
+
+# Markdown Preview Mock
 
 This page runs the real Markdown preview entry through the WebView testkit mock bridge.
 

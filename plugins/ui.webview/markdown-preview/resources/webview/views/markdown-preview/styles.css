@@ -1742,24 +1742,51 @@ html[data-theme="light"] .markdownPreview {
   height: 1em;
 }
 .markdownPreview .frontmatterBlock {
-  overflow: hidden;
-  border: 1px solid var(--ij-border);
-  border-radius: 6px;
-  background: var(--ij-bg-panel);
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--ij-border);
 }
 .markdownPreview .frontmatterHeader {
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--ij-border);
-  color: var(--ij-text-secondary);
-  font-size: var(--ij-font-size-medium);
-  font-weight: 600;
+  display: grid;
+  gap: 6px;
 }
-.markdownPreview .frontmatterBlock .frontmatterPre {
+.markdownPreview .frontmatterTitle {
   margin: 0;
-  padding: 10px 12px;
+  color: var(--ij-text-primary);
+  font-size: 2em;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.markdownPreview .frontmatterSubtitle {
+  margin: 0;
+  color: var(--ij-text-secondary);
+  font-size: 1.08em;
+  line-height: 1.45;
+}
+.markdownPreview .frontmatterMetadata {
+  margin: 14px 0 0;
+  padding: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
+}
+.markdownPreview .frontmatterMetadata summary {
+  color: var(--ij-text-secondary);
+  font-size: var(--ij-font-size-medium);
+}
+.markdownPreview .frontmatterMetadata dl {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  margin: 8px 0 0;
+}
+.markdownPreview .frontmatterMetadataEntry {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 10px;
+}
+.markdownPreview .frontmatterMetadataEntry dt,
+.markdownPreview .frontmatterMetadataEntry dd {
+  overflow-wrap: anywhere;
 }
 .markdownPreview .hljs-comment,
 .markdownPreview .hljs-quote {

@@ -83,6 +83,50 @@ test.afterAll(async () => {
   await preview?.close()
 })
 
+test("renders frontmatter as an article header with collapsed metadata", async ({ page }) => {
+  if (!preview) {
+    throw new Error("Markdown preview mock preview server was not started")
+  }
+  await page.goto(preview.url)
+  await page.waitForSelector(".frontmatterBlock")
+
+  const frontmatterState = await page.evaluate(() => {
+    const content = document.querySelector(".markdownPreviewContent")
+    const block = document.querySelector(".frontmatterBlock")
+    const details = block?.querySelector<HTMLDetailsElement>(".frontmatterMetadata")
+    const metadataLabels = Array.from(block?.querySelectorAll(".frontmatterMetadata dt") ?? [])
+      .map(element => element.textContent ?? "")
+    const metadataValues = Array.from(block?.querySelectorAll(".frontmatterMetadata dd") ?? [])
+      .map(element => element.textContent ?? "")
+    return {
+      isFirstBlock: content?.firstElementChild === block,
+      hasPre: block?.querySelector("pre") != null,
+      title: block?.querySelector(".frontmatterTitle")?.textContent ?? "",
+      subtitle: block?.querySelector(".frontmatterSubtitle")?.textContent ?? "",
+      hasDetails: details != null,
+      detailsOpen: details?.open ?? true,
+      metadataLabels,
+      metadataValues,
+    }
+  })
+
+  expect(frontmatterState.isFirstBlock).toBe(true)
+  expect(frontmatterState.hasPre).toBe(false)
+  expect(frontmatterState.title === "Markdown Preview Frontmatter").toBe(true)
+  expect(frontmatterState.subtitle === "WebView testkit bridge").toBe(true)
+  expect(frontmatterState.hasDetails).toBe(true)
+  expect(frontmatterState.detailsOpen).toBe(false)
+  expect(frontmatterState.metadataLabels.includes("author")).toBe(true)
+  expect(frontmatterState.metadataLabels.includes("tags")).toBe(true)
+  expect(frontmatterState.metadataLabels.includes("draft")).toBe(true)
+  expect(frontmatterState.metadataLabels.includes("title")).toBe(false)
+  expect(frontmatterState.metadataLabels.includes("subtitle")).toBe(false)
+  expect(frontmatterState.metadataLabels.includes("nested")).toBe(false)
+  expect(frontmatterState.metadataValues.includes("JetBrains")).toBe(true)
+  expect(frontmatterState.metadataValues.includes("webview, markdown")).toBe(true)
+  expect(frontmatterState.metadataValues.includes("false")).toBe(true)
+})
+
 test("zooms, pans, and exposes native resize for Mermaid diagrams", async ({ page }) => {
   if (!preview) {
     throw new Error("Markdown preview mock preview server was not started")
