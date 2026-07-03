@@ -1260,7 +1260,10 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     } finally {
       attachNewlyArrivedListeners(preparatoryWriteIntent)
     }
-    return WriteLockInitResult(shouldRelease, preparatoryWriteIntent.listeners + preparatoryWriteIntent.newlyArrivedListeners.get(), state, clazz, exposedData, this)
+    val newlyArrivedListeners = preparatoryWriteIntent.newlyArrivedListeners.get()
+    // avoid allocation of a new array list
+    val actualSetOfListeners = if (newlyArrivedListeners.isEmpty()) preparatoryWriteIntent.listeners else preparatoryWriteIntent.listeners + newlyArrivedListeners
+    return WriteLockInitResult(shouldRelease, actualSetOfListeners, state, clazz, exposedData, this)
   }
 
   private fun attachNewlyArrivedListeners(preparatoryWriteIntent: PreparatoryWriteIntent) {

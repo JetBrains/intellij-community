@@ -5,14 +5,13 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.impl.source.tree.mvcc.PsiVersionCleanable
 import com.intellij.psi.impl.source.tree.mvcc.PsiVersioningGarbageCollector
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.selects.select
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -35,7 +34,7 @@ internal class AsyncPsiVersioningGarbageCollector(val scope: CoroutineScope) : P
   // todo: should we consider array-backed queue which can be cleaned atomically by a single `compareAndSet`?
   private val trackedCleanableVersions: ConcurrentLinkedQueue<WeakReference<PsiVersionCleanable>> = ConcurrentLinkedQueue()
 
-  private val liveVersionsQueue: Channel<Set<Long>> = Channel(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val liveVersions: AtomicReference<Set<Long>> = AtomicReference()
   private val timeoutQueue: Channel<Unit> = Channel()
 
   private val actualCleanupScope = scope.childScope("Actual stale version cleaner")
@@ -49,19 +48,12 @@ internal class AsyncPsiVersioningGarbageCollector(val scope: CoroutineScope) : P
     }
 
     scope.launch {
-      var mutableLiveVersions: Set<Long>? = null
       while (true) {
-        select {
-          liveVersionsQueue.onReceive {
-            mutableLiveVersions = it
-          }
-          timeoutQueue.onReceive {
-            val latestLiveVersions = mutableLiveVersions
-            if (latestLiveVersions != null) {
-              actualCleanupScope.launch {
-                cleanupReferences(latestLiveVersions)
-              }
-            }
+        timeoutQueue.receive()
+        val currentLiveVersions = liveVersions.getAndSet(null)
+        if (currentLiveVersions != null) {
+          actualCleanupScope.launch {
+            cleanupReferences(currentLiveVersions)
           }
         }
       }
@@ -69,10 +61,7 @@ internal class AsyncPsiVersioningGarbageCollector(val scope: CoroutineScope) : P
   }
 
   override fun liveVersionsChanged(latestLiveVersions: Set<Long>) {
-    val result = liveVersionsQueue.trySend(latestLiveVersions)
-    check(result.isSuccess) {
-      "Failed to emit PSI versioning changes"
-    }
+    liveVersions.set(latestLiveVersions)
   }
 
   override suspend fun awaitCleanup() {

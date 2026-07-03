@@ -12,7 +12,6 @@ import com.intellij.openapi.application.WriteActionListener
 import com.intellij.openapi.application.WriteIntentReadActionListener
 import com.intellij.openapi.application.WriteLockReacquisitionListener
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
@@ -215,6 +214,8 @@ object InternalPsiVersioning {
       val instance: PsiVersionRegistry by lazy { PsiVersionRegistry() }
     }
 
+    private val garbageCollector = ApplicationManager.getApplication().serviceOrNull<PsiVersioningGarbageCollector>()
+
     private val version = AtomicLong(0)
 
     val latestPublishedVersion: Long
@@ -238,7 +239,7 @@ object InternalPsiVersioning {
 
     internal fun registerCleanable(cleanable: PsiVersionCleanable) {
       // service can be null in tests
-      ApplicationManager.getApplication().serviceOrNull<PsiVersioningGarbageCollector>()?.registerCleanable(cleanable)
+      garbageCollector?.registerCleanable(cleanable)
     }
 
 
@@ -262,7 +263,7 @@ object InternalPsiVersioning {
         }
       }
       if (newValue == null) {
-        ApplicationManager.getApplication().service<PsiVersioningGarbageCollector>().liveVersionsChanged(getFrozenKeys())
+        garbageCollector?.liveVersionsChanged(getFrozenKeys())
       }
     }
 
