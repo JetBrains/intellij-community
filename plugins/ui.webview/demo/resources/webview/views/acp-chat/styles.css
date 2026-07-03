@@ -2421,11 +2421,8 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  cursor: grab;
+  cursor: move;
   touch-action: none;
-}
-.acpMermaidViewport:active {
-  cursor: grabbing;
 }
 .acpMermaidViewport svg {
   display: block;
@@ -2455,7 +2452,6 @@ body {
   border-radius: 4px;
   color: var(--acp-text);
   background: transparent;
-  cursor: pointer;
 }
 .acpMermaidToolbarButton:hover {
   background: var(--ij-bg-hover, #ffffff17);

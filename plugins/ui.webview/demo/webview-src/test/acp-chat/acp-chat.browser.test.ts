@@ -1281,12 +1281,14 @@ test("keeps the keyboard-highlighted slash command visible while navigating", as
 async function verifyAcpMermaidViewport(page: Page): Promise<void> {
   await expect(page.getByRole("button", {name: "Zoom in diagram"})).toBeVisible()
   expect(await acpMermaidToolbarIconsLoaded(page)).toBe(true)
+  expect(await acpMermaidToolbarButtonsUseDefaultCursor(page)).toBe(true)
   const resizeEnabled = await page.evaluate(() => {
     const block = document.querySelector(".acpMermaidBlock--interactive")
     return block != null && getComputedStyle(block).resize === "vertical"
   })
   expect(resizeEnabled).toBe(true)
   expect(await acpMermaidSvgFillsViewport(page)).toBe(true)
+  expect(await acpMermaidViewportUsesMoveCursor(page)).toBe(true)
 
   await page.getByRole("button", {name: "Zoom in diagram"}).click()
   await page.waitForFunction(() => {
@@ -1337,10 +1339,24 @@ function acpMermaidSvgFillsViewport(page: Page): Promise<boolean> {
   })
 }
 
+function acpMermaidViewportUsesMoveCursor(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const viewport = document.querySelector(".acpMermaidViewport")
+    return viewport != null && getComputedStyle(viewport).cursor === "move"
+  })
+}
+
 function acpMermaidToolbarIconsLoaded(page: Page): Promise<boolean> {
   return page.evaluate(() => {
     const icons = Array.from(document.querySelectorAll<HTMLImageElement>(".acpMermaidToolbar img"))
     return icons.length === 3 && icons.every(icon => icon.complete && icon.naturalWidth > 0 && icon.naturalHeight > 0)
+  })
+}
+
+function acpMermaidToolbarButtonsUseDefaultCursor(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>(".acpMermaidToolbarButton"))
+    return buttons.length === 3 && buttons.every(button => getComputedStyle(button).cursor === "default")
   })
 }
 

@@ -193,6 +193,7 @@ test("zooms, pans, and exposes native resize for Mermaid diagrams", async ({ pag
 
   await expect(page.getByRole("button", { name: "Zoom in diagram" })).toBeVisible()
   expect(await mermaidToolbarIconsLoaded(page)).toBe(true)
+  expect(await mermaidToolbarButtonsUseDefaultCursor(page)).toBe(true)
   expect(await mermaidHasNoRunGutter(page)).toBe(true)
   const resizeEnabled = await page.evaluate(() => {
     const block = document.querySelector(".mermaidBlock.isInteractive")
@@ -200,6 +201,7 @@ test("zooms, pans, and exposes native resize for Mermaid diagrams", async ({ pag
   })
   expect(resizeEnabled).toBe(true)
   expect(await mermaidSvgFillsViewport(page)).toBe(true)
+  expect(await mermaidViewportUsesMoveCursor(page)).toBe(true)
 
   await page.getByRole("button", { name: "Zoom in diagram" }).click()
   await page.waitForFunction(() => {
@@ -373,10 +375,24 @@ function mermaidSvgFillsViewport(page: Page): Promise<boolean> {
   })
 }
 
+function mermaidViewportUsesMoveCursor(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const viewport = document.querySelector(".mermaidViewport")
+    return viewport != null && getComputedStyle(viewport).cursor === "move"
+  })
+}
+
 function mermaidToolbarIconsLoaded(page: Page): Promise<boolean> {
   return page.evaluate(() => {
     const icons = Array.from(document.querySelectorAll<HTMLImageElement>(".mermaidToolbar img"))
     return icons.length === 3 && icons.every(icon => icon.complete && icon.naturalWidth > 0 && icon.naturalHeight > 0)
+  })
+}
+
+function mermaidToolbarButtonsUseDefaultCursor(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>(".mermaidToolbarButton"))
+    return buttons.length === 3 && buttons.every(button => getComputedStyle(button).cursor === "default")
   })
 }
 
