@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.impl.canUnloadActionGroup
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.impl.BundledColorSchemeEPName
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.keymap.impl.BundledKeymapBean
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement
@@ -20,6 +21,8 @@ import kotlinx.coroutines.CancellationException
 private val LOG get() = Logger.getInstance(DynamicPluginsValidators::class.java)
 
 internal object DynamicPluginsValidators {
+  private val VETOER_EP_NAME = ExtensionPointName<DynamicPluginVetoer>("com.intellij.ide.dynamicPluginVetoer")
+
   /**
    * may throw [AbortDynamicPluginIssuesComputation] to stop the computation (I know this is a smelly thing, but it's the cheapest option right now)
    */

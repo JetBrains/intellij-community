@@ -23,7 +23,6 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -55,7 +54,6 @@ import java.util.function.Predicate
 import javax.swing.ToolTipManager
 
 private val LOG = logger<DynamicPlugins>()
-internal val VETOER_EP_NAME = ExtensionPointName<DynamicPluginVetoer>("com.intellij.ide.dynamicPluginVetoer")
 
 internal object DynamicPluginsLegacyImpl {
   internal fun clearCachesAfterUnload(classLoaders: WeakList<PluginClassLoader>) {
