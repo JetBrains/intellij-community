@@ -3,7 +3,6 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.IdeBundle
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
@@ -317,10 +316,6 @@ object DynamicPlugins {
     }
     LOG.debug(cause)
     return cause == null
-  }
-
-  fun onPluginUnload(parentDisposable: Disposable, callback: Runnable) {
-    return DynamicPluginsLegacyImpl.onPluginUnload(parentDisposable, callback)
   }
 
   /**

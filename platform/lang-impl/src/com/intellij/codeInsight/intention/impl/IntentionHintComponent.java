@@ -20,7 +20,8 @@ import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.actions.ActionsCollector;
-import com.intellij.ide.plugins.DynamicPlugins;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.inlinePrompt.InlinePrompt;
@@ -166,7 +167,13 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     myComponentHint = new MyComponentHint(myLightBulbPanel);
 
     EditorUtil.disposeWithEditor(myEditor, this);
-    DynamicPlugins.INSTANCE.onPluginUnload(this, () -> Disposer.dispose(this));
+    ApplicationManager.getApplication().getMessageBus().connect(this)
+      .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+        @Override
+        public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+          Disposer.dispose(IntentionHintComponent.this);
+        }
+      });
   }
 
   @RequiresEdt

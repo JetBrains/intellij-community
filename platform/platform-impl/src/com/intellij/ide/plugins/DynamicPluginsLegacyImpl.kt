@@ -1031,16 +1031,6 @@ internal object DynamicPluginsLegacyImpl {
     return true
   }
 
-  fun onPluginUnload(parentDisposable: Disposable, callback: Runnable) {
-    ApplicationManager.getApplication().messageBus.connect(parentDisposable)
-      .subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
-        override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-          callback.run()
-        }
-      })
-  }
-
-
   internal fun registerDescriptors(
     app: ApplicationImpl,
     descriptors: Sequence<IdeaPluginDescriptorImpl>,
