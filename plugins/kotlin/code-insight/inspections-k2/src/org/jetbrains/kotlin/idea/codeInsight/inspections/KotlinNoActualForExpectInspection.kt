@@ -62,7 +62,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtVisitorVoid
-import org.jetbrains.kotlin.tooling.core.withClosure
+import org.jetbrains.kotlin.utils.closure
 import java.awt.Component
 import javax.swing.DefaultListCellRenderer
 import javax.swing.JLabel
@@ -138,7 +138,7 @@ class KotlinNoActualForExpectInspection : AbstractKotlinInspection() {
                 In the example above, it will return `nativeMain`, `appleMain`, `iosMain`, `iosX64Main` iosArm64Main`
                  */
                 val allModulesCapableOfProvidingActuals = missingActuals
-                    .withClosure<Module> { leafModule -> leafModule.implementedModules - expectModule }
+                    .closure { leafModule -> leafModule.implementedModules - expectModule }
                     .reversed() /* reversing the list to ensure that modules "closest to the 'expect'" come first. */
 
                 val actualDeclaration = analyze(parentDeclaration) {

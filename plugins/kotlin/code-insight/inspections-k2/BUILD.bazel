@@ -79,7 +79,6 @@ jvm_library(
         "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
-        "@lib//:kotlin-tooling-core",
         "//platform/external-system-api:externalSystem",
         "//plugins/kotlin/formatter/minimal",
         "//platform/ide-core",
