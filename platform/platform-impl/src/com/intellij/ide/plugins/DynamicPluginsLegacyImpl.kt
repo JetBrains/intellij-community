@@ -69,9 +69,7 @@ private val LOG = logger<DynamicPlugins>()
 internal val VETOER_EP_NAME = ExtensionPointName<DynamicPluginVetoer>("com.intellij.ide.dynamicPluginVetoer")
 
 internal object DynamicPluginsLegacyImpl {
-  internal fun clearCachesAfterUnload(
-    classLoaders: WeakList<PluginClassLoader>,
-  ) {
+  internal fun clearCachesAfterUnload(classLoaders: WeakList<PluginClassLoader>) {
     (application as? ApplicationImpl)?.extensionArea?.clearUserCache()
     for (project in ProjectUtil.getOpenProjects()) {
       (project.extensionArea as ExtensionsAreaImpl).clearUserCache()
@@ -149,11 +147,14 @@ internal object DynamicPluginsLegacyImpl {
     val appExtensionArea = app.extensionArea
     val priorityUnloadListeners = mutableListOf<Runnable>()
     val unloadListeners = mutableListOf<Runnable>()
-    unregisterUnknownLevelExtensions(module.extensions, module, appExtensionArea, openedProjects,
-                                     priorityUnloadListeners, unloadListeners)
-    // note: here was a dead code for unregistering appContainer.extensions, but the map was always empty
-    // note: here was a dead code for unregistering project level extensions, but it is already handled by a call above
-    // note: here was a dead code for unregistering unknown level extensions with `moduleContainer.extensions` but the latter was always empty
+    unregisterExtensions(
+      extensionMap = module.extensions,
+      pluginDescriptor = module,
+      appExtensionArea = appExtensionArea,
+      openedProjects = openedProjects,
+      priorityUnloadListeners = priorityUnloadListeners,
+      unloadListeners = unloadListeners
+    )
 
     for (priorityUnloadListener in priorityUnloadListeners) {
       priorityUnloadListener.run()
@@ -200,12 +201,14 @@ internal object DynamicPluginsLegacyImpl {
     }
   }
 
-  internal fun unregisterUnknownLevelExtensions(extensionMap: Map<String, List<ExtensionDescriptor>>,
-                                               pluginDescriptor: IdeaPluginDescriptorImpl,
-                                               appExtensionArea: ExtensionsAreaImpl,
-                                               openedProjects: List<Project>,
-                                               priorityUnloadListeners: MutableList<Runnable>,
-                                               unloadListeners: MutableList<Runnable>) {
+  internal fun unregisterExtensions(
+    extensionMap: Map<String, List<ExtensionDescriptor>>,
+    pluginDescriptor: IdeaPluginDescriptorImpl,
+    appExtensionArea: ExtensionsAreaImpl,
+    openedProjects: List<Project>,
+    priorityUnloadListeners: MutableList<Runnable>,
+    unloadListeners: MutableList<Runnable>,
+  ) {
     for (epName in extensionMap.keys) {
       val isAppLevelEp = appExtensionArea.unregisterExtensions(epName, pluginDescriptor, priorityUnloadListeners,
                                                                unloadListeners)
@@ -226,9 +229,11 @@ internal object DynamicPluginsLegacyImpl {
     }
   }
 
-  internal fun processExtensionPoints(pluginDescriptor: IdeaPluginDescriptorImpl,
-                                            projects: List<Project>,
-                                            processor: (points: List<ExtensionPointDescriptor>, area: ExtensionsAreaImpl) -> Unit) {
+  internal fun processExtensionPoints(
+    pluginDescriptor: IdeaPluginDescriptorImpl,
+    projects: List<Project>,
+    processor: (points: List<ExtensionPointDescriptor>, area: ExtensionsAreaImpl) -> Unit,
+  ) {
     pluginDescriptor.appContainerDescriptor.extensionPoints.takeIf { it.isNotEmpty() }?.let {
       processor(it, ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
     }
