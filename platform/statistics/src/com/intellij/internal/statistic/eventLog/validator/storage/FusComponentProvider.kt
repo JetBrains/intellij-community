@@ -27,6 +27,8 @@ import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.util.PlatformUtils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.fus.reporting.DICTIONARY_LIST_LOAD_FAILED_TOPIC
 import com.jetbrains.fus.reporting.DICTIONARY_LIST_UPDATE_FAILED_TOPIC
@@ -328,8 +330,11 @@ object FusComponentProvider {
             excludedFields = FeatureUsageData.platformDataKeys,
             utilRulesProducer = CustomRuleProducer(recorderId)
           )
-          val effective: MetadataStorage<EventLogBuild> =
-            if (isInternal) CompositeValidationRulesStorage(storage, ValidationTestRulesPersistedStorage(recorderId)) else storage
+          val effective: MetadataStorage<EventLogBuild> = if (isInternal) {
+            CompositeValidationRulesStorage(storage, ValidationTestRulesPersistedStorage(recorderId))
+          } else {
+            storage
+          }
           metadataStorageRef = effective
           effective
         }
@@ -388,7 +393,12 @@ object FusComponentProvider {
             }
             preEventsSend = { events ->
               val machineId = actualOrDisabledMachineId(machineId, remoteConfig.provideOptions())
-              events.onEach { fillMachineId(it, machineId) }
+              // Legacy EventLogStatisticsService applied provideEventFilter(...) per send round; buckets/sampling
+              // moved into the SDK, the remaining parts (approved-groups re-check + snapshot-build filter) live here.
+              val testMode = StatisticsRecorderUtil.isTestModeEnabled(recorderId)
+              events
+                .filter { isNotSnapshotBuild(it) && isGroupApprovedForSend(it, metadataStorageRef, testMode) }
+                .onEach { fillMachineId(it, machineId) }
             }
             // Start the out-of-process external uploader on IDE shutdown (was IntellijReportDispatcher.postClose).
             postClose = { ExternalUploadOrchestrator.tryStartExternalUpload() }
@@ -419,6 +429,43 @@ object FusComponentProvider {
         machineId != MachineId.DISABLED) {
       event.event.data["system_id_revision"] = machineId.revision
     }
+  }
+
+  /**
+   * Formerly `LogEventSnapshotBuildFilter`: never upload events recorded by snapshot builds
+   * (`XXX.0`) or with an unparseable build number.
+   */
+  private fun isNotSnapshotBuild(event: LogEvent): Boolean {
+    val disabled = Registry.`is`("feature.usage.event.snapshot.filtering.disabled", false)
+    if (disabled) {
+      return true
+    }
+    val parts = EventLogBuild.fromString(event.build)?.components ?: return false
+    return parts.size != 2 || parts[1] != 0
+  }
+
+  /**
+   * Formerly `LogEventMetadataFilter` (built from `provideBaseEventFilter`): re-checks group approval against the
+   * *current* metadata at send time. Events can sit in the queue for days; a group de-listed in between must not
+   * be uploaded, even though it passed write-time validation.
+   *
+   * Deviations from legacy, both deliberate:
+   * - unreachable metadata keeps events (legacy dropped everything via `EventGroupsFilterRules.empty()`;
+   *   the SDK storage has persisted/bundled fallbacks, so unreachable is a degraded state, not the steady state);
+   * - test-mode recorders and test-rule groups (versionFilter == null but eventGroupRules != null,
+   *   see [CompositeValidationRulesStorage]) always pass, mirroring `IntellijSensitiveDataValidator.isGroupAllowed`.
+   */
+  private fun isGroupApprovedForSend(
+    event: LogEvent,
+    metadataStorage: MetadataStorage<EventLogBuild>?,
+    testMode: Boolean,
+  ): Boolean {
+    if (testMode) return true
+    if (metadataStorage?.isUnreachable() ?: true) return true
+    val validators = metadataStorage.getGroupValidators(event.group.id)
+    val versionFilter = validators.versionFilter
+                        ?: return validators.eventGroupRules != null // test-rule/custom-path group vs. unknown group
+    return versionFilter.accepts(event.group.id, event.group.version, event.build)
   }
 
   /**
