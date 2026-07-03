@@ -1794,8 +1794,7 @@ public final class TableResultView extends JBTableWithResizableCells
         handleClickToSortColumn(columnIdx, e);
       }
       else {
-        myResultPanel.getSelectionModel().setColumnSelection(columnIdx, true);
-        myResultPanel.getSelectionModel().selectWholeColumn();
+        selectViewColumnInterval(currentViewIdx, e);
       }
     }
   }
@@ -1981,6 +1980,8 @@ public final class TableResultView extends JBTableWithResizableCells
     if (selectionModel == null) return;
     if (interval) {
       int lead = getColumnModel().getSelectionModel().getLeadSelectionIndex();
+      // Shift-click can be the first column selection gesture; use the clicked column as the range anchor.
+      if (lead == -1) lead = viewColumn;
       if (exclusive) {
         selectionModel.addRowSelectionInterval(getRowCount() - 1, 0);
         selectionModel.addColumnSelectionInterval(viewColumn, lead);
@@ -1991,7 +1992,13 @@ public final class TableResultView extends JBTableWithResizableCells
       }
     }
     else if (exclusive) {
-      removeColumnSelectionInterval(viewColumn, viewColumn);
+      if (isColumnSelected(viewColumn)) {
+        removeColumnSelectionInterval(viewColumn, viewColumn);
+      }
+      else {
+        selectionModel.addRowSelectionInterval(getRowCount() - 1, 0);
+        selectionModel.addColumnSelectionInterval(viewColumn, viewColumn);
+      }
     }
     else {
       selectionModel.setRowSelectionInterval(getRowCount() - 1, 0);

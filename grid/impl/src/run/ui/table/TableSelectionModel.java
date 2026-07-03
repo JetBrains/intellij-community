@@ -299,4 +299,3 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
     selectionModel.setSelection(selection.getSelectedRows(), selection.getSelectedColumns());
   }
 }
-
