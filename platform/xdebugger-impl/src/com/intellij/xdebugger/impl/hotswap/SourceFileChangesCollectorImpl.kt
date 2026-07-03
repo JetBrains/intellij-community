@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.hotswap
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.history.LocalHistory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
@@ -14,6 +15,7 @@ import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VirtualFile
@@ -206,6 +208,30 @@ sealed interface HotSwapChangesCompatibility : Comparable<HotSwapChangesCompatib
   }
 }
 
+/**
+ * Synthetic status that marks that there were no changes detected.
+ */
+private data object NoChanges : HotSwapChangesCompatibility {
+  override val order: Int
+    get() = -20
+}
+
+/**
+ * Synthetic status that marks that there were no checkers provided.
+ */
+private data object NoChecks : HotSwapChangesCompatibility {
+  override val order: Int
+    get() = -10
+}
+
+/**
+ * Synthetic status that marks that compatibility checks cannot be run.
+ */
+private data object CheckImpossible : HotSwapChangesCompatibility {
+  override val order: Int
+    get() = 15
+}
+
 private val logger = logger<SourceFileChangesCollectorImpl>()
 
 /**
@@ -213,6 +239,7 @@ private val logger = logger<SourceFileChangesCollectorImpl>()
  */
 @ApiStatus.Internal
 class SourceFileChangesCollectorImpl(
+  private val project: Project,
   coroutineScope: CoroutineScope,
   private val listener: SourceFileChangesListener,
   internal val filters: List<SourceFileChangeFilter<VirtualFile>>,
@@ -222,6 +249,11 @@ class SourceFileChangesCollectorImpl(
   private val lock = ReentrantLock()
   private val cs = coroutineScope.childScope("SourceFileChangesCollectorImpl")
   private val currentProcessing = ConcurrentHashMap<VirtualFile, Job>()
+
+  /**
+   * Set of statuses that were reported within the current changes scope (between the hot swaps, changes reset to original state or session start).
+   */
+  private val reportedStatuses = ConcurrentCollectionFactory.createConcurrentSet<HotSwapStatistics.HotSwapSourceCompatibilityStatus>()
 
   @Volatile
   private var currentChanges: MutableMap<VirtualFile, HotSwapChangesCompatibility> = hashMapOf()
@@ -253,6 +285,7 @@ class SourceFileChangesCollectorImpl(
   override fun resetChanges() {
     val previousTimeStamp = lastResetTimeStamp.getAndSet(System.currentTimeMillis())
     currentChanges = hashMapOf()
+    reportedStatuses.clear()
     ChangesProcessingService.getInstance().dropTimestamp(previousTimeStamp)
   }
 
@@ -275,22 +308,23 @@ class SourceFileChangesCollectorImpl(
   private suspend fun processDocumentChangeInternal(change: ChangeState) {
     val file = change.file
     val currentChanges = currentChanges
-    val status = if (change.hasChanges) {
-      val compatibility = getCompatibility(file, change.oldContent)
+    val compatibility = if (change.hasChanges) {
+      val fileCompatibility = getCompatibility(file, change.oldContent)
       lock.withLock {
-        currentChanges[file] = compatibility
-        currentChanges.values.toSourceFileChangesStatus()
+        currentChanges[file] = fileCompatibility
+        currentChanges.calculateCompatibility()
       }
     }
     else {
       lock.withLock {
         currentChanges.remove(file)
-        currentChanges.values.toSourceFileChangesStatus()
+        currentChanges.calculateCompatibility()
       }
     }
 
     currentCoroutineContext().ensureActive()
-    when (status) {
+    reportSourceCompatibility(compatibility)
+    when (val status = compatibility.toSourceFileChangesStatus()) {
       SourceFileChangesStatus.ChangesCanceled -> {
         logger.debug { "Document change reverted previous changes: $file" }
         listener.onChangesCanceled()
@@ -306,19 +340,36 @@ class SourceFileChangesCollectorImpl(
     }
   }
 
+  private fun Map<*, HotSwapChangesCompatibility>.calculateCompatibility(): HotSwapChangesCompatibility = values.maxOrNull() ?: NoChanges
+  private fun HotSwapChangesCompatibility.toSourceFileChangesStatus(): SourceFileChangesStatus = when (this) {
+    NoChanges -> SourceFileChangesStatus.ChangesCanceled
+    is HotSwapChangesCompatibility.Incompatible -> SourceFileChangesStatus.IncompatibleChanges(this.reason)
+    else -> SourceFileChangesStatus.NewChanges
+  }
+
   private suspend fun getCompatibility(file: VirtualFile, oldContent: CharSequence?): HotSwapChangesCompatibility {
-    if (compatibilityCheckers.isEmpty()) return HotSwapChangesCompatibility.Compatible
-    if (oldContent == null) return HotSwapChangesCompatibility.Unknown
+    if (compatibilityCheckers.isEmpty()) return NoChecks
+    if (oldContent == null) return CheckImpossible
     val change = SourceFileChange(file, oldContent)
     return compatibilityCheckers.maxOf { checker -> checker.getCompatibility(change) }
   }
 
-  private fun Collection<HotSwapChangesCompatibility>.toSourceFileChangesStatus(): SourceFileChangesStatus {
-    val compatibility = maxOrNull()
-    return when (compatibility) {
-      null -> SourceFileChangesStatus.ChangesCanceled
-      is HotSwapChangesCompatibility.Incompatible -> SourceFileChangesStatus.IncompatibleChanges(compatibility.reason)
-      HotSwapChangesCompatibility.Compatible, HotSwapChangesCompatibility.Unknown, HotSwapChangesCompatibility.Irrelevant -> SourceFileChangesStatus.NewChanges
+  private fun reportSourceCompatibility(compatibility: HotSwapChangesCompatibility) {
+    val compatibilityStatus = when (compatibility) {
+      NoChanges -> {
+        reportedStatuses.clear()
+        return
+      }
+      HotSwapChangesCompatibility.Irrelevant -> HotSwapStatistics.HotSwapSourceCompatibilityStatus.UNSUPPORTED
+      HotSwapChangesCompatibility.Compatible -> HotSwapStatistics.HotSwapSourceCompatibilityStatus.COMPATIBLE
+      NoChecks -> HotSwapStatistics.HotSwapSourceCompatibilityStatus.NO_CHECKS
+      CheckImpossible -> HotSwapStatistics.HotSwapSourceCompatibilityStatus.CHECK_IMPOSSIBLE
+      HotSwapChangesCompatibility.Unknown -> HotSwapStatistics.HotSwapSourceCompatibilityStatus.UNKNOWN
+      is HotSwapChangesCompatibility.Incompatible -> HotSwapStatistics.HotSwapSourceCompatibilityStatus.INCOMPATIBLE
+    }
+    val shouldReport = reportedStatuses.add(compatibilityStatus)
+    if (shouldReport) {
+      HotSwapStatistics.logSourceCompatibilityDetected(project, compatibilityStatus)
     }
   }
 

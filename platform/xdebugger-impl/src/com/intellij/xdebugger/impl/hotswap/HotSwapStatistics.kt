@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 @Suppress("PublicApiImplicitType")
 @ApiStatus.Internal
 object HotSwapStatistics : CounterUsagesCollector() {
-  private val group = EventLogGroup("debugger.hotswap", 3)
+  private val group = EventLogGroup("debugger.hotswap", 4)
 
   private val dcevmEnabled = EventFields.Boolean("dcevm_enabled")
 
@@ -22,6 +22,10 @@ object HotSwapStatistics : CounterUsagesCollector() {
   private val hotSwapFailureReason = group.registerEvent("hotswap.failed", EventFields.Enum<HotSwapFailureReason>("reason"), hotSwapSource)
   private val hotSwapClassesNumber = group.registerEvent("hotswap.classes.reloaded", EventFields.Int("count"))
   private val sessionStarted = group.registerEvent("session.started", dcevmEnabled)
+  private val sourceCompatibilityDetected = group.registerEvent(
+    "source.compatibility.detected",
+    EventFields.Enum<HotSwapSourceCompatibilityStatus>("status"),
+  )
 
 
   override fun getGroup(): EventLogGroup = group
@@ -44,12 +48,26 @@ object HotSwapStatistics : CounterUsagesCollector() {
   @JvmStatic
   fun logClassesReloaded(project: Project, count: Int) = hotSwapClassesNumber.log(project, count)
 
+  @JvmStatic
+  fun logSourceCompatibilityDetected(project: Project, status: HotSwapSourceCompatibilityStatus) {
+    sourceCompatibilityDetected.log(project, status)
+  }
+
   enum class HotSwapStatus {
     SUCCESS,
     COMPILATION_FAILURE,
     HOT_SWAP_FAILURE,
     NO_CHANGES,
     RESTART,
+  }
+
+  enum class HotSwapSourceCompatibilityStatus {
+    COMPATIBLE,
+    UNSUPPORTED, // no checker for the modified file's langauge
+    NO_CHECKS, // checkers aren't enabled (feature not implemented/DCEVM enabled)
+    CHECK_IMPOSSIBLE, // cannot access previous content (VCS issue or performance limitation)
+    UNKNOWN, // checker failed
+    INCOMPATIBLE,
   }
 }
 

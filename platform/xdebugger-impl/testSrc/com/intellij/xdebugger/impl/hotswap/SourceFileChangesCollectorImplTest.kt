@@ -78,7 +78,7 @@ class SourceFileChangesCollectorImplTest {
   @Test
   fun testChangesDetection() {
     doTest { scope, document ->
-      scope.withCollector { collector, channel ->
+      scope.withCollector(project) { collector, channel ->
         assertNull(channel.tryReceive().getOrNull())
 
         writeCommandAction(project, "Replace first line") { document.replaceString(0, 4, "string") }
@@ -95,7 +95,7 @@ class SourceFileChangesCollectorImplTest {
   @Test
   fun testResetChanges() {
     doTest { scope, document ->
-      scope.withCollector { collector, channel ->
+      scope.withCollector(project) { collector, channel ->
         assertNull(channel.tryReceive().getOrNull())
 
         writeCommandAction(project, "Replace first line") { document.replaceString(0, 4, "string") }
@@ -117,7 +117,7 @@ class SourceFileChangesCollectorImplTest {
   fun testFiltering() {
     doTest { scope, document ->
       val filter = SourceFileChangeFilter<VirtualFile> { false }
-      scope.withCollector(filters = listOf(filter)) { collector, channel ->
+      scope.withCollector(project, filters = listOf(filter)) { collector, channel ->
         assertNull(channel.tryReceive().getOrNull())
 
         writeCommandAction(project, "Replace first line") { document.replaceString(0, 4, "string") }
@@ -130,7 +130,7 @@ class SourceFileChangesCollectorImplTest {
   @Test
   fun testRevertChanges() {
     doTest { scope, document ->
-      scope.withCollector { collector, channel ->
+      scope.withCollector(project) { collector, channel ->
         SourceFileChangesCollectorImpl.customLocalHistory = MockLocalHistory(document.text.toByteArray())
         assertNull(channel.tryReceive().getOrNull())
 
@@ -153,7 +153,7 @@ class SourceFileChangesCollectorImplTest {
         changes.send(change)
         HotSwapChangesCompatibility.Compatible
       }
-      scope.withCollector(compatibilityCheckers = listOf(checker)) { collector, channel ->
+      scope.withCollector(project, compatibilityCheckers = listOf(checker)) { collector, channel ->
         SourceFileChangesCollectorImpl.customLocalHistory = MockLocalHistory(document.text.toByteArray())
         assertNull(channel.tryReceive().getOrNull())
 
@@ -173,7 +173,7 @@ class SourceFileChangesCollectorImplTest {
     val reason = "Method was added"
     doTest { scope, document ->
       val checker = SourceFileChangeCompatibilityChecker { HotSwapChangesCompatibility.Incompatible(reason) }
-      scope.withCollector(compatibilityCheckers = listOf(checker)) { collector, channel ->
+      scope.withCollector(project, compatibilityCheckers = listOf(checker)) { collector, channel ->
         SourceFileChangesCollectorImpl.customLocalHistory = MockLocalHistory(document.text.toByteArray())
         assertNull(channel.tryReceive().getOrNull())
 
@@ -189,7 +189,7 @@ class SourceFileChangesCollectorImplTest {
   fun testIrrelevantCompatibilityResultIsIgnored() {
     doTest { scope, document ->
       val checker = SourceFileChangeCompatibilityChecker { HotSwapChangesCompatibility.Irrelevant }
-      scope.withCollector(compatibilityCheckers = listOf(checker)) { collector, channel ->
+      scope.withCollector(project, compatibilityCheckers = listOf(checker)) { collector, channel ->
         SourceFileChangesCollectorImpl.customLocalHistory = MockLocalHistory(document.text.toByteArray())
         assertNull(channel.tryReceive().getOrNull())
 
@@ -209,7 +209,7 @@ class SourceFileChangesCollectorImplTest {
       val checker2 = SourceFileChangeCompatibilityChecker { HotSwapChangesCompatibility.Incompatible(reason) }
       val checker3 = SourceFileChangeCompatibilityChecker { HotSwapChangesCompatibility.Unknown }
       val checker4 = SourceFileChangeCompatibilityChecker { HotSwapChangesCompatibility.Compatible }
-      scope.withCollector(compatibilityCheckers = listOf(checker1, checker2, checker3, checker4)) { collector, channel ->
+      scope.withCollector(project, compatibilityCheckers = listOf(checker1, checker2, checker3, checker4)) { collector, channel ->
         SourceFileChangesCollectorImpl.customLocalHistory = MockLocalHistory(document.text.toByteArray())
         assertNull(channel.tryReceive().getOrNull())
 
@@ -225,7 +225,7 @@ class SourceFileChangesCollectorImplTest {
   fun testIncompatibleChangesCanceledAfterRevert() {
     doTest { scope, document ->
       val checker = SourceFileChangeCompatibilityChecker { HotSwapChangesCompatibility.Incompatible("Method was added") }
-      scope.withCollector(compatibilityCheckers = listOf(checker)) { collector, channel ->
+      scope.withCollector(project, compatibilityCheckers = listOf(checker)) { collector, channel ->
         SourceFileChangesCollectorImpl.customLocalHistory = MockLocalHistory(document.text.toByteArray())
         assertNull(channel.tryReceive().getOrNull())
 
@@ -249,7 +249,7 @@ class SourceFileChangesCollectorImplTest {
         allowFirstCheckToComplete.await()
         HotSwapChangesCompatibility.Compatible
       }
-      scope.withCollector(compatibilityCheckers = listOf(checker)) { collector, channel ->
+      scope.withCollector(project, compatibilityCheckers = listOf(checker)) { collector, channel ->
         SourceFileChangesCollectorImpl.customLocalHistory = MockLocalHistory(CONTENT.toByteArray())
 
         writeCommandAction(project, "Replace first line") { document.replaceString(0, 4, "string") }
@@ -293,12 +293,13 @@ class SourceFileChangesCollectorImplTest {
 }
 
 private inline fun CoroutineScope.withCollector(
+  project: Project,
   filters: List<SourceFileChangeFilter<VirtualFile>> = emptyList(),
   compatibilityCheckers: List<SourceFileChangeCompatibilityChecker> = emptyList(),
   action: (SourceFileChangesCollector<VirtualFile>, channel: ReceiveChannel<Response>) -> Unit,
 ) {
   val listener = MockListener()
-  val collector = SourceFileChangesCollectorImpl(this, listener, filters, compatibilityCheckers)
+  val collector = SourceFileChangesCollectorImpl(project, this, listener, filters, compatibilityCheckers)
   try {
     action(collector, listener.channel)
   }
