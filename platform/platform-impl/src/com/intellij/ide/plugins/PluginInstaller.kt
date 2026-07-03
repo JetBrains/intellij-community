@@ -118,7 +118,7 @@ object PluginInstaller {
       DynamicPlugins.unloadPluginWithProgress(null, parentComponent, pluginDescriptor, options)
     }
     else {
-      DynamicPlugins.unloadPlugin(pluginDescriptor, options)
+      DynamicPlugins.unloadPlugin(pluginDescriptor)
     }
   }
 

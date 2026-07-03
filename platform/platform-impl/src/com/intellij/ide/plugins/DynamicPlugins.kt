@@ -212,9 +212,7 @@ object DynamicPlugins {
   }
 
   @RequiresEdt(generateAssertion = false)
-  @JvmOverloads
-  fun unloadPlugin(pluginDescriptor: PluginMainDescriptor,
-                   options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
+  fun unloadPlugin(pluginDescriptor: PluginMainDescriptor): Boolean {
     return runWithModalProgressBlocking(
       ModalTaskOwner.guess(),
       IdeBundle.message("modal.progress.title.unloading.plugin", pluginDescriptor.name),
