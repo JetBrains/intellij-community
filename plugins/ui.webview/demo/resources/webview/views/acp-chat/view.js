@@ -64,6 +64,7 @@ var hostStyles = i`
     font-family: var(--jb-font-family);
     font-size: var(--jb-font-size);
     line-height: var(--jb-line-height);
+    user-select: none;
   }
 
   :host([hidden]) {
@@ -218,11 +219,12 @@ i`
     border-color: var(--jb-border-color-strong);
   }
 
-  .field-control:focus-visible,
-  .textarea:focus-visible,
-  .select:focus-visible {
+  .field-control:focus,
+  .textarea:focus,
+  .select:focus {
     border-color: var(--jb-accent-color);
     box-shadow: var(--jb-focus-ring);
+    outline: none;
   }
 
   .field-control:disabled,
@@ -257,6 +259,12 @@ i`
 
   .select {
     padding-right: 26px;
+    user-select: none;
+  }
+
+  .field-control,
+  .textarea {
+    user-select: text;
   }
 
   .select-wrap::after {
@@ -268,6 +276,7 @@ i`
     right: 9px;
     top: 50%;
     transform: translateY(-52%);
+    user-select: none;
   }
 `;
 i`
@@ -299,6 +308,7 @@ i`
     min-height: var(--jb-control-height-compact);
     padding: 0 var(--jb-space-sm);
     text-align: left;
+    user-select: none;
     white-space: nowrap;
   }
 
@@ -320,6 +330,7 @@ i`
     gap: var(--jb-control-gap);
     min-height: var(--jb-control-height-compact);
     position: relative;
+    user-select: none;
   }
 
   .native-check {
@@ -427,6 +438,7 @@ var JbIcon = class extends i$1 {
       height: 16px;
       justify-content: center;
       line-height: 1;
+      user-select: none;
       width: 16px;
     }
 

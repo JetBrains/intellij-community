@@ -27,6 +27,10 @@ export class JbTabs extends LitElement {
       border-bottom-right-radius: 0;
       margin-bottom: -1px;
     }
+
+    .panel {
+      user-select: text;
+    }
   `]
 
   disabled = false
@@ -38,7 +42,7 @@ export class JbTabs extends LitElement {
       <div part="tablist" class="tabs" role="tablist">
         ${normalizeOptions(this.items).map(option => html`<button part="tab" class=${["button", "toolbar", "tab", this.value === option.value ? "selected" : ""].filter(Boolean).join(" ")} type="button" role="tab" aria-selected=${String(this.value === option.value)} ?disabled=${this.disabled || Boolean(option.disabled)} @click=${() => this.selectOption(option)}>${option.label}</button>`)}
       </div>
-      <div part="panel"><slot></slot></div>
+      <div part="panel" class="panel"><slot></slot></div>
     `
   }
 

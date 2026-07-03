@@ -8,6 +8,50 @@
   flex-direction: column;
   gap: 12px;
   padding: 12px;
+  user-select: none;
+}
+
+.app-shell :where(
+  .search-input,
+  .title-block,
+  .title-block *,
+  .clock,
+  .metric-card,
+  .metric-card *,
+  .panel-title,
+  .timeline-list,
+  .timeline-list *,
+  .activity-list,
+  .activity-list *,
+  .details-grid,
+  .details-grid *,
+  .footer-row,
+  .fallback,
+  .fallback *,
+  .mermaid-hint
+) {
+  user-select: text;
+}
+
+.app-shell :where(
+  .select-control,
+  .select-control *,
+  .combo-button,
+  .combo-button *,
+  .menu-button,
+  .menu-button *,
+  .combo-option,
+  .combo-option *,
+  .menu-item,
+  .menu-item *,
+  .btn-control,
+  .btn-control *,
+  .task-card,
+  .task-card *,
+  .mermaid-wrapper,
+  .mermaid-wrapper *
+) {
+  user-select: none;
 }
 
 .panel {
@@ -81,8 +125,9 @@
 
 .search-input:focus,
 .select-control:focus,
-.combo-button:focus-visible,
-.btn-control:focus-visible {
+.combo-button:focus,
+.menu-button:focus,
+.btn-control:focus {
   outline: none;
   border-color: var(--ij-accent);
   box-shadow: var(--ij-focus-ring);

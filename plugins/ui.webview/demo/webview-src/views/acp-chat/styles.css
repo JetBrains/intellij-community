@@ -32,6 +32,69 @@ body {
   position: relative;
   overflow: hidden;
   container-type: inline-size;
+  user-select: none;
+}
+
+.acpChatLayout input,
+.acpChatLayout textarea,
+.acpThreadViewport,
+.acpThreadViewport :where(*) {
+  user-select: text;
+}
+
+.acpChatLayout :where(
+  button,
+  [role="button"],
+  [role="combobox"],
+  [role="option"],
+  .acpSelectItem,
+  .acpSelectScrollButton,
+  .acpSelectLabel,
+  .acpAgentSelect,
+  .acpModelSelectorTrigger,
+  .acpConfigOptionSelect,
+  .acpModelSelectorItem,
+  .acpConfigSwitch,
+  .acpChatListItemTrigger,
+  .acpChatListNew,
+  .acpChatListDrawerTrigger,
+  .acpChatListDelete,
+  .acpChatListLoadMore,
+  .acpAttachmentChip,
+  .acpAttachmentRemove,
+  .acpMermaidBlock--interactive,
+  .acpMermaidBlock--interactive *,
+  .acpMermaidToolbar,
+  .acpMermaidToolbar *,
+  .acpSelectionToolbar,
+  .acpSelectionToolbar *,
+  .acpSlashCommandItem,
+  .acpComposerQuoteDismiss,
+  .acpComposerSend,
+  .acpApprovalButton,
+  .acpAuthAddVar
+) {
+  user-select: none;
+}
+
+.acpSelectContent,
+.acpSelectContent *,
+.acpModelSelectorContent,
+.acpModelSelectorContent *,
+.acpSelectionToolbar,
+.acpSelectionToolbar *,
+.acpSlashCommandMenu,
+.acpSlashCommandMenu *,
+.acpControlTooltip {
+  user-select: none;
+}
+
+.acpModelSelectorSearch {
+  user-select: text;
+}
+
+.acpThreadViewport :where(.acpMarkdownPathLink) {
+  user-select: text;
 }
 
 .acpChatMain {
@@ -80,6 +143,12 @@ body {
 .acpAgentSelect:disabled {
   cursor: default;
   opacity: 0.6;
+}
+
+.acpAgentSelect:focus {
+  border-color: color-mix(in srgb, var(--acp-accent) 58%, var(--acp-border));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--acp-accent) 28%, transparent);
+  outline: none;
 }
 
 .acpAgentSelectStarting {
@@ -288,6 +357,10 @@ body {
   background: color-mix(in srgb, var(--acp-bg-alt) 94%, var(--acp-accent));
 }
 
+.acpModelPickerControl:focus-within {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--acp-accent) 34%, transparent);
+}
+
 .acpControlWithHint {
   position: relative;
 }
@@ -353,6 +426,13 @@ body {
 .acpConfigOptionSelect:disabled {
   cursor: default;
   opacity: 0.6;
+}
+
+.acpModelSelectorTrigger:focus,
+.acpConfigOptionSelect:focus,
+.acpModelSelectorTrigger:focus-visible,
+.acpConfigOptionSelect:focus-visible {
+  outline: none;
 }
 
 .acpModelSelectorTriggerText,
@@ -489,6 +569,10 @@ body {
 .acpConfigToggle:focus-within {
   border-color: color-mix(in srgb, var(--acp-accent) 42%, var(--acp-border));
   background: color-mix(in srgb, var(--acp-accent) 10%, var(--acp-bg-alt));
+}
+
+.acpConfigToggle:focus-within {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--acp-accent) 34%, transparent);
 }
 
 .acpConfigToggleLabel {

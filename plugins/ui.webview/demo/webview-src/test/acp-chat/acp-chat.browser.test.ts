@@ -224,6 +224,83 @@ test("closes the model selector when WebView focus leaves", async ({page}) => {
   expect(modelSelectorClosed).toBe(true)
 })
 
+test("keeps desktop chrome non-selectable while ACP history stays selectable", async ({page}) => {
+  await openPreview(page)
+  await startMockAgent(page)
+
+  await composerInput(page).fill("markdown feature probe")
+  await page.getByRole("button", {name: "Send"}).click()
+  await expect(page.getByText("Markdown feature matrix", {exact: true})).toBeVisible()
+  await page.waitForSelector(".acpMarkdown pre code")
+  await page.waitForSelector(".acpMarkdownPathLink")
+
+  await page.locator('[data-config-id="model"] .acpModelSelectorTrigger').click()
+  await expect(page.getByPlaceholder("Search models...")).toBeVisible()
+
+  const selectionState = await page.evaluate(() => {
+    const userSelect = (selector: string): string => {
+      const element = document.querySelector<HTMLElement>(selector)
+      if (!element) throw new Error(`Missing ${selector}`)
+      return getComputedStyle(element).userSelect
+    }
+    const focusOutline = (selector: string): string => {
+      const element = document.querySelector<HTMLElement>(selector)
+      if (!element) throw new Error(`Missing ${selector}`)
+      element.focus()
+      return getComputedStyle(element).outlineStyle
+    }
+    const parentFocusRing = (selector: string): string => {
+      const element = document.querySelector<HTMLElement>(selector)
+      if (!element) throw new Error(`Missing ${selector}`)
+      element.querySelector<HTMLElement>("button, [role='combobox']")?.focus()
+      return getComputedStyle(element).boxShadow
+    }
+    return {
+      agentTrigger: userSelect(".acpAgentSelect"),
+      configTrigger: userSelect('[data-config-id="mode"] .acpConfigOptionSelect'),
+      modelTrigger: userSelect('[data-config-id="model"] .acpModelSelectorTrigger'),
+      modelItem: userSelect(".acpModelSelectorItem"),
+      sendButton: userSelect(".acpComposerSend"),
+      composerInput: userSelect(".acpComposerInput"),
+      modelSearch: userSelect(".acpModelSelectorSearch"),
+      thread: userSelect(".acpThreadViewport"),
+      markdown: userSelect(".acpMarkdown"),
+      code: userSelect(".acpMarkdown pre code"),
+      pathLink: userSelect(".acpMarkdownPathLink"),
+      agentOutline: focusOutline(".acpAgentSelect"),
+      configOutline: focusOutline('[data-config-id="mode"] .acpConfigOptionSelect'),
+      modelOutline: focusOutline('[data-config-id="model"] .acpModelSelectorTrigger'),
+      configRing: parentFocusRing('[data-config-id="mode"].acpModelPickerControl'),
+      modelRing: parentFocusRing('[data-config-id="model"].acpModelPickerControl'),
+    }
+  })
+
+  expect([
+    selectionState.agentTrigger,
+    selectionState.configTrigger,
+    selectionState.modelTrigger,
+    selectionState.modelItem,
+    selectionState.sendButton,
+  ].every(value => value === "none")).toBe(true)
+  expect([
+    selectionState.composerInput,
+    selectionState.modelSearch,
+    selectionState.thread,
+    selectionState.markdown,
+    selectionState.code,
+    selectionState.pathLink,
+  ].every(value => value === "text")).toBe(true)
+  expect([
+    selectionState.agentOutline,
+    selectionState.configOutline,
+    selectionState.modelOutline,
+  ].every(value => value === "none")).toBe(true)
+  expect([
+    selectionState.configRing,
+    selectionState.modelRing,
+  ].every(value => value !== "none")).toBe(true)
+})
+
 test("renders ACP chat in a real browser with a mock agent", async ({page}) => {
   if (!preview) {
     throw new Error("ACP chat mock preview server was not started")

@@ -13,6 +13,7 @@ export class JbHelpText extends LitElement {
     .help {
       color: var(--jb-text-muted);
       line-height: var(--jb-line-height-paragraph);
+      user-select: text;
     }
 
     .error {

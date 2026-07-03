@@ -25,6 +25,7 @@ export class JbContextHelp extends LitElement {
     .popup {
       line-height: var(--jb-line-height-paragraph);
       max-width: 260px;
+      user-select: text;
       white-space: normal;
     }
   `]
