@@ -477,10 +477,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  defaultValue="true"
                  restartRequired="true"
                  description="Enable plugin category promotion panels with priority sorting in the Installed plugins tab"/>
-    <registryKey key="dynamic.plugins.support.new.impl"
-                 defaultValue="true"
-                 restartRequired="true"
-                 description="Enable new dynamic plugin support implementation"/>
     <registryKey key="dynamic.plugins.support.await.classloader.unload.strategy"
                  defaultValue="[beforeLoad|asyncPostReconfiguration*]"
                  restartRequired="true"

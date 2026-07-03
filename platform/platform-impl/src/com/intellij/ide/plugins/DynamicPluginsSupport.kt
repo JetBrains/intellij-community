@@ -47,17 +47,14 @@ interface DynamicReconfigurationIsNotPossibleReason {
   }
 }
 
-private val instance: DynamicPluginsSupport? by lazy {
+private val instance: DynamicPluginsSupport by lazy {
   // note: dynamic plugin reconfiguration is available only after app init, so Registry is available
-  if (!Registry.`is`("dynamic.plugins.support.new.impl", false)) null
-  else {
-    val classloaderUnloadStrategy = when (Registry.get("dynamic.plugins.support.await.classloader.unload.strategy").selectedOption) {
-      "asyncPostReconfiguration" -> AwaitClassloaderUnloadAsyncPostReconfiguration()
-      "beforeLoad" -> AwaitClassloaderUnloadBeforeLoading()
-      else -> AwaitClassloaderUnloadBeforeLoading()
-    }
-    DynamicPluginsSupportImpl(classloaderUnloadStrategy)
+  val classloaderUnloadStrategy = when (Registry.get("dynamic.plugins.support.await.classloader.unload.strategy").selectedOption) {
+    "asyncPostReconfiguration" -> AwaitClassloaderUnloadAsyncPostReconfiguration()
+    "beforeLoad" -> AwaitClassloaderUnloadBeforeLoading()
+    else -> AwaitClassloaderUnloadBeforeLoading()
   }
+  DynamicPluginsSupportImpl(classloaderUnloadStrategy)
 }
 
 @ApiStatus.Internal
