@@ -10,8 +10,8 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
 import com.intellij.openapi.project.Project
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.util.ThreeState
 import com.intellij.util.application
+import com.intellij.util.containers.forEachLoggingErrors
 import org.gradle.initialization.BuildCancellationToken
 import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.GradleConnector
@@ -30,6 +30,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 
 /**
@@ -41,14 +42,12 @@ internal class GradleConnectorServiceImpl(project: Project) : GradleConnectorSer
   private val cancellationTokens = ConcurrentCollectionFactory.createConcurrentSet<BuildCancellationToken>()
   private val knownGradleUserHomes = ConcurrentCollectionFactory.createConcurrentSet<String>()
 
-  @Volatile
-  private var shutdownStarted = ThreeState.UNSURE
+  private val shutdownStarted = AtomicBoolean(false)
 
   init {
     Runtime.getRuntime().addShutdownHook(object : Thread("Shutdown hook to get to know whether shutdown is started") {
       override fun start() {
-        shutdownStarted = ThreeState.YES
-        super.start()
+        shutdownStarted.set(true)
       }
     })
 
@@ -99,9 +98,18 @@ internal class GradleConnectorServiceImpl(project: Project) : GradleConnectorSer
   }
 
   override fun dispose() {
-    if (!USE_PRODUCTION_DISPOSE_FOR_TESTS && application.isUnitTestMode) return
-    disconnectGradleConnections()
-    stopIdleDaemonsOfOldVersions()
+    if (!USE_PRODUCTION_DISPOSE_FOR_TESTS && application.isUnitTestMode) {
+      return
+    }
+    listOf(
+      ::cancelCurrentOperations,
+      ::stopIdleDaemonsOfOldVersions,
+      { gracefulStopDaemons(knownGradleUserHomes) },
+      ::disconnectGradleConnections
+    )
+      .forEachLoggingErrors(LOG) {
+        it()
+    }
   }
 
   private fun stopIdleDaemonsOfOldVersions() {
@@ -124,37 +132,42 @@ internal class GradleConnectorServiceImpl(project: Project) : GradleConnectorSer
   }
 
   private fun disconnectGradleConnections() {
-    if (shutdownStarted != ThreeState.YES) {
-      // do not call Gradle connector disconnect API when IDE app exit is called during VM shutdown
-      // otherwise Gradle call might lead to adding a new shutdown hook, but it's prohibited when shutdown is already started
+    // do not call Gradle connector disconnect API when IDE app exit is called during VM shutdown
+    // otherwise Gradle call might lead to adding a new shutdown hook, but it's prohibited when shutdown is already started
+    if (shutdownStarted.get()) {
+      return
+    }
+    val iterator = connectorsMap.values.iterator()
+    while (iterator.hasNext()) {
+      val projectConnection = iterator.next()
       try {
-        connectorsMap.values.forEach(GradleProjectConnection::disconnect)
+        projectConnection.disconnect()
       }
       catch (t: Throwable) {
         LOG.warn("Failed to disconnect Gradle connections during project close", t)
-        // one more attempt to clean up Gradle daemons
-        gracefulStopDaemons()
+      }
+      finally {
+        iterator.remove()
       }
     }
-    else {
-      gracefulStopDaemons()
-    }
-    cancellationTokens.clear()
-    connectorsMap.clear()
   }
 
-  private fun gracefulStopDaemons() {
-    cancellationTokens.forEach {
-      if (!it.isCancellationRequested) {
-        try {
-          it.cancel()
-        }
-        catch (t: Throwable) {
-          LOG.warn("Failed to cancel build", t)
+  private fun cancelCurrentOperations() {
+    val iterator = cancellationTokens.iterator()
+    while (iterator.hasNext()) {
+      val token = iterator.next()
+      try {
+        if (!token.isCancellationRequested) {
+          token.cancel()
         }
       }
+      catch (e: Exception) {
+        LOG.warn("Failed to cancel inflight operation", e)
+      }
+      finally {
+        iterator.remove()
+      }
     }
-    gracefulStopDaemons(knownGradleUserHomes)
   }
 
   private fun getConnection(connectorParams: ConnectorParams,
