@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -66,7 +66,6 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   private final EditorImpl myEditor;
   private final DocumentEx myDocument;
   private final @NotNull CaretModelImpl myCaretModel;
-  private final CaretId myCaretId;
   private boolean isValid = true;
   private Throwable myDisposalTrace;
 
@@ -104,8 +103,6 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     myEditor = editor;
     myDocument = editor.getElfDocument();
     myCaretModel = caretModel;
-    myCaretId = new CaretId();
-
     myLogicalCaret = new LogicalPosition(0, 0);
     myVisibleCaret = new VisualPosition(0, 0);
     myPositionMarker = new PositionMarker(0);
@@ -114,10 +111,6 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
                       ? myDocument.getLineStartOffset(1)
                       : (myDocument.getLineCount() == 0) ? 0 : myDocument.getLineEndOffset(0);
     myDocumentUpdateCounter = myCaretModel.getDocumentUpdateCounter();
-  }
-
-  public CaretId getCaretId() {
-    return myCaretId;
   }
 
   @Override
