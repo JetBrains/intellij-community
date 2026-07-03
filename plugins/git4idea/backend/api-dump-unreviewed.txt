@@ -2475,7 +2475,6 @@ f:git4idea.index.GitIndexStatusUtilKt
 f:git4idea.index.GitIndexUtil
 - sf:DEFAULT_MODE:java.lang.String
 - sf:EXECUTABLE_MODE:java.lang.String
-- sf:NULL_HASH:com.intellij.vcs.log.Hash
 - sf:SUBMODULE_MODE:java.lang.String
 - <init>():V
 - s:listStaged(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.Collection):java.util.List

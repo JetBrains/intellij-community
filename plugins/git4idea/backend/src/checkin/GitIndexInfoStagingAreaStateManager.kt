@@ -181,13 +181,14 @@ internal class GitIndexInfoStagingAreaStateManager(val repository: GitRepository
       change.stagedHash to change.stagedIsExecutable
     }
 
-    // NULL_HASH means "delete from index" for update-index --index-info
-    if (hash == GitIndexUtil.NULL_HASH) {
+    // zeroed-out hash means "delete from index" for update-index --index-info
+    val hashString = hash.asString()
+    if (hashString.all { it == '0' }) {
       return "0 $hash\t$relativePath"
     }
 
     val mode = resolveMode(change.isSubmodule, isExecutable)
-    return formatIndexInfo(mode, hash.asString(), relativePath)
+    return formatIndexInfo(mode, hashString, relativePath)
   }
 
   private fun resolveMode(isSubmodule: Boolean, isExecutable: Boolean): String {
