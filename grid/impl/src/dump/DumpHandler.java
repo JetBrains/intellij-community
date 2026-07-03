@@ -29,7 +29,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.JBIterable;
-import kotlin.Triple;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -116,52 +115,82 @@ public abstract class DumpHandler<T> {
     myHandler.addError(null, th);
   }
 
-  public void performDump(@Nullable Project project) {
-    Task.Backgroundable task = buildTask(myFactory, project);
+  public void performDump() {
+    Task.Backgroundable task = buildTask(myFactory);
     if (task == null) return;
     ProgressManager.getInstance().run(task);
   }
 
-  public @Nullable Task.Backgroundable buildTask(@NotNull DataExtractorFactory factory, @Nullable Project project) {
+  public Task.Backgroundable buildTask(@NotNull DataExtractorFactory factory) {
     ThreadingAssertions.assertEventDispatchThread();
-    List<Triple<T, DataExtractor, DumpHandlerParameters>> pairs = mySources
-      .map(s -> {
-        int subQueryIndex = getSubQueryIndex(s);
-        int resultSetIndex = getResultSetIndex(s);
-        ModelIndexSet<GridColumn> selectedColumns = getSelectedColumns(s);
-        String queryText = myNameProvider.getQueryText(s);
-        if (queryText == null) { // I see no reason to just ignore extractions with a null query if we allow empty string queries
-          queryText = "";
-        }
-        String name = myNameProvider.getName(s);
-        DataExtractor extractor = factory.createExtractor(createExtractorConfig(s, project));
-        return extractor != null ?
-               new Triple<>((T)s, extractor, new DumpHandlerParameters(selectedColumns, queryText, subQueryIndex, resultSetIndex, name)) :
-               null;
-      })
-      .filter(p -> p != null)
-      .toList();
-    if (pairs.isEmpty()) return null;
+    List<DumpSource<T>> dumpSources = prepareSources(factory);
+    if (dumpSources.isEmpty()) return null;
+    return buildTask(dumpSources);
+  }
+
+  private Task.@NotNull Backgroundable buildTask(List<DumpSource<T>> dumpSources) {
     return new Task.Backgroundable(myProject, myTitle) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setText(DataGridBundle.message("progress.text.initializing.output"));
         indicator.setIndeterminate(true);
-        Out previousOutput = null;
-        try {
-          for (Triple<T, DataExtractor, DumpHandlerParameters> p : pairs) {
-            indicator.checkCanceled();
-            if (p.getSecond() == null) continue;
-            previousOutput = processSource(p.getFirst(), p.getSecond(), indicator, p.getThird(), previousOutput);
-          }
-        }
-        catch (ProcessCanceledException ignore) {
-        }
-        finally {
-          dumpFinished(previousOutput);
-        }
+        processWithIndicator(dumpSources, indicator);
       }
     };
+  }
+
+  private void processWithIndicator(List<DumpSource<T>> dumpSources, @NotNull ProgressIndicator indicator) {
+    Out previousOutput = null;
+    try {
+      for (DumpSource<T> dumpSource : dumpSources) {
+        indicator.checkCanceled();
+        if (dumpSource.extractor == null) continue;
+        previousOutput = processSource(dumpSource, indicator, previousOutput);
+      }
+    }
+    catch (ProcessCanceledException ignore) {
+    }
+    finally {
+      dumpFinished(previousOutput);
+    }
+  }
+
+  private @NotNull List<DumpSource<T>> prepareSources(@NotNull DataExtractorFactory factory) {
+    return mySources
+      .map(s -> prepareSource(factory, s))
+      .filter(p -> p != null)
+      .toList();
+  }
+
+  private @Nullable DumpSource<T> prepareSource(@NotNull DataExtractorFactory factory, T sourceData) {
+    int subQueryIndex = getSubQueryIndex(sourceData);
+    int resultSetIndex = getResultSetIndex(sourceData);
+    ModelIndexSet<GridColumn> selectedColumns = getSelectedColumns(sourceData);
+    String queryText = myNameProvider.getQueryText(sourceData);
+    if (queryText == null) { // I see no reason to just ignore extractions with a null query if we allow empty string queries
+      queryText = "";
+    }
+    String name = myNameProvider.getName(sourceData);
+    DataExtractor extractor = factory.createExtractor(createExtractorConfig(sourceData, myProject));
+    return extractor != null ?
+           new DumpSource<>(sourceData, extractor, new DumpHandlerParameters(selectedColumns, queryText, subQueryIndex, resultSetIndex, name)) :
+           null;
+  }
+
+  private static class DumpSource<T> {
+    final T sourceData;
+    final DataExtractor extractor;
+    final DumpHandlerParameters dumpParameters;
+
+    private DumpSource(
+      @NotNull T sourceData,
+      @NotNull DataExtractor extractor,
+      @NotNull DumpHandlerParameters dumpParameters)
+    {
+      this.sourceData = sourceData;
+      this.extractor = extractor;
+      this.dumpParameters = dumpParameters;
+    }
   }
 
   private void dumpFinished(@Nullable Out lastOutput) {
@@ -192,23 +221,21 @@ public abstract class DumpHandler<T> {
   }
 
   private @Nullable Out processSource
-    (@NotNull T source,
-     @NotNull DataExtractor extractor,
+    (@NotNull DumpSource<T> dumpSource,
      @NotNull ProgressIndicator indicator,
-     @NotNull DumpHandlerParameters dumpParameters,
      @Nullable Out previousOutput
     ) {
     AsyncFutureResult<Object> result = AsyncFutureFactory.getInstance().createAsyncFutureResult();
     Out output;
     try {
-      output = refreshOut(dumpParameters.name, extractor, previousOutput);
+      output = refreshOut(dumpSource.dumpParameters.name, dumpSource.extractor, previousOutput);
     }
     catch (Exception e) {
       processError(e);
       return null;
     }
     indicator.setText(DataGridBundle.message("progress.text.running.query"));
-    AsyncPromise<Void> promise = run(source, extractor, output, dumpParameters);
+    AsyncPromise<Void> promise = run(dumpSource.sourceData, dumpSource.extractor, output, dumpSource.dumpParameters);
     if (promise == null) return output;
     promise.onProcessed(o -> result.set(true));
     try {
@@ -219,7 +246,7 @@ public abstract class DumpHandler<T> {
     }
     finally {
       myProcessedCount++;
-      sourceDumped(extractor, output);
+      sourceDumped(dumpSource.extractor, output);
     }
     return output;
   }
