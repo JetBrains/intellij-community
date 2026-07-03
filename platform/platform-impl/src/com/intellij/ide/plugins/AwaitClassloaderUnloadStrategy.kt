@@ -7,7 +7,7 @@ import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.clearCachesAfterUnload
+import com.intellij.ide.plugins.DynamicPluginsCachesCleanup.clearCachesAfterUnload
 import com.intellij.ide.plugins.PluginUtils.asSanitizedPathElement
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.notification.NotificationType

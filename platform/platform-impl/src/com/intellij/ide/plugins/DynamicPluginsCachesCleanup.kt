@@ -42,9 +42,12 @@ import java.awt.KeyboardFocusManager
 import java.awt.Window
 import javax.swing.ToolTipManager
 
-private val LOG = logger<DynamicPlugins>()
+private val LOG = logger<DynamicPluginsCachesCleanup>()
 
-internal object DynamicPluginsLegacyImpl {
+/**
+ * TODO consider converting these into unload listeners
+ */
+internal object DynamicPluginsCachesCleanup {
   internal fun clearCachesAfterUnload(classLoaders: WeakList<PluginClassLoader>) {
     (application as? ApplicationImpl)?.extensionArea?.clearUserCache()
     for (project in ProjectUtil.getOpenProjects()) {

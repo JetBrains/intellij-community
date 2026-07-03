@@ -6,8 +6,8 @@ import com.intellij.configurationStore.saveProjectsAndApp
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.clearCachedValues
-import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.clearCachesAfterUnload
+import com.intellij.ide.plugins.DynamicPluginsCachesCleanup.clearCachedValues
+import com.intellij.ide.plugins.DynamicPluginsCachesCleanup.clearCachesAfterUnload
 import com.intellij.ide.plugins.DynamicPluginsValidators.IssueReporter
 import com.intellij.ide.plugins.DynamicPluginsValidators.validateGroupCanBeLoaded
 import com.intellij.ide.plugins.DynamicPluginsValidators.validateGroupCanBeUnloaded
