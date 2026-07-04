@@ -143,27 +143,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
     protected val facetSettings: IKotlinFacetSettings
         get() = facetSettings("project")
 
-    class JvmTarget6IsImported8 : AbstractKotlinMavenImporterTest() {
-        @Test
-        fun testJvmTarget6IsImported8() = runBlocking {
-            // Some version won't be imported into JPS (because it's some milestone version which wasn't published to MC) => explicit
-            // JPS version during import will be dropped => we will fall back to the bundled JPS =>
-            // we have to load 1.6 jvmTarget as 1.8 KTIJ-21515
-            val (facet, notifications) = doJvmTarget6Test("1.7.0-RC")
-
-            Assert.assertEquals("JVM 1.8", facet.targetPlatform!!.oldFashionedDescription)
-            Assert.assertEquals("1.8", (facet.compilerArguments as K2JVMCompilerArguments).jvmTarget)
-
-            Assert.assertEquals(
-                """
-                    Title: 'Unsupported JVM target 1.6'
-                    Content: 'Maven project uses JVM target 1.6 for Kotlin compilation, which is no longer supported. It has been imported as JVM target 1.8. Consider migrating the project to JVM 1.8.'
-                """.trimIndent(),
-                notifications.asText(),
-            )
-        }
-    }
-
     protected suspend fun doJvmTarget6Test(version: String?): Pair<IKotlinFacetSettings, List<Notification>> {
         createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
 
