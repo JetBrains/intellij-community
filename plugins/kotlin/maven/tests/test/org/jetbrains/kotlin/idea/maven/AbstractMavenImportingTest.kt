@@ -18,6 +18,7 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.UsefulTestCase
@@ -155,9 +156,12 @@ abstract class AbstractMavenImportingTest(
   protected open fun checkExpected(afterDirectory: Path) {
     FileDocumentManager.getInstance().saveAllDocuments()
     val expected = afterDirectory.refreshAndGetVirtualDirectory()
+    // mavenDomFixture writes a cache-redirector settings.xml into the project dir; it is fixture infrastructure, not
+    // part of the test's expected output, so exclude it from the golden directory comparison.
     PlatformTestUtil.assertDirectoriesEqual(
       expected,
-      maven.projectPom.parent
+      maven.projectPom.parent,
+      VirtualFileFilter { it.name != "settings.xml" }
     )
   }
 
