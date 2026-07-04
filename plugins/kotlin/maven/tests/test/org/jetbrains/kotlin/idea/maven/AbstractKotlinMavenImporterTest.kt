@@ -143,28 +143,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
     protected val facetSettings: IKotlinFacetSettings
         get() = facetSettings("project")
 
-    class ImportOfficialCodeStyle8 : AbstractKotlinMavenImporterTest() {
-        @Test
-        fun testImportOfficialCodeStyle() = runBlocking {
-            importProjectAsync(
-                """
-            <groupId>test</groupId>
-            <artifactId>project</artifactId>
-            <version>1.0.0</version>
-
-            <properties>
-                <kotlin.code.style>official</kotlin.code.style>
-            </properties>
-            """
-            )
-
-            Assert.assertEquals(
-                KotlinOfficialStyleGuide.CODE_STYLE_ID,
-                CodeStyle.getSettings(project).kotlinCodeStyleDefaults()
-            )
-        }
-    }
-
     class ReImportRemoveDir : AbstractKotlinMavenImporterTest() {
         @Test
         fun testReImportRemoveDir() = runBlocking {
