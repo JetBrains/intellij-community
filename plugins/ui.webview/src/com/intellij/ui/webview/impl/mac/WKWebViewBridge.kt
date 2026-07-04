@@ -82,6 +82,7 @@ internal object WKWebViewBridge {
   private val SEL_SET_INSPECTABLE = createSelector("setInspectable:")
   private val SEL_SET_CAN_USE_CREDENTIAL_STORAGE = createSelector("_setCanUseCredentialStorage:")
   private val SEL_SET_RUBBER_BANDING_ENABLED = createSelector("_setRubberBandingEnabled:")
+  private val SEL_SET_UI_DELEGATE = createSelector("setUIDelegate:")
   private val SEL_REMOVE_FROM_SUPERVIEW = createSelector("removeFromSuperview")
   private val SEL_COPY = createSelector("copy:")
   private val SEL_PASTE = createSelector("paste:")
@@ -153,12 +154,16 @@ internal object WKWebViewBridge {
   private var messageHandlerCallback: Callback? = null
 
   private var urlSchemeHandlerClass: ID = ID.NIL
+  private var uiDelegateClass: ID = ID.NIL
 
   @Suppress("unused") // prevent GC
   private var urlSchemeStartCallback: Callback? = null
 
   @Suppress("unused") // prevent GC
   private var urlSchemeStopCallback: Callback? = null
+
+  @Suppress("unused") // prevent GC
+  private var uiDelegateCreateWebViewCallback: Callback? = null
 
   /**
    * Per-webview callback registry. Key = the ObjC `self` pointer of the handler instance.
@@ -168,16 +173,20 @@ internal object WKWebViewBridge {
 
   private val urlSchemeHandlerCallbacks = java.util.concurrent.ConcurrentHashMap<Long, (String) -> WebViewAssetResponse?>()
 
+  private val newWindowCallbacks = java.util.concurrent.ConcurrentHashMap<Long, (String) -> Unit>()
+
   /**
    * Creates and configures a new `WKWebView` instance.
    *
    * @param onMessage callback invoked on the main thread when JS calls `postMessage`
    * @param resolveAssetUrl callback invoked by the private URL scheme handler.
+   * @param onNewWindowRequested callback invoked when WebKit asks for a secondary WebView.
    * @return handles that must be passed to [release].
    */
   fun createWKWebView(
     onMessage: (String) -> Unit,
     resolveAssetUrl: (String) -> WebViewAssetResponse?,
+    onNewWindowRequested: (String) -> Unit,
     documentStartScripts: List<WebViewScript> = emptyList(),
   ): WebViewHandles {
     // 1. Create WKWebViewConfiguration
@@ -205,6 +214,8 @@ internal object WKWebViewBridge {
     val initializedWebView = invoke(webView, SEL_INIT_WITH_FRAME_CONFIGURATION,
                                     NSRect(0.0, 0.0, 0.0, 0.0), configuration)
     configureWebViewApplicationMode(initializedWebView)
+    val uiDelegateInstance = createAndRegisterUiDelegate(onNewWindowRequested)
+    invoke(initializedWebView, SEL_SET_UI_DELEGATE, uiDelegateInstance)
 
     // 5. Keep Swing host geometry as the only frame source. The WebView is attached
     // to the window content view, so AppKit autoresizing would follow the whole window.
@@ -217,6 +228,7 @@ internal object WKWebViewBridge {
       webView = initializedWebView,
       messageHandler = handlerInstance,
       urlSchemeHandler = urlSchemeHandlerInstance,
+      uiDelegate = uiDelegateInstance,
     )
   }
 
@@ -354,6 +366,7 @@ internal object WKWebViewBridge {
     val configuration = invoke(handles.webView, "configuration")
     val ucc = invoke(configuration, SEL_USER_CONTENT_CONTROLLER)
     invoke(ucc, SEL_REMOVE_SCRIPT_MESSAGE_HANDLER, nsString(IPC_HANDLER_NAME))
+    invoke(handles.webView, SEL_SET_UI_DELEGATE, ID.NIL)
 
     // 2. Detach from superview
     invoke(handles.webView, SEL_REMOVE_FROM_SUPERVIEW)
@@ -361,10 +374,12 @@ internal object WKWebViewBridge {
     // 3. Unregister message callback
     messageHandlerCallbacks.remove(handles.messageHandler.toLong())
     urlSchemeHandlerCallbacks.remove(handles.urlSchemeHandler.toLong())
+    newWindowCallbacks.remove(handles.uiDelegate.toLong())
 
     // 4. Release native objects
     invoke(handles.messageHandler, SEL_RELEASE)
     invoke(handles.urlSchemeHandler, SEL_RELEASE)
+    invoke(handles.uiDelegate, SEL_RELEASE)
     invoke(handles.webView, SEL_RELEASE)
   }
 
@@ -452,6 +467,58 @@ internal object WKWebViewBridge {
 
   // endregion
 
+  // region UI delegate class registration
+
+  private fun createAndRegisterUiDelegate(onNewWindowRequested: (String) -> Unit): ID {
+    ensureUiDelegateClassRegistered()
+
+    val instance = invoke(invoke(uiDelegateClass, SEL_ALLOC), SEL_INIT)
+    newWindowCallbacks[instance.toLong()] = onNewWindowRequested
+    return instance
+  }
+
+  @Synchronized
+  private fun ensureUiDelegateClassRegistered() {
+    if (!ID.NIL.equals(uiDelegateClass)) return
+
+    val superclass = getObjcClass(CLS_NSOBJECT)
+    val cls = allocateObjcClassPair(superclass, "IdeaWKUiDelegate")
+
+    val protocol = getProtocol("WKUIDelegate")
+    if (!isNil(protocol)) {
+      addProtocol(cls, protocol)
+    }
+
+    val createWebViewCallback = object : Callback {
+      @Suppress("unused", "UNUSED_PARAMETER") // called from native
+      fun callback(self: ID, selector: String, webView: ID, configuration: ID, navigationAction: ID, windowFeatures: ID): ID {
+        val url = urlFromNavigationAction(navigationAction)
+        if (url != null) {
+          newWindowCallbacks[self.toLong()]?.invoke(url)
+        }
+        return ID.NIL
+      }
+    }
+    uiDelegateCreateWebViewCallback = createWebViewCallback
+
+    addMethod(
+      cls,
+      createSelector("webView:createWebViewWithConfiguration:forNavigationAction:windowFeatures:"),
+      createWebViewCallback,
+      "@@:@@@@",
+    )
+
+    registerObjcClassPair(cls)
+    uiDelegateClass = cls
+  }
+
+  private fun urlFromNavigationAction(navigationAction: ID): String? {
+    val request = invoke(navigationAction, SEL_REQUEST)
+    return urlFromRequest(request)
+  }
+
+  // endregion
+
   // region URL scheme handler class registration
 
   private fun createAndRegisterUrlSchemeHandler(resolve: (String) -> WebViewAssetResponse?): ID {
@@ -499,6 +566,10 @@ internal object WKWebViewBridge {
 
   private fun urlFromSchemeTask(task: ID): String? {
     val request = invoke(task, SEL_REQUEST)
+    return urlFromRequest(request)
+  }
+
+  private fun urlFromRequest(request: ID): String? {
     if (isNil(request)) return null
     val url = invoke(request, SEL_URL)
     if (isNil(url)) return null
@@ -599,5 +670,6 @@ internal object WKWebViewBridge {
     val webView: ID,
     val messageHandler: ID,
     val urlSchemeHandler: ID,
+    val uiDelegate: ID,
   )
 }

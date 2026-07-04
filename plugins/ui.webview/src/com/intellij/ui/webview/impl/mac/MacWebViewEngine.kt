@@ -10,6 +10,7 @@ import com.intellij.ui.webview.impl.MacMainThreadDispatcher
 import com.intellij.ui.webview.impl.WebViewAssetResolver
 import com.intellij.ui.webview.impl.WebViewAssetResponse
 import com.intellij.ui.webview.impl.WebViewLogger
+import com.intellij.ui.webview.impl.openWebViewPopupUrlExternally
 import com.intellij.ui.webview.impl.resolveWebViewAssetUrl
 import com.intellij.ui.webview.impl.webViewAssetCustomSchemeUrl
 import com.intellij.ui.webview.impl.WebViewJsMessageReceiver
@@ -87,6 +88,7 @@ internal class MacWebViewEngine(
               val createdHandles = WKWebViewBridge.createWKWebView(
                 onMessage = { message -> handleIncomingMessage(message) },
                 resolveAssetUrl = this@MacWebViewEngine::resolveAssetUrl,
+                onNewWindowRequested = this@MacWebViewEngine::openNewWindowRequest,
                 documentStartScripts = documentStartScripts,
               )
               WebViewLogger.logPerf("wkwebview-create", System.currentTimeMillis() - t0)
@@ -333,6 +335,10 @@ internal class MacWebViewEngine(
 
   private fun resolveAssetUrl(url: String): WebViewAssetResponse? {
     return resolveWebViewAssetUrl(url, activeAssetResolver.get())
+  }
+
+  private fun openNewWindowRequest(url: String) {
+    openWebViewPopupUrlExternally(url)
   }
 
   private suspend fun awaitWebViewId(): ID? {
