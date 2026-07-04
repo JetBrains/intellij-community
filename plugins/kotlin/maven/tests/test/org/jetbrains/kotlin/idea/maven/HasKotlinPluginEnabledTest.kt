@@ -9,9 +9,10 @@ import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.importProjectsAsync
 import com.intellij.openapi.project.modules
 import com.intellij.testFramework.junit5.TestApplication
-import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.configuration.hasKotlinPluginEnabled
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -36,7 +37,7 @@ class HasKotlinPluginEnabledTest(mavenVersion: String, modelVersion: String) :
 </properties>
 """
         )
-        TestCase.assertTrue(project.modules.none { it.hasKotlinPluginEnabled() })
+        assertTrue(project.modules.none { it.hasKotlinPluginEnabled() })
     }
 
     @Test
@@ -61,7 +62,7 @@ class HasKotlinPluginEnabledTest(mavenVersion: String, modelVersion: String) :
 </dependencies>
 """
         )
-        TestCase.assertTrue(project.modules.none { it.hasKotlinPluginEnabled() })
+        assertTrue(project.modules.none { it.hasKotlinPluginEnabled() })
     }
 
     @Test
@@ -135,7 +136,7 @@ class HasKotlinPluginEnabledTest(mavenVersion: String, modelVersion: String) :
 </dependencies>
 """
         )
-        TestCase.assertEquals(project.modules.count { it.hasKotlinPluginEnabled() }, 1)
+        assertEquals(project.modules.count { it.hasKotlinPluginEnabled() }, 1)
     }
 
     @Test
@@ -226,8 +227,8 @@ class HasKotlinPluginEnabledTest(mavenVersion: String, modelVersion: String) :
         maven.importProjectsAsync(projectPom, submodulePom)
 
         val kotlinModules = project.modules.filter { it.hasKotlinPluginEnabled() }
-        TestCase.assertEquals(1, kotlinModules.size)
-        TestCase.assertEquals("submodule", kotlinModules.first().name)
+        assertEquals(1, kotlinModules.size)
+        assertEquals("submodule", kotlinModules.first().name)
     }
 
     @Test
@@ -337,7 +338,7 @@ class HasKotlinPluginEnabledTest(mavenVersion: String, modelVersion: String) :
         maven.importProjectsAsync(projectPom, submoduleAPom, submoduleBPom)
 
         val kotlinModules = project.modules.filter { it.hasKotlinPluginEnabled() }
-        TestCase.assertEquals(1, kotlinModules.size)
-        TestCase.assertEquals("submoduleA", kotlinModules.first().name)
+        assertEquals(1, kotlinModules.size)
+        assertEquals("submoduleA", kotlinModules.first().name)
     }
 }

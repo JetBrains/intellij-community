@@ -11,7 +11,6 @@ import com.intellij.maven.testFramework.fixtures.runWriteAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.module.Module
 import com.intellij.testFramework.junit5.TestApplication
-import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.idea.base.util.module
@@ -19,6 +18,7 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.platform.oldFashionedDescription
 import org.junit.Assert
 import org.junit.Assert.assertNull
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -148,6 +148,6 @@ class ArgsInFacetInSingleElementTest(mavenVersion: String, modelVersion: String)
         maven.assertModules("project")
 
         val externalSource = FacetManager.getInstance(module).allFacets.single().externalSource
-        TestCase.assertEquals("Maven", externalSource?.id)
+        assertEquals("Maven", externalSource?.id)
     }
 }
