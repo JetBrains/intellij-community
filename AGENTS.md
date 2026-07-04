@@ -70,15 +70,20 @@ Use `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof` for module r
 
 Never use the `search-tools-instructions` skill. See ijproxy for search tools.
 
-### ijproxy (required)
+### File operations (read / edit / write / list)
 
-- Read: `mcp__ijproxy__read_file`
-- Edit/Write: `mcp__ijproxy__apply_patch`
+Use the harness's native file tools for reading, editing, writing, and listing repo files. Prefer native read.
+
+- Read: native file read
+- Edit/Write: `apply_patch` (the harness tool, not `mcp__ijproxy__apply_patch`)
+- List dir: native directory listing
+
+### Search & navigation (ijproxy preferred)
+
 - **Search symbols (preferred):** `mcp__ijproxy__search_symbol`
 - Find files (glob): `mcp__ijproxy__search_file`
 - Search text: `mcp__ijproxy__search_text`
 - Search regex: `mcp__ijproxy__search_regex`
-- List dir: `mcp__ijproxy__list_dir`
 
 ### Client fallback (no MCP)
 
@@ -96,12 +101,10 @@ Available via ijproxy or JetBrains MCP. Use these for semantic operations; avoid
 - Run configs: `get_run_configurations`, `execute_run_configuration`
 
 ### Tooling rules
-- When ijproxy MCP is available, all repo file ops (read/search/edit/write) MUST use ijproxy tools. Do not use JetBrains MCP or generic tools.
-- Fallback tools (JetBrains MCP / client) are allowed only when ijproxy is unavailable.
+- For content/symbol **search** and semantic operations, use ijproxy when available; use JetBrains MCP or the client fallback below only when ijproxy is unavailable.
+- For file **read / edit / write / directory listing**, use the harness's native file tools (listed above). ijproxy `read_file` / `apply_patch` are not required for these — prefer native read.
 
-- For repo edits, use `mcp__ijproxy__apply_patch`. Generic `apply_patch` is forbidden unless ijproxy is unavailable.
-
-- Never shell for file ops (`cat`, `sed`, `find`, `grep`) on repo paths, except the client fallback (`./tools/fd.cmd`, `./tools/rg.cmd`) when no MCP is available.
+- Don't shell for file **search** (`find`, `grep`) on repo paths — use ijproxy search, or the client fallback (`./tools/fd.cmd`, `./tools/rg.cmd`) when no MCP is available. Native file tools handle file content, so avoid `cat`/`sed` on repo paths too.
 
 - Shell OK for: git (prefer `git_status` if the tool is available), build/test.
 

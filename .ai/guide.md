@@ -54,33 +54,43 @@ Use `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof` for module r
 
 Never use the `search-tools-instructions` skill. See ijproxy for search tools.
 
-### ijproxy (required)
+### File operations (read / edit / write / list)
+
+Use the harness's native file tools for reading, editing, writing, and listing repo files. Prefer native read.
 <!-- IF_TOOL:CODEX -->
-- Read: `mcp__ijproxy__read_file`
-- Edit/Write: `mcp__ijproxy__apply_patch`
+- Read: native file read
+- Edit/Write: `apply_patch` (the harness tool, not `mcp__ijproxy__apply_patch`)
+- List dir: native directory listing
+<!-- /IF_TOOL:CODEX -->
+<!-- IF_TOOL:CLAUDE -->
+- Read: `Read`
+- Edit: `Edit`
+- Write: `Write`
+- List dir: native directory listing
+<!-- /IF_TOOL:CLAUDE -->
+<!-- IF_TOOL:JUNIE -->
+- Read / Edit / Write: native file tools
+- List dir: native directory listing
+<!-- /IF_TOOL:JUNIE -->
+
+### Search & navigation (ijproxy preferred)
+<!-- IF_TOOL:CODEX -->
 - **Search symbols (preferred):** `mcp__ijproxy__search_symbol`
 - Find files (glob): `mcp__ijproxy__search_file`
 - Search text: `mcp__ijproxy__search_text`
 - Search regex: `mcp__ijproxy__search_regex`
-- List dir: `mcp__ijproxy__list_dir`
 <!-- /IF_TOOL:CODEX -->
 <!-- IF_TOOL:CLAUDE -->
-- Read: `read_file`
-- Edit/Write: `apply_patch`
 - **Search symbols (preferred):** `search_symbol`
 - Find files (glob): `search_file`
 - Search text: `search_text`
 - Search regex: `search_regex`
-- List dir: `list_dir`
 <!-- /IF_TOOL:CLAUDE -->
 <!-- IF_TOOL:JUNIE -->
-- Read: `read_file`
-- Edit/Write: `apply_patch`
 - **Search symbols (preferred):** `search_symbol`
 - Find files (glob): `search_file`
 - Search text: `search_text`
 - Search regex: `search_regex`
-- List dir: `list_dir`
 <!-- /IF_TOOL:JUNIE -->
 
 ### Client fallback (no MCP)
@@ -103,22 +113,13 @@ Available via ijproxy or JetBrains MCP. Use these for semantic operations; avoid
 - Run configs: `get_run_configurations`, `execute_run_configuration`
 
 ### Tooling rules
-- When ijproxy MCP is available, all repo file ops (read/search/edit/write) MUST use ijproxy tools. Do not use JetBrains MCP or generic tools.
-- Fallback tools (JetBrains MCP / client) are allowed only when ijproxy is unavailable.
-<!-- IF_TOOL:CODEX -->
-- For repo edits, use `mcp__ijproxy__apply_patch`. Generic `apply_patch` is forbidden unless ijproxy is unavailable.
-<!-- /IF_TOOL:CODEX -->
-<!-- IF_TOOL:CLAUDE -->
-- For repo edits, use the ijproxy edit/write tools listed above. Generic edit/write fallbacks are forbidden unless ijproxy is unavailable.
-<!-- /IF_TOOL:CLAUDE -->
-<!-- IF_TOOL:JUNIE -->
-- For repo edits, use the ijproxy edit/write tools listed above. Generic edit/write fallbacks are forbidden unless ijproxy is unavailable.
-<!-- /IF_TOOL:JUNIE -->
+- For content/symbol **search** and semantic operations, use ijproxy when available; use JetBrains MCP or the client fallback below only when ijproxy is unavailable.
+- For file **read / edit / write / directory listing**, use the harness's native file tools (listed above). ijproxy `read_file` / `apply_patch` are not required for these — prefer native read.
 <!-- IF_EDITION:ULTIMATE -->
-- Never shell for file ops (`cat`, `sed`, `find`, `grep`) on repo paths, except the client fallback (`./community/tools/fd.cmd`, `./community/tools/rg.cmd`) when no MCP is available.
+- Don't shell for file **search** (`find`, `grep`) on repo paths — use ijproxy search, or the client fallback (`./community/tools/fd.cmd`, `./community/tools/rg.cmd`) when no MCP is available. Native file tools handle file content, so avoid `cat`/`sed` on repo paths too.
 <!-- /IF_EDITION:ULTIMATE -->
 <!-- IF_EDITION:COMMUNITY -->
-- Never shell for file ops (`cat`, `sed`, `find`, `grep`) on repo paths, except the client fallback (`./tools/fd.cmd`, `./tools/rg.cmd`) when no MCP is available.
+- Don't shell for file **search** (`find`, `grep`) on repo paths — use ijproxy search, or the client fallback (`./tools/fd.cmd`, `./tools/rg.cmd`) when no MCP is available. Native file tools handle file content, so avoid `cat`/`sed` on repo paths too.
 <!-- /IF_EDITION:COMMUNITY -->
 - Shell OK for: git (prefer `git_status` if the tool is available), build/test.
 <!-- IF_EDITION:ULTIMATE -->
