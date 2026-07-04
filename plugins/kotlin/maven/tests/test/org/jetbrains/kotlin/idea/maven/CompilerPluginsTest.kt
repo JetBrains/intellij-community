@@ -8,8 +8,8 @@ import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.maven.compilerPlugin.toJpsVersionAgnosticKotlinBundledPath
-import org.junit.Assert
-import org.junit.Assert.assertEquals
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -49,7 +49,7 @@ class CompilerPluginsTest(mavenVersion: String, modelVersion: String) :
                 """
         )
 
-        Assert.assertEquals(
+        Assertions.assertEquals(
             "",
             facetSettings.compilerSettings!!.additionalArguments
         )

@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.additionalArgumentsAsList
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.platform.oldFashionedDescription
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -240,33 +240,33 @@ class SubmoduleArgsInheritanceTest(mavenVersion: String, modelVersion: String) :
         maven.assertModules("project", "myModule1", "myModule2", "myModule3")
 
         with(facetSettings("myModule1")) {
-            Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
-            Assert.assertEquals(LanguageVersion.KOTLIN_1_1, languageLevel!!)
-            Assert.assertEquals(LanguageVersion.KOTLIN_1_0, apiLevel!!)
-            Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
-            Assert.assertEquals(
+            Assertions.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
+            Assertions.assertEquals(LanguageVersion.KOTLIN_1_1, languageLevel!!)
+            Assertions.assertEquals(LanguageVersion.KOTLIN_1_0, apiLevel!!)
+            Assertions.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
+            Assertions.assertEquals(
                 listOf("-Xjava-source-roots=javaDir2"),
                 compilerSettings!!.additionalArgumentsAsList
             )
         }
 
         with(facetSettings("myModule2")) {
-            Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
-            Assert.assertEquals(LanguageVersion.KOTLIN_1_1, languageLevel!!)
-            Assert.assertEquals(LanguageVersion.KOTLIN_1_0, apiLevel!!)
-            Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
-            Assert.assertEquals(
+            Assertions.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
+            Assertions.assertEquals(LanguageVersion.KOTLIN_1_1, languageLevel!!)
+            Assertions.assertEquals(LanguageVersion.KOTLIN_1_0, apiLevel!!)
+            Assertions.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
+            Assertions.assertEquals(
                 listOf("-java-parameters", "-Xjava-source-roots=javaDir", "-kotlin-home", "temp2"),
                 compilerSettings!!.additionalArgumentsAsList
             )
         }
 
         with(facetSettings("myModule3")) {
-            Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
-            Assert.assertEquals(KotlinPluginLayout.standaloneCompilerVersion.languageVersion, languageLevel)
-            Assert.assertEquals(KotlinPluginLayout.standaloneCompilerVersion.languageVersion, apiLevel)
-            Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
-            Assert.assertEquals(
+            Assertions.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
+            Assertions.assertEquals(KotlinPluginLayout.standaloneCompilerVersion.languageVersion, languageLevel)
+            Assertions.assertEquals(KotlinPluginLayout.standaloneCompilerVersion.languageVersion, apiLevel)
+            Assertions.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
+            Assertions.assertEquals(
                 listOf("-kotlin-home", "temp2"),
                 compilerSettings!!.additionalArgumentsAsList
             )

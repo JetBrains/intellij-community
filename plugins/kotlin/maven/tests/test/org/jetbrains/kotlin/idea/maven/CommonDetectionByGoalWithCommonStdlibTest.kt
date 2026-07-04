@@ -14,8 +14,8 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.platform.isCommon
-import org.junit.Assert
-import org.junit.Assert.assertEquals
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -67,13 +67,13 @@ class CommonDetectionByGoalWithCommonStdlibTest(mavenVersion: String, modelVersi
 
         maven.assertModules("project")
 
-        Assert.assertTrue(facetSettings.targetPlatform.isCommon())
+        Assertions.assertTrue(facetSettings.targetPlatform.isCommon())
 
         val rootManager = ModuleRootManager.getInstance(maven.getModule("project"))
         val stdlib = rootManager.orderEntries.filterIsInstance<LibraryOrderEntry>().single().library
         assertEquals(KotlinCommonLibraryKind, (stdlib as LibraryEx).kind)
 
-        Assert.assertTrue(ModuleRootManager.getInstance(maven.getModule("project")).sdk!!.sdkType is KotlinSdkType)
+        Assertions.assertTrue(ModuleRootManager.getInstance(maven.getModule("project")).sdk!!.sdkType is KotlinSdkType)
 
         assertKotlinSources("project", "src/main/kotlin")
         assertKotlinTestSources("project", "src/test/java")

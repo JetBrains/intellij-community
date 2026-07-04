@@ -20,8 +20,8 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.maven.KotlinMavenImportingTestBase
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -174,18 +174,18 @@ class KaptMavenProjectConfiguratorTest(mavenVersion: String, modelVersion: Strin
     }
 
     private fun assertContains(text: String, expected: String) {
-        assertTrue("Expected to find '$expected' in:\n$text", text.contains(expected))
+        assertTrue( text.contains(expected),"Expected to find '$expected' in:\n$text")
     }
 
     private fun assertNotContains(text: String, unexpected: String) {
-        assertFalse("Expected not to find '$unexpected' in:\n$text", text.contains(unexpected))
+        assertFalse( text.contains(unexpected),"Expected not to find '$unexpected' in:\n$text")
     }
 
     private fun assertHasMapstructVersion(text: String) {
         assertTrue(
-            "Expected MapStruct processor version in:\n$text",
             text.contains("<version>1.6.3</version>") || text.contains("<version>$MAPSTRUCT_VERSION_PROPERTY</version>")
-        )
+        ,
+            "Expected MapStruct processor version in:\n$text")
     }
 
     companion object {

@@ -14,7 +14,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.platform.oldFashionedDescription
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -81,23 +81,23 @@ class JvmFacetConfigurationTest(mavenVersion: String, modelVersion: String) :
         maven.assertModules("project")
 
         with(facetSettings) {
-            Assert.assertEquals("1.1", languageLevel!!.versionString)
-            Assert.assertEquals("1.1", compilerArguments!!.languageVersion)
-            Assert.assertEquals("1.0", apiLevel!!.versionString)
-            Assert.assertEquals("1.0", compilerArguments!!.apiVersion)
-            Assert.assertFalse(compilerArguments!!.autoAdvanceLanguageVersion)
-            Assert.assertFalse(compilerArguments!!.autoAdvanceApiVersion)
-            Assert.assertEquals(true, compilerArguments!!.suppressWarnings)
-            Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
-            Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
-            Assert.assertEquals("foobar.jar", (compilerArguments as K2JVMCompilerArguments).classpath)
-            Assert.assertEquals(
+            Assertions.assertEquals("1.1", languageLevel!!.versionString)
+            Assertions.assertEquals("1.1", compilerArguments!!.languageVersion)
+            Assertions.assertEquals("1.0", apiLevel!!.versionString)
+            Assertions.assertEquals("1.0", compilerArguments!!.apiVersion)
+            Assertions.assertFalse(compilerArguments!!.autoAdvanceLanguageVersion)
+            Assertions.assertFalse(compilerArguments!!.autoAdvanceApiVersion)
+            Assertions.assertEquals(true, compilerArguments!!.suppressWarnings)
+            Assertions.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
+            Assertions.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
+            Assertions.assertEquals("foobar.jar", (compilerArguments as K2JVMCompilerArguments).classpath)
+            Assertions.assertEquals(
                 "",
                 compilerSettings!!.additionalArguments
             )
         }
 
-        Assert.assertEquals(kotlinMavenPluginVersion, KotlinJpsPluginSettings.jpsVersion(project))
+        Assertions.assertEquals(kotlinMavenPluginVersion, KotlinJpsPluginSettings.jpsVersion(project))
 
         maven.assertSources("project", "src/main/kotlin")
         maven.assertTestSources("project", "src/test/java")
@@ -160,8 +160,8 @@ class JvmFacetConfigurationTest(mavenVersion: String, modelVersion: String) :
 
         maven.assertModules("project")
         with(facetSettings) {
-            Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
-            Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
+            Assertions.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
+            Assertions.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
         }
     }
 }

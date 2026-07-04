@@ -32,8 +32,8 @@ import org.jetbrains.idea.maven.project.MavenImportListener
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.TestFile
-import org.junit.Assert
-import org.junit.Assert.assertTrue
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
@@ -92,7 +92,7 @@ abstract class AbstractMavenImportingTest(
     assertWithinTimeout {
       val scheduled = artifactDownloadingScheduled.get()
       val finished = artifactDownloadingFinished.get()
-      Assert.assertEquals("Expected $scheduled artifact downloads, but finished $finished", scheduled, finished)
+      Assertions.assertEquals( scheduled, finished,"Expected $scheduled artifact downloads, but finished $finished")
     }
   }
 
@@ -126,12 +126,12 @@ abstract class AbstractMavenImportingTest(
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
         assertTrue(
-          "${mainVirtualFile} should be in source content",
           // main file has to be in sources of any module
           project.modules.any {
             ModuleRootManager.getInstance(it).fileIndex.isInSourceContent(mainVirtualFile)
           }
-        )
+        ,
+          "${mainVirtualFile} should be in source content")
 
         codeInsightTestFixture.configureFromExistingVirtualFile(mainVirtualFile)
         codeInsightTestFixture.openFileInEditor(mainVirtualFile)

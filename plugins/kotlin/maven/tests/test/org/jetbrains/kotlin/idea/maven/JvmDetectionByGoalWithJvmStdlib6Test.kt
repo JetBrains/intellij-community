@@ -12,7 +12,7 @@ import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -69,7 +69,7 @@ class JvmDetectionByGoalWithJvmStdlib6Test(mavenVersion: String, modelVersion: S
 
         maven.assertModules("project")
 
-        Assert.assertEquals(JvmPlatforms.jvm6, facetSettings.targetPlatform)
+        Assertions.assertEquals(JvmPlatforms.jvm6, facetSettings.targetPlatform)
 
         maven.assertSources("project", "src/main/kotlin")
         maven.assertTestSources("project", "src/test/java")

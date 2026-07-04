@@ -7,7 +7,7 @@ import com.intellij.maven.testFramework.fixtures.createProjectSubDirs
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -79,11 +79,11 @@ class NoArgInvokeInitializersTest(mavenVersion: String, modelVersion: String) :
         maven.assertModules("project")
 
         with(facetSettings) {
-            Assert.assertEquals(
+            Assertions.assertEquals(
                 "",
                 compilerSettings!!.additionalArguments
             )
-            Assert.assertEquals(
+            Assertions.assertEquals(
                 listOf(
                     "plugin:org.jetbrains.kotlin.noarg:annotation=NoArg",
                     "plugin:org.jetbrains.kotlin.noarg:invokeInitializers=true"

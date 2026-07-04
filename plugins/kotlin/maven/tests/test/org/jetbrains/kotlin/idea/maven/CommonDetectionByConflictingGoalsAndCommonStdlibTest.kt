@@ -8,7 +8,7 @@ import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.platform.isCommon
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -66,7 +66,7 @@ class CommonDetectionByConflictingGoalsAndCommonStdlibTest(mavenVersion: String,
 
         maven.assertModules("project")
 
-        Assert.assertTrue(facetSettings.targetPlatform.isCommon())
+        Assertions.assertTrue(facetSettings.targetPlatform.isCommon())
 
         assertKotlinSources("project", "src/main/kotlin")
         assertKotlinTestSources("project", "src/test/java")

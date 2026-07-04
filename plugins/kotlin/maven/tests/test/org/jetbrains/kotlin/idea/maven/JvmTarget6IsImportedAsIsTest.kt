@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.idea.notification.asText
 import org.jetbrains.kotlin.idea.notification.catchNotificationsAsync
 import org.jetbrains.kotlin.platform.oldFashionedDescription
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -28,9 +28,9 @@ class JvmTarget6IsImportedAsIsTest(mavenVersion: String, modelVersion: String) :
     fun testJvmTargetIsImportedAsIs() = runBlocking {
         // If version isn't specified then we will fall back to bundled frontend which is already downloaded => Unbundled JPS can be used
         val (facet, notifications) = doJvmTarget6Test(version = null)
-        Assert.assertEquals("JVM 1.6", facet.targetPlatform!!.oldFashionedDescription)
-        Assert.assertEquals("1.6", (facet.compilerArguments as K2JVMCompilerArguments).jvmTarget)
-        Assert.assertEquals("", notifications.asText())
+        Assertions.assertEquals("JVM 1.6", facet.targetPlatform!!.oldFashionedDescription)
+        Assertions.assertEquals("1.6", (facet.compilerArguments as K2JVMCompilerArguments).jvmTarget)
+        Assertions.assertEquals("", notifications.asText())
     }
 
     private suspend fun doJvmTarget6Test(version: String?): Pair<IKotlinFacetSettings, List<Notification>> {

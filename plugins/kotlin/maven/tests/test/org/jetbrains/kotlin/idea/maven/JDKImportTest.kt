@@ -18,7 +18,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -85,9 +85,9 @@ class JDKImportTest(mavenVersion: String, modelVersion: String) :
             maven.assertModules("project")
 
             val moduleSDK = ModuleRootManager.getInstance(maven.getModule("project")).sdk!!
-            Assert.assertTrue(moduleSDK.sdkType is JavaSdk)
-            Assert.assertEquals("java 1.8", moduleSDK.name)
-            Assert.assertEquals(jdkHomePath, moduleSDK.homePath)
+            Assertions.assertTrue(moduleSDK.sdkType is JavaSdk)
+            Assertions.assertEquals("java 1.8", moduleSDK.name)
+            Assertions.assertEquals(jdkHomePath, moduleSDK.homePath)
         } finally {
             maven.runWriteAction(ThrowableRunnable { ProjectRootManager.getInstance(project).projectSdk = null })
         }

@@ -18,7 +18,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.ACTION_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.TestFile
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.junit.Assert.assertTrue
+import org.junit.jupiter.api.Assertions.assertTrue
 import java.io.File
 
 abstract class AbstractMavenUpdateConfigurationQuickFixTest(

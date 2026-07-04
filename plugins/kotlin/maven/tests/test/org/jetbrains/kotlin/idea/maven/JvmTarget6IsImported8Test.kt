@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.idea.notification.asText
 import org.jetbrains.kotlin.idea.notification.catchNotificationsAsync
 import org.jetbrains.kotlin.platform.oldFashionedDescription
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -31,10 +31,10 @@ class JvmTarget6IsImported8Test(mavenVersion: String, modelVersion: String) :
         // we have to load 1.6 jvmTarget as 1.8 KTIJ-21515
         val (facet, notifications) = doJvmTarget6Test("1.7.0-RC")
 
-        Assert.assertEquals("JVM 1.8", facet.targetPlatform!!.oldFashionedDescription)
-        Assert.assertEquals("1.8", (facet.compilerArguments as K2JVMCompilerArguments).jvmTarget)
+        Assertions.assertEquals("JVM 1.8", facet.targetPlatform!!.oldFashionedDescription)
+        Assertions.assertEquals("1.8", (facet.compilerArguments as K2JVMCompilerArguments).jvmTarget)
 
-        Assert.assertEquals(
+        Assertions.assertEquals(
             """
                     Title: 'Unsupported JVM target 1.6'
                     Content: 'Maven project uses JVM target 1.6 for Kotlin compilation, which is no longer supported. It has been imported as JVM target 1.8. Consider migrating the project to JVM 1.8.'

@@ -26,8 +26,8 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager
 import org.jetbrains.kotlin.idea.configuration.KotlinDependencyProvider
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
@@ -163,7 +163,7 @@ class MavenKotlinBuildSystemDependencyManagerTest(mavenVersion: String, modelVer
                             it.scope.stringValue == expectedScope
 
                 }
-                assertNotNull("Did not find expected dependency in pom.xml", foundDependency)
+                assertNotNull( foundDependency,"Did not find expected dependency in pom.xml")
             }
         }
     }

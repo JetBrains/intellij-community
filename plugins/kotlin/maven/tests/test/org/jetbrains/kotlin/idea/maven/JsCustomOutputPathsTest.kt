@@ -11,8 +11,8 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.PathUtil
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
-import org.junit.Assert
-import org.junit.Assert.assertNotEquals
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -78,26 +78,26 @@ class JsCustomOutputPathsTest(mavenVersion: String, modelVersion: String) :
         )
 
         assertNotEquals(kotlinVersion, KotlinJpsPluginSettings.jpsVersion(project))
-        Assert.assertEquals(KotlinJpsPluginSettings.fallbackVersionForOutdatedCompiler, KotlinJpsPluginSettings.jpsVersion(project))
+        Assertions.assertEquals(KotlinJpsPluginSettings.fallbackVersionForOutdatedCompiler, KotlinJpsPluginSettings.jpsVersion(project))
 
         maven.assertModules("project")
 
         val projectBasePath = maven.projectsManager.projects.first().file.parent.path
 
         with(facetSettings) {
-            Assert.assertEquals(
+            Assertions.assertEquals(
                 "$projectBasePath/prod/main.js",
                 PathUtil.toSystemIndependentName(productionOutputPath)
             )
-            Assert.assertEquals(
+            Assertions.assertEquals(
                 "$projectBasePath/test/test.js",
                 PathUtil.toSystemIndependentName(testOutputPath)
             )
         }
 
         with(CompilerModuleExtension.getInstance(maven.getModule("project"))!!) {
-            Assert.assertEquals("$projectBasePath/prod", PathUtil.toSystemIndependentName(compilerOutputUrl))
-            Assert.assertEquals("$projectBasePath/test", PathUtil.toSystemIndependentName(compilerOutputUrlForTests))
+            Assertions.assertEquals("$projectBasePath/prod", PathUtil.toSystemIndependentName(compilerOutputUrl))
+            Assertions.assertEquals("$projectBasePath/test", PathUtil.toSystemIndependentName(compilerOutputUrlForTests))
         }
     }
 }

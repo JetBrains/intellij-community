@@ -11,7 +11,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.platform.isJs
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -69,9 +69,9 @@ class JsDetectionByGoalWithJsStdlibTest(mavenVersion: String, modelVersion: Stri
 
         maven.assertModules("project")
 
-        Assert.assertTrue(facetSettings.targetPlatform.isJs())
+        Assertions.assertTrue(facetSettings.targetPlatform.isJs())
 
-        Assert.assertTrue(ModuleRootManager.getInstance(maven.getModule("project")).sdk!!.sdkType is KotlinSdkType)
+        Assertions.assertTrue(ModuleRootManager.getInstance(maven.getModule("project")).sdk!!.sdkType is KotlinSdkType)
 
         assertKotlinSources("project", "src/main/kotlin")
         assertKotlinTestSources("project", "src/test/java")

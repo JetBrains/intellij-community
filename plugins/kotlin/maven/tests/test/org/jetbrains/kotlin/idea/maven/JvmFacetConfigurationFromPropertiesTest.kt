@@ -13,7 +13,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.platform.oldFashionedDescription
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -73,12 +73,12 @@ class JvmFacetConfigurationFromPropertiesTest(mavenVersion: String, modelVersion
         maven.assertModules("project")
 
         with(facetSettings) {
-            Assert.assertEquals("1.0", languageLevel!!.versionString)
-            Assert.assertEquals("1.0", compilerArguments!!.languageVersion)
-            Assert.assertEquals("1.0", apiLevel!!.versionString)
-            Assert.assertEquals("1.0", compilerArguments!!.apiVersion)
-            Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
-            Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
+            Assertions.assertEquals("1.0", languageLevel!!.versionString)
+            Assertions.assertEquals("1.0", compilerArguments!!.languageVersion)
+            Assertions.assertEquals("1.0", apiLevel!!.versionString)
+            Assertions.assertEquals("1.0", compilerArguments!!.apiVersion)
+            Assertions.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
+            Assertions.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
         }
 
         maven.assertSources("project", "src/main/kotlin")

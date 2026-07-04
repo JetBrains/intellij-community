@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -252,21 +252,21 @@ class MultiModuleImportTest(mavenVersion: String, modelVersion: String) :
         maven.assertModules("project", "my-common-module1", "my-common-module2", "my-jvm-module", "my-js-module")
 
         with(facetSettings("my-common-module1")) {
-            Assert.assertEquals(CommonPlatforms.defaultCommonPlatform, targetPlatform)
+            Assertions.assertEquals(CommonPlatforms.defaultCommonPlatform, targetPlatform)
         }
 
         with(facetSettings("my-common-module2")) {
-            Assert.assertEquals(CommonPlatforms.defaultCommonPlatform, targetPlatform)
+            Assertions.assertEquals(CommonPlatforms.defaultCommonPlatform, targetPlatform)
         }
 
         with(facetSettings("my-jvm-module")) {
-            Assert.assertEquals(JvmPlatforms.jvm6, targetPlatform)
-            Assert.assertEquals(listOf("my-common-module1", "my-common-module2"), implementedModuleNames)
+            Assertions.assertEquals(JvmPlatforms.jvm6, targetPlatform)
+            Assertions.assertEquals(listOf("my-common-module1", "my-common-module2"), implementedModuleNames)
         }
 
         with(facetSettings("my-js-module")) {
-            Assert.assertEquals(JsPlatforms.defaultJsPlatform, targetPlatform)
-            Assert.assertEquals(listOf("my-common-module1"), implementedModuleNames)
+            Assertions.assertEquals(JsPlatforms.defaultJsPlatform, targetPlatform)
+            Assertions.assertEquals(listOf("my-common-module1"), implementedModuleNames)
         }
     }
 }

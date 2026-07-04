@@ -14,8 +14,8 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.platform.isJs
-import org.junit.Assert
-import org.junit.Assert.assertEquals
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -78,7 +78,7 @@ class JsAndCommonStdlibKindsTest(mavenVersion: String, modelVersion: String) :
 
         maven.assertModules("project")
 
-        Assert.assertTrue(facetSettings.targetPlatform.isJs())
+        Assertions.assertTrue(facetSettings.targetPlatform.isJs())
 
         val rootManager = ModuleRootManager.getInstance(maven.getModule("project"))
         val libraries = rootManager.orderEntries.filterIsInstance<LibraryOrderEntry>().map { it.library as LibraryEx }

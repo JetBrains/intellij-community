@@ -10,7 +10,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.platform.oldFashionedDescription
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -77,10 +77,10 @@ class ArgsOverridingInFacetTest(mavenVersion: String, modelVersion: String) :
         maven.assertModules("project")
 
         with(facetSettings) {
-            Assert.assertEquals("JVM 11", targetPlatform!!.oldFashionedDescription)
-            Assert.assertEquals(LanguageVersion.KOTLIN_1_1.description, languageLevel!!.description)
-            Assert.assertEquals(LanguageVersion.KOTLIN_1_1.description, apiLevel!!.description)
-            Assert.assertEquals("11", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
+            Assertions.assertEquals("JVM 11", targetPlatform!!.oldFashionedDescription)
+            Assertions.assertEquals(LanguageVersion.KOTLIN_1_1.description, languageLevel!!.description)
+            Assertions.assertEquals(LanguageVersion.KOTLIN_1_1.description, apiLevel!!.description)
+            Assertions.assertEquals("11", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
         }
     }
 }

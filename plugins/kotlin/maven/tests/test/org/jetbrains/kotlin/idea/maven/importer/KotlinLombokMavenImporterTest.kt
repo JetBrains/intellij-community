@@ -99,7 +99,7 @@ class KotlinLombokMavenImporterTest(mavenVersion: String, modelVersion: String) 
         maven.assertModules("project")
 
         with(facetSettings) {
-            org.junit.Assert.assertEquals(
+            assertEquals(
                 "",
                 compilerSettings!!.additionalArguments
             )

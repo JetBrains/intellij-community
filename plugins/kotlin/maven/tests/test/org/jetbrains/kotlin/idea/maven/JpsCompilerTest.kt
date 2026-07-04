@@ -13,10 +13,10 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.notification.asText
 import org.jetbrains.kotlin.idea.notification.catchNotificationTextAsync
 import org.jetbrains.kotlin.idea.notification.catchNotificationsAsync
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -34,7 +34,7 @@ class JpsCompilerTest(mavenVersion: String, modelVersion: String) :
         }
 
         val notification = notifications.find { it.title == "Unsupported Kotlin JPS plugin version" }
-        assertNotNull(notifications.asText(), notification)
+        assertNotNull( notification,notifications.asText())
         assertEquals(
             notification?.content,
             "Version (${KotlinJpsPluginSettings.fallbackVersionForOutdatedCompiler}) of the Kotlin JPS plugin will be used<br>" +

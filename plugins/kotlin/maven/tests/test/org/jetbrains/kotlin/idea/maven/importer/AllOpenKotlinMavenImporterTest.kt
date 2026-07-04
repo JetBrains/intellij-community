@@ -9,9 +9,9 @@ import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.maven.KotlinMavenImportingTestBase
-import org.junit.Assert.assertArrayEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -48,11 +48,11 @@ class AllOpenKotlinMavenImporterTest(mavenVersion: String, modelVersion: String)
         with(facetSettings) {
             val pluginClasspaths = compilerArguments?.pluginClasspaths ?: error("'compilerArguments?.pluginClasspaths' must not be null")
             assertTrue(
-                pluginClasspaths.joinToString { it },
-                pluginClasspaths.any { it.endsWith(KotlinArtifacts.allopenCompilerPluginPath.fileName.toString()) })
+                pluginClasspaths.any { it.endsWith(KotlinArtifacts.allopenCompilerPluginPath.fileName.toString()) },
+                pluginClasspaths.joinToString { it })
             assertTrue(
-                pluginClasspaths.joinToString { it },
-                pluginClasspaths.any { it.endsWith(KotlinArtifacts.noargCompilerPluginPath.fileName.toString()) })
+                pluginClasspaths.any { it.endsWith(KotlinArtifacts.noargCompilerPluginPath.fileName.toString()) },
+                pluginClasspaths.joinToString { it })
         }
     }
 

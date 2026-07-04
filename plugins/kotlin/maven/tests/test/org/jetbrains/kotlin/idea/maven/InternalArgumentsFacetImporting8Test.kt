@@ -8,7 +8,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -65,10 +65,10 @@ class InternalArgumentsFacetImporting8Test(mavenVersion: String, modelVersion: S
         )
 
         // Check that we haven't lost internal argument during importing to facet
-        Assert.assertTrue("Argument is missing from compiler settings", "-XXLanguage:+InlineClasses" in facetSettings.compilerSettings!!.additionalArguments)
+        Assertions.assertTrue( "-XXLanguage:+InlineClasses" in facetSettings.compilerSettings!!.additionalArguments,"Argument is missing from compiler settings")
 
         // Check that internal argument influenced LanguageVersionSettings correctly
-        Assert.assertEquals(
+        Assertions.assertEquals(
             LanguageFeature.State.ENABLED,
             maven.getModule("project").languageVersionSettings.getFeatureSupport(LanguageFeature.InlineClasses)
         )

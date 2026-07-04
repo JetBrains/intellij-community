@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.idea.test.KotlinSdkCreationChecker
 import org.jetbrains.kotlin.idea.test.resetCodeStyle
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetBridgeFactory
 import org.jetbrains.kotlin.platform.TargetPlatform
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
@@ -92,7 +92,7 @@ abstract class KotlinMavenImportingTestBase(
       assertWithinTimeout {
         val scheduled = artifactDownloadingScheduled.get()
         val finished = artifactDownloadingFinished.get()
-        Assert.assertEquals("Expected $scheduled artifact downloads, but finished $finished", scheduled, finished)
+        Assertions.assertEquals( scheduled, finished,"Expected $scheduled artifact downloads, but finished $finished")
       }
     }
     finally {
@@ -116,7 +116,7 @@ abstract class KotlinMavenImportingTestBase(
   ): Unit = readAction {
     val module = maven.getModule(projectName)
     val kaModule = module.toKaSourceModule(if (isProduction) KaSourceModuleKind.PRODUCTION else KaSourceModuleKind.TEST)
-    Assert.assertEquals("<$expectedName>", kaModule?.stableModuleName)
+    Assertions.assertEquals("<$expectedName>", kaModule?.stableModuleName)
   }
 
   protected fun assertKotlinSources(moduleName: String, vararg expectedSources: String) {

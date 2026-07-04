@@ -9,7 +9,7 @@ import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.packaging.impl.artifacts.ArtifactUtil
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertFalse
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource

@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.platform.isJs
-import org.junit.Assert
-import org.junit.Assert.assertEquals
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -84,26 +84,26 @@ class JsFacetConfigurationTest(mavenVersion: String, modelVersion: String) :
         maven.assertModules("project")
 
         with(facetSettings) {
-            Assert.assertEquals("1.1", languageLevel!!.versionString)
-            Assert.assertEquals("1.1", compilerArguments!!.languageVersion)
-            Assert.assertEquals("1.0", apiLevel!!.versionString)
-            Assert.assertEquals("1.0", compilerArguments!!.apiVersion)
-            Assert.assertFalse(compilerArguments!!.autoAdvanceLanguageVersion)
-            Assert.assertFalse(compilerArguments!!.autoAdvanceApiVersion)
-            Assert.assertEquals(true, compilerArguments!!.suppressWarnings)
-            Assert.assertTrue(targetPlatform.isJs())
+            Assertions.assertEquals("1.1", languageLevel!!.versionString)
+            Assertions.assertEquals("1.1", compilerArguments!!.languageVersion)
+            Assertions.assertEquals("1.0", apiLevel!!.versionString)
+            Assertions.assertEquals("1.0", compilerArguments!!.apiVersion)
+            Assertions.assertFalse(compilerArguments!!.autoAdvanceLanguageVersion)
+            Assertions.assertFalse(compilerArguments!!.autoAdvanceApiVersion)
+            Assertions.assertEquals(true, compilerArguments!!.suppressWarnings)
+            Assertions.assertTrue(targetPlatform.isJs())
             with(compilerArguments as K2JSCompilerArguments) {
-                Assert.assertEquals(true, sourceMap)
-                Assert.assertEquals("commonjs", moduleKind)
+                Assertions.assertEquals(true, sourceMap)
+                Assertions.assertEquals("commonjs", moduleKind)
             }
-            Assert.assertEquals("", compilerSettings!!.additionalArguments)
+            Assertions.assertEquals("", compilerSettings!!.additionalArguments)
         }
 
         val rootManager = ModuleRootManager.getInstance(maven.getModule("project"))
         val stdlib = rootManager.orderEntries.filterIsInstance<LibraryOrderEntry>().single().library
         assertEquals(KotlinJavaScriptLibraryKind, (stdlib as LibraryEx).kind)
 
-        Assert.assertTrue(ModuleRootManager.getInstance(maven.getModule("project")).sdk!!.sdkType is KotlinSdkType)
+        Assertions.assertTrue(ModuleRootManager.getInstance(maven.getModule("project")).sdk!!.sdkType is KotlinSdkType)
 
         assertKotlinSources("project", "src/main/kotlin")
         assertKotlinTestSources("project", "src/test/java")

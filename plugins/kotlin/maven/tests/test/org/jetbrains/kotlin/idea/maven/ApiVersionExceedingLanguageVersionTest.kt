@@ -6,7 +6,7 @@ import com.intellij.maven.testFramework.fixtures.createProjectSubDirs
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -64,10 +64,10 @@ internal class ApiVersionExceedingLanguageVersionTest(mavenVersion: String, mode
         )
 
         with(facetSettings) {
-            Assert.assertEquals("1.1", languageLevel!!.versionString)
-            Assert.assertEquals("1.1", compilerArguments!!.languageVersion)
-            Assert.assertEquals("1.2", apiLevel!!.versionString)
-            Assert.assertEquals("1.2", compilerArguments!!.apiVersion)
+            Assertions.assertEquals("1.1", languageLevel!!.versionString)
+            Assertions.assertEquals("1.1", compilerArguments!!.languageVersion)
+            Assertions.assertEquals("1.2", apiLevel!!.versionString)
+            Assertions.assertEquals("1.2", compilerArguments!!.apiVersion)
         }
     }
 }
