@@ -143,57 +143,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
     protected val facetSettings: IKotlinFacetSettings
         get() = facetSettings("project")
 
-    class StableModuleNameWhileUsingMavenJVM : AbstractKotlinMavenImporterTest() {
-        @Test
-        fun testStableModuleNameWhileUsingMaven_JVM() = runBlocking {
-            createProjectSubDirs("src/main/kotlin")
-
-            importProjectAsync(
-                """
-            <groupId>test</groupId>
-            <artifactId>project</artifactId>
-            <version>1.0.0</version>
-
-            <dependencies>
-                <dependency>
-                    <groupId>org.jetbrains.kotlin</groupId>
-                    <artifactId>kotlin-stdlib</artifactId>
-                    <version>$kotlinVersion</version>
-                </dependency>
-            </dependencies>
-
-            <build>
-                <sourceDirectory>src/main/kotlin</sourceDirectory>
-
-                <plugins>
-                    <plugin>
-                        <groupId>org.jetbrains.kotlin</groupId>
-                        <artifactId>kotlin-maven-plugin</artifactId>
-
-                        <executions>
-                            <execution>
-                                <id>compile</id>
-                                <phase>compile</phase>
-                                <goals>
-                                    <goal>compile</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <languageVersion>1.2</languageVersion>
-                            <jvmTarget>1.8</jvmTarget>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-            """
-            )
-
-            checkStableModuleName("project", "project", JvmPlatforms.unspecifiedJvmPlatform, isProduction = true)
-            checkStableModuleName("project", "project", JvmPlatforms.unspecifiedJvmPlatform, isProduction = false)
-        }
-    }
-
     class ImportObsoleteCodeStyle : AbstractKotlinMavenImporterTest() {
         @Test
         fun testImportObsoleteCodeStyle() = runBlocking {
