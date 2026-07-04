@@ -4,8 +4,9 @@ package org.jetbrains.kotlin.idea.maven
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertModules
 import com.intellij.maven.testFramework.fixtures.createProjectSubDirs
-import com.intellij.maven.testFramework.fixtures.getContentRoots
+import com.intellij.maven.testFramework.fixtures.getModule
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
@@ -89,12 +90,12 @@ class CollectTestSourceRootsInCompoundModuleTest(mavenVersion: String, modelVers
 
         maven.assertModules(compoundModule, mainModule, testModule)
 
-        val mainModuleTestSources = maven.getContentRoots(mainModule)
+        val mainModuleTestSources = ModuleRootManager.getInstance(maven.getModule(mainModule)).contentEntries
             .flatMap { it.getSourceFolders(JavaSourceRootType.TEST_SOURCE) }
             .map { it.url }
         assertEmpty(mainModuleTestSources)
 
-        val testModuleSources = maven.getContentRoots(testModule)
+        val testModuleSources = ModuleRootManager.getInstance(maven.getModule(testModule)).contentEntries
             .flatMap { it.getSourceFolders(JavaSourceRootType.SOURCE) }
             .map { it.url }
         assertEmpty(testModuleSources)

@@ -82,7 +82,7 @@ class JsCustomOutputPathsTest(mavenVersion: String, modelVersion: String) :
 
         maven.assertModules("project")
 
-        val projectBasePath = projectsManager.projects.first().file.parent.path
+        val projectBasePath = maven.projectsManager.projects.first().file.parent.path
 
         with(facetSettings) {
             Assert.assertEquals(
