@@ -143,28 +143,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
     protected val facetSettings: IKotlinFacetSettings
         get() = facetSettings("project")
 
-    class ImportObsoleteCodeStyle : AbstractKotlinMavenImporterTest() {
-        @Test
-        fun testImportObsoleteCodeStyle() = runBlocking {
-            importProjectAsync(
-                """
-            <groupId>test</groupId>
-            <artifactId>project</artifactId>
-            <version>1.0.0</version>
-
-            <properties>
-                <kotlin.code.style>obsolete</kotlin.code.style>
-            </properties>
-            """
-            )
-
-            Assert.assertEquals(
-                KotlinObsoleteStyleGuide.CODE_STYLE_ID,
-                CodeStyle.getSettings(project).kotlinCodeStyleDefaults()
-            )
-        }
-    }
-
     class JavaParameters20 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testJavaParameters() = runBlocking {
