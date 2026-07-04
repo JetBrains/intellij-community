@@ -955,6 +955,7 @@ platform/vcs-log/graph-api
 platform/vcs-log/impl
 platform/vcs-log/impl/bookmarks
 platform/vcs-tests
+platform/vcs/plugin
 platform/warmup
 platform/warmup/performanceTesting
 platform/welcome-screen

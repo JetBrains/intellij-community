@@ -21,6 +21,12 @@
   </dependencies>
   <!-- endregion -->
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.buildProgressListenerRegistrar"
+                    interface="com.intellij.build.BuildProgressListenerRegistrar"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="execution.filters.with.hyperlinks.allow.overlapping"
                  description="Enable rendering of overlapping execution filters with hyperlinks."
