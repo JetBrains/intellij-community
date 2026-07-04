@@ -14,6 +14,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndGet
@@ -622,6 +623,11 @@ class KotlinSourceRootDirsMavenTest(mavenVersion: String, modelVersion: String) 
                 resolveRelativePath(contentEntryPath!!).toPsiFile(project)
             }
             assertNotNull(pom)
+
+            // Keep generated-pom goldens SDK-independent: the legacy base left the module without an SDK, so the
+            // Kotlin configurator did not derive a <jvmTarget> from it. mavenImportingFixture keeps a project SDK that
+            // the imported module inherits, which would otherwise add a spurious <jvmTarget> (see getDefaultJvmTarget).
+            ModuleRootModificationUtil.setModuleSdk(module, null)
 
             val collector = create(project)
             val version = IdeKotlinVersion.get(KOTLIN_VERSION)
