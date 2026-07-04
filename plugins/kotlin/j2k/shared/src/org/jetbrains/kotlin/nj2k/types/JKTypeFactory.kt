@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.j2k.Nullability.Nullable
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
 import org.jetbrains.kotlin.nj2k.NullabilityInfo
+import org.jetbrains.kotlin.nj2k.resolveWithOriginalFallback
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKTypeParameterSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedClassSymbol
@@ -88,7 +89,7 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
 
         return when (type) {
             is PsiClassType -> {
-                val target = type.resolve()
+                val target = type.resolveWithOriginalFallback()
                 val parameters = type.parameters.map { fromPsiType(it) }
 
                 when (target) {

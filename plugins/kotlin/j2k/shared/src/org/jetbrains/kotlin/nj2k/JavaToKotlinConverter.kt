@@ -7,15 +7,23 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor
 import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiField
 import com.intellij.psi.PsiImportList
 import com.intellij.psi.PsiImportStatementBase
 import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPackageStatement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiRecordComponent
 import com.intellij.psi.PsiStatement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.JavaPsiRecordUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
@@ -36,10 +44,13 @@ import org.jetbrains.kotlin.j2k.PostProcessor
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.j2k.Result
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.nj2k.externalCodeProcessing.J2kMemberKey
+import org.jetbrains.kotlin.nj2k.externalCodeProcessing.OriginalJavaPsiContext
+import org.jetbrains.kotlin.nj2k.externalCodeProcessing.buildLightMethodKey
+import org.jetbrains.kotlin.nj2k.externalCodeProcessing.buildMemberKey
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
 import org.jetbrains.kotlin.nj2k.printing.JKCodeBuilder
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
-import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportList
@@ -52,22 +63,62 @@ class JavaToKotlinConverter(
     val project: Project,
     val targetModule: Module?,
     val settings: ConverterSettings,
-    val targetFile: KtFile? = null
+    val targetFile: KtFile? = null,
+    val referenceSearcher: ReferenceSearcher = IdeaReferenceSearcher,
 ) {
     val phasesCount: Int = J2KConversionPhase.entries.size
-    val referenceSearcher: ReferenceSearcher = IdeaReferenceSearcher
 
     suspend fun filesToKotlin(
         files: List<PsiJavaFile>,
         postProcessor: PostProcessor,
-        bodyFilter: ((PsiElement) -> Boolean)?,
         preprocessorExtensions: List<J2kPreprocessorExtension>,
         postprocessorExtensions: List<J2kPostprocessorExtension>,
     ): ConversionResult {
-        PreprocessorExtensionsRunner.runProcessors(project, files, preprocessorExtensions)
+        if (files.isEmpty()) return ConversionResult(emptyMap(), null)
+
+        val copiedFiles = readAction {
+            files.map {
+                val copy = it.copy() as PsiJavaFile
+                anchorCopiedElementToOriginal(it, copy)
+                copy
+            }
+        }
+
+        PreprocessorExtensionsRunner.runProcessors(project, copiedFiles, preprocessorExtensions)
+
+        return filesToKotlin(
+            files = files,
+            copiedFiles = copiedFiles,
+            postProcessor = postProcessor,
+            postprocessorExtensions = postprocessorExtensions,
+        )
+    }
+
+    private suspend fun filesToKotlin(
+        files: List<PsiJavaFile>,
+        copiedFiles: List<PsiJavaFile>,
+        postProcessor: PostProcessor,
+        postprocessorExtensions: List<J2kPostprocessorExtension>,
+    ): ConversionResult {
 
         val (results, externalCodeProcessing, context) = readAction {
-            elementsToKotlin(files, bodyFilter)
+            val originalJavaPsiContext = OriginalJavaPsiContext(
+                originalMembersByKey = files.buildMembersByKey(),
+                originalClassesByQualifiedName = files.buildClassesByQualifiedName(),
+            )
+            val methodReferenceSearcher = MethodReferenceSearcher(
+                copiedFiles = copiedFiles,
+                originalJavaPsiContext = originalJavaPsiContext,
+                delegate = referenceSearcher,
+            )
+            val inMemoryConverter = JavaToKotlinConverter(project, targetModule, settings, targetFile, methodReferenceSearcher)
+
+            inMemoryConverter.elementsToKotlin(
+                contextElement = files.first(),
+                inputElements = copiedFiles,
+                conversionContextElements = files,
+                originalJavaPsiContext = originalJavaPsiContext,
+            )
         }
 
         val kotlinFiles = results.filterNotNull().mapIndexed { i, result ->
@@ -80,7 +131,6 @@ class JavaToKotlinConverter(
         }
 
         postProcessor.doAdditionalProcessing(MultipleFilesPostProcessingTarget(kotlinFiles), context)
-
         PostprocessorExtensionsRunner.runProcessors(project, kotlinFiles, postprocessorExtensions)
 
         val (javaLines, kotlinLines) = readAction {
@@ -92,33 +142,25 @@ class JavaToKotlinConverter(
 
     fun elementsToKotlin(
         inputElements: List<PsiElement>,
-        bodyFilter: ((PsiElement) -> Boolean)?,
         forInlining: Boolean = false
     ): Result {
         val contextElement = inputElements.firstOrNull() ?: return Result.EMPTY
-        val targetKaModule =
-            targetFile?.getKaModuleOfTypeSafe<KaSourceModule>(project, useSiteModule = null)
-            // This `KaSourceModule` is not 100% waterproof, but without the target file, we don't actually know the kind of the target
-            // source module. The most reasonable assumption is that we copy the input element to a source module of the same kind.
-                ?: targetModule?.toKaSourceModuleWithElementSourceModuleKindOrProduction(contextElement)
-                ?: return Result.EMPTY
-        val targetPlatform = targetKaModule.targetPlatform
-        return doConvertElementsToKotlin(
-            contextElement = contextElement,
-            inputElements = inputElements,
-            targetPlatform = targetPlatform,
-            bodyFilter = bodyFilter,
-            forInlining = forInlining
-        )
+        return elementsToKotlin(contextElement, inputElements, inputElements, forInlining)
     }
 
-    private fun doConvertElementsToKotlin(
+    private fun elementsToKotlin(
         contextElement: PsiElement,
         inputElements: List<PsiElement>,
-        targetPlatform: TargetPlatform,
-        bodyFilter: ((PsiElement) -> Boolean)?,
-        forInlining: Boolean
+        conversionContextElements: List<PsiElement>,
+        forInlining: Boolean = false,
+        originalJavaPsiContext: OriginalJavaPsiContext = OriginalJavaPsiContext.Empty,
     ): Result {
+        val targetPlatform = (targetFile?.getKaModuleOfTypeSafe<KaSourceModule>(project, useSiteModule = null)
+        // This `KaSourceModule` is not 100% waterproof, but without the target file, we don't actually know the kind of the target
+        // source module. The most reasonable assumption is that we copy the input element to a source module of the same kind.
+            ?: targetModule?.toKaSourceModuleWithElementSourceModuleKindOrProduction(contextElement)
+            ?: return Result.EMPTY).targetPlatform
+
         val resolver = JKResolver(project, targetModule, contextElement)
         val symbolProvider = JKSymbolProvider(resolver)
         val typeFactory = JKTypeFactory(symbolProvider)
@@ -131,7 +173,7 @@ class JavaToKotlinConverter(
         }
 
         val importStorage = JKImportStorage(targetPlatform, project)
-        val treeBuilder = JavaToJKTreeBuilder(symbolProvider, typeFactory, referenceSearcher, importStorage, bodyFilter, forInlining)
+        val treeBuilder = JavaToJKTreeBuilder(symbolProvider, typeFactory, referenceSearcher, importStorage, forInlining)
 
         // we want to leave all imports as is in the case when user is converting only imports
         val saveImports = inputElements.all { element ->
@@ -143,9 +185,9 @@ class JavaToKotlinConverter(
         val elementsWithAsts = inputElements.associateWith { treeBuilder.buildTree(it, saveImports) }
 
         fun isInConversionContext(element: PsiElement): Boolean =
-            inputElements.any { it == element || it.isAncestor(element, strict = true) }
+            conversionContextElements.any { it == element || it.isAncestor(element, strict = true) }
 
-        val externalCodeProcessing = NewExternalCodeProcessing(referenceSearcher, ::isInConversionContext)
+        val externalCodeProcessing = NewExternalCodeProcessing(referenceSearcher, ::isInConversionContext, originalJavaPsiContext)
         val context = ConverterContext(
             symbolProvider,
             typeFactory,
@@ -178,6 +220,105 @@ class JavaToKotlinConverter(
             externalCodeProcessing.takeIf { it.isExternalProcessingNeeded() },
             context
         )
+    }
+
+    private fun List<PsiJavaFile>.buildMembersByKey(): Map<J2kMemberKey, PsiMember> {
+        val membersByKey = mutableMapOf<J2kMemberKey, PsiMember>()
+        for (file in this) {
+            file.accept(object : JavaRecursiveElementWalkingVisitor() {
+                override fun visitField(field: PsiField) {
+                    super.visitField(field)
+                    field.buildMemberKey()?.let { membersByKey[it] = field }
+                }
+
+                override fun visitMethod(method: PsiMethod) {
+                    super.visitMethod(method)
+                    method.buildMemberKey()?.let { membersByKey[it] = method }
+                }
+
+                override fun visitRecordComponent(recordComponent: PsiRecordComponent) {
+                    super.visitRecordComponent(recordComponent)
+                    val accessor = JavaPsiRecordUtil.getAccessorForRecordComponent(recordComponent) ?: return
+                    accessor.buildLightMethodKey()?.let { membersByKey[it] = accessor }
+                }
+            })
+        }
+        return membersByKey
+    }
+
+    private fun List<PsiJavaFile>.buildClassesByQualifiedName(): Map<String, PsiClass> {
+        val classesByQualifiedName = mutableMapOf<String, PsiClass>()
+        for (file in this) {
+            file.accept(object : JavaRecursiveElementWalkingVisitor() {
+                override fun visitClass(aClass: PsiClass) {
+                    super.visitClass(aClass)
+                    aClass.qualifiedName?.let { classesByQualifiedName[it] = aClass }
+                }
+            })
+        }
+        return classesByQualifiedName
+    }
+
+    private class MethodReferenceSearcher(
+        copiedFiles: List<PsiJavaFile>,
+        private val originalJavaPsiContext: OriginalJavaPsiContext,
+        private val delegate: ReferenceSearcher,
+    ) : ReferenceSearcher {
+        private val copiedFiles = copiedFiles.toSet()
+        private val copiedMethods = buildList {
+            copiedFiles.forEach { file ->
+                file.accept(object : JavaRecursiveElementWalkingVisitor() {
+                    override fun visitMethod(method: PsiMethod) {
+                        super.visitMethod(method)
+                        add(method)
+                    }
+                })
+            }
+        }
+
+        override fun findLocalUsages(element: PsiElement, scope: PsiElement): Collection<PsiReference> =
+            delegate.findLocalUsages(element.originalElement<PsiElement>() ?: element, scope.originalElement<PsiElement>() ?: scope)
+
+        override fun hasInheritors(`class`: PsiClass): Boolean {
+            if (!`class`.isInCopiedFiles()) return delegate.hasInheritors(`class`)
+
+            val originalClass = originalJavaPsiContext.resolve(`class`) ?: return false
+            return delegate.hasInheritors(originalClass)
+        }
+
+        override fun hasOverrides(method: PsiMethod): Boolean {
+            if (!method.isInCopiedFiles()) return delegate.hasOverrides(method)
+
+            if (copiedMethods.any { candidate ->
+                    candidate != method && candidate.findSuperMethods(false).any { superMethod -> superMethod == method }
+                }
+            ) {
+                return true
+            }
+
+            val originalMethod = originalJavaPsiContext.resolve(method) as? PsiMethod ?: return false
+            return delegate.hasOverrides(originalMethod)
+        }
+
+        override fun findUsagesForExternalCodeProcessing(
+            element: PsiElement,
+            searchJava: Boolean,
+            searchKotlin: Boolean
+        ): Collection<PsiReference> {
+            if (!element.isInCopiedFiles()) {
+                return delegate.findUsagesForExternalCodeProcessing(element, searchJava, searchKotlin)
+            }
+
+            val originalElement = when (element) {
+                is PsiClass -> originalJavaPsiContext.resolve(element)
+                is PsiMember -> originalJavaPsiContext.resolve(element)
+                else -> null
+            } ?: return emptyList()
+
+            return delegate.findUsagesForExternalCodeProcessing(originalElement, searchJava, searchKotlin)
+        }
+
+        private fun PsiElement.isInCopiedFiles(): Boolean = containingFile in copiedFiles
     }
 
     companion object {
@@ -230,6 +371,7 @@ class JavaToKotlinConverter(
             parent?.addAfter(psiFactory.createNewLine(numberOfNewLinesToAdd), /* anchor = */ this)
         }
     }
+
 }
 
 private enum class J2KConversionPhase {

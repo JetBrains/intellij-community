@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.j2k.Nullability.Default
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
+import org.jetbrains.kotlin.nj2k.resolveWithOriginalFallback
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKSymbol
@@ -48,7 +49,7 @@ fun JKClassSymbol.asType(nullability: Nullability = Default): JKClassType =
 
 val PsiType.isKotlinFunctionalType: Boolean
     get() {
-        val fqName = safeAs<PsiClassType>()?.resolve()?.kotlinFqName ?: return false
+        val fqName = safeAs<PsiClassType>()?.resolveWithOriginalFallback()?.kotlinFqName ?: return false
         return functionalTypeRegex.matches(fqName.asString())
     }
 

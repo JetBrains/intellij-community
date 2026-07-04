@@ -54,7 +54,7 @@ fun ElementAndTextList.convertCodeToKotlin(
             // A non-blocking read action is essential here 
             // to be able to show a modal progress window right away
             ReadAction.nonBlocking(Callable {
-                converter.elementsToKotlin(inputElements, null)
+                converter.elementsToKotlin(inputElements)
             }).executeSynchronously()
     }
     val importsToAdd = mutableSetOf<FqName>()

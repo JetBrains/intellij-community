@@ -147,11 +147,12 @@ fun JvmClassKind.toJk(): JKClass.ClassKind = when (this) {
 }
 
 private fun handleProtectedVisibility(psiMember: PsiMember, referenceSearcher: ReferenceSearcher): Visibility {
-    val originalClass = psiMember.containingClass ?: return Visibility.PROTECTED
+    val originalMember = psiMember.originalElementOrSelf()
+    val originalClass = originalMember.containingClass ?: return Visibility.PROTECTED
     // Search for usages only in Java because java-protected member cannot be used in Kotlin from same package
-    val usages = referenceSearcher.findUsagesForExternalCodeProcessing(psiMember, searchJava = true, searchKotlin = false)
+    val usages = referenceSearcher.findUsagesForExternalCodeProcessing(originalMember, searchJava = true, searchKotlin = false)
 
-    return if (usages.any { !allowProtected(it.element, psiMember, originalClass) })
+    return if (usages.any { !allowProtected(it.element, originalMember, originalClass) })
         Visibility.PUBLIC
     else Visibility.PROTECTED
 }

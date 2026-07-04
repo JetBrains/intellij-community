@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.nj2k
 
 import com.intellij.codeInsight.AnnotationTargetUtil
+import com.intellij.codeInsight.Nullability as PsiNullability
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.diagnostic.Logger
@@ -110,7 +111,6 @@ import com.intellij.psi.impl.source.tree.java.PsiClassObjectAccessExpressionImpl
 import com.intellij.psi.impl.source.tree.java.PsiLabeledStatementImpl
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl
-import com.intellij.psi.infos.MethodCandidateInfo
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.JavaPsiRecordUtil.getFieldForComponent
@@ -126,6 +126,7 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.j2k.content
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
+import org.jetbrains.kotlin.j2k.Nullability.Nullable
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -298,11 +299,10 @@ class JavaToJKTreeBuilder(
     private val typeFactory: JKTypeFactory,
     private val referenceSearcher: ReferenceSearcher,
     private val importStorage: JKImportStorage,
-    private val bodyFilter: ((PsiElement) -> Boolean)?,
     private val forInlining: Boolean
 ) {
     private val expressionTreeMapper = ExpressionTreeMapper()
-    private val declarationMapper = DeclarationMapper(expressionTreeMapper, withBody = bodyFilter == null)
+    private val declarationMapper = DeclarationMapper(expressionTreeMapper)
     private val formattingCollector = FormattingCollector()
     private val immutableVariables: MutableMap<PsiCodeBlock, Set<PsiElement>?> = mutableMapOf()
 
@@ -394,7 +394,7 @@ class JavaToJKTreeBuilder(
             val patternVariable = pattern?.patternVariable
 
             if (patternVariable != null) {
-                val variable = (operand as? PsiReferenceExpression)?.resolve() as? PsiVariable
+                val variable = (operand as? PsiReferenceExpression)?.resolveWithOriginalFallback() as? PsiVariable
                 val name = variable?.name ?: patternVariable.name
                 val typeElementForPattern =
                     with(declarationMapper) { JKTypeElement(type, psiTypeElement.annotationList()) }
@@ -556,27 +556,39 @@ class JavaToJKTreeBuilder(
             return JKLambdaExpression(statement, parameters, functionalType())
         }
 
-        private fun PsiMethodCallExpression.getExplicitTypeArguments(): PsiReferenceParameterList {
-            if (typeArguments.isNotEmpty()) return typeArgumentList
+        private fun PsiMethodCallExpression.getExplicitTypeArguments(): JKTypeArgumentList {
+            val sourceCall = originalElement<PsiMethodCallExpression>() ?: this
+            val typeArgumentList = (if (sourceCall.typeArguments.isNotEmpty()) {
+                sourceCall.typeArgumentList
+            } else {
+                AddTypeArgumentsFix.addTypeArguments(sourceCall, null, false)
+                    ?.safeAs<PsiMethodCallExpression>()
+                    ?.typeArgumentList
+            })
+                ?.toJK()
+                ?: return JKTypeArgumentList()
 
-            val resolveResult = resolveMethodGenerics()
-            if (resolveResult is MethodCandidateInfo && resolveResult.isApplicable) {
-                val method = resolveResult.element
-                if (method.isConstructor || !method.hasTypeParameters()) return typeArgumentList
+            val typeParameters = sourceCall.resolveMethod()?.typeParameters ?: return typeArgumentList
+            if (typeParameters.size != typeArgumentList.typeArguments.size) return typeArgumentList
+
+            typeArgumentList.typeArguments.forEachIndexed { index, typeArgument ->
+                typeArgument.type = when (getTypeParameterNullability(typeParameters[index])) {
+                    PsiNullability.NOT_NULL -> typeArgument.type.updateNullability(NotNull)
+                    PsiNullability.NULLABLE -> typeArgument.type.updateNullability(Nullable)
+                    else -> typeArgument.type
+                }
             }
 
-            return AddTypeArgumentsFix.addTypeArguments(this, null, false)
-                ?.safeAs<PsiMethodCallExpression>()
-                ?.typeArgumentList
-                ?: typeArgumentList
+            return typeArgumentList
         }
 
         //TODO mostly copied from old j2k, refactor
         private fun PsiMethodCallExpression.toJK(): JKExpression {
             val arguments = argumentList
-            val typeArguments = getExplicitTypeArguments().toJK()
+            val explicitTypeArguments = getExplicitTypeArguments()
+            val typeArguments = explicitTypeArguments
             val qualifier = methodExpression.qualifierExpression?.toJK()?.withLineBreaksFrom(methodExpression.qualifierExpression)
-            var target = methodExpression.resolve()
+            var target = methodExpression.resolveWithOriginalFallback()
             if (target is PsiMethodImpl && target.name.canBeGetterOrSetterName()) {
                 val baseCallable = target.findSuperMethods().firstOrNull()
                 if (baseCallable is KtLightMethod) {
@@ -725,7 +737,7 @@ class JavaToJKTreeBuilder(
 
         fun PsiReferenceExpression.toJK(ignoreFacades: Boolean = true): JKExpression {
             if (this is PsiMethodReferenceExpression) return toJK()
-            val target = resolve()
+            val target = resolveWithOriginalFallback()
 
             if (ignoreFacades && (target is KtLightClassForFacade || target is KtLightClassForDecompiledDeclaration)) {
                 // Normally, references to facade classes shouldn't be converted, because that would be
@@ -789,7 +801,7 @@ class JavaToJKTreeBuilder(
                     }
                 } else {
                     val classSymbol =
-                        classOrAnonymousClassReference?.resolve()?.let {
+                        classOrAnonymousClassReference?.resolveWithOriginalFallback()?.let {
                             symbolProvider.provideDirectSymbol(it) as JKClassSymbol
                         } ?: JKUnresolvedClassSymbol(
                             classOrAnonymousClassReference?.referenceName ?: NO_NAME_PROVIDED,
@@ -870,21 +882,7 @@ class JavaToJKTreeBuilder(
     private fun PsiElement.trailingComma(): PsiElement? =
         getNextSiblingIgnoringWhitespaceAndComments()?.takeIf { it is PsiJavaToken && it.text == "," }
 
-    private inner class DeclarationMapper(val expressionTreeMapper: ExpressionTreeMapper, var withBody: Boolean) {
-        fun <R> withBodyGeneration(
-            elementToCheck: PsiElement,
-            trueBranch: DeclarationMapper.() -> R,
-            elseBranch: DeclarationMapper.() -> R = trueBranch
-        ): R = when {
-            withBody -> trueBranch()
-            bodyFilter?.invoke(elementToCheck) == true -> {
-                withBody = true
-                trueBranch().also { withBody = false }
-            }
-
-            else -> elseBranch()
-        }
-
+    private inner class DeclarationMapper(val expressionTreeMapper: ExpressionTreeMapper) {
         fun PsiTypeParameterList.toJK(): JKTypeParameterList =
             JKTypeParameterList(typeParameters.map { it.toJK() })
                 .also {
@@ -1056,13 +1054,7 @@ class JavaToJKTreeBuilder(
             return JKField(
                 JKTypeElement(type.toJK(), typeElement.annotationList()).withFormattingFrom(typeElement),
                 nameIdentifier.toJK(),
-                with(expressionTreeMapper) {
-                    withBodyGeneration(
-                        this@toJK,
-                        trueBranch = { initializer.toJK() },
-                        elseBranch = { createTodoExpression() }
-                    )
-                },
+                with(expressionTreeMapper) { initializer.toJK() },
                 annotationList(this),
                 otherModifiers(),
                 visibility(),
@@ -1196,7 +1188,7 @@ class JavaToJKTreeBuilder(
                     returnTypeElement.annotationList()),
                 nameIdentifier.toJK(),
                 parameterList.parameters.map { it.toJK().withLineBreaksFrom(it) },
-                withBodyGeneration(this, trueBranch = { body?.toJK() ?: JKBodyStub }),
+                body?.toJK() ?: JKBodyStub,
                 typeParameterList?.toJK() ?: JKTypeParameterList(),
                 annotationList(this),
                 throwsList.referencedTypes.map { JKTypeElement(it.toJK()) },
@@ -1246,7 +1238,7 @@ class JavaToJKTreeBuilder(
         fun PsiCodeBlock.toJK(): JKBlock {
             immutableVariables.computeIfAbsent(this) { getImmutableLocalVariablesInBlock(this) }
             return JKBlockImpl(
-                if (withBody) statements.map { it.toJK() } else listOf(createTodoExpression().asStatement())
+                statements.map { it.toJK() }
             ).withFormattingFrom(this).also {
                 it.leftBrace.withFormattingFrom(lBrace)
                 it.rightBrace.withFormattingFrom(rBrace)
@@ -1413,9 +1405,6 @@ class JavaToJKTreeBuilder(
 
             return labels to currentStatement
         }
-
-        private fun createTodoExpression(): JKExpression =
-            JKCallExpressionImpl(symbolProvider.provideMethodSymbol("kotlin.TODO"))
 
         private fun PsiElement.createErrorStatement(message: String? = null): JKStatement =
             JKErrorStatement(this, message)

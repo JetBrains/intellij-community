@@ -70,6 +70,7 @@ class JKSymbolProvider(private val resolver: JKResolver) {
 
     val symbolsByPsi: MutableMap<PsiElement, JKSymbol> = mutableMapOf()
 
+    private val symbolsByOriginalPsi: MutableMap<PsiElement, JKSymbol> = mutableMapOf()
     private val symbolsByFqName: MutableMap<String, JKSymbol> = mutableMapOf()
     private val symbolsByFqNameWithExactSignature: MutableMap<List<String>, JKSymbol> = mutableMapOf()
     private val symbolsByJK: MutableMap<JKDeclaration, JKSymbol> = mutableMapOf()
@@ -82,6 +83,7 @@ class JKSymbolProvider(private val resolver: JKResolver) {
     }
 
     fun provideDirectSymbol(psi: PsiElement): JKSymbol {
+        symbolsByOriginalPsi[psi]?.let { return it }
         return symbolsByPsi.getOrPut(psi) {
             if (psi is KtLightDeclaration<*, *>) {
                 psi.kotlinOrigin?.let { provideDirectSymbol(it) } ?: createDirectSymbol(psi)
@@ -98,7 +100,7 @@ class JKSymbolProvider(private val resolver: JKResolver) {
     }
 
     internal inline fun <reified T : JKSymbol> provideSymbolForReference(reference: PsiReference): T {
-        val target = reference.resolve()
+        val target = reference.resolveWithOriginalFallback()
         if (target is LightRecordMethod) {
             val field = getFieldForComponent(target.recordComponent)
             if (field != null) return provideDirectSymbol(field) as T
@@ -140,6 +142,10 @@ class JKSymbolProvider(private val resolver: JKResolver) {
                 is PsiClass -> JKUniverseClassSymbol(typeFactory)
                 is PsiPackageStatement -> JKUniversePackageSymbol(typeFactory)
                 else -> error("Unexpected argument type: ${psi::class}")
+            }
+        }.also { symbol ->
+            psi.originalElement<PsiElement>()?.let { originalPsi ->
+                symbolsByOriginalPsi.putIfAbsent(originalPsi, symbol)
             }
         }
 
