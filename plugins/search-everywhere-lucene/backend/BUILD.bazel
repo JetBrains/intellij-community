@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "searchEverywhereLucene-backend-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":searchEverywhereLucene-backend-tests_test_lib"],
+)
+### skip generation section `test intellij.searchEverywhereLucene.backend.tests`
+
 ### auto-generated section `build intellij.searchEverywhereLucene.backend` start
 
 jvm_library(
@@ -183,11 +191,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.searchEverywhereLucene.backend.tests` end
-
-### auto-generated section `test intellij.searchEverywhereLucene.backend.tests` start
-
-jps_test(
-    name = "searchEverywhereLucene-backend-tests_test",
-    runtime_deps = [":searchEverywhereLucene-backend-tests_test_lib"],
-)
-### auto-generated section `test intellij.searchEverywhereLucene.backend.tests` end
