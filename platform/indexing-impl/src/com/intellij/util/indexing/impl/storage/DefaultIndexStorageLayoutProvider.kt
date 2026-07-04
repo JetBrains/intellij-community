@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.storage
 
-import com.intellij.concurrency.virtualThreads.IntelliJVirtualThreads
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ThrowableNotNullFunction
@@ -309,7 +308,9 @@ private fun setupInMemoryWAL(): WriteAheadLog {
 private fun setupPersistentWAL(directory: Path): WriteAheadLog? {
   return PersistentWriteAheadLogFactory.setup(
     directory = directory,
-    flusherThreadFactory = IntelliJVirtualThreads.ofVirtual().name("WriteAheadLogFlusher").factory(),
+    //platform thread is used only for better observability in traces
+    // maybe replace with IntelliJVirtualThreads.ofVirtual() as soon as all the debugging is finished?
+    flusherThreadFactory = Thread.ofPlatform().name("WriteAheadLogFlusher").factory(),
     toFileWriter = VIA_CHANNELS_CACHE_FILE_WRITER,
     invalidateCaches = { FileBasedIndex.getInstance().invalidateCaches() },
   )

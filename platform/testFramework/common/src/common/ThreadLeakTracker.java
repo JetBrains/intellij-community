@@ -143,6 +143,7 @@ public final class ThreadLeakTracker {
       "UserActivityMonitor thread",
       "VM Periodic Task Thread",
       "VM Thread",
+      "WriteAheadLogFlusher",
       "YJPAgent-Telemetry"
     );
     validateWhitelistedThreads(offenders);
