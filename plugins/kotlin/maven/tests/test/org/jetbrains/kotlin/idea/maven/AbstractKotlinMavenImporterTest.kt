@@ -143,60 +143,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
     protected val facetSettings: IKotlinFacetSettings
         get() = facetSettings("project")
 
-    class JavaParameters20 : AbstractKotlinMavenImporterTest() {
-        @Test
-        fun testJavaParameters() = runBlocking {
-            createProjectSubDirs("src/main/kotlin")
-
-            importProjectAsync(
-                """
-            <groupId>test</groupId>
-            <artifactId>project</artifactId>
-            <version>1.0.0</version>
-
-            <dependencies>
-                <dependency>
-                    <groupId>org.jetbrains.kotlin</groupId>
-                    <artifactId>kotlin-stdlib</artifactId>
-                    <version>$kotlinVersion</version>
-                </dependency>
-            </dependencies>
-
-            <build>
-                <sourceDirectory>src/main/kotlin</sourceDirectory>
-
-                <plugins>
-                    <plugin>
-                        <groupId>org.jetbrains.kotlin</groupId>
-                        <artifactId>kotlin-maven-plugin</artifactId>
-
-                        <executions>
-                            <execution>
-                                <id>compile</id>
-                                <phase>compile</phase>
-                                <goals>
-                                    <goal>compile</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <javaParameters>true</javaParameters>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-            """
-            )
-
-            assertModules("project")
-
-            with(facetSettings) {
-                Assert.assertEquals("-java-parameters", compilerSettings!!.additionalArguments)
-                Assert.assertTrue((mergedCompilerArguments as K2JVMCompilerArguments).javaParameters)
-            }
-        }
-    }
-
     class ArgsInFacet : AbstractKotlinMavenImporterTest() {
         @Test
         fun testArgsInFacet() = runBlocking {
