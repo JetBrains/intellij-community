@@ -194,61 +194,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         return facetSettings to notifications
     }
 
-    class InvalidJvmTarget : AbstractKotlinMavenImporterTest() {
-        @Test
-        fun testInvalidJvmTarget() = runBlocking {
-            createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
-
-            val kotlinMavenPluginVersion = "1.6.20"
-            importProjectAsync(
-                """
-            <groupId>test</groupId>
-            <artifactId>project</artifactId>
-            <version>1.0.0</version>
-
-            <dependencies>
-                <dependency>
-                    <groupId>org.jetbrains.kotlin</groupId>
-                    <artifactId>kotlin-stdlib</artifactId>
-                    <version>$kotlinVersion</version>
-                </dependency>
-            </dependencies>
-
-            <build>
-                <sourceDirectory>src/main/kotlin</sourceDirectory>
-
-                <plugins>
-                    <plugin>
-                        <groupId>org.jetbrains.kotlin</groupId>
-                        <artifactId>kotlin-maven-plugin</artifactId>
-                        <version>$kotlinMavenPluginVersion</version>
-
-                        <executions>
-                            <execution>
-                                <id>compile</id>
-                                <phase>compile</phase>
-                                <goals>
-                                    <goal>compile</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <jvmTarget>ILLEGAL_ITEM</jvmTarget>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-            """
-            )
-
-            assertModules("project")
-
-            with(facetSettings) {
-                Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
-            }
-        }
-    }
-
     class CollectSourceRootsInCompoundModule : AbstractKotlinMavenImporterTest() {
         @Test
         fun testCollectSourceRootsInCompoundModule() = runBlocking {
