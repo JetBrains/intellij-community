@@ -270,8 +270,12 @@ public final class DebugReflectionUtil {
       return result.toString();
     }
 
-    BackLink<?> prev() {
+    public BackLink<?> prev() {
       return backLink;
+    }
+
+    public @NotNull V getValue() {
+      return value;
     }
 
     String getFieldName() {
