@@ -22,9 +22,6 @@
     reason: <- intellij.agent.workbench.acp.runtime
   contentModules:
   - name: intellij.agent.workbench.acp.runtime
-- name: lib/modules/intellij.agent.workbench.ai.code.review.integration.jar
-  contentModules:
-  - name: intellij.agent.workbench.ai.code.review.integration
 - name: lib/modules/intellij.agent.workbench.ai.review.agents.jar
   contentModules:
   - name: intellij.agent.workbench.ai.review.agents
