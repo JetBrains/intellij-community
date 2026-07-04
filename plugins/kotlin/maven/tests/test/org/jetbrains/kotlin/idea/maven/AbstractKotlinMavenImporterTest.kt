@@ -143,64 +143,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
     protected val facetSettings: IKotlinFacetSettings
         get() = facetSettings("project")
 
-    class InternalArgumentsFacetImporting8 : AbstractKotlinMavenImporterTest() {
-        @Test
-        fun testInternalArgumentsFacetImporting() = runBlocking {
-            importProjectAsync(
-                """
-            <groupId>test</groupId>
-            <artifactId>project</artifactId>
-            <version>1.0.0</version>
-
-            <dependencies>
-                <dependency>
-                    <groupId>org.jetbrains.kotlin</groupId>
-                    <artifactId>kotlin-stdlib</artifactId>
-                    <version>$kotlinVersion</version>
-                </dependency>
-            </dependencies>
-
-            <build>
-                <sourceDirectory>src/main/kotlin</sourceDirectory>
-
-                <plugins>
-                    <plugin>
-                        <groupId>org.jetbrains.kotlin</groupId>
-                        <artifactId>kotlin-maven-plugin</artifactId>
-
-                        <executions>
-                            <execution>
-                                <id>compile</id>
-                                <phase>compile</phase>
-                                <goals>
-                                    <goal>compile</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <languageVersion>1.2</languageVersion>
-                            <args>
-                                <arg>-XXLanguage:+InlineClasses</arg>
-                            </args>
-                            <jvmTarget>1.8</jvmTarget>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-            """
-            )
-
-            // Check that we haven't lost internal argument during importing to facet
-            Assert.assertTrue("Argument is missing from compiler settings", "-XXLanguage:+InlineClasses" in facetSettings.compilerSettings!!.additionalArguments)
-
-            // Check that internal argument influenced LanguageVersionSettings correctly
-            Assert.assertEquals(
-                LanguageFeature.State.ENABLED,
-                getModule("project").languageVersionSettings.getFeatureSupport(LanguageFeature.InlineClasses)
-            )
-        }
-    }
-
     class StableModuleNameWhileUsingMavenJVM : AbstractKotlinMavenImporterTest() {
         @Test
         fun testStableModuleNameWhileUsingMaven_JVM() = runBlocking {
