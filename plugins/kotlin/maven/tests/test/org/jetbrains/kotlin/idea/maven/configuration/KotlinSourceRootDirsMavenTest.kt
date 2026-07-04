@@ -1,6 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.maven.configuration
 
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.createProjectSubDirs
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.importProjectsAsync
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
@@ -8,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndGet
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenConstants
@@ -15,13 +23,21 @@ import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector.Companion.create
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.idea.maven.AbstractKotlinMavenImporterTest
-import org.junit.Test
+import org.jetbrains.kotlin.idea.maven.KotlinMavenImportingTestBase
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.io.File
 
 private const val KOTLIN_VERSION = "2.2.20"
 
-class KotlinSourceRootDirsMavenTest : AbstractKotlinMavenImporterTest() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class KotlinSourceRootDirsMavenTest(mavenVersion: String, modelVersion: String) :
+    KotlinMavenImportingTestBase(mavenVersion, modelVersion) {
 
     private val purePom = """
     <groupId>org.example</groupId>
@@ -32,10 +48,10 @@ class KotlinSourceRootDirsMavenTest : AbstractKotlinMavenImporterTest() {
     @Test
     fun `test when only java dirs exist`() {
         runBlocking {
-            importProjectAsync(purePom)
+            maven.importProjectAsync(purePom)
         }
 
-        assertModules("project")
+        maven.assertModules("project")
 
         val afterFile = """
             <?xml version="1.0"?>
@@ -100,13 +116,13 @@ class KotlinSourceRootDirsMavenTest : AbstractKotlinMavenImporterTest() {
 
     @Test
     fun `test when kotlin dirs also exist`() {
-        createProjectSubDirs("src/main/kotlin", "src/test/kotlin")
+        maven.createProjectSubDirs("src/main/kotlin", "src/test/kotlin")
 
         runBlocking {
-            importProjectAsync(purePom)
+            maven.importProjectAsync(purePom)
         }
 
-        assertModules("project")
+        maven.assertModules("project")
 
         val afterFile = """
 <?xml version="1.0"?>
@@ -222,13 +238,13 @@ class KotlinSourceRootDirsMavenTest : AbstractKotlinMavenImporterTest() {
      */
     @Test
     fun `test submodule only with kotlin dir`() = runBlocking {
-        createProjectSubDirs("src/main/kotlin", "myModule1/src/main/kotlin", "src/test/kotlin", "myModule1/src/test/kotlin")
+        maven.createProjectSubDirs("src/main/kotlin", "myModule1/src/main/kotlin", "src/test/kotlin", "myModule1/src/test/kotlin")
 
-        val mainPom = createProjectPom(mainPomWithSubmodule)
-        val modulePom1 = createModulePom("myModule1", submodulePom)
+        val mainPom = maven.createProjectPom(mainPomWithSubmodule)
+        val modulePom1 = maven.createModulePom("myModule1", submodulePom)
 
-        importProjectsAsync(mainPom, modulePom1)
-        assertModules("project", "myModule1")
+        maven.importProjectsAsync(mainPom, modulePom1)
+        maven.assertModules("project", "myModule1")
 
         val module = project.modules.first { it.name == "myModule1" }
 
@@ -306,16 +322,16 @@ class KotlinSourceRootDirsMavenTest : AbstractKotlinMavenImporterTest() {
 
     @Test
     fun `test submodule with java and kotlin dirs`() = runBlocking {
-        createProjectSubDirs(
+        maven.createProjectSubDirs(
             "src/main/kotlin", "myModule1/src/main/kotlin", "src/test/kotlin", "myModule1/src/test/kotlin",
             "myModule1/src/main/java", "myModule1/src/test/java"
         )
 
-        val mainPom = createProjectPom(mainPomWithSubmodule)
-        val modulePom1 = createModulePom("myModule1", submodulePom)
+        val mainPom = maven.createProjectPom(mainPomWithSubmodule)
+        val modulePom1 = maven.createModulePom("myModule1", submodulePom)
 
-        importProjectsAsync(mainPom, modulePom1)
-        assertModules("project", "myModule1")
+        maven.importProjectsAsync(mainPom, modulePom1)
+        maven.assertModules("project", "myModule1")
 
         val module = project.modules.first { it.name == "myModule1" }
 
