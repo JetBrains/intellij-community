@@ -90,6 +90,27 @@ class WriteAheadLogFileChannelOverCircularBufferTest {
     }
   }
 
+  @Test
+  fun `per-file flush does not scan WAL records if the file has no pending writes`(@TempDir tempDir: Path) {
+    val pathWithPendingWrite = tempDir.resolve("with-pending-write.bin")
+    val pathWithoutPendingWrite = tempDir.resolve("without-pending-write.bin")
+    val circularBuffer = CountingReadCircularBytesBuffer()
+    val writeAheadLog = WriteAheadLogOverCircularBuffer(
+      circularBuffer,
+      fixedPathEnumerator(pathWithPendingWrite, pathWithoutPendingWrite),
+      { _, _, _ -> },
+    )
+
+    writeAheadLog.openFor(pathWithPendingWrite).write(0, byteArrayOf(1), 0, 1)
+
+    assertEquals(0, writeAheadLog.openFor(pathWithoutPendingWrite).flush())
+    assertEquals(
+      0,
+      circularBuffer.readConsumingCalls,
+      "Per-file flush must not scan WAL records when the requested file has no pending writes"
+    )
+  }
+
   @RepeatedTest(TURNS_COUNT)
   fun `writes to WAL-backed Channel produces the same file content as writes to FileChannel`(
     @TempDir tempDir: Path,
@@ -727,6 +748,32 @@ private class QueueFullOnceCircularBytesBuffer : CircularBytesBuffer {
   override fun flush() = Unit
 }
 
+private class CountingReadCircularBytesBuffer : CircularBytesBuffer {
+  var readConsumingCalls: Int = 0
+    private set
+  private var hasUnprocessedRecord: Boolean = false
+
+  override fun hasUnprocessedRecords(): Boolean = hasUnprocessedRecord
+
+  override fun maxEntrySize(): Int = 1024
+
+  override fun append(writer: ByteBufferWriter, entrySize: Int) {
+    writer.write(ByteBuffer.allocate(entrySize))
+    hasUnprocessedRecord = true
+  }
+
+  override fun read(reader: CircularBytesBuffer.DataReader) = Unit
+
+  override fun readConsuming(reader: CircularBytesBuffer.ConsumingDataReader): Int {
+    readConsumingCalls++
+    return 0
+  }
+
+  override fun close() = Unit
+
+  override fun flush() = Unit
+}
+
 private class ApplyUnfinishedFlushDeadlockCircularBytesBuffer : CircularBytesBuffer {
   private val readEntered = CountDownLatch(1)
   private val flushEntered = CountDownLatch(1)
@@ -810,4 +857,23 @@ private fun singlePathEnumerator(path: Path): DurableDataEnumerator<Path> = obje
   override fun force() = Unit
 
   override fun isDirty() = false
+}
+
+private fun fixedPathEnumerator(vararg paths: Path): DurableDataEnumerator<Path> {
+  val pathToId = paths.withIndex().associate { (index, path) -> path to index + 1 }
+  val idToPath = pathToId.entries.associate { (path, id) -> id to path }
+
+  return object : DurableDataEnumerator<Path> {
+    override fun enumerate(value: Path?): Int = pathToId[value] ?: error("Unknown path: $value")
+
+    override fun valueOf(idx: Int): Path? = idToPath[idx]
+
+    override fun tryEnumerate(value: Path?): Int = pathToId[value] ?: DataEnumerator.NULL_ID
+
+    override fun close() = Unit
+
+    override fun force() = Unit
+
+    override fun isDirty() = false
+  }
 }

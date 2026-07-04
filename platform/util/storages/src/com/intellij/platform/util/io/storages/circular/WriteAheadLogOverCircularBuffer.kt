@@ -243,6 +243,10 @@ class WriteAheadLogOverCircularBuffer(
 
   /** drain only records for a given pathId */
   private fun flush(pathId: Int): Int {
+    if (!hasUnfinished(pathId)) {
+      return 0
+    }
+
     val path = pathById(pathId)
     val flushedEntries = circularBytesBuffer.readConsuming { entryDataBuffer ->
       val record = readRecord(entryDataBuffer)
