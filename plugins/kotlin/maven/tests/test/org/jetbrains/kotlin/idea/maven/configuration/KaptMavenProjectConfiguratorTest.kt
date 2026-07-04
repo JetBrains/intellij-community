@@ -1,18 +1,36 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.maven.configuration
 
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.createProjectSubDirs
+import com.intellij.maven.testFramework.fixtures.getModule
+import com.intellij.maven.testFramework.fixtures.importProjectsAsync
+import com.intellij.maven.testFramework.fixtures.moduleTag
+import com.intellij.maven.testFramework.fixtures.modulesTag
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndGet
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
-import org.jetbrains.kotlin.idea.maven.AbstractKotlinMavenImporterTest
-import org.junit.Test
+import org.jetbrains.kotlin.idea.maven.KotlinMavenImportingTestBase
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class KaptMavenProjectConfiguratorTest : AbstractKotlinMavenImporterTest() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class KaptMavenProjectConfiguratorTest(mavenVersion: String, modelVersion: String) :
+    KotlinMavenImportingTestBase(mavenVersion, modelVersion) {
     @Test
     fun testConfigureKotlinAddsKaptToChildModuleWithProcessorVersion() = runBlocking {
         doTestConfigureKotlinAddsKaptToChildModule(
@@ -49,25 +67,25 @@ class KaptMavenProjectConfiguratorTest : AbstractKotlinMavenImporterTest() {
         parentDependencyManagement: String,
         annotationProcessorVersion: String,
     ) {
-        createProjectSubDirs("app/src/main/kotlin", "app/src/main/java", "lib/src/main/kotlin")
+        maven.createProjectSubDirs("app/src/main/kotlin", "app/src/main/java", "lib/src/main/kotlin")
 
-        val rootPom = createProjectPom(
+        val rootPom = maven.createProjectPom(
             """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
         <version>1.0.0</version>
         <packaging>pom</packaging>
 
-        <$modulesTag>
-          <$moduleTag>app</$moduleTag>
-          <$moduleTag>lib</$moduleTag>
-        </$modulesTag>
+        <${maven.modulesTag}>
+          <${maven.moduleTag}>app</${maven.moduleTag}>
+          <${maven.moduleTag}>lib</${maven.moduleTag}>
+        </${maven.modulesTag}>
 
         $parentDependencyManagement
       """.trimIndent()
         )
 
-        val appPom = createModulePom(
+        val appPom = maven.createModulePom(
             "app",
             """
         <parent>
@@ -99,7 +117,7 @@ class KaptMavenProjectConfiguratorTest : AbstractKotlinMavenImporterTest() {
       """.trimIndent()
         )
 
-        val libPom = createModulePom(
+        val libPom = maven.createModulePom(
             "lib",
             """
         <parent>
@@ -112,8 +130,8 @@ class KaptMavenProjectConfiguratorTest : AbstractKotlinMavenImporterTest() {
       """.trimIndent()
         )
 
-        importProjectsAsync(rootPom, appPom, libPom)
-        assertModules("project", "app", "lib")
+        maven.importProjectsAsync(rootPom, appPom, libPom)
+        maven.assertModules("project", "app", "lib")
 
         configureKotlinForAllModules()
 
@@ -142,7 +160,7 @@ class KaptMavenProjectConfiguratorTest : AbstractKotlinMavenImporterTest() {
             configurator.doInternalConfigure(
                 project,
                 IdeKotlinVersion.get(kotlinVersion),
-                listOf(getModule("project"), getModule("app"), getModule("lib")),
+                listOf(maven.getModule("project"), maven.getModule("app"), maven.getModule("lib")),
                 NotificationMessageCollector.create(project),
                 configurator.notificationHolder(project),
                 emptyMap(),
