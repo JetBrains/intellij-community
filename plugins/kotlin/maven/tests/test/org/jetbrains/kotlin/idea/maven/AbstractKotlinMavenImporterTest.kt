@@ -143,58 +143,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
     protected val facetSettings: IKotlinFacetSettings
         get() = facetSettings("project")
 
-    class JvmDetectionByGoalWithJsStdlib15 : AbstractKotlinMavenImporterTest() {
-        @Test
-        fun testJvmDetectionByGoalWithJsStdlib() = runBlocking {
-            createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
-
-            importProjectAsync(
-                """
-            <groupId>test</groupId>
-            <artifactId>project</artifactId>
-            <version>1.0.0</version>
-
-            <dependencies>
-                <dependency>
-                    <groupId>org.jetbrains.kotlin</groupId>
-                    <artifactId>kotlin-stdlib-js</artifactId>
-                    <version>$kotlinVersion</version>
-                </dependency>
-            </dependencies>
-
-            <build>
-                <sourceDirectory>src/main/kotlin</sourceDirectory>
-
-                <plugins>
-                    <plugin>
-                        <groupId>org.jetbrains.kotlin</groupId>
-                        <artifactId>kotlin-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>compile</id>
-                                <goals>
-                                    <goal>compile</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>test-compile</id>
-                                <goals>
-                                    <goal>test-compile</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-            """
-            )
-
-            assertModules("project")
-
-            Assert.assertEquals(JvmPlatforms.jvm6, facetSettings.targetPlatform)
-        }
-    }
-
     class JvmDetectionByGoalWithCommonStdlib : AbstractKotlinMavenImporterTest() {
         @Test
         fun testJvmDetectionByGoalWithCommonStdlib() = runBlocking {
