@@ -22,12 +22,14 @@ export class JbFieldGroup extends LitElement {
       font-weight: var(--jb-font-weight-medium);
       margin-bottom: var(--jb-space-sm);
       padding: 0;
+      -webkit-user-select: none;
       user-select: none;
     }
 
     .body {
       display: grid;
       gap: var(--jb-space-sm);
+      -webkit-user-select: text;
       user-select: text;
     }
   `]

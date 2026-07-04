@@ -1967,6 +1967,7 @@ html[data-theme="light"] .markdownPreview {
   padding: 0;
   overflow: hidden;
   resize: vertical;
+  -webkit-user-select: none;
   user-select: none;
 }
 .markdownImageBlock.isInteractive {
@@ -2015,6 +2016,9 @@ html[data-theme="light"] .markdownPreview {
   border-radius: 5px;
   background: var(--ij-bg-panel);
   box-shadow: 0 2px 6px color-mix(in srgb, black 18%, transparent);
+  cursor: default;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .markdownZoomToolbarButton {
   display: inline-flex;
@@ -2027,6 +2031,7 @@ html[data-theme="light"] .markdownPreview {
   border-radius: 4px;
   color: var(--ij-text-primary);
   background: transparent;
+  cursor: default;
 }
 .markdownZoomToolbarButton:hover,
 .markdownZoomToolbarButton:focus-visible {

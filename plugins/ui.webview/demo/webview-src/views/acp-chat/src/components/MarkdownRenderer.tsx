@@ -30,7 +30,7 @@ const rehypePlugins: Options["rehypePlugins"] = [
 
 export function MarkdownRenderer({ text, streaming = false, className = "acpMarkdown" }: MarkdownRendererProps) {
   const idPrefix = `acp-md-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}-`
-  const rootClassName = classNames(className, streaming ? "acpMarkdown--streaming" : undefined)
+  const rootClassName = classNames(className, "webview-selectable-text", streaming ? "acpMarkdown--streaming" : undefined)
   const pathLinkCandidates = useMemo(() => streaming ? [] : collectPathLinkCandidates(text), [streaming, text])
   const [resolvedRawPaths, setResolvedRawPaths] = useState<ReadonlySet<string>>(() => new Set())
 

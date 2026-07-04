@@ -84,6 +84,7 @@ export function MarkdownImageBlock({ src, alt, title, className, style, ...props
       <MarkdownZoomToolbar
         targetLabel="image"
         className="markdownImageToolbar"
+        buttonClassName="markdownImageToolbarButton"
         onZoomOut={() => zoomBy(1 / MARKDOWN_ZOOM_BUTTON_FACTOR)}
         onResetZoom={resetZoom}
         onZoomIn={() => zoomBy(MARKDOWN_ZOOM_BUTTON_FACTOR)}

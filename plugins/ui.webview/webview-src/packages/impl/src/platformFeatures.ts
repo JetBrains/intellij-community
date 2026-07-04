@@ -2,11 +2,13 @@
 
 import type { WebViewBridge } from "@jetbrains/intellij-webview"
 import { installWebViewBrowserZoomGuard } from "./browserZoomGuard"
+import { installWebViewDefaultTextSelectionGuard } from "./defaultTextSelectionGuard"
 import { installWebViewFocusInterop } from "./focusInterop"
 import { installIJTheming } from "./theme"
 
 export function installWebViewPlatformFeatures(bridge: WebViewBridge): void {
   installWebViewBrowserZoomGuard(bridge.transport())
+  installWebViewDefaultTextSelectionGuard()
   installIJTheming(bridge)
   installWebViewFocusInterop(bridge)
 }

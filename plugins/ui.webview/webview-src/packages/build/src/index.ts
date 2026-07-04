@@ -14,6 +14,7 @@ export interface WebViewViewEntry {
   id: string
   sourceDir?: string
   outDir?: string
+  enableDefaultTextSelectionGuard?: boolean
 }
 
 export interface WebViewViewConfigOptions extends WebViewViewEntry {
@@ -105,7 +106,7 @@ export function defineWebViewViewConfig(options: WebViewViewConfigOptions): User
   const outDir = options.outDir ?? resolve(options.webviewSrcDir, "..", "resources", "webview", "views", options.id)
 
   return {
-    plugins: [injectCommonWebViewRuntimeAssetsPlugin(), stripCrossoriginFromHtmlPlugin()],
+    plugins: [injectCommonWebViewRuntimeAssetsPlugin(options.enableDefaultTextSelectionGuard !== false), stripCrossoriginFromHtmlPlugin()],
     root: sourceDir,
     base: "./",
     publicDir: false,
@@ -168,19 +169,19 @@ function webViewManualChunkName(id: string): string | undefined {
   return packageName.replace(/[^A-Za-z0-9_-]+/g, "-")
 }
 
-function injectCommonWebViewRuntimeAssetsPlugin(): Plugin {
+function injectCommonWebViewRuntimeAssetsPlugin(enableDefaultTextSelectionGuard: boolean): Plugin {
   const bridgeUrl = COMMON_WEBVIEW_ASSET_PREFIX + COMMON_WEBVIEW_BRIDGE_ASSET
   const platformFeaturesUrl = COMMON_WEBVIEW_ASSET_PREFIX + COMMON_WEBVIEW_PLATFORM_FEATURES_ASSET
   return {
     name: "intellij-webview-common-runtime-assets",
     transformIndexHtml(html: string): string {
-      return injectCommonWebViewRuntimeAssets(html, bridgeUrl, platformFeaturesUrl)
+      return injectCommonWebViewRuntimeAssets(html, bridgeUrl, platformFeaturesUrl, enableDefaultTextSelectionGuard)
     },
     generateBundle(_options, bundle) {
       for (const item of Object.values(bundle)) {
         if (item.type !== "asset" || !item.fileName.endsWith(".html") || typeof item.source !== "string") continue
 
-        item.source = injectCommonWebViewRuntimeAssets(item.source, bridgeUrl, platformFeaturesUrl)
+        item.source = injectCommonWebViewRuntimeAssets(item.source, bridgeUrl, platformFeaturesUrl, enableDefaultTextSelectionGuard)
       }
     },
     configureServer(server) {
@@ -203,14 +204,29 @@ function injectCommonWebViewRuntimeAssetsPlugin(): Plugin {
   }
 }
 
-function injectCommonWebViewRuntimeAssets(html: string, bridgeUrl: string, platformFeaturesUrl: string): string {
-  if (html.includes(bridgeUrl) || html.includes(platformFeaturesUrl)) {
+function injectCommonWebViewRuntimeAssets(html: string, bridgeUrl: string, platformFeaturesUrl: string, enableDefaultTextSelectionGuard: boolean): string {
+  const htmlWithRuntimeAssets = html.includes(bridgeUrl) || html.includes(platformFeaturesUrl)
+    ? html
+    : html.replace(
+      /<head(\s[^>]*)?>/i,
+      (head) => `${head}\n  <script src="${bridgeUrl}"></script>\n  <script src="${platformFeaturesUrl}"></script>`,
+    )
+  return enableDefaultTextSelectionGuard ? htmlWithRuntimeAssets : injectDefaultTextSelectionGuardOptOut(htmlWithRuntimeAssets, platformFeaturesUrl)
+}
+
+function injectDefaultTextSelectionGuardOptOut(html: string, platformFeaturesUrl: string): string {
+  const metaName = "wvi-enable-default-text-selection-guard"
+  if (html.includes(`name="${metaName}"`) || html.includes(`name='${metaName}'`)) {
     return html
   }
   return html.replace(
-    /<head(\s[^>]*)?>/i,
-    (head) => `${head}\n  <script src="${bridgeUrl}"></script>\n  <script src="${platformFeaturesUrl}"></script>`,
+    new RegExp(`(<script src="${escapeRegExp(platformFeaturesUrl)}"></script>)`, "i"),
+    `<meta name="${metaName}" content="false">\n  $1`,
   )
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
 function commonWebViewRuntimeAssetName(url: string | undefined): string | null {

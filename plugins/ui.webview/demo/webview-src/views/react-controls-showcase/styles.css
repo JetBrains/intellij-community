@@ -3,7 +3,6 @@
 .react-controls-showcase-root {
   background: var(--jb-bg-window, var(--ij-bg-window));
   color: var(--jb-text-color, var(--ij-text-primary));
-  user-select: none;
 }
 
 #root {

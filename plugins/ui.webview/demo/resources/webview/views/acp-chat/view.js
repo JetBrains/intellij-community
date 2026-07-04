@@ -64,6 +64,7 @@ var hostStyles = i`
     font-family: var(--jb-font-family);
     font-size: var(--jb-font-size);
     line-height: var(--jb-line-height);
+    -webkit-user-select: none;
     user-select: none;
   }
 
@@ -107,6 +108,7 @@ i`
     outline: none;
     padding: 0 var(--jb-control-padding-x);
     position: relative;
+    -webkit-user-select: none;
     user-select: none;
     white-space: nowrap;
   }
@@ -322,11 +324,13 @@ i`
 
   .select {
     padding-right: 26px;
+    -webkit-user-select: none;
     user-select: none;
   }
 
   .field-control,
   .textarea {
+    -webkit-user-select: text;
     user-select: text;
   }
 
@@ -341,6 +345,7 @@ i`
     right: 9px;
     top: 50%;
     transform: translateY(-65%) rotate(45deg);
+    -webkit-user-select: none;
     user-select: none;
     width: 5px;
   }
@@ -374,6 +379,7 @@ i`
     min-height: var(--jb-control-height-compact);
     padding: 0 var(--jb-space-sm);
     text-align: left;
+    -webkit-user-select: none;
     user-select: none;
     white-space: nowrap;
   }
@@ -401,6 +407,7 @@ i`
     gap: var(--jb-control-gap);
     min-height: var(--jb-control-height-compact);
     position: relative;
+    -webkit-user-select: none;
     user-select: none;
   }
 
@@ -525,6 +532,7 @@ var JbIcon = class extends i$1 {
       height: 16px;
       justify-content: center;
       line-height: 1;
+      -webkit-user-select: none;
       user-select: none;
       width: 16px;
     }
@@ -3451,7 +3459,7 @@ var rehypePlugins = [
 ];
 function MarkdownRenderer({ text, streaming = false, className = "acpMarkdown" }) {
 	const idPrefix = `acp-md-${(0, import_react.useId)().replace(/[^a-zA-Z0-9_-]/g, "")}-`;
-	const rootClassName = classNames(className, streaming ? "acpMarkdown--streaming" : void 0);
+	const rootClassName = classNames(className, "webview-selectable-text", streaming ? "acpMarkdown--streaming" : void 0);
 	const pathLinkCandidates = (0, import_react.useMemo)(() => streaming ? [] : collectPathLinkCandidates(text), [streaming, text]);
 	const [resolvedRawPaths, setResolvedRawPaths] = (0, import_react.useState)(() => /* @__PURE__ */ new Set());
 	(0, import_react.useEffect)(() => {
@@ -4582,7 +4590,7 @@ function ChatView() {
 							className: "acpThread",
 							children: [
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(thread_exports.Viewport, {
-									className: "acpThreadViewport",
+									className: "acpThreadViewport webview-selectable-text",
 									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(thread_exports.Empty, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 										className: "acpEmpty",
 										children: "Select an agent and send a message to start."

@@ -8,7 +8,6 @@
   flex-direction: column;
   gap: 12px;
   padding: 12px;
-  user-select: none;
 }
 
 .app-shell :where(
@@ -30,6 +29,7 @@
   .fallback *,
   .mermaid-hint
 ) {
+  -webkit-user-select: text;
   user-select: text;
 }
 
@@ -51,6 +51,7 @@
   .mermaid-wrapper,
   .mermaid-wrapper *
 ) {
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -713,7 +714,6 @@
   background: var(--ij-bg-panel-alt);
   border: 1px solid var(--ij-border-inline);
   border-radius: var(--ij-radius-panel);
-  user-select: none;
 }
 
 .mermaid-viewport {

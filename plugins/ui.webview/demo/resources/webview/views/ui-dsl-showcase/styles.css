@@ -35,7 +35,6 @@
   line-height: var(--jb-line-height, 1.35);
   margin: 0;
   --webview-demo-fixed-canvas-width: 960px;
-  user-select: none;
 }
 
 .uiDslShowcasePage {
@@ -83,6 +82,7 @@
   line-height: var(--jb-line-height-paragraph, 1.45);
   margin: 0;
   max-width: 760px;
+  -webkit-user-select: text;
   user-select: text;
 }
 
@@ -96,6 +96,7 @@
   font: inherit;
   padding: 0;
   text-align: left;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -195,11 +196,13 @@
   min-width: 0;
   padding-top: 3px;
   text-align: right;
+  -webkit-user-select: text;
   user-select: text;
 }
 
 .dslLabelEmpty {
   color: transparent;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -251,6 +254,7 @@
   color: var(--jb-text-muted, var(--ij-text-secondary, #6b7280));
   font-size: var(--jb-font-size-small, 12px);
   line-height: var(--jb-line-height-paragraph, 1.45);
+  -webkit-user-select: text;
   user-select: text;
 }
 
@@ -323,6 +327,7 @@
   display: inline-flex;
   gap: 3px;
   text-decoration: none;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -531,6 +536,7 @@
   font-size: var(--jb-font-size-small, 12px);
   grid-template-columns: repeat(3, 1fr);
   line-height: var(--jb-line-height, 1.35);
+  -webkit-user-select: text;
   user-select: text;
 }
 
@@ -616,6 +622,7 @@
 .dslTabPanel {
   color: var(--jb-text-muted, #6b7280);
   min-height: 36px;
+  -webkit-user-select: text;
   user-select: text;
 }
 
@@ -655,6 +662,7 @@
   color: var(--jb-text-muted, #6b7280);
   font-size: var(--jb-font-size-small, 12px);
   margin: 0;
+  -webkit-user-select: text;
   user-select: text;
 }
 
@@ -670,6 +678,7 @@
 
 .uiDslShowcasePage :where(jb-text-field, jb-password-field, jb-number-field, jb-text-area, jb-select, jb-combobox, jb-slider)::part(input),
 .uiDslShowcasePage :where(jb-text-field, jb-password-field, jb-number-field, jb-text-area, jb-select, jb-combobox, jb-slider)::part(select) {
+  -webkit-user-select: text;
   user-select: text;
 }
 /*$vite$:1*/

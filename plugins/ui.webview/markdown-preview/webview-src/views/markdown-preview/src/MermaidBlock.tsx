@@ -132,6 +132,7 @@ function RenderedMermaidDiagram({ svg }: { svg: string }) {
       <MarkdownZoomToolbar
         targetLabel="diagram"
         className="mermaidToolbar"
+        buttonClassName="mermaidToolbarButton"
         onZoomOut={() => zoomBy(1 / MARKDOWN_ZOOM_BUTTON_FACTOR)}
         onResetZoom={resetZoom}
         onZoomIn={() => zoomBy(MARKDOWN_ZOOM_BUTTON_FACTOR)}

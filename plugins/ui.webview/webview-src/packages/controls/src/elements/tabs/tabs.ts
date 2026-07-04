@@ -29,6 +29,7 @@ export class JbTabs extends LitElement {
     }
 
     .panel {
+      -webkit-user-select: text;
       user-select: text;
     }
   `]

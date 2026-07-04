@@ -9,24 +9,26 @@ export const MARKDOWN_ZOOM_BUTTON_FACTOR = 1.2
 interface MarkdownZoomToolbarProps {
   targetLabel: string
   className?: string
+  buttonClassName?: string
   onZoomOut: () => void
   onResetZoom: () => void
   onZoomIn: () => void
 }
 
-export function MarkdownZoomToolbar({ targetLabel, className, onZoomOut, onResetZoom, onZoomIn }: MarkdownZoomToolbarProps) {
+export function MarkdownZoomToolbar({ targetLabel, className, buttonClassName, onZoomOut, onResetZoom, onZoomIn }: MarkdownZoomToolbarProps) {
   const normalizedTargetLabel = targetLabel.toLowerCase()
   const accessibleTargetLabel = `${normalizedTargetLabel.charAt(0).toUpperCase()}${normalizedTargetLabel.slice(1)}`
+  const buttonClass = classNames("markdownZoomToolbarButton", buttonClassName)
 
   return (
     <div className={classNames("markdownZoomToolbar", className)} aria-label={`${accessibleTargetLabel} zoom controls`}>
-      <button type="button" className="markdownZoomToolbarButton" aria-label={`Zoom out ${normalizedTargetLabel}`} title="Zoom out" onClick={onZoomOut}>
+      <button type="button" className={buttonClass} aria-label={`Zoom out ${normalizedTargetLabel}`} title="Zoom out" onClick={onZoomOut}>
         <img src={AllIcons.src("graph/zoomOut.svg")} alt="" draggable={false} />
       </button>
-      <button type="button" className="markdownZoomToolbarButton" aria-label={`Reset ${normalizedTargetLabel} zoom`} title="Reset zoom" onClick={onResetZoom}>
+      <button type="button" className={buttonClass} aria-label={`Reset ${normalizedTargetLabel} zoom`} title="Reset zoom" onClick={onResetZoom}>
         <img src={AllIcons.src("general/reset.svg")} alt="" draggable={false} />
       </button>
-      <button type="button" className="markdownZoomToolbarButton" aria-label={`Zoom in ${normalizedTargetLabel}`} title="Zoom in" onClick={onZoomIn}>
+      <button type="button" className={buttonClass} aria-label={`Zoom in ${normalizedTargetLabel}`} title="Zoom in" onClick={onZoomIn}>
         <img src={AllIcons.src("graph/zoomIn.svg")} alt="" draggable={false} />
       </button>
     </div>

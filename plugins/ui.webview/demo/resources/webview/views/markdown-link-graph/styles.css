@@ -125,7 +125,6 @@ button:disabled {
 
 .resizingPreview {
   cursor: col-resize;
-  user-select: none;
 }
 
 .preview {

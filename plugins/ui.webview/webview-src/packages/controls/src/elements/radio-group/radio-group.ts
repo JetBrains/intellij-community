@@ -28,6 +28,7 @@ export class JbRadioGroup extends LitElement {
       color: var(--jb-text-muted);
       margin-bottom: var(--jb-space-xs);
       padding: 0;
+      -webkit-user-select: none;
       user-select: none;
     }
   `]

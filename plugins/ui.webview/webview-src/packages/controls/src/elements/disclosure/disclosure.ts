@@ -15,6 +15,7 @@ export class JbDisclosure extends LitElement {
     .content {
       margin-top: var(--jb-space-sm);
       padding-left: calc(var(--jb-control-height-compact) + var(--jb-space-xs));
+      -webkit-user-select: text;
       user-select: text;
     }
   `]

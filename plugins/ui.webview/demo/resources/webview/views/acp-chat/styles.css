@@ -1261,12 +1261,12 @@ body {
   position: relative;
   overflow: hidden;
   container-type: inline-size;
-  user-select: none;
 }
 .acpChatLayout input,
 .acpChatLayout textarea,
 .acpThreadViewport,
 .acpThreadViewport :where(*) {
+  -webkit-user-select: text;
   user-select: text;
 }
 .acpChatLayout :where(
@@ -1301,6 +1301,7 @@ body {
   .acpApprovalButton,
   .acpAuthAddVar
 ) {
+  -webkit-user-select: none;
   user-select: none;
 }
 .acpSelectContent,
@@ -1312,12 +1313,15 @@ body {
 .acpSlashCommandMenu,
 .acpSlashCommandMenu *,
 .acpControlTooltip {
+  -webkit-user-select: none;
   user-select: none;
 }
 .acpModelSelectorSearch {
+  -webkit-user-select: text;
   user-select: text;
 }
 .acpThreadViewport :where(.acpMarkdownPathLink) {
+  -webkit-user-select: text;
   user-select: text;
 }
 .acpChatMain {
@@ -1486,6 +1490,7 @@ body {
   border-radius: 4px;
   cursor: default;
   outline: none;
+  -webkit-user-select: none;
   user-select: none;
 }
 .acpSelectItem[data-highlighted] {
@@ -2415,6 +2420,7 @@ body {
   padding: 0;
   overflow: hidden;
   resize: vertical;
+  -webkit-user-select: none;
   user-select: none;
 }
 .acpMermaidViewport {
@@ -3045,6 +3051,7 @@ details.acpTool[open] > .acpToolHeader::after {
   color: var(--acp-accent);
   font-family: var(--acp-mono), monospace;
   font-size: 12px;
+  -webkit-user-select: all;
   user-select: all;
 }
 .acpAuthHint {

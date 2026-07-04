@@ -3,7 +3,6 @@
 .react-controls-showcase-root {
   background: var(--jb-bg-window, var(--ij-bg-window));
   color: var(--jb-text-color, var(--ij-text-primary));
-  user-select: none;
 }
 
 #root {
@@ -278,6 +277,7 @@
 .jbReactControlChrome,
 .jbReactControlChrome * {
   box-sizing: border-box;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -407,6 +407,7 @@
   min-width: max(var(--anchor-width), 160px);
   overflow: hidden;
   padding: var(--jb-space-xs);
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -559,6 +560,7 @@
   min-width: var(--jb-control-height-compact);
   outline: none;
   padding: 0 var(--jb-space-xs);
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -586,11 +588,13 @@
   line-height: var(--jb-line-height);
   max-width: 280px;
   padding: var(--jb-space-xs) var(--jb-space-sm);
+  -webkit-user-select: none;
   user-select: none;
 }
 
 .jbReactTextInput,
 .jbReactComboboxInput {
+  -webkit-user-select: text;
   user-select: text;
 }
 /*$vite$:1*/

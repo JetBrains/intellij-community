@@ -17,6 +17,7 @@ export class JbSlider extends LitElement {
   static styles = [hostStyles, css`
     .slider {
       accent-color: var(--jb-accent-color);
+      -webkit-user-select: none;
       user-select: none;
       width: 100%;
     }

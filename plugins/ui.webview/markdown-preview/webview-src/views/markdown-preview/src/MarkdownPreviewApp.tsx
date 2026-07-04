@@ -261,7 +261,7 @@ export function MarkdownPreviewApp({
 
   return (
     <>
-      <div key={contentVersion} className="markdownPreviewContent">
+      <div key={contentVersion} className="markdownPreviewContent webview-selectable-text">
         <ReactMarkdown
           remarkPlugins={remarkPlugins}
           rehypePlugins={rehypePlugins}

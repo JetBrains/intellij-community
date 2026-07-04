@@ -129,11 +129,11 @@ function DslCell(props: { children: React.ReactNode, column?: boolean, top?: boo
 }
 
 function DslRightComment(props: { children: React.ReactNode }) {
-  return <div className="dslRightComment">{props.children}</div>
+  return <div className="dslRightComment webview-selectable-text">{props.children}</div>
 }
 
 function DslRowComment(props: { children: React.ReactNode }) {
-  return <div className="dslRowComment">{props.children}</div>
+  return <div className="dslRowComment webview-selectable-text">{props.children}</div>
 }
 
 function DslInlineHelp(props: { children?: React.ReactNode, text: string }) {
@@ -673,7 +673,7 @@ function CommentsSection(props: { commentClickStatus: string, setCommentClickSta
     <DslSection title="Comments">
       <DslGroup title="Cell Comment">
         <DslRow fullWidth noLabel>
-          <p className="dslArbitraryComment">
+          <p className="dslArbitraryComment webview-selectable-text">
             Comments related to a cell must be assigned directly to that cell. This ensures proper layout placement and improves support for the accessibility framework
           </p>
         </DslRow>
@@ -681,11 +681,11 @@ function CommentsSection(props: { commentClickStatus: string, setCommentClickSta
           <div className="dslThreeFields">
             <div className="dslCellInlineComment">
               <jb-text-field value="textField1"></jb-text-field>
-              <span className="dslRightComment">Right comment to textField1</span>
+              <span className="dslRightComment webview-selectable-text">Right comment to textField1</span>
             </div>
             <div className="dslCellBlock">
               <jb-text-field value="textField2"></jb-text-field>
-              <span className="dslBottomComment">Bottom comment to textField2</span>
+              <span className="dslBottomComment webview-selectable-text">Bottom comment to textField2</span>
             </div>
             <div className="dslControlLine webviewDemoNoWrapControls">
               <jb-text-field value="textField3"></jb-text-field>
@@ -703,13 +703,13 @@ function CommentsSection(props: { commentClickStatus: string, setCommentClickSta
 
       <DslGroup title="Arbitrary Comment">
         <DslRow fullWidth noLabel>
-          <p className="dslArbitraryComment">Arbitrary comments can be placed anywhere. They are not related to any cell or row</p>
+          <p className="dslArbitraryComment webview-selectable-text">Arbitrary comments can be placed anywhere. They are not related to any cell or row</p>
         </DslRow>
       </DslGroup>
 
       <DslGroup title="Common Info">
         <DslRow top fullWidth noLabel>
-          <div className="dslCommonInfo">
+          <div className="dslCommonInfo webview-selectable-text">
             <p className="dslCommonComment">
               Comments can be an html text with some clickable&nbsp;
               <button className="dslTextLink" type="button" onClick={() => props.setCommentClickStatus("First comment link clicked")}>link</button>

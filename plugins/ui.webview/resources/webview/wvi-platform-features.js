@@ -77,6 +77,40 @@
 		if (event.ctrlKey && event.cancelable) event.preventDefault();
 	}
 	//#endregion
+	//#region packages/impl/src/defaultTextSelectionGuard.ts
+	var DEFAULT_TEXT_SELECTION_GUARD_META_NAME = "wvi-enable-default-text-selection-guard";
+	var DEFAULT_TEXT_SELECTION_GUARD_STYLE_ATTRIBUTE = "data-wvi-default-text-selection-guard";
+	var DEFAULT_TEXT_SELECTION_GUARD_CSS = `
+:where(body.ij-webview-root) {
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+}
+
+:where(body.ij-webview-root) :where(
+  input,
+  textarea,
+  [contenteditable]:not([contenteditable="false"]),
+  .webview-selectable-text,
+  .webview-selectable-text *,
+  [data-webview-selectable="true"],
+  [data-webview-selectable="true"] *
+) {
+  -webkit-user-select: text;
+  user-select: text;
+}
+`.trim();
+	function installWebViewDefaultTextSelectionGuard() {
+		if (!isDefaultTextSelectionGuardEnabled() || document.head.querySelector(`style[${DEFAULT_TEXT_SELECTION_GUARD_STYLE_ATTRIBUTE}]`) != null) return;
+		const style = document.createElement("style");
+		style.setAttribute(DEFAULT_TEXT_SELECTION_GUARD_STYLE_ATTRIBUTE, "");
+		style.textContent = DEFAULT_TEXT_SELECTION_GUARD_CSS;
+		document.head.appendChild(style);
+	}
+	function isDefaultTextSelectionGuardEnabled() {
+		return document.head.querySelector(`meta[name="${DEFAULT_TEXT_SELECTION_GUARD_META_NAME}"]`)?.getAttribute("content") !== "false";
+	}
+	//#endregion
 	//#region packages/impl/src/focusInterop.ts
 	var FOCUS_API_NAMESPACE = "webview.focus";
 	var FOCUS_BOUNDARY_ATTRIBUTE = "data-webview-focus-boundary";
@@ -692,6 +726,7 @@
 	//#region packages/impl/src/platformFeatures.ts
 	function installWebViewPlatformFeatures(bridge) {
 		installWebViewBrowserZoomGuard(bridge.transport());
+		installWebViewDefaultTextSelectionGuard();
 		installIJTheming(bridge);
 		installWebViewFocusInterop(bridge);
 	}

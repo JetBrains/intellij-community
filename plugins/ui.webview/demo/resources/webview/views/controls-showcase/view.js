@@ -48,6 +48,7 @@ var hostStyles = i`
     font-family: var(--jb-font-family);
     font-size: var(--jb-font-size);
     line-height: var(--jb-line-height);
+    -webkit-user-select: none;
     user-select: none;
   }
 
@@ -91,6 +92,7 @@ var buttonStyles = i`
     outline: none;
     padding: 0 var(--jb-control-padding-x);
     position: relative;
+    -webkit-user-select: none;
     user-select: none;
     white-space: nowrap;
   }
@@ -306,11 +308,13 @@ var inputStyles = i`
 
   .select {
     padding-right: 26px;
+    -webkit-user-select: none;
     user-select: none;
   }
 
   .field-control,
   .textarea {
+    -webkit-user-select: text;
     user-select: text;
   }
 
@@ -325,6 +329,7 @@ var inputStyles = i`
     right: 9px;
     top: 50%;
     transform: translateY(-65%) rotate(45deg);
+    -webkit-user-select: none;
     user-select: none;
     width: 5px;
   }
@@ -358,6 +363,7 @@ var popupStyles = i`
     min-height: var(--jb-control-height-compact);
     padding: 0 var(--jb-space-sm);
     text-align: left;
+    -webkit-user-select: none;
     user-select: none;
     white-space: nowrap;
   }
@@ -385,6 +391,7 @@ var choiceStyles = i`
     gap: var(--jb-control-gap);
     min-height: var(--jb-control-height-compact);
     position: relative;
+    -webkit-user-select: none;
     user-select: none;
   }
 
@@ -880,6 +887,7 @@ var JbContextHelp = class extends i$1 {
     .popup {
       line-height: var(--jb-line-height-paragraph);
       max-width: 260px;
+      -webkit-user-select: text;
       user-select: text;
       white-space: normal;
     }
@@ -921,6 +929,7 @@ var JbDisclosure = class extends i$1 {
     .content {
       margin-top: var(--jb-space-sm);
       padding-left: calc(var(--jb-control-height-compact) + var(--jb-space-xs));
+      -webkit-user-select: text;
       user-select: text;
     }
   `
@@ -1153,6 +1162,7 @@ var JbField = class extends i$1 {
     .body {
       display: grid;
       gap: var(--jb-space-xs);
+      -webkit-user-select: text;
       user-select: text;
     }
   `];
@@ -1197,12 +1207,14 @@ var JbFieldGroup = class extends i$1 {
       font-weight: var(--jb-font-weight-medium);
       margin-bottom: var(--jb-space-sm);
       padding: 0;
+      -webkit-user-select: none;
       user-select: none;
     }
 
     .body {
       display: grid;
       gap: var(--jb-space-sm);
+      -webkit-user-select: text;
       user-select: text;
     }
   `];
@@ -1223,6 +1235,7 @@ var JbHelpText = class extends i$1 {
     .help {
       color: var(--jb-text-muted);
       line-height: var(--jb-line-height-paragraph);
+      -webkit-user-select: text;
       user-select: text;
     }
 
@@ -1273,6 +1286,7 @@ var JbIcon = class extends i$1 {
       height: 16px;
       justify-content: center;
       line-height: 1;
+      -webkit-user-select: none;
       user-select: none;
       width: 16px;
     }
@@ -1324,6 +1338,7 @@ var JbLabel = class extends i$1 {
     label {
       color: var(--jb-text-color);
       display: inline-block;
+      -webkit-user-select: none;
       user-select: none;
     }
 
@@ -1497,6 +1512,7 @@ var JbRadioGroup = class extends i$1 {
       color: var(--jb-text-muted);
       margin-bottom: var(--jb-space-xs);
       padding: 0;
+      -webkit-user-select: none;
       user-select: none;
     }
   `];
@@ -1725,6 +1741,7 @@ var JbSlider = class extends i$1 {
 	static styles = [hostStyles, i`
     .slider {
       accent-color: var(--jb-accent-color);
+      -webkit-user-select: none;
       user-select: none;
       width: 100%;
     }
@@ -1865,6 +1882,7 @@ var JbTabs = class extends i$1 {
     }
 
     .panel {
+      -webkit-user-select: text;
       user-select: text;
     }
   `
@@ -1913,6 +1931,7 @@ var JbText = class extends i$1 {
     .text {
       color: var(--jb-text-color);
       margin: 0;
+      -webkit-user-select: text;
       user-select: text;
     }
 

@@ -15,6 +15,7 @@ export class JbLabel extends LitElement {
     label {
       color: var(--jb-text-color);
       display: inline-block;
+      -webkit-user-select: none;
       user-select: none;
     }
 

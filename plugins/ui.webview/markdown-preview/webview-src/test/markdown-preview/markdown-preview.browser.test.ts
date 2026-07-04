@@ -184,6 +184,34 @@ test("keeps font settings available without table of contents", async ({ page })
   expect(railState.fontSettingsButtons === 1).toBe(true)
 })
 
+test("keeps markdown content selectable while preview chrome uses the default guard", async ({ page }) => {
+  if (!preview) {
+    throw new Error("Markdown preview mock preview server was not started")
+  }
+  await page.goto(preview.url)
+  await page.waitForSelector(".markdownPreviewContent")
+
+  const selectionState = await page.evaluate(() => {
+    const body = document.body
+    const content = document.querySelector<HTMLElement>(".markdownPreviewContent")
+    const heading = document.querySelector<HTMLElement>(".markdownPreview h1")
+    const railButton = document.querySelector<HTMLElement>(".markdownFloatingRailButton")
+    return {
+      guardStyleCount: document.querySelectorAll("style[data-wvi-default-text-selection-guard]").length,
+      bodyGuarded: getComputedStyle(body).userSelect === "none",
+      contentSelectable: content != null && getComputedStyle(content).userSelect === "text",
+      headingSelectable: heading != null && getComputedStyle(heading).userSelect === "text",
+      railButtonGuarded: railButton != null && getComputedStyle(railButton).userSelect === "none",
+    }
+  })
+
+  expect(selectionState.guardStyleCount === 1).toBe(true)
+  expect(selectionState.bodyGuarded).toBe(true)
+  expect(selectionState.contentSelectable).toBe(true)
+  expect(selectionState.headingSelectable).toBe(true)
+  expect(selectionState.railButtonGuarded).toBe(true)
+})
+
 test("zooms, pans, and exposes native resize for Mermaid diagrams", async ({ page }) => {
   if (!preview) {
     throw new Error("Markdown preview mock preview server was not started")

@@ -9,6 +9,7 @@ export const hostStyles = css`
     font-family: var(--jb-font-family);
     font-size: var(--jb-font-size);
     line-height: var(--jb-line-height);
+    -webkit-user-select: none;
     user-select: none;
   }
 
@@ -53,6 +54,7 @@ export const buttonStyles = css`
     outline: none;
     padding: 0 var(--jb-control-padding-x);
     position: relative;
+    -webkit-user-select: none;
     user-select: none;
     white-space: nowrap;
   }
@@ -269,11 +271,13 @@ export const inputStyles = css`
 
   .select {
     padding-right: 26px;
+    -webkit-user-select: none;
     user-select: none;
   }
 
   .field-control,
   .textarea {
+    -webkit-user-select: text;
     user-select: text;
   }
 
@@ -288,6 +292,7 @@ export const inputStyles = css`
     right: 9px;
     top: 50%;
     transform: translateY(-65%) rotate(45deg);
+    -webkit-user-select: none;
     user-select: none;
     width: 5px;
   }
@@ -322,6 +327,7 @@ export const popupStyles = css`
     min-height: var(--jb-control-height-compact);
     padding: 0 var(--jb-space-sm);
     text-align: left;
+    -webkit-user-select: none;
     user-select: none;
     white-space: nowrap;
   }
@@ -350,6 +356,7 @@ export const choiceStyles = css`
     gap: var(--jb-control-gap);
     min-height: var(--jb-control-height-compact);
     position: relative;
+    -webkit-user-select: none;
     user-select: none;
   }
 

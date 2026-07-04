@@ -25,6 +25,7 @@ export class JbIcon extends LitElement {
       height: 16px;
       justify-content: center;
       line-height: 1;
+      -webkit-user-select: none;
       user-select: none;
       width: 16px;
     }

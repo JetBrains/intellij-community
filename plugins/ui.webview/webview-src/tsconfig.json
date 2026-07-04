@@ -9,6 +9,7 @@
     "skipLibCheck": true,
     "isolatedModules": true,
     "esModuleInterop": true,
+    "jsx": "react-jsx",
     "forceConsistentCasingInFileNames": true,
     "allowImportingTsExtensions": true,
     "noEmit": true

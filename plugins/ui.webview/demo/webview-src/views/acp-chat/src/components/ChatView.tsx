@@ -43,7 +43,7 @@ export function ChatView() {
         {chat.status ? <header className="acpChatHeader"><span className="acpChatStatus">{chat.status}</span></header> : null}
         <PlanView plan={chat.plan} />
         <ThreadPrimitive.Root className="acpThread">
-          <ThreadPrimitive.Viewport className="acpThreadViewport">
+          <ThreadPrimitive.Viewport className="acpThreadViewport webview-selectable-text">
             <ThreadPrimitive.Empty>
               <div className="acpEmpty">Select an agent and send a message to start.</div>
             </ThreadPrimitive.Empty>
