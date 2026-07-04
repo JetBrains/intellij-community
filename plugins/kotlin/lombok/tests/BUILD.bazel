@@ -84,6 +84,12 @@ jvm_library(
         "//platform/external-system-impl:externalSystem-tests_test_lib",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-tests",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.lombok.tests` end
