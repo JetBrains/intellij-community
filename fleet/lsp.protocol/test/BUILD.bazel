@@ -64,6 +64,9 @@ jvm_library(
         "//fleet/lsp.protocol:lsp.protocol_test_lib",
         "//fleet/test-runtime",
         "//fleet/test-runtime:test-runtime_test_lib",
+        "//fleet/util/logging/slf4j",
+        "//fleet/util/logging/slf4j:slf4j_test_lib",
+        "@lib//:slf4j-jdk14",
     ],
 )
 ### auto-generated section `build fleet.lsp.protocol.test` end

@@ -84,7 +84,12 @@ internal suspend fun withLspImpl(
                     else -> deferred.await()
                 } as Result
             } catch (c: CancellationException) {
-                notifyAsync(LSP.CancelNotificationType, CancelParams(id))
+                runCatching {
+                    notifyAsync(LSP.CancelNotificationType, CancelParams(id))
+                }.onFailure {
+                    currentCoroutineContext().job.ensureActive()
+                    LOG.info("Request cancellation for ${requestType.method} is not delivered ($it)")
+                }
                 outgoingRequests.remove(id)
                 throw c
             }
@@ -211,7 +216,13 @@ internal suspend fun withLspImpl(
                                         )
                                     }
                                 ).let { responseMessage ->
-                                    outgoing.send(LSP.json.encodeToJsonElement(ResponseMessage.serializer(), responseMessage))
+                                    val encodedResponse = LSP.json.encodeToJsonElement(ResponseMessage.serializer(), responseMessage)
+                                    runCatching {
+                                        outgoing.send(encodedResponse)
+                                    }.onFailure {
+                                        currentCoroutineContext().job.ensureActive()
+                                        LOG.info("Response for ${request.method} is not delivered ($it)")
+                                    }
                                     if (request.method == Shutdown.method) {
                                         incoming.cancel()
                                         outgoing.close()
@@ -291,7 +302,7 @@ internal suspend fun withLspImpl(
                                     runCatching {
                                         when (val handler = handlers.notificationHandler(notification.method)) {
                                             null ->
-                                                LOG.debug { "no handler for notification: ${notification.method}" }
+                                                LOG.info("Notification handler for ${notification.method} is not found")
 
                                             else -> {
                                                 val deserializedParams = notification.params?.let { params ->

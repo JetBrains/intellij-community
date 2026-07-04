@@ -79,9 +79,16 @@ kotlin {
     implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.json.jvm231489733.get().let { "${it.group}:kotlinx-serialization-json:${it.version}" }) {
       isTransitive = false
     }
+    implementation(jps.org.slf4j.slf4j.jdk141933517271.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      isTransitive = false
+      exclude(group = "org.slf4j", module = "slf4j-api")
+    }
     implementation(project(":fleet.ktor.client.core"))
     implementation(project(":fleet.lsp.protocol"))
     implementation(project(":fleet.test.runtime"))
+  }
+  sourceSets.jvmTest.dependencies {
+    implementation(project(":fleet.util.logging.slf4j"))
   }
   // KOTLIN__MARKER_END
 }
