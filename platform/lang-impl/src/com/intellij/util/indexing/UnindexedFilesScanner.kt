@@ -602,6 +602,10 @@ class UnindexedFilesScanner(
                 }
               }
             }
+            catch (e: ProcessCanceledException) {
+              files.addFirst(file)
+              throw e
+            }
             catch (e: Exception) {
               LOG.error("Error while scanning ${file.presentableUrl}\n" +
                         "To reindex this file IDE has to be restarted", e)
