@@ -94,21 +94,21 @@ public final class CacheAvoidingVirtualFileWrapper extends VirtualFile implement
     NewVirtualFileSystem fileSystem = wrappedFile.getFileSystem();
     String[] childNames = fileSystem.list(wrappedFile);
     VirtualFile[] children = new VirtualFile[childNames.length];
-    Set<String> unresolvedChilds = null;
+    Set<String> unresolvedChildren = null;
     for (int i = 0; i < childNames.length; i++) {
       String childName = childNames[i];
       VirtualFile child = findChild(childName);
       children[i] = child;
 
       if (child == null) {//shit happens => sort out after the loop
-        if (unresolvedChilds == null) {
-          unresolvedChilds = CollectionFactory.createSmallMemoryFootprintSet(1);
+        if (unresolvedChildren == null) {
+          unresolvedChildren = CollectionFactory.createSmallMemoryFootprintSet(1);
         }
-        unresolvedChilds.add(childName);
+        unresolvedChildren.add(childName);
       }
     }
 
-    if (unresolvedChilds == null) {
+    if (unresolvedChildren == null) {
       return children;
     }
     else {
@@ -116,7 +116,7 @@ public final class CacheAvoidingVirtualFileWrapper extends VirtualFile implement
       // But let's log details for a while, so we'll see what is going on:
       LOG.warn(
         "Suspicious scenario: [" + wrappedFile.getPath() + "].childNames=" + Arrays.toString(childNames) + ", " +
-        "but " + unresolvedChilds + " names was not resolved, (re-queried) childNames=" + Arrays.toString(fileSystem.list(wrappedFile))
+        "but " + unresolvedChildren + " names was not resolved, (re-queried) childNames=" + Arrays.toString(fileSystem.list(wrappedFile))
       );
       return Arrays.stream(children)
         .filter(child -> child != null)
