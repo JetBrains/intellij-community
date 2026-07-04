@@ -1573,4 +1573,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.jewel.markdown.extensions.images.tests",
   "intellij.python.community.execService.tests",
   "intellij.python.community.services.shared.tests",
+  "intellij.python.pytools.tests",
 )
