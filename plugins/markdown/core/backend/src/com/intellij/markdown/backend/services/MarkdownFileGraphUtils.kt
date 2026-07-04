@@ -52,12 +52,12 @@ object MarkdownFileGraphUtils {
     enqueue(root)
 
     while (queue.isNotEmpty()) {
+      ProgressManager.checkCanceled()
       val file = queue.removeFirst()
 
       file.accept(object : PsiRecursiveElementWalkingVisitor() {
         override fun visitElement(element: PsiElement) {
           if (element is MarkdownLinkDestination) {
-            ProgressManager.checkCanceled()
             resolveReferences(element)
               .mapNotNull { it.target }
               .mapNotNull { it.containingFile }
