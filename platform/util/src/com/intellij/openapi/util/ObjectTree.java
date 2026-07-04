@@ -342,6 +342,25 @@ public final class ObjectTree {
     }
   }
 
+  @TestOnly
+  public @Nullable String printParentChainToRoot(@NotNull Disposable disposable) {
+    synchronized (getTreeLock()) {
+      ObjectNode parentNode = myObject2ParentNode.get(disposable);
+      if (parentNode == null && myRootNode.findChildNode(disposable) == null) {
+        return null;
+      }
+      StringBuilder sb = new StringBuilder();
+      sb.append("  ").append(disposable).append(" (").append(disposable.getClass().getName()).append(')');
+      for (ObjectNode current = parentNode;
+           current != null && current != myRootNode;
+           current = myObject2ParentNode.get(current.getObject())) {
+        Disposable p = current.getObject();
+        sb.append("\n    <- ").append(p).append(" (").append(p.getClass().getName()).append(')');
+      }
+      sb.append("\n    <- ROOT");
+      return sb.toString();
+    }
+  }
 
   @ApiStatus.Internal
   void assertIsEmpty(boolean throwError) {
