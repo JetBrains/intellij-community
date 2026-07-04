@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "sdk-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":sdk-tests_test_lib"],
+)
+
+### skip generation section `test intellij.python.sdk.tests`
+
 ### auto-generated section `build intellij.python.sdk` start
 
 jvm_library(
@@ -263,11 +272,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.python.sdk.tests` end
-
-### auto-generated section `test intellij.python.sdk.tests` start
-
-jps_test(
-    name = "sdk-tests_test",
-    runtime_deps = [":sdk-tests_test_lib"],
-)
-### auto-generated section `test intellij.python.sdk.tests` end
