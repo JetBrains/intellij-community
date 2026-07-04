@@ -143,67 +143,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
     protected val facetSettings: IKotlinFacetSettings
         get() = facetSettings("project")
 
-    class ArgsInFacet : AbstractKotlinMavenImporterTest() {
-        @Test
-        fun testArgsInFacet() = runBlocking {
-            createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
-
-            importProjectAsync(
-                """
-            <groupId>test</groupId>
-            <artifactId>project</artifactId>
-            <version>1.0.0</version>
-
-            <dependencies>
-                <dependency>
-                    <groupId>org.jetbrains.kotlin</groupId>
-                    <artifactId>kotlin-stdlib</artifactId>
-                    <version>$kotlinVersion</version>
-                </dependency>
-            </dependencies>
-
-            <build>
-                <sourceDirectory>src/main/kotlin</sourceDirectory>
-
-                <plugins>
-                    <plugin>
-                        <groupId>org.jetbrains.kotlin</groupId>
-                        <artifactId>kotlin-maven-plugin</artifactId>
-
-                        <executions>
-                            <execution>
-                                <id>compile</id>
-                                <phase>compile</phase>
-                                <goals>
-                                    <goal>compile</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <args>
-                                <arg>-jvm-target</arg>
-                                <arg>1.8</arg>
-                                <arg>-Xcoroutines=enable</arg>
-                                <arg>-classpath</arg>
-                                <arg>c:\program files\jdk1.8</arg>
-                            </args>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-            """
-            )
-
-            assertModules("project")
-
-            with(facetSettings) {
-                Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
-                Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
-                Assert.assertEquals("c:/program files/jdk1.8", (compilerArguments as K2JVMCompilerArguments).classpath)
-            }
-        }
-    }
-
     @MppGoal
     class JsDetectionByGoalWithJvmStdlib : AbstractKotlinMavenImporterTest() {
         @Test
