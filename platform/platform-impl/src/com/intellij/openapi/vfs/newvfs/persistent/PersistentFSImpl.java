@@ -1825,6 +1825,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         return;
       }
 
+      //The order: first(remove the file from it's parent.children) then(mark the file as deleted) -- is important!
+      // (see executeDelete() there same order is used)
+      // We rely on the fact that .children are all valid files during .children processing.
+      // (Order doesn't matter then all the VFS accesses are under WA/RA framework, but the VFS quite frequently accessed outside RA/WA)
+
       int parentId = fileId(parent);
       List<CharSequence> childrenNamesDeleted = new ArrayList<>(deleteEvents.size());
       IntSet childrenIdsDeleted = new IntOpenHashSet(deleteEvents.size());
@@ -1836,13 +1841,18 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         childrenNamesDeleted.add(child.getNameSequence());
         childrenIdsDeleted.add(childId);
         deleted.add(new ChildInfoImpl(childId, ChildInfoImpl.UNKNOWN_ID_YET, null, null, null));
+      }
+
+      deleted.sort(ChildInfo.BY_ID);
+      vfsPeer.update(parent, parentId, oldChildren -> oldChildren.subtract(deleted), /*setAllChildrenCached: */ false);
+      parent.removeChildren(childrenIdsDeleted, childrenNamesDeleted);
+      for (VFileDeleteEvent event : deleteEvents) {
+        VirtualFile child = event.getFile();
+        int childId = fileId(child);
 
         vfsPeer.deleteRecordRecursively(childId);
         invalidateSubtree((VirtualFileSystemEntry)child, "Bulk file deletions", event);
       }
-      deleted.sort(ChildInfo.BY_ID);
-      vfsPeer.update(parent, parentId, oldChildren -> oldChildren.subtract(deleted), /*setAllChildrenCached: */ false);
-      parent.removeChildren(childrenIdsDeleted, childrenNamesDeleted);
     }
   }
 
@@ -2717,7 +2727,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
     else {
       //The order: first(remove the file from it's parent.children) then(mark the file as deleted) -- is important!
-      // During .children processing we rely on the fact that .children are all valid files
+      // We rely on the fact that .children are all valid files during .children processing
+      // (Order doesn't matter then all the VFS accesses are under WA/RA framework, but the VFS quite frequently accessed outside RA/WA)
       vfsPeer.update(parent, parentId, children -> children.remove(fileIdToDelete), /*setAllChildrenCached: */ false);
 
       ((VirtualDirectoryImpl)parent).removeChild((VirtualFileSystemEntry)file);
