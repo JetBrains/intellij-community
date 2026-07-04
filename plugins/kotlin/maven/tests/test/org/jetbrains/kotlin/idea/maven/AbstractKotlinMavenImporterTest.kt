@@ -143,17 +143,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
     protected val facetSettings: IKotlinFacetSettings
         get() = facetSettings("project")
 
-    class JvmTarget6IsImportedAsIs : AbstractKotlinMavenImporterTest() {
-        @Test
-        fun testJvmTargetIsImportedAsIs() = runBlocking {
-            // If version isn't specified then we will fall back to bundled frontend which is already downloaded => Unbundled JPS can be used
-            val (facet, notifications) = doJvmTarget6Test(version = null)
-            Assert.assertEquals("JVM 1.6", facet.targetPlatform!!.oldFashionedDescription)
-            Assert.assertEquals("1.6", (facet.compilerArguments as K2JVMCompilerArguments).jvmTarget)
-            Assert.assertEquals("", notifications.asText())
-        }
-    }
-
     class JvmTarget6IsImported8 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testJvmTarget6IsImported8() = runBlocking {
