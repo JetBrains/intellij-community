@@ -39,6 +39,7 @@ jvm_library(
         "//platform/lang-impl",
         "//platform/ide-core",
         "//plugins/markdown/core/backend",
+        "//platform/util:util-ui",
     ],
 )
 
@@ -70,6 +71,7 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//plugins/markdown/core/backend:backend_test_lib",
         "//platform/backend:backend_test_lib",
+        "//platform/util:util-ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.grazie.markdown` end
