@@ -202,6 +202,12 @@ internal class IdeaFreezeReporter : PerformanceListener {
 
       if (ExceptionAutoReportUtil.isAutoReportEnabled() && ExceptionAutoReportUtil.isAutoReportableException(loggingEvent)) {
         LOG.debug("UI freeze will be automatically reported, do not show to user")
+
+        val reason = analyzeFreeze(loggingEvent)
+        if (reason != null) {
+          LifecycleUsageTriggerCollector.pluginFreezeDetected(reason, durationMs, false)
+        }
+
         return // do not show freeze notifications, reported automatically
       }
 
