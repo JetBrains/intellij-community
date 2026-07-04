@@ -2201,6 +2201,11 @@ function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, sel
 			function handleClick(event) {
 				if (!href) return;
 				event.preventDefault();
+				const localFragment = localAnchorFragment(href);
+				if (localFragment !== void 0) {
+					navigateToLocalAnchor(localFragment);
+					return;
+				}
 				onOpenLink(href);
 			}
 			return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
@@ -2402,6 +2407,43 @@ function standaloneImageFromParagraphNode(node) {
 		alt: stringProperty(imageNode.properties?.alt),
 		title: stringProperty(imageNode.properties?.title)
 	};
+}
+function localAnchorFragment(href) {
+	if (href.startsWith("#")) return href.slice(1);
+	try {
+		const url = new URL(href, window.location.href);
+		if (url.origin === window.location.origin && url.pathname === window.location.pathname && url.search === window.location.search && url.hash.startsWith("#")) return url.hash.slice(1);
+	} catch {}
+}
+function navigateToLocalAnchor(fragment) {
+	if (fragment.length === 0) {
+		updateLocationHash("#");
+		window.scrollTo({
+			top: 0,
+			left: 0
+		});
+		return;
+	}
+	const target = findLocalAnchorTarget(decodeFragment(fragment));
+	updateLocationHash(`#${fragment}`);
+	target?.scrollIntoView({ block: "start" });
+}
+function findLocalAnchorTarget(id) {
+	const normalizedId = id.replace(/^-+/, "");
+	return document.getElementById(id) ?? document.getElementById(normalizedId) ?? document.getElementById(`user-content-${id}`) ?? document.getElementById(`user-content-${normalizedId}`);
+}
+function decodeFragment(fragment) {
+	try {
+		return decodeURIComponent(fragment);
+	} catch {
+		return fragment;
+	}
+}
+function updateLocationHash(href) {
+	if (!window.history) return;
+	try {
+		window.history.pushState(null, "", href);
+	} catch {}
 }
 function isWhitespaceTextNode(node) {
 	return node.tagName === void 0 && (node.value ?? "").trim().length === 0;

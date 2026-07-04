@@ -128,6 +128,35 @@ test("renders frontmatter as an article header with collapsed metadata", async (
   expect(frontmatterState.metadataValues.includes("monorepo")).toBe(true)
 })
 
+test("navigates fragment links inside the preview without opening host link", async ({ page }) => {
+  if (!preview) {
+    throw new Error("Markdown preview mock preview server was not started")
+  }
+  await page.goto(preview.url)
+  await page.waitForSelector(".markdownPreviewContent")
+  const targetId = await page.evaluate(() => {
+    const target = Array.from(document.querySelectorAll<HTMLHeadingElement>("h1, h2, h3, h4, h5, h6"))
+      .find(heading => heading.textContent?.includes("Локальная навигация раздела"))
+    return target?.id ?? ""
+  })
+  expect(targetId.length > 0).toBe(true)
+
+  const initialOpenLinkCalls = await openLinkCallCount(page)
+  const initialScrollY = await page.evaluate(() => window.scrollY)
+  await page.getByRole("link", { name: "Local anchor link" }).click()
+  await page.waitForFunction(() => {
+    const target = Array.from(document.querySelectorAll<HTMLHeadingElement>("h1, h2, h3, h4, h5, h6"))
+      .find(heading => heading.textContent?.includes("Локальная навигация раздела"))
+    if (!target) return false
+    const box = target.getBoundingClientRect()
+    return window.scrollY > 0 && box.bottom > 0 && box.top < window.innerHeight
+  })
+
+  const finalScrollY = await page.evaluate(() => window.scrollY)
+  expect(finalScrollY > initialScrollY).toBe(true)
+  expect(await openLinkCallCount(page) === initialOpenLinkCalls).toBe(true)
+})
+
 test("changes preview font size from floating settings", async ({ page }) => {
   if (!preview) {
     throw new Error("Markdown preview mock preview server was not started")
@@ -444,6 +473,15 @@ function setFontSizeCallCount(page: Page): Promise<number> {
       __WVI_MOCK__?: { calls: { byMethod(method: string): readonly unknown[] } }
     }).__WVI_MOCK__
     return mock?.calls.byMethod("markdown.preview/setFontSize").length ?? 0
+  })
+}
+
+function openLinkCallCount(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    const mock = (window as Window & {
+      __WVI_MOCK__?: { calls: { byMethod(method: string): readonly unknown[] } }
+    }).__WVI_MOCK__
+    return mock?.calls.byMethod("markdown.preview/openLink").length ?? 0
   })
 }
 

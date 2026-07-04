@@ -225,7 +225,7 @@ repository: monorepo
 
 This page runs the real Markdown preview entry through the WebView testkit mock bridge.
 
-[External link](https://www.jetbrains.com), an inline command: \`echo inline\`, and a path \`docs/guide.md:12\`.
+[External link](https://www.jetbrains.com), [Local anchor link](#-локальная-навигация-раздела), an inline command: \`echo inline\`, and a path \`docs/guide.md:12\`.
 
 Inline math \\(a+b\\) and display math $$c=d$$.
 
@@ -289,6 +289,10 @@ flowchart LR
 | --- | --- |
 | Icons | AllIcons |
 | Theme | Toggleable |
+
+## 📌 Локальная навигация раздела
+
+Anchor target with a Unicode heading.
 `
 
 const shortMarkdown = `# Short Markdown

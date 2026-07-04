@@ -122,6 +122,11 @@ export function MarkdownPreviewApp({
       function handleClick(event: MouseEvent<HTMLAnchorElement>): void {
         if (!href) return
         event.preventDefault()
+        const localFragment = localAnchorFragment(href)
+        if (localFragment !== undefined) {
+          navigateToLocalAnchor(localFragment)
+          return
+        }
         onOpenLink(href)
       }
 
@@ -297,6 +302,58 @@ function standaloneImageFromParagraphNode(node: unknown): MarkdownImageDescripto
     src,
     alt: stringProperty(imageNode.properties?.alt),
     title: stringProperty(imageNode.properties?.title),
+  }
+}
+
+function localAnchorFragment(href: string): string | undefined {
+  if (href.startsWith("#")) return href.slice(1)
+
+  try {
+    const url = new URL(href, window.location.href)
+    if (url.origin === window.location.origin && url.pathname === window.location.pathname && url.search === window.location.search && url.hash.startsWith("#")) {
+      return url.hash.slice(1)
+    }
+  }
+  catch {
+  }
+  return undefined
+}
+
+function navigateToLocalAnchor(fragment: string): void {
+  if (fragment.length === 0) {
+    updateLocationHash("#")
+    window.scrollTo({ top: 0, left: 0 })
+    return
+  }
+
+  const target = findLocalAnchorTarget(decodeFragment(fragment))
+  updateLocationHash(`#${fragment}`)
+  target?.scrollIntoView({ block: "start" })
+}
+
+function findLocalAnchorTarget(id: string): HTMLElement | null {
+  const normalizedId = id.replace(/^-+/, "")
+  return document.getElementById(id)
+    ?? document.getElementById(normalizedId)
+    ?? document.getElementById(`user-content-${id}`)
+    ?? document.getElementById(`user-content-${normalizedId}`)
+}
+
+function decodeFragment(fragment: string): string {
+  try {
+    return decodeURIComponent(fragment)
+  }
+  catch {
+    return fragment
+  }
+}
+
+function updateLocationHash(href: string): void {
+  if (!window.history) return
+  try {
+    window.history.pushState(null, "", href)
+  }
+  catch {
   }
 }
 
