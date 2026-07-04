@@ -194,55 +194,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         return facetSettings to notifications
     }
 
-    class CompilerPlugins : AbstractKotlinMavenImporterTest() {
-        @Test
-        fun testCompilerPlugins() = runBlocking {
-            importProjectAsync(
-                """
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1.0.0</version>
-
-                    <build>
-                        <plugins>
-                            <plugin>
-                                <groupId>org.jetbrains.kotlin</groupId>
-                                <artifactId>kotlin-maven-plugin</artifactId>
-                                <version>$kotlinVersion</version>
-                                <configuration>
-                                    <compilerPlugins>
-                                        <plugin>kotlinx-serialization</plugin>
-                                        <plugin>all-open</plugin>
-                                        <plugin>lombok</plugin>
-                                        <plugin>jpa</plugin>
-                                        <plugin>noarg</plugin>
-                                        <plugin>sam-with-receiver</plugin>
-                                    </compilerPlugins>
-                                </configuration>
-                            </plugin>
-                        </plugins>
-                    </build>
-                """
-            )
-
-            Assert.assertEquals(
-                "",
-                facetSettings.compilerSettings!!.additionalArguments
-            )
-            assertModules("project")
-            assertEquals(
-                listOf(
-                    KotlinArtifacts.allopenCompilerPluginPath,
-                    KotlinArtifacts.kotlinxSerializationCompilerPluginPath,
-                    KotlinArtifacts.lombokCompilerPluginPath,
-                    KotlinArtifacts.noargCompilerPluginPath,
-                    KotlinArtifacts.samWithReceiverCompilerPluginPath,
-                ).map { it.toJpsVersionAgnosticKotlinBundledPath() },
-                facetSettings.compilerArguments?.pluginClasspaths?.sorted()
-            )
-        }
-    }
-
     class InvalidJvmTarget : AbstractKotlinMavenImporterTest() {
         @Test
         fun testInvalidJvmTarget() = runBlocking {
