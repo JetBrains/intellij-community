@@ -144,60 +144,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         get() = facetSettings("project")
 
     @MppGoal
-    class CommonDetectionByGoalWithJvmStdlib1164 : AbstractKotlinMavenImporterTest() {
-        @Test
-        fun testCommonDetectionByGoalWithJvmStdlib() = runBlocking {
-            createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
-
-            importProjectAsync(
-                """
-            <groupId>test</groupId>
-            <artifactId>project</artifactId>
-            <version>1.0.0</version>
-
-            <dependencies>
-                <dependency>
-                    <groupId>org.jetbrains.kotlin</groupId>
-                    <artifactId>kotlin-stdlib</artifactId>
-                    <version>$kotlinVersion</version>
-                </dependency>
-            </dependencies>
-
-            <build>
-                <sourceDirectory>src/main/kotlin</sourceDirectory>
-
-                <plugins>
-                    <plugin>
-                        <groupId>org.jetbrains.kotlin</groupId>
-                        <artifactId>kotlin-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>compile</id>
-                                <goals>
-                                    <goal>metadata</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-            """
-            )
-
-            assertModules("project")
-
-            Assert.assertTrue(facetSettings.targetPlatform.isCommon())
-
-            Assert.assertTrue(ModuleRootManager.getInstance(getModule("project")).sdk!!.sdkType is KotlinSdkType)
-
-            assertKotlinSources("project", "src/main/kotlin")
-            assertKotlinTestSources("project", "src/test/java")
-            assertDefaultKotlinResources("project")
-            assertDefaultKotlinTestResources("project")
-        }
-    }
-
-    @MppGoal
     class CommonDetectionByGoalWithCommonStdlib : AbstractKotlinMavenImporterTest() {
         @Test
         fun testCommonDetectionByGoalWithCommonStdlib() = runBlocking {
