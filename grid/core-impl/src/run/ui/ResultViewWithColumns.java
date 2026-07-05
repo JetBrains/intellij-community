@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public interface ResultViewWithColumns {
   void changeSelectedColumnsWidth(int delta);
   void fitColumnsToViewport();
+  void resetColumnWidths();
   void createDefaultColumnsFromModel();
   ResultViewColumn getLayoutColumn(@NotNull ModelIndex<?> column);
 }

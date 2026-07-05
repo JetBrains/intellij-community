@@ -955,7 +955,12 @@ public final class TableResultView extends JBTableWithResizableCells
     JTableHeader tableHeader = getTableHeader();
     TableColumn resizingColumn = tableHeader != null ? tableHeader.getResizingColumn() : null;
     if (resizingColumn != null && autoResizeMode == AUTO_RESIZE_OFF) {
-      resizingColumn.setPreferredWidth(resizingColumn.getWidth());
+      if (resizingColumn instanceof TableResultViewColumn column) {
+        column.setColumnWidthByUser(resizingColumn.getWidth());
+      }
+      else {
+        resizingColumn.setPreferredWidth(resizingColumn.getWidth());
+      }
     }
     resizeAndRepaint();
   }
@@ -1089,7 +1094,7 @@ public final class TableResultView extends JBTableWithResizableCells
       if (column < 0) continue;
       ResultViewColumn tableColumn = (ResultViewColumn)columnModel.getColumn(column);
       int width = tableColumn.getColumnWidth();
-      tableColumn.setColumnWidth(Math.max(0, width + delta));
+      tableColumn.setColumnWidthByUser(Math.max(0, width + delta));
     }
   }
 
@@ -1102,7 +1107,14 @@ public final class TableResultView extends JBTableWithResizableCells
     if (availableWidth <= 0) return;
     int columnWidth = Math.max(JBUI.scale(40), availableWidth / columnCount);
     for (int i = 0; i < columnCount; i++) {
-      ((ResultViewColumn)columnModel.getColumn(i)).setColumnWidth(columnWidth);
+      ((ResultViewColumn)columnModel.getColumn(i)).setColumnWidthByUser(columnWidth);
+    }
+  }
+
+  @Override
+  public void resetColumnWidths() {
+    for (TableResultViewColumn column : myColumnCache) {
+      column.clearWidthSetByUser();
     }
   }
 
@@ -1534,18 +1546,18 @@ public final class TableResultView extends JBTableWithResizableCells
     IntList newColumnIndices = new IntArrayList();
     for (int columnDataIdx = 0; columnDataIdx < model.getColumnCount(); columnDataIdx++) {
       boolean notShownEarlier = !myColumnCache.hasCachedColumn(columnDataIdx);
-      myColumnCache.getOrCreateColumn(columnDataIdx);
+      TableResultViewColumn tableColumn = myColumnCache.getOrCreateColumn(columnDataIdx);
       HierarchicalColumnsCollapseManager collapseManager = myResultPanel.getHierarchicalColumnsCollapseManager();
       // prevents myColumnLayout.columnsShown call in setColumnEnabled
       boolean enabled = isTransposed() ||
                         myResultPanel.isColumnEnabled(ModelIndex.forColumn(myResultPanel, columnDataIdx)) &&
                         !(collapseManager != null &&
                           collapseManager.isColumnHiddenDueToCollapse(ModelIndex.forColumn(myResultPanel, columnDataIdx)));
-      ModelIndex<?> modelColumnIdx =
-        isTransposed() ? ModelIndex.forRow(myResultPanel, columnDataIdx) : ModelIndex.forColumn(myResultPanel, columnDataIdx);
-      setViewColumnVisible(modelColumnIdx, enabled);
-      if (notShownEarlier && enabled) {
-        newColumnIndices.add(columnDataIdx);
+      if (enabled) {
+        addColumn(tableColumn);
+        if (notShownEarlier) {
+          newColumnIndices.add(columnDataIdx);
+        }
       }
     }
 
