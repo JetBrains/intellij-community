@@ -1122,6 +1122,13 @@ public final class TableResultView extends JBTableWithResizableCells
   }
 
   @Override
+  public void resetColumnWidths() {
+    for (TableResultViewColumn column : myColumnCache) {
+      column.clearWidthSetByUser();
+    }
+  }
+
+  @Override
   public void resetRowHeights() {
     int defaultRowHeight = getRowHeight();
     for (int i = 0; i < getRowCount(); i++) {
