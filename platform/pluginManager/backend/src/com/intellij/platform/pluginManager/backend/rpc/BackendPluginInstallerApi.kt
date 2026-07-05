@@ -55,9 +55,9 @@ internal class BackendPluginInstallerApi : PluginInstallerApi {
     return channelFlow {
       withContext(Dispatchers.EDT) {
         val project = projectId?.findProjectOrNull()
-        InstallFromDiskAction.installPluginFromDisk(null, project, InstalledPluginsTableModel(project), PluginEnabler.HEADLESS, null) {
+        InstallFromDiskAction.installPluginFromDisk(null, project, InstalledPluginsTableModel(project), PluginEnabler.HEADLESS, null, {
           trySend(PluginInstalledFromDiskResult(PluginDescriptorConverter.toPluginDto(it.pluginDescriptor), it.restartNeeded))
-        }
+        }, { _, _ -> })
       }
     }
   }

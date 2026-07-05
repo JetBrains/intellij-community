@@ -52,6 +52,8 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.updateSettings.impl.PluginAutoUpdateListener
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.updateSettings.impl.UpdateOptions
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
@@ -650,6 +652,10 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
         return
       }
       this@PluginManagerConfigurablePanel.onPluginInstalledFromDisk(callbackData)
+    }
+
+    override fun onPluginWithUpdateSourceInstalledFromDisk(pluginId: PluginId, updateSourceId: PluginUpdateSourceId) {
+      PluginUpdateSourceService.getInstance().setPluginUpdateSourceId(pluginId, updateSourceId)
     }
   }
 
