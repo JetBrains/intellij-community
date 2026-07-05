@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ex.MessagesEx
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.NioFiles
@@ -47,6 +48,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.util.function.BiConsumer
 import java.util.function.Consumer
 import javax.swing.JComponent
 
@@ -264,6 +266,7 @@ object PluginInstaller {
     project: Project?,
     parent: JComponent?,
     callback: Consumer<in PluginInstallCallbackData>,
+    pluginUpdateSourceCallback: BiConsumer<PluginId, PluginUpdateSourceId>,
   ) {
     try {
       val pluginDescriptor = ProgressManager.getInstance().runProcessWithProgressSynchronously(
@@ -409,6 +412,9 @@ object PluginInstaller {
         if (callbackData.pluginDescriptor.pluginId != pluginDescriptor.pluginId) {
           callback.accept(callbackData)
         }
+      }
+      for ((pluginId, pluginUpdateSourceId) in operation.dependentPluginUpdateSourceIds) {
+        pluginUpdateSourceCallback.accept(pluginId, pluginUpdateSourceId)
       }
 
       if (file.toString().endsWith(".zip") && keepArchive()) {
