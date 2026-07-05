@@ -7,6 +7,8 @@ import com.intellij.maven.testFramework.fixtures.createProjectSubDirs
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.testRootDisposable
 import com.intellij.notification.Notification
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -15,6 +17,7 @@ import org.jetbrains.kotlin.idea.notification.asText
 import org.jetbrains.kotlin.idea.notification.catchNotificationsAsync
 import org.jetbrains.kotlin.platform.oldFashionedDescription
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -24,6 +27,17 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @ArgumentsSource(MavenVersionArguments::class)
 class JvmTarget6IsImportedAsIsTest(mavenVersion: String, modelVersion: String) :
     KotlinMavenImportingTestBase(mavenVersion, modelVersion) {
+
+    // Environment setup, not test logic: the legacy base ran on local without a project SDK (EelTestJdkProvider returns
+    // null there), so imported modules had no SDK. The fixture registers JBR 25; clearing the project SDK restores the
+    // legacy "no module SDK" state. The Maven server still starts on the internal (JBR 25) JDK via USE_PROJECT_JDK.
+    @BeforeEach
+    fun clearProjectSdk() {
+        WriteAction.runAndWait<Throwable> {
+            ProjectRootManager.getInstance(project).projectSdk = null
+        }
+    }
+
     @Test
     fun testJvmTargetIsImportedAsIs() = runBlocking {
         // If version isn't specified then we will fall back to bundled frontend which is already downloaded => Unbundled JPS can be used
