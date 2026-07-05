@@ -7,9 +7,10 @@ import com.intellij.maven.testFramework.fixtures.createProjectSubDirs
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.testRootDisposable
 import com.intellij.notification.Notification
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.idea.notification.asText
@@ -27,15 +28,17 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 class JvmTarget6IsImported8Test(mavenVersion: String, modelVersion: String) :
     KotlinMavenImportingTestBase(mavenVersion, modelVersion) {
 
-    // Environment setup, not part of the test logic: the fixture's module SDK is JBR 25, which sends an old Kotlin
-    // milestone (1.7.0-RC) down KotlinJpsPluginSettings' JDK-incompatibility path (KTIJ-34861). Only a Maven-delegated
-    // build drops the explicit JPS version there, leaving it blank so the importer promotes the unsupported 1.6 target
-    // to 1.8 (KTIJ-21515) — exactly what the legacy base got for free on a pre-25 JDK. Lowering the fixture JDK is not
-    // possible: the Maven server needs the real (JBR 25) JDK, and a cleared project SDK is re-assigned during import
-    // (MavenUtil.suggestProjectSdk) before the JPS-version decision is made.
+    // Environment setup, not test logic: the legacy base ran on local without a project SDK (EelTestJdkProvider returns
+    // null there), so imported modules had no SDK. The fixture registers JBR 25 instead, which sends the old milestone
+    // JPS version (1.7.0-RC) down KotlinJpsPluginSettings' JDK-incompatibility path (KTIJ-34861) instead of dropping it.
+    // Clearing the project SDK restores the legacy "no module SDK" state, so the milestone version is dropped and the
+    // importer promotes the unsupported 1.6 target to 1.8 (KTIJ-21515). The Maven server still starts on the internal
+    // (JBR 25) JDK via the USE_PROJECT_JDK fallback.
     @BeforeEach
-    fun delegateBuildToMaven() {
-        MavenRunner.getInstance(project).settings.isDelegateBuildToMaven = true
+    fun clearProjectSdk() {
+        WriteAction.runAndWait<Throwable> {
+            ProjectRootManager.getInstance(project).projectSdk = null
+        }
     }
 
     @Test

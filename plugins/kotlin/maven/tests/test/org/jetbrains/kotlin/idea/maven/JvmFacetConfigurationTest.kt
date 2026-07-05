@@ -9,12 +9,15 @@ import com.intellij.maven.testFramework.fixtures.assertSources
 import com.intellij.maven.testFramework.fixtures.assertTestSources
 import com.intellij.maven.testFramework.fixtures.createProjectSubDirs
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.platform.oldFashionedDescription
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -24,6 +27,19 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @ArgumentsSource(MavenVersionArguments::class)
 class JvmFacetConfigurationTest(mavenVersion: String, modelVersion: String) :
     KotlinMavenImportingTestBase(mavenVersion, modelVersion) {
+
+    // Environment setup, not test logic: the legacy base ran on local without a project SDK (EelTestJdkProvider returns
+    // null there), so imported modules had no SDK. The fixture registers JBR 25 instead, which sends an old Kotlin JPS
+    // version (< 2.1.10) down KotlinJpsPluginSettings' JDK-incompatibility path (KTIJ-34861) and replaces it with the
+    // bundled version. Clearing the project SDK restores the legacy "no module SDK" state so the imported JPS version is
+    // kept as-is. The Maven server still starts on the internal (JBR 25) JDK via the USE_PROJECT_JDK fallback.
+    @BeforeEach
+    fun clearProjectSdk() {
+        WriteAction.runAndWait<Throwable> {
+            ProjectRootManager.getInstance(project).projectSdk = null
+        }
+    }
+
     @Test
     fun testJvmFacetConfiguration() = runBlocking {
         maven.createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
