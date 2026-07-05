@@ -1571,6 +1571,7 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.jewel.markdown.extensions.gfmAlerts.tests",
   "intellij.platform.jewel.markdown.extensions.gfmTables.tests",
   "intellij.platform.jewel.markdown.extensions.images.tests",
+  "intellij.platform.objectSerializer.tests",
   "intellij.python.community.execService.tests",
   "intellij.python.community.services.internal.impl.tests",
   "intellij.python.community.services.shared.tests",
