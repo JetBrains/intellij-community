@@ -10,8 +10,10 @@ import com.intellij.maven.testFramework.fixtures.defaultTestResources
 import com.intellij.maven.testFramework.fixtures.getModule
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.maven.testFramework.fixtures.testRootDisposable
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenImportListener
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -73,6 +75,14 @@ abstract class KotlinMavenImportingTestBase(
       )
     }
     sdkCreationChecker = KotlinSdkCreationChecker()
+    // The legacy base ran on local without a project SDK (EelTestJdkProvider returns null there), so imported modules
+    // had no SDK. The fixture registers JBR 25 instead, which the modules inherit — that makes old Kotlin JPS versions
+    // (< 2.1.10) hit KotlinJpsPluginSettings' JDK-incompatibility path (KTIJ-34861) and lets the Kotlin configurator
+    // derive spurious <jvmTarget>s from the SDK. Clearing the project SDK restores the legacy "no module SDK" state for
+    // the whole hierarchy; the Maven server still starts on the internal JBR 25 JDK via the USE_PROJECT_JDK fallback.
+    WriteAction.runAndWait<Throwable> {
+      ProjectRootManager.getInstance(project).projectSdk = null
+    }
     if (createStdProjectFolders) maven.createStdProjectFolders()
     project.messageBus.connect(maven.testRootDisposable)
       .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {

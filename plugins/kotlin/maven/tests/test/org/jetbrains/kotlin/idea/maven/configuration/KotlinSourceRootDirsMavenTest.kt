@@ -8,14 +8,12 @@ import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.createProjectSubDirs
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.importProjectsAsync
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndGet
@@ -28,7 +26,6 @@ import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.maven.KotlinMavenImportingTestBase
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -41,17 +38,6 @@ private const val KOTLIN_VERSION = "2.2.20"
 @ArgumentsSource(MavenVersionArguments::class)
 class KotlinSourceRootDirsMavenTest(mavenVersion: String, modelVersion: String) :
     KotlinMavenImportingTestBase(mavenVersion, modelVersion) {
-
-    // Environment setup, not test logic: the legacy base ran on local without a project SDK (EelTestJdkProvider returns
-    // null there), so imported modules had no SDK and the Kotlin configurator derived no <jvmTarget>. The fixture
-    // registers JBR 25; clearing the project SDK restores the legacy "no module SDK" state so the generated poms stay
-    // SDK-independent. The Maven server still starts on the internal (JBR 25) JDK via the USE_PROJECT_JDK fallback.
-    @BeforeEach
-    fun clearProjectSdk() {
-        WriteAction.runAndWait<Throwable> {
-            ProjectRootManager.getInstance(project).projectSdk = null
-        }
-    }
 
     private val purePom = """
     <groupId>org.example</groupId>
