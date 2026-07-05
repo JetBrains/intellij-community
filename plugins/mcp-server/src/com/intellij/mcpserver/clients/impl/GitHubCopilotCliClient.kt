@@ -12,8 +12,7 @@ import java.nio.file.Path
  *
  * JSON config files use the `"mcpServers"` top-level key. The CLI accepts
  * several locations:
- *  - Global: `~/.copilot/mcp.json` (preferred) or the legacy
- *    `~/.copilot/mcp-config.json`, both overridable via `$COPILOT_HOME`.
+ *  - Global: `~/.copilot/mcp-config.json`, overridable via `$COPILOT_HOME`.
  *  - Project: `.github/mcp.json` (preferred) or `mcp.json` at the project
  *    root.
  *
