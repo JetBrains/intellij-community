@@ -39,12 +39,6 @@ class EditorCell(
     executionStatus.afterDistinctChange(this) {
       thisLogger().debug("Execution status changed: $it for interval ${intervalPointer.get()?.ordinal}")
     }
-
-    isUnfolded.afterDistinctChange(this) {
-      if (isUnfolded.get()) {
-        updateIfInVisibleRect()
-      }
-    }
   }
 
   val cellFrameManager: EditorCellFrameManager? = EditorCellFrameManager.create(this)?.also {
