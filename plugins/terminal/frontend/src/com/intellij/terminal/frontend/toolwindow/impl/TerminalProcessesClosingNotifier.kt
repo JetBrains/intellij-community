@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.VetoableProjectManagerListener
@@ -20,12 +21,14 @@ import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.util.asDisposable
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import java.time.LocalDateTime
 
@@ -83,9 +86,20 @@ internal object TerminalProcessesClosingNotifier : VetoableProjectManagerListene
       return true
     }
 
-    val tabTitlesToConfirm = runWithModalProgressBlocking(project, "") {
-      collectTabTitlesToConfirm(reworkedViews, classicWidgets)
+    val tabTitlesToConfirm = try {
+      runWithModalProgressBlocking(project, TerminalBundle.message("checking.running.terminal.processes.progress")) {
+        collectTabTitlesToConfirm(reworkedViews, classicWidgets)
+      }
     }
+    catch (_: CancellationException) {
+      ProgressManager.checkCanceled()
+      // User pressed "cancel" in the progress dialog.
+      // Since the user's intention is to close the project,
+      // consider that the user wants to skip any additional checks and finally close the project.
+      project.putUserData(PROCESSES_TERMINATION_CONFIRMED_TIME_KEY, LocalDateTime.now())
+      return true
+    }
+
     if (tabTitlesToConfirm.isEmpty()) {
       return true
     }
