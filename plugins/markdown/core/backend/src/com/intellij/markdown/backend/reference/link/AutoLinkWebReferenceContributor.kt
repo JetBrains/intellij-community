@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.lang.references
+package com.intellij.markdown.backend.reference.link
 
 import com.intellij.openapi.paths.WebReference
 import com.intellij.patterns.PlatformPatterns

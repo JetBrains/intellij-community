@@ -1,5 +1,6 @@
-package org.intellij.plugins.markdown.lang.references.paths.github
+package com.intellij.markdown.backend.reference
 
+import com.intellij.markdown.backend.reference.headers.HeaderAnchorPathReferenceProvider
 import com.intellij.openapi.paths.PathReferenceProviderBase
 import com.intellij.openapi.paths.StaticPathReferenceProvider
 import com.intellij.openapi.util.TextRange
@@ -8,8 +9,8 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceProvider
 import com.intellij.util.ProcessingContext
 import org.intellij.plugins.markdown.lang.references.ReferenceUtil
-import org.intellij.plugins.markdown.lang.references.headers.HeaderAnchorPathReferenceProvider
 import org.intellij.plugins.markdown.lang.references.paths.ContentRootRelatedFileWithoutExtensionReference
+import org.intellij.plugins.markdown.lang.references.paths.github.GithubWikiLocalFileReference
 import java.util.regex.Pattern
 
 internal class GithubWikiLocalFileReferenceProvider: PsiReferenceProvider() {

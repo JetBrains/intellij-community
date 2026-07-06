@@ -264,15 +264,11 @@
 
     <pathReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.RelativeFileWithoutExtensionReferenceProvider"/>
     <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.LineNumberPathReferenceProvider"/>
-    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.paths.github.GithubWikiLocalReferenceContributor"/>
 
     <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownAutoLink"
                              implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownAutoLink$Manipulator"/>
     <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan"
                              implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan$Manipulator"/>
-    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.test.TestPsiReferenceContributor"/>
-    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.AutoLinkWebReferenceContributor"/>
-    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.backtick.BacktickReferenceContributor"/>
     <referencesSearch implementation="org.intellij.plugins.markdown.lang.references.backtick.BacktickReferenceSearcher"/>
     <useScopeEnlarger implementation="org.intellij.plugins.markdown.lang.references.backtick.MarkdownReferenceUseScopeEnlarger"/>
     <usageViewElementsListener implementation="org.intellij.plugins.markdown.lang.references.backtick.BacktickUsageViewElementsListener"/>

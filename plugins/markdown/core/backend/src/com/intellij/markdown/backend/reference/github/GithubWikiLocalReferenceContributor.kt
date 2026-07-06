@@ -1,5 +1,6 @@
-package org.intellij.plugins.markdown.lang.references.paths.github
+package com.intellij.markdown.backend.reference.github
 
+import com.intellij.markdown.backend.reference.GithubWikiLocalFileReferenceProvider
 import com.intellij.psi.PsiReferenceContributor
 import com.intellij.psi.PsiReferenceRegistrar
 import org.intellij.plugins.markdown.lang.references.ReferenceUtil
