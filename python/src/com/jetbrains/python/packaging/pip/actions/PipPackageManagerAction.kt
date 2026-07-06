@@ -38,7 +38,7 @@ internal class PipSetDefaultRequirementsAction() : PipPackageManagerAction() {
     if (!e.presentation.isEnabledAndVisible)
       return
     val manager = e.getPythonPackageManager<PipPythonPackageManager>() ?: return
-    val savedFile = PythonRequirementTxtSdkUtils.findRequirementsTxt(manager.sdk)
+    val savedFile = PythonRequirementTxtSdkUtils.resolvePersistedRequirementsFile(manager.sdk)
     val currentFile = e.getData(PlatformDataKeys.VIRTUAL_FILE) ?: return
 
     if (savedFile == currentFile) {

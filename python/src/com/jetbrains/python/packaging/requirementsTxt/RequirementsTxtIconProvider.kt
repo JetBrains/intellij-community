@@ -21,7 +21,7 @@ internal class RequirementsTxtIconProvider : IconProvider() {
     val module = ModuleUtil.findModuleForFile(vFile, psiFile.project) ?: return null
 
     val sdk = module.pythonSdk ?: return null
-    val saved = PythonRequirementTxtSdkUtils.findRequirementsTxt(sdk)
+    val saved = PythonRequirementTxtSdkUtils.resolvePersistedRequirementsFile(sdk)
     return if (saved == vFile) {
       PythonIcons.Python.ReferencedFile
     } else {
