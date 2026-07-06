@@ -13,6 +13,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.cancel
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import org.junit.Assume
+import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.condition.OS
 import org.junit.runner.RunWith
@@ -21,8 +22,8 @@ import java.awt.datatransfer.DataFlavor
 
 @RunWith(JUnit4::class)
 internal class TerminalCopyOnSelectionTest : BasePlatformTestCase() {
-  override fun setUp() {
-    super.setUp()
+  @Before
+  fun requireNotLinux() {
     Assume.assumeTrue("Can't run this test on Linux because non-headless mode is required to access system selection content", OS.current() != OS.LINUX)
   }
 
