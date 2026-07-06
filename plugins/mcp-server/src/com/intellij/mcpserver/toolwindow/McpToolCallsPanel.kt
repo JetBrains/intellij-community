@@ -1,6 +1,8 @@
 package com.intellij.mcpserver.toolwindow
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.setToolTipText
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.mcpserver.ClientInfo
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.openapi.Disposable
@@ -16,18 +18,25 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SearchTextField
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.table.JBTable
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.Box
@@ -275,8 +284,48 @@ private class ToolCallDetailPanel : JPanel(BorderLayout()), Disposable {
     }
     editor.setCaretVisible(false)
 
+    add(createHeader(), BorderLayout.NORTH)
     add(editor.component, BorderLayout.CENTER)
     border = JBUI.Borders.emptyTop(2)
+
+    applyHighlighter()
+  }
+
+  private fun createHeader(): JPanel {
+    val header = JPanel()
+    header.layout = BoxLayout(header, BoxLayout.X_AXIS)
+    header.border = JBUI.Borders.empty(2, 4)
+
+    header.add(JBLabel("${McpServerBundle.message("mcp.toolwindow.calls.detail.parameters")}:"))
+    header.add(Box.createHorizontalGlue())
+
+    val combo = ComboBox(HighlightLanguage.entries.filter { it.resolveFileType() != null }.toTypedArray())
+    combo.selectedItem = loadSelectedLanguage()
+    combo.setToolTipText(HtmlChunk.text(McpServerBundle.message("mcp.toolwindow.calls.detail.highlight.label")))
+    combo.maximumSize = combo.preferredSize
+    combo.addActionListener {
+      val selected = combo.selectedItem as? HighlightLanguage ?: return@addActionListener
+      saveSelectedLanguage(selected)
+      applyHighlighter()
+    }
+    header.add(combo)
+
+    return header
+  }
+
+  private fun applyHighlighter() {
+    val fileType = loadSelectedLanguage().resolveFileType()
+    if (fileType == null) return
+    editor.highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(null, fileType)
+  }
+
+  private fun loadSelectedLanguage(): HighlightLanguage {
+    val stored = PropertiesComponent.getInstance().getValue(HIGHLIGHT_LANGUAGE_KEY)
+    return HighlightLanguage.entries.find { it.name == stored } ?: HighlightLanguage.JSON
+  }
+
+  private fun saveSelectedLanguage(language: HighlightLanguage) {
+    PropertiesComponent.getInstance().setValue(HIGHLIGHT_LANGUAGE_KEY, language.name)
   }
 
   fun showEntry(entry: McpToolCallEntry?) {
@@ -285,7 +334,6 @@ private class ToolCallDetailPanel : JPanel(BorderLayout()), Disposable {
       return
     }
     val sb = StringBuilder()
-    sb.appendLine("${McpServerBundle.message("mcp.toolwindow.calls.detail.parameters")}:")
     sb.appendLine(formatJson(entry.arguments))
     if (entry.errorMessage != null) {
       sb.appendLine()
@@ -310,6 +358,41 @@ private class ToolCallDetailPanel : JPanel(BorderLayout()), Disposable {
 
   override fun dispose() {
     EditorFactory.getInstance().releaseEditor(editor)
+  }
+}
+
+private const val HIGHLIGHT_LANGUAGE_KEY = "mcp.toolcalls.detail.highlight.lang"
+
+/**
+ * Languages offered in the tool-call detail highlighting dropdown. [PLAIN] disables highlighting.
+ * File types are resolved at runtime via [FileTypeManager] so no static dependency on the
+ * JSON/XML/Markdown modules is required (Markdown is a plugin and may be disabled).
+ */
+private enum class HighlightLanguage {
+  JSON, XML, MARKDOWN, PLAIN;
+
+  fun resolveFileType(): FileType? = when (this) {
+    JSON -> FileTypeManager.getInstance().getStdFileType("JSON")
+    PLAIN -> FileTypes.PLAIN_TEXT
+    XML -> resolveByExtension("xml")
+    MARKDOWN -> resolveByExtension("md")
+  }
+
+  @NonNls
+  fun displayName(): String = when (this) {
+    JSON -> "JSON"
+    PLAIN -> McpServerBundle.message("mcp.toolwindow.calls.detail.highlight.plain")
+    XML -> "XML"
+    MARKDOWN -> "Markdown"
+  }
+
+  override fun toString(): String = displayName()
+
+  companion object {
+    private fun resolveByExtension(extension: String): FileType {
+      val fileType = FileTypeManager.getInstance().getFileTypeByExtension(extension)
+      return if (fileType == FileTypes.UNKNOWN) FileTypes.PLAIN_TEXT else fileType
+    }
   }
 }
 
