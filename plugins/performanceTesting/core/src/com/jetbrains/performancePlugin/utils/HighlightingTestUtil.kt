@@ -62,7 +62,7 @@ class HighlightingTestUtil {
     suspend fun waitForCondition(checkInterval: Long = 500, condition: suspend () -> Boolean) {
       while (true) {
         if (condition()) return
-        delay(checkInterval)
+        delay(checkInterval.milliseconds)
       }
     }
 
@@ -77,7 +77,7 @@ class HighlightingTestUtil {
         while (true) {
           val value = condition()
           if (value != null) return@withTimeoutOrNull value
-          delay(checkInterval)
+          delay(checkInterval.milliseconds)
         }
       }
       @Suppress("UNCHECKED_CAST")
