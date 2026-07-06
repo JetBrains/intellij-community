@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.groovy.ext.spock;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.groovy.spock;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.junit.JUnitUtil;
@@ -15,6 +15,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.ext.spock.SpockConstants;
+import org.jetbrains.plugins.groovy.ext.spock.SpockUtils;
 import org.jetbrains.plugins.groovy.testIntegration.GroovyTestFramework;
 
 import static com.intellij.psi.util.InheritanceUtil.isInheritor;

@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.groovy.ext.spock
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.groovy.spock
 
 import com.intellij.execution.RunConfigurationExtension
 import com.intellij.execution.configurations.JavaParameters
@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.PathUtil
+import org.jetbrains.plugins.groovy.ext.spock.isSpockSpecification
 import org.jetbrains.plugins.groovy.spock.rt.SpockJUnitTestTreeNodeManager
 
 class SpockRunConfigurationExtension : RunConfigurationExtension() {
