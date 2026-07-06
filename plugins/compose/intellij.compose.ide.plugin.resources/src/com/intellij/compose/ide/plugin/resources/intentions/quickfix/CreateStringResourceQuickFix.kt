@@ -119,10 +119,7 @@ private fun Project.startTemplate(xmlVirtualFile: VirtualFile, data: TemplateDat
 
   TemplateManager.getInstance(this).startTemplate(openedEditor, data.template, object : TemplateEditingAdapter() {
     override fun templateFinished(template: Template, brokenOff: Boolean) {
-      runInEdt { fileEditorManager.closeFile(xmlVirtualFile) }
-    }
-
-    override fun templateCancelled(template: Template?) {
+      if (brokenOff) return
       runInEdt { fileEditorManager.closeFile(xmlVirtualFile) }
     }
   })
