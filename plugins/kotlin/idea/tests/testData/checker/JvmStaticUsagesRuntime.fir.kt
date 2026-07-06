@@ -1,14 +1,14 @@
 // RUNTIME
-<error descr="[WRONG_ANNOTATION_TARGET] This annotation is not applicable to target 'class'">@JvmStatic</error>
+<error descr="[WRONG_ANNOTATION_TARGET]">@JvmStatic</error>
 class A {
-    <error descr="[WRONG_ANNOTATION_TARGET] This annotation is not applicable to target 'companion object'">@JvmStatic</error>
+    <error descr="[WRONG_ANNOTATION_TARGET]">@JvmStatic</error>
     companion object {
         @JvmStatic fun a1() {
 
         }
     }
 
-    <error descr="[WRONG_ANNOTATION_TARGET] This annotation is not applicable to target 'object'">@JvmStatic</error>
+    <error descr="[WRONG_ANNOTATION_TARGET]">@JvmStatic</error>
     object A {
         @JvmStatic fun a2() {
 
@@ -28,7 +28,7 @@ class A {
     }
 }
 
-<error descr="[WRONG_ANNOTATION_TARGET] This annotation is not applicable to target 'interface'">@JvmStatic</error>
+<error descr="[WRONG_ANNOTATION_TARGET]">@JvmStatic</error>
 interface B {
     companion object {
         @JvmStatic fun a1() {

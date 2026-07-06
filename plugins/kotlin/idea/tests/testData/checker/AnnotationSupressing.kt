@@ -4,14 +4,14 @@ annotation class Z(val i: Int)
 @Z("BAD") @Suppress("TYPE_MISMATCH")
 fun some0() {}
 
-@Z("BAD") <error descr="[REPEATED_ANNOTATION] This annotation is not repeatable">@Z("BAD")</error> @Suppress("TYPE_MISMATCH")
+@Z("BAD") <error descr="[REPEATED_ANNOTATION]">@Z("BAD")</error> @Suppress("TYPE_MISMATCH")
 fun some01() {}
 
 @Suppress("TYPE_MISMATCH") @Z("BAD")
 fun some1() {
 }
 
-@Suppress("TYPE_MISMATCH") @Z("BAD") <error descr="[REPEATED_ANNOTATION] This annotation is not repeatable">@Z("BAD")</error>
+@Suppress("TYPE_MISMATCH") @Z("BAD") <error descr="[REPEATED_ANNOTATION]">@Z("BAD")</error>
 fun some11() {
 }
 
@@ -23,10 +23,10 @@ fun some2() {
 fun some3() {
 }
 
-@A(<error descr="[TYPE_MISMATCH] Type mismatch: inferred type is String but Int was expected">"BAD"</error>) <error descr="[REPEATED_ANNOTATION] This annotation is not repeatable">@A(<error descr="[TYPE_MISMATCH] Type mismatch: inferred type is String but Int was expected">"BAD"</error>)</error>
+@A(<error descr="[TYPE_MISMATCH]">"BAD"</error>) <error descr="[REPEATED_ANNOTATION]">@A(<error descr="[TYPE_MISMATCH]">"BAD"</error>)</error>
 fun some4() {
 }
 
-@Z(<error descr="[TYPE_MISMATCH] Type mismatch: inferred type is String but Int was expected">"BAD"</error>)
+@Z(<error descr="[TYPE_MISMATCH]">"BAD"</error>)
 fun someN() {
 }

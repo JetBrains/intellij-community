@@ -2,7 +2,7 @@ fun <K, V> testMutableMapEntry(map: MutableMap<K, V>, k1: K, v: V) {
 }
 
 fun foo() {
-    testMutableMapEntry(hashMap(1 to 'a'), 'b'<error descr="[NO_VALUE_FOR_PARAMETER] No value passed for parameter 'v'">)</error>
+    testMutableMapEntry(hashMap(1 to 'a'), 'b'<error descr="[NO_VALUE_FOR_PARAMETER]">)</error>
 }
 
 //extract from library

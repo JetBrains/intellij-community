@@ -5,7 +5,7 @@ class MyRunnable() {}
 
 fun test() {
   val m = MyRunnable()
-  <warning descr="[DEPRECATION] 'invoke(): Unit' is deprecated. Use A instead">m</warning>()
+  <warning descr="[DEPRECATION]">m</warning>()
 }
 
 // NO_CHECK_INFOS

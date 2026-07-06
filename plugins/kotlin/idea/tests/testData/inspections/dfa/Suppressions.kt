@@ -52,13 +52,13 @@ fun compilerWarningSuppression() {
 }
 fun compilerWarningDuplicate(x : Int) {
     // Reported as a compiler warning: suppress
-    if (<warning descr="[SENSELESS_COMPARISON] Condition 'x != null' is always 'true'">x != null</warning>) {
+    if (<warning descr="[SENSELESS_COMPARISON]">x != null</warning>) {
     }
 }
 fun compilerWarningDuplicateWhen(x : X) {
     // Reported as a compiler warning: suppress
     when (x) {
-        <warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'">is X</warning> -> {}
+        <warning descr="[USELESS_IS_CHECK]">is X</warning> -> {}
     }
 }
 fun nothingOrNull(s: String?): String? {

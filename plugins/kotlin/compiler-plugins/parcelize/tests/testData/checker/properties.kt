@@ -6,32 +6,32 @@ import android.os.Parcelable
 
 @Parcelize
 class A(val firstName: String) : Parcelable {
-    val <warning descr="[PROPERTY_WONT_BE_SERIALIZED] Property would not be serialized into a 'Parcel'. Add '@IgnoredOnParcel' annotation to remove the warning">secondName</warning>: String = ""
+    val <warning descr="[PROPERTY_WONT_BE_SERIALIZED]">secondName</warning>: String = ""
 
-    val <warning descr="[PROPERTY_WONT_BE_SERIALIZED] Property would not be serialized into a 'Parcel'. Add '@IgnoredOnParcel' annotation to remove the warning">delegated</warning> by lazy { "" }
+    val <warning descr="[PROPERTY_WONT_BE_SERIALIZED]">delegated</warning> by lazy { "" }
 
-    lateinit var <warning descr="[PROPERTY_WONT_BE_SERIALIZED] Property would not be serialized into a 'Parcel'. Add '@IgnoredOnParcel' annotation to remove the warning">lateinit</warning>: String
+    lateinit var <warning descr="[PROPERTY_WONT_BE_SERIALIZED]">lateinit</warning>: String
 
     val customGetter: String
         get() = ""
 
     var customSetter: String
         get() = ""
-        set(<warning descr="[UNUSED_PARAMETER] Parameter 'v' is never used">v</warning>) {}
+        set(<warning descr="[UNUSED_PARAMETER]">v</warning>) {}
 }
 
 @Parcelize
 @Suppress("WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET")
-class B(<warning descr="[INAPPLICABLE_IGNORED_ON_PARCEL_CONSTRUCTOR_PROPERTY] '@IgnoredOnParcel' is inapplicable to properties without default value declared in the primary constructor">@IgnoredOnParcel</warning> val firstName: String) : Parcelable {
+class B(<warning descr="[INAPPLICABLE_IGNORED_ON_PARCEL_CONSTRUCTOR_PROPERTY]">@IgnoredOnParcel</warning> val firstName: String) : Parcelable {
     @IgnoredOnParcel
     var a: String = ""
 
     @field:IgnoredOnParcel
-    var <warning descr="[PROPERTY_WONT_BE_SERIALIZED] Property would not be serialized into a 'Parcel'. Add '@IgnoredOnParcel' annotation to remove the warning">b</warning>: String = ""
+    var <warning descr="[PROPERTY_WONT_BE_SERIALIZED]">b</warning>: String = ""
 
     @get:IgnoredOnParcel
     var c: String = ""
 
     @set:IgnoredOnParcel
-    var <warning descr="[PROPERTY_WONT_BE_SERIALIZED] Property would not be serialized into a 'Parcel'. Add '@IgnoredOnParcel' annotation to remove the warning">d</warning>: String = ""
+    var <warning descr="[PROPERTY_WONT_BE_SERIALIZED]">d</warning>: String = ""
 }

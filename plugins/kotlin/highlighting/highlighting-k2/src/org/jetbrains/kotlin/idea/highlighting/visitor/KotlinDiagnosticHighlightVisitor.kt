@@ -316,10 +316,14 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
     }
 
     @NlsSafe
-    private fun KaDiagnostic.getMessageToRender(): String =
-        if (isInternalOrUnitTestMode())
+    private fun KaDiagnostic.getMessageToRender(): String {
+        if (ApplicationManager.getApplication().isUnitTestMode) {
+            return "[$factoryName]"
+        }
+        return if (isInternalOrUnitTestMode())
             getDefaultMessageWithFactoryName()
         else defaultMessage
+    }
 
     private fun isInternalOrUnitTestMode(): Boolean {
         val application = ApplicationManager.getApplication()

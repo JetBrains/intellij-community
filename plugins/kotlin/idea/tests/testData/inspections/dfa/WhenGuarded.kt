@@ -16,9 +16,9 @@ fun f(a: A) {
 fun f1(a: A) {
     when(a) {
         is B if a is C -> {
-            if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'.">a is C</warning>) {}
+            if (<warning descr="[USELESS_IS_CHECK]">a is C</warning>) {}
         }
-        is B if <warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'.">a is A</warning> -> {
+        is B if <warning descr="[USELESS_IS_CHECK]">a is A</warning> -> {
             if (<warning descr="Condition 'a is C' is always false">a is C</warning>) {}
         }
         <warning descr="'when' branch is never reachable">is C</warning> -> {

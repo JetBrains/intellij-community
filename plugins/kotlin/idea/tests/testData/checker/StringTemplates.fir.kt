@@ -12,7 +12,7 @@ fun demo() {
     use("$.$.asdf$\t")
     use("asd\$")
     use("asd$a\x")
-    use("asd$a$asd$ $<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: xxx">xxx</error>")
+    use("asd$a$asd$ $<error descr="[UNRESOLVED_REFERENCE]">xxx</error>")
     use("fosdfasdo${1 + bar + 100}}sdsdfgdsfsdf")
     use("foo${bar + map {foo}}sdfsdf")
     use("foo${bar + map { "foo" }}sdfsdf")

@@ -10,7 +10,7 @@ open class Open(val foo: String) : Parcelable
 class Final(val foo: String) : Parcelable
 
 @Parcelize
-<error descr="[PARCELABLE_SHOULD_BE_INSTANTIABLE] 'Parcelable' should not be an 'abstract' class">abstract</error> class Abstract(val foo: String) : Parcelable
+<error descr="[PARCELABLE_SHOULD_BE_INSTANTIABLE]">abstract</error> class Abstract(val foo: String) : Parcelable
 
 @Parcelize
 sealed class Sealed(val foo: String) : Parcelable {
@@ -19,13 +19,13 @@ sealed class Sealed(val foo: String) : Parcelable {
 
 class Outer {
     @Parcelize
-    <error descr="[PARCELABLE_CANT_BE_INNER_CLASS] 'Parcelable' can't be an inner class">inner</error> class Inner(val foo: String) : Parcelable
+    <error descr="[PARCELABLE_CANT_BE_INNER_CLASS]">inner</error> class Inner(val foo: String) : Parcelable
 }
 
 fun foo() {
     @Parcelize
-    <error descr="[PARCELABLE_CANT_BE_LOCAL_CLASS] 'Parcelable' can't be a local class">object</error> : Parcelable {}
+    <error descr="[PARCELABLE_CANT_BE_LOCAL_CLASS]">object</error> : Parcelable {}
 
     @Parcelize
-    class <error descr="[NO_PARCELABLE_SUPERTYPE] No 'Parcelable' supertype"><error descr="[PARCELABLE_CANT_BE_LOCAL_CLASS] 'Parcelable' can't be a local class">Local</error></error> {}
+    class <error descr="[NO_PARCELABLE_SUPERTYPE]"><error descr="[PARCELABLE_CANT_BE_LOCAL_CLASS]">Local</error></error> {}
 }

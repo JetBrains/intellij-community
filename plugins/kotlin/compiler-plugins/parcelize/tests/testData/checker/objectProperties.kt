@@ -12,16 +12,16 @@ object A : Parcelable {
     @IgnoredOnParcel
     val b: String = ""
 
-    val <warning descr="[PROPERTY_WONT_BE_SERIALIZED] Property would not be serialized into a 'Parcel'. Add '@IgnoredOnParcel' annotation to remove the warning">secondName</warning>: String = ""
+    val <warning descr="[PROPERTY_WONT_BE_SERIALIZED]">secondName</warning>: String = ""
 
-    val <warning descr="[PROPERTY_WONT_BE_SERIALIZED] Property would not be serialized into a 'Parcel'. Add '@IgnoredOnParcel' annotation to remove the warning">delegated</warning> by lazy { "" }
+    val <warning descr="[PROPERTY_WONT_BE_SERIALIZED]">delegated</warning> by lazy { "" }
 
-    lateinit var <warning descr="[PROPERTY_WONT_BE_SERIALIZED] Property would not be serialized into a 'Parcel'. Add '@IgnoredOnParcel' annotation to remove the warning">lateinit</warning>: String
+    lateinit var <warning descr="[PROPERTY_WONT_BE_SERIALIZED]">lateinit</warning>: String
 
     val customGetter: String
         get() = ""
 
     var customSetter: String
         get() = ""
-        set(<warning descr="[UNUSED_PARAMETER] Parameter 'v' is never used">v</warning>) {}
+        set(<warning descr="[UNUSED_PARAMETER]">v</warning>) {}
 }

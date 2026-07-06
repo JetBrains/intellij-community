@@ -47,7 +47,7 @@ fun whenIs(obj : Any?) {
     }
     if (obj is X) {
         when(obj) {
-            <warning descr="[USELESS_IS_CHECK] Check for instance is always 'false'">is Y</warning> -> {}
+            <warning descr="[USELESS_IS_CHECK]">is Y</warning> -> {}
         }
     }
 }

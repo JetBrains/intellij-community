@@ -1,5 +1,5 @@
 class C {
-    <error descr="[FUNCTION_DECLARATION_WITH_NO_NAME] Function declaration must have a name">fun ()</error> {
+    <error descr="[FUNCTION_DECLARATION_WITH_NO_NAME]">fun ()</error> {
 
     }
 
@@ -12,4 +12,4 @@ class C {
 
 class C1<<error descr="Type parameter name expected">in</error>> {}
 
-class C2(<error descr="[VALUE_PARAMETER_WITH_NO_TYPE_ANNOTATION] A type annotation is required on a value parameter">val</error><error descr="Parameter name expected">)</error> {}
+class C2(<error descr="[VALUE_PARAMETER_WITH_NO_TYPE_ANNOTATION]">val</error><error descr="Parameter name expected">)</error> {}
