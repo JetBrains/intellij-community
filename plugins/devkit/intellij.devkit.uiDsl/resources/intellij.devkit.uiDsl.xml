@@ -12,7 +12,7 @@
   <actions>
     <action id="UiDslShowcaseAction" class="com.intellij.devkit.uiDsl.showcase.UiDslShowcaseAction"/>
     <action id="UISandboxAction" internal="true" class="com.intellij.devkit.uiDsl.sandbox.UISandboxAction">
-      <add-to-group group-id="Internal.UI" anchor="before" relative-to-action="UiInspector"/>
+      <add-to-group group-id="Internal.UI"/>
     </action>
   </actions>
 

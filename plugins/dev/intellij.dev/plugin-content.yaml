@@ -15,6 +15,9 @@
 - name: lib/modules/intellij.php.dev.jar
   contentModules:
   - name: intellij.php.dev
+- name: lib/modules/intellij.platform.ide.ui.inspector.jar
+  contentModules:
+  - name: intellij.platform.ide.ui.inspector
 - name: lib/modules/intellij.platform.statistics.devkit.jar
   contentModules:
   - name: intellij.platform.statistics.devkit
