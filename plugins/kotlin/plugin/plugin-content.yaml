@@ -170,8 +170,6 @@
   contentModules:
   - name: intellij.kotlin.scripting
   - name: intellij.kotlin.gradle.tooling
-  - name: intellij.kotlin.lombok
-  - name: intellij.kotlin.maven
   - name: intellij.kotlin.runConfigurations.junit
   - name: intellij.kotlin.runConfigurations.testng
   - name: intellij.kotlin.runConfigurations.jvm
@@ -190,15 +188,12 @@
   - name: intellij.kotlin.projectWizard.gradle
   - name: intellij.kotlin.projectWizard.maven
   - name: intellij.kotlin.projectWizard.compose
-  - name: intellij.kotlin.jvm.decompiler
   - name: intellij.kotlin.base.scripting
   - name: intellij.kotlin.base.scripting.main.kts
   - name: intellij.kotlin.base.scripting.shared
   - name: intellij.kotlin.base.scripting.scratch.definition
-  - name: intellij.kotlin.jvm.debugger.evaluation
   - name: intellij.kotlin.refactorings
   - name: intellij.kotlin.refactorings.rename
-  - name: intellij.kotlin.navigation
 - name: lib/kotlinc.allopen-compiler-plugin.jar
   library: kotlinc.allopen-compiler-plugin
   files:
@@ -409,9 +404,24 @@
 - name: lib/modules/intellij.kotlin.j2k.jar
   contentModules:
   - name: intellij.kotlin.j2k
+- name: lib/modules/intellij.kotlin.jvm.debugger.evaluation.jar
+  contentModules:
+  - name: intellij.kotlin.jvm.debugger.evaluation
+- name: lib/modules/intellij.kotlin.jvm.decompiler.jar
+  contentModules:
+  - name: intellij.kotlin.jvm.decompiler
 - name: lib/modules/intellij.kotlin.jvm.jar
   contentModules:
   - name: intellij.kotlin.jvm
+- name: lib/modules/intellij.kotlin.lombok.jar
+  contentModules:
+  - name: intellij.kotlin.lombok
+- name: lib/modules/intellij.kotlin.maven.jar
+  contentModules:
+  - name: intellij.kotlin.maven
+- name: lib/modules/intellij.kotlin.navigation.jar
+  contentModules:
+  - name: intellij.kotlin.navigation
 - name: lib/modules/intellij.kotlin.performanceExtendedPlugin.jar
   contentModules:
   - name: intellij.kotlin.performanceExtendedPlugin
