@@ -1,6 +1,12 @@
 ---
 name: fix-project-leak-from-tc-report
-description: End-to-end workflow to fix a `_LastInSuiteTest.testProjectLeak` failure reported by TeamCity. Given a TC ashcode / leak diagnostic, this skill drives the full cycle — identify the culprit test, reproduce the leak locally 10× with `tests.cmd`, analyze every unique retention chain observed, apply fixes per chain, and verify by rerunning the leak-hunter until it stops firing. Use when the user asks to fix (not just investigate) a project leak surfaced by TC. Self-contained: does not depend on other skills.
+description: >-
+  End-to-end workflow to fix a `_LastInSuiteTest.testProjectLeak` failure reported by TeamCity.
+  Given a TC ashcode / leak diagnostic, this skill drives the full cycle — identify the culprit test,
+  reproduce the leak locally 10x with `tests.cmd`, analyze every unique retention chain observed,
+  apply fixes per chain, and verify by rerunning the leak-hunter until it stops firing.
+  Use when the user asks to fix (not just investigate) a project leak surfaced by TC.
+  Self-contained: does not depend on other skills.
 ---
 
 # Fix a `_LastInSuiteTest.testProjectLeak` from a TeamCity report
