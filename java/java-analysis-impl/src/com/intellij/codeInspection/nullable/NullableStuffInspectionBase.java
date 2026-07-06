@@ -634,8 +634,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
               (i < parameters.length - 1 || !MethodCallInstruction.isVarArgCall(method, substitutor, arguments, parameters))) {
             PsiType expectedType = substitutor.substitute(parameters[i].getType());
             PsiType declaredExpectedType = useDeclaredType ? parameters[i].getType() : null;
-            checkNestedGenericClasses(holder, argument, expectedType, argument.getType(),
-                                      ConflictNestedTypeProblem.ASSIGNMENT_NESTED_TYPE_PROBLEM, declaredExpectedType);
+            checkNestedGenericClasses(holder, argument, expectedType, declaredExpectedType, argument.getType(),
+                                      ConflictNestedTypeProblem.ASSIGNMENT_NESTED_TYPE_PROBLEM);
           }
         }
       }
@@ -647,18 +647,17 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                          @Nullable PsiType expectedType,
                                          @Nullable PsiType actualType,
                                          @NotNull ConflictNestedTypeProblem problem) {
-    return checkNestedGenericClasses(holder, errorElement, expectedType, actualType, problem, null);
+    return checkNestedGenericClasses(holder, errorElement, expectedType, null, actualType, problem);
   }
 
   private boolean checkNestedGenericClasses(@NotNull ProblemsHolder holder,
                                             @NotNull PsiElement errorElement,
                                             @Nullable PsiType expectedType,
-                                            @Nullable PsiType actualType,
-                                            @NotNull ConflictNestedTypeProblem problem,
-                                            @Nullable PsiType declaredExpectedType) {
+                                            @Nullable PsiType declaredExpectedType, @Nullable PsiType actualType,
+                                            @NotNull ConflictNestedTypeProblem problem) {
     if (expectedType == null || actualType == null) return false;
     JavaTypeNullabilityUtil.NullabilityConflictContext
-      context = JavaTypeNullabilityUtil.getNullabilityConflictInAssignment(expectedType, actualType, declaredExpectedType,
+      context = JavaTypeNullabilityUtil.getNullabilityConflictInAssignment(expectedType, declaredExpectedType, actualType,
                                                                            new JavaTypeNullabilityUtil.NullabilityConflictOptions(
                                                                              REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS,
                                                                              REPORT_UNSPECIFIED_BOUND_CONFLICTS)
