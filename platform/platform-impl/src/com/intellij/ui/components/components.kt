@@ -142,6 +142,7 @@ fun noteComponent(@Label note: String, linkHandler: ((url: String) -> Unit)? = n
 }
 
 @ApiStatus.ScheduledForRemoval
+@ApiStatus.Internal
 @Deprecated("Use Kotlin UI DSL, method Row.text")
 @JvmOverloads
 fun htmlComponent(@DetailedDescription text: String = "",

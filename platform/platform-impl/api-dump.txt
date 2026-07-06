@@ -5322,7 +5322,6 @@ c:com.intellij.ui.components.BasicOptionButtonUI$MainButton
 - <init>(com.intellij.ui.components.BasicOptionButtonUI):V
 f:com.intellij.ui.components.ComponentsKt
 - sf:RadioButton(java.lang.String):javax.swing.JRadioButton
-- sf:htmlComponent():javax.swing.JEditorPane
 - sf:noteComponent(java.lang.String):javax.swing.JComponent
 com.intellij.ui.components.DialogManager
 - a:performAction(kotlin.jvm.functions.Function0):V
