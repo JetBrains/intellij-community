@@ -95,7 +95,6 @@ f:git4idea.GitPushUtil$BranchNameInputDialogMessages
 c:git4idea.GitRevisionNumber
 - com.intellij.openapi.vcs.history.ShortVcsRevisionNumber
 - sf:HEAD:git4idea.GitRevisionNumber
-- sf:NOT_COMMITTED_HASH:java.lang.String
 - <init>(java.lang.String,java.util.Date):V
 - asString():java.lang.String
 - compareTo(com.intellij.openapi.vcs.history.VcsRevisionNumber):I

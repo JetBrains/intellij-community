@@ -174,6 +174,8 @@ f:git4idea.history.GitHistoryTraverserProviderKt
 - sf:getTraverser(com.intellij.openapi.project.Project):git4idea.history.GitHistoryTraverser
 a:git4idea.ignore.GitRepositoryIgnoredFilesHolder
 - a:containsFile(com.intellij.openapi.vcs.FilePath):Z
+f:git4idea.index.GitIndexUtil
+- s:isNullHash(java.lang.String):Z
 f:git4idea.log.GitLogProvider
 - <init>(com.intellij.openapi.project.Project):V
 - isFullHash(com.intellij.openapi.vfs.VirtualFile,java.lang.String):Z

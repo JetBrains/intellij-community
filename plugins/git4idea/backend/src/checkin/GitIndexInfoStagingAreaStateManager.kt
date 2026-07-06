@@ -183,7 +183,7 @@ internal class GitIndexInfoStagingAreaStateManager(val repository: GitRepository
 
     // zeroed-out hash means "delete from index" for update-index --index-info
     val hashString = hash.asString()
-    if (hashString.all { it == '0' }) {
+    if (GitIndexUtil.isNullHash(hashString)) {
       return "0 $hash\t$relativePath"
     }
 
