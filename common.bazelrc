@@ -218,10 +218,15 @@ common --experimental_repository_downloader_retries=5
 # rules_jvm_external 6.10 bundles Coursier v2.1.24, which does NOT retry HTTP 5xx (only SSL/AccessDenied),
 # so transient 502s from Space Packages during the resolve fail immediately. Pin a newer Coursier that
 # retries 5xx (Coursier PR #3515, first in v2.1.25-M20); combined with the per-install
-# additional_coursier_options=["--retry-count","5"] this retries 502s. Requires the rje
-# coursier-optional-file-field patch (newer coursier omits the "file" key for pom-only entries).
+# additional_coursier_options=["--retry-count","5"] this retries 502s. Requires the rules_jvm_external
+# coursier-optional-file-field patch (newer Coursier omits the "file" key for pom-only entries).
 common --repo_env=COURSIER_URL=https://github.com/coursier/coursier/releases/download/v2.1.25-M26/coursier.jar
 common --repo_env=COURSIER_SHA256=97647d0378b877db2552a29caec075de1bae86375f0343ba82cf52d69193eb5e
+
+# Coursier's default retry backoff is 10ms x 2^n over 5 attempts (~150ms total) - far too short to outlast a
+# transient Space Packages 502. Stretch the initial delay (via a JVM system property forwarded through COURSIER_OPTS).
+# Keep this to a single -D: bazelrc splits the flag value on spaces, so multiple -D tokens would not parse.
+common --repo_env=COURSIER_OPTS=-Dcoursier.exception-retry-backoff-initial-delay=5s
 
 # Scale HTTP timeouts by 2x
 common --http_timeout_scaling=2.0
