@@ -89,6 +89,16 @@ internal object JewelMavenArtifacts {
   fun isPublishedJewelModule(module: JpsModule): Boolean =
     module.name.startsWith("intellij.platform.jewel.") && module.name !in NOT_PUBLISHED
 
+  /**
+   * Platform modules that are published to Maven Central as transitive dependencies of Jewel,
+   * see [PLATFORM_DEPENDENCY_PREFIXES]. The `intellij.platform.icons.` module-name prefix is the
+   * counterpart of the `icons-` artifactId prefix (the `platform` segment is dropped when the Maven
+   * coordinates are generated), and covers both `intellij.platform.icons.api` and
+   * `intellij.platform.icons.api.rendering`.
+   */
+  fun isPublishedPlatformDependency(module: JpsModule): Boolean =
+    module.name.startsWith("intellij.platform.icons.")
+
   fun patchCoordinates(module: JpsModule, coordinates: MavenCoordinates): MavenCoordinates {
     check(isPublishedJewelModule(module))
     val version = "$VERSION-${coordinates.version}"
@@ -180,6 +190,20 @@ internal object JewelMavenArtifacts {
       name = "Google Team"
       organization = "Google"
       organizationUrl = "https://developer.android.com"
+    })
+  }
+
+  /**
+   * Supplies the POM metadata required by Maven Central for the [isPublishedPlatformDependency] modules.
+   * The `name`, `url`, `scm`, `developers` and `organization` fields are already filled in by the POM
+   * generator for these community modules; only `description` and `licenses` are missing.
+   */
+  fun addPlatformPomMetadata(module: JpsModule, model: Model) {
+    check(isPublishedPlatformDependency(module))
+    model.description = "IntelliJ Platform icons API."
+    model.addLicense(License().apply {
+      name = "Apache License 2.0"
+      url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
     })
   }
 

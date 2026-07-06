@@ -97,6 +97,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
     mavenArtifacts.addPomMetadata = { module, model ->
       when {
         JewelMavenArtifacts.isPublishedJewelModule(module) -> JewelMavenArtifacts.addPomMetadata(module, model)
+        JewelMavenArtifacts.isPublishedPlatformDependency(module) -> JewelMavenArtifacts.addPlatformPomMetadata(module, model)
       }
     }
     mavenArtifacts.isJavadocJarRequired = {
