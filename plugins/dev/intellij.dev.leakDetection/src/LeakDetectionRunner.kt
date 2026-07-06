@@ -67,7 +67,7 @@ internal class LeakDetectionRunner(private val coroutineScope: CoroutineScope) {
 
   /** Runs [ProjectLeakDetector] on a background thread under a progress indicator, then reports the results. */
   fun runLeakDetectionInBackground(project: Project?) {
-    service<LeakDetectionRunner>().coroutineScope.launch {
+    coroutineScope.launch {
       val leaks = if (project != null) {
         withBackgroundProgress(project, DevLeakDetectionBundle.message("progress.title.detecting.leaks"), cancellable = true) {
           ProjectLeakDetector().detect()
