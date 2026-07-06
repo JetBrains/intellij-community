@@ -48,7 +48,6 @@ a:com.intellij.platform.lsp.api.LspClientDescriptor
 - p:findLocalFileByPath(java.lang.String):com.intellij.openapi.vfs.VirtualFile
 - getClientCapabilities():org.eclipse.lsp4j.ClientCapabilities
 - p:getFilePath(com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- f:getFilePathUri(java.lang.String):java.lang.String
 - getFileUri(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - getLanguageId(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - getLsp4jServerClass():java.lang.Class
