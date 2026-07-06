@@ -53,10 +53,6 @@
                             implementation="com.jetbrains.python.requirements.widget.PyDependenciesFileStatusBarWidgetFactory"
                             order="after pythonInterpreterWidget, before git, before hg, before Notifications"/>
 
-    <localInspection language="TOML" enabledByDefault="true"
-                     implementationClass="com.jetbrains.python.sdk.poetry.PoetryPackageVersionsInspection"
-                     key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python"
-                     suppressId="PoetryPackageVersions" shortName="PoetryPackageVersionsInspection"/>
     <registryKey defaultValue="20" description="How often conda environments cache must be refreshed (seconds)"
                  key="python.conda.envs.refresh.seconds" restartRequired="true"/>
     <registryKey defaultValue="60" description="TTL of conda environments cache (seconds)" key="python.conda.envs.cache.ttl.seconds"
@@ -1302,5 +1298,7 @@
       implementation="com.jetbrains.python.conda.CondaDependenciesInspectionProvider"/>
     <python.inspections.dependencies.dependenciesInspectionProvider
       implementation="com.jetbrains.python.pipenv.PipEnvDependenciesInspectionProvider"/>
+    <python.inspections.dependencies.dependenciesInspectionProvider
+      implementation="com.jetbrains.python.sdk.poetry.LegacyPoetryDependenciesInspectionProvider"/>
   </extensions>
 </idea-plugin>
