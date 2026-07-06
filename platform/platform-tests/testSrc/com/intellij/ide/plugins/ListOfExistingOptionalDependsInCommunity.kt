@@ -16,11 +16,6 @@ val existingOptionalDependsTagInCommunityPlugins = mapOf(
     "com.intellij.modules.idea",
     "intellij.webp",
   ),
-  "org.intellij.groovy" to setOf(
-    "org.intellij.intelliLang",
-    "com.intellij.modules.structuralsearch",
-    "JUnit",
-  ),
   "Coverage" to setOf(
     "TestNG-J",
     "JUnit",
