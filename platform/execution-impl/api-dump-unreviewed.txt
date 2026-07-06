@@ -150,7 +150,6 @@ a:com.intellij.execution.RunManagerEx
 - f:setBeforeRunTasks(com.intellij.execution.configurations.RunConfiguration,java.util.List,Z):V
 f:com.intellij.execution.TerminateRemoteProcessDialog
 - <init>():V
-- s:show(com.intellij.openapi.project.Project,java.lang.String,com.intellij.execution.process.ProcessHandler):com.intellij.ide.ProcessCloseConfirmation
 f:com.intellij.execution.TestStateStorage
 - <init>(com.intellij.openapi.project.Project):V
 - dispose():V

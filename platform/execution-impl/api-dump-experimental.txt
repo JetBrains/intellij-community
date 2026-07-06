@@ -1,5 +1,5 @@
 f:com.intellij.execution.TerminateRemoteProcessDialog
-- *s:show(com.intellij.openapi.project.Project,java.util.List,java.util.List):com.intellij.ide.ProcessCloseConfirmation
+- *s:show(com.intellij.openapi.project.Project,java.util.List,java.util.List):com.intellij.execution.TerminateRemoteProcessDialog$ProcessCloseConfirmationResult
 *:com.intellij.execution.multilaunch.execution.conditions.ConditionTemplate
 - *sf:Companion:com.intellij.execution.multilaunch.execution.conditions.ConditionTemplate$Companion
 - a:createCondition():com.intellij.execution.multilaunch.execution.conditions.Condition

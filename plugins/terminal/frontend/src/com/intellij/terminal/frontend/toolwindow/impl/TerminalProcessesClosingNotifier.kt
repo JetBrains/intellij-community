@@ -1,6 +1,7 @@
 package com.intellij.terminal.frontend.toolwindow.impl
 
 import com.intellij.execution.TerminateRemoteProcessDialog
+import com.intellij.execution.TerminateRemoteProcessDialog.ProcessCloseConfirmationResult
 import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.ui.RunContentManagerImpl
 import com.intellij.ide.AppLifecycleListener
@@ -125,7 +126,7 @@ internal object TerminalProcessesClosingNotifier : VetoableProjectManagerListene
         it.putUserData(RunContentManagerImpl.ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY, true)
       }
     }
-    return TerminateRemoteProcessDialog.show(project, tabTitles, fakeProcesses) != null
+    return TerminateRemoteProcessDialog.show(project, tabTitles, fakeProcesses) != ProcessCloseConfirmationResult.LEAVE_RUNNING
   }
 }
 

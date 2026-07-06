@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal
 
 import com.intellij.execution.TerminateRemoteProcessDialog
+import com.intellij.execution.TerminateRemoteProcessDialog.ProcessCloseConfirmationResult
 import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.ui.BaseContentCloseListener
 import com.intellij.execution.ui.RunContentManagerImpl
@@ -58,7 +59,7 @@ abstract class TerminalTabCloseListener(
     // don't show 'disconnect' button
     proxy.putUserData(RunContentManagerImpl.ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY, true)
     val result = TerminateRemoteProcessDialog.show(project, "Terminal ${content.displayName}", proxy)
-    return result != null
+    return result != ProcessCloseConfirmationResult.LEAVE_RUNNING
   }
 
   abstract fun shouldConfirmClosing(content: Content): CloseCheckResult
