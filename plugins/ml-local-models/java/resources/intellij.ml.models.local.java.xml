@@ -1,4 +1,11 @@
 <idea-plugin>
+  <dependencies>
+    <plugin id="com.intellij.java"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.frontback.psi"/>
+  </dependencies>
+
   <extensions defaultExtensionNs="com.intellij">
     <ml.local.models.factory language="JAVA" implementationClass="com.intellij.java.ml.local.JavaMethodsFrequencyModelFactory"/>
     <ml.local.models.factory language="JAVA" implementationClass="com.intellij.java.ml.local.JavaClassesFrequencyModelFactory"/>
