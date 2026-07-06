@@ -3,14 +3,11 @@ project
 
 project.kmmApp
 
-project.kmmApp.androidTest
-    org.jetbrains.kotlin.mpp.tests:androidLib:1.0@aar (TEST)
+project.kmmApp.androidHostTest
+    org.jetbrains.kotlin.mpp.tests:androidLib-android:1.0 (TEST)
 
-project.kmmApp.main
-    org.jetbrains.kotlin.mpp.tests:androidLib:1.0@aar (COMPILE)
-
-project.kmmApp.unitTest
-    org.jetbrains.kotlin.mpp.tests:androidLib:1.0@aar (TEST)
+project.kmmApp.androidMain
+    org.jetbrains.kotlin.mpp.tests:androidLib-android:1.0 (COMPILE)
 
 
 Test configuration:

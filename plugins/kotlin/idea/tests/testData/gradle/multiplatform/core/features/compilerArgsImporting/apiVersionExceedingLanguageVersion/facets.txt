@@ -1,7 +1,11 @@
 MODULES
 project
 
-project.androidTest
+project.androidHostTest
+    languageLevel = 1.7
+    apiLevel = 1.8
+
+project.androidMain
     languageLevel = 1.7
     apiLevel = 1.8
 
@@ -75,19 +79,11 @@ project.jvmTest
     languageLevel = 1.7
     apiLevel = 1.8
 
-project.main
-    languageLevel = 1.7
-    apiLevel = 1.8
-
 project.nativeMain
     languageLevel = 1.7
     apiLevel = 1.8
 
 project.nativeTest
-    languageLevel = 1.7
-    apiLevel = 1.8
-
-project.unitTest
     languageLevel = 1.7
     apiLevel = 1.8
 

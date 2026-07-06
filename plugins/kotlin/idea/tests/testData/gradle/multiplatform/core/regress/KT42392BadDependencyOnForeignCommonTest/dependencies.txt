@@ -1,9 +1,4 @@
 MODULES
-project.p1.main
-    p1.commonMain (refines, COMPILE)
-    p2.commonMain (COMPILE)
-    p2.jvmMain (COMPILE)
-
 
 Test configuration:
 - showing only modules matching .*p1\.main.*

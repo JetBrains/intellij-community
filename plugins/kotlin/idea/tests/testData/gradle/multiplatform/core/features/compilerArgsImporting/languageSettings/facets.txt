@@ -1,7 +1,12 @@
 MODULES
 project
 
-project.androidTest
+project.androidHostTest
+    languageLevel = 1.7
+    apiLevel = 1.7
+    compilerSettings = -opt-in OptInAnnotation -progressive
+
+project.androidMain
     languageLevel = 1.7
     apiLevel = 1.7
     compilerSettings = -opt-in OptInAnnotation -progressive
@@ -86,22 +91,12 @@ project.jvmTest
     apiLevel = 1.7
     compilerSettings = -opt-in OptInAnnotation -progressive
 
-project.main
-    languageLevel = 1.7
-    apiLevel = 1.7
-    compilerSettings = -opt-in OptInAnnotation -progressive
-
 project.nativeMain
     languageLevel = 1.7
     apiLevel = 1.7
     compilerSettings = -opt-in OptInAnnotation -progressive
 
 project.nativeTest
-    languageLevel = 1.7
-    apiLevel = 1.7
-    compilerSettings = -opt-in OptInAnnotation -progressive
-
-project.unitTest
     languageLevel = 1.7
     apiLevel = 1.7
     compilerSettings = -opt-in OptInAnnotation -progressive

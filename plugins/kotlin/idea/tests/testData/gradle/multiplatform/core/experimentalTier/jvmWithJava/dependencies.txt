@@ -6,13 +6,11 @@ project.javaOnly
 project.javaOnly.main
     jvmWithJavaProducer.commonMain (COMPILE)
     jvmWithJavaProducer.jvmMain (COMPILE)
-    jvmWithJavaProducer.main (COMPILE)
 
 project.javaOnly.test
     javaOnly.main (friend, COMPILE)
     jvmWithJavaProducer.commonMain (COMPILE)
     jvmWithJavaProducer.jvmMain (COMPILE)
-    jvmWithJavaProducer.main (COMPILE)
 
 project.jvmWithJavaProducer
 
@@ -29,21 +27,15 @@ project.jvmWithJavaProducer.jvmTest
     jvmWithJavaProducer.commonTest (refines, TEST)
     jvmWithJavaProducer.jvmMain (friend, TEST)
 
-project.jvmWithJavaProducer.main
-
-project.jvmWithJavaProducer.test
-
 project.kotlinJvmOnly
 
 project.kotlinJvmOnly.main
     jvmWithJavaProducer.commonMain (COMPILE)
     jvmWithJavaProducer.jvmMain (COMPILE)
-    jvmWithJavaProducer.main (COMPILE)
 
 project.kotlinJvmOnly.test
     jvmWithJavaProducer.commonMain (COMPILE)
     jvmWithJavaProducer.jvmMain (COMPILE)
-    jvmWithJavaProducer.main (COMPILE)
     kotlinJvmOnly.main (friend, COMPILE)
 
 

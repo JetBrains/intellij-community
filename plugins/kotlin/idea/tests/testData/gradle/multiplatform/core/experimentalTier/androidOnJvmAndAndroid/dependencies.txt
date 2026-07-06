@@ -1,17 +1,21 @@
 MODULES
 project.androidOnly
 
-project.androidOnly.androidTest
+project.androidOnly.androidHostTest
+    jvmAndAndroid.androidMain (TEST)
     jvmAndAndroid.commonMain (TEST)
-    jvmAndAndroid.main (TEST)
 
-project.androidOnly.main
+project.androidOnly.androidMain
+    jvmAndAndroid.androidMain (COMPILE)
     jvmAndAndroid.commonMain (COMPILE)
-    jvmAndAndroid.main (COMPILE)
 
-project.androidOnly.unitTest
+project.androidOnly.commonMain
+    jvmAndAndroid.androidMain (COMPILE)
+    jvmAndAndroid.commonMain (COMPILE)
+
+project.androidOnly.commonTest
+    jvmAndAndroid.androidMain (TEST)
     jvmAndAndroid.commonMain (TEST)
-    jvmAndAndroid.main (TEST)
 
 
 Test configuration:

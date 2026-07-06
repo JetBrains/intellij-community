@@ -1,9 +1,13 @@
 MODULES
 project.consumer
 
-project.consumer.androidTest
-    org.jetbrains.kotlin.mpp.tests:expectedEverywhere-android-debug:1.0@aar (TEST)
-    org.jetbrains.kotlin.mpp.tests:expectedInJvmAndAndroid-android-debug:1.0@aar (TEST)
+project.consumer.androidHostTest
+    org.jetbrains.kotlin.mpp.tests:expectedEverywhere-android:1.0 (TEST)
+    org.jetbrains.kotlin.mpp.tests:expectedInJvmAndAndroid-android:1.0 (TEST)
+
+project.consumer.androidMain
+    org.jetbrains.kotlin.mpp.tests:expectedEverywhere-android:1.0 (COMPILE)
+    org.jetbrains.kotlin.mpp.tests:expectedInJvmAndAndroid-android:1.0 (COMPILE)
 
 project.consumer.commonMain
     org.jetbrains.kotlin.mpp.tests:expectedEverywhere:commonMain:1.0 (COMPILE)
@@ -30,14 +34,6 @@ project.consumer.linuxX64Main
 
 project.consumer.linuxX64Test
     org.jetbrains.kotlin.mpp.tests:expectedEverywhere-linuxx64:1.0 (TEST)
-
-project.consumer.main
-    org.jetbrains.kotlin.mpp.tests:expectedEverywhere-android-debug:1.0@aar (COMPILE)
-    org.jetbrains.kotlin.mpp.tests:expectedInJvmAndAndroid-android-debug:1.0@aar (COMPILE)
-
-project.consumer.unitTest
-    org.jetbrains.kotlin.mpp.tests:expectedEverywhere-android-debug:1.0@aar (TEST)
-    org.jetbrains.kotlin.mpp.tests:expectedInJvmAndAndroid-android-debug:1.0@aar (TEST)
 
 
 Test configuration:

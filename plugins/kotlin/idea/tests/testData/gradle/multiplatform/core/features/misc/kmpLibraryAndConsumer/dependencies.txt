@@ -1,8 +1,11 @@
 MODULES
 consumer
 
-consumer.androidTest
-    com.h0tk3y.mpp.demo:lib-android-debug:1.0@aar (TEST)
+consumer.androidHostTest
+    com.h0tk3y.mpp.demo:lib-android:1.0 (TEST)
+
+consumer.androidMain
+    com.h0tk3y.mpp.demo:lib-android:1.0 (COMPILE)
 
 consumer.commonMain
     com.h0tk3y.mpp.demo:lib:commonMain:1.0 (COMPILE)
@@ -27,12 +30,6 @@ consumer.iosX64Main
 
 consumer.iosX64Test
     com.h0tk3y.mpp.demo:lib-iosx64:1.0 (TEST)
-
-consumer.main
-    com.h0tk3y.mpp.demo:lib-android-debug:1.0@aar (COMPILE)
-
-consumer.unitTest
-    com.h0tk3y.mpp.demo:lib-android-debug:1.0@aar (TEST)
 
 
 Test configuration:

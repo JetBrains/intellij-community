@@ -1,17 +1,21 @@
 MODULES
 project.app
 
-project.app.androidTest
+project.app.androidHostTest
+    lib.androidMain (TEST)
     lib.commonMain (TEST)
-    lib.jvmMain (TEST)
 
-project.app.main
+project.app.androidMain
+    lib.androidMain (COMPILE)
     lib.commonMain (COMPILE)
-    lib.jvmMain (COMPILE)
 
-project.app.unitTest
+project.app.commonMain
+    lib.androidMain (COMPILE)
+    lib.commonMain (COMPILE)
+
+project.app.commonTest
+    lib.androidMain (TEST)
     lib.commonMain (TEST)
-    lib.jvmMain (TEST)
 
 
 Test configuration:

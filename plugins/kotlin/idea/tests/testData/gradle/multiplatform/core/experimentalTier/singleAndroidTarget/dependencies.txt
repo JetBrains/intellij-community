@@ -1,17 +1,25 @@
 MODULES
 project
 
-project.androidTest
-    main (friend, TEST)
+project.androidHostTest
+    androidMain (friend, TEST)
+    commonMain (friend, TEST)
+    commonTest (refines, TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
     org.jetbrains:annotations:13.0 (TEST)
 
-project.main
+project.androidMain
+    commonMain (refines, COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
     org.jetbrains:annotations:13.0 (COMPILE)
 
-project.unitTest
-    main (friend, TEST)
+project.commonMain
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains:annotations:13.0 (COMPILE)
+
+project.commonTest
+    androidMain (friend, TEST)
+    commonMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
     org.jetbrains:annotations:13.0 (TEST)
 
