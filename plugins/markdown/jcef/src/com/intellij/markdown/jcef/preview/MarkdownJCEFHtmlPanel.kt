@@ -7,6 +7,7 @@ import com.intellij.markdown.jcef.preview.impl.JcefBrowserPipeImpl
 import com.intellij.markdown.jcef.preview.impl.addRequestHandler
 import com.intellij.markdown.jcef.preview.impl.executeCancellableJavaScript
 import com.intellij.markdown.jcef.preview.impl.waitForPageLoad
+import com.intellij.markdown.jcef.preview.impl.waitForReloadIgnoringCache
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -119,6 +120,12 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
     waitForPageLoad(pageUrl)
   }
 
+  /** Like [loadIndexContent], but bypasses the cache so settings-dependent resources refresh (see [waitForReloadIgnoringCache]). */
+  private suspend fun reloadIndexContent() {
+    reloadExtensions()
+    waitForReloadIgnoringCache()
+  }
+
   private var previousRenderClosure: String = ""
 
   private val coroutineScope = project?.let(MarkdownPluginScope::createChildScope) ?: MarkdownApplicationScope.createChildScope()
@@ -174,7 +181,7 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
             updateDom(renderClosure, initialScrollOffset, previousRenderClosure.isEmpty())
           }
           is PreviewRequest.ReloadWithOffset -> {
-            loadIndexContent()
+            reloadIndexContent()
             updateDom(previousRenderClosure, request.offset, firstUpdate = true)
           }
         }
