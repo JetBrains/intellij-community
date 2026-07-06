@@ -1,4 +1,21 @@
-<idea-plugin package="org.intellij.plugins.intelliLang.inject.groovy">
+<idea-plugin>
+  <dependencies>
+    <plugin id="org.intellij.intelliLang"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.langInjection"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.langInjection"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.xml.psi"/>
+    <!-- endregion -->
+  </dependencies>
   <extensions defaultExtensionNs="org.intellij.intelliLang">
     <languageSupport implementation="org.intellij.plugins.intelliLang.inject.groovy.GroovyLanguageInjectionSupport"/>
     <injectionConfig config="resources/groovyInjections.xml"/>

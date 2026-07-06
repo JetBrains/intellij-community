@@ -20,6 +20,7 @@
     <module name="intellij.groovy.ant"/>
     <module name="intellij.groovy.copyright"/>
     <module name="intellij.groovy.byteCodeViewer"/>
+    <module name="intellij.groovy.langInjection"/>
   </content>
   <content>
     <module name="intellij.libraries.hamcrest" loading="embedded"/>
@@ -35,7 +36,6 @@
     <module name="intellij.java.debugger.impl"/>
     <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.frontback.psi"/>
-    <module name="intellij.java.langInjection"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
     <module name="intellij.java.ui"/>
@@ -51,7 +51,6 @@
     <!-- endregion -->
   </dependencies>
 
-  <depends optional="true" config-file="intellilang-groovy-support.xml">org.intellij.intelliLang</depends>
   <!--suppress PluginXmlValidity -->
   <depends optional="true" config-file="groovy-structural-search.xml">com.intellij.modules.structuralsearch</depends>
   <depends optional="true" config-file="spock-support.xml">JUnit</depends>

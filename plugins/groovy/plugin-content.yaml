@@ -43,3 +43,6 @@
 - name: lib/modules/intellij.groovy.copyright.jar
   contentModules:
   - name: intellij.groovy.copyright
+- name: lib/modules/intellij.groovy.langInjection.jar
+  contentModules:
+  - name: intellij.groovy.langInjection
