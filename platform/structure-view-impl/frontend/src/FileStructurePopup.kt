@@ -808,7 +808,7 @@ class FileStructurePopup(
 
   @TestOnly
   @ApiStatus.Internal
-  override fun setTreeActionState(actionName: String, state: Boolean) {
+  override fun setTreeActionState(actionName: String, state: Boolean): Promise<*> {
     val checkBox = myCheckBoxes[actionName]
     if (checkBox != null) {
       checkBox.setSelected(state)
@@ -819,6 +819,7 @@ class FileStructurePopup(
     else {
       LOG.error("Action '$actionName' not found in FileStructurePopup")
     }
+    return waitUpdateFinishedAsync()
   }
 
   @TestOnly

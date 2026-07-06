@@ -24,6 +24,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.client.ClientAppSession
+import com.intellij.openapi.client.ClientKind
+import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
@@ -67,12 +69,24 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.asDeferred
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
+
+@ApiStatus.Internal
+object BackendStructureTreeServiceTestApi {
+  @TestOnly
+  fun getStructureViewCountForTests(): Int {
+    return ClientSessionsManager.getAppSessions(ClientKind.REMOTE).sumOf { session ->
+      session.getServiceIfCreated(BackendStructureTreeService::class.java)?.getStructureViewCountForTests() ?: 0
+    }
+  }
+}
 
 internal class BackendStructureTreeService(private val session: ClientAppSession) {
   private val structureViews = ConcurrentHashMap<Int, StructureViewEntry>()
@@ -85,6 +99,11 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
 
   fun getStructureViewEntry(id: StructureViewDtoId): StructureViewEntry? {
     return structureViews[id.id]
+  }
+
+  @TestOnly
+  internal fun getStructureViewCountForTests(): Int {
+    return structureViews.size
   }
 
   fun getShowPopupRequestFlow(): Flow<ShowStructurePopupRequest> {

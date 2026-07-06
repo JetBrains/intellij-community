@@ -18,9 +18,12 @@ interface StructurePopupTestExt: Disposable {
   @ApiStatus.Internal
   fun setSearchFilterForTests(filter: String?)
 
+  /**
+   * Sets a tree action checkbox state and completes after the popup update triggered by the action has finished.
+   */
   @TestOnly
   @ApiStatus.Internal
-  fun setTreeActionState(actionName: String, state: Boolean)
+  fun setTreeActionState(actionName: String, state: Boolean): Promise<*>
 
   @TestOnly
   @ApiStatus.Internal
