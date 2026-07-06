@@ -12,6 +12,8 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.tools.ide.metrics.collector.MetricsCollector
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.publishing.PerformanceMetricsDto
+import com.intellij.tools.ide.metrics.collector.telemetry.describeTelemetryJsonFile
+import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.tools.ide.util.common.withRetry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -70,14 +72,39 @@ internal class IJPerfBenchmarksMetricsPublisher {
                                                     vararg metricsCollectors: MetricsCollector): PerformanceMetricsDto {
       delay(1.seconds) // give some time to settle metrics (usually meters) that were published at the end of the test
 
-      val metrics: List<PerformanceMetrics.Metric> = withRetry("Telemetry metrics should be exported",
+      val telemetryJsonFile = BenchmarksSpanMetricsCollector.getDefaultPathToTelemetrySpanJson()
+      var lastFailure: Throwable? = null
+      var lastFileState: String? = null
+      var attempt = 0
+      val metrics: List<PerformanceMetrics.Metric>? = withRetry("Telemetry metrics should be exported",
                                                                retries = 10, delay = 300.milliseconds) {
-        TelemetryManager.getInstance().forceFlushMetrics()
-
-        metricsCollectors.flatMap {
-          it.collect(PathManager.getLogDir())
+        attempt++
+        try {
+          TelemetryManager.getInstance().forceFlushMetrics()
+          metricsCollectors.flatMap {
+            it.collect(PathManager.getLogDir())
+          }
         }
-      }!!
+        catch (e: Throwable) {
+          // capture the real cause AND the file state at the moment of failure. withRetry only logs and
+          // returns null on exhaustion; and a re-read after the loop races with the writer finishing, so it
+          // can misleadingly show a healthy file. Snapshot the accurate read-time state here.
+          lastFailure = e
+          lastFileState = describeTelemetryJsonFile(telemetryJsonFile)
+          logOutput("Perf metrics collection for '$uniqueTestIdentifier' failed on attempt $attempt: $lastFileState")
+          throw e
+        }
+      }
+
+      if (metrics == null) {
+        // do not mask: surface the real cause and the failure-time telemetry file state (size/finalized/tail).
+        // Per-failed-attempt state is logged above (build log) and distinguishes a write/read race from a
+        // never-written file; the exception carries it to the dashboard without archiving a huge file. See AT-1875.
+        throw IllegalStateException(
+          "Failed to extract perf metrics for '$uniqueTestIdentifier' after $attempt attempts. $lastFileState",
+          lastFailure,
+        )
+      }
 
       teamCityClient.publishTeamCityArtifacts(source = PathManager.getLogDir(), artifactPath = uniqueTestIdentifier)
       teamCityClient.publishTeamCityArtifacts(source = getIdeTestLogFile(), artifactPath = uniqueTestIdentifier)

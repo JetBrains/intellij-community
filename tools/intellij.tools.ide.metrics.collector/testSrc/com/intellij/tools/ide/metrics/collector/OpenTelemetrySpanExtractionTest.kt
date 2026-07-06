@@ -9,8 +9,11 @@ import com.intellij.util.io.URLUtil
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
+import kotlinx.serialization.SerializationException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import java.nio.file.Files
 import java.nio.file.FileSystemAlreadyExistsException
 import java.nio.file.FileSystems
 import java.nio.file.Paths
@@ -382,5 +385,20 @@ class OpenTelemetrySpanExtractionTest {
       //Check that the alias applies only to the specified metric
       Metric.newDuration("performance_test", 30661)
     ))
+  }
+
+  @Test
+  fun truncatedTelemetryFileFailsWithDiagnostics() {
+    // a file read while still being written ends without the closing "]}]}"; the failure must carry the real
+    // cause and the on-disk file state instead of being masked by a synthetic NPE upstream (see AT-1875)
+    val complete = Files.readAllBytes(openTelemetryReports / "opentelemetry.json")
+    val truncated = Files.createTempFile("truncated", "-opentelemetry.json")
+    Files.write(truncated, complete.copyOf(complete.size / 2))
+
+    val failure = assertThrows<IllegalStateException> {
+      OpentelemetrySpanJsonParser(SpanFilter.any()).getSpanElements(truncated)
+    }
+    assertThat(failure.message).contains("finalized=false")
+    assertThat(failure.cause).isInstanceOf(SerializationException::class.java)
   }
 }
