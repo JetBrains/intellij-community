@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.pom.Navigatable
 import org.gradle.tooling.model.build.BuildEnvironment
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.plugins.gradle.issue.GradleIssueChecker
 import org.jetbrains.plugins.gradle.issue.GradleIssueData
 import org.jetbrains.plugins.gradle.issue.GradleIssueFailure
@@ -23,10 +24,12 @@ import org.jetbrains.plugins.gradle.statistics.GradleModelBuilderMessageCollecto
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
+import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG = logger<GradleExecutionReporter>()
 
-internal class GradleExecutionReporterImpl(
+@Internal
+class GradleExecutionReporterImpl(
   private val projectPath: String,
   private val taskId: ExternalSystemTaskId,
   private val listener: ExternalSystemTaskNotificationListener,
@@ -37,13 +40,20 @@ internal class GradleExecutionReporterImpl(
   private val projectRoot: Path
     get() = buildEnvironment?.buildIdentifier?.rootDir?.toPath() ?: Path.of(projectPath)
 
+  private val hasFailures = AtomicBoolean(false)
+
   private val processedMessageKeys = HashSet<MessageKey>()
   private val processedIssueKeys = HashSet<IssueKey>()
+
+  fun hasFailures(): Boolean = hasFailures.get()
 
   override fun failure(failure: GradleIssueFailure): GradleExecutionFailureReport =
     GradleExecutionFailureReportImpl(this, failure)
 
   private fun reportFailure(report: GradleExecutionFailureReportImpl) {
+    if (report.severity == GradleExecutionFailureReport.Severity.ERROR) {
+      hasFailures.set(true)
+    }
     reportFusEvent(report)
     reportLoggerEvent(report)
     reportBuildEvent(report)
