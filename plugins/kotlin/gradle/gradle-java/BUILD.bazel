@@ -2,6 +2,14 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
+jps_test(
+    name = "kotlin-gradle-gradle-java-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":kotlin-gradle-gradle-java-tests_test_lib"],
+)
+### skip generation section `test kotlin.gradle.gradle-java.tests`
+
 ### auto-generated section `build kotlin.gradle.gradle-java` start
 
 create_kotlinc_options(
@@ -392,11 +400,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml kotlin.gradle.gradle-java.tests` end
-
-### auto-generated section `test kotlin.gradle.gradle-java.tests` start
-
-jps_test(
-    name = "kotlin-gradle-gradle-java-tests_test",
-    runtime_deps = [":kotlin-gradle-gradle-java-tests_test_lib"],
-)
-### auto-generated section `test kotlin.gradle.gradle-java.tests` end
