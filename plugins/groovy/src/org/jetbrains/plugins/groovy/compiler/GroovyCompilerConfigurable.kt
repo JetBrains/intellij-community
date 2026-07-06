@@ -48,7 +48,7 @@ class GroovyCompilerConfigurable(private val project: Project) : BoundSearchable
         cell(textField)
           .align(AlignX.FILL)
           .applyToComponent {
-            val descriptor = FileChooserDescriptor(true, false, false, false, false, false).withDescription(GroovyBundle.message("settings.compiler.select.path.to.groovy.compiler.configscript"))
+            val descriptor = FileChooserDescriptor(true, false, false, false, false, false).withDescription(GroovyBundle.message("settings.compiler.select.path.to.groovy.compiler.configscript")).withEnvironmentRestricted(true)
             addBrowseFolderListener(project, descriptor)
           }.onReset {
             textField.text = normalizePath(config.configScript)
@@ -97,6 +97,7 @@ class GroovyCompilerConfigurable(private val project: Project) : BoundSearchable
     val configuration = config.excludeFromStubGeneration
     val index = if (project.isDefault) null else ProjectRootManager.getInstance(project).fileIndex
     val descriptor = FileChooserDescriptor(true, true, false, false, false, true)
+      .withEnvironmentRestricted(true)
       .withFileFilter { file -> index == null || !index.isExcluded(file) }
       .withRoots(getInstance(project).modules.flatMap { module ->
         ModuleRootManager.getInstance(module).getSourceRoots(JavaModuleSourceRootTypes.SOURCES)
