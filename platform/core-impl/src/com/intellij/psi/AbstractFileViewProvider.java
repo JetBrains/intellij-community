@@ -500,7 +500,8 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
 
     @Override
     public @NonNls String toString() {
-      return "VirtualFileContent{size=" + getVirtualFile().getLength() + "}";
+      Document doc = getDocument();
+      return "VirtualFileContent{virtualFileSize=" + getVirtualFile().getLength() + ", documentSize=" + (doc == null ? null : doc.getTextLength()) + "}";
     }
   }
 

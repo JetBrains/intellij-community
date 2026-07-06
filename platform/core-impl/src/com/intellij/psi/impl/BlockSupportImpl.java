@@ -289,11 +289,13 @@ public final class BlockSupportImpl extends BlockSupport {
 
     ASTNode newFileElement = PsiVersioningService.createVersionedPsiElements(oldFileNode, () -> newFile.getNode());
     if (lastCommittedText.length() != oldFileNode.getTextLength()) {
+      Document docCachedByFile = PsiDocumentManager.getInstance(fileImpl.getProject()).getCachedDocument(fileImpl);
+      Document docByViewProvider = viewProvider.getDocument();
       throw new IncorrectOperationException(
         "Last committed text length: " + lastCommittedText.length() + ", " +
         "old file node length: " + oldFileNode.getTextLength() + ", " +
-        "cached document by PsiFile: " + PsiDocumentManager.getInstance(fileImpl.getProject()).getCachedDocument(fileImpl) + ", " +
-        "document by view provider: " + viewProvider.getDocument() + ", " +
+        "cached document by PsiFile: " + docCachedByFile + "@" + System.identityHashCode(docCachedByFile) + ", " +
+        "document by view provider: " + docByViewProvider + "@" + System.identityHashCode(docByViewProvider) + ", " +
         "viewProvider: " + viewProvider);
     }
     DiffLog diffLog = mergeTrees(fileImpl, oldFileNode, newFileElement, indicator, lastCommittedText);
