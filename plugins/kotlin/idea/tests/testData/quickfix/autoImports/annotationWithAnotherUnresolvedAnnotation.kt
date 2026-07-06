@@ -2,12 +2,12 @@
 // ERROR: No value passed for parameter 'value'
 // ERROR: Property must be initialized
 // ERROR: Unresolved reference: Language33
-// K2_ERROR: Property must be initialized.
-// K2_ERROR: Unresolved reference 'Language'.
-// K2_ERROR: Unresolved reference 'Language33'.
-// K2_AFTER_ERROR: No value passed for parameter 'value'.
-// K2_AFTER_ERROR: Property must be initialized.
-// K2_AFTER_ERROR: Unresolved reference 'Language33'.
+// K2_AFTER_ERROR: MUST_BE_INITIALIZED
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: MUST_BE_INITIALIZED
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 import org.intellij.lang.annotations.JdkConstants
 

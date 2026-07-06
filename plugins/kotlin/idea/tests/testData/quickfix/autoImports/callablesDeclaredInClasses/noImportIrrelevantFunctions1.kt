@@ -5,8 +5,8 @@
 // ACTION: Create member function 'Base.foo'
 // ACTION: Rename reference
 // ERROR: Unresolved reference: foo
-// K2_ERROR: Unresolved reference 'foo' on receiver of type 'Base'.
-// K2_AFTER_ERROR: Unresolved reference 'foo' on receiver of type 'Base'.
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 package p
 

@@ -1,7 +1,7 @@
 // "Add 'Any' as upper bound for T to make it non-nullable" "true"
 // LANGUAGE_VERSION: 1.7
-// K2_ERROR: Argument type mismatch: actual type is 'T (of fun <T> bar)', but 'Any' was expected.
-// K2_ERROR: Cannot infer type for type parameter 'R'. Specify it explicitly.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
 
 fun <R : Any> foo(x: R) {}
 

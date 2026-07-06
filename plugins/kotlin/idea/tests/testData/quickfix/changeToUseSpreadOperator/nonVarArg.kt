@@ -5,8 +5,8 @@
 // ACTION: Create function 'foo'
 // ACTION: Enable option 'Function return types' for 'Types' inlay hints
 // ERROR: Type mismatch: inferred type is Array<String> but String was expected
-// K2_ERROR: Argument type mismatch: actual type is 'Array<String>', but 'String' was expected.
-// K2_AFTER_ERROR: Argument type mismatch: actual type is 'Array<String>', but 'String' was expected.
+// K2_AFTER_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 fun foo(x: String) {}
 

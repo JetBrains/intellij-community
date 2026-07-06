@@ -1,8 +1,8 @@
 // "Change the upper bound of T to 'A' to make T non-nullable" "true"
 // LANGUAGE_VERSION: 1.7
-// K2_ERROR: Argument type mismatch: actual type is 'Foo<T#1 (of class Bar<T : A?, U : A?>), U#1 (of class Bar<T : A?, U : A?>)>', but 'Foo<uninferred T (of fun <T : Any, U> foo), uninferred U (of fun <T : Any, U> foo)>' was expected.
-// K2_ERROR: Cannot infer type for type parameter 'T'. Specify it explicitly.
-// K2_ERROR: Cannot infer type for type parameter 'U'. Specify it explicitly.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
 
 class A
 

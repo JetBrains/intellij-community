@@ -1,7 +1,7 @@
 // "Add explicit context 's: String'" "true"
 // COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
 // LANGUAGE_VERSION: 2.3
-// K2_ERROR: Overload resolution ambiguity between candidates:<br>fun foo(p: Int): Unit<br>context(s: String) fun foo(p: Int): Unit
+// K2_ERROR: OVERLOAD_RESOLUTION_AMBIGUITY
 fun foo(p: Int) {}
 context(s: String) fun foo(p: Int) {}
 

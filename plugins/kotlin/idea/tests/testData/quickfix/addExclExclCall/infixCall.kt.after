@@ -1,5 +1,5 @@
 // "Add non-null asserted (p!!) call" "true"
-// K2_ERROR: Infix call is prohibited on a nullable receiver of type 'SafeType?'. Use '?.'-qualified call instead.
+// K2_ERROR: UNSAFE_INFIX_CALL
 
 class SafeType {
     infix fun op(arg: Int) {}

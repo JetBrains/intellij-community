@@ -1,12 +1,12 @@
 // "Rename reference" "true"
 // ERROR: Unresolved reference: x
 // ERROR: Unresolved reference: x
-// K2_ERROR: Unresolved reference 'x'.
-// K2_ERROR: Unresolved reference 'x'.
-// K2_ERROR: Unresolved reference 'x'.
-// K2_ERROR: Unresolved reference 'x'.
-// K2_AFTER_ERROR: Unresolved reference 'x'.
-// K2_AFTER_ERROR: Unresolved reference 'x'.
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 class A {
     val a = 1
     val s = ""

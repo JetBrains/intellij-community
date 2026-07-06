@@ -1,5 +1,5 @@
 // "Remove 'enum' modifier" "true"
-// K2_ERROR: Modifier 'enum' is not applicable to 'interface'.
+// K2_ERROR: WRONG_MODIFIER_TARGET
 <caret>interface A {
 }
 

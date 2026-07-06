@@ -1,5 +1,5 @@
 // "Import extension function 'Other.foo'" "true"
-// K2_ERROR: Unresolved reference 'foo' on receiver of type 'Other'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 package p
 
 import p.ObjBase.foo

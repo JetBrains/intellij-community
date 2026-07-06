@@ -1,5 +1,5 @@
 // "Change type of base property 'A.x' to 'String'" "true"
-// K2_ERROR: Type of 'var x: String' doesn't match the type of the overridden 'var' property 'var x: Int' defined in 'A'.
+// K2_ERROR: VAR_TYPE_MISMATCH_ON_OVERRIDE
 interface A {
     var x: Int
 }

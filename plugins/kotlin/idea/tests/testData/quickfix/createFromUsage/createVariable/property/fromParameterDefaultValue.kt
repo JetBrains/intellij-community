@@ -1,7 +1,7 @@
 // "Create property 'foo'" "true"
-// K2_ERROR: Unresolved reference 'foo'.
 // ERROR: Property must be initialized
-// K2_AFTER_ERROR: Property must be initialized.
+// K2_AFTER_ERROR: MUST_BE_INITIALIZED
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 fun defaultParamValue(p: Int = fo<caret>o) {}
 

@@ -2,8 +2,8 @@
 // ACTION: Add non-null asserted (foo()!!) call
 // ACTION: Replace with safe (this?.) call
 // ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type A?
-// K2_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'A?'.
-// K2_AFTER_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'A?'.
+// K2_AFTER_ERROR: UNSAFE_CALL
+// K2_ERROR: UNSAFE_CALL
 
 class A {
     fun foo() {

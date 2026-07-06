@@ -3,12 +3,12 @@
 // ACTION: Change to constructor invocation
 // ERROR: Unresolved reference: XXX
 // ERROR: This type has a constructor, and thus must be initialized here
-// K2_ERROR: No value passed for parameter 'p1'.
-// K2_ERROR: This type has a constructor, so it must be initialized here.
-// K2_ERROR: Unresolved reference 'XXX'.
-// K2_AFTER_ERROR: No value passed for parameter 'p1'.
-// K2_AFTER_ERROR: This type has a constructor, so it must be initialized here.
-// K2_AFTER_ERROR: Unresolved reference 'XXX'.
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_AFTER_ERROR: SUPERTYPE_NOT_INITIALIZED
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: SUPERTYPE_NOT_INITIALIZED
+// K2_ERROR: UNRESOLVED_REFERENCE
 open class Base(p1: XXX)
 
 class C : Base<caret>

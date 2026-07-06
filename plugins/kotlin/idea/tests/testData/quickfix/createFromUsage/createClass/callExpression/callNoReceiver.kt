@@ -9,7 +9,7 @@
 // K2_ACTIONS_LIST: Create test
 // K2_ACTIONS_LIST: Rename reference
 // K2_ACTIONS_LIST: Create function 'Foo'
-// K2_ERROR: Unresolved reference 'Foo'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 fun test() = <caret>Foo(2, "2")
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromUsageFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinClassAction

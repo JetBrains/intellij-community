@@ -1,7 +1,7 @@
 // "Insert 'this()' call" "true"
 // ERROR: There's a cycle in the delegation calls chain
-// K2_ERROR: Explicit 'this' or 'super' call is required. There is no constructor in the superclass that can be called without arguments.
-// K2_AFTER_ERROR: There's a cycle in the delegation calls chain.
+// K2_AFTER_ERROR: CYCLIC_CONSTRUCTOR_DELEGATION_CALL
+// K2_ERROR: EXPLICIT_DELEGATION_CALL_REQUIRED
 
 open class B(val x: Int)
 

@@ -13,7 +13,7 @@ class K2MarkedForRemovalInspectionTest : KotlinMarkedForRemovalInspectionTest() 
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       package test
       fun main() {
-        <error descr="'test.MyTest' is deprecated and marked for removal"><warning descr="[DEPRECATION] 'constructor(): MyTest' is deprecated. Deprecated in Java.">MyTest</warning></error>()
+        <error descr="'test.MyTest' is deprecated and marked for removal"><warning descr="[DEPRECATION]">MyTest</warning></error>()
       }
     """.trimIndent())
   }

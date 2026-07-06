@@ -2,7 +2,7 @@
 // WITH_STDLIB
 // COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
 // LANGUAGE_VERSION: 2.3
-// K2_ERROR: No value passed for parameter 'a'.
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
   context(d: Int)
   fun foo(a: Int, b: Int = 5) {}
 

@@ -1,8 +1,8 @@
 // PROBLEM: none
-// K2_ERROR: Argument already passed for this parameter.
-// K2_ERROR: No value passed for parameter 'b'.
 // ERROR: An argument is already passed for this parameter
 // ERROR: No value passed for parameter 'b'
+// K2_ERROR: ARGUMENT_PASSED_TWICE
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
 fun test() {
     class Test{
         operator fun get(a: Int, b: Int) : Int = 0

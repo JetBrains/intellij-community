@@ -1,5 +1,5 @@
 // "Surround with null check" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'Int?', but 'Int' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 object Obj {
     fun foo(x: Int) = x

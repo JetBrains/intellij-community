@@ -2,10 +2,10 @@
 // WITH_STDLIB
 // COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
 // LANGUAGE_VERSION: 2.3
-// K2_ERROR: Mixing named and positional arguments is not allowed unless the order of the arguments matches the order of the parameters.
-// K2_ERROR: No value passed for parameter 'value'.
-// K2_AFTER_ERROR: Mixing named and positional arguments is not allowed unless the order of the arguments matches the order of the parameters.
-// K2_AFTER_ERROR: No value passed for parameter 'value'.
+// K2_AFTER_ERROR: MIXING_NAMED_AND_POSITIONAL_ARGUMENTS
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: MIXING_NAMED_AND_POSITIONAL_ARGUMENTS
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
 
 context(name: String)
 fun foo(value: Int) {}

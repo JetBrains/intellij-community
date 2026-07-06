@@ -1,9 +1,9 @@
 // "Specify all remaining arguments by name" "true"
 // WITH_STDLIB
-// K2_ERROR: No value passed for parameter 'a'.
-// K2_ERROR: No value passed for parameter 'b'.
-// K2_ERROR: No value passed for parameter 'c'.
-// K2_ERROR: No value passed for parameter 'd'.
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
 fun foo(a: Int, b: Int, c: Int, d: Int): Int = a + b + c + d
 
 fun test() {

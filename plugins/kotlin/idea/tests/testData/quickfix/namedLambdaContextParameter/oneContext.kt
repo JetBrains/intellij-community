@@ -1,6 +1,6 @@
 // "Remove parameter name" "true"
 // COMPILER_ARGUMENTS: -Xcontext-parameters
-// K2_ERROR: Named context parameters in function types are unsupported. Use syntax 'context(Type)' instead.
+// K2_ERROR: NAMED_CONTEXT_PARAMETER_IN_FUNCTION_TYPE
 
 fun foo(bar: context(c: <caret>String)() -> Unit) {
 }

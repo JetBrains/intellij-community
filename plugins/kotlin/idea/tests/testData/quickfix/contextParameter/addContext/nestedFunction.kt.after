@@ -1,7 +1,7 @@
 // "Add context parameter to function" "true"
 // COMPILER_ARGUMENTS: -Xcontext-parameters
-// K2_ERROR: No context argument for 'i: Int' found.
-// K2_AFTER_ERROR: No context argument for '_: Int' found.
+// K2_AFTER_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: NO_CONTEXT_ARGUMENT
 context(i: Int) fun bar() {}
 
 fun outer() {

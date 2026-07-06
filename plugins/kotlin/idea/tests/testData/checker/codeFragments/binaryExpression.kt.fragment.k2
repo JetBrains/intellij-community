@@ -1,1 +1,1 @@
-a + <error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'b'.">b</error>
+a + <error descr="[UNRESOLVED_REFERENCE]">b</error>

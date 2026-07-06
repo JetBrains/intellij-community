@@ -5,14 +5,14 @@
 // ERROR: Unresolved reference: x
 // ERROR: Unresolved reference: y
 // ERROR: Unresolved reference: z
-// K2_ERROR: 'expect' class does not declare any constructors.
-// K2_ERROR: Unresolved reference 'x'.
-// K2_ERROR: Unresolved reference 'y'.
-// K2_ERROR: Unresolved reference 'z'.
-// K2_AFTER_ERROR: 'expect' class does not declare any constructors.
-// K2_AFTER_ERROR: Unresolved reference 'x'.
-// K2_AFTER_ERROR: Unresolved reference 'y'.
-// K2_AFTER_ERROR: Unresolved reference 'z'.
+// K2_AFTER_ERROR: NO_IMPLICIT_DEFAULT_CONSTRUCTOR_ON_EXPECT_CLASS
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: NO_IMPLICIT_DEFAULT_CONSTRUCTOR_ON_EXPECT_CLASS
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 expect annotation class Foo
 

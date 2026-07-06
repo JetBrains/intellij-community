@@ -1,5 +1,5 @@
 // "Make 'foo' not abstract" "true"
-// K2_ERROR: Modifier 'abstract' is not applicable to 'top level function'.
+// K2_ERROR: WRONG_MODIFIER_TARGET
 <caret>abstract fun foo() {}
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

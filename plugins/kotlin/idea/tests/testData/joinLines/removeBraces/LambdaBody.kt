@@ -1,6 +1,6 @@
 // AFTER_ERROR: Unresolved reference: bar
-// K2_AFTER_ERROR: Cannot infer type for type parameter 'R'. Specify it explicitly.
-// K2_AFTER_ERROR: Unresolved reference 'bar'.
+// K2_AFTER_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
 fun foo() {
     <caret>run {
         bar()

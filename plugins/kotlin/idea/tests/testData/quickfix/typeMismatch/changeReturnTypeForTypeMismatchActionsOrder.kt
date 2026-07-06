@@ -4,7 +4,7 @@
 // K2_ACTIONS_LIST: Remove explicitly specified return type of called function 'foo'
 // K2_ACTIONS_LIST: Introduce import alias
 // WITH_STDLIB
-// K2_ERROR: Return type mismatch: expected 'Unit', actual 'Int'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 
 fun test() {
     return <caret>foo()

@@ -1,5 +1,5 @@
 // "Make 'B' 'abstract'" "true"
-// K2_ERROR: Class 'B' is not abstract and does not implement abstract base class member:<br>fun foo(): Unit
+// K2_ERROR: ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED
 abstract class A {
     abstract fun foo()
 }

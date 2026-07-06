@@ -1,11 +1,11 @@
 // "Add secondary constructor to 'Foo'" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'Boolean', but 'String' was expected.
-// K2_ERROR: Too many arguments for 'constructor(name: String): Foo'.
-// K2_ERROR: Unresolved reference 'xxx'.
+// K2_AFTER_ERROR: CYCLIC_CONSTRUCTOR_DELEGATION_CALL
+// K2_AFTER_ERROR: NONE_APPLICABLE
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: TOO_MANY_ARGUMENTS
+// K2_ERROR: UNRESOLVED_REFERENCE
 
-// K2_AFTER_ERROR: None of the following candidates is applicable:<br><br>constructor(name: String): Foo:<br>  Too many arguments for 'constructor(name: String): Foo'.<br>  Argument type mismatch: actual type is 'Boolean', but 'String' was expected.<br><br>constructor(name: Boolean): Foo:<br>  Too many arguments for 'constructor(name: Boolean): Foo'.
-// K2_AFTER_ERROR: There's a cycle in the delegation calls chain.
-// K2_AFTER_ERROR: Unresolved reference 'xxx'.
 class Foo(
     val name: String,
 ) {

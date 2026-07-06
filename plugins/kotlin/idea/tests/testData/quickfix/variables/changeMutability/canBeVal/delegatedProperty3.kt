@@ -4,10 +4,10 @@
 // ACTION: Introduce import alias
 // ERROR: Type 'Delegate' has no method 'getValue(Nothing?, KProperty<*>)' and thus it cannot serve as a delegate
 // ERROR: Type 'Delegate' has no method 'setValue(Nothing?, KProperty<*>, String)' and thus it cannot serve as a delegate for var (read-write property)
-// K2_ERROR: Type 'Delegate' has no method 'getValue(Nothing?, KMutableProperty0<*>)', so it cannot serve as a delegate.
-// K2_ERROR: Type 'Delegate' has no method 'setValue(Nothing?, KMutableProperty0<*>, String)', so it cannot serve as a delegate for var (read-write property).
-// K2_AFTER_ERROR: Type 'Delegate' has no method 'getValue(Nothing?, KMutableProperty0<*>)', so it cannot serve as a delegate.
-// K2_AFTER_ERROR: Type 'Delegate' has no method 'setValue(Nothing?, KMutableProperty0<*>, String)', so it cannot serve as a delegate for var (read-write property).
+// K2_AFTER_ERROR: DELEGATE_SPECIAL_FUNCTION_MISSING
+// K2_AFTER_ERROR: DELEGATE_SPECIAL_FUNCTION_MISSING
+// K2_ERROR: DELEGATE_SPECIAL_FUNCTION_MISSING
+// K2_ERROR: DELEGATE_SPECIAL_FUNCTION_MISSING
 import kotlin.reflect.KProperty
 
 fun test() {

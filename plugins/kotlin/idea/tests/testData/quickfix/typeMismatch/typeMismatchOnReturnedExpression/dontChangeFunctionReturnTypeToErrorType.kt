@@ -9,10 +9,10 @@
 // ACTION: Remove explicit lambda parameter types (may break code)
 // ERROR: Type mismatch: inferred type is ([Error type: Unresolved type for NoSuchType]) -> Int but Int was expected
 // ERROR: Unresolved reference: NoSuchType
-// K2_ERROR: Return type mismatch: expected 'Int', actual '(??? (Unresolved qualified name: NoSuchType)) -> Int'.
-// K2_ERROR: Unresolved reference 'NoSuchType'.
-// K2_AFTER_ERROR: Return type mismatch: expected 'Int', actual '(??? (Unresolved qualified name: NoSuchType)) -> Int'.
-// K2_AFTER_ERROR: Unresolved reference 'NoSuchType'.
+// K2_AFTER_ERROR: RETURN_TYPE_MISMATCH
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: RETURN_TYPE_MISMATCH
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 fun foo(): Int {
     return { x: NoSuchType<caret> -> 42 }

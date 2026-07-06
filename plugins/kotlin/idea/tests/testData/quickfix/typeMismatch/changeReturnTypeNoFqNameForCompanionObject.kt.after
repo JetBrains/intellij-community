@@ -1,5 +1,5 @@
 // "Change return type of enclosing function 'Companion.foo' to 'Int'" "true"
-// K2_ERROR: Return type mismatch: expected 'String', actual 'Int'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 package foo.bar
 
 class A {

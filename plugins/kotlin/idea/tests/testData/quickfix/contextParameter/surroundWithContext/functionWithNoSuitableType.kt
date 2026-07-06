@@ -1,6 +1,6 @@
 // "Surround call with 'context(TODO())'" "true"
 // COMPILER_ARGUMENTS: -Xcontext-parameters
-// K2_ERROR: No context argument for 's: String' found.
+// K2_ERROR: NO_CONTEXT_ARGUMENT
 context(s: String) fun bar() {}
 
 fun foo(i: Int) {

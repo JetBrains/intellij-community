@@ -1,5 +1,5 @@
 // "Use inherited visibility" "true"
-// K2_ERROR: Cannot weaken access privilege internal for 'accessor' in 'Success'.
+// K2_ERROR: CANNOT_WEAKEN_ACCESS_PRIVILEGE
 interface ParseResult<out T> {
     public val success : Boolean
     public val value : T

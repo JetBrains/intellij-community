@@ -1,5 +1,5 @@
 // "Import extension function 'Companion.baz'" "true"
-// K2_ERROR: Unresolved reference 'baz'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 package p
 
 open class A {

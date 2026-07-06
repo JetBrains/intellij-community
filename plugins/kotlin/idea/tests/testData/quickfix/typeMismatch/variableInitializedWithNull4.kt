@@ -4,8 +4,8 @@
 // ACTION: Converts the assignment statement to an expression
 // ACTION: Remove braces from 'if' statement
 // ERROR: Type mismatch: inferred type is String but Int was expected
-// K2_ERROR: Assignment type mismatch: actual type is 'String', but 'Int' was expected.
-// K2_AFTER_ERROR: Assignment type mismatch: actual type is 'String', but 'Int' was expected.
+// K2_AFTER_ERROR: ASSIGNMENT_TYPE_MISMATCH
+// K2_ERROR: ASSIGNMENT_TYPE_MISMATCH
 fun foo(condition: Boolean) {
     var x = 1
     if (condition) {

@@ -1,10 +1,10 @@
 // "Create member function 'A.foo'" "true"
 // ERROR: Type mismatch: inferred type is A<Int> but Int was expected
-// K2_ERROR: Return type mismatch: expected 'Int', actual 'A<Int>'.
-// K2_ERROR: Unresolved reference 'foo' on receiver of type 'A<Int>'.
-// K2_AFTER_ERROR: Return type mismatch: expected 'Int', actual 'A<Int>'.
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
+// K2_AFTER_ERROR: RETURN_TYPE_MISMATCH
+// K2_ERROR: RETURN_TYPE_MISMATCH
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 class A<T>(val n: T)
 

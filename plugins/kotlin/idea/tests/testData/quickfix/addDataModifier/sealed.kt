@@ -9,12 +9,12 @@
 // ERROR: Destructuring declaration initializer of type Foo must have a 'component1()' function
 // ERROR: Destructuring declaration initializer of type Foo must have a 'component2()' function
 // ERROR: Sealed types cannot be instantiated
-// K2_ERROR: Cannot access 'constructor(bar: String, baz: Int): Foo': it is protected in 'Foo'.
-// K2_ERROR: Destructuring of type 'Foo' requires operator function 'component1()'.
-// K2_ERROR: Destructuring of type 'Foo' requires operator function 'component2()'.
-// K2_AFTER_ERROR: Cannot access 'constructor(bar: String, baz: Int): Foo': it is protected in 'Foo'.
-// K2_AFTER_ERROR: Destructuring of type 'Foo' requires operator function 'component1()'.
-// K2_AFTER_ERROR: Destructuring of type 'Foo' requires operator function 'component2()'.
+// K2_AFTER_ERROR: COMPONENT_FUNCTION_MISSING
+// K2_AFTER_ERROR: COMPONENT_FUNCTION_MISSING
+// K2_AFTER_ERROR: INVISIBLE_REFERENCE
+// K2_ERROR: COMPONENT_FUNCTION_MISSING
+// K2_ERROR: COMPONENT_FUNCTION_MISSING
+// K2_ERROR: INVISIBLE_REFERENCE
 sealed class Foo(val bar: String, val baz: Int)
 
 fun test() {

@@ -1,6 +1,6 @@
 // "Implement members" "true"
 // WITH_STDLIB
-// K2_ERROR: Class 'A' is not abstract and does not implement abstract member:<br>fun foo(): Unit
+// K2_ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED
 annotation class Annotation
 interface I {
     @Annotation

@@ -13,7 +13,7 @@
 // ACTION: Propagate 'MyExperimentalAPI' opt-in requirement to containing class 'Inner'
 // ACTION: Propagate 'MyExperimentalAPI' opt-in requirement to containing class 'Outer'
 // RUNTIME_WITH_SCRIPT_RUNTIME
-// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@MyExperimentalAPI' or '@OptIn(MyExperimentalAPI::class)'
+// K2_ERROR: OPT_IN_USAGE_ERROR
 
 @RequiresOptIn
 annotation class MyExperimentalAPI

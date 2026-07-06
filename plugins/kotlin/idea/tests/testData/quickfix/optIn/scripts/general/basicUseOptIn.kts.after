@@ -8,8 +8,8 @@
 // ACTION: Propagate 'MyExperimentalAPI' opt-in requirement to containing class 'Bar'
 // PRIORITY: HIGH
 // RUNTIME_WITH_SCRIPT_RUNTIME
-// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@a.b.MyExperimentalAPI' or '@OptIn(a.b.MyExperimentalAPI::class)'
-// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@a.b.MyExperimentalAPI' or '@OptIn(a.b.MyExperimentalAPI::class)'
+// K2_ERROR: OPT_IN_USAGE_ERROR
+// K2_ERROR: OPT_IN_USAGE_ERROR
 
 package a.b
 

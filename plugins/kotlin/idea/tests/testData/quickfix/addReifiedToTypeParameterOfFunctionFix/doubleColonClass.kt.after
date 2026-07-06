@@ -1,5 +1,5 @@
 // "Make 'T' reified and 'dereferenceClass' inline" "true"
-// K2_ERROR: Cannot use 'T' as reified type parameter. Use a class instead.
+// K2_ERROR: TYPE_PARAMETER_AS_REIFIED
 
 inline fun <reified T: Any> dereferenceClass(): Any =
         T::class<caret>

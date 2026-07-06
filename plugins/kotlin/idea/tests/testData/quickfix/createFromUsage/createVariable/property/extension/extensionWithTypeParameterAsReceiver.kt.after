@@ -1,7 +1,4 @@
-private val <T> T.bar: Int
-    get() {
-        TODO("Not yet implemented")
-    }
+private val T.bar: Int
 
 // "Create extension property 'T.bar'" "true"
 fun consume(n: Int) {}

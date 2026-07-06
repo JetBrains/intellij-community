@@ -1,6 +1,6 @@
 // "Add use-site target" "true"
 // CHOSEN_OPTION: PROPERTY_GETTER|Add use-site target 'get'
-// K2_ERROR: This annotation is not applicable to target 'top level property with backing field'. Applicable targets: getter, setter
+// K2_ERROR: WRONG_ANNOTATION_TARGET
 
 @Target(AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
 annotation class Anno2

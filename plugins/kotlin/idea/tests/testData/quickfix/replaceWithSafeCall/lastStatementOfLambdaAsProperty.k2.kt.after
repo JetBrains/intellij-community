@@ -1,5 +1,5 @@
 // "Replace with safe (?.) call" "true"
-// K2_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'Foo?'.
+// K2_ERROR: UNSAFE_CALL
 class Test(private val foo: Foo?) {
     val baz = {
         bar("")

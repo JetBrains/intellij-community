@@ -2,9 +2,9 @@
 // WITH_STDLIB
 // ERROR: '@get:' annotations could be applied only to property declarations
 // ERROR: This annotation is not applicable to target 'class' and use site target '@get'
-// K2_ERROR: '@get:' annotations can only be applied to property declarations.
-// K2_ERROR: This annotation is not applicable to target 'class' and use-site target '@get'. Applicable targets: class, function, property, annotation class, constructor, setter, getter, typealias
-// K2_AFTER_ERROR: '@get:' annotations can only be applied to property declarations.
-// K2_AFTER_ERROR: This annotation is not applicable to target 'class' and use-site target '@get'. Applicable targets: class, function, property, annotation class, constructor, setter, getter, typealias
+// K2_AFTER_ERROR: INAPPLICABLE_TARGET_ON_PROPERTY
+// K2_AFTER_ERROR: WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET
+// K2_ERROR: INAPPLICABLE_TARGET_ON_PROPERTY
+// K2_ERROR: WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET
 <caret>@get:Deprecated("", level = DeprecationLevel.ERROR)
 class Foo

@@ -1,5 +1,5 @@
 // "Add function to supertype…" "true"
-// K2_ERROR: 'f' overrides nothing.
+// K2_ERROR: NOTHING_TO_OVERRIDE
 open class A {
 }
 open class B : A() {

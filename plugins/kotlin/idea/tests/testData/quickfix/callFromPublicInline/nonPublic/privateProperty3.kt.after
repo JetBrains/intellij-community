@@ -1,5 +1,5 @@
 // "Remove 'inline' modifier" "true"
-// K2_ERROR: Public-API inline function cannot access non-public-API property.
+// K2_ERROR: NON_PUBLIC_CALL_FROM_PUBLIC_INLINE
 class C {
     private var foo = false
 

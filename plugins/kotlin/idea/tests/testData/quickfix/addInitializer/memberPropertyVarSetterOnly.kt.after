@@ -1,7 +1,7 @@
 // "Add initializer" "true"
-// K2_ERROR: Property must be initialized.
+// K2_ERROR: MUST_BE_INITIALIZED
 class A {
-    var n: Int = <selection>0</selection><caret>
+    var n: Int = <selection>0<caret></selection>
         set(value: Int) {}
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$AddInitializerFix

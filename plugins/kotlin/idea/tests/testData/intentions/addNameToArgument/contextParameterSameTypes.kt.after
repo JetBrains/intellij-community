@@ -4,14 +4,14 @@
 // AFTER-WARNING: Parameter 'x' is never used
 // AFTER-WARNING: Parameter 'y' is never used
 // AFTER-WARNING: Parameter 'a' is never used
+// K2_AFTER_ERROR: MIXING_NAMED_AND_POSITIONAL_ARGUMENTS
+// K2_AFTER_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: ARGUMENT_PASSED_TWICE
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: TOO_MANY_ARGUMENTS
 
-// K2_AFTER_ERROR: Mixing named and positional arguments is not allowed unless the order of the arguments matches the order of the parameters.
-// K2_AFTER_ERROR: No context argument for 'y: String' found.
-// K2_ERROR: Argument already passed for this parameter.
-// K2_ERROR: Argument type mismatch: actual type is 'String', but 'Int' was expected.
-// K2_ERROR: No context argument for 'x: String' found.
-// K2_ERROR: No context argument for 'y: String' found.
-// K2_ERROR: Too many arguments for 'context(x: String, y: String) fun foo(a: Int): Int'.
 
 context(x: String, y: String)
 fun foo(a: Int): Int = a

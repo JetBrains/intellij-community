@@ -26,6 +26,6 @@ fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesK
 
 // Calling Composable function from non-Composable function is not allowed.
 // ERROR "COMPOSABLE_EXPECTED" is expected.
-fun <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_EXPECTED] Functions which invoke @Composable functions must be marked with the @Composable annotation'; highlightingTextAttributesKey='ERRORS_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>NonComposableFunctionCallingComposable<!>() {
-    <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_INVOCATION] @Composable invocations can only happen from the context of a @Composable function'; highlightingTextAttributesKey='ERRORS_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>Home<!>()
+fun <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_EXPECTED]'; highlightingTextAttributesKey='ERRORS_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>NonComposableFunctionCallingComposable<!>() {
+    <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_INVOCATION]'; highlightingTextAttributesKey='ERRORS_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>Home<!>()
 }

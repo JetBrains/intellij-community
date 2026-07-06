@@ -1,7 +1,7 @@
 // "Create property 'v2' as constructor parameter" "false"
 // ERROR: Unresolved reference: v2
-// K2_ERROR: Unresolved reference 'v2' on receiver of type 'A'.
-// K2_AFTER_ERROR: Unresolved reference 'v2' on receiver of type 'A'.
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 interface A
 

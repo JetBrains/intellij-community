@@ -1,6 +1,6 @@
 // "Specify 'CharSequence' return type for enclosing function 'test'" "true"
-// K2_ERROR: Return type mismatch: expected 'Unit', actual 'CharSequence'.
-// K2_ERROR: Return type mismatch: expected 'Unit', actual 'String'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
+// K2_ERROR: RETURN_TYPE_MISMATCH
 fun test(x: CharSequence): CharSequence {
     if (true) return "foo"<caret>
     return x

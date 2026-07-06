@@ -1,5 +1,5 @@
 // "Add 'noinline' to parameter 'block'" "true"
-// K2_ERROR: Illegal usage of inline parameter 'block: () -> Unit'. Add 'noinline' modifier to the parameter declaration.
+// K2_ERROR: USAGE_IS_NOT_INLINABLE
 
 inline fun foo(noinline block: () -> Unit) = block<caret>
 

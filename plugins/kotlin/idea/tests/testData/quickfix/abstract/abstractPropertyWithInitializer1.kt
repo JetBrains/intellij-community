@@ -1,5 +1,5 @@
 // "Make 'i' not abstract" "true"
-// K2_ERROR: Abstract property 'i' in non-abstract class 'A'.
+// K2_ERROR: ABSTRACT_PROPERTY_IN_NON_ABSTRACT_CLASS
 class A {
     <caret>abstract var i = 0
 }

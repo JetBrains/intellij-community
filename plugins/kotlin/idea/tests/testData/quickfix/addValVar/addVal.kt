@@ -1,5 +1,5 @@
 // "Add 'val' or 'var' to parameter 'x'" "true"
-// K2_ERROR: Primary constructor of data class must only have property ('val' / 'var') parameters.
+// K2_ERROR: DATA_CLASS_NOT_PROPERTY_PARAMETER
 
 data class Foo(<caret>x: Int, val y: Int) {
 

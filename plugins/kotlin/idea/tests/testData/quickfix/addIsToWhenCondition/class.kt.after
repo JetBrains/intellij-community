@@ -1,5 +1,5 @@
 // "Add 'is' before 'Foo'" "true"
-// K2_ERROR: Classifier 'class Foo : Any' does not have a companion object, so it cannot be used as an expression.
+// K2_ERROR: NO_COMPANION_OBJECT
 
 class Foo
 

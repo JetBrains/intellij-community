@@ -1,9 +1,9 @@
 // "Show conflicting 'myFunction' declarations" "true"
 // SHOULD_BE_AVAILABLE_AFTER_EXECUTION
-// K2_ERROR: Conflicting overloads:<br>fun myFunction(): Unit
-// K2_ERROR: Conflicting overloads:<br>fun myFunction(): Unit
-// K2_AFTER_ERROR: Conflicting overloads:<br>fun myFunction(): Unit
-// K2_AFTER_ERROR: Conflicting overloads:<br>fun myFunction(): Unit
+// K2_AFTER_ERROR: CONFLICTING_OVERLOADS
+// K2_AFTER_ERROR: CONFLICTING_OVERLOADS
+// K2_ERROR: CONFLICTING_OVERLOADS
+// K2_ERROR: CONFLICTING_OVERLOADS
 
 package test
 

@@ -1,6 +1,6 @@
 // "Change to 'var'" "true"
 // WITH_STDLIB
-// K2_ERROR: '@Volatile' annotation cannot be used on immutable properties.
+// K2_ERROR: VOLATILE_ON_VALUE
 class Foo {
     <caret>@Volatile
     val bar: String = ""

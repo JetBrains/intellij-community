@@ -1,6 +1,6 @@
 // "Create member property 'A.foo'" "true"
 // K2_ACTION: "Create property 'foo'" "true"
-// K2_ERROR: Unresolved reference 'foo' on receiver of type 'A<Int>'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 class A<T>(val n: T)
 

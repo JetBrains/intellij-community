@@ -38,7 +38,7 @@ class ImportClassDuringTypingTest: KotlinLightCodeInsightFixtureTestCase() {
         val errors = myFixture.doHighlighting(HighlightSeverity.ERROR).sortedWith(Segment.BY_START_OFFSET_THEN_END_OFFSET)
         assertNotEmpty(errors)
         val error = errors.get(0)
-        assertEquals("[UNRESOLVED_REFERENCE] Unresolved reference 'FileInputStream'.", error.getDescription())
+        assertEquals("[UNRESOLVED_REFERENCE]", error.getDescription())
         assertTrue(error.hasHint())
         val errDesc =
             error.findRegisteredQuickFix(BiFunction { descriptor: IntentionActionDescriptor?, range: TextRange? ->

@@ -1,7 +1,7 @@
 // "Remove forbidden opt-in annotation targets" "true"
 // RUNTIME_WITH_SCRIPT_RUNTIME
-// K2_ERROR: Expression annotations with retention other than SOURCE are prohibited.
-// K2_ERROR: Opt-in requirement marker annotation cannot be used on the following code elements: expression.
+// K2_ERROR: OPT_IN_MARKER_WITH_WRONG_TARGET
+// K2_ERROR: RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION_ERROR
 @RequiresOptIn
 @Target(<caret>AnnotationTarget.EXPRESSION)
 annotation class SomeOptInAnnotation

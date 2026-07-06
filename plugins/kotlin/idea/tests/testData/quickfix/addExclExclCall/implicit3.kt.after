@@ -1,5 +1,5 @@
 // "Add non-null asserted (project!!) call" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'Foo.Project?', but 'Foo.Project' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 class Foo {
     val project: Project? = null
 

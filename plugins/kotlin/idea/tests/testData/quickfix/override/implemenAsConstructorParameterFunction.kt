@@ -6,8 +6,8 @@
 // ACTION: Make private
 // ACTION: Extract 'A' from current file
 // ERROR: Class 'A' is not abstract and does not implement abstract member public abstract fun foo(): Int defined in I
-// K2_ERROR: Class 'A' is not abstract and does not implement abstract member:<br>fun foo(): Int
-// K2_AFTER_ERROR: Class 'A' is not abstract and does not implement abstract member:<br>fun foo(): Int
+// K2_AFTER_ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED
+// K2_ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED
 interface I {
     fun foo(): Int
 }

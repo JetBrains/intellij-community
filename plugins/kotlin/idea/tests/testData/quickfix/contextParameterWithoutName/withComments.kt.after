@@ -1,6 +1,6 @@
 // "Use '_' to declare an anonymous context parameter" "true"
 // COMPILER_ARGUMENTS: -Xcontext-parameters
-// K2_ERROR: Context parameters must be named. Use '_' to declare an anonymous context parameter.
+// K2_ERROR: CONTEXT_PARAMETER_WITHOUT_NAME
 
 context(/*1*/_: String/*2*/)
 fun foo() = Unit

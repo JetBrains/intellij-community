@@ -1,6 +1,6 @@
 // "Surround with lambda" "true"
 // PRIORITY: HIGH
-// K2_ERROR: Assignment type mismatch: actual type is 'Int', but '() -> Long' was expected.
+// K2_ERROR: ASSIGNMENT_TYPE_MISMATCH
 fun foo() {
     val block: () -> Long
     block = <caret>123

@@ -1,8 +1,8 @@
 // "Surround call with 'with'" "false"
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 // API_VERSION: 2.1
-// K2_ERROR: No context argument for 's: String' found.
-// K2_AFTER_ERROR: No context argument for 's: String' found.
+// K2_AFTER_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: NO_CONTEXT_ARGUMENT
 context(i: Int, s: String) fun bar() {}
 
 fun foo() {

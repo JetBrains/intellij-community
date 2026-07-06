@@ -1,6 +1,6 @@
 // "Add getter" "true"
 // WITH_STDLIB
-// K2_ERROR: Property must be initialized or be abstract.
+// K2_ERROR: MUST_BE_INITIALIZED_OR_BE_ABSTRACT
 class Test {
     val x: Int<caret>
 }

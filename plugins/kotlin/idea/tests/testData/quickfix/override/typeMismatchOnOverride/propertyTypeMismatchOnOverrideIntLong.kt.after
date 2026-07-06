@@ -1,5 +1,5 @@
 // "Change type to 'Int'" "true"
-// K2_ERROR: Type of 'var x: Long' doesn't match the type of the overridden 'var' property 'var x: Int' defined in 'A'.
+// K2_ERROR: VAR_TYPE_MISMATCH_ON_OVERRIDE
 abstract class A {
     abstract var x : Int
 }

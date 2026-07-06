@@ -1,7 +1,7 @@
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 // "Change parameter 'b' type of function 'foo' to 'Unit'" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'Unit', but 'Int' was expected.
 
 context(_: String)
 fun main() {

@@ -1,6 +1,6 @@
 // "Add context parameter to function" "true"
 // COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
-// K2_ERROR: No context argument for 's: String' found.
+// K2_ERROR: NO_CONTEXT_ARGUMENT
 /**
  *
  */

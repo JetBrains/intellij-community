@@ -1,10 +1,10 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters -XXLanguage:+ExplicitContextArguments
+// K2_ERROR: MIXING_NAMED_AND_POSITIONAL_ARGUMENTS
+// K2_ERROR: MIXING_NAMED_AND_POSITIONAL_ARGUMENTS
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
 
 // PRIORITY: LOW
-// K2_ERROR: Mixing named and positional arguments is not allowed unless the order of the arguments matches the order of the parameters.
-// K2_ERROR: Mixing named and positional arguments is not allowed unless the order of the arguments matches the order of the parameters.
-// K2_ERROR: No context argument for 'x: String' found.
-// K2_ERROR: No value passed for parameter 'a'.
 
 context(x: String)
 fun foo(a: String, b: String): String {

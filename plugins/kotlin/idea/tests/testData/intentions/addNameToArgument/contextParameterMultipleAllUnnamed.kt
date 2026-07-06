@@ -4,11 +4,11 @@
 // AFTER-WARNING: Parameter 'x' is never used
 // AFTER-WARNING: Parameter 'y' is never used
 // AFTER-WARNING: Parameter 'a' is never used
-// K2_ERROR: Argument already passed for this parameter.
-// K2_ERROR: No context argument for 'y: Int' found.
-// K2_ERROR: Too many arguments for 'context(x: String, y: Int) fun foo(a: String): String'.
+// K2_AFTER_ERROR: ARGUMENT_PASSED_TWICE
+// K2_ERROR: ARGUMENT_PASSED_TWICE
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: TOO_MANY_ARGUMENTS
 
-// K2_AFTER_ERROR: Argument already passed for this parameter.
 
 context(x: String, y: Int)
 fun foo(a: String): String = x + y + a

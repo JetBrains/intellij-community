@@ -1,7 +1,7 @@
 // "Convert 'KClass' to 'Class'" "true"
 // PRIORITY: HIGH
 // WITH_STDLIB
-// K2_ERROR: Argument type mismatch: actual type is 'KClass<String>', but 'Class<*>' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 fun main() {
     val clazz = String::class

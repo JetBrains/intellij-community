@@ -4,13 +4,13 @@
 import androidx.compose.runtime.Composable
 
 @Composable fun A() {}
-val aCallable: () -> Unit <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected '() -> Unit', actual 'KComposableFunction0<Unit>'.'")!>=<!> ::A
+val aCallable: () -> Unit <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH]'")!>=<!> ::A
 val bCallable: @Composable () -> Unit = ::A
 val cCallable = ::A
 fun doSomething(fn: () -> Unit) { print(fn) }
 @Composable fun B(content: @Composable () -> Unit) {
     content()
-    doSomething(::<!HIGHLIGHTING("severity='ERROR'; descr='[INAPPLICABLE_CANDIDATE] Inapplicable candidate(s): fun A(): Unit'")!>A<!>)
+    doSomething(::<!HIGHLIGHTING("severity='ERROR'; descr='[INAPPLICABLE_CANDIDATE]'")!>A<!>)
     B(::A)
 }
 

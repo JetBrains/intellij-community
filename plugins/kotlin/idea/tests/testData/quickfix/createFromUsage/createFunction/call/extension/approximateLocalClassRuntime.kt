@@ -3,6 +3,7 @@
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
 // TODO fix in K2, see KT-67250 getExpectedType() improvements in K2
 // IGNORE_K2
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 open class A
 

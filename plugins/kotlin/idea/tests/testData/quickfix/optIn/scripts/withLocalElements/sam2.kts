@@ -7,7 +7,7 @@
 // ACTION: Opt in for 'MyOptIn' in module 'light_idea_test_case'
 // ACTION: Opt in for 'MyOptIn' on 'bar'
 // ACTION: Opt in for 'MyOptIn' on statement
-// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@MyOptIn' or '@OptIn(MyOptIn::class)'
+// K2_ERROR: OPT_IN_USAGE_ERROR
 
 @RequiresOptIn
 annotation class MyOptIn

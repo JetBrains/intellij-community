@@ -94,7 +94,7 @@ abstract class KotlinLoggingGuardedByConditionInspectionTest : LoggingGuardedByC
           fun n(arg: String) {
               if (LOG.<warning descr="Logging call guarded by log condition">isDebugEnabled</warning>) {
                   LOG.debug("test1" + arg)
-                  arg.<warning descr="[REDUNDANT_CALL_OF_CONVERSION_METHOD] Redundant call of conversion method.">toString()</warning>
+                  arg.<warning descr="[REDUNDANT_CALL_OF_CONVERSION_METHOD]">toString()</warning>
               }
           }
       
@@ -114,7 +114,7 @@ abstract class KotlinLoggingGuardedByConditionInspectionTest : LoggingGuardedByC
           fun n(arg: String) {
               if (LOG.isDebugEnabled) {
                   LOG.debug("test1" + arg)
-                  arg.<warning descr="[REDUNDANT_CALL_OF_CONVERSION_METHOD] Redundant call of conversion method.">toString()</warning>
+                  arg.<warning descr="[REDUNDANT_CALL_OF_CONVERSION_METHOD]">toString()</warning>
               }
           }
       

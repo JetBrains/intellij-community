@@ -8,7 +8,7 @@
 // ACTION: Opt in for 'Library' in module 'light_idea_test_case'
 // ACTION: Opt in for 'Library' on 'bar'
 // RUNTIME_WITH_SCRIPT_RUNTIME
-// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@Library' or '@OptIn(Library::class)'
+// K2_ERROR: OPT_IN_USAGE_ERROR
 @RequiresOptIn
 annotation class Library()
 

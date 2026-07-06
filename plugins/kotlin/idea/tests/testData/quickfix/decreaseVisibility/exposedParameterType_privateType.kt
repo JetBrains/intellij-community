@@ -6,10 +6,10 @@
 // ACTION: Remove parameter 'arg'
 // ERROR: 'internal' function exposes its 'private-in-class' parameter type argument Nested
 // ERROR: Cannot access 'Nested': it is private in 'Outer'
-// K2_ERROR: 'internal' function exposes its 'private-in-class' parameter type argument 'Nested'.
-// K2_ERROR: Cannot access 'class Nested : Any': it is private in 'Outer'.
-// K2_AFTER_ERROR: 'internal' function exposes its 'private-in-class' parameter type argument 'Nested'.
-// K2_AFTER_ERROR: Cannot access 'class Nested : Any': it is private in 'Outer'.
+// K2_AFTER_ERROR: EXPOSED_PARAMETER_TYPE
+// K2_AFTER_ERROR: INVISIBLE_REFERENCE
+// K2_ERROR: EXPOSED_PARAMETER_TYPE
+// K2_ERROR: INVISIBLE_REFERENCE
 
 class Outer {
     private class Nested

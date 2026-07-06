@@ -1,5 +1,5 @@
 // "Replace ',' with '||' in when" "true"
-// K2_ERROR: Use '||' instead of commas in conditions of 'when' without a subject.
+// K2_ERROR: COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT
 fun test(a: Boolean, b: Boolean, c: Boolean) {
     val c = when {
         a<caret>, b -> "a"

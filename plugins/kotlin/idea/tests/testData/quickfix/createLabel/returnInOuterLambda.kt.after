@@ -1,5 +1,5 @@
 // "Create Label 'foo'@" "true"
-// K2_ERROR: Unresolved label.
+// K2_ERROR: UNRESOLVED_LABEL
 
 inline fun Int.bar(f: (Int) -> Unit) { }
 

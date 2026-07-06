@@ -1,5 +1,5 @@
 // "Change parameter 'x' type of function 'foo' to '(HashSet<Int>) -> Int'" "true"
-// K2_ERROR: Argument type mismatch: actual type is '(HashSet<Int>) -> Int', but 'Int' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 package bar
 
 import java.util.HashSet

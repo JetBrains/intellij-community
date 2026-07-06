@@ -4,8 +4,8 @@
 // ACTION: Create function 'suspendCoroutineOrReturn'
 // ACTION: Rename reference
 // ERROR: Unresolved reference: suspendCoroutineOrReturn
-// K2_ERROR: Unresolved reference 'suspendCoroutineOrReturn'.
-// K2_AFTER_ERROR: Unresolved reference 'suspendCoroutineOrReturn'.
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 fun some() {
     suspendCoroutineOrReturn<caret> {}

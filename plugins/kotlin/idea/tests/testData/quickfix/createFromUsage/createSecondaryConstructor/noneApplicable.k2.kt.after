@@ -1,7 +1,7 @@
 // "Create secondary constructor" "true"
 // K2_ACTION: "Add secondary constructor to 'CtorSecondary'" "true"
 // ERROR: Primary constructor call expected
-// K2_ERROR: None of the following candidates is applicable:<br><br>constructor(): CtorSecondary:<br>  Too many arguments for 'constructor(): CtorSecondary'.<br>  Too many arguments for 'constructor(): CtorSecondary'.<br><br>constructor(p: Int): CtorSecondary:<br>  Too many arguments for 'constructor(p: Int): CtorSecondary'.
+// K2_ERROR: NONE_APPLICABLE
 
 class CtorSecondary() {
     constructor(p: Int) : this()

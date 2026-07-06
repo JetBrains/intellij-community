@@ -1,5 +1,5 @@
 // "Make 'foo' 'final'" "true"
-// K2_ERROR: Private setters for open properties are prohibited.
+// K2_ERROR: PRIVATE_SETTER_FOR_OPEN_PROPERTY
 open class My {
     open var foo = 42
         <caret>private set

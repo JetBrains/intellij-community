@@ -1,12 +1,12 @@
 // "Create function 'bar'" "false"
 // ERROR: Unresolved reference: foo
 // ERROR: Unresolved reference: bar
-// K2_ERROR: Annotation argument must be a compile-time constant.
-// K2_ERROR: Unresolved reference 'bar'.
-// K2_ERROR: Unresolved reference 'foo'.
-// K2_AFTER_ERROR: Annotation argument must be a compile-time constant.
-// K2_AFTER_ERROR: Unresolved reference 'bar'.
-// K2_AFTER_ERROR: Unresolved reference 'foo'.
+// K2_AFTER_ERROR: ANNOTATION_ARGUMENT_MUST_BE_CONST
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: ANNOTATION_ARGUMENT_MUST_BE_CONST
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 @foo(1, "2", <caret>bar("3", 4)) fun test() {
 

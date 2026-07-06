@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.fir
 
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
@@ -77,7 +76,7 @@ object K2DirectiveBasedActionUtils {
                         file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
                     diagnostics
                         .filter { it.severity == severity }
-                        .map { "$directive ${it.defaultMessage.replace("\n", "<br>")}" }
+                        .map { "$directive ${it.factoryName}" }
                         .sorted()
                 }
             }

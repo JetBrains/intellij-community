@@ -1,8 +1,8 @@
 // "Specify remaining required arguments by name" "false"
 // ERROR: No value passed for parameter 'a'
-// K2_ERROR: No value passed for parameter 'a'.
-// K2_AFTER_ERROR: No value passed for parameter 'a'.
 // WITH_STDLIB
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
 fun foo(a: Int) {}
 
 fun test() {

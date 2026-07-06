@@ -1,3 +1,5 @@
+import BAR
+
 // "Replace with 'BAR'" "true"
 
 enum class Enm {
@@ -7,7 +9,7 @@ enum class Enm {
 }
 
 fun test() {
-    Enm.BAR
+    BAR
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
 // IGNORE_K2

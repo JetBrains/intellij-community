@@ -1,6 +1,6 @@
 // "Initialize with constructor parameter" "true"
 // WITH_STDLIB
-// K2_ERROR: Property must be initialized.
+// K2_ERROR: MUST_BE_INITIALIZED
 abstract class Form<T>(val name: String){
     var <caret>data: T?
         set(value){

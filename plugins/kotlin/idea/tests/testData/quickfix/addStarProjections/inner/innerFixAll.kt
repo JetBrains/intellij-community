@@ -1,6 +1,6 @@
 // "Apply all 'Add star projections' fixes in file" "true"
-// K2_ERROR: One type argument expected. Use 'A.B<*>' if you do not intend to pass type arguments.
-// K2_ERROR: One type argument expected. Use 'A.B<*>' if you do not intend to pass type arguments.
+// K2_ERROR: NO_TYPE_ARGUMENTS_ON_RHS
+// K2_ERROR: NO_TYPE_ARGUMENTS_ON_RHS
 
 class A {
     inner class B<T>

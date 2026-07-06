@@ -4,7 +4,7 @@
 // ACTION: Change type of 'x' to 'String?'
 // ACTION: Convert property initializer to getter
 // ERROR: Null can not be a value of a non-null type String
-// K2_ERROR: Null cannot be a value of a non-null type 'String'.
-// K2_AFTER_ERROR: Null cannot be a value of a non-null type 'String'.
+// K2_AFTER_ERROR: NULL_FOR_NONNULL_TYPE
+// K2_ERROR: NULL_FOR_NONNULL_TYPE
 
 val x: String = null<caret>

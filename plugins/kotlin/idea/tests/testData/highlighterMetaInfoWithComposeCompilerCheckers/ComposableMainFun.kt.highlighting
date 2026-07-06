@@ -3,6 +3,6 @@
 // ALLOW_ERRORS
 import androidx.compose.runtime.Composable
 
-@Composable fun <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_FUN_MAIN] Composable main functions are not currently supported'")!>main<!>(args: Array<String>) {
+@Composable fun <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_FUN_MAIN]'")!>main<!>(args: Array<String>) {
     print(args)
 }

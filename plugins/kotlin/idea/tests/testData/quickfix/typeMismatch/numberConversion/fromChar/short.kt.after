@@ -1,6 +1,6 @@
 // "Convert expression to 'Short'" "true"
 // WITH_STDLIB
-// K2_ERROR: Argument type mismatch: actual type is 'Char', but 'Short' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 fun short(x: Short) {}
 
 fun test(c: Char) {

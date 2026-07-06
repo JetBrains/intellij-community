@@ -1,6 +1,6 @@
 // "Surround call with 'context(i)'" "true"
 // COMPILER_ARGUMENTS: -Xcontext-parameters
-// K2_ERROR: No context argument for 'i: Int' found.
+// K2_ERROR: NO_CONTEXT_ARGUMENT
 context(i: Int) fun bar(x: Int, y: String): String = ""
 
 fun foo(i: Int) {

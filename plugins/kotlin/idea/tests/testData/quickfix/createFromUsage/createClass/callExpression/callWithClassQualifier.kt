@@ -8,7 +8,7 @@
 // K2_ACTIONS_LIST: Rename reference
 // K2_ACTIONS_LIST: Create extension function 'A.Companion.Foo'
 // K2_ACTIONS_LIST: Create member function 'A.Companion.Foo'
-// K2_ERROR: Unresolved reference 'Foo'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 class A<T>(val n: T) {
 
 }

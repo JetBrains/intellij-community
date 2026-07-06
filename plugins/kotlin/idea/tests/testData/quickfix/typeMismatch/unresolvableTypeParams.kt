@@ -1,4 +1,5 @@
 // "Change parameter 'n' type of function 'foo' to 'Any?'" "true"
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 fun foo(n: Int) {
 
 }

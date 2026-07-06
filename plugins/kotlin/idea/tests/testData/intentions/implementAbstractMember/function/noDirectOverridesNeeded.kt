@@ -1,6 +1,6 @@
 // IS_APPLICABLE: false
-// K2_ERROR: Class 'C' is not abstract and does not implement abstract base class member:<br>fun foo(): Int
 // ERROR: Class 'C' is not abstract and does not implement abstract base class member public abstract fun foo(): Int defined in B
+// K2_ERROR: ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED
 interface A {
     fun <caret>foo(): Int
 }

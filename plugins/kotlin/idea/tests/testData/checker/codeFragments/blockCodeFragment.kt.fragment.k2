@@ -1,2 +1,2 @@
 val b = 1
-a + b + <error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'c'.">c</error>
+a + b + <error descr="[UNRESOLVED_REFERENCE]">c</error>

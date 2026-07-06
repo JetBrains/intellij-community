@@ -1,5 +1,5 @@
 // "Add use-site target 'delegate'" "true"
-// K2_ERROR: This annotation is not applicable to target 'top level property with delegate'. Applicable targets: field
+// K2_ERROR: WRONG_ANNOTATION_TARGET
 import kotlin.reflect.KProperty
 
 @Target(AnnotationTarget.FIELD)

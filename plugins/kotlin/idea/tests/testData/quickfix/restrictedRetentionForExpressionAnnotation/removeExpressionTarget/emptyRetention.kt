@@ -1,5 +1,5 @@
 // "Remove EXPRESSION target" "true"
-// K2_ERROR: Expression annotations with retention other than SOURCE are prohibited.
+// K2_ERROR: RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION_ERROR
 <caret>@Retention
 @Target(AnnotationTarget.EXPRESSION)
 annotation class Ann

@@ -1,6 +1,6 @@
 // "Opt in for 'B' on containing class 'C'" "true"
 // PRIORITY: HIGH
-// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@B' or '@OptIn(B::class)'
+// K2_ERROR: OPT_IN_USAGE_ERROR
 @RequiresOptIn
 annotation class A
 

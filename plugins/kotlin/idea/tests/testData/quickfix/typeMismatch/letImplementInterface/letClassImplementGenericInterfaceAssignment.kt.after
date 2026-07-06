@@ -1,5 +1,5 @@
 // "Let 'B' implement interface 'A<Int>'" "true"
-// K2_ERROR: Assignment type mismatch: actual type is 'B', but 'A<Int>' was expected.
+// K2_ERROR: ASSIGNMENT_TYPE_MISMATCH
 package let.implement
 
 fun bar() {

@@ -1,4 +1,5 @@
 // "Change type to 'Int'" "true"
+// K2_ERROR: ABSTRACT_PROPERTY_WITHOUT_TYPE
 abstract class A {
     abstract var x : Int
 }
