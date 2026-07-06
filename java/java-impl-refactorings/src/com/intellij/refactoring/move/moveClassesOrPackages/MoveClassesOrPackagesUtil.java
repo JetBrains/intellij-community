@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -631,7 +632,7 @@ public final class MoveClassesOrPackagesUtil {
     PackageLocalsUsageCollector visitor = new PackageLocalsUsageCollector(elementsToMove, targetPackage, conflicts);
 
     for (PsiElement element : elementsToMove) {
-      if (element.getContainingFile() != null) {
+      if (element.getContainingFile() != null && !(element instanceof PsiCompiledElement)) {
         element.accept(visitor);
       }
     }
