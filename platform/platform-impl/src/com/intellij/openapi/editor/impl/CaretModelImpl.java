@@ -66,7 +66,6 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   private boolean visualPositionUpdateScheduled;
   private boolean editorSizeValidationScheduled;
   private boolean documentInUpdate;
-  private int documentUpdateCounter;
   private TextAttributes textAttributes;
 
   public CaretModelImpl(@NotNull EditorImpl editor) {
@@ -387,7 +386,6 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   @Override
   public void documentChanged(@NotNull DocumentEvent e) {
     documentInUpdate = false;
-    documentUpdateCounter++;
     if (!isInBulkUpdate()) {
       doWithCaretMerging(() -> {}); // do caret merging if it's not scheduled for later
       if (visualPositionUpdateScheduled) {
@@ -474,7 +472,6 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   @Override
   public @NotNull String dumpState() {
     return "[in update: " + documentInUpdate +
-           ", update counter: " + documentUpdateCounter +
            ", perform caret merging: " + performCaretMergingAfterCurrentOperation +
            ", current caret: " + currentCaret.get() +
            ", all carets: " + ContainerUtil.map(allCarets, CaretImpl::dumpState) + "]";
@@ -564,10 +561,6 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
         editor.validateSize();
       }
     }
-  }
-
-  int getDocumentUpdateCounter() {
-    return documentUpdateCounter;
   }
 
   boolean isDocumentInUpdate() {

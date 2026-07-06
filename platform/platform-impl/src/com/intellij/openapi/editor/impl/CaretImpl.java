@@ -108,7 +108,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     myPositionMarker = new PositionMarker(0);
     myVisualLineStart = 0;
     myVisualLineEnd = getInitialVisualLineEnd(myDocument);
-    myDocumentUpdateCounter = myCaretModel.getDocumentUpdateCounter();
+    myDocumentUpdateCounter = myDocument.getModificationSequence();
   }
 
   @Override
@@ -1367,7 +1367,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   @Override
   public @NonNls String toString() {
-    return "Caret at " + (myDocumentUpdateCounter == myCaretModel.getDocumentUpdateCounter() ? myVisibleCaret : getOffset()) +
+    return "Caret at " + (myDocumentUpdateCounter == myDocument.getModificationSequence() ? myVisibleCaret : getOffset()) +
            (mySelectionMarker == null ? "" : ", selection marker: " + mySelectionMarker);
   }
 
@@ -1464,7 +1464,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   void updateCachedStateIfNeeded() {
     if (EDT.isCurrentThreadEdt()) {
-      int modelCounter = myCaretModel.getDocumentUpdateCounter();
+      int modelCounter = myDocument.getModificationSequence();
       if (myDocumentUpdateCounter != modelCounter) {
         updateCachedState();
         myDocumentUpdateCounter = modelCounter;
