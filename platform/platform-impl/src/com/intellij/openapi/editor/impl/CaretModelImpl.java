@@ -508,7 +508,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
       return false;
     }
     for (CaretImpl caret : allCarets) {
-      if (caretsOverlap(caret, caretToAdd)) {
+      if (caret.overlaps(caretToAdd)) {
         return false;
       }
     }
@@ -589,7 +589,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
           it.next();
         }
         CaretImpl currCaret = it.next();
-        if (prevCaret != null && caretsOverlap(currCaret, prevCaret)) {
+        if (prevCaret != null && currCaret.overlaps(prevCaret)) {
           int newSelectionStart = Math.min(currCaret.getSelectionStart(), prevCaret.getSelectionStart());
           int newSelectionEnd = Math.max(currCaret.getSelectionEnd(), prevCaret.getSelectionEnd());
           CaretImpl toRetain;
@@ -654,24 +654,6 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     for (CaretImpl caret : allCarets) {
       caret.validateState();
     }
-  }
-
-  private static boolean caretsOverlap(@NotNull CaretImpl firstCaret, @NotNull CaretImpl secondCaret) {
-    if (firstCaret.getVisualPosition().equals(secondCaret.getVisualPosition())) {
-      return true;
-    }
-    int firstStart = firstCaret.getSelectionStart();
-    int secondStart = secondCaret.getSelectionStart();
-    int firstEnd = firstCaret.getSelectionEnd();
-    int secondEnd = secondCaret.getSelectionEnd();
-    return (firstStart < secondStart && firstEnd > secondStart) ||
-           (firstStart > secondStart && firstStart < secondEnd) ||
-           (firstStart == secondStart && secondEnd != secondStart && firstEnd > firstStart) ||
-           ((hasPureVirtualSelection(firstCaret) || hasPureVirtualSelection(secondCaret)) && (firstStart == secondStart || firstEnd == secondEnd));
-  }
-
-  private static boolean hasPureVirtualSelection(@NotNull CaretImpl firstCaret) {
-    return firstCaret.getSelectionStart() == firstCaret.getSelectionEnd() && firstCaret.hasVirtualSelection();
   }
 
   private static final Comparator<Caret> CARET_POSITION_COMPARATOR = (caret1, caret2) -> {
