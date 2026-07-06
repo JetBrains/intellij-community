@@ -170,9 +170,6 @@
   contentModules:
   - name: intellij.kotlin.scripting
   - name: intellij.kotlin.gradle.tooling
-  - name: intellij.kotlin.runConfigurations.junit
-  - name: intellij.kotlin.runConfigurations.testng
-  - name: intellij.kotlin.runConfigurations.jvm
   - name: intellij.kotlin.gradle.gradle
   - name: intellij.kotlin.gradle.codeInsight.common
   - name: intellij.kotlin.gradle.codeInsight.groovy
@@ -441,6 +438,15 @@
 - name: lib/modules/intellij.kotlin.refactorings.rename.jar
   contentModules:
   - name: intellij.kotlin.refactorings.rename
+- name: lib/modules/intellij.kotlin.runConfigurations.junit.jar
+  contentModules:
+  - name: intellij.kotlin.runConfigurations.junit
+- name: lib/modules/intellij.kotlin.runConfigurations.jvm.jar
+  contentModules:
+  - name: intellij.kotlin.runConfigurations.jvm
+- name: lib/modules/intellij.kotlin.runConfigurations.testng.jar
+  contentModules:
+  - name: intellij.kotlin.runConfigurations.testng
 - name: lib/modules/intellij.kotlin.searching.jar
   contentModules:
   - name: intellij.kotlin.searching

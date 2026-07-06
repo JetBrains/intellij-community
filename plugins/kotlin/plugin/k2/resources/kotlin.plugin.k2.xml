@@ -181,9 +181,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
 
-    <configurationType implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationType"/>
-    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer" id="kotlinMain"/>
-
     <localInspection language="kotlin" implementationClass="org.jetbrains.kotlin.idea.configuration.inspections.KaptKotlinCompilerPluginInspection"
                      shortName="KaptKotlinCompilerPlugin"
                      key="kapt.kotlin.compiler.plugin.inspection.problem.display.name"
