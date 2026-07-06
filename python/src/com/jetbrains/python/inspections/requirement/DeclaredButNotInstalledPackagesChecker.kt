@@ -40,7 +40,7 @@ class DeclaredButNotInstalledPackagesChecker(
     installedPackages: List<PythonPackage>,
     modulePackages: List<PythonPackage>,
   ): Boolean {
-    if (requirement.packageName in ignoredPackageNames) {
+    if (PyPackageName.from(requirement.name) in ignoredPackageNames) {
       return false
     }
 

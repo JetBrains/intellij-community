@@ -221,7 +221,7 @@ public final class PyPIPackageUtil {
     @NotNull String repositoryUrl,
     @NotNull String packageName
   ) throws NotSimpleRepositoryApiUrlException {
-    final String normalizedPackageName = PyPackageName.normalize(packageName);
+    final String normalizedPackageName = PyPackageName.from(packageName);
     final String normalizedRepositoryUrl = normalizeRepositoryUrl(repositoryUrl);
     final String packageUrl = normalizedRepositoryUrl + normalizedPackageName + "/";
     return packageUrl;
@@ -242,7 +242,7 @@ public final class PyPIPackageUtil {
   public static @NotNull String buildDetailsUrl(@NotNull String repositoryUrl,
                                                 @NotNull String packageName) throws NotSimpleRepositoryApiUrlException {
     final String normalizedRepositoryUrl = normalizeRepositoryUrl(repositoryUrl);
-    final String normalizedPackageName = PyPackageName.normalize(packageName);
+    final String normalizedPackageName = PyPackageName.from(packageName);
 
     final String baseUrl = StringUtil.trimEnd(normalizedRepositoryUrl, PYPI_SIMPLE_REPOSITORY_API);
     final String detailsUrl = baseUrl + PYPI_DETAILS_API + normalizedPackageName + "/json";

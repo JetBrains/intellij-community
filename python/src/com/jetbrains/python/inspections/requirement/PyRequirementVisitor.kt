@@ -86,6 +86,7 @@ class PyRequirementVisitor(
     checkPackagesHaveBeenInstalled(node, module)
   }
 
+  @RequiresBackgroundThread
   private fun checkPackagesHaveBeenInstalled(file: PsiElement, module: Module) {
     ThreadingAssertions.assertBackgroundThread()
     if (PyPackageManagerModuleHelpers.isRunningPackagingTasks(module))

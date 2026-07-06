@@ -8,11 +8,11 @@ import org.jetbrains.annotations.ApiStatus
 @JvmInline
 value class PyPackageName private constructor(val name: @NlsSafe String) {
   companion object {
-    fun from(name: String): PyPackageName =
-      PyPackageName(normalizePackageName(name))
-
     @JvmStatic
-    fun normalize(name: String): String = from(name).name
+    @JvmName("from")
+    fun from(name: String): PyPackageName {
+      return PyPackageName(normalizePackageName(name))
+    }
 
     /**
      * Normalizes a project name according to

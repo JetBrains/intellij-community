@@ -25,7 +25,7 @@ internal class InstalledButNotDeclaredChecker(
     if (packageName.name !in pyPiCacheService)
       return null
 
-    if (declared.toRequirements().any { it.packageName == packageName }) {
+    if (declared.toRequirements().any { PyPackageName.from(it.name) == packageName }) {
       return null
     }
 
