@@ -9,6 +9,7 @@ import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.Disposable
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.runBlocking
@@ -45,6 +46,7 @@ import java.util.function.Consumer
 @TestApplication
 @ParameterizedClass
 @AllGradleVersionsSource
+@RegistryKey("gradle.use.resilient.model.fetch.unstable", true.toString())
 class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
 
   private val testRootFixture = tempPathFixture()
@@ -81,7 +83,7 @@ class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
     gradle.linkProject(project, projectRoot)
 
     buildView.assertSyncViewTree {
-      assertNode("(failed|finished)".toRegex()) {
+      assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
         assertFilePositionNode(gradleVersion, gradleDsl, brokenFile) {
           assertNode(TEST_BUILD_ISSUE_TITLE)
@@ -108,7 +110,7 @@ class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
     gradle.linkProject(project, projectRoot)
 
     buildView.assertSyncViewTree {
-      assertNode("(failed|finished)".toRegex()) {
+      assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
         assertFilePositionNode(gradleVersion, gradleDsl, BrokenFile.BUILD_SCRIPT) {
           assertNode(TEST_BUILD_ISSUE_TITLE)
