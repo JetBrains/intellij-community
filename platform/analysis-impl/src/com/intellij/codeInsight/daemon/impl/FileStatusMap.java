@@ -169,7 +169,7 @@ public final class FileStatusMap implements Disposable {
                                @Nullable ProgressIndicator indicator) {
     synchronized (myFileStatusMapState) {
       FileStatus status = myFileStatusMapState.getOrCreateStatus(document, context);
-      status.setDefensivelyMarked(false, passId);
+      status.clearDefensivelyMarked(passId);
       if (passId == Pass.WOLF) {
         status.setWolfPassFinished();
       }
@@ -234,7 +234,7 @@ public final class FileStatusMap implements Disposable {
       else {
         if (status.isDefensivelyMarked(passId)) {
           status.setDirtyScope(passId, WholeFileDirtyMarker.INSTANCE);
-          status.setDefensivelyMarked(false, passId);
+          status.clearDefensivelyMarked(passId);
         }
         assertPassIsRegistered(passId, status);
         marker = status.getDirtyScope(passId);
