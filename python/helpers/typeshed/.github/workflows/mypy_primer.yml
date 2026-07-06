@@ -25,7 +25,7 @@ jobs:
         shard-index: [0, 1, 2, 3, 4, 5]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           path: typeshed_to_test
           fetch-depth: 0

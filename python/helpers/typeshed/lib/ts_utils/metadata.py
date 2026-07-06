@@ -374,7 +374,7 @@ def update_metadata(distribution: str, **new_values: object) -> dict[str, object
         new_key = key.replace("_", "-")
         data[new_key] = data.pop(key)
     with path.open("w", encoding="UTF-8") as f:
-        tomlkit.dump(data, f)  # pyright: ignore[reportUnknownMemberType] # tomlkit.dump has partially unknown Mapping type
+        tomlkit.dump(data, f)
     return data
 
 
