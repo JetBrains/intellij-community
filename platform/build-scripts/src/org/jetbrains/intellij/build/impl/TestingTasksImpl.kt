@@ -1629,4 +1629,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.toml.tests",
   "intellij.tools.cmd.tests",
   "intellij.tools.ide.metrics.benchmark.tests",
+  "intellij.tools.ide.metrics.collector.tests",
 )
