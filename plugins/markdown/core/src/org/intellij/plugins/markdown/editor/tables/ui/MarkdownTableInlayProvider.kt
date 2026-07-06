@@ -20,16 +20,16 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils.calculateActualTex
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.VerticalBarPresentation
-import org.intellij.plugins.markdown.lang.isMarkdownType
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import javax.swing.JPanel
 
-internal class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings> {
+class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings> {
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector? {
     return when {
-      file.fileType.isMarkdownType() -> Collector(editor)
+      file.supportsMarkdown() -> Collector(editor)
       else -> null
     }
   }

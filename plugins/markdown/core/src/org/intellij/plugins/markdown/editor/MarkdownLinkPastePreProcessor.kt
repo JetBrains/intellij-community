@@ -16,7 +16,7 @@ internal class MarkdownLinkPastePreProcessor : CopyPastePreProcessor {
   override fun preprocessOnPaste(project: Project, file: PsiFile, editor: Editor, text: String, rawText: RawText?): String {
     val linkText = editor.selectionModel.selectedText ?: return text
     val linkDestination = MarkdownLinkEditingUtil.getLinkDestination(text) ?: return text
-    if (linkText.isBlank() || !file.language.supportsMarkdown()) {
+    if (linkText.isBlank() || !file.supportsMarkdown()) {
       return text
     }
     return MarkdownLinkEditingUtil.createInlineLink(linkText, linkDestination)

@@ -16,7 +16,7 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentRange
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentSpaces
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLine
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLineSafely
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 
@@ -34,7 +34,7 @@ internal class MarkdownListIndentBackspaceHandlerDelegate : BackspaceHandlerDele
     deletedRange = null
     listItem = null
     moveCaret = false
-    if (file !is MarkdownFile || !char.isWhitespace()) {
+    if (!file.supportsMarkdown() || !char.isWhitespace()) {
       return
     }
     if (!MarkdownCodeInsightSettings.getInstance().state.adjustListIndentation) {

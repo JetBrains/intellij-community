@@ -10,7 +10,7 @@ import com.intellij.openapi.command.executeCommand
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.updateColumnAlignment
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnAlignment
-import org.intellij.plugins.markdown.lang.isMarkdownLanguage
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 
 internal abstract class SetColumnAlignmentAction(private val alignment: MarkdownTableSeparatorRow.CellAlignment): ToggleAction() {
@@ -25,7 +25,7 @@ internal abstract class SetColumnAlignmentAction(private val alignment: Markdown
     if (editor == null
         || file == null
         || offset == null
-        || !file.language.isMarkdownLanguage()) {
+        || !file.supportsMarkdown(event.dataContext)) {
       event.presentation.isEnabledAndVisible = false
       return false
     }

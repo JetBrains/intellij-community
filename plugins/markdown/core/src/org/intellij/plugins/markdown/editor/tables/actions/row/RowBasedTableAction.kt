@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
-import org.intellij.plugins.markdown.lang.isMarkdownLanguage
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
@@ -44,7 +44,7 @@ internal abstract class RowBasedTableAction(private val considerSeparatorRow: Bo
         || editor == null
         || file == null
         || offset == null
-        || !file.language.isMarkdownLanguage()) {
+        || !file.supportsMarkdown(event.dataContext)) {
       event.presentation.isEnabledAndVisible = false
       return
     }

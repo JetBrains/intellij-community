@@ -4,13 +4,13 @@ package org.intellij.plugins.markdown.editor.lists
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import org.intellij.plugins.markdown.editor.lists.ListRenumberUtils.renumberInBulk
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentRange
 import org.intellij.plugins.markdown.editor.lists.ListUtils.list
 import org.intellij.plugins.markdown.editor.lists.ListUtils.sublists
 import org.intellij.plugins.markdown.editor.lists.Replacement.Companion.replaceSafelyIn
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 
 /**
@@ -19,7 +19,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
  */
 internal class MarkdownListItemUnindentHandler(baseHandler: EditorActionHandler?) : ListItemIndentUnindentHandlerBase(baseHandler) {
 
-  override fun doIndentUnindent(item: MarkdownListItem, file: MarkdownFile, document: Document): Boolean {
+  override fun doIndentUnindent(item: MarkdownListItem, file: PsiFile, document: Document): Boolean {
     val outerItem = item.parentOfType<MarkdownListItem>()
 
     if (outerItem == null) {
@@ -41,7 +41,7 @@ internal class MarkdownListItemUnindentHandler(baseHandler: EditorActionHandler?
     return !indentRange.isEmpty
   }
 
-  private fun decreaseNestingLevel(item: MarkdownListItem, outerItem: MarkdownListItem, file: MarkdownFile, document: Document) {
+  private fun decreaseNestingLevel(item: MarkdownListItem, outerItem: MarkdownListItem, file: PsiFile, document: Document) {
     val itemInfo = ListItemInfo(item, document)
     val outerInfo = ListItemInfo(outerItem, document)
 
@@ -53,7 +53,7 @@ internal class MarkdownListItemUnindentHandler(baseHandler: EditorActionHandler?
     itemInfo.changeIndent(outerInfo.indentInfo.indent).replaceSafelyIn(document)
   }
 
-  override fun updateNumbering(item: MarkdownListItem, file: MarkdownFile, document: Document) {
+  override fun updateNumbering(item: MarkdownListItem, file: PsiFile, document: Document) {
     item.list.renumberInBulk(document, recursive = false, restart = false)
 
     PsiDocumentManager.getInstance(file.project).commitDocument(document)

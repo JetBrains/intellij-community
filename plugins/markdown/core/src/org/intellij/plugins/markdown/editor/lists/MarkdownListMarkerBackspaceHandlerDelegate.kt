@@ -20,7 +20,7 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLine
 import org.intellij.plugins.markdown.editor.lists.ListUtils.items
 import org.intellij.plugins.markdown.editor.lists.ListUtils.list
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
@@ -40,7 +40,7 @@ internal class MarkdownListMarkerBackspaceHandlerDelegate: BackspaceHandlerDeleg
       return
     }
     val deletedOffset = editor.caretModel.offset - 1
-    if (file !is MarkdownFile || deletedOffset < 0) {
+    if (!file.supportsMarkdown() || deletedOffset < 0) {
       return
     }
 
@@ -79,7 +79,7 @@ internal class MarkdownListMarkerBackspaceHandlerDelegate: BackspaceHandlerDeleg
     if (nextItemFirstLine != null && !createsNewList) {
       if (codeInsightSettings.renumberListsOnType) {
         PsiDocumentManager.getInstance(file.project).commitDocument(document)
-        val updatedItem = (file as MarkdownFile).getListItemAtLine(nextItemFirstLine, document)
+        val updatedItem = file.getListItemAtLine(nextItemFirstLine, document)
         updatedItem?.list?.renumberInBulk(document, recursive = false, restart = false)
       }
     }

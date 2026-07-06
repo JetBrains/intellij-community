@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.util
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.elementType
@@ -10,6 +11,7 @@ import com.intellij.psi.util.siblings
 import com.intellij.util.Consumer
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
@@ -80,7 +82,9 @@ internal object MarkdownPsiStructureUtil {
     }
     val structureContainer = when (element) {
       is MarkdownFile -> element
+      is PsiFile -> element.takeIf { it.supportsMarkdown() }
       else -> element.parentOfType(TRANSPARENT_CONTAINERS, withSelf = true)
+              ?: element.containingFile.takeIf { it.supportsMarkdown() && element.supportsMarkdown() }
     }
     if (structureContainer == null) {
       return

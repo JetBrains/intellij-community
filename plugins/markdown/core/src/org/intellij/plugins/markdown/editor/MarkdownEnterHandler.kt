@@ -16,8 +16,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil.isTopLevel
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
 
@@ -95,7 +95,7 @@ internal class MarkdownEnterHandler : EnterHandlerDelegate {
   private fun shouldAbortIndentation(file: PsiFile, editor: Editor, offset: Int): Boolean {
     //do not stop indentation after two spaces in code fences
     if (
-      file !is MarkdownFile
+      !file.supportsMarkdown()
       || file.findElementAt(offset - 1)?.let { MarkdownCodeFenceUtils.inCodeFence(it.node) } == true
     ) {
       return false
@@ -130,7 +130,8 @@ internal class MarkdownEnterHandler : EnterHandlerDelegate {
     val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return false
 
     if (!editor.document.isWritable) return false
-    if (InjectedLanguageManager.getInstance(project).getTopLevelFile(element) !is MarkdownFile) return false
+    val topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(element)
+    if (!topLevelFile.supportsMarkdown(dataContext)) return false
 
     return !editor.isViewer
   }
