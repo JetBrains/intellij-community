@@ -26,6 +26,8 @@ abstract class AbstractK2InspectionTest : AbstractInspectionTest() {
     override fun processKotlinScriptIfNeeded(psiFile: PsiFile) {
         if (psiFile !is KtFile || !psiFile.isScript()) return
 
+        // Script configuration is loaded asynchronously. Ensure it is ready before
+        // running inspections to avoid a race with `.kts` setup.
         runWithModalProgressBlocking(project, "AbstractK2InspectionTest") {
             KotlinScriptService.getInstance(project).load(psiFile.alwaysVirtualFile)
         }
