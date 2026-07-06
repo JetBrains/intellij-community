@@ -151,7 +151,12 @@ class KotlinMppCustomImportingTests : AbstractKotlinMppGradleImportingTest() {
                 val androidUnitTestInfo = model.getSourceSetOrFail("androidUnitTest").getAndroidSourceSetInfoOrFail()
                 assertEquals("androidUnitTest", androidUnitTestInfo.kotlinSourceSetName)
                 assertEquals("test", androidUnitTestInfo.androidSourceSetName)
-                assertEquals(setOf("debugUnitTest", "releaseUnitTest"), androidUnitTestInfo.androidVariantNames)
+                val expectedAndroidUnitTestVariants = if ((agpVersion?.version?.substringBefore('.')?.toIntOrNull() ?: 0) >= 9) {
+                    setOf("debugUnitTest")
+                } else {
+                    setOf("debugUnitTest", "releaseUnitTest")
+                }
+                assertEquals(expectedAndroidUnitTestVariants, androidUnitTestInfo.androidVariantNames)
 
                 val androidInstrumentedTestInfo = model.getSourceSetOrFail("androidInstrumentedTest").getAndroidSourceSetInfoOrFail()
                 assertEquals("androidInstrumentedTest", androidInstrumentedTestInfo.kotlinSourceSetName)

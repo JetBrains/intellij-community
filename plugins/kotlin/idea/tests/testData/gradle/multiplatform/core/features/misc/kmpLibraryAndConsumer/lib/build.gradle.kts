@@ -1,7 +1,7 @@
 plugins {
     kotlin("multiplatform")
     id("maven-publish")
-    id("com.android.library")
+    {{android_library_plugin_id}}
 }
 
 group = "com.h0tk3y.mpp.demo"
@@ -14,9 +14,8 @@ repositories {
 {{default_android_block}}
 
 kotlin {
-    {{androidTargetPlaceholder}} {
-        publishLibraryVariants("release", "debug")
-    }
+    {{androidTargetPlaceholder}}
+    {{android_target_publishing_snippet}}
     {{iosTargetPlaceholder}}
 }
 

@@ -15,7 +15,7 @@ repositories {
 
 plugins {
     kotlin("multiplatform")
-    id("com.android.library")
+    {{android_library_plugin_id}}
 }
 
 {{default_android_block}}
@@ -24,11 +24,9 @@ kotlin {
     {{androidTargetPlaceholder}}
     {{iosTargetPlaceholder}}
 
-    sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation("com.h0tk3y.mpp.demo:lib:1.0")
-            }
+    sourceSets.getByName("commonMain") {
+        dependencies {
+            implementation("com.h0tk3y.mpp.demo:lib:1.0")
         }
     }
 }

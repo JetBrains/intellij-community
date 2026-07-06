@@ -13,6 +13,8 @@ publishing {
 }
 
 kotlin {
-    js(IR)
+    js(IR) {
+        nodejs()
+    }
     jvm()
 }

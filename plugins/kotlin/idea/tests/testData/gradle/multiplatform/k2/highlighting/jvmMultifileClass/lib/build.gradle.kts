@@ -5,7 +5,9 @@ plugins {
 
 kotlin {
     jvm()
-    js()
+    js {
+        nodejs()
+    }
 
     sourceSets {
         val intermediate by creating {

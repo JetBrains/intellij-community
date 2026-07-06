@@ -1,6 +1,6 @@
 plugins {
     kotlin("multiplatform")
-    id("com.android.library")
+    {{android_library_plugin_id}}
 }
 
 {{default_android_block}}
@@ -23,6 +23,7 @@ kotlin {
 
         val androidMain by getting {
             dependsOn(jvmAndAndroidMain)
+            {{android_main_kotlin_source_dirs}}
         }
 
         val jvmMain by getting {

@@ -1,6 +1,6 @@
 plugins {
     kotlin("multiplatform")
-    id("com.android.library")
+    {{android_library_plugin_id}}
 }
 
 {{default_android_block}}
@@ -8,9 +8,8 @@ plugins {
 val attr = Attribute.of("disambiguity.attr", String::class.java)
 
 kotlin {
-    {{androidTargetPlaceholder}} {
-        attributes.attribute(attr, "jvm")
-    }
+    {{androidTargetPlaceholder}}
+    targets.getByName("android").attributes.attribute(attr, "jvm")
 }
 
 dependencies {

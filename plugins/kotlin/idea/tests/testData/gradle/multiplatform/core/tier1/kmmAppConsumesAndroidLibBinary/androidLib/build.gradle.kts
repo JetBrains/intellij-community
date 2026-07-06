@@ -1,6 +1,6 @@
 plugins {
-    id("com.android.library")
-    kotlin("android")
+    {{android_library_plugin_id}}
+    {{android_library_kotlin_plugin}}
     `maven-publish`
 }
 
@@ -13,12 +13,5 @@ publishing {
     repositories {
         maven("$rootDir/repo")
     }
-
-    afterEvaluate {
-        publications {
-            create<MavenPublication>("default") {
-                from(components["release"])
-            }
-        }
-    }
+    {{android_library_manual_publication_snippet}}
 }

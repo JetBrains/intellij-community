@@ -1,6 +1,6 @@
 plugins {
     kotlin("multiplatform")
-    id("com.android.library")
+    {{android_library_plugin_id}}
     id("maven-publish")
 }
 
@@ -18,9 +18,8 @@ publishing {
 kotlin {
     linuxX64()
     jvm()
-    {{androidTargetPlaceholder}} {
-        publishLibraryVariants("release", "debug")
-    }
+    {{androidTargetPlaceholder}}
+    {{android_target_publishing_snippet}}
 
     sourceSets {
         val commonMain by getting { }

@@ -2,7 +2,7 @@
 
 plugins {
     kotlin("multiplatform")
-    id("com.android.application")
+    {{android_application_compatible_plugin_id}}
 }
 
 {{default_android_block}}

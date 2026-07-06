@@ -1,6 +1,6 @@
 plugins {
     kotlin("multiplatform")
-    id("com.android.application")
+    {{android_application_compatible_plugin_id}}
 }
 
 repositories {
@@ -19,5 +19,6 @@ kotlin {
                 implementation(kotlin("test"))
             }
         }
+        {{android_host_test_source_dirs}}
     }
 }

@@ -1,16 +1,16 @@
 plugins {
-    id("com.android.library")
+    {{android_library_plugin_id}}
     kotlin("multiplatform")
 }
 
-android {
+{{android_library_configuration_open}}
     compileSdk = {{compile_sdk_version}}
     namespace = "org.jetbrains.kotlin.smoke.multiplatformAndroidJvmIosLibrary"
-    sourceSets.getByName("main").manifest.srcFile("src/androidMain/AndroidManifest.xml")
-}
+    {{android_legacy_main_manifest}}
+{{android_library_configuration_close}}
 
 kotlin {
-    androidTarget()
+    {{android_target}}
     jvm()
     linuxX64()
 

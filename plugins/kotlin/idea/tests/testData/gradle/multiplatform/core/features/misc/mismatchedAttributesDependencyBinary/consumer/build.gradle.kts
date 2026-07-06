@@ -3,13 +3,17 @@ plugins {
 }
 
 kotlin {
-    js(IR)
+    js(IR) {
+        nodejs()
+    }
     linuxX64()
 
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlin.mpp.tests:producer:1.0")
+                if (file("$rootDir/repo").exists()) {
+                    implementation("org.jetbrains.kotlin.mpp.tests:producer:1.0")
+                }
             }
         }
     }

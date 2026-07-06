@@ -13,7 +13,9 @@ publishing {
 }
 
 kotlin {
-    js(IR)
+    js(IR) {
+        nodejs()
+    }
     jvm()
     linuxX64()
     macosX64() // TODO: switch later when M1 agents arrive
