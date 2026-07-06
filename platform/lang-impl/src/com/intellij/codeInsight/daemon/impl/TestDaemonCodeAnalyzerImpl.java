@@ -552,7 +552,6 @@ public final class TestDaemonCodeAnalyzerImpl {
   }
 
   private boolean daemonIsWorkingOrPending(@NotNull Document document) {
-    waitForUpdateFileStatusBackgroundQueueInTests(); // daemon could be restarted in ShowAutoImportPass.doApplyInformationToEditor() which calls DCAI.stopProcess() which re-schedules daemon in DaemonListeners.runAfterUpdateFileStatusQueue(), meaning we don't know if daemon is restarted until we call waitForUpdateFileStatusBackgroundQueueInTests()
     return myDaemonCodeAnalyzer.isRunningOrPending() || PsiDocumentManager.getInstance(myProject).isUncommited(document);
   }
 
