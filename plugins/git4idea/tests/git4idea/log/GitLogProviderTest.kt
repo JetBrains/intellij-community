@@ -63,7 +63,7 @@ class GitLogProviderTest : GitLogProviderTestBase() {
   }
 
   fun test_full_hash_check_sha1_repository() {
-    val sha1Repo = createRepository(project, testNioRoot.resolve("sha1-repo"), makeInitialCommit = true)
+    val sha1Repo = createRepository(project, testNioRoot.resolve("sha1-repo"), makeInitialCommit = true, objectFormat = GitObjectFormat.SHA1)
     val headHash = last()
     assertEquals(GitObjectFormat.SHA1.hexSize, headHash.length)
 
