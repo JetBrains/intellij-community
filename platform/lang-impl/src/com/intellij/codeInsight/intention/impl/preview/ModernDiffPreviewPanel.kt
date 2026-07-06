@@ -12,25 +12,31 @@ import com.intellij.openapi.editor.CombinedPopupLayout
 import com.intellij.openapi.editor.CombinedPopupPanel
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.HintHint
+import com.intellij.ui.JBColor
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.SeparatorOrientation
 import com.intellij.ui.WidthBasedLayout
+import com.intellij.ui.WindowRoundedCornersManager
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanelWithEmptyText
+import com.intellij.ui.components.panels.BackgroundRoundedPanel
 import com.intellij.ui.components.panels.ListLayout
+import com.intellij.ui.paint.PaintUtil
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -38,8 +44,17 @@ import com.intellij.util.ui.initOnShow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.RenderingHints
+import java.awt.geom.Area
+import java.awt.geom.Rectangle2D
+import java.awt.geom.RoundRectangle2D
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.SwingUtilities
+import kotlin.math.floor
 
 internal class WrapperPanel(content: JComponent) : JPanel(BorderLayout()), WidthBasedLayout {
   init {
@@ -64,6 +79,61 @@ internal class WrapperPanel(content: JComponent) : JPanel(BorderLayout()), Width
   }
 }
 
+internal class MatchedRoundedCornersPanel(component: JComponent): JPanel(BorderLayout()) {
+  init {
+    add(component, BorderLayout.CENTER)
+    background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+  }
+
+  override fun isPaintingOrigin(): Boolean {
+    return true
+  }
+
+  override fun paintChildren(g: Graphics?) {
+    super.paintChildren(g)
+    if (g !is Graphics2D) return
+
+    // Only mask the corners when the host popup window actually has rounded corners;
+    // otherwise (square popup) masking would cut the corners with the background color.
+    val window = SwingUtilities.getWindowAncestor(this)
+    if (window == null || WindowRoundedCornersManager.getRoundedCornersParams(window) == null) return
+
+    val ctx = ScaleContext.create(g)
+
+    val width = PaintUtil.alignIntToInt(width, ctx, PaintUtil.RoundingMode.CEIL, null)
+    val height = PaintUtil.alignIntToInt(height, ctx, PaintUtil.RoundingMode.CEIL, null)
+    val arcValue = 8
+
+    val offset = PaintUtil.alignIntToInt(JBUI.scale(1), ctx, PaintUtil.RoundingMode.CEIL, null)
+    val offset2 = offset * 2
+    val offsetF = offset.toFloat()
+
+    val widthF = width.toFloat()
+    val heightF = height.toFloat()
+
+    val arc = PaintUtil.alignIntToInt(arcValue, ctx, PaintUtil.RoundingMode.CEIL, null)
+    val arcSizeF = JBUIScale.scale(arc / 2f)
+
+    g.color = JBColor.namedColor("MainWindow.background", JBColor.PanelBackground)
+
+    g.fillRect(0, 0, width, offset)
+    g.fillRect(0, height - offset, width, offset)
+    g.fillRect(0, offset, offset, height - offset2)
+    g.fillRect(width - offset, offset, offset, height - offset2)
+
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC)
+    g.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY)
+
+    val contentRect = Rectangle2D.Float(offsetF, offsetF, widthF - offset2, heightF - offset2)
+    val cornerMask = Area(contentRect).apply {
+      subtract(Area(RoundRectangle2D.Float(
+        offsetF, offsetF, widthF - offset2, heightF - offset2, arcSizeF * 2, arcSizeF * 2)))
+    }
+    g.fill(cornerMask)
+  }
+}
+
 internal class ModernDiffPreviewPanel(
   private val project: Project,
   private val modernDiff: IntentionPreviewInfo.ModernDiff,
@@ -80,7 +150,11 @@ internal class ModernDiffPreviewPanel(
     }
   }
 
-  private fun createTopCaptionComponent(@NlsSafe highlightingHtml: String?): JPanel? {
+  private fun createPopupParentMatchedRoundedCornersPanel(panel: JPanel): JPanel {
+    return MatchedRoundedCornersPanel(panel)
+  }
+
+  private fun createTopCaptionComponent(@NlsSafe highlightingHtml: String?): JPanel {
     val layeredPane = popup.content.rootPane.layeredPane
     val hintHint = HintHint().setAwtTooltip(true).setStatus(HintHint.Status.Info)
 
@@ -103,7 +177,8 @@ internal class ModernDiffPreviewPanel(
 
   private fun configureUiPanel(panel: JPanel, omitTopGap: Boolean = true, omitBottomGap: Boolean = false,): JPanel {
     return panel.apply {
-      border = JBUI.Borders.empty(if (omitTopGap) 0 else 3, 5, if (omitBottomGap) 0 else 5, 5)
+      border = JBUI.Borders.empty(if (omitTopGap) 2 else 3, 5, if (omitBottomGap) 2 else 5, 5)
+      background = EditorColorsManager.getInstance().globalScheme.defaultBackground
     }
   }
 
@@ -197,20 +272,24 @@ internal class ModernDiffPreviewPanel(
         withContext(Dispatchers.Default) {
           IntentionDiffUtil.applyDiffToUi(project, this@ModernDiffPreviewPanel, content1, content2, ui)
         }
+
         popup.pack(true, true)
       }
     }
 
     val setupPanel = combineWithTopComponentOrBareContent(
       createTopCaptionComponent(modernDiff.highlightingHtml),
-      if (diffUis.size == 1)
-        createSingleDiffPanel(diffUis.first())
-      else
-        createVerticalFlowingContainerWithCaptionsForUis(diffUis)
+      createPopupParentMatchedRoundedCornersPanel(
+        if (diffUis.size == 1)
+          createSingleDiffPanel(diffUis.first())
+        else
+          createVerticalFlowingContainerWithCaptionsForUis(diffUis)
+      )
     )
 
     add(setupPanel, BorderLayout.CENTER)
     border = JBUI.Borders.empty()
+
     popup.pack(true, true)
   }
 
