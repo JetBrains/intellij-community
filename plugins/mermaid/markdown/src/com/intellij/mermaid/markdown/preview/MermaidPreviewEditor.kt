@@ -38,10 +38,17 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import java.awt.BorderLayout
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import kotlin.time.Duration.Companion.milliseconds
 import org.jetbrains.annotations.ApiStatus
+
+private val RELOAD_DEBOUNCE = 100.milliseconds
+private val UPDATE_DEBOUNCE = 20.milliseconds
+// Larger than the others: resize fires in bursts while dragging.
+private val RESIZE_DEBOUNCE = 200.milliseconds
 
 @OptIn(FlowPreview::class)
 @ApiStatus.Internal
@@ -55,6 +62,11 @@ class MermaidPreviewEditor internal constructor(
   private val coroutineScope: CoroutineScope = pluginScope.childScope("MermaidPreviewEditorScope", CoroutineName("MermaidPreviewEditorScope"))
   private val updateRequests = MutableSharedFlow<String>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val reloadRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val resizeRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  // Width the diagram was last rendered at; a resize past this needs a re-render (the SVG is pinned
+  // to its render-time max-width). EDT-only. This browser has no DOM resize events, so we use Swing.
+  private var lastRenderedWidth = 0
 
   private val document = FileDocumentManager.getInstance().getDocument(file)!!
 
@@ -66,11 +78,14 @@ class MermaidPreviewEditor internal constructor(
     // Each source is debounced on its own, so a reload is never coalesced away by a document update.
     coroutineScope.launch(context = Dispatchers.EDT) {
       merge(
-        reloadRequests.debounce(100.milliseconds).map { PreviewRequest.Reload },
-        updateRequests.debounce(20.milliseconds).map { PreviewRequest.Update(it) },
+        reloadRequests.debounce(RELOAD_DEBOUNCE).map { PreviewRequest.Reload },
+        updateRequests.debounce(UPDATE_DEBOUNCE).map { PreviewRequest.Update(it) },
+        // Resize re-renders the current content at the new width.
+        resizeRequests.debounce(RESIZE_DEBOUNCE).map { PreviewRequest.Update(document.text) },
       ).collect { request ->
         try {
           val diagram = component.diagramComponent()
+          lastRenderedWidth = component.width
           when (request) {
             is PreviewRequest.Update -> diagram.update(request.text)
             PreviewRequest.Reload -> {
@@ -111,11 +126,19 @@ class MermaidPreviewEditor internal constructor(
   }
 
   private fun createComponent(): MermaidPreviewComponentContainer {
-    return MermaidPreviewComponentContainer(
+    val container = MermaidPreviewComponentContainer(
       parentDisposable = this,
       coroutineScope = coroutineScope,
       componentDeferred = createDiagramComponent(parentDisposable = this)
     )
+    container.addComponentListener(object: ComponentAdapter() {
+      override fun componentResized(event: ComponentEvent) {
+        if (container.width != lastRenderedWidth) {
+          resizeRequests.tryEmit(Unit)
+        }
+      }
+    })
+    return container
   }
 
   private fun createDiagramComponent(parentDisposable: Disposable): Pair<MermaidDiagramPreviewComponent, Deferred<Unit>> {
