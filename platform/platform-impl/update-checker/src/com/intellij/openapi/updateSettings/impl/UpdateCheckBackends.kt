@@ -26,7 +26,18 @@ internal class PreparedPluginUpdates(
   val toUpdate: Map<PluginId, PluginDownloader>,
   val toUpdateDisabled: Map<PluginId, PluginDownloader>,
   val models: Map<PluginId, PluginUiModel>,
-)
+) {
+  fun getAllPluginIds(): Set<PluginId> {
+    return toUpdate.keys + toUpdateDisabled.keys + models.keys
+  }
+
+  fun filterByPluginIds(pluginIds: Collection<PluginId>): PreparedPluginUpdates {
+    return PreparedPluginUpdates(toUpdate.filterKeys { it in pluginIds },
+                                 toUpdateDisabled.filterKeys { it in pluginIds },
+                                 models.filterKeys { it in pluginIds }
+    )
+  }
+}
 
 internal abstract class RemotePluginRepository(val id: String) {
   abstract fun findUpdates(
@@ -95,7 +106,15 @@ internal class MarketplaceUpdateCheckPluginRepository : MarketplaceLikePluginRep
   }
 }
 
-internal class CustomPluginRepository(private val host: String) : RemotePluginRepository(host) {
+internal fun getMatchingPluginUpdateSource(backend: RemotePluginRepository): PluginUpdateSourceId {
+  return when (backend) {
+    is MarketplaceLikePluginRepository -> PluginUpdateSourceService.getInstance().createMarketplacePluginUpdateSourceId()
+    is CustomPluginRepository -> PluginUpdateSourceService.getInstance().createCustomRepositoryPluginUpdateSourceId(backend.host)
+    else -> throw IllegalStateException("Unexpected plugin repository type: $backend")
+  }
+}
+
+internal class CustomPluginRepository(internal val host: String) : RemotePluginRepository(host) {
   override fun findUpdates(
     buildNumber: BuildNumber?,
     state: InstalledPluginsState,

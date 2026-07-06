@@ -381,12 +381,23 @@ object UpdateChecker {
       try {
         val updates = backend.findUpdates(buildNumber, state, updateable.keys, indicator)
 
-        pluginModels.putAll(updates.models)
+        val relevantUpdates = if (PluginUpdateSourceService.isPluginUpdateFilteredAgainstPluginUpdateSource()) {
+          val backendUpdateSource = getMatchingPluginUpdateSource(backend)
+          val relevantPluginIds =
+            updates.getAllPluginIds().filter { pluginId -> hasMatchingPluginUpdateSource(pluginId, backendUpdateSource) }
+          updates.filterByPluginIds(relevantPluginIds)
+        }
+        else {
+          updates
+        }
+        pluginModels.putAll(relevantUpdates.models)
 
-        toUpdate.putAll(updates.toUpdate)
-        toUpdateDisabled.putAll(updates.toUpdateDisabled)
-        for (updatePluginId in (updates.toUpdate.keys + updates.toUpdateDisabled.keys)) {
-          updateable.remove(updatePluginId)
+        toUpdate.putAll(relevantUpdates.toUpdate)
+        toUpdateDisabled.putAll(relevantUpdates.toUpdateDisabled)
+        if (!PluginUpdateSourceService.isPluginUpdateFilteredAgainstPluginUpdateSource()) {
+          for (updatePluginId in (relevantUpdates.toUpdate.keys + relevantUpdates.toUpdateDisabled.keys)) {
+            updateable.remove(updatePluginId)
+          }
         }
       }
       catch (e: Exception) {
@@ -399,6 +410,15 @@ object UpdateChecker {
 
     return InternalPluginResults(PluginUpdates(toUpdate.values, toUpdateDisabled.values, incompatible),
                                  pluginModels.values, errors)
+  }
+
+  private fun hasMatchingPluginUpdateSource(pluginId: PluginId, candidatePluginUpdateSource: PluginUpdateSourceId): Boolean {
+    val updateSourceFromSettings = PluginUpdateSourceService.getInstance().getPluginUpdateSourceId(pluginId)
+    return when {
+      updateSourceFromSettings == null -> false
+      updateSourceFromSettings.isMarketplace -> candidatePluginUpdateSource.isMarketplace
+      else -> !candidatePluginUpdateSource.isMarketplace && updateSourceFromSettings.host == candidatePluginUpdateSource.host
+    }
   }
 
   private fun collectUpdateablePlugins(): Map<PluginId, IdeaPluginDescriptor?> {
