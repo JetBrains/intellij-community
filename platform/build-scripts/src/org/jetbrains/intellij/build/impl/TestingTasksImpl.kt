@@ -1624,4 +1624,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.whatsNew.tests",
   "intellij.testng.tests",
   "intellij.textmate.core.tests",
+  "intellij.textmate.joni.tests",
 )
