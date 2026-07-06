@@ -207,7 +207,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
         throw TimeoutException(errorText)
       }
     }
-    LOG.info("Code analysis waiting finished")
+    LOG.info("Code analysis complete")
   }
 
   private fun registerToWaitForAnalysisToFinish(future: CompletableFuture<Unit>) {
