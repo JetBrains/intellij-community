@@ -83,7 +83,13 @@ object GradleProjectsPublisher {
             "Can't publish subproject $subprojectName because it doesn't have any .kt-sources"
         }
 
-        val output = runTaskAndGetErrorOutput(subprojectDirectory.toString(), importedProject, "publish")
+        // TODO(KT-86451): Remove explicit warning mode override after the deprecated `-no-endorsed-libs` is removed
+        val output = runTaskAndGetErrorOutput(
+            subprojectDirectory.toString(),
+            importedProject,
+            "publish",
+            "--warning-mode all",
+        )
         if (output.isNotEmpty()) {
             error("Unexpected errors while running 'publish' task in $subprojectName\n\n$output")
         }
