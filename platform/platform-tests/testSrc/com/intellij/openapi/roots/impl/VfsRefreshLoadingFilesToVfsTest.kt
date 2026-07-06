@@ -24,9 +24,9 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
@@ -36,7 +36,6 @@ import kotlin.io.path.name
 import kotlin.io.path.pathString
 import kotlin.io.path.relativeTo
 import kotlin.io.path.writeText
-import kotlin.time.Duration.Companion.seconds
 
 @RegistryKey("vfs.refresh.iterate.included.files.under.exclude", "true")
 @TestApplication
@@ -48,7 +47,7 @@ class VfsRefreshLoadingFilesToVfsTest {
   @TestDisposable
   private lateinit var disposable: Disposable
 
-  @Test
+  @RepeatedTest(50)
   fun `new content dir under excluded parent is loaded into vfs after refresh`(): Unit = runBlocking {
     stageNestedExcludedLayout()
 
@@ -62,7 +61,6 @@ class VfsRefreshLoadingFilesToVfsTest {
       generatedRoot.createDirectories()
       generateFiles(generatedRoot, packagePrefix = "com/example")
 
-      delay(1.seconds)
       val filesLoadedIntoVfs = collectFilesLoadedIntoVfsBeforeListenersRuns(rootVirtualFile, disposable)
       assertSubtreeLoadedIntoVfs(filesLoadedIntoVfs, rootVirtualFile, relativeRoot = "outer/build/generated", packagePrefix = "com/example")
     }
@@ -81,8 +79,6 @@ class VfsRefreshLoadingFilesToVfsTest {
 
       generatedRoot.createDirectories()
       generateFiles(generatedRoot, packagePrefix = "com/example")
-
-      delay(1.seconds)
 
       val vfuManager = project.workspaceModel.getVirtualFileUrlManager()
       val excludedDirVfu = vfuManager.findByUrl(excludedDir.toIdeUrl())
@@ -107,7 +103,6 @@ class VfsRefreshLoadingFilesToVfsTest {
       newPackageRoot.createDirectories()
       generateFiles(newPackageRoot, packagePrefix = "")
 
-      delay(1.seconds)
       val filesLoadedIntoVfs = collectFilesLoadedIntoVfsBeforeListenersRuns(rootVirtualFile, disposable)
       assertSubtreeLoadedIntoVfs(filesLoadedIntoVfs, rootVirtualFile, relativeRoot = "single/newpkg", packagePrefix = "")
     }
