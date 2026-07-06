@@ -1485,8 +1485,7 @@ public class HighlightInfo implements Segment {
                                                                   @NotNull Consumer<? super QuickFixActionRegistrar> computation) {
     if (project.isDisposed()
         || PsiDocumentManager.getInstance(project).isUncommited(document)
-        || PsiManager.getInstance(project).getModificationTracker().getModificationCount() != oldPsiModificationStamp
-    ) {
+        || PsiManager.getInstance(project).getModificationTracker().getModificationCount() != oldPsiModificationStamp) {
       return List.of();
     }
     assertIntentionActionDescriptorsAreRangeMarkerBased(getIntentionActionDescriptors(offsetStore));
@@ -1512,6 +1511,11 @@ public class HighlightInfo implements Segment {
     computation.accept(registrarDelegate);
     assertIntentionActionDescriptorsAreRangeMarkerBased(getIntentionActionDescriptors(offsetStore));
     fireQuickFixesAvailable(lazyDescriptors, project, document);
+    if (!lazyDescriptors.isEmpty()) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("computeQuickFixesSynchronously finished: " + lazyDescriptors);
+      }
+    }
     return lazyDescriptors;
   }
 
