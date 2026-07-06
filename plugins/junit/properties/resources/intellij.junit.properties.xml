@@ -1,0 +1,27 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java"/>
+    <module name="intellij.java.execution.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.properties.backend"/>
+    <module name="intellij.properties.backend.psi"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <properties.implicitPropertyUsageProvider implementation="com.intellij.execution.junit2.properties.JUnitImplicitPropertyUsageProvider"/>
+    <completion.contributor language="Properties" implementationClass="com.intellij.execution.junit2.properties.JUnitPropertiesCompletionContributor"/>
+    <psi.referenceContributor language="Properties" implementation="com.intellij.execution.junit2.properties.JUnitPropertiesReferenceContributor"/>
+    <platform.backend.documentation.psiTargetProvider implementation="com.intellij.execution.junit2.properties.JUnitPlatformPropertyDocumentationTargetProvider"/>
+  </extensions>
+</idea-plugin>

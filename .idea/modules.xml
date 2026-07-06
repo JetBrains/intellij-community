@@ -725,6 +725,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/junit/java-tests/intellij.junit.java.tests.iml" filepath="$PROJECT_DIR$/plugins/junit/java-tests/intellij.junit.java.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/junit/kotlin-tests-k2/intellij.junit.kotlin.tests.k2.iml" filepath="$PROJECT_DIR$/plugins/junit/kotlin-tests-k2/intellij.junit.kotlin.tests.k2.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/junit/kotlin-tests-shared/intellij.junit.kotlin.tests.shared.iml" filepath="$PROJECT_DIR$/plugins/junit/kotlin-tests-shared/intellij.junit.kotlin.tests.shared.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/junit/properties/intellij.junit.properties.iml" filepath="$PROJECT_DIR$/plugins/junit/properties/intellij.junit.properties.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/junit_rt/intellij.junit.rt.iml" filepath="$PROJECT_DIR$/plugins/junit_rt/intellij.junit.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/junit/testFramework/intellij.junit.testFramework.iml" filepath="$PROJECT_DIR$/plugins/junit/testFramework/intellij.junit.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/junit5_rt/intellij.junit.v5.rt.iml" filepath="$PROJECT_DIR$/plugins/junit5_rt/intellij.junit.v5.rt.iml" />

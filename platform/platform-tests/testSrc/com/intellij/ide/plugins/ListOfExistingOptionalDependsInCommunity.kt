@@ -20,9 +20,6 @@ val existingOptionalDependsTagInCommunityPlugins = mapOf(
     "TestNG-J",
     "JUnit",
   ),
-  "JUnit" to setOf(
-    "com.intellij.properties",
-  ),
   "TestNG-J" to setOf(
     "org.intellij.intelliLang",
   ),
