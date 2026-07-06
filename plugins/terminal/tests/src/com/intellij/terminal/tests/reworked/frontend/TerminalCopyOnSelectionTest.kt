@@ -1,5 +1,6 @@
 package com.intellij.terminal.tests.reworked.frontend
 
+import com.intellij.mock.MockFocusManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.ide.CopyPasteManager
@@ -18,8 +19,6 @@ import org.junit.Test
 import org.junit.jupiter.api.condition.OS
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.awt.Component
-import java.awt.DefaultKeyboardFocusManager
 import java.awt.datatransfer.DataFlavor
 
 @RunWith(JUnit4::class)
@@ -93,9 +92,7 @@ internal class TerminalCopyOnSelectionTest : BasePlatformTestCase() {
     // Copy on selection only works if terminal is the focus owner.
     TerminalTestUtil.replaceKeyboardFocusManager(
       testRootDisposable,
-      object : DefaultKeyboardFocusManager() {
-        override fun getFocusOwner(): Component = editor.contentComponent
-      }
+      MockFocusManager(editor.contentComponent)
     )
     return editor
   }
