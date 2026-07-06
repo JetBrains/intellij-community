@@ -18,18 +18,21 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
 private typealias AnalyzerCacheKey<T> = Key<CachedValue<AtomicReference<Cached<LlmIssue<T>>>>>
 private val log = Logger.getInstance(SpecificationAnalyzer::class.java)
 
+@ApiStatus.Experimental
 internal object SpecificationAnalyzer {
   private val mutexKeys = ConcurrentHashMap<String, Key<Mutex>>()
   private val cacheKeys = ConcurrentHashMap<String, AnalyzerCacheKey<LlmIssue<*>>>()
 
+  @RequiresBackgroundThread
   fun <T> analyze(analyzer: LlmAnalyzer<T>, file: PsiFile, files: Set<PsiFile>, client: SuspendableAPIGatewayClient): List<LlmIssue<T>> {
     @Suppress("UNCHECKED_CAST") val analyzerKey = cacheKeys
       .computeIfAbsent(analyzer.javaClass.name) { Key.create("cache key for ${analyzer.javaClass.name}") }
@@ -40,14 +43,11 @@ internal object SpecificationAnalyzer {
     try {
       var cached = ref.get()
       val text = file.text
-      val other = cachedData.asSequence()
-        .filter { it.first != file }
-        .map { it.first to it.second.get() }
-        .toSet()
+      val other = cachedData.filterTo(HashSet()) { it.first != file }
       if (isOutdated(file, ref) || isOutdated(other)) {
-        return executeRequestWithLock(analyzer, file) {
+        return executeRequestWithLock(analyzer, files) {
           cached = ref.get()
-          if (cached != null && cached.text == text && other.isEmpty()) return@executeRequestWithLock cached.data
+          if (!isOutdated(file, ref) && !isOutdated(other)) return@executeRequestWithLock cached.data
           val specifications = getSpecifications(cached, file, other)
           val start = System.currentTimeMillis()
           val analyzerName = analyzer::class.simpleName
@@ -59,8 +59,11 @@ internal object SpecificationAnalyzer {
             Analyzing text with $analyzerName took $timeMs ms on
             text with length ${text.length} and used $credits credits.
           """.trimIndent())
-          cached = Cached(text, analysis.data[file.virtualFile.path]!!)
+          cached = Cached(text, analysis.data[file.virtualFile.path].orEmpty())
           ref.set(cached)
+          other.forEach { (otherFile, otherRef) ->
+            otherRef.set(Cached(otherFile.text, analysis.data[otherFile.virtualFile.path].orEmpty()))
+          }
           SpecificationFUSCollector.analysisCompleted(analyzerName!!, specifications, analysis, timeMs)
           cached.data
         }
@@ -84,10 +87,13 @@ internal object SpecificationAnalyzer {
   private fun <T> getCached(files: Set<PsiFile>, analyzerKey: AnalyzerCacheKey<T>) =
     files.map { it to getCached(it, files, analyzerKey) }
 
-  private fun <T> getSpecifications(cached: Cached<LlmIssue<T>>?, file: PsiFile, other: Set<Pair<PsiFile, Cached<LlmIssue<T>>>>): Set<Specification<T>> {
+  private fun <T> getSpecifications(
+    cached: Cached<LlmIssue<T>>?, file: PsiFile,
+    other: Set<Pair<PsiFile, AtomicReference<Cached<LlmIssue<T>>>>>
+  ): Set<Specification<T>> {
     val result = HashSet<Specification<T>>()
     result.add(getSpecification(cached, file))
-    other.forEach { result.add(getSpecification(it.second, it.first)) }
+    other.forEach { result.add(getSpecification(it.second.get(), it.first)) }
     return result
   }
 
@@ -97,24 +103,40 @@ internal object SpecificationAnalyzer {
     else Specification(name, file.text, cache.text, cache.data)
   }
 
-  private fun <T> isOutdated(cachedData: Set<Pair<PsiFile, Cached<LlmIssue<T>>?>>): Boolean =
-    cachedData.any { (file, cached) -> cached == null || cached.text != file.text }
+  private fun <T> isOutdated(cachedData: Set<Pair<PsiFile, AtomicReference<Cached<LlmIssue<T>>>>>): Boolean =
+    cachedData.any { (file, ref) -> isOutdated(file, ref) }
 
   private fun <T> isOutdated(file: PsiFile, holder: AtomicReference<Cached<LlmIssue<T>>>): Boolean {
     val cached = holder.get()
     return cached == null || cached.text != file.text
   }
 
-  private fun <T> executeRequestWithLock(analyzer: LlmAnalyzer<T>, file: PsiFile, action: suspend () -> List<LlmIssue<T>>): List<LlmIssue<T>> {
+  private fun <T> executeRequestWithLock(analyzer: LlmAnalyzer<T>, files: Set<PsiFile>, action: suspend () -> List<LlmIssue<T>>): List<LlmIssue<T>> {
     val mutexKey = mutexKeys.computeIfAbsent(analyzer.javaClass.name) { Key.create("mutex key for ${analyzer.javaClass.name}") }
-    val mutex = (file as UserDataHolderEx).getOrCreateUserData(mutexKey) { Mutex() }
+    val mutexes = getMutexes(files, mutexKey)
     return runWithCheckCanceled {
-      APIQueries.handleExceptions(file.project) {
-        mutex.withLock {
+      APIQueries.handleExceptions(files.first().project) {
+        mutexes.withLock {
           action()
         }
       }
     } ?: emptyList()
+  }
+
+  private fun getMutexes(files: Set<PsiFile>, mutexKey: Key<Mutex>): List<Mutex> =
+    files.sortedBy { it.viewProvider.virtualFile.path }.map { (it as UserDataHolderEx).getOrCreateUserData(mutexKey) { Mutex() } }
+
+  private suspend inline fun <T> List<Mutex>.withLock(action: () -> T): T {
+    val locked = ArrayList<Mutex>(size)
+    return try {
+      this.forEach {
+        it.lock()
+        locked.add(it)
+      }
+      action()
+    } finally {
+      locked.forEach { it.unlock() }
+    }
   }
 }
 
