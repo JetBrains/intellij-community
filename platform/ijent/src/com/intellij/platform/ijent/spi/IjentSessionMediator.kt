@@ -29,5 +29,5 @@ class IjentConnectionContext(
   val mediator: IjentSessionMediator,
   val targetPlatform: EelPlatform,
   val connectionStrategy: IjentConnectionStrategy,
-  val backendPid: Long? = null,
+  val parentPidToWatch: Long? = null,
 )
