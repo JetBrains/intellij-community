@@ -134,12 +134,6 @@ package org.jetbrains.jewel.markdown {
     property public int level;
   }
 
-  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownBlock.HtmlBlock implements org.jetbrains.jewel.markdown.MarkdownBlock {
-    ctor public MarkdownBlock.HtmlBlock(String content);
-    method public String getContent();
-    property public String content;
-  }
-
   @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownBlock.HtmlBlockWithAttributes implements org.jetbrains.jewel.markdown.MarkdownBlock org.jetbrains.jewel.markdown.WithChildBlocks {
     ctor public MarkdownBlock.HtmlBlockWithAttributes(org.jetbrains.jewel.markdown.MarkdownBlock mdBlock, java.util.Map<java.lang.String,java.lang.String> attributes);
     method public java.util.Map<java.lang.String,java.lang.String> getAttributes();
@@ -433,7 +427,6 @@ package org.jetbrains.jewel.markdown.rendering {
     method @androidx.compose.runtime.Composable public void RenderFencedCodeBlock(org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.FencedCodeBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced styling, boolean enabled, androidx.compose.ui.Modifier modifier);
     method @androidx.compose.runtime.Composable public void RenderHeading(org.jetbrains.jewel.markdown.MarkdownBlock.Heading block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, androidx.compose.ui.Modifier modifier);
     method @androidx.compose.runtime.Composable public void RenderHeading(org.jetbrains.jewel.markdown.MarkdownBlock.Heading block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.HN styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, androidx.compose.ui.Modifier modifier);
-    method @androidx.compose.runtime.Composable public void RenderHtmlBlock(org.jetbrains.jewel.markdown.MarkdownBlock.HtmlBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.HtmlBlock styling, boolean enabled, androidx.compose.ui.Modifier modifier);
     method @androidx.compose.runtime.Composable public void RenderIndentedCodeBlock(org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.IndentedCodeBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Indented styling, boolean enabled, androidx.compose.ui.Modifier modifier);
     method @androidx.compose.runtime.Composable public void RenderList(org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, androidx.compose.ui.Modifier modifier);
     method @androidx.compose.runtime.Composable public void RenderListItem(org.jetbrains.jewel.markdown.MarkdownBlock.ListItem block, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, androidx.compose.ui.Modifier modifier);
@@ -447,21 +440,6 @@ package org.jetbrains.jewel.markdown.rendering {
     method public java.util.List<org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension> getRendererExtensions();
     method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling getRootStyling();
     method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public operator org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer plus(org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension extension);
-    method @androidx.compose.runtime.Composable public void render(java.util.List<? extends org.jetbrains.jewel.markdown.MarkdownBlock> blocks, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
-    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock block, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
-    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.BlockQuote block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.BlockQuote styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
-    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code styling, boolean enabled, androidx.compose.ui.Modifier modifier);
-    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.FencedCodeBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced styling, boolean enabled, androidx.compose.ui.Modifier modifier);
-    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.IndentedCodeBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Indented styling, boolean enabled, androidx.compose.ui.Modifier modifier);
-    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.Heading block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
-    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.Heading block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.HN styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
-    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.HtmlBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.HtmlBlock styling, boolean enabled, androidx.compose.ui.Modifier modifier);
-    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
-    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.OrderedList block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
-    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.UnorderedList block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
-    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.ListItem block, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
-    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.Paragraph block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Paragraph styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
-    method @androidx.compose.runtime.Composable public void renderThematicBreak(org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak styling, boolean enabled, androidx.compose.ui.Modifier modifier);
     property public org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer inlineRenderer;
     property public java.util.List<org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension> rendererExtensions;
     property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling rootStyling;
@@ -563,7 +541,6 @@ package org.jetbrains.jewel.markdown.rendering {
     method @androidx.compose.runtime.Composable public void RenderFencedCodeBlock(org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.FencedCodeBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced styling, boolean enabled, androidx.compose.ui.Modifier modifier);
     method @androidx.compose.runtime.Composable public void RenderHeading(org.jetbrains.jewel.markdown.MarkdownBlock.Heading block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, androidx.compose.ui.Modifier modifier);
     method @androidx.compose.runtime.Composable public void RenderHeading(org.jetbrains.jewel.markdown.MarkdownBlock.Heading block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.HN styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, androidx.compose.ui.Modifier modifier);
-    method @androidx.compose.runtime.Composable public void RenderHtmlBlock(org.jetbrains.jewel.markdown.MarkdownBlock.HtmlBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.HtmlBlock styling, boolean enabled, androidx.compose.ui.Modifier modifier);
     method @androidx.compose.runtime.Composable public void RenderIndentedCodeBlock(org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.IndentedCodeBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Indented styling, boolean enabled, androidx.compose.ui.Modifier modifier);
     method @androidx.compose.runtime.Composable public void RenderList(org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, androidx.compose.ui.Modifier modifier);
     method @androidx.compose.runtime.Composable public void RenderListItem(org.jetbrains.jewel.markdown.MarkdownBlock.ListItem block, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, androidx.compose.ui.Modifier modifier);
@@ -577,21 +554,6 @@ package org.jetbrains.jewel.markdown.rendering {
     method public java.util.List<org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension> getRendererExtensions();
     method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling getRootStyling();
     method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public operator org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer plus(org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension extension);
-    method @Deprecated @androidx.compose.runtime.Composable public default void render(java.util.List<? extends org.jetbrains.jewel.markdown.MarkdownBlock> blocks, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
-    method @Deprecated @androidx.compose.runtime.Composable public default void render(org.jetbrains.jewel.markdown.MarkdownBlock block, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
-    method @Deprecated @androidx.compose.runtime.Composable public default void render(org.jetbrains.jewel.markdown.MarkdownBlock.BlockQuote block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.BlockQuote styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
-    method @Deprecated @androidx.compose.runtime.Composable public default void render(org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code styling, boolean enabled, androidx.compose.ui.Modifier modifier);
-    method @Deprecated @androidx.compose.runtime.Composable public default void render(org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.FencedCodeBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced styling, boolean enabled, androidx.compose.ui.Modifier modifier);
-    method @Deprecated @androidx.compose.runtime.Composable public default void render(org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.IndentedCodeBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Indented styling, boolean enabled, androidx.compose.ui.Modifier modifier);
-    method @Deprecated @androidx.compose.runtime.Composable public default void render(org.jetbrains.jewel.markdown.MarkdownBlock.Heading block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
-    method @Deprecated @androidx.compose.runtime.Composable public default void render(org.jetbrains.jewel.markdown.MarkdownBlock.Heading block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.HN styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
-    method @Deprecated @androidx.compose.runtime.Composable public default void render(org.jetbrains.jewel.markdown.MarkdownBlock.HtmlBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.HtmlBlock styling, boolean enabled, androidx.compose.ui.Modifier modifier);
-    method @Deprecated @androidx.compose.runtime.Composable public default void render(org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
-    method @Deprecated @androidx.compose.runtime.Composable public default void render(org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.OrderedList block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
-    method @Deprecated @androidx.compose.runtime.Composable public default void render(org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.UnorderedList block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
-    method @Deprecated @androidx.compose.runtime.Composable public default void render(org.jetbrains.jewel.markdown.MarkdownBlock.ListItem block, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
-    method @Deprecated @androidx.compose.runtime.Composable public default void render(org.jetbrains.jewel.markdown.MarkdownBlock.Paragraph block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Paragraph styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
-    method @Deprecated @androidx.compose.runtime.Composable public default void renderThematicBreak(org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak styling, boolean enabled, androidx.compose.ui.Modifier modifier);
     property public abstract org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer inlineRenderer;
     property public abstract java.util.List<org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension> rendererExtensions;
     property public abstract org.jetbrains.jewel.markdown.rendering.MarkdownStyling rootStyling;
@@ -602,12 +564,11 @@ package org.jetbrains.jewel.markdown.rendering {
   }
 
   @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class MarkdownStyling {
-    ctor @KotlinOnly public MarkdownStyling(androidx.compose.ui.unit.Dp blockVerticalSpacing, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Paragraph paragraph, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading heading, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.BlockQuote blockQuote, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code code, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List list, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Image image, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak thematicBreak, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.HtmlBlock htmlBlock);
+    ctor @KotlinOnly public MarkdownStyling(androidx.compose.ui.unit.Dp blockVerticalSpacing, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Paragraph paragraph, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading heading, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.BlockQuote blockQuote, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code code, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List list, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Image image, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak thematicBreak);
     method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public org.jetbrains.jewel.markdown.rendering.InlinesStyling getBaseInlinesStyling();
     method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.BlockQuote getBlockQuote();
     method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code getCode();
     method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading getHeading();
-    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.HtmlBlock getHtmlBlock();
     method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Image getImage();
     method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List getList();
     method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Paragraph getParagraph();
@@ -617,7 +578,6 @@ package org.jetbrains.jewel.markdown.rendering {
     property public androidx.compose.ui.unit.Dp blockVerticalSpacing;
     property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code code;
     property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading heading;
-    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.HtmlBlock htmlBlock;
     property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Image image;
     property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List list;
     property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Paragraph paragraph;
@@ -827,25 +787,6 @@ package org.jetbrains.jewel.markdown.rendering {
   public static sealed interface MarkdownStyling.Heading.HN extends org.jetbrains.jewel.markdown.rendering.WithInlinesStyling org.jetbrains.jewel.markdown.rendering.WithUnderline {
     method public androidx.compose.foundation.layout.PaddingValues getPadding();
     property public abstract androidx.compose.foundation.layout.PaddingValues padding;
-  }
-
-  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.HtmlBlock {
-    ctor @KotlinOnly public MarkdownStyling.HtmlBlock(androidx.compose.ui.text.TextStyle textStyle, androidx.compose.foundation.layout.PaddingValues padding, androidx.compose.ui.graphics.Shape shape, androidx.compose.ui.graphics.Color background, androidx.compose.ui.unit.Dp borderWidth, androidx.compose.ui.graphics.Color borderColor, boolean fillWidth);
-    method public boolean getFillWidth();
-    method public androidx.compose.foundation.layout.PaddingValues getPadding();
-    method public androidx.compose.ui.graphics.Shape getShape();
-    method public androidx.compose.ui.text.TextStyle getTextStyle();
-    property public androidx.compose.ui.graphics.Color background;
-    property public androidx.compose.ui.graphics.Color borderColor;
-    property public androidx.compose.ui.unit.Dp borderWidth;
-    property public boolean fillWidth;
-    property public androidx.compose.foundation.layout.PaddingValues padding;
-    property public androidx.compose.ui.graphics.Shape shape;
-    property public androidx.compose.ui.text.TextStyle textStyle;
-    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.HtmlBlock.Companion Companion;
-  }
-
-  public static final class MarkdownStyling.HtmlBlock.Companion {
   }
 
   @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.Image {

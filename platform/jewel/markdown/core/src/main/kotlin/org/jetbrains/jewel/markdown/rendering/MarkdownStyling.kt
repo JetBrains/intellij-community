@@ -38,7 +38,6 @@ public class MarkdownStyling(
     public val list: List,
     public val image: Image,
     public val thematicBreak: ThematicBreak,
-    public val htmlBlock: HtmlBlock,
 ) {
     @ApiStatus.Experimental
     @ExperimentalJewelApi
@@ -961,61 +960,6 @@ public class MarkdownStyling(
         public companion object
     }
 
-    @ApiStatus.Experimental
-    @ExperimentalJewelApi
-    @GenerateDataFunctions
-    public class HtmlBlock(
-        public val textStyle: TextStyle,
-        public val padding: PaddingValues,
-        public val shape: Shape,
-        public val background: Color,
-        public val borderWidth: Dp,
-        public val borderColor: Color,
-        public val fillWidth: Boolean,
-    ) {
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as HtmlBlock
-
-            if (fillWidth != other.fillWidth) return false
-            if (textStyle != other.textStyle) return false
-            if (padding != other.padding) return false
-            if (shape != other.shape) return false
-            if (background != other.background) return false
-            if (borderWidth != other.borderWidth) return false
-            if (borderColor != other.borderColor) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = fillWidth.hashCode()
-            result = 31 * result + textStyle.hashCode()
-            result = 31 * result + padding.hashCode()
-            result = 31 * result + shape.hashCode()
-            result = 31 * result + background.hashCode()
-            result = 31 * result + borderWidth.hashCode()
-            result = 31 * result + borderColor.hashCode()
-            return result
-        }
-
-        override fun toString(): String {
-            return "HtmlBlock(" +
-                "textStyle=$textStyle, " +
-                "padding=$padding, " +
-                "shape=$shape, " +
-                "background=$background, " +
-                "borderWidth=$borderWidth, " +
-                "borderColor=$borderColor, " +
-                "fillWidth=$fillWidth" +
-                ")"
-        }
-
-        public companion object
-    }
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -1030,7 +974,6 @@ public class MarkdownStyling(
         if (list != other.list) return false
         if (image != other.image) return false
         if (thematicBreak != other.thematicBreak) return false
-        if (htmlBlock != other.htmlBlock) return false
 
         return true
     }
@@ -1044,7 +987,6 @@ public class MarkdownStyling(
         result = 31 * result + list.hashCode()
         result = 31 * result + image.hashCode()
         result = 31 * result + thematicBreak.hashCode()
-        result = 31 * result + htmlBlock.hashCode()
         return result
     }
 
@@ -1057,8 +999,7 @@ public class MarkdownStyling(
             "code=$code, " +
             "list=$list, " +
             "image=$image, " +
-            "thematicBreak=$thematicBreak, " +
-            "htmlBlock=$htmlBlock" +
+            "thematicBreak=$thematicBreak" +
             ")"
     }
 

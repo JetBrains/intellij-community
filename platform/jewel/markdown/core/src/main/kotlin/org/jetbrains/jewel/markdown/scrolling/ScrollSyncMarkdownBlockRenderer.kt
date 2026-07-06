@@ -111,6 +111,7 @@ public open class ScrollSyncMarkdownBlockRenderer(
         }
     }
 
+    @Suppress("DEPRECATION")
     @Deprecated(
         message =
             "This class function is not scalable as it relies on a pre-resolved MimeType object. " +

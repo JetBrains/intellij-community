@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.intui.markdown.bridge.styling
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
@@ -35,7 +34,6 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPosition
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Indented
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading
-import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.HtmlBlock
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Image
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered
@@ -58,9 +56,8 @@ public fun MarkdownStyling.Companion.create(
     list: List = List.create(baseTextStyle),
     image: Image = Image.default(),
     thematicBreak: ThematicBreak = ThematicBreak.create(),
-    htmlBlock: HtmlBlock = HtmlBlock.create(editorTextStyle),
 ): MarkdownStyling =
-    MarkdownStyling(blockVerticalSpacing, paragraph, heading, blockQuote, code, list, image, thematicBreak, htmlBlock)
+    MarkdownStyling(blockVerticalSpacing, paragraph, heading, blockQuote, code, list, image, thematicBreak)
 
 @ApiStatus.Experimental
 @ExperimentalJewelApi
@@ -425,18 +422,6 @@ public fun ThematicBreak.Companion.create(
     lineWidth: Dp = 2.dp,
     lineColor: Color = dividerColor,
 ): ThematicBreak = ThematicBreak(padding, lineWidth, lineColor)
-
-@ApiStatus.Experimental
-@ExperimentalJewelApi
-public fun HtmlBlock.Companion.create(
-    textStyle: TextStyle = defaultEditorTextStyle,
-    padding: PaddingValues = PaddingValues(8.dp),
-    shape: Shape = RoundedCornerShape(4.dp),
-    background: Color = blockBackgroundColor,
-    borderWidth: Dp = 1.dp,
-    borderColor: Color = dividerColor,
-    fillWidth: Boolean = true,
-): HtmlBlock = HtmlBlock(textStyle, padding, shape, background, borderWidth, borderColor, fillWidth)
 
 @ApiStatus.Experimental
 @ExperimentalJewelApi
