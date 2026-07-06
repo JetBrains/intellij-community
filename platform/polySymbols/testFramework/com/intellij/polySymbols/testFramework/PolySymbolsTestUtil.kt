@@ -371,14 +371,15 @@ fun CodeInsightTestFixture.renderLookupItems(
   lookupElements?.asSequence()
     ?.map {
       val presentation = TestLookupElementPresentation.renderReal(it)
+      val prioritizedLookupElement = it.`as`(PrioritizedLookupElement::class.java)
       LookupElementInfo(
         lookupElement = it,
         lookupString = it.lookupString,
         displayText = presentation.itemText,
         tailText = presentation.tailText,
         typeText = presentation.typeText,
-        priority = (it as? PrioritizedLookupElement<*>)?.priority ?: 0.0,
-        proximity = (it as? PrioritizedLookupElement<*>)?.explicitProximity,
+        priority = prioritizedLookupElement?.priority ?: 0.0,
+        proximity = prioritizedLookupElement?.explicitProximity,
         isStrikeout = presentation.isStrikeout,
         isItemTextBold = presentation.isItemTextBold,
         isItemTextItalic = presentation.isItemTextItalic,
