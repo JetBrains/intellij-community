@@ -134,8 +134,6 @@
   - name: intellij.kotlin.preferences
   - name: intellij.kotlin.references
   - name: intellij.kotlin.projectConfiguration
-  - name: intellij.kotlin.projectWizard.cli
-  - name: intellij.kotlin.projectWizard.core
   - name: intellij.kotlin.jvm.debugger.core
   - name: kotlin.jvm-debugger.evaluation
   - name: intellij.kotlin.jvm.debugger.eval4j
@@ -178,10 +176,6 @@
   - name: intellij.kotlin.gradle.java
   - name: kotlin.gradle.scripting.shared
   - name: intellij.kotlin.gradle.scripting
-  - name: intellij.kotlin.projectWizard.idea
-  - name: intellij.kotlin.projectWizard.gradle
-  - name: intellij.kotlin.projectWizard.maven
-  - name: intellij.kotlin.projectWizard.compose
   - name: intellij.kotlin.base.scripting
   - name: intellij.kotlin.base.scripting.main.kts
   - name: intellij.kotlin.base.scripting.shared
@@ -432,6 +426,24 @@
 - name: lib/modules/intellij.kotlin.projectStructure.jar
   contentModules:
   - name: intellij.kotlin.projectStructure
+- name: lib/modules/intellij.kotlin.projectWizard.cli.jar
+  contentModules:
+  - name: intellij.kotlin.projectWizard.cli
+- name: lib/modules/intellij.kotlin.projectWizard.compose.jar
+  contentModules:
+  - name: intellij.kotlin.projectWizard.compose
+- name: lib/modules/intellij.kotlin.projectWizard.core.jar
+  contentModules:
+  - name: intellij.kotlin.projectWizard.core
+- name: lib/modules/intellij.kotlin.projectWizard.gradle.jar
+  contentModules:
+  - name: intellij.kotlin.projectWizard.gradle
+- name: lib/modules/intellij.kotlin.projectWizard.idea.jar
+  contentModules:
+  - name: intellij.kotlin.projectWizard.idea
+- name: lib/modules/intellij.kotlin.projectWizard.maven.jar
+  contentModules:
+  - name: intellij.kotlin.projectWizard.maven
 - name: lib/modules/intellij.kotlin.refactorings.jar
   contentModules:
   - name: intellij.kotlin.refactorings

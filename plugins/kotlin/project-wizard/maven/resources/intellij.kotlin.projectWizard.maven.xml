@@ -1,8 +1,11 @@
-<idea-plugin package="org.jetbrains.kotlin.tools.projectWizard.maven">
+<idea-plugin>
 
   <dependencies>
     <module name="intellij.maven"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.kotlin.projectWizard.core"/>
     <module name="intellij.kotlin.projectWizard.idea"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

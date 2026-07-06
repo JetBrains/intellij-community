@@ -8,6 +8,7 @@
     <module name="intellij.kotlin.base.externalSystem"/>
     <module name="intellij.kotlin.gradle.codeInsight.common"/>
     <module name="intellij.kotlin.gradle.gradle"/>
+    <module name="intellij.kotlin.projectWizard.core"/>
     <module name="kotlin.gradle.gradle-java"/>
   </dependencies>
   <!-- endregion -->
