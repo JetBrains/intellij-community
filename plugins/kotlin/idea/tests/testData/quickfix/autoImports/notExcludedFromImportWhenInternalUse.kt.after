@@ -12,7 +12,9 @@
 // ACTION: Import class 'FunctionReference'
 // ACTION: Introduce local variable
 // ACTION: Rename reference
+// K2_ERROR: Only the Kotlin standard library is allowed to use the 'kotlin' package.
 // K2_ERROR: Unresolved reference 'FunctionReference'.
+// K2_AFTER_ERROR: Only the Kotlin standard library is allowed to use the 'kotlin' package.
 
 package kotlin
 

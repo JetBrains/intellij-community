@@ -1,18 +1,11 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-build-common-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-build-common-tests-for-ide:2.4.20-dev-8332">
-      <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.4.20-dev-8332/kotlin-build-common-tests-for-ide-2.4.20-dev-8332.jar">
-          <sha256sum>f23c0357365a75e7592a2753fbeceeafd3aed21b9297f52c8bb39d7e1b263d7a</sha256sum>
-        </artifact>
-      </verification>
-    </properties>
+  <library name="kotlinc.kotlin-build-common-tests">
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.4.20-dev-8332/kotlin-build-common-tests-for-ide-2.4.20-dev-8332.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.4.255-dev-255/kotlin-build-common-tests-for-ide-2.4.255-dev-255.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.4.20-dev-8332/kotlin-build-common-tests-for-ide-2.4.20-dev-8332-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.4.255-dev-255/kotlin-build-common-tests-for-ide-2.4.255-dev-255-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -89,7 +89,20 @@ object CreateKotlinCallableActionTextBuilder {
                 val renderedReceiver = receiverSymbol?.renderAsReceiver(request, receiverType, renderer)
                     ?: receiverType?.render(renderer, Variance.IN_VARIANCE)
                     ?: request.receiverExpression.text
-                receiverTypeText = addedPackage + renderedReceiver
+                receiverTypeText = buildString {
+                    append(addedPackage)
+                    val receiverIsCompanion = (receiverSymbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT
+                    if (request.isForCompanion && receiverIsCompanion) {
+                        (receiverSymbol.containingDeclaration as? KaClassSymbol)?.classId?.shortClassName?.let {
+                            append(it)
+                            append('.')
+                        }
+                    }
+                    append(renderedReceiver)
+                    if (request.isForCompanion && !receiverIsCompanion) {
+                        append(".Companion")
+                    }
+                }
             }
             return if (receiverTypeText.isEmpty()) {
                 "" to ""
@@ -97,7 +110,7 @@ object CreateKotlinCallableActionTextBuilder {
                 val receiverType = receiverSymbol.returnType
                 (if (receiverType is KaFunctionType) "($receiverTypeText)." else "$receiverTypeText.") to receiverTypeText
             } else {
-                (receiverTypeText + if (request.isForCompanion) ".Companion." else ".") to receiverTypeText
+                "$receiverTypeText." to receiverTypeText
             }
         }
     }
