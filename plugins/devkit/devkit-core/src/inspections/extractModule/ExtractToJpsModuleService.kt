@@ -43,6 +43,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
+import com.intellij.task.ProjectTaskManager
 import com.intellij.util.xml.DomManager
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_RESOURCE_ROOT_ENTITY_TYPE_ID
@@ -75,15 +76,15 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
         computeOriginalDataForExtractionFromOptionalDependency(descriptor)
       } ?: return@launch
 
-      val actualData = if (!ApplicationManager.getApplication().isUnitTestMode) {
-        withContext(Dispatchers.EDT) {
+      if (!ApplicationManager.getApplication().isUnitTestMode) {
+        val actualData = withContext(Dispatchers.EDT) {
           ExtractToJpsModuleDialog(originalData).showAndGetResult()
         } ?: return@launch
+        buildProjectAndRunExtraction(actualData)
       }
       else {
-        originalData
+        runExtraction(originalData)
       }
-      runExtraction(actualData)
     }
   }
 
@@ -95,7 +96,17 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
       val actualData = withContext(Dispatchers.EDT) {
         ExtractToJpsModuleDialog(originalData).showAndGetResult()
       } ?: return@launch
-      runExtraction(actualData)
+      buildProjectAndRunExtraction(actualData)
+    }
+  }
+
+  private fun buildProjectAndRunExtraction(data: ExtractToJpsModuleData) {
+    ProjectTaskManager.getInstance(project).buildAllModules().onSuccess { result ->
+      if (!result.isAborted && !result.hasErrors()) {
+        coroutineScope.launch {
+          runExtraction(data)
+        }
+      }
     }
   }
 
@@ -154,8 +165,10 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
               return TargetModuleCreator.ExtractedModuleData(module = createdModule, directoryToMoveClassesTo = newPackageDirectory)
             }
           }
-          project.service<ExtractModuleService>()
-            .analyzeDependenciesAndCreateModuleInBackground(data.packageDirectory, data.originalModule, creator)
+          withContext(Dispatchers.Default) {
+            project.service<ExtractModuleService>()
+              .analyzeDependenciesAndExtractModule(data.packageDirectory, data.originalModule, creator)
+          }
         }
         else {
           LOG.error("Cannot move classes to module '${data.newModuleName}': createdModule = $createdModule, newPackageDirectory = $newPackageDirectory")
