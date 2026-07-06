@@ -74,7 +74,7 @@ public final class PluginsTabFactory implements WelcomeTabFactory {
 
     @Override
     protected JComponent buildComponent() {
-      PluginManagerConfigurable configurable = new PluginManagerConfigurable();
+      PluginManagerConfigurable configurable = PluginManagerConfigurable.createForWelcomeScreen();
       Disposer.register(parentDisposable, configurable::disposeUIResources);
       return createPluginsPanel(configurable);
     }

@@ -8,6 +8,9 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.certificates.PluginCertificateManager
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerManageAction
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerOpenSourceEnum
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerTab
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.plugins.newui.MyPluginModel
 import com.intellij.ide.plugins.newui.PluginManagerCustomizer
@@ -98,7 +101,10 @@ import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants
 
 @ApiStatus.Internal
-class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: String?) : Disposable {
+class PluginManagerConfigurablePanel @RequiresEdt constructor(
+  searchQuery: String?,
+  openSource: PluginManagerOpenSourceEnum = PluginManagerOpenSourceEnum.OTHER,
+) : Disposable {
   private val coroutineScope: CoroutineScope
 
   private val pluginModelFacade: PluginModelFacade
@@ -145,7 +151,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
 
     UiPluginManager.getInstance().updateDescriptorsForInstalledPlugins()
 
-    PluginManagerUsageCollector.sessionStarted()
+    PluginManagerUsageCollector.logSessionStarted(openSource)
 
     if (laterSearchQuery != null) {
       val search = enableSearch(laterSearchQuery, forceShowInstalledTabForTag)
@@ -185,9 +191,12 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
   }
 
   private fun createTabHeaderComponent(selectionTab: Int): TabbedPaneHeaderComponent {
-    val tabHeaderComponent = object : TabbedPaneHeaderComponent(createGearActions(), { index ->
+    val tabHeaderComponent = object : TabbedPaneHeaderComponent(createGearActions(), { index, userInitiated ->
       cardPanel.select(index, true)
       storeSelectionTab(index)
+      if (userInitiated) {
+        PluginManagerUsageCollector.tabSelected(if (index == MARKETPLACE_TAB) PluginManagerTab.MARKETPLACE else PluginManagerTab.INSTALLED)
+      }
 
       val query = if (index == MARKETPLACE_TAB) installedTab.searchQuery else marketplaceTab.searchQuery
       if (index == MARKETPLACE_TAB) {
@@ -608,6 +617,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
 
   private inner class ManagePluginRepositoriesAction : DumbAwareAction(IdeBundle.message("plugin.manager.repositories")) {
     override fun actionPerformed(e: AnActionEvent) {
+      PluginManagerUsageCollector.manageActionInvoked(PluginManagerManageAction.MANAGE_REPOSITORIES)
       val oldRepoUrls = ArrayList(UpdateSettings.getInstance().getStoredPluginHosts())
       if (ShowSettingsUtil.getInstance().editConfigurable(cardPanel, PluginHostsConfigurable())) {
         if (pluginManagerCustomizer == null) {
@@ -631,6 +641,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
 
   private inner class OpenHttpProxyConfigurableAction : DumbAwareAction(IdeBundle.message("button.http.proxy.settings")) {
     override fun actionPerformed(e: AnActionEvent) {
+      PluginManagerUsageCollector.manageActionInvoked(PluginManagerManageAction.HTTP_PROXY)
       if (HttpProxyConfigurable.editConfigurable(cardPanel)) {
         resetPanels()
       }
@@ -639,6 +650,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
 
   private inner class ManagePluginCertificatesAction : DumbAwareAction(IdeBundle.message("plugin.manager.custom.certificates")) {
     override fun actionPerformed(e: AnActionEvent) {
+      PluginManagerUsageCollector.manageActionInvoked(PluginManagerManageAction.CERTIFICATES)
       if (ShowSettingsUtil.getInstance().editConfigurable(cardPanel, PluginCertificateManager())) {
         resetPanels()
       }
@@ -650,6 +662,11 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
     this@PluginManagerConfigurablePanel.pluginModelFacade.getModel(),
     this@PluginManagerConfigurablePanel.cardPanel,
   ) {
+    override fun actionPerformed(e: AnActionEvent) {
+      PluginManagerUsageCollector.manageActionInvoked(PluginManagerManageAction.INSTALL_FROM_DISK)
+      super.actionPerformed(e)
+    }
+
     @RequiresEdt
     override fun onPluginInstalledFromDisk(callbackData: PluginInstallCallbackData, project: Project?) {
       if (pluginManagerCustomizer != null) {
@@ -668,6 +685,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
 
   private inner class ResetConfigurableAction : DumbAwareAction(IdeBundle.message("plugin.manager.refresh")) {
     override fun actionPerformed(e: AnActionEvent) {
+      PluginManagerUsageCollector.manageActionInvoked(PluginManagerManageAction.RESET)
       resetPanels()
     }
   }
@@ -678,6 +696,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
+      PluginManagerUsageCollector.manageActionInvoked(PluginManagerManageAction.TOGGLE_AUTO_UPDATE)
       pluginsAutoUpdateEnabled = state
     }
 
@@ -695,6 +714,9 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
     private val myEnable: Boolean = enable
 
     override fun actionPerformed(e: AnActionEvent) {
+      PluginManagerUsageCollector.manageActionInvoked(
+        if (myEnable) PluginManagerManageAction.ENABLE_ALL else PluginManagerManageAction.DISABLE_ALL
+      )
       PluginModelAsyncOperationsExecutor.switchPlugins(coroutineScope, pluginModelFacade, myEnable) { models ->
         //noinspection unchecked
         setState(pluginModelFacade, models as Collection<PluginUiModel>, myEnable)
