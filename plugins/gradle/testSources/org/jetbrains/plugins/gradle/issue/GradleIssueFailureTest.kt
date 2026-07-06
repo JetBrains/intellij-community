@@ -88,6 +88,32 @@ class GradleIssueFailureTest {
   }
 
   @Test
+  fun `GradleIssueFailure resolves message from cause when own message is null`() {
+    val cause = GradleIssueFailure.createIssueFailure("cause message", null)
+    val failure = GradleIssueFailure.createIssueFailure(null, null, listOf(cause))
+
+    assertEquals("cause message", failure.message)
+  }
+
+  @Test
+  fun `GradleIssueFailure resolves description from cause when own description is null`() {
+    val cause = GradleIssueFailure.createIssueFailure(null, "cause description")
+    val failure = GradleIssueFailure.createIssueFailure(null, null, listOf(cause))
+
+    assertEquals("cause description", failure.description)
+  }
+
+  @Test
+  fun `GradleIssueFailure created from Throwable resolves message from cause when throwable message is null`() {
+    val causeThrowable = RuntimeException("root cause message")
+    val throwable = RuntimeException(null, causeThrowable)
+
+    val failure = GradleIssueFailure.createIssueFailure(throwable)
+
+    assertEquals("root cause message", failure.message)
+  }
+
+  @Test
   fun `GradleIssueFailure resolves class name from description`() {
     val failureMessage = "failed to find target current"
     val failure = GradleIssueFailure.createIssueFailure(failureMessage, LocationAwareException::class.java.name + ": $failureMessage")

@@ -7,10 +7,14 @@ import java.nio.file.Path
 import java.util.regex.Pattern
 
 internal class GradleIssueFailureImpl(
-  override val message: String?,
-  override val description: String?,
+  message: String?,
+  description: String?,
   override val causes: List<GradleIssueFailure>,
 ) : GradleIssueFailure {
+
+  override val message: String? = message ?: causes.resolveForNonEmptyCauses { it.message }
+
+  override val description: String? = description ?: causes.resolveForNonEmptyCauses { it.description }
 
   override val rootCause: GradleIssueFailure = causes.resolveForNonEmptyCauses { it.rootCause } ?: this
 
@@ -18,26 +22,26 @@ internal class GradleIssueFailureImpl(
 
   override val className: String? = resolveClassName(description)
 
-  override val text: String = resolveFailureText(message, description, className) ?: ""
+  override val text: String = resolveFailureText(message, description, className)
 }
 
 internal class GradleThrowableIssueFailure(
   val throwable: Throwable,
 ) : GradleIssueFailure {
 
-  override val message: String? = throwable.message
+  override val causes: List<GradleThrowableIssueFailure> = resolveCauses(throwable)
+
+  override val message: String? = throwable.message ?: causes.resolveForNonEmptyCauses { it.message }
 
   override val description: String = throwable.stackTraceToString()
 
-  override val causes: List<GradleThrowableIssueFailure> = resolveCauses(throwable)
-
   override val rootCause: GradleThrowableIssueFailure = causes.resolveForNonEmptyCauses { it.rootCause } ?: this
 
-  override val filePosition: FilePosition? = resolveFilePosition(message, description, causes)
+  override val filePosition: FilePosition? = resolveFilePosition(throwable.message, description, causes)
 
   override val className: String = throwable.javaClass.name
 
-  override val text: String = resolveFailureText(message, description, className) ?: ""
+  override val text: String = resolveFailureText(throwable.message, description, className)
 }
 
 private fun resolveCauses(throwable: Throwable): List<GradleThrowableIssueFailure> {
@@ -64,14 +68,14 @@ private fun resolveClassName(description: String?): String? {
   return candidate
 }
 
-private fun resolveFailureText(message: String?, description: String?, className: String?): String? {
+private fun resolveFailureText(message: String?, description: String?, className: String?): String {
   return when {
     className != null && message != null -> "$className: $message"
     className != null && description != null -> "$className: $description"
     message != null -> message
     description != null -> description
     className != null -> className
-    else -> null
+    else -> ""
   }
 }
 
