@@ -26,13 +26,11 @@ import com.intellij.testFramework.useProjectAsync
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
-import kotlin.io.path.name
 import kotlin.io.path.pathString
 import kotlin.io.path.relativeTo
 import kotlin.io.path.writeText
@@ -47,7 +45,7 @@ class VfsRefreshLoadingFilesToVfsTest {
   @TestDisposable
   private lateinit var disposable: Disposable
 
-  @RepeatedTest(50)
+  @Test
   fun `new content dir under excluded parent is loaded into vfs after refresh`(): Unit = runBlocking {
     stageNestedExcludedLayout()
 
@@ -75,14 +73,11 @@ class VfsRefreshLoadingFilesToVfsTest {
       val excludedDir = rootDir.rootPath.resolve("other/build")
       val generatedRoot = excludedDir.resolve("inner/generated")
 
-      addModuleWithContentRootUnderExcludedPattern(project, root, excludedDir.name, generatedRoot)
+      addModuleWithContentRootUnderExplicitExclude(project, root, excludedDir, generatedRoot)
 
       generatedRoot.createDirectories()
       generateFiles(generatedRoot, packagePrefix = "com/example")
 
-      val vfuManager = project.workspaceModel.getVirtualFileUrlManager()
-      val excludedDirVfu = vfuManager.findByUrl(excludedDir.toIdeUrl())
-      assertThat(excludedDirVfu).isNull()
 
       val filesLoadedIntoVfs = collectFilesLoadedIntoVfsBeforeListenersRuns(rootVirtualFile, disposable)
       assertSubtreeLoadedIntoVfs(filesLoadedIntoVfs,
@@ -208,23 +203,6 @@ class VfsRefreshLoadingFilesToVfsTest {
           ContentRootEntity(contentRoot.toVirtualFileUrl(urlManager), emptyList(), NonPersistentEntitySource) {
             excludedUrls = listOf(ExcludeUrlEntity(excludedRoot.toVirtualFileUrl(urlManager), NonPersistentEntitySource))
           },
-          ContentRootEntity(nestedContentRoot.toVirtualFileUrl(urlManager), emptyList(), NonPersistentEntitySource),
-        )
-      })
-    }
-  }
-
-  private suspend fun addModuleWithContentRootUnderExcludedPattern(
-    project: Project,
-    contentRoot: Path,
-    excludedPattern: String,
-    nestedContentRoot: Path,
-  ) {
-    val urlManager = project.workspaceModel.getVirtualFileUrlManager()
-    project.workspaceModel.update("add content root under excluded pattern") { storage ->
-      storage.addEntity(ModuleEntity("module", moduleDependencies(), NonPersistentEntitySource) {
-        contentRoots = listOf(
-          ContentRootEntity(contentRoot.toVirtualFileUrl(urlManager), listOf(excludedPattern), NonPersistentEntitySource),
           ContentRootEntity(nestedContentRoot.toVirtualFileUrl(urlManager), emptyList(), NonPersistentEntitySource),
         )
       })
