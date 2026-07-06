@@ -1,0 +1,2 @@
+// K2_INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.diagnosticBased.EscapingCapturedVariableInspection
+// COMPILER_ARGUMENTS: -XXLanguage:+ReportEscapingCapturedVariable

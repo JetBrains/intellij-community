@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.statistics.fileloggers.MetricsContainer
 import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
 import org.jetbrains.kotlin.statistics.metrics.NumericalMetrics
+import org.jetbrains.kotlin.statistics.metrics.StringListMetrics
 import org.jetbrains.kotlin.statistics.metrics.StringMetrics
 
 private const val BASE_FUS_VERSION = 17
@@ -18,7 +19,7 @@ object KotlinGradleFUSCollector : CounterUsagesCollector() {
 
     private val GROUP = EventLogGroup(
         "kotlin.gradle.performance",
-        BASE_FUS_VERSION + StringMetrics.VERSION + BooleanMetrics.VERSION + NumericalMetrics.VERSION,
+        BASE_FUS_VERSION + StringMetrics.VERSION + BooleanMetrics.VERSION + NumericalMetrics.VERSION + StringListMetrics.VERSION,
     )
 
     private fun listOfAllMetrics(): Array<Any> {
@@ -26,6 +27,7 @@ object KotlinGradleFUSCollector : CounterUsagesCollector() {
         result.addAll(StringMetrics.entries.toTypedArray())
         result.addAll(BooleanMetrics.entries.toTypedArray())
         result.addAll(NumericalMetrics.entries.toTypedArray())
+        result.addAll(StringListMetrics.entries.toTypedArray())
         return result.toArray()
     }
 
@@ -36,7 +38,7 @@ object KotlinGradleFUSCollector : CounterUsagesCollector() {
             NumericalMetrics.CPU_NUMBER_OF_CORES,
             StringMetrics.GRADLE_VERSION,
             NumericalMetrics.ARTIFACTS_DOWNLOAD_SPEED,
-            StringMetrics.IDES_INSTALLED,
+            StringListMetrics.IDES_INSTALLED,
             BooleanMetrics.EXECUTED_FROM_IDEA,
             StringMetrics.PROJECT_PATH
         ),
@@ -54,17 +56,17 @@ object KotlinGradleFUSCollector : CounterUsagesCollector() {
             BooleanMetrics.ENABLED_COMPILER_PLUGIN_NO_ARG,
             BooleanMetrics.ENABLED_COMPILER_PLUGIN_SAM_WITH_RECEIVER,
             BooleanMetrics.ENABLED_COMPILER_REFERENCE_INDEX,
-            StringMetrics.JVM_DEFAULTS,
-            StringMetrics.USE_OLD_BACKEND
+            StringListMetrics.JVM_DEFAULTS,
+            StringListMetrics.USE_OLD_BACKEND
         ),
 
         KotlinGradleEvent(
             GROUP, GradleStatisticsEventGroups.JS,
             BooleanMetrics.JS_GENERATE_EXTERNALS,
-            StringMetrics.JS_GENERATE_EXECUTABLE_DEFAULT,
-            StringMetrics.JS_TARGET_MODE,
+            StringListMetrics.JS_GENERATE_EXECUTABLE_DEFAULT,
+            StringListMetrics.JS_TARGET_MODE,
             BooleanMetrics.JS_SOURCE_MAP,
-            StringMetrics.JS_PROPERTY_LAZY_INITIALIZATION,
+            StringListMetrics.JS_PROPERTY_LAZY_INITIALIZATION,
             StringMetrics.JS_OUTPUT_GRANULARITY,
             BooleanMetrics.JS_IR_INCREMENTAL,
             BooleanMetrics.WASM_IR_INCREMENTAL,
@@ -72,13 +74,13 @@ object KotlinGradleFUSCollector : CounterUsagesCollector() {
 
         KotlinGradleEvent(
             GROUP, GradleStatisticsEventGroups.MPP,
-            StringMetrics.MPP_PLATFORMS,
+            StringListMetrics.MPP_PLATFORMS,
             BooleanMetrics.ENABLED_HMPP,
-            StringMetrics.JS_COMPILER_MODE,
+            StringListMetrics.JS_COMPILER_MODE,
             BooleanMetrics.KOTLIN_CROSS_COMPILATION_DISABLED,
             BooleanMetrics.KOTLIN_CROSS_COMPILATION_NOT_SUPPORTED,
             BooleanMetrics.KOTLIN_NATIVE_CACHE_DISABLED,
-            StringMetrics.WASM_COMPILER_MODE,
+            StringListMetrics.WASM_COMPILER_MODE,
         ),
 
         KotlinGradleEvent(
