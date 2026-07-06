@@ -1555,6 +1555,7 @@ plugins/terminal/frontend
 plugins/terminal/sh
 plugins/terminal/tests
 plugins/testng
+plugins/testng/langInjection
 plugins/testng_rt
 plugins/testng_rt/tests
 plugins/textmate
