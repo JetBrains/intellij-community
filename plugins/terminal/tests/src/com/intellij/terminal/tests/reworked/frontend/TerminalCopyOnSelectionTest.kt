@@ -8,6 +8,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.frontend.view.impl.TerminalEditorFactory
+import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.cancel
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputPsiFile
@@ -18,30 +19,14 @@ import org.junit.jupiter.api.condition.OS
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.awt.Component
-import java.awt.KeyboardFocusManager
+import java.awt.DefaultKeyboardFocusManager
 import java.awt.datatransfer.DataFlavor
-import javax.swing.FocusManager
 
 @RunWith(JUnit4::class)
 internal class TerminalCopyOnSelectionTest : BasePlatformTestCase() {
-  private var defaultFocusManager: KeyboardFocusManager? = null
-
   override fun setUp() {
     super.setUp()
-    defaultFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
     Assume.assumeTrue("Can't run this test on Linux because non-headless mode is required to access system selection content", OS.current() != OS.LINUX)
-  }
-
-  override fun tearDown() {
-    try {
-      KeyboardFocusManager.setCurrentKeyboardFocusManager(defaultFocusManager)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
   }
 
   @Test
@@ -106,8 +91,9 @@ internal class TerminalCopyOnSelectionTest : BasePlatformTestCase() {
       scope
     )
     // Copy on selection only works if terminal is the focus owner.
-    KeyboardFocusManager.setCurrentKeyboardFocusManager(
-      object : FocusManager() {
+    TerminalTestUtil.replaceKeyboardFocusManager(
+      testRootDisposable,
+      object : DefaultKeyboardFocusManager() {
         override fun getFocusOwner(): Component = editor.contentComponent
       }
     )
