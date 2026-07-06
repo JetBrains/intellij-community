@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.dev.leakDetection">
+<idea-plugin>
   <resource-bundle>messages.DevLeakDetectionBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
