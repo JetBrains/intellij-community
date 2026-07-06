@@ -118,7 +118,6 @@ internal class SmoothRobot(
   }
 
   override fun cleanUp() {
-    basicRobot.cleanUp()
     Toolkit.getDefaultToolkit().removeAWTEventListener(KeyLoggerAWTEventListener)
   }
 

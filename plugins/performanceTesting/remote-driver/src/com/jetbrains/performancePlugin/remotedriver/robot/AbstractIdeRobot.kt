@@ -167,6 +167,8 @@ internal abstract class AbstractIdeRobot(
     }
   }
 
+  override fun cleanUp() = Unit
+
   protected fun unifyModifiers(vararg modifiers: Int): Int = modifiers.reduceOrNull { acc, i -> acc or i } ?: 0
 
   protected fun <T> performOnEdt(body: () -> T): T? =
