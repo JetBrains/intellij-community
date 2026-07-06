@@ -5,8 +5,10 @@ import com.intellij.documentation.mdn.MdnSymbolDocumentation
 import com.intellij.documentation.mdn.getHtmlApiNamespace
 import com.intellij.documentation.mdn.getHtmlMdnAttributeDocumentation
 import com.intellij.model.Pointer
+import com.intellij.navigation.SymbolNavigationService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolModifier
@@ -62,8 +64,8 @@ internal class HtmlAttributeDescriptorBasedSymbol private constructor(
   override val defaultValue: String?
     get() = descriptor.defaultValue
 
-  override val linkedElement: PsiElement?
-    get() = descriptor.declaration
+  override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
+    descriptor.declaration?.let { listOf(SymbolNavigationService.getInstance().psiElementNavigationTarget(it)) } ?: emptyList()
 
   @PolySymbol.Property(HtmlAttributeValueProperty::class)
   val attributeValue: PolySymbolHtmlAttributeValue

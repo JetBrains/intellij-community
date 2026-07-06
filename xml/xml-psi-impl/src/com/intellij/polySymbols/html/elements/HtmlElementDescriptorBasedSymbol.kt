@@ -5,7 +5,9 @@ import com.intellij.documentation.mdn.MdnSymbolDocumentation
 import com.intellij.documentation.mdn.getHtmlApiNamespace
 import com.intellij.documentation.mdn.getHtmlMdnTagDocumentation
 import com.intellij.model.Pointer
+import com.intellij.navigation.SymbolNavigationService
 import com.intellij.openapi.project.Project
+import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.html.HTML_ELEMENTS
@@ -41,8 +43,8 @@ internal class HtmlElementDescriptorBasedSymbol(
   override val defaultValue: String?
     get() = descriptor.defaultValue
 
-  override val linkedElement: PsiElement?
-    get() = descriptor.declaration
+  override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
+    descriptor.declaration?.let { listOf(SymbolNavigationService.getInstance().psiElementNavigationTarget(it)) } ?: emptyList()
 
   override fun createPointer(): Pointer<HtmlElementDescriptorBasedSymbol> {
     val descriptor = this.descriptor
