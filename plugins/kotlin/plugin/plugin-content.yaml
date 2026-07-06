@@ -181,9 +181,6 @@
   - name: intellij.kotlin.gradle.java
   - name: kotlin.gradle.scripting.shared
   - name: intellij.kotlin.gradle.scripting
-  - name: intellij.kotlin.onboarding
-  - name: intellij.kotlin.onboarding.gradle
-  - name: intellij.kotlin.onboarding.maven
   - name: intellij.kotlin.projectWizard.idea
   - name: intellij.kotlin.projectWizard.gradle
   - name: intellij.kotlin.projectWizard.maven
@@ -422,6 +419,15 @@
 - name: lib/modules/intellij.kotlin.navigation.jar
   contentModules:
   - name: intellij.kotlin.navigation
+- name: lib/modules/intellij.kotlin.onboarding.gradle.jar
+  contentModules:
+  - name: intellij.kotlin.onboarding.gradle
+- name: lib/modules/intellij.kotlin.onboarding.jar
+  contentModules:
+  - name: intellij.kotlin.onboarding
+- name: lib/modules/intellij.kotlin.onboarding.maven.jar
+  contentModules:
+  - name: intellij.kotlin.onboarding.maven
 - name: lib/modules/intellij.kotlin.performanceExtendedPlugin.jar
   contentModules:
   - name: intellij.kotlin.performanceExtendedPlugin
