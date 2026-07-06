@@ -9,7 +9,6 @@ import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.TestDataPath
-import com.intellij.testFramework.UsefulTestCase.LOG
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.utils.io.deleteRecursively
@@ -46,6 +45,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.sour
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.WorkspaceChecksDsl
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
 import org.jetbrains.kotlin.idea.codeInsight.gradle.PluginTargetVersionsRule
 import org.jetbrains.kotlin.idea.codeInsight.gradle.combineMultipleFailures
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
@@ -178,7 +178,14 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         runAll(
             {
                 runForEnabledFeatures { context.beforeTestExecution() }
-                createLocalPropertiesFiles()
+                WriteAction.runAndWait<Throwable> {
+                    createLocalPropertiesFiles(
+                        testProjectRoot = testProjectRoot.toPath(),
+                        testDataDirectory = testDataDirectory.toPath(),
+                        gradleJdkHome = gradleJdkPath.path,
+                        testProperties = testProperties,
+                    )
+                }
                 configureByFiles()
                 runForEnabledFeatures { context.beforeImport() }
                 if (runImport) {
@@ -333,6 +340,20 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
     }
 
     companion object {
+        private const val IOS_TARGET_PLACEHOLDER = "{{iosTargetPlaceholder}}"
+
+        private val AGP_9_COMPATIBILITY_PROPERTIES = """
+            # AGP 9+ compatibility properties
+            android.builtInKotlin=false
+            android.newDsl=false
+            kotlin.native.ignoreDisabledTargets=true
+        """.trimIndent()
+
+        private val HIERARCHY_TEMPLATE_COMPATIBILITY_PROPERTIES = """
+            # Kotlin 2.1+ iOS test compatibility properties
+            kotlin.mpp.applyDefaultHierarchyTemplate=false
+        """.trimIndent()
+
         fun KotlinMppTestsContext.createLocalPropertiesFiles() = WriteAction.runAndWait<Throwable> {
             createLocalPropertiesFiles(testProjectRoot.toPath(), testDataDirectory.toPath(), gradleJdkPath.path, testProperties)
         }
@@ -344,15 +365,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
             testProperties: KotlinMppTestProperties,
         ) {
             val content = localPropertiesContent(gradleJdkHome, testProperties)
-
-            val buildRoots = buildSet {
-                add(testProjectRoot) // main project root
-                testDataDirectory.walk()
-                    .filter { it.isRegularFile() && (it.name == "settings.gradle" || it.name == "settings.gradle.kts") }
-                    .forEach { add(testProjectRoot.resolve(testDataDirectory.relativize(it.parent))) }
-            }
-
-            for (buildRoot in buildRoots) {
+            for (buildRoot in collectBuildRoots(testProjectRoot, testDataDirectory)) {
                 val target = buildRoot.resolve("local.properties")
                 target.parent.createDirectories()
                 target.writeText(content)
@@ -360,10 +373,42 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
             }
         }
 
+        private fun collectBuildRoots(testProjectRoot: Path, testDataDirectory: Path): Set<Path> = buildSet {
+            add(testProjectRoot)
+            testDataDirectory.walk()
+                .filter { it.isRegularFile() && (it.name == "settings.gradle" || it.name == "settings.gradle.kts") }
+                .forEach { add(testProjectRoot.resolve(testDataDirectory.relativize(it.parent))) }
+        }
+
+        private fun applyCompatibilityProperties(
+            testProjectRoot: Path,
+            testDataDirectory: Path,
+            testProperties: KotlinMppTestProperties,
+        ) {
+            val needsHierarchyTemplateCompatibility = testProperties.kotlinVersion.version >= KotlinGradlePluginVersions.V_2_1_0
+                    && testDataUsesIosTargetPlaceholder(testDataDirectory)
+            val isAgp9OrHigher = testProperties.agpVersion.isAgp9OrHigher()
+            if (!isAgp9OrHigher && !needsHierarchyTemplateCompatibility) return
+
+            for (buildRoot in collectBuildRoots(testProjectRoot, testDataDirectory)) {
+                val gradleProperties = buildRoot.resolve("gradle.properties")
+                if (isAgp9OrHigher) {
+                    appendCompatibilityPropertiesIfMissing(gradleProperties, AGP_9_COMPATIBILITY_PROPERTIES)
+                }
+                if (needsHierarchyTemplateCompatibility) {
+                    appendCompatibilityPropertiesIfMissing(gradleProperties, HIERARCHY_TEMPLATE_COMPATIBILITY_PROPERTIES)
+                }
+                LocalFileSystem.getInstance().refreshAndFindFileByNioFile(gradleProperties)
+            }
+        }
+
         private fun localPropertiesContent(gradleJdkHome: String, testProperties: KotlinMppTestProperties): String = buildString {
             appendLine("sdk.dir=${KotlinTestUtils.getAndroidSdkSystemIndependentPath()}")
             appendLine("org.gradle.java.home=$gradleJdkHome")
-            appendLine(testProperties.agpVersion)
+            val agpVersion = testProperties.agpVersion
+            if (agpVersion != null) {
+                appendLine(agpVersion)
+            }
             if (IS_UNDER_TEAMCITY && testProperties.kotlinVersion.version.isDev) {
                 when {
                     HostManager.hostIsMac -> "KOTLIN_NATIVE_PREBUILT_MACOS_AARCH64"
@@ -384,6 +429,12 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
                     appendLine("kotlin.native.home=$kotlinNativeHome")
                 }
             }
+        }
+
+        private fun testDataUsesIosTargetPlaceholder(testDataDirectory: Path): Boolean {
+            return testDataDirectory.walk()
+                .filter { it.isRegularFile() && (it.name == "build.gradle" || it.name == "build.gradle.kts") }
+                .any { IOS_TARGET_PLACEHOLDER in it.readText() }
         }
 
         fun KotlinSyncTestsContext.configureByFiles() = WriteAction.runAndWait<Throwable> {
@@ -435,7 +486,38 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
                             .refreshAndFindFileByNioFile(target)!!
                             .putUserData(VfsTestUtil.TEST_DATA_FILE_PATH, source.toCanonicalPath())
                     }
+
+                val gradleProperties = testProjectRoot.resolve("gradle.properties")
+                if (gradleProperties.exists() && rootForProjectCopy != null) {
+                    val copy = rootForProjectCopy.resolve("gradle.properties")
+                    if (!copy.exists()) {
+                        copy.writeText(gradleProperties.readText())
+                    }
+                }
+
+                (testProperties as? KotlinMppTestProperties)?.let {
+                    applyCompatibilityProperties(testProjectRoot, testDataDirectory, it)
+                    rootForProjectCopy?.let { projectCopyRoot ->
+                        applyCompatibilityProperties(projectCopyRoot, testDataDirectory, it)
+                    }
+                }
             }
+        }
+
+        private fun appendCompatibilityPropertiesIfMissing(gradleProperties: Path, contentToAppend: String) {
+            val existing = gradleProperties.takeIf { it.exists() }?.readText().orEmpty()
+            val existingLines = existing.lineSequence().toSet()
+            val candidateLines = contentToAppend.lineSequence().filter { it.isNotBlank() }.toList()
+            val missingProperties = candidateLines.filter { !it.startsWith("#") && it !in existingLines }
+            if (missingProperties.isEmpty()) return
+
+            val missingComments = candidateLines.filter { it.startsWith("#") && it !in existingLines }
+            val separator = when {
+                existing.isBlank() -> ""
+                existing.endsWith('\n') -> "\n"
+                else -> "\n\n"
+            }
+            gradleProperties.writeText(existing + separator + (missingComments + missingProperties).joinToString("\n") + "\n")
         }
 
         fun computeRootForProjectCopy(
