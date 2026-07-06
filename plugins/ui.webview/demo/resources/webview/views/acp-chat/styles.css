@@ -1245,6 +1245,7 @@ body {
   --acp-warning: var(--ij-warning, #d3a849);
   --acp-error: var(--ij-danger, #db5c5c);
   --acp-mono: var(--ij-editor-font, "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace);
+  --acp-font-size-secondary: max(calc(var(--ij-font-size, 13px) - 1px), 11px);
 }
 html, body, #root {
   height: 100%;
@@ -1518,7 +1519,7 @@ body {
 .acpSelectLabel {
   padding: 4px 8px;
   color: var(--acp-text-muted);
-  font-size: 12px;
+  font-size: var(--acp-font-size-secondary);
 }
 .acpSelectSeparator {
   height: 1px;
@@ -1568,7 +1569,7 @@ body {
   background: var(--acp-bg-alt);
   color: var(--acp-text);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24);
-  font-size: 12px;
+  font-size: var(--acp-font-size-secondary);
   line-height: 1.25;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1590,7 +1591,7 @@ body {
 }
 .acpModelPickerLabel {
   color: var(--acp-text-muted);
-  font-size: 12px;
+  font-size: var(--acp-font-size-secondary);
   white-space: nowrap;
 }
 .acpModelSelectorTrigger,
@@ -1608,7 +1609,6 @@ body {
   border-radius: 3px;
   padding: 0;
   font: inherit;
-  font-size: 12px;
   cursor: pointer;
 }
 .acpModelSelectorTrigger:disabled,
@@ -1673,7 +1673,7 @@ body {
 .acpModelSelectorGroupLabel {
   padding: 4px 8px;
   color: var(--acp-text-muted);
-  font-size: 12px;
+  font-size: var(--acp-font-size-secondary);
 }
 .acpModelSelectorItem {
   display: flex;
@@ -1710,7 +1710,7 @@ body {
 }
 .acpModelSelectorItemDesc {
   color: var(--acp-text-muted);
-  font-size: 12px;
+  font-size: var(--acp-font-size-secondary);
 }
 .acpModelSelectorItem:hover .acpModelSelectorItemDesc,
 .acpModelSelectorItem:focus-visible .acpModelSelectorItemDesc {
@@ -1751,7 +1751,7 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--acp-text-muted);
-  font-size: 12px;
+  font-size: var(--acp-font-size-secondary);
 }
 .acpConfigSwitch {
   position: relative;

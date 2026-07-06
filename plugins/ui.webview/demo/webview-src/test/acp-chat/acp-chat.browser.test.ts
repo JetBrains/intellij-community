@@ -946,6 +946,42 @@ test("drives ACP composer config controls through the picker", async ({page}) =>
     && controlPresentation.effortIcon?.endsWith("/webview/views/acp-chat/assets/acpChatEffort.svg") === true
     && controlPresentation.thinkMoreIcon?.endsWith("/webview/views/acp-chat/assets/acpChatBrain.svg") === true).toBe(true)
 
+  await page.evaluate(() => {
+    document.documentElement.style.setProperty("--ij-font-size", "20px")
+  })
+  await page.locator('[data-config-id="model"] .acpModelSelectorTrigger').click()
+  await expect(page.locator(".acpModelSelectorContent")).toBeVisible()
+  const scaledControlFontSizes = await page.evaluate(() => {
+    function fontSize(selector: string): string | null {
+      const element = document.querySelector(selector)
+      return element ? getComputedStyle(element).fontSize : null
+    }
+
+    return {
+      agentSelect: fontSize(".acpAgentSelect"),
+      modeSelect: fontSize('[data-config-id="mode"] .acpConfigOptionSelect'),
+      modelTrigger: fontSize('[data-config-id="model"] .acpModelSelectorTrigger'),
+      effortSelect: fontSize('[data-config-id="effort"] .acpConfigOptionSelect'),
+      modelSearch: fontSize(".acpModelSelectorSearch"),
+      modelGroupLabel: fontSize(".acpModelSelectorGroupLabel"),
+      modelItemName: fontSize(".acpModelSelectorItemName"),
+      modelItemDesc: fontSize(".acpModelSelectorItemDesc"),
+    }
+  })
+  expect(scaledControlFontSizes.agentSelect === "20px"
+    && scaledControlFontSizes.modeSelect === "20px"
+    && scaledControlFontSizes.modelTrigger === "20px"
+    && scaledControlFontSizes.effortSelect === "20px"
+    && scaledControlFontSizes.modelSearch === "20px"
+    && scaledControlFontSizes.modelGroupLabel === "19px"
+    && scaledControlFontSizes.modelItemName === "20px"
+    && scaledControlFontSizes.modelItemDesc === "19px").toBe(true)
+  await page.locator('[data-config-id="model"] .acpModelSelectorTrigger').press("Escape")
+  await page.waitForFunction(() => document.querySelector(".acpModelSelectorContent") == null)
+  await page.evaluate(() => {
+    document.documentElement.style.removeProperty("--ij-font-size")
+  })
+
   const iconResourcesLoad = await page.evaluate(async () => {
     const iconSources = [
       document.querySelector(".acpAgentSelect .acpAgentSelectItemIcon > *")?.getAttribute("src"),
