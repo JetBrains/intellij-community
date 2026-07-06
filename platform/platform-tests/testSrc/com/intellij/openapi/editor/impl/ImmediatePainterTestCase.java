@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.mock.MockFocusManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
