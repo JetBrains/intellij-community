@@ -13,7 +13,7 @@ typealias DependenciesMap = Map<PyRequirement, PsiElement>
 @ApiStatus.Internal
 abstract class DependenciesInspectionProvider<T : PsiFile>(internal val `class`: Class<T>) {
   protected abstract fun provideDependencies(file: T): DependenciesMap?
-  abstract val emptyFileInspectionMessage: @InspectionMessage String
+  abstract val emptyFileInspectionMessage: @InspectionMessage String?
 
   fun getDependencies(file: PsiFile): DependenciesMap? =
     @Suppress("UNCHECKED_CAST")

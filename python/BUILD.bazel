@@ -1407,6 +1407,8 @@ jvm_library(
         "//libraries/junit4:junit4_test_lib",
         "//plugins/toml/core",
         "//plugins/toml/core:core_test_lib",
+        "//python/python-poetry/backend",
+        "//python/python-poetry/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.tests` end

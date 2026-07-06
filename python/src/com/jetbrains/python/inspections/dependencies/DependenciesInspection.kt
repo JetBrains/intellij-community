@@ -72,15 +72,30 @@ class DependenciesInspection : LocalInspectionTool() {
         return
       }
 
-      val (provider, dependencies) = DependenciesInspectionProviderData.providers.firstNotNullOfOrNull { provider ->
-        provider.getDependencies(psiFile)?.let { provider to it }
-      } ?: return
+      val eligibleProviders =
+        DependenciesInspectionProviderData
+          .providers
+          .mapNotNull { provider ->
+            provider
+              .getDependencies(psiFile)
+              ?.let { provider to it }
+          }
 
-      if (psiFile.injectionParent() == null) {
-        verifyNonEmptyFile(psiFile, provider, packageManager)
+      if (eligibleProviders.isEmpty()) {
+        return
       }
 
-      packageManager.verifyPackageManager(dependencies)
+      val finalDependenciesMap = mutableMapOf<PyRequirement, PsiElement>()
+
+      for ((provider, dependencies) in eligibleProviders) {
+        if (psiFile.injectionParent() == null) {
+          verifyNonEmptyFile(psiFile, provider, packageManager)
+        }
+
+        finalDependenciesMap += dependencies
+      }
+
+      packageManager.verifyPackageManager(finalDependenciesMap)
     }
 
     private fun verifyNonEmptyFile(psiFile: PsiFile, provider: DependenciesInspectionProvider<*>, packageManager: PythonPackageManager) {
@@ -88,12 +103,16 @@ class DependenciesInspection : LocalInspectionTool() {
         return
       }
 
-      val dependenciesExporter = packageManager.dependenciesExporter
-      val fixes = dependenciesExporter?.let { arrayOf(ExportDependenciesQuickFix(it)) } ?: emptyArray()
+      val fixes =
+        packageManager
+          .dependenciesExporter
+          ?.let { arrayOf(ExportDependenciesQuickFix(it)) }
+        ?: emptyArray()
+      val inspectionMessage = provider.emptyFileInspectionMessage ?: return
 
       holder.registerProblem(
         psiFile,
-        provider.emptyFileInspectionMessage,
+        inspectionMessage,
         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
         *fixes,
       )

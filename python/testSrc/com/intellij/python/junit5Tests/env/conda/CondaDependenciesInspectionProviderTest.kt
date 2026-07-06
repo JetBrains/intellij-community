@@ -60,23 +60,4 @@ class CondaDependenciesInspectionProviderTest : PythonDependencyTestCase() {
   }
 
   override fun getBasePath(): String = "/community/python/testData/conda/environmentYml/inspections/"
-
-  /**
-   * Marks the SDK as tracking `environment.yml` as its declared-dependencies root (associating it with
-   * the module dir that holds the file) so the package manager's dependency-file cache tracks it — the
-   * gate in [com.jetbrains.python.inspections.dependencies.DependenciesInspection] reads that cache. The
-   * real conda manager exposes `environment.yml` as its root unconditionally; the test manager keys this
-   * off SDK user data. Init is then forced so the cache is seeded before highlighting runs.
-   */
-  private fun markEnvironmentYmlAsDependencyRoot() {
-    val sdk = myFixture.project.pythonSdk!!
-    sdk.putUserData(TestPythonPackageManager.REQUIREMENTS_PROVIDER_KEY, RequirementsProviderType.ENVIRONMENT_YML)
-    val moduleDir = myFixture.findFileInTempDir("environment.yml").parent
-    ApplicationManager.getApplication().runWriteAction {
-      val modificator = sdk.sdkModificator
-      (modificator.sdkAdditionalData as PythonSdkAdditionalData).associatedModulePath = moduleDir.path
-      modificator.commitChanges()
-    }
-    runBlocking { PythonPackageManager.forSdk(myFixture.project, sdk).waitForInit() }
-  }
 }
