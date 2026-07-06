@@ -3,7 +3,7 @@ package com.intellij.ide.dnd;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.tree.TreePathUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,8 +28,7 @@ public interface TransferableWrapper extends FileFlavorProvider {
     PsiElement[] elements = getPsiElements();
     if (elements == null) return null;
     return Arrays.stream(elements)
-      .filter(PsiFileSystemItem.class::isInstance)
-      .map(e -> ((PsiFileSystemItem)e).getVirtualFile())
+      .map(PsiUtilCore::getVirtualFile)
       .filter(Objects::nonNull)
       .toArray(VirtualFile[]::new);
   }
