@@ -6,13 +6,11 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.frontend.view.impl.TerminalEditorFactory
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.cancel
-import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputPsiFile
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import org.junit.Assume
 import org.junit.Test
@@ -31,7 +29,7 @@ internal class TerminalCopyOnSelectionTest : BasePlatformTestCase() {
   @Test
   fun `copy on selection works for single selection and does not clear clipboard when selection becomes empty`() {
     val editor = createTerminalEditor()
-    editor.emitOnTerminal(
+    editor.document.setText(
       """
       first
       second
@@ -55,7 +53,7 @@ internal class TerminalCopyOnSelectionTest : BasePlatformTestCase() {
   @Test
   fun `copy on selection works for block selection and does not clear clipboard when block selection is cleared`() {
     val editor = createTerminalEditor()
-    editor.emitOnTerminal(
+    editor.document.setText(
       """
       first
       second
@@ -95,12 +93,6 @@ internal class TerminalCopyOnSelectionTest : BasePlatformTestCase() {
       MockFocusManager(editor.contentComponent)
     )
     return editor
-  }
-
-  private fun Editor.emitOnTerminal(text: String) {
-    document.setText(text)
-    val psiFile = PsiDocumentManager.getInstance(this@TerminalCopyOnSelectionTest.project).getPsiFile(this.document) as TerminalOutputPsiFile
-    psiFile.charsSequence = this.document.immutableCharSequence
   }
 
   private fun copiedTransferable() = CopyPasteManager.getInstance().let { it.systemSelectionContents ?: it.contents }
