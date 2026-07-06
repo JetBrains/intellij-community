@@ -1,0 +1,30 @@
+<idea-plugin>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="org.intellij.groovy"/>
+    <module name="intellij.java"/>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.libraries.groovy"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.duplicates.analysis"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.structuralSearch"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensions defaultExtensionNs="org.intellij.groovy">
+    <membersContributor implementation="com.intellij.structuralsearch.groovy.IdeaOpenApiNonCodeMembersContributor"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <structuralsearch.profile implementation="com.intellij.structuralsearch.groovy.GroovyStructuralSearchProfile"/>
+    <structuralsearch.scriptEngine implementation="com.intellij.structuralsearch.groovy.GroovyStructuralSearchScriptEngine"/>
+    <equivalenceDescriptorProvider implementation="com.intellij.structuralsearch.groovy.GroovyEquivalenceDescriptorProvider"/>
+  </extensions>
+</idea-plugin>

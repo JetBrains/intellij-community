@@ -21,6 +21,7 @@
     <module name="intellij.groovy.copyright"/>
     <module name="intellij.groovy.byteCodeViewer"/>
     <module name="intellij.groovy.langInjection"/>
+    <module name="intellij.groovy.structuralSearch"/>
   </content>
   <content>
     <module name="intellij.libraries.hamcrest" loading="embedded"/>
@@ -52,7 +53,6 @@
   </dependencies>
 
   <!--suppress PluginXmlValidity -->
-  <depends optional="true" config-file="groovy-structural-search.xml">com.intellij.modules.structuralsearch</depends>
   <depends optional="true" config-file="spock-support.xml">JUnit</depends>
 
   <resource-bundle>messages.GroovyBundle</resource-bundle>
