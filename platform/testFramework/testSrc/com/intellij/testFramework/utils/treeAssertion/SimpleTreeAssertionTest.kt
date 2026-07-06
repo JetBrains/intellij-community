@@ -306,4 +306,63 @@ class SimpleTreeAssertionTest {
       }
     }
   }
+
+  @Nested
+  inner class FlattenIfTest {
+
+    @Test
+    fun `skips node and promotes children to parent level`() {
+      val tree = buildTree {
+        root("root", 0) {
+          node("B", 1)
+          node("C", 2)
+        }
+      }
+
+      SimpleTreeAssertion.assertTree(tree) {
+        assertNode("root") {
+          assertNode("A", flattenIf = true) {
+            assertNode("B")
+            assertNode("C")
+          }
+        }
+      }
+    }
+
+    @Test
+    fun `preserves grandchildren structure`() {
+      val tree = buildTree {
+        root("root", 0) {
+          node("B", 1) {
+            node("D", 3)
+          }
+          node("C", 2)
+        }
+      }
+
+      SimpleTreeAssertion.assertTree(tree) {
+        assertNode("root") {
+          assertNode("A", flattenIf = true) {
+            assertNode("B") {
+              assertNode("D")
+            }
+            assertNode("C")
+          }
+        }
+      }
+    }
+
+    @Test
+    fun `with no children adds nothing`() {
+      val tree = buildTree {
+        root("root", 0)
+      }
+
+      SimpleTreeAssertion.assertTree(tree) {
+        assertNode("root") {
+          assertNode("A", flattenIf = true)
+        }
+      }
+    }
+  }
 }
