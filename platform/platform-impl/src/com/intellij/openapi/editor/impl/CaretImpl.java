@@ -6,13 +6,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.CaretState;
 import com.intellij.openapi.editor.CaretVisualAttributes;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorSettings;
@@ -48,6 +48,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +62,6 @@ import java.awt.Rectangle;
 public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private static final Logger LOG = Logger.getInstance(CaretImpl.class);
   private static final Key<CaretVisualAttributes> VISUAL_ATTRIBUTES_KEY = new Key<>("CaretAttributes");
-  public static final DataKey<Boolean> HONOR_CAMEL_WORDS = DataKey.create("HonorCamelWords");
 
   private final EditorImpl myEditor;
   private final DocumentEx myDocument;
@@ -75,7 +75,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   private volatile PositionMarker myPositionMarker;
   private boolean myLeansTowardsLargerOffsets;
   private int myLogicalColumnAdjustment;
-  int myVisualColumnAdjustment;
+  private int myVisualColumnAdjustment;
   private int myVisualLineStart;
   private int myVisualLineEnd;
   private boolean mySkipChangeRequests;
@@ -107,9 +107,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     myVisibleCaret = new VisualPosition(0, 0);
     myPositionMarker = new PositionMarker(0);
     myVisualLineStart = 0;
-    myVisualLineEnd = (myDocument.getLineCount() > 1)
-                      ? myDocument.getLineStartOffset(1)
-                      : (myDocument.getLineCount() == 0) ? 0 : myDocument.getLineEndOffset(0);
+    myVisualLineEnd = getInitialVisualLineEnd(myDocument);
     myDocumentUpdateCounter = myCaretModel.getDocumentUpdateCounter();
   }
 
@@ -120,7 +118,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   @Override
   public void moveToOffset(final int offset, final boolean locateBeforeSoftWrap) {
-    assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assertNotUpdating();
     if (mySkipChangeRequests) {
       return;
@@ -165,7 +163,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   @Override
   public void moveCaretRelatively(final int _columnShift, final int lineShift, final boolean withSelection, final boolean scrollToCaret) {
-    assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (mySkipChangeRequests) {
       return;
     }
@@ -349,7 +347,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
                                              @NonNls @Nullable StringBuilder debugBuffer,
                                              boolean adjustForInlays,
                                              boolean fireListeners) {
-    assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     checkDisposal();
     updateCachedStateIfNeeded();
     if (debugBuffer != null) {
@@ -552,7 +550,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   }
 
   void doMoveToVisualPosition(@NotNull VisualPosition pos, boolean fireListeners) {
-    assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     checkDisposal();
     assertNotUpdating();
     if (mySkipChangeRequests) {
@@ -630,10 +628,6 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     return doMoveToLogicalPosition(pos, locateBeforeSoftWrap, debugBuffer, adjustForInlays, fireListeners);
   }
 
-  private static void assertIsDispatchThread() {
-    EditorImpl.assertIsDispatchThread();
-  }
-
   private void assertNotUpdating() {
     LOG.assertTrue(isUpToDate() || !ApplicationManager.getApplication().isDispatchThread(),
                    "Caret model is in its update process. All requests are illegal at this point.");
@@ -698,6 +692,19 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   public int getVisualLineEnd() {
     updateCachedStateIfNeeded();
     return myVisualLineEnd;
+  }
+
+  void setVisualColumnAdjustment(int visualColumnAdjustment) {
+    myVisualColumnAdjustment = visualColumnAdjustment;
+  }
+
+  @NotNull CaretState getCaretState() {
+    return new CaretState(
+      getLogicalPosition(),
+      myVisualColumnAdjustment,
+      getSelectionStartLogicalPosition(),
+      getSelectionEndLogicalPosition()
+    );
   }
 
   /**
@@ -825,7 +832,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   @Override
   public @Nullable Caret clone(boolean above) {
-    assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     int lineShift = above ? -1 : 1;
     LogicalPosition oldPosition = getLogicalPosition();
     int newLine = oldPosition.line + lineShift;
@@ -1176,6 +1183,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
             EditorUtil.isAtLineEnd(myEditor, switchedOffsets ? endOffset : startOffset) ? startPosition.column - endLineColumn : 0;
           int endDiff =
             EditorUtil.isAtLineEnd(myEditor, switchedOffsets ? startOffset : endOffset) ? endPosition.column - endLineColumn : 0;
+          //noinspection MathClampMigration
           marker.startVirtualOffset = Math.max(0, Math.min(startDiff, endDiff));
           marker.endVirtualOffset = Math.max(0, Math.max(startDiff, endDiff));
         }
@@ -1304,7 +1312,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     DataContext customizedContext = CustomizedDataContext.withSnapshot(
       context,
       sink -> {
-        sink.set(HONOR_CAMEL_WORDS, honorCamelWordsSettings);
+        sink.set(HonorCamelWordsDataContextSerializerKt.getHONOR_CAMEL_WORDS(), honorCamelWordsSettings);
       });
     Caret caret = customizedContext.getData(CommonDataKeys.CARET);
     assert caret != null;
@@ -1451,14 +1459,16 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   void resetCachedState() {
     myDocumentUpdateCounter = -1;
+    myVisualColumnAdjustment = 0;
   }
 
   void updateCachedStateIfNeeded() {
-    if (!ApplicationManager.getApplication().isDispatchThread()) return;
-    int modelCounter = myCaretModel.getDocumentUpdateCounter();
-    if (myDocumentUpdateCounter != modelCounter) {
-      updateCachedState();
-      myDocumentUpdateCounter = modelCounter;
+    if (EDT.isCurrentThreadEdt()) {
+      int modelCounter = myCaretModel.getDocumentUpdateCounter();
+      if (myDocumentUpdateCounter != modelCounter) {
+        updateCachedState();
+        myDocumentUpdateCounter = modelCounter;
+      }
     }
   }
 
@@ -1493,6 +1503,17 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     LOG.assertTrue(!DocumentUtil.isInsideSurrogatePair(myDocument, getOffset()));
     LOG.assertTrue(!DocumentUtil.isInsideSurrogatePair(myDocument, getSelectionStart()));
     LOG.assertTrue(!DocumentUtil.isInsideSurrogatePair(myDocument, getSelectionEnd()));
+  }
+
+  private static int getInitialVisualLineEnd(@NotNull Document document) {
+    int lineCount = document.getLineCount();
+    if (lineCount == 0) {
+      return 0;
+    }
+    if (lineCount == 1) {
+      return document.getLineEndOffset(0);
+    }
+    return document.getLineStartOffset(1);
   }
 
   private record VerticalInfo(

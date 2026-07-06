@@ -59,7 +59,6 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   private final EventDispatcher<CaretActionListener> caretActionListeners;
   private final RangeMarkerTree<CaretImpl.PositionMarker> positionMarkerTree;
   private final RangeMarkerTree<CaretImpl.SelectionMarker> selectionMarkerTree;
-
   private final ThreadLocal<CaretImpl> currentCaret = new ThreadLocal<>(); // active caret in the context of 'runForEachCaret' call
   private final LinkedList<CaretImpl> allCarets = new LinkedList<>();
   private volatile @NotNull CaretImpl primaryCaret;
@@ -305,7 +304,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
           fireCaretAdded(caret);
         }
         if (caretState != null && caretState.getCaretPosition() != null && caretState.getVisualColumnAdjustment() != 0) {
-          caret.myVisualColumnAdjustment = caretState.getVisualColumnAdjustment();
+          caret.setVisualColumnAdjustment(caretState.getVisualColumnAdjustment());
           caret.updateVisualPosition();
         }
         if (caretState != null && caretState.getSelectionStart() != null && caretState.getSelectionEnd() != null) {
@@ -362,14 +361,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     synchronized (allCarets) {
       List<CaretState> states = new ArrayList<>(allCarets.size());
       for (CaretImpl caret : allCarets) {
-        states.add(
-          new CaretState(
-            caret.getLogicalPosition(),
-            caret.myVisualColumnAdjustment,
-            caret.getSelectionStartLogicalPosition(),
-            caret.getSelectionEndLogicalPosition()
-          )
-        );
+        states.add(caret.getCaretState());
       }
       return states;
     }
@@ -473,7 +465,6 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
       doWithCaretMerging(() -> {
         for (CaretImpl caret : allCarets) {
           caret.resetCachedState();
-          caret.myVisualColumnAdjustment = 0;
           caret.updateVisualPosition();
         }
       });
