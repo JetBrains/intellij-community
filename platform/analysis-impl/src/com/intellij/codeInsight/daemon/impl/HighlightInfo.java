@@ -1543,12 +1543,8 @@ public class HighlightInfo implements Segment {
         Future<List<IntentionActionDescriptor>> future = description.future();
         if (future == null) {
           Consumer<? super QuickFixActionRegistrar> computer = description.fixesComputer();
-          var promise = ReadAction.nonBlocking(() ->
-              doComputeLazyQuickFixes(document, project, description.psiModificationStamp(), computer))
-            .wrapProgress(progressIndicator.get())
-            .submit(ForkJoinPool.commonPool());
-          future = promise;
-          promise.onSuccess(descriptors -> fireQuickFixesAvailable(descriptors, project, document));
+          future = ReadAction.nonBlocking(() -> doComputeLazyQuickFixes(document, project, description.psiModificationStamp(), computer)).wrapProgress(progressIndicator.get()).submit(ForkJoinPool.commonPool())
+            .onSuccess(descriptors -> fireQuickFixesAvailable(descriptors, project, document));
           return new LazyFixDescription(computer, PsiManager.getInstance(project).getModificationTracker().getModificationCount(), future);
         }
         return description;
