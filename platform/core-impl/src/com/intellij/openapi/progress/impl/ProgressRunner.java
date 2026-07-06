@@ -480,7 +480,6 @@ public final class ProgressRunner<R> {
   ) {
     CompletableFuture<R> resultFuture = new CompletableFuture<>();
     ChildContext childContext = Propagation.createChildContext("ProgressRunner: " + task);
-    CoroutineContext externalContextElements = ThreadContext.currentThreadContext().fold((CoroutineContext)EmptyCoroutineContext.INSTANCE, (acc, elem) -> elem instanceof ExternalIntelliJContextElement ? acc.plus(elem) : acc);
     Job job = childContext.getJob();
     if (job != null) {
       // cancellation of the Job cancels the future
@@ -507,7 +506,7 @@ public final class ProgressRunner<R> {
         try {
           childContext.runInChildContext(() -> {
             CoroutineContext effectiveContext =
-              ThreadContext.currentThreadContext().plus(asContextElement(progressIndicator.getModalityState()).plus(sharedPermit)).plus(externalContextElements);
+              ThreadContext.currentThreadContext().plus(asContextElement(progressIndicator.getModalityState()).plus(sharedPermit));
             ThreadContext.installThreadContext(effectiveContext, true, () -> {
               runnable.run();
               return Unit.INSTANCE;
