@@ -146,11 +146,11 @@ internal class UvPyProjectManager : PyProjectManager, PyProjectCreator by ToolBa
 // but sufficient here since dependency names are already validated by uv.
 private val DEPENDENCY_NAME_REGEX = """^\s*(\w([\w\-.]*\w)?).*$""".toRegex()
 
-private fun extractDependencyNamesWithoutExtras(toml: PyProjectToml): Set<String>? =
-  toml.project?.dependencies?.let { it.project + it.allDepsFromGroups }?.mapNotNull {
+private fun extractDependencyNamesWithoutExtras(toml: PyProjectToml): Set<String> =
+  toml.project.dependencies.let { it.project + it.allDepsFromGroups }.mapNotNull {
     val (dependencyName, _) = DEPENDENCY_NAME_REGEX.matchEntire(it)?.destructured ?: return@mapNotNull null
     dependencyName
-  }?.toSet()
+  }.toSet()
 
 private data class WorkspaceInfo(val members: List<PathMatcher>, val exclude: List<PathMatcher>) {
   fun match(path: Path): Boolean =
@@ -197,7 +197,7 @@ private fun getUvDependencies(
   if (sourcesTablesWithRoots.isEmpty()) {
     return null
   }
-  val deps = extractDependencyNamesWithoutExtras(pyProject.pyProjectToml) ?: return null
+  val deps = extractDependencyNamesWithoutExtras(pyProject.pyProjectToml)
   // Dependency names indexed by their normalized form; a `tool.uv.sources` entry applies to a
   // dependency when their normalized names match, regardless of `-`/`_`/`.` spelling (PY-90207).
   val depByNormalizedName = deps.associateByTo(HashMap()) { PyPackageName.normalizeProjectName(it) }
