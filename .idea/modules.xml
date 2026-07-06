@@ -557,6 +557,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/rt/intellij.groovy.rt.iml" filepath="$PROJECT_DIR$/plugins/groovy/rt/intellij.groovy.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/rt/classLoader/intellij.groovy.rt.classLoader.iml" filepath="$PROJECT_DIR$/plugins/groovy/rt/classLoader/intellij.groovy.rt.classLoader.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy-scripting/intellij.groovy.scripting.iml" filepath="$PROJECT_DIR$/plugins/groovy-scripting/intellij.groovy.scripting.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/groovy/spock/intellij.groovy.spock.iml" filepath="$PROJECT_DIR$/plugins/groovy/spock/intellij.groovy.spock.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/spock-rt/intellij.groovy.spock.rt.iml" filepath="$PROJECT_DIR$/plugins/groovy/spock-rt/intellij.groovy.spock.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/structuralsearch-groovy/intellij.groovy.structuralSearch.iml" filepath="$PROJECT_DIR$/plugins/groovy/structuralsearch-groovy/intellij.groovy.structuralSearch.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/structuralsearch-groovy/intellij.groovy.structuralSearch.tests.iml" filepath="$PROJECT_DIR$/plugins/groovy/structuralsearch-groovy/intellij.groovy.structuralSearch.tests.iml" />

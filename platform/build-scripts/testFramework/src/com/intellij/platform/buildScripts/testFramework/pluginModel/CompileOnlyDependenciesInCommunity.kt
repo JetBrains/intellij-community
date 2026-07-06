@@ -16,4 +16,5 @@ val compileOnlyDependenciesInCommunity: List<Pair<String, String>> = listOf(
   "intellij.junit.v6.rt" to "intellij.libraries.junit6", // module is used in external processes where the library from user's project is added to the classpath
   "intellij.junit.v6.rt" to "intellij.libraries.junit6.launcher", // module is used in external processes where the library from user's project is added to the classpath
   "intellij.platform.util" to "intellij.platform.util.troveCompileOnly", //used only for compilation of deprecated FileUtil.FILE_HASHING_STRATEGY left for compatibility
+  "intellij.groovy.spock.rt" to "intellij.junit.rt", //the classes are loaded in an external process at runtime and have a proper dependency there; can be removed after extracting spock.rt to a content module (IDEA-391267)
 )

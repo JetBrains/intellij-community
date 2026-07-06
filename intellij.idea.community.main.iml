@@ -77,6 +77,7 @@
     <orderEntry type="module" module-name="intellij.platform.images" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.groovy" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.groovy.langInjection" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.groovy.spock" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.junit" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.moduleSet.plugin.main" scope="RUNTIME" />

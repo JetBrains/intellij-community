@@ -22,6 +22,7 @@
     <module name="intellij.groovy.byteCodeViewer"/>
     <module name="intellij.groovy.langInjection"/>
     <module name="intellij.groovy.structuralSearch"/>
+    <module name="intellij.groovy.spock"/>
   </content>
   <content>
     <module name="intellij.libraries.hamcrest" loading="embedded"/>
@@ -43,17 +44,12 @@
     <module name="intellij.java.unscramble"/>
     <module name="intellij.platform.jps.build"/>
     <module name="intellij.platform.jps.build.javac.rt"/>
-    <module name="intellij.platform.smRunner"/>
     <module name="intellij.platform.structureView"/>
-    <module name="intellij.platform.testRunner"/>
     <module name="intellij.properties.backend"/>
     <module name="intellij.properties.psi"/>
     <module name="intellij.spellchecker"/>
     <!-- endregion -->
   </dependencies>
-
-  <!--suppress PluginXmlValidity -->
-  <depends optional="true" config-file="spock-support.xml">JUnit</depends>
 
   <resource-bundle>messages.GroovyBundle</resource-bundle>
 

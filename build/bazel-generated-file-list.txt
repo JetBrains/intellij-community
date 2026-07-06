@@ -1166,6 +1166,7 @@ plugins/groovy/langInjection
 plugins/groovy/rt
 plugins/groovy/rt-constants
 plugins/groovy/rt/classLoader
+plugins/groovy/spock
 plugins/groovy/spock-rt
 plugins/groovy/structuralsearch-groovy
 plugins/hg4idea

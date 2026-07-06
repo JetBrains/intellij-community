@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.junit.rt" />
+    <orderEntry type="module" module-name="intellij.junit.rt" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="PROVIDED" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="spockframework.spock.core" type="repository">

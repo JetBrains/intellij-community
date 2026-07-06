@@ -45,6 +45,9 @@
 - name: lib/modules/intellij.groovy.langInjection.jar
   contentModules:
   - name: intellij.groovy.langInjection
+- name: lib/modules/intellij.groovy.spock.jar
+  contentModules:
+  - name: intellij.groovy.spock
 - name: lib/modules/intellij.groovy.structuralSearch.jar
   contentModules:
   - name: intellij.groovy.structuralSearch

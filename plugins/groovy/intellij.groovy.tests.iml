@@ -91,6 +91,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy.langInjection" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.groovy.spock" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.groovy.scripting" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy.live.templates" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />

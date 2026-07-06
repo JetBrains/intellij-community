@@ -1,0 +1,81 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.groovy.spock` start
+jvm_library(
+    name = "spock",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.groovy.spock",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//java/java-impl:impl",
+        "//java/execution/impl",
+        "//platform/execution-impl",
+        "//platform/execution",
+        "//java/java-psi-api:psi",
+        "//platform/util/jdom",
+        "//platform/platform-util-io:ide-util-io",
+        "//plugins/groovy/spock-rt",
+        "//plugins/junit",
+        "//plugins/groovy",
+        "//platform/testRunner",
+        "//platform/ide-core",
+        "//platform/lang-core",
+        "//platform/smRunner",
+        "@lib//:kotlin-stdlib",
+        "//plugins/junit_rt:junit-rt",
+    ],
+)
+
+jvm_library(
+    name = "spock_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.groovy.spock",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":spock",
+        "//platform/core-api:core_test_lib",
+        "//java/java-impl:impl_test_lib",
+        "//java/execution/impl:impl_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//plugins/groovy/spock-rt:spock-rt_test_lib",
+        "//plugins/junit:junit_test_lib",
+        "//plugins/groovy:groovy_test_lib",
+        "//platform/testRunner:testRunner_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/lang-core:lang-core_test_lib",
+        "//platform/smRunner:smRunner_test_lib",
+        "//plugins/junit_rt:junit-rt_test_lib",
+    ],
+)
+### auto-generated section `build intellij.groovy.spock` end
+
+### auto-generated section `iml intellij.groovy.spock` start
+exports_files(
+    [
+        "intellij.groovy.spock.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.groovy.spock` end
