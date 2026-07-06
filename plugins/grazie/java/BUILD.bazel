@@ -18,6 +18,7 @@ jvm_library(
         ["src/main/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -60,6 +61,7 @@ jvm_library(
         "//platform/util-ex:util-ex_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//spellchecker:spellchecker_test_lib",
+        "//platform/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.grazie.java` end
