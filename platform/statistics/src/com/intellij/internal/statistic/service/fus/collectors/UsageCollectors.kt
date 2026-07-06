@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.service.fus.collectors
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 
@@ -35,14 +34,12 @@ object UsageCollectors {
     return APPLICATION_EP_NAME.extensionList.asSequence()
       .filter { it.allowOnStartup == true }
       .mapNotNull { it.getCollectorIfApplicable() as ApplicationUsagesCollector? }
-      .filter { isValidCollector(it) }
       .toList()
   }
 
   private fun getAllApplicationCollectors(): Collection<ApplicationUsagesCollector> {
     return APPLICATION_EP_NAME.extensionList.asSequence()
       .mapNotNull { it.getCollectorIfApplicable() as ApplicationUsagesCollector? }
-      .filter { isValidCollector(it) }
       .toList()
   }
 
@@ -53,16 +50,7 @@ object UsageCollectors {
 
     return PROJECT_EP_NAME.extensionList.asSequence()
       .mapNotNull { it.getCollectorIfApplicable() as ProjectUsagesCollector? }
-      .filter { isValidCollector(it) }
       .toList()
-  }
-
-  private fun isValidCollector(item: FeatureUsagesCollector): Boolean {
-    val valid = item.isValid
-    if (!valid) {
-      Logger.getInstance(UsageCollectors::class.java).info("$item is !valid -> skipped from extension points list")
-    }
-    return valid
   }
 
   private fun isCalledFromPlugin(invoker: UsagesCollectorConsumer): Boolean {

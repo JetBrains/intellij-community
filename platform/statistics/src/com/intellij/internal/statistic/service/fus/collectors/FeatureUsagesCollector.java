@@ -13,7 +13,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 /**
  * <p>Use it to create a collector which records IDE/project state or user/IDE internal actions.</p>
@@ -26,7 +25,6 @@ import java.util.regex.Pattern;
  */
 @ApiStatus.Internal
 public abstract class FeatureUsagesCollector {
-  private static final @NonNls String GROUP_ID_PATTERN = "([a-zA-Z]*\\.)*[a-zA-Z]*";
   private @Nullable String fileName = null;
 
   /**
@@ -43,10 +41,6 @@ public abstract class FeatureUsagesCollector {
   @TestOnly
   public void forceCalculateFileName() {
     calculateFileName();
-  }
-
-  public final boolean isValid() {
-    return Pattern.compile(GROUP_ID_PATTERN).matcher(getGroupId()).matches();
   }
 
   public @Nullable String getFileName() {
