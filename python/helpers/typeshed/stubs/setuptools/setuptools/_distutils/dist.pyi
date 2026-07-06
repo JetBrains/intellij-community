@@ -4,6 +4,7 @@ from re import Pattern
 from typing import IO, ClassVar, Literal, TypeAlias, TypeVar, overload
 
 from .cmd import Command
+from .extension import Extension
 
 command_re: Pattern[str]
 
@@ -78,18 +79,18 @@ class Distribution:
     script_args: list[str] | None
     command_options: dict[str, dict[str, tuple[str, str]]]
     dist_files: list[tuple[str, str, str]]
-    packages: Incomplete
+    packages: list[str] | None
     package_data: dict[str, list[str]]
-    package_dir: Incomplete
-    py_modules: Incomplete
+    package_dir: dict[str, str] | None
+    py_modules: list[str] | None
     libraries: Incomplete
     headers: Incomplete
-    ext_modules: Incomplete
+    ext_modules: list[Extension] | None
     ext_package: Incomplete
     include_dirs: Incomplete
     extra_path: Incomplete
     scripts: Incomplete
-    data_files: Incomplete
+    data_files: list[str | tuple[Incomplete, ...]] | None
     password: str
     command_obj: dict[str, Command]
     have_run: dict[str, bool]

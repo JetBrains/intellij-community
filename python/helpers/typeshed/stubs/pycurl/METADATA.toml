@@ -1,4 +1,4 @@
-version = "7.46.0"
+version = "7.47.0"
 upstream-repository = "https://github.com/pycurl/pycurl"
 
 [tool.stubtest]
