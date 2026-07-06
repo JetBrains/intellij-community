@@ -1530,12 +1530,12 @@ public class HighlightInfo implements Segment {
     assertIntentionActionDescriptorsAreRangeMarkerBased(getIntentionActionDescriptors(offsetStore));
     ThreadingAssertions.assertBackgroundThread();
     ThreadingAssertions.assertReadAccess();
-    AtomicReference<ProgressIndicator> progressIndicator = new AtomicReference<>(new DaemonProgressIndicator());
+    AtomicReference<ProgressIndicator> progressIndicator = new AtomicReference<>();
     updateOffsetStore(oldStore -> {
-      if (!progressIndicator.get().isCanceled()) {
-        progressIndicator.get().cancel(); // cancel the previous computations started before but not stored in the "future" field because the CAS failed
+      ProgressIndicator oldIndicator = progressIndicator.getAndSet(new DaemonProgressIndicator());
+      if (oldIndicator != null && !oldIndicator.isCanceled()) {
+        oldIndicator.cancel(); // cancel the previous computations started before but not stored in the "future" field because the CAS failed
       }
-      progressIndicator.set(new DaemonProgressIndicator());
       if (oldStore == TOMB) {
         return oldStore;
       }
