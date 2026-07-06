@@ -189,8 +189,6 @@
   - name: intellij.kotlin.base.scripting.main.kts
   - name: intellij.kotlin.base.scripting.shared
   - name: intellij.kotlin.base.scripting.scratch.definition
-  - name: intellij.kotlin.refactorings
-  - name: intellij.kotlin.refactorings.rename
 - name: lib/kotlinc.allopen-compiler-plugin.jar
   library: kotlinc.allopen-compiler-plugin
   files:
@@ -437,6 +435,12 @@
 - name: lib/modules/intellij.kotlin.projectStructure.jar
   contentModules:
   - name: intellij.kotlin.projectStructure
+- name: lib/modules/intellij.kotlin.refactorings.jar
+  contentModules:
+  - name: intellij.kotlin.refactorings
+- name: lib/modules/intellij.kotlin.refactorings.rename.jar
+  contentModules:
+  - name: intellij.kotlin.refactorings.rename
 - name: lib/modules/intellij.kotlin.searching.jar
   contentModules:
   - name: intellij.kotlin.searching
