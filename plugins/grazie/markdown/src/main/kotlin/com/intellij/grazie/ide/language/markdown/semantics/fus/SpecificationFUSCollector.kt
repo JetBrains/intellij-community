@@ -6,9 +6,10 @@ import ai.grazie.rules.promptAnalysis.LlmAnalyzer.WithSpending
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import kotlin.math.roundToLong
 
 internal object SpecificationFUSCollector: CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("grazie.semantics", 4)
+  private val GROUP = EventLogGroup("grazie.semantics", 5)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -18,11 +19,13 @@ internal object SpecificationFUSCollector: CounterUsagesCollector() {
   )
   private val TIME_FIELD = EventFields.Long("timeMs")
   private val ISSUES_FIELD = EventFields.Int("issues")
-  private val COST_FIELD = EventFields.Double("cost")
+  private val COST_FIELD = EventFields.RoundedLong("cost")
   private val TEXT_LENGTH_FIELD = EventFields.RoundedInt("textLength")
   private val FILE_COUNT_FIELD = EventFields.RoundedInt("fileCount")
   private val INDEX_FIELD = EventFields.Int("index")
   private val TOTAL_FIELD = EventFields.Int("total")
+
+  private const val COEFFICIENT = 1_000_000L
 
 
   fun suggestionAccepted(index: Int, total: Int) = acceptSuggestionEvent.log(
@@ -40,11 +43,12 @@ internal object SpecificationFUSCollector: CounterUsagesCollector() {
   ) {
     val textLength = specifications.sumOf { it.currentText.length }
     val issues = analysis.data.values.sumOf { it.size }
+    val costs = (COEFFICIENT * analysis.spentCredits).roundToLong()
     analysisEvent.log(
       ANALYZER_FIELD.with(analyzer),
       TEXT_LENGTH_FIELD.with(textLength),
       FILE_COUNT_FIELD.with(specifications.size),
-      COST_FIELD.with(analysis.spentCredits),
+      COST_FIELD.with(costs),
       TIME_FIELD.with(timeMs),
       ISSUES_FIELD.with(issues),
     )
