@@ -1631,4 +1631,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.tools.ide.metrics.benchmark.tests",
   "intellij.tools.ide.metrics.collector.tests",
   "intellij.tools.ide.starter.bus.tests",
+  "intellij.turboComplete.tests",
 )
