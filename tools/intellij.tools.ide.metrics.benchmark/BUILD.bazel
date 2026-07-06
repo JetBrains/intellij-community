@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
+jps_test(
+    name = "ide-metrics-benchmark-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":ide-metrics-benchmark-tests_test_lib"],
+)
+### skip generation section `test intellij.tools.ide.metrics.benchmark.tests`
+
 ### auto-generated section `build intellij.tools.ide.metrics.benchmark` start
 
 jvm_provided_library(
@@ -168,11 +176,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.tools.ide.metrics.benchmark.tests` end
-
-### auto-generated section `test intellij.tools.ide.metrics.benchmark.tests` start
-
-jps_test(
-    name = "ide-metrics-benchmark-tests_test",
-    runtime_deps = [":ide-metrics-benchmark-tests_test_lib"],
-)
-### auto-generated section `test intellij.tools.ide.metrics.benchmark.tests` end
