@@ -26,11 +26,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.v2.ScrollbarAdapter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
@@ -45,6 +51,7 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Locale
+import kotlin.math.roundToInt
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -127,6 +134,25 @@ public fun Scrollbars(
             }
             RowWithScrollbar(ipsum, scrollbarStyle, Modifier.fillMaxWidth())
             LazyRowWithScrollbar(ipsum, scrollbarStyle, Modifier.fillMaxWidth())
+
+            Row(
+                Modifier.fillMaxWidth().height(250.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SpannedGridWithScrollbar(
+                    title = "LazyVerticalGrid (default adapter)",
+                    spanAware = false,
+                    style = scrollbarStyle,
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                )
+                SpannedGridWithScrollbar(
+                    title = "LazyVerticalGrid (span-aware adapter)",
+                    spanAware = true,
+                    style = scrollbarStyle,
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                )
+            }
         }
     }
 }
@@ -415,6 +441,159 @@ private fun LazyRowWithScrollbar(content: String, scrollbarStyle: ScrollbarStyle
     }
 }
 
+/**
+ * The default scrollbar adapter assumes every item occupies exactly one slot, so it underestimates the number of lines
+ * in the grid, and the thumb overshoots the track while scrolling. Passing a custom [ScrollbarAdapter] that knows the
+ * actual item structure fixes it.
+ */
+@Composable
+private fun SpannedGridWithScrollbar(
+    title: String,
+    spanAware: Boolean,
+    style: ScrollbarStyle,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier) {
+        Text(title, fontSize = 18.sp)
+        Spacer(Modifier.height(8.dp))
+
+        val gridState = rememberLazyGridState()
+        val adapter =
+            if (spanAware) {
+                remember(gridState) { SpanAwareGridScrollbarAdapter(gridState, GRID_COLUMNS, GRID_HEADER_INTERVAL) }
+            } else {
+                null
+            }
+
+        VerticallyScrollableContainer(
+            scrollState = gridState,
+            style = style,
+            adapter = adapter,
+            modifier =
+                Modifier.fillMaxSize()
+                    .background(JewelTheme.textAreaStyle.colors.background)
+                    .border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal),
+        ) {
+            val shape = RoundedCornerShape(4.dp)
+            val borderColor = getBorderColor()
+            val backgroundColor = getBackgroundColor()
+
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(GRID_COLUMNS),
+                state = gridState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 4.dp, end = 4.dp + scrollbarContentSafePadding(style)),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                items(
+                    count = GRID_ITEM_COUNT,
+                    span = { index ->
+                        if (index % GRID_HEADER_INTERVAL == 0) GridItemSpan(maxLineSpan) else GridItemSpan(1)
+                    },
+                ) { index ->
+                    if (index % GRID_HEADER_INTERVAL == 0) {
+                        Box(
+                            modifier =
+                                Modifier.height(GRID_CELL_HEIGHT)
+                                    .fillMaxWidth()
+                                    .background(backgroundColor, shape)
+                                    .border(1.dp, borderColor, shape)
+                                    .padding(horizontal = 8.dp),
+                            contentAlignment = Alignment.CenterStart,
+                        ) {
+                            Text("Group ${index / GRID_HEADER_INTERVAL + 1}")
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier.height(GRID_CELL_HEIGHT).background(backgroundColor, shape),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text("$index")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * A [ScrollbarAdapter] for a [LazyVerticalGrid] whose items have heterogeneous spans.
+ *
+ * The default adapter estimates line counts assuming one slot per item, which is wrong when some items span the full
+ * line. This is a limitation CMP cannot fix generically, as it has no information about non-composed lines. This
+ * adapter computes exact values by encoding the known structure of the grid: every [headerInterval]-th item is a
+ * full-span header, all other items span one of the [columns] slots, and all lines are equally tall.
+ */
+private class SpanAwareGridScrollbarAdapter(
+    private val gridState: LazyGridState,
+    private val columns: Int,
+    private val headerInterval: Int,
+) : ScrollbarAdapter {
+    // Each group of headerInterval items renders as one header line plus the following
+    // headerInterval - 1 single-span items, packed columns per line (last line ragged)
+    private val linesPerGroup = 1 + (headerInterval - 1 + columns - 1) / columns
+
+    private val layoutInfo
+        get() = gridState.layoutInfo
+
+    // All cells are equally tall, so any visible item measures the line height
+    private val lineHeight
+        get() = layoutInfo.visibleItemsInfo.firstOrNull()?.size?.height?.toDouble() ?: 0.0
+
+    private val linePitch
+        get() = lineHeight + layoutInfo.mainAxisItemSpacing
+
+    private val totalLines
+        get() = if (layoutInfo.totalItemsCount == 0) 0 else lineOfIndex(layoutInfo.totalItemsCount - 1) + 1
+
+    private fun lineOfIndex(index: Int): Int {
+        val group = index / headerInterval
+        val positionInGroup = index % headerInterval
+        val lineInGroup = if (positionInGroup == 0) 0 else 1 + (positionInGroup - 1) / columns
+        return group * linesPerGroup + lineInGroup
+    }
+
+    private fun firstIndexOfLine(line: Int): Int {
+        val group = line / linesPerGroup
+        val lineInGroup = line % linesPerGroup
+        return if (lineInGroup == 0) {
+            group * headerInterval
+        } else {
+            group * headerInterval + 1 + (lineInGroup - 1) * columns
+        }
+    }
+
+    override val scrollOffset: Double
+        get() = lineOfIndex(gridState.firstVisibleItemIndex) * linePitch + gridState.firstVisibleItemScrollOffset
+
+    override val contentSize: Double
+        get() {
+            val lines = totalLines
+            if (lines == 0) return 0.0
+            return lines * lineHeight +
+                (lines - 1) * layoutInfo.mainAxisItemSpacing +
+                layoutInfo.beforeContentPadding +
+                layoutInfo.afterContentPadding
+        }
+
+    override val viewportSize: Double
+        get() = layoutInfo.viewportSize.height.toDouble()
+
+    override suspend fun scrollTo(scrollOffset: Double) {
+        val pitch = linePitch
+        if (pitch <= 0.0) return
+
+        val maxOffset = (contentSize - viewportSize).coerceAtLeast(0.0)
+        val target = scrollOffset.coerceIn(0.0, maxOffset)
+        val line = (target / pitch).toInt().coerceIn(0, (totalLines - 1).coerceAtLeast(0))
+        val remainderPx = (target - line * pitch).roundToInt()
+
+        gridState.scrollToItem(firstIndexOfLine(line), remainderPx)
+    }
+}
+
 @Composable
 private fun getBorderColor(): Color =
     if (JewelTheme.isDark) {
@@ -446,6 +625,11 @@ private const val LOREM_IPSUM =
         "Sed nec sapien nec dui rhoncus bibendum. Sed blandit bibendum libero."
 
 private val OneLineIpsum = LOREM_IPSUM.replace('\n', ' ')
+
+private const val GRID_COLUMNS = 4
+private const val GRID_HEADER_INTERVAL = 10
+private const val GRID_ITEM_COUNT = 100
+private val GRID_CELL_HEIGHT = 24.dp
 
 private val LIST_ITEMS =
     LOREM_IPSUM.split(",")
