@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndGet
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.net.URLClassLoader
@@ -32,6 +33,9 @@ class ProjectLeakDetectorTest {
         val factory = EditorFactory.getInstance()
         val editor = factory.createEditor(factory.createDocument("leaked editor content"))
         val hash = System.identityHashCode(editor)
+        // Production tracks editors via LeakCandidateEditorListener; the plugin's listeners are not installed in
+        // this bare application, so feed the registry directly to arm the detector's pre-check.
+        LeakCandidateRegistry.getInstance().register(editor)
         factory.releaseEditor(editor) // marks it disposed and stamps the disposal timestamp
         leakedEditor = editor // hold via a static field so the editor stays reachable once this test's Class is walked
         hash
@@ -44,6 +48,31 @@ class ProjectLeakDetectorTest {
     }
     finally {
       leakedEditor = null
+    }
+  }
+
+  @Test
+  fun testRegistryReportsRetainedDisposedInstances() {
+    // The detector's cheap pre-check relies on this: a live instance must not trigger the walk, a retained
+    // disposed one must. Use a fresh registry (not the app service) so the assertions are independent of other tests.
+    runInEdtAndGet {
+      val factory = EditorFactory.getInstance()
+      val registry = LeakCandidateRegistry()
+      val aliveEditor = factory.createEditor(factory.createDocument("alive editor content"))
+      try {
+        registry.register(aliveEditor)
+        assertFalse(registry.hasRetainedDisposedInstances(),
+                    "a live editor must not be reported as a retained disposed instance")
+
+        val disposedEditor = factory.createEditor(factory.createDocument("disposed editor content"))
+        registry.register(disposedEditor)
+        factory.releaseEditor(disposedEditor)
+        assertTrue(registry.hasRetainedDisposedInstances(),
+                   "a retained disposed editor must be reported")
+      }
+      finally {
+        factory.releaseEditor(aliveEditor)
+      }
     }
   }
 

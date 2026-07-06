@@ -80,6 +80,11 @@ class ProjectLeakDetector(
     delay(200.milliseconds)
     hardGc()
 
+    if (!LeakCandidateRegistry.getInstance().hasRetainedDisposedInstances()) {
+      LOG.debug("No disposed Project/Editor retained after GC; skipping the leak object-graph walk")
+      return emptyList()
+    }
+
     var leaks = collect()
     if (leaks.isNotEmpty()) {
       // Re-scan after another GC: anything still reachable now is very unlikely to be a transient reference.
