@@ -492,6 +492,18 @@ c:com.intellij.openapi.editor.impl.MarkupModelImpl
 - removeHighlighter(com.intellij.openapi.editor.markup.RangeHighlighter):V
 - s:roundToLineBoundaries(com.intellij.openapi.editor.Document,I,I):com.intellij.openapi.util.TextRange
 - setRangeHighlighterAttributes(com.intellij.openapi.editor.markup.RangeHighlighter,com.intellij.openapi.editor.markup.TextAttributes):V
+com.intellij.openapi.editor.impl.elf.ElfTheManager
+- sf:Companion:com.intellij.openapi.editor.impl.elf.ElfTheManager$Companion
+- a:bindElfDocument(com.intellij.openapi.editor.Document,com.intellij.openapi.vfs.VirtualFile):V
+- a:executeElfCommand(com.intellij.openapi.project.Project,java.lang.String,java.lang.Object,java.lang.Runnable):V
+- a:getElfDocument(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.impl.DocumentImpl
+- s:getInstance():com.intellij.openapi.editor.impl.elf.ElfTheManager
+- a:getRealDocument(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.impl.DocumentImpl
+- a:isElfCommandInProgress():Z
+- a:isElfDocument(com.intellij.openapi.editor.Document):Z
+- a:isRealDocument(com.intellij.openapi.editor.Document):Z
+f:com.intellij.openapi.editor.impl.elf.ElfTheManager$Companion
+- f:getInstance():com.intellij.openapi.editor.impl.elf.ElfTheManager
 com.intellij.openapi.editor.impl.event.MarkupModelListener
 - java.util.EventListener
 - sf:EMPTY_ARRAY:com.intellij.openapi.editor.impl.event.MarkupModelListener[]

@@ -21,8 +21,6 @@ a:com.intellij.build.AbstractViewManager
 - close():V
 - invokeOnCompletion(java.util.function.Consumer):V
 - setStdOut(Z):V
-*:com.intellij.build.BuildProgressObservable
-- a:addListener(com.intellij.build.BuildProgressListener,com.intellij.openapi.Disposable):V
 f:com.intellij.build.BuildTreeFilters
 - *sf:createFilteringActionsGroup(java.util.function.Supplier):com.intellij.openapi.actionSystem.DefaultActionGroup
 c:com.intellij.build.BuildView
