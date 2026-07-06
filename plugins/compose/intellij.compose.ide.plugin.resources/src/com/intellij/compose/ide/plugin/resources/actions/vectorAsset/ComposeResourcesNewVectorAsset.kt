@@ -1,13 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources.actions.vectorAsset
 
-import com.intellij.compose.ide.plugin.resources.ComposeResourcesManager
+import com.intellij.compose.ide.plugin.resources.getAllComposeResourcesDirs
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.vfs.VfsUtil
 
@@ -41,9 +40,8 @@ internal class ComposeResourcesNewVectorAsset : AnAction() {
     }
 
     val module = ModuleUtilCore.findModuleForFile(file, project)
-    val composeModuleNames = project.service<ComposeResourcesManager>().composeResourcesByModulePath.keys
-    val hasComposeResources = module != null && composeModuleNames.any { it in module.name }
+    val composeModuleNames = project.getAllComposeResourcesDirs().map { it.moduleName }
 
-    e.presentation.isEnabledAndVisible = hasComposeResources
+    e.presentation.isEnabledAndVisible = module != null && composeModuleNames.any { it in module.name }
   }
 }

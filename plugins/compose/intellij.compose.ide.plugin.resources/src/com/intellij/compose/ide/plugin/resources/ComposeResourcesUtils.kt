@@ -1,7 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources
 
+import com.intellij.compose.ide.plugin.resources.gradle.GradleComposeResourcesDir
+import com.intellij.compose.ide.plugin.resources.gradle.GradleComposeResourcesManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findVirtualFileOrDirectory
 import com.intellij.openapi.vfs.toNioPathOrNull
@@ -106,3 +110,7 @@ internal val KtDotQualifiedExpression.isComposeResClass: Boolean
 
     return resolvedFqn == expectedFqn
   }
+
+/** Return a list of all the Compose resources directories present in the given [Project] */
+internal fun Project.getAllComposeResourcesDirs(): List<GradleComposeResourcesDir> =
+  service<GradleComposeResourcesManager>().composeResourcesByModulePath.flatMap { it.value.directoriesBySourceSetName.values }
