@@ -276,17 +276,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
           return treeElement;
         }
 
-        // We create persistent trees for real physical files.
-        // also, if we are operating in a versioned environment, the created tree should also be versioned,
-        // because they will likely be used for real physical files later, like in document commit.
-        // This is the case for write action for example
-        // but if there is an explicit non-versioned environment, then we create a collapsed tree no matter what.
-        boolean canUseVersioned =
-          InternalPsiVersioning.isVersionedComputation() ||
-          (viewProvider.correspondsToRealFile());
+        boolean shouldNodeBeVersioned = shouldNodeBeVersioned(viewProvider);
 
-        treeElement = InternalPsiVersioning.inVersionedEnvironment(canUseVersioned, () -> {
-          if (canUseVersioned) {
+        treeElement = InternalPsiVersioning.inVersionedEnvironment(shouldNodeBeVersioned, () -> {
+          if (shouldNodeBeVersioned) {
             FileElement fileElement = InternalPsiVersioning.runModificationOfVersionedPsi(() -> createFileElement(viewProvider.getContents()));
             return fileElement;
           } else {
@@ -1272,5 +1265,15 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @ApiStatus.Internal
   public boolean isIndexingFileCopy() {
     return getUserData(IndexingDataKeys.VIRTUAL_FILE) != null;
+  }
+
+  @ApiStatus.Internal
+  public static boolean shouldNodeBeVersioned(@NotNull FileViewProvider viewProvider) {
+    // We create persistent trees for real physical files.
+    // also, if we are operating in a versioned environment, the created tree should also be versioned,
+    // because they will likely be used for real physical files later, like in document commit.
+    // This is the case for write action for example
+    // but if there is an explicit non-versioned environment, then we create a collapsed tree no matter what.
+    return InternalPsiVersioning.isVersionedComputation() || viewProvider.isPhysical();
   }
 }

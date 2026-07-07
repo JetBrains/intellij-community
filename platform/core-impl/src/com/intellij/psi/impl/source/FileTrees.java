@@ -257,7 +257,7 @@ final class FileTrees {
    */
   @NotNull
   static FileTrees noStub(@Nullable FileElement ast, @NotNull PsiFileImpl file, @NotNull FileViewProvider viewProvider) {
-    boolean canBeVersioned = InternalPsiVersioning.isVersionedComputation() || viewProvider.isPhysical();
+    boolean canBeVersioned = PsiFileImpl.shouldNodeBeVersioned(viewProvider);
     Supplier<? extends FileElement> treeSupplier = ast == null ? null : () -> ast;
     ConcreteAstPointer pointer = ConcreteAstPointer.createPointer(canBeVersioned, treeSupplier);
     return new FileTrees(file, null, pointer, null);
