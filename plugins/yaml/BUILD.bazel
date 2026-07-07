@@ -1,6 +1,18 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "yaml-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [
+        ":yaml",
+        ":yaml-tests_test_lib",
+        "//json",
+    ],
+)
+### skip generation section `test intellij.yaml.tests`
+
 ### auto-generated section `build intellij.yaml` start
 
 jvm_library(
@@ -193,11 +205,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.yaml.tests` end
-
-### auto-generated section `test intellij.yaml.tests` start
-
-jps_test(
-    name = "yaml-tests_test",
-    runtime_deps = [":yaml-tests_test_lib"],
-)
-### auto-generated section `test intellij.yaml.tests` end
