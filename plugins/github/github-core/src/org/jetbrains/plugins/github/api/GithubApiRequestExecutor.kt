@@ -285,11 +285,15 @@ sealed class GithubApiRequestExecutor {
 
       val ghDotComRawHost = "raw.githubusercontent.com"
       val enterpriseRawHost = "raw.$mainHost" // If GH Enterprise serves raw files from raw.<enterprise-host>
+      val enterpriseAvatarHost = "avatars.$mainHost" // GHE serves avatars from avatars.<enterprise-host>
+      val enterpriseMediaHost = "media.$mainHost" // GHE serves media attachments from media.<enterprise-host>
 
       val hostMatches = when {
         targetHost == mainHost -> true
         targetHost == apiHost -> true
         targetHost == enterpriseRawHost -> true
+        targetHost == enterpriseAvatarHost -> true
+        targetHost == enterpriseMediaHost -> true
         serverPath.isGithubDotCom || serverPath.isGheDataResidency -> targetHost == ghDotComRawHost
         else -> false
       }
