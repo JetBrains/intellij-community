@@ -18,6 +18,7 @@ import git4idea.GitBranch
 import git4idea.branch.GitBranchUiHandler
 import git4idea.branch.GitBranchWorker
 import git4idea.branch.GitRebaseParams
+import git4idea.branch.GitRebaseParams.RebaseUpstream
 import git4idea.config.GitVersionSpecialty
 import git4idea.i18n.GitBundle
 import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog
@@ -854,7 +855,11 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
       )
     )
 
-    val params = GitRebaseParams(vcs.version, null, null, "master", setOf(GitRebaseOption.INTERACTIVE, GitRebaseOption.AUTOSQUASH))
+    val params = GitRebaseParams(vcs.version,
+                                 null,
+                                 null,
+                                 RebaseUpstream.fromRefString("master"),
+                                 setOf(GitRebaseOption.INTERACTIVE, GitRebaseOption.AUTOSQUASH))
     GitTestingRebaseProcess(project, params, repo).rebase()
     val capturedTodoList = capturedTodo ?: error("Interactive rebase todo list was not captured")
     val lines = capturedTodoList.parseRebaseTodoList()

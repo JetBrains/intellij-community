@@ -82,6 +82,8 @@ class GitRebaseParams internal constructor(
   val branch: String? = branch?.takeIf { it.isNotBlank() }
   val newBase: String? = newBase?.takeIf { it.isNotBlank() }
 
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Prefer using fromRefString")
   internal constructor(
     version: GitVersion,
     branch: String?,
