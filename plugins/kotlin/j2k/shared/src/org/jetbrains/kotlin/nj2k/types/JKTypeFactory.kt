@@ -30,13 +30,16 @@ import org.jetbrains.kotlin.j2k.Nullability.Nullable
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
 import org.jetbrains.kotlin.nj2k.NullabilityInfo
-import org.jetbrains.kotlin.nj2k.resolveWithOriginalFallback
+import org.jetbrains.kotlin.nj2k.OriginalJavaSemanticResolver
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKTypeParameterSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedClassSymbol
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 
-class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
+class JKTypeFactory internal constructor(
+    val symbolProvider: JKSymbolProvider,
+    private val semanticResolver: OriginalJavaSemanticResolver,
+) {
     internal var nullabilityInfo: NullabilityInfo? = null
 
     fun fromPsiType(type: PsiType): JKType = createFromPsiType(type)
@@ -89,7 +92,7 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
 
         return when (type) {
             is PsiClassType -> {
-                val target = type.resolveWithOriginalFallback()
+                val target = semanticResolver.resolveClassType(type)
                 val parameters = type.parameters.map { fromPsiType(it) }
 
                 when (target) {

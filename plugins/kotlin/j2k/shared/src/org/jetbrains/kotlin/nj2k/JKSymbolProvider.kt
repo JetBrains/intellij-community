@@ -65,7 +65,10 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.KtTypeParameter
 
-class JKSymbolProvider(private val resolver: JKResolver) {
+class JKSymbolProvider internal constructor(
+    private val resolver: JKResolver,
+    private val semanticResolver: OriginalJavaSemanticResolver,
+) {
     lateinit var typeFactory: JKTypeFactory
 
     val symbolsByPsi: MutableMap<PsiElement, JKSymbol> = mutableMapOf()
@@ -100,7 +103,7 @@ class JKSymbolProvider(private val resolver: JKResolver) {
     }
 
     internal inline fun <reified T : JKSymbol> provideSymbolForReference(reference: PsiReference): T {
-        val target = reference.resolveWithOriginalFallback()
+        val target = semanticResolver.resolveReference(reference)
         if (target is LightRecordMethod) {
             val field = getFieldForComponent(target.recordComponent)
             if (field != null) return provideDirectSymbol(field) as T
@@ -144,7 +147,7 @@ class JKSymbolProvider(private val resolver: JKResolver) {
                 else -> error("Unexpected argument type: ${psi::class}")
             }
         }.also { symbol ->
-            psi.originalElement<PsiElement>()?.let { originalPsi ->
+            semanticResolver.originalElement(psi)?.let { originalPsi ->
                 symbolsByOriginalPsi.putIfAbsent(originalPsi, symbol)
             }
         }

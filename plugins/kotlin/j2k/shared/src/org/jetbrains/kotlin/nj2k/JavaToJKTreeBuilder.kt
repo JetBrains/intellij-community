@@ -294,9 +294,10 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class JavaToJKTreeBuilder(
+class JavaToJKTreeBuilder internal constructor(
     private val symbolProvider: JKSymbolProvider,
     private val typeFactory: JKTypeFactory,
+    private val semanticResolver: OriginalJavaSemanticResolver,
     private val referenceSearcher: ReferenceSearcher,
     private val importStorage: JKImportStorage,
     private val forInlining: Boolean
@@ -394,7 +395,7 @@ class JavaToJKTreeBuilder(
             val patternVariable = pattern?.patternVariable
 
             if (patternVariable != null) {
-                val variable = (operand as? PsiReferenceExpression)?.resolveWithOriginalFallback() as? PsiVariable
+                val variable = (operand as? PsiReferenceExpression)?.let(semanticResolver::resolveReference) as? PsiVariable
                 val name = variable?.name ?: patternVariable.name
                 val typeElementForPattern =
                     with(declarationMapper) { JKTypeElement(type, psiTypeElement.annotationList()) }
@@ -557,7 +558,7 @@ class JavaToJKTreeBuilder(
         }
 
         private fun PsiMethodCallExpression.getExplicitTypeArguments(): JKTypeArgumentList {
-            val sourceCall = originalElement<PsiMethodCallExpression>() ?: this
+            val sourceCall = semanticResolver.originalElementOrSelf(this)
             val typeArgumentList = (if (sourceCall.typeArguments.isNotEmpty()) {
                 sourceCall.typeArgumentList
             } else {
@@ -588,7 +589,7 @@ class JavaToJKTreeBuilder(
             val explicitTypeArguments = getExplicitTypeArguments()
             val typeArguments = explicitTypeArguments
             val qualifier = methodExpression.qualifierExpression?.toJK()?.withLineBreaksFrom(methodExpression.qualifierExpression)
-            var target = methodExpression.resolveWithOriginalFallback()
+            var target = semanticResolver.resolveReference(methodExpression)
             if (target is PsiMethodImpl && target.name.canBeGetterOrSetterName()) {
                 val baseCallable = target.findSuperMethods().firstOrNull()
                 if (baseCallable is KtLightMethod) {
@@ -707,7 +708,7 @@ class JavaToJKTreeBuilder(
                 ?.takeUnless { type ->
                     type.safeAs<PsiClassType>()?.parameters?.any { it is PsiCapturedWildcardType } == true
                 }?.takeUnless { type ->
-                    type.isKotlinFunctionalType
+                    type.isKotlinFunctionalType(semanticResolver)
                 }?.toJK()
                 ?.asTypeElement() ?: JKTypeElement(JKNoType)
 
@@ -737,7 +738,7 @@ class JavaToJKTreeBuilder(
 
         fun PsiReferenceExpression.toJK(ignoreFacades: Boolean = true): JKExpression {
             if (this is PsiMethodReferenceExpression) return toJK()
-            val target = resolveWithOriginalFallback()
+            val target = semanticResolver.resolveReference(this)
 
             if (ignoreFacades && (target is KtLightClassForFacade || target is KtLightClassForDecompiledDeclaration)) {
                 // Normally, references to facade classes shouldn't be converted, because that would be
@@ -801,7 +802,7 @@ class JavaToJKTreeBuilder(
                     }
                 } else {
                     val classSymbol =
-                        classOrAnonymousClassReference?.resolveWithOriginalFallback()?.let {
+                        classOrAnonymousClassReference?.let(semanticResolver::resolveReference)?.let {
                             symbolProvider.provideDirectSymbol(it) as JKClassSymbol
                         } ?: JKUnresolvedClassSymbol(
                             classOrAnonymousClassReference?.referenceName ?: NO_NAME_PROVIDED,
@@ -1043,7 +1044,7 @@ class JavaToJKTreeBuilder(
             }.orEmpty()
 
         private fun PsiMember.visibility(): JKVisibilityModifierElement =
-            visibility(referenceSearcher) { ast, psi -> ast.withFormattingFrom(psi) }
+            visibility(referenceSearcher, semanticResolver) { ast, psi -> ast.withFormattingFrom(psi) }
 
         fun PsiField.toJK(): JKField {
             val mutability = when {
@@ -1212,7 +1213,7 @@ class JavaToJKTreeBuilder(
             val superMethods = findSuperMethods()
             if (superMethods.isEmpty()) return false // Unknown super method
             return superMethods.any { superMethod ->
-                superMethod.overriddenMethodVisibility(referenceSearcher).visibility == visibility
+                superMethod.overriddenMethodVisibility(referenceSearcher, semanticResolver).visibility == visibility
             }
         }
 

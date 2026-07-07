@@ -70,13 +70,14 @@ fun canKeepEqEq(left: PsiExpression, right: PsiExpression?): Boolean {
     }
 }
 
-fun PsiMember.visibility(
+internal fun PsiMember.visibility(
     referenceSearcher: ReferenceSearcher,
+    semanticResolver: OriginalJavaSemanticResolver,
     assignNonCodeElements: ((JKFormattingOwner, PsiElement) -> Unit)?
 ): JKVisibilityModifierElement {
     val visibilityFromModifier = modifierList?.children?.mapNotNull { child ->
         if (child !is PsiKeyword) return@mapNotNull null
-        child.text.toKotlinVisibility(psiMember = this@visibility, referenceSearcher)?.let {
+        child.text.toKotlinVisibility(psiMember = this@visibility, referenceSearcher, semanticResolver)?.let {
             JKVisibilityModifierElement(it)
         }?.also { modifier ->
             assignNonCodeElements?.also { it(modifier, child) }
@@ -90,22 +91,29 @@ fun PsiMember.visibility(
     }
 }
 
-private fun String.toKotlinVisibility(psiMember: PsiMember, referenceSearcher: ReferenceSearcher): Visibility? = when (this) {
+private fun String.toKotlinVisibility(
+    psiMember: PsiMember,
+    referenceSearcher: ReferenceSearcher,
+    semanticResolver: OriginalJavaSemanticResolver,
+): Visibility? = when (this) {
     PsiModifier.PACKAGE_LOCAL -> Visibility.INTERNAL
     PsiModifier.PRIVATE -> Visibility.PRIVATE
-    PsiModifier.PROTECTED -> handleProtectedVisibility(psiMember, referenceSearcher)
+    PsiModifier.PROTECTED -> handleProtectedVisibility(psiMember, referenceSearcher, semanticResolver)
     PsiModifier.PUBLIC -> Visibility.PUBLIC
     else -> null
 }
 
 // Returns the visibility of an overridden method to determine the proper visibility of an overriding method.
 // The overridden method may be a regular or compiled Java/Kotlin method.
-internal fun PsiMethod.overriddenMethodVisibility(referenceSearcher: ReferenceSearcher): JKVisibilityModifierElement {
+internal fun PsiMethod.overriddenMethodVisibility(
+    referenceSearcher: ReferenceSearcher,
+    semanticResolver: OriginalJavaSemanticResolver,
+): JKVisibilityModifierElement {
     // In some implementations (ex. compiled Java/Kotlin classes), modifierList.children() returns null.
     // However, modifierList.text still contains the modifiers as a string.
     val modifiers = modifierList.text?.split(" ", "\n").orEmpty()
     val visibilityFromModifier = modifiers.firstNotNullOfOrNull { modifier ->
-        modifier.toKotlinVisibility(psiMember = this@overriddenMethodVisibility, referenceSearcher)
+        modifier.toKotlinVisibility(psiMember = this@overriddenMethodVisibility, referenceSearcher, semanticResolver)
     }
 
     val visibility = when {
@@ -146,8 +154,12 @@ fun JvmClassKind.toJk(): JKClass.ClassKind = when (this) {
     JvmClassKind.ENUM -> JKClass.ClassKind.ENUM
 }
 
-private fun handleProtectedVisibility(psiMember: PsiMember, referenceSearcher: ReferenceSearcher): Visibility {
-    val originalMember = psiMember.originalElementOrSelf()
+private fun handleProtectedVisibility(
+    psiMember: PsiMember,
+    referenceSearcher: ReferenceSearcher,
+    semanticResolver: OriginalJavaSemanticResolver,
+): Visibility {
+    val originalMember = semanticResolver.originalElementOrSelf(psiMember)
     val originalClass = originalMember.containingClass ?: return Visibility.PROTECTED
     // Search for usages only in Java because java-protected member cannot be used in Kotlin from same package
     val usages = referenceSearcher.findUsagesForExternalCodeProcessing(originalMember, searchJava = true, searchKotlin = false)

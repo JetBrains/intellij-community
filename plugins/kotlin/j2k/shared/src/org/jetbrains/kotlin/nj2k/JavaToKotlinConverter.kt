@@ -106,9 +106,10 @@ class JavaToKotlinConverter(
                 originalMembersByKey = files.buildMembersByKey(),
                 originalClassesByQualifiedName = files.buildClassesByQualifiedName(),
             )
+            val semanticResolver = OriginalJavaSemanticResolver(originalJavaPsiContext)
             val methodReferenceSearcher = MethodReferenceSearcher(
                 copiedFiles = copiedFiles,
-                originalJavaPsiContext = originalJavaPsiContext,
+                semanticResolver = semanticResolver,
                 delegate = referenceSearcher,
             )
             val inMemoryConverter = JavaToKotlinConverter(project, targetModule, settings, targetFile, methodReferenceSearcher)
@@ -162,8 +163,9 @@ class JavaToKotlinConverter(
             ?: return Result.EMPTY).targetPlatform
 
         val resolver = JKResolver(project, targetModule, contextElement)
-        val symbolProvider = JKSymbolProvider(resolver)
-        val typeFactory = JKTypeFactory(symbolProvider)
+        val semanticResolver = OriginalJavaSemanticResolver(originalJavaPsiContext)
+        val symbolProvider = JKSymbolProvider(resolver, semanticResolver)
+        val typeFactory = JKTypeFactory(symbolProvider, semanticResolver)
         symbolProvider.typeFactory = typeFactory
         symbolProvider.preBuildTree(inputElements)
 
@@ -173,7 +175,7 @@ class JavaToKotlinConverter(
         }
 
         val importStorage = JKImportStorage(targetPlatform, project)
-        val treeBuilder = JavaToJKTreeBuilder(symbolProvider, typeFactory, referenceSearcher, importStorage, forInlining)
+        val treeBuilder = JavaToJKTreeBuilder(symbolProvider, typeFactory, semanticResolver, referenceSearcher, importStorage, forInlining)
 
         // we want to leave all imports as is in the case when user is converting only imports
         val saveImports = inputElements.all { element ->
@@ -261,7 +263,7 @@ class JavaToKotlinConverter(
 
     private class MethodReferenceSearcher(
         copiedFiles: List<PsiJavaFile>,
-        private val originalJavaPsiContext: OriginalJavaPsiContext,
+        private val semanticResolver: OriginalJavaSemanticResolver,
         private val delegate: ReferenceSearcher,
     ) : ReferenceSearcher {
         private val copiedFiles = copiedFiles.toSet()
@@ -277,12 +279,12 @@ class JavaToKotlinConverter(
         }
 
         override fun findLocalUsages(element: PsiElement, scope: PsiElement): Collection<PsiReference> =
-            delegate.findLocalUsages(element.originalElement<PsiElement>() ?: element, scope.originalElement<PsiElement>() ?: scope)
+            delegate.findLocalUsages(semanticResolver.originalElementOrSelf(element), semanticResolver.originalElementOrSelf(scope))
 
         override fun hasInheritors(`class`: PsiClass): Boolean {
             if (!`class`.isInCopiedFiles()) return delegate.hasInheritors(`class`)
 
-            val originalClass = originalJavaPsiContext.resolve(`class`) ?: return false
+            val originalClass = semanticResolver.resolveClass(`class`) ?: return false
             return delegate.hasInheritors(originalClass)
         }
 
@@ -296,7 +298,7 @@ class JavaToKotlinConverter(
                 return true
             }
 
-            val originalMethod = originalJavaPsiContext.resolve(method) as? PsiMethod ?: return false
+            val originalMethod = semanticResolver.resolveMember(method) as? PsiMethod ?: return false
             return delegate.hasOverrides(originalMethod)
         }
 
@@ -310,8 +312,8 @@ class JavaToKotlinConverter(
             }
 
             val originalElement = when (element) {
-                is PsiClass -> originalJavaPsiContext.resolve(element)
-                is PsiMember -> originalJavaPsiContext.resolve(element)
+                is PsiClass -> semanticResolver.resolveClass(element)
+                is PsiMember -> semanticResolver.resolveMember(element)
                 else -> null
             } ?: return emptyList()
 
