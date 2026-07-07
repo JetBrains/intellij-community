@@ -281,6 +281,44 @@ class SpeedSearchableLazyColumnTest {
         onLazyColumnItem("Item 7").assertIsSelected()
     }
 
+    @Test
+    fun `with no matching selection, select the topmost visible match`() =
+        runComposeTest(listEntries = markedEntries(20, 45, 70)) {
+            onLazyColumn.performScrollToIndex(43)
+
+            onLazyColumn.performKeyPress("Banana", rule = this)
+
+            // 45 is inside the viewport; it wins over the global first match (20) and the one below (70)
+            onLazyColumnItem("Banana 45").assertIsDisplayed().assertIsSelected()
+        }
+
+    @Test
+    fun `with no visible match, select the first match below the viewport rather than the global first`() =
+        runComposeTest(listEntries = markedEntries(20, 70)) {
+            onLazyColumn.performScrollToIndex(43)
+
+            onLazyColumn.performKeyPress("Banana", rule = this)
+
+            // Neither match is visible; the forward scan reaches 70 (below) before wrapping to 20 (above)
+            onLazyColumnItem("Banana 70").assertIsDisplayed().assertIsSelected()
+        }
+
+    @Test
+    fun `with matches only above the viewport, wrap to the first match from the top`() =
+        runComposeTest(listEntries = markedEntries(5, 20)) {
+            onLazyColumn.performScrollToIndex(43)
+
+            onLazyColumn.performKeyPress("Banana", rule = this)
+
+            // The wrap selects the first match from the top of the list (5), not the nearest one above (20),
+            // matching SpeedSearchBase.findElement's wrap-around behavior
+            onLazyColumnItem("Banana 5").assertIsDisplayed().assertIsSelected()
+        }
+
+    /** 100 entries named `Item <index>`, except the given indexes, which are named `Banana <index>`. */
+    private fun markedEntries(vararg matchIndexes: Int) =
+        List(100) { index -> if (index in matchIndexes) "Banana $index" else "Item $index" }
+
     private fun runComposeTest(
         listEntries: List<String> = List(500) { "Item ${it + 1}" },
         dismissOnLoseFocus: Boolean = true,
