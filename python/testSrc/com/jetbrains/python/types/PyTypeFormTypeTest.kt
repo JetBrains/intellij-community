@@ -36,6 +36,43 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
   }
 
   @Nested
+  inner class CallableForm {
+    @Test
+    fun `explicit TypeForm constructor of a class object`() = test("""
+      from typing_extensions import TypeForm
+
+      x = TypeForm(int)
+      y = x
+      #   └ TYPE TypeForm[int]
+      """)
+
+    @Test
+    fun `explicit TypeForm constructor of a union expression`() = test("""
+      from typing_extensions import TypeForm
+
+      x = TypeForm(str | None)
+      y = x
+      #   └ TYPE TypeForm[str | None]
+      """)
+
+    @Test
+    fun `explicit TypeForm constructor of a string forward reference`() = test("""
+      from typing_extensions import TypeForm
+
+      x = TypeForm('list[int]')
+      y = x
+      #   └ TYPE TypeForm[list[int]]
+      """)
+
+    @Test
+    fun `explicit TypeForm constructor is a valid TypeForm value`() = test("""
+      from typing_extensions import TypeForm
+
+      x: TypeForm[int | str] = TypeForm(int)
+      """)
+  }
+
+  @Nested
   inner class Assignability {
     @Test
     fun `class object is assignable to TypeForm`() = test("""

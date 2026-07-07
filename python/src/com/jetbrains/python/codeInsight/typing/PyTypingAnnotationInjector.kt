@@ -203,6 +203,15 @@ private fun PsiElement.classifyCallSitePosition(call: PyCallExpression): TypeAnn
         TypeAnnotationPosition.NonTypeForm
     }
 
+    // TypeForm(T) — the single positional argument is a type expression (PEP 747)
+    resolved.any { it == PyTypingTypeProvider.TYPE_FORM || it == PyTypingTypeProvider.TYPE_FORM_EXT } -> {
+      val firstArg = argList.arguments.firstOrNull()
+      if (firstArg != null && PsiTreeUtil.isAncestor(firstArg, this, false))
+        TypeAnnotationPosition.TypeForm
+      else
+        TypeAnnotationPosition.NonTypeForm
+    }
+
     // For unknown calls, strings nested inside generic subscriptions are type arguments:
     // `x: call(set['str'])` — 'str' is the type arg of set[...] and should inject.
     // But only when the call itself is in an annotation context — otherwise something like
