@@ -39,6 +39,9 @@ private const val FLAG_PREFIX = "--"
 private val LOG = fileLogger()
 
 class UniversalToolset : McpToolset {
+  override fun displayName(): String = McpServerBundle.message("toolset.display.name.universal")
+
+  override fun displayDescription(toolName: String): String? = McpServerBundle.message("tool.description.$toolName")
 
   //@McpTool
   //@McpDescription(
