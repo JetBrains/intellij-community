@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.ex;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,6 +32,29 @@ public abstract class IdeDocumentHistory {
   public abstract boolean isNavigateNextChangeAvailable();
 
   public abstract @NotNull List<VirtualFile> getChangedFiles();
+
+  /**
+   * Captures the navigation origin before a delayed (asynchronous) navigation starts.
+   * <p>Every prepared snapshot <b>must</b> be committed via {@link NavigationHistorySnapshot#commitIfChanged()},
+   * even when the navigation fails or is canceled. Prefer {@code performNavigationHistoryAware}, which enforces
+   * this contract and suppresses command-based history only while executing the corresponding navigation coroutine.
+   */
+  @ApiStatus.Internal
+  @RequiresEdt
+  public abstract @NotNull NavigationHistorySnapshot prepareHistorySnapshot();
+
+  /**
+   * A snapshot of the navigation origin captured before delayed navigation starts.
+   * Idea behind is to separate the command from its side effects, which might be executed later on.
+   * Once the navigation completes, {@link #commitIfChanged()} closes the delayed navigation scope,
+   * applying origin as a back-history place if the current navigation place has changed.
+   */
+  @ApiStatus.Internal
+  @FunctionalInterface
+  public interface NavigationHistorySnapshot {
+    @RequiresEdt
+    void commitIfChanged();
+  }
 
   @ApiStatus.Internal
   public abstract List<IdeDocumentHistoryImpl.PlaceInfo> getChangePlaces();

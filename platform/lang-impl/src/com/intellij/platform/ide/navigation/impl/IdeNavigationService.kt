@@ -58,14 +58,14 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
    */
   private val semaphore: OverflowSemaphore = OverflowSemaphore(permits = 1, overflow = BufferOverflow.DROP_OLDEST)
 
-  override suspend fun navigate(dataContext: DataContext, options: NavigationOptions) {
+  override suspend fun navigate(dataContext: DataContext, options: NavigationOptions): Boolean {
     if (!isAsyncDataContext(dataContext)) {
       LOG.error("Expected async context, got: $dataContext")
       val asyncContext = withContext(Dispatchers.EDT) {
         // hope that context component is still available
         Utils.createAsyncDataContext(dataContext)
       }
-      navigate(asyncContext, options)
+      return navigate(asyncContext, options)
     }
     return semaphore.withPermit {
       val navigatables = readAction {
@@ -73,6 +73,9 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
       }
       if (!navigatables.isNullOrEmpty()) {
         doNavigate(navigatables = navigatables.toList(), options = options, dataContext = dataContext)
+      }
+      else {
+        false
       }
     }
   }
@@ -89,13 +92,25 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
         it.navigationRequest()
       }
     }.filterNotNull()
-    return navigate(project = project, requests = requests, options = options, dataContext = dataContext)
+    return withHistoryIfNeeded(options) {
+      navigate(project = project, requests = requests, options = options, dataContext = dataContext)
+    }
   }
 
-  override suspend fun navigate(request: NavigationRequest, options: NavigationOptions, dataContext: DataContext?) {
-    semaphore.withPermit {
-      navigate(project = project, requests = listOf(request), options = options, dataContext = dataContext)
+  override suspend fun navigate(request: NavigationRequest, options: NavigationOptions, dataContext: DataContext?): Boolean {
+    return semaphore.withPermit {
+      withHistoryIfNeeded(options) {
+        navigate(project = project, requests = listOf(request), options = options, dataContext = dataContext)
+      }
     }
+  }
+
+  private suspend inline fun <T> withHistoryIfNeeded(options: NavigationOptions, crossinline action: suspend () -> T): T {
+    options as NavigationOptions.Impl
+    if (!options.recordAsBackHistory) {
+      return action()
+    }
+    return performNavigationHistoryAware(project) { action() }
   }
 }
 
@@ -126,6 +141,9 @@ private suspend fun navigate(project: Project, requests: List<NavigationRequest>
     return true
   }
   if (nonSourceRequest == null || options.sourceNavigationOnly) {
+    if (nonSourceRequest != null && LOG.isDebugEnabled) {
+      LOG.debug("Skipping non-source request because of sourceNavigationOnly: $nonSourceRequest")
+    }
     return false
   }
 

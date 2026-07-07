@@ -61,12 +61,13 @@ private class RecordingNavigationService : NavigationService {
   var navigatableCalls: Int = 0
     private set
 
-  override suspend fun navigate(dataContext: DataContext, options: NavigationOptions) {
+  override suspend fun navigate(dataContext: DataContext, options: NavigationOptions): Boolean {
     error("Unexpected data-context navigation")
   }
 
-  override suspend fun navigate(request: NavigationRequest, options: NavigationOptions, dataContext: DataContext?) {
+  override suspend fun navigate(request: NavigationRequest, options: NavigationOptions, dataContext: DataContext?): Boolean {
     requestCalls++
+    return true
   }
 
   override suspend fun navigate(navigatables: List<Navigatable>, options: NavigationOptions, dataContext: DataContext?): Boolean {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.navigation
 
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -44,11 +44,22 @@ interface NavigationOptions {
 
   /**
    * Sets whether to force the focus regardless of other conditions.
+   * Forcing the focus implies requesting it, so `forceFocus(true)` also enables [requestFocus].
    *
    * Default: `false`.
    */
   @Internal
   fun forceFocus(value: Boolean): NavigationOptions
+
+  /**
+   * Identifies if the navigation should be recorded in the history.
+   * Captures a place where navigation started, commits as a back-history entry after the navigation completes,
+   * omitting records with no changes.
+   *
+   * Should be set to `false` for autoscroll, preview, other programmatic navigation.
+   */
+  @Internal
+  fun recordAsBackHistory(value: Boolean): NavigationOptions
 
   companion object {
     @JvmStatic
@@ -65,6 +76,7 @@ interface NavigationOptions {
       openInRightSplit = false,
       sourceNavigationOnly = false,
       forceFocus = false,
+      recordAsBackHistory = true
     )
   }
 
@@ -78,6 +90,7 @@ interface NavigationOptions {
     @Experimental @JvmField val sourceNavigationOnly: Boolean,
     @Experimental @JvmField val openInRightSplit: Boolean,
     @Experimental @JvmField val forceFocus: Boolean,
+    @Experimental @JvmField val recordAsBackHistory: Boolean,
   ) : NavigationOptions {
     override fun requestFocus(value: Boolean): NavigationOptions = copy(requestFocus = value)
 
@@ -87,6 +100,8 @@ interface NavigationOptions {
 
     override fun sourceNavigationOnly(value: Boolean): NavigationOptions = copy(sourceNavigationOnly = value)
 
-    override fun forceFocus(value: Boolean): NavigationOptions = copy(forceFocus = value)
+    override fun forceFocus(value: Boolean): NavigationOptions = copy(forceFocus = value, requestFocus = if (value) true else requestFocus)
+
+    override fun recordAsBackHistory(value: Boolean): NavigationOptions = copy(recordAsBackHistory = value)
   }
 }

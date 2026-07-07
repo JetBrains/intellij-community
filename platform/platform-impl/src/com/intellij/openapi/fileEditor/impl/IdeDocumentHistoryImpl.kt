@@ -69,6 +69,7 @@ import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 import java.util.ArrayDeque
 import java.util.Deque
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
 
 private val LOG = Logger.getInstance(IdeDocumentHistoryImpl::class.java)
@@ -104,6 +105,8 @@ open class IdeDocumentHistoryImpl(
   private val changedFilesInCurrentCommand = HashSet<VirtualFile>()
   private var currentCommandHasMoves = false
   private var reallyExcludeCurrentCommandFromNavigation = false
+  private val isNavigationHistorySuppressed: Boolean
+    get() = NavigationHistoryContext.isActive
 
   private val recentFileTimestampMap: SynchronizedClearableLazy<PersistentHashMap<String, Long>>
 
@@ -229,7 +232,7 @@ open class IdeDocumentHistoryImpl(
 
   override fun onSelectionChanged() {
     ThreadingAssertions.assertEventDispatchThread()
-    if (!reallyExcludeCurrentCommandFromNavigation) {
+    if (!reallyExcludeCurrentCommandFromNavigation && !isNavigationHistorySuppressed) {
       currentCommandIsNavigation = true
     }
     currentCommandHasMoves = true
@@ -280,18 +283,8 @@ open class IdeDocumentHistoryImpl(
     }
 
     val commandStartPlace = commandStartPlace
-    if (commandStartPlace != null && currentCommandIsNavigation && currentCommandHasMoves) {
-      if (!backInProgress) {
-        if (!registeredBackPlaceInLastGroup) {
-          registeredBackPlaceInLastGroup = true
-          putLastOrMerge(next = commandStartPlace, limit = BACK_QUEUE_LIMIT, isChanged = false, groupId = commandGroupId)
-          registerViewed(commandStartPlace.file)
-        }
-        if (!forwardInProgress) {
-          forwardPlaces.clear()
-        }
-      }
-      removeInvalidFilesFromStacks()
+    if (!isNavigationHistorySuppressed && commandStartPlace != null && currentCommandIsNavigation && currentCommandHasMoves) {
+      commitBackPlace(commandStartPlace, commandGroupId, checkCommandGroup = true)
     }
 
     if (currentCommandHasChanges) {
@@ -357,6 +350,55 @@ open class IdeDocumentHistoryImpl(
       }
     }
     return files
+  }
+
+  override fun prepareHistorySnapshot(): NavigationHistorySnapshot {
+    ThreadingAssertions.assertEventDispatchThread()
+    val lastPlace = getCurrentPlaceInfo()
+    val isCompleted = AtomicBoolean(false)
+
+    return NavigationHistorySnapshot {
+      ThreadingAssertions.assertEventDispatchThread()
+      if (!isCompleted.compareAndSet(false, true)) {
+        return@NavigationHistorySnapshot
+      }
+      if (lastPlace != null && !backInProgress && !forwardInProgress && hasChangedSince(lastPlace)) {
+        commitBackPlace(lastPlace, groupId = null, checkCommandGroup = false)
+      }
+    }
+  }
+
+  private fun hasChangedSince(place: PlaceInfo): Boolean {
+    val currentPlace = getCurrentPlaceInfo() ?: return false
+    return !isSameCaretPlace(currentPlace, place)
+  }
+
+  private fun isSameCaretPlace(currentPlace: PlaceInfo, previousPlace: PlaceInfo): Boolean {
+    if (currentPlace.file != previousPlace.file || currentPlace.editorTypeId != previousPlace.editorTypeId) {
+      return false
+    }
+    val currentCaret = currentPlace.caretPosition
+    val previousCaret = previousPlace.caretPosition
+
+    return if (currentCaret != null && previousCaret != null && currentCaret.isValid && previousCaret.isValid) {
+      currentCaret.startOffset == previousCaret.startOffset
+    } else currentPlace.navigationState == previousPlace.navigationState
+  }
+
+  private fun commitBackPlace(place: PlaceInfo, groupId: Any?, checkCommandGroup: Boolean) {
+    if (!backInProgress) {
+      if (!checkCommandGroup || !registeredBackPlaceInLastGroup) {
+        if (checkCommandGroup) {
+          registeredBackPlaceInLastGroup = true
+        }
+        putLastOrMerge(next = place, limit = BACK_QUEUE_LIMIT, isChanged = false, groupId = groupId)
+        registerViewed(place.file)
+      }
+      if (!forwardInProgress) {
+        forwardPlaces.clear()
+      }
+    }
+    removeInvalidFilesFromStacks()
   }
 
   fun isRecentlyChanged(file: VirtualFile): Boolean = state.changedPaths.contains(file.getPath())
