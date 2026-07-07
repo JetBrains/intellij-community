@@ -389,6 +389,15 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertEquals(1, primaryCaret.offset)
   }
 
+  fun `test visual aware reversed selection keeps lead position when caret is not on selection boundary`() {
+    initText("abcdef")
+
+    primaryCaret.setSelection(VisualPosition(0, 5), 5, VisualPosition(0, 1), 1, false)
+
+    assertEquals(5, primaryCaret.leadSelectionOffset)
+    assertEquals(VisualPosition(0, 5), primaryCaret.leadSelectionPosition)
+  }
+
   fun `test moving into collapsed fold expands it and positions caret inside`() {
     initText("abcdef")
     val foldRegion = addCollapsedFoldRegion(1, 5, "...")

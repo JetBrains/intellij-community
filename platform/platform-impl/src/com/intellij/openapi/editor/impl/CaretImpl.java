@@ -45,6 +45,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -63,6 +64,7 @@ import java.awt.Rectangle;
 @ApiStatus.Internal
 public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private static final Logger LOG = Logger.getInstance(CaretImpl.class);
+  private static final RegistryValue VIM_LIKE_CARET_SELECTION_ENABLED = Registry.get("editor.block.caret.selection.vim-like");
 
   private final EditorImpl myEditor;
   private final DocumentEx myDocument;
@@ -1397,6 +1399,17 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   private @Nullable VisualPosition getLeadSelectionPositionOrNull() {
     SelectionMarker selectionMarker = mySelectionMarker;
     if (selectionMarker != null && selectionMarker.hasSelection()) {
+      int caretOffset = getOffset();
+      if (!selectionMarker.hasVirtualSelection() &&
+          (caretOffset == selectionMarker.getStartOffset() || caretOffset == selectionMarker.getEndOffset())) {
+        // The caret sits exactly on a selection boundary. By default the lead is the selection's start
+        // position; with a block caret and the vim-like option enabled, fall back to the legacy flag-based
+        // lead so that block-caret mouse-drag selection (see EditorImpl#processMouseDragged) is unchanged.
+        boolean useEndPosition = mySelectionEndPositionIsLead &&
+                                 EditorUtil.isBlockLikeCaret(this) &&
+                                 VIM_LIKE_CARET_SELECTION_ENABLED.asBoolean();
+        return getSelectionVisualPosition(selectionMarker, !useEndPosition);
+      }
       return getSelectionVisualPosition(selectionMarker, !mySelectionEndPositionIsLead);
     }
     return null;
