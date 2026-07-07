@@ -3,16 +3,13 @@ package com.intellij.platform.ijent.spi
 
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentSession
-import com.intellij.platform.ijent.IjentSessionRegistry
-import org.jetbrains.annotations.TestOnly
-import java.util.ServiceLoader
 
 /**
  * Creates an [IjentApi] session from a deployed IJent instance.
  */
 interface IjentSessionProvider {
   /**
-   * Supposed to be used inside [IjentSessionRegistry.register].
+   * Supposed to be used when registering a new IJent session.
    */
   suspend fun connect(deploymentResult: IjentConnectionContext): IjentSession
 }
