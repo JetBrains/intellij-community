@@ -205,9 +205,12 @@ internal class UpdateableGHPRTimelineThreadViewModel internal constructor(
   }
 
   private fun calcDiffWithAnchor(thread: GHPullRequestReviewThread): Pair<PatchHunk, LineRange?>? {
+    // GitHub returns an empty diff hunk for file-level comments and some outdated threads: there is nothing to anchor a diff to.
+    if (thread.diffHunk.isBlank()) return null
+
     val patchReader = PatchReader(PatchHunkUtil.createPatchFromHunk("_", thread.diffHunk))
     val hunk = patchReader.readTextPatches().firstOrNull()?.hunks?.firstOrNull() ?: run {
-      LOG.error("Failed to parse diff hunk for thread ${thread.id}",
+      LOG.error("Failed to parse non-empty diff hunk for thread ${thread.id}",
                 Attachment("threadData.txt", thread.toString()),
                 Attachment("threadDiffHunk.txt", thread.diffHunk))
       return null
