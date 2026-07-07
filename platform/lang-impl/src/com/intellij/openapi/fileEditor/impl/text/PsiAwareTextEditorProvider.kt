@@ -49,6 +49,9 @@ private const val FOLDING_ELEMENT: @NonNls String = "folding"
 
 open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorProvider {
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
+    val interceptedEditor = ImplicitSplitModeEditorBinder.tryBindSuppliedEditorToBackend(this, project, file)
+    if (interceptedEditor != null) return interceptedEditor
+
     return PsiAwareTextEditorImpl(project = project, file = file, provider = this)
   }
 
@@ -58,6 +61,9 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     document: Document?,
     editorCoroutineScope: CoroutineScope,
   ): TextEditor {
+    val interceptedEditor = ImplicitSplitModeEditorBinder.tryBindSuppliedEditorToBackendAsync(this, project, file, document, editorCoroutineScope)
+    if (interceptedEditor != null) return interceptedEditor
+
     val asyncLoader = createAsyncEditorLoader(
       provider = this,
       project = project,
