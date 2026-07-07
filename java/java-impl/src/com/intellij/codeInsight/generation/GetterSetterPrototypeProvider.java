@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -59,12 +59,12 @@ public abstract class GetterSetterPrototypeProvider {
   }
 
   public static boolean isReadOnlyProperty(PsiField field) {
-    for (GetterSetterPrototypeProvider provider : EP_NAME.getExtensionList()) {
-      if (DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> provider.canGeneratePrototypeFor(field))) {
-        return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> provider.isReadOnly(field));
-      }
-    }
-    return field.hasModifierProperty(PsiModifier.FINAL);
+      return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
+        for (GetterSetterPrototypeProvider provider : EP_NAME.getExtensionList()) {
+          if (provider.canGeneratePrototypeFor(field)) return provider.isReadOnly(field);
+        }
+        return field.hasModifierProperty(PsiModifier.FINAL);
+      });
   }
 
   public static PsiMethod[] findGetters(PsiClass aClass, String propertyName, boolean isStatic) {
