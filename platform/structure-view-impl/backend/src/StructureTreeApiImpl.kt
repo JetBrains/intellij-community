@@ -27,7 +27,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.rpc.backend.RemoteApiProvider
-import com.intellij.platform.structureView.backend.BackendStructureTreeService.Companion.processStateToGetSelectedValue
+import com.intellij.platform.structureView.backend.BackendStructureTreeService.Companion.processStateToGetSelectedKey
 import com.intellij.platform.structureView.backend.BackendStructureTreeService.Companion.visit
 import com.intellij.platform.structureView.backend.BackendStructureTreeService.StructureViewEvent
 import com.intellij.platform.structureView.impl.DelegatingNodeProvider
@@ -125,8 +125,8 @@ internal class StructureTreeApiImpl : StructureTreeApi {
       }
 
 
-      val selectedValue = processStateToGetSelectedValue(state, entry, currentEditorElement)
-      entry.nodeToId[selectedValue]
+      val selectedKey = processStateToGetSelectedKey(state, entry, currentEditorElement)
+      entry.nodeToId[selectedKey]
     }.asDeferred().await()
 
 
@@ -136,7 +136,7 @@ internal class StructureTreeApiImpl : StructureTreeApi {
   override suspend fun navigateToElement(id: StructureViewDtoId, elementId: Int): Boolean {
     val entry = getStructureTreeService().getStructureViewEntry(id) ?: return false
 
-    val elementValue = entry.nodeToId.entries.find { it.value == elementId }?.key ?: return false
+    val elementKey = entry.nodeToId.entries.find { it.value == elementId }?.key ?: return false
 
     val (targetElement, treeNode) = entry.structureTreeModel.invoker.compute {
       var targetElement: StructureViewTreeElement? = null
@@ -146,7 +146,7 @@ internal class StructureTreeApiImpl : StructureTreeApi {
       visit(root, entry.structureTreeModel, TreePath(root)) {
         val wrapper = BackendStructureTreeService.unwrapTreeElementWrapper(it.lastPathComponent)
         val element = wrapper?.getValue() as? StructureViewTreeElement
-        return@visit if (element?.value == elementValue) {
+        return@visit if (element?.nodeKey(wrapper) == elementKey) {
           targetElement = element
           treeNode = wrapper
           true

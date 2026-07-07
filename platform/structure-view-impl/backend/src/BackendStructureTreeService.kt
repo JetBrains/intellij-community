@@ -354,12 +354,12 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
     }
 
 
-    val selectedValue = processStateToGetSelectedValue(state, entry, currentEditorElement)
+    val selectedKey = processStateToGetSelectedKey(state, entry, currentEditorElement)
 
     logger.trace {
-      val selection = entry.nodeToId[selectedValue]
+      val selection = entry.nodeToId[selectedKey]
       "computeNodes: tree traversal completed in ${(System.nanoTime() - visitorStartTime).asTraceDuration()};" +
-      "selectionId=$selection, selectedValuePresent=${selectedValue != null}"
+      "selectionId=$selection, selectedKeyPresent=${selectedKey != null}"
     }
 
     val nodeProviders = nodeProvidersMap.entries.mapNotNull { (provider, nodes) ->
@@ -372,7 +372,7 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
       )
     }
 
-    val selection = entry.nodeToId[selectedValue]
+    val selection = entry.nodeToId[selectedKey]
 
     val deferredNodeProviders = CompletableFuture<DeferredNodesDto>()
 
@@ -499,14 +499,14 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
     val wrapper = unwrapTreeElementWrapper(path.lastPathComponent) ?: return
     val element = wrapper.getValue() as? StructureViewTreeElement ?: return
 
-    val id = structureViewEntry.nodeToId.getOrPut(element.value) {
+    val nodeKey = element.nodeKey(wrapper)
+    val id = structureViewEntry.nodeToId.getOrPut(nodeKey) {
       structureViewEntry.idRef.get().also { structureViewEntry.idRef.inc() }
     }
 
-    val parentId = unwrapTreeElementWrapper(path.parentPath?.lastPathComponent)
-      ?.getValue()
-      ?.let { it as? StructureViewTreeElement }
-      ?.let { structureViewEntry.nodeToId[it.value] } ?: 0
+    val parentWrapper = unwrapTreeElementWrapper(path.parentPath?.lastPathComponent)
+    val parentId = (parentWrapper?.getValue() as? StructureViewTreeElement)
+      ?.let { structureViewEntry.nodeToId[it.nodeKey(parentWrapper)] } ?: 0
 
     val model = element.toDto(
       id,
@@ -542,7 +542,7 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
     val project: Project,
     val navigationCallback: ((AbstractTreeNode<*>) -> Unit)?,
     val idRef: IntRef = IntRef(1), // should only be accessed at StructureTreeModel.invoker
-    val nodeToId: MutableMap<Any, Int> = hashMapOf(), // should only be accessed at StructureTreeModel.invoker
+    val nodeToId: MutableMap<StructureViewNodeKey, Int> = hashMapOf(), // should only be accessed at StructureTreeModel.invoker
   )
 
   companion object {
@@ -568,10 +568,10 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
       }
     }
 
-    private fun unwrapStructureValue(node: Any?): Any? {
+    private fun unwrapStructureKey(node: Any?): StructureViewNodeKey? {
       val wrapper = unwrapTreeElementWrapper(node) ?: return null
       val element = wrapper.value as? StructureViewTreeElement ?: return null
-      return element.value
+      return element.nodeKey(wrapper)
     }
 
     private fun shouldAutoExpand(element: StructureViewTreeElement, expandInfoProvider: ExpandInfoProvider?): Boolean {
@@ -579,7 +579,7 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
       return element is CustomRegionTreeElement || expandInfoProvider?.isAutoExpand(element) == true
     }
 
-    internal fun processStateToGetSelectedValue(state: StructureViewSelectVisitorState, entry: StructureViewEntry, currentEditorElement: Any?): Any? {
+    internal fun processStateToGetSelectedKey(state: StructureViewSelectVisitorState, entry: StructureViewEntry, currentEditorElement: Any?): StructureViewNodeKey? {
       val adjusted = state.bestMatch ?: return null
       val selectedNode = if (!state.isExactMatch && currentEditorElement is PsiElement) {
         FileStructurePopup.findClosestPsiElement(currentEditorElement, adjusted, entry.structureTreeModel) ?: adjusted.lastPathComponent
@@ -587,9 +587,20 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
       else {
         adjusted.lastPathComponent
       }
-      return unwrapStructureValue(selectedNode)
+      return unwrapStructureKey(selectedNode)
     }
   }
+}
+
+internal data class StructureViewNodeKey(
+  val value: Any?,
+  val elementClass: Class<*>,
+  val providerName: String?,
+)
+
+internal fun StructureViewTreeElement.nodeKey(wrapper: TreeElementWrapper?): StructureViewNodeKey {
+  // Some structure elements intentionally wrap the same PSI value with different presentation/topology, for example HTML5 outline nodes.
+  return StructureViewNodeKey(value, javaClass, wrapper?.provider?.name)
 }
 
 private fun Long.asTraceDuration(): String {
