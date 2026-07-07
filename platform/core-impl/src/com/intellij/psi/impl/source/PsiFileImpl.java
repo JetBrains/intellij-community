@@ -629,7 +629,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         updatedTree = myTrees.dropStubAndFileElement().withAst(createTreeElementPointer(element));
       }
       catch (StubTreeLoader.StubTreeAndIndexUnmatchCoarseException e) {
-        // this exception is not possible -- we are dropping stub prior to installing a new tree pointer,
+        // we need to catch this exception syntactically because it is checked
+        // but it is not possible -- we are dropping the stub prior to installing a new tree pointer,
         // so no validation against stub and PSI actually happens
         throw new RuntimeException(e);
       }
