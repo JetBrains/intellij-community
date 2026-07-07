@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.openapi.module.Module
@@ -26,8 +26,8 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
     myFixture.enableInspections(ForbiddenInSuspectContextMethodInspection::class.java)
   }
 
-  private val progressManagerDescr = "Do not call 'ProgressManager.checkCanceled' in suspend context. Use top-level 'checkCancelled' function"
-  private val progressManagerFix = "Replace 'ProgressManager.checkCanceled' with coroutine-friendly 'checkCancelled'"
+  private val progressManagerDescr = "Do not call 'ProgressManager.checkCanceled' in suspend context. Use top-level 'checkCanceled' function"
+  private val progressManagerFix = "Replace 'ProgressManager.checkCanceled' with coroutine-friendly 'checkCanceled'"
 
   private val invokeAndWaitDescr = "'invokeAndWait' can block current coroutine. Use 'Dispatchers.EDT' instead"
   private val invokeAndWaitFix = "Replace 'invokeAndWait' call with 'withContext(Dispatchers.EDT) {}'"
@@ -86,10 +86,9 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
 
     myFixture.checkResult("""
       import com.intellij.openapi.progress.ProgressManager.checkCanceled
-      import com.intellij.openapi.progress.checkCancelled
       
       suspend fun myFun() {
-          checkCancelled()
+          com.intellij.openapi.progress.checkCanceled()
       }
     """.trimIndent())
   }
@@ -201,11 +200,11 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
     myFixture.checkResult("""
       @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
       import com.intellij.openapi.progress.ProgressManager
-      import com.intellij.openapi.progress.checkCancelled
+      import com.intellij.openapi.progress.checkCanceled
       
       fun myFun() {
         suspend fun myInnerFun() {
-            checkCancelled()
+            checkCanceled()
         }
       }
     """.trimIndent())
@@ -237,14 +236,14 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
     myFixture.checkResult("""
       @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
       import com.intellij.openapi.progress.ProgressManager
-      import com.intellij.openapi.progress.checkCancelled
+      import com.intellij.openapi.progress.checkCanceled
       
       fun callSuspendFunction(function: suspend () -> Unit) {
       }
       
       val myLambda: () -> Unit = {
         callSuspendFunction {
-            checkCancelled()
+            checkCanceled()
         }
       }
     """.trimIndent())
@@ -496,7 +495,7 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
       @RequiresBlockingContext
       fun blockingFun() {
         runBlockingCancellable {
-            checkCancelled()
+            checkCanceled()
         }
       }
     """.trimIndent())
@@ -527,7 +526,7 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
       
       suspend fun process(items: List<Int>) {
         items.map {
-          checkCancelled()
+          checkCanceled()
           it + 1
         }
       }
@@ -983,7 +982,7 @@ abstract class KtBlockingContextInspectionTestCase : LightJavaCodeInsightFixture
       import kotlinx.coroutines.*
 
       @Suppress("RedundantSuspendModifier")
-      suspend fun checkCancelled(): Unit = Unit
+      suspend fun checkCanceled(): Unit = Unit
       
       fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
         throw RuntimeException("Unimplemented")
