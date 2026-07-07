@@ -97,16 +97,16 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   protected boolean shouldCreatePsi() {
     if (isIgnored()) return false;
 
+    if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+      // We cannot touch virtual files in versioned environment, so we allow creating PSI here anyway
+      return true;
+    }
+
     VirtualFile vFile = getVirtualFile();
     if (correspondsToRealFile() && vFile.isInLocalFileSystem()) { // check directories consistency
       VirtualFile parent = vFile.getParent();
       if (parent == null) return false;
 
-      if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
-        // it is not possible to access workspace model index in frozen environment
-        // so we allow creating PSI anyway
-        return true;
-      }
       PsiDirectory psiDir = getManager().findDirectory(parent);
       if (psiDir == null) {
         FileIndexFacade indexFacade = FileIndexFacade.getInstance(getManager().getProject());

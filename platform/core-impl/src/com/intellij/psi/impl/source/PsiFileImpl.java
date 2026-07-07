@@ -209,12 +209,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       // but there's temporary disposed project in tests, which doesn't actually dispose its components :(
       return false;
     }
-    if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
-      // in versioning environment, files are kept valid.
-      // it is not possible to access virtual files anyway
-      return true;
-    }
-    if (!myViewProvider.getVirtualFile().isValid()) {
+    if (!InternalPsiVersioning.isInsideVersioningButNotLocks() && !myViewProvider.getVirtualFile().isValid()) {
       // PSI listeners receive VFS deletion events and do markInvalidated
       // but some VFS listeners receive the same events before that and ask PsiFile.isValid
       return false;
