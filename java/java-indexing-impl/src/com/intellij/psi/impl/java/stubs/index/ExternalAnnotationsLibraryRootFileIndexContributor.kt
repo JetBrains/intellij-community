@@ -11,6 +11,7 @@ import com.intellij.workspaceModel.core.fileIndex.DependencyDescription
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
+import com.intellij.workspaceModel.core.fileIndex.impl.LibraryFileSetData
 
 /**
  * Registers external annotation roots from libraries in the [WorkspaceFileIndex][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex]
@@ -31,8 +32,8 @@ class ExternalAnnotationsLibraryRootFileIndexContributor : WorkspaceFileIndexCon
     if (libraryId.tableId !is LibraryTableId.ModuleLibraryTableId && !storage.hasReferrers(libraryId)) return
     for (root in entity.roots) {
       if (root.type.name == AnnotationOrderRootType.ANNOTATIONS_ID && root.inclusionOptions == LibraryRoot.InclusionOptions.ROOT_ITSELF) {
-        // No WorkspaceFileSetData needed: annotation roots don't participate in JVM package resolution
-        registrar.registerFileSet(root.url, WorkspaceFileKind.EXTERNAL, entity, null)
+        // annotation roots don't participate in JVM package resolution
+        registrar.registerFileSet(root.url, WorkspaceFileKind.EXTERNAL, entity, LibraryAnnotationsFileSetData(libraryId))
       }
     }
   }
@@ -40,3 +41,5 @@ class ExternalAnnotationsLibraryRootFileIndexContributor : WorkspaceFileIndexCon
   override val dependenciesOnOtherEntities: List<DependencyDescription<LibraryEntity>>
     get() = listOf(DependencyDescription.OnReference(LibraryId::class.java))
 }
+
+private data class LibraryAnnotationsFileSetData(override val libraryId: LibraryId?) : LibraryFileSetData
