@@ -1,6 +1,5 @@
 import { t as __commonJSMin } from "./rolldown-runtime.js";
 import { t as require_cose_base } from "./cose-base.js";
-//#region node_modules/cytoscape-cose-bilkent/cytoscape-cose-bilkent.js
 var require_cytoscape_cose_bilkent = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if (typeof exports === "object" && typeof module === "object") module.exports = factory(require_cose_base());
@@ -284,5 +283,4 @@ var require_cytoscape_cose_bilkent = /* @__PURE__ */ __commonJSMin(((exports, mo
 		})]);
 	});
 }));
-//#endregion
 export { require_cytoscape_cose_bilkent as t };

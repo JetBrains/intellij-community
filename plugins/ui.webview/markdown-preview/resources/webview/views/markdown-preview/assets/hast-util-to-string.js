@@ -1,4 +1,3 @@
-//#region node_modules/hast-util-to-string/lib/index.js
 /**
 * @import {Nodes, Parents} from 'hast'
 */
@@ -37,5 +36,4 @@ function all(node) {
 	while (++index < node.children.length) result[index] = one(node.children[index]);
 	return result.join("");
 }
-//#endregion
 export { toString as t };

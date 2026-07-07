@@ -1,5 +1,4 @@
 import { t as __commonJSMin } from "./rolldown-runtime.js";
-//#region node_modules/cytoscape-fcose/node_modules/cose-base/node_modules/layout-base/layout-base.js
 var require_layout_base$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if (typeof exports === "object" && typeof module === "object") module.exports = factory();
@@ -3276,8 +3275,6 @@ var require_layout_base$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => 
 		]);
 	});
 }));
-//#endregion
-//#region node_modules/cytoscape-fcose/node_modules/cose-base/cose-base.js
 var require_cose_base$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if (typeof exports === "object" && typeof module === "object") module.exports = factory(require_layout_base$1());
@@ -5377,8 +5374,6 @@ var require_cose_base$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		})();
 	});
 }));
-//#endregion
-//#region node_modules/layout-base/layout-base.js
 var require_layout_base = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if (typeof exports === "object" && typeof module === "object") module.exports = factory();
@@ -8208,8 +8203,6 @@ var require_layout_base = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		]);
 	});
 }));
-//#endregion
-//#region node_modules/cose-base/cose-base.js
 var require_cose_base = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if (typeof exports === "object" && typeof module === "object") module.exports = factory(require_layout_base());
@@ -9095,5 +9088,4 @@ var require_cose_base = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		]);
 	});
 }));
-//#endregion
 export { require_cose_base$1 as n, require_cose_base as t };

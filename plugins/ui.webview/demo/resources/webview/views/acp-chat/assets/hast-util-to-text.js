@@ -1,6 +1,5 @@
 import { a as convert } from "./hast-util-raw.js";
 import { t as convertElement } from "./hast-util-is-element.js";
-//#region node_modules/unist-util-find-after/lib/index.js
 /**
 * @typedef {import('unist').Node} UnistNode
 * @typedef {import('unist').Parent} UnistParent
@@ -98,8 +97,6 @@ function(parent, index, test) {
 	}
 	while (++index < parent.children.length) if (is(parent.children[index], index, parent)) return parent.children[index];
 });
-//#endregion
-//#region node_modules/hast-util-to-text/lib/index.js
 /**
 * @typedef {import('hast').Comment} Comment
 * @typedef {import('hast').Element} Element
@@ -479,5 +476,4 @@ function isCell(node) {
 function closedDialog(node) {
 	return node.tagName === "dialog" && !(node.properties || {}).open;
 }
-//#endregion
 export { toText as t };

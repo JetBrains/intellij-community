@@ -1,4 +1,3 @@
-//#region node_modules/marked/lib/marked.esm.js
 /**
 * marked v15.0.12 - a markdown parser
 * Copyright (c) 2011-2025, Christopher Jeffrey. (MIT Licensed)
@@ -1830,8 +1829,6 @@ marked.walkTokens;
 marked.parseInline;
 _Parser.parse;
 _Lexer.lex;
-//#endregion
-//#region node_modules/mermaid/node_modules/marked/lib/marked.esm.js
 /**
 * marked v16.4.2 - a markdown parser
 * Copyright (c) 2018-2025, MarkedJS. (MIT License)
@@ -3304,5 +3301,4 @@ k.walkTokens;
 k.parseInline;
 b.parse;
 x.lex;
-//#endregion
 export { marked as n, k as t };

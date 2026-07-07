@@ -1,6 +1,5 @@
 import { n as frontmatterToMarkdown, t as frontmatterFromMarkdown } from "./mdast-util-frontmatter.js";
 import { t as frontmatter } from "./micromark-extension-frontmatter.js";
-//#region node_modules/remark-frontmatter/lib/index.js
 /**
 * @typedef {import('mdast').Root} Root
 * @typedef {import('micromark-extension-frontmatter').Options} Options
@@ -31,5 +30,4 @@ function remarkFrontmatter(options) {
 	fromMarkdownExtensions.push(frontmatterFromMarkdown(settings));
 	toMarkdownExtensions.push(frontmatterToMarkdown(settings));
 }
-//#endregion
 export { remarkFrontmatter as t };

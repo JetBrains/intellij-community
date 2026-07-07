@@ -1,6 +1,4 @@
 import { r as __toESM, t as __commonJSMin } from "./rolldown-runtime.js";
-//#endregion
-//#region node_modules/fault/index.js
 var import_format = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((exports, module) => {
 	(function() {
 		var namespace;
@@ -115,5 +113,4 @@ function create(Constructor) {
 		return new Constructor(format ? (0, import_format.default)(format, ...values) : format);
 	}
 }
-//#endregion
 export { fault as t };

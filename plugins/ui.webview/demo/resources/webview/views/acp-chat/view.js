@@ -19,7 +19,6 @@ import { t as remarkGfm } from "./assets/remark-gfm.js";
 import { t as remarkMath } from "./assets/remark-math.js";
 import { h as select_default, n as identity, t as zoom_default } from "./assets/d3.js";
 import { d as __vitePreload } from "./assets/mermaid.js";
-//#region \0vite/modulepreload-polyfill.js
 (function polyfill() {
 	const relList = document.createElement("link").relList;
 	if (relList && relList.supports && relList.supports("modulepreload")) return;
@@ -49,14 +48,10 @@ import { d as __vitePreload } from "./assets/mermaid.js";
 		fetch(link.href, fetchOpts);
 	}
 })();
-//#endregion
-//#region ../../webview-src/packages/controls/src/foundation/define.ts
 var import_client = require_client();
 function defineControl(tagName, constructor, registry = customElements) {
 	if (!registry.get(tagName)) registry.define(tagName, constructor);
 }
-//#endregion
-//#region ../../webview-src/packages/controls/src/foundation/styles.ts
 var hostStyles = i`
   :host {
     box-sizing: border-box;
@@ -498,8 +493,6 @@ i`
     opacity: 1;
   }
 `;
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/icon/icon.ts
 var JbIcon = class extends i$1 {
 	static properties = {
 		label: {
@@ -566,11 +559,7 @@ var JbIcon = class extends i$1 {
 function defineJbIcon(registry) {
 	defineControl("jb-icon", JbIcon, registry);
 }
-//#endregion
-//#region ../../webview-src/packages/controls/src/define/icon.ts
 defineJbIcon();
-//#endregion
-//#region ../../webview-src/packages/api/src/webViewApi.ts
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 function apiId() {
 	return function createApiId(namespace) {
@@ -607,8 +596,6 @@ function createLazyWebViewTheme() {
 	});
 }
 var webViewTheme = createLazyWebViewTheme();
-//#endregion
-//#region ../../webview-src/packages/api/src/iconSet.ts
 var IconSet = /* @__PURE__ */ Object.freeze({ define(id) {
 	validateIconSetId(id);
 	return new DefinedIconSet(id);
@@ -636,8 +623,6 @@ function validateIconResourcePath(resourcePath) {
 function encodeIconResourcePath(resourcePath) {
 	return resourcePath.split("/").map((segment) => encodeURIComponent(segment)).join("/");
 }
-//#endregion
-//#region ../../webview-src/packages/api/src/focus.ts
 var WEBVIEW_FOCUS_LEAVE_EVENT = "wvi-focus-leave";
 function addWebViewFocusLeaveListener(listener) {
 	window.addEventListener(WEBVIEW_FOCUS_LEAVE_EVENT, listener);
@@ -645,8 +630,6 @@ function addWebViewFocusLeaveListener(listener) {
 }
 apiId()("webview.focus");
 apiId()("webview.focus");
-//#endregion
-//#region ../../webview-src/packages/api/src/bridge.ts
 function getWebViewBridge() {
 	return window.__WVI__;
 }
@@ -669,8 +652,6 @@ function createLazyWebViewBridge() {
 	});
 }
 var webView = createLazyWebViewBridge();
-//#endregion
-//#region views/acp-chat/src/bridge/webviewApi.ts
 var acpBridgeHost = webView.callable(apiId()("acp.bridge"));
 var currentHandlers = null;
 webView.implement(apiId()("acp.bridge"), {
@@ -684,8 +665,6 @@ webView.implement(apiId()("acp.bridge"), {
 function setBridgePageHandlers(handlers) {
 	currentHandlers = handlers;
 }
-//#endregion
-//#region views/acp-chat/src/bridge/acpStdioStream.ts
 function createAgentStdioStream() {
 	const encoder = new TextEncoder();
 	const decoder = new TextDecoder();
@@ -729,8 +708,6 @@ function createAgentStdioStream() {
 		}
 	};
 }
-//#endregion
-//#region views/acp-chat/src/acp/client.ts
 var AcpAuthRequiredError = class extends Error {
 	methods;
 	constructor(methods, message) {
@@ -1336,65 +1313,25 @@ function objectOrUndefined(value) {
 function messageOf(error) {
 	return error instanceof Error ? error.message : String(error);
 }
-//#endregion
-//#region views/acp-chat/src/icons/acpChatAgent.svg
 var acpChatAgent_default = "" + new URL("assets/acpChatAgent.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatAgent_dark.svg
 var acpChatAgent_dark_default = "" + new URL("assets/acpChatAgent_dark.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatBrain.svg
 var acpChatBrain_default = "" + new URL("assets/acpChatBrain.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatBrain_dark.svg
 var acpChatBrain_dark_default = "" + new URL("assets/acpChatBrain_dark.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatDebug.svg
 var acpChatDebug_default = "" + new URL("assets/acpChatDebug.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatDebug_dark.svg
 var acpChatDebug_dark_default = "" + new URL("assets/acpChatDebug_dark.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatEffort.svg
 var acpChatEffort_default = "" + new URL("assets/acpChatEffort.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatEffort_dark.svg
 var acpChatEffort_dark_default = "" + new URL("assets/acpChatEffort_dark.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatJunie.svg
 var acpChatJunie_default = "" + new URL("assets/acpChatJunie.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatMode.svg
 var acpChatMode_default = "" + new URL("assets/acpChatMode.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatMode_dark.svg
 var acpChatMode_dark_default = "" + new URL("assets/acpChatMode_dark.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatProcessor.svg
 var acpChatProcessor_default = "" + new URL("assets/acpChatProcessor.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatProcessor_dark.svg
 var acpChatProcessor_dark_default = "" + new URL("assets/acpChatProcessor_dark.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatSend.svg
 var acpChatSend_default = "" + new URL("assets/acpChatSend.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatSend_dark.svg
 var acpChatSend_dark_default = "" + new URL("assets/acpChatSend_dark.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatShield.svg
 var acpChatShield_default = "" + new URL("assets/acpChatShield.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatShield_dark.svg
 var acpChatShield_dark_default = "" + new URL("assets/acpChatShield_dark.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatToggle.svg
 var acpChatToggle_default = "" + new URL("assets/acpChatToggle.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/icons/acpChatToggle_dark.svg
 var acpChatToggle_dark_default = "" + new URL("assets/acpChatToggle_dark.svg", import.meta.url).href;
-//#endregion
-//#region views/acp-chat/src/components/icons/AcpChatIconSet.ts
 var ACP_CHAT_ICONS = IconSet.define("AcpChatIcons");
 var ACP_CHAT_ICON_RESOURCE_ROOT = "webview/views/acp-chat/assets";
 var AGENT_ICON_PATH = iconResourcePath(acpChatAgent_default, "acpChatAgent.svg");
@@ -1435,8 +1372,6 @@ function iconResourcePath(assetUrl, fileName) {
 function keepBundledIconAssets(paths) {
 	if (paths.length === 0) throw new Error("ACP chat icon assets are missing");
 }
-//#endregion
-//#region views/acp-chat/src/runtime/useAcpChat.ts
 var emptyPromptCapabilities = {
 	image: false,
 	audio: false,
@@ -2487,8 +2422,6 @@ function agentInfoFromDto(agent) {
 function errorText(error) {
 	return error instanceof Error ? error.message : String(error);
 }
-//#endregion
-//#region views/acp-chat/src/components/Select.tsx
 var import_jsx_runtime = require_jsx_runtime();
 var SelectRoot = Select$1;
 function SelectTrigger({ className, children, ...props }) {
@@ -2587,8 +2520,6 @@ function Select({ options, children, placeholder, className, triggerAriaLabel, .
 		}, value)) })]
 	});
 }
-//#endregion
-//#region views/acp-chat/src/components/AgentSelector.tsx
 var OPEN_ACP_CONFIG_VALUE = "__open_acp_config__";
 function AgentSelector(props) {
 	const placeholderText = props.agents.length ? "Select an agent…" : "No agents in ~/.jetbrains/acp.json";
@@ -2649,8 +2580,6 @@ function AgentSelectContent(props) {
 		})]
 	});
 }
-//#endregion
-//#region views/acp-chat/src/components/ApprovalPrompt.tsx
 function ApprovalPrompt({ permission }) {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 		className: "acpApprovalOverlay",
@@ -2679,8 +2608,6 @@ function ApprovalPrompt({ permission }) {
 		})
 	});
 }
-//#endregion
-//#region views/acp-chat/src/components/ChatList.tsx
 function ChatList({ chat }) {
 	const [drawerOpen, setDrawerOpen] = (0, import_react.useState)(false);
 	const [sidebarOpen, setSidebarOpen] = (0, import_react.useState)(true);
@@ -2887,8 +2814,6 @@ function TrashIcon() {
 		})
 	});
 }
-//#endregion
-//#region views/acp-chat/src/components/MermaidBlock.tsx
 var mermaidBlockId = 0;
 var mermaidRenderId = 0;
 var mermaidModule;
@@ -3160,8 +3085,6 @@ function configureMermaid(mermaid) {
 function cssVariable(name, fallback) {
 	return (getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback).replace(/^#([0-9a-fA-F]{6})[0-9a-fA-F]{2}$/, "#$1");
 }
-//#endregion
-//#region views/acp-chat/src/components/markdownHastUtils.ts
 function codeNodeFromPreNode(node) {
 	return node?.children?.find((child) => child.tagName === "code");
 }
@@ -3176,8 +3099,6 @@ function hastText(node) {
 	if (typeof node.value === "string") return node.value;
 	return node.children?.map(hastText).join("") ?? "";
 }
-//#endregion
-//#region views/acp-chat/src/components/markdownPathLinks.tsx
 function collectPathLinkCandidates(markdown) {
 	const codeSegments = markdownCodeSegments(markdown);
 	const candidates = [];
@@ -3390,8 +3311,6 @@ var PATH_TRIM_END = new Set([
 	";"
 ]);
 var URL_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:\/\//i;
-//#endregion
-//#region views/acp-chat/src/components/markdownSanitizeSchema.ts
 var defaultAttributes = defaultSchema.attributes || {};
 var markdownSanitizeSchema = {
 	...defaultSchema,
@@ -3438,8 +3357,6 @@ function mergeAttributes(tagName, additions) {
 function unique(values) {
 	return Array.from(new Set(values));
 }
-//#endregion
-//#region views/acp-chat/src/components/MarkdownRenderer.tsx
 var remarkPlugins = [remarkGfm, remarkMath];
 var rehypePlugins = [
 	rehypeRaw,
@@ -3525,8 +3442,6 @@ function MarkdownRenderer({ text, streaming = false, className = "acpMarkdown" }
 function classNames(...names) {
 	return names.filter(Boolean).join(" ");
 }
-//#endregion
-//#region views/acp-chat/src/components/ModelSelector.tsx
 var ModelSelectorContext = (0, import_react.createContext)(null);
 function useModelSelectorContext() {
 	const context = (0, import_react.useContext)(ModelSelectorContext);
@@ -3702,8 +3617,6 @@ var ModelSelector = {
 	Group,
 	Item
 };
-//#endregion
-//#region views/acp-chat/src/components/ModelPicker.tsx
 function ModelPicker(props) {
 	const hasSessionModes = props.modes.length > 0;
 	const selectedMode = props.modes.find((mode) => mode.id === props.currentModeId);
@@ -3914,8 +3827,6 @@ function isKnownModelText(value) {
 	const normalized = value?.toLocaleLowerCase() ?? "";
 	return normalized.includes("gemini") || normalized.includes("claude") || normalized.includes("gpt") || normalized.includes("llama") || normalized.includes("mistral") || normalized.includes("sonnet") || normalized.includes("opus") || normalized.includes("haiku");
 }
-//#endregion
-//#region views/acp-chat/src/components/PlanView.tsx
 function PlanView({ plan }) {
 	if (plan.length === 0) return null;
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
@@ -3947,8 +3858,6 @@ function planMark(status) {
 		default: return "○";
 	}
 }
-//#endregion
-//#region views/acp-chat/src/components/SlashCommandMenu.tsx
 var slashCommandFormatter = {
 	serialize(item) {
 		return commandPrefix(item.id);
@@ -4062,8 +3971,6 @@ function scrollElementIntoNearestView(container, element) {
 	if (elementRect.top < containerRect.top) container.scrollTop -= containerRect.top - elementRect.top;
 	else if (elementRect.bottom > containerRect.bottom) container.scrollTop += elementRect.bottom - containerRect.bottom;
 }
-//#endregion
-//#region views/acp-chat/src/components/ThinkingBlock.tsx
 var SMOOTH_TEXT_OPTIONS$1 = {
 	drainMs: 250,
 	maxCharIntervalMs: 5,
@@ -4092,8 +3999,6 @@ function ThinkingBlock() {
 		})]
 	});
 }
-//#endregion
-//#region views/acp-chat/src/components/AuthPrompt.tsx
 /**
 * In-chat authorization dialog. Mirrors {@link ApprovalPrompt}: the runtime resolves `auth.onChoose` with the chosen
 * method (and, for env_var methods, the entered credentials) or `null` to cancel. While the agent runs an OAuth device
@@ -4298,8 +4203,6 @@ function collectEnv(rows) {
 	}
 	return env;
 }
-//#endregion
-//#region views/acp-chat/src/components/ToolCallCard.tsx
 function ToolCallCard(props) {
 	const result = props?.result ?? {};
 	if (result.kind === "auth" && result.auth) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuthCard, { auth: result.auth });
@@ -4554,8 +4457,6 @@ function renderDiff(diff) {
 	const added = diff.newText.split("\n").filter((line) => line.length > 0).map((line) => `+ ${line}`);
 	return [...removed, ...added].join("\n");
 }
-//#endregion
-//#region views/acp-chat/src/components/ChatView.tsx
 var SMOOTH_TEXT_OPTIONS = {
 	drainMs: 250,
 	maxCharIntervalMs: 5,
@@ -4754,8 +4655,5 @@ function MarkdownText() {
 		streaming: status.type === "running"
 	});
 }
-//#endregion
-//#region views/acp-chat/src/main.tsx
 var container = document.getElementById("root");
 if (container) (0, import_client.createRoot)(container).render(/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChatView, {}));
-//#endregion

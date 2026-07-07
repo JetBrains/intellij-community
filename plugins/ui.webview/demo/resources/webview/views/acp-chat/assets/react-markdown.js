@@ -9,7 +9,6 @@ import { t as toHast } from "./mdast-util-to-hast.js";
 import { t as bail } from "./bail.js";
 import { t as require_extend } from "./extend.js";
 import { t as isPlainObject } from "./is-plain-obj.js";
-//#region node_modules/remark-parse/lib/index.js
 /**
 * @typedef {import('mdast').Root} Root
 * @typedef {import('mdast-util-from-markdown').Options} FromMarkdownOptions
@@ -43,8 +42,6 @@ function remarkParse(options) {
 		});
 	}
 }
-//#endregion
-//#region node_modules/remark-rehype/lib/index.js
 /**
 * @import {Root as HastRoot} from 'hast'
 * @import {Root as MdastRoot} from 'mdast'
@@ -210,8 +207,6 @@ function remarkRehype(destination, options) {
 		});
 	};
 }
-//#endregion
-//#region node_modules/trough/lib/index.js
 /**
 * @typedef {(error?: Error | null | undefined, ...output: Array<any>) => void} Callback
 *   Callback.
@@ -366,8 +361,6 @@ function wrap(middleware, callback) {
 		done(null, value);
 	}
 }
-//#endregion
-//#region node_modules/vfile/lib/minpath.browser.js
 var minpath = {
 	basename,
 	dirname,
@@ -600,14 +593,10 @@ function normalizeString(path, allowAboveRoot) {
 function assertPath$1(path) {
 	if (typeof path !== "string") throw new TypeError("Path must be a string. Received " + JSON.stringify(path));
 }
-//#endregion
-//#region node_modules/vfile/lib/minproc.browser.js
 var minproc = { cwd };
 function cwd() {
 	return "/";
 }
-//#endregion
-//#region node_modules/vfile/lib/minurl.shared.js
 /**
 * Checks if a value has the shape of a WHATWG URL object.
 *
@@ -629,8 +618,6 @@ function cwd() {
 function isUrl(fileUrlOrPath) {
 	return Boolean(fileUrlOrPath !== null && typeof fileUrlOrPath === "object" && "href" in fileUrlOrPath && fileUrlOrPath.href && "protocol" in fileUrlOrPath && fileUrlOrPath.protocol && fileUrlOrPath.auth === void 0);
 }
-//#endregion
-//#region node_modules/vfile/lib/minurl.browser.js
 /**
 * @param {URL | string} path
 *   File URL.
@@ -681,8 +668,6 @@ function getPathFromURLPosix(url) {
 	}
 	return decodeURIComponent(pathname);
 }
-//#endregion
-//#region node_modules/vfile/lib/index.js
 /**
 * @import {Node, Point, Position} from 'unist'
 * @import {Options as MessageOptions} from 'vfile-message'
@@ -1200,8 +1185,6 @@ function assertPath(path, name) {
 function isUint8Array$1(value) {
 	return Boolean(value && typeof value === "object" && "byteLength" in value && "byteOffset" in value);
 }
-//#endregion
-//#region node_modules/unified/lib/callable-instance.js
 var import_extend = /* @__PURE__ */ __toESM(require_extend(), 1);
 var CallableInstance = (
 /**
@@ -1219,8 +1202,6 @@ function(property) {
 	Object.setPrototypeOf(apply, proto);
 	return apply;
 });
-//#endregion
-//#region node_modules/unified/lib/index.js
 /**
 * @typedef {import('trough').Pipeline} Pipeline
 *
@@ -2297,8 +2278,6 @@ function looksLikeAValue(value) {
 function isUint8Array(value) {
 	return Boolean(value && typeof value === "object" && "byteLength" in value && "byteOffset" in value);
 }
-//#endregion
-//#region node_modules/react-markdown/lib/index.js
 /**
 * @import {Element, Nodes, Parents, Root} from 'hast'
 * @import {Root as MdastRoot} from 'mdast'
@@ -2607,5 +2586,4 @@ function defaultUrlTransform(value) {
 	if (colon === -1 || slash !== -1 && colon > slash || questionMark !== -1 && colon > questionMark || numberSign !== -1 && colon > numberSign || safeProtocol.test(value.slice(0, colon))) return value;
 	return "";
 }
-//#endregion
 export { defaultUrlTransform as n, Markdown as t };

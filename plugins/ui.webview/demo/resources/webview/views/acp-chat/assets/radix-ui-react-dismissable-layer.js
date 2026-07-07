@@ -1,7 +1,6 @@
 import { o as __toESM } from "./rolldown-runtime.js";
 import { V as require_jsx_runtime, it as require_react } from "./assistant-ui-core.js";
 import { _ as dispatchDiscreteCustomEvent, b as useComposedRefs, g as Primitive, h as composeEventHandlers, m as useCallbackRef, p as useEscapeKeydown } from "./assistant-ui-react.js";
-//#region node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var import_jsx_runtime = require_jsx_runtime();
 var DISMISSABLE_LAYER_NAME = "DismissableLayer";
@@ -242,5 +241,4 @@ function handleAndDispatchCustomEvent(name, handler, detail, { discrete }) {
 	if (discrete) dispatchDiscreteCustomEvent(target, event);
 	else target.dispatchEvent(event);
 }
-//#endregion
 export { DismissableLayer as t };

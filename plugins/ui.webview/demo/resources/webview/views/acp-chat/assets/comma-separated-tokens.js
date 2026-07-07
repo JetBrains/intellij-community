@@ -1,4 +1,3 @@
-//#region node_modules/comma-separated-tokens/index.js
 /**
 * @typedef Options
 *   Configuration for `stringify`.
@@ -53,5 +52,4 @@ function stringify(values, options) {
 	const settings = options || {};
 	return (values[values.length - 1] === "" ? [...values, ""] : values).join((settings.padRight ? " " : "") + "," + (settings.padLeft === false ? "" : " ")).trim();
 }
-//#endregion
 export { stringify as n, parse as t };

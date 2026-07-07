@@ -111,6 +111,7 @@ export function defineWebViewViewConfig(options: WebViewViewConfigOptions): User
       injectCommonWebViewRuntimeAssetsPlugin(options.enableDefaultTextSelectionGuard !== false),
       stripCrossoriginFromHtmlPlugin(),
       stripEmptyVitePreloadWrappersPlugin(options.modulePreload === false),
+      stripRolldownRegionCommentsPlugin(),
     ],
     root: sourceDir,
     base: "./",
@@ -295,6 +296,54 @@ function stripEmptyVitePreloadWrappersPlugin(enabled: boolean): Plugin | null {
       }
     },
   }
+}
+
+function stripRolldownRegionCommentsPlugin(): Plugin {
+  return {
+    name: "intellij-webview-strip-rolldown-region-comments",
+    enforce: "post",
+    renderChunk: {
+      order: "post",
+      handler(code) {
+        const transformedCode = stripRolldownRegionComments(code)
+        return transformedCode === code ? null : { code: transformedCode, map: null }
+      },
+    },
+    generateBundle(_options, bundle) {
+      for (const item of Object.values(bundle)) {
+        if (item.type !== "chunk") continue
+
+        item.code = stripRolldownRegionComments(item.code)
+      }
+    },
+    writeBundle(outputOptions, bundle) {
+      const outDir = outputOptions.dir ?? (outputOptions.file == null ? undefined : dirname(outputOptions.file))
+      if (outDir == null) return
+
+      for (const item of Object.values(bundle)) {
+        if (item.type !== "chunk") continue
+
+        const file = resolve(outDir, item.fileName)
+        const code = readFileSync(file, "utf8")
+        const transformedCode = stripRolldownRegionComments(code)
+        if (transformedCode !== code) {
+          writeFileSync(file, transformedCode)
+        }
+      }
+    },
+  }
+}
+
+function stripRolldownRegionComments(code: string): string {
+  const lines = code.split("\n")
+  let hasRegionComment = false
+  const retainedLines = lines.filter(line => {
+    const trimmedLine = line.trimEnd()
+    const isRegionComment = trimmedLine.startsWith("//#region ") || trimmedLine === "//#endregion"
+    hasRegionComment ||= isRegionComment
+    return !isRegionComment
+  })
+  return hasRegionComment ? retainedLines.join("\n") : code
 }
 
 function stripEmptyVitePreloadWrappers(code: string): string {

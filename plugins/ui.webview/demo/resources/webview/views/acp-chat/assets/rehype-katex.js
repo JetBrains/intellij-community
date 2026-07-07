@@ -2,7 +2,6 @@ import { i as visitParents, r as SKIP } from "./hast-util-raw.js";
 import { t as toText } from "./hast-util-to-text.js";
 import { t as fromHtmlIsomorphic } from "./hast-util-from-html-isomorphic.js";
 import { t as katex } from "./katex.js";
-//#region node_modules/rehype-katex/lib/index.js
 /**
 * @import {ElementContent, Root} from 'hast'
 * @import {KatexOptions} from 'katex'
@@ -102,5 +101,4 @@ function rehypeKatex(options) {
 		});
 	};
 }
-//#endregion
 export { rehypeKatex as t };

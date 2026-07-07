@@ -1,7 +1,6 @@
 import { o as __toESM } from "./rolldown-runtime.js";
 import { V as require_jsx_runtime, it as require_react } from "./assistant-ui-core.js";
 import { b as useComposedRefs, g as Primitive, m as useCallbackRef } from "./assistant-ui-react.js";
-//#region node_modules/@radix-ui/react-focus-scope/dist/index.mjs
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var import_jsx_runtime = require_jsx_runtime();
 var AUTOFOCUS_ON_MOUNT = "focusScope.autoFocusOnMount";
@@ -191,5 +190,4 @@ function arrayRemove(array, item) {
 function removeLinks(items) {
 	return items.filter((item) => item.tagName !== "A");
 }
-//#endregion
 export { FocusScope as t };

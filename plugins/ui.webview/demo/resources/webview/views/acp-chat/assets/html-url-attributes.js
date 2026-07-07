@@ -1,4 +1,3 @@
-//#region node_modules/html-url-attributes/lib/index.js
 /**
 * HTML URL properties.
 *
@@ -40,5 +39,4 @@ var urlAttributes = {
 		"video"
 	]
 };
-//#endregion
 export { urlAttributes as t };

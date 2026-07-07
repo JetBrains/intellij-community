@@ -1,6 +1,5 @@
 import { t as __commonJSMin } from "./rolldown-runtime.js";
 import { n as require_cose_base } from "./cose-base.js";
-//#region node_modules/cytoscape-fcose/cytoscape-fcose.js
 var require_cytoscape_fcose = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if (typeof exports === "object" && typeof module === "object") module.exports = factory(require_cose_base());
@@ -1080,5 +1079,4 @@ var require_cytoscape_fcose = /* @__PURE__ */ __commonJSMin(((exports, module) =
 		})();
 	});
 }));
-//#endregion
 export { require_cytoscape_fcose as t };

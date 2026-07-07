@@ -1,5 +1,4 @@
 import { t as raw } from "./hast-util-raw.js";
-//#region node_modules/rehype-raw/lib/index.js
 /**
 * @typedef {import('hast').Root} Root
 * @typedef {import('hast-util-raw').Options} RawOptions
@@ -33,5 +32,4 @@ function rehypeRaw(options) {
 		});
 	};
 }
-//#endregion
 export { rehypeRaw as t };

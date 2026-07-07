@@ -11,7 +11,6 @@ import { t as hideOthers } from "./aria-hidden.js";
 import { n as autoUpdate } from "./floating-ui-dom.js";
 import { a as offset, c as useFloating, i as limitShift, n as flip, o as shift, r as hide, s as size, t as arrow } from "./floating-ui-react-dom.js";
 import { t as Root } from "./radix-ui-react-arrow.js";
-//#region node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs
 var import_react_dom = /* @__PURE__ */ __toESM(require_react_dom(), 1);
 var import_jsx_runtime = require_jsx_runtime();
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
@@ -65,8 +64,6 @@ function useUncontrolledState({ defaultProp, onChange }) {
 function isFunction(value) {
 	return typeof value === "function";
 }
-//#endregion
-//#region node_modules/@radix-ui/react-presence/dist/index.mjs
 function useStateMachine(initialState, machine) {
 	return import_react.useReducer((state, event) => {
 		return machine[state][event] ?? state;
@@ -188,8 +185,6 @@ function getElementRef(element) {
 	if (mayWarn) return element.props.ref;
 	return element.props.ref || element.ref;
 }
-//#endregion
-//#region node_modules/@radix-ui/react-portal/dist/index.mjs
 var PORTAL_NAME$1 = "Portal";
 var Portal$1 = import_react.forwardRef((props, forwardedRef) => {
 	const { container: containerProp, ...portalProps } = props;
@@ -202,8 +197,6 @@ var Portal$1 = import_react.forwardRef((props, forwardedRef) => {
 	}), container) : null;
 });
 Portal$1.displayName = PORTAL_NAME$1;
-//#endregion
-//#region node_modules/tslib/tslib.es6.mjs
 var __assign = function() {
 	__assign = Object.assign || function __assign(t) {
 		for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -231,8 +224,6 @@ function __spreadArray(to, from, pack) {
 	}
 	return to.concat(ar || Array.prototype.slice.call(from));
 }
-//#endregion
-//#region node_modules/react-remove-scroll-bar/dist/es2015/constants.js
 var zeroRightClassName = "right-scroll-bar-position";
 var fullWidthClassName = "width-before-scroll-bar";
 var noScrollbarsClassName = "with-scroll-bars-hidden";
@@ -241,8 +232,6 @@ var noScrollbarsClassName = "with-scroll-bars-hidden";
 * ! might be undefined ! use will fallback!
 */
 var removedBarSizeVariable = "--removed-body-scroll-bar-size";
-//#endregion
-//#region node_modules/use-callback-ref/dist/es2015/assignRef.js
 /**
 * Assigns a value for a given ref, no matter of the ref format
 * @param {RefObject} ref - a callback function or ref object
@@ -261,8 +250,6 @@ function assignRef(ref, value) {
 	else if (ref) ref.current = value;
 	return ref;
 }
-//#endregion
-//#region node_modules/use-callback-ref/dist/es2015/useRef.js
 /**
 * creates a MutableRef with ref change callback
 * @param initialValue - initial ref value
@@ -299,8 +286,6 @@ function useCallbackRef(initialValue, callback) {
 	ref.callback = callback;
 	return ref.facade;
 }
-//#endregion
-//#region node_modules/use-callback-ref/dist/es2015/useMergeRef.js
 var useIsomorphicLayoutEffect = typeof window !== "undefined" ? import_react.useLayoutEffect : import_react.useEffect;
 var currentValues = /* @__PURE__ */ new WeakMap();
 /**
@@ -340,8 +325,6 @@ function useMergeRefs(refs, defaultValue) {
 	}, [refs]);
 	return callbackRef;
 }
-//#endregion
-//#region node_modules/use-sidecar/dist/es2015/medium.js
 function ItoI(a) {
 	return a;
 }
@@ -420,8 +403,6 @@ function createSidecarMedium(options) {
 	}, options);
 	return medium;
 }
-//#endregion
-//#region node_modules/use-sidecar/dist/es2015/exports.js
 var SideCar = function(_a) {
 	var sideCar = _a.sideCar, rest = __rest(_a, ["sideCar"]);
 	if (!sideCar) throw new Error("Sidecar: please provide `sideCar` property to import the right car");
@@ -434,11 +415,7 @@ function exportSidecar(medium, exported) {
 	medium.useMedium(exported);
 	return SideCar;
 }
-//#endregion
-//#region node_modules/react-remove-scroll/dist/es2015/medium.js
 var effectCar = createSidecarMedium();
-//#endregion
-//#region node_modules/react-remove-scroll/dist/es2015/UI.js
 var nothing = function() {};
 /**
 * Removes scrollbar from the page and contain the scroll within the Lock
@@ -493,8 +470,6 @@ RemoveScroll.classNames = {
 	fullWidth: fullWidthClassName,
 	zeroRight: zeroRightClassName
 };
-//#endregion
-//#region node_modules/react-style-singleton/dist/es2015/singleton.js
 function makeStyleTag() {
 	if (!document) return null;
 	var tag = document.createElement("style");
@@ -532,8 +507,6 @@ var stylesheetSingleton = function() {
 		}
 	};
 };
-//#endregion
-//#region node_modules/react-style-singleton/dist/es2015/hook.js
 /**
 * creates a hook to control style singleton
 * @see {@link styleSingleton} for a safer component version
@@ -554,8 +527,6 @@ var styleHookSingleton = function() {
 		}, [styles && isDynamic]);
 	};
 };
-//#endregion
-//#region node_modules/react-style-singleton/dist/es2015/component.js
 /**
 * create a Component to add styles on demand
 * - styles are added when first instance is mounted
@@ -571,8 +542,6 @@ var styleSingleton = function() {
 	};
 	return Sheet;
 };
-//#endregion
-//#region node_modules/react-remove-scroll-bar/dist/es2015/utils.js
 var zeroGap = {
 	left: 0,
 	top: 0,
@@ -606,8 +575,6 @@ var getGapWidth = function(gapMode) {
 		gap: Math.max(0, windowWidth - documentWidth + offsets[2] - offsets[0])
 	};
 };
-//#endregion
-//#region node_modules/react-remove-scroll-bar/dist/es2015/component.js
 var Style = styleSingleton();
 var lockAttribute = "data-scroll-locked";
 var getStyles = function(_a, allowRelative, gapMode, important) {
@@ -644,8 +611,6 @@ var RemoveScrollBar = function(_a) {
 	}, [gapMode]);
 	return import_react.createElement(Style, { styles: getStyles(gap, !noRelative, gapMode, !noImportant ? "!important" : "") });
 };
-//#endregion
-//#region node_modules/react-remove-scroll/dist/es2015/aggresiveCapture.js
 var passiveSupported = false;
 if (typeof window !== "undefined") try {
 	var options = Object.defineProperty({}, "passive", { get: function() {
@@ -658,8 +623,6 @@ if (typeof window !== "undefined") try {
 	passiveSupported = false;
 }
 var nonPassive = passiveSupported ? { passive: false } : false;
-//#endregion
-//#region node_modules/react-remove-scroll/dist/es2015/handleScroll.js
 var alwaysContainsScroll = function(node) {
 	return node.tagName === "TEXTAREA";
 };
@@ -741,8 +704,6 @@ var handleScroll = function(axis, endTarget, event, sourceDelta, noOverscroll) {
 	else if (!isDeltaPositive && (noOverscroll && Math.abs(availableScrollTop) < 1 || !noOverscroll && -delta > availableScrollTop)) shouldCancelScroll = true;
 	return shouldCancelScroll;
 };
-//#endregion
-//#region node_modules/react-remove-scroll/dist/es2015/SideEffect.js
 var getTouchXY = function(event) {
 	return "changedTouches" in event ? [event.changedTouches[0].clientX, event.changedTouches[0].clientY] : [0, 0];
 };
@@ -896,11 +857,7 @@ function getOutermostShadowParent(node) {
 	}
 	return shadowParent;
 }
-//#endregion
-//#region node_modules/react-remove-scroll/dist/es2015/sidecar.js
 var sidecar_default = exportSidecar(effectCar, RemoveScrollSideCar);
-//#endregion
-//#region node_modules/react-remove-scroll/dist/es2015/Combination.js
 var ReactRemoveScroll = import_react.forwardRef(function(props, ref) {
 	return import_react.createElement(RemoveScroll, __assign({}, props, {
 		ref,
@@ -908,8 +865,6 @@ var ReactRemoveScroll = import_react.forwardRef(function(props, ref) {
 	}));
 });
 ReactRemoveScroll.classNames = RemoveScroll.classNames;
-//#endregion
-//#region node_modules/@radix-ui/react-use-size/dist/index.mjs
 function useSize(element) {
 	const [size, setSize] = import_react.useState(void 0);
 	useLayoutEffect2(() => {
@@ -944,8 +899,6 @@ function useSize(element) {
 	}, [element]);
 	return size;
 }
-//#endregion
-//#region node_modules/@radix-ui/react-popper/dist/index.mjs
 var POPPER_NAME = "Popper";
 var [createPopperContext, createPopperScope] = createContextScope(POPPER_NAME);
 var [PopperProvider, usePopperContext] = createPopperContext(POPPER_NAME);
@@ -1209,8 +1162,6 @@ var Root2$1 = Popper;
 var Anchor = PopperAnchor;
 var Content = PopperContent;
 var Arrow = PopperArrow;
-//#endregion
-//#region node_modules/@radix-ui/react-popover/dist/index.mjs
 var POPOVER_NAME = "Popover";
 var [createPopoverContext, createPopoverScope] = createContextScope(POPOVER_NAME, [createPopperScope]);
 var usePopperScope = createPopperScope();
@@ -1450,5 +1401,4 @@ var Root2 = Popover;
 var Trigger = PopoverTrigger;
 var Portal = PopoverPortal;
 var Content2 = PopoverContent;
-//#endregion
 export { Anchor as a, Root2$1 as c, ReactRemoveScroll as d, Portal$1 as f, Trigger as i, createPopperScope as l, useControllableState as m, Portal as n, Arrow as o, Presence as p, Root2 as r, Content as s, Content2 as t, useSize as u };

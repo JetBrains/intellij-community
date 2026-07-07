@@ -1,6 +1,5 @@
 import { n as gfmToMarkdown, t as gfmFromMarkdown } from "./mdast-util-gfm.js";
 import { t as gfm } from "./micromark-extension-gfm.js";
-//#region node_modules/remark-gfm/lib/index.js
 /**
 * @import {Root} from 'mdast'
 * @import {Options} from 'remark-gfm'
@@ -30,5 +29,4 @@ function remarkGfm(options) {
 	fromMarkdownExtensions.push(gfmFromMarkdown());
 	toMarkdownExtensions.push(gfmToMarkdown(settings));
 }
-//#endregion
 export { remarkGfm as t };

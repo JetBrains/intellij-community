@@ -1,4 +1,3 @@
-//#region node_modules/dompurify/dist/purify.es.mjs
 /*! @license DOMPurify 3.4.2 | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/3.4.2/LICENSE */
 var { entries, setPrototypeOf, isFrozen, getPrototypeOf, getOwnPropertyDescriptor } = Object;
 var { freeze, seal, create } = Object;
@@ -1675,5 +1674,4 @@ function createDOMPurify() {
 	return DOMPurify;
 }
 var purify = createDOMPurify();
-//#endregion
 export { purify as t };

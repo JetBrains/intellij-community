@@ -1,6 +1,5 @@
 import { t as require_jsx_runtime } from "./react.js";
 import { n as AllIcons, t as classNames } from "../view.js";
-//#region views/markdown-preview/src/MarkdownZoomControls.tsx
 var import_jsx_runtime = require_jsx_runtime();
 var MARKDOWN_ZOOM_SCALE_EXTENT = [.25, 4];
 var MARKDOWN_ZOOM_BUTTON_FACTOR = 1.2;
@@ -54,5 +53,4 @@ function MarkdownZoomToolbar({ targetLabel, className, buttonClassName, onZoomOu
 function shouldHandleZoomEvent(event) {
 	return event.type !== "wheel" || event.ctrlKey;
 }
-//#endregion
 export { shouldHandleZoomEvent as i, MARKDOWN_ZOOM_SCALE_EXTENT as n, MarkdownZoomToolbar as r, MARKDOWN_ZOOM_BUTTON_FACTOR as t };

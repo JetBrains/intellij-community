@@ -1,7 +1,6 @@
 import { o as __toESM } from "./rolldown-runtime.js";
 import { V as require_jsx_runtime, it as require_react } from "./assistant-ui-core.js";
 import { b as useComposedRefs, v as createSlot } from "./assistant-ui-react.js";
-//#region node_modules/@radix-ui/react-context/dist/index.mjs
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var import_jsx_runtime = require_jsx_runtime();
 function createContextScope(scopeName, createContextScopeDeps = []) {
@@ -67,8 +66,6 @@ function composeContextScopes(...scopes) {
 	createScope.scopeName = baseScope.scopeName;
 	return createScope;
 }
-//#endregion
-//#region node_modules/@radix-ui/react-collection/dist/index.mjs
 function createCollection(name) {
 	const PROVIDER_NAME = name + "CollectionProvider";
 	const [createCollectionContext, createCollectionScope] = createContextScope(PROVIDER_NAME);
@@ -139,5 +136,4 @@ function createCollection(name) {
 		createCollectionScope
 	];
 }
-//#endregion
 export { createContextScope as n, createCollection as t };

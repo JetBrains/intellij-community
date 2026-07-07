@@ -1,5 +1,4 @@
 import { l as position, o as esm_default } from "./hast-util-raw.js";
-//#region node_modules/hast-util-sanitize/lib/schema.js
 /**
 * @import {Schema} from 'hast-util-sanitize'
 */
@@ -200,8 +199,6 @@ var defaultSchema = {
 		"var"
 	]
 };
-//#endregion
-//#region node_modules/hast-util-sanitize/lib/index.js
 /**
 * @import {
 *   Comment,
@@ -775,5 +772,4 @@ function findDefinition(definitions, key) {
 	}
 	if (key.length > 4 && key.slice(0, 4).toLowerCase() === "data") return dataDefault;
 }
-//#endregion
 export { defaultSchema as n, sanitize as t };

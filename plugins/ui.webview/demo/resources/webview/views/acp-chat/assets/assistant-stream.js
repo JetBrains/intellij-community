@@ -1,5 +1,4 @@
 import { o as __toESM, t as __commonJSMin } from "./rolldown-runtime.js";
-//#region node_modules/assistant-stream/dist/utils/promiseWithResolvers.js
 var promiseWithResolvers = () => {
 	let resolve;
 	let reject;
@@ -14,8 +13,6 @@ var promiseWithResolvers = () => {
 		reject
 	};
 };
-//#endregion
-//#region node_modules/assistant-stream/dist/core/utils/stream/merge.js
 var createMergeStream = () => {
 	const list = [];
 	let sealed = false;
@@ -81,8 +78,6 @@ var createMergeStream = () => {
 		}
 	};
 };
-//#endregion
-//#region node_modules/assistant-stream/dist/core/modules/text.js
 var TextStreamControllerImpl = class {
 	_controller;
 	_isClosed = false;
@@ -126,8 +121,6 @@ var createTextStreamController = () => {
 		controller = c;
 	} }), controller];
 };
-//#endregion
-//#region node_modules/assistant-stream/dist/core/modules/tool-call.js
 var ToolCallStreamControllerImpl = class {
 	_controller;
 	_isClosed = false;
@@ -207,16 +200,12 @@ var createToolCallStreamController = () => {
 		controller = c;
 	} }), controller];
 };
-//#endregion
-//#region node_modules/assistant-stream/dist/core/utils/Counter.js
 var Counter = class {
 	value = -1;
 	up() {
 		return ++this.value;
 	}
 };
-//#endregion
-//#region node_modules/assistant-stream/dist/core/utils/stream/path-utils.js
 var PathAppendEncoder = class extends TransformStream {
 	constructor(idx) {
 		super({ transform(chunk, controller) {
@@ -248,8 +237,6 @@ var PathMergeEncoder = class extends TransformStream {
 		} });
 	}
 };
-//#endregion
-//#region node_modules/assistant-stream/dist/core/utils/stream/PipeableTransformStream.js
 var PipeableTransformStream = class extends TransformStream {
 	constructor(transform) {
 		super();
@@ -260,8 +247,6 @@ var PipeableTransformStream = class extends TransformStream {
 		});
 	}
 };
-//#endregion
-//#region node_modules/assistant-stream/dist/core/utils/stream/AssistantMetaTransformStream.js
 var AssistantMetaTransformStream = class extends TransformStream {
 	constructor() {
 		const parts = [];
@@ -296,8 +281,6 @@ var AssistantMetaTransformStream = class extends TransformStream {
 		} });
 	}
 };
-//#endregion
-//#region node_modules/nanoid/non-secure/index.js
 var customAlphabet = (alphabet, defaultSize = 21) => {
 	return (size = defaultSize) => {
 		let id = "";
@@ -306,11 +289,7 @@ var customAlphabet = (alphabet, defaultSize = 21) => {
 		return id;
 	};
 };
-//#endregion
-//#region node_modules/assistant-stream/dist/core/utils/generateId.js
 var generateId = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 7);
-//#endregion
-//#region node_modules/assistant-stream/dist/core/modules/assistant-stream.js
 var AssistantStreamControllerImpl = class AssistantStreamControllerImpl {
 	_state;
 	_parentId;
@@ -476,8 +455,6 @@ function createAssistantStreamController() {
 		return promise;
 	}), controller];
 }
-//#endregion
-//#region node_modules/assistant-stream/dist/utils/json/fix-json.js
 function fixJson(input) {
 	const stack = ["ROOT"];
 	let lastValidIndex = -1;
@@ -761,8 +738,6 @@ function fixJson(input) {
 	}
 	return [result, path];
 }
-//#endregion
-//#region node_modules/assistant-stream/dist/utils/json/parse-partial-json-object.js
 var import_secure_json_parse = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var hasBuffer = typeof Buffer !== "undefined";
 	var suspectProtoRx = /"(?:_|\\u005[Ff])(?:_|\\u005[Ff])(?:p|\\u0070)(?:r|\\u0072)(?:o|\\u006[Ff])(?:t|\\u0074)(?:o|\\u006[Ff])(?:_|\\u005[Ff])(?:_|\\u005[Ff])"\s*:/;
@@ -926,8 +901,6 @@ var getPartialJsonObjectFieldState = (obj, fieldPath) => {
 	if (!meta) throw new Error("unable to determine object state");
 	return getFieldState(obj, meta, fieldPath.map(String));
 };
-//#endregion
-//#region node_modules/assistant-stream/dist/utils/AsyncIterableStream.js
 async function* streamGeneratorPolyfill() {
 	const reader = this.getReader();
 	try {
@@ -944,8 +917,6 @@ function asAsyncIterableStream(source) {
 	source[Symbol.asyncIterator] ??= streamGeneratorPolyfill;
 	return source;
 }
-//#endregion
-//#region node_modules/assistant-stream/dist/core/tool/ToolResponse.js
 var TOOL_RESPONSE_SYMBOL = Symbol.for("aui.tool-response");
 /**
 * Tool result wrapper for separating UI-visible output from model-visible
@@ -994,8 +965,6 @@ var ToolResponse = class ToolResponse {
 		return new ToolResponse({ result: result === void 0 ? "<no result>" : result });
 	}
 };
-//#endregion
-//#region node_modules/assistant-stream/dist/core/utils/withPromiseOrValue.js
 function withPromiseOrValue(callback, thenHandler, catchHandler) {
 	try {
 		const promiseOrValue = callback();
@@ -1005,8 +974,6 @@ function withPromiseOrValue(callback, thenHandler, catchHandler) {
 		catchHandler(e);
 	}
 }
-//#endregion
-//#region node_modules/assistant-stream/dist/core/tool/ToolCallReader.js
 function getField(obj, fieldPath) {
 	let current = obj;
 	for (const key of fieldPath) {
@@ -1315,8 +1282,6 @@ var ToolCallReaderImpl = class {
 		return (await this.response.get()).result;
 	} };
 };
-//#endregion
-//#region node_modules/assistant-stream/dist/core/tool/ToolExecutionStream.js
 var ToolExecutionStream = class extends PipeableTransformStream {
 	constructor(options) {
 		const toolCallPromises = /* @__PURE__ */ new Map();
@@ -1435,8 +1400,6 @@ var ToolExecutionStream = class extends PipeableTransformStream {
 		});
 	}
 };
-//#endregion
-//#region node_modules/assistant-stream/dist/core/tool/toolResultStream.js
 var isStandardSchemaV1 = (schema) => {
 	return typeof schema === "object" && schema !== null && "~standard" in schema && schema["~standard"].version === 1;
 };
@@ -1529,5 +1492,4 @@ function toolResultStream(tools, abortSignal, human, options) {
 		onExecutionEnd: options?.onExecutionEnd
 	});
 }
-//#endregion
 export { customAlphabet as a, createAssistantStreamController as i, ToolResponse as n, AssistantMetaTransformStream as o, parsePartialJsonObject as r, toolResultStream as t };

@@ -1,7 +1,6 @@
 import { n as require_react, t as require_jsx_runtime } from "./react.js";
 import { h as select_default, n as identity, t as zoom_default } from "./d3.js";
 import { i as shouldHandleZoomEvent, n as MARKDOWN_ZOOM_SCALE_EXTENT, r as MarkdownZoomToolbar, t as MARKDOWN_ZOOM_BUTTON_FACTOR } from "./MarkdownZoomControls.js";
-//#region views/markdown-preview/src/MermaidBlock.tsx
 var import_react = require_react();
 var import_jsx_runtime = require_jsx_runtime();
 var mermaidBlockId = 0;
@@ -237,5 +236,4 @@ function configureMermaid(mermaid, theme) {
 function cssVariable(name, fallback) {
 	return (getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback).replace(/^#([0-9a-fA-F]{6})[0-9a-fA-F]{2}$/, "#$1");
 }
-//#endregion
 export { MermaidBlock };

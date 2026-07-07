@@ -1,5 +1,4 @@
 import { t as renderMathInElement } from "./katex.js";
-//#region views/markdown-preview/src/markdownLatex.ts
 var latexDelimiters = [
 	{
 		left: "$$",
@@ -56,5 +55,4 @@ function renderMarkdownLatex() {
 		throwOnError: false
 	});
 }
-//#endregion
 export { renderMarkdownLatex };

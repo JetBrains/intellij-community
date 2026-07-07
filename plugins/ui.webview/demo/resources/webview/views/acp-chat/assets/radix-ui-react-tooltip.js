@@ -6,7 +6,6 @@ import { n as createContextScope } from "./radix-ui-react-collection.js";
 import { t as useId } from "./radix-ui-react-id.js";
 import { a as Anchor, c as Root2, f as Portal$1, l as createPopperScope, m as useControllableState, o as Arrow, p as Presence, s as Content } from "./radix-ui-react-popover.js";
 import { t as DismissableLayer } from "./radix-ui-react-dismissable-layer.js";
-//#region node_modules/@radix-ui/react-tooltip/dist/index.mjs
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var import_jsx_runtime = require_jsx_runtime();
 var [createTooltipContext, createTooltipScope] = createContextScope("Tooltip", [createPopperScope]);
@@ -490,5 +489,4 @@ var Root3 = Tooltip;
 var Trigger = TooltipTrigger;
 var Portal = TooltipPortal;
 var Content2 = TooltipContent;
-//#endregion
 export { Trigger as a, Root3 as i, Portal as n, Provider as r, Content2 as t };

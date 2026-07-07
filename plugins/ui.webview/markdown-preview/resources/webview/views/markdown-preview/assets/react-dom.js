@@ -1,6 +1,5 @@
 import { t as __commonJSMin } from "./rolldown-runtime.js";
 import { n as require_react } from "./react.js";
-//#region node_modules/scheduler/cjs/scheduler.production.min.js
 /**
 * @license React
 * scheduler.production.min.js
@@ -240,13 +239,9 @@ var require_scheduler_production_min = /* @__PURE__ */ __commonJSMin(((exports) 
 		};
 	};
 }));
-//#endregion
-//#region node_modules/scheduler/index.js
 var require_scheduler = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = require_scheduler_production_min();
 }));
-//#endregion
-//#region node_modules/react-dom/cjs/react-dom.production.min.js
 /**
 * @license React
 * react-dom.production.min.js
@@ -6920,8 +6915,6 @@ var require_react_dom_production_min = /* @__PURE__ */ __commonJSMin(((exports) 
 	};
 	exports.version = "18.3.1-next-f1338f8080-20240426";
 }));
-//#endregion
-//#region node_modules/react-dom/index.js
 var require_react_dom = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	function checkDCE() {
 		if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ === "undefined" || typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.checkDCE !== "function") return;
@@ -6934,12 +6927,9 @@ var require_react_dom = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	checkDCE();
 	module.exports = require_react_dom_production_min();
 }));
-//#endregion
-//#region node_modules/react-dom/client.js
 var require_client = /* @__PURE__ */ __commonJSMin(((exports) => {
 	var m = require_react_dom();
 	exports.createRoot = m.createRoot;
 	exports.hydrateRoot = m.hydrateRoot;
 }));
-//#endregion
 export { require_client as t };

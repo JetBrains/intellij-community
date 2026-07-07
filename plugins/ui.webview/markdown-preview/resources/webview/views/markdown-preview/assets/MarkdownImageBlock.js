@@ -2,7 +2,6 @@ import { n as require_react, t as require_jsx_runtime } from "./react.js";
 import { t as classNames } from "../view.js";
 import { h as select_default, n as identity, t as zoom_default } from "./d3.js";
 import { i as shouldHandleZoomEvent, n as MARKDOWN_ZOOM_SCALE_EXTENT, r as MarkdownZoomToolbar, t as MARKDOWN_ZOOM_BUTTON_FACTOR } from "./MarkdownZoomControls.js";
-//#region views/markdown-preview/src/MarkdownImageBlock.tsx
 var import_react = require_react();
 var import_jsx_runtime = require_jsx_runtime();
 function MarkdownImageBlock({ src, alt, title, className, style, ...props }) {
@@ -78,5 +77,4 @@ function MarkdownImageBlock({ src, alt, title, className, style, ...props }) {
 		})]
 	});
 }
-//#endregion
 export { MarkdownImageBlock };

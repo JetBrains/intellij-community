@@ -1,4 +1,3 @@
-//#region node_modules/marked/lib/marked.esm.js
 /**
 * marked v16.4.2 - a markdown parser
 * Copyright (c) 2018-2025, MarkedJS. (MIT License)
@@ -1471,5 +1470,4 @@ k.walkTokens;
 k.parseInline;
 b.parse;
 x.lex;
-//#endregion
 export { k as t };

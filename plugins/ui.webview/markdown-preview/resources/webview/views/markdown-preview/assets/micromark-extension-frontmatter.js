@@ -1,6 +1,5 @@
 import { d as markdownSpace, l as markdownLineEnding } from "./mdast-util-from-markdown.js";
 import { r as toMatters } from "./mdast-util-frontmatter.js";
-//#region node_modules/micromark-extension-frontmatter/lib/syntax.js
 /**
 * @typedef {import('micromark-util-types').Construct} Construct
 * @typedef {import('micromark-util-types').ConstructRecord} ConstructRecord
@@ -348,5 +347,4 @@ function fence(matter, prop) {
 function pick(schema, prop) {
 	return typeof schema === "string" ? schema : schema[prop];
 }
-//#endregion
 export { frontmatter as t };

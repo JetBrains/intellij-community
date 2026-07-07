@@ -1,4 +1,3 @@
-//#region node_modules/ccount/index.js
 /**
 * Count how often a character (or substring) is used in a string.
 *
@@ -20,5 +19,4 @@ function ccount(value, character) {
 	}
 	return count;
 }
-//#endregion
 export { ccount as t };

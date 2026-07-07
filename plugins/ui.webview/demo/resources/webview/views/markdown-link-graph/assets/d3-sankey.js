@@ -1,6 +1,5 @@
 import { n as min, r as max, t as sum } from "./d3-array.js";
 import { t as path } from "./d3-path.js";
-//#region node_modules/d3-sankey/src/align.js
 function targetDepth(d) {
 	return d.target.depth;
 }
@@ -16,15 +15,11 @@ function justify(node, n) {
 function center(node) {
 	return node.targetLinks.length ? node.depth : node.sourceLinks.length ? min(node.sourceLinks, targetDepth) - 1 : 0;
 }
-//#endregion
-//#region node_modules/d3-sankey/src/constant.js
 function constant(x) {
 	return function() {
 		return x;
 	};
 }
-//#endregion
-//#region node_modules/d3-sankey/src/sankey.js
 function ascendingSourceBreadth(a, b) {
 	return ascendingBreadth(a.source, b.source) || a.index - b.index;
 }
@@ -328,26 +323,18 @@ function Sankey() {
 	}
 	return sankey;
 }
-//#endregion
-//#region node_modules/d3-sankey/node_modules/d3-shape/src/constant.js
 function constant_default(x) {
 	return function constant() {
 		return x;
 	};
 }
-//#endregion
-//#region node_modules/d3-sankey/node_modules/d3-shape/src/point.js
 function x(p) {
 	return p[0];
 }
 function y(p) {
 	return p[1];
 }
-//#endregion
-//#region node_modules/d3-sankey/node_modules/d3-shape/src/array.js
 var slice = Array.prototype.slice;
-//#endregion
-//#region node_modules/d3-sankey/node_modules/d3-shape/src/link/index.js
 function linkSource(d) {
 	return d.source;
 }
@@ -386,8 +373,6 @@ function curveHorizontal(context, x0, y0, x1, y1) {
 function linkHorizontal() {
 	return link(curveHorizontal);
 }
-//#endregion
-//#region node_modules/d3-sankey/src/sankeyLinkHorizontal.js
 function horizontalSource(d) {
 	return [d.source.x1, d.y0];
 }
@@ -397,5 +382,4 @@ function horizontalTarget(d) {
 function sankeyLinkHorizontal_default() {
 	return linkHorizontal().source(horizontalSource).target(horizontalTarget);
 }
-//#endregion
 export { left as a, justify as i, Sankey as n, right as o, center as r, sankeyLinkHorizontal_default as t };

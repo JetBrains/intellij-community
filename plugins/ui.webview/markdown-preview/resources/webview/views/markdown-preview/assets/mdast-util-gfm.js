@@ -5,7 +5,6 @@ import { t as ccount } from "./ccount.js";
 import { t as findAndReplace } from "./mdast-util-find-and-replace.js";
 import { t as markdownTable } from "./markdown-table.js";
 import { t as longestStreak } from "./longest-streak.js";
-//#region node_modules/mdast-util-gfm-autolink-literal/lib/index.js
 /**
 * @import {RegExpMatchObject, ReplaceFunction} from 'mdast-util-find-and-replace'
 * @import {CompileContext, Extension as FromMarkdownExtension, Handle as FromMarkdownHandle, Transform as FromMarkdownTransform} from 'mdast-util-from-markdown'
@@ -225,8 +224,6 @@ function previous(match, email) {
 	const code = match.input.charCodeAt(match.index - 1);
 	return (match.index === 0 || unicodeWhitespace(code) || unicodePunctuation(code)) && (!email || code !== 47);
 }
-//#endregion
-//#region node_modules/mdast-util-gfm-footnote/lib/index.js
 /**
 * @import {
 *   CompileContext,
@@ -417,8 +414,6 @@ function mapExceptFirst(line, index, blank) {
 function mapAll(line, index, blank) {
 	return (blank ? "" : "    ") + line;
 }
-//#endregion
-//#region node_modules/mdast-util-gfm-strikethrough/lib/index.js
 /**
 * @typedef {import('mdast').Delete} Delete
 *
@@ -518,8 +513,6 @@ function handleDelete(node, _, state, info) {
 function peekDelete() {
 	return "~";
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/handle/blockquote.js
 /**
 * @import {Blockquote, Parents} from 'mdast'
 * @import {Info, Map, State} from 'mdast-util-to-markdown'
@@ -544,8 +537,6 @@ function blockquote(node, _, state, info) {
 function map$1(line, _, blank) {
 	return ">" + (blank ? "" : " ") + line;
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/util/pattern-in-scope.js
 /**
 * @import {ConstructName, Unsafe} from 'mdast-util-to-markdown'
 */
@@ -570,8 +561,6 @@ function listInScope(stack, list, none) {
 	while (++index < list.length) if (stack.includes(list[index])) return true;
 	return false;
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/handle/break.js
 /**
 * @import {Break, Parents} from 'mdast'
 * @import {Info, State} from 'mdast-util-to-markdown'
@@ -588,8 +577,6 @@ function hardBreak(_, _1, state, info) {
 	while (++index < state.unsafe.length) if (state.unsafe[index].character === "\n" && patternInScope(state.stack, state.unsafe[index])) return /[ \t]/.test(info.before) ? "" : " ";
 	return "\\\n";
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/util/format-code-as-indented.js
 /**
 * @import {State} from 'mdast-util-to-markdown'
 * @import {Code} from 'mdast'
@@ -602,8 +589,6 @@ function hardBreak(_, _1, state, info) {
 function formatCodeAsIndented(node, state) {
 	return Boolean(state.options.fences === false && node.value && !node.lang && /[^ \r\n]/.test(node.value) && !/^[\t ]*(?:[\r\n]|$)|(?:^|[\r\n])[\t ]*$/.test(node.value));
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/util/check-fence.js
 /**
 * @import {Options, State} from 'mdast-util-to-markdown'
 */
@@ -616,8 +601,6 @@ function checkFence(state) {
 	if (marker !== "`" && marker !== "~") throw new Error("Cannot serialize code with `" + marker + "` for `options.fence`, expected `` ` `` or `~`");
 	return marker;
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/handle/code.js
 /**
 * @import {Info, Map, State} from 'mdast-util-to-markdown'
 * @import {Code, Parents} from 'mdast'
@@ -674,8 +657,6 @@ function code(node, _, state, info) {
 function map(line, _, blank) {
 	return (blank ? "" : "    ") + line;
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/util/check-quote.js
 /**
 * @import {Options, State} from 'mdast-util-to-markdown'
 */
@@ -688,8 +669,6 @@ function checkQuote(state) {
 	if (marker !== "\"" && marker !== "'") throw new Error("Cannot serialize title with `" + marker + "` for `options.quote`, expected `\"`, or `'`");
 	return marker;
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/handle/definition.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {Definition, Parents} from 'mdast'
@@ -747,8 +726,6 @@ function definition(node, _, state, info) {
 	exit();
 	return value;
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/util/check-emphasis.js
 /**
 * @import {Options, State} from 'mdast-util-to-markdown'
 */
@@ -761,8 +738,6 @@ function checkEmphasis(state) {
 	if (marker !== "*" && marker !== "_") throw new Error("Cannot serialize emphasis with `" + marker + "` for `options.emphasis`, expected `*`, or `_`");
 	return marker;
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/util/encode-character-reference.js
 /**
 * Encode a code point as a character reference.
 *
@@ -774,8 +749,6 @@ function checkEmphasis(state) {
 function encodeCharacterReference(code) {
 	return "&#x" + code.toString(16).toUpperCase() + ";";
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/util/encode-info.js
 /**
 * @import {EncodeSides} from '../types.js'
 */
@@ -846,8 +819,6 @@ function encodeInfo(outside, inside, marker) {
 		outside: false
 	};
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/handle/emphasis.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {Emphasis, Parents} from 'mdast'
@@ -893,8 +864,6 @@ function emphasis(node, _, state, info) {
 function emphasisPeek(_, _1, state) {
 	return state.options.emphasis || "*";
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/util/format-heading-as-setext.js
 /**
 * @import {State} from 'mdast-util-to-markdown'
 * @import {Heading} from 'mdast'
@@ -914,8 +883,6 @@ function formatHeadingAsSetext(node, state) {
 	});
 	return Boolean((!node.depth || node.depth < 3) && toString(node) && (state.options.setext || literalWithBreak));
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/handle/heading.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {Heading, Parents} from 'mdast'
@@ -958,8 +925,6 @@ function heading(node, _, state, info) {
 	exit();
 	return value;
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/handle/html.js
 /**
 * @import {Html} from 'mdast'
 */
@@ -977,8 +942,6 @@ function html(node) {
 function htmlPeek() {
 	return "<";
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/handle/image.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {Image, Parents} from 'mdast'
@@ -1044,8 +1007,6 @@ function image(node, _, state, info) {
 function imagePeek() {
 	return "!";
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/handle/image-reference.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {ImageReference, Parents} from 'mdast'
@@ -1093,8 +1054,6 @@ function imageReference(node, _, state, info) {
 function imageReferencePeek() {
 	return "!";
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/handle/inline-code.js
 /**
 * @import {State} from 'mdast-util-to-markdown'
 * @import {InlineCode, Parents} from 'mdast'
@@ -1132,8 +1091,6 @@ function inlineCode(node, _, state) {
 function inlineCodePeek() {
 	return "`";
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/util/format-link-as-autolink.js
 /**
 * @import {State} from 'mdast-util-to-markdown'
 * @import {Link} from 'mdast'
@@ -1147,8 +1104,6 @@ function formatLinkAsAutolink(node, state) {
 	const raw = toString(node);
 	return Boolean(!state.options.resourceLink && node.url && !node.title && node.children && node.children.length === 1 && node.children[0].type === "text" && (raw === node.url || "mailto:" + raw === node.url) && /^[a-z][a-z+.-]+:/i.test(node.url) && !/[\0- <>\u007F]/.test(node.url));
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/handle/link.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {Link, Parents} from 'mdast'
@@ -1237,8 +1192,6 @@ function link(node, _, state, info) {
 function linkPeek(node, _, state) {
 	return formatLinkAsAutolink(node, state) ? "<" : "[";
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/handle/link-reference.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {LinkReference, Parents} from 'mdast'
@@ -1286,8 +1239,6 @@ function linkReference(node, _, state, info) {
 function linkReferencePeek() {
 	return "[";
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/util/check-bullet.js
 /**
 * @import {Options, State} from 'mdast-util-to-markdown'
 */
@@ -1300,8 +1251,6 @@ function checkBullet(state) {
 	if (marker !== "*" && marker !== "+" && marker !== "-") throw new Error("Cannot serialize items with `" + marker + "` for `options.bullet`, expected `*`, `+`, or `-`");
 	return marker;
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/util/check-bullet-other.js
 /**
 * @import {Options, State} from 'mdast-util-to-markdown'
 */
@@ -1317,8 +1266,6 @@ function checkBulletOther(state) {
 	if (bulletOther === bullet) throw new Error("Expected `bullet` (`" + bullet + "`) and `bulletOther` (`" + bulletOther + "`) to be different");
 	return bulletOther;
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/util/check-bullet-ordered.js
 /**
 * @import {Options, State} from 'mdast-util-to-markdown'
 */
@@ -1331,8 +1278,6 @@ function checkBulletOrdered(state) {
 	if (marker !== "." && marker !== ")") throw new Error("Cannot serialize items with `" + marker + "` for `options.bulletOrdered`, expected `.` or `)`");
 	return marker;
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/util/check-rule.js
 /**
 * @import {Options, State} from 'mdast-util-to-markdown'
 */
@@ -1345,8 +1290,6 @@ function checkRule(state) {
 	if (marker !== "*" && marker !== "-" && marker !== "_") throw new Error("Cannot serialize rules with `" + marker + "` for `options.rule`, expected `*`, `-`, or `_`");
 	return marker;
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/handle/list.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {List, Parents} from 'mdast'
@@ -1388,8 +1331,6 @@ function list(node, parent, state, info) {
 	exit();
 	return value;
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/util/check-list-item-indent.js
 /**
 * @import {Options, State} from 'mdast-util-to-markdown'
 */
@@ -1402,8 +1343,6 @@ function checkListItemIndent(state) {
 	if (style !== "tab" && style !== "one" && style !== "mixed") throw new Error("Cannot serialize items with `" + style + "` for `options.listItemIndent`, expected `tab`, `one`, or `mixed`");
 	return style;
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/handle/list-item.js
 /**
 * @import {Info, Map, State} from 'mdast-util-to-markdown'
 * @import {ListItem, Parents} from 'mdast'
@@ -1434,8 +1373,6 @@ function listItem(node, parent, state, info) {
 		return (blank ? bullet : bullet + " ".repeat(size - bullet.length)) + line;
 	}
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/handle/paragraph.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {Paragraph, Parents} from 'mdast'
@@ -1455,8 +1392,6 @@ function paragraph(node, _, state, info) {
 	exit();
 	return value;
 }
-//#endregion
-//#region node_modules/mdast-util-phrasing/lib/index.js
 /**
 * @typedef {import('mdast').Html} Html
 * @typedef {import('mdast').PhrasingContent} PhrasingContent
@@ -1489,8 +1424,6 @@ var phrasing = convert([
 	"text",
 	"textDirective"
 ]);
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/handle/root.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {Parents, Root} from 'mdast'
@@ -1507,8 +1440,6 @@ function root(node, _, state, info) {
 		return phrasing(d);
 	}) ? state.containerPhrasing : state.containerFlow).call(state, node, info);
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/util/check-strong.js
 /**
 * @import {Options, State} from 'mdast-util-to-markdown'
 */
@@ -1521,8 +1452,6 @@ function checkStrong(state) {
 	if (marker !== "*" && marker !== "_") throw new Error("Cannot serialize strong with `" + marker + "` for `options.strong`, expected `*`, or `_`");
 	return marker;
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/handle/strong.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {Parents, Strong} from 'mdast'
@@ -1568,8 +1497,6 @@ function strong(node, _, state, info) {
 function strongPeek(_, _1, state) {
 	return state.options.strong || "*";
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/handle/text.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {Parents, Text} from 'mdast'
@@ -1584,8 +1511,6 @@ function strongPeek(_, _1, state) {
 function text(node, _, state, info) {
 	return state.safe(node.value, info);
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/util/check-rule-repetition.js
 /**
 * @import {Options, State} from 'mdast-util-to-markdown'
 */
@@ -1598,8 +1523,6 @@ function checkRuleRepetition(state) {
 	if (repetition < 3) throw new Error("Cannot serialize rules with repetition `" + repetition + "` for `options.ruleRepetition`, expected `3` or more");
 	return repetition;
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/handle/thematic-break.js
 /**
 * @import {State} from 'mdast-util-to-markdown'
 * @import {Parents, ThematicBreak} from 'mdast'
@@ -1614,8 +1537,6 @@ function thematicBreak(_, _1, state) {
 	const value = (checkRule(state) + (state.options.ruleSpaces ? " " : "")).repeat(checkRuleRepetition(state));
 	return state.options.ruleSpaces ? value.slice(0, -1) : value;
 }
-//#endregion
-//#region node_modules/mdast-util-to-markdown/lib/handle/index.js
 /**
 * Default (CommonMark) handlers.
 */
@@ -1641,8 +1562,6 @@ var handle = {
 	text,
 	thematicBreak
 };
-//#endregion
-//#region node_modules/mdast-util-gfm-table/lib/index.js
 /**
 * @typedef {import('mdast').InlineCode} InlineCode
 * @typedef {import('mdast').Table} Table
@@ -1905,8 +1824,6 @@ function gfmTableToMarkdown(options) {
 		return value;
 	}
 }
-//#endregion
-//#region node_modules/mdast-util-gfm-task-list-item/lib/index.js
 /**
 * @typedef {import('mdast').ListItem} ListItem
 * @typedef {import('mdast').Paragraph} Paragraph
@@ -2015,8 +1932,6 @@ function listItemWithTaskListItem(node, parent, state, info) {
 		return $0 + checkbox;
 	}
 }
-//#endregion
-//#region node_modules/mdast-util-gfm/lib/index.js
 /**
 * @import {Extension as FromMarkdownExtension} from 'mdast-util-from-markdown'
 * @import {Options} from 'mdast-util-gfm'
@@ -2058,5 +1973,4 @@ function gfmToMarkdown(options) {
 		gfmTaskListItemToMarkdown()
 	] };
 }
-//#endregion
 export { gfmToMarkdown as n, gfmFromMarkdown as t };

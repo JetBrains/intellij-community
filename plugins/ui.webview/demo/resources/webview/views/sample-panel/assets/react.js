@@ -1,5 +1,4 @@
 import { t as __commonJSMin } from "./rolldown-runtime.js";
-//#region node_modules/react/cjs/react.production.min.js
 /**
 * @license React
 * react.production.min.js
@@ -322,10 +321,7 @@ var require_react_production_min = /* @__PURE__ */ __commonJSMin(((exports) => {
 	};
 	exports.version = "18.3.1";
 }));
-//#endregion
-//#region node_modules/react/index.js
 var require_react = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = require_react_production_min();
 }));
-//#endregion
 export { require_react as t };

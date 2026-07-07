@@ -1,7 +1,6 @@
 import { o as __toESM } from "./rolldown-runtime.js";
 import { V as require_jsx_runtime, it as require_react } from "./assistant-ui-core.js";
 import { g as Primitive } from "./assistant-ui-react.js";
-//#region node_modules/@radix-ui/react-arrow/dist/index.mjs
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var import_jsx_runtime = require_jsx_runtime();
 var NAME = "Arrow";
@@ -19,5 +18,4 @@ var Arrow = import_react.forwardRef((props, forwardedRef) => {
 });
 Arrow.displayName = NAME;
 var Root = Arrow;
-//#endregion
 export { Root as t };

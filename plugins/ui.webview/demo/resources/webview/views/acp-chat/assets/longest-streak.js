@@ -1,4 +1,3 @@
-//#region node_modules/longest-streak/index.js
 /**
 * Get the count of the longest repeating streak of `substring` in `value`.
 *
@@ -25,5 +24,4 @@ function longestStreak(value, substring) {
 	}
 	return max;
 }
-//#endregion
 export { longestStreak as t };

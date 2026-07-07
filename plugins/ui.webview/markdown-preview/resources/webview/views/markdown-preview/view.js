@@ -8,7 +8,6 @@ import { t as rehypeSlug } from "./assets/rehype-slug.js";
 import { t as remarkFrontmatter } from "./assets/remark-frontmatter.js";
 import { t as remarkGfm } from "./assets/remark-gfm.js";
 import { i, n as A, r as b, t as i$1 } from "./assets/lit.js";
-//#region ../../webview-src/packages/api/src/webViewApi.ts
 var import_client = require_client();
 function apiId() {
 	return function createApiId(namespace) {
@@ -45,8 +44,6 @@ function createLazyWebViewTheme() {
 	});
 }
 var webViewTheme = createLazyWebViewTheme();
-//#endregion
-//#region ../../webview-src/packages/api/src/iconSet.ts
 var IconSet = /* @__PURE__ */ Object.freeze({ define(id) {
 	validateIconSetId(id);
 	return new DefinedIconSet(id);
@@ -74,8 +71,6 @@ function validateIconResourcePath(resourcePath) {
 function encodeIconResourcePath(resourcePath) {
 	return resourcePath.split("/").map((segment) => encodeURIComponent(segment)).join("/");
 }
-//#endregion
-//#region ../../webview-src/packages/api/src/focus.ts
 var WEBVIEW_FOCUS_LEAVE_EVENT = "wvi-focus-leave";
 function addWebViewFocusLeaveListener(listener) {
 	window.addEventListener(WEBVIEW_FOCUS_LEAVE_EVENT, listener);
@@ -83,8 +78,6 @@ function addWebViewFocusLeaveListener(listener) {
 }
 apiId()("webview.focus");
 apiId()("webview.focus");
-//#endregion
-//#region ../../webview-src/packages/api/src/bridge.ts
 function getWebViewBridge() {
 	return window.__WVI__;
 }
@@ -107,8 +100,6 @@ function createLazyWebViewBridge() {
 	});
 }
 var webView = createLazyWebViewBridge();
-//#endregion
-//#region ../../webview-src/packages/api/src/diagnostics.ts
 function getPerfLogger(scope) {
 	return {
 		event(metric, details) {
@@ -137,8 +128,6 @@ function formatWebViewLogDetails(details) {
 	if (typeof details === "string") return details;
 	return Object.entries(details).filter(([, value]) => value !== null && value !== void 0).map(([key, value]) => `${key}=${value}`).join(", ");
 }
-//#endregion
-//#region views/markdown-preview/src/FloatingMarkdownControls.tsx
 var import_react = require_react();
 var import_jsx_runtime = require_jsx_runtime();
 var headingSelector = "h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]";
@@ -415,8 +404,6 @@ function closestFontSize(fontSize, options) {
 function classNames$1(...names) {
 	return names.filter(Boolean).join(" ") || void 0;
 }
-//#endregion
-//#region views/markdown-preview/src/markdownDiagnostics.ts
 function markdownDiagnosticDetails(markdown, contentVersion, extra = "") {
 	const details = `contentVersion=${contentVersion}, markdownChars=${markdown.length}, markdownLines=${markdownLineCount(markdown)}`;
 	return extra.length === 0 ? details : `${details}, ${extra}`;
@@ -427,8 +414,6 @@ function markdownLineCount(markdown) {
 	for (let index = 0; index < markdown.length; index++) if (markdown.charCodeAt(index) === 10) lines++;
 	return lines;
 }
-//#endregion
-//#region views/markdown-preview/src/markdownHastUtils.ts
 function codeNodeFromPreNode(node) {
 	return node?.children?.find((child) => child.tagName === "code");
 }
@@ -443,8 +428,6 @@ function hastText(node) {
 	if (typeof node.value === "string") return node.value;
 	return node.children?.map(hastText).join("") ?? "";
 }
-//#endregion
-//#region views/markdown-preview/src/markdownPathLinks.tsx
 function collectPathLinkCandidates(markdown) {
 	const codeSegments = markdownCodeSegments(markdown);
 	const candidates = [];
@@ -658,8 +641,6 @@ var PATH_TRIM_END = new Set([
 	";"
 ]);
 var URL_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:\/\//i;
-//#endregion
-//#region views/markdown-preview/src/markdownReactUtils.ts
 function codeToString(node) {
 	if (typeof node === "string" || typeof node === "number") return String(node);
 	if (Array.isArray(node)) return node.map(codeToString).join("");
@@ -668,8 +649,6 @@ function codeToString(node) {
 function classNames(...names) {
 	return names.filter(Boolean).join(" ") || void 0;
 }
-//#endregion
-//#region views/markdown-preview/src/markdownResources.ts
 var markdownResourcePrefix = "./__markdown-preview-resource/";
 function markdownResourceSrc(src) {
 	if (!src || !isLocalMarkdownResource(src)) return src;
@@ -687,8 +666,6 @@ function base64UrlEncode(value) {
 	for (const byte of bytes) binary += String.fromCharCode(byte);
 	return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
-//#endregion
-//#region views/markdown-preview/src/markdownRemarkPlugins.ts
 function remarkFrontmatterBlocks() {
 	return (tree) => transformFrontmatterNodes(tree);
 }
@@ -815,13 +792,9 @@ function addSourcePositionAttributes(node) {
 	}
 	node.children?.forEach(addSourcePositionAttributes);
 }
-//#endregion
-//#region ../../webview-src/packages/controls/src/foundation/define.ts
 function defineControl(tagName, constructor, registry = customElements) {
 	if (!registry.get(tagName)) registry.define(tagName, constructor);
 }
-//#endregion
-//#region ../../webview-src/packages/controls/src/foundation/styles.ts
 var hostStyles = i`
   :host {
     box-sizing: border-box;
@@ -1263,8 +1236,6 @@ i`
     opacity: 1;
   }
 `;
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/icon/icon.ts
 var JbIcon = class extends i$1 {
 	static properties = {
 		label: {
@@ -1331,11 +1302,7 @@ var JbIcon = class extends i$1 {
 function defineJbIcon(registry) {
 	defineControl("jb-icon", JbIcon, registry);
 }
-//#endregion
-//#region ../../webview-src/packages/controls/src/define/icon.ts
 defineJbIcon();
-//#endregion
-//#region views/markdown-preview/src/markdownSourcePositions.ts
 var sourcePositionPattern = /^(\d+):(\d+)-(\d+):(\d+)$/;
 var sourceDecorationClassNames = [
 	"is-source-selected",
@@ -1518,8 +1485,6 @@ function findElementForLine(elements, targetLine) {
 function lineSpan(element) {
 	return element.endLine - element.startLine;
 }
-//#endregion
-//#region views/markdown-preview/src/markdownRunCommands.tsx
 var runLineIcon = { src: () => AllIcons.src("expui/gutter/run.svg") };
 var runBlockIcon = { src: () => AllIcons.src("expui/gutter/rerun.svg") };
 function codeFenceCommandCandidates(sourcePosition, codeNode) {
@@ -1682,8 +1647,6 @@ function isMermaidLanguage(language) {
 function runCommandIcon(variant) {
 	return variant === "block" ? runBlockIcon : runLineIcon;
 }
-//#endregion
-//#region views/markdown-preview/src/markdownSanitizeSchema.ts
 var defaultAttributes = defaultSchema.attributes || {};
 var markdownSanitizeSchema = {
 	...defaultSchema,
@@ -1742,8 +1705,6 @@ function unique(values) {
 function mergeProtocols(attributeName, additions) {
 	return unique([...defaultSchema.protocols?.[attributeName] || [], ...additions]);
 }
-//#endregion
-//#region views/markdown-preview/src/MarkdownPreviewApp.tsx
 var emptyPathSet = /* @__PURE__ */ new Set();
 var markdownLogger$1 = getPerfLogger("markdown");
 var LazyMarkdownImageBlock = (0, import_react.lazy)(() => import("./assets/MarkdownImageBlock.js").then((module) => ({ default: module.MarkdownImageBlock })));
@@ -2197,8 +2158,6 @@ function executeWhenIdle(callback) {
 		if (timeoutHandle !== void 0) clearTimeout(timeoutHandle);
 	};
 }
-//#endregion
-//#region views/markdown-preview/src/main.tsx
 var markdownPreviewPageApiId = apiId()("markdown.preview");
 var markdownPreviewHostApi = webView.callable(apiId()("markdown.preview"));
 var markdownLogger = getPerfLogger("markdown");
@@ -2321,5 +2280,4 @@ function requiredElement(id) {
 	if (!element) throw new Error(`Missing element #${id}`);
 	return element;
 }
-//#endregion
 export { AllIcons as n, classNames as t };

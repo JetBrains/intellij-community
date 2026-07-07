@@ -1,6 +1,5 @@
 import "./devlop.js";
 import { A as graphql, C as lua, D as javascript, E as json, F as cpp, I as c, L as bash, M as diff, N as css, O as java, P as csharp, R as arduino, S as makefile, T as kotlin, _ as phpTemplate, a as vbnet, b as objectivec, c as sql, d as rust, f as ruby, g as plaintext, h as python, i as wasm, j as go, k as ini, l as shell, m as pythonRepl, n as yaml, o as typescript, p as r, r as xml, s as swift, t as core_default, u as scss, v as php, w as less, x as markdown, y as perl } from "./highlight-js.js";
-//#region node_modules/lowlight/lib/common.js
 /**
 * @import {LanguageFn} from 'highlight.js'
 */
@@ -48,8 +47,6 @@ var grammars = {
 	xml,
 	yaml
 };
-//#endregion
-//#region node_modules/lowlight/lib/index.js
 /**
 * @import {ElementContent, Element, RootData, Root} from 'hast'
 * @import {Emitter, HLJSOptions as HljsOptions, HighlightResult, LanguageFn} from 'highlight.js'
@@ -450,5 +447,4 @@ var HastEmitter = class {
 		return "";
 	}
 };
-//#endregion
 export { grammars as n, createLowlight as t };
