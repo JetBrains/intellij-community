@@ -32,6 +32,10 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 
 class RefactoringToolset : McpToolset {
+  override fun displayName(): String = McpServerBundle.message("toolset.display.name.refactoring")
+
+  override fun displayDescription(toolName: String): String? = McpServerBundle.message("tool.description.$toolName")
+
   @McpTool
   @McpDescription("""
         Renames a symbol (variable, function, class, etc.) in the specified file.
