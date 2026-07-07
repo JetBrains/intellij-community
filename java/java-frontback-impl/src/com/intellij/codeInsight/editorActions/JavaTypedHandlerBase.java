@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.NewRdCompletionSupport;
 import com.intellij.codeInsight.completion.command.configuration.CommandCompletionSettingsService;
+import com.intellij.codeInsight.completion.commands.JavaCommandCompletionFactory;
 import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -600,7 +601,14 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
 
       //do not show lookup when typing varargs ellipsis
       final PsiElement prevSibling = PsiTreeUtil.prevVisibleLeaf(lastElement);
-      if (prevSibling == null || ".".equals(prevSibling.getText())) return false;
+      if (prevSibling == null) return false;
+      if (".".equals(prevSibling.getText())) {
+        if (!(".".equals(lastElement.getText()) &&
+              CommandCompletionSettingsService.getInstance().commandCompletionEnabled() &&
+              JavaCommandCompletionFactory.isAfterTypeElementDotsInParameterList(file, offset - 2, 2))) {
+          return false;
+        }
+      }
       PsiElement parent = prevSibling;
       do {
         parent = parent.getParent();
@@ -615,6 +623,15 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
             prevSibling instanceof PsiIdentifier identifier &&
             parameter.getIdentifyingElement() == identifier) {
           return true;
+        }
+        if (CommandCompletionSettingsService.getInstance().commandCompletionEnabled() &&
+            parent instanceof PsiParameterList &&
+            ".".equals(prevSibling.getText()) &&
+            ".".equals(lastElement.getText())) {
+          PsiElement prevPrevSibling = PsiTreeUtil.prevVisibleLeaf(prevSibling);
+          return prevPrevSibling != null &&
+                 prevPrevSibling.getParent() instanceof PsiJavaCodeReferenceElement javaCodeReferenceElement &&
+                 javaCodeReferenceElement.getParent() instanceof PsiTypeElement;
         }
         return false;
       }

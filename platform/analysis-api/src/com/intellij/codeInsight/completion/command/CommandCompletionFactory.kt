@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command
 
 import com.intellij.lang.Language
@@ -48,7 +48,7 @@ interface CommandCompletionFactory : PossiblyDumbAware {
    * For injected languages, the context is the injected file.
    * Should be fast because it can be called on EDT.
    *
-   * @param psiFile the PSI file representing the file in which the applicability is being evaluated
+   * @param psiFile the PSI file representing the file in which the applicability is being evaluated (check a cleaned file)
    * @param offset the position within the file where the applicability should be checked
    * @return true if the functionality is applicable at the specified context, false otherwise
    */

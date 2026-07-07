@@ -1769,6 +1769,49 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     assertTrue(elements.none { element -> element.lookupString.contains("toString", ignoreCase = true) })
   }
 
+  fun testNoJavaCompletionAfterSingleDotInParameterList() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+        class A {
+            void method(String.<caret> text) {
+            }
+        }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertTrue(elements == null || elements.isEmpty())
+  }
+
+  fun testVarargsDotCommandIsFirstAfterDoubleDotInParameterList() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+        class A {
+            void method(String..<caret> text) {
+            }
+        }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertEquals(".", elements.first().lookupString)
+    assertNotNull(elements.first().`as`(CommandCompletionLookupElement::class.java))
+  }
+
+  fun testVarargsDotCommandInsert() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+        class A {
+            void method(String..<caret> text) {
+            }
+        }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first())
+    myFixture.checkResult("""
+        class A {
+            void method(String... text) {
+            }
+        }
+      """.trimIndent())
+  }
+
   fun testNoCreateFromUsagesAfterDoubleDot() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
