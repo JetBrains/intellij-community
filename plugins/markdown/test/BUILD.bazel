@@ -88,6 +88,8 @@ jvm_library(
         # do not sort,
         "//plugins/markdown/core:markdown",
         "//plugins/markdown/core:markdown_test_lib",
+        "//plugins/markdown/core/frontend",
+        "//plugins/markdown/core/frontend:frontend_test_lib",
         "//plugins/markdown/jcef",
         "//plugins/markdown/jcef:jcef_test_lib",
         "//plugins/markdown/core/backend",

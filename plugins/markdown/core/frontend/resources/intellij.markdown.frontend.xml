@@ -4,6 +4,7 @@
     <module name="intellij.markdown"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
+    <fileEditorProvider id="markdown-preview-editor" implementation="org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider"/>
     <applicationService serviceInterface="org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener"
                         serviceImplementation="com.intellij.markdown.frontend.preview.accessor.impl.MarkdownLinkOpenerImpl"/>
     <registryKey key="markdown.open.link.fallback"
