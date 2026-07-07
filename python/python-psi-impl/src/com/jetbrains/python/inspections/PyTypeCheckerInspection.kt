@@ -230,7 +230,7 @@ open class PyTypeCheckerInspection : PyInspection() {
         val annotatedType = resolvedDeclaredType(leaf) ?: continue
         if (annotatedType.containsAny(context = myTypeEvalContext)) continue
         val received = if (valueType is PyTupleType && !valueType.isHomogeneous) {
-          getTargetTypeFromTupleAssignment(leaf, targetSeq, valueType)
+          getTargetTypeFromTupleAssignment(leaf, targetSeq, valueType, myTypeEvalContext)
         }
         else {
           (valueType as? PyClassType)?.iteratedItemType
@@ -428,7 +428,7 @@ open class PyTypeCheckerInspection : PyInspection() {
           if (target !is PyTargetExpression) continue
           if (!targetOrResolvedHasExplicitType(target)) continue
           val annotatedType = myTypeEvalContext.getType(target)
-          val unpackedType = getTargetTypeFromTupleAssignment(target, lhsSeq, rhsType) ?: continue
+          val unpackedType = getTargetTypeFromTupleAssignment(target, lhsSeq, rhsType, myTypeEvalContext) ?: continue
           if (match(annotatedType, unpackedType, myTypeEvalContext)) continue
           val displayType = upcastLiteralToClass(unpackedType)
           PyTypeCheckerProblemReporter.report(holder, PyTypeCheckerSuppressionCode.BAD_ASSIGNMENT, rhs,
