@@ -31,6 +31,9 @@ import kotlinx.serialization.Serializable
 import kotlin.io.path.pathString
 
 class ExecutionToolset : McpToolset {
+  override fun displayName(): String = McpServerBundle.message("toolset.display.name.execution")
+
+  override fun displayDescription(toolName: String): String? = McpServerBundle.message("tool.description.$toolName")
 
   @McpToolHints(readOnlyHint = TRUE, openWorldHint = FALSE)
   @McpTool(name = ExecutionToolNames.GET_RUN_CONFIGURATIONS)
