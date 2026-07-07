@@ -188,7 +188,7 @@ def _dependency_labels(library_id, variant, field, target_names, target_names_by
         if label in labels:
             continue
         labels[label] = True
-    return labels.keys()
+    return sorted(labels.keys())
 
 def _artifact_label(artifact):
     return "@%s//file" % _artifact_repository_name(artifact)
