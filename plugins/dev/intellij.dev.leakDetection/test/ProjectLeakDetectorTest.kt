@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndGet
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -24,6 +25,42 @@ class ProjectLeakDetectorTest {
     assertTrue(report.contains("com.example.FooProject@1234"))
     assertTrue(report.contains("retained for: 12345 ms after disposal"))
     assertTrue(report.contains("created at: created in test"))
+  }
+
+  @Test
+  fun testBuildReportSquashesStructurallyEqualPaths() {
+    // Two editors retained through the same chain, differing only by identity hashes and an array index: they must be
+    // squashed into a single entry whose reference path is printed once.
+    val leaks = listOf(
+      LeakInfo(LeakKind.EDITOR, "com.example.BarEditor", 0xaaaa, "Editor A", null, 100L,
+               "via 'com.example.Tracker.field'; Value: 'com.example.Tracker@1111' of class com.example.Tracker\n" +
+               "via '[1]'; Value: 'x' of class [Ljava.lang.Object;"),
+      LeakInfo(LeakKind.EDITOR, "com.example.BarEditor", 0xbbbb, "Editor B", null, 200L,
+               "via 'com.example.Tracker.field'; Value: 'com.example.Tracker@2222' of class com.example.Tracker\n" +
+               "via '[2]'; Value: 'x' of class [Ljava.lang.Object;"),
+    )
+    val report = LeakDetectionRunner.getInstance().reporter().buildReport(leaks)
+
+    assertTrue(report.contains("2 leaked instance(s) in 1 distinct retention path(s)"), report)
+    assertTrue(report.contains("2 instances sharing this path"), report)
+    assertTrue(report.contains("@aaaa"), report)
+    assertTrue(report.contains("@bbbb"), report)
+    // The shared reference path is rendered exactly once, not repeated per instance.
+    assertEquals(1, report.split("com.example.Tracker.field").size - 1, report)
+  }
+
+  @Test
+  fun testBuildReportKeepsDistinctPathsSeparate() {
+    // Same class but genuinely different reference paths must not be squashed.
+    val leaks = listOf(
+      LeakInfo(LeakKind.EDITOR, "com.example.BarEditor", 0xaaaa, "Editor A", null, 100L, "via 'com.example.One.a'; Value: 'x' of class com.example.One"),
+      LeakInfo(LeakKind.EDITOR, "com.example.BarEditor", 0xbbbb, "Editor B", null, 200L, "via 'com.example.Two.b'; Value: 'y' of class com.example.Two"),
+    )
+    val report = LeakDetectionRunner.getInstance().reporter().buildReport(leaks)
+
+    assertFalse(report.contains("distinct retention path(s)"), report)
+    assertTrue(report.contains("com.example.BarEditor@aaaa"), report)
+    assertTrue(report.contains("com.example.BarEditor@bbbb"), report)
   }
 
   @Test

@@ -49,6 +49,11 @@ private const val UPLOADS_URL = "https://uploads.jetbrains.com"
 // Action contributed by the performanceTesting plugin; invoked by id so we don't depend on that plugin's module.
 private const val CAPTURE_MEMORY_SNAPSHOT_ACTION_ID = "CaptureMemorySnapShot"
 
+// Volatile parts of a reference-path rendering ignored when deciding whether two paths are the same retention chain
+private val IDENTITY_HASH_REGEX = Regex("@[0-9a-fA-F]+")
+private val ARRAY_INDEX_REGEX = Regex("""\[\d+]""")
+private val IDE_FRAME_REGEX = Regex("""IdeFrameImpl\[frame[0-9]""")
+
 /** Surfaces [ProjectLeakDetector] results: a balloon notification (with actions) plus a `LOG.error` so Diogen collects them. */
 @ApiStatus.Internal
 class LeakReporter(private val coroutineScope: CoroutineScope) {
@@ -90,18 +95,49 @@ class LeakReporter(private val coroutineScope: CoroutineScope) {
   }
 
   fun buildReport(leaks: List<LeakInfo>): String {
+    // Squash leaks that share the same structural reference path (ignoring identity hashes and array indices), so a
+    // report with many near-identical retention chains stays readable: each distinct path is printed only once.
+    val groups = LinkedHashMap<String, MutableList<LeakInfo>>()
+    for (leak in leaks) {
+      val key = "${leak.kind}\n${leak.className}\n${pathSignature(leak.referencePath)}"
+      groups.getOrPut(key) { ArrayList() }.add(leak)
+    }
+
     val sb = StringBuilder()
-    sb.append("Project leak detection found ").append(leaks.size).append(" leaked instance(s):\n\n")
-    leaks.forEachIndexed { index, leak ->
-      sb.append('#').append(index + 1).append(' ').append(leak.kind).append(' ')
-        .append(leak.className).append('@').append(Integer.toHexString(leak.identityHashCode)).append('\n')
-      sb.append("  instance: ").append(leak.description).append('\n')
-      leak.staleForMs?.let { sb.append("  retained for: ").append(it).append(" ms after disposal\n") }
-      leak.creationTrace?.let { sb.append("  created at: ").append(it).append('\n') }
-      sb.append("  reference path:\n").append(leak.referencePath.trimEnd().prependIndent("    ")).append("\n\n")
+    sb.append("Project leak detection found ").append(leaks.size).append(" leaked instance(s)")
+    if (groups.size < leaks.size) {
+      sb.append(" in ").append(groups.size).append(" distinct retention path(s)")
+    }
+    sb.append(":\n\n")
+
+    groups.values.forEachIndexed { index, group ->
+      val representative = group.first()
+      sb.append('#').append(index + 1).append(' ').append(representative.kind).append(' ').append(representative.className)
+      if (group.size == 1) {
+        sb.append('@').append(Integer.toHexString(representative.identityHashCode)).append('\n')
+        sb.append("  instance: ").append(representative.description).append('\n')
+        representative.staleForMs?.let { sb.append("  retained for: ").append(it).append(" ms after disposal\n") }
+        representative.creationTrace?.let { sb.append("  created at: ").append(it).append('\n') }
+      }
+      else {
+        sb.append(" — ").append(group.size).append(" instances sharing this path\n")
+        sb.append("  instances:\n")
+        for (leak in group) {
+          sb.append("    @").append(Integer.toHexString(leak.identityHashCode)).append(' ').append(leak.description)
+          leak.staleForMs?.let { sb.append(" (retained ").append(it).append(" ms after disposal)") }
+          sb.append('\n')
+        }
+      }
+      sb.append("  reference path:\n").append(representative.referencePath.trimEnd().prependIndent("    ")).append("\n\n")
     }
     return sb.toString()
   }
+
+  private fun pathSignature(referencePath: String): String =
+    referencePath
+      .replace(IDENTITY_HASH_REGEX, "@")
+      .replace(ARRAY_INDEX_REGEX, "[]")
+      .replace(IDE_FRAME_REGEX, "IdeFrameImpl[")
 
   private fun copyToClipboard(report: String) {
     CopyPasteManager.getInstance().setContents(StringSelection(report))
