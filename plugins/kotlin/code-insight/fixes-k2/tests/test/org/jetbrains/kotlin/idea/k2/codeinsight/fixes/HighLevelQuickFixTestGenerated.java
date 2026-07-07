@@ -13209,6 +13209,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         public void testSafeCallChain3() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/replaceWithDotCall/safeCallChain3.kt");
         }
+
+        @TestMetadata("safeCallChain4.kt")
+        public void testSafeCallChain4() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceWithDotCall/safeCallChain4.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

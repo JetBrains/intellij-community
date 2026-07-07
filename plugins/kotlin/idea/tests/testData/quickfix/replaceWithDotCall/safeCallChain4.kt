@@ -1,12 +1,12 @@
 // "Replace with dot call" "true"
 class Foo(val bar: Bar)
-class Bar(val baz: Baz)
+class Bar(val baz: Baz?)
 class Baz {
     fun qux() {}
 }
 
 fun test(foo: Foo) {
-    foo.bar.baz.qux()
+    foo?<caret>.bar?.baz?.qux()
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithDotCallFix
