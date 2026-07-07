@@ -27,6 +27,7 @@ import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
 import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyPossibleClassMember
 import com.jetbrains.python.psi.PyPsiFacade
 import com.jetbrains.python.psi.PyTargetExpression
@@ -468,24 +469,19 @@ object PyTypeUtil {
     memberResolveResults: List<@JvmWildcard RatedResolveResult>,
     context: TypeEvalContext,
   ): PyType? {
-    val elements = memberResolveResults.mapNotNull { it.element as? PyTypedElement }
-    if (elements.isEmpty()) return PyAnyType.unknown
+    val resolvedElements = memberResolveResults.mapNotNull { it.element as? PyTypedElement }
+    if (resolvedElements.isEmpty()) return PyAnyType.unknown
 
-    // Skip elements whose type is `staticmethod`/`classmethod` - these decorators
-    // are taken into account by `PyFunctionImpl.modifier`.
-    var lastIndex = elements.lastIndex
-    var lastType = context.getType(elements[lastIndex])
-    if (isStaticOrClassMethod(lastType)) {
-      for (i in lastIndex - 1 downTo 0) {
-        val type = context.getType(elements[i])
-        if (type is PyCallableType && type !is PyClassLikeType) {
-          lastIndex = i
-          lastType = type
-          break
-        }
+    // Element with a declared type takes precedence.
+    val elements = resolvedElements
+      .filter {
+        it is PyFunction ||
+        it is PyTargetExpression && (it.annotationValue != null || it.typeCommentAnnotation != null)
       }
-    }
-    val last = elements[lastIndex]
+      .ifEmpty { resolvedElements }
+
+    val last = elements.last()
+    val lastType = context.getType(last)
     if (lastType !is PyFunctionType) return lastType
 
     val overloads = mutableListOf<PyCallableType?>()
@@ -496,7 +492,7 @@ object PyTypeUtil {
     else {
       impl = Ref.create(lastType)
     }
-    for (i in lastIndex - 1 downTo 0) {
+    for (i in elements.lastIndex - 1 downTo 0) {
       val el = elements[i]
       if (!PyiUtil.isOverload(el, context)) break
       overloads.add(context.getType(el) as? PyCallableType)
@@ -505,13 +501,6 @@ object PyTypeUtil {
 
     overloads.reverse()
     return PyOverloadType(overloads, impl)
-  }
-
-  private fun isStaticOrClassMethod(type: PyType?): Boolean {
-    if (type !is PyClassType) return false
-    val builtins = PyBuiltinCache.getInstance(type.pyClass)
-    return type.pyClass === builtins.staticMethodType?.pyClass ||
-           type.pyClass === builtins.classMethodType?.pyClass
   }
 
   @ApiStatus.Internal

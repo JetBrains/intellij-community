@@ -60,8 +60,6 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-76219"])
     fun `property type accessed via bounded type parameter`() = test("""
-      from typing_extensions import reveal_type
-
       class K:
           _text: str
           @property
@@ -1778,17 +1776,34 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
   )
 
   @Test
-  @TestFor(issues = ["PY-19412"])
+  fun `classmethod created via reassignment`() = test(
+    """
+    class A:
+        def foo(cls) -> int:
+            return 1
+
+        foo = classmethod(foo)
+
+    foo = A().foo
+    #└ TYPE () -> int
+    expr = foo()
+    #└ TYPE int
+    """
+  )
+
+  @Test
+  @TestFor(issues = ["PY-19412", "PY-90808"])
   fun `classmethod created via reassignment in another module`() = test(
     """
     from a import Spam
 
-    Spam.spam()
+    expr = Spam.spam()
+    #└ TYPE int
     """,
     "a.py" to """
       class Spam:
-          def spam(cls):
-              pass
+          def spam(cls) -> int:
+              return 1
 
           eggs = False
           spam = classmethod(spam)
