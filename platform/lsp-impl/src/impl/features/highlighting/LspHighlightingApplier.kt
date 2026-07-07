@@ -83,6 +83,8 @@ internal class LspHighlightingApplier(private val project: Project) {
 
   private fun collectHighlightsForApply(file: VirtualFile): HighlightsToApply? {
     if (file is VirtualFileWindow) return null
+    // The refresh is scheduled asynchronously, so the file may have been deleted/invalidated between the cache update and this read action
+    if (!file.isValid) return null
     val psiFile = PsiManager.getInstance(project).findFile(file) ?: return null
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
     val groupId = GROUP_ID
