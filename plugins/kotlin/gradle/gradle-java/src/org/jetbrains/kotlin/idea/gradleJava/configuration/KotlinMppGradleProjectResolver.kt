@@ -32,7 +32,6 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateModuleDepe
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateMppModuleDataNode
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getKotlinModuleId
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelImpl
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
@@ -60,16 +59,16 @@ open class KotlinMppGradleProjectResolver : AbstractProjectResolverExtension() {
         val moduleDataNode: DataNode<ModuleData>
     }
 
-    override fun getToolingExtensionsClasses(): Set<Class<out Any>> {
+    override fun getToolingExtensionsClasses(): Set<Class<*>> {
         return setOf(
-            KotlinMPPGradleModelBuilder::class.java, KotlinTarget::class.java,
-            IdeaKotlinDependency::class.java, Extras::class.java, Unit::class.java
+            KotlinMPPGradleModel::class.java,   // Module: intellij.kotlin.gradle.tooling.impl
+            KotlinTarget::class.java,           // Module: intellij.kotlin.base.project-model
+            IdeaKotlinDependency::class.java,   // Library: kotlin-gradle-plugin-idea
+            Extras::class.java                  // Library: kotlin-tooling-core
         )
     }
 
-    override fun getExtraProjectModelClasses(): Set<Class<out Any>> {
-        return setOf(KotlinMPPGradleModel::class.java, KotlinTarget::class.java, IdeaKotlinDependency::class.java, Extras::class.java)
-    }
+    override fun getExtraProjectModelClasses(): Set<Class<*>> = setOf(KotlinMPPGradleModel::class.java)
 
     override fun getExtraCommandLineArgs(): List<String> =
         /**
