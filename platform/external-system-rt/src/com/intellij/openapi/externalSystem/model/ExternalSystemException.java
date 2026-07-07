@@ -20,7 +20,8 @@ public class ExternalSystemException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
   
-  private final String myOriginalReason;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") // only due to synchronized method override
+  private String myOriginalReason;
 
   private final @NotNull String[] myQuickFixes;
   private boolean myCauseInitialized;
@@ -50,12 +51,16 @@ public class ExternalSystemException extends RuntimeException {
       myOriginalReason = "";
       return;
     }
-    
+
+    myOriginalReason = getStacktraceString(cause);
+  }
+
+  private static String getStacktraceString(@NotNull Throwable cause) {
     StringWriter stringWriter = new StringWriter();
     try (PrintWriter printWriter = new PrintWriter(stringWriter)) {
       cause.printStackTrace(printWriter);
     }
-    myOriginalReason = stringWriter.toString();
+    return stringWriter.toString();
   }
 
   /**
@@ -88,6 +93,7 @@ public class ExternalSystemException extends RuntimeException {
   @Override
   public synchronized Throwable initCause(Throwable cause) {
     myCauseInitialized = true;
+    myOriginalReason = getStacktraceString(cause);
     return super.initCause(cause);
   }
 
