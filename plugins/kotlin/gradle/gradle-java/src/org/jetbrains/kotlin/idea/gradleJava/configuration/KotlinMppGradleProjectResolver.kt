@@ -13,7 +13,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
 import com.intellij.openapi.externalSystem.util.Order
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetInfo
 import org.jetbrains.kotlin.idea.gradle.configuration.ResolveModulesPerSourceSetInMppBuildIssue
@@ -31,13 +30,13 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateModuleComp
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateModuleDependencies
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateMppModuleDataNode
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getKotlinModuleId
+import org.jetbrains.kotlin.idea.gradleTooling.IdeaMppProjectProvider
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelImpl
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
-import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
-import org.jetbrains.kotlin.tooling.core.Extras
+import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
@@ -59,16 +58,9 @@ open class KotlinMppGradleProjectResolver : AbstractProjectResolverExtension() {
         val moduleDataNode: DataNode<ModuleData>
     }
 
-    override fun getToolingExtensionsClasses(): Set<Class<*>> {
-        return setOf(
-            KotlinMPPGradleModel::class.java,   // Module: intellij.kotlin.gradle.tooling.impl
-            KotlinTarget::class.java,           // Module: intellij.kotlin.base.project-model
-            IdeaKotlinDependency::class.java,   // Library: kotlin-gradle-plugin-idea
-            Extras::class.java                  // Library: kotlin-tooling-core
-        )
-    }
+    override fun getToolingExtensionsClasses(): Set<Class<*>> = IdeaMppProjectProvider.MODEL_CLASSPATH
 
-    override fun getExtraProjectModelClasses(): Set<Class<*>> = setOf(KotlinMPPGradleModel::class.java)
+    override fun getModelProvider(): ProjectImportModelProvider = IdeaMppProjectProvider
 
     override fun getExtraCommandLineArgs(): List<String> =
         /**

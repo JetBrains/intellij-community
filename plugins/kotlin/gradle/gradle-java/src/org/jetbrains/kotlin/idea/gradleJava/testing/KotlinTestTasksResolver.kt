@@ -13,8 +13,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.idea.gradleJava.configuration.getMppModel
+import org.jetbrains.kotlin.idea.gradleTooling.IdeaMppProjectProvider
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
-import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
+import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
@@ -25,12 +26,9 @@ open class KotlinTestTasksResolver : AbstractProjectResolverExtension() {
         internal const val ENABLED_REGISTRY_KEY = "kotlin.gradle.testing.enabled"
     }
 
-    override fun getToolingExtensionsClasses(): Set<Class<*>> = setOf(
-        KotlinMPPGradleModel::class.java,   // Module: intellij.kotlin.gradle.tooling.impl
-        KotlinTarget::class.java,           // Module: intellij.kotlin.base.project-model
-    )
+    override fun getToolingExtensionsClasses(): Set<Class<*>> = IdeaMppProjectProvider.MODEL_CLASSPATH
 
-    override fun getExtraProjectModelClasses(): Set<Class<*>> = setOf(KotlinMPPGradleModel::class.java)
+    override fun getModelProvider(): ProjectImportModelProvider = IdeaMppProjectProvider
 
     override fun populateModuleTasks(
         gradleModule: IdeaModule,
