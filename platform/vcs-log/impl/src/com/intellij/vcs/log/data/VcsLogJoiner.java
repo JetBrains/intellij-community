@@ -59,20 +59,47 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
       int redIndex = redCommitsAndSavedRedIndex.first;
       Set<CommitId> redCommits = redCommitsAndSavedRedIndex.second;
 
-      // Step 3: Find overlap depth — how deep firstBlock penetrates into savedLog.
-      // No contiguity assumed: firstBlock commits may be scattered across disconnected islands.
+      // Step 3: Find overlap depth and connection depth, and check for gaps.
+      // We need to ensure that:
+      // 1. We know how deep firstBlock overlaps with savedLog (overlapDepth).
+      // 2. Any commit we need to connect to (parents of firstBlock not in firstBlock, and new refs)
+      //    is present in savedLog (requiredDepth). If not, we have a gap and must abort.
       StopWatch overlapWatch = StopWatch.start("VcsLogJoiner.addCommits.overlapScan");
       int overlapDepth = 0;
-      Set<CommitId> remaining = new HashSet<>(firstBlockMap.keySet());
-      for (int i = 0; i < savedLog.size() && !remaining.isEmpty(); i++) {
-        if (remaining.remove(savedLog.get(i).getId())) {
+      int requiredDepth = 0;
+      Set<CommitId> remainingOverlap = new HashSet<>(firstBlockMap.keySet());
+
+      Set<CommitId> requiredInSavedLog = new HashSet<>();
+      for (Commit commit : firstBlock) {
+        for (CommitId parent : commit.getParents()) {
+          if (!firstBlockMap.containsKey(parent)) {
+            requiredInSavedLog.add(parent);
+          }
+        }
+      }
+      for (CommitId newRef : newRefs) {
+        if (!previousRefs.contains(newRef) && !firstBlockMap.containsKey(newRef)) {
+          requiredInSavedLog.add(newRef);
+        }
+      }
+      Set<CommitId> remainingRequired = new HashSet<>(requiredInSavedLog);
+
+      for (int i = 0; i < savedLog.size() && (!remainingOverlap.isEmpty() || !remainingRequired.isEmpty()); i++) {
+        CommitId id = savedLog.get(i).getId();
+        if (remainingOverlap.remove(id)) {
           overlapDepth = i + 1;
+        }
+        if (remainingRequired.remove(id)) {
+          requiredDepth = i + 1;
         }
       }
       overlapWatch.report(LOG);
-      // remaining now contains genuinely new commit IDs (possibly new island roots) — not an error.
 
-      int unsafeBlockSize = Math.max(redIndex, overlapDepth);
+      if (!remainingRequired.isEmpty()) {
+        throw new VcsLogRefreshNotEnoughDataException();
+      }
+
+      int unsafeBlockSize = Math.max(redIndex, Math.max(overlapDepth, requiredDepth));
 
       // Step 4: Reconstruct the unsafe zone in a single pass:
       // - filter out red commits

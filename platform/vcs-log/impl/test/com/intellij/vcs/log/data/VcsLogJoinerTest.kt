@@ -669,4 +669,101 @@ class VcsLogJoinerTest {
       }
     }
   }
+
+  @Test
+  fun sameDataRefresh() {
+    // Refreshing with the exact same data should not change the log.
+    runTest {
+      fullLog {
+        +"3|-a|-b"
+        +"2|-b|-c"
+        +"1|-c|-"
+      }
+      recentCommits {
+        +"3|-a|-b"
+        +"2|-b|-c"
+        +"1|-c|-"
+      }
+      oldRefs {
+        +"a"
+      }
+      newRefs {
+        +"a"
+      }
+      expected {
+        +"a"
+        +"b"
+        +"c"
+      }
+      expectedWithParents {
+        +"a|-b"
+        +"b|-c"
+        +"c"
+      }
+    }
+  }
+
+  @Test
+  fun sameDataRefreshWithIslands() {
+    // Same-data refresh with disconnected islands should not change the log.
+    runTest {
+      fullLog {
+        +"3|-a|-b"
+        +"2|-b|-"
+        +"2|-x|-y"
+        +"1|-y|-"
+      }
+      recentCommits {
+        +"3|-a|-b"
+        +"2|-b|-"
+        +"2|-x|-y"
+        +"1|-y|-"
+      }
+      oldRefs {
+        +"a"
+        +"x"
+      }
+      newRefs {
+        +"a"
+        +"x"
+      }
+      expected {
+        +"a"
+        +"b"
+        +"x"
+        +"y"
+      }
+    }
+  }
+
+  @Test
+  fun newCommitOnExistingChain() {
+    // A new commit is added on top of an existing chain.
+    runTest {
+      fullLog {
+        +"2|-b|-c"
+        +"1|-c|-"
+      }
+      recentCommits {
+        +"3|-a|-b"
+        +"2|-b|-c"
+      }
+      oldRefs {
+        +"b"
+      }
+      newRefs {
+        +"a"
+      }
+      expected {
+        +"a"
+        +"b"
+        +"c"
+      }
+      expectedWithParents {
+        +"a|-b"
+        +"b|-c"
+        +"c"
+      }
+    }
+  }
 }
