@@ -82,6 +82,10 @@ private val DEFAULT_FILE_SYSTEM = FileSystems.getDefault()
  * precise post-filtering where needed.
  */
 internal class SearchToolset : McpToolset {
+  override fun displayName(): String = McpServerBundle.message("toolset.display.name.search")
+
+  override fun displayDescription(toolName: String): String? = McpServerBundle.message("tool.description.$toolName")
+
   @McpToolHints(readOnlyHint = TRUE, openWorldHint = FALSE)
   @McpTool
   @McpDescription("""
