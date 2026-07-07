@@ -17,6 +17,7 @@ import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
 import com.intellij.dvcs.DvcsUtil
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -352,11 +353,13 @@ private class StagedDiffRequest(contents: List<DiffContent>, titles: List<String
    */
   private inner class SaveIndexFilesAssignmentTracker : AssignmentTracker() {
     override fun onEachUnassignment() {
-      for (content in contents) {
-        if (content is DocumentContent) {
-          val file = FileDocumentManager.getInstance().getFile(content.document)
-          if (file is GitIndexVirtualFile) {
-            FileDocumentManager.getInstance().saveDocument(content.document)
+      WriteIntentReadAction.run {
+        for (content in contents) {
+          if (content is DocumentContent) {
+            val file = FileDocumentManager.getInstance().getFile(content.document)
+            if (file is GitIndexVirtualFile) {
+              FileDocumentManager.getInstance().saveDocument(content.document)
+            }
           }
         }
       }
