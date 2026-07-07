@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.editor.lists.inspections
+package com.intellij.markdown.backend.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement

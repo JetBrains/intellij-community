@@ -178,7 +178,8 @@ object TableUtils {
    * Currently, if the table is indented, the table separator element will contain line indentation as well.
    * The problem only occurs with table separator row - regular rows elements don't include leading indents.
    */
-  internal fun MarkdownTableSeparatorRow.calculateActualTextRange(): TextRange {
+  @ApiStatus.Internal
+  fun MarkdownTableSeparatorRow.calculateActualTextRange(): TextRange {
     val text = text
     val first = text.indexOfFirst { !it.isWhitespace() && it != '>'}
     val last = text.indexOfLast { !it.isWhitespace() }

@@ -102,33 +102,6 @@
                                id="MarkdownTableInlayProvider"/>
     <editorFactoryListener implementation="org.intellij.plugins.markdown.editor.tables.ui.MarkdownInlayUpdateOnSoftWrapListener"/>
 
-    <localInspection language="Markdown"
-                     shortName="MarkdownIncorrectTableFormatting"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.incorrect.table.formatting.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     level="WEAK WARNING"
-                     implementationClass="org.intellij.plugins.markdown.editor.tables.inspections.MarkdownIncorrectTableFormattingInspection"/>
-
-    <localInspection language="Markdown"
-                     shortName="MarkdownNoTableBorders"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.no.table.borders.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     implementationClass="org.intellij.plugins.markdown.editor.tables.inspections.MarkdownNoTableBordersInspection"/>
-
-    <localInspection language="Markdown"
-                     shortName="MarkdownTablePipeInCodeSpan"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.table.pipe.in.code.span.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     implementationClass="org.intellij.plugins.markdown.editor.tables.inspections.MarkdownTablePipeInCodeSpanInspection"/>
-
     <intentionAction>
       <language>Markdown</language>
       <className>org.intellij.plugins.markdown.editor.tables.intentions.MarkdownInsertTableColumnIntention$InsertBefore</className>
@@ -247,15 +220,6 @@
     <stripTrailingSpacesFilterFactory implementation="org.intellij.plugins.markdown.editor.MarkdownStripTrailingSpacesFilterFactory"/>
     <httpRequestHandler implementation="org.intellij.plugins.markdown.ui.preview.PreviewStaticServer"/>
 
-    <localInspection language="Markdown"
-                     shortName="MarkdownUnresolvedFileReference"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.unresolved.file.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     implementationClass="org.intellij.plugins.markdown.lang.references.paths.MarkdownUnresolvedFileReferenceInspection"/>
-
     <lang.foldingBuilder language="Markdown" implementationClass="org.intellij.plugins.markdown.folding.MarkdownFoldingBuilder"/>
 
     <stubIndex implementation="org.intellij.plugins.markdown.lang.index.HeaderTextIndex"/>
@@ -299,14 +263,6 @@
     <editorActionHandler action="EditorUnindentSelection"
                          implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemUnindentHandler"/>
 
-    <localInspection language="Markdown"
-                     shortName="MarkdownIncorrectlyNumberedListItem"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.incorrectly.numbered.list.item.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     implementationClass="org.intellij.plugins.markdown.editor.lists.inspections.IncorrectListNumberingInspection"/>
-
     <actionPromoter implementation="org.intellij.plugins.markdown.ui.actions.MarkdownActionPromoter"/>
     <customizableActionGroupProvider implementation="org.intellij.plugins.markdown.ui.floating.FloatingToolbarCustomizableGroupProvider"/>
 
@@ -336,22 +292,6 @@
       <bundleName>messages.MarkdownBundle</bundleName>
       <categoryKey>markdown.intention.category</categoryKey>
     </intentionAction>
-
-    <localInspection language="Markdown"
-                     shortName="MarkdownOutdatedTableOfContents"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.outdated.table.of.contents.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     implementationClass="org.intellij.plugins.markdown.editor.toc.OutdatedTableOfContentsInspection"/>
-
-    <localInspection language="Markdown"
-                     shortName="MarkdownLinkDestinationWithSpaces"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.link.destination.with.spaces.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     implementationClass="org.intellij.plugins.markdown.lang.references.paths.MarkdownLinkDestinationWithSpacesInspection"/>
 
     <notificationGroup id="Markdown" displayType="BALLOON" bundle="messages.MarkdownBundle" key="notification.group.markdown"/>
 

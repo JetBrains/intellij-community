@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.editor.toc
+package com.intellij.markdown.backend.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
@@ -11,6 +11,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.editor.toc.GenerateTableOfContentsAction
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 

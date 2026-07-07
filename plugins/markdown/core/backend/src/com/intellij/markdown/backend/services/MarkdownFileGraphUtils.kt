@@ -12,7 +12,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination
-import org.intellij.plugins.markdown.lang.references.paths.resolveReferences
+import com.intellij.markdown.backend.inspections.resolveReferences
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Predicate
 

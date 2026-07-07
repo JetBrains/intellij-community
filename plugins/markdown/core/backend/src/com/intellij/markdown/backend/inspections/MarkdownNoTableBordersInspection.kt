@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.editor.tables.inspections
+package com.intellij.markdown.backend.inspections
 
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalInspectionTool
@@ -7,7 +7,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
-import org.intellij.plugins.markdown.editor.tables.intentions.FixTableBordersIntention
+import com.intellij.markdown.backend.intentions.FixTableBordersIntention
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.jetbrains.annotations.ApiStatus

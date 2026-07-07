@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.lang.references.paths
+package com.intellij.markdown.backend.inspections
 
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalInspectionTool
@@ -28,7 +28,7 @@ class MarkdownLinkDestinationWithSpacesInspection: LocalInspectionTool() {
   }
 
   private fun checkReference(element: MarkdownLinkDestination, holder: ProblemsHolder) {
-    val references = element.references.filterNotNull().filter { it is FileReferenceOwner }
+    val references = element.references.filter { it is FileReferenceOwner }
     if (references.isEmpty()) return
     @Suppress("NAME_SHADOWING")
     val element = references.first().element as? MarkdownLinkDestination ?: return

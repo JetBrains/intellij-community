@@ -2,7 +2,7 @@ package org.intellij.plugins.markdown.reference
 
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.lang.references.paths.MarkdownLinkDestinationWithSpacesInspection
+import com.intellij.markdown.backend.inspections.MarkdownLinkDestinationWithSpacesInspection
 import org.junit.Test
 
 class FileLinkWithSpacesQuickFixTest: LightPlatformCodeInsightFixture4TestCase() {

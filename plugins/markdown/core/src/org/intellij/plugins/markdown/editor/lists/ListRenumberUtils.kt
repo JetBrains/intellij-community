@@ -16,8 +16,10 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListNumber
+import org.jetbrains.annotations.ApiStatus
 
-internal object ListRenumberUtils {
+@ApiStatus.Internal
+object ListRenumberUtils {
   fun MarkdownList.renumberInBulk(document: Document, recursive: Boolean, restart: Boolean, inWriteAction: Boolean = true, sequentially: Boolean = true) {
     val replacementList = collectReplacements(document, recursive, restart, sequentially).toList()
     if (inWriteAction) {

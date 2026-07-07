@@ -10,7 +10,8 @@ import com.intellij.psi.util.parents
 import com.intellij.psi.util.siblings
 import org.jetbrains.annotations.ApiStatus
 
-internal fun PsiElement.hasType(type: IElementType): Boolean {
+@ApiStatus.Internal
+fun PsiElement.hasType(type: IElementType): Boolean {
   return PsiUtilCore.getElementType(this) == type
 }
 

@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.editor.tables.inspections
+package com.intellij.markdown.backend.intentions
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction
 import com.intellij.codeInspection.IntentionWrapper
