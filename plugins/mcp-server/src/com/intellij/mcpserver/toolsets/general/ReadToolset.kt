@@ -30,6 +30,10 @@ private const val MAX_READ_LIMIT = 5000
 private const val MAX_LINE_LENGTH = 2000
 
 internal class ReadToolset : McpToolset {
+  override fun displayName(): String = McpServerBundle.message("toolset.display.name.read")
+
+  override fun displayDescription(toolName: String): String? = McpServerBundle.message("tool.description.$toolName")
+
   /*
    * We intentionally return numbered lines as plain text ("L<line>: ...") instead of JSON.
    * This matches Codex CLI's read_file convention, keeps responses compact for LLMs,
