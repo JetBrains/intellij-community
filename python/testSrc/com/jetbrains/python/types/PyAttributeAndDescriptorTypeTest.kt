@@ -1776,4 +1776,22 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
           foo = None
       """,
   )
+
+  @Test
+  @TestFor(issues = ["PY-19412"])
+  fun `classmethod created via reassignment in another module`() = test(
+    """
+    from a import Spam
+
+    Spam.spam()
+    """,
+    "a.py" to """
+      class Spam:
+          def spam(cls):
+              pass
+
+          eggs = False
+          spam = classmethod(spam)
+      """,
+  )
 }
