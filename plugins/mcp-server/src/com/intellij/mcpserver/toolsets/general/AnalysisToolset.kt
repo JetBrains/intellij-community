@@ -11,7 +11,6 @@ import com.intellij.build.events.FileMessageEvent
 import com.intellij.build.events.FinishBuildEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.StartBuildEvent
-import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.mcpserver.McpProjectDependenciesProvider
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpToolset
@@ -113,7 +112,7 @@ class AnalysisToolset : McpToolset {
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.collecting.file.problems", filePath))
     val lintResult = collectLintFiles(
       filePaths = listOf(filePath),
-      minSeverityValue = if (errorsOnly) LintMinSeverity.ERROR.apiValue else LintMinSeverity.WARNING.apiValue,
+      minSeverityValue = LintMinSeverity.fromErrorsOnly(errorsOnly).apiValue,
       timeout = timeout,
       progressTitle = McpServerBundle.message("progress.title.analyzing.file", filePath.substringAfterLast('/').substringAfterLast('\\')),
     )
@@ -574,19 +573,4 @@ class AnalysisToolset : McpToolset {
   data class ProjectDependenciesResult(
     @JvmField val dependencies: List<DependencyInfo>,
   )
-}
-
-private enum class LintMinSeverity(
-  @JvmField val apiValue: String,
-  @JvmField val highlightSeverity: HighlightSeverity,
-) {
-  WARNING("warning", HighlightSeverity.WEAK_WARNING),
-  ERROR("error", HighlightSeverity.ERROR);
-
-  companion object {
-    fun parse(value: String): LintMinSeverity {
-      val normalized = value.trim().lowercase()
-      return entries.firstOrNull { it.apiValue == normalized } ?: mcpFail("min_severity must be one of: warning, error")
-    }
-  }
 }
