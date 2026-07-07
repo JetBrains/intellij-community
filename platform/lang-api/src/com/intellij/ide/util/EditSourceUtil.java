@@ -14,8 +14,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.ide.navigation.NavigateUtil;
 import com.intellij.platform.ide.navigation.NavigationOptions;
-import com.intellij.platform.ide.navigation.NavigationServiceKt;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
@@ -118,7 +118,7 @@ public final class EditSourceUtil {
     Navigatable descriptor = getDescriptor(element);
     if (descriptor != null && descriptor.canNavigate()) {
       Project project = element.getProject();
-      NavigationServiceKt.navigateBlocking(project, descriptor, NavigationOptions.requestFocus(), null);
+      NavigateUtil.requestNavigate(project, descriptor, NavigationOptions.requestFocus(), null);
     }
     return true;
   }

@@ -3,11 +3,13 @@
 
 package com.intellij.util
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.IdeUiService
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
@@ -16,25 +18,28 @@ import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 
 internal fun openSourcesFrom(context: DataContext, requestFocus: Boolean) {
   val project = context.getData(CommonDataKeys.PROJECT) ?: return
   val asyncContext = IdeUiService.getInstance().createAsyncDataContext(context)
   val options = NavigationOptions.defaultOptions().requestFocus(requestFocus)
-  runWithModalProgressBlocking(project, IdeBundle.message("progress.title.preparing.navigation")) {
+  @Suppress("UsagesOfObsoleteApi")
+  (project as ComponentManagerEx).getCoroutineScope().launch(ClientId.coroutineContext()) {
     project.serviceAsync<NavigationService>().navigate(asyncContext, options)
   }
 }
 
-internal fun navigate(project: Project, requestFocus: Boolean, tryNotToScroll: Boolean, navigatables: Iterable<Navigatable?>?): Boolean {
+internal fun navigate(project: Project, requestFocus: Boolean, tryNotToScroll: Boolean, navigatables: Iterable<Navigatable?>?) {
   if (navigatables == null) {
-    return false
+    return
   }
   val filteredNavigatables = navigatables.filterNotNull()
   val options = NavigationOptions.defaultOptions().requestFocus(requestFocus).preserveCaret(tryNotToScroll)
-  return runWithModalProgressBlocking(project, IdeBundle.message("progress.title.preparing.navigation")) {
-    NavigationService.getInstance(project).navigate(filteredNavigatables, options)
+  @Suppress("UsagesOfObsoleteApi")
+  (project as ComponentManagerEx).getCoroutineScope().launch(ClientId.coroutineContext()) {
+    project.serviceAsync<NavigationService>().navigate(filteredNavigatables, options)
   }
 }
 
@@ -50,6 +55,11 @@ internal fun navigateToSource(project: Project, requestFocus: Boolean, tryNotToS
   return runWithModalProgressBlocking(project, IdeBundle.message("progress.title.preparing.navigation")) {
     NavigationService.getInstance(project).navigate(navigatable, options)
   }
+}
+
+internal suspend fun Navigatable.navigateToSource(project: Project, requestFocus: Boolean, tryNotToScroll: Boolean): Boolean {
+  val options = NavigationOptions.defaultOptions().requestFocus(requestFocus).preserveCaret(tryNotToScroll)
+  return project.serviceAsync<NavigationService>().navigate(this, options)
 }
 
 internal fun findProject(navigatables: Iterable<Navigatable>): Project? {

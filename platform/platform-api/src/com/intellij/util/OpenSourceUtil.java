@@ -3,6 +3,8 @@ package com.intellij.util;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
@@ -39,31 +41,57 @@ public final class OpenSourceUtil {
   }
 
   /**
-   * Invokes {@link #navigate(boolean, boolean, Iterable)} if at least one navigatable exists
+   * Navigates to all available sources or to the first navigatable that represents non-source navigation.
+   * <p>When the {@code ide.navigation.requests} registry flag is enabled and a project can be derived from the navigatables,
+   * the navigation is submitted asynchronously and this method returns before it completes.
+   * Tests that need the result must await via {@code NavigationTestUtil.awaitPendingNavigation}.
+   * NB: a synchronous legacy call under Write Action is deferred to a later EDT event.
+   *
+   * @param requestFocus   specifies whether a focus should be requested or not
+   * @param tryNotToScroll specifies whether a corresponding editor should preserve its state if it is possible
+   * @param navigatables   navigatables to process
    */
   public static void navigate(boolean requestFocus, boolean tryNotToScroll, Navigatable @Nullable ... navigatables) {
     if (navigatables != null && navigatables.length > 0) {
-      navigate(requestFocus, tryNotToScroll, List.of(navigatables));
+      doNavigate(requestFocus, tryNotToScroll, List.of(navigatables));
     }
   }
 
   /**
    * Navigates to all available sources or to the first navigatable that represents non-source navigation.
+   * <p>See {@link #navigate(boolean, boolean, Navigatable...)} for the dispatch semantics.
    *
    * @param requestFocus   specifies whether a focus should be requested or not
    * @param tryNotToScroll specifies whether a corresponding editor should preserve its state if it is possible
    * @param navigatables   an iterable collection of navigatables
-   * @return {@code true} if at least one navigatable was processed, {@code false} otherwise
+   *
+   * @return best-effort status: when navigation is submitted asynchronously or deferred,
+   * {@code true} means that a navigation request was submitted, not that it was processed.
+   * @deprecated the return value is not reliable with asynchronous navigation;
+   * use {@link #navigate(boolean, boolean, Navigatable...)} instead
    */
+  @Deprecated
   public static boolean navigate(boolean requestFocus, boolean tryNotToScroll, @Nullable Iterable<? extends Navigatable> navigatables) {
+    return doNavigate(requestFocus, tryNotToScroll, navigatables);
+  }
+
+  private static boolean doNavigate(boolean requestFocus, boolean tryNotToScroll, @Nullable Iterable<? extends Navigatable> navigatables) {
     if (navigatables == null) {
       return false;
     }
     if (Registry.is("ide.navigation.requests")) {
       Project project = OpenSourceUtilKt.findProject(navigatables);
       if (project != null) {
-        return OpenSourceUtilKt.navigate(project, requestFocus, tryNotToScroll, navigatables);
+        OpenSourceUtilKt.navigate(project, requestFocus, tryNotToScroll, navigatables);
+        return true;
       }
+    }
+
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      ModalityState modalityState = ModalityState.defaultModalityState();
+      ApplicationManager.getApplication().invokeLater(
+        () -> doNavigate(requestFocus, tryNotToScroll, navigatables), modalityState);
+      return true;
     }
 
     Navigatable nonSourceNavigatable = null;
@@ -99,7 +127,9 @@ public final class OpenSourceUtil {
    * @param tryNotToScroll specifies whether a corresponding editor should preserve its state if it is possible
    * @param navigatables   an iterable collection of navigatables
    * @return {@code true} if at least one navigatable was processed, {@code false} otherwise
+   * @deprecated prefer using void-returning alternatives
    */
+  @Deprecated
   public static boolean navigateToSource(boolean requestFocus,
                                          boolean tryNotToScroll,
                                          @Nullable Iterable<? extends Navigatable> navigatables) {

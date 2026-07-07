@@ -59,7 +59,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-import static com.intellij.platform.ide.navigation.NavigationServiceKt.navigateBlocking;
+import static com.intellij.platform.ide.navigation.NavigateUtil.requestNavigate;
 
 @ApiStatus.Internal
 public final class ShowUsagesTable extends JBTable implements UiDataProvider {
@@ -213,14 +213,14 @@ public final class ShowUsagesTable extends JBTable implements UiDataProvider {
             usageInfosToNavigate.add(usageInfo);
           }
           else if (usage instanceof Navigatable navigatable) {
-            navigateBlocking(parameters.project, navigatable, NavigationOptions.requestFocus(), dataContext);
+            requestNavigate(parameters.project, navigatable, NavigationOptions.requestFocus(), dataContext);
           }
         }
         var popup = PopupUtil.getPopupContainerFor(this);
         if (popup instanceof AbstractPopup abstractPopup) {
           abstractPopup.setForceCancelOnFocusLoss(true); // Disable the Wayland focus workaround and allow it to close.
         }
-        UsageNavigation.getInstance(parameters.project).navigate(usageInfosToNavigate, true, dataContext);
+        UsageNavigation.getInstance(parameters.project).navigate(usageInfosToNavigate, true);
       }
     };
   }

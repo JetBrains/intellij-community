@@ -14,13 +14,15 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.lang.LanguageNamesValidation
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.navigation.NavigationOptions
-import com.intellij.platform.ide.navigation.navigateBlocking
+import com.intellij.platform.ide.navigation.requestNavigate
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
@@ -61,8 +63,11 @@ internal fun navigateRequestLazy(project: Project, requestor: NavigationRequesto
 @JvmOverloads
 fun navigateRequest(project: Project, request: NavigationRequest, dataContext: DataContext? = null) {
   EDT.assertIsEdt()
-  IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation()
-  navigateBlocking(project, request, NavigationOptions.requestFocus(), dataContext)
+  if (!Registry.`is`("ide.navigation.requests")) {
+    IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation()
+  }
+  val scope = project.service<CoreUiCoroutineScopeHolder>().coroutineScope
+  requestNavigate(project, request, NavigationOptions.requestFocus(), dataContext, scope)
 }
 
 internal fun notifyNowhereToGo(project: Project, editor: Editor, file: PsiFile, offset: Int) {

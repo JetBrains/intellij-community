@@ -9,6 +9,8 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.IdeUiService
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.client.currentSessionOrNull
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
@@ -56,7 +58,7 @@ fun navigateBlocking(project: Project, request: NavigationRequest, options: Navi
  *
  * With the `ide.navigation.requests` registry flag enabled, the navigation is launched in [coroutineScope]
  * (or, when none is given, in the scope of the client session identified by the current [ClientId],
- * falling back to the project scope), capturing the current [ClientId] and an async [dataContext].
+ * falling back to the project scope), capturing the current [ClientId], modality state, and an async [dataContext].
  * Otherwise, a blocking modal navigation ([navigateBlocking]) is scheduled on a later EDT event.
  *
  * In both modes the function returns before the navigation completes.
@@ -72,16 +74,17 @@ fun requestNavigate(
   dataContext: DataContext? = null,
   coroutineScope: CoroutineScope? = null,
 ) {
+  val modalityState = ModalityState.current()
   if (Registry.`is`("ide.navigation.requests")) {
     val asyncDataContext = getOrCreateAsyncDataContext(project, dataContext)
-    launchNavigation(project, coroutineScope) {
+    launchNavigation(project, coroutineScope, modalityState) {
       project.serviceAsync<NavigationService>().navigate(navigatable, options, asyncDataContext)
     }
   }
   else {
-    ApplicationManager.getApplication().invokeLater {
+    ApplicationManager.getApplication().invokeLater({
       navigateBlocking(project, navigatable, options, dataContext)
-    }
+    }, modalityState)
   }
 }
 
@@ -99,27 +102,32 @@ fun requestNavigate(
   dataContext: DataContext? = null,
   coroutineScope: CoroutineScope? = null,
 ) {
+  val modalityState = ModalityState.current()
   if (Registry.`is`("ide.navigation.requests")) {
     val asyncDataContext = getOrCreateAsyncDataContext(project, dataContext)
-    launchNavigation(project, coroutineScope) {
+    launchNavigation(project, coroutineScope, modalityState) {
       project.serviceAsync<NavigationService>().navigate(request, options, asyncDataContext)
     }
   }
   else {
-    ApplicationManager.getApplication().invokeLater {
+    ApplicationManager.getApplication().invokeLater({
       navigateBlocking(project, request, options, dataContext)
-    }
+    }, modalityState)
   }
 }
 
-private fun launchNavigation(project: Project, coroutineScope: CoroutineScope?, action: suspend () -> Unit) {
-  // when no scope is given, prefer the scope of the client session identified by the current ClientId:
-  // it is cancelled together with the client (or the project for the local session), which is exactly
-  // the lifetime a client-initiated navigation should have
+private fun launchNavigation(
+  project: Project,
+  coroutineScope: CoroutineScope?,
+  modalityState: ModalityState,
+  action: suspend () -> Unit,
+) {
+  // when no scope is given, prefer the scope of the client session
   @Suppress("UsagesOfObsoleteApi")
   val scope = coroutineScope
-              ?: (project.currentSessionOrNull as? ComponentManagerEx ?: project as ComponentManagerEx).getCoroutineScope()
-  scope.launch(ClientId.coroutineContext()) {
+              ?: (project.currentSessionOrNull as? ComponentManagerEx ?: project as ComponentManagerEx)
+                .getCoroutineScope()
+  scope.launch(ClientId.coroutineContext() + modalityState.asContextElement()) {
     action()
   }
 }

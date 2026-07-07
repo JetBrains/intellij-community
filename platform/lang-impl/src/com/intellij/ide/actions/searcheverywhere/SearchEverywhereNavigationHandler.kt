@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
-import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor.Companion.getElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
@@ -57,77 +56,63 @@ open class SearchEverywhereNavigationHandler(val project: Project) {
   }
 
   fun gotoSelectedItem(selected: PsiElement, modifiers: Int, searchText: String, offset: Int = -1) {
-    project.service<SearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch(ClientId.coroutineContext()) {
-      val navigatingAction = readAction { tryMakeNavigatingFunction(selected, modifiers, searchText, offset) }
-      if (navigatingAction != null) {
-        navigatingAction()
-      }
-      else {
-        LOG.warn("Selected $selected produced an invalid navigation action! Doing nothing!")
+    val navigationOptions = NavigationOptions.defaultOptions()
+      .openInRightSplit((modifiers and InputEvent.SHIFT_DOWN_MASK) != 0)
+      .preserveCaret(true).forceFocus(true)
+    project.service<SearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch {
+      val navigationService = project.serviceAsync<NavigationService>()
+      semaphore.withPermit {
+        navigationService.navigateRequests(navigationOptions) {
+          makeNavigationRequests(selected, searchText, offset)
+        }
       }
     }
   }
 
-  private fun tryMakeNavigatingFunction(selected: PsiElement, modifiers: Int, searchText: String, offset: Int): (suspend () -> Unit)? {
-    if (!selected.isValid) {
-      LOG.warn("Cannot navigate to invalid PsiElement")
+  private suspend fun makeNavigationRequests(selected: PsiElement, searchText: String, offset: Int): Collection<NavigationRequest> {
+    val target = readAction {
+      if (!selected.isValid) {
+        LOG.warn("Cannot navigate to invalid PsiElement")
+        return@readAction null
+      }
+
+      val psiElement = preparePsi(selected, searchText)
+      val file =
+        if (selected is PsiFile) selected.virtualFile
+        else PsiUtilCore.getVirtualFile(psiElement)
+      psiElement to file
+    } ?: return emptyList()
+
+    val (psiElement, file) = target
+    if (file == null) {
+      // Navigation items from rd protocol often lack .containingFile or other PSI extensions, and are only expected to be
+      // navigated through the Navigatable API.
+      // This fallback is for items like that.
+      val navigatable = psiElement as? Navigatable
+      if (navigatable == null) {
+        LOG.warn("Cannot navigate to invalid PsiElement (psiElement=$psiElement)")
+        return emptyList()
+      }
+      return listOf(RawNavigationRequest(navigatable, true))
+    }
+
+    val extendedNavigatable = lineAndColumnNavigatable(file, searchText)
+    if (extendedNavigatable != null) {
+      triggerLineOrColumnFeatureUsed(extendedNavigatable)
+      return listOfNotNull(rawNavigationRequest(extendedNavigatable))
+    }
+    return listOfNotNull(
+      createSourceNavigationRequest(project = project, element = psiElement, file = file, searchText = searchText, offset = offset)
+    )
+  }
+
+  private fun lineAndColumnNavigatable(file: VirtualFile, searchText: String): OpenFileDescriptor? {
+    val position = getLineAndColumn(searchText)
+    if (position.first < 0 && position.second < 0) {
       return null
     }
-
-    val psiElement = preparePsi(selected, searchText)
-    val file =
-      if (selected is PsiFile) selected.virtualFile
-      else PsiUtilCore.getVirtualFile(psiElement)
-
-    val extendedNavigatable = if (file == null) {
-      null
-    }
-    else {
-      val position = getLineAndColumn(searchText)
-      if (position.first >= 0 || position.second >= 0) {
-        //todo create a navigation request by line&column, not by offset only
-        OpenFileDescriptor(project, file, position.first, position.second)
-      }
-      else {
-        null
-      }
-    }
-
-    return suspend {
-      val navigationOptions = NavigationOptions.defaultOptions()
-        .openInRightSplit((modifiers and InputEvent.SHIFT_DOWN_MASK) != 0)
-        .preserveCaret(true).forceFocus(true)
-      if (extendedNavigatable == null) {
-        if (file == null) {
-          val navigatable = psiElement as? Navigatable
-          if (navigatable != null) {
-            // Navigation items from rd protocol often lack .containingFile or other PSI extensions, and are only expected to be
-            // navigated through the Navigatable API.
-            // This fallback is for items like that.
-            val navRequest = RawNavigationRequest(navigatable, true)
-            semaphore.withPermit {
-              project.serviceAsync<NavigationService>().navigate(navRequest, navigationOptions, null)
-            }
-          }
-          else {
-            LOG.warn("Cannot navigate to invalid PsiElement (psiElement=$psiElement)")
-          }
-        }
-        else {
-          createSourceNavigationRequest(project = project, element = psiElement, file = file, searchText = searchText, offset = offset)?.let {
-            semaphore.withPermit {
-              project.serviceAsync<NavigationService>().navigate(it, navigationOptions, null)
-            }
-          }
-        }
-      }
-      else {
-        semaphore.withPermit {
-          project.serviceAsync<NavigationService>().navigate(extendedNavigatable, navigationOptions)
-          triggerLineOrColumnFeatureUsed(extendedNavigatable)
-        }
-      }
-    }
+    //todo create a navigation request by line&column, not by offset only
+    return OpenFileDescriptor(project, file, position.first, position.second)
   }
 
   open suspend fun createSourceNavigationRequest(
@@ -151,6 +136,13 @@ open class SearchEverywhereNavigationHandler(val project: Project) {
   }
 
   protected open suspend fun triggerLineOrColumnFeatureUsed(extendedNavigatable: Navigatable) {}
+
+  /**
+   * The same request [NavigationService] would build for [navigatable] on its own, see [Navigatable.navigationRequest].
+   */
+  private fun rawNavigationRequest(navigatable: Navigatable): NavigationRequest? {
+    return if (navigatable.canNavigate()) RawNavigationRequest(navigatable, navigatable.canNavigateToSource()) else null
+  }
 
   private fun preparePsi(originalPsiElement: PsiElement, searchText: String): PsiElement {
     var psiElement = originalPsiElement

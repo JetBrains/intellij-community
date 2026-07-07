@@ -31,6 +31,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.platform.ide.navigation.NavigationOptions;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.OnePixelSplitter;
@@ -77,11 +78,11 @@ import static com.intellij.analysis.problemsView.toolWindow.ProblemsViewBundle.m
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.application.ModalityState.stateForComponent;
 import static com.intellij.openapi.fileEditor.FileEditorManagerKeys.OPEN_IN_PREVIEW_TAB;
+import static com.intellij.platform.ide.navigation.NavigateUtil.requestNavigate;
 import static com.intellij.ui.ColorUtil.toHtmlColor;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.ui.scale.JBUIScale.scale;
 import static com.intellij.util.ArrayUtil.getFirstElement;
-import static com.intellij.util.OpenSourceUtil.navigate;
 
 public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, UiCompatibleDataProvider, ProblemsViewTab {
   public static final @NotNull DataKey<ProblemsViewPanel> DATA_KEY = DataKey.create("ProblemsViewPanel");
@@ -468,7 +469,8 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
         Navigatable navigatable = node == null ? null : node.getNavigatable();
         if (navigatable != null && navigatable.canNavigateToSource()) {
           try (AccessToken ignored = ClientId.withClientId(mySession.getClientId())) {
-            navigate(false, navigatable);
+            requestNavigate(getProject(), navigatable,
+                            NavigationOptions.defaultOptions().requestFocus(false).recordAsBackHistory(false));
           }
         }
       });

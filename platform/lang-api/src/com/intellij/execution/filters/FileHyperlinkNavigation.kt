@@ -41,8 +41,7 @@ suspend fun navigateFileHyperlink(
     }
     if (resolvedDirectory.directory != null && resolvedDirectory.isInProject) {
       if (resolvedDirectory.request != null) {
-        navigationService.navigate(resolvedDirectory.request, options)
-        return true
+        return navigationService.navigate(resolvedDirectory.request, options)
       }
       return withContext(Dispatchers.EDT) {
         PsiNavigationSupport.getInstance().navigateToDirectory(resolvedDirectory.directory, requestFocus)

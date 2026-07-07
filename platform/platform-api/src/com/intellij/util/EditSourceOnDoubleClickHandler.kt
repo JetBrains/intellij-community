@@ -54,7 +54,7 @@ object EditSourceOnDoubleClickHandler {
 
         val dataContext = DataManager.getInstance().getDataContext(treeTable)
         CommonDataKeys.PROJECT.getData(dataContext) ?: return false
-        OpenSourceUtil.openSourcesFrom(dataContext, true)
+        navigateOnDoubleClick(dataContext, whenPerformed = null)
         return true
       }
     }.installOn(treeTable)
@@ -72,7 +72,7 @@ object EditSourceOnDoubleClickHandler {
 
         val dataContext = DataManager.getInstance().getDataContext(table)
         CommonDataKeys.PROJECT.getData(dataContext) ?: return false
-        OpenSourceUtil.openSourcesFrom(dataContext, true)
+        navigateOnDoubleClick(dataContext, whenPerformed = null)
         return true
       }
     }.installOn(table)
@@ -90,11 +90,36 @@ object EditSourceOnDoubleClickHandler {
         }
 
         val dataContext = DataManager.getInstance().getDataContext(list)
-        OpenSourceUtil.openSourcesFrom(dataContext, true)
-        whenPerformed?.run()
+        navigateOnDoubleClick(dataContext, whenPerformed)
         return true
       }
     }.installOn(list)
+  }
+
+  private fun navigateOnDoubleClick(dataContext: DataContext, whenPerformed: Runnable?) {
+    if (Registry.`is`("ide.navigation.requests")) {
+      val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
+      val asyncContext = IdeUiService.getInstance().createAsyncDataContext(dataContext)
+      // childScope not available in platform-api, we cannot use something like SearchEverywhereContributorCoroutineScopeHolder
+      @Suppress("UsagesOfObsoleteApi")
+      (project as ComponentManagerEx).getCoroutineScope().launch(ClientId.coroutineContext()) {
+        val options = NavigationOptions.defaultOptions().requestFocus(true).preserveCaret(true)
+        project.serviceAsync<NavigationService>().navigate(asyncContext, options)
+        whenPerformed?.let { task ->
+          withContext(Dispatchers.EDT) {
+            writeIntentReadAction {
+              task.run()
+            }
+          }
+        }
+      }
+    }
+    else {
+      SlowOperations.knownIssue("IDEA-304701, EA-659716").use {
+        OpenSourceUtil.openSourcesFrom(dataContext, true)
+      }
+      whenPerformed?.run()
+    }
   }
 
   @JvmStatic
@@ -193,29 +218,7 @@ object EditSourceOnDoubleClickHandler {
     }
 
     protected open fun processDoubleClick(e: MouseEvent, dataContext: DataContext, treePath: TreePath) {
-      if (Registry.`is`("ide.navigation.requests")) {
-        val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
-        val asyncContext = IdeUiService.getInstance().createAsyncDataContext(dataContext)
-        // childScope not available in platform-api, we cannot use something like SearchEverywhereContributorCoroutineScopeHolder
-        @Suppress("UsagesOfObsoleteApi")
-        (project as ComponentManagerEx).getCoroutineScope().launch(ClientId.coroutineContext()) {
-          val options = NavigationOptions.defaultOptions().requestFocus(true).preserveCaret(true)
-          project.serviceAsync<NavigationService>().navigate(asyncContext, options)
-          whenPerformed?.let { task ->
-            withContext(Dispatchers.EDT) {
-              writeIntentReadAction {
-                task.run()
-              }
-            }
-          }
-        }
-      }
-      else {
-        SlowOperations.knownIssue("IDEA-304701, EA-659716").use {
-          OpenSourceUtil.openSourcesFrom(dataContext, true)
-        }
-        whenPerformed?.run()
-      }
+      navigateOnDoubleClick(dataContext, whenPerformed)
     }
   }
 }
