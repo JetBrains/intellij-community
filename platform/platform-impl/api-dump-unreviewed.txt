@@ -302,6 +302,7 @@ f:com.intellij.codeInsight.editorActions.TextBlockTransferable
 - s:convertLineSeparators(com.intellij.openapi.editor.Editor,java.lang.String):java.lang.String
 - s:convertLineSeparators(com.intellij.openapi.editor.Editor,java.lang.String,java.util.Collection):java.lang.String
 - s:convertLineSeparators(java.lang.String,java.lang.String,java.util.Collection):java.lang.String
+- s:convertPureVirtualSelectionRowsToEmptyLines(com.intellij.openapi.editor.Editor,java.lang.String):java.lang.String
 - getSize():I
 f:com.intellij.codeInsight.folding.impl.FoldingUtil
 - s:createFoldTreeIterator(com.intellij.openapi.editor.Editor):java.util.Iterator

@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCopyPasteHelper;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.EditorModificationUtilEx;
+import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actions.BasePasteHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -57,13 +58,18 @@ public final class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
 
     ThreadingAssertions.assertEventDispatchThread();
     List<TextBlockTransferableData> extraData = new ArrayList<>();
-    String s = editor.getCaretModel().supportsMultipleCarets() ? getSelectedTextForClipboard(editor, options, extraData)
-                                                               : editor.getSelectionModel().getSelectedText();
-    if (StringUtil.isEmpty(s)) return null;
+    boolean supportsMultipleCarets = editor.getCaretModel().supportsMultipleCarets();
+    String rawText = supportsMultipleCarets ? getSelectedTextForClipboard(editor, options, extraData)
+                                            : editor.getSelectionModel().getSelectedText();
+    if (StringUtil.isEmpty(rawText)) return null;
 
-    s = TextBlockTransferable.convertLineSeparators(s, "\n", extraData);
-    return editor.getCaretModel().supportsMultipleCarets() ? new TextBlockTransferable(s, extraData, null)
-                                                           : new StringSelection(s);
+    rawText = TextBlockTransferable.convertLineSeparators(rawText, "\n", extraData);
+    if (!supportsMultipleCarets) {
+      return new StringSelection(rawText);
+    }
+
+    String text = TextBlockTransferable.convertPureVirtualSelectionRowsToEmptyLines(rawText, editor.getCaretModel());
+    return new TextBlockTransferable(text, extraData, text.equals(rawText) ? null : new RawText(rawText));
   }
 
   @SuppressWarnings("unused")  // external usages

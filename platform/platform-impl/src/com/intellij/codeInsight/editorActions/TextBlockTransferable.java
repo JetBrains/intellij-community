@@ -2,6 +2,8 @@
 
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.ide.Sizeable;
@@ -11,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,6 +143,35 @@ public final class TextBlockTransferable implements Transferable, Sizeable {
     else{
       return StringUtil.convertLineSeparators(text, newSeparator);
     }
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull String convertPureVirtualSelectionRowsToEmptyLines(@NotNull String text, @NotNull CaretModel model) {
+    if (!model.supportsMultipleCarets()) {
+      return text;
+    }
+
+    List<Caret> carets = model.getAllCarets();
+    StringBuilder result = new StringBuilder(text.length());
+    int lineStart = 0;
+    int caretIndex = 0;
+    for (int i = 0; i <= text.length(); i++) {
+      if (i == text.length() || text.charAt(i) == '\n') {
+        if (caretIndex >= carets.size() || !isPureVirtualSelection(carets.get(caretIndex))) {
+          result.append(text, lineStart, i);
+        }
+        if (i < text.length()) {
+          result.append('\n');
+        }
+        lineStart = i + 1;
+        caretIndex++;
+      }
+    }
+    return result.toString();
+  }
+
+  private static boolean isPureVirtualSelection(@NotNull Caret caret) {
+    return caret.hasSelection() && caret.getSelectionStart() == caret.getSelectionEnd();
   }
 
   private record DataFlavorWithPriority(DataFlavor flavor, int priority) {
