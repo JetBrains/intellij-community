@@ -14,10 +14,7 @@ import org.gradle.tooling.internal.consumer.DefaultGradleConnector
 import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
-import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
-import org.jetbrains.kotlin.tooling.core.Extras
+import org.jetbrains.kotlin.idea.gradleTooling.IdeaMppProjectProvider
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.plugins.gradle.service.execution.createMainInitScript
 import org.jetbrains.plugins.gradle.service.execution.createTargetPathMapperInitScript
@@ -75,10 +72,7 @@ fun <T : Any> buildGradleModel(
         val targetPathMapperInitScript = createTargetPathMapperInitScript()
         executionSettings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, targetPathMapperInitScript.toString())
         val kotlinToolingExtensionClasses = buildSet {
-            add(KotlinMPPGradleModel::class.java)   // Module: intellij.kotlin.gradle.tooling.impl
-            add(KotlinTarget::class.java)           // Module: intellij.kotlin.base.project-model
-            add(IdeaKotlinDependency::class.java)   // Library: kotlin-gradle-plugin-idea
-            add(Extras::class.java)                 // Library: kotlin-tooling-core
+            addAll(IdeaMppProjectProvider.MODEL_CLASSPATH)
             addIfNotNull(builderClass)
         }
         val initScript = createMainInitScript(false, kotlinToolingExtensionClasses)
