@@ -41,6 +41,7 @@ private val LOG = logger<ProjectLeakDetector>()
 
 internal const val NOTIFICATION_GROUP_ID = "Project Leak Detection"
 private const val YOUTRACK_NEW_ISSUE_URL = "https://youtrack.jetbrains.com/newIssue"
+private const val YOUTRACK_VISIBILITY_GROUP = "jetbrains-team"
 
 // Snapshot upload target (same service used by Report Feedback / Collect Logs via LogUploader).
 private const val UPLOADS_URL = "https://uploads.jetbrains.com"
@@ -109,6 +110,7 @@ class LeakReporter(private val coroutineScope: CoroutineScope) {
   /**
    * Captures a memory snapshot and uploads it to [UPLOADS_URL],
    * then opens a prefilled YouTrack issue whose description links to the uploaded snapshot and copies the report to the clipboard.
+   * The opened draft is restricted to [YOUTRACK_VISIBILITY_GROUP] visibility, since the report may contain internal data.
    *
    * If the upload fails or is cancelled, falls back to opening [UPLOADS_URL] and revealing the snapshot file so it can be
    * uploaded manually.
@@ -213,7 +215,10 @@ class LeakReporter(private val coroutineScope: CoroutineScope) {
         else -> append("Memory snapshot: capture was unavailable.\n")
       }
     }
-    return "$YOUTRACK_NEW_ISSUE_URL?project=IJPL&summary=${encode(summary)}&description=${encode(description)}"
+
+    val visibilityCommand = "visible to $YOUTRACK_VISIBILITY_GROUP"
+    return "$YOUTRACK_NEW_ISSUE_URL?project=IJPL&summary=${encode(summary)}" +
+           "&description=${encode(description)}&c=${encode(visibilityCommand)}"
   }
 
   private fun encode(value: String): String = URLEncoder.encode(value, StandardCharsets.UTF_8)
