@@ -38,9 +38,11 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import java.nio.file.Path
 import kotlin.io.path.exists
+import org.jetbrains.annotations.ApiStatus
 
 
-internal val Sdk.isUv: Boolean
+@get:ApiStatus.Internal
+val Sdk.isUv: Boolean
   get() = PythonSdkUtil.isPythonSdk(this) && uvFlavorData != null
 
 internal val Sdk.uvFlavorData: UvSdkFlavorData?
