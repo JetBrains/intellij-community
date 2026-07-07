@@ -655,12 +655,14 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
   /**
    * Calls {@link Configurable#isModified()} on {@code configurable} and returns the result,
-   * or {@code null} if the call throws (with a warning logged).
-   * Some configurables throw before {@link Configurable#createComponent()} has been called —
-   * e.g. {@code CustomizationConfigurable} NPEs on a null panel, and
-   * {@code FileEncodingConfigurable} throws {@link AssertionError}.
+   * or {@code null} if {@link Configurable#createComponent()} has not been called yet
+   * (i.e. the configurable was never displayed) or if the call throws (with a warning logged).
    */
-  private static @Nullable Boolean isModifiedSafely(@NotNull Configurable configurable) {
+  private @Nullable Boolean isModifiedSafely(@NotNull Configurable configurable) {
+    if (editor.getContent(configurable) == null) {
+      LOG.debug("Configurable " + configurable.getDisplayName() + " was never displayed");
+      return null;
+    }
     try {
       return configurable.isModified();
     }
