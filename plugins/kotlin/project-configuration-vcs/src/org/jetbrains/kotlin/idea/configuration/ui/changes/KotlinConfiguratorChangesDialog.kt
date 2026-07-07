@@ -7,9 +7,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ContentRevision
 import com.intellij.openapi.vcs.changes.TextRevisionNumber
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.vcsUtil.VcsUtil
@@ -47,7 +47,7 @@ class KotlinConfiguratorChangesDialog(
 
             override fun getFile(): FilePath = filePath
 
-            override fun getRevisionNumber(): VcsRevisionNumber = TextRevisionNumber(name)
+            override fun getRevisionNumber(): VcsRevisionNumber = TextRevisionNumber(name, name)
         }
     }
 
