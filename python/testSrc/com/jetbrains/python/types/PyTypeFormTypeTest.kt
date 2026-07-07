@@ -71,6 +71,88 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
 
       x: TypeForm[int] = 42 # ISSUES *
       """)
+
+    @Test
+    fun `string forward reference is assignable to TypeForm`() = test("""
+      from typing_extensions import TypeForm
+
+      x: TypeForm[str | None] = "str | None"
+      """)
+
+    @Test
+    fun `simple string forward reference is assignable to TypeForm`() = test("""
+      from typing_extensions import TypeForm
+
+      x: TypeForm[int] = "int"
+      """)
+
+    @Test
+    fun `string forward reference is covariant`() = test("""
+      from typing_extensions import TypeForm
+
+      x: TypeForm[int | str] = "int"
+      """)
+
+    @Test
+    fun `string forward reference is assignable to TypeForm of Any`() = test("""
+      from typing import Any
+      from typing_extensions import TypeForm
+
+      x: TypeForm[Any] = "int"
+      """)
+
+    @Test
+    fun `multiline string forward reference is assignable to TypeForm`() = test("""
+      from typing_extensions import TypeForm
+
+      x: TypeForm[int | str] = ${"\"\"\""}
+          int | str
+      ${"\"\"\""}
+      """)
+
+    @Test
+    fun `string forward reference to a wrong type is not assignable to TypeForm`() = test("""
+      from typing_extensions import TypeForm
+
+      x: TypeForm[int] = "str" # ISSUES *
+      """)
+
+    @Test
+    fun `invalid string forward reference is not assignable to TypeForm`() = test("""
+      from typing_extensions import TypeForm
+
+      x: TypeForm[int] = "not a type" # ISSUES *
+      """)
+
+    @Test
+    fun `f-string is not assignable to TypeForm`() = test("""
+      from typing_extensions import TypeForm
+
+      x: TypeForm[int] = f"int" # ISSUES *
+      """)
+  }
+
+  @Nested
+  inner class StringArguments {
+    @Test
+    fun `string forward reference is a valid TypeForm argument`() = test("""
+      from typing_extensions import TypeForm
+
+      def g(x: TypeForm[int | str]): ...
+
+      def use():
+          g("int")
+      """)
+
+    @Test
+    fun `reports a wrong string forward reference argument`() = test("""
+      from typing_extensions import TypeForm
+
+      def g(x: TypeForm[int | str]): ...
+
+      def use():
+          g("bytes") # ISSUES *
+      """)
   }
 
   @Nested
@@ -116,6 +198,39 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
 
       def use():
           f(42) # ISSUES *
+      """)
+
+    @Test
+    fun `infers represented type from a string forward reference`() = test("""
+      from typing_extensions import TypeForm
+
+      def f[T](form: TypeForm[T]) -> T: ...
+
+      def use():
+          r = f("int")
+      #   └ TYPE int
+      """)
+
+    @Test
+    fun `infers represented type from a string forward reference union`() = test("""
+      from typing_extensions import TypeForm
+
+      def f[T](form: TypeForm[T]) -> T: ...
+
+      def use():
+          r = f("int | str")
+      #   └ TYPE int | str
+      """)
+
+    @Test
+    fun `infers represented type from a keyword string forward reference`() = test("""
+      from typing_extensions import TypeForm
+
+      def f[T](form: TypeForm[T]) -> T: ...
+
+      def use():
+          r = f(form="int")
+      #   └ TYPE int
       """)
   }
 

@@ -43,7 +43,6 @@ import com.jetbrains.python.psi.impl.PyPsiFacadeImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.stubs.PyLiteralKind
-import com.jetbrains.python.psi.types.PyLiteralType.Companion.upcastLiteralToClass
 import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import org.jetbrains.annotations.ApiStatus
@@ -355,6 +354,19 @@ class PyLiteralType private constructor(
     ): PyType? {
       val substitution = if (substitutions != null) PyTypeChecker.substitute(expected, substitutions, context) else expected
       val substitutionOrBound = if (substitution is PyTypeVarType) substitution.effectiveBound else substitution
+      // PEP 747: a string literal whose contents are a valid type expression is a valid `TypeForm` value.
+      if (substitutionOrBound is PyTypeFormType) {
+        val value = PyUtil.peelArgument(expression)
+        if (value is PyStringLiteralExpression && !value.isInterpolated) {
+          val contents = value.stringValue
+          // A multiline string literal can contain a type expression unparsable without parentheses.
+          val toParse = if ("\n" in contents) "($contents)" else contents
+          val denoted = Ref.deref(PyTypingTypeProvider.getStringBasedType(toParse, value, context))
+          if (denoted != null) {
+            PyTypeFormType.create(value, denoted)?.let { return it }
+          }
+        }
+      }
       if (substitutionOrBound.isUnknown) return PyAnyType.unknown
       return TypePromoter(context, containsLiteral(substitutionOrBound)).promoteToType(substitutionOrBound, expression)
     }
