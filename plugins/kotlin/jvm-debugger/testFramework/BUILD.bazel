@@ -43,6 +43,7 @@ jvm_library(
         "@lib//:kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-compiler-tests",
         "@lib//:kotlinc-kotlin-jps-common",
+        "@lib//:kotlinc-analysis-api",
         "//aether-dependency-resolver",
         "//aether-dependency-resolver:aether-dependency-resolver_test_lib",
         "//java/debugger/openapi:java-debugger",
