@@ -68,7 +68,10 @@ public final class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       return new StringSelection(rawText);
     }
 
-    String text = TextBlockTransferable.convertPureVirtualSelectionRowsToEmptyLines(rawText, editor.getCaretModel());
+    TextBlockTransferable.VirtualSelectionText selectionText =
+      TextBlockTransferable.convertVirtualSelectionRowsToEmptyLines(rawText, editor, extraData);
+    rawText = selectionText.rawText();
+    String text = selectionText.text();
     return new TextBlockTransferable(text, extraData, text.equals(rawText) ? null : new RawText(rawText));
   }
 

@@ -331,6 +331,54 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                         opq<caret># mnopqr""");
   }
 
+  public void testCopyPreservesEmptyLinesInBlockSelectionAfterLineEndWithoutColumnMode() {
+    init("""
+           # abcdef
+           #\s
+           # mnopqr""");
+    ((EditorEx)getEditor()).setColumnMode(false);
+    getEditor().getSelectionModel().setBlockSelection(new LogicalPosition(0, 4), new LogicalPosition(2, 7));
+    assertEquals(2, getEditor().getCaretModel().getCaretCount());
+
+    copy();
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertNotNull(contents);
+    assertEquals("cde\n\nopq", CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor));
+  }
+
+  public void testCopyPreservesOnlyDocumentLinesInBlockSelectionAfterLineEndWithoutColumnMode() {
+    init("""
+           # abcdef
+           #\s
+           # mnopqr""");
+    ((EditorEx)getEditor()).setColumnMode(false);
+    getEditor().getSelectionModel().setBlockSelection(new LogicalPosition(0, 4), new LogicalPosition(1000, 7));
+    assertEquals(2, getEditor().getCaretModel().getCaretCount());
+
+    copy();
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertNotNull(contents);
+    assertEquals("cde\n\nopq", CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor));
+  }
+
+  public void testMouseCopyPreservesEmptyLinesInBlockSelectionAfterLineEndWithoutColumnMode() {
+    init("""
+           # abcdef
+           #\s
+           # mnopqr""");
+    ((EditorEx)getEditor()).setColumnMode(false);
+    mouse().alt().pressAt(0, 4).dragTo(2, 7).release();
+    assertEquals(2, getEditor().getCaretModel().getCaretCount());
+
+    copy();
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertNotNull(contents);
+    assertEquals("cde\n\nopq", CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor));
+  }
+
   public void testCopyHelperPreservesEmptyLinesInBlockSelection() throws Exception {
     init("""
            # abcdef

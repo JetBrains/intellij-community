@@ -302,8 +302,15 @@ f:com.intellij.codeInsight.editorActions.TextBlockTransferable
 - s:convertLineSeparators(com.intellij.openapi.editor.Editor,java.lang.String):java.lang.String
 - s:convertLineSeparators(com.intellij.openapi.editor.Editor,java.lang.String,java.util.Collection):java.lang.String
 - s:convertLineSeparators(java.lang.String,java.lang.String,java.util.Collection):java.lang.String
-- s:convertPureVirtualSelectionRowsToEmptyLines(com.intellij.openapi.editor.Editor,java.lang.String):java.lang.String
+- s:convertVirtualSelectionRowsToEmptyLines(java.lang.String,com.intellij.openapi.editor.Editor):java.lang.String
+- s:convertVirtualSelectionRowsToEmptyLines(java.lang.String,com.intellij.openapi.editor.Editor,java.util.Collection):com.intellij.codeInsight.editorActions.TextBlockTransferable$VirtualSelectionText
 - getSize():I
+f:com.intellij.codeInsight.editorActions.TextBlockTransferable$VirtualSelectionText
+- <init>(java.lang.String,java.lang.String):V
+- equals(java.lang.Object):Z
+- hashCode():I
+- rawText():java.lang.String
+- text():java.lang.String
 f:com.intellij.codeInsight.folding.impl.FoldingUtil
 - s:createFoldTreeIterator(com.intellij.openapi.editor.Editor):java.util.Iterator
 - s:findFoldRegion(com.intellij.openapi.editor.Editor,I,I):com.intellij.openapi.editor.FoldRegion
@@ -3319,6 +3326,8 @@ f:com.intellij.openapi.editor.impl.ScrollingModelImpl
 - scrollVertically(I):V
 f:com.intellij.openapi.editor.impl.SelectionModelImpl
 - copySelectionToClipboard():V
+- getBlockSelectionEnd():com.intellij.openapi.editor.LogicalPosition
+- getBlockSelectionStart():com.intellij.openapi.editor.LogicalPosition
 - getEditor():com.intellij.openapi.editor.Editor
 - getTextAttributes():com.intellij.openapi.editor.markup.TextAttributes
 - removeSelectionListener(com.intellij.openapi.editor.event.SelectionListener):V

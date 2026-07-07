@@ -94,6 +94,18 @@ internal class TerminalCopyOnSelectionTest : BasePlatformTestCase() {
     assertEquals("irs\neco\nhir", afterClear!!.getTransferData(DataFlavor.stringFlavor))
   }
 
+  @Test
+  fun `copy on selection preserves empty rows for block selection after line end`() {
+    val editor = createTerminalEditor()
+    editor.emitOnTerminal("# abcdef\n# \n# mnopqr")
+
+    editor.selectionModel.setBlockSelection(LogicalPosition(0, 4), LogicalPosition(2, 7))
+    val copied = copiedTransferable()
+
+    assertNotNull(copied)
+    assertEquals("cde\n\nopq", copied!!.getTransferData(DataFlavor.stringFlavor))
+  }
+
   private fun createTerminalEditor(): Editor {
     val scope = terminalProjectScope(project).childScope("TerminalOutputEditor").also {
       Disposer.register(testRootDisposable) { it.cancel() }
