@@ -175,6 +175,7 @@ def _dependency_labels(library_id, variant, field, target_names, target_names_by
     labels = {}
     for dependency_id in dependencies:
         dependency_module_id = _maven_module_id(dependency_id)
+        dependency_module_id = _maven_module_id(dependency_id)
         target_name = target_names.get(dependency_id)
         if target_name == None:
             target_name = target_names_by_module.get(dependency_module_id)
@@ -498,10 +499,8 @@ def _register_artifact_repositories(resolution):
 
 def _kmp_extension_impl(module_ctx):
     config = _read_configure_tag(module_ctx)
-    repository_credentials = []
-    if config.deps:
-        netrc = module_ctx.getenv("NETRC") or ""
-        repository_credentials = _repository_credentials(module_ctx, config.repositories, netrc)
+    netrc = module_ctx.getenv("NETRC") or ""
+    repository_credentials = _repository_credentials(module_ctx, config.repositories, netrc)
     resolution_json = _resolve_with_facts(module_ctx, config, repository_credentials)
     resolution = json.decode(resolution_json)
     _register_artifact_repositories(resolution)
