@@ -1,12 +1,12 @@
 package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyPsiBundle
@@ -19,7 +19,6 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyClassTypeImpl
-import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeUtil.isSubtypeRelated
@@ -62,37 +61,35 @@ class PyInvalidCastInspection : PyInspection() {
 
         if (targetType.isSubtypeRelated(actualType, myTypeEvalContext)) return
 
-        // Relax the subtype-relation check according to the enabled options:
-        //  - ignoring generic variance erases generic type arguments, so e.g. casting 'list[int]' to 'list[object]'
-        //    is treated as subtype-related;
-        //  - ignoring TypedDict structure treats a TypedDict as a plain 'dict', so e.g. a 'dict[str, object]' may be
-        //    cast to a TypedDict.
-        if (ignoreGenericVariance || ignoreTypedDictStructure) {
-          var relaxedTarget = targetType
-          var relaxedActual = actualType
-          if (ignoreGenericVariance) {
-            relaxedTarget = relaxedTarget.eraseGenericParameters()
-            relaxedActual = relaxedActual.eraseGenericParameters()
-          }
-          if (ignoreTypedDictStructure) {
-            relaxedTarget = relaxedTarget.eraseTypedDictStructure()
-            relaxedActual = relaxedActual.eraseTypedDictStructure()
-          }
-          if (relaxedTarget.isSubtypeRelated(relaxedActual, myTypeEvalContext)) return
+        // Treat a TypedDict as a plain 'dict' when the corresponding option is enabled, so that e.g. a
+        // 'dict[str, object]' may be cast to a TypedDict and vice versa.
+        if (ignoreTypedDictStructure &&
+            targetType.eraseTypedDictStructure().isSubtypeRelated(actualType.eraseTypedDictStructure(), myTypeEvalContext)) {
+          return
         }
+
+        // The types become subtype-related once the variance of their generic arguments is ignored, so the mismatch
+        // is purely about variance (e.g. casting the invariant 'list[int]' to 'list[object]'). Such casts are only
+        // reported when the "ignore generic variance" option is disabled, and get a dedicated message.
+        val relatedIgnoringVariance = isSubtypeRelatedIgnoringVariance(targetType, actualType, myTypeEvalContext)
+        if (relatedIgnoringVariance && ignoreGenericVariance) return
+
         val fromName = PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)
         val toName = PythonDocumentationProvider.getVerboseTypeName(targetType, myTypeEvalContext)
 
         val suggestedName = computeSuggestedIntermediateTypeName(targetType, actualType, myTypeEvalContext)
 
+        val messageKey = if (relatedIgnoringVariance) "INSP.invalid.cast.variance.message" else "INSP.invalid.cast.message"
+
         registerProblem(
           callExpression,
-          PyPsiBundle.message(
-            "INSP.invalid.cast.message",
+          PyPsiBundle.problemMessage(
+            messageKey,
             fromName,
             toName,
             suggestedName
           ),
+          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
           AddIntermediateCastQuickFix(suggestedName)
         )
       }
@@ -119,14 +116,30 @@ private class AddIntermediateCastQuickFix(private val typeText: String) : PsiUpd
 }
 
 /**
- * Erases generic type arguments so that parameterized types are compared by their base class only,
- * making the subtype-relation check insensitive to the variance of generic parameters
- * (e.g. `list[int]` becomes plain `list`). Union members are erased element-wise.
+ * Checks whether two types are subtype-related while ignoring the variance of generic type arguments: two
+ * parameterized types of related base classes are considered related as long as their corresponding type arguments
+ * are themselves subtype-related, regardless of the direction required by the declared variance
+ * (e.g. `list\[int]` and `list\[object]` are related, but `list\[str]` and `list\[int]` are not). This makes the check
+ * insensitive to whether a generic parameter is invariant, covariant, or contravariant. Union members are
+ * distributed over.
  */
-private fun PyType?.eraseGenericParameters(): PyType? = when (this) {
-  is PyUnionType -> this.map { it.eraseGenericParameters() }
-  is PyCollectionType -> PyClassTypeImpl(this.pyClass, this.isDefinition)
-  else -> this
+private fun isSubtypeRelatedIgnoringVariance(t1: PyType?, t2: PyType?, context: TypeEvalContext): Boolean {
+  if (t1 is PyUnionType) return t1.members.any { isSubtypeRelatedIgnoringVariance(it, t2, context) }
+  if (t2 is PyUnionType) return t2.members.any { isSubtypeRelatedIgnoringVariance(t1, it, context) }
+
+  if (t1 is PyClassType && t2 is PyClassType && t1.isParameterized && t2.isParameterized) {
+    val base1 = PyClassTypeImpl(t1.pyClass, t1.isDefinition)
+    val base2 = PyClassTypeImpl(t2.pyClass, t2.isDefinition)
+    if (!base1.isSubtypeRelated(base2, context)) return false
+
+    val args1 = t1.typeArguments
+    val args2 = t2.typeArguments
+    // Different arity means we can't align the arguments; the base-class relation is enough to consider them related.
+    if (args1.size != args2.size) return true
+    return args1.indices.all { isSubtypeRelatedIgnoringVariance(args1[it], args2[it], context) }
+  }
+
+  return t1.isSubtypeRelated(t2, context)
 }
 
 /**
