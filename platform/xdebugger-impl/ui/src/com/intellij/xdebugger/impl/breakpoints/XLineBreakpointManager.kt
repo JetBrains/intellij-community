@@ -61,17 +61,10 @@ class XLineBreakpointManager(
     return myBreakpoints.values()
   }
 
-  @ApiStatus.Internal
-  fun getBreakpointFileUrls(): Collection<String> {
-    return myBreakpoints.keySet()
-  }
-
-  @ApiStatus.Internal
   fun getFileBreakpoints(fileUrl: String): Collection<XLineBreakpointProxy> {
     return myBreakpoints[fileUrl]
   }
 
-  @ApiStatus.Internal
   fun removeBreakpoints(toRemove: Collection<XBreakpointProxy>?) {
     for (breakpoint in toRemove.orEmpty()) {
       manager.removeBreakpoint(breakpoint)

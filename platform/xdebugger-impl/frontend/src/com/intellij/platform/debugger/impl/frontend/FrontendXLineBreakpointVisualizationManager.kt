@@ -40,7 +40,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.debugger.impl.shared.proxy.XLightLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
@@ -96,8 +95,8 @@ internal class FrontendXLineBreakpointVisualizationManager(
 
       Registry.get(XDebuggerUtil.INLINE_BREAKPOINTS_KEY).addListener(object : RegistryValueListener {
         override fun afterValueChanged(value: RegistryValue) {
-          for (fileUrl in manager.getBreakpointFileUrls()) {
-            val file = VirtualFileManager.getInstance().findFileByUrl(fileUrl) ?: continue
+          for (breakpoint in manager.getAllBreakpoints()) {
+            val file = breakpoint.getFile() ?: continue
             if (XDebuggerUtil.areInlineBreakpointsEnabled(file)) continue
             val document = FileDocumentManager.getInstance().getDocument(file) ?: continue
             // Multiple breakpoints on the single line should be joined in this case.
