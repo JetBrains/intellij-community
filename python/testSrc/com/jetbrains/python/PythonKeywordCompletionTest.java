@@ -368,7 +368,7 @@ public class PythonKeywordCompletionTest extends PyTestCase {
 
   // PY-49728
   public void testNonLiteralExpressionKeywordsInGuardCondition() {
-    assertContainsElements(doTestByTestName(), PyNames.ASYNC, PyNames.NOT, PyNames.LAMBDA);
+    assertContainsElements(doTestByTestName(), PyNames.NOT, PyNames.LAMBDA);
   }
 
   // PY-49728
@@ -414,6 +414,15 @@ public class PythonKeywordCompletionTest extends PyTestCase {
       PyNames.ASYNC + " " + PyNames.FOR,
       PyNames.ASYNC + " " + PyNames.WITH
     );
+  }
+
+  // PY-90809
+  public void testAsyncKeywordNotSuggestedInsideArbitraryExpressions() {
+    List<String> variants = doTestByText("""
+                                           def f(asset):
+                                               if as<caret>
+                                           """);
+    assertDoesntContain(variants, PyNames.ASYNC);
   }
 
   // PY-88664

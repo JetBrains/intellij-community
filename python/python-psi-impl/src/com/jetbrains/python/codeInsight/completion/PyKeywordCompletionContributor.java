@@ -810,19 +810,18 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
                putKeyword(PyNames.ASYNC + " " + PyNames.WITH, TRAILING_SPACE_INSERT_HANDLER, TailTypes.noneType(), result);
              }
            });
-
     extend(CompletionType.BASIC,
            psiElement()
              .withLanguage(PythonLanguage.getInstance())
              .and(PY35)
+             .and(IN_BEGIN_STMT)
              .andNot(IN_COMMENT)
              .andNot(IN_IMPORT_STMT)
              .andNot(IN_PARAM_LIST)
              .andNot(AFTER_QUALIFIER)
              .andNot(IN_STRING_LITERAL)
              .andNot(TARGET_AFTER_QUALIFIER)
-             .andNot(IN_PATTERN)
-             .andNot(IS_TYPE_PARAMETER_NAME),
+             .andNot(IN_PATTERN),
            new PyKeywordCompletionProvider(PyNames.ASYNC));
     extend(CompletionType.BASIC,
            psiElement()
