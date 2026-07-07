@@ -42,6 +42,7 @@ import com.jetbrains.python.psi.impl.ParamHelper
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyPsiUtils
+import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
 import com.jetbrains.python.psi.impl.PyTypeProvider
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyCallableParameterMapping.mapCallableParameters
@@ -2487,6 +2488,7 @@ object PyTypeChecker {
     target: PyExpression,
     parentTupleOrList: PySequenceExpression,
     assignedTupleType: PyTupleType,
+    context: TypeEvalContext,
   ): PyType? {
     val count = assignedTupleType.elementCount
     val elements = parentTupleOrList.elements
@@ -2529,14 +2531,13 @@ object PyTypeChecker {
         if (element == target) {
           return assignedTupleType.getElementType(effectiveIndex)
         }
-        if (element is PyTupleExpression || element is PyListLiteralExpression) {
-          val elementType = assignedTupleType.getElementType(effectiveIndex)
-          if (elementType is PyTupleType) {
-            val result = getTargetTypeFromTupleAssignment(target, element, elementType)
-            if (result != null) {
-              return result
-            }
-          }
+        if ((element is PyTupleExpression || element is PyListLiteralExpression)
+            && element.textRange.contains(target.textRange)) {
+          // The target is nested inside this element; unpack the corresponding item type into it. Delegating to the
+          // iterable-unpacking entry point handles a nested homogeneous iterable (e.g. a `list` inside the tuple),
+          // not just a nested tuple.
+          val elementType = assignedTupleType.getElementType(effectiveIndex) ?: return null
+          return PyTargetExpressionImpl.getTargetTypeFromIterableUnpacking(target, element, null, elementType, context)
         }
       }
       return null
@@ -2549,14 +2550,13 @@ object PyTypeChecker {
       }
       for (i in 0..<count) {
         val element = PyPsiUtils.flattenParens(elements[i])
-        if (element is PyTupleExpression || element is PyListLiteralExpression) {
-          val elementType = assignedTupleType.getElementType(i)
-          if (elementType is PyTupleType) {
-            val result = getTargetTypeFromTupleAssignment(target, element, elementType)
-            if (result != null) {
-              return result
-            }
-          }
+        if ((element is PyTupleExpression || element is PyListLiteralExpression)
+            && element.textRange.contains(target.textRange)) {
+          // The target is nested inside this element; unpack the corresponding item type into it. Delegating to the
+          // iterable-unpacking entry point handles a nested homogeneous iterable (e.g. a `list` inside the tuple),
+          // not just a nested tuple.
+          val elementType = assignedTupleType.getElementType(i) ?: return null
+          return PyTargetExpressionImpl.getTargetTypeFromIterableUnpacking(target, element, null, elementType, context)
         }
       }
     }

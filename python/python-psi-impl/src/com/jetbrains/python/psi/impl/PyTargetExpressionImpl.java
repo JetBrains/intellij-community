@@ -83,6 +83,7 @@ import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
+import com.jetbrains.python.psi.types.PyCollectionTypeImpl;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyNamedTupleType;
 import com.jetbrains.python.psi.types.PyTupleType;
@@ -240,7 +241,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         if (value != null && (targetTupleOrList instanceof PyTupleExpression || targetTupleOrList instanceof PyListLiteralExpression)) {
           PyType assignedType = PyUnionType.toNonWeakType(context.getType(value));
           if (assignedType != null) {
-            PyType positionalItemType = getTargetTypeFromIterableUnpacking(targetTupleOrList, value, assignedType, context);
+            PyType positionalItemType = getTargetTypeFromIterableUnpacking(this, targetTupleOrList, value, assignedType, context);
             if (positionalItemType != null) {
               return positionalItemType;
             }
@@ -288,16 +289,26 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return PyAnyType.getUnknown();
   }
 
-  private @Nullable PyType getTargetTypeFromIterableUnpacking(@NotNull PySequenceExpression topmostContainingTupleOrList,
-                                                              @Nullable PyExpression assignedIterable, @NotNull PyType assignedType,
-                                                              @NotNull TypeEvalContext context) {
+  /**
+   * Computes the type of {@code target} when the sequence {@code topmostContainingTupleOrList} is unpacked from an
+   * iterable of type {@code assignedType} (e.g. {@code [a, b] = value}, {@code for a, b in value}).
+   * <p>
+   * Mutually recursive with {@link PyTypeChecker#getTargetTypeFromTupleAssignment}: fixed-length (heterogeneous) tuple
+   * items are distributed positionally by that method, which delegates each nested target back here so that a nested
+   * homogeneous iterable (e.g. a {@code list} inside a {@code tuple}) is unpacked correctly.
+   */
+  @ApiStatus.Internal
+  public static @Nullable PyType getTargetTypeFromIterableUnpacking(@NotNull PyExpression target,
+                                                                    @NotNull PySequenceExpression topmostContainingTupleOrList,
+                                                                    @Nullable PyExpression assignedIterable, @NotNull PyType assignedType,
+                                                                    @NotNull TypeEvalContext context) {
     if (assignedType instanceof PyTupleType tupleType) {
-      return PyTypeChecker.getTargetTypeFromTupleAssignment(this, topmostContainingTupleOrList, tupleType);
+      return PyTypeChecker.getTargetTypeFromTupleAssignment(target, topmostContainingTupleOrList, tupleType, context);
     }
     else if (assignedType instanceof PyClassLikeType classLikeType) {
       PyNamedTupleType namedTupleType = ContainerUtil.findInstance(classLikeType.getAncestorTypes(context), PyNamedTupleType.class);
       if (namedTupleType != null) {
-        return PyTypeChecker.getTargetTypeFromTupleAssignment(this, topmostContainingTupleOrList, namedTupleType);
+        return PyTypeChecker.getTargetTypeFromTupleAssignment(target, topmostContainingTupleOrList, namedTupleType, context);
       }
       else {
         final PyType iterationType = assignedIterable != null
@@ -307,14 +318,19 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
           return null;
         }
         PyExpression[] elements = topmostContainingTupleOrList.getElements();
-        if (ArrayUtil.contains(this, elements)) {
+        if (ArrayUtil.contains(target, elements)) {
           return iterationType;
         }
 
         for (PyExpression element : elements) {
+          // A starred target collects a homogeneous list of the element type regardless of its
+          // position (e.g. `head, *tail = xs` or `first, *middle, last = xs`).
+          if (element instanceof PyStarExpression starExpression && PyPsiUtils.flattenParens(starExpression.getExpression()) == target) {
+            return createHomogeneousListType(target, iterationType);
+          }
           if (PyPsiUtils.flattenParens(element) instanceof PySequenceExpression sequenceExpression
-              && sequenceExpression.getTextRange().contains(getTextRange())) {
-            PyType foundType = getTargetTypeFromIterableUnpacking(sequenceExpression, null, iterationType, context);
+              && sequenceExpression.getTextRange().contains(target.getTextRange())) {
+            PyType foundType = getTargetTypeFromIterableUnpacking(target, sequenceExpression, null, iterationType, context);
             if (foundType != null) {
               return foundType;
             }
@@ -323,6 +339,14 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       }
     }
     return PyAnyType.getUnknown();
+  }
+
+  private static @Nullable PyType createHomogeneousListType(@NotNull PsiElement anchor, @NotNull PyType elementType) {
+    PyClass listClass = PyBuiltinCache.getInstance(anchor).getClass("list");
+    if (listClass == null) {
+      return PyAnyType.getUnknown();
+    }
+    return new PyCollectionTypeImpl(listClass, false, Collections.singletonList(PyLiteralType.upcastLiteralToClass(elementType)));
   }
 
   @Override
@@ -439,8 +463,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       final PyType sourceType = context.getType(source);
       final PyType type = getIterationType(sourceType, source, this, isAsync, context);
       target = PyPsiUtils.flattenParens(target);
-      if (type instanceof PyTupleType tupleType && (target instanceof PyTupleExpression || target instanceof PyListLiteralExpression)) {
-        return PyTypeChecker.getTargetTypeFromTupleAssignment(this, (PySequenceExpression)target, tupleType);
+      if (type != null && (target instanceof PyTupleExpression || target instanceof PyListLiteralExpression)) {
+        return getTargetTypeFromIterableUnpacking(this, (PySequenceExpression)target, null, type, context);
       }
       if (target == this && type != null) {
         return type;

@@ -389,6 +389,93 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       ys = [expr for [_, [expr]] in xs]
       #     └ TYPE str
       """)
+
+    @Test
+    @TestFor(issues = ["PY-89977"])
+    fun `homogeneous iterable unpacking in for loop`() = test("""
+      def f(a: list[list[int]]):
+          for expr, e in a:
+      #       └ TYPE int
+              pass
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-89977"])
+    fun `homogeneous iterable unpacking in for loop square brackets`() = test("""
+      def f(a: list[list[int]]):
+          for [b, expr] in a:
+      #           └ TYPE int
+              pass
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-89977"])
+    fun `homogeneous iterable unpacking in comprehension`() = test("""
+      def f(a: list[list[int]]):
+          ys = [expr for expr, e in a]
+      #         └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-89977"])
+    fun `homogeneous iterable star target in for loop`() = test("""
+      def f(a: list[list[int]]):
+          for head, *expr in a:
+      #               └ TYPE list[int]
+              pass
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-89977"])
+    fun `homogeneous iterable star target in assignment`() = test("""
+      def f(xs: list[int]):
+          h, *expr = xs
+      #       └ TYPE list[int]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-89977"])
+    fun `homogeneous iterable star target in the middle`() = test("""
+      def f(xs: list[int]):
+          a1, *expr, a3 = xs
+      #        └ TYPE list[int]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-89977"])
+    fun `homogeneous iterable head beside star target`() = test("""
+      def f(a: list[list[int]]):
+          for expr, *tail in a:
+      #         └ TYPE int
+              pass
+      """)
+
+    @Disabled("PY-89977: on 262 the nested-iterable unpacking path yields a null type, which trips PyAnyType validation; the full PyAnyType migration (PY-88453) that hardens this is not on 262")
+    @Test
+    @TestFor(issues = ["PY-89977"])
+    fun `nested homogeneous iterable inside tuple assignment`() = test("""
+      def f():
+          a, (expr, c) = (1, [2, 3])
+      #          └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-89977"])
+    fun `nested homogeneous iterable inside tuple for loop`() = test("""
+      def f(x: list[tuple[int, list[str]]]):
+          for p, (expr, r) in x:
+      #              └ TYPE str
+              pass
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-89977"])
+    fun `nested star target over homogeneous iterable inside tuple for loop`() = test("""
+      def f(x: list[tuple[int, list[str]]]):
+          for p, [*expr] in x:
+      #             └ TYPE list[str]
+              pass
+      """)
   }
 
   @Nested
