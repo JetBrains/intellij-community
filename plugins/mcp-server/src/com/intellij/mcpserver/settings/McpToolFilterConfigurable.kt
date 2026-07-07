@@ -25,13 +25,14 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparatorImpl
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.rows
 import com.intellij.ui.dsl.builder.selected
-import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparatorImpl
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.text.NameUtilCore
-import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -44,11 +45,9 @@ import java.awt.event.ComponentEvent
 import java.awt.event.KeyEvent
 import java.nio.file.Path
 import javax.swing.AbstractAction
-import javax.swing.DefaultListCellRenderer
 import javax.swing.JCheckBox
 import javax.swing.JComboBox
 import javax.swing.JComponent
-import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.JViewport
 import javax.swing.KeyStroke
@@ -301,25 +300,12 @@ class McpToolFilterConfigurable : SearchableConfigurable {
   private fun createTopPanel(): JComponent = panel {
     if (hasManagedSessionSupport) {
       row(McpServerBundle.message("configurable.mcp.tool.filter.managed.router.label")) {
-        val comboBox = comboBox(ManagedSessionRouterMode.entries)
+        val comboBox = comboBox(ManagedSessionRouterMode.entries, textListCellRenderer("") { it.displayName })
           .onChanged {
             updateRouterOnlyControls()
           }
           .applyToComponent {
             selectedItem = currentManagedSessionRouterMode(initialInvocationMode)
-            renderer = object : DefaultListCellRenderer() {
-              override fun getListCellRendererComponent(
-                list: JList<*>?,
-                value: Any?,
-                index: Int,
-                isSelected: Boolean,
-                cellHasFocus: Boolean,
-              ): Component {
-                return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus).apply {
-                  text = (value as? ManagedSessionRouterMode)?.displayName
-                }
-              }
-            }
           }
         managedSessionRouterModeComboBox = comboBox.component
       }.rowComment(McpServerBundle.message("configurable.mcp.tool.filter.router.comment"))
