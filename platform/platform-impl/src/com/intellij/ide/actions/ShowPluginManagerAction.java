@@ -44,10 +44,8 @@ final class ShowPluginManagerAction extends AnAction implements DumbAware, Actio
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    // todo remove after ActionSearchDuplicatesTest fix
     e.getPresentation().setEnabledAndVisible(
       !ActionPlaces.isMacSystemMenuAction(e)
-      && !ActionPlaces.ACTION_SEARCH.equals(e.getPlace())
     );
   }
 
