@@ -12,10 +12,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.impl.FakePsiElement
-import org.intellij.plugins.markdown.lang.isMarkdownType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination
 import org.intellij.plugins.markdown.lang.references.ReferenceUtil
 import org.intellij.plugins.markdown.lang.references.paths.FileWithoutExtensionReference
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.util.MarkdownLinkFragmentUtil
 
 internal class LineNumberPathReferenceProvider: PathReferenceProviderBase() {
@@ -34,7 +34,7 @@ internal class LineNumberPathReferenceProvider: PathReferenceProviderBase() {
     val fragmentRange = MarkdownLinkFragmentUtil.getFragmentRange(elementText, range) ?: return false
     val lineRange = MarkdownLinkFragmentUtil.parseGitHubLineRange(fragmentRange.substring(elementText)) ?: return false
     val targetFile = findTargetFile(references) ?: return false
-    if (targetFile.fileType.isMarkdownType()) {
+    if (targetFile.supportsMarkdown()) {
       return false
     }
     references.add(object : PsiReferenceBase<MarkdownLinkDestination>(element, TextRange(fragmentRange.startOffset, fragmentRange.startOffset + fragmentRange.length), false) {
