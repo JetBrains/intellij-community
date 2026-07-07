@@ -1027,15 +1027,6 @@ internal class PluginDependenciesTest {
         }
       }.installAt(pluginDirPath)
 
-      plugin("full.line.provider") {
-        pluginAlias("org.jetbrains.completion.full.line")
-        content(namespace = "jetbrains") {
-          module("intellij.fullLine.core") { packagePrefix = "com.intellij.fullLine.core"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
-          module("intellij.fullLine.local") { packagePrefix = "com.intellij.fullLine.local"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
-          module("intellij.fullLine.core.impl") { packagePrefix = "com.intellij.fullLine.core.impl"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
-        }
-      }.installAt(pluginDirPath)
-
       plugin("cwm.provider") {
         pluginAlias("com.jetbrains.codeWithMe")
         content(namespace = "jetbrains") {
@@ -1061,7 +1052,6 @@ internal class PluginDependenciesTest {
         dependencies {
           plugin(PluginManagerCore.JAVA_PLUGIN_ALIAS_ID.idString)
           plugin("com.intellij.modules.rider")
-          plugin("org.jetbrains.completion.full.line")
           plugin("com.jetbrains.codeWithMe")
           plugin("intellij.rider.plugins.cwm")
           plugin("com.intellij.modules.json")
@@ -1073,15 +1063,11 @@ internal class PluginDependenciesTest {
       assertThat(consumer).hasExactDirectParentClassloaders(
         pluginSet.getEnabledPlugin("java.provider"),
         pluginSet.getEnabledPlugin("rider.provider"),
-        pluginSet.getEnabledPlugin("full.line.provider"),
         pluginSet.getEnabledPlugin("cwm.provider"),
         pluginSet.getEnabledPlugin("cwm.rider.provider"),
         pluginSet.getEnabledPlugin("json.provider"),
         pluginSet.getEnabledModule("intellij.java.backend"),
         pluginSet.getEnabledModule("intellij.rider"),
-        pluginSet.getEnabledModule("intellij.fullLine.core"),
-        pluginSet.getEnabledModule("intellij.fullLine.local"),
-        pluginSet.getEnabledModule("intellij.fullLine.core.impl"),
         pluginSet.getEnabledModule("intellij.cwm"),
         pluginSet.getEnabledModule("intellij.rider.plugins.cwm"),
         pluginSet.getEnabledModule("intellij.json.backend"),
@@ -1239,35 +1225,6 @@ internal class PluginDependenciesTest {
       assertThat(consumer).hasExactDirectParentClassloaders(
         pluginSet.getEnabledPlugin("java.alias.provider"),
         pluginSet.getEnabledModule("intellij.java.backend"),
-      )
-    }
-
-    @Test
-    fun `depends on full line alias adds full line modules`() {
-      plugin("full.line.alias.provider") {
-        pluginAlias("org.jetbrains.completion.full.line")
-      }.installAt(pluginDirPath)
-
-      plugin("full.line.modules") {
-        content(namespace = "jetbrains") {
-          module("intellij.fullLine.core") { packagePrefix = "com.intellij.fullLine.core"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
-          module("intellij.fullLine.local") { packagePrefix = "com.intellij.fullLine.local"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
-          module("intellij.fullLine.core.impl") { packagePrefix = "com.intellij.fullLine.core.impl"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
-        }
-      }.installAt(pluginDirPath)
-
-      plugin("consumer") {
-        vendor = "JetBrains"
-        depends("org.jetbrains.completion.full.line")
-      }.installAt(pluginDirPath)
-
-      val pluginSet = buildPluginSet()
-      val consumer = pluginSet.getEnabledPlugin("consumer")
-      assertThat(consumer).hasExactDirectParentClassloaders(
-        pluginSet.getEnabledPlugin("full.line.alias.provider"),
-        pluginSet.getEnabledModule("intellij.fullLine.core"),
-        pluginSet.getEnabledModule("intellij.fullLine.local"),
-        pluginSet.getEnabledModule("intellij.fullLine.core.impl"),
       )
     }
 

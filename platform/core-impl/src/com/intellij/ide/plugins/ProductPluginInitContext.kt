@@ -326,11 +326,6 @@ class ProductPluginInitContext(
           if (doesDependOnPluginAlias(descriptor, RIDER_ALIAS_ID)) {
             yieldIfResolves(DependencyRef.of(RIDER_MODULE_ID))
           }
-          if (doesDependOnPluginAlias(descriptor, PluginId.getId("org.jetbrains.completion.full.line"))) {
-            fullLineApiContentModules.forEach { fullLineModule ->
-              yieldIfResolves(DependencyRef.of(fullLineModule))
-            }
-          }
 
           if (PlatformUtils.isGateway() && doesDependOnPluginAlias(descriptor, PluginId.getId("com.jetbrains.gateway"))) {
             contentModulesExtractedInCorePluginInGateway.forEach { module ->
@@ -452,16 +447,6 @@ private val vcsApiContentModules = arrayOf(
 ).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
 
 private val COLLABORATION_TOOLS_MODULE_ID = PluginModuleId("intellij.platform.collaborationTools", PluginModuleId.JETBRAINS_NAMESPACE)
-
-/**
- * List of content modules from the core plugin which should be automatically added as dependencies to all plugins with dependency on `org.jetbrains.completion.full.line` plugin
- * alias for compatibility.
- */
-private val fullLineApiContentModules = arrayOf(
-  "intellij.fullLine.core",
-  "intellij.fullLine.local",
-  "intellij.fullLine.core.impl",
-).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
 
 /**
  * Specifies the list of content modules which was recently extracted from the main module of the core plugin and may have external usages.
