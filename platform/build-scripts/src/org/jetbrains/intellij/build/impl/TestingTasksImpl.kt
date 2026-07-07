@@ -1643,4 +1643,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.xpath.tests",
   "intellij.yaml.backend.tests",
   "intellij.yaml.tests",
+  "intellij.xml.xmlbeans.tests",
 )
