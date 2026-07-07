@@ -58,6 +58,10 @@ import kotlin.time.Duration.Companion.milliseconds
 private val logger = logger<AnalysisToolset>()
 
 class AnalysisToolset : McpToolset {
+  override fun displayName(): String = McpServerBundle.message("toolset.display.name.analysis")
+
+  override fun displayDescription(toolName: String): String? = McpServerBundle.message("tool.description.$toolName")
+
   @McpToolHints(readOnlyHint = TRUE, openWorldHint = FALSE)
   @McpTool
   @McpDescription("""
