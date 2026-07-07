@@ -62,6 +62,10 @@
       dynamic="true"
       qualifiedName="com.intellij.compose.ide.plugin.resources.dataProvider"
       interface="com.intellij.compose.ide.plugin.resources.ComposeResourcesDataProvider"/>
+    <extensionPoint
+      dynamic="true"
+      qualifiedName="com.intellij.compose.ide.plugin.resources.settingsContributor"
+      interface="com.intellij.compose.ide.plugin.resources.settings.ComposeResourcesSettingsContributor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij.compose.ide.plugin.resources">
@@ -74,6 +78,12 @@
   <extensions defaultExtensionNs="com.intellij">
     <annotator language="XML" implementationClass="com.intellij.compose.ide.plugin.resources.highlighting.ComposeResourcesXmlAnnotator"/>
 
+    <applicationConfigurable
+      id="compose.resources.settings"
+      parentId="kmp.settings.group"
+      bundle="messages.ComposeIdeBundle"
+      key="compose.resources.title"
+      instance="com.intellij.compose.ide.plugin.resources.settings.ComposeResourcesConfigurable"/>
 
     <codeInsight.unresolvedReferenceQuickFixProvider
       implementation="com.intellij.compose.ide.plugin.resources.intentions.ComposeResourcesUnresolvedStringReferenceQuickFixProvider"/>
