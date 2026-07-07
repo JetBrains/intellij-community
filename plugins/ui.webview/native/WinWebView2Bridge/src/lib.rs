@@ -37,7 +37,7 @@ const MODIFIER_SHIFT: jint = 1;
 const MODIFIER_CONTROL: jint = 1 << 1;
 const MODIFIER_ALT: jint = 1 << 2;
 const MODIFIER_META: jint = 1 << 3;
-const NATIVE_ABI_VERSION: &str = "wvi-dedicated-thread-v5";
+const NATIVE_ABI_VERSION: &str = "wvi-dedicated-thread-v7";
 const WM_USER_INVOKE: u32 = WM_USER + 1;
 const WEBVIEW_ASSET_URL_FILTER: &str = "https://ij-webview-assets.local/*";
 const DIAGNOSTIC_TRACE: jint = 0;
@@ -124,6 +124,31 @@ impl JavaCallbacks {
                 "onEvaluationError",
                 "(JLjava/lang/String;)V",
                 &[JValue::Long(eval_id), JValue::Object(&message)],
+            )?;
+            Ok(())
+        });
+    }
+
+    fn on_dev_tools_protocol_method_result(
+        &self,
+        call_id: jlong,
+        result: Option<String>,
+        error: Option<String>,
+    ) {
+        self.with_env(|env, object| {
+            let result = match result {
+                Some(result) => JObject::from(env.new_string(result)?),
+                None => JObject::null(),
+            };
+            let error = match error {
+                Some(error) => JObject::from(env.new_string(error)?),
+                None => JObject::null(),
+            };
+            env.call_method(
+                object,
+                "onDevToolsProtocolMethodResult",
+                "(JLjava/lang/String;Ljava/lang/String;)V",
+                &[JValue::Long(call_id), JValue::Object(&result), JValue::Object(&error)],
             )?;
             Ok(())
         });
@@ -465,6 +490,7 @@ struct NativeWebView {
         ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,
     )>,
     execute_script_handlers: Vec<(u64, ICoreWebView2ExecuteScriptCompletedHandler)>,
+    dev_tools_handlers: Vec<(u64, ICoreWebView2CallDevToolsProtocolMethodCompletedHandler)>,
     next_script_handler_id: u64,
     document_start_scripts: Vec<String>,
     web_message_token: EventRegistrationToken,
@@ -515,6 +541,7 @@ impl NativeWebView {
         self.controller_completed_handler = None;
         self.add_script_handlers.clear();
         self.execute_script_handlers.clear();
+        self.dev_tools_handlers.clear();
         if !self.hwnd.0.is_null() {
             unsafe {
                 let _ = DestroyWindow(self.hwnd);
@@ -732,6 +759,38 @@ pub extern "system" fn Java_com_intellij_ui_webview_impl_windows_WinWebView2Brid
 }
 
 #[no_mangle]
+pub extern "system" fn Java_com_intellij_ui_webview_impl_windows_WinWebView2Bridge_setVirtualHostNameToFolderMappingNative(
+    mut env: JNIEnv<'_>,
+    _class: JClass<'_>,
+    handle: jlong,
+    host_name: JString<'_>,
+    folder_path: JString<'_>,
+) {
+    let host_name = match jstring_to_string(&mut env, host_name) {
+        Ok(value) => value,
+        Err(message) => {
+            let _ = env.throw_new("java/lang/IllegalArgumentException", message);
+            return;
+        }
+    };
+    let folder_path = match jstring_to_string(&mut env, folder_path) {
+        Ok(value) => value,
+        Err(message) => {
+            let _ = env.throw_new("java/lang/IllegalArgumentException", message);
+            return;
+        }
+    };
+    run_with_handle(&mut env, handle, |native| {
+        let view = native.borrow();
+        let webview = view
+            .webview
+            .as_ref()
+            .ok_or_else(|| "WebView2 is not ready".to_string())?;
+        set_virtual_host_name_to_folder_mapping(webview, &host_name, &folder_path)
+    });
+}
+
+#[no_mangle]
 pub extern "system" fn Java_com_intellij_ui_webview_impl_windows_WinWebView2Bridge_loadHtmlNative(
     mut env: JNIEnv<'_>,
     _class: JClass<'_>,
@@ -806,6 +865,76 @@ pub extern "system" fn Java_com_intellij_ui_webview_impl_windows_WinWebView2Brid
         let result = unsafe { webview.ExecuteScript(&HSTRING::from(script), &handler) };
         if let Err(error) = result {
             remove_execute_script_handler(&native, handler_id);
+            return Err(format_windows_error(error));
+        }
+        Ok(())
+    });
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_intellij_ui_webview_impl_windows_WinWebView2Bridge_callDevToolsProtocolMethodNative(
+    mut env: JNIEnv<'_>,
+    _class: JClass<'_>,
+    handle: jlong,
+    call_id: jlong,
+    method_name: JString<'_>,
+    params_json: JString<'_>,
+) {
+    let method_name = match jstring_to_string(&mut env, method_name) {
+        Ok(value) => value,
+        Err(message) => {
+            let _ = env.throw_new("java/lang/IllegalArgumentException", message);
+            return;
+        }
+    };
+    let params_json = match jstring_to_string(&mut env, params_json) {
+        Ok(value) => value,
+        Err(message) => {
+            let _ = env.throw_new("java/lang/IllegalArgumentException", message);
+            return;
+        }
+    };
+    run_with_handle(&mut env, handle, |native| {
+        let (webview, handler, handler_id) = {
+            let mut view = native.borrow_mut();
+            let webview = view
+                .webview
+                .clone()
+                .ok_or_else(|| "WebView2 is not ready".to_string())?;
+            let callbacks = view.callbacks.clone();
+            let handler_id = view.next_script_handler_id;
+            view.next_script_handler_id += 1;
+            let native_for_callback = native.clone();
+            let handler = CallDevToolsProtocolMethodCompletedHandler::create(Box::new(
+                move |error_code, result| {
+                    remove_dev_tools_handler(&native_for_callback, handler_id);
+                    match error_code {
+                        Ok(()) => callbacks.on_dev_tools_protocol_method_result(
+                            call_id,
+                            Some(result),
+                            None,
+                        ),
+                        Err(error) => callbacks.on_dev_tools_protocol_method_result(
+                            call_id,
+                            None,
+                            Some(format_windows_error(error)),
+                        ),
+                    }
+                    Ok(())
+                },
+            ));
+            view.dev_tools_handlers.push((handler_id, handler.clone()));
+            (webview, handler, handler_id)
+        };
+        let result = unsafe {
+            webview.CallDevToolsProtocolMethod(
+                &HSTRING::from(method_name.as_str()),
+                &HSTRING::from(params_json.as_str()),
+                &handler,
+            )
+        };
+        if let Err(error) = result {
+            remove_dev_tools_handler(&native, handler_id);
             return Err(format_windows_error(error));
         }
         Ok(())
@@ -1052,6 +1181,7 @@ fn create_native(
         unidentified_navigation_timing: None,
         add_script_handlers: Vec::new(),
         execute_script_handlers: Vec::new(),
+        dev_tools_handlers: Vec::new(),
         next_script_handler_id: 0,
         document_start_scripts,
         web_message_token: EventRegistrationToken::default(),
@@ -2328,6 +2458,23 @@ fn handle_web_resource_requested(
     Ok(())
 }
 
+fn set_virtual_host_name_to_folder_mapping(
+    webview: &ICoreWebView2,
+    host_name: &str,
+    folder_path: &str,
+) -> BridgeResult<()> {
+    let webview3 = webview.cast::<ICoreWebView2_3>().map_err(format_windows_error)?;
+    unsafe {
+        webview3
+            .SetVirtualHostNameToFolderMapping(
+                &HSTRING::from(host_name),
+                &HSTRING::from(folder_path),
+                COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_DENY_CORS,
+            )
+            .map_err(format_windows_error)
+    }
+}
+
 fn create_web_resource_response(
     environment: &ICoreWebView2Environment,
     asset_response: NativeAssetResponse,
@@ -2457,6 +2604,12 @@ fn remove_execute_script_handler(native: &NativeHandle, handler_id: u64) {
     if let Ok(mut view) = native.try_borrow_mut() {
         view.execute_script_handlers
             .retain(|(id, _)| *id != handler_id);
+    }
+}
+
+fn remove_dev_tools_handler(native: &NativeHandle, handler_id: u64) {
+    if let Ok(mut view) = native.try_borrow_mut() {
+        view.dev_tools_handlers.retain(|(id, _)| *id != handler_id);
     }
 }
 

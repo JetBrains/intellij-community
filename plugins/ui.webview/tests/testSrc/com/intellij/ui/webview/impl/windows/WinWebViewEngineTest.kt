@@ -477,11 +477,17 @@ internal class WinWebViewEngineTest {
     override fun loadUrl(handle: Long, url: String) {
     }
 
+    override fun setVirtualHostNameToFolderMapping(handle: Long, hostName: String, folderPath: String) {
+    }
+
     override fun loadHtml(handle: Long, html: String, baseUrl: String?) {
       htmlLoads.add(HtmlLoad(handle, html, baseUrl))
     }
 
     override fun evaluateJavaScript(handle: Long, evalId: Long, script: String) {
+    }
+
+    override fun callDevToolsProtocolMethod(handle: Long, callId: Long, methodName: String, paramsJson: String) {
     }
 
     override fun transferToJs(handle: Long, rawJson: String) {
