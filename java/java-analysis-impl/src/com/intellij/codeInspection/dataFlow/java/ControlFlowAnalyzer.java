@@ -1433,9 +1433,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new PopInstruction());
     addInstruction(new PushValueInstruction(DfTypes.FALSE));
     addInstruction(new GotoInstruction(endPatternOffset));
+    int nextIndex = getInstructionCount();
+    generateBoxingUnboxingInstructionFor(pattern, checkType, patternType, false);
     SimpleAssignmentInstruction assignmentInstr = new SimpleAssignmentInstruction(null, patternDfaVar);
     addInstruction(assignmentInstr);
-    condGotoOffset.setOffset(assignmentInstr.getIndex());
+    condGotoOffset.setOffset(nextIndex);
   }
 
   private void generateInstanceOfInstructions(@NotNull PsiElement context,
@@ -2515,7 +2517,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       List<? extends MethodContract> contracts = constructor == null ? Collections.emptyList() :
                                                  JavaMethodContractUtil.getMethodCallContracts(constructor, null);
       contracts = DfaUtil.addRangeContracts(constructor, contracts);
-      addInstruction(new MethodCallInstruction(expression, contracts));
+      DfaVariableValue constructorResult = constructor == null ? null : createTempVariable(type);
+      addInstruction(new MethodCallInstruction(expression, contracts, constructorResult));
       processFailResult(constructor, contracts, expression);
 
       addMethodThrows(constructorOrClass);

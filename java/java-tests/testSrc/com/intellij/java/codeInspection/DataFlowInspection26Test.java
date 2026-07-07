@@ -34,4 +34,8 @@ public class DataFlowInspection26Test extends DataFlowInspectionTestCase {
   }
 
   public void testMatchExceptionWithPrimitivePatterns() { doTest(); }
+
+  public void testTrackRecordFields() {
+    doTest();
+  }
 }
