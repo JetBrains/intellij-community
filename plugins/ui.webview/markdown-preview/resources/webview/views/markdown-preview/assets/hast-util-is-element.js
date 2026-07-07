@@ -1,4 +1,4 @@
-//#region node_modules/.bun/hast-util-is-element@3.0.0/node_modules/hast-util-is-element/lib/index.js
+//#region node_modules/hast-util-is-element/lib/index.js
 /**
 * Generate a check from a test.
 *

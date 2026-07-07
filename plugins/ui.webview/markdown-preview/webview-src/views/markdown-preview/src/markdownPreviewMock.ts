@@ -92,6 +92,11 @@ export default defineWebViewMock(({ host, page, theme }) => {
     updatePreview()
   })
 
+  toolbar.dollarMarkdownButton.addEventListener("click", () => {
+    currentMarkdown = ordinaryDollarMarkdown
+    updatePreview()
+  })
+
   theme.set("light")
   host.implement(markdownPreviewHostApiId, {
     async pageReady() {
@@ -148,7 +153,12 @@ export default defineWebViewMock(({ host, page, theme }) => {
   }
 })
 
-function installMockToolbar(): { toggleThemeButton: HTMLButtonElement, shortMarkdownButton: HTMLButtonElement, log: HTMLSpanElement } {
+function installMockToolbar(): {
+  toggleThemeButton: HTMLButtonElement,
+  shortMarkdownButton: HTMLButtonElement,
+  dollarMarkdownButton: HTMLButtonElement,
+  log: HTMLSpanElement,
+} {
   const content = document.getElementById("content")
   if (!content) {
     throw new Error("Missing Markdown preview content element")
@@ -168,13 +178,18 @@ function installMockToolbar(): { toggleThemeButton: HTMLButtonElement, shortMark
   shortMarkdownButton.textContent = "Short markdown"
   toolbar.append(shortMarkdownButton)
 
+  const dollarMarkdownButton = document.createElement("button")
+  dollarMarkdownButton.type = "button"
+  dollarMarkdownButton.textContent = "Dollar markdown"
+  toolbar.append(dollarMarkdownButton)
+
   const log = document.createElement("span")
   log.id = "mock-run-log"
   toolbar.append(log)
 
   content.before(toolbar)
   installMockToolbarStyles()
-  return { toggleThemeButton, shortMarkdownButton, log }
+  return { toggleThemeButton, shortMarkdownButton, dollarMarkdownButton, log }
 }
 
 function installMockToolbarStyles(): void {
@@ -298,4 +313,9 @@ Anchor target with a Unicode heading.
 const shortMarkdown = `# Short Markdown
 
 This mock document has no table of contents.
+`
+
+const ordinaryDollarMarkdown = `# Dollar Markdown
+
+This document mentions $5, $10, and an escaped \\$placeholder without math.
 `

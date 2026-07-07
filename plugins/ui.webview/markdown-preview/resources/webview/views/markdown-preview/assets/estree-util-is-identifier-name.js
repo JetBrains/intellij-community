@@ -1,4 +1,4 @@
-//#region node_modules/.bun/estree-util-is-identifier-name@3.0.0/node_modules/estree-util-is-identifier-name/lib/index.js
+//#region node_modules/estree-util-is-identifier-name/lib/index.js
 var nameRe = /^[$_\p{ID_Start}][$_\u{200C}\u{200D}\p{ID_Continue}]*$/u;
 var nameReJsx = /^[$_\p{ID_Start}][-$_\u{200C}\u{200D}\p{ID_Continue}]*$/u;
 /** @type {Options} */

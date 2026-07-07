@@ -5,7 +5,7 @@ import { t as ccount } from "./ccount.js";
 import { t as findAndReplace } from "./mdast-util-find-and-replace.js";
 import { t as markdownTable } from "./markdown-table.js";
 import { t as longestStreak } from "./longest-streak.js";
-//#region node_modules/.bun/mdast-util-gfm-autolink-literal@2.0.1/node_modules/mdast-util-gfm-autolink-literal/lib/index.js
+//#region node_modules/mdast-util-gfm-autolink-literal/lib/index.js
 /**
 * @import {RegExpMatchObject, ReplaceFunction} from 'mdast-util-find-and-replace'
 * @import {CompileContext, Extension as FromMarkdownExtension, Handle as FromMarkdownHandle, Transform as FromMarkdownTransform} from 'mdast-util-from-markdown'
@@ -226,7 +226,7 @@ function previous(match, email) {
 	return (match.index === 0 || unicodeWhitespace(code) || unicodePunctuation(code)) && (!email || code !== 47);
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-gfm-footnote@2.1.0/node_modules/mdast-util-gfm-footnote/lib/index.js
+//#region node_modules/mdast-util-gfm-footnote/lib/index.js
 /**
 * @import {
 *   CompileContext,
@@ -418,7 +418,7 @@ function mapAll(line, index, blank) {
 	return (blank ? "" : "    ") + line;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-gfm-strikethrough@2.0.0/node_modules/mdast-util-gfm-strikethrough/lib/index.js
+//#region node_modules/mdast-util-gfm-strikethrough/lib/index.js
 /**
 * @typedef {import('mdast').Delete} Delete
 *
@@ -519,7 +519,7 @@ function peekDelete() {
 	return "~";
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/handle/blockquote.js
+//#region node_modules/mdast-util-to-markdown/lib/handle/blockquote.js
 /**
 * @import {Blockquote, Parents} from 'mdast'
 * @import {Info, Map, State} from 'mdast-util-to-markdown'
@@ -545,7 +545,7 @@ function map$1(line, _, blank) {
 	return ">" + (blank ? "" : " ") + line;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/util/pattern-in-scope.js
+//#region node_modules/mdast-util-to-markdown/lib/util/pattern-in-scope.js
 /**
 * @import {ConstructName, Unsafe} from 'mdast-util-to-markdown'
 */
@@ -571,7 +571,7 @@ function listInScope(stack, list, none) {
 	return false;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/handle/break.js
+//#region node_modules/mdast-util-to-markdown/lib/handle/break.js
 /**
 * @import {Break, Parents} from 'mdast'
 * @import {Info, State} from 'mdast-util-to-markdown'
@@ -589,7 +589,7 @@ function hardBreak(_, _1, state, info) {
 	return "\\\n";
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/util/format-code-as-indented.js
+//#region node_modules/mdast-util-to-markdown/lib/util/format-code-as-indented.js
 /**
 * @import {State} from 'mdast-util-to-markdown'
 * @import {Code} from 'mdast'
@@ -603,7 +603,7 @@ function formatCodeAsIndented(node, state) {
 	return Boolean(state.options.fences === false && node.value && !node.lang && /[^ \r\n]/.test(node.value) && !/^[\t ]*(?:[\r\n]|$)|(?:^|[\r\n])[\t ]*$/.test(node.value));
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/util/check-fence.js
+//#region node_modules/mdast-util-to-markdown/lib/util/check-fence.js
 /**
 * @import {Options, State} from 'mdast-util-to-markdown'
 */
@@ -617,7 +617,7 @@ function checkFence(state) {
 	return marker;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/handle/code.js
+//#region node_modules/mdast-util-to-markdown/lib/handle/code.js
 /**
 * @import {Info, Map, State} from 'mdast-util-to-markdown'
 * @import {Code, Parents} from 'mdast'
@@ -675,7 +675,7 @@ function map(line, _, blank) {
 	return (blank ? "" : "    ") + line;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/util/check-quote.js
+//#region node_modules/mdast-util-to-markdown/lib/util/check-quote.js
 /**
 * @import {Options, State} from 'mdast-util-to-markdown'
 */
@@ -689,7 +689,7 @@ function checkQuote(state) {
 	return marker;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/handle/definition.js
+//#region node_modules/mdast-util-to-markdown/lib/handle/definition.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {Definition, Parents} from 'mdast'
@@ -748,7 +748,7 @@ function definition(node, _, state, info) {
 	return value;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/util/check-emphasis.js
+//#region node_modules/mdast-util-to-markdown/lib/util/check-emphasis.js
 /**
 * @import {Options, State} from 'mdast-util-to-markdown'
 */
@@ -762,7 +762,7 @@ function checkEmphasis(state) {
 	return marker;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/util/encode-character-reference.js
+//#region node_modules/mdast-util-to-markdown/lib/util/encode-character-reference.js
 /**
 * Encode a code point as a character reference.
 *
@@ -775,7 +775,7 @@ function encodeCharacterReference(code) {
 	return "&#x" + code.toString(16).toUpperCase() + ";";
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/util/encode-info.js
+//#region node_modules/mdast-util-to-markdown/lib/util/encode-info.js
 /**
 * @import {EncodeSides} from '../types.js'
 */
@@ -847,7 +847,7 @@ function encodeInfo(outside, inside, marker) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/handle/emphasis.js
+//#region node_modules/mdast-util-to-markdown/lib/handle/emphasis.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {Emphasis, Parents} from 'mdast'
@@ -894,7 +894,7 @@ function emphasisPeek(_, _1, state) {
 	return state.options.emphasis || "*";
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/util/format-heading-as-setext.js
+//#region node_modules/mdast-util-to-markdown/lib/util/format-heading-as-setext.js
 /**
 * @import {State} from 'mdast-util-to-markdown'
 * @import {Heading} from 'mdast'
@@ -915,7 +915,7 @@ function formatHeadingAsSetext(node, state) {
 	return Boolean((!node.depth || node.depth < 3) && toString(node) && (state.options.setext || literalWithBreak));
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/handle/heading.js
+//#region node_modules/mdast-util-to-markdown/lib/handle/heading.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {Heading, Parents} from 'mdast'
@@ -959,7 +959,7 @@ function heading(node, _, state, info) {
 	return value;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/handle/html.js
+//#region node_modules/mdast-util-to-markdown/lib/handle/html.js
 /**
 * @import {Html} from 'mdast'
 */
@@ -978,7 +978,7 @@ function htmlPeek() {
 	return "<";
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/handle/image.js
+//#region node_modules/mdast-util-to-markdown/lib/handle/image.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {Image, Parents} from 'mdast'
@@ -1045,7 +1045,7 @@ function imagePeek() {
 	return "!";
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/handle/image-reference.js
+//#region node_modules/mdast-util-to-markdown/lib/handle/image-reference.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {ImageReference, Parents} from 'mdast'
@@ -1094,7 +1094,7 @@ function imageReferencePeek() {
 	return "!";
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/handle/inline-code.js
+//#region node_modules/mdast-util-to-markdown/lib/handle/inline-code.js
 /**
 * @import {State} from 'mdast-util-to-markdown'
 * @import {InlineCode, Parents} from 'mdast'
@@ -1133,7 +1133,7 @@ function inlineCodePeek() {
 	return "`";
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/util/format-link-as-autolink.js
+//#region node_modules/mdast-util-to-markdown/lib/util/format-link-as-autolink.js
 /**
 * @import {State} from 'mdast-util-to-markdown'
 * @import {Link} from 'mdast'
@@ -1148,7 +1148,7 @@ function formatLinkAsAutolink(node, state) {
 	return Boolean(!state.options.resourceLink && node.url && !node.title && node.children && node.children.length === 1 && node.children[0].type === "text" && (raw === node.url || "mailto:" + raw === node.url) && /^[a-z][a-z+.-]+:/i.test(node.url) && !/[\0- <>\u007F]/.test(node.url));
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/handle/link.js
+//#region node_modules/mdast-util-to-markdown/lib/handle/link.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {Link, Parents} from 'mdast'
@@ -1238,7 +1238,7 @@ function linkPeek(node, _, state) {
 	return formatLinkAsAutolink(node, state) ? "<" : "[";
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/handle/link-reference.js
+//#region node_modules/mdast-util-to-markdown/lib/handle/link-reference.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {LinkReference, Parents} from 'mdast'
@@ -1287,7 +1287,7 @@ function linkReferencePeek() {
 	return "[";
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/util/check-bullet.js
+//#region node_modules/mdast-util-to-markdown/lib/util/check-bullet.js
 /**
 * @import {Options, State} from 'mdast-util-to-markdown'
 */
@@ -1301,7 +1301,7 @@ function checkBullet(state) {
 	return marker;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/util/check-bullet-other.js
+//#region node_modules/mdast-util-to-markdown/lib/util/check-bullet-other.js
 /**
 * @import {Options, State} from 'mdast-util-to-markdown'
 */
@@ -1318,7 +1318,7 @@ function checkBulletOther(state) {
 	return bulletOther;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/util/check-bullet-ordered.js
+//#region node_modules/mdast-util-to-markdown/lib/util/check-bullet-ordered.js
 /**
 * @import {Options, State} from 'mdast-util-to-markdown'
 */
@@ -1332,7 +1332,7 @@ function checkBulletOrdered(state) {
 	return marker;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/util/check-rule.js
+//#region node_modules/mdast-util-to-markdown/lib/util/check-rule.js
 /**
 * @import {Options, State} from 'mdast-util-to-markdown'
 */
@@ -1346,7 +1346,7 @@ function checkRule(state) {
 	return marker;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/handle/list.js
+//#region node_modules/mdast-util-to-markdown/lib/handle/list.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {List, Parents} from 'mdast'
@@ -1389,7 +1389,7 @@ function list(node, parent, state, info) {
 	return value;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/util/check-list-item-indent.js
+//#region node_modules/mdast-util-to-markdown/lib/util/check-list-item-indent.js
 /**
 * @import {Options, State} from 'mdast-util-to-markdown'
 */
@@ -1403,7 +1403,7 @@ function checkListItemIndent(state) {
 	return style;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/handle/list-item.js
+//#region node_modules/mdast-util-to-markdown/lib/handle/list-item.js
 /**
 * @import {Info, Map, State} from 'mdast-util-to-markdown'
 * @import {ListItem, Parents} from 'mdast'
@@ -1435,7 +1435,7 @@ function listItem(node, parent, state, info) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/handle/paragraph.js
+//#region node_modules/mdast-util-to-markdown/lib/handle/paragraph.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {Paragraph, Parents} from 'mdast'
@@ -1456,7 +1456,7 @@ function paragraph(node, _, state, info) {
 	return value;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-phrasing@4.1.0/node_modules/mdast-util-phrasing/lib/index.js
+//#region node_modules/mdast-util-phrasing/lib/index.js
 /**
 * @typedef {import('mdast').Html} Html
 * @typedef {import('mdast').PhrasingContent} PhrasingContent
@@ -1490,7 +1490,7 @@ var phrasing = convert([
 	"textDirective"
 ]);
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/handle/root.js
+//#region node_modules/mdast-util-to-markdown/lib/handle/root.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {Parents, Root} from 'mdast'
@@ -1508,7 +1508,7 @@ function root(node, _, state, info) {
 	}) ? state.containerPhrasing : state.containerFlow).call(state, node, info);
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/util/check-strong.js
+//#region node_modules/mdast-util-to-markdown/lib/util/check-strong.js
 /**
 * @import {Options, State} from 'mdast-util-to-markdown'
 */
@@ -1522,7 +1522,7 @@ function checkStrong(state) {
 	return marker;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/handle/strong.js
+//#region node_modules/mdast-util-to-markdown/lib/handle/strong.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {Parents, Strong} from 'mdast'
@@ -1569,7 +1569,7 @@ function strongPeek(_, _1, state) {
 	return state.options.strong || "*";
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/handle/text.js
+//#region node_modules/mdast-util-to-markdown/lib/handle/text.js
 /**
 * @import {Info, State} from 'mdast-util-to-markdown'
 * @import {Parents, Text} from 'mdast'
@@ -1585,7 +1585,7 @@ function text(node, _, state, info) {
 	return state.safe(node.value, info);
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/util/check-rule-repetition.js
+//#region node_modules/mdast-util-to-markdown/lib/util/check-rule-repetition.js
 /**
 * @import {Options, State} from 'mdast-util-to-markdown'
 */
@@ -1599,7 +1599,7 @@ function checkRuleRepetition(state) {
 	return repetition;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/handle/thematic-break.js
+//#region node_modules/mdast-util-to-markdown/lib/handle/thematic-break.js
 /**
 * @import {State} from 'mdast-util-to-markdown'
 * @import {Parents, ThematicBreak} from 'mdast'
@@ -1615,7 +1615,7 @@ function thematicBreak(_, _1, state) {
 	return state.options.ruleSpaces ? value.slice(0, -1) : value;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-to-markdown@2.1.2/node_modules/mdast-util-to-markdown/lib/handle/index.js
+//#region node_modules/mdast-util-to-markdown/lib/handle/index.js
 /**
 * Default (CommonMark) handlers.
 */
@@ -1642,7 +1642,7 @@ var handle = {
 	thematicBreak
 };
 //#endregion
-//#region node_modules/.bun/mdast-util-gfm-table@2.0.0/node_modules/mdast-util-gfm-table/lib/index.js
+//#region node_modules/mdast-util-gfm-table/lib/index.js
 /**
 * @typedef {import('mdast').InlineCode} InlineCode
 * @typedef {import('mdast').Table} Table
@@ -1906,7 +1906,7 @@ function gfmTableToMarkdown(options) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-gfm-task-list-item@2.0.0/node_modules/mdast-util-gfm-task-list-item/lib/index.js
+//#region node_modules/mdast-util-gfm-task-list-item/lib/index.js
 /**
 * @typedef {import('mdast').ListItem} ListItem
 * @typedef {import('mdast').Paragraph} Paragraph
@@ -2016,7 +2016,7 @@ function listItemWithTaskListItem(node, parent, state, info) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-gfm@3.1.0/node_modules/mdast-util-gfm/lib/index.js
+//#region node_modules/mdast-util-gfm/lib/index.js
 /**
 * @import {Extension as FromMarkdownExtension} from 'mdast-util-from-markdown'
 * @import {Options} from 'mdast-util-gfm'

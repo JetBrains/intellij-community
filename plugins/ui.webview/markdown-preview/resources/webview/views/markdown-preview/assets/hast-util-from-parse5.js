@@ -1,7 +1,7 @@
 import { n as __exportAll } from "./rolldown-runtime.js";
 import "./devlop.js";
 import { t as parse$1 } from "./comma-separated-tokens.js";
-//#region node_modules/.bun/property-information@7.1.0/node_modules/property-information/lib/util/schema.js
+//#region node_modules/property-information/lib/util/schema.js
 /**
 * @import {Schema as SchemaType, Space} from 'property-information'
 */
@@ -27,7 +27,7 @@ Schema.prototype.normal = {};
 Schema.prototype.property = {};
 Schema.prototype.space = void 0;
 //#endregion
-//#region node_modules/.bun/property-information@7.1.0/node_modules/property-information/lib/util/merge.js
+//#region node_modules/property-information/lib/util/merge.js
 /**
 * @import {Info, Space} from 'property-information'
 */
@@ -51,7 +51,7 @@ function merge(definitions, space) {
 	return new Schema(property, normal, space);
 }
 //#endregion
-//#region node_modules/.bun/property-information@7.1.0/node_modules/property-information/lib/normalize.js
+//#region node_modules/property-information/lib/normalize.js
 /**
 * Get the cleaned case insensitive form of an attribute or property.
 *
@@ -65,7 +65,7 @@ function normalize(value) {
 	return value.toLowerCase();
 }
 //#endregion
-//#region node_modules/.bun/property-information@7.1.0/node_modules/property-information/lib/util/info.js
+//#region node_modules/property-information/lib/util/info.js
 /**
 * @import {Info as InfoType} from 'property-information'
 */
@@ -97,7 +97,7 @@ Info.prototype.property = "";
 Info.prototype.spaceSeparated = false;
 Info.prototype.space = void 0;
 //#endregion
-//#region node_modules/.bun/property-information@7.1.0/node_modules/property-information/lib/util/types.js
+//#region node_modules/property-information/lib/util/types.js
 var types_exports = /* @__PURE__ */ __exportAll({
 	boolean: () => boolean,
 	booleanish: () => booleanish,
@@ -119,7 +119,7 @@ function increment() {
 	return 2 ** ++powers;
 }
 //#endregion
-//#region node_modules/.bun/property-information@7.1.0/node_modules/property-information/lib/util/defined-info.js
+//#region node_modules/property-information/lib/util/defined-info.js
 /**
 * @import {Space} from 'property-information'
 */
@@ -165,7 +165,7 @@ function mark(values, key, value) {
 	if (value) values[key] = value;
 }
 //#endregion
-//#region node_modules/.bun/property-information@7.1.0/node_modules/property-information/lib/util/create.js
+//#region node_modules/property-information/lib/util/create.js
 /**
 * @import {Info, Space} from 'property-information'
 */
@@ -214,7 +214,7 @@ function create(definition) {
 	return new Schema(properties, normals, definition.space);
 }
 //#endregion
-//#region node_modules/.bun/property-information@7.1.0/node_modules/property-information/lib/aria.js
+//#region node_modules/property-information/lib/aria.js
 var aria = create({
 	properties: {
 		ariaActiveDescendant: null,
@@ -272,7 +272,7 @@ var aria = create({
 	}
 });
 //#endregion
-//#region node_modules/.bun/property-information@7.1.0/node_modules/property-information/lib/util/case-sensitive-transform.js
+//#region node_modules/property-information/lib/util/case-sensitive-transform.js
 /**
 * @param {Record<string, string>} attributes
 *   Attributes.
@@ -285,7 +285,7 @@ function caseSensitiveTransform(attributes, attribute) {
 	return attribute in attributes ? attributes[attribute] : attribute;
 }
 //#endregion
-//#region node_modules/.bun/property-information@7.1.0/node_modules/property-information/lib/util/case-insensitive-transform.js
+//#region node_modules/property-information/lib/util/case-insensitive-transform.js
 /**
 * @param {Record<string, string>} attributes
 *   Attributes.
@@ -298,7 +298,7 @@ function caseInsensitiveTransform(attributes, property) {
 	return caseSensitiveTransform(attributes, property.toLowerCase());
 }
 //#endregion
-//#region node_modules/.bun/property-information@7.1.0/node_modules/property-information/lib/html.js
+//#region node_modules/property-information/lib/html.js
 var html$1 = create({
 	attributes: {
 		acceptcharset: "accept-charset",
@@ -610,7 +610,7 @@ var html$1 = create({
 	transform: caseInsensitiveTransform
 });
 //#endregion
-//#region node_modules/.bun/property-information@7.1.0/node_modules/property-information/lib/svg.js
+//#region node_modules/property-information/lib/svg.js
 var svg$1 = create({
 	attributes: {
 		accentHeight: "accent-height",
@@ -1168,7 +1168,7 @@ var svg$1 = create({
 	transform: caseSensitiveTransform
 });
 //#endregion
-//#region node_modules/.bun/property-information@7.1.0/node_modules/property-information/lib/xlink.js
+//#region node_modules/property-information/lib/xlink.js
 var xlink = create({
 	properties: {
 		xLinkActuate: null,
@@ -1185,7 +1185,7 @@ var xlink = create({
 	}
 });
 //#endregion
-//#region node_modules/.bun/property-information@7.1.0/node_modules/property-information/lib/xmlns.js
+//#region node_modules/property-information/lib/xmlns.js
 var xmlns = create({
 	attributes: { xmlnsxlink: "xmlns:xlink" },
 	properties: {
@@ -1196,7 +1196,7 @@ var xmlns = create({
 	transform: caseInsensitiveTransform
 });
 //#endregion
-//#region node_modules/.bun/property-information@7.1.0/node_modules/property-information/lib/xml.js
+//#region node_modules/property-information/lib/xml.js
 var xml = create({
 	properties: {
 		xmlBase: null,
@@ -1209,7 +1209,7 @@ var xml = create({
 	}
 });
 //#endregion
-//#region node_modules/.bun/property-information@7.1.0/node_modules/property-information/lib/hast-to-react.js
+//#region node_modules/property-information/lib/hast-to-react.js
 /**
 * Special cases for React (`Record<string, string>`).
 *
@@ -1241,7 +1241,7 @@ var hastToReact = {
 	xmlnsXLink: "xmlnsXlink"
 };
 //#endregion
-//#region node_modules/.bun/property-information@7.1.0/node_modules/property-information/lib/find.js
+//#region node_modules/property-information/lib/find.js
 /**
 * @import {Schema} from 'property-information'
 */
@@ -1318,7 +1318,7 @@ function camelcase($0) {
 	return $0.charAt(1).toUpperCase();
 }
 //#endregion
-//#region node_modules/.bun/property-information@7.1.0/node_modules/property-information/index.js
+//#region node_modules/property-information/index.js
 var html = merge([
 	aria,
 	html$1,
@@ -1334,7 +1334,7 @@ var svg = merge([
 	xml
 ], "svg");
 //#endregion
-//#region node_modules/.bun/space-separated-tokens@2.0.2/node_modules/space-separated-tokens/index.js
+//#region node_modules/space-separated-tokens/index.js
 /**
 * Parse space-separated tokens to an array of strings.
 *
@@ -1359,7 +1359,7 @@ function stringify(values) {
 	return values.join(" ").trim();
 }
 //#endregion
-//#region node_modules/.bun/hast-util-parse-selector@4.0.0/node_modules/hast-util-parse-selector/lib/index.js
+//#region node_modules/hast-util-parse-selector/lib/index.js
 /**
 * @typedef {import('hast').Element} Element
 * @typedef {import('hast').Properties} Properties
@@ -1434,7 +1434,7 @@ function parseSelector(selector, defaultTagName) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/hastscript@9.0.1/node_modules/hastscript/lib/create-h.js
+//#region node_modules/hastscript/lib/create-h.js
 /**
 * @import {Element, Nodes, RootContent, Root} from 'hast'
 * @import {Info, Schema} from 'property-information'
@@ -1679,7 +1679,7 @@ function createAdjustMap(values) {
 	return result;
 }
 //#endregion
-//#region node_modules/.bun/hastscript@9.0.1/node_modules/hastscript/lib/svg-case-sensitive-tag-names.js
+//#region node_modules/hastscript/lib/svg-case-sensitive-tag-names.js
 /**
 * List of case-sensitive SVG tag names.
 *
@@ -1727,7 +1727,7 @@ var svgCaseSensitiveTagNames = [
 	"textPath"
 ];
 //#endregion
-//#region node_modules/.bun/hastscript@9.0.1/node_modules/hastscript/lib/index.js
+//#region node_modules/hastscript/lib/index.js
 /**
 * @typedef {import('./jsx-classic.js').Element} h.JSX.Element
 * @typedef {import('./jsx-classic.js').ElementChildrenAttribute} h.JSX.ElementChildrenAttribute
@@ -1745,7 +1745,7 @@ var h = createH(html, "div");
 /** @type {ReturnType<createH>} */
 var s = createH(svg, "g", svgCaseSensitiveTagNames);
 //#endregion
-//#region node_modules/.bun/vfile-location@5.0.3/node_modules/vfile-location/lib/index.js
+//#region node_modules/vfile-location/lib/index.js
 /**
 * @import {VFile, Value} from 'vfile'
 * @import {Location} from 'vfile-location'
@@ -1823,7 +1823,7 @@ function next(value, from) {
 	return cr < lf ? cr : lf;
 }
 //#endregion
-//#region node_modules/.bun/web-namespaces@2.0.1/node_modules/web-namespaces/index.js
+//#region node_modules/web-namespaces/index.js
 /**
 * Map of web namespaces.
 *
@@ -1838,7 +1838,7 @@ var webNamespaces = {
 	xmlns: "http://www.w3.org/2000/xmlns/"
 };
 //#endregion
-//#region node_modules/.bun/hast-util-from-parse5@8.0.3/node_modules/hast-util-from-parse5/lib/index.js
+//#region node_modules/hast-util-from-parse5/lib/index.js
 /**
 * @import {ElementData, Element, Nodes, RootContent, Root} from 'hast'
 * @import {DefaultTreeAdapterMap, Token} from 'parse5'

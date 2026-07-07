@@ -1,5 +1,5 @@
 import { r as __toESM, t as __commonJSMin } from "./rolldown-runtime.js";
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/arduino.js
+//#region node_modules/highlight.js/es/languages/arduino.js
 /** @type LanguageFn */
 function cPlusPlus(hljs) {
 	const regex = hljs.regex;
@@ -869,7 +869,7 @@ function arduino(hljs) {
 	return ARDUINO;
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/bash.js
+//#region node_modules/highlight.js/es/languages/bash.js
 /** @type LanguageFn */
 function bash(hljs) {
 	const regex = hljs.regex;
@@ -1226,7 +1226,7 @@ function bash(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/c.js
+//#region node_modules/highlight.js/es/languages/c.js
 /** @type LanguageFn */
 function c(hljs) {
 	const regex = hljs.regex;
@@ -1490,7 +1490,7 @@ function c(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/cpp.js
+//#region node_modules/highlight.js/es/languages/cpp.js
 /** @type LanguageFn */
 function cpp(hljs) {
 	const regex = hljs.regex;
@@ -1981,7 +1981,7 @@ function cpp(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/csharp.js
+//#region node_modules/highlight.js/es/languages/csharp.js
 /** @type LanguageFn */
 function csharp(hljs) {
 	const BUILT_IN_KEYWORDS = [
@@ -2356,7 +2356,7 @@ function csharp(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/css.js
+//#region node_modules/highlight.js/es/languages/css.js
 var MODES$2 = (hljs) => {
 	return {
 		IMPORTANT: {
@@ -3239,7 +3239,7 @@ function css(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/diff.js
+//#region node_modules/highlight.js/es/languages/diff.js
 /** @type LanguageFn */
 function diff(hljs) {
 	const regex = hljs.regex;
@@ -3278,7 +3278,7 @@ function diff(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/go.js
+//#region node_modules/highlight.js/es/languages/go.js
 function go(hljs) {
 	const KEYWORDS = {
 		keyword: [
@@ -3417,7 +3417,7 @@ function go(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/graphql.js
+//#region node_modules/highlight.js/es/languages/graphql.js
 /** @type LanguageFn */
 function graphql(hljs) {
 	const regex = hljs.regex;
@@ -3484,7 +3484,7 @@ function graphql(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/ini.js
+//#region node_modules/highlight.js/es/languages/ini.js
 function ini(hljs) {
 	const regex = hljs.regex;
 	const NUMBERS = {
@@ -3577,7 +3577,7 @@ function ini(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/java.js
+//#region node_modules/highlight.js/es/languages/java.js
 var decimalDigits$1 = "[0-9](_*[0-9])*";
 var frac$1 = `\\.(${decimalDigits$1})`;
 var hexDigits$1 = "[0-9a-fA-F](_*[0-9a-fA-F])*";
@@ -3813,7 +3813,7 @@ function java(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/javascript.js
+//#region node_modules/highlight.js/es/languages/javascript.js
 var IDENT_RE$2 = "[A-Za-z$_][0-9A-Za-z$_]*";
 var KEYWORDS$2 = [
 	"as",
@@ -4381,7 +4381,7 @@ function javascript$1(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/json.js
+//#region node_modules/highlight.js/es/languages/json.js
 function json(hljs) {
 	const ATTRIBUTE = {
 		className: "attr",
@@ -4419,7 +4419,7 @@ function json(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/kotlin.js
+//#region node_modules/highlight.js/es/languages/kotlin.js
 var decimalDigits = "[0-9](_*[0-9])*";
 var frac = `\\.(${decimalDigits})`;
 var hexDigits = "[0-9a-fA-F](_*[0-9a-fA-F])*";
@@ -4634,7 +4634,7 @@ function kotlin(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/less.js
+//#region node_modules/highlight.js/es/languages/less.js
 var MODES$1 = (hljs) => {
 	return {
 		IMPORTANT: {
@@ -5581,7 +5581,7 @@ function less(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/lua.js
+//#region node_modules/highlight.js/es/languages/lua.js
 function lua(hljs) {
 	const OPENING_LONG_BRACKET = "\\[=*\\[";
 	const CLOSING_LONG_BRACKET = "\\]=*\\]";
@@ -5629,7 +5629,7 @@ function lua(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/makefile.js
+//#region node_modules/highlight.js/es/languages/makefile.js
 function makefile(hljs) {
 	const VARIABLE = {
 		className: "variable",
@@ -5690,7 +5690,7 @@ function makefile(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/markdown.js
+//#region node_modules/highlight.js/es/languages/markdown.js
 function markdown(hljs) {
 	const regex = hljs.regex;
 	const INLINE_HTML = {
@@ -5883,7 +5883,7 @@ function markdown(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/objectivec.js
+//#region node_modules/highlight.js/es/languages/objectivec.js
 function objectivec(hljs) {
 	const API_CLASS = {
 		className: "built_in",
@@ -6117,7 +6117,7 @@ function objectivec(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/perl.js
+//#region node_modules/highlight.js/es/languages/perl.js
 /** @type LanguageFn */
 function perl(hljs) {
 	const regex = hljs.regex;
@@ -6570,7 +6570,7 @@ function perl(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/php.js
+//#region node_modules/highlight.js/es/languages/php.js
 /**
 * @param {HLJSApi} hljs
 * @returns {LanguageDetail}
@@ -7090,7 +7090,7 @@ function php(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/php-template.js
+//#region node_modules/highlight.js/es/languages/php-template.js
 function phpTemplate(hljs) {
 	return {
 		name: "PHP template",
@@ -7132,7 +7132,7 @@ function phpTemplate(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/plaintext.js
+//#region node_modules/highlight.js/es/languages/plaintext.js
 function plaintext(hljs) {
 	return {
 		name: "Plain text",
@@ -7141,7 +7141,7 @@ function plaintext(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/python.js
+//#region node_modules/highlight.js/es/languages/python.js
 function python(hljs) {
 	const regex = hljs.regex;
 	const IDENT_RE = /[\p{XID_Start}_]\p{XID_Continue}*/u;
@@ -7497,7 +7497,7 @@ function python(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/python-repl.js
+//#region node_modules/highlight.js/es/languages/python-repl.js
 function pythonRepl(hljs) {
 	return {
 		aliases: ["pycon"],
@@ -7515,7 +7515,7 @@ function pythonRepl(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/r.js
+//#region node_modules/highlight.js/es/languages/r.js
 /** @type LanguageFn */
 function r(hljs) {
 	const regex = hljs.regex;
@@ -7659,7 +7659,7 @@ function r(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/ruby.js
+//#region node_modules/highlight.js/es/languages/ruby.js
 function ruby(hljs) {
 	const regex = hljs.regex;
 	const RUBY_METHOD_RE = "([a-zA-Z_]\\w*[!?=]?|[-+~]@|<<|>>|=~|===?|<=>|[<>]=?|\\*\\*|[-/+%^&*~`|]|\\[\\]=?)";
@@ -7980,7 +7980,7 @@ function ruby(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/rust.js
+//#region node_modules/highlight.js/es/languages/rust.js
 /** @type LanguageFn */
 function rust(hljs) {
 	const regex = hljs.regex;
@@ -8274,7 +8274,7 @@ function rust(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/scss.js
+//#region node_modules/highlight.js/es/languages/scss.js
 var MODES = (hljs) => {
 	return {
 		IMPORTANT: {
@@ -9167,7 +9167,7 @@ function scss(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/shell.js
+//#region node_modules/highlight.js/es/languages/shell.js
 /** @type LanguageFn */
 function shell(hljs) {
 	return {
@@ -9184,7 +9184,7 @@ function shell(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/sql.js
+//#region node_modules/highlight.js/es/languages/sql.js
 function sql(hljs) {
 	const regex = hljs.regex;
 	const COMMENT_MODE = hljs.COMMENT("--", "$");
@@ -9807,7 +9807,7 @@ function sql(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/swift.js
+//#region node_modules/highlight.js/es/languages/swift.js
 /**
 * @param {string} value
 * @returns {RegExp}
@@ -10505,7 +10505,7 @@ function swift(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/typescript.js
+//#region node_modules/highlight.js/es/languages/typescript.js
 var IDENT_RE = "[A-Za-z$_][0-9A-Za-z$_]*";
 var KEYWORDS = [
 	"as",
@@ -11175,7 +11175,7 @@ function typescript(hljs) {
 	return tsLanguage;
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/vbnet.js
+//#region node_modules/highlight.js/es/languages/vbnet.js
 /** @type LanguageFn */
 function vbnet(hljs) {
 	const regex = hljs.regex;
@@ -11260,7 +11260,7 @@ function vbnet(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/wasm.js
+//#region node_modules/highlight.js/es/languages/wasm.js
 /** @type LanguageFn */
 function wasm(hljs) {
 	hljs.regex;
@@ -11370,7 +11370,7 @@ function wasm(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/xml.js
+//#region node_modules/highlight.js/es/languages/xml.js
 /** @type LanguageFn */
 function xml(hljs) {
 	const regex = hljs.regex;
@@ -11544,7 +11544,7 @@ function xml(hljs) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/highlight.js@11.11.1/node_modules/highlight.js/es/languages/yaml.js
+//#region node_modules/highlight.js/es/languages/yaml.js
 function yaml(hljs) {
 	const LITERALS = "true false yes no null";
 	const KEY = {

@@ -1,4 +1,4 @@
-//#region node_modules/.bun/markdown-table@3.0.4/node_modules/markdown-table/index.js
+//#region node_modules/markdown-table/index.js
 /**
 * @typedef {Options} MarkdownTableOptions
 *   Configuration.

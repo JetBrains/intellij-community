@@ -1,6 +1,6 @@
 import { i as convert, r as visitParents } from "./hast-util-raw.js";
 import { t as escapeStringRegexp } from "./escape-string-regexp.js";
-//#region node_modules/.bun/mdast-util-find-and-replace@3.0.2/node_modules/mdast-util-find-and-replace/lib/index.js
+//#region node_modules/mdast-util-find-and-replace/lib/index.js
 /**
 * @import {Nodes, Parents, PhrasingContent, Root, Text} from 'mdast'
 * @import {BuildVisitor, Test, VisitorResult} from 'unist-util-visit-parents'

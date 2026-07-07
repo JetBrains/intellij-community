@@ -1,5 +1,5 @@
 import { a as esm_default, c as position } from "./hast-util-raw.js";
-//#region node_modules/.bun/hast-util-sanitize@5.0.2/node_modules/hast-util-sanitize/lib/schema.js
+//#region node_modules/hast-util-sanitize/lib/schema.js
 /**
 * @import {Schema} from 'hast-util-sanitize'
 */
@@ -201,7 +201,7 @@ var defaultSchema = {
 	]
 };
 //#endregion
-//#region node_modules/.bun/hast-util-sanitize@5.0.2/node_modules/hast-util-sanitize/lib/index.js
+//#region node_modules/hast-util-sanitize/lib/index.js
 /**
 * @import {
 *   Comment,

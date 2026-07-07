@@ -1,9 +1,9 @@
-//#region node_modules/.bun/d3-axis@3.0.0/node_modules/d3-axis/src/identity.js
+//#region node_modules/d3-axis/src/identity.js
 function identity_default(x) {
 	return x;
 }
 //#endregion
-//#region node_modules/.bun/d3-axis@3.0.0/node_modules/d3-axis/src/axis.js
+//#region node_modules/d3-axis/src/axis.js
 var top = 1, right = 2, bottom = 3, left = 4, epsilon = 1e-6;
 function translateX(x) {
 	return "translate(" + x + ",0)";

@@ -1,7 +1,7 @@
 import { n as __exportAll } from "./rolldown-runtime.js";
 import { r as stringifyPosition } from "./hast-util-to-jsx-runtime.js";
 import { t as decodeNamedCharacterReference } from "./decode-named-character-reference.js";
-//#region node_modules/.bun/mdast-util-to-string@4.0.0/node_modules/mdast-util-to-string/lib/index.js
+//#region node_modules/mdast-util-to-string/lib/index.js
 /**
 * @typedef {import('mdast').Nodes} Nodes
 *
@@ -83,7 +83,7 @@ function node(value) {
 	return Boolean(value && typeof value === "object");
 }
 //#endregion
-//#region node_modules/.bun/micromark-util-chunked@2.0.1/node_modules/micromark-util-chunked/index.js
+//#region node_modules/micromark-util-chunked/index.js
 /**
 * Like `Array#splice`, but smarter for giant arrays.
 *
@@ -153,7 +153,7 @@ function push(list, items) {
 	return items;
 }
 //#endregion
-//#region node_modules/.bun/micromark-util-combine-extensions@2.0.1/node_modules/micromark-util-combine-extensions/index.js
+//#region node_modules/micromark-util-combine-extensions/index.js
 /**
 * @import {
 *   Extension,
@@ -224,7 +224,7 @@ function constructs(existing, list) {
 	splice(existing, 0, 0, before);
 }
 //#endregion
-//#region node_modules/.bun/micromark-util-decode-numeric-character-reference@2.0.2/node_modules/micromark-util-decode-numeric-character-reference/index.js
+//#region node_modules/micromark-util-decode-numeric-character-reference/index.js
 /**
 * Turn the number (in string form as either hexa- or plain decimal) coming from
 * a numeric character reference into a character.
@@ -245,7 +245,7 @@ function decodeNumericCharacterReference(value, base) {
 	return String.fromCodePoint(code);
 }
 //#endregion
-//#region node_modules/.bun/micromark-util-normalize-identifier@2.0.1/node_modules/micromark-util-normalize-identifier/index.js
+//#region node_modules/micromark-util-normalize-identifier/index.js
 /**
 * Normalize an identifier (as found in references, definitions).
 *
@@ -269,7 +269,7 @@ function normalizeIdentifier(value) {
 	return value.replace(/[\t\n\r ]+/g, " ").replace(/^ | $/g, "").toLowerCase().toUpperCase();
 }
 //#endregion
-//#region node_modules/.bun/micromark-util-character@2.1.1/node_modules/micromark-util-character/index.js
+//#region node_modules/micromark-util-character/index.js
 /**
 * @import {Code} from 'micromark-util-types'
 */
@@ -497,7 +497,7 @@ function regexCheck(regex) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-factory-space@2.0.1/node_modules/micromark-factory-space/index.js
+//#region node_modules/micromark-factory-space/index.js
 /**
 * @import {Effects, State, TokenType} from 'micromark-util-types'
 */
@@ -556,7 +556,7 @@ function factorySpace(effects, ok, type, max) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark@4.0.2/node_modules/micromark/lib/initialize/content.js
+//#region node_modules/micromark/lib/initialize/content.js
 /**
 * @import {
 *   InitialConstruct,
@@ -623,7 +623,7 @@ function initializeContent(effects) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark@4.0.2/node_modules/micromark/lib/initialize/document.js
+//#region node_modules/micromark/lib/initialize/document.js
 /**
 * @import {
 *   Construct,
@@ -839,7 +839,7 @@ function tokenizeContainer(effects, ok, nok) {
 	return factorySpace(effects, effects.attempt(this.parser.constructs.document, ok, nok), "linePrefix", this.parser.constructs.disable.null.includes("codeIndented") ? void 0 : 4);
 }
 //#endregion
-//#region node_modules/.bun/micromark-util-classify-character@2.0.1/node_modules/micromark-util-classify-character/index.js
+//#region node_modules/micromark-util-classify-character/index.js
 /**
 * @import {Code} from 'micromark-util-types'
 */
@@ -862,7 +862,7 @@ function classifyCharacter(code) {
 	if (unicodePunctuation(code)) return 2;
 }
 //#endregion
-//#region node_modules/.bun/micromark-util-resolve-all@2.0.1/node_modules/micromark-util-resolve-all/index.js
+//#region node_modules/micromark-util-resolve-all/index.js
 /**
 * @import {Event, Resolver, TokenizeContext} from 'micromark-util-types'
 */
@@ -892,7 +892,7 @@ function resolveAll(constructs, events, context) {
 	return events;
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/attention.js
+//#region node_modules/micromark-core-commonmark/lib/attention.js
 /**
 * @import {
 *   Code,
@@ -1112,7 +1112,7 @@ function movePoint(point, offset) {
 	point._bufferIndex += offset;
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/autolink.js
+//#region node_modules/micromark-core-commonmark/lib/autolink.js
 /**
 * @import {
 *   Construct,
@@ -1323,7 +1323,7 @@ function tokenizeAutolink(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/blank-line.js
+//#region node_modules/micromark-core-commonmark/lib/blank-line.js
 /**
 * @import {
 *   Construct,
@@ -1380,7 +1380,7 @@ function tokenizeBlankLine(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/block-quote.js
+//#region node_modules/micromark-core-commonmark/lib/block-quote.js
 /**
 * @import {
 *   Construct,
@@ -1507,7 +1507,7 @@ function exit(effects) {
 	effects.exit("blockQuote");
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/character-escape.js
+//#region node_modules/micromark-core-commonmark/lib/character-escape.js
 /**
 * @import {
 *   Construct,
@@ -1567,7 +1567,7 @@ function tokenizeCharacterEscape(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/character-reference.js
+//#region node_modules/micromark-core-commonmark/lib/character-reference.js
 /**
 * @import {
 *   Code,
@@ -1705,7 +1705,7 @@ function tokenizeCharacterReference(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/code-fenced.js
+//#region node_modules/micromark-core-commonmark/lib/code-fenced.js
 /**
 * @import {
 *   Code,
@@ -2120,7 +2120,7 @@ function tokenizeNonLazyContinuation(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/code-indented.js
+//#region node_modules/micromark-core-commonmark/lib/code-indented.js
 /**
 * @import {
 *   Construct,
@@ -2264,7 +2264,7 @@ function tokenizeFurtherStart(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/code-text.js
+//#region node_modules/micromark-core-commonmark/lib/code-text.js
 /**
 * @import {
 *   Construct,
@@ -2449,7 +2449,7 @@ function tokenizeCodeText(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-util-subtokenize@2.1.0/node_modules/micromark-util-subtokenize/lib/splice-buffer.js
+//#region node_modules/micromark-util-subtokenize/lib/splice-buffer.js
 /**
 * Some of the internal operations of micromark do lots of editing
 * operations on very large arrays. This runs into problems with two
@@ -2679,7 +2679,7 @@ function chunkedPush(list, right) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-util-subtokenize@2.1.0/node_modules/micromark-util-subtokenize/index.js
+//#region node_modules/micromark-util-subtokenize/index.js
 /**
 * @import {Chunk, Event, Token} from 'micromark-util-types'
 */
@@ -2834,7 +2834,7 @@ function subcontent(events, eventIndex) {
 	return gaps;
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/content.js
+//#region node_modules/micromark-core-commonmark/lib/content.js
 /**
 * @import {
 *   Construct,
@@ -2967,7 +2967,7 @@ function tokenizeContinuation(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-factory-destination@2.0.1/node_modules/micromark-factory-destination/index.js
+//#region node_modules/micromark-factory-destination/index.js
 /**
 * @import {Effects, State, TokenType} from 'micromark-util-types'
 */
@@ -3151,7 +3151,7 @@ function factoryDestination(effects, ok, nok, type, literalType, literalMarkerTy
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-factory-label@2.0.1/node_modules/micromark-factory-label/index.js
+//#region node_modules/micromark-factory-label/index.js
 /**
 * @import {
 *   Effects,
@@ -3283,7 +3283,7 @@ function factoryLabel(effects, ok, nok, type, markerType, stringType) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-factory-title@2.0.1/node_modules/micromark-factory-title/index.js
+//#region node_modules/micromark-factory-title/index.js
 /**
 * @import {
 *   Code,
@@ -3428,7 +3428,7 @@ function factoryTitle(effects, ok, nok, type, markerType, stringType) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-factory-whitespace@2.0.1/node_modules/micromark-factory-whitespace/index.js
+//#region node_modules/micromark-factory-whitespace/index.js
 /**
 * @import {Effects, State} from 'micromark-util-types'
 */
@@ -3468,7 +3468,7 @@ function factoryWhitespace(effects, ok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/definition.js
+//#region node_modules/micromark-core-commonmark/lib/definition.js
 /**
 * @import {
 *   Construct,
@@ -3683,7 +3683,7 @@ function tokenizeTitleBefore(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/hard-break-escape.js
+//#region node_modules/micromark-core-commonmark/lib/hard-break-escape.js
 /**
 * @import {
 *   Construct,
@@ -3740,7 +3740,7 @@ function tokenizeHardBreakEscape(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/heading-atx.js
+//#region node_modules/micromark-core-commonmark/lib/heading-atx.js
 /**
 * @import {
 *   Construct,
@@ -3925,7 +3925,7 @@ function tokenizeHeadingAtx(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-util-html-tag-name@2.0.1/node_modules/micromark-util-html-tag-name/index.js
+//#region node_modules/micromark-util-html-tag-name/index.js
 /**
 * List of lowercase HTML “block” tag names.
 *
@@ -4024,7 +4024,7 @@ var htmlRawNames = [
 	"textarea"
 ];
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/html-flow.js
+//#region node_modules/micromark-core-commonmark/lib/html-flow.js
 /**
 * @import {
 *   Code,
@@ -4797,7 +4797,7 @@ function tokenizeBlankLineBefore(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/html-text.js
+//#region node_modules/micromark-core-commonmark/lib/html-text.js
 /**
 * @import {
 *   Code,
@@ -5411,7 +5411,7 @@ function tokenizeHtmlText(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/label-end.js
+//#region node_modules/micromark-core-commonmark/lib/label-end.js
 /**
 * @import {
 *   Construct,
@@ -5881,7 +5881,7 @@ function tokenizeReferenceCollapsed(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/label-start-image.js
+//#region node_modules/micromark-core-commonmark/lib/label-start-image.js
 /**
 * @import {
 *   Construct,
@@ -5974,7 +5974,7 @@ function tokenizeLabelStartImage(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/label-start-link.js
+//#region node_modules/micromark-core-commonmark/lib/label-start-link.js
 /**
 * @import {
 *   Construct,
@@ -6022,7 +6022,7 @@ function tokenizeLabelStartLink(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/line-ending.js
+//#region node_modules/micromark-core-commonmark/lib/line-ending.js
 /**
 * @import {
 *   Construct,
@@ -6052,7 +6052,7 @@ function tokenizeLineEnding(effects, ok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/thematic-break.js
+//#region node_modules/micromark-core-commonmark/lib/thematic-break.js
 /**
 * @import {
 *   Code,
@@ -6147,7 +6147,7 @@ function tokenizeThematicBreak(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/list.js
+//#region node_modules/micromark-core-commonmark/lib/list.js
 /**
 * @import {
 *   Code,
@@ -6319,7 +6319,7 @@ function tokenizeListItemPrefixWhitespace(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-core-commonmark@2.0.3/node_modules/micromark-core-commonmark/lib/setext-underline.js
+//#region node_modules/micromark-core-commonmark/lib/setext-underline.js
 /**
 * @import {
 *   Code,
@@ -6471,7 +6471,7 @@ function tokenizeSetextUnderline(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark@4.0.2/node_modules/micromark/lib/initialize/flow.js
+//#region node_modules/micromark/lib/initialize/flow.js
 /**
 * @import {
 *   InitialConstruct,
@@ -6518,7 +6518,7 @@ function initializeFlow(effects) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark@4.0.2/node_modules/micromark/lib/initialize/text.js
+//#region node_modules/micromark/lib/initialize/text.js
 /**
 * @import {
 *   Code,
@@ -6695,7 +6695,7 @@ function resolveAllLineSuffixes(events, context) {
 	return events;
 }
 //#endregion
-//#region node_modules/.bun/micromark@4.0.2/node_modules/micromark/lib/constructs.js
+//#region node_modules/micromark/lib/constructs.js
 /**
 * @import {Extension} from 'micromark-util-types'
 */
@@ -6773,7 +6773,7 @@ var attentionMarkers = { null: [42, 95] };
 /** @satisfies {Extension['disable']} */
 var disable = { null: [] };
 //#endregion
-//#region node_modules/.bun/micromark@4.0.2/node_modules/micromark/lib/create-tokenizer.js
+//#region node_modules/micromark/lib/create-tokenizer.js
 /**
 * @import {
 *   Chunk,
@@ -7242,7 +7242,7 @@ function serializeChunks(chunks, expandTabs) {
 	return result.join("");
 }
 //#endregion
-//#region node_modules/.bun/micromark@4.0.2/node_modules/micromark/lib/parse.js
+//#region node_modules/micromark/lib/parse.js
 /**
 * @import {
 *   Create,
@@ -7286,7 +7286,7 @@ function parse(options) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark@4.0.2/node_modules/micromark/lib/postprocess.js
+//#region node_modules/micromark/lib/postprocess.js
 /**
 * @import {Event} from 'micromark-util-types'
 */
@@ -7301,7 +7301,7 @@ function postprocess(events) {
 	return events;
 }
 //#endregion
-//#region node_modules/.bun/micromark@4.0.2/node_modules/micromark/lib/preprocess.js
+//#region node_modules/micromark/lib/preprocess.js
 /**
 * @import {Chunk, Code, Encoding, Value} from 'micromark-util-types'
 */
@@ -7402,7 +7402,7 @@ function preprocess() {
 	}
 }
 //#endregion
-//#region node_modules/.bun/micromark-util-decode-string@2.0.1/node_modules/micromark-util-decode-string/index.js
+//#region node_modules/micromark-util-decode-string/index.js
 var characterEscapeOrReference = /\\([!-/:-@[-`{-~])|&(#(?:\d{1,7}|x[\da-f]{1,6})|[\da-z]{1,31});/gi;
 /**
 * Decode markdown strings (which occur in places such as fenced code info
@@ -7439,7 +7439,7 @@ function decode($0, $1, $2) {
 	return decodeNamedCharacterReference($2) || $0;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-from-markdown@2.0.3/node_modules/mdast-util-from-markdown/lib/index.js
+//#region node_modules/mdast-util-from-markdown/lib/index.js
 /**
 * @import {
 *   Break,

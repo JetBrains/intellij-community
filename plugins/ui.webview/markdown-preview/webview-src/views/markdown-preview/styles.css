@@ -526,6 +526,7 @@ html[data-theme="light"] .markdownPreview {
   cursor: pointer;
   font: inherit;
   text-align: inherit;
+  animation: markdownPathLinkReveal 220ms ease-out;
 }
 
 .markdownPreview .markdownPathLink:hover,
@@ -606,6 +607,7 @@ html[data-theme="light"] .markdownPreview {
 .markdownPreview pre code.hljs {
   display: block;
   color: var(--ij-text-primary);
+  animation: markdownHighlightReveal 180ms ease-out;
 }
 
 .markdownPreview .codeFenceWithCommands {
@@ -641,6 +643,7 @@ html[data-theme="light"] .markdownPreview {
   background: transparent;
   opacity: 0.72;
   cursor: pointer;
+  animation: markdownRunButtonReveal 160ms ease-out;
 }
 
 .markdownPreview .markdownRunButton:hover,
@@ -967,4 +970,63 @@ html[data-theme="light"] .markdownPreview {
 .mermaidError {
   margin-bottom: 8px;
   color: var(--markdown-error);
+}
+
+.markdownPreview .katex {
+  animation: markdownLatexReveal 180ms ease-out;
+}
+
+@keyframes markdownPathLinkReveal {
+  from {
+    color: var(--ij-text-primary);
+    background-color: color-mix(in srgb, var(--ij-accent) 14%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--ij-accent) 10%, transparent);
+  }
+
+  to {
+    color: var(--ij-accent);
+    background-color: transparent;
+    box-shadow: none;
+  }
+}
+
+@keyframes markdownRunButtonReveal {
+  from {
+    opacity: 0;
+    transform: translateX(-3px);
+  }
+
+  to {
+    opacity: 0.72;
+    transform: translateX(0);
+  }
+}
+
+@keyframes markdownHighlightReveal {
+  from {
+    filter: saturate(0.65);
+  }
+
+  to {
+    filter: none;
+  }
+}
+
+@keyframes markdownLatexReveal {
+  from {
+    opacity: 0.72;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .markdownPreview .markdownPathLink,
+  .markdownPreview .markdownRunButton,
+  .markdownPreview pre code.hljs,
+  .markdownPreview .katex {
+    animation: none;
+  }
 }

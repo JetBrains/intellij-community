@@ -1,4 +1,4 @@
-//#region node_modules/.bun/ccount@2.0.1/node_modules/ccount/index.js
+//#region node_modules/ccount/index.js
 /**
 * Count how often a character (or substring) is used in a string.
 *

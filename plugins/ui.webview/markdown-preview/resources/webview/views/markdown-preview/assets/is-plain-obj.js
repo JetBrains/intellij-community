@@ -1,4 +1,4 @@
-//#region node_modules/.bun/is-plain-obj@4.1.0/node_modules/is-plain-obj/index.js
+//#region node_modules/is-plain-obj/index.js
 function isPlainObject(value) {
 	if (typeof value !== "object" || value === null) return false;
 	const prototype = Object.getPrototypeOf(value);

@@ -1780,7 +1780,8 @@ function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, sel
 	const commands = commandsReady ? resolvedCommands.commands : [];
 	const resolvedRawPaths = pathLinksReady ? resolvedPathLinks.rawPaths : emptyPathSet;
 	const commandLookup = createCommandLookup(commands);
-	const [rehypeHighlightPlugin, setRehypeHighlightPlugin] = (0, import_react.useState)();
+	const [rehypeHighlightState, setRehypeHighlightState] = (0, import_react.useState)();
+	const rehypeHighlightPlugin = rehypeHighlightState?.contentVersion === contentVersion ? rehypeHighlightState.plugin : void 0;
 	const rehypePlugins = (0, import_react.useMemo)(() => {
 		if (!rehypeHighlightPlugin) return baseRehypePlugins;
 		return [...baseRehypePlugins, [rehypeHighlightPlugin, {
@@ -1867,11 +1868,12 @@ function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, sel
 			const sourcePosition = sourcePositionFromPreNode(node);
 			const codeNode = codeNodeFromPreNode(node);
 			const isMermaidFence = codeNode ? isMermaidCodeNode(codeNode) : false;
-			if (sourcePosition && codeNode && !isMermaidFence) commandCandidates.push(...codeFenceCommandCandidates(sourcePosition, codeNode));
+			const codeFenceCandidates = sourcePosition && codeNode && !isMermaidFence ? codeFenceCommandCandidates(sourcePosition, codeNode) : [];
+			commandCandidates.push(...codeFenceCandidates);
 			if (isMermaidFence) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children });
 			const blockCommand = sourcePosition ? findBlockCommand(commandLookup, sourcePosition) : void 0;
 			const lineCommands = sourcePosition ? findLineCommands(commandLookup, sourcePosition, blockCommand?.firstLineCommandId) : [];
-			if (!blockCommand && lineCommands.length === 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("pre", {
+			if (!(codeFenceCandidates.length > 0 || blockCommand || lineCommands.length > 0)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("pre", {
 				className,
 				...props,
 				children
@@ -1937,26 +1939,29 @@ function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, sel
 			contentVersion: -1,
 			rawPaths: emptyPathSet
 		});
-		const startedAtMs = performance.now();
-		onResolvePathLinks({
-			contentVersion,
-			candidates: pathLinkCandidates
-		}).then((response) => {
-			if (cancelled) return;
-			const resolvedIds = new Set(response.resolvedIds);
-			markdownLogger$1.perfSince("pathLinks.resolve", startedAtMs, markdownDiagnosticDetails(markdown, contentVersion, `candidates=${pathLinkCandidates.length}, resolved=${resolvedIds.size}`));
-			setResolvedPathLinks({
+		const cancelIdle = executeWhenIdle(() => {
+			const startedAtMs = performance.now();
+			onResolvePathLinks({
 				contentVersion,
-				rawPaths: new Set(pathLinkCandidates.filter((candidate) => resolvedIds.has(candidate.id)).map((candidate) => candidate.rawPath))
-			});
-		}).catch(() => {
-			if (!cancelled) setResolvedPathLinks({
-				contentVersion,
-				rawPaths: emptyPathSet
+				candidates: pathLinkCandidates
+			}).then((response) => {
+				if (cancelled) return;
+				const resolvedIds = new Set(response.resolvedIds);
+				markdownLogger$1.perfSince("pathLinks.resolve", startedAtMs, markdownDiagnosticDetails(markdown, contentVersion, `candidates=${pathLinkCandidates.length}, resolved=${resolvedIds.size}`));
+				setResolvedPathLinks({
+					contentVersion,
+					rawPaths: new Set(pathLinkCandidates.filter((candidate) => resolvedIds.has(candidate.id)).map((candidate) => candidate.rawPath))
+				});
+			}).catch(() => {
+				if (!cancelled) setResolvedPathLinks({
+					contentVersion,
+					rawPaths: emptyPathSet
+				});
 			});
 		});
 		return () => {
 			cancelled = true;
+			cancelIdle();
 		};
 	}, [
 		contentVersion,
@@ -1965,47 +1970,74 @@ function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, sel
 	]);
 	(0, import_react.useEffect)(() => {
 		let cancelled = false;
-		const startedAtMs = performance.now();
+		setResolvedCommands({
+			contentVersion: -1,
+			commands: []
+		});
 		const candidates = uniqueCommandCandidates(commandCandidates);
-		onResolveRunCommands({
-			contentVersion,
-			candidates
-		}).then((response) => {
-			if (cancelled) return;
+		if (candidates.length === 0) {
 			setResolvedCommands({
 				contentVersion,
-				commands: response.commands
+				commands: []
 			});
-			markdownLogger$1.perfSince("runCommands.resolve", startedAtMs, markdownDiagnosticDetails(markdown, contentVersion, `candidates=${candidates.length}, resolved=${response.commands.length}`));
+			return;
+		}
+		const cancelIdle = executeWhenIdle(() => {
+			const startedAtMs = performance.now();
+			onResolveRunCommands({
+				contentVersion,
+				candidates
+			}).then((response) => {
+				if (cancelled) return;
+				setResolvedCommands({
+					contentVersion,
+					commands: response.commands
+				});
+				markdownLogger$1.perfSince("runCommands.resolve", startedAtMs, markdownDiagnosticDetails(markdown, contentVersion, `candidates=${candidates.length}, resolved=${response.commands.length}`));
+			});
 		});
 		return () => {
 			cancelled = true;
+			cancelIdle();
 		};
 	}, [contentVersion, onResolveRunCommands]);
 	(0, import_react.useEffect)(() => {
-		if (!markdownMayNeedSyntaxHighlighting(markdown) || rehypeHighlightPlugin) return;
+		if (!markdownMayNeedSyntaxHighlighting(markdown) || rehypeHighlightState?.contentVersion === contentVersion) return;
 		let cancelled = false;
-		import("./assets/rehype-highlight.js").then((n) => n.t).then((module) => {
-			if (!cancelled) setRehypeHighlightPlugin(() => module.default);
+		const cancelIdle = executeWhenIdle(() => {
+			import("./assets/rehype-highlight.js").then((n) => n.t).then((module) => {
+				if (!cancelled) setRehypeHighlightState({
+					contentVersion,
+					plugin: module.default
+				});
+			});
 		});
 		return () => {
 			cancelled = true;
+			cancelIdle();
 		};
-	}, [markdown, rehypeHighlightPlugin]);
+	}, [
+		contentVersion,
+		markdown,
+		rehypeHighlightState
+	]);
 	(0, import_react.useEffect)(() => {
 		if (!commandsReady || !pathLinksReady || !markdownMayContainLatex(markdown)) return;
 		let cancelled = false;
-		const startedAtMs = performance.now();
-		(async () => {
-			const { renderMarkdownLatex } = await import("./assets/markdownLatex.js");
-			return { renderMarkdownLatex };
-		})().then(({ renderMarkdownLatex }) => {
-			if (cancelled) return;
-			renderMarkdownLatex();
-			markdownLogger$1.perfSince("latex.render", startedAtMs, markdownDiagnosticDetails(markdown, contentVersion));
+		const cancelIdle = executeWhenIdle(() => {
+			const startedAtMs = performance.now();
+			(async () => {
+				const { renderMarkdownLatex } = await import("./assets/markdownLatex.js");
+				return { renderMarkdownLatex };
+			})().then(({ renderMarkdownLatex }) => {
+				if (cancelled) return;
+				renderMarkdownLatex();
+				markdownLogger$1.perfSince("latex.render", startedAtMs, markdownDiagnosticDetails(markdown, contentVersion));
+			});
 		});
 		return () => {
 			cancelled = true;
+			cancelIdle();
 		};
 	}, [
 		commandsReady,
@@ -2101,7 +2133,69 @@ function markdownMayNeedSyntaxHighlighting(markdown) {
 	return /(^|\n)(```|~~~| {4}|\t|<pre\b|<code\b)/.test(markdown);
 }
 function markdownMayContainLatex(markdown) {
-	return markdown.includes("$") || markdown.includes("\\(") || markdown.includes("\\[") || markdown.includes("\\begin{");
+	return /\\\([\s\S]*?\\\)|\\\[[\s\S]*?\\\]|\\begin\{[A-Za-z*]+}/.test(markdown) || markdownMayContainDollarLatex(markdown);
+}
+function markdownMayContainDollarLatex(markdown) {
+	for (let index = 0; index < markdown.length; index++) {
+		if (markdown[index] !== "$" || isEscaped(markdown, index)) continue;
+		const displayMath = markdown[index + 1] === "$";
+		const delimiter = displayMath ? "$$" : "$";
+		const contentStart = index + delimiter.length;
+		if (!displayMath && (contentStart >= markdown.length || /\s|\d/.test(markdown[contentStart]))) {
+			index = contentStart - 1;
+			continue;
+		}
+		const contentEnd = unescapedIndexOf(markdown, delimiter, contentStart);
+		if (contentEnd < 0) {
+			index = contentStart - 1;
+			continue;
+		}
+		if (!displayMath && (contentEnd === contentStart || /\s/.test(markdown[contentEnd - 1]))) {
+			index = contentEnd + delimiter.length - 1;
+			continue;
+		}
+		return true;
+	}
+	return false;
+}
+function unescapedIndexOf(text, search, startIndex) {
+	let index = text.indexOf(search, startIndex);
+	while (index >= 0 && isEscaped(text, index)) index = text.indexOf(search, index + search.length);
+	return index;
+}
+function isEscaped(text, index) {
+	let backslashCount = 0;
+	for (let offset = index - 1; offset >= 0 && text[offset] === "\\"; offset--) backslashCount++;
+	return backslashCount % 2 === 1;
+}
+function executeWhenIdle(callback) {
+	let cancelled = false;
+	let animationFrameHandle;
+	let idleCallbackHandle;
+	let timeoutHandle;
+	function run() {
+		if (!cancelled) callback();
+	}
+	animationFrameHandle = requestAnimationFrame(() => {
+		animationFrameHandle = void 0;
+		if (cancelled) return;
+		const idleWindow = window;
+		if (idleWindow.requestIdleCallback) idleCallbackHandle = idleWindow.requestIdleCallback(() => {
+			idleCallbackHandle = void 0;
+			run();
+		}, { timeout: 1e3 });
+		else timeoutHandle = window.setTimeout(() => {
+			timeoutHandle = void 0;
+			run();
+		}, 0);
+	});
+	return () => {
+		cancelled = true;
+		if (animationFrameHandle !== void 0) cancelAnimationFrame(animationFrameHandle);
+		const idleWindow = window;
+		if (idleCallbackHandle !== void 0) idleWindow.cancelIdleCallback?.(idleCallbackHandle);
+		if (timeoutHandle !== void 0) clearTimeout(timeoutHandle);
+	};
 }
 //#endregion
 //#region views/markdown-preview/src/main.tsx

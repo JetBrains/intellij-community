@@ -1,4 +1,4 @@
-//#region node_modules/.bun/@iconify+utils@3.1.3/node_modules/@iconify/utils/lib/icon/defaults.js
+//#region node_modules/@iconify/utils/lib/icon/defaults.js
 /** Default values for dimensions */
 var defaultIconDimensions = Object.freeze({
 	left: 0,
@@ -24,7 +24,7 @@ var defaultExtendedIconProps = Object.freeze({
 	hidden: false
 });
 //#endregion
-//#region node_modules/.bun/@iconify+utils@3.1.3/node_modules/@iconify/utils/lib/customisations/defaults.js
+//#region node_modules/@iconify/utils/lib/customisations/defaults.js
 /**
 * Default icon customisations values
 */
@@ -37,7 +37,7 @@ var defaultIconCustomisations = Object.freeze({
 	...defaultIconTransformations
 });
 //#endregion
-//#region node_modules/.bun/@iconify+utils@3.1.3/node_modules/@iconify/utils/lib/icon/name.js
+//#region node_modules/@iconify/utils/lib/icon/name.js
 /**
 * Convert string icon name to IconifyIconName object.
 */
@@ -88,7 +88,7 @@ var validateIconName = (icon, allowSimpleName) => {
 	return !!((allowSimpleName && icon.prefix === "" || !!icon.prefix) && !!icon.name);
 };
 //#endregion
-//#region node_modules/.bun/@iconify+utils@3.1.3/node_modules/@iconify/utils/lib/icon/transformations.js
+//#region node_modules/@iconify/utils/lib/icon/transformations.js
 /**
 * Merge transformations
 */
@@ -101,7 +101,7 @@ function mergeIconTransformations(obj1, obj2) {
 	return result;
 }
 //#endregion
-//#region node_modules/.bun/@iconify+utils@3.1.3/node_modules/@iconify/utils/lib/icon/merge.js
+//#region node_modules/@iconify/utils/lib/icon/merge.js
 /**
 * Merge icon and alias
 *
@@ -116,7 +116,7 @@ function mergeIconData(parent, child) {
 	return result;
 }
 //#endregion
-//#region node_modules/.bun/@iconify+utils@3.1.3/node_modules/@iconify/utils/lib/icon-set/tree.js
+//#region node_modules/@iconify/utils/lib/icon-set/tree.js
 /**
 * Resolve icon set icons
 *
@@ -140,7 +140,7 @@ function getIconsTree(data, names) {
 	return resolved;
 }
 //#endregion
-//#region node_modules/.bun/@iconify+utils@3.1.3/node_modules/@iconify/utils/lib/icon-set/get-icon.js
+//#region node_modules/@iconify/utils/lib/icon-set/get-icon.js
 /**
 * Get icon data, using prepared aliases tree
 */
@@ -164,7 +164,7 @@ function getIconData(data, name) {
 	return tree ? internalGetIconData(data, name, tree) : null;
 }
 //#endregion
-//#region node_modules/.bun/@iconify+utils@3.1.3/node_modules/@iconify/utils/lib/svg/size.js
+//#region node_modules/@iconify/utils/lib/svg/size.js
 /**
 * Regular expressions for calculating dimensions
 */
@@ -192,7 +192,7 @@ function calculateSize(size, ratio, precision) {
 	}
 }
 //#endregion
-//#region node_modules/.bun/@iconify+utils@3.1.3/node_modules/@iconify/utils/lib/svg/defs.js
+//#region node_modules/@iconify/utils/lib/svg/defs.js
 function splitSVGDefs(content, tag = "defs") {
 	let defs = "";
 	const index = content.indexOf("<" + tag);
@@ -224,7 +224,7 @@ function wrapSVGContent(body, start, end) {
 	return mergeDefsAndContent(split.defs, start + split.content + end);
 }
 //#endregion
-//#region node_modules/.bun/@iconify+utils@3.1.3/node_modules/@iconify/utils/lib/svg/build.js
+//#region node_modules/@iconify/utils/lib/svg/build.js
 /**
 * Check if value should be unset. Allows multiple keywords
 */
@@ -334,7 +334,7 @@ function iconToSVG(icon, customisations) {
 	};
 }
 //#endregion
-//#region node_modules/.bun/@iconify+utils@3.1.3/node_modules/@iconify/utils/lib/svg/id.js
+//#region node_modules/@iconify/utils/lib/svg/id.js
 /**
 * Regular expression for finding ids
 */
@@ -370,7 +370,7 @@ function replaceIDs(body) {
 	return body;
 }
 //#endregion
-//#region node_modules/.bun/@iconify+utils@3.1.3/node_modules/@iconify/utils/lib/svg/html.js
+//#region node_modules/@iconify/utils/lib/svg/html.js
 /**
 * Generate <svg>
 */

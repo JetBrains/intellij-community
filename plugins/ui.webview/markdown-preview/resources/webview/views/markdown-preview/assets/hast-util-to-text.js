@@ -1,6 +1,6 @@
 import { i as convert } from "./hast-util-raw.js";
 import { t as convertElement } from "./hast-util-is-element.js";
-//#region node_modules/.bun/unist-util-find-after@5.0.0/node_modules/unist-util-find-after/lib/index.js
+//#region node_modules/unist-util-find-after/lib/index.js
 /**
 * @typedef {import('unist').Node} UnistNode
 * @typedef {import('unist').Parent} UnistParent
@@ -99,7 +99,7 @@ function(parent, index, test) {
 	while (++index < parent.children.length) if (is(parent.children[index], index, parent)) return parent.children[index];
 });
 //#endregion
-//#region node_modules/.bun/hast-util-to-text@4.0.2/node_modules/hast-util-to-text/lib/index.js
+//#region node_modules/hast-util-to-text/lib/index.js
 /**
 * @typedef {import('hast').Comment} Comment
 * @typedef {import('hast').Element} Element

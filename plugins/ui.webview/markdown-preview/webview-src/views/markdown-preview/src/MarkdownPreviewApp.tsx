@@ -75,6 +75,12 @@ const markdownLogger = getPerfLogger("markdown")
 const LazyMarkdownImageBlock = lazy(() => import("./MarkdownImageBlock").then(module => ({ default: module.MarkdownImageBlock })))
 const LazyMermaidBlock = lazy(() => import("./MermaidBlock").then(module => ({ default: module.MermaidBlock })))
 type RehypePlugin = NonNullable<Options["rehypePlugins"]>[number]
+type IdleCallbackHandle = number
+
+type WindowWithIdleCallback = Window & {
+  requestIdleCallback: ((callback: () => void, options?: { timeout?: number }) => IdleCallbackHandle) | undefined
+  cancelIdleCallback: ((handle: IdleCallbackHandle) => void) | undefined
+}
 
 const remarkPlugins: Options["remarkPlugins"] = [
   remarkGfm,
@@ -123,7 +129,8 @@ export function MarkdownPreviewApp({
   const commands = commandsReady ? resolvedCommands.commands : []
   const resolvedRawPaths = pathLinksReady ? resolvedPathLinks.rawPaths : emptyPathSet
   const commandLookup = createCommandLookup(commands)
-  const [rehypeHighlightPlugin, setRehypeHighlightPlugin] = useState<RehypePlugin | undefined>()
+  const [rehypeHighlightState, setRehypeHighlightState] = useState<{ contentVersion: number, plugin: RehypePlugin } | undefined>()
+  const rehypeHighlightPlugin = rehypeHighlightState?.contentVersion === contentVersion ? rehypeHighlightState.plugin : undefined
   const rehypePlugins = useMemo<Options["rehypePlugins"]>(() => {
     if (!rehypeHighlightPlugin) return baseRehypePlugins
     return [
@@ -187,15 +194,15 @@ export function MarkdownPreviewApp({
       const sourcePosition = sourcePositionFromPreNode(node)
       const codeNode = codeNodeFromPreNode(node)
       const isMermaidFence = codeNode ? isMermaidCodeNode(codeNode) : false
-      if (sourcePosition && codeNode && !isMermaidFence) {
-        commandCandidates.push(...codeFenceCommandCandidates(sourcePosition, codeNode))
-      }
+      const codeFenceCandidates = sourcePosition && codeNode && !isMermaidFence ? codeFenceCommandCandidates(sourcePosition, codeNode) : []
+      commandCandidates.push(...codeFenceCandidates)
       if (isMermaidFence) {
         return <>{children}</>
       }
       const blockCommand = sourcePosition ? findBlockCommand(commandLookup, sourcePosition) : undefined
       const lineCommands = sourcePosition ? findLineCommands(commandLookup, sourcePosition, blockCommand?.firstLineCommandId) : []
-      if (!blockCommand && lineCommands.length === 0) {
+      const hasCommandGutter = codeFenceCandidates.length > 0 || blockCommand || lineCommands.length > 0
+      if (!hasCommandGutter) {
         return <pre className={className} {...props}>{children}</pre>
       }
       return (
@@ -246,71 +253,89 @@ export function MarkdownPreviewApp({
 
     let cancelled = false
     setResolvedPathLinks({ contentVersion: -1, rawPaths: emptyPathSet })
-    const startedAtMs = performance.now()
-    void onResolvePathLinks({ contentVersion, candidates: pathLinkCandidates }).then(response => {
-      if (cancelled) return
-      const resolvedIds = new Set(response.resolvedIds)
-      markdownLogger.perfSince(
-        "pathLinks.resolve",
-        startedAtMs,
-        markdownDiagnosticDetails(markdown, contentVersion, `candidates=${pathLinkCandidates.length}, resolved=${resolvedIds.size}`),
-      )
-      setResolvedPathLinks({
-        contentVersion,
-        rawPaths: new Set(pathLinkCandidates.filter(candidate => resolvedIds.has(candidate.id)).map(candidate => candidate.rawPath)),
+    const cancelIdle = executeWhenIdle(() => {
+      const startedAtMs = performance.now()
+      void onResolvePathLinks({ contentVersion, candidates: pathLinkCandidates }).then(response => {
+        if (cancelled) return
+        const resolvedIds = new Set(response.resolvedIds)
+        markdownLogger.perfSince(
+          "pathLinks.resolve",
+          startedAtMs,
+          markdownDiagnosticDetails(markdown, contentVersion, `candidates=${pathLinkCandidates.length}, resolved=${resolvedIds.size}`),
+        )
+        setResolvedPathLinks({
+          contentVersion,
+          rawPaths: new Set(pathLinkCandidates.filter(candidate => resolvedIds.has(candidate.id)).map(candidate => candidate.rawPath)),
+        })
+      }).catch(() => {
+        if (!cancelled) setResolvedPathLinks({ contentVersion, rawPaths: emptyPathSet })
       })
-    }).catch(() => {
-      if (!cancelled) setResolvedPathLinks({ contentVersion, rawPaths: emptyPathSet })
     })
     return () => {
       cancelled = true
+      cancelIdle()
     }
   }, [contentVersion, onResolvePathLinks, pathLinkCandidates])
 
   useEffect(() => {
     let cancelled = false
-    const startedAtMs = performance.now()
+    setResolvedCommands({ contentVersion: -1, commands: [] })
     const candidates = uniqueCommandCandidates(commandCandidates)
-    void onResolveRunCommands({ contentVersion, candidates }).then(response => {
-      if (cancelled) return
-      setResolvedCommands({ contentVersion, commands: response.commands })
-      markdownLogger.perfSince(
-        "runCommands.resolve",
-        startedAtMs,
-        markdownDiagnosticDetails(markdown, contentVersion, `candidates=${candidates.length}, resolved=${response.commands.length}`),
-      )
+    if (candidates.length === 0) {
+      setResolvedCommands({ contentVersion, commands: [] })
+      return
+    }
+
+    const cancelIdle = executeWhenIdle(() => {
+      const startedAtMs = performance.now()
+      void onResolveRunCommands({ contentVersion, candidates }).then(response => {
+        if (cancelled) return
+        setResolvedCommands({ contentVersion, commands: response.commands })
+        markdownLogger.perfSince(
+          "runCommands.resolve",
+          startedAtMs,
+          markdownDiagnosticDetails(markdown, contentVersion, `candidates=${candidates.length}, resolved=${response.commands.length}`),
+        )
+      })
     })
     return () => {
       cancelled = true
+      cancelIdle()
     }
   }, [contentVersion, onResolveRunCommands])
 
   useEffect(() => {
-    if (!markdownMayNeedSyntaxHighlighting(markdown) || rehypeHighlightPlugin) return
+    if (!markdownMayNeedSyntaxHighlighting(markdown) || rehypeHighlightState?.contentVersion === contentVersion) return
 
     let cancelled = false
-    void import("rehype-highlight").then(module => {
-      if (!cancelled) {
-        setRehypeHighlightPlugin(() => module.default as RehypePlugin)
-      }
+    const cancelIdle = executeWhenIdle(() => {
+      void import("rehype-highlight").then(module => {
+        if (!cancelled) {
+          setRehypeHighlightState({ contentVersion, plugin: module.default as RehypePlugin })
+        }
+      })
     })
     return () => {
       cancelled = true
+      cancelIdle()
     }
-  }, [markdown, rehypeHighlightPlugin])
+  }, [contentVersion, markdown, rehypeHighlightState])
 
   useEffect(() => {
     if (!commandsReady || !pathLinksReady || !markdownMayContainLatex(markdown)) return
 
     let cancelled = false
-    const startedAtMs = performance.now()
-    void import("./markdownLatex").then(({ renderMarkdownLatex }) => {
-      if (cancelled) return
-      renderMarkdownLatex()
-      markdownLogger.perfSince("latex.render", startedAtMs, markdownDiagnosticDetails(markdown, contentVersion))
+    const cancelIdle = executeWhenIdle(() => {
+      const startedAtMs = performance.now()
+      void import("./markdownLatex").then(({ renderMarkdownLatex }) => {
+        if (cancelled) return
+        renderMarkdownLatex()
+        markdownLogger.perfSince("latex.render", startedAtMs, markdownDiagnosticDetails(markdown, contentVersion))
+      })
     })
     return () => {
       cancelled = true
+      cancelIdle()
     }
   }, [commandsReady, contentVersion, markdown, pathLinksReady, theme])
 
@@ -430,5 +455,85 @@ function markdownMayNeedSyntaxHighlighting(markdown: string): boolean {
 }
 
 function markdownMayContainLatex(markdown: string): boolean {
-  return markdown.includes("$") || markdown.includes("\\(") || markdown.includes("\\[") || markdown.includes("\\begin{")
+  return /\\\([\s\S]*?\\\)|\\\[[\s\S]*?\\\]|\\begin\{[A-Za-z*]+}/.test(markdown) || markdownMayContainDollarLatex(markdown)
+}
+
+function markdownMayContainDollarLatex(markdown: string): boolean {
+  for (let index = 0; index < markdown.length; index++) {
+    if (markdown[index] !== "$" || isEscaped(markdown, index)) continue
+
+    const displayMath = markdown[index + 1] === "$"
+    const delimiter = displayMath ? "$$" : "$"
+    const contentStart = index + delimiter.length
+    if (!displayMath && (contentStart >= markdown.length || /\s|\d/.test(markdown[contentStart]))) {
+      index = contentStart - 1
+      continue
+    }
+
+    const contentEnd = unescapedIndexOf(markdown, delimiter, contentStart)
+    if (contentEnd < 0) {
+      index = contentStart - 1
+      continue
+    }
+    if (!displayMath && (contentEnd === contentStart || /\s/.test(markdown[contentEnd - 1]))) {
+      index = contentEnd + delimiter.length - 1
+      continue
+    }
+    return true
+  }
+  return false
+}
+
+function unescapedIndexOf(text: string, search: string, startIndex: number): number {
+  let index = text.indexOf(search, startIndex)
+  while (index >= 0 && isEscaped(text, index)) {
+    index = text.indexOf(search, index + search.length)
+  }
+  return index
+}
+
+function isEscaped(text: string, index: number): boolean {
+  let backslashCount = 0
+  for (let offset = index - 1; offset >= 0 && text[offset] === "\\"; offset--) {
+    backslashCount++
+  }
+  return backslashCount % 2 === 1
+}
+
+function executeWhenIdle(callback: () => void): () => void {
+  let cancelled = false
+  let animationFrameHandle: number | undefined
+  let idleCallbackHandle: IdleCallbackHandle | undefined
+  let timeoutHandle: number | undefined
+
+  function run(): void {
+    if (!cancelled) callback()
+  }
+
+  animationFrameHandle = requestAnimationFrame(() => {
+    animationFrameHandle = undefined
+    if (cancelled) return
+
+    const idleWindow = window as WindowWithIdleCallback
+    if (idleWindow.requestIdleCallback) {
+      idleCallbackHandle = idleWindow.requestIdleCallback(() => {
+        idleCallbackHandle = undefined
+        run()
+      }, { timeout: 1000 })
+    }
+    else {
+      timeoutHandle = window.setTimeout(() => {
+        timeoutHandle = undefined
+        run()
+      }, 0)
+    }
+  })
+
+  return () => {
+    cancelled = true
+    if (animationFrameHandle !== undefined) cancelAnimationFrame(animationFrameHandle)
+    const idleWindow = window as WindowWithIdleCallback
+    if (idleCallbackHandle !== undefined) idleWindow.cancelIdleCallback?.(idleCallbackHandle)
+    if (timeoutHandle !== undefined) clearTimeout(timeoutHandle)
+  }
 }

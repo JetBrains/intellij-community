@@ -1,4 +1,4 @@
-//#region node_modules/.bun/bail@2.0.2/node_modules/bail/index.js
+//#region node_modules/bail/index.js
 /**
 * Throw a given error.
 *

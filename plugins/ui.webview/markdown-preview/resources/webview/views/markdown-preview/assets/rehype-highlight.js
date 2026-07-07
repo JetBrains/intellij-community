@@ -2,7 +2,7 @@ import { n as __exportAll } from "./rolldown-runtime.js";
 import { n as visit } from "./hast-util-raw.js";
 import { t as toText } from "./hast-util-to-text.js";
 import { n as grammars, t as createLowlight } from "./lowlight.js";
-//#region node_modules/.bun/rehype-highlight@7.0.2/node_modules/rehype-highlight/lib/index.js
+//#region node_modules/rehype-highlight/lib/index.js
 /**
 * @import {ElementContent, Element, Root} from 'hast'
 * @import {LanguageFn} from 'lowlight'
@@ -123,7 +123,7 @@ function language(node) {
 	return name;
 }
 //#endregion
-//#region node_modules/.bun/rehype-highlight@7.0.2/node_modules/rehype-highlight/index.js
+//#region node_modules/rehype-highlight/index.js
 var rehype_highlight_exports = /* @__PURE__ */ __exportAll({ default: () => rehypeHighlight });
 //#endregion
 export { rehype_highlight_exports as t };

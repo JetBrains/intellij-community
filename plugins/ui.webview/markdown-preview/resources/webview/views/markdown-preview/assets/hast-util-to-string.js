@@ -1,4 +1,4 @@
-//#region node_modules/.bun/hast-util-to-string@3.0.1/node_modules/hast-util-to-string/lib/index.js
+//#region node_modules/hast-util-to-string/lib/index.js
 /**
 * @import {Nodes, Parents} from 'hast'
 */

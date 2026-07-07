@@ -8,6 +8,7 @@ type Locator = {
   boundingBox(): Promise<BoundingBox | null>
   click(): Promise<void>
   dispatchEvent(type: string, eventInit?: Record<string, unknown>): Promise<void>
+  first(): Locator
   scrollIntoViewIfNeeded(): Promise<void>
 }
 
@@ -34,11 +35,13 @@ type ConsoleMessage = {
 }
 
 type Page = {
+  addInitScript(pageFunction: () => void): Promise<void>
   goto(url: string): Promise<void>
   getByRole(role: string, options?: { name?: string | RegExp; exact?: boolean }): Locator
   locator(selector: string): Locator
   route(url: string | RegExp, handler: (route: Route) => Promise<void> | void): Promise<void>
   evaluate<Result>(pageFunction: () => Result | Promise<Result>): Promise<Result>
+  evaluate<Result, Arg>(pageFunction: (arg: Arg) => Result | Promise<Result>, arg: Arg): Promise<Result>
   on(event: "console", handler: (message: ConsoleMessage) => void): void
   on(event: "pageerror", handler: (error: Error) => void): void
   waitForFunction(pageFunction: () => boolean): Promise<unknown>
@@ -384,6 +387,49 @@ test("renders only host-resolved code paths as navigation buttons", async ({ pag
   expect(Number.isFinite(navigation.clientX) && Number.isFinite(navigation.clientY)).toBe(true)
 })
 
+test("defers markdown enhancements until idle without shifting code fences", async ({ page }) => {
+  if (!preview) {
+    throw new Error("Markdown preview mock preview server was not started")
+  }
+  await installControlledIdleCallbacks(page)
+  await page.goto(preview.url)
+  await page.waitForSelector(".markdownPreview h1")
+  await page.waitForSelector(".codeFenceWithCommands pre")
+
+  const firstCodeFence = page.locator(".codeFenceWithCommands pre").first()
+  const codeFenceBoxBefore = await firstCodeFence.boundingBox()
+  expect(await methodCallCount(page, "markdown.preview/resolvePathLinks") === 0).toBe(true)
+  expect(await methodCallCount(page, "markdown.preview/resolveRunCommands") === 0).toBe(true)
+  expect(await hasMarkdownPathLinks(page)).toBe(false)
+  expect(await hasMarkdownRunButtons(page)).toBe(false)
+
+  await flushIdleCallbacks(page)
+  await page.waitForSelector(".markdownPathLink")
+  await page.waitForSelector(".markdownRunButton")
+
+  const codeFenceBoxAfter = await firstCodeFence.boundingBox()
+  expect(await methodCallCount(page, "markdown.preview/resolvePathLinks") > 0).toBe(true)
+  expect(await methodCallCount(page, "markdown.preview/resolveRunCommands") > 0).toBe(true)
+  expect(codeFenceBoxBefore != null && codeFenceBoxAfter != null).toBe(true)
+  expect(Math.abs((codeFenceBoxBefore?.x ?? 0) - (codeFenceBoxAfter?.x ?? 0)) <= 1).toBe(true)
+  expect(Math.abs((codeFenceBoxBefore?.width ?? 0) - (codeFenceBoxAfter?.width ?? 0)) <= 1).toBe(true)
+})
+
+test("does not load KaTeX for ordinary dollar signs", async ({ page }) => {
+  if (!preview) {
+    throw new Error("Markdown preview mock preview server was not started")
+  }
+  await installControlledIdleCallbacks(page)
+  await page.goto(preview.url)
+  await page.getByRole("button", { name: "Dollar markdown" }).click()
+  await page.waitForFunction(() => document.querySelector(".markdownPreview h1")?.textContent === "Dollar Markdown")
+
+  await flushIdleCallbacks(page)
+  await waitForLateMockUpdates(page)
+
+  expect(await hasKatex(page)).toBe(false)
+})
+
 test("updates after KaTeX rendering without React DOM commit errors", async ({ page }) => {
   if (!preview) {
     throw new Error("Markdown preview mock preview server was not started")
@@ -485,8 +531,75 @@ function openLinkCallCount(page: Page): Promise<number> {
   })
 }
 
+function methodCallCount(page: Page, method: string): Promise<number> {
+  return page.evaluate((methodName) => {
+    const mock = (window as Window & {
+      __WVI_MOCK__?: { calls: { byMethod(method: string): readonly unknown[] } }
+    }).__WVI_MOCK__
+    return mock?.calls.byMethod(methodName).length ?? 0
+  }, method)
+}
+
 function waitForLateMockUpdates(page: Page): Promise<unknown> {
   return page.evaluate(() => new Promise(resolve => setTimeout(resolve, 120)))
+}
+
+async function installControlledIdleCallbacks(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    type TestIdleDeadline = {
+      didTimeout: boolean
+      timeRemaining(): number
+    }
+    type TestIdleCallback = (deadline: TestIdleDeadline) => void
+    type TestIdleWindow = Window & {
+      requestIdleCallback?: (callback: TestIdleCallback) => number
+      cancelIdleCallback?: (handle: number) => void
+      __markdownPreviewIdleCallbacks?: Map<number, TestIdleCallback>
+      __markdownPreviewNextIdleCallbackId?: number
+      __flushMarkdownPreviewIdleCallbacks?: () => void
+    }
+
+    const idleWindow = window as TestIdleWindow
+    const callbacks = new Map<number, TestIdleCallback>()
+    idleWindow.__markdownPreviewIdleCallbacks = callbacks
+    idleWindow.__markdownPreviewNextIdleCallbackId = 1
+    idleWindow.requestIdleCallback = (callback): number => {
+      const id = idleWindow.__markdownPreviewNextIdleCallbackId ?? 1
+      idleWindow.__markdownPreviewNextIdleCallbackId = id + 1
+      callbacks.set(id, callback)
+      return id
+    }
+    idleWindow.cancelIdleCallback = (handle: number): void => {
+      callbacks.delete(handle)
+    }
+    idleWindow.__flushMarkdownPreviewIdleCallbacks = (): void => {
+      const pendingCallbacks = Array.from(callbacks.values())
+      callbacks.clear()
+      for (const callback of pendingCallbacks) {
+        callback({
+          didTimeout: false,
+          timeRemaining: () => 50,
+        })
+      }
+    }
+  })
+}
+
+async function flushIdleCallbacks(page: Page): Promise<void> {
+  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => resolve())))
+  await page.evaluate(() => (window as Window & { __flushMarkdownPreviewIdleCallbacks?: () => void }).__flushMarkdownPreviewIdleCallbacks?.())
+}
+
+function hasMarkdownPathLinks(page: Page): Promise<boolean> {
+  return page.evaluate(() => document.querySelector(".markdownPathLink") != null)
+}
+
+function hasMarkdownRunButtons(page: Page): Promise<boolean> {
+  return page.evaluate(() => document.querySelector(".markdownRunButton") != null)
+}
+
+function hasKatex(page: Page): Promise<boolean> {
+  return page.evaluate(() => document.querySelector(".katex") != null)
 }
 
 function markdownImageFillsViewport(page: Page): Promise<boolean> {

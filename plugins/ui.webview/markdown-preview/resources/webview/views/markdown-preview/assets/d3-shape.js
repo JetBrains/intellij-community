@@ -1,12 +1,12 @@
 import { n as Path } from "./d3-path.js";
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/constant.js
+//#region node_modules/d3-shape/src/constant.js
 function constant_default(x) {
 	return function constant() {
 		return x;
 	};
 }
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/math.js
+//#region node_modules/d3-shape/src/math.js
 var abs = Math.abs;
 var atan2 = Math.atan2;
 var cos = Math.cos;
@@ -24,7 +24,7 @@ function asin(x) {
 	return x >= 1 ? halfPi : x <= -1 ? -halfPi : Math.asin(x);
 }
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/path.js
+//#region node_modules/d3-shape/src/path.js
 function withPath(shape) {
 	let digits = 3;
 	shape.digits = function(_) {
@@ -40,7 +40,7 @@ function withPath(shape) {
 	return () => new Path(digits);
 }
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/arc.js
+//#region node_modules/d3-shape/src/arc.js
 function arcInnerRadius(d) {
 	return d.innerRadius;
 }
@@ -169,7 +169,7 @@ function array_default(x) {
 	return typeof x === "object" && "length" in x ? x : Array.from(x);
 }
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/curve/linear.js
+//#region node_modules/d3-shape/src/curve/linear.js
 function Linear(context) {
 	this._context = context;
 }
@@ -205,7 +205,7 @@ function linear_default(context) {
 	return new Linear(context);
 }
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/point.js
+//#region node_modules/d3-shape/src/point.js
 function x(p) {
 	return p[0];
 }
@@ -213,7 +213,7 @@ function y(p) {
 	return p[1];
 }
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/line.js
+//#region node_modules/d3-shape/src/line.js
 function line_default(x$1, y$1) {
 	var defined = constant_default(true), context = null, curve = linear_default, output = null, path = withPath(line);
 	x$1 = typeof x$1 === "function" ? x$1 : x$1 === void 0 ? x : constant_default(x$1);
@@ -246,17 +246,17 @@ function line_default(x$1, y$1) {
 	return line;
 }
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/descending.js
+//#region node_modules/d3-shape/src/descending.js
 function descending_default(a, b) {
 	return b < a ? -1 : b > a ? 1 : b >= a ? 0 : NaN;
 }
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/identity.js
+//#region node_modules/d3-shape/src/identity.js
 function identity_default(d) {
 	return d;
 }
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/pie.js
+//#region node_modules/d3-shape/src/pie.js
 function pie_default() {
 	var value = identity_default, sortValues = descending_default, sort = null, startAngle = constant_default(0), endAngle = constant_default(tau), padAngle = constant_default(0);
 	function pie(data) {
@@ -299,7 +299,7 @@ function pie_default() {
 	return pie;
 }
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/curve/bump.js
+//#region node_modules/d3-shape/src/curve/bump.js
 var Bump = class {
 	constructor(context, x) {
 		this._context = context;
@@ -342,10 +342,10 @@ function bumpY(context) {
 	return new Bump(context, false);
 }
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/noop.js
+//#region node_modules/d3-shape/src/noop.js
 function noop_default() {}
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/curve/basis.js
+//#region node_modules/d3-shape/src/curve/basis.js
 function point$3(that, x, y) {
 	that._context.bezierCurveTo((2 * that._x0 + that._x1) / 3, (2 * that._y0 + that._y1) / 3, (that._x0 + 2 * that._x1) / 3, (that._y0 + 2 * that._y1) / 3, (that._x0 + 4 * that._x1 + x) / 6, (that._y0 + 4 * that._y1 + y) / 6);
 }
@@ -398,7 +398,7 @@ function basis_default(context) {
 	return new Basis(context);
 }
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/curve/basisClosed.js
+//#region node_modules/d3-shape/src/curve/basisClosed.js
 function BasisClosed(context) {
 	this._context = context;
 }
@@ -455,7 +455,7 @@ function basisClosed_default(context) {
 	return new BasisClosed(context);
 }
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/curve/basisOpen.js
+//#region node_modules/d3-shape/src/curve/basisOpen.js
 function BasisOpen(context) {
 	this._context = context;
 }
@@ -501,7 +501,7 @@ function basisOpen_default(context) {
 	return new BasisOpen(context);
 }
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/curve/bundle.js
+//#region node_modules/d3-shape/src/curve/bundle.js
 function Bundle(context, beta) {
 	this._basis = new Basis(context);
 	this._beta = beta;
@@ -539,7 +539,7 @@ var bundle_default = (function custom(beta) {
 	return bundle;
 })(.85);
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/curve/cardinal.js
+//#region node_modules/d3-shape/src/curve/cardinal.js
 function point$2(that, x, y) {
 	that._context.bezierCurveTo(that._x1 + that._k * (that._x2 - that._x0), that._y1 + that._k * (that._y2 - that._y0), that._x2 + that._k * (that._x1 - x), that._y2 + that._k * (that._y1 - y), that._x2, that._y2);
 }
@@ -600,7 +600,7 @@ var cardinal_default = (function custom(tension) {
 	return cardinal;
 })(0);
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/curve/cardinalClosed.js
+//#region node_modules/d3-shape/src/curve/cardinalClosed.js
 function CardinalClosed(context, tension) {
 	this._context = context;
 	this._k = (1 - tension) / 6;
@@ -662,7 +662,7 @@ var cardinalClosed_default = (function custom(tension) {
 	return cardinal;
 })(0);
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/curve/cardinalOpen.js
+//#region node_modules/d3-shape/src/curve/cardinalOpen.js
 function CardinalOpen(context, tension) {
 	this._context = context;
 	this._k = (1 - tension) / 6;
@@ -714,7 +714,7 @@ var cardinalOpen_default = (function custom(tension) {
 	return cardinal;
 })(0);
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/curve/catmullRom.js
+//#region node_modules/d3-shape/src/curve/catmullRom.js
 function point$1(that, x, y) {
 	var x1 = that._x1, y1 = that._y1, x2 = that._x2, y2 = that._y2;
 	if (that._l01_a > 1e-12) {
@@ -791,7 +791,7 @@ var catmullRom_default = (function custom(alpha) {
 	return catmullRom;
 })(.5);
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/curve/catmullRomClosed.js
+//#region node_modules/d3-shape/src/curve/catmullRomClosed.js
 function CatmullRomClosed(context, alpha) {
 	this._context = context;
 	this._alpha = alpha;
@@ -859,7 +859,7 @@ var catmullRomClosed_default = (function custom(alpha) {
 	return catmullRom;
 })(.5);
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/curve/catmullRomOpen.js
+//#region node_modules/d3-shape/src/curve/catmullRomOpen.js
 function CatmullRomOpen(context, alpha) {
 	this._context = context;
 	this._alpha = alpha;
@@ -917,7 +917,7 @@ var catmullRomOpen_default = (function custom(alpha) {
 	return catmullRom;
 })(.5);
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/curve/linearClosed.js
+//#region node_modules/d3-shape/src/curve/linearClosed.js
 function LinearClosed(context) {
 	this._context = context;
 }
@@ -940,7 +940,7 @@ function linearClosed_default(context) {
 	return new LinearClosed(context);
 }
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/curve/monotone.js
+//#region node_modules/d3-shape/src/curve/monotone.js
 function sign(x) {
 	return x < 0 ? -1 : 1;
 }
@@ -1037,7 +1037,7 @@ function monotoneY(context) {
 	return new MonotoneY(context);
 }
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/curve/natural.js
+//#region node_modules/d3-shape/src/curve/natural.js
 function Natural(context) {
 	this._context = context;
 }
@@ -1087,7 +1087,7 @@ function natural_default(context) {
 	return new Natural(context);
 }
 //#endregion
-//#region node_modules/.bun/d3-shape@3.2.0/node_modules/d3-shape/src/curve/step.js
+//#region node_modules/d3-shape/src/curve/step.js
 function Step(context, t) {
 	this._context = context;
 	this._t = t;

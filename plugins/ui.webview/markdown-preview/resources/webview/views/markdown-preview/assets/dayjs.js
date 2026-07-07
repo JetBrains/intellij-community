@@ -1,5 +1,5 @@
 import { t as __commonJSMin } from "./rolldown-runtime.js";
-//#region node_modules/.bun/dayjs@1.11.20/node_modules/dayjs/dayjs.min.js
+//#region node_modules/dayjs/dayjs.min.js
 var require_dayjs_min = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	(function(t, e) {
 		"object" == typeof exports && "undefined" != typeof module ? module.exports = e() : "function" == typeof define && define.amd ? define(e) : (t = "undefined" != typeof globalThis ? globalThis : t || self).dayjs = e();
@@ -297,7 +297,7 @@ var require_dayjs_min = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	}));
 }));
 //#endregion
-//#region node_modules/.bun/dayjs@1.11.20/node_modules/dayjs/plugin/isoWeek.js
+//#region node_modules/dayjs/plugin/isoWeek.js
 var require_isoWeek = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	(function(e, t) {
 		"object" == typeof exports && "undefined" != typeof module ? module.exports = t() : "function" == typeof define && define.amd ? define(t) : (e = "undefined" != typeof globalThis ? globalThis : e || self).dayjs_plugin_isoWeek = t();
@@ -326,7 +326,7 @@ var require_isoWeek = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	}));
 }));
 //#endregion
-//#region node_modules/.bun/dayjs@1.11.20/node_modules/dayjs/plugin/customParseFormat.js
+//#region node_modules/dayjs/plugin/customParseFormat.js
 var require_customParseFormat = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	(function(e, t) {
 		"object" == typeof exports && "undefined" != typeof module ? module.exports = t() : "function" == typeof define && define.amd ? define(t) : (e = "undefined" != typeof globalThis ? globalThis : e || self).dayjs_plugin_customParseFormat = t();
@@ -489,7 +489,7 @@ var require_customParseFormat = /* @__PURE__ */ __commonJSMin(((exports, module)
 	}));
 }));
 //#endregion
-//#region node_modules/.bun/dayjs@1.11.20/node_modules/dayjs/plugin/advancedFormat.js
+//#region node_modules/dayjs/plugin/advancedFormat.js
 var require_advancedFormat = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	(function(e, t) {
 		"object" == typeof exports && "undefined" != typeof module ? module.exports = t() : "function" == typeof define && define.amd ? define(t) : (e = "undefined" != typeof globalThis ? globalThis : e || self).dayjs_plugin_advancedFormat = t();
@@ -526,7 +526,7 @@ var require_advancedFormat = /* @__PURE__ */ __commonJSMin(((exports, module) =>
 	}));
 }));
 //#endregion
-//#region node_modules/.bun/dayjs@1.11.20/node_modules/dayjs/plugin/duration.js
+//#region node_modules/dayjs/plugin/duration.js
 var require_duration = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	(function(t, s) {
 		"object" == typeof exports && "undefined" != typeof module ? module.exports = s() : "function" == typeof define && define.amd ? define(s) : (t = "undefined" != typeof globalThis ? globalThis : t || self).dayjs_plugin_duration = s();

@@ -1,7 +1,7 @@
 import "./devlop.js";
 import { t as fault } from "./fault.js";
 import { t as escapeStringRegexp } from "./escape-string-regexp.js";
-//#region node_modules/.bun/micromark-extension-frontmatter@2.0.0/node_modules/micromark-extension-frontmatter/lib/to-matters.js
+//#region node_modules/micromark-extension-frontmatter/lib/to-matters.js
 /**
 * @typedef {'toml' | 'yaml'} Preset
 *   Known name of a frontmatter style.
@@ -108,7 +108,7 @@ function matter(option) {
 	return result;
 }
 //#endregion
-//#region node_modules/.bun/mdast-util-frontmatter@2.0.1/node_modules/mdast-util-frontmatter/lib/index.js
+//#region node_modules/mdast-util-frontmatter/lib/index.js
 /**
 * @typedef {import('mdast').Literal} Literal
 *
