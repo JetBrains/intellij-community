@@ -740,7 +740,7 @@ class ShelveChangesManager @Internal constructor(
     }
     val beforePath = getProjectRelativePath(beforeFile)
     val afterPath = getProjectRelativePath(afterFile)
-    return ShelvedBinaryFile(beforePath ?: "", afterPath ?: "", shelvedPath)
+    return ShelvedBinaryFile(beforePath, afterPath, shelvedPath)
   }
 
   private fun getProjectRelativePath(filePath: FilePath?): String? {
