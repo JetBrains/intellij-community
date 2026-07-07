@@ -1,7 +1,7 @@
 import "./devlop.js";
 import { a as esm_default, c as position, n as visit, o as pointEnd, s as pointStart } from "./hast-util-raw.js";
 import { s as asciiAlphanumeric } from "./mdast-util-from-markdown.js";
-//#region node_modules/micromark-util-sanitize-uri/index.js
+//#region node_modules/.bun/micromark-util-sanitize-uri@2.0.1/node_modules/micromark-util-sanitize-uri/index.js
 /**
 * Normalize a URL.
 *
@@ -46,7 +46,7 @@ function normalizeUri(value) {
 	return result.join("") + value.slice(start);
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/blockquote.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/blockquote.js
 /**
 * @import {Element} from 'hast'
 * @import {Blockquote} from 'mdast'
@@ -74,7 +74,7 @@ function blockquote(state, node) {
 	return state.applyData(node, result);
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/break.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/break.js
 /**
 * @import {Element, Text} from 'hast'
 * @import {Break} from 'mdast'
@@ -105,7 +105,7 @@ function hardBreak(state, node) {
 	}];
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/code.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/code.js
 /**
 * @import {Element, Properties} from 'hast'
 * @import {Code} from 'mdast'
@@ -150,7 +150,7 @@ function code(state, node) {
 	return result;
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/delete.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/delete.js
 /**
 * @import {Element} from 'hast'
 * @import {Delete} from 'mdast'
@@ -178,7 +178,7 @@ function strikethrough(state, node) {
 	return state.applyData(node, result);
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/emphasis.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/emphasis.js
 /**
 * @import {Element} from 'hast'
 * @import {Emphasis} from 'mdast'
@@ -206,7 +206,7 @@ function emphasis(state, node) {
 	return state.applyData(node, result);
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/footnote-reference.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/footnote-reference.js
 /**
 * @import {Element} from 'hast'
 * @import {FootnoteReference} from 'mdast'
@@ -264,7 +264,7 @@ function footnoteReference(state, node) {
 	return state.applyData(node, sup);
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/heading.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/heading.js
 /**
 * @import {Element} from 'hast'
 * @import {Heading} from 'mdast'
@@ -292,7 +292,7 @@ function heading(state, node) {
 	return state.applyData(node, result);
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/html.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/html.js
 /**
 * @import {Element} from 'hast'
 * @import {Html} from 'mdast'
@@ -322,7 +322,7 @@ function html(state, node) {
 	}
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/revert.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/revert.js
 /**
 * @import {ElementContent} from 'hast'
 * @import {Reference, Nodes} from 'mdast'
@@ -363,7 +363,7 @@ function revert(state, node) {
 	return contents;
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/image-reference.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/image-reference.js
 /**
 * @import {ElementContent, Element, Properties} from 'hast'
 * @import {ImageReference} from 'mdast'
@@ -400,7 +400,7 @@ function imageReference(state, node) {
 	return state.applyData(node, result);
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/image.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/image.js
 /**
 * @import {Element, Properties} from 'hast'
 * @import {Image} from 'mdast'
@@ -432,7 +432,7 @@ function image(state, node) {
 	return state.applyData(node, result);
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/inline-code.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/inline-code.js
 /**
 * @import {Element, Text} from 'hast'
 * @import {InlineCode} from 'mdast'
@@ -466,7 +466,7 @@ function inlineCode(state, node) {
 	return state.applyData(node, result);
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/link-reference.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/link-reference.js
 /**
 * @import {ElementContent, Element, Properties} from 'hast'
 * @import {LinkReference} from 'mdast'
@@ -500,7 +500,7 @@ function linkReference(state, node) {
 	return state.applyData(node, result);
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/link.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/link.js
 /**
 * @import {Element, Properties} from 'hast'
 * @import {Link} from 'mdast'
@@ -531,7 +531,7 @@ function link(state, node) {
 	return state.applyData(node, result);
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/list-item.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/list-item.js
 /**
 * @import {ElementContent, Element, Properties} from 'hast'
 * @import {ListItem, Parents} from 'mdast'
@@ -634,7 +634,7 @@ function listItemLoose(node) {
 	return spread === null || spread === void 0 ? node.children.length > 1 : spread;
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/list.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/list.js
 /**
 * @import {Element, Properties} from 'hast'
 * @import {List} from 'mdast'
@@ -674,7 +674,7 @@ function list(state, node) {
 	return state.applyData(node, result);
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/paragraph.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/paragraph.js
 /**
 * @import {Element} from 'hast'
 * @import {Paragraph} from 'mdast'
@@ -702,7 +702,7 @@ function paragraph(state, node) {
 	return state.applyData(node, result);
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/root.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/root.js
 /**
 * @import {Parents as HastParents, Root as HastRoot} from 'hast'
 * @import {Root as MdastRoot} from 'mdast'
@@ -728,7 +728,7 @@ function root(state, node) {
 	return state.applyData(node, result);
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/strong.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/strong.js
 /**
 * @import {Element} from 'hast'
 * @import {Strong} from 'mdast'
@@ -756,7 +756,7 @@ function strong(state, node) {
 	return state.applyData(node, result);
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/table.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/table.js
 /**
 * @import {Table} from 'mdast'
 * @import {Element} from 'hast'
@@ -815,7 +815,7 @@ function table(state, node) {
 	return state.applyData(node, result);
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/table-row.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/table-row.js
 /**
 * @import {Element, ElementContent, Properties} from 'hast'
 * @import {Parents, TableRow} from 'mdast'
@@ -872,7 +872,7 @@ function tableRow(state, node, parent) {
 	return state.applyData(node, result);
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/table-cell.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/table-cell.js
 /**
 * @import {Element} from 'hast'
 * @import {TableCell} from 'mdast'
@@ -900,7 +900,7 @@ function tableCell(state, node) {
 	return state.applyData(node, result);
 }
 //#endregion
-//#region node_modules/trim-lines/index.js
+//#region node_modules/.bun/trim-lines@3.0.1/node_modules/trim-lines/index.js
 var tab = 9;
 var space = 32;
 /**
@@ -957,7 +957,7 @@ function trimLine(value, start, end) {
 	return endIndex > startIndex ? value.slice(startIndex, endIndex) : "";
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/text.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/text.js
 /**
 * @import {Element as HastElement, Text as HastText} from 'hast'
 * @import {Text as MdastText} from 'mdast'
@@ -983,7 +983,7 @@ function text(state, node) {
 	return state.applyData(node, result);
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/thematic-break.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/thematic-break.js
 /**
 * @import {Element} from 'hast'
 * @import {ThematicBreak} from 'mdast'
@@ -1011,7 +1011,7 @@ function thematicBreak(state, node) {
 	return state.applyData(node, result);
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/handlers/index.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/handlers/index.js
 /**
 * @import {Handlers} from '../state.js'
 */
@@ -1051,7 +1051,7 @@ var handlers = {
 };
 function ignore() {}
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/footer.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/footer.js
 /**
 * @import {ElementContent, Element} from 'hast'
 * @import {State} from './state.js'
@@ -1265,7 +1265,7 @@ function footer(state) {
 	};
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/state.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/state.js
 /**
 * @import {
 *   ElementContent as HastElementContent,
@@ -1662,7 +1662,7 @@ function trimMarkdownSpaceStart(value) {
 	return value.slice(index);
 }
 //#endregion
-//#region node_modules/mdast-util-to-hast/lib/index.js
+//#region node_modules/.bun/mdast-util-to-hast@13.2.1/node_modules/mdast-util-to-hast/lib/index.js
 /**
 * @import {Nodes as HastNodes} from 'hast'
 * @import {Nodes as MdastNodes} from 'mdast'

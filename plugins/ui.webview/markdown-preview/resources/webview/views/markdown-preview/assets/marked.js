@@ -1,4 +1,4 @@
-//#region node_modules/marked/lib/marked.esm.js
+//#region node_modules/.bun/marked@16.4.2/node_modules/marked/lib/marked.esm.js
 /**
 * marked v16.4.2 - a markdown parser
 * Copyright (c) 2018-2025, MarkedJS. (MIT License)

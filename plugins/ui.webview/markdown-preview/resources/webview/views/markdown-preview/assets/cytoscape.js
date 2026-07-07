@@ -1,4 +1,4 @@
-//#region node_modules/cytoscape/dist/cytoscape.esm.mjs
+//#region node_modules/.bun/cytoscape@3.33.3/node_modules/cytoscape/dist/cytoscape.esm.mjs
 /**
 * Copyright (c) 2016-2026, The Cytoscape Consortium.
 *

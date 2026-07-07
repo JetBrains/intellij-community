@@ -1,5 +1,5 @@
 import { t as __commonJSMin } from "./rolldown-runtime.js";
-//#region node_modules/react/cjs/react.production.min.js
+//#region node_modules/.bun/react@18.3.1/node_modules/react/cjs/react.production.min.js
 /**
 * @license React
 * react.production.min.js
@@ -323,12 +323,12 @@ var require_react_production_min = /* @__PURE__ */ __commonJSMin(((exports) => {
 	exports.version = "18.3.1";
 }));
 //#endregion
-//#region node_modules/react/index.js
+//#region node_modules/.bun/react@18.3.1/node_modules/react/index.js
 var require_react = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = require_react_production_min();
 }));
 //#endregion
-//#region node_modules/react/cjs/react-jsx-runtime.production.min.js
+//#region node_modules/.bun/react@18.3.1/node_modules/react/cjs/react-jsx-runtime.production.min.js
 /**
 * @license React
 * react-jsx-runtime.production.min.js
@@ -366,7 +366,7 @@ var require_react_jsx_runtime_production_min = /* @__PURE__ */ __commonJSMin(((e
 	exports.jsxs = q;
 }));
 //#endregion
-//#region node_modules/react/jsx-runtime.js
+//#region node_modules/.bun/react@18.3.1/node_modules/react/jsx-runtime.js
 var require_jsx_runtime = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = require_react_jsx_runtime_production_min();
 }));

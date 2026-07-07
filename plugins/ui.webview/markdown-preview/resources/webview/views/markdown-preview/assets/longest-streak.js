@@ -1,4 +1,4 @@
-//#region node_modules/longest-streak/index.js
+//#region node_modules/.bun/longest-streak@3.1.0/node_modules/longest-streak/index.js
 /**
 * Get the count of the longest repeating streak of `substring` in `value`.
 *

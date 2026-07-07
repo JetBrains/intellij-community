@@ -1,13 +1,12 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./katex.js","./rolldown-runtime.js","./mermaid-js-parser.js"])))=>i.map(i=>d[i]);
 import { n as __exportAll, r as __toESM$1 } from "./rolldown-runtime.js";
-import { h as select_default } from "./d3.js";
-import { t as hcl_default } from "./d3-interpolate.js";
 import { a as require_dayjs_min, i as require_isoWeek, n as require_advancedFormat, r as require_customParseFormat, t as require_duration } from "./dayjs.js";
 import { a as lighten, c as rgba, i as darken, n as adjust, o as isDark, r as transparentize, s as channel, t as invert } from "./khroma.js";
 import { t as purify } from "./dompurify.js";
 import { a as min$1, o as max } from "./d3-array.js";
 import { _ as band, a as timeMonday, c as timeThursday, d as timeDay, f as timeHour, g as linear, h as millisecond, i as timeFriday, l as timeTuesday, m as second, n as timeFormat, o as timeSaturday, p as timeMinute, r as timeMonth, s as timeSunday, t as time, u as timeWednesday, v as ordinal } from "./d3-scale.js";
 import { n as axisTop, t as axisBottom } from "./d3-axis.js";
+import { h as select_default } from "./d3.js";
+import { t as hcl_default } from "./d3-interpolate.js";
 import { i as format$1 } from "./d3-format.js";
 import { n as hierarchy, t as treemap_default } from "./d3-hierarchy.js";
 import { t as Tableau10_default } from "./d3-scale-chromatic.js";
@@ -22,7 +21,10 @@ import { n as layout$2, r as Graph, t as write } from "./dagre-d3-es.js";
 import { t as require_cytoscape_cose_bilkent } from "./cytoscape-cose-bilkent.js";
 import { a as left, i as justify, n as Sankey, o as right, r as center, t as sankeyLinkHorizontal_default } from "./d3-sankey.js";
 //#region \0vite/preload-helper.js
-var scriptRel = "modulepreload";
+var scriptRel = /* @__PURE__ */ (function detectScriptRel() {
+	const relList = typeof document < "u" && document.createElement("link").relList;
+	return relList && relList.supports && relList.supports("modulepreload") ? "modulepreload" : "preload";
+})();
 var assetsURL = function(dep, importerUrl) {
 	return new URL(dep, importerUrl).href;
 };
@@ -78,7 +80,7 @@ var __vitePreload = function preload(baseModule, deps, importerUrl) {
 	});
 };
 //#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-NNHCCRGN.mjs
+//#region node_modules/.bun/@mermaid-js+parser@1.1.1/node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-NNHCCRGN.mjs
 var __create = Object.create;
 var __defProp$1 = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -26374,7 +26376,7 @@ lodash-es/lodash.js:
 *)
 */
 //#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-4EGX6M5U.mjs
+//#region node_modules/.bun/@mermaid-js+parser@1.1.1/node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-4EGX6M5U.mjs
 var ArchitectureTokenBuilder = class extends AbstractMermaidTokenBuilder {
 	static {
 		__name$1(this, "ArchitectureTokenBuilder");
@@ -26415,7 +26417,7 @@ function createArchitectureServices(context = EmptyFileSystem) {
 }
 __name$1(createArchitectureServices, "createArchitectureServices");
 //#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-N66VUXT2.mjs
+//#region node_modules/.bun/@mermaid-js+parser@1.1.1/node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-N66VUXT2.mjs
 var EventModelingTokenBuilder = class extends AbstractMermaidTokenBuilder {
 	static {
 		__name$1(this, "EventModelingTokenBuilder");
@@ -26482,7 +26484,7 @@ function createEventModelingServices(context = EmptyFileSystem) {
 }
 __name$1(createEventModelingServices, "createEventModelingServices");
 //#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-UIBZB4QT.mjs
+//#region node_modules/.bun/@mermaid-js+parser@1.1.1/node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-UIBZB4QT.mjs
 var GitGraphTokenBuilder = class extends AbstractMermaidTokenBuilder {
 	static {
 		__name$1(this, "GitGraphTokenBuilder");
@@ -26506,7 +26508,7 @@ function createGitGraphServices(context = EmptyFileSystem) {
 }
 __name$1(createGitGraphServices, "createGitGraphServices");
 //#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-5DO6E6H7.mjs
+//#region node_modules/.bun/@mermaid-js+parser@1.1.1/node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-5DO6E6H7.mjs
 var InfoTokenBuilder = class extends AbstractMermaidTokenBuilder {
 	static {
 		__name$1(this, "InfoTokenBuilder");
@@ -26530,7 +26532,7 @@ function createInfoServices(context = EmptyFileSystem) {
 }
 __name$1(createInfoServices, "createInfoServices");
 //#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-MPE355IW.mjs
+//#region node_modules/.bun/@mermaid-js+parser@1.1.1/node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-MPE355IW.mjs
 var PacketTokenBuilder = class extends AbstractMermaidTokenBuilder {
 	static {
 		__name$1(this, "PacketTokenBuilder");
@@ -26554,7 +26556,7 @@ function createPacketServices(context = EmptyFileSystem) {
 }
 __name$1(createPacketServices, "createPacketServices");
 //#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-MZUSXYTE.mjs
+//#region node_modules/.bun/@mermaid-js+parser@1.1.1/node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-MZUSXYTE.mjs
 var PieTokenBuilder = class extends AbstractMermaidTokenBuilder {
 	static {
 		__name$1(this, "PieTokenBuilder");
@@ -26587,7 +26589,7 @@ function createPieServices(context = EmptyFileSystem) {
 }
 __name$1(createPieServices, "createPieServices");
 //#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-FHYWG6QK.mjs
+//#region node_modules/.bun/@mermaid-js+parser@1.1.1/node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-FHYWG6QK.mjs
 var RadarTokenBuilder = class extends AbstractMermaidTokenBuilder {
 	static {
 		__name$1(this, "RadarTokenBuilder");
@@ -26611,7 +26613,7 @@ function createRadarServices(context = EmptyFileSystem) {
 }
 __name$1(createRadarServices, "createRadarServices");
 //#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-WCWK7LTN.mjs
+//#region node_modules/.bun/@mermaid-js+parser@1.1.1/node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-WCWK7LTN.mjs
 var TreeViewValueConverter = class extends AbstractMermaidValueConverter {
 	static {
 		__name$1(this, "TreeViewValueConverter");
@@ -26644,7 +26646,7 @@ function createTreeViewServices(context = EmptyFileSystem) {
 }
 __name$1(createTreeViewServices, "createTreeViewServices");
 //#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-BR22UD5L.mjs
+//#region node_modules/.bun/@mermaid-js+parser@1.1.1/node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-BR22UD5L.mjs
 var TreemapTokenBuilder = class extends AbstractMermaidTokenBuilder {
 	static {
 		__name$1(this, "TreemapTokenBuilder");
@@ -26726,7 +26728,7 @@ function createTreemapServices(context = EmptyFileSystem) {
 }
 __name$1(createTreemapServices, "createTreemapServices");
 //#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-PUPMXCY4.mjs
+//#region node_modules/.bun/@mermaid-js+parser@1.1.1/node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-PUPMXCY4.mjs
 var WardleyValueConverter = class extends AbstractMermaidValueConverter {
 	static {
 		__name$1(this, "WardleyValueConverter");
@@ -26750,7 +26752,7 @@ function createWardleyServices(context = EmptyFileSystem) {
 }
 __name$1(createWardleyServices, "createWardleyServices");
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-AGHRB4JF.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/chunk-AGHRB4JF.mjs
 var import_dayjs_min = /* @__PURE__ */ __toESM$1(require_dayjs_min(), 1);
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", {
@@ -26801,7 +26803,7 @@ var format = /* @__PURE__ */ __name((level) => {
 	return `%c${(0, import_dayjs_min.default)().format("ss.SSS")} : ${level} : `;
 }, "format");
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-CSCIHK7Q.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/chunk-CSCIHK7Q.mjs
 var frontMatterRegex = /^-{3}\s*[\n\r](.*?)[\n\r]-{3}\s*[\n\r]+/s;
 var directiveRegex = /%{2}{\s*(?:(\w+)\s*:|(\w+))\s*(?:(\w+)|((?:(?!}%{2}).|\r?\n)*))?\s*(?:}%{2})?/gi;
 var anyCommentRegex = /\s*%%.*\n/gm;
@@ -32078,10 +32080,10 @@ var renderKatexUnsanitized = /* @__PURE__ */ __name(async (text, config2) => {
 	if (!hasKatex(text)) return text;
 	if (!(isMathMLSupported() || config2.legacyMathML || config2.forceLegacyMathML)) return text.replace(katexRegex, "MathML is unsupported in this environment.");
 	{
-		const { default: katex } = await __vitePreload(async () => {
+		const { default: katex } = await (async () => {
 			const { default: katex } = await import("./katex.js").then((n) => n.n);
 			return { default: katex };
-		}, __vite__mapDeps([0,1]), import.meta.url);
+		})();
 		const outputMode = config2.forceLegacyMathML || !isMathMLSupported() && config2.legacyMathML ? "htmlAndMathml" : "mathml";
 		return text.split(lineBreakRegex).map((line) => hasKatex(line) ? `<div style="display: flex; align-items: center; justify-content: center; white-space: nowrap;">${line}</div>` : `<div>${line}</div>`).join("").replace(katexRegex, (_, c) => katex.renderToString(c, {
 			throwOnError: true,
@@ -32337,7 +32339,7 @@ var DiagramNotFoundError = class extends Error {
 	}
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-WU5MYG2G.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/chunk-WU5MYG2G.mjs
 var selectSvgElement = /* @__PURE__ */ __name((id) => {
 	const { securityLevel } = getConfig2$2();
 	let root = select_default("body");
@@ -32345,7 +32347,7 @@ var selectSvgElement = /* @__PURE__ */ __name((id) => {
 	return root.select(`#${id}`);
 }, "selectSvgElement");
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-5ZQYHXKU.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/chunk-5ZQYHXKU.mjs
 var import_dist = require_dist();
 var d3CurveTypes = {
 	curveBasis: basis_default,
@@ -32801,7 +32803,7 @@ function isLabelCoordinateInPath(point, dAttr) {
 }
 __name(isLabelCoordinateInPath, "isLabelCoordinateInPath");
 //#endregion
-//#region node_modules/ts-dedent/esm/index.js
+//#region node_modules/.bun/ts-dedent@2.2.0/node_modules/ts-dedent/esm/index.js
 function dedent(templ) {
 	var values = [];
 	for (var _i = 1; _i < arguments.length; _i++) values[_i - 1] = arguments[_i];
@@ -32835,7 +32837,7 @@ function dedent(templ) {
 	return string;
 }
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-O5CBEL6O.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/chunk-O5CBEL6O.mjs
 var unknownIcon = {
 	body: "<g><rect width=\"80\" height=\"80\" style=\"fill: #087ebf; stroke-width: 0px;\"/><text transform=\"translate(21.16 64.67)\" style=\"fill: #fff; font-family: ArialMT, Arial; font-size: 67.75px;\"><tspan x=\"0\" y=\"0\">?</tspan></text></g>",
 	height: 80,
@@ -33204,7 +33206,7 @@ var createText = /* @__PURE__ */ __name(async (el, text = "", { style = "", isTi
 	}
 }, "createText");
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-4BX2VUAB.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/chunk-4BX2VUAB.mjs
 function populateCommonDb(ast, db) {
 	if (ast.accDescr) db.setAccDescription?.(ast.accDescr);
 	if (ast.accTitle) db.setAccTitle?.(ast.accTitle);
@@ -33212,77 +33214,77 @@ function populateCommonDb(ast, db) {
 }
 __name(populateCommonDb, "populateCommonDb");
 //#endregion
-//#region node_modules/@mermaid-js/parser/dist/mermaid-parser.core.mjs
+//#region node_modules/.bun/@mermaid-js+parser@1.1.1/node_modules/@mermaid-js/parser/dist/mermaid-parser.core.mjs
 var parsers = {};
 var initializers = {
 	info: /* @__PURE__ */ __name$1(async () => {
-		const { createInfoServices: createInfoServices2 } = await __vitePreload(async () => {
+		const { createInfoServices: createInfoServices2 } = await (async () => {
 			const { createInfoServices: createInfoServices2 } = await import("./mermaid-js-parser.js").then((n) => n.s);
 			return { createInfoServices: createInfoServices2 };
-		}, __vite__mapDeps([2,1]), import.meta.url);
+		})();
 		parsers.info = createInfoServices2().Info.parser.LangiumParser;
 	}, "info"),
 	packet: /* @__PURE__ */ __name$1(async () => {
-		const { createPacketServices: createPacketServices2 } = await __vitePreload(async () => {
+		const { createPacketServices: createPacketServices2 } = await (async () => {
 			const { createPacketServices: createPacketServices2 } = await import("./mermaid-js-parser.js").then((n) => n.o);
 			return { createPacketServices: createPacketServices2 };
-		}, __vite__mapDeps([2,1]), import.meta.url);
+		})();
 		parsers.packet = createPacketServices2().Packet.parser.LangiumParser;
 	}, "packet"),
 	pie: /* @__PURE__ */ __name$1(async () => {
-		const { createPieServices: createPieServices2 } = await __vitePreload(async () => {
+		const { createPieServices: createPieServices2 } = await (async () => {
 			const { createPieServices: createPieServices2 } = await import("./mermaid-js-parser.js").then((n) => n.a);
 			return { createPieServices: createPieServices2 };
-		}, __vite__mapDeps([2,1]), import.meta.url);
+		})();
 		parsers.pie = createPieServices2().Pie.parser.LangiumParser;
 	}, "pie"),
 	treeView: /* @__PURE__ */ __name$1(async () => {
-		const { createTreeViewServices: createTreeViewServices2 } = await __vitePreload(async () => {
+		const { createTreeViewServices: createTreeViewServices2 } = await (async () => {
 			const { createTreeViewServices: createTreeViewServices2 } = await import("./mermaid-js-parser.js").then((n) => n.r);
 			return { createTreeViewServices: createTreeViewServices2 };
-		}, __vite__mapDeps([2,1]), import.meta.url);
+		})();
 		parsers.treeView = createTreeViewServices2().TreeView.parser.LangiumParser;
 	}, "treeView"),
 	architecture: /* @__PURE__ */ __name$1(async () => {
-		const { createArchitectureServices: createArchitectureServices2 } = await __vitePreload(async () => {
+		const { createArchitectureServices: createArchitectureServices2 } = await (async () => {
 			const { createArchitectureServices: createArchitectureServices2 } = await import("./mermaid-js-parser.js").then((n) => n.u);
 			return { createArchitectureServices: createArchitectureServices2 };
-		}, __vite__mapDeps([2,1]), import.meta.url);
+		})();
 		parsers.architecture = createArchitectureServices2().Architecture.parser.LangiumParser;
 	}, "architecture"),
 	gitGraph: /* @__PURE__ */ __name$1(async () => {
-		const { createGitGraphServices: createGitGraphServices2 } = await __vitePreload(async () => {
+		const { createGitGraphServices: createGitGraphServices2 } = await (async () => {
 			const { createGitGraphServices: createGitGraphServices2 } = await import("./mermaid-js-parser.js").then((n) => n.c);
 			return { createGitGraphServices: createGitGraphServices2 };
-		}, __vite__mapDeps([2,1]), import.meta.url);
+		})();
 		parsers.gitGraph = createGitGraphServices2().GitGraph.parser.LangiumParser;
 	}, "gitGraph"),
 	eventmodeling: /* @__PURE__ */ __name$1(async () => {
-		const { createEventModelingServices: createEventModelingServices2 } = await __vitePreload(async () => {
+		const { createEventModelingServices: createEventModelingServices2 } = await (async () => {
 			const { createEventModelingServices: createEventModelingServices2 } = await import("./mermaid-js-parser.js").then((n) => n.l);
 			return { createEventModelingServices: createEventModelingServices2 };
-		}, __vite__mapDeps([2,1]), import.meta.url);
+		})();
 		parsers.eventmodeling = createEventModelingServices2().EventModel.parser.LangiumParser;
 	}, "eventmodeling"),
 	radar: /* @__PURE__ */ __name$1(async () => {
-		const { createRadarServices: createRadarServices2 } = await __vitePreload(async () => {
+		const { createRadarServices: createRadarServices2 } = await (async () => {
 			const { createRadarServices: createRadarServices2 } = await import("./mermaid-js-parser.js").then((n) => n.i);
 			return { createRadarServices: createRadarServices2 };
-		}, __vite__mapDeps([2,1]), import.meta.url);
+		})();
 		parsers.radar = createRadarServices2().Radar.parser.LangiumParser;
 	}, "radar"),
 	treemap: /* @__PURE__ */ __name$1(async () => {
-		const { createTreemapServices: createTreemapServices2 } = await __vitePreload(async () => {
+		const { createTreemapServices: createTreemapServices2 } = await (async () => {
 			const { createTreemapServices: createTreemapServices2 } = await import("./mermaid-js-parser.js").then((n) => n.n);
 			return { createTreemapServices: createTreemapServices2 };
-		}, __vite__mapDeps([2,1]), import.meta.url);
+		})();
 		parsers.treemap = createTreemapServices2().Treemap.parser.LangiumParser;
 	}, "treemap"),
 	wardley: /* @__PURE__ */ __name$1(async () => {
-		const { createWardleyServices: createWardleyServices2 } = await __vitePreload(async () => {
+		const { createWardleyServices: createWardleyServices2 } = await (async () => {
 			const { createWardleyServices: createWardleyServices2 } = await import("./mermaid-js-parser.js").then((n) => n.t);
 			return { createWardleyServices: createWardleyServices2 };
-		}, __vite__mapDeps([2,1]), import.meta.url);
+		})();
 		parsers.wardley = createWardleyServices2().Wardley.parser.LangiumParser;
 	}, "wardley")
 };
@@ -33311,7 +33313,7 @@ var MermaidParseError = class extends Error {
 	}
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/architectureDiagram-3BPJPVTR.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/architectureDiagram-3BPJPVTR.mjs
 var architectureDiagram_3BPJPVTR_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$29 });
 var import_cytoscape_fcose = /* @__PURE__ */ __toESM$1(require_cytoscape_fcose(), 1);
 var ArchitectureDirectionName = {
@@ -34226,7 +34228,7 @@ var diagram$29 = {
 	styles: architectureStyles_default
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-FMBD7UC4.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/chunk-FMBD7UC4.mjs
 var getIconStyles = /* @__PURE__ */ __name(() => `
   /* Font Awesome icon styling - consolidated */
   .label-icon {
@@ -34243,7 +34245,7 @@ var getIconStyles = /* @__PURE__ */ __name(() => `
   }
 `, "getIconStyles");
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-BSJP7CBP.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/chunk-BSJP7CBP.mjs
 var computeLabelTransform = /* @__PURE__ */ __name((bbox, useHtmlLabels) => {
 	if (useHtmlLabels) return "translate(" + -bbox.width / 2 + ", " + -bbox.height / 2 + ")";
 	const x = bbox.x ?? 0;
@@ -34354,7 +34356,7 @@ var getLineFunctionsWithOffset = /* @__PURE__ */ __name((edge) => {
 	};
 }, "getLineFunctionsWithOffset");
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-L5ZTLDWV.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/chunk-L5ZTLDWV.mjs
 var getSubGraphTitleMargins = /* @__PURE__ */ __name(({ flowchart }) => {
 	const subGraphTitleTopMargin = flowchart?.subGraphTitleMargin?.top ?? 0;
 	const subGraphTitleBottomMargin = flowchart?.subGraphTitleMargin?.bottom ?? 0;
@@ -34392,7 +34394,7 @@ async function configureLabelImages(container, labelText) {
 }
 __name(configureLabelImages, "configureLabelImages");
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/blockDiagram-GPEHLZMM.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/blockDiagram-GPEHLZMM.mjs
 var blockDiagram_GPEHLZMM_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$28 });
 var parser$26 = (function() {
 	var o = /* @__PURE__ */ __name(function(k, v, o2, l) {
@@ -38557,7 +38559,7 @@ var diagram$28 = {
 	styles: styles_default$7
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-ND2GUHAM.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/chunk-ND2GUHAM.mjs
 var drawRect$2 = /* @__PURE__ */ __name((element, rectData) => {
 	const rectElement = element.append("rect");
 	rectElement.attr("x", rectData.x);
@@ -38644,7 +38646,7 @@ var createTooltip = /* @__PURE__ */ __name(() => {
 	return tooltipElem;
 }, "createTooltip");
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/c4Diagram-AAUBKEIU.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/c4Diagram-AAUBKEIU.mjs
 var c4Diagram_AAUBKEIU_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$27 });
 var parser$25 = (function() {
 	var o = /* @__PURE__ */ __name(function(k, v, o2, l) {
@@ -42320,14 +42322,14 @@ var diagram$27 = {
 	}, "init")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-55IACEB6.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/chunk-55IACEB6.mjs
 var getDiagramElement = /* @__PURE__ */ __name((id, securityLevel) => {
 	let sandboxElement;
 	if (securityLevel === "sandbox") sandboxElement = select_default("#i" + id);
 	return (securityLevel === "sandbox" ? select_default(sandboxElement.nodes()[0].contentDocument.body) : select_default("body")).select(`[id="${id}"]`);
 }, "getDiagramElement");
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-2J33WTMH.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/chunk-2J33WTMH.mjs
 var setupViewPortForSVG = /* @__PURE__ */ __name((svg, padding, cssDiagram, useMaxWidth) => {
 	svg.attr("class", cssDiagram);
 	const { width, height, x, y } = calculateDimensionsWithPadding(svg, padding);
@@ -42354,7 +42356,7 @@ var createViewBox = /* @__PURE__ */ __name((x, y, width, height, padding) => {
 	return `${x - padding} ${y - padding} ${width} ${height}`;
 }, "createViewBox");
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-NZK2D7GU.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/chunk-NZK2D7GU.mjs
 var solidStateFill = /* @__PURE__ */ __name((color) => {
 	const { handDrawnSeed } = getConfig2$2();
 	return {
@@ -42439,7 +42441,7 @@ var getStrokeDashArray = /* @__PURE__ */ __name((strokeDasharrayStyle) => {
 	return [isNaN(dashArray[0]) ? 0 : dashArray[0], isNaN(dashArray[1]) ? 0 : dashArray[1]];
 }, "getStrokeDashArray");
 //#endregion
-//#region node_modules/roughjs/bundled/rough.esm.js
+//#region node_modules/.bun/roughjs@4.6.6/node_modules/roughjs/bundled/rough.esm.js
 function t(t, e, s) {
 	if (t && t.length) {
 		const [n, o] = e, a = Math.PI / 180 * s, h = Math.cos(a), r = Math.sin(a);
@@ -43830,7 +43832,7 @@ var at = {
 	newSeed: () => et.newSeed()
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-3OPIFGDE.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/chunk-3OPIFGDE.mjs
 var labelHelper = /* @__PURE__ */ __name(async (parent, node, _classes) => {
 	let cssClasses;
 	const useHtmlLabels = node.useHtmlLabels || evaluate(getConfig2$2()?.htmlLabels);
@@ -49363,7 +49365,7 @@ var positionNode = /* @__PURE__ */ __name((node) => {
 	return diff;
 }, "positionNode");
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-KSCS5N6A.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/chunk-KSCS5N6A.mjs
 var addEdgeMarkers = /* @__PURE__ */ __name((svgPath, edge, url, id, diagramType, useMargin = false, strokeColor) => {
 	if (edge.arrowTypeStart) addEdgeMarker(svgPath, "start", edge.arrowTypeStart, url, id, diagramType, useMargin, strokeColor);
 	if (edge.arrowTypeEnd) addEdgeMarker(svgPath, "end", edge.arrowTypeEnd, url, id, diagramType, useMargin, strokeColor);
@@ -50221,7 +50223,7 @@ var markers = {
 };
 var markers_default = insertMarkers$1;
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-LZXEDZCA.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/chunk-LZXEDZCA.mjs
 var internalHelpers = {
 	common: common_default,
 	getConfig,
@@ -50277,7 +50279,7 @@ var getRegisteredLayoutAlgorithm = /* @__PURE__ */ __name((algorithm = "", { fal
 	throw new Error(`Both layout algorithms ${algorithm} and ${fallback} are not registered.`);
 }, "getRegisteredLayoutAlgorithm");
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-727SXJPM.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/chunk-727SXJPM.mjs
 var parser$24 = (function() {
 	var o = /* @__PURE__ */ __name(function(k, v, o2, l) {
 		for (o2 = o2 || {}, l = k.length; l--; o2[k[l]] = v);
@@ -54059,7 +54061,7 @@ var classRenderer_v3_unified_default = {
 	}, "getDir")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/classDiagram-4FO5ZUOK.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/classDiagram-4FO5ZUOK.mjs
 var classDiagram_4FO5ZUOK_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$26 });
 var diagram$26 = {
 	parser: classDiagram_default,
@@ -54074,7 +54076,7 @@ var diagram$26 = {
 	}, "init")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/classDiagram-v2-Q7XG4LA2.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/classDiagram-v2-Q7XG4LA2.mjs
 var classDiagram_v2_Q7XG4LA2_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$25 });
 var diagram$25 = {
 	parser: classDiagram_default,
@@ -54089,7 +54091,7 @@ var diagram$25 = {
 	}, "init")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/cose-bilkent-S5V4N54A.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/cose-bilkent-S5V4N54A.mjs
 var cose_bilkent_S5V4N54A_exports = /* @__PURE__ */ __exportAll({ render: () => render2$1 });
 var import_cytoscape_cose_bilkent = /* @__PURE__ */ __toESM$1(require_cytoscape_cose_bilkent(), 1);
 cytoscape.use(import_cytoscape_cose_bilkent.default);
@@ -54347,7 +54349,7 @@ var render2$1 = /* @__PURE__ */ __name(async (data4Layout, svg, { insertCluster,
 	log2.debug("Cose-bilkent rendering completed");
 }, "render");
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/dagre-BM42HDAG.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/dagre-BM42HDAG.mjs
 var dagre_BM42HDAG_exports = /* @__PURE__ */ __exportAll({ render: () => render$1 });
 var clusterDb = /* @__PURE__ */ new Map();
 var descendants = /* @__PURE__ */ new Map();
@@ -54807,7 +54809,7 @@ var render$1 = /* @__PURE__ */ __name(async (data4Layout, svg) => {
 	await recursiveRender(element, graph, data4Layout.type, data4Layout.diagramId, void 0, siteConfig);
 }, "render");
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/diagram-2AECGRRQ.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/diagram-2AECGRRQ.mjs
 var diagram_2AECGRRQ_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$24 });
 var defaultOptions = {
 	showLegend: true,
@@ -55079,7 +55081,7 @@ var diagram$24 = {
 	}, "styles")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-QZHKN3VN.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/chunk-QZHKN3VN.mjs
 var ImperativeState = class {
 	/**
 	* @param init - Function that creates the default state.
@@ -55096,7 +55098,7 @@ var ImperativeState = class {
 	}
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/diagram-5GNKFQAL.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/diagram-5GNKFQAL.mjs
 var diagram_5GNKFQAL_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$23 });
 var state$1 = new ImperativeState(() => ({
 	cnt: 1,
@@ -55230,7 +55232,7 @@ var diagram$23 = {
 	}, "styles")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/diagram-KO2AKTUF.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/diagram-KO2AKTUF.mjs
 var diagram_KO2AKTUF_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$22 });
 var PositionFrameKind = "position frame";
 var FramePositionedKind = "frame positioned";
@@ -55774,7 +55776,7 @@ var diagram$22 = {
 	styles: /* @__PURE__ */ __name((_options) => ``, "getStyles")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/diagram-LMA3HP47.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/diagram-LMA3HP47.mjs
 var diagram_LMA3HP47_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$21 });
 var DEFAULT_PACKET_CONFIG = defaultConfig_default.packet;
 var PacketDB = class {
@@ -55951,7 +55953,7 @@ var diagram$21 = {
 	}, "styles")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/diagram-OG6HWLK6.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/diagram-OG6HWLK6.mjs
 var diagram_OG6HWLK6_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$20 });
 var TreeMapDB = class {
 	constructor() {
@@ -56367,7 +56369,7 @@ var diagram$20 = {
 	}, "getStyles")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/erDiagram-TEJ5UH35.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/erDiagram-TEJ5UH35.mjs
 var erDiagram_TEJ5UH35_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$19 });
 var parser$18 = (function() {
 	var o = /* @__PURE__ */ __name(function(k, v, o2, l) {
@@ -58322,7 +58324,7 @@ var diagram$19 = {
 	}, "getStyles")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-XPW4576I.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/chunk-XPW4576I.mjs
 function isNothing(subject) {
 	return typeof subject === "undefined" || subject === null;
 }
@@ -60448,7 +60450,7 @@ js-yaml/dist/js-yaml.mjs:
 (*! js-yaml 4.1.1 https://github.com/nodeca/js-yaml @license MIT *)
 */
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/flowDiagram-I6XJVG4X.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/flowDiagram-I6XJVG4X.mjs
 var flowDiagram_I6XJVG4X_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$18 });
 var MERMAID_DOM_ID_PREFIX = "flowchart-";
 var FlowDB = class {
@@ -65179,7 +65181,7 @@ var diagram$18 = {
 	}, "init")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/ganttDiagram-6RSMTGT7.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/ganttDiagram-6RSMTGT7.mjs
 var ganttDiagram_6RSMTGT7_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$17 });
 var import_isoWeek = /* @__PURE__ */ __toESM$1(require_isoWeek(), 1);
 var import_customParseFormat = /* @__PURE__ */ __toESM$1(require_customParseFormat(), 1);
@@ -67383,7 +67385,7 @@ var diagram$17 = {
 `, "getStyles")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/gitGraphDiagram-PVQCEYII.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/gitGraphDiagram-PVQCEYII.mjs
 var gitGraphDiagram_PVQCEYII_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$16 });
 var commitType = {
 	NORMAL: 0,
@@ -68526,7 +68528,7 @@ var diagram$16 = {
 	}, "getStyles")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/infoDiagram-5YYISTIA.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/infoDiagram-5YYISTIA.mjs
 var infoDiagram_5YYISTIA_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$15 });
 var parser$14 = { parse: /* @__PURE__ */ __name(async (input) => {
 	const ast = await parse$2("info", input);
@@ -68544,7 +68546,7 @@ var diagram$15 = {
 	}, "draw") }
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/ishikawaDiagram-YF4QCWOH.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/ishikawaDiagram-YF4QCWOH.mjs
 var ishikawaDiagram_YF4QCWOH_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$14 });
 var parser$13 = (function() {
 	var o = /* @__PURE__ */ __name(function(k, v, o2, l) {
@@ -69509,7 +69511,7 @@ var diagram$14 = {
 `, "getStyles")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/journeyDiagram-JHISSGLW.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/journeyDiagram-JHISSGLW.mjs
 var journeyDiagram_JHISSGLW_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$13 });
 var parser$12 = (function() {
 	var o = /* @__PURE__ */ __name(function(k, v, o2, l) {
@@ -70727,7 +70729,7 @@ var diagram$13 = {
 	}, "init")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/kanban-definition-UN3LZRKU.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/kanban-definition-UN3LZRKU.mjs
 var kanban_definition_UN3LZRKU_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$12 });
 var parser$11 = (function() {
 	var o = /* @__PURE__ */ __name(function(k, v, o2, l) {
@@ -71956,20 +71958,20 @@ var diagram$12 = {
 `, "getStyles")
 };
 //#endregion
-//#region node_modules/uuid/dist/stringify.js
+//#region node_modules/.bun/uuid@14.0.0/node_modules/uuid/dist/stringify.js
 var byteToHex = [];
 for (let i = 0; i < 256; ++i) byteToHex.push((i + 256).toString(16).slice(1));
 function unsafeStringify(arr, offset = 0) {
 	return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
 }
 //#endregion
-//#region node_modules/uuid/dist/rng.js
+//#region node_modules/.bun/uuid@14.0.0/node_modules/uuid/dist/rng.js
 var rnds8 = new Uint8Array(16);
 function rng() {
 	return crypto.getRandomValues(rnds8);
 }
 //#endregion
-//#region node_modules/uuid/dist/v4.js
+//#region node_modules/.bun/uuid@14.0.0/node_modules/uuid/dist/v4.js
 function v4(options, buf, offset) {
 	if (!buf && !options && crypto.randomUUID) return crypto.randomUUID();
 	return _v4(options, buf, offset);
@@ -71989,7 +71991,7 @@ function _v4(options, buf, offset) {
 	return unsafeStringify(rnds);
 }
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/mindmap-definition-RKZ34NQL.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/mindmap-definition-RKZ34NQL.mjs
 var mindmap_definition_RKZ34NQL_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$11 });
 var parser$10 = (function() {
 	var o = /* @__PURE__ */ __name(function(k, v, o2, l) {
@@ -73249,7 +73251,7 @@ var diagram$11 = {
 	}, "getStyles")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/pieDiagram-4H26LBE5.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/pieDiagram-4H26LBE5.mjs
 var pieDiagram_4H26LBE5_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$10 });
 var DEFAULT_PIE_CONFIG = defaultConfig_default.pie;
 var DEFAULT_PIE_DB = {
@@ -73414,7 +73416,7 @@ var diagram$10 = {
 	styles: pieStyles_default
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/quadrantDiagram-W4KKPZXB.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/quadrantDiagram-W4KKPZXB.mjs
 var quadrantDiagram_W4KKPZXB_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$9 });
 var parser$8 = (function() {
 	var o = /* @__PURE__ */ __name(function(k, v, o2, l) {
@@ -75644,7 +75646,7 @@ var diagram$9 = {
 	styles: /* @__PURE__ */ __name(() => "", "styles")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/requirementDiagram-4Y6WPE33.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/requirementDiagram-4Y6WPE33.mjs
 var requirementDiagram_4Y6WPE33_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$8 });
 var parser$7 = (function() {
 	var o = /* @__PURE__ */ __name(function(k, v, o2, l) {
@@ -78095,7 +78097,7 @@ var diagram$8 = {
 	styles: styles_default$4
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/sankeyDiagram-5OEKKPKP.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/sankeyDiagram-5OEKKPKP.mjs
 var sankeyDiagram_5OEKKPKP_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$7 });
 var parser$6 = (function() {
 	var o = /* @__PURE__ */ __name(function(k, v, o2, l) {
@@ -78877,7 +78879,7 @@ var diagram$7 = {
 	renderer: sankeyRenderer_default
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/sequenceDiagram-3UESZ5HK.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/sequenceDiagram-3UESZ5HK.mjs
 var sequenceDiagram_3UESZ5HK_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$6 });
 var parser$5 = (function() {
 	var o = /* @__PURE__ */ __name(function(k, v, o2, l) {
@@ -84319,7 +84321,7 @@ var diagram$6 = {
 	}, "init")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-AQP2D5EJ.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/chunk-AQP2D5EJ.mjs
 var parser$4 = (function() {
 	var o = /* @__PURE__ */ __name(function(k, v, o2, l) {
 		for (o2 = o2 || {}, l = k.length; l--; o2[k[l]] = v);
@@ -86877,7 +86879,7 @@ g.stateGroup line {
 }
 `, "getStyles");
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/stateDiagram-AJRCARHV.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/stateDiagram-AJRCARHV.mjs
 var stateDiagram_AJRCARHV_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$5 });
 var drawStartState = /* @__PURE__ */ __name((g) => g.append("circle").attr("class", "start-state").attr("r", getConfig2$2().state.sizeUnit).attr("cx", getConfig2$2().state.padding + getConfig2$2().state.sizeUnit).attr("cy", getConfig2$2().state.padding + getConfig2$2().state.sizeUnit), "drawStartState");
 var drawDivider = /* @__PURE__ */ __name((g) => g.append("line").style("stroke", "grey").style("stroke-dasharray", "3").attr("x1", getConfig2$2().state.textHeight).attr("class", "divider").attr("x2", getConfig2$2().state.textHeight * 2).attr("y1", 0).attr("y2", 0), "drawDivider");
@@ -87223,7 +87225,7 @@ var diagram$5 = {
 	}, "init")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/stateDiagram-v2-BHNVJYJU.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/stateDiagram-v2-BHNVJYJU.mjs
 var stateDiagram_v2_BHNVJYJU_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$4 });
 var diagram$4 = {
 	parser: stateDiagram_default,
@@ -87238,7 +87240,7 @@ var diagram$4 = {
 	}, "init")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/timeline-definition-PNZ67QCA.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/timeline-definition-PNZ67QCA.mjs
 var timeline_definition_PNZ67QCA_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$3 });
 var parser$3 = (function() {
 	var o = /* @__PURE__ */ __name(function(k, v, o2, l) {
@@ -88737,7 +88739,7 @@ var diagram$3 = {
 	}, "getStyles")
 };
 //#endregion
-//#region node_modules/@upsetjs/venn.js/build/venn.esm.js
+//#region node_modules/.bun/@upsetjs+venn.js@2.0.0/node_modules/@upsetjs/venn.js/build/venn.esm.js
 var SMALL$1 = 1e-10;
 /**
 * Returns the intersection area of a bunch of circles (where each circle
@@ -90290,7 +90292,7 @@ function layout(data, options = {}) {
 	});
 }
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/vennDiagram-CIIHVFJN.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/vennDiagram-CIIHVFJN.mjs
 var vennDiagram_CIIHVFJN_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$2 });
 var parser$2 = (function() {
 	var o = /* @__PURE__ */ __name(function(k, v, o2, l) {
@@ -91500,7 +91502,7 @@ var diagram$2 = {
 	styles: styles_default
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/wardleyDiagram-YWT4CUSO.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/wardleyDiagram-YWT4CUSO.mjs
 var wardleyDiagram_YWT4CUSO_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$1 });
 var toPercent = /* @__PURE__ */ __name((value, context) => {
 	const normalized = value <= 1 ? value * 100 : value;
@@ -92365,7 +92367,7 @@ var diagram$1 = {
 	}, "styles")
 };
 //#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/xychartDiagram-2RQKCTM6.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/chunks/mermaid.core/xychartDiagram-2RQKCTM6.mjs
 var xychartDiagram_2RQKCTM6_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram });
 var parser = (function() {
 	var o = /* @__PURE__ */ __name(function(k, v, o2, l) {
@@ -94779,7 +94781,7 @@ var diagram = {
 	}, "draw") }
 };
 //#endregion
-//#region node_modules/stylis/src/Enum.js
+//#region node_modules/.bun/stylis@4.4.0/node_modules/stylis/src/Enum.js
 var COMMENT = "comm";
 var RULESET = "rule";
 var DECLARATION = "decl";
@@ -94788,7 +94790,7 @@ var NAMESPACE = "@namespace";
 var KEYFRAMES = "@keyframes";
 var LAYER = "@layer";
 //#endregion
-//#region node_modules/stylis/src/Utility.js
+//#region node_modules/.bun/stylis@4.4.0/node_modules/stylis/src/Utility.js
 /**
 * @param {number}
 * @return {number}
@@ -94855,7 +94857,7 @@ function append(value, array) {
 	return array.push(value), value;
 }
 //#endregion
-//#region node_modules/stylis/src/Tokenizer.js
+//#region node_modules/.bun/stylis@4.4.0/node_modules/stylis/src/Tokenizer.js
 var line = 1;
 var column = 1;
 var length = 0;
@@ -95038,7 +95040,7 @@ function identifier(index) {
 	return slice(index, position);
 }
 //#endregion
-//#region node_modules/stylis/src/Parser.js
+//#region node_modules/.bun/stylis@4.4.0/node_modules/stylis/src/Parser.js
 /**
 * @param {string} value
 * @return {object[]}
@@ -95212,7 +95214,7 @@ function declaration(value, root, parent, length, siblings) {
 	return node(value, root, parent, DECLARATION, substr(value, 0, length), substr(value, length + 1, -1), length, siblings);
 }
 //#endregion
-//#region node_modules/stylis/src/Serializer.js
+//#region node_modules/.bun/stylis@4.4.0/node_modules/stylis/src/Serializer.js
 /**
 * @param {object[]} children
 * @param {function} callback
@@ -95243,7 +95245,7 @@ function stringify(element, index, children, callback) {
 	return strlen(children = serialize(element.children, callback)) ? element.return = element.value + "{" + children + "}" : "";
 }
 //#endregion
-//#region node_modules/stylis/src/Middleware.js
+//#region node_modules/.bun/stylis@4.4.0/node_modules/stylis/src/Middleware.js
 /**
 * @param {function[]} collection
 * @return {function}
@@ -95257,7 +95259,7 @@ function middleware(collection) {
 	};
 }
 //#endregion
-//#region node_modules/mermaid/dist/mermaid.core.mjs
+//#region node_modules/.bun/mermaid@11.15.0/node_modules/mermaid/dist/mermaid.core.mjs
 var mermaid_core_exports = /* @__PURE__ */ __exportAll({ default: () => mermaid_default });
 var id = "c4";
 var c4Detector_default = {

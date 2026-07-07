@@ -1,4 +1,4 @@
-//#region node_modules/hast-util-heading-rank/lib/index.js
+//#region node_modules/.bun/hast-util-heading-rank@3.0.0/node_modules/hast-util-heading-rank/lib/index.js
 /**
 * @typedef {import('hast').Nodes} Nodes
 */

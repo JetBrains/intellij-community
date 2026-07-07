@@ -26,8 +26,4 @@ object WebViewLogger {
       }
     }
   }
-
-  fun logPerf(metric: String, valueMs: Long) {
-    LOG.info("perf: $metric = ${valueMs}ms")
-  }
 }

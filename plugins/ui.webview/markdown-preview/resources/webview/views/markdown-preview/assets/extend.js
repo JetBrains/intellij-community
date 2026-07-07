@@ -1,5 +1,5 @@
 import { t as __commonJSMin } from "./rolldown-runtime.js";
-//#region node_modules/extend/index.js
+//#region node_modules/.bun/extend@3.0.2/node_modules/extend/index.js
 var require_extend = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var hasOwn = Object.prototype.hasOwnProperty;
 	var toStr = Object.prototype.toString;

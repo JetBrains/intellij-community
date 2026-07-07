@@ -1,6 +1,6 @@
 import { n as frontmatterToMarkdown, t as frontmatterFromMarkdown } from "./mdast-util-frontmatter.js";
 import { t as frontmatter } from "./micromark-extension-frontmatter.js";
-//#region node_modules/remark-frontmatter/lib/index.js
+//#region node_modules/.bun/remark-frontmatter@5.0.0/node_modules/remark-frontmatter/lib/index.js
 /**
 * @typedef {import('mdast').Root} Root
 * @typedef {import('micromark-extension-frontmatter').Options} Options

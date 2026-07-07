@@ -2,7 +2,10 @@
 
 #![cfg(target_os = "windows")]
 
-use std::{cell::RefCell, ffi::c_void, panic::AssertUnwindSafe, rc::Rc};
+use std::{
+    cell::RefCell, collections::HashMap, ffi::c_void, panic::AssertUnwindSafe, rc::Rc,
+    time::Instant,
+};
 
 use jni::{
     objects::{GlobalRef, JByteArray, JClass, JObject, JString, JValue},
@@ -254,6 +257,7 @@ impl JavaCallbacks {
 struct SharedEnvironmentState {
     key: EnvironmentKey,
     generation: u64,
+    started_at: Instant,
     environment: Option<ICoreWebView2Environment>,
     creating: bool,
     waiters: Vec<NativeHandle>,
@@ -312,6 +316,7 @@ impl SharedWebView2EnvironmentManager {
         self.state = Some(SharedEnvironmentState {
             key: key.clone(),
             generation,
+            started_at: Instant::now(),
             environment: None,
             creating: true,
             waiters: vec![native],
@@ -421,11 +426,27 @@ impl SharedWebView2EnvironmentManager {
             .as_ref()
             .is_some_and(|state| state.generation == generation)
     }
+
+    fn environment_started_at(&self, generation: u64) -> Option<Instant> {
+        self.state.as_ref().and_then(|state| {
+            if state.generation == generation {
+                Some(state.started_at)
+            } else {
+                None
+            }
+        })
+    }
 }
 
 thread_local! {
     static SHARED_ENVIRONMENT_MANAGER: RefCell<SharedWebView2EnvironmentManager> =
         RefCell::new(SharedWebView2EnvironmentManager::default());
+}
+
+#[derive(Clone, Copy)]
+struct NavigationTiming {
+    requested_at: Option<Instant>,
+    started_at: Instant,
 }
 
 struct NativeWebView {
@@ -435,6 +456,10 @@ struct NativeWebView {
     controller: Option<ICoreWebView2Controller>,
     webview: Option<ICoreWebView2>,
     controller_completed_handler: Option<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>,
+    controller_create_started_at: Option<Instant>,
+    last_navigation_requested_at: Option<Instant>,
+    navigation_timings: HashMap<u64, NavigationTiming>,
+    unidentified_navigation_timing: Option<NavigationTiming>,
     add_script_handlers: Vec<(
         u64,
         ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,
@@ -683,16 +708,25 @@ pub extern "system" fn Java_com_intellij_ui_webview_impl_windows_WinWebView2Brid
         return;
     };
     run_with_handle(&mut env, handle, |native| {
-        let webview = native
-            .borrow()
-            .webview
-            .clone()
-            .ok_or_else(|| "WebView2 is not ready".to_string())?;
-        unsafe {
-            webview
-                .Navigate(&HSTRING::from(url))
-                .map_err(format_windows_error)?;
-        }
+        let webview = {
+            let mut view = native.borrow_mut();
+            view.last_navigation_requested_at = Some(Instant::now());
+            view.navigation_timings.clear();
+            view.unidentified_navigation_timing = None;
+            view.webview
+                .clone()
+                .ok_or_else(|| "WebView2 is not ready".to_string())?
+        };
+        measure_perf(
+            &native,
+            "perf.webview2.navigation.loadUrl.call",
+            vec![("urlChars", url.len().to_string())],
+            || unsafe {
+                webview
+                    .Navigate(&HSTRING::from(url.as_str()))
+                    .map_err(format_windows_error)
+            },
+        )?;
         Ok(())
     });
 }
@@ -709,16 +743,25 @@ pub extern "system" fn Java_com_intellij_ui_webview_impl_windows_WinWebView2Brid
         return;
     };
     run_with_handle(&mut env, handle, |native| {
-        let webview = native
-            .borrow()
-            .webview
-            .clone()
-            .ok_or_else(|| "WebView2 is not ready".to_string())?;
-        unsafe {
-            webview
-                .NavigateToString(&HSTRING::from(html))
-                .map_err(format_windows_error)?;
-        }
+        let webview = {
+            let mut view = native.borrow_mut();
+            view.last_navigation_requested_at = Some(Instant::now());
+            view.navigation_timings.clear();
+            view.unidentified_navigation_timing = None;
+            view.webview
+                .clone()
+                .ok_or_else(|| "WebView2 is not ready".to_string())?
+        };
+        measure_perf(
+            &native,
+            "perf.webview2.navigation.loadHtml.call",
+            vec![("htmlChars", html.len().to_string())],
+            || unsafe {
+                webview
+                    .NavigateToString(&HSTRING::from(html.as_str()))
+                    .map_err(format_windows_error)
+            },
+        )?;
         Ok(())
     });
 }
@@ -1003,6 +1046,10 @@ fn create_native(
         controller: None,
         webview: None,
         controller_completed_handler: None,
+        controller_create_started_at: None,
+        last_navigation_requested_at: None,
+        navigation_timings: HashMap::new(),
+        unidentified_navigation_timing: None,
         add_script_handlers: Vec::new(),
         execute_script_handlers: Vec::new(),
         next_script_handler_id: 0,
@@ -1102,6 +1149,7 @@ fn create_shared_environment_completed_handler(
                 return Ok(());
             };
 
+            let environment_started_at = shared_environment_started_at(generation);
             let waiters = SHARED_ENVIRONMENT_MANAGER.with(|manager| {
                 manager
                     .borrow_mut()
@@ -1113,6 +1161,14 @@ fn create_shared_environment_completed_handler(
                 .cloned();
             if let Some(native) = &diagnostic_target {
                 log_environment_metadata(&environment, native);
+                if let Some(started_at) = environment_started_at {
+                    emit_perf_diagnostic(
+                        native,
+                        "perf.webview2.environment.create",
+                        started_at,
+                        vec![("generation", generation.to_string())],
+                    );
+                }
             }
             if let Err(message) = attach_environment_diagnostics(&environment, generation) {
                 if let Some(native) = &diagnostic_target {
@@ -1170,9 +1226,12 @@ fn begin_create_controller(
     let native_for_callback = native.clone();
     let handler = CreateCoreWebView2ControllerCompletedHandler::create(Box::new(
         move |error_code, controller| {
-            if let Ok(mut view) = native_for_callback.try_borrow_mut() {
+            let controller_started_at = if let Ok(mut view) = native_for_callback.try_borrow_mut() {
                 view.controller_completed_handler = None;
-            }
+                view.controller_create_started_at.take()
+            } else {
+                None
+            };
             if is_native_destroyed(&native_for_callback)
                 || !is_shared_environment_current(generation)
             {
@@ -1191,6 +1250,14 @@ fn begin_create_controller(
                 return Ok(());
             };
 
+            if let Some(started_at) = controller_started_at {
+                emit_perf_diagnostic(
+                    &native_for_callback,
+                    "perf.webview2.controller.create",
+                    started_at,
+                    vec![("generation", generation.to_string())],
+                );
+            }
             match finish_create(
                 native_for_callback.clone(),
                 environment_for_callback.clone(),
@@ -1203,10 +1270,17 @@ fn begin_create_controller(
             Ok(())
         },
     ));
-    native.borrow_mut().controller_completed_handler = Some(handler.clone());
+    {
+        let mut view = native.borrow_mut();
+        view.controller_completed_handler = Some(handler.clone());
+        view.controller_create_started_at = Some(Instant::now());
+    }
     unsafe {
         if let Err(error) = environment.CreateCoreWebView2Controller(hwnd, &handler) {
             unregister_shared_environment_view(native_handle(&native));
+            if let Ok(mut view) = native.try_borrow_mut() {
+                view.controller_create_started_at = None;
+            }
             return Err(format_windows_error(error));
         }
     }
@@ -1219,23 +1293,80 @@ fn finish_create(
     controller: ICoreWebView2Controller,
     generation: u64,
 ) -> BridgeResult<()> {
-    let webview = unsafe { controller.CoreWebView2().map_err(format_windows_error)? };
-    configure_webview_application_settings(&webview)?;
-    install_document_start_scripts(&webview, native.clone())?;
-    let token = attach_ipc_handler(&webview, native.clone())?;
-    let web_resource_token =
-        attach_web_resource_requested_handler(&environment, &webview, native.clone())?;
-    let accelerator_token = attach_accelerator_key_handler(&controller, native.clone())?;
-    let got_focus_token = attach_got_focus_handler(&controller, native.clone())?;
-    if let Err(message) = attach_webview_diagnostics(&webview, native.clone()) {
-        emit_diagnostic(
-            &native,
-            DIAGNOSTIC_WARN,
-            "diagnostics.attach-webview-failed",
-            message,
-            String::new(),
-        );
-    }
+    let finish_started_at = Instant::now();
+    let webview = measure_perf(
+        &native,
+        "perf.webview2.finish.core-webview2",
+        vec![("generation", generation.to_string())],
+        || unsafe { controller.CoreWebView2().map_err(format_windows_error) },
+    )?;
+
+    measure_perf(
+        &native,
+        "perf.webview2.finish.settings",
+        vec![("generation", generation.to_string())],
+        || configure_webview_application_settings(&webview),
+    )?;
+
+    let script_count = native
+        .try_borrow()
+        .map(|view| view.document_start_scripts.len())
+        .unwrap_or_default();
+    measure_perf(
+        &native,
+        "perf.webview2.finish.document-start-scripts",
+        vec![
+            ("generation", generation.to_string()),
+            ("scriptCount", script_count.to_string()),
+        ],
+        || install_document_start_scripts(&webview, native.clone()),
+    )?;
+
+    let token = measure_perf(
+        &native,
+        "perf.webview2.finish.ipc-handler",
+        vec![("generation", generation.to_string())],
+        || attach_ipc_handler(&webview, native.clone()),
+    )?;
+
+    let web_resource_token = measure_perf(
+        &native,
+        "perf.webview2.finish.resource-handler",
+        vec![("generation", generation.to_string())],
+        || attach_web_resource_requested_handler(&environment, &webview, native.clone()),
+    )?;
+
+    let accelerator_token = measure_perf(
+        &native,
+        "perf.webview2.finish.accelerator-handler",
+        vec![("generation", generation.to_string())],
+        || attach_accelerator_key_handler(&controller, native.clone()),
+    )?;
+
+    let got_focus_token = measure_perf(
+        &native,
+        "perf.webview2.finish.focus-handler",
+        vec![("generation", generation.to_string())],
+        || attach_got_focus_handler(&controller, native.clone()),
+    )?;
+
+    measure_perf(
+        &native,
+        "perf.webview2.finish.diagnostics",
+        vec![("generation", generation.to_string())],
+        || {
+            if let Err(message) = attach_webview_diagnostics(&webview, native.clone()) {
+                emit_diagnostic(
+                    &native,
+                    DIAGNOSTIC_WARN,
+                    "diagnostics.attach-webview-failed",
+                    message,
+                    String::new(),
+                );
+            }
+            Ok(())
+        },
+    )?;
 
     let (callbacks, handle, hwnd, controller, visible, x, y, width, height, scale) = {
         let mut view = native.borrow_mut();
@@ -1274,6 +1405,15 @@ fn finish_create(
     }
 
     callbacks.on_created(handle);
+    emit_perf_diagnostic(
+        &native,
+        "perf.webview2.finish.total",
+        finish_started_at,
+        vec![
+            ("generation", generation.to_string()),
+            ("handle", handle.to_string()),
+        ],
+    );
     Ok(())
 }
 
@@ -1344,6 +1484,118 @@ fn emit_diagnostic(native: &NativeHandle, level: jint, event: &str, message: Str
         Err(_) => return,
     };
     callbacks.on_native_diagnostic(level, event, message, data);
+}
+
+fn emit_perf_diagnostic(
+    native: &NativeHandle,
+    event: &str,
+    started_at: Instant,
+    mut data: Vec<(&str, String)>,
+) {
+    let elapsed = started_at.elapsed();
+    data.push(("elapsedMs", elapsed.as_millis().to_string()));
+    emit_diagnostic(
+        native,
+        DIAGNOSTIC_TRACE,
+        event,
+        "WebView2 perf timing".to_string(),
+        diagnostic_data(data),
+    );
+}
+
+fn measure_perf<T>(
+    native: &NativeHandle,
+    event: &str,
+    data: Vec<(&str, String)>,
+    action: impl FnOnce() -> BridgeResult<T>,
+) -> BridgeResult<T> {
+    let started_at = Instant::now();
+    let result = action();
+    if result.is_ok() {
+        emit_perf_diagnostic(native, event, started_at, data);
+    }
+    result
+}
+
+fn record_navigation_start(
+    native: &NativeHandle,
+    navigation_id: Option<u64>,
+    data: &mut Vec<(&str, String)>,
+) {
+    let now = Instant::now();
+    if let Ok(mut view) = native.try_borrow_mut() {
+        let timing = NavigationTiming {
+            requested_at: view.last_navigation_requested_at,
+            started_at: now,
+        };
+        if let Some(requested_at) = timing.requested_at {
+            append_elapsed_ms(data, "sinceLoadCallMs", requested_at);
+        }
+        if let Some(navigation_id) = navigation_id {
+            view.navigation_timings.insert(navigation_id, timing);
+        } else {
+            view.unidentified_navigation_timing = Some(timing);
+        }
+    }
+}
+
+fn append_navigation_progress_timings(
+    native: &NativeHandle,
+    navigation_id: Option<u64>,
+    data: &mut Vec<(&str, String)>,
+) {
+    if let Ok(view) = native.try_borrow() {
+        if let Some(timing) = current_navigation_timing(&view, navigation_id) {
+            append_navigation_timing(data, timing);
+        }
+    }
+}
+
+fn complete_navigation_timings(
+    native: &NativeHandle,
+    navigation_id: Option<u64>,
+    data: &mut Vec<(&str, String)>,
+) {
+    if let Ok(mut view) = native.try_borrow_mut() {
+        let timing = if let Some(navigation_id) = navigation_id {
+            view.navigation_timings.remove(&navigation_id)
+        } else if view.navigation_timings.len() == 1 {
+            let navigation_id = *view.navigation_timings.keys().next().unwrap();
+            view.navigation_timings.remove(&navigation_id)
+        } else {
+            view.unidentified_navigation_timing.take()
+        };
+        if let Some(timing) = timing {
+            append_navigation_timing(data, timing);
+        }
+        if view.navigation_timings.is_empty() && view.unidentified_navigation_timing.is_none() {
+            view.last_navigation_requested_at = None;
+        }
+    }
+}
+
+fn current_navigation_timing(
+    view: &NativeWebView,
+    navigation_id: Option<u64>,
+) -> Option<NavigationTiming> {
+    if let Some(navigation_id) = navigation_id {
+        return view.navigation_timings.get(&navigation_id).copied();
+    }
+    if view.navigation_timings.len() == 1 {
+        return view.navigation_timings.values().next().copied();
+    }
+    view.unidentified_navigation_timing
+}
+
+fn append_navigation_timing(data: &mut Vec<(&str, String)>, timing: NavigationTiming) {
+    if let Some(requested_at) = timing.requested_at {
+        append_elapsed_ms(data, "sinceLoadCallMs", requested_at);
+    }
+    append_elapsed_ms(data, "sinceNavigationStartMs", timing.started_at);
+}
+
+fn append_elapsed_ms(data: &mut Vec<(&str, String)>, name: &'static str, started_at: Instant) {
+    data.push((name, started_at.elapsed().as_millis().to_string()));
 }
 
 fn log_environment_metadata(environment: &ICoreWebView2Environment, native: &NativeHandle) {
@@ -1462,9 +1714,11 @@ fn attach_navigation_handlers(webview: &ICoreWebView2, native: NativeHandle) -> 
             if let Some(uri) = unsafe { get_pwstr(|value| args.Uri(value)) } {
                 data.push(("uri", uri));
             }
-            if let Some(navigation_id) = unsafe { get_u64(|value| args.NavigationId(value)) } {
+            let navigation_id = unsafe { get_u64(|value| args.NavigationId(value)) };
+            if let Some(navigation_id) = navigation_id {
                 data.push(("navigationId", navigation_id.to_string()));
             }
+            record_navigation_start(&native_for_start, navigation_id, &mut data);
             emit_diagnostic(
                 &native_for_start,
                 DIAGNOSTIC_DEBUG,
@@ -1500,12 +1754,14 @@ fn attach_navigation_handlers(webview: &ICoreWebView2, native: NativeHandle) -> 
     let content_handler = ContentLoadingEventHandler::create(Box::new(move |_, args| {
         if let Some(args) = args {
             let mut data = Vec::new();
-            if let Some(navigation_id) = unsafe { get_u64(|value| args.NavigationId(value)) } {
+            let navigation_id = unsafe { get_u64(|value| args.NavigationId(value)) };
+            if let Some(navigation_id) = navigation_id {
                 data.push(("navigationId", navigation_id.to_string()));
             }
             if let Some(is_error_page) = unsafe { get_bool(|value| args.IsErrorPage(value)) } {
                 data.push(("isErrorPage", is_error_page.to_string()));
             }
+            append_navigation_progress_timings(&native_for_content, navigation_id, &mut data);
             emit_diagnostic(
                 &native_for_content,
                 DIAGNOSTIC_DEBUG,
@@ -1528,9 +1784,11 @@ fn attach_navigation_handlers(webview: &ICoreWebView2, native: NativeHandle) -> 
         let handler = DOMContentLoadedEventHandler::create(Box::new(move |_, args| {
             if let Some(args) = args {
                 let mut data = Vec::new();
-                if let Some(navigation_id) = unsafe { get_u64(|value| args.NavigationId(value)) } {
+                let navigation_id = unsafe { get_u64(|value| args.NavigationId(value)) };
+                if let Some(navigation_id) = navigation_id {
                     data.push(("navigationId", navigation_id.to_string()));
                 }
+                append_navigation_progress_timings(&native_for_dom, navigation_id, &mut data);
                 emit_diagnostic(
                     &native_for_dom,
                     DIAGNOSTIC_DEBUG,
@@ -1556,6 +1814,7 @@ fn attach_navigation_handlers(webview: &ICoreWebView2, native: NativeHandle) -> 
             if let Some(is_new_document) = unsafe { get_bool(|value| args.IsNewDocument(value)) } {
                 data.push(("isNewDocument", is_new_document.to_string()));
             }
+            append_navigation_progress_timings(&native_for_source, None, &mut data);
             emit_diagnostic(
                 &native_for_source,
                 DIAGNOSTIC_DEBUG,
@@ -1749,7 +2008,8 @@ fn handle_navigation_completed(
     let mut data = Vec::new();
     let is_success = unsafe { get_bool(|value| args.IsSuccess(value)) }.unwrap_or(false);
     data.push(("isSuccess", is_success.to_string()));
-    if let Some(navigation_id) = unsafe { get_u64(|value| args.NavigationId(value)) } {
+    let navigation_id = unsafe { get_u64(|value| args.NavigationId(value)) };
+    if let Some(navigation_id) = navigation_id {
         data.push(("navigationId", navigation_id.to_string()));
     }
     if let Some(web_error_status) =
@@ -1763,6 +2023,7 @@ fn handle_navigation_completed(
             data.push(("httpStatusCode", http_status_code.to_string()));
         }
     }
+    complete_navigation_timings(native, navigation_id, &mut data);
     emit_diagnostic(
         native,
         if is_success {
@@ -1955,6 +2216,10 @@ fn emit_shared_environment_diagnostic(
 
 fn shared_environment_active_views(generation: u64) -> Vec<NativeHandle> {
     SHARED_ENVIRONMENT_MANAGER.with(|manager| manager.borrow_mut().active_views(generation))
+}
+
+fn shared_environment_started_at(generation: u64) -> Option<Instant> {
+    SHARED_ENVIRONMENT_MANAGER.with(|manager| manager.borrow().environment_started_at(generation))
 }
 
 fn invalidate_shared_environment(generation: u64) -> Vec<NativeHandle> {

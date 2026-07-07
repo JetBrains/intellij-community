@@ -1,8 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import { createRoot } from "react-dom/client"
-import { apiId, webView, webViewTheme, type WebViewCallable, type WebViewImplementable } from "@jetbrains/intellij-webview"
+import { apiId, getPerfLogger, webView, webViewTheme, type WebViewCallable, type WebViewImplementable } from "@jetbrains/intellij-webview"
 import { MarkdownPreviewApp, scrollMarkdownPreviewToLine } from "./MarkdownPreviewApp"
+import { markdownDiagnosticDetails } from "./markdownDiagnostics"
 import { decorateSourceBlocks } from "./markdownSourcePositions"
 import type {
   MarkdownChangedBlockDescriptor,
@@ -55,6 +56,7 @@ interface MarkdownOpenLinkParams {
 
 const markdownPreviewPageApiId = apiId<MarkdownPreviewPageApi>()("markdown.preview")
 const markdownPreviewHostApi = webView.callable(apiId<MarkdownPreviewHostApi>()("markdown.preview"))
+const markdownLogger = getPerfLogger("markdown")
 const contentElement = requiredElement<HTMLElement>("content")
 const root = createRoot(contentElement)
 let markdown = ""
@@ -67,13 +69,20 @@ let previewSettings = defaultPreviewSettings()
 
 webView.implement(markdownPreviewPageApiId, {
   contentChanged(params) {
+    const startedAtMs = performance.now()
+    const details = markdownDiagnosticDetails(
+      params.markdown,
+      params.contentVersion,
+      `scrollLine=${params.scrollLine}, changes=${params.changes?.length ?? 0}`,
+    )
+    markdownLogger.event("contentChanged.received", details)
     markdown = params.markdown
     scrollLine = params.scrollLine
     contentVersion = params.contentVersion
     previewSettings = normalizePreviewSettings(params.settings)
     applyPreviewSettings(previewSettings)
     changes = params.changes ?? []
-    renderPreview()
+    renderPreview("contentChanged", startedAtMs, details)
   },
   scrollToLine(params) {
     scrollLine = params.line
@@ -86,14 +95,14 @@ webView.implement(markdownPreviewPageApiId, {
 })
 
 applyTheme(theme)
-renderPreview()
+renderPreview("initial")
 webViewTheme.onChanged(nextTheme => {
   theme = nextTheme
   applyTheme(nextTheme)
 })
 void markdownPreviewHostApi.pageReady()
 
-function renderPreview(): void {
+function renderPreview(reason = "render", startedAtMs = performance.now(), details = markdownDiagnosticDetails(markdown, contentVersion)): void {
   root.render(
     <MarkdownPreviewApp
       markdown={markdown}
@@ -111,6 +120,9 @@ function renderPreview(): void {
       onSetFontSize={setMarkdownFontSize}
     />
   )
+  requestAnimationFrame(() => {
+    markdownLogger.perfSince("render.afterFrame", startedAtMs, `reason=${reason}, ${details}`)
+  })
 }
 
 function openMarkdownLink(href: string): void {

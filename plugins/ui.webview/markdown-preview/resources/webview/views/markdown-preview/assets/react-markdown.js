@@ -9,7 +9,7 @@ import { t as toHast } from "./mdast-util-to-hast.js";
 import { t as bail } from "./bail.js";
 import { t as require_extend } from "./extend.js";
 import { t as isPlainObject } from "./is-plain-obj.js";
-//#region node_modules/remark-parse/lib/index.js
+//#region node_modules/.bun/remark-parse@11.0.0/node_modules/remark-parse/lib/index.js
 /**
 * @typedef {import('mdast').Root} Root
 * @typedef {import('mdast-util-from-markdown').Options} FromMarkdownOptions
@@ -44,7 +44,7 @@ function remarkParse(options) {
 	}
 }
 //#endregion
-//#region node_modules/remark-rehype/lib/index.js
+//#region node_modules/.bun/remark-rehype@11.1.2/node_modules/remark-rehype/lib/index.js
 /**
 * @import {Root as HastRoot} from 'hast'
 * @import {Root as MdastRoot} from 'mdast'
@@ -211,7 +211,7 @@ function remarkRehype(destination, options) {
 	};
 }
 //#endregion
-//#region node_modules/trough/lib/index.js
+//#region node_modules/.bun/trough@2.2.0/node_modules/trough/lib/index.js
 /**
 * @typedef {(error?: Error | null | undefined, ...output: Array<any>) => void} Callback
 *   Callback.
@@ -367,7 +367,7 @@ function wrap(middleware, callback) {
 	}
 }
 //#endregion
-//#region node_modules/vfile/lib/minpath.browser.js
+//#region node_modules/.bun/vfile@6.0.3/node_modules/vfile/lib/minpath.browser.js
 var minpath = {
 	basename,
 	dirname,
@@ -601,13 +601,13 @@ function assertPath$1(path) {
 	if (typeof path !== "string") throw new TypeError("Path must be a string. Received " + JSON.stringify(path));
 }
 //#endregion
-//#region node_modules/vfile/lib/minproc.browser.js
+//#region node_modules/.bun/vfile@6.0.3/node_modules/vfile/lib/minproc.browser.js
 var minproc = { cwd };
 function cwd() {
 	return "/";
 }
 //#endregion
-//#region node_modules/vfile/lib/minurl.shared.js
+//#region node_modules/.bun/vfile@6.0.3/node_modules/vfile/lib/minurl.shared.js
 /**
 * Checks if a value has the shape of a WHATWG URL object.
 *
@@ -630,7 +630,7 @@ function isUrl(fileUrlOrPath) {
 	return Boolean(fileUrlOrPath !== null && typeof fileUrlOrPath === "object" && "href" in fileUrlOrPath && fileUrlOrPath.href && "protocol" in fileUrlOrPath && fileUrlOrPath.protocol && fileUrlOrPath.auth === void 0);
 }
 //#endregion
-//#region node_modules/vfile/lib/minurl.browser.js
+//#region node_modules/.bun/vfile@6.0.3/node_modules/vfile/lib/minurl.browser.js
 /**
 * @param {URL | string} path
 *   File URL.
@@ -682,7 +682,7 @@ function getPathFromURLPosix(url) {
 	return decodeURIComponent(pathname);
 }
 //#endregion
-//#region node_modules/vfile/lib/index.js
+//#region node_modules/.bun/vfile@6.0.3/node_modules/vfile/lib/index.js
 /**
 * @import {Node, Point, Position} from 'unist'
 * @import {Options as MessageOptions} from 'vfile-message'
@@ -1201,7 +1201,7 @@ function isUint8Array$1(value) {
 	return Boolean(value && typeof value === "object" && "byteLength" in value && "byteOffset" in value);
 }
 //#endregion
-//#region node_modules/unified/lib/callable-instance.js
+//#region node_modules/.bun/unified@11.0.5/node_modules/unified/lib/callable-instance.js
 var import_extend = /* @__PURE__ */ __toESM(require_extend(), 1);
 var CallableInstance = (
 /**
@@ -1220,7 +1220,7 @@ function(property) {
 	return apply;
 });
 //#endregion
-//#region node_modules/unified/lib/index.js
+//#region node_modules/.bun/unified@11.0.5/node_modules/unified/lib/index.js
 /**
 * @typedef {import('trough').Pipeline} Pipeline
 *
@@ -2298,7 +2298,7 @@ function isUint8Array(value) {
 	return Boolean(value && typeof value === "object" && "byteLength" in value && "byteOffset" in value);
 }
 //#endregion
-//#region node_modules/react-markdown/lib/index.js
+//#region node_modules/.bun/react-markdown@10.1.0/node_modules/react-markdown/lib/index.js
 /**
 * @import {Element, Nodes, Parents, Root} from 'hast'
 * @import {Root as MdastRoot} from 'mdast'

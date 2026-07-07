@@ -1,5 +1,5 @@
 import { t as raw } from "./hast-util-raw.js";
-//#region node_modules/rehype-raw/lib/index.js
+//#region node_modules/.bun/rehype-raw@7.0.0/node_modules/rehype-raw/lib/index.js
 /**
 * @typedef {import('hast').Root} Root
 * @typedef {import('hast-util-raw').Options} RawOptions

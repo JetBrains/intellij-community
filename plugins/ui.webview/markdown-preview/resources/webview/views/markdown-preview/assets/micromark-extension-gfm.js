@@ -1,5 +1,5 @@
 import { a as factorySpace, c as asciiControl, d as markdownSpace, f as unicodePunctuation, g as splice, h as combineExtensions, i as classifyCharacter, l as markdownLineEnding, m as normalizeIdentifier, n as blankLine, o as asciiAlpha, p as unicodeWhitespace, r as resolveAll, s as asciiAlphanumeric, u as markdownLineEndingOrSpace } from "./mdast-util-from-markdown.js";
-//#region node_modules/micromark-extension-gfm-autolink-literal/lib/syntax.js
+//#region node_modules/.bun/micromark-extension-gfm-autolink-literal@2.1.0/node_modules/micromark-extension-gfm-autolink-literal/lib/syntax.js
 /**
 * @import {Code, ConstructRecord, Event, Extension, Previous, State, TokenizeContext, Tokenizer} from 'micromark-util-types'
 */
@@ -700,7 +700,7 @@ function previousUnbalanced(events) {
 	return result;
 }
 //#endregion
-//#region node_modules/micromark-extension-gfm-footnote/lib/syntax.js
+//#region node_modules/.bun/micromark-extension-gfm-footnote@2.1.0/node_modules/micromark-extension-gfm-footnote/lib/syntax.js
 /**
 * @import {Event, Exiter, Extension, Resolver, State, Token, TokenizeContext, Tokenizer} from 'micromark-util-types'
 */
@@ -1119,7 +1119,7 @@ function tokenizeIndent(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/micromark-extension-gfm-strikethrough/lib/syntax.js
+//#region node_modules/.bun/micromark-extension-gfm-strikethrough@2.1.0/node_modules/micromark-extension-gfm-strikethrough/lib/syntax.js
 /**
 * @import {Options} from 'micromark-extension-gfm-strikethrough'
 * @import {Event, Extension, Resolver, State, Token, TokenizeContext, Tokenizer} from 'micromark-util-types'
@@ -1260,7 +1260,7 @@ function gfmStrikethrough(options) {
 	}
 }
 //#endregion
-//#region node_modules/micromark-extension-gfm-table/lib/edit-map.js
+//#region node_modules/.bun/micromark-extension-gfm-table@2.1.1/node_modules/micromark-extension-gfm-table/lib/edit-map.js
 /**
 * @import {Event} from 'micromark-util-types'
 */
@@ -1352,7 +1352,7 @@ function addImplementation(editMap, at, remove, add) {
 	]);
 }
 //#endregion
-//#region node_modules/micromark-extension-gfm-table/lib/infer.js
+//#region node_modules/.bun/micromark-extension-gfm-table@2.1.1/node_modules/micromark-extension-gfm-table/lib/infer.js
 /**
 * @import {Event} from 'micromark-util-types'
 */
@@ -1390,7 +1390,7 @@ function gfmTableAlign(events, index) {
 	return align;
 }
 //#endregion
-//#region node_modules/micromark-extension-gfm-table/lib/syntax.js
+//#region node_modules/.bun/micromark-extension-gfm-table@2.1.1/node_modules/micromark-extension-gfm-table/lib/syntax.js
 /**
 * @import {Event, Extension, Point, Resolver, State, Token, TokenizeContext, Tokenizer} from 'micromark-util-types'
 */
@@ -2084,7 +2084,7 @@ function getPoint(events, index) {
 	return event[1][side];
 }
 //#endregion
-//#region node_modules/micromark-extension-gfm-task-list-item/lib/syntax.js
+//#region node_modules/.bun/micromark-extension-gfm-task-list-item@2.1.0/node_modules/micromark-extension-gfm-task-list-item/lib/syntax.js
 /**
 * @import {Extension, State, TokenizeContext, Tokenizer} from 'micromark-util-types'
 */
@@ -2203,7 +2203,7 @@ function spaceThenNonSpace(effects, ok, nok) {
 	}
 }
 //#endregion
-//#region node_modules/micromark-extension-gfm/index.js
+//#region node_modules/.bun/micromark-extension-gfm@3.0.0/node_modules/micromark-extension-gfm/index.js
 /**
 * @typedef {import('micromark-extension-gfm-footnote').HtmlOptions} HtmlOptions
 * @typedef {import('micromark-extension-gfm-strikethrough').Options} Options

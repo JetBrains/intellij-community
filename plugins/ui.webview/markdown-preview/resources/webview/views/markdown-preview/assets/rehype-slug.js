@@ -2,7 +2,7 @@ import { n as visit } from "./hast-util-raw.js";
 import { t as BananaSlug } from "./github-slugger.js";
 import { t as headingRank } from "./hast-util-heading-rank.js";
 import { t as toString } from "./hast-util-to-string.js";
-//#region node_modules/rehype-slug/lib/index.js
+//#region node_modules/.bun/rehype-slug@6.0.0/node_modules/rehype-slug/lib/index.js
 /**
 * @typedef {import('hast').Root} Root
 */

@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.ui.webview.impl.WebViewLogger
 import com.intellij.ui.webview.impl.engine.WebViewScript
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -31,9 +30,10 @@ internal class WinWebViewEngineTest {
     val bridge = FakeWinWebView2Bridge()
     val scope = testScope()
     val engine = createActiveEngine(scope, bridge)
+    val engineLogger = Logger.getInstance(WinWebViewEngine::class.java)
 
     val logged = collectWarningsAndErrors {
-      WebViewLogger.LOG.setLevel(LogLevel.TRACE)
+      engineLogger.setLevel(LogLevel.TRACE)
       try {
         runInEdtAndWait {
           bridge.callbacks.onNativeDiagnostic(0, "$marker-trace", "trace message", "trace=data")
@@ -44,15 +44,15 @@ internal class WinWebViewEngineTest {
         }
       }
       finally {
-        WebViewLogger.LOG.setLevel(LogLevel.INFO)
+        engineLogger.setLevel(LogLevel.INFO)
       }
     }
 
     try {
       val buffer = factory!!.toBuffer()
       assertTrue(buffer.contains("FINER") && buffer.contains("$marker-trace"), buffer)
-      assertTrue(buffer.contains("FINE") && buffer.contains("$marker-debug"), buffer)
-      assertTrue(buffer.contains("INFO") && buffer.contains("$marker-info"), buffer)
+      assertTrue(buffer.contains("FINER") && buffer.contains("$marker-debug"), buffer)
+      assertTrue(buffer.contains("FINER") && buffer.contains("$marker-info"), buffer)
       assertTrue(logged.warnings.any { it.contains("$marker-warn") }, logged.warnings.toString())
       assertTrue(logged.errors.any { it.contains("$marker-error") }, logged.errors.toString())
     }

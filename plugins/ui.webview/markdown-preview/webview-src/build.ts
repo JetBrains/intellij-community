@@ -6,7 +6,7 @@ import { build } from "vite"
 import { defineWebViewViewConfigs, selectWebViewViewBuildEntries, withWebViewBuildWatch } from "@jetbrains/intellij-webview/vite"
 
 const webviewSrcDir = dirname(fileURLToPath(import.meta.url))
-const selectedViews = selectWebViewViewBuildEntries(["markdown-preview"])
+const selectedViews = selectWebViewViewBuildEntries([{ id: "markdown-preview", modulePreload: false }])
 
 for (const config of defineWebViewViewConfigs({ webviewSrcDir, views: selectedViews.views })) {
   await build(withWebViewBuildWatch(config, selectedViews.watch) as unknown as Parameters<typeof build>[0])

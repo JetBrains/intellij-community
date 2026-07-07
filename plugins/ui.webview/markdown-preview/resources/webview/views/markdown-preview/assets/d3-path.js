@@ -1,4 +1,4 @@
-//#region node_modules/d3-path/src/path.js
+//#region node_modules/.bun/d3-path@3.1.0/node_modules/d3-path/src/path.js
 var pi$1 = Math.PI, tau$1 = 2 * pi$1, epsilon$1 = 1e-6, tauEpsilon$1 = tau$1 - epsilon$1;
 function append(strings) {
 	this._ += strings[0];
@@ -74,7 +74,7 @@ function path$1() {
 }
 path$1.prototype = Path$1.prototype;
 //#endregion
-//#region node_modules/d3-sankey/node_modules/d3-shape/node_modules/d3-path/src/path.js
+//#region node_modules/.bun/d3-path@1.0.9/node_modules/d3-path/src/path.js
 var pi = Math.PI, tau = 2 * pi, epsilon = 1e-6, tauEpsilon = tau - epsilon;
 function Path() {
 	this._x0 = this._y0 = this._x1 = this._y1 = null;

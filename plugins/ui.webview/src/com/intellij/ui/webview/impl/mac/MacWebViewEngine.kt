@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.webview.impl.mac
 
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.ui.mac.foundation.ID
 import com.intellij.ui.webview.api.WebViewAssetPath
 import com.intellij.ui.webview.api.WebViewAssetRoot
@@ -10,11 +12,12 @@ import com.intellij.ui.webview.impl.WebViewAssetResponse
 import com.intellij.ui.webview.impl.WebViewEditCommand
 import com.intellij.ui.webview.impl.WebViewEngineBridge
 import com.intellij.ui.webview.impl.WebViewJsMessageReceiver
-import com.intellij.ui.webview.impl.WebViewLogger
 import com.intellij.ui.webview.impl.engine.WebViewScript
 import com.intellij.ui.webview.impl.openWebViewPopupUrlExternally
 import com.intellij.ui.webview.impl.resolveWebViewAssetUrl
+import com.intellij.ui.webview.impl.traceWebViewPerf
 import com.intellij.ui.webview.impl.webViewAssetCustomSchemeUrl
+import com.intellij.ui.webview.impl.webViewLifecycle
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -29,6 +32,8 @@ import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
+
+private val LOG = logger<MacWebViewEngine>()
 
 /**
  * macOS implementation of [WebViewEngineBridge] backed by a native `WKWebView`.
@@ -86,18 +91,18 @@ internal class MacWebViewEngine(
         State.New -> {
           if (!state.compareAndSet(State.New, State.Active)) continue
 
-          WebViewLogger.logLifecycle("create", "initializing WKWebView")
+          LOG.webViewLifecycle("create", "initializing WKWebView")
           scope.launch(MacMainThreadDispatcher) {
             try {
-              val t0 = System.currentTimeMillis()
-              val createdHandles = WKWebViewBridge.createWKWebView(
-                onMessage = { message -> handleIncomingMessage(message) },
-                resolveAssetUrl = this@MacWebViewEngine::resolveAssetUrl,
-                onNewWindowRequested = this@MacWebViewEngine::openNewWindowRequest,
-                onModifierKeyEvent = { event -> modifierKeyHandler(event) },
-                documentStartScripts = documentStartScripts,
-              )
-              WebViewLogger.logPerf("wkwebview-create", System.currentTimeMillis() - t0)
+              val createdHandles = LOG.traceWebViewPerf("wkwebview-create") {
+                WKWebViewBridge.createWKWebView(
+                  onMessage = { message -> handleIncomingMessage(message) },
+                  resolveAssetUrl = this@MacWebViewEngine::resolveAssetUrl,
+                  onNewWindowRequested = this@MacWebViewEngine::openNewWindowRequest,
+                  onModifierKeyEvent = { event -> modifierKeyHandler(event) },
+                  documentStartScripts = documentStartScripts,
+                )
+              }
 
               if (state.get() != State.Active || !handlesReady.complete(createdHandles)) {
                 WKWebViewBridge.release(createdHandles)
@@ -106,19 +111,19 @@ internal class MacWebViewEngine(
               }
 
               handles = createdHandles
-              WebViewLogger.logLifecycle("create", "WKWebView ready")
+              LOG.webViewLifecycle("create", "WKWebView ready")
             }
             catch (t: Throwable) {
               handlesReady.completeExceptionally(t)
               state.set(State.Closed)
-              WebViewLogger.LOG.warn("Failed to initialize WKWebView", t)
+              LOG.warn("Failed to initialize WKWebView", t)
             }
           }
           return
         }
         State.Active -> return
         State.Closing, State.Closed -> {
-          WebViewLogger.LOG.warn("initialize() ignored: engine is $current")
+          LOG.warn("initialize() ignored: engine is $current")
           return
         }
       }
@@ -223,7 +228,7 @@ internal class MacWebViewEngine(
             scope.cancel()
             cancelPendingEvaluations()
             handlesReady.cancel(CancellationException("Engine closed before initialization"))
-            WebViewLogger.logLifecycle("close", "closed from New state")
+            LOG.webViewLifecycle("close", "closed from New state")
             return
           }
         }
@@ -233,13 +238,13 @@ internal class MacWebViewEngine(
           }
         }
         State.Closing, State.Closed -> {
-          WebViewLogger.logLifecycle("close", "already closing/closed, idempotent no-op")
+          LOG.webViewLifecycle("close", "already closing/closed, idempotent no-op")
           return
         }
       }
     }
 
-    WebViewLogger.logLifecycle("close", "state=${state.get()}")
+    LOG.webViewLifecycle("close", "state=${state.get()}")
     cancelPendingEvaluations()
 
     scope.cancel()
@@ -252,7 +257,7 @@ internal class MacWebViewEngine(
         WKWebViewBridge.release(currentHandles)
         handlesReady.cancel(CancellationException("Engine closed"))
         state.set(State.Closed)
-        WebViewLogger.logLifecycle("close", "native cleanup complete")
+        LOG.webViewLifecycle("close", "native cleanup complete")
       }
     }
     else {
@@ -344,7 +349,7 @@ internal class MacWebViewEngine(
   }
 
   private fun resolveAssetUrl(url: String): WebViewAssetResponse? {
-    return resolveWebViewAssetUrl(url, activeAssetResolver.get())
+    return resolveWebViewAssetUrl(url, activeAssetResolver.get(), "mac")
   }
 
   private fun openNewWindowRequest(url: String) {
@@ -376,18 +381,12 @@ internal class MacWebViewEngine(
 
   private fun logOutgoingToJavaScript(rawJson: String) {
     val count = nextOutgoingLogId.incrementAndGet()
-    val message = "Delivering WebView message to JS #$count (${rawJson.length} chars)"
-    if (count <= 5) {
-      WebViewLogger.LOG.info(message)
-    }
-    else {
-      WebViewLogger.LOG.debug(message)
-    }
+    LOG.trace { "Delivering WebView message to JS #$count (${rawJson.length} chars)" }
   }
 
   private fun logIncomingFromJavaScript(message: String) {
     val count = nextIncomingLogId.incrementAndGet()
-    WebViewLogger.LOG.info("Received WebView message from JS #$count (${message.length} chars)")
+    LOG.trace { "Received WebView message from JS #$count (${message.length} chars)" }
   }
 
   private fun tryCompleteEvaluation(message: String): Boolean {
@@ -414,7 +413,10 @@ internal class MacWebViewEngine(
  * Factory function for creating a macOS WebView engine.
  */
 @ApiStatus.Internal
-internal fun createMacWebViewEngine(parentScope: CoroutineScope, documentStartScripts: List<WebViewScript> = emptyList()): MacWebViewEngine {
+internal fun createMacWebViewEngine(
+  parentScope: CoroutineScope,
+  documentStartScripts: List<WebViewScript> = emptyList(),
+): MacWebViewEngine {
   return MacWebViewEngine(parentScope, documentStartScripts)
 }
 

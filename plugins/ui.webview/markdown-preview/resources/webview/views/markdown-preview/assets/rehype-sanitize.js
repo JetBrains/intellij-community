@@ -1,5 +1,5 @@
 import { t as sanitize } from "./hast-util-sanitize.js";
-//#region node_modules/rehype-sanitize/lib/index.js
+//#region node_modules/.bun/rehype-sanitize@6.0.0/node_modules/rehype-sanitize/lib/index.js
 /**
 * @typedef {import('hast').Root} Root
 * @typedef {import('hast-util-sanitize').Schema} Schema

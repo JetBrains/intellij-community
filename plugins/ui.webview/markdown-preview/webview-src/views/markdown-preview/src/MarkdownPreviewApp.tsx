@@ -1,18 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import { useEffect, useMemo, useState, type MouseEvent } from "react"
+import { lazy, Suspense, useEffect, useMemo, useState, type MouseEvent } from "react"
 import ReactMarkdown, { type Components, type Options } from "react-markdown"
-import rehypeHighlight from "rehype-highlight"
+import { getPerfLogger } from "@jetbrains/intellij-webview"
 import rehypeRaw from "rehype-raw"
 import rehypeSanitize from "rehype-sanitize"
 import rehypeSlug from "rehype-slug"
 import remarkFrontmatter from "remark-frontmatter"
 import remarkGfm from "remark-gfm"
 import { FloatingMarkdownControls } from "./FloatingMarkdownControls"
-import { MarkdownImageBlock } from "./MarkdownImageBlock"
-import { MermaidBlock } from "./MermaidBlock"
+import { markdownDiagnosticDetails } from "./markdownDiagnostics"
 import { codeNodeFromPreNode, type HastNode } from "./markdownHastUtils"
-import { renderMarkdownLatex } from "./markdownLatex"
 import { collectPathLinkCandidates, renderPathLinks } from "./markdownPathLinks"
 import type {
   MarkdownChangedBlockDescriptor,
@@ -73,6 +71,10 @@ interface MarkdownPreviewAppProps {
 }
 
 const emptyPathSet = new Set<string>()
+const markdownLogger = getPerfLogger("markdown")
+const LazyMarkdownImageBlock = lazy(() => import("./MarkdownImageBlock").then(module => ({ default: module.MarkdownImageBlock })))
+const LazyMermaidBlock = lazy(() => import("./MermaidBlock").then(module => ({ default: module.MermaidBlock })))
+type RehypePlugin = NonNullable<Options["rehypePlugins"]>[number]
 
 const remarkPlugins: Options["remarkPlugins"] = [
   remarkGfm,
@@ -80,11 +82,10 @@ const remarkPlugins: Options["remarkPlugins"] = [
   remarkFrontmatterBlocks,
   remarkSourcePositionAttributes,
 ]
-const rehypePlugins: Options["rehypePlugins"] = [
+const baseRehypePlugins: NonNullable<Options["rehypePlugins"]> = [
   rehypeRaw,
   rehypeSlug,
   [rehypeSanitize, markdownSanitizeSchema],
-  [rehypeHighlight, { detect: true, plainText: ["mermaid", "text", "txt"] }],
 ]
 
 export function MarkdownPreviewApp({
@@ -103,7 +104,12 @@ export function MarkdownPreviewApp({
   onSetFontSize,
 }: MarkdownPreviewAppProps) {
   const commandCandidates: MarkdownCommandCandidate[] = []
-  const pathLinkCandidates = useMemo(() => collectPathLinkCandidates(markdown), [markdown])
+  const pathLinkCandidates = useMemo(() => {
+    const startedAtMs = performance.now()
+    const candidates = collectPathLinkCandidates(markdown)
+    markdownLogger.perfSince("pathLinks.collect", startedAtMs, markdownDiagnosticDetails(markdown, contentVersion, `candidates=${candidates.length}`))
+    return candidates
+  }, [contentVersion, markdown])
   const [resolvedCommands, setResolvedCommands] = useState<{ contentVersion: number, commands: MarkdownCommandDescriptor[] }>({
     contentVersion: -1,
     commands: [],
@@ -117,6 +123,14 @@ export function MarkdownPreviewApp({
   const commands = commandsReady ? resolvedCommands.commands : []
   const resolvedRawPaths = pathLinksReady ? resolvedPathLinks.rawPaths : emptyPathSet
   const commandLookup = createCommandLookup(commands)
+  const [rehypeHighlightPlugin, setRehypeHighlightPlugin] = useState<RehypePlugin | undefined>()
+  const rehypePlugins = useMemo<Options["rehypePlugins"]>(() => {
+    if (!rehypeHighlightPlugin) return baseRehypePlugins
+    return [
+      ...baseRehypePlugins,
+      [rehypeHighlightPlugin, { detect: true, plainText: ["mermaid", "text", "txt"] }],
+    ] as Options["rehypePlugins"]
+  }, [rehypeHighlightPlugin])
   const components: Components = {
     a({ href, children, ...props }) {
       function handleClick(event: MouseEvent<HTMLAnchorElement>): void {
@@ -138,7 +152,12 @@ export function MarkdownPreviewApp({
     p({ node, className, children, ...props }) {
       const image = standaloneImageFromParagraphNode(node)
       if (image) {
-        return <MarkdownImageBlock {...props} className={className} src={markdownResourceSrc(image.src) ?? image.src} alt={image.alt} title={image.title} />
+        const imageSrc = markdownResourceSrc(image.src) ?? image.src
+        return (
+          <Suspense fallback={<p {...props} className={className}><img src={imageSrc} alt={image.alt ?? ""} title={image.title} /></p>}>
+            <LazyMarkdownImageBlock {...props} className={className} src={imageSrc} alt={image.alt} title={image.title} />
+          </Suspense>
+        )
       }
       return <p {...props} className={className}>{children}</p>
     },
@@ -195,7 +214,11 @@ export function MarkdownPreviewApp({
     code({ node, className, children, ...props }) {
       const code = codeToString(children).replace(/\n$/, "")
       if (className?.split(/\s+/).includes("language-mermaid")) {
-        return <MermaidBlock chart={code} theme={theme} />
+        return (
+          <Suspense fallback={<div className="mermaidBlock isRendering">Rendering diagram...</div>}>
+            <LazyMermaidBlock chart={code} theme={theme} />
+          </Suspense>
+        )
       }
       const sourcePosition = sourcePositionFromHastNode(node)
       if (sourcePosition && !hasLanguageClass(className)) {
@@ -223,9 +246,15 @@ export function MarkdownPreviewApp({
 
     let cancelled = false
     setResolvedPathLinks({ contentVersion: -1, rawPaths: emptyPathSet })
+    const startedAtMs = performance.now()
     void onResolvePathLinks({ contentVersion, candidates: pathLinkCandidates }).then(response => {
       if (cancelled) return
       const resolvedIds = new Set(response.resolvedIds)
+      markdownLogger.perfSince(
+        "pathLinks.resolve",
+        startedAtMs,
+        markdownDiagnosticDetails(markdown, contentVersion, `candidates=${pathLinkCandidates.length}, resolved=${resolvedIds.size}`),
+      )
       setResolvedPathLinks({
         contentVersion,
         rawPaths: new Set(pathLinkCandidates.filter(candidate => resolvedIds.has(candidate.id)).map(candidate => candidate.rawPath)),
@@ -240,8 +269,16 @@ export function MarkdownPreviewApp({
 
   useEffect(() => {
     let cancelled = false
-    void onResolveRunCommands({ contentVersion, candidates: uniqueCommandCandidates(commandCandidates) }).then(response => {
-      if (!cancelled) setResolvedCommands({ contentVersion, commands: response.commands })
+    const startedAtMs = performance.now()
+    const candidates = uniqueCommandCandidates(commandCandidates)
+    void onResolveRunCommands({ contentVersion, candidates }).then(response => {
+      if (cancelled) return
+      setResolvedCommands({ contentVersion, commands: response.commands })
+      markdownLogger.perfSince(
+        "runCommands.resolve",
+        startedAtMs,
+        markdownDiagnosticDetails(markdown, contentVersion, `candidates=${candidates.length}, resolved=${response.commands.length}`),
+      )
     })
     return () => {
       cancelled = true
@@ -249,10 +286,33 @@ export function MarkdownPreviewApp({
   }, [contentVersion, onResolveRunCommands])
 
   useEffect(() => {
-    if (commandsReady && pathLinksReady) {
-      renderMarkdownLatex()
+    if (!markdownMayNeedSyntaxHighlighting(markdown) || rehypeHighlightPlugin) return
+
+    let cancelled = false
+    void import("rehype-highlight").then(module => {
+      if (!cancelled) {
+        setRehypeHighlightPlugin(() => module.default as RehypePlugin)
+      }
+    })
+    return () => {
+      cancelled = true
     }
-  }, [commandsReady, markdown, pathLinksReady, theme])
+  }, [markdown, rehypeHighlightPlugin])
+
+  useEffect(() => {
+    if (!commandsReady || !pathLinksReady || !markdownMayContainLatex(markdown)) return
+
+    let cancelled = false
+    const startedAtMs = performance.now()
+    void import("./markdownLatex").then(({ renderMarkdownLatex }) => {
+      if (cancelled) return
+      renderMarkdownLatex()
+      markdownLogger.perfSince("latex.render", startedAtMs, markdownDiagnosticDetails(markdown, contentVersion))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [commandsReady, contentVersion, markdown, pathLinksReady, theme])
 
   useEffect(() => {
     scrollMarkdownPreviewToLine(scrollLine)
@@ -363,4 +423,12 @@ function isWhitespaceTextNode(node: HastNode): boolean {
 
 function stringProperty(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined
+}
+
+function markdownMayNeedSyntaxHighlighting(markdown: string): boolean {
+  return /(^|\n)(```|~~~| {4}|\t|<pre\b|<code\b)/.test(markdown)
+}
+
+function markdownMayContainLatex(markdown: string): boolean {
+  return markdown.includes("$") || markdown.includes("\\(") || markdown.includes("\\[") || markdown.includes("\\begin{")
 }

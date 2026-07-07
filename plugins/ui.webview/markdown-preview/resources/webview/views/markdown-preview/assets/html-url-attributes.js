@@ -1,4 +1,4 @@
-//#region node_modules/html-url-attributes/lib/index.js
+//#region node_modules/.bun/html-url-attributes@3.0.1/node_modules/html-url-attributes/lib/index.js
 /**
 * HTML URL properties.
 *

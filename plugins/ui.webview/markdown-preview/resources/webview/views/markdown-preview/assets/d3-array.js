@@ -1,14 +1,14 @@
-//#region node_modules/d3-array/src/ascending.js
+//#region node_modules/.bun/d3-array@3.2.4/node_modules/d3-array/src/ascending.js
 function ascending(a, b) {
 	return a == null || b == null ? NaN : a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
 }
 //#endregion
-//#region node_modules/d3-array/src/descending.js
+//#region node_modules/.bun/d3-array@3.2.4/node_modules/d3-array/src/descending.js
 function descending(a, b) {
 	return a == null || b == null ? NaN : b < a ? -1 : b > a ? 1 : b >= a ? 0 : NaN;
 }
 //#endregion
-//#region node_modules/d3-array/src/bisector.js
+//#region node_modules/.bun/d3-array@3.2.4/node_modules/d3-array/src/bisector.js
 function bisector(f) {
 	let compare1, compare2, delta;
 	if (f.length !== 2) {
@@ -56,18 +56,18 @@ function zero() {
 	return 0;
 }
 //#endregion
-//#region node_modules/d3-array/src/number.js
+//#region node_modules/.bun/d3-array@3.2.4/node_modules/d3-array/src/number.js
 function number(x) {
 	return x === null ? NaN : +x;
 }
 //#endregion
-//#region node_modules/d3-array/src/bisect.js
+//#region node_modules/.bun/d3-array@3.2.4/node_modules/d3-array/src/bisect.js
 var ascendingBisect = bisector(ascending);
 var bisectRight = ascendingBisect.right;
 ascendingBisect.left;
 bisector(number).center;
 //#endregion
-//#region node_modules/d3-array/src/ticks.js
+//#region node_modules/.bun/d3-array@3.2.4/node_modules/d3-array/src/ticks.js
 var e10 = Math.sqrt(50), e5 = Math.sqrt(10), e2 = Math.sqrt(2);
 function tickSpec(start, stop, count) {
 	const step = (stop - start) / Math.max(0, count), power = Math.floor(Math.log10(step)), error = step / Math.pow(10, power), factor = error >= e10 ? 10 : error >= e5 ? 5 : error >= e2 ? 2 : 1;
@@ -116,7 +116,7 @@ function tickStep(start, stop, count) {
 	return (reverse ? -1 : 1) * (inc < 0 ? 1 / -inc : inc);
 }
 //#endregion
-//#region node_modules/d3-array/src/max.js
+//#region node_modules/.bun/d3-array@3.2.4/node_modules/d3-array/src/max.js
 function max$1(values, valueof) {
 	let max;
 	if (valueof === void 0) {
@@ -128,7 +128,7 @@ function max$1(values, valueof) {
 	return max;
 }
 //#endregion
-//#region node_modules/d3-array/src/min.js
+//#region node_modules/.bun/d3-array@3.2.4/node_modules/d3-array/src/min.js
 function min$1(values, valueof) {
 	let min;
 	if (valueof === void 0) {
@@ -140,7 +140,7 @@ function min$1(values, valueof) {
 	return min;
 }
 //#endregion
-//#region node_modules/d3-array/src/range.js
+//#region node_modules/.bun/d3-array@3.2.4/node_modules/d3-array/src/range.js
 function range(start, stop, step) {
 	start = +start, stop = +stop, step = (n = arguments.length) < 2 ? (stop = start, start = 0, 1) : n < 3 ? 1 : +step;
 	var i = -1, n = Math.max(0, Math.ceil((stop - start) / step)) | 0, range = new Array(n);
@@ -148,7 +148,7 @@ function range(start, stop, step) {
 	return range;
 }
 //#endregion
-//#region node_modules/d3-sankey/node_modules/d3-array/src/max.js
+//#region node_modules/.bun/d3-array@2.12.1/node_modules/d3-array/src/max.js
 function max(values, valueof) {
 	let max;
 	if (valueof === void 0) {
@@ -160,7 +160,7 @@ function max(values, valueof) {
 	return max;
 }
 //#endregion
-//#region node_modules/d3-sankey/node_modules/d3-array/src/min.js
+//#region node_modules/.bun/d3-array@2.12.1/node_modules/d3-array/src/min.js
 function min(values, valueof) {
 	let min;
 	if (valueof === void 0) {
@@ -172,7 +172,7 @@ function min(values, valueof) {
 	return min;
 }
 //#endregion
-//#region node_modules/d3-sankey/node_modules/d3-array/src/sum.js
+//#region node_modules/.bun/d3-array@2.12.1/node_modules/d3-array/src/sum.js
 function sum(values, valueof) {
 	let sum = 0;
 	if (valueof === void 0) {

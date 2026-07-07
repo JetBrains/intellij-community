@@ -1,13 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.webview.impl
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.webview.api.WebViewAssetPath
 import com.intellij.ui.webview.api.WebViewAssetProviderResult
 import com.intellij.ui.webview.api.WebViewAssetRoot
 import com.intellij.ui.webview.api.WebViewAssetSource
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
-import org.jetbrains.annotations.ApiStatus
+
+private val LOG = logger<WebViewAssetResolver>()
 
 @ApiStatus.Internal
 class WebViewAssetResolver(
@@ -18,7 +21,7 @@ class WebViewAssetResolver(
   private val iconSetAssetProvider = WebViewIconSetAssetProvider(root.iconSets)
 
   internal fun resolve(requestPath: WebViewAssetRequestPath): WebViewAssetResponse {
-    iconSetAssetProvider.resolve(requestPath.path)?.let { return it.toResponse() }
+    iconSetAssetProvider.resolve(requestPath.path)?.let { return it.toResponse("icon-set") }
 
     val path = try {
       requestPath.toAssetPath()
@@ -29,19 +32,19 @@ class WebViewAssetResolver(
 
     return try {
       resolveCommonFontAsset(path) ?: resolveCommonRuntimeAsset(path) ?: resolveScopedAsset(path) ?: when (val source = root.source) {
-        is WebViewAssetSource.Directory -> resolveFromDirectory(source.root, path, noCache = true)
+        is WebViewAssetSource.Directory -> resolveFromDirectory(source.root, path, noCache = true, diagnosticSource = "directory")
         is WebViewAssetSource.Classpath -> resolveFromClasspath(source, path)
       }
     }
     catch (t: Throwable) {
-      WebViewLogger.LOG.warn("Failed to resolve WebView asset: $path", t)
+      LOG.warn("Failed to resolve WebView asset: $path", t)
       WebViewAssetResponse.internalError("Failed to resolve WebView asset: $path")
     }
   }
 
   private fun resolveFromClasspath(source: WebViewAssetSource.Classpath, path: WebViewAssetPath): WebViewAssetResponse {
     devSourceRoots.find(source, path)?.let { devRoot ->
-      val response = resolveFromDirectory(devRoot, path, noCache = true)
+      val response = resolveFromDirectory(devRoot, path, noCache = true, diagnosticSource = "dev-source")
       if (response.statusCode != 404) return response
     }
 
@@ -55,10 +58,11 @@ class WebViewAssetResolver(
       contentType = webViewAssetContentType(path.path),
       bytes = bytes,
       headers = mapOf("Cache-Control" to "no-cache"),
+      diagnosticSource = "classpath",
     )
   }
 
-  private fun resolveFromDirectory(root: Path, path: WebViewAssetPath, noCache: Boolean): WebViewAssetResponse {
+  private fun resolveFromDirectory(root: Path, path: WebViewAssetPath, noCache: Boolean, diagnosticSource: String): WebViewAssetResponse {
     val base = root.toAbsolutePath().normalize()
     val file = base.resolve(path.path).normalize()
     if (!file.startsWith(base)) {
@@ -73,6 +77,7 @@ class WebViewAssetResolver(
       contentType = webViewAssetContentType(path.path, file),
       bytes = Files.newInputStream(file).use { it.readBytes() },
       headers = if (noCache) mapOf("Cache-Control" to "no-cache") else emptyMap(),
+      diagnosticSource = diagnosticSource,
     )
   }
 
@@ -90,6 +95,7 @@ class WebViewAssetResolver(
       contentType = webViewAssetContentType(path.path),
       bytes = bytes,
       headers = mapOf("Cache-Control" to "no-cache"),
+      diagnosticSource = "common-runtime",
     )
   }
 
@@ -109,6 +115,7 @@ class WebViewAssetResolver(
       contentType = webViewAssetContentType(fontPath),
       bytes = Files.newInputStream(file).use { it.readBytes() },
       headers = mapOf("Cache-Control" to "no-cache"),
+      diagnosticSource = "common-font",
     )
   }
 
@@ -117,8 +124,8 @@ class WebViewAssetResolver(
     val scopedPath = path.relativeTo(scopedProvider.prefix)
                        ?: return WebViewAssetResponse.notFound("Scoped WebView asset path is empty: $path")
     val result = scopedProvider.provider.resolve(scopedPath)
-                 ?: return WebViewAssetResponse.notFound("Scoped WebView asset not found: $path")
-    return result.toResponse()
+                  ?: return WebViewAssetResponse.notFound("Scoped WebView asset not found: $path")
+    return result.toResponse("scoped")
   }
 
   private fun WebViewAssetPath.matchesPrefix(prefix: WebViewAssetPath): Boolean {
@@ -130,7 +137,7 @@ class WebViewAssetResolver(
     return if (relative.isEmpty()) null else WebViewAssetPath.of(relative)
   }
 
-  private fun WebViewAssetProviderResult.toResponse(): WebViewAssetResponse {
+  private fun WebViewAssetProviderResult.toResponse(diagnosticSource: String): WebViewAssetResponse {
     return when (this) {
       is WebViewAssetProviderResult.Content -> WebViewAssetResponse(
         statusCode = 200,
@@ -138,6 +145,7 @@ class WebViewAssetResolver(
         contentType = contentType,
         bytes = readBytes(),
         headers = headers,
+        diagnosticSource = diagnosticSource,
       )
       is WebViewAssetProviderResult.Forbidden -> WebViewAssetResponse.forbidden(message)
       is WebViewAssetProviderResult.NotFound -> WebViewAssetResponse.notFound(message)

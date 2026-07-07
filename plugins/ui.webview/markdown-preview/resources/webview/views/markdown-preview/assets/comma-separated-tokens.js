@@ -1,4 +1,4 @@
-//#region node_modules/comma-separated-tokens/index.js
+//#region node_modules/.bun/comma-separated-tokens@2.0.3/node_modules/comma-separated-tokens/index.js
 /**
 * @typedef Options
 *   Configuration for `stringify`.
