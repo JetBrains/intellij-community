@@ -143,6 +143,11 @@ internal class LspHighlightingApplier(private val project: Project) {
 
     for (item in diagnosticsAndQuickFixes) {
       val textRange = getRangeInDocument(document, item.diagnostic.range) ?: continue
+      // The document can be ahead of the PSI: a publishDiagnostics notification may arrive after the user typed
+      // but before the daemon reparses (commits) the file. AnnotationBuilder.range validates against the committed
+      // PsiFile, so a range in the not-yet-reparsed tail would throw (IJPL-236846). Skip it this run; the reparse
+      // triggers LspHighlightingPass, which re-runs this with the committed PSI and applies it properly.
+      if (!psiFile.textRange.contains(textRange)) continue
       holder.clear()
       diagnosticsSupport.createAnnotation(holder, item.diagnostic, textRange, item.quickFixes)
       for (annotation in holder) {
