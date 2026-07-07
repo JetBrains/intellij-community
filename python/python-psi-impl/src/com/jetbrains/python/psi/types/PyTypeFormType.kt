@@ -70,12 +70,15 @@ class PyTypeFormType private constructor(
     @JvmStatic
     fun representedTypeOf(type: PyType?): PyType? {
       if (type is PyTypeFormType) return type.representedType
+      // `None` is both a value and a type expression denoting `NoneType`.
+      if (type.isNoneType) return type
       if (type is PyInstantiableType<*> && type.isDefinition) return type.toInstance()
       if (type is PyUnionType) {
         val represented = mutableListOf<PyType?>()
         for (member in type.members) {
           when {
             member is PyInstantiableType<*> && member.isDefinition -> represented.add(member.toInstance())
+            member.isNoneType -> represented.add(member)
             member is PyClassType && member.classQName in RUNTIME_TYPE_FORM_CONTAINERS -> {} // erased container, ignore
             else -> return null
           }

@@ -130,6 +130,27 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
 
       x: TypeForm[int] = f"int" # ISSUES *
       """)
+
+    @Test
+    fun `None is assignable to a TypeForm containing None`() = test("""
+      from typing_extensions import TypeForm
+
+      x: TypeForm[str | None] = None
+      """)
+
+    @Test
+    fun `None is assignable to TypeForm of None`() = test("""
+      from typing_extensions import TypeForm
+
+      x: TypeForm[None] = None
+      """)
+
+    @Test
+    fun `None is not assignable to a TypeForm without None`() = test("""
+      from typing_extensions import TypeForm
+
+      x: TypeForm[int] = None # ISSUES *
+      """)
   }
 
   @Nested
@@ -231,6 +252,17 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       def use():
           r = f(form="int")
       #   └ TYPE int
+      """)
+
+    @Test
+    fun `infers represented type from None`() = test("""
+      from typing_extensions import TypeForm
+
+      def f[T](form: TypeForm[T]) -> T: ...
+
+      def use():
+          r = f(None)
+      #   └ TYPE None
       """)
   }
 
