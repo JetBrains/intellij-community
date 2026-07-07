@@ -6,6 +6,7 @@ package com.intellij.mcpserver.toolsets.general
 
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.diagnostic.isCoroutineDumpEnabled
+import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
@@ -44,6 +45,10 @@ private const val THREAD_STATE_DESCRIPTION =
 
 class DiagnosticsToolset : McpToolset {
   override fun isEnabled(): Boolean = System.getProperty(DIAGNOSTICS_ENABLED_PROPERTY).toBoolean()
+
+  override fun displayName(): String = McpServerBundle.message("toolset.display.name.diagnostics")
+
+  override fun displayDescription(toolName: String): String? = McpServerBundle.message("tool.description.$toolName")
 
   @McpToolHints(readOnlyHint = TRUE, openWorldHint = FALSE)
   @McpTool
