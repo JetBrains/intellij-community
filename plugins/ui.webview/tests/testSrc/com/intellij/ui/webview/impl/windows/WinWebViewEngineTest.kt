@@ -6,17 +6,31 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.ui.webview.api.WebViewAssetPath
+import com.intellij.ui.webview.api.WebViewAssetRoot
+import com.intellij.ui.webview.impl.WEBVIEW_ASSET_CUSTOM_SCHEME
+import com.intellij.ui.webview.impl.WEBVIEW_ASSET_CUSTOM_SCHEME_HOST
+import com.intellij.ui.webview.impl.WEBVIEW_ASSET_HTTPS_HOST
 import com.intellij.ui.webview.impl.engine.WebViewScript
+import com.intellij.ui.webview.impl.webViewAssetCustomSchemeUrl
+import com.intellij.ui.webview.impl.webViewAssetHttpsUrl
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.EnumSet
 import kotlin.coroutines.CoroutineContext
 
@@ -95,7 +109,7 @@ internal class WinWebViewEngineTest {
   fun createPassesDocumentStartScriptToNativeBridge() {
     val bridge = FakeWinWebView2Bridge()
     val scope = testScope()
-    val engine = WinWebViewEngine(
+    val engine = createTestEngine(
       scope,
       bridge,
       debugName = "test",
@@ -174,7 +188,7 @@ internal class WinWebViewEngineTest {
     val bridge = FakeWinWebView2Bridge()
     val scope = testScope()
     val dispatcher = QueuingDispatcher()
-    val engine = WinWebViewEngine(scope, bridge, debugName = "test", webViewDispatcher = dispatcher)
+    val engine = createTestEngine(scope, bridge, debugName = "test", webViewDispatcher = dispatcher)
     runInEdtAndWait {
       engine.attachToParent(100L, 10, 20, 300, 200, 1.5)
     }
@@ -193,7 +207,7 @@ internal class WinWebViewEngineTest {
     val bridge = FakeWinWebView2Bridge()
     val scope = testScope()
     val dispatcher = QueuingDispatcher()
-    val engine = WinWebViewEngine(scope, bridge, debugName = "test", webViewDispatcher = dispatcher)
+    val engine = createTestEngine(scope, bridge, debugName = "test", webViewDispatcher = dispatcher)
     try {
       runInEdtAndWait { engine.attachToParent(100L, 10, 20, 300, 200, 1.5) }
       dispatcher.drain()
@@ -222,7 +236,7 @@ internal class WinWebViewEngineTest {
     val bridge = FakeWinWebView2Bridge()
     val scope = testScope()
     val dispatcher = QueuingDispatcher()
-    val engine = WinWebViewEngine(scope, bridge, debugName = "test", webViewDispatcher = dispatcher)
+    val engine = createTestEngine(scope, bridge, debugName = "test", webViewDispatcher = dispatcher)
     try {
       runInEdtAndWait {
         engine.attachToParent(100L, 10, 20, 300, 200, 1.5)
@@ -245,10 +259,40 @@ internal class WinWebViewEngineTest {
   }
 
   @Test
+  fun closeWaitsForDevToolsCpuProfileStopBeforeDestroy() = runBlocking {
+    val bridge = FakeWinWebView2Bridge()
+    bridge.deferProfilerStop = true
+    val scope = testScope()
+    val engine = createActiveEngine(scope, bridge, devToolsCpuProfilingEnabled = true)
+    var closeJob: Job? = null
+    try {
+      assertTrue(bridge.devToolsCalls.any { it.methodName == "Profiler.start" }, bridge.devToolsCalls.toString())
+
+      closeJob = launch(start = CoroutineStart.UNDISPATCHED) {
+        engine.close()
+      }
+      assertNotNull(bridge.pendingProfilerStopCallId)
+      assertTrue(bridge.destroyedHandles.isEmpty(), bridge.destroyedHandles.toString())
+    }
+    finally {
+      bridge.pendingProfilerStopCallId?.let { callId ->
+        bridge.completeDevToolsCall(callId, """{"profile":{"nodes":[],"samples":[],"timeDeltas":[]}}""", null)
+      }
+      closeJob?.join()
+      scope.cancel()
+    }
+
+    val stopIndex = bridge.callOrder.indexOf("devtools:Profiler.stop")
+    val destroyIndex = bridge.callOrder.indexOf("destroy:1")
+    assertTrue(stopIndex >= 0, bridge.callOrder.toString())
+    assertTrue(destroyIndex > stopIndex, bridge.callOrder.toString())
+  }
+
+  @Test
   fun createAppliesInitialBoundsBeforeFirstVisibilityAndKeepsHiddenUntilCreated() {
     val bridge = FakeWinWebView2Bridge()
     val scope = testScope()
-    val engine = WinWebViewEngine(scope, bridge, debugName = "test", webViewDispatcher = SyncDispatcher)
+    val engine = createTestEngine(scope, bridge, debugName = "test", webViewDispatcher = SyncDispatcher)
     try {
       runInEdtAndWait { engine.attachToParent(100L, 10, 20, 300, 200, 1.5) }
       runInEdtAndWait { bridge.callbacks.onCreated(bridge.createdHandles.single()) }
@@ -261,6 +305,75 @@ internal class WinWebViewEngineTest {
     finally {
       runBlocking { engine.close() }
       scope.cancel()
+    }
+  }
+
+  @Test
+  fun loadAssetUsesCustomSchemeUrlByDefault(@TempDir tempDir: Path) {
+    Files.writeString(tempDir.resolve("index.html"), "custom")
+    val bridge = FakeWinWebView2Bridge()
+    val scope = testScope()
+    val engine = createActiveEngine(scope, bridge)
+    try {
+      runBlocking { engine.loadAsset(WebViewAssetRoot.fromDirectory(tempDir), WebViewAssetPath.indexHtml(), null) }
+
+      assertEquals(
+        listOf(UrlLoad(1L, webViewAssetCustomSchemeUrl(WebViewAssetPath.indexHtml()))),
+        bridge.urlLoads,
+      )
+      assertTrue(bridge.urlLoads.single().url.startsWith("$WEBVIEW_ASSET_CUSTOM_SCHEME://$WEBVIEW_ASSET_CUSTOM_SCHEME_HOST/"))
+    }
+    finally {
+      closeEngine(engine, scope)
+    }
+  }
+
+  @Test
+  fun loadAssetUsesHttpsUrlWhenCustomSchemeIsDisabled(@TempDir tempDir: Path) {
+    Files.writeString(tempDir.resolve("index.html"), "legacy")
+    val bridge = FakeWinWebView2Bridge()
+    val scope = testScope()
+    val engine = createActiveEngine(scope, bridge, customSchemeAssetLoadingEnabled = false)
+    try {
+      runBlocking { engine.loadAsset(WebViewAssetRoot.fromDirectory(tempDir), WebViewAssetPath.indexHtml(), null) }
+
+      assertEquals(
+        listOf(UrlLoad(1L, webViewAssetHttpsUrl(WebViewAssetPath.indexHtml()))),
+        bridge.urlLoads,
+      )
+      assertTrue(bridge.urlLoads.single().url.startsWith("https://$WEBVIEW_ASSET_HTTPS_HOST/"))
+    }
+    finally {
+      closeEngine(engine, scope)
+    }
+  }
+
+  @Test
+  fun sameCustomSchemeUrlResolvesAgainstEachActiveEngineRoot(@TempDir tempDir: Path) {
+    val firstRoot = Files.createDirectory(tempDir.resolve("first"))
+    val secondRoot = Files.createDirectory(tempDir.resolve("second"))
+    Files.writeString(firstRoot.resolve("index.html"), "first")
+    Files.writeString(secondRoot.resolve("index.html"), "second")
+
+    val firstBridge = FakeWinWebView2Bridge()
+    val secondBridge = FakeWinWebView2Bridge()
+    val firstScope = testScope()
+    val secondScope = testScope()
+    val firstEngine = createActiveEngine(firstScope, firstBridge)
+    val secondEngine = createActiveEngine(secondScope, secondBridge)
+    try {
+      runBlocking {
+        firstEngine.loadAsset(WebViewAssetRoot.fromDirectory(firstRoot), WebViewAssetPath.indexHtml(), null)
+        secondEngine.loadAsset(WebViewAssetRoot.fromDirectory(secondRoot), WebViewAssetPath.indexHtml(), null)
+      }
+
+      val url = webViewAssetCustomSchemeUrl(WebViewAssetPath.indexHtml())
+      assertAssetResponse("first", firstBridge.callbacks.resolveAsset(url))
+      assertAssetResponse("second", secondBridge.callbacks.resolveAsset(url))
+    }
+    finally {
+      closeEngine(firstEngine, firstScope)
+      closeEngine(secondEngine, secondScope)
     }
   }
 
@@ -309,12 +422,16 @@ internal class WinWebViewEngineTest {
     scope: CoroutineScope,
     bridge: FakeWinWebView2Bridge,
     parentHwnd: Long = 100L,
+    devToolsCpuProfilingEnabled: Boolean = false,
+    customSchemeAssetLoadingEnabled: Boolean = true,
   ): WinWebViewEngine {
-    val engine = WinWebViewEngine(
+    val engine = createTestEngine(
       scope,
       bridge,
       debugName = "test",
       webViewDispatcher = SyncDispatcher,
+      devToolsCpuProfilingEnabled = { devToolsCpuProfilingEnabled },
+      customSchemeAssetLoadingEnabled = { customSchemeAssetLoadingEnabled },
     )
     runInEdtAndWait {
       engine.attachToParent(parentHwnd, 10, 20, 300, 200, 1.5)
@@ -363,11 +480,42 @@ internal class WinWebViewEngineTest {
     scope.cancel()
   }
 
+  private fun assertAssetResponse(expectedContent: String, response: WinWebView2Bridge.AssetResponse?) {
+    assertNotNull(response)
+    assertEquals(200, response!!.statusCode)
+    assertEquals(expectedContent, response.bytes.toString(StandardCharsets.UTF_8))
+  }
+
+  private fun createTestEngine(
+    scope: CoroutineScope,
+    bridge: FakeWinWebView2Bridge,
+    debugName: String? = "test",
+    documentStartScripts: List<WebViewScript> = emptyList(),
+    webViewDispatcher: CoroutineDispatcher = SyncDispatcher,
+    devToolsCpuProfilingEnabled: () -> Boolean = { false },
+    customSchemeAssetLoadingEnabled: () -> Boolean = { true },
+  ): WinWebViewEngine {
+    return WinWebViewEngine(
+      scope,
+      bridge,
+      debugName = debugName,
+      documentStartScripts = documentStartScripts,
+      webViewDispatcher = webViewDispatcher,
+      devToolsCpuProfilingEnabled = devToolsCpuProfilingEnabled,
+      customSchemeAssetLoadingEnabled = customSchemeAssetLoadingEnabled,
+    )
+  }
+
   private fun collectWarningsAndErrors(action: () -> Unit): LoggedMessages {
     val errors = mutableListOf<String>()
     val warnings = mutableListOf<String>()
     val token = LoggedErrorProcessor.executeWith(object : LoggedErrorProcessor() {
-      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<LoggedErrorProcessor.Action> {
+      override fun processError(
+        category: String,
+        message: String,
+        details: Array<out String>,
+        t: Throwable?,
+      ): Set<LoggedErrorProcessor.Action> {
         errors.add(message)
         return EnumSet.noneOf(LoggedErrorProcessor.Action::class.java)
       }
@@ -405,6 +553,11 @@ internal class WinWebViewEngineTest {
     val baseUrl: String?,
   )
 
+  private data class UrlLoad(
+    val handle: Long,
+    val url: String,
+  )
+
   private data class Visibility(
     val handle: Long,
     val visible: Boolean,
@@ -413,6 +566,13 @@ internal class WinWebViewEngineTest {
   private data class JsTransfer(
     val handle: Long,
     val rawJson: String,
+  )
+
+  private data class DevToolsCall(
+    val handle: Long,
+    val callId: Long,
+    val methodName: String,
+    val paramsJson: String,
   )
 
   private class FakeWinWebView2Bridge : WinWebView2BridgeApi {
@@ -426,13 +586,17 @@ internal class WinWebViewEngineTest {
     val bounds = mutableListOf<BoundsRecord>()
     val visibility = mutableListOf<Visibility>()
     val htmlLoads = mutableListOf<HtmlLoad>()
+    val urlLoads = mutableListOf<UrlLoad>()
     val jsTransfers = mutableListOf<JsTransfer>()
+    val devToolsCalls = mutableListOf<DevToolsCall>()
     val documentStartScripts = mutableListOf<String>()
     val focusedHandles = mutableListOf<Long>()
     val clearFocusedHandles = mutableListOf<Long>()
     val callOrder = mutableListOf<String>()
     var focusFailure: IllegalStateException? = null
     var clearFocusFailure: IllegalStateException? = null
+    var deferProfilerStop: Boolean = false
+    var pendingProfilerStopCallId: Long? = null
     private var nextHandle = 1L
 
     override fun create(parentHwnd: Long, userDataDir: String, documentStartScript: String, callbacks: WinWebView2Bridge.Callbacks): Long {
@@ -445,6 +609,7 @@ internal class WinWebViewEngineTest {
 
     override fun destroy(handle: Long) {
       destroyedHandles.add(handle)
+      callOrder.add("destroy:$handle")
     }
 
     override fun attachToParent(handle: Long, parentHwnd: Long) {
@@ -475,6 +640,7 @@ internal class WinWebViewEngineTest {
     }
 
     override fun loadUrl(handle: Long, url: String) {
+      urlLoads.add(UrlLoad(handle, url))
     }
 
     override fun setVirtualHostNameToFolderMapping(handle: Long, hostName: String, folderPath: String) {
@@ -488,10 +654,22 @@ internal class WinWebViewEngineTest {
     }
 
     override fun callDevToolsProtocolMethod(handle: Long, callId: Long, methodName: String, paramsJson: String) {
+      devToolsCalls.add(DevToolsCall(handle, callId, methodName, paramsJson))
+      callOrder.add("devtools:$methodName")
+      if (methodName == "Profiler.stop" && deferProfilerStop) {
+        pendingProfilerStopCallId = callId
+      }
+      else {
+        callbacks.onDevToolsProtocolMethodResult(callId, "{}", null)
+      }
     }
 
     override fun transferToJs(handle: Long, rawJson: String) {
       jsTransfers.add(JsTransfer(handle, rawJson))
+    }
+
+    fun completeDevToolsCall(callId: Long, result: String?, error: String?) {
+      callbacks.onDevToolsProtocolMethodResult(callId, result, error)
     }
   }
 

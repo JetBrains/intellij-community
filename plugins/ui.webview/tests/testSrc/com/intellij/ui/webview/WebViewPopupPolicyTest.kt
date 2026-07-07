@@ -29,6 +29,7 @@ internal class WebViewPopupPolicyTest {
       "file:///tmp/index.html",
       "https://ij-webview-assets.local/index.html",
       "ij-webview-asset:/index.html",
+      "ij-webview-asset://assets/index.html",
       "https:relative",
       "not a url",
     )

@@ -4,9 +4,12 @@ package com.intellij.ui.webview
 import com.intellij.ui.webview.api.WebViewAssetPath
 import com.intellij.ui.webview.api.WebViewAssetProviderResult
 import com.intellij.ui.webview.api.WebViewAssetRoot
+import com.intellij.ui.webview.impl.WEBVIEW_ASSET_CUSTOM_SCHEME
+import com.intellij.ui.webview.impl.WEBVIEW_ASSET_CUSTOM_SCHEME_HOST
 import com.intellij.ui.webview.impl.WEBVIEW_ASSET_HTTPS_HOST
 import com.intellij.ui.webview.impl.WebViewAssetResolver
 import com.intellij.ui.webview.impl.resolveWebViewAssetUrl
+import com.intellij.ui.webview.impl.webViewAssetCustomSchemeUrl
 import com.intellij.ui.webview.impl.webViewAssetHttpsUrl
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -42,10 +45,55 @@ internal class WebViewAssetResolverTest {
   }
 
   @Test
+  fun resolvesDirectoryRootThroughCustomSchemeUrl(@TempDir tempDir: Path) {
+    Files.writeString(tempDir.resolve("index.html"), /*language=HTML*/ "<html><body>custom-scheme</body></html>")
+
+    val resolver = WebViewAssetResolver(WebViewAssetRoot.fromDirectory(tempDir))
+    val url = webViewAssetCustomSchemeUrl(WebViewAssetPath.indexHtml())
+    assertTrue(url.startsWith("$WEBVIEW_ASSET_CUSTOM_SCHEME://$WEBVIEW_ASSET_CUSTOM_SCHEME_HOST/"))
+    val response = resolveWebViewAssetUrl(url, resolver)
+    assertNotNull(response)
+
+    assertEquals(200, response!!.statusCode)
+    assertEquals("text/html; charset=utf-8", response.contentType)
+    assertEquals(/*language=HTML*/ "<html><body>custom-scheme</body></html>", response.bytes.toString(StandardCharsets.UTF_8))
+  }
+
+  @Test
   fun rejectsEncodedTraversalThroughVirtualUrl(@TempDir tempDir: Path) {
     Files.writeString(tempDir.resolve("index.html"), "ok")
     val resolver = WebViewAssetResolver(WebViewAssetRoot.fromDirectory(tempDir))
     val response = resolveWebViewAssetUrl("https://$WEBVIEW_ASSET_HTTPS_HOST/%2e%2e/secret.txt", resolver)
+    assertNotNull(response)
+
+    assertEquals(403, response!!.statusCode)
+  }
+
+  @Test
+  fun rejectsEncodedTraversalThroughCustomSchemeUrl(@TempDir tempDir: Path) {
+    Files.writeString(tempDir.resolve("index.html"), "ok")
+    val resolver = WebViewAssetResolver(WebViewAssetRoot.fromDirectory(tempDir))
+    val response = resolveWebViewAssetUrl("$WEBVIEW_ASSET_CUSTOM_SCHEME://$WEBVIEW_ASSET_CUSTOM_SCHEME_HOST/%2e%2e/secret.txt", resolver)
+    assertNotNull(response)
+
+    assertEquals(403, response!!.statusCode)
+  }
+
+  @Test
+  fun rejectsUnexpectedAuthorityInCustomSchemeUrl(@TempDir tempDir: Path) {
+    Files.writeString(tempDir.resolve("index.html"), "ok")
+    val resolver = WebViewAssetResolver(WebViewAssetRoot.fromDirectory(tempDir))
+    val response = resolveWebViewAssetUrl("$WEBVIEW_ASSET_CUSTOM_SCHEME://host/index.html", resolver)
+    assertNotNull(response)
+
+    assertEquals(403, response!!.statusCode)
+  }
+
+  @Test
+  fun rejectsNoAuthorityCustomSchemeUrl(@TempDir tempDir: Path) {
+    Files.writeString(tempDir.resolve("index.html"), "ok")
+    val resolver = WebViewAssetResolver(WebViewAssetRoot.fromDirectory(tempDir))
+    val response = resolveWebViewAssetUrl("$WEBVIEW_ASSET_CUSTOM_SCHEME:/index.html", resolver)
     assertNotNull(response)
 
     assertEquals(403, response!!.statusCode)
@@ -233,7 +281,9 @@ internal class WebViewAssetResolverTest {
     Files.writeString(tempDir.resolve("bridge.js"), /*language=JavaScript*/ "window.devRoot = true")
 
     val resolver = WebViewAssetResolver(
-      WebViewAssetRoot.fromClasspath(WebViewAssetResolverTest::class.java, WebViewAssetPath.of("webview/views/sample-panel"), devSourceRoot = tempDir),
+      WebViewAssetRoot.fromClasspath(WebViewAssetResolverTest::class.java,
+                                     WebViewAssetPath.of("webview/views/sample-panel"),
+                                     devSourceRoot = tempDir),
     )
     val response = resolveWebViewAssetUrl(webViewAssetHttpsUrl(WebViewAssetPath.of("bridge.js")), resolver)
     assertNotNull(response)
@@ -245,7 +295,9 @@ internal class WebViewAssetResolverTest {
   @Test
   fun fallsBackToClasspathWhenDevSourceEntryIsMissing(@TempDir tempDir: Path) = withDevSourceFallbackEnabled {
     val resolver = WebViewAssetResolver(
-      WebViewAssetRoot.fromClasspath(WebViewAssetResolverTest::class.java, WebViewAssetPath.of("webview/views/sample-panel"), devSourceRoot = tempDir),
+      WebViewAssetRoot.fromClasspath(WebViewAssetResolverTest::class.java,
+                                     WebViewAssetPath.of("webview/views/sample-panel"),
+                                     devSourceRoot = tempDir),
     )
     val response = resolveWebViewAssetUrl(webViewAssetHttpsUrl(WebViewAssetPath.of("view.js")), resolver)
     assertNotNull(response)

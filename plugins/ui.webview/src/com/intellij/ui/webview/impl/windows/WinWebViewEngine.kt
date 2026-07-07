@@ -12,6 +12,7 @@ import com.intellij.ui.webview.impl.WebViewAssetResolver
 import com.intellij.ui.webview.impl.WebViewAssetResponse
 import com.intellij.ui.webview.impl.WEBVIEW_CONSOLE_NOTIFICATION_METHOD
 import com.intellij.ui.webview.impl.resolveWebViewAssetUrl
+import com.intellij.ui.webview.impl.webViewAssetCustomSchemeUrl
 import com.intellij.ui.webview.impl.webViewAssetHttpsUrl
 import com.intellij.ui.webview.impl.WebViewJsMessageReceiver
 import com.intellij.ui.webview.impl.engine.WebViewScript
@@ -22,10 +23,15 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.nio.file.Files
@@ -50,6 +56,8 @@ internal class WinWebViewEngine(
   private val debugName: String? = null,
   documentStartScripts: List<WebViewScript> = emptyList(),
   private val webViewDispatcher: CoroutineDispatcher = WebView2Dispatcher.coroutineDispatcher,
+  private val devToolsCpuProfilingEnabled: () -> Boolean = { Registry.get(DEVTOOLS_CPU_PROFILING_REGISTRY_KEY).asBoolean() },
+  private val customSchemeAssetLoadingEnabled: () -> Boolean = { Registry.get(WINDOWS_ASSET_CUSTOM_SCHEME_REGISTRY_KEY).asBoolean() },
 ) : WebViewEngineBridge {
   override val isHeavyweight: Boolean = true
 
@@ -61,6 +69,11 @@ internal class WinWebViewEngine(
     data class Url(val url: String) : PendingLoad
     data class Html(val html: String, val baseUrl: String?) : PendingLoad
   }
+
+  private data class DevToolsCallResult(
+    val result: String?,
+    val error: String?,
+  )
 
   private data class PendingBounds(
     val x: Int,
@@ -202,6 +215,7 @@ internal class WinWebViewEngine(
     override fun onNativeDiagnostic(level: Int, event: String, message: String, data: String) {
       if (event == NATIVE_EVENT_NAVIGATION_COMPLETED && firstNavigationCompleted.compareAndSet(false, true)) {
         logConsoleStartupSummary(event, force = true)
+        scheduleDevToolsCpuProfileStopAfterFirstNavigation()
       }
       logNativeDiagnostic(level, event, message, data)
       when (event) {
@@ -291,7 +305,13 @@ internal class WinWebViewEngine(
 
   override suspend fun loadAsset(root: WebViewAssetRoot, entry: WebViewAssetPath, query: String?) {
     activeAssetResolver.set(WebViewAssetResolver(root))
-    loadUrlInternal(webViewAssetHttpsUrl(entry, query))
+    val url = if (isCustomSchemeAssetLoadingEnabled()) {
+      webViewAssetCustomSchemeUrl(entry, query)
+    }
+    else {
+      webViewAssetHttpsUrl(entry, query)
+    }
+    loadUrlInternal(url)
   }
 
   override suspend fun loadHtml(html: String, baseFile: Path?) {
@@ -714,41 +734,63 @@ internal class WinWebViewEngine(
     }
   }
 
-  private fun stopDevToolsCpuProfile(reason: String) {
+  private suspend fun stopDevToolsCpuProfile(reason: String) {
     if (!devToolsCpuProfileStarted.get()) return
     if (!devToolsCpuProfileStopRequested.compareAndSet(false, true)) return
     val handle = nativeHandle
     if (handle == 0L) return
-    callDevToolsProtocolMethod(handle, "Profiler.stop", "{}") { result, error ->
-      if (error != null) {
-        LOG.warn("Failed to stop WebView2 DevTools CPU profiler${diagnosticContext()}: $error")
-        return@callDevToolsProtocolMethod
+
+    val stopResult = withTimeoutOrNull(DEVTOOLS_CPU_PROFILE_STOP_TIMEOUT_MILLIS) {
+      callDevToolsProtocolMethodAwait(handle, "Profiler.stop", "{}")
+    }
+    when {
+      stopResult == null -> {
+        LOG.warn("Timed out waiting for WebView2 DevTools CPU profiler to stop${diagnosticContext()}")
       }
-      if (result.isNullOrBlank()) {
+      stopResult.error != null -> {
+        LOG.warn("Failed to stop WebView2 DevTools CPU profiler${diagnosticContext()}: ${stopResult.error}")
+      }
+      stopResult.result.isNullOrBlank() -> {
         LOG.warn("WebView2 DevTools CPU profiler returned empty result${diagnosticContext()}")
-        return@callDevToolsProtocolMethod
       }
-      writeDevToolsCpuProfile(result, reason)
+      else -> writeDevToolsCpuProfile(stopResult.result, reason)
     }
   }
 
-  private fun isDevToolsCpuProfilingEnabled(): Boolean {
-    return Registry.`is`(DEVTOOLS_CPU_PROFILING_REGISTRY_KEY, false)
-  }
-
-  private fun callDevToolsProtocolMethod(handle: Long, methodName: String, paramsJson: String, onResult: (String?, String?) -> Unit) {
-    val callId = nextEvalId.incrementAndGet()
-    pendingDevToolsCalls[callId] = onResult
-    try {
-      bridge.callDevToolsProtocolMethod(handle, callId, methodName, paramsJson)
-    }
-    catch (t: IllegalStateException) {
-      pendingDevToolsCalls.remove(callId)
-      LOG.warn("Failed to call WebView2 DevTools protocol method $methodName${diagnosticContext()}: ${t.message}")
+  private fun scheduleDevToolsCpuProfileStopAfterFirstNavigation() {
+    if (!devToolsCpuProfileStarted.get()) return
+    // TODO: Replace this coarse post-navigation snapshot with real startup profiling
+    // that stops at first meaningful WebView content paint/readiness.
+    scope.launch {
+      delay(DEVTOOLS_CPU_PROFILE_POST_NAVIGATION_DELAY_MILLIS)
+      stopDevToolsCpuProfile("post-navigation-delay")
     }
   }
 
-  private fun writeDevToolsCpuProfile(result: String, reason: String) {
+  private suspend fun callDevToolsProtocolMethodAwait(handle: Long, methodName: String, paramsJson: String): DevToolsCallResult? {
+    return suspendCancellableCoroutine { continuation ->
+      val callId = callDevToolsProtocolMethod(handle, methodName, paramsJson) { result, error ->
+        if (continuation.isActive) {
+          continuation.resume(DevToolsCallResult(result, error))
+        }
+      }
+      if (callId == null) {
+        continuation.resume(null)
+        return@suspendCancellableCoroutine
+      }
+      continuation.invokeOnCancellation {
+        pendingDevToolsCalls.remove(callId)
+      }
+    }
+  }
+
+  private suspend fun writeDevToolsCpuProfile(result: String, reason: String) {
+    withContext(Dispatchers.IO) {
+      writeDevToolsCpuProfileBlocking(result, reason)
+    }
+  }
+
+  private fun writeDevToolsCpuProfileBlocking(result: String, reason: String) {
     val profile = extractDevToolsCpuProfile(result)
     val directory = Path.of(PathManager.getLogPath(), "webview-cpu-profiles")
     val fileName = "webview2-${safeProfileName()}-${System.currentTimeMillis()}-$reason.cpuprofile"
@@ -761,6 +803,29 @@ internal class WinWebViewEngine(
     }.onFailure { t ->
       LOG.warn("Failed to save WebView2 DevTools CPU profile${diagnosticContext()}: ${t.message}")
     }
+  }
+
+  private fun isDevToolsCpuProfilingEnabled(): Boolean {
+    return devToolsCpuProfilingEnabled()
+  }
+
+  private fun isCustomSchemeAssetLoadingEnabled(): Boolean {
+    return customSchemeAssetLoadingEnabled()
+  }
+
+  private fun callDevToolsProtocolMethod(handle: Long, methodName: String, paramsJson: String, onResult: (String?, String?) -> Unit): Long? {
+    val callId = nextEvalId.incrementAndGet()
+    pendingDevToolsCalls[callId] = onResult
+    invokeOnWebView {
+      try {
+        bridge.callDevToolsProtocolMethod(handle, callId, methodName, paramsJson)
+      }
+      catch (t: IllegalStateException) {
+        pendingDevToolsCalls.remove(callId)?.invoke(null, t.message)
+        LOG.warn("Failed to call WebView2 DevTools protocol method $methodName${diagnosticContext()}: ${t.message}")
+      }
+    }
+    return callId
   }
 
   private fun extractDevToolsCpuProfile(result: String): String {
@@ -867,6 +932,9 @@ internal class WinWebViewEngine(
     private const val NATIVE_EVENT_BROWSER_PROCESS_EXITED_FATAL = "browser-process-exited.fatal"
     private const val NATIVE_EVENT_NAVIGATION_COMPLETED = "navigation.completed"
     private const val DEVTOOLS_CPU_PROFILING_REGISTRY_KEY = "ide.webview.windows.devtools.cpu.profiling"
+    private const val DEVTOOLS_CPU_PROFILE_STOP_TIMEOUT_MILLIS = 3_000L
+    private const val DEVTOOLS_CPU_PROFILE_POST_NAVIGATION_DELAY_MILLIS = 2_000L
+    private const val WINDOWS_ASSET_CUSTOM_SCHEME_REGISTRY_KEY = "ide.webview.windows.asset.custom.scheme.enabled"
   }
 }
 

@@ -11,10 +11,15 @@ private val LOG = fileLogger()
 
 internal const val WEBVIEW_ASSET_CUSTOM_SCHEME: String = "ij-webview-asset"
 
+// Windows WebView2 needs a non-opaque custom-scheme origin for ES module loading, so its
+// internal asset URLs use a fixed authority: `ij-webview-asset://assets/...`.
+// The host is not a view router; each CoreWebView2 still resolves assets through its own handler.
+internal const val WEBVIEW_ASSET_CUSTOM_SCHEME_HOST: String = "assets"
+
 internal const val WEBVIEW_ASSET_HTTPS_HOST: String = "ij-webview-assets.local"
 
 internal fun webViewAssetCustomSchemeUrl(entry: WebViewAssetPath, query: String? = null): String {
-  return "$WEBVIEW_ASSET_CUSTOM_SCHEME:/${entry.path}${querySuffix(query)}"
+  return "$WEBVIEW_ASSET_CUSTOM_SCHEME://$WEBVIEW_ASSET_CUSTOM_SCHEME_HOST/${entry.path}${querySuffix(query)}"
 }
 
 @ApiStatus.Internal
@@ -60,8 +65,9 @@ private fun parseWebViewAssetRequest(url: String): WebViewAssetRequest? {
   val uri = runCatching { URI(url) }.getOrNull() ?: return null
   return when (uri.scheme) {
     WEBVIEW_ASSET_CUSTOM_SCHEME -> {
-      require(uri.rawAuthority == null) { "WebView asset URL must not contain authority: $url" }
-      WebViewAssetRequest(WebViewAssetRequestPath.of(uri.rawPath.orEmpty()), WEBVIEW_ASSET_CUSTOM_SCHEME)
+      require(uri.host == WEBVIEW_ASSET_CUSTOM_SCHEME_HOST) { "WebView asset URL must use $WEBVIEW_ASSET_CUSTOM_SCHEME_HOST authority: $url" }
+      require(uri.port < 0) { "WebView asset URL must not contain port: $url" }
+      WebViewAssetRequest(WebViewAssetRequestPath.of(uri.rawPath?.trimStart('/') ?: ""), WEBVIEW_ASSET_CUSTOM_SCHEME)
     }
     "https" -> {
       if (uri.host != WEBVIEW_ASSET_HTTPS_HOST) return null

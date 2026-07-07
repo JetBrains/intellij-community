@@ -37,9 +37,11 @@ const MODIFIER_SHIFT: jint = 1;
 const MODIFIER_CONTROL: jint = 1 << 1;
 const MODIFIER_ALT: jint = 1 << 2;
 const MODIFIER_META: jint = 1 << 3;
-const NATIVE_ABI_VERSION: &str = "wvi-dedicated-thread-v7";
+const NATIVE_ABI_VERSION: &str = "wvi-custom-scheme-assets-v9";
 const WM_USER_INVOKE: u32 = WM_USER + 1;
-const WEBVIEW_ASSET_URL_FILTER: &str = "https://ij-webview-assets.local/*";
+const WEBVIEW_ASSET_CUSTOM_SCHEME: &str = "ij-webview-asset";
+const WEBVIEW_ASSET_CUSTOM_SCHEME_FILTER: &str = "ij-webview-asset://assets/*";
+const WEBVIEW_ASSET_HTTPS_FILTER: &str = "https://ij-webview-assets.local/*";
 const DIAGNOSTIC_TRACE: jint = 0;
 const DIAGNOSTIC_DEBUG: jint = 1;
 const DIAGNOSTIC_INFO: jint = 2;
@@ -530,11 +532,9 @@ impl NativeWebView {
         {
             unsafe {
                 let _ = webview.remove_WebResourceRequested(token);
-                let _ = webview.RemoveWebResourceRequestedFilter(
-                    &HSTRING::from(WEBVIEW_ASSET_URL_FILTER),
-                    COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL,
-                );
             }
+            remove_web_resource_requested_filter(webview, WEBVIEW_ASSET_CUSTOM_SCHEME_FILTER);
+            remove_web_resource_requested_filter(webview, WEBVIEW_ASSET_HTTPS_FILTER);
         }
         self.webview = None;
         self.controller = None;
@@ -1233,7 +1233,9 @@ fn start_shared_environment_creation(
     generation: u64,
     handler: ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler,
 ) -> BridgeResult<()> {
-    let options = ICoreWebView2EnvironmentOptions::from(CoreWebView2EnvironmentOptions::default());
+    let options = CoreWebView2EnvironmentOptions::default();
+    configure_asset_custom_scheme(&options);
+    let options = ICoreWebView2EnvironmentOptions::from(options);
     unsafe {
         if let Err(error) =
             options.SetAdditionalBrowserArguments(w!("--disable-features=ElasticOverscroll"))
@@ -1259,6 +1261,21 @@ fn start_shared_environment_creation(
         }
     }
     Ok(())
+}
+
+fn configure_asset_custom_scheme(options: &CoreWebView2EnvironmentOptions) {
+    let registration =
+        CoreWebView2CustomSchemeRegistration::new(WEBVIEW_ASSET_CUSTOM_SCHEME.to_string());
+    unsafe {
+        // Keep the fixed authority (`ij-webview-asset://assets/...`): WebView2 ES modules need
+        // a non-opaque custom-scheme origin, and per-view routing is done by WebResourceRequested.
+        registration.set_has_authority_component(true);
+        registration.set_treat_as_secure(true);
+    }
+    let registration: ICoreWebView2CustomSchemeRegistration = registration.into();
+    unsafe {
+        options.set_scheme_registrations(vec![Some(registration)]);
+    }
 }
 
 fn create_shared_environment_completed_handler(
@@ -2419,17 +2436,35 @@ fn attach_web_resource_requested_handler(
     }));
     let mut token = EventRegistrationToken::default();
     unsafe {
-        webview
-            .AddWebResourceRequestedFilter(
-                &HSTRING::from(WEBVIEW_ASSET_URL_FILTER),
-                COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL,
-            )
-            .map_err(format_windows_error)?;
+        add_web_resource_requested_filter(webview, WEBVIEW_ASSET_CUSTOM_SCHEME_FILTER)?;
+        add_web_resource_requested_filter(webview, WEBVIEW_ASSET_HTTPS_FILTER)?;
         webview
             .add_WebResourceRequested(&handler, &mut token)
             .map_err(format_windows_error)?;
     }
     Ok(token)
+}
+
+fn add_web_resource_requested_filter(
+    webview: &ICoreWebView2,
+    filter: &str,
+) -> BridgeResult<()> {
+    unsafe {
+        webview.AddWebResourceRequestedFilter(
+            &HSTRING::from(filter),
+            COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL,
+        )
+    }
+    .map_err(format_windows_error)
+}
+
+fn remove_web_resource_requested_filter(webview: &ICoreWebView2, filter: &str) {
+    unsafe {
+        let _ = webview.RemoveWebResourceRequestedFilter(
+            &HSTRING::from(filter),
+            COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL,
+        );
+    }
 }
 
 fn handle_web_resource_requested(

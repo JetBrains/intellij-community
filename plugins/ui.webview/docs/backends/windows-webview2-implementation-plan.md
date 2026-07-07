@@ -43,7 +43,11 @@ The backend supports:
 
 ## Asset Serving
 
-Asset-backed pages navigate to the shared internal `https://ij-webview-assets.local/...` origin. The native bridge registers a WebView2 `WebResourceRequested` filter for that origin and delegates matching requests back to Kotlin through `WinWebView2Bridge.Callbacks.resolveAsset`.
+Asset-backed pages navigate to the shared internal `ij-webview-asset://assets/...` origin. The native bridge registers that WebView2 custom scheme when creating the shared environment, then registers a per-WebView2 `WebResourceRequested` filter and delegates matching requests back to Kotlin through that view's `WinWebView2Bridge.Callbacks.resolveAsset`.
+
+The authority is intentionally present: WebView2 ES module loading needs a non-opaque custom-scheme origin, otherwise a page can load the HTML, CSS, and classic runtime scripts while never requesting the module entry bundle.
+
+The temporary `https://ij-webview-assets.local/...` filter remains registered as a rollback path while `ide.webview.windows.asset.custom.scheme.enabled` exists. The rollback only changes the URL chosen by `WinWebViewEngine.loadAsset`; routing still stays per native WebView instance through its own callback and active asset resolver.
 
 Kotlin resolves requests through `WebViewAssetResolver`, so classpath roots, directory roots, and common runtime assets such as `/__webview/wvi-bridge.js` follow the same path normalization and escape checks as the other asset-serving backends. WebView2 responses carry status, content type, and no-cache headers from the resolved `WebViewAssetResponse`.
 

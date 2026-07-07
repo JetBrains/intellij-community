@@ -21,7 +21,7 @@ private class WinWebView2BridgePluginAnchor
 
 @ApiStatus.Internal
 internal object WinWebView2Bridge {
-  private const val EXPECTED_NATIVE_ABI_VERSION = "wvi-dedicated-thread-v7"
+  private const val EXPECTED_NATIVE_ABI_VERSION = "wvi-custom-scheme-assets-v9"
 
   init {
     if (SystemInfo.isWindows) {
@@ -88,6 +88,7 @@ internal object WinWebView2Bridge {
 
   fun create(parentHwnd: Long, userDataDir: String, documentStartScript: String, callbacks: Callbacks): Long =
     createNative(parentHwnd, userDataDir, documentStartScript, callbacks)
+
   fun destroy(handle: Long) = destroyNative(handle)
   fun attachToParent(handle: Long, parentHwnd: Long) = attachToParentNative(handle, parentHwnd)
   fun detachFromParent(handle: Long) = detachFromParentNative(handle)
