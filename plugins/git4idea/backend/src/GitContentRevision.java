@@ -70,7 +70,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
         return ContentRevisionCache.getFromCache(myProject, myFile, myRevision, GitVcs.getKey(), REPOSITORY_CONTENT);
       }
 
-      if (!GitUtil.isHashString(myRevision.getRev())) {
+      if (!GitUtil.isPossibleFullHash(myRevision.getRev())) {
         // do not cache contents for 'HEAD' or branch/tag references
         return ContentRevisionCache.loadAsBytes(myFile, this::loadContent);
       }

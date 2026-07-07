@@ -59,6 +59,7 @@ import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
+import git4idea.repo.GitObjectFormat;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryFiles;
@@ -1164,10 +1165,6 @@ public final class GitUtil {
     return HashImpl.build(head);
   }
 
-  public static boolean isHashString(@NotNull @NonNls String revision) {
-    return isHashString(revision, true);
-  }
-
   public static boolean isHashString(@NotNull @NonNls String revision, boolean fullHashOnly) {
     if (fullHashOnly) {
       return HASH_STRING_PATTERN.matcher(revision).matches();
@@ -1175,5 +1172,15 @@ public final class GitUtil {
     else {
       return VcsLogUtil.HASH_REGEX.matcher(revision).matches();
     }
+  }
+
+  public static boolean isPossibleFullHash(@NotNull @NonNls String revision) {
+    int length = revision.length();
+    for (GitObjectFormat format : GitObjectFormat.getEntries()) {
+      if (length == format.getHexSize()) {
+        return VcsLogUtil.HASH_REGEX.matcher(revision).matches();
+      }
+    }
+    return false;
   }
 }

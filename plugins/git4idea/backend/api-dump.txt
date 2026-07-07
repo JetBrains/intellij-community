@@ -30,6 +30,7 @@ f:git4idea.GitUtil
 - s:hasGitRepositories(com.intellij.openapi.project.Project):Z
 - s:isGitRoot(java.io.File):Z
 - s:isGitRoot(java.nio.file.Path):Z
+- s:isPossibleFullHash(java.lang.String):Z
 - s:isUnderGit(com.intellij.openapi.vcs.FilePath):Z
 - s:isUnderGit(com.intellij.openapi.vfs.VirtualFile):Z
 - s:justOneGitRepository(com.intellij.openapi.project.Project):Z
@@ -76,6 +77,8 @@ f:git4idea.branch.GitBranchesCollection
 - findLocalBranch(java.lang.String):git4idea.GitLocalBranch
 - findRemoteBranch(java.lang.String):git4idea.GitRemoteBranch
 - getHash(git4idea.GitBranch):com.intellij.vcs.log.Hash
+f:git4idea.branch.GitRebaseParams$RebaseUpstream$Companion
+- f:fromRefString(java.lang.String):git4idea.branch.GitRebaseParams$RebaseUpstream$Reference
 f:git4idea.changes.GitBranchComparisonResultImplKt
 - sf:getFilePath(com.intellij.openapi.diff.impl.patch.FilePatch):java.lang.String
 f:git4idea.changes.GitBranchComparisonResultKt

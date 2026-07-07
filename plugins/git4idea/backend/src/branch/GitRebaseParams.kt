@@ -64,7 +64,7 @@ class GitRebaseParams internal constructor(
           return Reference(GitUtil.HEAD)
         }
 
-        if (GitUtil.isHashString(ref)) {
+        if (GitUtil.isPossibleFullHash(ref)) {
           return Commit(HashImpl.build(ref))
         }
         return Reference(ref)
