@@ -73,6 +73,8 @@
       implementation="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourcesDrawablePreviewRenderer"
       order="last"/>
     <dataProvider implementation="com.intellij.compose.ide.plugin.resources.gradle.GradleComposeResourcesDataProvider"/>
+    <settingsContributor
+      implementation="com.intellij.compose.ide.plugin.resources.emmetLikeTemplates.settings.ComposeResourcesEmmetLikeSettingsContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -84,6 +86,12 @@
       bundle="messages.ComposeIdeBundle"
       key="compose.resources.title"
       instance="com.intellij.compose.ide.plugin.resources.settings.ComposeResourcesConfigurable"/>
+
+    <applicationService
+      serviceImplementation="com.intellij.compose.ide.plugin.resources.emmetLikeTemplates.settings.ComposeResourcesEmmetLikeSettings"/>
+    <applicationSettings
+      service="com.intellij.compose.ide.plugin.resources.emmetLikeTemplates.settings.ComposeResourcesEmmetLikeSettings"/>
+
 
     <codeInsight.unresolvedReferenceQuickFixProvider
       implementation="com.intellij.compose.ide.plugin.resources.intentions.ComposeResourcesUnresolvedStringReferenceQuickFixProvider"/>

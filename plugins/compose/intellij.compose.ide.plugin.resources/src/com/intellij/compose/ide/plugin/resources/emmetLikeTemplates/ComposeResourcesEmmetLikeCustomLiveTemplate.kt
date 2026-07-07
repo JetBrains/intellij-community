@@ -5,6 +5,7 @@ import com.intellij.codeInsight.template.CustomLiveTemplateBase
 import com.intellij.codeInsight.template.CustomTemplateCallback
 import com.intellij.compose.ide.plugin.resources.ALL_STRING_TAGS
 import com.intellij.compose.ide.plugin.resources.ResourceType
+import com.intellij.compose.ide.plugin.resources.emmetLikeTemplates.settings.ComposeResourcesEmmetLikeSettings
 import com.intellij.compose.ide.plugin.resources.isComposeResourcesFile
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
 
@@ -21,8 +22,9 @@ private val valuesDirectoryRegex = Regex("""values(?:-.+)?""")
  * - Items: `(item|i){[value]}[*multiplier]` (context-aware for `<plurals>`)
  * - Positional format specifiers: `NUMBER[TYPE]` (e.g. `1` expands to `%1$s`, `2d` to `%2$d`)
  *
- * All shorthand commands are triggered by pressing **Tab**. The tool expands the abbreviation
- * and automatically places the caret inside the first editable field.
+ * All shorthand commands are triggered by the configured Compose resources shortcut. By default, it's **Tab**
+ *
+ * The tool expands the abbreviation and automatically places the caret inside the first editable field.
  */
 internal class ComposeResourcesEmmetLikeCustomLiveTemplate : CustomLiveTemplateBase() {
 
@@ -70,7 +72,7 @@ internal class ComposeResourcesEmmetLikeCustomLiveTemplate : CustomLiveTemplateB
   override fun supportsWrapping(): Boolean = false
   override fun wrap(selection: String, callback: CustomTemplateCallback): Unit = Unit
   override fun getTitle(): String = ComposeIdeBundle.message("compose.resources.string.action.shortcut.text")
-  override fun getShortcut(): Char = '\t'
+  override fun getShortcut(): Char = ComposeResourcesEmmetLikeSettings.getInstance().expandShortcut.toChar()
 }
 
 private fun String.hasValidCommandStart(): Boolean =
