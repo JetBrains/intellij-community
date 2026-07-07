@@ -161,6 +161,8 @@
                  description="Enables reporting errors about modules that effectively work only on frontend or backend, but do not explicitly state that fact via platform dependency"/>
     <registryKey key="devkit.split.mode.custom.icons" defaultValue="true"
                  description="Enables custom file and directory icons for split-mode frontend/backend/shared modules in DevKit."/>
+    <registryKey key="devkit.split.mode.inlay.plugin.descriptor.kind" defaultValue="true"
+                 description="Shows inline split-mode compatibility hints for DevKit plugin descriptors."/>
     <registryKey key="devkit.split.mode.run.jps.to.bazel.in.quick.fix" defaultValue="false"
                  description="Automatically run JPS to Bazel conversion after applying a fix that touches runtime/compile dependencies"/>
     <registryKey key="devkit.split.mode.add.to.exclusions.quick.fix.enabled" defaultValue="false"
@@ -784,6 +786,15 @@
                                     implementationClass="org.jetbrains.idea.devkit.references.DevKitRelatedPropertiesProvider"/>
     <codeInsight.lineMarkerProvider language="XML"
                                     implementationClass="org.jetbrains.idea.devkit.navigation.DescriptorsIncludingContentModuleLineMarkerProvider"/>
+    <codeInsight.declarativeInlayProvider
+      providerId="devkit.plugin.descriptor.split.mode.kind"
+      bundle="messages.DevKitBundle"
+      nameKey="inlay.split.mode.module.kind.name"
+      descriptionKey="inlay.split.mode.module.kind.description"
+      group="OTHER_GROUP"
+      implementationClass="org.jetbrains.idea.devkit.navigation.DescriptorSplitModeInlayHintsProvider"
+      isEnabledByDefault="true"
+      language="XML"/>
     <psi.referenceContributor
       language="Properties"
       implementation="org.jetbrains.idea.devkit.references.MessageBundleReferenceContributor"/>
