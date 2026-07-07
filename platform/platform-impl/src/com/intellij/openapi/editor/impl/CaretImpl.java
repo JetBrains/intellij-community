@@ -40,13 +40,13 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.CharArrayUtil;
@@ -63,7 +63,6 @@ import java.awt.Rectangle;
 @ApiStatus.Internal
 public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private static final Logger LOG = Logger.getInstance(CaretImpl.class);
-  private static final Key<CaretVisualAttributes> VISUAL_ATTRIBUTES_KEY = new Key<>("CaretAttributes");
 
   private final EditorImpl myEditor;
   private final DocumentEx myDocument;
@@ -81,10 +80,10 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   private int myVisualColumnAdjustment;
   private int myVisualLineStart;
   private int myVisualLineEnd;
+  private CaretVisualAttributes myAttributes;
+
   private boolean mySkipChangeRequests;
-  private int myColumnNumberForCloning = -1;
-  private int myDesiredSelectionStartColumn = -1;
-  private int myDesiredSelectionEndColumn = -1;
+  private int myDocumentUpdateCounter;
 
   /**
    * This field holds initial horizontal caret position during vertical navigation. It's used to determine target position when
@@ -93,14 +92,15 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
    * Negative value means no coordinate should be preserved.
    */
   private int myDesiredX = -1;
+  private int myDesiredSelectionStartColumn = -1;
+  private int myDesiredSelectionEndColumn = -1;
+  private int myColumnNumberForCloning = -1;
 
   private volatile SelectionMarker mySelectionMarker;
   private volatile VisualPosition mySelectionStartPosition;
   private volatile VisualPosition mySelectionEndPosition;
   private volatile boolean mySelectionEndPositionIsLead;
   private boolean mySelectionUnknownDirection;
-
-  private int myDocumentUpdateCounter;
 
   CaretImpl(@NotNull EditorImpl editor, @NotNull CaretModelImpl caretModel) {
     myEditor = editor;
@@ -1225,13 +1225,12 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   @Override
   public @NotNull CaretVisualAttributes getVisualAttributes() {
-    CaretVisualAttributes attrs = getUserData(VISUAL_ATTRIBUTES_KEY);
-    return attrs == null ? CaretVisualAttributes.getDefault() : attrs;
+    return ObjectUtils.notNull(myAttributes, CaretVisualAttributes.getDefault());
   }
 
   @Override
   public void setVisualAttributes(@NotNull CaretVisualAttributes attributes) {
-    putUserData(VISUAL_ATTRIBUTES_KEY, attributes == CaretVisualAttributes.getDefault() ? null : attributes);
+    myAttributes = attributes == CaretVisualAttributes.getDefault() ? null : attributes;
     requestRepaint(myVerticalInfo);
   }
 
@@ -1652,8 +1651,8 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     int y, // y coordinate of caret
     int logicalLineY, // y coordinate of caret's logical line start
     int logicalLineHeight // height of caret's logical line
-    // (If there are soft wraps, it's larger than a visual line's height.
-    // it's also larger if caret is located at a custom fold region)
+                          // (If there are soft wraps, it's larger than a visual line's height.
+                          // it's also larger if caret is located at a custom fold region)
   ) {
   }
 }
