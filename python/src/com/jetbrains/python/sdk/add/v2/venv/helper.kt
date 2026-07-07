@@ -18,7 +18,10 @@ import com.jetbrains.python.sdk.add.v2.SdkWrapper
 import com.jetbrains.python.sdk.add.v2.installBaseSdk
 import com.jetbrains.python.sdk.add.v2.setupSdk
 
-suspend fun <P : PathHolder> PythonMutableTargetAddInterpreterModel<P>.setupVirtualenv(venvFolder: P, moduleOrProject: ModuleOrProject): PyResult<Sdk> {
+internal suspend fun <P : PathHolder> PythonMutableTargetAddInterpreterModel<P>.setupVirtualenv(
+  venvFolder: P,
+  moduleOrProject: ModuleOrProject,
+): PyResult<Sdk> {
   val baseSdkPath = when (val baseSdk = state.baseInterpreter.get()!!) {
     is InstallableSelectableInterpreter -> installBaseSdk(baseSdk.installableSdk)?.let { fileSystem.wrapSdk(it) }?.homePath
     is ExistingSelectableInterpreter -> baseSdk.homePath

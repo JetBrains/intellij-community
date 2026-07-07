@@ -132,7 +132,8 @@ abstract class PythonNewEnvironmentCreator<P : PathHolder>(override val model: P
   }
 }
 
-abstract class PythonExistingEnvironmentConfigurator<P : PathHolder>(model: PythonAddInterpreterModel<P>) : PythonAddEnvironment<P>(model)
+internal abstract class PythonExistingEnvironmentConfigurator<P : PathHolder>(model: PythonAddInterpreterModel<P>) :
+  PythonAddEnvironment<P>(model)
 
 
 enum class PythonSupportedEnvironmentManagers(

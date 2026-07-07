@@ -59,7 +59,7 @@ internal fun PythonAddInterpreterModel<*>.getBaseCondaOrError(): PyResult<PyCond
 /**
  * [base] or selected
  */
-suspend fun PythonAddInterpreterModel<*>.selectCondaEnvironment(moduleOrProject: ModuleOrProject, base: Boolean): PyResult<Sdk> {
+internal suspend fun PythonAddInterpreterModel<*>.selectCondaEnvironment(moduleOrProject: ModuleOrProject, base: Boolean): PyResult<Sdk> {
   condaViewModel.condaEnvironmentsLoading.takeWhile { it }.collect { }
   val pyCondaEnv = if (base) {
     getBaseCondaOrError()

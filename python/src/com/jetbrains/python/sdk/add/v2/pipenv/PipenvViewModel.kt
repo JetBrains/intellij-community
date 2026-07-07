@@ -11,7 +11,7 @@ import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.pipenv.getPipEnvExecutable
 import kotlinx.coroutines.CoroutineScope
 
-class PipenvViewModel<P : PathHolder>(
+internal class PipenvViewModel<P : PathHolder>(
   fileSystem: FileSystem<P>,
   propertyGraph: PropertyGraph,
 ) : PythonToolViewModel {
