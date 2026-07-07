@@ -2,12 +2,13 @@
 package com.intellij.ui.webview.impl
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.trace
 import org.jetbrains.annotations.ApiStatus
 
 /**
  * Dedicated logger category for the WebView runtime.
  *
- * Usage: `WebViewLogger.LOG.info("lifecycle: created webview")`
+ * Usage: `WebViewLogger.logLifecycle("created webview")`
  *
  * Category: `#com.intellij.ui.webview`
  */
@@ -16,11 +17,13 @@ object WebViewLogger {
   val LOG: Logger = Logger.getInstance("#com.intellij.ui.webview")
 
   fun logLifecycle(event: String, details: String = "") {
-    if (details.isNotEmpty()) {
-      LOG.info("lifecycle: $event — $details")
-    }
-    else {
-      LOG.info("lifecycle: $event")
+    LOG.trace {
+      if (details.isNotEmpty()) {
+        "lifecycle: $event - $details"
+      }
+      else {
+        "lifecycle: $event"
+      }
     }
   }
 
