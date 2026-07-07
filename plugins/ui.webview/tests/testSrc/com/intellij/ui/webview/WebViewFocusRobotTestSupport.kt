@@ -17,6 +17,7 @@ import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeTrue
+import java.awt.AWTEvent
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Desktop
@@ -24,6 +25,8 @@ import java.awt.Dimension
 import java.awt.KeyboardFocusManager
 import java.awt.Point
 import java.awt.Robot
+import java.awt.Toolkit
+import java.awt.event.AWTEventListener
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.event.InputEvent
@@ -134,6 +137,87 @@ internal object WebViewFocusRobotTestSupport {
       )
     }
     finally {
+      focusRegistration.close()
+      bus.close()
+      SwingUtilities.invokeAndWait {
+        field.caret.blinkRate = 0
+        field.caret.deinstall(field)
+        frame.contentPane.removeAll()
+      }
+    }
+  }
+
+  suspend fun runModifierDoubleClickShortcutScenario(
+    frame: JFrame,
+    scope: CoroutineScope,
+    engine: WebViewEngineBridge,
+    nativeHostPeer: NativeWebViewHostPeer,
+    tempDir: Path,
+  ) {
+    val robot = createRobotOrSkip()
+    val bus = WebViewMessageBusImpl(scope, engine)
+    val modifierEvents = Collections.synchronizedList(mutableListOf<RecordedKeyEvent>())
+    val field = JTextField().apply {
+      preferredSize = Dimension(1, 32)
+      caret = DefaultCaret().apply { blinkRate = 0 }
+    }
+    val host = SwingWebViewHostPanel(scope, engine, bus.interop.createWebViewFocusEntrySink(), nativeHostPeer)
+    val focusRegistration = bus.interop.registerWebViewFocusExitHandler(host)
+    val modifierEventRegistration = recordModifierKeyEvents(modifierEvents)
+    engine.connectMessageBus { rawJson -> bus.transferFromJs(rawJson) }
+    writeFocusInteropPage(tempDir)
+
+    try {
+      SwingUtilities.invokeAndWait {
+        frame.contentPane.removeAll()
+        frame.contentPane.layout = BorderLayout()
+        frame.contentPane.add(field, BorderLayout.SOUTH)
+        frame.contentPane.add(host, BorderLayout.CENTER)
+        frame.toFront()
+        frame.revalidate()
+        frame.repaint()
+      }
+      assertTrue(waitUntilShowing(host, 5.seconds), "WebView host component did not become showing")
+      assertTrue(waitUntilShowing(field, 5.seconds), "Swing text field did not become showing")
+
+      engine.loadAsset(WebViewAssetRoot.fromDirectory(tempDir), WebViewAssetPath.indexHtml())
+      waitForJavaScriptResult(
+        webView = engine,
+        script = "Boolean(window.__WVI__ && window['__wviFocusInteropReady'])",
+        expected = "true",
+        description = "Modifier shortcut test page did not load WebView bridge and platform features",
+      )
+
+      focusSwingFieldWithRobot(robot, frame, field, "Swing field did not receive initial focus", skipIfUnavailable = true)
+      clearText(field)
+      typeKey(robot, KeyEvent.VK_1)
+      val swingFieldPreflightDiagnostics = buildCurrentFocusDiagnostics(frame, field)
+      assumeTrue(
+        waitForFieldText(field, "1", emptyList(), assertOnFailure = false),
+        "AWT Robot key input is not delivered to the focused Swing field; $swingFieldPreflightDiagnostics",
+      )
+
+      clickWebElementCenter(robot, host, engine, "web-input")
+      waitForFocusOwnerNot(field, "WebView activation did not clear the previous Swing focus owner")
+
+      clearRecordedKeyEvents(modifierEvents)
+      doubleTapModifier(robot, KeyEvent.VK_SHIFT)
+      waitForModifierDoubleTap(
+        events = modifierEvents,
+        keyCode = KeyEvent.VK_SHIFT,
+        description = "Double Shift inside WebView did not reach AWT",
+      )
+
+      clearRecordedKeyEvents(modifierEvents)
+      doubleTapModifier(robot, KeyEvent.VK_CONTROL)
+      waitForModifierDoubleTap(
+        events = modifierEvents,
+        keyCode = KeyEvent.VK_CONTROL,
+        description = "Double Ctrl inside WebView did not reach AWT",
+      )
+    }
+    finally {
+      modifierEventRegistration.close()
       focusRegistration.close()
       bus.close()
       SwingUtilities.invokeAndWait {
@@ -1094,6 +1178,68 @@ internal object WebViewFocusRobotTestSupport {
     robot.waitForIdle()
   }
 
+  private fun doubleTapModifier(robot: Robot, keyCode: Int) {
+    robot.keyPress(keyCode)
+    robot.keyRelease(keyCode)
+    robot.delay(80)
+    robot.keyPress(keyCode)
+    robot.keyRelease(keyCode)
+    robot.waitForIdle()
+  }
+
+  private fun recordModifierKeyEvents(events: MutableList<RecordedKeyEvent>): AutoCloseable {
+    val listener = AWTEventListener { event ->
+      if (event is KeyEvent &&
+          (event.id == KeyEvent.KEY_PRESSED || event.id == KeyEvent.KEY_RELEASED) &&
+          (event.keyCode == KeyEvent.VK_SHIFT || event.keyCode == KeyEvent.VK_CONTROL)) {
+        events.add(RecordedKeyEvent(event.id, event.keyCode))
+      }
+    }
+    Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.KEY_EVENT_MASK)
+    return AutoCloseable {
+      Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
+    }
+  }
+
+  private suspend fun waitForModifierDoubleTap(events: MutableList<RecordedKeyEvent>, keyCode: Int, description: String) {
+    val matched = withTimeoutOrNull(5.seconds) {
+      while (true) {
+        if (containsModifierDoubleTap(recordedKeyEventsSnapshot(events), keyCode)) return@withTimeoutOrNull true
+        delay(50.milliseconds)
+      }
+    } == true
+    assertTrue(matched, "$description; events=${recordedKeyEventsSnapshot(events).joinToString()}")
+  }
+
+  private fun containsModifierDoubleTap(events: List<RecordedKeyEvent>, keyCode: Int): Boolean {
+    val expectedEventIds = intArrayOf(
+      KeyEvent.KEY_PRESSED,
+      KeyEvent.KEY_RELEASED,
+      KeyEvent.KEY_PRESSED,
+      KeyEvent.KEY_RELEASED,
+    )
+    var matchedEventCount = 0
+    for ((id, recordedKeyCode) in events) {
+      if (recordedKeyCode == keyCode && id == expectedEventIds[matchedEventCount]) {
+        matchedEventCount++
+        if (matchedEventCount == expectedEventIds.size) return true
+      }
+    }
+    return false
+  }
+
+  private fun recordedKeyEventsSnapshot(events: MutableList<RecordedKeyEvent>): List<RecordedKeyEvent> {
+    return synchronized(events) {
+      events.toList()
+    }
+  }
+
+  private fun clearRecordedKeyEvents(events: MutableList<RecordedKeyEvent>) {
+    synchronized(events) {
+      events.clear()
+    }
+  }
+
   private fun clearText(field: JTextField) {
     SwingUtilities.invokeAndWait {
       field.text = ""
@@ -1129,6 +1275,8 @@ internal object WebViewFocusRobotTestSupport {
     }
     assertEquals("1", actual, "$description, inputEvents=$inputEvents")
   }
+
+  private data class RecordedKeyEvent(val id: Int, val keyCode: Int)
 
   private class RecordingNativeWebViewHostPeer : NativeWebViewHostPeer {
     var clearFocusForSwingTransferCount = 0

@@ -1,7 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.webview.impl.windows
 
-import com.intellij.ui.webview.impl.WebViewEditCommand
+import com.intellij.ui.webview.impl.WebViewShortcutRouter
+import com.intellij.ui.webview.impl.WebViewShortcutRouting
 import java.awt.Component
 import java.awt.KeyboardFocusManager
 import java.awt.Toolkit
@@ -24,10 +25,11 @@ internal object WinWebViewShortcutInterop {
 
     val eventSource = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow ?: target
     val keyEvent = createKeyEvent(eventSource, keyEventKind, virtualKey, modifierFlags, keyEventLParam) ?: return false
-    if (!isShortcutCandidate(keyEvent.keyCode, keyEvent.modifiersEx)) return false
+    val routing = WebViewShortcutRouter.route(keyEvent)
+    if (routing == WebViewShortcutRouting.BROWSER_ONLY) return false
 
     Toolkit.getDefaultToolkit().systemEventQueue.postEvent(keyEvent)
-    return true
+    return routing == WebViewShortcutRouting.FORWARD_TO_IDE_CONSUME_BROWSER_HANDLING
   }
 
   internal fun createKeyEvent(source: Component, keyEventKind: Int, virtualKey: Int, modifierFlags: Int, keyEventLParam: Int): KeyEvent? {
@@ -50,18 +52,7 @@ internal object WinWebViewShortcutInterop {
   }
 
   internal fun isShortcutCandidate(keyCode: Int, modifiersEx: Int): Boolean {
-    if (keyCode == KeyEvent.VK_UNDEFINED || isModifierKey(keyCode)) return false
-    if (isBrowserEditingShortcut(keyCode, modifiersEx)) return false
-
-    val commandModifiers = InputEvent.CTRL_DOWN_MASK or InputEvent.ALT_DOWN_MASK or InputEvent.META_DOWN_MASK
-    return modifiersEx and commandModifiers != 0 || keyCode in KeyEvent.VK_F1..KeyEvent.VK_F24 || keyCode == KeyEvent.VK_ESCAPE
-  }
-
-  // A keystroke is "browser editing" when the active keymap binds it to one of the shared WebView edit
-  // commands (Copy/Paste/Cut/SelectAll/Undo/Redo). Such keystrokes are kept for WebView2's native editing
-  // rather than forwarded to the IDE. Source of truth: WebViewEditCommand (shared across all OS backends).
-  private fun isBrowserEditingShortcut(keyCode: Int, modifiersEx: Int): Boolean {
-    return WebViewEditCommand.matchingCommand(keyCode, modifiersEx, WebViewEditCommand.DEFAULTS) != null
+    return WebViewShortcutRouter.isShortcutCandidate(keyCode, modifiersEx)
   }
 
   private fun modifierFlagsToJavaModifiers(modifierFlags: Int): Int {
@@ -87,14 +78,6 @@ internal object WinWebViewShortcutInterop {
       in VK_NUMPAD0..VK_DIVIDE -> KeyEvent.KEY_LOCATION_NUMPAD
       else -> KeyEvent.KEY_LOCATION_STANDARD
     }
-  }
-
-  private fun isModifierKey(keyCode: Int): Boolean {
-    return keyCode == KeyEvent.VK_SHIFT ||
-           keyCode == KeyEvent.VK_CONTROL ||
-           keyCode == KeyEvent.VK_ALT ||
-           keyCode == KeyEvent.VK_META ||
-           keyCode == KeyEvent.VK_ALT_GRAPH
   }
 
   private val WINDOWS_TO_JAVA_KEY_CODES = mapOf(

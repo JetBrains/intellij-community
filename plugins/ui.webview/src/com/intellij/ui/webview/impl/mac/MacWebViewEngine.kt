@@ -4,17 +4,17 @@ package com.intellij.ui.webview.impl.mac
 import com.intellij.ui.mac.foundation.ID
 import com.intellij.ui.webview.api.WebViewAssetPath
 import com.intellij.ui.webview.api.WebViewAssetRoot
-import com.intellij.ui.webview.impl.WebViewEngineBridge
-import com.intellij.ui.webview.impl.WebViewEditCommand
 import com.intellij.ui.webview.impl.MacMainThreadDispatcher
 import com.intellij.ui.webview.impl.WebViewAssetResolver
 import com.intellij.ui.webview.impl.WebViewAssetResponse
+import com.intellij.ui.webview.impl.WebViewEditCommand
+import com.intellij.ui.webview.impl.WebViewEngineBridge
+import com.intellij.ui.webview.impl.WebViewJsMessageReceiver
 import com.intellij.ui.webview.impl.WebViewLogger
+import com.intellij.ui.webview.impl.engine.WebViewScript
 import com.intellij.ui.webview.impl.openWebViewPopupUrlExternally
 import com.intellij.ui.webview.impl.resolveWebViewAssetUrl
 import com.intellij.ui.webview.impl.webViewAssetCustomSchemeUrl
-import com.intellij.ui.webview.impl.WebViewJsMessageReceiver
-import com.intellij.ui.webview.impl.engine.WebViewScript
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -63,6 +63,11 @@ internal class MacWebViewEngine(
   @Volatile
   private var inboundMessageHandler: (String) -> Unit = {}
 
+  // Attachment-scoped callback. The native bridge only observes AppKit events; the host decides when
+  // they may be forwarded to AWT and clears the callback on detach.
+  @Volatile
+  private var modifierKeyHandler: (WKWebViewBridge.ModifierKeyEvent) -> Unit = {}
+
   private val handlesReady = CompletableDeferred<WKWebViewBridge.WebViewHandles>()
 
   private val nextEvalId = AtomicLong(0)
@@ -89,6 +94,7 @@ internal class MacWebViewEngine(
                 onMessage = { message -> handleIncomingMessage(message) },
                 resolveAssetUrl = this@MacWebViewEngine::resolveAssetUrl,
                 onNewWindowRequested = this@MacWebViewEngine::openNewWindowRequest,
+                onModifierKeyEvent = { event -> modifierKeyHandler(event) },
                 documentStartScripts = documentStartScripts,
               )
               WebViewLogger.logPerf("wkwebview-create", System.currentTimeMillis() - t0)
@@ -121,6 +127,10 @@ internal class MacWebViewEngine(
 
   override fun connectMessageBus(receiver: WebViewJsMessageReceiver) {
     inboundMessageHandler = receiver::transferFromJs
+  }
+
+  internal fun setModifierKeyHandler(handler: ((WKWebViewBridge.ModifierKeyEvent) -> Unit)?) {
+    modifierKeyHandler = handler ?: {}
   }
 
   override suspend fun loadFile(file: Path) {

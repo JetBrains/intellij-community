@@ -5,6 +5,7 @@ import com.intellij.jna.JnaLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.webview.impl.NativeBridgeLibraryAvailability
 import com.intellij.ui.webview.impl.WebViewEngineBridge
 import com.intellij.ui.webview.impl.host.NativeWebViewHostPeer
@@ -44,6 +45,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @EnabledOnOs(OS.MAC, OS.WINDOWS)
 @DisabledIfSystemProperty(named = "java.awt.headless", matches = "true")
+@TestApplication
 class WebViewFocusInteropRobotTest {
 
   private var frame: JFrame? = null
@@ -100,6 +102,23 @@ class WebViewFocusInteropRobotTest {
     val facade = createPlatformEngine(scope!!)
     try {
       WebViewFocusRobotTestSupport.runFocusInteropScenario(
+        frame!!,
+        scope!!,
+        facade,
+        createNativeHostPeer(scope!!, facade),
+        tempDir,
+      )
+    }
+    finally {
+      facade.close()
+    }
+  }
+
+  @Test
+  fun modifierDoubleClickInsideWebViewReachesAwt(@TempDir tempDir: Path): Unit = runBlocking {
+    val facade = createPlatformEngine(scope!!)
+    try {
+      WebViewFocusRobotTestSupport.runModifierDoubleClickShortcutScenario(
         frame!!,
         scope!!,
         facade,
