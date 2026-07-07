@@ -45,7 +45,6 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -121,7 +120,7 @@ public final class GitUtil {
   private static final Logger LOG = Logger.getInstance(GitUtil.class);
   private static final @NonNls String HEAD_FILE = "HEAD";
 
-  private static final Pattern HASH_STRING_PATTERN = Pattern.compile("[a-fA-F0-9]{40}");
+  public static final Pattern HASH_REGEX = Pattern.compile("[a-fA-F0-9]{7,64}");
 
   /**
    * A private constructor to suppress instance creation
@@ -1165,20 +1164,15 @@ public final class GitUtil {
     return HashImpl.build(head);
   }
 
-  public static boolean isHashString(@NotNull @NonNls String revision, boolean fullHashOnly) {
-    if (fullHashOnly) {
-      return HASH_STRING_PATTERN.matcher(revision).matches();
-    }
-    else {
-      return VcsLogUtil.HASH_REGEX.matcher(revision).matches();
-    }
+  public static boolean isPossibleHash(@NotNull String revision) {
+    return HASH_REGEX.matcher(revision).matches();
   }
 
-  public static boolean isPossibleFullHash(@NotNull @NonNls String revision) {
+  public static boolean isPossibleFullHash(@NotNull String revision) {
     int length = revision.length();
     for (GitObjectFormat format : GitObjectFormat.getEntries()) {
       if (length == format.getHexSize()) {
-        return VcsLogUtil.HASH_REGEX.matcher(revision).matches();
+        return isPossibleHash(revision);
       }
     }
     return false;

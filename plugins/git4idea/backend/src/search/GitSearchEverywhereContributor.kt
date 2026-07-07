@@ -69,7 +69,7 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
 
     val dataPack = awaitFullLogDataPack(dataManager, progressIndicator) ?: return
 
-    if (filter.isSelected(COMMIT_BY_HASH) && pattern.length >= 7 && GitUtil.isHashString(pattern, false)) {
+    if (filter.isSelected(COMMIT_BY_HASH) && pattern.length >= 7 && GitUtil.isPossibleHash(pattern)) {
       storage.findCommitId {
         progressIndicator.checkCanceled()
         it.hash.asString().startsWith(pattern, true) && dataPack.containsAll(listOf(it), storage)

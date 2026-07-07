@@ -22,7 +22,7 @@ fun getLocation(directory: VirtualFile, executable: GitExecutable): String {
   if (name != "HEAD") return name
 
   val hash = Git.getInstance().runCommand(createRevParseHandler(directory, executable, abbrev = false)).getOutputOrThrow()
-  if (GitUtil.isHashString(hash, false)) {
+  if (GitUtil.isPossibleHash(hash)) {
     return VcsLogUtil.getShortHash(hash)
   }
   throw VcsException(GitBundle.message("git.light.cant.find.current.revision.exception.message", directory.path))

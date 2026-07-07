@@ -111,7 +111,7 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
   @Override
   public @Nullable String getBaseVersionContent(@NotNull FilePath filePath, @NotNull String beforeVersionId) throws VcsException {
     if (StringUtil.isEmptyOrSpaces(beforeVersionId) || filePath.getVirtualFile() == null) return null;
-    if (!GitUtil.isHashString(beforeVersionId, false)) return null;
+    if (!GitUtil.isPossibleHash(beforeVersionId)) return null;
 
     // apply if base revision id matches revision
     GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(filePath);

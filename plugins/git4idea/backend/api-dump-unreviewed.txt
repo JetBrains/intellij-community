@@ -153,7 +153,6 @@ f:git4idea.GitUtil
 - s:gitTime(java.util.Date):java.lang.String
 - s:hasLocalChanges(Z,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
 - s:isCaseOnlyChange(java.lang.String,java.lang.String):Z
-- s:isHashString(java.lang.String,Z):Z
 - s:joinToHtml(java.util.Collection):java.lang.String
 - s:mention(java.util.Collection):java.lang.String
 - s:parseRemoteBranch(java.lang.String,java.util.Collection):git4idea.GitRemoteBranch
