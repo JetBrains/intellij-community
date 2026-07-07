@@ -3,6 +3,7 @@ package com.intellij.dev.leakDetection
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.actions.RevealFileAction
+import com.intellij.ide.logsUploader.LogUploader
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -21,9 +22,14 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.datatransfer.StringSelection
@@ -35,6 +41,9 @@ private val LOG = logger<ProjectLeakDetector>()
 
 internal const val NOTIFICATION_GROUP_ID = "Project Leak Detection"
 private const val YOUTRACK_NEW_ISSUE_URL = "https://youtrack.jetbrains.com/newIssue"
+
+// Snapshot upload target (same service used by Report Feedback / Collect Logs via LogUploader).
+private const val UPLOADS_URL = "https://uploads.jetbrains.com"
 
 // Action contributed by the performanceTesting plugin; invoked by id so we don't depend on that plugin's module.
 private const val CAPTURE_MEMORY_SNAPSHOT_ACTION_ID = "CaptureMemorySnapShot"
@@ -98,33 +107,81 @@ class LeakReporter(private val coroutineScope: CoroutineScope) {
   }
 
   /**
-   * Captures a memory snapshot (off the EDT, under progress), then opens a prefilled YouTrack issue whose description
-   * references the snapshot, copies the report to the clipboard, and reveals the snapshot file so it can be attached.
+   * Captures a memory snapshot and uploads it to [UPLOADS_URL],
+   * then opens a prefilled YouTrack issue whose description links to the uploaded snapshot and copies the report to the clipboard.
+   *
+   * If the upload fails or is cancelled, falls back to opening [UPLOADS_URL] and revealing the snapshot file so it can be
+   * uploaded manually.
    */
   private fun createTicket(project: Project?, leaks: List<LeakInfo>, report: String) {
     copyToClipboard(report)
     coroutineScope.launch {
-      val snapshot = if (project != null) {
-        withBackgroundProgress(project, DevLeakDetectionBundle.message("progress.title.capturing.snapshot"), cancellable = false) {
-          captureSnapshot()
-        }
-      }
-      else {
-        withModalProgress(ModalTaskOwner.guess(),
-                          DevLeakDetectionBundle.message("modal.progress.title.capturing.snapshot"),
-                          TaskCancellation.nonCancellable()) {
-          captureSnapshot()
-        }
+      val snapshot = captureUnderProgress(project, "progress.title.capturing.snapshot", "modal.progress.title.capturing.snapshot") {
+        captureSnapshot()
       }
 
+      // Upload the snapshot so it can be linked from the ticket; null if capture/upload failed or was cancelled.
+      val browseUrl = if (snapshot != null) uploadSnapshotOrNull(project, snapshot) else null
+
       withContext(Dispatchers.EDT) {
-        BrowserUtil.browse(createTicketUrl(leaks, snapshot))
-        if (snapshot != null) {
+        BrowserUtil.browse(createTicketUrl(leaks, snapshot, browseUrl))
+        if (browseUrl == null && snapshot != null) {
+          // Upload unavailable: let the reporter upload the snapshot manually.
+          BrowserUtil.browse(UPLOADS_URL)
           RevealFileAction.openFile(snapshot)
         }
       }
     }
   }
+
+  private suspend fun <T> captureUnderProgress(project: Project?, backgroundTitleKey: String, modalTitleKey: String, action: suspend () -> T): T =
+    if (project != null) {
+      withBackgroundProgress(project, DevLeakDetectionBundle.message(backgroundTitleKey), cancellable = true) {
+        action()
+      }
+    }
+    else {
+      withModalProgress(ModalTaskOwner.guess(), DevLeakDetectionBundle.message(modalTitleKey), TaskCancellation.cancellable()) {
+        action()
+      }
+    }
+
+  /**
+   * Uploads [snapshot] to [UPLOADS_URL] under a cancellable progress and returns its browse URL, or `null` if the upload
+   * failed or the user cancelled it (in which case the caller falls back to a manual upload).
+   */
+  private suspend fun uploadSnapshotOrNull(project: Project?, snapshot: Path): String? =
+    try {
+      captureUnderProgress(project, "progress.title.uploading.snapshot", "modal.progress.title.uploading.snapshot") {
+        // runInterruptible ties cancellation to thread interruption so the blocking upload aborts immediately;
+        // LogUploader.uploadFile is a blocking JDK HttpClient.send call with no cancellation checks of its own.
+        runInterruptible(Dispatchers.IO) {
+          LogUploader.getBrowseUrl(LogUploader.uploadFile(snapshot))
+        }
+      }
+    }
+    catch (e: CancellationException) {
+      // If the enclosing scope itself was cancelled, rethrow to preserve structured concurrency.
+      if (!currentCoroutineContext().isActive) throw e
+
+      // Only the upload progress was cancelled by the user: keep going with a manual-upload fallback.
+      LOG.info("Memory snapshot upload cancelled; the ticket will point to a manual upload")
+      null
+    }
+    catch (e: Exception) {
+      // Rethrow if the enclosing scope was cancelled; otherwise fall back to a manual upload.
+      currentCoroutineContext().ensureActive()
+
+      // A cancelled upload surfaces here as an interrupted blocking call (LogUploader wraps InterruptedException).
+      if (e.cause is InterruptedException) {
+        LOG.info("Memory snapshot upload interrupted; the ticket will point to a manual upload")
+      }
+      else {
+        LOG.warn("Failed to upload memory snapshot for the leak ticket", e)
+      }
+
+      null
+    }
 
   private fun captureSnapshot(): Path? {
     if (!MemoryDumpHelper.memoryDumpAvailable()) {
@@ -143,18 +200,17 @@ class LeakReporter(private val coroutineScope: CoroutineScope) {
     }
   }
 
-  private fun createTicketUrl(leaks: List<LeakInfo>, snapshot: Path?): String {
+  private fun createTicketUrl(leaks: List<LeakInfo>, snapshot: Path?, browseUrl: String?): String {
     val summary = "Project or Editor leak detected"
     val description = buildString {
       append("Detected ").append(leaks.size).append(" leaked instance(s) in a running IDE.\n")
       append("The full report (reference paths) has been copied to the clipboard and is also in the IDE log (idea.log).\n\n")
       leaks.take(5).forEach { append("- ").append(it.kind).append(' ').append(it.className).append('\n') }
       append('\n')
-      if (snapshot != null) {
-        append("Memory snapshot (please attach this file)").append('\n')
-      }
-      else {
-        append("Memory snapshot: capture was unavailable.\n")
+      when {
+        browseUrl != null -> append("Memory snapshot: ").append(browseUrl).append('\n')
+        snapshot != null -> append("Memory snapshot: upload the revealed file to ").append(UPLOADS_URL).append(" and paste the link here.\n")
+        else -> append("Memory snapshot: capture was unavailable.\n")
       }
     }
     return "$YOUTRACK_NEW_ISSUE_URL?project=IJPL&summary=${encode(summary)}&description=${encode(description)}"
