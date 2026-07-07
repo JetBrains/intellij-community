@@ -284,6 +284,32 @@ class GradleModelControllerTest(val isResilientSyncEnabled: Boolean) {
   }
 
   @Test
+  fun `suppressed model fetch request suppresses all failures`() {
+    val rootProject = MockGradleProject("root")
+    val subProject = MockGradleProject("sub-project", rootProject)
+    val projectModels = listOf(rootProject, subProject)
+    val buildModel = MockGradleBuild(rootProject, projectModels)
+
+    val buildController = TestBuildController().apply {
+      registerModelFailure(rootProject, TestModel::class.java, TestModelFetchException())
+    }
+    val modelConsumer = TestModelConsumer()
+
+    GradleModelControllerImpl(buildController)
+      .fetchRequest(listOf(buildModel), TestModel::class.java)
+      .suppressFailures()
+      .execute(modelConsumer)
+
+    buildController.assertRunActionCounts(emptyList())
+    buildController.assertModelRequests(projectModels.map {
+      TestModelRequest(it, TestModel::class.java)
+    })
+
+    modelConsumer.assertBuildModels(emptyList())
+    modelConsumer.assertProjectModels(emptyList())
+  }
+
+  @Test
   fun `resilient model fetch api propagates project directory as target path in failure result`() {
     val projectDirectory = File("root-dir")
     val rootProject = MockGradleProject("root", projectDirectory = projectDirectory)
