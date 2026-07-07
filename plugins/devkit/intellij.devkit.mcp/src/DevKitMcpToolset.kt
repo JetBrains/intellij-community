@@ -19,6 +19,7 @@ import com.intellij.psi.SmartPointerManager
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
+import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisConfig
 import org.jetbrains.idea.devkit.threadingModelHelper.ConstraintType
 import org.jetbrains.idea.devkit.threadingModelHelper.ExecutionPath
@@ -34,6 +35,10 @@ import kotlin.time.Duration.Companion.milliseconds
 private const val DEFAULT_SPLIT_MODE_COMPATIBILITY_ANALYSIS_TIMEOUT_MILLISECONDS: Int = 5 * 60 * 1000
 
 class DevKitMcpToolset : McpToolset {
+  override fun displayName(): String = DevKitBundle.message("toolset.display.name.devkit")
+
+  override fun displayDescription(toolName: String): String? = DevKitBundle.message("tool.description.$toolName")
+
   @McpTool
   @McpDescription(
     """
