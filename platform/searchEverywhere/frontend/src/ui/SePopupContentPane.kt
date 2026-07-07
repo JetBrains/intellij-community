@@ -624,6 +624,8 @@ class SePopupContentPane(
   @RequiresEdt
   private suspend fun elementsSelected(indexes: IntArray, modifiers: Int) {
     ThreadingAssertions.assertEventDispatchThread()
+    if (indexes.isEmpty() || indexes.max() >= resultListModel.size) return
+
     var nonItemDataCount = 0
 
     // Calculate items with indexes considering some non-item rows on top (for example, notification row).
