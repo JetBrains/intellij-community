@@ -36,6 +36,30 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
   }
 
   @Nested
+  inner class Validation {
+    @Test
+    fun `bare TypeForm requires a type argument`() = test("""
+      from typing_extensions import TypeForm
+
+      def func(x: TypeForm): ... # ISSUES *
+      """)
+
+    @Test
+    fun `TypeForm with too many arguments`() = test("""
+      from typing_extensions import TypeForm
+
+      def func(x: TypeForm[int, str]): ... # ISSUES *
+      """)
+
+    @Test
+    fun `TypeForm with a single argument is valid`() = test("""
+      from typing_extensions import TypeForm
+
+      def func(x: TypeForm[int]): ...
+      """)
+  }
+
+  @Nested
   inner class CallableForm {
     @Test
     fun `explicit TypeForm constructor of a class object`() = test("""
