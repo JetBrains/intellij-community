@@ -160,7 +160,6 @@
     "intellij.ml.llm.httpClient",
     "intellij.ml.llm.idea.product.modules",
     "intellij.ml.llm.ideolog",
-    "intellij.ml.llm.ideolog.tests",
     "intellij.ml.llm.inlinePromptDetector",
     "intellij.ml.llm.inlinePromptDetector.tests",
     "intellij.ml.llm.integration.testFramework",
