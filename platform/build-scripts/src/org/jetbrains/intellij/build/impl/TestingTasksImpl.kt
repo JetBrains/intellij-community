@@ -1636,5 +1636,6 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.vcs.github.tests",
   "intellij.vcs.github.tracker.tests",
   "kotlin.gradle.gradle-java.tests",
+  "intellij.yaml.backend.tests",
   "intellij.yaml.tests",
 )
