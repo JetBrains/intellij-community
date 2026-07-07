@@ -37,6 +37,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
 import org.jetbrains.jewel.foundation.search.EmptySpeedSearchMatcher
 import org.jetbrains.jewel.foundation.search.filter
@@ -73,6 +74,8 @@ class SpeedSearchAreaFilteringTest {
     @get:Rule val rule = createComposeRule()
 
     private val testDispatcher = UnconfinedTestDispatcher()
+
+    private var capturedListState: SelectableLazyListState? = null
 
     private val ComposeContentTestRule.onLazyColumn
         get() = onNodeWithTag("LazyColumn")
@@ -209,6 +212,20 @@ class SpeedSearchAreaFilteringTest {
         onLazyColumn.performKeyPress(Key.DirectionUp, rule = this)
         onLazyColumnItem("Angular").assertIsDisplayed().assertIsSelected()
     }
+
+    @Test
+    fun `when the previously selected item is filtered out, the first visible match is selected`() =
+        runFilteringComposeTest {
+            capturedListState!!.selectedKeys = emptySet()
+            waitForIdle()
+
+            // Type "Angular" - two matches, both visible, first one at index 0 of the filtered list.
+            onLazyColumn.performKeyPress("Angular", rule = this)
+
+            // The first match must be selected, never the second one.
+            onLazyColumnItem("Angular").assertIsDisplayed().assertIsSelected()
+            onLazyColumnItem("AngularJS").assertIsDisplayed()
+        }
 
     @Test
     fun `partial match filtering should work correctly`() = runFilteringComposeTest {
@@ -442,6 +459,7 @@ class SpeedSearchAreaFilteringTest {
             val speedSearchState = rememberSpeedSearchState()
             capturedSpeedSearchState = speedSearchState
             val listState = rememberSelectableLazyListState()
+            capturedListState = listState
 
             // Filter the list based on the current matcher - same pattern as showcase
             val filteredItems by remember { derivedStateOf { listEntries.filter(speedSearchState.currentMatcher) } }

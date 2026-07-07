@@ -281,6 +281,22 @@ internal class SpeedSearchableLazyColumnScopeImpl(
     }
 }
 
+/**
+ * Keeps the list selection in sync with the speed-search matches.
+ *
+ * Whenever [SpeedSearchState.matchingIndexes] changes while the search is active, the selection is decided as follows:
+ * 1. If a currently selected item still matches, keep it selected (scrolling to it if it is offscreen).
+ * 2. Otherwise, if a selection exists, select the visible match closest to it.
+ * 3. Otherwise, select the topmost visible match.
+ * 4. If no match is visible, select the first match after the viewport.
+ * 5. Failing that, select the first match before the viewport, i.e., the first match from the top of the list.
+ *
+ * Steps 3–5 amount to a single rule: a forward scan starting at the top of the viewport that wraps around to the top of
+ * the list. This deliberately preserves the user's rough position instead of always jumping to the first match, and
+ * mirrors Swing's `SpeedSearchBase.findElement` (forward from the current position, wrap to the top — including
+ * wrapping to the *first* match from the top rather than the nearest one above) rather than `ListWithFilter`'s
+ * always-select-row-0 behavior.
+ */
 @Composable
 internal fun SpeedSearchableLazyColumnScrollEffect(
     selectableLazyListState: SelectableLazyListState,
@@ -345,8 +361,9 @@ internal fun SpeedSearchableLazyColumnScrollEffect(
                     return@combine
                 }
 
-                // If any of the visible items match the filter, just select the one closest to any of the selected
-                // items
+                // If any of the visible items match the filter, select the one closest to any of the currently
+                // selected items. When there is no selection left to anchor to (e.g. the previously selected item
+                // was filtered out), fall back to the first visible match so the first result is always selected.
                 val indexOfVisibleMatches =
                     visibleItemIndexes.filter { indexesMatchingSearchText.binarySearch(it) >= 0 }
 
@@ -358,7 +375,7 @@ internal fun SpeedSearchableLazyColumnScrollEffect(
                                 ?.let { visibleMatchIndex to it }
                         }
                         .minByOrNull { (it.first - it.second).absoluteValue }
-                        ?.first
+                        ?.first ?: indexOfVisibleMatches.firstOrNull()
 
                 if (bestVisibleMatch != null) {
                     selectableLazyListState.selectedKeys = setOfNotNull(keyValues.getOrNull(bestVisibleMatch))
