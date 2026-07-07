@@ -4,9 +4,12 @@
 package org.jetbrains.intellij.build.bazel
 
 import com.intellij.openapi.util.JDOMUtil
+import kotlinx.coroutines.runBlocking
 import org.jdom.Namespace
+import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import java.io.IOException
 import java.io.InputStream
 import java.net.URI
 import java.net.http.HttpClient
@@ -32,7 +35,7 @@ internal data class CacheEntry(
 /**
  * @param isPrivate is set according to a heuristic, see [org.jetbrains.intellij.build.bazel.loadJarRepositories]
  */
-internal data class JarRepository(val url: String, val isPrivate: Boolean) {
+internal data class JarRepository(val id: String, val url: String, val isPrivate: Boolean) {
   init {
     check(!url.endsWith("/")) {
       "Repository URL must not end with '/': $url"
@@ -40,6 +43,36 @@ internal data class JarRepository(val url: String, val isPrivate: Boolean) {
   }
 
   val urlWithSlash = "$url/"
+}
+
+/** Thrown for transient HTTP responses (5xx / 429) so [retryWithExponentialBackOff] retries the request. */
+private class RetryableHttpException(message: String) : RuntimeException(message)
+
+/**
+ * Pinning of Maven artifacts to a specific repository (by [JarRepository.id]), so the generator
+ * queries only that repository instead of probing every entry in `.idea/jarRepositories.xml`.
+ *
+ * Keys are matched against `groupId` / `groupId.<subgroup>` (a group prefix) or an exact `group:artifact`
+ * coordinate; the longest matching key wins.
+ */
+internal class RepositoryPins(private val keyToRepoId: Map<String, String>) {
+  fun repoIdFor(groupId: String, artifactId: String): String? {
+    val groupArtifact = "$groupId:$artifactId"
+    var best: Map.Entry<String, String>? = null
+    for (entry in keyToRepoId) {
+      val key = entry.key
+      val matches = if (key.contains(':')) groupArtifact == key
+      else groupId == key || groupId.startsWith("$key.")
+      if (matches && (best == null || key.length > best.key.length)) {
+        best = entry
+      }
+    }
+    return best?.value
+  }
+
+  companion object {
+    val EMPTY: RepositoryPins = RepositoryPins(emptyMap())
+  }
 }
 
 private fun getAuthFromSystemProperties(): Pair<String, String>? {
@@ -185,7 +218,11 @@ internal fun readModules(modulesBazel: List<Path>, repositories: List<JarReposit
   return map
 }
 
-internal class UrlCache(val modulesBazel: List<Path>, val repositories: List<JarRepository>) {
+internal class UrlCache(
+  val modulesBazel: List<Path>,
+  val repositories: List<JarRepository>,
+  val pins: RepositoryPins = RepositoryPins.EMPTY,
+) {
   private val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build()
   private val usedPaths = mutableSetOf<String>()
 
@@ -213,10 +250,25 @@ internal class UrlCache(val modulesBazel: List<Path>, val repositories: List<Jar
       .uri(URI.create(url))
       .method("HEAD", HttpRequest.BodyPublishers.noBody())
     addAuthIfNeeded(repo, requestBuilder)
+    val request = requestBuilder.build()
 
-    val response = httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.discarding())
-      ?.followRedirectsIfNeeded()
-    val statusCode = response?.statusCode()
+    // A transient error (5xx / 429 / IOException) that is still there after all the retries is an error.
+    // The artifact has one pinned repository, so there is no other repository to probe.
+    @Suppress("RAW_RUN_BLOCKING")
+    val statusCode = runBlocking {
+      retryWithExponentialBackOff(
+        initialDelayMs = 1_000,
+        isRetryAllowed = { it is RetryableHttpException || it is IOException },
+      ) {
+        val response = httpClient.send(request, HttpResponse.BodyHandlers.discarding()).followRedirectsIfNeeded()
+        val code = response.statusCode()
+        if (code == 429 || code / 100 == 5) {
+          throw RetryableHttpException("Got HTTP $code for $url")
+        }
+        code
+      }
+    }
+
     if (statusCode == 401) {
       throw IllegalStateException(buildString {
         append("Not authorized: $url")
@@ -239,15 +291,27 @@ internal class UrlCache(val modulesBazel: List<Path>, val repositories: List<Jar
       .uri(URI.create(url))
       .GET()
     addAuthIfNeeded(repo, requestBuilder)
+    val request = requestBuilder.build()
 
-    val response = httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream())
-      .followRedirectsIfNeeded()
-    if (response.statusCode() != 200) {
-      val body = response.body().use { it.readAllBytes() }.decodeToString()
-      error("Cannot download $url: ${response.statusCode()}\n$body")
+    @Suppress("RAW_RUN_BLOCKING")
+    return runBlocking {
+      retryWithExponentialBackOff(
+        initialDelayMs = 1_000,
+        isRetryAllowed = { it is RetryableHttpException || it is IOException },
+      ) {
+        val response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream()).followRedirectsIfNeeded()
+        val code = response.statusCode()
+        if (code == 429 || code / 100 == 5) {
+          response.body().use { it.readAllBytes() }
+          throw RetryableHttpException("Got HTTP $code for $url")
+        }
+        if (code != 200) {
+          val body = response.body().use { it.readAllBytes() }.decodeToString()
+          error("Cannot download $url: $code\n$body")
+        }
+        response.body().sha256()
+      }
     }
-
-    return response.body().sha256()
   }
 
   private inline fun <reified T> HttpResponse<T>.followRedirectsIfNeeded(maxRedirects: Int = 5): HttpResponse<T> {

@@ -89,6 +89,7 @@ internal class JpsModuleToBazel {
 
       val project = loadJpsProject(projectDir, communityRoot, m2Repo)
       val jarRepositories = loadJarRepositories(projectDir)
+      val repositoryPins = loadRepositoryPins(communityRoot, jarRepositories)
 
       val kotlincDefaults = parseKotlincProjectDefaults(communityRoot)
       generateCompilerOptionsBzl(communityRoot, kotlincDefaults)
@@ -98,7 +99,7 @@ internal class JpsModuleToBazel {
         communityRoot.resolve("lib/MODULE.bazel"),
       )
 
-      val urlCache = UrlCache(modulesBazel, jarRepositories)
+      val urlCache = UrlCache(modulesBazel, jarRepositories, repositoryPins)
 
       val generator = BazelBuildFileGenerator(
         ultimateRoot = ultimateRoot,
@@ -544,8 +545,46 @@ internal fun loadJarRepositories(projectDir: Path): List<JarRepository> {
   val jarRepositoriesXml = JDOMUtil.load(projectDir.resolve(".idea/jarRepositories.xml"))
   val component = jarRepositoriesXml.getChildren("component").single()
   return component.getChildren("remote-repository").map { element ->
-    JarRepository(url = getOptionValue(element, "url"), isPrivate = getOptionValue(element, "id").contains("private"))
+    val id = getOptionValue(element, "id")
+    JarRepository(id = id, url = getOptionValue(element, "url"), isPrivate = id.contains("private"))
   }
+}
+
+/**
+ * Loads the per-library repository pins from `community/platform/build-scripts/bazel/repository-pins.txt`.
+ * Each non-comment line is `<maven group prefix or group:artifact>  <repository id>`, where the id refers to a
+ * `<remote-repository>` in `.idea/jarRepositories.xml`. The generator resolves an artifact against only its
+ * pinned repository. It does not probe the other repositories. Every artifact must have a pin.
+ *
+ * A synthetic project tree, for example a test project, has no such file. Then there are no pins, and the
+ * resolution of an artifact that is not in `lib/MODULE.bazel` fails with a message that names this file.
+ */
+internal fun loadRepositoryPins(communityRoot: Path, jarRepositories: List<JarRepository>): RepositoryPins {
+  val file = communityRoot.resolve("platform/build-scripts/bazel/repository-pins.txt")
+  if (!file.isRegularFile()) {
+    return RepositoryPins.EMPTY
+  }
+
+  val knownIds = jarRepositories.mapTo(HashSet()) { it.id }
+  val map = HashMap<String, String>()
+  for ((index, rawLine) in file.readText().lines().withIndex()) {
+    val line = rawLine.substringBefore('#').trim()
+    if (line.isEmpty()) {
+      continue
+    }
+    val parts = line.split(Regex("\\s+"))
+    check(parts.size == 2) {
+      "repository-pins.txt:${index + 1}: expected '<group-prefix-or-group:artifact> <repository-id>', got: $rawLine"
+    }
+    val (key, repoId) = parts
+    check(repoId in knownIds) {
+      "repository-pins.txt:${index + 1}: unknown repository id '$repoId'. Known ids: ${knownIds.sorted()}"
+    }
+    check(map.put(key, repoId) == null) {
+      "repository-pins.txt:${index + 1}: duplicate key '$key'"
+    }
+  }
+  return RepositoryPins(map)
 }
 
 internal fun getOptionValue(element: Element, key: String): String {

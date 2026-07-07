@@ -71,18 +71,29 @@ private fun getUrlAndSha256(jar: MavenFileDescription, jarRepositories: List<Jar
   val entry = urlCache.getEntry(jarPath)
   if (entry == null) {
     println("Resolving: $jarPath")
-    for (repo in jarRepositories) {
-      val url = "${repo.url}/${jarPath}"
-      if (urlCache.checkUrl(url, repo)) {
-        val hash = urlCache.calculateHash(url, repo)
-        check(jar.sha256checksum == null || hash == jar.sha256checksum) {
-          "Hash mismatch: got ${jar.sha256checksum} from .idea/libraries, but ${hash} from downloading $url for ${jar.path}"
-        }
-
-        return urlCache.putUrl(jarPath = jarPath, url = url, hash = hash)
+    // The artifact is pinned to one repository, so query only that repository instead of probing all of them.
+    val pinnedRepoId = urlCache.pins.repoIdFor(jar.mavenCoordinates.groupId, jar.mavenCoordinates.artifactId)
+                       ?: error(
+                         "${jar.mavenCoordinates} has no repository pin (jarPath=$jarPath). " +
+                         "Add a '${jar.mavenCoordinates.groupId}' or " +
+                         "'${jar.mavenCoordinates.groupId}:${jar.mavenCoordinates.artifactId}' line to " +
+                         "community/platform/build-scripts/bazel/repository-pins.txt"
+                       )
+    val repo = jarRepositories.singleOrNull { it.id == pinnedRepoId }
+               ?: error(
+                 "${jar.mavenCoordinates} is pinned to repository id '$pinnedRepoId', " +
+                 "which is not present in .idea/jarRepositories.xml"
+               )
+    val url = "${repo.url}/${jarPath}"
+    if (urlCache.checkUrl(url, repo)) {
+      val hash = urlCache.calculateHash(url, repo)
+      check(jar.sha256checksum == null || hash == jar.sha256checksum) {
+        "Hash mismatch: got ${jar.sha256checksum} from .idea/libraries, but ${hash} from downloading $url for ${jar.path}"
       }
+
+      return urlCache.putUrl(jarPath = jarPath, url = url, hash = hash)
     }
-    error("Cannot find $jar in $jarRepositories (jarPath=$jarPath)")
+    error("Cannot find $jar in its pinned repository '$pinnedRepoId' (jarPath=$jarPath)")
   }
   check(jar.sha256checksum == null || entry.sha256 == jar.sha256checksum) {
     "Hash mismatch: got ${jar.sha256checksum} from .idea/libraries, but ${entry.sha256} for ${jar.path} from lib/MODULE.bazel or community/lib/MODULE.bazel"

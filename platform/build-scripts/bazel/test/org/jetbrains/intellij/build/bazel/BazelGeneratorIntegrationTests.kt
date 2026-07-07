@@ -216,7 +216,7 @@ class BazelGeneratorIntegrationTests {
       allLibraries = listOf(library),
       urlCache = UrlCache(
         modulesBazel = listOf(libModule),
-        repositories = listOf(JarRepository("https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies", isPrivate = true)),
+        repositories = listOf(JarRepository(id = "intellij-dependencies", url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies", isPrivate = true)),
       ),
       m2Repo = m2Repo,
     )
