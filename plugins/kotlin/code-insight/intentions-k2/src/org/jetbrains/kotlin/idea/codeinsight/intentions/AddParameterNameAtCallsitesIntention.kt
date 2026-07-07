@@ -13,13 +13,15 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
-import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
-import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtNamed
-import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 internal class AddParameterNameAtCallsitesIntention : PsiBasedModCommandAction<KtParameter>(KtParameter::class.java) {
     override fun getFamilyName(): @IntentionFamilyName String {
@@ -33,7 +35,7 @@ internal class AddParameterNameAtCallsitesIntention : PsiBasedModCommandAction<K
     @OptIn(KaExperimentalApi::class)
     override fun perform(context: ActionContext, element: KtParameter): ModCommand {
         val parameterName = element.nameAsName ?: return ModCommand.nop()
-        val function = element.findParentOfType<KtNamedFunction>() ?: return ModCommand.nop()
+        val function = element.findParentOfType<KtFunction>() ?: return ModCommand.nop()
         val references = ConvertFunctionToPropertyAndViceVersaUtils.findReferencesToElement(function) ?: return ModCommand.nop()
 
         // One reference could contain a lambda argument that contains another reference.
@@ -49,8 +51,8 @@ internal class AddParameterNameAtCallsitesIntention : PsiBasedModCommandAction<K
             val lambdaArguments = mutableListOf<KtLambdaArgument>()
 
             for (reference in sortedReferences) {
-                if (reference !is KtSimpleNameReference) continue
-                val callExpression = reference.element.parent as? KtCallExpression ?: continue
+                if (reference.element !is KtElement) continue
+                val callExpression = reference.element.parentsWithSelf.firstIsInstanceOrNull<KtCallElement>() ?: continue
                 if (!callExpression.isValid) continue
                 analyze(callExpression) {
                     val resolveCall = callExpression.resolveCall() ?: return@analyze
