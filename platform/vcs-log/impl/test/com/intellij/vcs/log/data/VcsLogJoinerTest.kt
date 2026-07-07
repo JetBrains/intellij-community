@@ -40,6 +40,7 @@ class VcsLogJoinerTest {
     private lateinit var oldRefs: List<String>
     private lateinit var newRefs: List<String>
     private lateinit var expected: String
+    private var expectedWithParents: String? = null
 
     private fun build(f: StringArrayBuilder.() -> Unit): List<String> {
       val stringArrayBuilder = StringArrayBuilder()
@@ -67,6 +68,10 @@ class VcsLogJoinerTest {
       expected = build(f).joinToString(separator = "\n")
     }
 
+    fun expectedWithParents(f: StringArrayBuilder.() -> Unit) {
+      expectedWithParents = build(f).joinToString(separator = "\n")
+    }
+
     fun run() {
       val vcsFullLog = TimedCommitParser.log(fullLog)
       val vcsRecentCommits = TimedCommitParser.log(recentCommits)
@@ -76,6 +81,14 @@ class VcsLogJoinerTest {
       val result = VcsLogJoiner<Hash, TimedVcsCommit>().addCommits(vcsFullLog, vcsOldRefs, vcsRecentCommits, vcsNewRefs).getFirst()!!
       val actual = result.joinToString(separator = "\n") { it.id.asString() }
       assertEquals(expected, actual)
+
+      expectedWithParents?.let { expectedParents ->
+        val actualWithParents = result.joinToString(separator = "\n") { commit ->
+          val parents = commit.parents.joinToString(" ") { it.asString() }
+          if (parents.isEmpty()) commit.id.asString() else "${commit.id.asString()}|-${parents}"
+        }
+        assertEquals(expectedParents, actualWithParents)
+      }
     }
   }
 
@@ -513,6 +526,146 @@ class VcsLogJoinerTest {
       }
       expected {
 
+      }
+    }
+  }
+
+  @Test
+  fun staleParentPropagation() {
+    // Scenario from IJPL-248963: commit C's parents changed from [B, D] to [B].
+    // D had a ref "obsolete" which is now gone. D should be removed (red).
+    // Bug: walking savedLog, C is green → old parents {B, D} are propagated as green
+    //   → D becomes green → D survives instead of being removed.
+    runTest {
+      fullLog {
+        +"4|-c|-b d"
+        +"3|-b|-a"
+        +"2|-d|-a"
+        +"1|-a|-"
+      }
+      recentCommits {
+        // C now only has parent B (D was removed)
+        +"4|-c|-b"
+      }
+      oldRefs {
+        +"c"
+        +"d"
+      }
+      newRefs {
+        // ref to D is gone
+        +"c"
+      }
+      expected {
+        +"c"
+        +"b"
+        +"a"
+      }
+    }
+  }
+
+  @Test
+  fun staleParentPropagation_parentsUpdated() {
+    // Verify that the returned commit C has updated parents from firstBlock,
+    // not stale parents from savedLog.
+    runTest {
+      fullLog {
+        +"4|-c|-b d"
+        +"3|-b|-a"
+        +"2|-d|-a"
+        +"1|-a|-"
+      }
+      recentCommits {
+        +"4|-c|-b"
+      }
+      oldRefs {
+        +"c"
+        +"d"
+      }
+      newRefs {
+        +"c"
+      }
+      expected {
+        +"c"
+        +"b"
+        +"a"
+      }
+      expectedWithParents {
+        // C should have parent [b] only, not [b, d]
+        +"c|-b"
+        +"b|-a"
+        +"a"
+      }
+    }
+  }
+
+  @Test
+  fun staleParentPropagation_multipleChangedParents() {
+    // Multiple commits have changed parents. Verify both are updated.
+    runTest {
+      fullLog {
+        +"5|-e|-c d"
+        +"4|-c|-b d"
+        +"3|-b|-a"
+        +"2|-d|-a"
+        +"1|-a|-"
+      }
+      recentCommits {
+        // E now only has parent C, C now only has parent B (D removed from both)
+        +"5|-e|-c"
+        +"4|-c|-b"
+      }
+      oldRefs {
+        +"e"
+        +"d"
+      }
+      newRefs {
+        +"e"
+      }
+      expected {
+        +"e"
+        +"c"
+        +"b"
+        +"a"
+      }
+      expectedWithParents {
+        +"e|-c"
+        +"c|-b"
+        +"b|-a"
+        +"a"
+      }
+    }
+  }
+
+  @Test
+  fun parentReplacedSameCommitHash() {
+    // A→B→C becomes A→B'→C: commit A keeps the same hash but its parent
+    // changed from B to B'. B is gone, B' is new.
+    // A should connect to B' in the result, old B should be removed.
+    runTest {
+      fullLog {
+        +"3|-a|-b"
+        +"2|-b|-c"
+        +"1|-c|-"
+      }
+      recentCommits {
+        +"3|-a|-b2"
+        +"2|-b2|-c"
+      }
+      oldRefs {
+        +"a"
+      }
+      newRefs {
+        +"a"
+      }
+      expected {
+        +"a"
+        +"b2"
+        +"c"
+      }
+      expectedWithParents {
+        +"a|-b2"
+        +"b2|-c"
+        +"c"
       }
     }
   }
