@@ -242,14 +242,23 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
           // Re-install the environment data context so that macro expansion works (PY-88858).
           try (AccessToken ignored2 = ExecutionManagerImpl.Companion.withEnvironmentDataContext(dataContext)) {
             try {
-              ServerSocket serverSocket = new ServerSocket(0, 0, InetAddress.getLoopbackAddress());
+              ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
+              PythonDebuggerClientModeTargetedCommandLineBuilder debuggerScriptCommandLineBuilder = null;
               int serverLocalPort = serverSocket.getLocalPort();
               TargetEnvironment.LocalPortBinding localPortBinding =
                 new TargetEnvironment.LocalPortBinding(serverLocalPort, null);
-              var debuggerScriptCommandLineBuilder = new PythonDebuggerClientModeTargetedCommandLineBuilder(
-                environment.getProject(), pyState, profile, localPortBinding, serverSocket);
-              ExecutionResult result = pyState.execute(environment.getExecutor(), debuggerScriptCommandLineBuilder);
-              return Pair.create(serverSocket, result);
+              try {
+                debuggerScriptCommandLineBuilder = new PythonDebuggerClientModeTargetedCommandLineBuilder(
+                  environment.getProject(), pyState, profile, localPortBinding, serverSocket);
+                ExecutionResult result = pyState.execute(environment.getExecutor(), debuggerScriptCommandLineBuilder);
+                return Pair.create(debuggerScriptCommandLineBuilder.getServerSocketForDebugging(), result);
+              }
+              catch (ExecutionException | RuntimeException err) {
+                closeServerSocket(debuggerScriptCommandLineBuilder != null
+                                  ? debuggerScriptCommandLineBuilder.getServerSocketForDebugging()
+                                  : serverSocket, err);
+                throw err;
+              }
             }
             catch (Exception err) {
               throw new RuntimeException(err.getMessage(), err);
@@ -272,6 +281,54 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     }
     catch (IOException e) {
       throw new RuntimeException(PyBundle.message("runcfg.error.message.failed.to.find.free.socket.port"), e);
+    }
+  }
+
+  /**
+   * Ensures the debug server socket is bound to the address resolved by the target environment's port forwarding.
+   * If the resolved host matches the existing socket's bind address (treating all loopback addresses as equivalent),
+   * the original socket is reused. Otherwise, a new socket is created on the resolved address, and the original is closed.
+   *
+   * @return the original {@code serverSocket} if its address already matches, or a newly created socket bound to the resolved address
+   */
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull ServerSocket createServerSocketForDebugging(@NotNull TargetEnvironment environment,
+                                                              @NotNull TargetEnvironment.LocalPortBinding ideServerPortBinding,
+                                                              @NotNull ServerSocket serverSocket)
+    throws IOException {
+    ResolvedPortBinding localPortBinding = environment.getLocalPortBindings().get(ideServerPortBinding);
+    int port = ideServerPortBinding.getLocal();
+    InetAddress hostInetAddress;
+    if (localPortBinding != null) {
+      hostInetAddress = InetAddress.getByName(localPortBinding.getLocalEndpoint().getHost());
+    }
+    else {
+      LOG.error("The resolution of the local port binding for \"" + port + "\" port cannot be found in the prepared environment" +
+                ", falling back to \"localhost\" for the server socket binding on the local machine");
+      hostInetAddress = InetAddress.getLoopbackAddress();
+    }
+    LOG.debug("Creating server socket for debugging at " + hostInetAddress + ":" + port);
+    if (hostInetAddress.equals(serverSocket.getInetAddress())
+        || (hostInetAddress.isLoopbackAddress() && serverSocket.getInetAddress().isLoopbackAddress())) {
+      return serverSocket;
+    }
+    var newSocket = new ServerSocket(port, 0, hostInetAddress);
+    try {
+      serverSocket.close();
+    }
+    catch (IOException e) {
+      LOG.warn("Failed to close the original server socket", e);
+    }
+    return newSocket;
+  }
+
+  private static void closeServerSocket(@NotNull ServerSocket serverSocket, @NotNull Throwable cause) {
+    try {
+      serverSocket.close();
+    }
+    catch (IOException e) {
+      cause.addSuppressed(e);
     }
   }
 
@@ -1122,60 +1179,47 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   private final class PythonDebuggerClientModeTargetedCommandLineBuilder extends PythonDebuggerTargetedCommandLineBuilder {
     private final @NotNull TargetEnvironment.LocalPortBinding myLocalPortBinding;
 
-    private volatile @Nullable ServerSocket myServerSocketForDebugging;
+    private volatile @NotNull ServerSocket myServerSocketForDebugging;
 
     private PythonDebuggerClientModeTargetedCommandLineBuilder(@NotNull Project project,
                                                                @NotNull PythonCommandLineState pyState,
                                                                @NotNull RunProfile profile,
                                                                @NotNull TargetEnvironment.LocalPortBinding localPortBinding,
-                                                               @Nullable ServerSocket preCreatedServerSocket) {
+                                                               @NotNull ServerSocket serverSocketForDebugging) {
       super(project, pyState, profile);
       myLocalPortBinding = localPortBinding;
-      myServerSocketForDebugging = preCreatedServerSocket;
+      myServerSocketForDebugging = serverSocketForDebugging;
     }
 
     @Override
     protected @NotNull Function<@Nullable TargetEnvironment, HostPort> createPortBinding(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest) {
       helpersAwareTargetRequest.getTargetEnvironmentRequest().getLocalPortBindings().add(myLocalPortBinding);
-      if (myServerSocketForDebugging == null) {
-        helpersAwareTargetRequest.getTargetEnvironmentRequest().onEnvironmentPrepared((environment, indicator) -> {
-          try {
-            myServerSocketForDebugging = createServerSocketForDebugging(environment, myLocalPortBinding);
-          }
-          catch (IOException e) {
-            LOG.error("Unable to create server socket for debugging", e);
-          }
-          return Unit.INSTANCE;
-        });
-      }
+      helpersAwareTargetRequest.getTargetEnvironmentRequest().onEnvironmentPrepared((environment, _) -> {
+        try {
+          myServerSocketForDebugging = createServerSocketForDebugging(environment, myLocalPortBinding, myServerSocketForDebugging);
+        }
+        catch (IOException e) {
+          throw new RuntimeException("Unable to create server socket for debugging", e);
+        }
+        return Unit.INSTANCE;
+      });
       helpersAwareTargetRequest.getTargetEnvironmentRequest().getLocalPortBindings().add(myLocalPortBinding);
       return TargetEnvironmentFunctions.getTargetEnvironmentValue(myLocalPortBinding);
     }
 
-    private static @NotNull ServerSocket createServerSocketForDebugging(@NotNull TargetEnvironment environment,
-                                                                        @NotNull TargetEnvironment.LocalPortBinding ideServerPortBinding)
+    private static @NotNull ServerSocket  createServerSocketForDebugging(@NotNull TargetEnvironment environment,
+                                                                        @NotNull TargetEnvironment.LocalPortBinding ideServerPortBinding,
+                                                                        @NotNull ServerSocket serverSocket)
       throws IOException {
-      ResolvedPortBinding localPortBinding = environment.getLocalPortBindings().get(ideServerPortBinding);
-      int port = ideServerPortBinding.getLocal();
-      InetAddress hostInetAddress;
-      if (localPortBinding != null) {
-        hostInetAddress = InetAddress.getByName(localPortBinding.getLocalEndpoint().getHost());
-      }
-      else {
-        LOG.error("The resolution of the local port binding for \"" + port + "\" port cannot be found in the prepared environment" +
-                  ", falling back to \"localhost\" for the server socket binding on the local machine");
-        hostInetAddress = InetAddress.getLoopbackAddress();
-      }
-      LOG.debug("Creating server socket for debugging at " + hostInetAddress + ":" + port);
-      return new ServerSocket(port, 0, hostInetAddress);
+      return PyDebugRunner.createServerSocketForDebugging(environment, ideServerPortBinding, serverSocket);
     }
 
     /**
-     * Returns the server socket allocated after creation of the environment and before starting the process.
+     * Returns the server socket reserved before creation of the environment and adjusted before starting the process.
      *
-     * @return the allocated server socket or {@code null} if the allocation failed
+     * @return the allocated server socket
      */
-    public @Nullable ServerSocket getServerSocketForDebugging() {
+    public @NotNull ServerSocket getServerSocketForDebugging() {
       return myServerSocketForDebugging;
     }
   }
