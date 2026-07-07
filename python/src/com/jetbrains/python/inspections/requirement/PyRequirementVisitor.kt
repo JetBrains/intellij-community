@@ -33,10 +33,9 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class PyRequirementVisitor(
   holder: ProblemsHolder?,
-  ignoredPackages: Collection<String>,
+  val ignoredPackages: Collection<PyPackageName>,
   context: TypeEvalContext,
 ) : PyInspectionVisitor(holder, context) {
-  private val ignoredPyPackageNames: Set<PyPackageName> = ignoredPackages.mapTo(mutableSetOf()) { PyPackageName.from(it) }
 
   override fun visitPyFromImportStatement(node: PyFromImportStatement) {
     val importSource = node.importSource ?: return
@@ -65,7 +64,7 @@ class PyRequirementVisitor(
     val manager = PythonPackageManager.forSdk(module.project, sdk)
     val declared = manager.listDeclaredPackagesAsync() ?: return
 
-    val installedNotDeclaredChecker = InstalledButNotDeclaredChecker(ignoredPyPackageNames, declared)
+    val installedNotDeclaredChecker = InstalledButNotDeclaredChecker(ignoredPackages, declared)
     val packageName = installedNotDeclaredChecker.getUndeclaredPackageName(importedPyModule = importedPyModule) ?: return
 
 
@@ -94,7 +93,7 @@ class PyRequirementVisitor(
     val sdk = PythonSdkUtil.findPythonSdk(module) ?: return
     val manager = PythonPackageManager.forSdk(module.project, sdk)
 
-    val declaredNotInstalledChecker = DeclaredButNotInstalledPackagesChecker(ignoredPyPackageNames)
+    val declaredNotInstalledChecker = DeclaredButNotInstalledPackagesChecker(ignoredPackages)
     val unsatisfied = declaredNotInstalledChecker.findUnsatisfiedRequirements(module, manager)
     if (unsatisfied.isEmpty())
       return

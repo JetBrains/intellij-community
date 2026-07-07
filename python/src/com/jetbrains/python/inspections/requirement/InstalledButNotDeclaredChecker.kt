@@ -32,8 +32,8 @@ internal class InstalledButNotDeclaredChecker(
     return packageName
   }
 
-  private fun isIgnoredOrStandardPackage(packageName: PyPackageName, rawModuleName: String): Boolean =
+  private fun isIgnoredOrStandardPackage(packageName: PyPackageName, importedPyModule: String): Boolean =
     ignoredPackages.contains(packageName) ||
-    packageName.name == PyPackageUtil.SETUPTOOLS ||
-    PyStdlibUtil.getPackages()?.contains(rawModuleName) == true
+    importedPyModule == PyPackageUtil.SETUPTOOLS ||
+    PyStdlibUtil.getPackages()?.contains(importedPyModule) == true
 }
