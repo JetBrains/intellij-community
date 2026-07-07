@@ -2,7 +2,7 @@
 name: fix-project-leak-from-tc-report
 description: >-
   End-to-end workflow to fix a `_LastInSuiteTest.testProjectLeak` failure reported by TeamCity.
-  Given a TC ashcode / leak diagnostic, this skill drives the full cycle — identify the culprit test,
+  Given a TC hashcode / leak diagnostic, this skill drives the full cycle — identify the culprit test,
   reproduce the leak locally 10x with `tests.cmd`, analyze every unique retention chain observed,
   apply fixes per chain, and verify by rerunning the leak-hunter until it stops firing.
   Use when the user asks to fix (not just investigate) a project leak surfaced by TC.
@@ -33,7 +33,7 @@ The leaked `Project` name is the strongest signal. In `ProjectRule()` / heavy-pr
 
 If the project name is generic (`light_temp_…`), pick the first non-platform class from the retention chain (`ProjectCodeStyleSettingsManager`, a plugin service, a Mockito mock, …) and search callers/tests referencing it plus the plugin area.
 
-Fallback ordering (in decreasing signal strength): heap Instance line → CI ashcode branch → retention-chain class names → the user.
+Fallback ordering (in decreasing signal strength): heap Instance line → CI hashcode branch → retention-chain class names → the user.
 
 ## Phase 2 — reproduce locally 10 times
 
