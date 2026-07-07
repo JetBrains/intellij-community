@@ -24,6 +24,10 @@ import kotlin.time.Duration.Companion.milliseconds
 private val logger = logger<TerminalToolset>()
 
 class TerminalToolset : McpToolset {
+  override fun displayName(): String = McpServerBundle.message("toolset.display.name.terminal")
+
+  override fun displayDescription(toolName: String): String? = McpServerBundle.message("tool.description.$toolName")
+
   @McpTool
   @McpDescription("""
         Executes a specified shell command in the IDE's integrated terminal.
