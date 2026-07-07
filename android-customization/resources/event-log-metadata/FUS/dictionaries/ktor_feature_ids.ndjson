@@ -227,6 +227,8 @@ org.gradle/gradle
 org.gradle/gradle.meta                                     
 org.jetbrains/amper                                        
 org.jetbrains/amper.meta                                   
+org.jetbrains/kotlin-toolchain                             
+org.jetbrains/kotlin-toolchain.meta                        
 org.jetbrains/kotlinx-rpc                                  
 org.jetbrains/kotlinx-rpc-grpc                             
 org.jetbrains/kotlinx-rpc-grpc.meta                        
@@ -260,4 +262,4 @@ velocity
 versions/ktorLibs.versions                                 
 versions/libs.versions                                     
 webjars                                                    
-{"blockSize":60,"length":15720,"version":"7166"}
+{"blockSize":60,"length":15840,"version":"7451"}
