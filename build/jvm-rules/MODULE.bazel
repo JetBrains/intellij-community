@@ -353,6 +353,13 @@ http_file(
 )
 
 http_file(
+    name = "kotlin-stdlib-sources_http",
+    downloaded_file_path = "kotlin-stdlib-sources-%s.jar" % _KOTLIN_VERSION,
+    sha256 = "5c4fa84ec945a63453e64bc0141c222ece806a2026c2961fe76b0be483896323",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/%s/kotlin-stdlib-%s-sources.jar" % (_KOTLIN_VERSION, _KOTLIN_VERSION),
+)
+
+http_file(
     name = "kotlin-stdlib-jdk7_http",
     downloaded_file_path = "kotlin-stdlib-jdk7-%s.jar" % _KOTLIN_VERSION,
     sha256 = "557015e95d080addd12e084d83e259d16dba70932c456df857232794903d514a",
