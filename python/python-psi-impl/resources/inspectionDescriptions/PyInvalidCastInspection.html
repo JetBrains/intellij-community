@@ -33,9 +33,10 @@ cast(list[object], int_list)  # ok
 <!-- tooltip end -->
 <p>The inspection relies on static type information; when a type is unknown, no warning is reported.</p>
 
-<p>Use the <b>Ignore variance of generic type arguments</b> option to control whether generic type arguments are taken
-  into account. When enabled (the default), parameterized types are compared by their base class only, so a cast such as
-  <code>cast(list[object], int_list)</code> is allowed. Disable it to also report casts that differ only in their
+<p>Use the <b>Ignore variance of generic type arguments</b> option to control whether the variance of generic type
+  arguments is taken into account. When enabled (the default), the variance is ignored: as long as the corresponding
+  type arguments are in the same inheritance hierarchy, the cast is allowed, so <code>cast(list[object], int_list)</code>
+  is not reported even though <code>list</code> is invariant. Disable it to also report casts that differ only in their
   (invariant) type arguments.</p>
 
 <p>Use the <b>Ignore TypedDict structure (treat a TypedDict as a dict)</b> option to control whether a <code>TypedDict</code>
