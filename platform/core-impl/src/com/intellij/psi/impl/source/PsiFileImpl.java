@@ -215,7 +215,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       return false;
     }
 
+    // todo: make myPossiblyInvalidatedVersioned?
     if (!myPossiblyInvalidated) return true;
+
+    if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+      // we do not allow resurrection for versioned environments
+      return false;
+    }
 
     // synchronized by read-write action
     if (((FileManagerEx)myManager.getFileManager()).evaluateValidity(this)) {
