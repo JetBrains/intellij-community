@@ -1,0 +1,11 @@
+{
+    "@@perfile": {
+        "foo.txt": {
+            "@test.pfslot.data": {
+                "dev": {
+                    "test.pfslot.style": "dev-style"
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,34 @@
+{
+    "test.profiles": [
+        "prod",
+        "dev"
+    ],
+    "test.languages": [
+        "kotlin",
+        "java"
+    ],
+    "test.profile.current": "dev",
+    "test.lang.current": "java",
+    "@test.profile.data": {
+        "prod": {
+            "@test.lang.data": {
+                "kotlin": {
+                    "test.style": "prod-kotlin"
+                },
+                "java": {
+                    "test.style": "prod-java"
+                }
+            }
+        },
+        "dev": {
+            "@test.lang.data": {
+                "kotlin": {
+                    "test.style": "dev-kotlin"
+                },
+                "java": {
+                    "test.style": "dev-java"
+                }
+            }
+        }
+    }
+}

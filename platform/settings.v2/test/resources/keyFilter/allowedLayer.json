@@ -1,0 +1,4 @@
+{
+    "test.filter.exclusive": "allowed",
+    "test.filter.shared": "allowed"
+}

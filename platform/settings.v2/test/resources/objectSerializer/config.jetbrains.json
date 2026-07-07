@@ -1,0 +1,20 @@
+{
+    "test.obj.config": {
+        "name": "prod",
+        "retries": 5000000000,
+        "ratio": null,
+        "primary": {
+            "host": "localhost",
+            "port": null
+        },
+        "aliases": [
+            "a",
+            null,
+            "b"
+        ],
+        "limits": {
+            "cpu": 4,
+            "mem": null
+        }
+    }
+}

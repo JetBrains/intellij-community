@@ -1,0 +1,7 @@
+{
+    "@test.slotops.data": {
+        "dev": {
+            "test.slotops.style": "dev-style"
+        }
+    }
+}

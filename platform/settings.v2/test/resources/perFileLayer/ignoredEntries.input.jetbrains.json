@@ -1,0 +1,14 @@
+{
+    "test.perfile.style": "dir",
+    "@@perfile": {
+        "gone.txt": {
+            "test.perfile.style": "gone"
+        },
+        "sub": {
+            "test.perfile.style": "sub"
+        },
+        "foo.txt": {
+            "test.perfile.style": "foo"
+        }
+    }
+}

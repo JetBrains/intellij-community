@@ -1,0 +1,13 @@
+{
+    "test.robust.listFromScalar": "notalist",
+    "test.robust.scalarFromList": [
+        1,
+        2,
+        3
+    ],
+    "test.robust.goodList": [
+        "a",
+        "b"
+    ],
+    "test.robust.goodScalar": 9
+}

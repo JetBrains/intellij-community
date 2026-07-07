@@ -1,0 +1,15 @@
+{
+    "test.fp.str": "deep",
+    "test.fp.num": 1,
+    "test.fp.flag": true,
+    "test.fp.tags": [
+        "x",
+        null,
+        "y"
+    ],
+    "test.fp.limits": {
+        "a": 1,
+        "n": null
+    },
+    "test.fp.opt": null
+}

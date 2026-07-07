@@ -1,0 +1,12 @@
+{
+    "test.fp.str": "up",
+    "test.fp.num": 2,
+    "test.fp.flag": false,
+    "test.fp.tags": [
+        "z"
+    ],
+    "test.fp.limits": {
+        "b": 2
+    },
+    "test.fp.opt": "up-opt"
+}

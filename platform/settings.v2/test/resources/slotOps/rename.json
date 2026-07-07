@@ -1,0 +1,10 @@
+{
+    "@test.slotops.data": {
+        "prod": {
+            "test.slotops.style": "prod-style"
+        },
+        "dev2": {
+            "test.slotops.style": "dev-style"
+        }
+    }
+}

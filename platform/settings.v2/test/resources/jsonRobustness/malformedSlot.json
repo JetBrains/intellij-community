@@ -1,0 +1,10 @@
+{
+    "test.mm.marker": "landed",
+    "@test.mm.profileData": {
+        "bad": "notamap",
+        "good": {
+            "test.mm.name": "ok",
+            "test.mm.count": 5
+        }
+    }
+}

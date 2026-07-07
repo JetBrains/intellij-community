@@ -1,0 +1,14 @@
+{
+    "test.robust.objWrongFieldType": {
+        "host": "h",
+        "port": "notanumber"
+    },
+    "test.robust.objMissingField": {
+        "host": "h"
+    },
+    "test.robust.objFromScalar": "notanobject",
+    "test.robust.goodObj": {
+        "host": "ok",
+        "port": 8080
+    }
+}

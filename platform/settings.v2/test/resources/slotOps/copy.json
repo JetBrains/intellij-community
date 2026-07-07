@@ -1,0 +1,13 @@
+{
+    "@test.slotops.data": {
+        "dev": {
+            "test.slotops.style": "dev-style"
+        },
+        "prod": {
+            "test.slotops.style": "prod-style"
+        },
+        "stage": {
+            "test.slotops.style": "dev-style"
+        }
+    }
+}

@@ -1,0 +1,8 @@
+{
+    "test.perfile.style": "dir",
+    "@@perfile": {
+        "foo.txt": {
+            "test.perfile.style": "foo"
+        }
+    }
+}

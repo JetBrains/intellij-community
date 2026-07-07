@@ -1,0 +1,9 @@
+{
+    "test.mm.marker": "landed",
+    "@test.mm.profileData": {
+        "default": {
+            "test.mm.name": "good",
+            "test.mm.count": "NaN"
+        }
+    }
+}

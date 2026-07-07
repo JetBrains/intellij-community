@@ -1,0 +1,8 @@
+{
+    "test.robust.strFromNum": 123,
+    "test.robust.intFromStr": "oops",
+    "test.robust.boolFromStr": "yes",
+    "test.robust.goodStr": "ok",
+    "test.robust.goodInt": 5,
+    "test.robust.goodBool": true
+}
