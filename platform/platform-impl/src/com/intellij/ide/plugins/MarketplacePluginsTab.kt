@@ -13,7 +13,6 @@ import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollect
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.plugins.newui.MultiSelectionEventHandler
 import com.intellij.ide.plugins.newui.MyPluginModel
-import com.intellij.ide.plugins.newui.PluginUpdatesService
 import com.intellij.ide.plugins.newui.NoOpPluginsViewCustomizer
 import com.intellij.ide.plugins.newui.PluginDetailsPageComponent
 import com.intellij.ide.plugins.newui.PluginInstallationState
@@ -23,6 +22,7 @@ import com.intellij.ide.plugins.newui.PluginModelFacade
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUiModelAdapter
 import com.intellij.ide.plugins.newui.PluginUpdateSubscription
+import com.intellij.ide.plugins.newui.PluginUpdatesService
 import com.intellij.ide.plugins.newui.PluginsGroup
 import com.intellij.ide.plugins.newui.PluginsGroupComponent
 import com.intellij.ide.plugins.newui.PluginsGroupComponentWithProgress
@@ -73,7 +73,6 @@ import java.util.function.Predicate
 import java.util.function.Supplier
 import javax.swing.JComponent
 
-@ApiStatus.Internal
 internal class MarketplacePluginsTab @RequiresEdt constructor(
   facade: PluginModelFacade,
   scope: CoroutineScope,
@@ -287,12 +286,12 @@ internal class MarketplacePluginsTab @RequiresEdt constructor(
         val allDescriptors = model.customRepositories[host]
         if (allDescriptors != null) {
           val groupName = IdeBundle.message("plugins.configurable.repository.0", host)
-          LOG.info("Marketplace tab: '" + groupName + "' group load started")
+          LOG.debug("Marketplace tab: '$groupName' group load started (custom repository)")
           addGroup(
             groups,
             groupName,
             PluginsGroupType.CUSTOM_REPOSITORY,
-            "/repository:\"" + host + "\"",
+            "/repository:\"$host\"",
             allDescriptors,
             Predicate { group ->
               PluginsGroup.sortByName(group.getModels())
@@ -569,7 +568,7 @@ internal class MarketplacePluginsTab @RequiresEdt constructor(
     installationStates: Map<PluginId, PluginInstallationState>,
   ) {
     val groupName = IdeBundle.message("plugins.configurable.suggested")
-    LOG.info("Marketplace tab: '" + groupName + "' group load started")
+    LOG.debug("Marketplace tab: '$groupName' group load started (suggested)")
 
     for (plugin in plugins) {
       if (plugin.isFromMarketplace) {
@@ -626,7 +625,7 @@ internal class MarketplacePluginsTab @RequiresEdt constructor(
     if (!group.getModels().isEmpty()) {
       groups.add(group)
     }
-    LOG.info("Marketplace tab: '" + name + "' group load finished")
+    LOG.debug("Marketplace tab: '$name' group load finished")
   }
 
   @Throws(IOException::class)
@@ -641,7 +640,7 @@ internal class MarketplacePluginsTab @RequiresEdt constructor(
     installedPluginIds: Map<PluginId, PluginUiModel>,
     installationStates: Map<PluginId, PluginInstallationState>,
   ) {
-    LOG.info("Marketplace tab: '" + name + "' group load started")
+    LOG.debug("Marketplace tab: '$name' group load started (via light descriptor)")
     val searchResult = marketplaceData[query]!!
     val error = searchResult.error
     if (error != null) {
