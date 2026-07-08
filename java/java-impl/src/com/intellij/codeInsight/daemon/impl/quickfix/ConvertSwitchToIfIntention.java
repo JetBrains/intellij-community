@@ -1,10 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -91,7 +92,8 @@ public class ConvertSwitchToIfIntention extends PsiUpdateModCommandAction<PsiSwi
 
   public static boolean isAvailable(@NotNull PsiSwitchStatement switchStatement) {
     final PsiCodeBlock body = switchStatement.getBody();
-    return body != null && !body.isEmpty() && BreakConverter.from(switchStatement) != null && !mayFallThroughNonTerminalDefaultCase(body);
+    return body != null && !body.isEmpty() && BreakConverter.from(switchStatement) != null && !mayFallThroughNonTerminalDefaultCase(body) &&
+           !JavaPsiSwitchUtil.containsRepresentativePrimitive(switchStatement);
   }
 
   private static boolean mayFallThroughNonTerminalDefaultCase(PsiCodeBlock body) {

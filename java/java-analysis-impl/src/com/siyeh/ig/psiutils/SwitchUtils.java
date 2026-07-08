@@ -306,6 +306,7 @@ public final class SwitchUtils {
     }
     PsiPrimitiveType unwrapped = PsiPrimitiveType.getOptionallyUnboxedType(selectorType);
     if (unwrapped != null && isExtendedSwitchSelectorType(unwrapped)) {
+      if (JavaPsiSwitchUtil.isRepresentativePrimitive(o)) return false;
       return unwrapped.equals(valueType);
     }
     return TypeConversionUtil.isAssignable(selectorType, valueType);
