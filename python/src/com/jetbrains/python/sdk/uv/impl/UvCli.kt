@@ -7,6 +7,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.execService.DownloadConfig
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.uv.backend.UV_TOOL
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
@@ -52,7 +53,7 @@ private suspend fun <P : PathHolder> runUv(
     venvPath?.let { put("UV_PROJECT_ENVIRONMENT", it.toString()) }
   }
   val bin = fileSystem.getBinaryToExec(uv, workingDir)
-  val downloadConfig = if (canChangeTomlOrLock) DownloadConfig(relativePaths = listOf("pyproject.toml", "uv.lock")) else null
+  val downloadConfig = if (canChangeTomlOrLock) DownloadConfig(relativePaths = listOf(PY_PROJECT_TOML, "uv.lock")) else null
   return runExecutableWithProgress(bin,
                                    env = env,
                                    timeout = 10.minutes,

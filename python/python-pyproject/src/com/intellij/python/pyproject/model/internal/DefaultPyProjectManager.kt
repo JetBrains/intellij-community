@@ -2,6 +2,7 @@ package com.intellij.python.pyproject.model.internal
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.common.tools.ToolId
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.ProjectStructureInfo
 import com.intellij.python.pyproject.model.spi.PyProjectManager
@@ -28,7 +29,7 @@ internal object DefaultPyProjectManager : PyProjectManager {
     where: Directory,
     name: @NlsSafe String,
   ): PyResult<Unit> {
-    val fileName = where.resolve(name).resolve("pyproject.toml")
+    val fileName = where.resolve(name).resolve(PY_PROJECT_TOML)
     val escapedName = Toml.tomlEscape(PyPackageName.normalizeProjectName(name))
     try {
       withContext(Dispatchers.IO) {
