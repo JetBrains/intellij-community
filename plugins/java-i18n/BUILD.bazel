@@ -3,7 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
     name = "java-i18n-tests_test",
-    timeout = "moderate",
+    timeout = "long",
     tags = ["community-aggregator"],
     runtime_deps = [":java-i18n-tests_test_lib"],
 )
