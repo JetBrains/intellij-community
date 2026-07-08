@@ -29,7 +29,7 @@ public final class JavadocInjector implements MultiHostInjector {
     final Language language = getLanguage(snippet);
 
     final List<TextRange> ranges = snippet.getContentRanges();
-    if (ranges.isEmpty()) return;
+    if (ranges.isEmpty() || (ranges.size() == 1 && ranges.getFirst().isEmpty())) return;
 
     registrar.startInjecting(language);
     for (TextRange range : ranges) {
