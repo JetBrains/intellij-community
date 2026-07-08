@@ -8,6 +8,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.contentModuleName
+import com.intellij.ide.plugins.shortLogDescription
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
@@ -379,10 +380,10 @@ ${if (exception == null) "" else exception.message}""")
 
   override fun toString(): String {
     return "${javaClass.simpleName}(" +
+           "state=${if (state == PluginAwareClassLoader.ACTIVE) "active" else "unload in progress"}, " +
            "plugin=$pluginDescriptor, " +
            "packagePrefix=$packagePrefix, " +
-           "state=${if (state == PluginAwareClassLoader.ACTIVE) "active" else "unload in progress"}, " +
-           "parents=${parents.joinToString()}, " +
+           "parents=${parents.joinToString { it.shortLogDescription }}" +
            ")"
   }
 
