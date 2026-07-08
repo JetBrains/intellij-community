@@ -315,6 +315,16 @@ class JavaSupportTest : GrazieTestBase() {
     runHighlightTestForFile("ide/language/java/Mixed.java")
   }
 
+  fun `test spellchecking does not produce NoSuchMethodError`() {
+    myFixture.configureByText("a.java", """
+     // A little bit more text to sound like English. 
+     // It's a <GRAMMAR_ERROR descr="Grazie.RuleEngine.En.Spelling.MISPLACED_SPACE">grea tbig</GRAMMAR_ERROR> adventure.
+    """.trimIndent())
+    assertDoesNotThrow {
+      myFixture.checkHighlighting()
+    }
+  }
+
 
   private fun doTest(beforeText: String, afterText: String, hint: String) {
     myFixture.configureByText("a.java", beforeText)
