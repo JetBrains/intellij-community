@@ -6785,6 +6785,7 @@ a:com.intellij.ui.PopupHandler
 - s:installPopupMenu(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.ui.PopupHandler
 - s:installPopupMenu(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String,javax.swing.event.PopupMenuListener):com.intellij.ui.PopupHandler
 - s:installPopupMenu(javax.swing.JComponent,java.lang.String,java.lang.String):com.intellij.ui.PopupHandler
+- s:installPopupMenu(javax.swing.JComponent,javax.swing.JComponent,java.lang.String,java.lang.String):com.intellij.ui.PopupHandler
 - s:installRowSelectionTablePopup(javax.swing.JTable,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.ui.PopupHandler
 - s:installSelectionListPopup(javax.swing.JList,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.ui.PopupHandler
 - s:installUnknownPopupHandler(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.ActionManager):java.awt.event.MouseListener
