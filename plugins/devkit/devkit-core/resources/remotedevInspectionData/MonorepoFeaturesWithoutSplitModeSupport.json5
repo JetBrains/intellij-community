@@ -1,0 +1,47 @@
+// Monorepo features that are not inspected by DevKit split-mode inspections yet.
+// This file is the source of truth for SplitModeExcludedModules.xml IDE scopes.
+// Use pathPatterns for repository paths and moduleNames for IntelliJ module names.
+{
+  pathPatterns: [
+    "plugins/llm//*",
+    "plugins/llm-experimental//*",
+    "plugins/llm-installer//*",
+    "plugins/llm-sandbox//*",
+    "community/python//*",
+  ],
+
+  moduleNames: [
+    "intellij.platform.resources",
+    "intellij.platform.ui.jcef",
+    "intellij.platform.util",
+    "intellij.platform.projectModel",
+    "intellij.platform.projectModel.impl",
+    "intellij.platform.refactoring",
+    "intellij.platform.split",
+    "intellij.platform.split.connection",
+    "intellij.platform.ide.bootstrap",
+    "intellij.platform.ide.core",
+    "intellij.platform.ide.core.impl",
+    "intellij.platform.ide.impl",
+    "intellij.platform.indexing",
+    "intellij.platform.indexing.impl",
+    "intellij.platform.lang",
+    "intellij.platform.lang.core",
+    "intellij.platform.lang.impl",
+    "intellij.platform.editor.ex",
+    "intellij.platform.editor.ui",
+    "intellij.platform.frontend.split",
+    "intellij.platform.frontend.split.base",
+    "intellij.platform.ide",
+    "intellij.platform.analysis",
+    "intellij.platform.analysis.impl",
+    "intellij.platform.backend.split",
+    "intellij.platform.codeStyle",
+    "intellij.platform.codeStyle.impl",
+    "intellij.platform.commercial",
+    "intellij.platform.commercial.license",
+    "intellij.platform.completion.common",
+    "intellij.platform.core",
+    "intellij.platform.core.impl",
+  ],
+}
