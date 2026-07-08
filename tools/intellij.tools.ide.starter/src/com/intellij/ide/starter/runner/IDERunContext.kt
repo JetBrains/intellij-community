@@ -106,6 +106,16 @@ data class IDERunContext(
   fun publishArtifacts(publish: Boolean = artifactsPublishingEnabled) {
     if (!publish) return
 
+    runCatching {
+      publishArtifactsOrThrow()
+    }.onFailure {
+      logError("Fail to execute publishArtifacts run for $contextName", it)
+    }.onSuccess {
+      logOutput("Successfully finished publishArtifacts run for $contextName")
+    }
+  }
+
+  private fun publishArtifactsOrThrow() {
     testContext.publishArtifact(
       source = logsDir,
       artifactPath = contextName,

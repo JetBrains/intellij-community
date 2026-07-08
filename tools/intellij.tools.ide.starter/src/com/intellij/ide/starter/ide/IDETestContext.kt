@@ -493,7 +493,7 @@ open class IDETestContext(
         configure(runContext)
       }
       catch (throwable: Throwable) {
-        runCatching { runContext.publishArtifacts() }
+        runContext.publishArtifacts()
         throw throwable
       }
       try {
