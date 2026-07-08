@@ -31,6 +31,8 @@ import java.util.Collections
 import java.util.EnumSet
 import kotlin.time.Duration.Companion.milliseconds
 
+private const val DEFAULT_SPLIT_MODE_COMPATIBILITY_ANALYSIS_TIMEOUT_MILLISECONDS: Int = 5 * 60 * 1000
+
 class DevKitMcpToolset : McpToolset {
   @McpTool
   @McpDescription(
@@ -92,6 +94,41 @@ class DevKitMcpToolset : McpToolset {
     descriptorPath: String,
   ): RecognizeIjModuleKindResult {
     return recognizeSplitModeModuleKindForPath(descriptorPath)
+  }
+
+  @McpTool
+  @McpDescription(
+    """
+      |Recognizes the Split Mode API kind for a fully qualified API name using the same DevKit restriction data
+      |as the remdev inspections.
+      |Returns the target module kind when the API is listed in DevKit split-mode restrictions.
+    """
+  )
+  @Suppress("unused", "FunctionName")
+  suspend fun recognize_split_mode_api_kind(
+    @McpDescription("Fully qualified code API name, for example `com.intellij.openapi.ui.DialogWrapper`.")
+    apiName: String,
+  ): RecognizeSplitModeApiKindResult {
+    return recognizeSplitModeApiKind(apiName)
+  }
+
+  @McpTool
+  @McpDescription(
+    """
+      |Collects Split Mode compatibility issues for all supported files under the given directory.
+      |Runs only the DevKit split-mode compatibility inspection whitelist and returns every found issue.
+      |Whitelisted inspections: SplitModeApiUsage, SplitModeXmlApiUsage, SplitModeMixedDependencies,
+      |SplitModeImplicitModuleKind, MissingFrontendOrBackendRuntimeDependency.
+    """
+  )
+  @Suppress("unused", "FunctionName")
+  suspend fun collect_split_mode_compatibility_issues(
+    @McpDescription(Constants.RELATIVE_PATH_IN_PROJECT_DESCRIPTION)
+    directoryPath: String,
+    @McpDescription("Analysis timeout in milliseconds.")
+    analysisTimeout: Int = DEFAULT_SPLIT_MODE_COMPATIBILITY_ANALYSIS_TIMEOUT_MILLISECONDS,
+  ): SplitModeCompatibilityIssuesResult {
+    return collectSplitModeCompatibilityIssues(directoryPath, analysisTimeout)
   }
 
   @McpTool
@@ -169,12 +206,14 @@ class DevKitMcpToolset : McpToolset {
     mapper: (ConstraintType) -> T,
   ): Pair<List<Pair<T, List<SourceLocation>>>, Boolean> {
     val project = currentCoroutineContext().project
-    val file = VirtualFileManager.getInstance().findFileByNioPath(project.resolveInProject(filePath)) ?: throw McpExpectedError("Virtual file not found")
+    val file = VirtualFileManager.getInstance().findFileByNioPath(project.resolveInProject(filePath))
+               ?: throw McpExpectedError("Virtual file not found")
     val pointer = readAction {
       val document = FileDocumentManager.getInstance().getDocument(file)
       val psiTree = PsiManager.getInstance(project).findFile(file) ?: throw McpExpectedError("PsiFile not found")
       val offset = document?.getLineStartOffset(line - 1)?.plus(column - 1) ?: throw McpExpectedError("Invalid line/column")
-      val method = LockReqPsiOps.forLanguage(psiTree.language).extractTargetElement(psiTree, offset) ?: throw McpExpectedError("No method found at the specified position")
+      val method = LockReqPsiOps.forLanguage(psiTree.language).extractTargetElement(psiTree, offset)
+                   ?: throw McpExpectedError("No method found at the specified position")
       SmartPointerManager.createPointer(method)
     }
 
@@ -183,15 +222,18 @@ class DevKitMcpToolset : McpToolset {
     val result = withTimeoutOrNull(timeout.milliseconds) {
       @Suppress("HardCodedStringLiteral")
       withBackgroundProgress(project, "Analyzing Locking Requirements usage for AI", true) {
-        LockReqAnalyzerParallelBFS().analyzeMethodStreaming(pointer, AnalysisConfig.forProject(project, requirementSet), project, object : LockReqConsumer {
-          override fun onPath(path: ExecutionPath) {
-            val lockType = mapper(path.lockRequirement.constraintType)
-            val locations = path.methodChain.map {
-              SourceLocation(it.containingClassName ?: "<null>", it.methodName)
-            }
-            list.add(lockType to locations)
-          }
-        })
+        LockReqAnalyzerParallelBFS().analyzeMethodStreaming(pointer,
+                                                            AnalysisConfig.forProject(project, requirementSet),
+                                                            project,
+                                                            object : LockReqConsumer {
+                                                              override fun onPath(path: ExecutionPath) {
+                                                                val lockType = mapper(path.lockRequirement.constraintType)
+                                                                val locations = path.methodChain.map {
+                                                                  SourceLocation(it.containingClassName ?: "<null>", it.methodName)
+                                                                }
+                                                                list.add(lockType to locations)
+                                                              }
+                                                            })
       }
     }
     val timeout = result == null
@@ -199,7 +241,7 @@ class DevKitMcpToolset : McpToolset {
   }
 
   enum class LockType {
-     READ_ASSERTION, WRITE_ASSERTION, WRITE_INTENT_ASSERTION, NO_READ_ASSERTION
+    READ_ASSERTION, WRITE_ASSERTION, WRITE_INTENT_ASSERTION, NO_READ_ASSERTION
   }
 
   enum class ThreadType {
@@ -249,5 +291,51 @@ class DevKitMcpToolset : McpToolset {
     val kindId: String,
     @property:McpDescription("Reasoning produced by the same DevKit module-kind analysis used by the remdev inspections.")
     val reasoning: String,
+  )
+
+  @Serializable
+  data class RecognizeSplitModeApiKindResult(
+    @property:McpDescription("Fully qualified code API name that was recognized.")
+    val apiName: String,
+    @property:McpDescription("Target Split Mode module kind for this API, or null when no restriction matches.")
+    val kindId: String?,
+    @property:McpDescription("Optional hint from the DevKit split-mode restrictions data.")
+    val hint: String?,
+  )
+
+  @Serializable
+  data class SplitModeCompatibilityIssuesResult(
+    @property:McpDescription("Directory path that was analyzed, relative to the project root when provided that way.")
+    val directoryPath: String,
+    @property:McpDescription("Split Mode inspection short names used for this analysis.")
+    val inspectionIds: List<String>,
+    @property:McpDescription("Number of supported source files inspected under the directory.")
+    val inspectedFileCount: Int,
+    @property:McpDescription("All found Split Mode compatibility issues from the whitelisted inspections.")
+    val issues: List<SplitModeCompatibilityIssue>,
+    @property:McpDescription(Constants.TIMED_OUT_DESCRIPTION)
+    val timedOut: Boolean,
+  )
+
+  @Serializable
+  data class SplitModeCompatibilityIssue(
+    @property:McpDescription("Inspection short name that reported the issue.")
+    val inspectionId: String,
+    @property:McpDescription("Problem highlight type reported by the inspection.")
+    val severity: String,
+    @property:McpDescription("Problem file path, relative to the project root when possible.")
+    val filePath: String,
+    @property:McpDescription("1-based start line, if available.")
+    val line: Int?,
+    @property:McpDescription("1-based start column, if available.")
+    val column: Int?,
+    @property:McpDescription("1-based end line, if available.")
+    val endLine: Int?,
+    @property:McpDescription("1-based end column, if available.")
+    val endColumn: Int?,
+    @property:McpDescription("Rendered inspection problem description.")
+    val description: String,
+    @property:McpDescription("Quick-fix family names available in batch mode.")
+    val quickFixes: List<String>,
   )
 }
