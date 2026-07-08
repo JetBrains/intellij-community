@@ -1,10 +1,14 @@
 package com.intellij.grazie.ide.language.markdown.semantics.analyzer
 
 import ai.grazie.api.gateway.client.SuspendableAPIGatewayClient
+import ai.grazie.rules.promptAnalysis.ContradictionAnalyzer.Contradiction
+import ai.grazie.rules.promptAnalysis.ContradictionAnalyzer.LlmContradiction
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.LlmIssue
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.Specification
+import ai.grazie.rules.promptAnalysis.LlmAnalyzer.WithSpending
 import ai.grazie.utils.mpp.money.Credit
+import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.cloud.APIQueries
 import com.intellij.grazie.ide.language.markdown.semantics.fus.SpecificationFUSCollector
 import com.intellij.openapi.diagnostic.Logger
@@ -24,6 +28,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
+private typealias IssuesWithSpending<T> = WithSpending<Map<String, List<LlmIssue<T>>>>
 private typealias AnalyzerCacheKey<T> = Key<CachedValue<AtomicReference<Cached<LlmIssue<T>>>>>
 private val log = Logger.getInstance(SpecificationAnalyzer::class.java)
 
@@ -52,7 +57,7 @@ internal object SpecificationAnalyzer {
           val start = System.currentTimeMillis()
           val analyzerName = analyzer::class.simpleName
           log.info("$analyzerName starts executing request with lock")
-          val analysis = analyzer.analyze(specifications, client)
+          val analysis = analyze(analyzer, specifications, client)
           val timeMs = System.currentTimeMillis() - start
           val credits = analysis.spentCredits / Credit.CREDITS_IN_DOLLAR
           log.info("""
@@ -77,6 +82,36 @@ internal object SpecificationAnalyzer {
       }
       throw e
     }
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun <T> analyze(
+    analyzer: LlmAnalyzer<T>, specifications: Set<Specification<T>>, client: SuspendableAPIGatewayClient
+  ): IssuesWithSpending<T> {
+    val analysis = analyzer.analyze(specifications, client)
+    if (analysis.data.values.asSequence().flatMap { it }.any { it.issue is Contradiction }) {
+      return analyzeContradictions(analysis as IssuesWithSpending<Contradiction>) as IssuesWithSpending<T>
+    }
+    return analysis
+  }
+
+  private fun analyzeContradictions(analysis: IssuesWithSpending<Contradiction>): IssuesWithSpending<Contradiction> {
+    val newAnalysis = HashMap<String, MutableList<LlmIssue<Contradiction>>>()
+    analysis.data.forEach { (path, issues) ->
+      issues.forEach { issue ->
+        newAnalysis.computeIfAbsent(path) { ArrayList() }.add(issue)
+        val contradiction = Contradiction(
+          "", "", GrazieBundle.message("specification.contradiction.message"),
+          issue.issue.contradictsStartOffset, issue.issue.contradictsEndOffset,
+          issue.issue.startOffset, issue.issue.endOffset, emptyList<String>(),
+          issue.issue.contradictsPath, issue.issue.path
+        )
+        newAnalysis.computeIfAbsent(issue.issue.contradictsPath) { ArrayList() }
+          .add(LlmContradiction(contradiction, issue.issue.contradictsStartOffset, issue.issue.contradictsEndOffset))
+      }
+    }
+
+    return WithSpending(newAnalysis, analysis.spentCredits)
   }
 
   private fun <T> getCached(file: PsiFile, files: Set<PsiFile>, analyzerKey: AnalyzerCacheKey<T>) =
