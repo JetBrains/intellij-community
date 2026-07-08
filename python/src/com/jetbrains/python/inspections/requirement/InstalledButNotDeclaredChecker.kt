@@ -5,35 +5,36 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil
-import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyPackageUtil
-import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.toRequirements
+import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.pip.PyPiPackageCache
 
 internal class InstalledButNotDeclaredChecker(
-  private val ignoredPackages: Collection<PyPackageName>,
-  private val declared: List<PythonPackage>,
+  val ignoredPackages: Collection<String>,
+  val pythonPackageManager: PythonPackageManager,
 ) {
-  fun getUndeclaredPackageName(importedPyModule: String): PyPackageName? {
-    val packageName = PyPackageName.from(PyPsiPackageUtil.moduleToPackageName(importedPyModule))
-    if (isIgnoredOrStandardPackage(packageName, importedPyModule))
+  fun getUndeclaredPackageName(importedPyModule: String): String? {
+    val packageName = PyPsiPackageUtil.moduleToPackageName(importedPyModule)
+    if (isIgnoredOrStandardPackage(importedPyModule))
       return null
 
+    val declared = pythonPackageManager.listDeclaredPackagesSnapshot() ?: return null
     val pyPiCacheService = ApplicationManager.getApplication().service<PyPiPackageCache>()
 
-    if (packageName.name !in pyPiCacheService)
+    if (packageName !in pyPiCacheService)
       return null
 
-    if (declared.toRequirements().any { PyPackageName.from(it.name) == packageName }) {
+    val requirements = declared.toRequirements()
+    if (requirements.any { it.name == packageName }) {
       return null
     }
 
     return packageName
   }
 
-  private fun isIgnoredOrStandardPackage(packageName: PyPackageName, importedPyModule: String): Boolean =
+  private fun isIgnoredOrStandardPackage(packageName: String): Boolean =
     ignoredPackages.contains(packageName) ||
-    importedPyModule == PyPackageUtil.SETUPTOOLS ||
-    PyStdlibUtil.getPackages()?.contains(importedPyModule) == true
+    packageName == PyPackageUtil.SETUPTOOLS ||
+    PyStdlibUtil.getPackages()?.contains(packageName) == true
 }

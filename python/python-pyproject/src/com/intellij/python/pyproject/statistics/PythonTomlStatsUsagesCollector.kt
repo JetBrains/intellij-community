@@ -145,7 +145,7 @@ object PyProjectTomlCollector {
       } ?: return@mapNotNullTo null
 
       val toolNormalizedName = toolTomlKey.segments.getOrNull(1)?.text?.let {
-        PyPackageName.from(it).name
+        PyPackageName.normalizePackageName(it)
       }
 
       toolNormalizedName

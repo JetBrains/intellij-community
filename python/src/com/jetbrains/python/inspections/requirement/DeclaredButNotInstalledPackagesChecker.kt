@@ -3,26 +3,22 @@ package com.jetbrains.python.inspections.requirement
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.toRequirements
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.listDeclaredPackagesAsync
-import com.jetbrains.python.packaging.management.listInstalledPackagesAsync
 import com.jetbrains.python.psi.PyUtil
 
 class DeclaredButNotInstalledPackagesChecker(
-  ignoredPackages: Collection<PyPackageName>,
+  ignoredPackages: Collection<String>,
 ) {
-  private val ignoredPackageNames: Set<PyPackageName> = ignoredPackages.toHashSet()
+  private val ignoredPackageNames: Set<String> = ignoredPackages.mapTo(mutableSetOf()) { PyPackageName.normalizePackageName(it) }
 
-  @RequiresBackgroundThread
   fun findUnsatisfiedRequirements(module: Module, manager: PythonPackageManager): List<PyRequirement> {
-    val requirements = manager.listDeclaredPackagesAsync() ?: return emptyList()
+    val requirements = manager.listDeclaredPackagesSnapshot() ?: return emptyList()
     val packagesToCheck = filterToMainPackages(requirements, manager)
-    val installedPackages = manager.listInstalledPackagesAsync()
+    val installedPackages = manager.listInstalledPackagesSnapshot()
     val modulePackages = collectPackagesInModule(module)
 
     return packagesToCheck.toRequirements().filter { requirement ->
@@ -40,7 +36,7 @@ class DeclaredButNotInstalledPackagesChecker(
     installedPackages: List<PythonPackage>,
     modulePackages: List<PythonPackage>,
   ): Boolean {
-    if (PyPackageName.from(requirement.name) in ignoredPackageNames) {
+    if (requirement.name in ignoredPackageNames) {
       return false
     }
 

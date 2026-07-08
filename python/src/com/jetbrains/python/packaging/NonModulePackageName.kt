@@ -13,10 +13,10 @@ import org.jetbrains.annotations.ApiStatus
 class NonModulePackageName private constructor(val name: String) {
   companion object {
     fun moduleNames(project: Project): Set<String> =
-      project.modules.mapTo(mutableSetOf()) { PyPackageName.from(it.name).name }
+      project.modules.mapTo(mutableSetOf()) { PyPackageName.normalizePackageName(it.name) }
 
     fun create(packageName: String, project: Project): NonModulePackageName? {
-      val normalized = PyPackageName.from(packageName).name
+      val normalized = PyPackageName.normalizePackageName(packageName)
       if (normalized in moduleNames(project)) return null
       return NonModulePackageName(normalized)
     }

@@ -169,7 +169,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
     waitForInit()
 
-    val normalizedPackagesNames = packages.map { PyPackageName.from(it).name }
+    val normalizedPackagesNames = packages.map { PyPackageName.normalizePackageName(it) }
     uninstallPackageCommand(*normalizedPackagesNames.toTypedArray(), workspaceMember = workspaceMember).getOr { return it }
     return reloadPackages()
   }
@@ -577,20 +577,6 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 fun PythonPackageManager.listDeclaredPackagesAsync(): List<PythonPackage>? = runBlockingMaybeCancellable {
   listDeclaredPackagesCached()
 }?.getOrNull()
-
-/**
- * Lists installed packages, awaiting initial loading if necessary.
- *
- * Use this from non-suspending background contexts (e.g. inspection visitors) instead of
- * [PythonPackageManager.listInstalledPackagesSnapshot] when freshness matters — the snapshot
- * may be stale or empty before the initial reload finishes, which causes false-positive
- * "requirement is not satisfied" diagnostics right after PPTW package operations
- * (PY-89774).
- */
-@RequiresBackgroundThread
-internal fun PythonPackageManager.listInstalledPackagesAsync(): List<PythonPackage> = runBlockingMaybeCancellable {
-  listInstalledPackages()
-}
 
 @ApiStatus.Internal
 @JvmInline

@@ -11,15 +11,12 @@ import com.intellij.psi.PsiFile
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.inspections.requirement.PyRequirementVisitor
-import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.psi.PyFile
 import one.util.streamex.StreamEx
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class PyPackageRequirementsInspection : PyInspection() {
-  @JvmField
-  val ignoredPackages: MutableList<String> = mutableListOf()
+class PyPackageRequirementsInspection() : PyInspection() {
+  var ignoredPackages: MutableList<String> = mutableListOf()
+
 
   override fun getOptionsPane(): OptPane {
     return OptPane.pane(OptPane.stringList("ignoredPackages", PyPsiBundle.message(IGNORED_PACKAGES)))
@@ -34,7 +31,7 @@ class PyPackageRequirementsInspection : PyInspection() {
       PsiElementVisitor.EMPTY_VISITOR
     }
     else {
-      PyRequirementVisitor(holder, ignoredPackages.map { PyPackageName.from(it) }, PyInspectionVisitor.getContext(session))
+      PyRequirementVisitor(holder, ignoredPackages, PyInspectionVisitor.getContext(session))
     }
   }
 

@@ -8,11 +8,8 @@ import org.jetbrains.annotations.ApiStatus
 @JvmInline
 value class PyPackageName private constructor(val name: @NlsSafe String) {
   companion object {
-    @JvmStatic
-    @JvmName("from")
-    fun from(name: String): PyPackageName {
-      return PyPackageName(normalizePackageName(name))
-    }
+    fun from(name: String): PyPackageName =
+      PyPackageName(normalizePackageName(name))
 
     /**
      * Normalizes a project name according to
@@ -30,7 +27,8 @@ value class PyPackageName private constructor(val name: @NlsSafe String) {
         .trim('-')
     }
 
-    private fun normalizePackageName(packageName: String): String {
+    @JvmStatic
+    fun normalizePackageName(packageName: String): String {
       var name = packageName.trim()
         .removePrefix("\"")
         .removeSuffix("\"")
