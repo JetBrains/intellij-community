@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.webview.impl.windows
 
+import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.ui.webview.impl.WebViewShortcutRouter
 import com.intellij.ui.webview.impl.WebViewShortcutRouting
 import java.awt.Component
@@ -8,6 +9,7 @@ import java.awt.KeyboardFocusManager
 import java.awt.Toolkit
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import javax.swing.KeyStroke
 
 internal object WinWebViewShortcutInterop {
   internal const val KEY_EVENT_KIND_KEY_DOWN: Int = 0
@@ -20,15 +22,20 @@ internal object WinWebViewShortcutInterop {
   internal const val MODIFIER_ALT: Int = 1 shl 2
   internal const val MODIFIER_META: Int = 1 shl 3
 
-  fun handleAcceleratorKeyPressed(target: Component?, keyEventKind: Int, virtualKey: Int, modifierFlags: Int, keyEventLParam: Int): Boolean {
-    // SYSTEM_KEY_* events are forwarded as native Windows MSGs by WinWebView2Bridge. Posting a synthetic
-    // Swing KeyEvent here would lose native MSG metadata and can also double-dispatch the same keystroke.
-    if (isNativeSystemKeyForwardedToAwt(keyEventKind)) return false
+  private val systemKeyRoutingState = SystemKeyRoutingState()
+
+  fun handleAcceleratorKeyPressed(
+    target: Component?,
+    keyEventKind: Int,
+    virtualKey: Int,
+    modifierFlags: Int,
+    keyEventLParam: Int,
+  ): Boolean {
     if (target == null || !target.isShowing) return false
 
     val eventSource = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow ?: target
     val keyEvent = createKeyEvent(eventSource, keyEventKind, virtualKey, modifierFlags, keyEventLParam) ?: return false
-    val routing = WebViewShortcutRouter.route(keyEvent)
+    val routing = routeKeyEvent(keyEventKind, virtualKey, keyEvent)
     if (routing == WebViewShortcutRouting.BROWSER_ONLY) return false
 
     Toolkit.getDefaultToolkit().systemEventQueue.postEvent(keyEvent)
@@ -58,10 +65,57 @@ internal object WinWebViewShortcutInterop {
     return WebViewShortcutRouter.isShortcutCandidate(keyCode, modifiersEx)
   }
 
-  // Mirrors the native hook contract: every WM_SYSKEYDOWN/WM_SYSKEYUP observed inside WebView focus is
-  // already posted to the AWT root window, regardless of the Alt-context bit in keyEventLParam.
-  internal fun isNativeSystemKeyForwardedToAwt(keyEventKind: Int): Boolean {
-    return keyEventKind == KEY_EVENT_KIND_SYSTEM_KEY_DOWN || keyEventKind == KEY_EVENT_KIND_SYSTEM_KEY_UP
+  internal fun routeKeyEvent(
+    keyEventKind: Int,
+    virtualKey: Int,
+    keyEvent: KeyEvent,
+    hasActiveKeymapShortcut: (KeyEvent) -> Boolean = ::hasActiveKeymapShortcut,
+    systemKeyRoutingState: SystemKeyRoutingState = this.systemKeyRoutingState,
+  ): WebViewShortcutRouting {
+    return when (keyEventKind) {
+      KEY_EVENT_KIND_SYSTEM_KEY_DOWN -> systemKeyRoutingState.routeSystemKeyDown(virtualKey, keyEvent, hasActiveKeymapShortcut)
+      KEY_EVENT_KIND_SYSTEM_KEY_UP -> systemKeyRoutingState.routeSystemKeyUp(virtualKey)
+      else -> WebViewShortcutRouter.route(keyEvent)
+    }
+  }
+
+  internal class SystemKeyRoutingState {
+    private val ideOwnedVirtualKeys = HashSet<Int>()
+
+    // WebView2 reports Alt-based Windows shortcuts as SYSTEM_KEY_*. The IDE gets first ownership
+    // only when the active keymap actually binds the keystroke; otherwise native code forwards the
+    // original WM_SYSKEY* message to AWT so Windows behavior such as Alt+F4 stays native.
+    @Synchronized
+    fun routeSystemKeyDown(
+      virtualKey: Int,
+      keyEvent: KeyEvent,
+      hasActiveKeymapShortcut: (KeyEvent) -> Boolean,
+    ): WebViewShortcutRouting {
+      if (!WebViewShortcutRouter.isShortcutCandidate(keyEvent.keyCode, keyEvent.modifiersEx) || !hasActiveKeymapShortcut(keyEvent)) {
+        ideOwnedVirtualKeys.remove(virtualKey)
+        return WebViewShortcutRouting.BROWSER_ONLY
+      }
+
+      ideOwnedVirtualKeys.add(virtualKey)
+      return WebViewShortcutRouting.FORWARD_TO_IDE_CONSUME_BROWSER_HANDLING
+    }
+
+    // A release must follow the decision made for its press. Otherwise an IDE-owned Alt shortcut
+    // would get a pressed event in Swing and then leak the release into the native fallback path.
+    @Synchronized
+    fun routeSystemKeyUp(virtualKey: Int): WebViewShortcutRouting {
+      return if (ideOwnedVirtualKeys.remove(virtualKey)) {
+        WebViewShortcutRouting.FORWARD_TO_IDE_CONSUME_BROWSER_HANDLING
+      }
+      else {
+        WebViewShortcutRouting.BROWSER_ONLY
+      }
+    }
+  }
+
+  private fun hasActiveKeymapShortcut(event: KeyEvent): Boolean {
+    val keymap = KeymapManager.getInstance()?.activeKeymap ?: return false
+    return keymap.getActionIds(KeyStroke.getKeyStrokeForEvent(event)).isNotEmpty()
   }
 
   private fun modifierFlagsToJavaModifiers(modifierFlags: Int): Int {

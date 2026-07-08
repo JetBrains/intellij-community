@@ -46,9 +46,9 @@ The backend supports:
 The Windows backend keeps browser editing native and forwards only the keys that belong to IDE or OS-level handling:
 
 - WebView2 keeps normal typing, text editing, IME/dead-key handling, and browser text navigation shortcuts such as `Ctrl+Left`, `Ctrl+Right`, and related selection/deletion variants.
-- WebView2 `AcceleratorKeyPressed` is routed through Kotlin for IDE accelerators. Browser-owned editing shortcuts are filtered out before the IDE consumes them.
+- WebView2 `AcceleratorKeyPressed` is routed through Kotlin for IDE accelerators. Browser-owned editing shortcuts are filtered out before the IDE consumes them, and Windows `SYSTEM_KEY_*` callbacks are first matched against the active IDE keymap.
 - Bare Shift is supplied by the native bridge because WebView2 does not report it through `AcceleratorKeyPressed`; this is required for double-Shift IDE gestures. Bare Ctrl stays on the WebView2 accelerator path.
-- Windows system keys observed as `WM_SYSKEYDOWN`/`WM_SYSKEYUP` inside WebView focus are forwarded as native messages to the root AWT window. Kotlin does not synthesize duplicate Swing events for WebView2 `SYSTEM_KEY_*` callbacks.
+- Unclaimed Windows system keys are forwarded as native `WM_SYSKEYDOWN`/`WM_SYSKEYUP` messages to the root AWT window after Kotlin declines them, so OS-level behavior such as window close still runs through the AWT peer and `DefWindowProc` path.
 
 Do not replace this with full Swing keyboard ownership for WebView content. That would break native browser editing behavior and IME handling.
 

@@ -58,6 +58,7 @@ thread_local! {
     static KEYBOARD_INTEROP_WINDOWS: RefCell<Vec<HWND>> = RefCell::new(Vec::new());
     static KEYBOARD_INTEROP_HOOK: RefCell<Option<HHOOK>> = const { RefCell::new(None) };
     static SHIFT_FALLBACK_EVENTS: RefCell<VecDeque<PendingShiftEvent>> = RefCell::new(VecDeque::new());
+    static SHIFT_FALLBACK_ACTIVE_WINDOWS: RefCell<HashMap<jint, HWND>> = RefCell::new(HashMap::new());
     static NEXT_SHIFT_FALLBACK_EVENT_ID: Cell<usize> = const { Cell::new(1) };
 }
 
@@ -2612,6 +2613,13 @@ fn attach_accelerator_key_handler(
                             )
                         })
                         .unwrap_or(false);
+                    let handled = handled
+                        || forward_system_key_to_awt_root_window_if_unhandled(
+                            &native,
+                            key_event_kind.0,
+                            virtual_key,
+                            key_event_lparam,
+                        );
                     if handled {
                         args.SetHandled(true)?;
                     }
@@ -2928,30 +2936,54 @@ fn is_shift_key(virtual_key: jint) -> bool {
         || virtual_key == VK_RSHIFT.0 as jint
 }
 
+fn forward_system_key_to_awt_root_window_if_unhandled(
+    native: &NativeHandle,
+    key_event_kind: jint,
+    virtual_key: u32,
+    key_event_lparam: i32,
+) -> bool {
+    let Some(message) = system_key_message_from_event_kind(key_event_kind) else {
+        return false;
+    };
+    let Ok(view) = native.try_borrow() else {
+        return false;
+    };
+    unsafe {
+        forward_system_key_to_awt_root_window(
+            view.hwnd,
+            message,
+            WPARAM(virtual_key as usize),
+            LPARAM(key_event_lparam as isize),
+        )
+    }
+}
+
 unsafe fn forward_system_key_to_awt_root_window(
     hwnd: HWND,
     message: u32,
-    keyboard_event: &KBDLLHOOKSTRUCT,
+    wparam: WPARAM,
+    lparam: LPARAM,
 ) -> bool {
-    // AWT/JBR can close windows and run menu/system-key handling only when the Java KeyEvent carries
-    // the original native MSG. Recreating Alt+F4/F10/etc. in Kotlin would post a synthetic KeyEvent
-    // without that MSG, so the hook forwards the real WM_SYSKEY* message to the root AWT window.
+    // Kotlin gets the first chance to claim SYSTEM_KEY_* as an IDE shortcut. Unclaimed system keys
+    // are posted here with their original native MSG payload so AWT/JBR can run Windows-level
+    // handling such as Alt+F4 close through the peer/DefWindowProc path.
     let root = GetAncestor(hwnd, GA_ROOT);
     if !is_system_key_message(message) {
         return false;
     }
-    !root.0.is_null()
-        && PostMessageW(
-            Some(root),
-            message,
-            WPARAM(keyboard_event.vkCode as usize),
-            LPARAM(key_event_lparam_from_low_level_keyboard_event(keyboard_event) as isize),
-        )
-        .is_ok()
+    !root.0.is_null() && PostMessageW(Some(root), message, wparam, lparam).is_ok()
 }
 
 fn is_system_key_message(message: u32) -> bool {
     matches!(message, WM_SYSKEYDOWN | WM_SYSKEYUP)
+}
+
+fn system_key_message_from_event_kind(key_event_kind: jint) -> Option<u32> {
+    match key_event_kind {
+        kind if kind == COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN.0 => Some(WM_SYSKEYDOWN),
+        kind if kind == COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_UP.0 => Some(WM_SYSKEYUP),
+        _ => None,
+    }
 }
 
 unsafe fn register_keyboard_interop_window(hwnd: HWND) {
@@ -2988,6 +3020,11 @@ unsafe fn unregister_keyboard_interop_window(hwnd: HWND) {
     SHIFT_FALLBACK_EVENTS.with(|events| {
         events.borrow_mut().retain(|event| event.hwnd != hwnd);
     });
+    SHIFT_FALLBACK_ACTIVE_WINDOWS.with(|windows| {
+        windows
+            .borrow_mut()
+            .retain(|_, active_hwnd| *active_hwnd != hwnd);
+    });
 }
 
 unsafe extern "system" fn keyboard_interop_proc(
@@ -3007,15 +3044,6 @@ unsafe fn handle_keyboard_interop_event(message: u32, keyboard_event: KBDLLHOOKS
         return;
     }
 
-    // System keys are owned by the Windows/AWT message pipeline. Kotlin deduplicates matching
-    // WebView2 AcceleratorKeyPressed callbacks by key-event kind and does not synthesize them again.
-    if is_system_key_message(message) {
-        if let Some(hwnd) = focused_keyboard_interop_window() {
-            forward_system_key_to_awt_root_window(hwnd, message, &keyboard_event);
-        }
-        return;
-    }
-
     schedule_shift_fallback_if_needed(message, keyboard_event);
 }
 
@@ -3025,14 +3053,14 @@ unsafe fn schedule_shift_fallback_if_needed(message: u32, keyboard_event: KBDLLH
         return;
     }
 
+    let key_event_kind = key_event_kind_from_message(message);
     // WebView2 AcceleratorKeyPressed does not report bare Shift transitions, but the IDE gesture
-    // handler needs them for double-Shift. Post them back to the container HWND so the JNI callback
-    // runs on the WebView dispatcher thread and shares the normal Kotlin shortcut router.
-    let Some(hwnd) = focused_keyboard_interop_window() else {
+    // handler needs them for double-Shift. Pair key-up with the key-down HWND because the second
+    // Shift press can open an IDE popup and move focus before the physical key-up arrives.
+    let Some(hwnd) = shift_fallback_target_window(virtual_key, key_event_kind) else {
         return;
     };
 
-    let key_event_kind = key_event_kind_from_message(message);
     let id = NEXT_SHIFT_FALLBACK_EVENT_ID.with(|next_id| {
         let id = next_id.get();
         next_id.set(id.wrapping_add(1).max(1));
@@ -3050,6 +3078,25 @@ unsafe fn schedule_shift_fallback_if_needed(message: u32, keyboard_event: KBDLLH
         events.borrow_mut().push_back(event);
     });
     let _ = PostMessageW(Some(hwnd), WM_USER_SHIFT_FALLBACK, WPARAM(id), LPARAM(0));
+}
+
+unsafe fn shift_fallback_target_window(virtual_key: jint, key_event_kind: jint) -> Option<HWND> {
+    let active_key = shift_fallback_active_key(virtual_key);
+    if is_key_down_event_kind(key_event_kind) {
+        let hwnd = focused_keyboard_interop_window()?;
+        SHIFT_FALLBACK_ACTIVE_WINDOWS.with(|windows| {
+            windows.borrow_mut().insert(active_key, hwnd);
+        });
+        return Some(hwnd);
+    }
+
+    let stored_hwnd =
+        SHIFT_FALLBACK_ACTIVE_WINDOWS.with(|windows| windows.borrow_mut().remove(&active_key));
+    stored_hwnd.or_else(|| focused_keyboard_interop_window())
+}
+
+fn shift_fallback_active_key(_virtual_key: jint) -> jint {
+    VK_SHIFT.0 as jint
 }
 
 unsafe fn focused_keyboard_interop_window() -> Option<HWND> {
@@ -3081,6 +3128,11 @@ unsafe fn focused_keyboard_interop_window() -> Option<HWND> {
 
 fn is_key_down_or_up_message(message: u32) -> bool {
     matches!(message, WM_KEYDOWN | WM_KEYUP | WM_SYSKEYDOWN | WM_SYSKEYUP)
+}
+
+fn is_key_down_event_kind(key_event_kind: jint) -> bool {
+    key_event_kind == COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN.0
+        || key_event_kind == COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN.0
 }
 
 fn key_event_kind_from_message(message: u32) -> jint {

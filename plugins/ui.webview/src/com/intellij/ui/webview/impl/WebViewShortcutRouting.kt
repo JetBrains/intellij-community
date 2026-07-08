@@ -14,7 +14,7 @@ internal object WebViewShortcutRouter {
   // Ownership model:
   // - browser/WebView keeps normal input, text editing, selection, IME, and browser text navigation;
   // - IDE receives true IDE accelerators and bare modifier gestures;
-  // - native backends may forward OS-level system keys before this synthetic accelerator path sees them.
+  // - native backends may run OS-level fallback for unclaimed system keys after the IDE route declines them.
   fun route(event: KeyEvent): WebViewShortcutRouting {
     if (isModifierGestureCandidate(event)) {
       return WebViewShortcutRouting.FORWARD_TO_IDE_KEEP_BROWSER_HANDLING
