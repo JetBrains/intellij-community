@@ -64,6 +64,7 @@ import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyCompositeType;
 import com.jetbrains.python.psi.types.PyDescriptorTypeUtil;
 import com.jetbrains.python.psi.types.PyImportedModuleType;
 import com.jetbrains.python.psi.types.PyInstantiableType;
@@ -523,24 +524,19 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                                        @NotNull PyQualifiedExpression anchor,
                                                        @NotNull PyResolveContext resolveContext,
                                                        @Nullable List<ProblemMessage> errors) {
-    if (type instanceof PyUnionType union) {
-      var result = StreamEx.of(union.getMembers())
+    if (type instanceof PyCompositeType compositeType) {
+      var results = StreamEx.of(compositeType.getMembers())
           .map(it -> getTypeOfMember(it, attrName, anchor, resolveContext, errors))
           .nonNull()
-          .map(it -> it.get())
+          .map(it -> Objects.requireNonNull(it).get())
           .toList();
-      if (!result.isEmpty()) {
-        return new Ref<>(PyUnionType.union(result));
-      }
-    }
-    else if (type instanceof PyUnsafeUnionType union) {
-      var result = StreamEx.of(union.getMembers())
-          .map(it -> getTypeOfMember(it, attrName, anchor, resolveContext, errors))
-          .nonNull()
-          .map(it -> it.get())
-          .toList();
-      if (!result.isEmpty()) {
-        return new Ref<>(PyUnsafeUnionType.unsafeUnion(result));
+      if (!results.isEmpty()) {
+        PyType result = switch (compositeType) {
+          case PyIntersectionType ignored -> PyIntersectionType.intersection(results);
+          case PyUnsafeUnionType ignored -> PyUnsafeUnionType.unsafeUnion(results);
+          default -> PyUnionType.union(results);
+        };
+        return new Ref<>(result);
       }
     }
     else if (type instanceof PyClassType classType) {
@@ -551,24 +547,14 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
     else if (type instanceof PyTypeVarType typeVarType) {
       var result = PyTypeUtil.toStream(typeVarType.getEffectiveBound())
-        .map(it -> it instanceof PyClassType classType ? getTypeOfMethod(classType, typeVarType, attrName, anchor, resolveContext, errors) : null)
+        .map(it -> it instanceof PyClassType classType
+                   ? getTypeOfMethod(classType, typeVarType, attrName, anchor, resolveContext, errors)
+                   : null)
         .nonNull()
-        .map(it -> it.get())
+        .map(it -> Objects.requireNonNull(it).get())
         .toList();
       if (!result.isEmpty()) {
         return new Ref<>(PyUnionType.union(result));
-      }
-    }
-    else if (type instanceof PyIntersectionType intersectionType) {
-      List<@Nullable PyType> intersection = new ArrayList<>();
-      for (PyType member : intersectionType.getMembers()) {
-        Ref<PyType> partType = getTypeOfMember(member, attrName, anchor, resolveContext, errors);
-        if (partType != null) {
-          intersection.add(partType.get());
-        }
-      }
-      if (!intersection.isEmpty()) {
-        return new Ref<>(PyIntersectionType.intersection(intersection));
       }
     }
     else {
