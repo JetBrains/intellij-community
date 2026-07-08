@@ -38,7 +38,7 @@ use serde::Deserialize;
 
 #[cfg(target_os = "windows")]
 use {
-    windows::core::{GUID, HSTRING, PCWSTR, PWSTR},
+    windows::core::{GUID, HSTRING, PWSTR},
     windows::Win32::Foundation,
     windows::Win32::Foundation::HANDLE,
     windows::Win32::System::LibraryLoader,
@@ -140,9 +140,6 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool, sandbox_subp
 
     #[cfg(target_os = "windows")]
     {
-        if let Some(app_user_model_id) = configuration.get_app_user_model_id() {
-            set_app_user_model_id(&app_user_model_id)?;
-        }
         // on Windows, JRE and JCEF dependencies directory is not on the default DLL search path
         set_dll_search_path(&jre_home)?;
     }
@@ -191,17 +188,6 @@ fn strip_working_directory_ns_prefix() -> Result<()> {
     }
 
     Ok(())
-}
-
-#[cfg(target_os = "windows")]
-fn set_app_user_model_id(app_user_model_id: &str) -> Result<()> {
-    debug!("Setting AppUserModelID: {app_user_model_id}");
-    if app_user_model_id.chars().count() > 128 {
-        bail!("AppUserModelID exceeds the maximum Windows limit of 128 characters");
-    }
-    let h_str = HSTRING::from(app_user_model_id);
-    unsafe { Shell::SetCurrentProcessExplicitAppUserModelID(PCWSTR(h_str.as_ptr())) }
-        .with_context(|| format!("Failed to set AppUserModelID to '{app_user_model_id}'"))
 }
 
 #[cfg(target_os = "windows")]
@@ -345,25 +331,11 @@ macro_rules! jvm_property {
 #[allow(non_snake_case)]
 #[derive(Deserialize, Clone, Debug)]
 pub struct ProductInfo {
-    pub name: String,
-    pub version: String,
-    pub versionSuffix: Option<String>,
     pub productCode: String,
     pub productVendor: String,
     pub envVarBaseName: String,
     pub dataDirectoryName: String,
     pub launch: Vec<ProductInfoLaunchField>
-}
-
-impl ProductInfo {
-    pub fn app_user_model_id(&self) -> String {
-        let mut result = format!("{} {}", self.name, self.version);
-        if let Some(version_suffix) = self.versionSuffix.as_deref() {
-            result.push(' ');
-            result.push_str(version_suffix);
-        }
-        result
-    }
 }
 
 #[allow(non_snake_case)]
@@ -398,7 +370,6 @@ pub trait LaunchConfiguration {
     fn get_custom_properties_file(&self) -> Result<PathBuf>;
     fn get_class_path(&self) -> Result<Vec<String>>;
     fn should_redirect_stdout(&self) -> bool;
-    fn get_app_user_model_id(&self) -> Option<String> { None }
     fn prepare_for_launch(&self, is_musl: bool) -> Result<(PathBuf, &str, Option<PathBuf>)>;
 }
 
