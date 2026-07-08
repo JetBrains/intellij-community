@@ -114,7 +114,7 @@ class MultipleRootsInjectedFileViewProvider extends MultiplePsiFilesPerDocumentF
   }
 
   @Override
-  protected boolean cacheContent() {
+  protected boolean cacheContentInVersionedEnvironment() {
     return false;
   }
 

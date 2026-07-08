@@ -88,7 +88,7 @@ class SingleRootInjectedFileViewProvider extends SingleRootFileViewProvider impl
   }
 
   @Override
-  protected boolean cacheContent() {
+  protected boolean cacheContentInVersionedEnvironment() {
     return false;
   }
 

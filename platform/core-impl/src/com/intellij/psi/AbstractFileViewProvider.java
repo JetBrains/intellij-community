@@ -373,7 +373,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
       storedContent = new VirtualFileContent();
       myContent.set(storedContent);
     }
-    if (cacheContent() && storedContent instanceof VirtualFileContent) {
+    if (cacheContentInVersionedEnvironment() && storedContent instanceof VirtualFileContent) {
       // Once someone decided to retrieve the content, we need to return consistent data from this function.
       // So we are fixing the content for this snapshot by freezing the text and modstamp.
       FrozenFileContent frozenFileContent = new FrozenFileContent((VirtualFileContent)storedContent);
@@ -393,7 +393,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
    * This is why we disable caching for injected view providers -- they have relaxed locking invariants anyway.
    */
   @ApiStatus.Experimental
-  protected boolean cacheContent() {
+  protected boolean cacheContentInVersionedEnvironment() {
     return true;
   }
 

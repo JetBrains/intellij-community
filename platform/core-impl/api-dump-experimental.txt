@@ -87,7 +87,7 @@ a:com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 a:com.intellij.psi.AbstractFileViewProvider
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.psi.FileViewProvider
-- *p:cacheContent():Z
+- *p:cacheContentInVersionedEnvironment():Z
 *f:com.intellij.psi.DummyBlockType
 - sf:DUMMY_BLOCK:com.intellij.psi.tree.IElementType
 - <init>():V
