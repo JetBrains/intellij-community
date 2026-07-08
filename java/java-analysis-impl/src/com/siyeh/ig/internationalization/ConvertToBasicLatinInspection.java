@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInspection.i18n;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -28,6 +27,7 @@ import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.io.IOUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Nls;
@@ -46,9 +46,7 @@ public final class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalIn
     return new JavaElementVisitor() {
       private void handle(@NotNull PsiElement element) {
         if (IOUtil.isAscii(element.getText())) return;
-        // "Basic Latin" is a proper noun
-        //noinspection DialogTitleCapitalization
-        holder.registerProblem(element, JavaI18nBundle.message("inspection.non.basic.latin.character.display.name"), new ConvertToBasicLatinFix());
+        holder.registerProblem(element, InspectionGadgetsBundle.message("inspection.non.basic.latin.character.display.name"), new ConvertToBasicLatinFix());
       }
 
       @Override
@@ -208,7 +206,7 @@ public final class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalIn
   private static class ConvertToBasicLatinFix extends PsiUpdateModCommandQuickFix {
     @Override
     public @Nls @NotNull String getFamilyName() {
-      return JavaI18nBundle.message("inspection.non.basic.latin.character.quickfix");
+      return InspectionGadgetsBundle.message("inspection.non.basic.latin.character.quickfix");
     }
 
     @Override
