@@ -37,6 +37,7 @@ import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.io.TempDir
 import java.awt.Desktop
 import java.awt.Dimension
+import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
@@ -128,6 +129,26 @@ class WebViewFocusInteropRobotTest {
     }
     finally {
       facade.close()
+    }
+  }
+
+  @Test
+  @EnabledOnOs(OS.WINDOWS)
+  fun altF4InsideWebViewClosesFrame(): Unit = runBlocking {
+    val tempDir = Files.createTempDirectory("webview-alt-f4-test")
+    val facade = createPlatformEngine(scope!!)
+    try {
+      WebViewFocusRobotTestSupport.runAltF4WindowCloseScenario(
+        frame!!,
+        scope!!,
+        facade,
+        createNativeHostPeer(scope!!, facade),
+        tempDir,
+      )
+    }
+    finally {
+      facade.close()
+      tempDir.toFile().deleteRecursively()
     }
   }
 

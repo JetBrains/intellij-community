@@ -228,6 +228,80 @@ internal object WebViewFocusRobotTestSupport {
     }
   }
 
+  suspend fun runAltF4WindowCloseScenario(
+    frame: JFrame,
+    scope: CoroutineScope,
+    engine: WebViewEngineBridge,
+    nativeHostPeer: NativeWebViewHostPeer,
+    tempDir: Path,
+  ) {
+    val robot = createRobotOrSkip()
+    val bus = WebViewMessageBusImpl(scope, engine)
+    val field = JTextField().apply {
+      preferredSize = Dimension(1, 32)
+      caret = DefaultCaret().apply { blinkRate = 0 }
+    }
+    val host = SwingWebViewHostPanel(scope, engine, bus.interop.createWebViewFocusEntrySink(), nativeHostPeer)
+    val focusRegistration = bus.interop.registerWebViewFocusExitHandler(host)
+    engine.connectMessageBus { rawJson -> bus.transferFromJs(rawJson) }
+    writeFocusInteropPage(tempDir)
+
+    try {
+      SwingUtilities.invokeAndWait {
+        frame.contentPane.removeAll()
+        frame.contentPane.layout = BorderLayout()
+        frame.contentPane.add(field, BorderLayout.SOUTH)
+        frame.contentPane.add(host, BorderLayout.CENTER)
+        frame.toFront()
+        frame.revalidate()
+        frame.repaint()
+      }
+      assertTrue(waitUntilShowing(host, 5.seconds), "WebView host component did not become showing")
+      assertTrue(waitUntilShowing(field, 5.seconds), "Swing text field did not become showing")
+
+      engine.loadAsset(WebViewAssetRoot.fromDirectory(tempDir), WebViewAssetPath.indexHtml())
+      waitForJavaScriptResult(
+        webView = engine,
+        script = "Boolean(window.__WVI__ && window['__wviFocusInteropReady'])",
+        expected = "true",
+        description = "Alt+F4 test page did not load WebView bridge and platform features",
+      )
+
+      focusSwingFieldWithRobot(robot, frame, field, "Swing field did not receive initial focus", skipIfUnavailable = true)
+      clearText(field)
+      typeKey(robot, KeyEvent.VK_1)
+      val swingFieldPreflightDiagnostics = buildCurrentFocusDiagnostics(frame, field)
+      assumeTrue(
+        waitForFieldText(field, "1", emptyList(), assertOnFailure = false),
+        "AWT Robot key input is not delivered to the focused Swing field; $swingFieldPreflightDiagnostics",
+      )
+
+      clickWebElementCenter(robot, host, engine, "web-input")
+      waitForFocusOwnerNot(field, "WebView activation did not clear the previous Swing focus owner")
+      delay(100.milliseconds)
+
+      pressAltF4(robot)
+      val disposed = withTimeoutOrNull(5.seconds) {
+        while (true) {
+          if (isFrameClosed(frame)) return@withTimeoutOrNull true
+          delay(50.milliseconds)
+        }
+      } == true
+      assertTrue(disposed, "Alt+F4 inside WebView did not close the containing JFrame")
+    }
+    finally {
+      focusRegistration.close()
+      bus.close()
+      SwingUtilities.invokeAndWait {
+        field.caret.blinkRate = 0
+        field.caret.deinstall(field)
+        if (frame.isDisplayable) {
+          frame.contentPane.removeAll()
+        }
+      }
+    }
+  }
+
   suspend fun runMacFirstResponderFocusTransferScenario(
     frame: JFrame,
     scope: CoroutineScope,
@@ -1185,6 +1259,26 @@ internal object WebViewFocusRobotTestSupport {
     robot.keyPress(keyCode)
     robot.keyRelease(keyCode)
     robot.waitForIdle()
+  }
+
+  private fun pressAltF4(robot: Robot) {
+    robot.keyPress(KeyEvent.VK_ALT)
+    try {
+      robot.keyPress(KeyEvent.VK_F4)
+      robot.keyRelease(KeyEvent.VK_F4)
+    }
+    finally {
+      robot.keyRelease(KeyEvent.VK_ALT)
+      robot.waitForIdle()
+    }
+  }
+
+  private fun isFrameClosed(frame: JFrame): Boolean {
+    var closed = false
+    SwingUtilities.invokeAndWait {
+      closed = !frame.isDisplayable || !frame.isShowing
+    }
+    return closed
   }
 
   private fun recordModifierKeyEvents(events: MutableList<RecordedKeyEvent>): AutoCloseable {

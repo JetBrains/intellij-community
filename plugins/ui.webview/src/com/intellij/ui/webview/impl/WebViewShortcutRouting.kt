@@ -23,6 +23,7 @@ internal object WebViewShortcutRouter {
 
   fun isShortcutCandidate(keyCode: Int, modifiersEx: Int): Boolean {
     if (keyCode == KeyEvent.VK_UNDEFINED || isModifierKey(keyCode)) return false
+    if (isNativeWindowShortcut(keyCode, modifiersEx)) return false
     if (isBrowserEditingShortcut(keyCode, modifiersEx)) return false
 
     val commandModifiers = InputEvent.CTRL_DOWN_MASK or InputEvent.ALT_DOWN_MASK or InputEvent.META_DOWN_MASK
@@ -42,6 +43,14 @@ internal object WebViewShortcutRouter {
   // rather than forwarded to the IDE. Source of truth: WebViewEditCommand (shared across all OS backends).
   private fun isBrowserEditingShortcut(keyCode: Int, modifiersEx: Int): Boolean {
     return WebViewEditCommand.matchingCommand(keyCode, modifiersEx, WebViewEditCommand.DEFAULTS) != null
+  }
+
+  private fun isNativeWindowShortcut(keyCode: Int, modifiersEx: Int): Boolean {
+    val nonShiftModifiers = modifiersEx and (InputEvent.CTRL_DOWN_MASK or
+                                            InputEvent.ALT_DOWN_MASK or
+                                            InputEvent.META_DOWN_MASK or
+                                            InputEvent.ALT_GRAPH_DOWN_MASK)
+    return keyCode == KeyEvent.VK_F4 && nonShiftModifiers == InputEvent.ALT_DOWN_MASK
   }
 
   private fun isModifierKey(keyCode: Int): Boolean {

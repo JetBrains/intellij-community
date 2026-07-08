@@ -3,7 +3,11 @@
 #![cfg(target_os = "windows")]
 
 use std::{
-    cell::RefCell, collections::HashMap, ffi::c_void, panic::AssertUnwindSafe, rc::Rc,
+    cell::{Cell, RefCell},
+    collections::{HashMap, VecDeque},
+    ffi::c_void,
+    panic::AssertUnwindSafe,
+    rc::Rc,
     time::Instant,
 };
 
@@ -21,7 +25,8 @@ use windows::{
         System::{Com::*, LibraryLoader::GetModuleHandleW, Threading::GetCurrentThreadId},
         UI::{
             Input::KeyboardAndMouse::{
-                GetKeyState, SetFocus, VIRTUAL_KEY, VK_CONTROL, VK_LWIN, VK_MENU, VK_RWIN, VK_SHIFT,
+                GetAsyncKeyState, GetKeyState, SetFocus, VIRTUAL_KEY, VK_CONTROL, VK_F4, VK_LSHIFT,
+                VK_LWIN, VK_MENU, VK_RSHIFT, VK_RWIN, VK_SHIFT,
             },
             Shell::SHCreateMemStream,
             WindowsAndMessaging::*,
@@ -37,8 +42,9 @@ const MODIFIER_SHIFT: jint = 1;
 const MODIFIER_CONTROL: jint = 1 << 1;
 const MODIFIER_ALT: jint = 1 << 2;
 const MODIFIER_META: jint = 1 << 3;
-const NATIVE_ABI_VERSION: &str = "wvi-custom-scheme-assets-v9";
+const NATIVE_ABI_VERSION: &str = "wvi-custom-scheme-assets-v10";
 const WM_USER_INVOKE: u32 = WM_USER + 1;
+const WM_USER_SHIFT_FALLBACK: u32 = WM_USER + 2;
 const WEBVIEW_ASSET_CUSTOM_SCHEME: &str = "ij-webview-asset";
 const WEBVIEW_ASSET_CUSTOM_SCHEME_FILTER: &str = "ij-webview-asset://assets/*";
 const WEBVIEW_ASSET_HTTPS_FILTER: &str = "https://ij-webview-assets.local/*";
@@ -47,6 +53,22 @@ const DIAGNOSTIC_DEBUG: jint = 1;
 const DIAGNOSTIC_INFO: jint = 2;
 const DIAGNOSTIC_WARN: jint = 3;
 const DIAGNOSTIC_ERROR: jint = 4;
+
+thread_local! {
+    static KEYBOARD_INTEROP_WINDOWS: RefCell<Vec<HWND>> = RefCell::new(Vec::new());
+    static KEYBOARD_INTEROP_HOOK: RefCell<Option<HHOOK>> = const { RefCell::new(None) };
+    static SHIFT_FALLBACK_EVENTS: RefCell<VecDeque<PendingShiftEvent>> = RefCell::new(VecDeque::new());
+    static NEXT_SHIFT_FALLBACK_EVENT_ID: Cell<usize> = const { Cell::new(1) };
+}
+
+struct PendingShiftEvent {
+    id: usize,
+    hwnd: HWND,
+    key_event_kind: jint,
+    virtual_key: jint,
+    modifiers: jint,
+    key_event_lparam: jint,
+}
 
 struct NativeAssetResponse {
     status_code: i32,
@@ -150,7 +172,11 @@ impl JavaCallbacks {
                 object,
                 "onDevToolsProtocolMethodResult",
                 "(JLjava/lang/String;Ljava/lang/String;)V",
-                &[JValue::Long(call_id), JValue::Object(&result), JValue::Object(&error)],
+                &[
+                    JValue::Long(call_id),
+                    JValue::Object(&result),
+                    JValue::Object(&error),
+                ],
             )?;
             Ok(())
         });
@@ -2445,10 +2471,7 @@ fn attach_web_resource_requested_handler(
     Ok(token)
 }
 
-fn add_web_resource_requested_filter(
-    webview: &ICoreWebView2,
-    filter: &str,
-) -> BridgeResult<()> {
+fn add_web_resource_requested_filter(webview: &ICoreWebView2, filter: &str) -> BridgeResult<()> {
     unsafe {
         webview.AddWebResourceRequestedFilter(
             &HSTRING::from(filter),
@@ -2498,7 +2521,9 @@ fn set_virtual_host_name_to_folder_mapping(
     host_name: &str,
     folder_path: &str,
 ) -> BridgeResult<()> {
-    let webview3 = webview.cast::<ICoreWebView2_3>().map_err(format_windows_error)?;
+    let webview3 = webview
+        .cast::<ICoreWebView2_3>()
+        .map_err(format_windows_error)?;
     unsafe {
         webview3
             .SetVirtualHostNameToFolderMapping(
@@ -2715,9 +2740,16 @@ fn create_container_hwnd(parent: HWND, callbacks: Rc<JavaCallbacks>) -> BridgeRe
                 let _ = SetFocus(Some(child));
             }
         }
+        if msg == WM_USER_SHIFT_FALLBACK {
+            unsafe {
+                dispatch_pending_shift_event(hwnd, wparam.0);
+            }
+            return LRESULT(0);
+        }
         let result = DefWindowProcW(hwnd, msg, wparam, lparam);
         if msg == WM_NCDESTROY {
             unsafe {
+                unregister_keyboard_interop_window(hwnd);
                 clear_container_callbacks(hwnd);
             }
         }
@@ -2763,6 +2795,7 @@ fn create_container_hwnd(parent: HWND, callbacks: Rc<JavaCallbacks>) -> BridgeRe
 
     unsafe {
         SetWindowLongPtrW(hwnd, GWLP_USERDATA, Rc::into_raw(callbacks) as isize);
+        register_keyboard_interop_window(hwnd);
     }
     Ok(hwnd)
 }
@@ -2875,6 +2908,258 @@ fn current_modifier_flags() -> jint {
 
 unsafe fn is_key_down(virtual_key: VIRTUAL_KEY) -> bool {
     (GetKeyState(virtual_key.0 as i32) as u16 & 0x8000) != 0
+}
+
+fn modifier_flags_for_shift_event(key_event_kind: jint) -> jint {
+    let mut flags = current_modifier_flags();
+    if key_event_kind == COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN.0
+        || key_event_kind == COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN.0
+    {
+        flags |= MODIFIER_SHIFT;
+    } else {
+        flags &= !MODIFIER_SHIFT;
+    }
+    flags
+}
+
+fn is_shift_key(virtual_key: jint) -> bool {
+    virtual_key == VK_SHIFT.0 as jint
+        || virtual_key == VK_LSHIFT.0 as jint
+        || virtual_key == VK_RSHIFT.0 as jint
+}
+
+fn is_window_close_shortcut(message: u32, virtual_key: jint, modifier_flags: jint) -> bool {
+    let key_transition = matches!(message, WM_KEYDOWN | WM_SYSKEYDOWN | WM_KEYUP | WM_SYSKEYUP);
+    let non_shift_modifiers = modifier_flags & (MODIFIER_CONTROL | MODIFIER_ALT | MODIFIER_META);
+    key_transition && virtual_key == VK_F4.0 as jint && non_shift_modifiers == MODIFIER_ALT
+}
+
+unsafe fn forward_system_key_to_awt_root_window(
+    hwnd: HWND,
+    message: u32,
+    keyboard_event: &KBDLLHOOKSTRUCT,
+) -> bool {
+    let root = GetAncestor(hwnd, GA_ROOT);
+    let Some(system_message) = system_key_message_from_keyboard_hook_message(message) else {
+        return false;
+    };
+    !root.0.is_null()
+        && PostMessageW(
+            Some(root),
+            system_message,
+            WPARAM(keyboard_event.vkCode as usize),
+            LPARAM(key_event_lparam_from_low_level_keyboard_event(keyboard_event) as isize),
+        )
+        .is_ok()
+}
+
+fn system_key_message_from_keyboard_hook_message(message: u32) -> Option<u32> {
+    match message {
+        WM_KEYDOWN | WM_SYSKEYDOWN => Some(WM_SYSKEYDOWN),
+        WM_KEYUP | WM_SYSKEYUP => Some(WM_SYSKEYUP),
+        _ => None,
+    }
+}
+
+unsafe fn register_keyboard_interop_window(hwnd: HWND) {
+    KEYBOARD_INTEROP_WINDOWS.with(|windows| {
+        let mut windows = windows.borrow_mut();
+        if !windows.contains(&hwnd) {
+            windows.push(hwnd);
+        }
+    });
+    KEYBOARD_INTEROP_HOOK.with(|hook| {
+        let mut hook = hook.borrow_mut();
+        if hook.is_none() {
+            if let Ok(installed_hook) =
+                SetWindowsHookExW(WH_KEYBOARD_LL, Some(keyboard_interop_proc), None, 0)
+            {
+                *hook = Some(installed_hook);
+            }
+        }
+    });
+}
+
+unsafe fn unregister_keyboard_interop_window(hwnd: HWND) {
+    KEYBOARD_INTEROP_WINDOWS.with(|windows| {
+        let mut windows = windows.borrow_mut();
+        windows.retain(|registered_hwnd| *registered_hwnd != hwnd);
+        if windows.is_empty() {
+            KEYBOARD_INTEROP_HOOK.with(|hook| {
+                if let Some(installed_hook) = hook.borrow_mut().take() {
+                    let _ = UnhookWindowsHookEx(installed_hook);
+                }
+            });
+        }
+    });
+    SHIFT_FALLBACK_EVENTS.with(|events| {
+        events.borrow_mut().retain(|event| event.hwnd != hwnd);
+    });
+}
+
+unsafe extern "system" fn keyboard_interop_proc(
+    code: i32,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
+    if code >= 0 {
+        let keyboard_event = *(lparam.0 as *const KBDLLHOOKSTRUCT);
+        handle_keyboard_interop_event(wparam.0 as u32, keyboard_event);
+    }
+    CallNextHookEx(None, code, wparam, lparam)
+}
+
+unsafe fn handle_keyboard_interop_event(message: u32, keyboard_event: KBDLLHOOKSTRUCT) {
+    if !is_key_down_or_up_message(message) {
+        return;
+    }
+
+    let virtual_key = keyboard_event.vkCode as jint;
+    if is_window_close_shortcut(
+        message,
+        virtual_key,
+        keyboard_hook_modifier_flags(&keyboard_event),
+    ) {
+        if let Some(hwnd) = focused_keyboard_interop_window() {
+            forward_system_key_to_awt_root_window(hwnd, message, &keyboard_event);
+        }
+        return;
+    }
+
+    schedule_shift_fallback_if_needed(message, keyboard_event);
+}
+
+unsafe fn keyboard_hook_modifier_flags(event: &KBDLLHOOKSTRUCT) -> jint {
+    let mut flags = 0;
+    if is_key_async_down(VK_SHIFT) {
+        flags |= MODIFIER_SHIFT;
+    }
+    if is_key_async_down(VK_CONTROL) {
+        flags |= MODIFIER_CONTROL;
+    }
+    if is_key_async_down(VK_MENU) || event.flags.contains(LLKHF_ALTDOWN) {
+        flags |= MODIFIER_ALT;
+    }
+    if is_key_async_down(VK_LWIN) || is_key_async_down(VK_RWIN) {
+        flags |= MODIFIER_META;
+    }
+    flags
+}
+
+unsafe fn is_key_async_down(virtual_key: VIRTUAL_KEY) -> bool {
+    (GetAsyncKeyState(virtual_key.0 as i32) as u16 & 0x8000) != 0
+}
+
+unsafe fn schedule_shift_fallback_if_needed(message: u32, keyboard_event: KBDLLHOOKSTRUCT) {
+    let virtual_key = keyboard_event.vkCode as jint;
+    if !is_shift_key(virtual_key) {
+        return;
+    }
+
+    let Some(hwnd) = focused_keyboard_interop_window() else {
+        return;
+    };
+
+    let key_event_kind = key_event_kind_from_message(message);
+    let id = NEXT_SHIFT_FALLBACK_EVENT_ID.with(|next_id| {
+        let id = next_id.get();
+        next_id.set(id.wrapping_add(1).max(1));
+        id
+    });
+    let event = PendingShiftEvent {
+        id,
+        hwnd,
+        key_event_kind,
+        virtual_key,
+        modifiers: modifier_flags_for_shift_event(key_event_kind),
+        key_event_lparam: key_event_lparam_from_low_level_keyboard_event(&keyboard_event),
+    };
+    SHIFT_FALLBACK_EVENTS.with(|events| {
+        events.borrow_mut().push_back(event);
+    });
+    let _ = PostMessageW(Some(hwnd), WM_USER_SHIFT_FALLBACK, WPARAM(id), LPARAM(0));
+}
+
+unsafe fn focused_keyboard_interop_window() -> Option<HWND> {
+    let foreground = GetForegroundWindow();
+    if foreground.0.is_null() {
+        return None;
+    }
+    let foreground_thread_id = GetWindowThreadProcessId(foreground, None);
+    let mut gui_thread_info = GUITHREADINFO {
+        cbSize: std::mem::size_of::<GUITHREADINFO>() as u32,
+        ..Default::default()
+    };
+    if GetGUIThreadInfo(foreground_thread_id, &mut gui_thread_info).is_err() {
+        return None;
+    }
+
+    let focus = gui_thread_info.hwndFocus;
+    if focus.0.is_null() {
+        return None;
+    }
+    KEYBOARD_INTEROP_WINDOWS.with(|windows| {
+        windows
+            .borrow()
+            .iter()
+            .copied()
+            .find(|hwnd| *hwnd == focus || IsChild(*hwnd, focus).as_bool())
+    })
+}
+
+fn is_key_down_or_up_message(message: u32) -> bool {
+    matches!(message, WM_KEYDOWN | WM_KEYUP | WM_SYSKEYDOWN | WM_SYSKEYUP)
+}
+
+fn key_event_kind_from_message(message: u32) -> jint {
+    match message {
+        WM_SYSKEYDOWN => COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN.0,
+        WM_SYSKEYUP => COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_UP.0,
+        WM_KEYUP => COREWEBVIEW2_KEY_EVENT_KIND_KEY_UP.0,
+        _ => COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN.0,
+    }
+}
+
+fn key_event_lparam_from_low_level_keyboard_event(event: &KBDLLHOOKSTRUCT) -> jint {
+    let mut lparam = 1 | ((event.scanCode as i32) << 16);
+    if event.flags.contains(LLKHF_EXTENDED) {
+        lparam |= 1 << 24;
+    }
+    if event.flags.contains(LLKHF_ALTDOWN) {
+        lparam |= 1 << 29;
+    }
+    if event.flags.contains(LLKHF_UP) {
+        lparam |= 1 << 30;
+        lparam |= i32::MIN;
+    }
+    lparam
+}
+
+unsafe fn dispatch_pending_shift_event(hwnd: HWND, id: usize) {
+    let event = SHIFT_FALLBACK_EVENTS.with(|events| {
+        let mut events = events.borrow_mut();
+        events
+            .iter()
+            .position(|event| event.id == id)
+            .and_then(|index| events.remove(index))
+    });
+    let Some(event) = event else {
+        return;
+    };
+    if event.hwnd != hwnd {
+        return;
+    }
+
+    let callbacks_ptr = GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *const JavaCallbacks;
+    if callbacks_ptr.is_null() {
+        return;
+    }
+    (*callbacks_ptr).on_accelerator_key_pressed(
+        event.key_event_kind,
+        event.virtual_key,
+        event.modifiers,
+        event.key_event_lparam,
+    );
 }
 
 fn jstring_to_string(env: &mut JNIEnv<'_>, value: JString<'_>) -> BridgeResult<String> {

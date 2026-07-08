@@ -21,7 +21,7 @@ private class WinWebView2BridgePluginAnchor
 
 @ApiStatus.Internal
 internal object WinWebView2Bridge {
-  private const val EXPECTED_NATIVE_ABI_VERSION = "wvi-custom-scheme-assets-v9"
+  private const val EXPECTED_NATIVE_ABI_VERSION = "wvi-custom-scheme-assets-v10"
 
   init {
     if (SystemInfo.isWindows) {

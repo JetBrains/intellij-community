@@ -120,6 +120,17 @@ class WinWebViewShortcutInteropTest {
   }
 
   @Test
+  fun `lets native window close shortcut fall through`() {
+    val altF4 = createWindowsKeyEvent(
+      virtualKey = VK_F4,
+      modifierFlags = WinWebViewShortcutInterop.MODIFIER_ALT,
+      keyEventKind = WinWebViewShortcutInterop.KEY_EVENT_KIND_SYSTEM_KEY_DOWN,
+    )
+
+    assertEquals(WebViewShortcutRouting.BROWSER_ONLY, WebViewShortcutRouter.route(altF4))
+  }
+
+  @Test
   fun `preserves left and right modifier key locations`() {
     assertEquals(
       KeyEvent.KEY_LOCATION_LEFT,
