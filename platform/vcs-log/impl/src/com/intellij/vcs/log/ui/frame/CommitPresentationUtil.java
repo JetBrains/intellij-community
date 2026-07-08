@@ -28,6 +28,7 @@ import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.ui.table.links.CommitLinksProvider;
 import com.intellij.vcs.log.ui.table.links.NavigateToCommit;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -44,13 +45,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public final class CommitPresentationUtil {
-  private static final @NotNull Pattern HASH_PATTERN = Pattern.compile("[0-9a-f]{7,40}", Pattern.CASE_INSENSITIVE);
-
   private static final @NotNull @NlsSafe String GO_TO_HASH = "go-to-hash:";
   private static final @NotNull @NlsSafe String SHOW_HIDE_BRANCHES = "show-hide-branches";
   private static final @NlsSafe String ELLIPSIS = "...";
@@ -118,7 +116,7 @@ public final class CommitPresentationUtil {
 
   private static @NotNull Set<@NlsSafe String> findHashes(@NotNull @NlsSafe String text) {
     Set<String> result = new HashSet<>();
-    Matcher matcher = HASH_PATTERN.matcher(text);
+    Matcher matcher = VcsLogUtil.GIT_HASH_REGEX.matcher(text);
     while (matcher.find()) {
       result.add(matcher.group());
     }
@@ -126,7 +124,7 @@ public final class CommitPresentationUtil {
   }
 
   private static @NotNull @NlsSafe String replaceHashes(@NotNull @NlsSafe String s, @NotNull Set<@NlsSafe String> resolvedHashes) {
-    Matcher matcher = HASH_PATTERN.matcher(s);
+    Matcher matcher = VcsLogUtil.GIT_HASH_REGEX.matcher(s);
     StringBuilder result = new StringBuilder();
 
     while (matcher.find()) {
