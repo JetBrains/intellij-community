@@ -358,6 +358,18 @@ public class PythonKeywordCompletionTest extends PyTestCase {
     assertContainsElements(variants, PyNames.TRUE, PyNames.FALSE);
   }
 
+  // PY-90834
+  public void testNoExpressionKeywordsAsClassName() {
+    List<String> variants = doTestByText("class <caret>");
+    assertDoesntContain(variants, PyNames.TRUE, PyNames.FALSE, PyNames.NONE, PyNames.NOT, PyNames.LAMBDA);
+  }
+
+  // PY-90834
+  public void testNoExpressionKeywordsAsTypeAliasName() {
+    List<String> variants = doTestByText("type <caret> = int");
+    assertDoesntContain(variants, PyNames.TRUE, PyNames.FALSE, PyNames.NONE, PyNames.NOT, PyNames.LAMBDA);
+  }
+
   // PY-48039
   public void testNoCaseOutsideMatchStatement() {
     CodeInsightSettings.runWithTemporarySettings(settings -> {

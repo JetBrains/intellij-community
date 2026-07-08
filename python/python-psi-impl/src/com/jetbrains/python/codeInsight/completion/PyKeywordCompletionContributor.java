@@ -259,8 +259,11 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
     psiElement().inside(PyStringLiteralExpression.class).andNot(
       psiElement().inFile(psiFile(PyDoctestFile.class)));
 
-  private static final ElementPattern<PsiElement> IS_FUNCTION_NAME = 
-    psiElement().withElementType(PyTokenTypes.IDENTIFIER).withParent(PyFunction.class);
+  private static final ElementPattern<PsiElement> IS_DECLARATION_NAME = or(
+    psiElement().withElementType(PyTokenTypes.IDENTIFIER).withParent(PyFunction.class),
+    psiElement().withElementType(PyTokenTypes.IDENTIFIER).withParent(PyClass.class),
+    psiElement().withElementType(PyTokenTypes.IDENTIFIER).withParent(PyTypeAliasStatement.class)
+  );
 
   public static final PsiElementPattern.Capture<PsiElement> AFTER_QUALIFIER =
     psiElement().afterLeaf(psiElement().withText(".").inside(PyReferenceExpression.class));
@@ -707,7 +710,7 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
         .andNot(IN_IMPORT_STMT)
         .andNot(IS_PARAMETER_NAME)
         .andNot(IS_TYPE_PARAMETER_NAME)
-        .andNot(IS_FUNCTION_NAME)
+        .andNot(IS_DECLARATION_NAME)
         .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
         .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL).andNot(TARGET_AFTER_QUALIFIER)
         .andNot(IN_PATTERN)
@@ -725,7 +728,7 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
         .andNot(IN_IMPORT_STMT)
         .andNot(IS_PARAMETER_NAME)
         .andNot(IS_TYPE_PARAMETER_NAME)
-        .andNot(IS_FUNCTION_NAME)
+        .andNot(IS_DECLARATION_NAME)
         .andNot(AFTER_QUALIFIER)
         .andNot(IN_STRING_LITERAL)
         .andNot(TARGET_AFTER_QUALIFIER)
