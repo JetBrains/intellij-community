@@ -1,0 +1,71 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.kotlin.base.resources"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.binaryExtension"
+            interface="org.jetbrains.kotlin.idea.base.projectStructure.KotlinBinaryExtension"
+            dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectStructure.sourceRootEditHandler implementation="org.jetbrains.kotlin.idea.roots.ui.KotlinModuleSourceRootEditHandler$TestResource"/>
+    <applicationActivity implementation="org.jetbrains.kotlin.idea.macros.ApplicationWideKotlinBundledPathMacroCleaner"/>
+    <projectStructure.sourceRootEditHandler implementation="org.jetbrains.kotlin.idea.roots.ui.KotlinModuleSourceRootEditHandler$Source"/>
+    <projectStructure.sourceRootEditHandler implementation="org.jetbrains.kotlin.idea.roots.ui.KotlinModuleSourceRootEditHandler$TestSource"/>
+    <projectService serviceInterface="org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory"
+                    serviceImplementation="org.jetbrains.kotlin.idea.vfilefinder.IdeVirtualFileFinderFactory"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledMacroRefresher"/>
+    <projectPathMacroContributor implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledPathMacroContributor"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledRefresher"/>
+    <treeStructureProvider implementation="org.jetbrains.kotlin.idea.projectView.KotlinExpandNodeProjectViewProvider" order="last, after ClassesTreeStructureProvider"/>
+    <virtualFileSystem implementationClass="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileSystemImpl"
+                       key="fwd" physical="false"/>
+    <postStartupActivity
+            implementation="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsStartupActivity"/>
+    <workspaceModel.fileIndexContributor
+            implementation="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceFileIndexContributor"/>
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.KotlinLibraryToSourceAnalysisStateComponent"/>
+    <projectSettings service="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.KotlinLibraryToSourceAnalysisStateComponent"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector$MyStartupActivity"/>
+    <treeStructureProvider implementation="org.jetbrains.kotlin.idea.projectView.KotlinSelectInProjectViewProvider"/>
+    <moduleConfigurationEditorProvider implementation="org.jetbrains.kotlin.idea.roots.ui.NonJvmKotlinModuleEditorsProvider"/>
+    <projectStructure.sourceRootEditHandler implementation="org.jetbrains.kotlin.idea.roots.ui.KotlinModuleSourceRootEditHandler$Resource"/>
+  </extensions>
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector$ModelChangeListener"
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+    <listener class="org.jetbrains.kotlin.idea.macros.KotlinDistAutomaticDownloaderForKotlinBundled"
+              topic="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetectorListener"/>
+    <listener class="org.jetbrains.kotlin.idea.KotlinClearPackageCachesListener"
+              topic="com.intellij.openapi.roots.ModuleRootListener"/>
+    <listener class="org.jetbrains.kotlin.idea.KotlinClearPackageCachesListener"
+              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+    <listener class="org.jetbrains.kotlin.idea.macros.KotlinDistAutomaticDownloaderForKotlinBundled"
+              topic="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener"/>
+  </projectListeners>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <binaryExtension implementation="org.jetbrains.kotlin.idea.base.projectStructure.KlibMetaBinary"/>
+    <binaryExtension implementation="org.jetbrains.kotlin.idea.base.projectStructure.KotlinBuiltInBinary"/>
+    <binaryExtension implementation="org.jetbrains.kotlin.idea.base.projectStructure.KotlinModuleBinary"/>
+    <binaryExtension implementation="org.jetbrains.kotlin.idea.base.projectStructure.JavaClassBinary"/>
+  </extensions>
+  <applicationListeners>
+    <listener class="org.jetbrains.kotlin.idea.macros.KotlinBundledPathMacroContributor"
+              topic="com.intellij.openapi.project.ProjectCloseListener"/>
+  </applicationListeners>
+  <actions>
+    <group>
+      <action
+              id="LibraryToSourceDependencySupportToggleAction"
+              class="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.LibraryToSourceDependencySupportToggleAction"/>
+    </group>
+  </actions>
+</idea-plugin>

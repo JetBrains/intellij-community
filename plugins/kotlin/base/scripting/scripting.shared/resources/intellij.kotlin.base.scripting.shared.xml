@@ -1,8 +1,9 @@
-<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.core.script.shared">
+<idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
@@ -51,5 +52,7 @@
     <scriptDefinitionsSource
             id="BridgeScriptDefinitionsContributor"
             implementation="org.jetbrains.kotlin.idea.core.script.shared.definition.BridgeScriptDefinitionsContributor"/>
+    <idea.base.platforms.targetPlatformDetector
+            implementation="org.jetbrains.kotlin.idea.core.script.v1.ScriptingTargetPlatformDetector"/>
   </extensions>
 </idea-plugin>

@@ -1,13 +1,14 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="org.jetbrains.java.decompiler"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
-    <module name="kotlin.jvm.shared"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.highlighting"/>
-    <!-- endregion -->
+    <module name="kotlin.jvm.shared"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <attachSourcesProvider implementation="org.jetbrains.kotlin.idea.jvmDecompiler.DecompileKotlinToJavaActionProvider"/>

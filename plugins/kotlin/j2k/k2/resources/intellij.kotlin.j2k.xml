@@ -5,12 +5,13 @@
     <j2kPreprocessorExtension implementation="org.jetbrains.kotlin.j2k.k2.preProcessings.K2TypeArgumentsExpander"/>
   </extensions>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.frontback.psi"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.codeInsight.fixes"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
 </idea-plugin>

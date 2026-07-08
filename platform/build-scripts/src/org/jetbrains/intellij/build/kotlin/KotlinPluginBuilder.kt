@@ -37,7 +37,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.base.kdoc",
       "intellij.kotlin.base.platforms",
       "intellij.kotlin.base.facet",
-      "intellij.kotlin.base.projectStructure",
       "intellij.kotlin.base.scripting",
       "intellij.kotlin.base.scripting.main.kts",
       "intellij.kotlin.base.scripting.shared",

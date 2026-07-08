@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.java"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.codeInsight.liveTemplates"/>
     <module name="intellij.kotlin.codeInsight.shared"/>
   </dependencies>

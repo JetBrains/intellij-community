@@ -1,11 +1,12 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.jetbrains.performancePlugin"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.performanceTesting.vcs"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.jetbrains">
     <performancePlugin.commandProvider implementation="com.intellij.performance.performancePlugin.KotlinPluginCommandProvider"/>

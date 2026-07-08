@@ -129,9 +129,8 @@
     <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinAnalyzerVersionAboutPopupDescriptionProvider"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.editor.KotlinEditorOptions"/>
-    <applicationActivity implementation="org.jetbrains.kotlin.idea.macros.ApplicationWideKotlinBundledPathMacroCleaner"/>
 
-    <projectService
+      <projectService
             serviceInterface="org.jetbrains.kotlin.idea.facet.KotlinFacetEditorProviderService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinFacetEditorProviderServiceImpl"/>
     <projectService
@@ -156,14 +155,9 @@
 
     <pathMacroExpandableProtocol protocol="kotlin-js-meta"/>
 
-    <projectPathMacroContributor implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledPathMacroContributor"/>
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledMacroRefresher"/>
+      <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.update.KotlinPluginUpdateCheckerStartActivity"/>
 
-    <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.update.KotlinPluginUpdateCheckerStartActivity"/>
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector$MyStartupActivity"/>
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledRefresher"/>
-
-    <typeDeclarationProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinTypeDeclarationProvider"/>
+      <typeDeclarationProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinTypeDeclarationProvider"/>
     <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinGotoValVarTypeHandler"/>
     <focusModeProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinFocusModeProvider" />
 
@@ -194,10 +188,7 @@
             forClass="org.jetbrains.kotlin.psi.KtStringTemplateExpression"
             implementationClass="org.jetbrains.kotlin.psi.psiUtil.KtStringTemplateExpressionManipulator"/>
 
-    <treeStructureProvider implementation="org.jetbrains.kotlin.idea.projectView.KotlinSelectInProjectViewProvider"/>
-    <treeStructureProvider implementation="org.jetbrains.kotlin.idea.projectView.KotlinExpandNodeProjectViewProvider" order="last, after ClassesTreeStructureProvider"/>
-
-    <qualifiedNameProvider implementation="org.jetbrains.kotlin.idea.KotlinQualifiedNameProvider"/>
+      <qualifiedNameProvider implementation="org.jetbrains.kotlin.idea.KotlinQualifiedNameProvider"/>
 
     <packageDependencies.visitor
             language="kotlin"
@@ -210,13 +201,6 @@
     <stripTrailingSpacesFilterFactory implementation="org.jetbrains.kotlin.idea.editor.KotlinStripTrailingSpacesFilterFactory"/>
 
     <search.topHitProvider implementation="org.jetbrains.kotlin.idea.editor.KotlinEditorOptionsTopHitProvider"/>
-
-    <moduleConfigurationEditorProvider implementation="org.jetbrains.kotlin.idea.roots.ui.NonJvmKotlinModuleEditorsProvider"/>
-
-    <projectStructure.sourceRootEditHandler implementation="org.jetbrains.kotlin.idea.roots.ui.KotlinModuleSourceRootEditHandler$Source"/>
-    <projectStructure.sourceRootEditHandler implementation="org.jetbrains.kotlin.idea.roots.ui.KotlinModuleSourceRootEditHandler$TestSource"/>
-    <projectStructure.sourceRootEditHandler implementation="org.jetbrains.kotlin.idea.roots.ui.KotlinModuleSourceRootEditHandler$Resource"/>
-    <projectStructure.sourceRootEditHandler implementation="org.jetbrains.kotlin.idea.roots.ui.KotlinModuleSourceRootEditHandler$TestResource"/>
 
     <advancedSetting
             id="kotlin.enable.autoconfiguration"
@@ -305,41 +289,20 @@
     <listener class="org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService$PackageCacheModuleRootListener"
               topic="com.intellij.openapi.roots.ModuleRootListener"/>
 
-    <listener class="org.jetbrains.kotlin.idea.KotlinClearPackageCachesListener"
-              topic="com.intellij.openapi.roots.ModuleRootListener"/>
-    <listener class="org.jetbrains.kotlin.idea.KotlinClearPackageCachesListener"
-              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
-    <listener class="org.jetbrains.kotlin.idea.configuration.notifications.ExternalKotlinCompilerProjectDataImportListener"
-              topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"/>
+      <listener class="org.jetbrains.kotlin.idea.configuration.notifications.ExternalKotlinCompilerProjectDataImportListener"
+                topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"/>
 
     <listener class="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService$CommonCompilerSettingsChangeListener"
               topic="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener"/>
 
-    <listener class="org.jetbrains.kotlin.idea.macros.KotlinDistAutomaticDownloaderForKotlinBundled"
-              topic="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener"/>
-
-    <listener class="org.jetbrains.kotlin.idea.macros.KotlinDistAutomaticDownloaderForKotlinBundled"
-              topic="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetectorListener"/>
-
-    <listener class="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector$ModelChangeListener"
-              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
   </projectListeners>
 
-  <applicationListeners>
-    <listener class="org.jetbrains.kotlin.idea.macros.KotlinBundledPathMacroContributor"
-              topic="com.intellij.openapi.project.ProjectCloseListener"/>
-  </applicationListeners>
-
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <versionInfoProvider implementation="org.jetbrains.kotlin.idea.base.compilerPreferences.facet.KotlinVersionInfoProviderByModuleDependencies"/>
 
     <pluginUpdateVerifier implementation="org.jetbrains.kotlin.idea.update.GooglePluginUpdateVerifier"/>
 
-    <binaryExtension implementation="org.jetbrains.kotlin.idea.base.projectStructure.JavaClassBinary"/>
-    <binaryExtension implementation="org.jetbrains.kotlin.idea.base.projectStructure.KotlinBuiltInBinary"/>
-    <binaryExtension implementation="org.jetbrains.kotlin.idea.base.projectStructure.KotlinModuleBinary"/>
-
-    <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator"/>
+        <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator"/>
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJsModuleConfigurator"/>
     <buildSystemDependencyManager implementation="org.jetbrains.kotlin.idea.configuration.JpsKotlinBuildSystemDependencyManager"/>
   </extensions>
@@ -618,10 +581,6 @@
         <action
                 id="CheckComponentsUsageSearchAction"
                 class="org.jetbrains.kotlin.idea.actions.internal.CheckComponentsUsageSearchAction"/>
-
-        <action
-                id="LibraryToSourceDependencySupportToggleAction"
-                class="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.LibraryToSourceDependencySupportToggleAction"/>
 
 
       </group>

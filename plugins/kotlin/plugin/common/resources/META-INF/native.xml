@@ -17,7 +17,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <binaryExtension implementation="org.jetbrains.kotlin.idea.base.projectStructure.KlibMetaBinary"/>
     <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind"/>
   </extensions>
 </idea-plugin>

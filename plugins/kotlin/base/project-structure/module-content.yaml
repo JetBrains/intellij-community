@@ -1,0 +1,13 @@
+- name: dist.all/lib/intellij.kotlin.base.projectStructure.jar
+  projectLibraries:
+  - name: kotlinc.analysis-api-impl-base
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2/analysis-api-impl-base-for-ide-2.jar
+  - name: kotlinc.analysis-api-platform-interface
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2/analysis-api-platform-interface-for-ide-2.jar
+  - name: kotlinc.kotlin-compiler-fe10
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2/kotlin-compiler-fe10-for-ide-2.jar
+  modules:
+  - name: intellij.kotlin.base.projectStructure

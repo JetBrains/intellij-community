@@ -34,13 +34,5 @@
 
 
   <!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->
-
-  <content namespace="jetbrains">
-    <module name="intellij.kotlin.base.resources" loading="embedded"/>
-    <module name="intellij.kotlin.codeInsight.shared" loading="embedded"/>
-    <module name="intellij.kotlin.jvm.debugger.base.util" loading="embedded"/>
-    <module name="intellij.kotlin.jvm.debugger.coroutines" loading="embedded"/>
-  </content>
-
   <xi:include href="/kotlin.plugin.k2.xml"/>
 </idea-plugin>

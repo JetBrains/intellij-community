@@ -1,11 +1,12 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.kotlin.k2"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.devkit.workspaceModel"/>
     <module name="intellij.java.psi"/>
-    <!-- endregion -->
+    <module name="intellij.kotlin.base.projectStructure"/>
   </dependencies>
+  <!-- endregion -->
 
   <resource-bundle>messages.DevKitWorkspaceModelBundle</resource-bundle>
 </idea-plugin>

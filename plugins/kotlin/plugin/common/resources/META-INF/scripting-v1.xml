@@ -20,8 +20,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <idea.base.platforms.targetPlatformDetector
-            implementation="org.jetbrains.kotlin.idea.core.script.v1.ScriptingTargetPlatformDetector"/>
 
     <syntheticResolveExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptingResolveExtension"/>
     <extraImportsProviderExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptExtraImportsProviderExtension"/>

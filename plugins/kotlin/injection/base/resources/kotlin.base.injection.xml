@@ -1,9 +1,10 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.langInjection.backend"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.langInjection"/>
     <module name="intellij.java.psi"/>
-    <!-- endregion -->
+    <module name="intellij.kotlin.base.projectStructure"/>
   </dependencies>
+  <!-- endregion -->
 </idea-plugin>

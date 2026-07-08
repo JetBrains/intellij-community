@@ -26,7 +26,6 @@
   <xi:include href="dep-spellchecker.xml"/>
   <xi:include href="scripting-v1.xml"/>
   <xi:include href="native.xml"/>
-  <xi:include href="native-k2.xml"/>
   <xi:include href="facets-base.xml"/>
   <xi:include href="jvm.xml"/>
   <xi:include href="searching-k2.xml"/>
@@ -157,17 +156,12 @@
   <extensions defaultExtensionNs="com.intellij">
     <iconProvider implementation="org.jetbrains.kotlin.idea.FirKotlinIconProvider"/>
 
-    <projectService serviceInterface="org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory"
-                    serviceImplementation="org.jetbrains.kotlin.idea.vfilefinder.IdeVirtualFileFinderFactory"/>
-
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.PluginStartupActivity"/>
+      <postStartupActivity implementation="org.jetbrains.kotlin.idea.PluginStartupActivity"/>
     <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.update.KotlinPluginUpdateCheckerStartActivity"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
 
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.KotlinLibraryToSourceAnalysisStateComponent"/>
-
-    <!--suppress LightServiceMigrationXML -->
+      <!--suppress LightServiceMigrationXML -->
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService"/>
 
     <lang.importOptimizer language="kotlin" implementationClass="org.jetbrains.kotlin.idea.imports.KotlinFirImportOptimizer"/>
@@ -175,8 +169,6 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressionChecker"
             serviceImplementation="org.jetbrains.kotlin.idea.inspections.suppress.KotlinK2SuppressionChecker"/>
-    <projectSettings
-            service="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.KotlinLibraryToSourceAnalysisStateComponent"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -296,5 +288,11 @@
     <module name="intellij.kotlin.internal"/>
 
     <module name="intellij.kotlin.performanceExtendedPlugin"/>
+
+    <module name="intellij.kotlin.base.resources" loading="embedded"/>
+    <module name="intellij.kotlin.codeInsight.shared" loading="embedded"/>
+    <module name="intellij.kotlin.jvm.debugger.base.util" loading="embedded"/>
+    <module name="intellij.kotlin.jvm.debugger.coroutines" loading="embedded"/>
+    <module name="intellij.kotlin.base.projectStructure" loading="embedded"/>
   </content>
 </idea-plugin>

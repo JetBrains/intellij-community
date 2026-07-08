@@ -1,6 +1,9 @@
 - name: lib/frontend-split/kotlin-frontend.jar
   modules:
   - name: kotlin.frontend.split
+- name: lib/intellij.kotlin.base.projectStructure.jar
+  contentModules:
+  - name: intellij.kotlin.base.projectStructure
 - name: lib/intellij.kotlin.base.resources.jar
   contentModules:
   - name: intellij.kotlin.base.resources
@@ -109,7 +112,6 @@
   - name: intellij.kotlin.base.kdoc
   - name: intellij.kotlin.base.platforms
   - name: intellij.kotlin.base.facet
-  - name: intellij.kotlin.base.projectStructure
   - name: intellij.kotlin.base.analysis
   - name: intellij.kotlin.base.codeInsight
   - name: intellij.kotlin.base.analysis.utils
@@ -173,10 +175,6 @@
   - name: intellij.kotlin.gradle.java
   - name: kotlin.gradle.scripting.shared
   - name: intellij.kotlin.gradle.scripting
-  - name: intellij.kotlin.base.scripting
-  - name: intellij.kotlin.base.scripting.main.kts
-  - name: intellij.kotlin.base.scripting.shared
-  - name: intellij.kotlin.base.scripting.scratch.definition
 - name: lib/kotlinc.allopen-compiler-plugin.jar
   library: kotlinc.allopen-compiler-plugin
   files:
@@ -264,6 +262,18 @@
 - name: lib/modules/intellij.kotlin.base.externalSystem.jar
   contentModules:
   - name: intellij.kotlin.base.externalSystem
+- name: lib/modules/intellij.kotlin.base.scripting.jar
+  contentModules:
+  - name: intellij.kotlin.base.scripting
+- name: lib/modules/intellij.kotlin.base.scripting.main.kts.jar
+  contentModules:
+  - name: intellij.kotlin.base.scripting.main.kts
+- name: lib/modules/intellij.kotlin.base.scripting.scratch.definition.jar
+  contentModules:
+  - name: intellij.kotlin.base.scripting.scratch.definition
+- name: lib/modules/intellij.kotlin.base.scripting.shared.jar
+  contentModules:
+  - name: intellij.kotlin.base.scripting.shared
 - name: lib/modules/intellij.kotlin.codeInsight.base.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.base
