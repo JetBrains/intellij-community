@@ -2,9 +2,12 @@
 package com.intellij.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.util.IconLoader
+import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.icons.getReflectiveIcon
 import com.intellij.ui.icons.isReflectivePath
+import com.intellij.util.IconUtil
 import com.intellij.util.ui.EmptyIcon
 import org.junit.jupiter.api.Test
 import javax.swing.Icon
@@ -42,6 +45,30 @@ class IconLoaderTest {
     assertThat(getReflectiveIcon("AllIcons.FileTypes.AddAny",
                                  TestIcons::class.java.classLoader))
       .isEqualTo(AllIcons.FileTypes.AddAny)
+  }
+
+  /**
+   * IJPL-244871 SOE: DarkReplacer.replaceIcon
+   */
+  @Test
+  fun recursiveLayeredIcon_setIcon() {
+    val layered = LayeredIcon(1)
+    assertErrorLogged<Throwable> {
+      layered.setIcon(IconUtil.toSize(layered, 16, 16), 0)
+    }
+  }
+
+  /**
+   * IJPL-244871 SOE: DarkReplacer.replaceIcon
+   */
+  @Test
+  fun recursiveLayeredIcon_getDarkIcon() {
+    lateinit var layered: LayeredIcon
+    layered = LayeredIcon.layeredIcon { arrayOf(layered)}
+
+    assertErrorLogged<Throwable> {
+      IconLoader.getDarkIcon(layered, true)
+    }
   }
 }
 
