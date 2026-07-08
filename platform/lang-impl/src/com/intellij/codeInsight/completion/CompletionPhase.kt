@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
@@ -515,6 +516,15 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
   }
 
   abstract class ZombiePhase internal constructor(indicator: CompletionProgressIndicator?) : CompletionPhase(indicator) {
+    internal fun expireOnEditorRelease(editor: Editor) {
+      val phase = this
+      EditorUtil.disposeWithEditor(editor, Disposable {
+        if (CompletionServiceImpl.completionPhase === phase) {
+          CompletionServiceImpl.setCompletionPhase(NoCompletion)
+        }
+      })
+    }
+
     internal fun expireOnAnyEditorChange(editor: Editor) {
       editor.getDocument().addDocumentListener(object : DocumentListener {
         override fun beforeDocumentChange(e: DocumentEvent) {
@@ -542,6 +552,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
     val restorePrefix: Runnable
   ) : ZombiePhase(indicator) {
     init {
+      expireOnEditorRelease(indicator.editor)
       expireOnAnyEditorChange(indicator.editor)
     }
 
@@ -558,6 +569,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
   @ApiStatus.Internal
   class NoSuggestionsHint internal constructor(hint: LightweightHint?, indicator: CompletionProgressIndicator) : ZombiePhase(indicator) {
     init {
+      expireOnEditorRelease(indicator.editor)
       expireOnAnyEditorChange(indicator.editor)
       if (hint != null) {
         val hintListener = HintListener { CompletionServiceImpl.setCompletionPhase(NoCompletion) }
@@ -579,6 +591,13 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
   ) : ZombiePhase(null) {
     private val myTracker: ActionTracker = ActionTracker(editor, this)
     private val myEditor: Editor = editor
+
+    init {
+      // Do not call expireOnAnyEditorChange here: EmptyAutoPopup must survive document/caret changes
+      // so that allowsSkippingNewAutoPopup can suppress a redundant re-popup while the user keeps typing.
+      // We only need to release the editor when it is disposed (IJPL-249705).
+      expireOnEditorRelease(editor)
+    }
 
     fun allowsSkippingNewAutoPopup(editor: Editor, toType: Char): Boolean {
       if (myEditor === editor && !myTracker.hasAnythingHappened() && !CompletionProgressIndicator.shouldRestartCompletion(editor, restartingPrefixConditions, toType.toString())) {
