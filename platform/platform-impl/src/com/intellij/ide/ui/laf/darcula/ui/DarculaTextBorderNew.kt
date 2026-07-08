@@ -4,7 +4,6 @@ package com.intellij.ide.ui.laf.darcula.ui
 import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.util.ui.JBInsets
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Rectangle
@@ -15,7 +14,6 @@ import javax.swing.text.JTextComponent
  * Text border for new UI themes
  */
 // todo remove inheritance from DarculaTextBorder, rename, make public API
-@ApiStatus.Internal
 internal class DarculaTextBorderNew : DarculaTextBorder() {
 
   override fun paintNormalBorder(g: Graphics2D, c: JComponent, r: Rectangle) {

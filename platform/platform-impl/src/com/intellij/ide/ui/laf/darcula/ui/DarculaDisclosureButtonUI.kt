@@ -51,7 +51,6 @@ class DarculaDisclosureButtonUI(val uiComponent: JComponent) : BasicButtonUI() {
       return actionBounds.contains(e.point)
     }
 
-    @ApiStatus.Internal
     internal fun getAdditionalActionsButtonBounds(c: DisclosureButton): Rectangle? {
       if (c.additionalAction == null) return null
       val gearIcon = additionalActionsIcon(false)

@@ -14,7 +14,6 @@ import java.awt.Color
 import javax.swing.JComponent
 import javax.swing.JList
 
-@ApiStatus.Internal
 internal class LcrSimpleColoredTextImpl(
   initParams: LcrTextInitParamsImpl, baselineAlign: Boolean, beforeGap: LcrRow.Gap,
   private val text: @Nls String,

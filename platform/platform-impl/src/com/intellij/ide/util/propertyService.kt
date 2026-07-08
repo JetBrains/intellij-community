@@ -149,6 +149,7 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
   }
 }
 
+@Suppress("unused") // implements PropertiesComponent service
 @State(name = AppPropertyService.COMPONENT_NAME, reportStatistic = false, storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE,
                                                                               usePathMacroManager = false)])
 @Internal
@@ -158,7 +159,7 @@ class AppPropertyService : BasePropertyService() {
   }
 }
 
+@Suppress("unused") // implements PropertiesComponent service
 @State(name = "PropertiesComponent", reportStatistic = false, storages = [Storage(StoragePathMacros.WORKSPACE_FILE,
                                                                                   usePathMacroManager = false)])
-@Internal
 internal class ProjectPropertyService : BasePropertyService()

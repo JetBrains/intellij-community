@@ -592,7 +592,6 @@ class InstalledPluginsTab @RequiresEdt constructor(
     bundledUpdateCounter.isVisible = visible
   }
 
-  @ApiStatus.Internal
   internal inner class InstalledSearchOptionAction(private val myOption: InstalledSearchOption)
     : ToggleAction(myOption.myPresentableNameSupplier), DumbAware {
     var myIsSelected: Boolean = false

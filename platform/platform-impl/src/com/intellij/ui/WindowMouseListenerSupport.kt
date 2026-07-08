@@ -7,10 +7,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.wayland.getValidBoundsForPopup
 import com.intellij.ui.wayland.isUnconstrainedPopupPositioning
+import com.intellij.util.ui.JdkConstants
 import com.intellij.util.ui.StartupUiUtil
 import com.jetbrains.JBR
-import com.intellij.util.ui.JdkConstants
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.Dialog
@@ -22,8 +21,6 @@ import java.awt.Window
 import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
 
-
-@ApiStatus.Internal
 internal interface WindowMouseListenerSource {
   fun getContent(event: MouseEvent): Component
 

@@ -10,8 +10,6 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus.Internal
 
-
-@Internal
 internal object InitialScanningSkipReporter {
 
   val GROUP = EventLogGroup("indexing.initial.scanning.skip", 2)
@@ -101,7 +99,6 @@ internal object InitialScanningSkipReporter {
   }
 }
 
-@Internal
 internal class IndexesScanningSkipCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = InitialScanningSkipReporter.GROUP
 }

@@ -22,7 +22,6 @@ import com.intellij.reference.SoftReference
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
 import java.util.Vector
 import java.util.concurrent.atomic.AtomicBoolean
@@ -49,7 +48,6 @@ private val LOG = logger<FindPopupResultsAutoloadHandler>()
  * interface — no Swing imports beyond [DefaultTableModel], which is the only Swing surface
  * the executor touches directly.
  */
-@ApiStatus.Internal
 internal class FindPopupResultsAutoloadHandler(private val host: Host) {
 
   /** Session-scoped paging state. */

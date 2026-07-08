@@ -3,7 +3,6 @@ package com.intellij.openapi.application
 
 import com.google.gson.GsonBuilder
 import com.intellij.idea.AppExitCodes
-import org.jetbrains.annotations.ApiStatus
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import java.nio.file.Path
@@ -36,7 +35,6 @@ import kotlin.system.exitProcess
 }
  */
 
-@ApiStatus.Internal
 internal data class DumpedLaunchParameters(
   val cmdArguments: List<String>,
   val vmOptions: List<String>,
@@ -44,7 +42,7 @@ internal data class DumpedLaunchParameters(
   val systemProperties: Map<String, String>
 )
 
-@ApiStatus.Internal
+@Suppress("unused")
 internal class DumpLaunchParametersStarter : ModernApplicationStarter() {
   override fun premain(args: List<String>) {
     val outputIndex = args.indexOfFirst { it == "-o" || it == "--output" } + 1

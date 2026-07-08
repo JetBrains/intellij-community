@@ -2,9 +2,7 @@
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.ui.dsl.builder.MutableProperty
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal data class MutablePropertyImpl<T>(val getter: () -> T, val setter: (value: T) -> Unit) : MutableProperty<T> {
 
   override fun get(): T {

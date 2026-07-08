@@ -11,11 +11,9 @@ import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.text.MatcherHolder
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 import javax.swing.ListCellRenderer
 
-@ApiStatus.Internal
 internal fun cellRenderer(): ListCellRenderer<Any?> = listCellRenderer<Any?> {
   selectionColor = if (selected) JBUI.CurrentTheme.List.Selection.background(true) else null
 

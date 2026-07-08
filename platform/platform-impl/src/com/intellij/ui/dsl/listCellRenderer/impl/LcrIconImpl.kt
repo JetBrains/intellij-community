@@ -11,7 +11,6 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JList
 
-@ApiStatus.Internal
 internal class LcrIconImpl(initParams: LcrIconInitParams, baselineAlign: Boolean, beforeGap: LcrRow.Gap, val icon: Icon) :
   LcrCellBaseImpl<LcrIconInitParams>(initParams, baselineAlign, beforeGap) {
 

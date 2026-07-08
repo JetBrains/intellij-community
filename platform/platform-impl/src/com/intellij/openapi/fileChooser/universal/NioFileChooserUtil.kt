@@ -21,7 +21,6 @@ import java.nio.file.attribute.DosFileAttributes
 import kotlin.io.path.name
 import kotlin.streams.asSequence
 
-@ApiStatus.Internal
 internal object NioFileChooserUtil {
 
   fun isHidden(path: Path): Boolean {

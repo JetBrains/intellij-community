@@ -11,12 +11,10 @@ import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.eventLog.events.EventId3
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.DurationUnit
 
-@Internal
 internal interface GotoDeclarationReporter {
   enum class DeclarationsFound { NONE, SINGLE, MULTIPLE }
   enum class NavigationType { AUTO, FROM_POPUP }
@@ -41,7 +39,6 @@ internal interface GotoDeclarationReporter {
   fun reportNavigatedToDeclaration(navigationType: NavigationType, navigationProvider: Any?)
 }
 
-@Internal
 internal class GotoDeclarationFUSReporter : GotoDeclarationReporter {
   private val start = System.currentTimeMillis()
 
