@@ -13,6 +13,8 @@ import com.intellij.psi.util.siblings
 import com.intellij.psi.util.startOffset
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
+import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
+import org.intellij.plugins.markdown.lang.isMarkdownType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
@@ -170,7 +172,13 @@ object TableUtils {
   }
 
   internal fun isFormattingOnTypeEnabledForTables(file: PsiFile): Boolean {
-    return MarkdownCodeInsightSettings.getInstance().state.reformatTablesOnType && file !in CodeStyle.getSettings(file).excludedFiles
+    if (!file.fileType.isMarkdownType()) {
+      return false
+    }
+    val settings = CodeStyle.getSettings(file)
+    return MarkdownCodeInsightSettings.getInstance().state.reformatTablesOnType
+           && file !in settings.excludedFiles
+           && settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).FORMAT_TABLES
   }
 
   /**
