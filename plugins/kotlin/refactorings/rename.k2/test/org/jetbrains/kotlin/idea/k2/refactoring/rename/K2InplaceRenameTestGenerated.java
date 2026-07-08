@@ -608,6 +608,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/NamedArguments.kt");
     }
 
+    @TestMetadata("NamedDestructuring.kt")
+    public void testNamedDestructuring() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/NamedDestructuring.kt");
+    }
+
     @TestMetadata("NoReformat.kt")
     public void testNoReformat() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/NoReformat.kt");
