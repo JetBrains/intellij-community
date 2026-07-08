@@ -6,12 +6,14 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.ProductIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -187,6 +189,8 @@ object UniversalFileChooser {
     okAction: Runnable,
     private val okEnabledUpdater: (Boolean) -> Unit = {},
     contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
+    private val extraToolbarActions: ActionGroup = DefaultActionGroup(),
+    private val extraPopupActions: ActionGroup = DefaultActionGroup()
   ) : JPanel(), FileBrowserPanel {
 
     companion object {
@@ -204,6 +208,7 @@ object UniversalFileChooser {
 
     private val topToolbar: ActionToolbar
     private val toolbarActionGroup: DefaultActionGroup
+    private val popupActionGroup: DefaultActionGroup
 
     init {
       layout = BorderLayout()
@@ -214,6 +219,7 @@ object UniversalFileChooser {
       val (toolbar, group) = createTopToolbar()
       topToolbar = toolbar
       toolbarActionGroup = group
+      popupActionGroup = DefaultActionGroup(toolbarActionGroup, Separator.getInstance(), extraPopupActions)
       val screenSize = Toolkit.getDefaultToolkit().screenSize
       preferredSize = Dimension(screenSize.width / 2, screenSize.height / 2)
       tabbedPane = JBTabbedPane()
@@ -224,7 +230,7 @@ object UniversalFileChooser {
         contributors
       }
       for (contributor in effectiveContributors) {
-        val fileView = FileView(contributor, descriptor, disposable, project, okAction, scope, topToolbar, toolbarActionGroup, ::updateOkEnabled)
+        val fileView = FileView(contributor, descriptor, disposable, project, okAction, scope, topToolbar, popupActionGroup, ::updateOkEnabled)
         fileViews.add(fileView)
       }
       // If there is a single tab available, don't show the tab itself, only its content panel.
@@ -409,7 +415,8 @@ object UniversalFileChooser {
         add(showHiddenAction)
       }
 
-      val toolbar = ActionManager.getInstance().createActionToolbar("UniversalFileChooserTopToolbar", actionGroup, true)
+      val toolbarGroup = DefaultActionGroup(actionGroup, Separator.getInstance(), extraToolbarActions)
+      val toolbar = ActionManager.getInstance().createActionToolbar("UniversalFileChooserTopToolbar", toolbarGroup, true)
       return toolbar to actionGroup
     }
 
@@ -604,7 +611,7 @@ object UniversalFileChooser {
       okAction: Runnable,
       val scope: CoroutineScope,
       private val topToolbar: ActionToolbar,
-      toolbarActionGroup: DefaultActionGroup,
+      popupActionGroup: ActionGroup,
       private val okEnabledUpdater: () -> Unit = {},
     ) {
       val topComponent: JComponent
@@ -706,7 +713,7 @@ object UniversalFileChooser {
           topToolbar.updateActionsAsync()
         }
 
-        PopupHandler.installPopupMenu(tree, toolbarActionGroup, "UniversalFileChooserTreePopup")
+        PopupHandler.installPopupMenu(tree, popupActionGroup, "UniversalFileChooserTreePopup")
 
         tree.addKeyListener(object : KeyAdapter() {
           override fun keyPressed(e: KeyEvent) {
@@ -1108,8 +1115,10 @@ object FileBrowser {
     parentDisposable: Disposable,
     contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
     onDefaultAction: Runnable = Runnable {},
+    toolbarActionGroup: ActionGroup,
+    popupActionGroup: ActionGroup
   ): FileBrowserPanel {
-    return Panel(parentDisposable, descriptor, project, onDefaultAction, {}, contributors)
+    return Panel(parentDisposable, descriptor, project, onDefaultAction, {}, contributors, toolbarActionGroup, popupActionGroup)
   }
 
   /**
@@ -1127,8 +1136,10 @@ object FileBrowser {
     parentDisposable: Disposable,
     root: Path,
     onDefaultAction: Runnable = Runnable {},
+    toolbarActionGroup: ActionGroup,
+    popupActionGroup: ActionGroup
   ): FileBrowserPanel? {
     val contributor = UniversalFileChooserContributor.findOwner(root) ?: return null
-    return createPanel(project, descriptor, parentDisposable, listOf(SingleRootContributor(contributor, root)), onDefaultAction)
+    return createPanel(project, descriptor, parentDisposable, listOf(SingleRootContributor(contributor, root)), onDefaultAction, toolbarActionGroup, popupActionGroup)
   }
 }

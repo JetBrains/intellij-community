@@ -325,10 +325,10 @@ f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider$DefaultIm
 - setText(java.lang.String):V
 - setTextToFile(com.intellij.openapi.fileChooser.ex.FileLookup$LookupFile):V
 f:com.intellij.openapi.fileChooser.universal.FileBrowser
-- *sf:createPanel(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.Disposable,java.nio.file.Path,java.lang.Runnable):com.intellij.openapi.fileChooser.universal.FileBrowserPanel
-- *sf:createPanel(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.Disposable,java.util.Collection,java.lang.Runnable):com.intellij.openapi.fileChooser.universal.FileBrowserPanel
-- *bs:createPanel$default(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.Disposable,java.nio.file.Path,java.lang.Runnable,I,java.lang.Object):com.intellij.openapi.fileChooser.universal.FileBrowserPanel
-- *bs:createPanel$default(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.Disposable,java.util.Collection,java.lang.Runnable,I,java.lang.Object):com.intellij.openapi.fileChooser.universal.FileBrowserPanel
+- *sf:createPanel(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.Disposable,java.nio.file.Path,java.lang.Runnable,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.fileChooser.universal.FileBrowserPanel
+- *sf:createPanel(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.Disposable,java.util.Collection,java.lang.Runnable,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.fileChooser.universal.FileBrowserPanel
+- *bs:createPanel$default(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.Disposable,java.nio.file.Path,java.lang.Runnable,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.ActionGroup,I,java.lang.Object):com.intellij.openapi.fileChooser.universal.FileBrowserPanel
+- *bs:createPanel$default(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.Disposable,java.util.Collection,java.lang.Runnable,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.ActionGroup,I,java.lang.Object):com.intellij.openapi.fileChooser.universal.FileBrowserPanel
 *:com.intellij.openapi.fileChooser.universal.FileBrowserPanel
 - a:getSelectedFiles():java.util.List
 a:com.intellij.openapi.fileEditor.TextEditorWithPreviewProvider
