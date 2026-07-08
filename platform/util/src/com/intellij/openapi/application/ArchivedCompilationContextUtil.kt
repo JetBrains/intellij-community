@@ -12,6 +12,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.relativeTo
 
 @Internal
 object ArchivedCompilationContextUtil {
@@ -74,7 +75,17 @@ object ArchivedCompilationContextUtil {
 
 private fun getArchivedCompiledClassesLocationIfIsRunningFromBazelOut(): String? {
   val utilJar = PathManager.getJarPathForClass(PathManager::class.java)
-    ?.let{ Paths.get(it).toRealPath().absolutePathString() }
+    ?.let {
+      if (BazelRunfiles.isRunningFromBazel) {
+        // return the same value for normal case under bazel
+        // or in case of //platform/testFramework/monorepo:monorepo-tests_test
+        // .../a9dd60d319c66bc49e47c96653e93701/execroot/_main/bazel-out/darwin_arm64-fastbuild/bin/platform/testFramework/monorepo/monorepo-tests_test.runfiles/_main/platform/util/util.jar
+        // -> .../a9dd60d319c66bc49e47c96653e93701/execroot/_main/bazel-out/jvm-fastbuild/bin/platform/util/util.jar
+        Paths.get(it).toRealPath().absolutePathString()
+      } else {
+        it
+      }
+    }
   val bazelOutPattern = Paths.get("bazel-out", "jvm-fastbuild").toString()
   val index = utilJar?.indexOf(bazelOutPattern) ?: -1
   val isRunningFromBazelOut = index != -1 && utilJar!!.endsWith(".jar")
@@ -121,12 +132,28 @@ private fun computeArchivedCompiledClassesMappingIfIsRunningFromBazelOut(): Map<
   }
 
   val mapping = LinkedHashMap<String, String>()
+  val archivedCompiledClassesLocation = getArchivedCompiledClassesLocationIfIsRunningFromBazelOut()?.let { Paths.get(it).parent.parent }
+
   for ((moduleName, targetsFileModuleDescription) in targetsFile.modules) {
     if (targetsFileModuleDescription.productionJars.isNotEmpty()) {
-      mapping["production/$moduleName"] = targetsFileModuleDescription.productionJars.map { projectRoot.resolve(it).toString() }.single()
+      mapping["production/$moduleName"] = targetsFileModuleDescription.productionJars.map { productionJar ->
+        if (archivedCompiledClassesLocation != null) {
+          val relativeProductionJar = Paths.get(productionJar).relativeTo(Paths.get("out"))
+          archivedCompiledClassesLocation.resolve(relativeProductionJar).toString()
+        } else {
+          projectRoot.resolve(productionJar).toString()
+        }
+      }.single()
     }
     if (targetsFileModuleDescription.testJars.isNotEmpty()) {
-      mapping["test/$moduleName"] = targetsFileModuleDescription.testJars.map { projectRoot.resolve(it).toString() }.single()
+      mapping["test/$moduleName"] = targetsFileModuleDescription.testJars.map { testJar ->
+        if (archivedCompiledClassesLocation != null) {
+          val relativeTestJar = Paths.get(testJar).relativeTo(Paths.get("out"))
+          archivedCompiledClassesLocation.resolve(relativeTestJar).toString()
+        } else {
+          projectRoot.resolve(testJar).toString()
+        }
+      }.single()
     }
   }
   return mapping
