@@ -556,4 +556,14 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
             return 'hello'
         """);
   }
+
+  // an incomplete augmented assignment (no right-hand side) must not throw an NPE.
+  @TestFor(issues = "PY-90019")
+  public void testIncompleteAugAssignmentDoesNotThrow() {
+    doTestByText(
+      """
+        def f(n: int):
+            n +=<EOLError descr="Expression expected"></EOLError>
+        """);
+  }
 }
