@@ -34,7 +34,7 @@ java_library(
 
 java_import(
     name = "kotlinc-allopen-compiler-plugin",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.4.255-dev-255/allopen-compiler-plugin-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.5.255-dev-255/allopen-compiler-plugin-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -47,7 +47,7 @@ java_library(
 
 java_import(
     name = "kotlinc-analysis-api",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/analysis-api-for-ide/2.4.255-dev-255/analysis-api-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/analysis-api-for-ide/2.5.255-dev-255/analysis-api-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -60,7 +60,7 @@ java_library(
 
 java_import(
     name = "kotlinc-analysis-api-fe10",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.4.255-dev-255/analysis-api-fe10-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.5.255-dev-255/analysis-api-fe10-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -73,7 +73,7 @@ java_library(
 
 java_import(
     name = "kotlinc-analysis-api-impl-base",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.4.255-dev-255/analysis-api-impl-base-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.5.255-dev-255/analysis-api-impl-base-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -86,7 +86,7 @@ java_library(
 
 java_import(
     name = "kotlinc-analysis-api-k2",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.4.255-dev-255/analysis-api-k2-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.5.255-dev-255/analysis-api-k2-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -99,7 +99,7 @@ java_library(
 
 java_import(
     name = "kotlinc-analysis-api-platform-interface",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.4.255-dev-255/analysis-api-platform-interface-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.5.255-dev-255/analysis-api-platform-interface-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -112,7 +112,7 @@ java_library(
 
 java_import(
     name = "kotlinc-assignment-compiler-plugin",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.4.255-dev-255/assignment-compiler-plugin-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.5.255-dev-255/assignment-compiler-plugin-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -125,7 +125,7 @@ java_library(
 
 java_import(
     name = "kotlinc-compose-compiler-plugin",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.4.255-dev-255/compose-compiler-plugin-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.5.255-dev-255/compose-compiler-plugin-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -138,7 +138,7 @@ java_library(
 
 java_import(
     name = "kotlinc-incremental-compilation-impl-tests",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.4.255-dev-255/incremental-compilation-impl-tests-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.5.255-dev-255/incremental-compilation-impl-tests-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -151,7 +151,7 @@ java_library(
 
 java_import(
     name = "kotlinc-js-plain-objects-compiler-plugin",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.4.255-dev-255/js-plain-objects-compiler-plugin-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.5.255-dev-255/js-plain-objects-compiler-plugin-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -164,7 +164,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-build-common-tests",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.4.255-dev-255/kotlin-build-common-tests-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.5.255-dev-255/kotlin-build-common-tests-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -177,7 +177,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-build-tools-api",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-build-tools-api/2.4.255-dev-255/kotlin-build-tools-api-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-build-tools-api/2.5.255-dev-255/kotlin-build-tools-api-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -190,7 +190,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-build-tools-cri-impl",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.4.255-dev-255/kotlin-build-tools-cri-impl-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.5.255-dev-255/kotlin-build-tools-cri-impl-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -203,7 +203,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-build-tools-impl",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-build-tools-impl/2.4.255-dev-255/kotlin-build-tools-impl-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-build-tools-impl/2.5.255-dev-255/kotlin-build-tools-impl-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -216,7 +216,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-compiler-cli",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.4.255-dev-255/kotlin-compiler-cli-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.5.255-dev-255/kotlin-compiler-cli-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -229,7 +229,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-compiler-common",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.4.255-dev-255/kotlin-compiler-common-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.5.255-dev-255/kotlin-compiler-common-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -242,7 +242,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-compiler-fe10",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.4.255-dev-255/kotlin-compiler-fe10-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.5.255-dev-255/kotlin-compiler-fe10-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -255,7 +255,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-compiler-fir",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.4.255-dev-255/kotlin-compiler-fir-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.255-dev-255/kotlin-compiler-fir-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -268,7 +268,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-compiler-ir",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.4.255-dev-255/kotlin-compiler-ir-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.5.255-dev-255/kotlin-compiler-ir-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -281,7 +281,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-compiler-tests",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.4.255-dev-255/kotlin-compiler-tests-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.5.255-dev-255/kotlin-compiler-tests-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -294,7 +294,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-dataframe-compiler-plugin",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.4.255-dev-255/kotlin-dataframe-compiler-plugin-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.5.255-dev-255/kotlin-dataframe-compiler-plugin-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -307,7 +307,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-gradle-statistics",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.4.255-dev-255/kotlin-gradle-statistics-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.5.255-dev-255/kotlin-gradle-statistics-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -320,7 +320,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-jps-common",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.4.255-dev-255/kotlin-jps-common-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.5.255-dev-255/kotlin-jps-common-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -333,7 +333,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-jps-plugin-classpath-bootstrap-for-tests",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.4.255-dev-255/kotlin-jps-plugin-classpath-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.5.255-dev-255/kotlin-jps-plugin-classpath-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -346,7 +346,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-objcexport-header-generator",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-objcexport-header-generator-for-ide/2.4.255-dev-255/kotlin-objcexport-header-generator-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-objcexport-header-generator-for-ide/2.5.255-dev-255/kotlin-objcexport-header-generator-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -359,7 +359,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-script-runtime",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-script-runtime/2.4.255-dev-255/kotlin-script-runtime-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-script-runtime/2.5.255-dev-255/kotlin-script-runtime-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -372,7 +372,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-scripting-common",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-common/2.4.255-dev-255/kotlin-scripting-common-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-common/2.5.255-dev-255/kotlin-scripting-common-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -385,7 +385,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-scripting-compiler-impl",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.4.255-dev-255/kotlin-scripting-compiler-impl-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.5.255-dev-255/kotlin-scripting-compiler-impl-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -398,7 +398,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-scripting-dependencies",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.4.255-dev-255/kotlin-scripting-dependencies-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.5.255-dev-255/kotlin-scripting-dependencies-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -411,7 +411,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-scripting-jvm",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-jvm/2.4.255-dev-255/kotlin-scripting-jvm-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-jvm/2.5.255-dev-255/kotlin-scripting-jvm-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -424,7 +424,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlin-swift-export",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-swift-export-for-ide/2.4.255-dev-255/kotlin-swift-export-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlin-swift-export-for-ide/2.5.255-dev-255/kotlin-swift-export-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -437,7 +437,7 @@ java_library(
 
 java_import(
     name = "kotlinc-kotlinx-serialization-compiler-plugin",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.4.255-dev-255/kotlinx-serialization-compiler-plugin-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.5.255-dev-255/kotlinx-serialization-compiler-plugin-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -450,7 +450,7 @@ java_library(
 
 java_import(
     name = "kotlinc-lombok-compiler-plugin",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.4.255-dev-255/lombok-compiler-plugin-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.5.255-dev-255/lombok-compiler-plugin-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -463,7 +463,7 @@ java_library(
 
 java_import(
     name = "kotlinc-low-level-api-fir",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.4.255-dev-255/low-level-api-fir-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.5.255-dev-255/low-level-api-fir-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -476,7 +476,7 @@ java_library(
 
 java_import(
     name = "kotlinc-noarg-compiler-plugin",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.4.255-dev-255/noarg-compiler-plugin-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.5.255-dev-255/noarg-compiler-plugin-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -489,7 +489,7 @@ java_library(
 
 java_import(
     name = "kotlinc-parcelize-compiler-plugin",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.4.255-dev-255/parcelize-compiler-plugin-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.5.255-dev-255/parcelize-compiler-plugin-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -502,7 +502,7 @@ java_library(
 
 java_import(
     name = "kotlinc-sam-with-receiver-compiler-plugin",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.4.255-dev-255/sam-with-receiver-compiler-plugin-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.5.255-dev-255/sam-with-receiver-compiler-plugin-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -515,7 +515,7 @@ java_library(
 
 java_import(
     name = "kotlinc-scripting-compiler-plugin",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.4.255-dev-255/scripting-compiler-plugin-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.5.255-dev-255/scripting-compiler-plugin-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -528,7 +528,7 @@ java_library(
 
 java_import(
     name = "kotlinc-symbol-light-classes",
-    jars = ["kotlin-snapshot/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.4.255-dev-255/symbol-light-classes-for-ide-2.4.255-dev-255.jar"],
+    jars = ["kotlin-snapshot/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.5.255-dev-255/symbol-light-classes-for-ide-2.5.255-dev-255.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -561,45 +561,45 @@ java_import(
 exports_files(
     [
         "ecj-4.25.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.4.255-dev-255/allopen-compiler-plugin-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/analysis-api-for-ide/2.4.255-dev-255/analysis-api-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.4.255-dev-255/analysis-api-fe10-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.4.255-dev-255/analysis-api-impl-base-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.4.255-dev-255/analysis-api-k2-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.4.255-dev-255/analysis-api-platform-interface-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.4.255-dev-255/assignment-compiler-plugin-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.4.255-dev-255/compose-compiler-plugin-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.4.255-dev-255/incremental-compilation-impl-tests-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.4.255-dev-255/js-plain-objects-compiler-plugin-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.4.255-dev-255/kotlin-build-common-tests-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-build-tools-api/2.4.255-dev-255/kotlin-build-tools-api-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.4.255-dev-255/kotlin-build-tools-cri-impl-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-build-tools-impl/2.4.255-dev-255/kotlin-build-tools-impl-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.4.255-dev-255/kotlin-compiler-cli-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.4.255-dev-255/kotlin-compiler-common-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.4.255-dev-255/kotlin-compiler-fe10-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.4.255-dev-255/kotlin-compiler-fir-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.4.255-dev-255/kotlin-compiler-ir-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.4.255-dev-255/kotlin-compiler-tests-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.4.255-dev-255/kotlin-dataframe-compiler-plugin-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.4.255-dev-255/kotlin-gradle-statistics-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.4.255-dev-255/kotlin-jps-common-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.4.255-dev-255/kotlin-jps-plugin-classpath-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-objcexport-header-generator-for-ide/2.4.255-dev-255/kotlin-objcexport-header-generator-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-script-runtime/2.4.255-dev-255/kotlin-script-runtime-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-common/2.4.255-dev-255/kotlin-scripting-common-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.4.255-dev-255/kotlin-scripting-compiler-impl-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.4.255-dev-255/kotlin-scripting-dependencies-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-jvm/2.4.255-dev-255/kotlin-scripting-jvm-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-swift-export-for-ide/2.4.255-dev-255/kotlin-swift-export-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.4.255-dev-255/kotlinx-serialization-compiler-plugin-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.4.255-dev-255/lombok-compiler-plugin-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.4.255-dev-255/low-level-api-fir-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.4.255-dev-255/noarg-compiler-plugin-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.4.255-dev-255/parcelize-compiler-plugin-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.4.255-dev-255/sam-with-receiver-compiler-plugin-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.4.255-dev-255/scripting-compiler-plugin-for-ide-2.4.255-dev-255.jar",
-        "kotlin-snapshot/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.4.255-dev-255/symbol-light-classes-for-ide-2.4.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.5.255-dev-255/allopen-compiler-plugin-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/analysis-api-for-ide/2.5.255-dev-255/analysis-api-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.5.255-dev-255/analysis-api-fe10-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.5.255-dev-255/analysis-api-impl-base-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.5.255-dev-255/analysis-api-k2-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.5.255-dev-255/analysis-api-platform-interface-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.5.255-dev-255/assignment-compiler-plugin-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.5.255-dev-255/compose-compiler-plugin-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.5.255-dev-255/incremental-compilation-impl-tests-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.5.255-dev-255/js-plain-objects-compiler-plugin-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.5.255-dev-255/kotlin-build-common-tests-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-build-tools-api/2.5.255-dev-255/kotlin-build-tools-api-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.5.255-dev-255/kotlin-build-tools-cri-impl-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-build-tools-impl/2.5.255-dev-255/kotlin-build-tools-impl-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.5.255-dev-255/kotlin-compiler-cli-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.5.255-dev-255/kotlin-compiler-common-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.5.255-dev-255/kotlin-compiler-fe10-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.255-dev-255/kotlin-compiler-fir-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.5.255-dev-255/kotlin-compiler-ir-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.5.255-dev-255/kotlin-compiler-tests-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.5.255-dev-255/kotlin-dataframe-compiler-plugin-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.5.255-dev-255/kotlin-gradle-statistics-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.5.255-dev-255/kotlin-jps-common-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.5.255-dev-255/kotlin-jps-plugin-classpath-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-objcexport-header-generator-for-ide/2.5.255-dev-255/kotlin-objcexport-header-generator-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-script-runtime/2.5.255-dev-255/kotlin-script-runtime-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-common/2.5.255-dev-255/kotlin-scripting-common-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.5.255-dev-255/kotlin-scripting-compiler-impl-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.5.255-dev-255/kotlin-scripting-dependencies-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-jvm/2.5.255-dev-255/kotlin-scripting-jvm-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlin-swift-export-for-ide/2.5.255-dev-255/kotlin-swift-export-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.5.255-dev-255/kotlinx-serialization-compiler-plugin-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.5.255-dev-255/lombok-compiler-plugin-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.5.255-dev-255/low-level-api-fir-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.5.255-dev-255/noarg-compiler-plugin-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.5.255-dev-255/parcelize-compiler-plugin-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.5.255-dev-255/sam-with-receiver-compiler-plugin-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.5.255-dev-255/scripting-compiler-plugin-for-ide-2.5.255-dev-255.jar",
+        "kotlin-snapshot/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.5.255-dev-255/symbol-light-classes-for-ide-2.5.255-dev-255.jar",
         "eawtstub.jar",
         "commons-httpclient-3.1-patched.jar",
     ],
