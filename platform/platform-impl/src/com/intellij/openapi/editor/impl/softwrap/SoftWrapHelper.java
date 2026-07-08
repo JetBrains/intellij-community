@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.softwrap;
 
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CustomWrapModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -10,8 +11,6 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.CaretImpl;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapParsingListener;
 import com.intellij.openapi.util.Segment;
@@ -92,11 +91,11 @@ public final class SoftWrapHelper {
    * @return          {@code true} if caret offset of the given editor points to visual position that belongs to
    *                  visual line where soft wrap end is located
    */
-  public static boolean isCaretAfterSoftWrap(CaretImpl caret) {
+  public static boolean isCaretAfterSoftWrap(Caret caret) {
     if (!caret.isUpToDate()) {
       return false;
     }
-    EditorImpl editor = caret.getEditor();
+    Editor editor = caret.getEditor();
     SoftWrapModel softWrapModel = editor.getSoftWrapModel();
     int offset = caret.getOffset();
     SoftWrap softWrap = softWrapModel.getSoftWrap(offset);
