@@ -5,6 +5,7 @@ import com.intellij.build.events.MessageEvent
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.NonExtendable
+import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.plugins.gradle.issue.GradleIssueFailure
 import java.nio.file.Path
 
@@ -33,6 +34,7 @@ interface GradleExecutionReporter {
    * Configures how a single [GradleIssueFailure] should be reported.
    */
   @NonExtendable
+  @CheckReturnValue
   interface GradleExecutionFailureReport {
 
     /**
