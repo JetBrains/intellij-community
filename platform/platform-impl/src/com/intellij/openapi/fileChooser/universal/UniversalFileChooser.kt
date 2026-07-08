@@ -1093,53 +1093,94 @@ interface FileBrowserPanel {
 
 object FileBrowser {
   /**
-   * Creates an embeddable file browsing panel.
+   * Entry point for building an embeddable [FileBrowserPanel].
    *
    * The [parentDisposable] owns the panel's lifecycle: background loaders, listeners, and the
    * internal coroutine scope are released when it is disposed. Callers should not rely on any
    * dialog-close events.
    *
-   * @param project           project context used by the browser. [ProjectManager.getInstance.defaultProject] for a global context.
+   * Typical usage:
+   * ```
+   * val panel = FileBrowser.builder(project, descriptor, parentDisposable)
+   *   .contributors(listOf(myContributor))
+   *   .onDefaultAction { openSelected() }
+   *   .toolbarActions(myToolbarGroup)
+   *   .popupActions(myPopupGroup)
+   *   .build()
+   * ```
+   *
+   * @param project           project context used by the browser.
+   *                          Use [ProjectManager.getDefaultProject] for a global context.
    * @param descriptor        file chooser descriptor
    * @param parentDisposable  disposable owning the returned panel
-   * @param contributors      contributors (tabs) to display; defaults to all registered
-   *                          [UniversalFileChooserContributor] extensions
-   * @param onDefaultAction   optional callback invoked when the user triggers the default action
-   *                          on the current selection (Enter / double-click).
    */
   @ApiStatus.Experimental
   @JvmStatic
-  fun createPanel(
-    project: Project,
-    descriptor: FileChooserDescriptor,
-    parentDisposable: Disposable,
-    contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
-    onDefaultAction: Runnable = Runnable {},
-    toolbarActionGroup: ActionGroup,
-    popupActionGroup: ActionGroup
-  ): FileBrowserPanel {
-    return Panel(parentDisposable, descriptor, project, onDefaultAction, {}, contributors, toolbarActionGroup, popupActionGroup)
-  }
+  fun builder(project: Project, descriptor: FileChooserDescriptor, parentDisposable: Disposable): Builder =
+    Builder(project, descriptor, parentDisposable)
 
   /**
-   * Creates an embeddable file browsing panel. The same as
-   * [createFilePanel(Project, FileChooserDescriptor, Disposable, Collection<UniversalFileChooserContributor>, Runnable)] but for a specific
-   * root path. Other roots are not shown.
+   * Fluent builder for an embeddable [FileBrowserPanel].
    *
-   * @return The created file panel, or null if the root contributor cannot be determined.
+   * Only [project], [descriptor], and [parentDisposable] are required; all other parameters have
+   * reasonable defaults. Use [contributors] or [root] to restrict which tabs are shown, and
+   * [toolbarActions] / [popupActions] to inject additional actions.
+   *
+   * @see FileBrowser.builder
    */
   @ApiStatus.Experimental
-  @JvmStatic
-  fun createPanel(
-    project: Project,
-    descriptor: FileChooserDescriptor,
-    parentDisposable: Disposable,
-    root: Path,
-    onDefaultAction: Runnable = Runnable {},
-    toolbarActionGroup: ActionGroup,
-    popupActionGroup: ActionGroup
-  ): FileBrowserPanel? {
-    val contributor = UniversalFileChooserContributor.findOwner(root) ?: return null
-    return createPanel(project, descriptor, parentDisposable, listOf(SingleRootContributor(contributor, root)), onDefaultAction, toolbarActionGroup, popupActionGroup)
+  class Builder internal constructor(
+    private val project: Project,
+    private val descriptor: FileChooserDescriptor,
+    private val parentDisposable: Disposable,
+  ) {
+    private var contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList
+    private var onDefaultAction: Runnable = Runnable {}
+    private var toolbarActions: ActionGroup = DefaultActionGroup()
+    private var popupActions: ActionGroup = DefaultActionGroup()
+
+    /**
+     * Restricts the tabs shown in the panel to the given [contributors]. By default all registered
+     * [UniversalFileChooserContributor] extensions are used.
+     */
+    fun contributors(contributors: Collection<UniversalFileChooserContributor>): Builder = apply {
+      this.contributors = contributors
+    }
+
+    /**
+     * Shortcut for a single contributor rooted at [root]: the panel will show only that contributor's
+     * subtree starting at [root]. Returns `false` if no [UniversalFileChooserContributor] owns [root];
+     * in that case the builder is left unchanged so callers can decide how to react.
+     */
+    fun root(root: Path): Boolean {
+      val contributor = UniversalFileChooserContributor.findOwner(root) ?: return false
+      this.contributors = listOf(SingleRootContributor(contributor, root))
+      return true
+    }
+
+    /**
+     * Callback invoked when the user triggers the default action on the current selection
+     * (Enter / double-click).
+     */
+    fun onDefaultAction(action: Runnable): Builder = apply {
+      this.onDefaultAction = action
+    }
+
+    /**
+     * Additional actions appended to the panel's top toolbar (after the built-in navigation actions).
+     */
+    fun toolbarActions(actions: ActionGroup): Builder = apply {
+      this.toolbarActions = actions
+    }
+
+    /**
+     * Additional actions appended to the tree's context popup (after the toolbar actions).
+     */
+    fun popupActions(actions: ActionGroup): Builder = apply {
+      this.popupActions = actions
+    }
+
+    fun build(): FileBrowserPanel =
+      Panel(parentDisposable, descriptor, project, onDefaultAction, {}, contributors, toolbarActions, popupActions)
   }
 }
