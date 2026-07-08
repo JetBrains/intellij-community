@@ -51,7 +51,7 @@ class TerminalOutputScrollingModelImpl(
 ) : TerminalOutputScrollingModel {
   private var shouldScrollToCursor: Boolean = true
 
-  /** The state of the output model for which scroll position was adjusted */
+  /** The state of the output model already processed by this class, whether or not a scroll was performed for it */
   private val appliedOutputModelState = MutableStateFlow<OutputModelState>(getCurrentOutputModelState())
 
   init {
@@ -63,11 +63,17 @@ class TerminalOutputScrollingModelImpl(
             updateScrollPosition(outputModel.cursorOffset)
           }
         }
+        else {
+          appliedOutputModelState.value = getCurrentOutputModelState()
+        }
       }
 
       override fun cursorOffsetChanged(event: TerminalCursorOffsetChangeEvent) {
         if (shouldScrollToCursor) {
           updateScrollPosition(event.newOffset)
+        }
+        else {
+          appliedOutputModelState.value = getCurrentOutputModelState()
         }
       }
     })
