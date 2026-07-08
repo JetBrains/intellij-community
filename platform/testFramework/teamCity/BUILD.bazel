@@ -23,6 +23,7 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "@lib//:jetbrains-annotations",
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
+        "//.ownership/monorepo-resolver:codeowners-monorepo-resolver",
     ],
 )
 
@@ -39,6 +40,7 @@ jvm_library(
         # do not sort,
         ":teamCity",
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",
+        "//.ownership/monorepo-resolver:codeowners-monorepo-resolver_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.testFramework.teamCity` end
