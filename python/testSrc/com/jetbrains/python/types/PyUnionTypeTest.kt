@@ -102,6 +102,32 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
+    @TestFor(issues = ["PY-90791"])
+    fun `union member attribute of parameterized generics`() = test("""
+      class Box[T]:
+          t: T
+
+      def foo(box: Box[int] | Box[str]):
+          expr = box.t
+      #   └ TYPE int | str
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90791"])
+    fun `union member attribute from generic descriptor of parameterized generics`() = test("""
+      class Field[T]:
+          def __get__(self, instance, owner) -> T:
+              raise NotImplementedError
+
+      class Box[T]:
+          t: Field[T]
+
+      def foo(box: Box[int] | Box[str]):
+          expr = box.t
+      #   └ TYPE int | str
+      """)
+
+    @Test
     @TestFor(issues = ["PY-11364"])
     fun `union member method call of different types`() = test("""
       class C1:

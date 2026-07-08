@@ -2522,12 +2522,13 @@ object PyTypeChecker {
       PyAnyType.validate(this)
       return when (this) {
         null, is PyAnyType -> null
-        is PyUnionType -> this.isCallable
-        is PyUnsafeUnionType -> this.isCallable
+        is PyUnionType -> isCallable
+        is PyUnsafeUnionType -> isCallable
+        is PyIntersectionType -> isCallable
         is PyOverloadType -> true
-        is PyCallableType -> this.isCallable
-        is PyStructuralType if this.isInferredFromUsages -> true
-        is PyTypeVarType -> if (this.isDefinition) true else this.effectiveBound.isCallable
+        is PyCallableType -> isCallable
+        is PyStructuralType if isInferredFromUsages -> true
+        is PyTypeVarType -> if (isDefinition) true else effectiveBound.isCallable
         else -> false
       }
     }
@@ -2549,6 +2550,19 @@ object PyTypeChecker {
    */
   private val PyUnsafeUnionType.isCallable: Boolean?
     get() = members.any { it.isCallable ?: return null }
+
+  private val PyIntersectionType.isCallable: Boolean?
+    get() {
+      var hasUnknown = false
+      for (member in members) {
+        when (member.isCallable) {
+          true -> return true
+          null -> hasUnknown = true
+          false -> {}
+        }
+      }
+      return if (hasUnknown) null else false
+    }
 
   @JvmStatic
   fun definesGetAttr(file: PyFile, context: TypeEvalContext): Boolean {

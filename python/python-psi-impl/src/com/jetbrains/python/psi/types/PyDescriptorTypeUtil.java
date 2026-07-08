@@ -24,6 +24,7 @@ public final class PyDescriptorTypeUtil {
   private PyDescriptorTypeUtil() { }
 
   public static @Nullable Ref<PyType> getDunderGetReturnType(@NotNull PyQualifiedExpression expression,
+                                                             @Nullable PyType instanceType,
                                                              @Nullable PyType attributeType,
                                                              @NotNull TypeEvalContext context) {
     if (!expression.isQualified()) return null;
@@ -35,7 +36,7 @@ public final class PyDescriptorTypeUtil {
                                                                                 resolveContext);
     if (members == null || members.isEmpty()) return null;
 
-    return getTypeFromSyntheticDunderGetCall(expression, attributeType, context);
+    return getTypeFromSyntheticDunderGetCall(expression, instanceType, attributeType, context);
   }
 
   public static @Nullable Ref<PyType> getExpectedValueTypeForDunderSet(@NotNull PyQualifiedExpression targetExpression,
@@ -53,30 +54,27 @@ public final class PyDescriptorTypeUtil {
   }
 
   private static @Nullable Ref<PyType> getTypeFromSyntheticDunderGetCall(@NotNull PyQualifiedExpression expression,
+                                                                         @Nullable PyType instanceType,
                                                                          @NotNull PyType attributeType,
                                                                          @NotNull TypeEvalContext context) {
-    PyExpression qualifier = expression.getQualifier();
-    if (qualifier != null && attributeType instanceof PyCallableType receiverType) {
-      PyType qualifierType = context.getType(qualifier);
-      if (qualifierType instanceof PyClassLikeType classType) {
-        PyType instanceArgumentType;
-        PyType instanceTypeArgument;
-        final var noneType = PyBuiltinCache.getInstance(expression).getNoneType();
-        if (noneType == null) {
-          return null;
-        }
-        if (classType.isDefinition()) {
-          instanceArgumentType = noneType;
-          instanceTypeArgument = classType;
-        }
-        else {
-          instanceArgumentType = classType;
-          instanceTypeArgument = classType.toClass();
-        }
-        List<PyType> argumentTypes = List.of(instanceArgumentType, instanceTypeArgument);
-        PyType type = PySyntheticCallHelper.getCallTypeByFunctionName(PyNames.DUNDER_GET, receiverType, argumentTypes, context);
-        return Ref.create(type);
+    if (attributeType instanceof PyCallableType receiverType && instanceType instanceof PyClassLikeType classType) {
+      PyType instanceArgumentType;
+      PyType instanceTypeArgument;
+      final var noneType = PyBuiltinCache.getInstance(expression).getNoneType();
+      if (noneType == null) {
+        return null;
       }
+      if (classType.isDefinition()) {
+        instanceArgumentType = noneType;
+        instanceTypeArgument = classType;
+      }
+      else {
+        instanceArgumentType = classType;
+        instanceTypeArgument = classType.toClass();
+      }
+      List<PyType> argumentTypes = List.of(instanceArgumentType, instanceTypeArgument);
+      PyType type = PySyntheticCallHelper.getCallTypeByFunctionName(PyNames.DUNDER_GET, receiverType, argumentTypes, context);
+      return Ref.create(type);
     }
     return null;
   }
