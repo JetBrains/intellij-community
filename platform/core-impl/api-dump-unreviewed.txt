@@ -1249,7 +1249,6 @@ f:com.intellij.psi.impl.DebugUtil
 - s:nodeTreeToString(com.intellij.lang.ASTNode,Z):java.lang.String
 - s:onInvalidated(com.intellij.lang.ASTNode):V
 - s:onInvalidated(com.intellij.psi.FileViewProvider):V
-- s:onInvalidated(com.intellij.psi.PsiElement):V
 - s:performPsiModification(java.lang.String,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - s:performPsiModification(java.lang.String,com.intellij.util.ThrowableRunnable):V
 - s:psiToBuffer(java.lang.Appendable,com.intellij.psi.PsiElement,I,Z,Z,Z,Z):V

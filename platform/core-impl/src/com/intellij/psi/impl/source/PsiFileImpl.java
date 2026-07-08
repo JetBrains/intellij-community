@@ -61,6 +61,7 @@ import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.psi.impl.source.tree.mvcc.VersionedPsiConsistencyException;
+import com.intellij.psi.impl.source.tree.mvcc.VersionedPsiReference;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -131,6 +132,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected PsiFile myOriginalFile;
   private final AbstractFileViewProvider myViewProvider;
   private volatile FileTrees myTrees;
+  // We are attempting to avoid the logic with resurrection of PsiFiles in versioned environment.
+  // For this reason, invalidation of psi files in versioned env is tracked without the involvement of `myPossiblyInvalidated`
+  // because `myPossiblyInvalidated` can change from `true` to `false`
+  private final VersionedPsiReference<Object> versionedInvalidationTrace = new VersionedPsiReference<>();
   private volatile boolean myPossiblyInvalidated;
   protected final PsiManagerEx myManager;
   public static final Key<Boolean> BUILDING_STUB = new Key<>("Don't use stubs mark!");
@@ -209,19 +214,23 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       // but there's temporary disposed project in tests, which doesn't actually dispose its components :(
       return false;
     }
-    if (!InternalPsiVersioning.isInsideVersioningButNotLocks() && !myViewProvider.getVirtualFile().isValid()) {
+    if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+      // in versioned environment, we would like to not touch VFS, so we don't evalute the validity of virtual file.
+      // We do not allow resurrection of PsiFiles (this is a questionable logic, and we try to not rely on it),
+      // so resurrection is not invoked.
+      // Instead, we track invalidation in a versioned reference.
+      // So once a file is invalidated, it cannot become valid anymore.
+      Object trace = versionedInvalidationTrace.get();
+      return trace == null;
+    }
+
+    if (!myViewProvider.getVirtualFile().isValid()) {
       // PSI listeners receive VFS deletion events and do markInvalidated
       // but some VFS listeners receive the same events before that and ask PsiFile.isValid
       return false;
     }
 
-    // todo: make myPossiblyInvalidatedVersioned?
     if (!myPossiblyInvalidated) return true;
-
-    if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
-      // we do not allow resurrection for versioned environments
-      return false;
-    }
 
     // synchronized by read-write action
     if (((FileManagerEx)myManager.getFileManager()).evaluateValidity(this)) {
@@ -235,7 +244,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @Override
   public final void markInvalidated() {
     myPossiblyInvalidated = true;
-    DebugUtil.onInvalidated(this);
+    Object invalidation = DebugUtil.onInvalidated(this);
+    versionedInvalidationTrace.set(invalidation == null ? new Throwable("unknown reason") : invalidation);
   }
 
   @Override

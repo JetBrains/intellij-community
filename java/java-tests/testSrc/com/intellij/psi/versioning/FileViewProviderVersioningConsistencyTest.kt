@@ -24,6 +24,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.source.CharTableImpl
 import com.intellij.psi.impl.source.DummyHolder
@@ -220,6 +221,34 @@ internal class FileViewProviderVersioningConsistencyTest {
       println("Original file hashcode: ${file.hashCode()}")
       val newPsiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)!!
       Assertions.assertEquals(file, newPsiFile)
+    }
+  }
+
+  @Test
+  fun `invalidated PsiFile stays invalid in frozen PSI after live resurrection`() {
+    val fileManager = (psiFile.manager as PsiManagerEx).fileManagerEx
+    val file = runReadActionBlocking {
+      PsiDocumentManager.getInstance(project).getPsiFile(editor.document)!!
+    }
+
+    runWriteAction {
+      DebugUtil.performPsiModification<Throwable>("test possibly invalidate physical PSI") {
+        fileManager.possiblyInvalidatePhysicalPsi()
+      }
+    }
+
+    PsiVersioningService.freezePsiVersion {
+      ThreadingAssertions.assertNoReadAccess()
+      Assertions.assertFalse(file.isValid)
+    }
+
+    runReadActionBlocking {
+      Assertions.assertTrue(file.isValid, "The live PSI should be resurrected outside frozen PSI")
+    }
+
+    PsiVersioningService.freezePsiVersion {
+      ThreadingAssertions.assertNoReadAccess()
+      Assertions.assertFalse(file.isValid, "Frozen PSI should keep the invalidation and must not observe live resurrection")
     }
   }
 
@@ -550,4 +579,3 @@ internal fun PsiFile.assertAstState(shouldBeBuilt: Boolean) {
     Assertions.assertNull(refs.second, "AST for $this should not be built")
   }
 }
-

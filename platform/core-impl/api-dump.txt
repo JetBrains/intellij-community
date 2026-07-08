@@ -743,6 +743,7 @@ f:com.intellij.psi.impl.CheckUtil
 - s:checkWritable(com.intellij.psi.PsiElement):V
 f:com.intellij.psi.impl.DebugUtil
 - s:lightTreeAsElementTypeToString(com.intellij.util.diff.FlyweightCapableTreeStructure,Z):java.lang.String
+- s:onInvalidated(com.intellij.psi.PsiElement):java.lang.Object
 - s:psiToStringIgnoringNonCode(com.intellij.psi.PsiElement):java.lang.String
 a:com.intellij.psi.impl.ElementBase
 - com.intellij.openapi.util.UserDataHolderBase
