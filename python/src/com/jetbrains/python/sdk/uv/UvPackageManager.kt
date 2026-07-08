@@ -37,7 +37,6 @@ import com.jetbrains.python.packaging.packageRequirements.WorkspaceMemberPackage
 import com.jetbrains.python.packaging.packageRequirements.collectAllNames
 import com.jetbrains.python.packaging.packageRequirements.extractDeclaredDependencies
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
-import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.requirements.PyDependenciesFile
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
@@ -98,8 +97,7 @@ internal class UvPackageManager internal constructor(
   }
 
   override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
-    val specsWithoutVersion = specifications.map { it.copy(requirement = pyRequirement(it.name, null)) }
-    val request = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specsWithoutVersion)
+    val request = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specifications.toList())
     val result = installPackageCommand(request, emptyList())
 
     return result

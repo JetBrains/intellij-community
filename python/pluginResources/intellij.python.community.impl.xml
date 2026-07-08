@@ -155,22 +155,8 @@
                             implementationClass="com.jetbrains.python.poetry.PoetryDependencyPackageNameCompletionContributor"/>
     <completion.contributor language="TOML"
                             implementationClass="com.jetbrains.python.poetry.PoetryDependencyVersionCompletionContributor"/>
-    <codeInsight.declarativeInlayProvider group="VALUES_GROUP"
-                                          bundle="messages.PyBundle"
-                                          implementationClass="com.jetbrains.python.requirements.inspections.tools.RequirementInlayHintsProvider"
-                                          isEnabledByDefault="true"
-                                          language="Requirements"
-                                          nameKey="INLAY.requirements.inlay.name"
-                                          descriptionKey="INLAY.requirements.inlay.description"
-                                          providerId="python.requirements.inlay"/>
-    <codeInsight.declarativeInlayProvider group="VALUES_GROUP"
-                                          bundle="messages.PyBundle"
-                                          implementationClass="com.jetbrains.python.requirements.inspections.tools.RequirementInlayHintsProvider"
-                                          isEnabledByDefault="true"
-                                          language="TOML"
-                                          nameKey="INLAY.requirements.inlay.name"
-                                          descriptionKey="INLAY.requirements.inlay.description"
-                                          providerId="python.requirements.inlay.toml"/>
+    <codeInsight.declarativeInlayProviderFactory
+      implementation="com.jetbrains.python.requirements.inspections.tools.DependenciesInlayHintsProviderFactory"/>
 
     <pluginSuggestionProvider order="first" implementation="com.jetbrains.python.suggestions.PycharmProSuggestionProvider"/>
     <postStartupActivity implementation="com.jetbrains.python.poetry.PoetryPyProjectTomlPostStartupActivity"/>
@@ -923,7 +909,7 @@
                     dynamic="true"/>
 
     <extensionPoint qualifiedName="com.jetbrains.python.inspections.dependencies.dependenciesInspectionProvider"
-                    interface="com.jetbrains.python.inspections.dependencies.DependenciesInspectionProvider"
+                    interface="com.jetbrains.python.inspections.dependencies.DependenciesPsiProvider"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -1300,12 +1286,12 @@
 
   <extensions defaultExtensionNs="com.jetbrains">
     <python.inspections.dependencies.dependenciesInspectionProvider
-      implementation="com.jetbrains.python.requirements.inspections.tools.RequirementsDependenciesInspectionProvider"/>
+      implementation="com.jetbrains.python.requirements.inspections.tools.RequirementsDependenciesPsiProvider"/>
     <python.inspections.dependencies.dependenciesInspectionProvider
-      implementation="com.jetbrains.python.conda.CondaDependenciesInspectionProvider"/>
+      implementation="com.jetbrains.python.conda.CondaDependenciesPsiProvider"/>
     <python.inspections.dependencies.dependenciesInspectionProvider
-      implementation="com.jetbrains.python.pipenv.PipEnvDependenciesInspectionProvider"/>
+      implementation="com.jetbrains.python.pipenv.PipEnvDependenciesPsiProvider"/>
     <python.inspections.dependencies.dependenciesInspectionProvider
-      implementation="com.jetbrains.python.sdk.poetry.LegacyPoetryDependenciesInspectionProvider"/>
+      implementation="com.jetbrains.python.sdk.poetry.LegacyPoetryDependenciesPsiProvider"/>
   </extensions>
 </idea-plugin>

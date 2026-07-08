@@ -1,6 +1,6 @@
 [project]
 dependencies = [
-  "<warning descr="Package mypy is not installed">mypy</warning>"
+  <warning descr="Package mypy is not installed">"mypy"</warning>
 ]
 optional-dependencies = { test = ["pytest"] }
 

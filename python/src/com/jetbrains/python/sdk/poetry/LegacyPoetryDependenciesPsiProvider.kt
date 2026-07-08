@@ -4,11 +4,12 @@ package com.jetbrains.python.sdk.poetry
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.psi.PsiFile
 import com.intellij.python.pyproject.PY_PROJECT_TOML
-import com.jetbrains.python.inspections.dependencies.DependenciesInspectionProvider
-import com.jetbrains.python.inspections.dependencies.DependenciesMap
+import com.jetbrains.python.inspections.dependencies.DependenciesPsiProvider
+import com.jetbrains.python.inspections.dependencies.DependencyMap
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.psi.getStringOrNull
 import com.jetbrains.python.requirements.getPythonSdk
+import org.toml.lang.TomlLanguage
 import org.toml.lang.psi.TomlFile
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlLiteral
@@ -17,8 +18,11 @@ import org.toml.lang.psi.TomlTable
 private val poetryGroupRegex = Regex("""^tool\.poetry\.group\.[^.]*\.dependencies$""")
 private val legacyPoetryDependencyHeaders = setOf("tool.poetry.dependencies", "tool.poetry.dev-dependencies")
 
-internal class LegacyPoetryDependenciesInspectionProvider : DependenciesInspectionProvider<TomlFile>(TomlFile::class.java) {
-  override fun provideDependencies(file: TomlFile): DependenciesMap? {
+internal class LegacyPoetryDependenciesPsiProvider : DependenciesPsiProvider<TomlFile>(
+  TomlFile::class.java,
+  TomlLanguage
+) {
+  override fun provideDependencies(file: TomlFile): DependencyMap? {
     if (file.name != PY_PROJECT_TOML || !isPoetryProject(file)) {
       return null
     }

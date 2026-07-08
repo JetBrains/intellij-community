@@ -6,12 +6,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
 import com.intellij.python.pyproject.PY_PROJECT_TOML_PROJECT
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.inspections.dependencies.DependenciesInspectionProvider
-import com.jetbrains.python.inspections.dependencies.DependenciesMap
+import com.jetbrains.python.inspections.dependencies.DependenciesPsiProvider
+import com.jetbrains.python.inspections.dependencies.DependencyMap
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.psi.injectionParent
 import com.jetbrains.python.requirements.RequirementsFile
+import com.jetbrains.python.requirements.RequirementsLanguage
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlTable
 
@@ -36,14 +37,17 @@ private fun PsiElement.isInUninspectedTomlSection(): Boolean {
 }
 
 /**
- * Dependencies inspection provider for requirements.txt. uses [isInUninspectedTomlSection] for 
+ * Dependencies PSI provider for requirements.txt. Uses [isInUninspectedTomlSection] for 
  * scope filtering — previously the outdated check fired in `[build-system]`, `[dependency-groups]`, 
  * etc. because that filter only existed in the not-installed inspection; that was a bug, since 
  * there's no reason to nag about an outdated build-system or dev dependency relative to the active 
  * project interpreter.
  */
-internal class RequirementsDependenciesInspectionProvider : DependenciesInspectionProvider<RequirementsFile>(RequirementsFile::class.java) {
-  override fun provideDependencies(file: RequirementsFile): DependenciesMap? {
+internal class RequirementsDependenciesPsiProvider : DependenciesPsiProvider<RequirementsFile>(
+  RequirementsFile::class.java,
+  RequirementsLanguage.INSTANCE,
+) {
+  override fun provideDependencies(file: RequirementsFile): DependencyMap? {
     val injectionParent = file.injectionParent()
 
     if (injectionParent != null && injectionParent.isInUninspectedTomlSection()) {

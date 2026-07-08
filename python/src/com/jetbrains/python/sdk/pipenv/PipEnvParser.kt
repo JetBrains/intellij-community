@@ -7,7 +7,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.inspections.dependencies.DependenciesMap
+import com.jetbrains.python.inspections.dependencies.DependencyMap
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.psi.getStringOrNull
@@ -32,7 +32,7 @@ internal object PipEnvParser {
   }
 
   @JvmStatic
-  fun getPipFileDependenciesMap(file: TomlFile): DependenciesMap =
+  fun getPipFileDependenciesMap(file: TomlFile): DependencyMap =
     file
       .children
       .filterIsInstance<TomlTable>()
