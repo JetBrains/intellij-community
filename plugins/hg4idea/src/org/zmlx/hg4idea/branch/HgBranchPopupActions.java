@@ -200,7 +200,7 @@ public final class HgBranchPopupActions {
       List<HgCloseBranchExecutor> executors = Collections.singletonList(new HgCloseBranchExecutor(myRepositories));
       String commitMessage = "Close Branch"; //NON-NLS
       CommitChangeListDialog.showCommitDialog(project, affectedVcses, changesForRepositories, activeChangeList,
-                                              executors, false, commitMessage, null);
+                                              executors, false, commitMessage, true, null);
     }
 
     @Override

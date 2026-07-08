@@ -56,7 +56,7 @@ internal abstract class GitAutoSquashCommitAction : GitSingleCommitEditingAction
 
     val commitMessage = getCommitMessage(commit)
     CommitChangeListDialog.showCommitDialog(project, affectedVcses, changes, changeList,
-                                            executors, true, commitMessage, null)
+                                            executors, true, commitMessage, true, null)
   }
 
   protected abstract fun getCommitMessage(commit: VcsShortCommitDetails): String
