@@ -6,13 +6,17 @@ import com.intellij.devkit.core.icons.DevkitCoreIcons.FrontendModule
 import com.intellij.devkit.core.icons.DevkitCoreIcons.SharedModule
 import com.intellij.icons.AllIcons
 import com.intellij.lang.xml.XMLLanguage
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.xml.XmlFile
+import com.intellij.ui.IconDeferrer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import javax.swing.Icon
@@ -20,15 +24,14 @@ import javax.swing.Icon
 @ApiStatus.Internal
 object SplitModeModuleKindIcons {
   @JvmStatic
-  fun isCustomIconsEnabled(): Boolean {
-    return Registry.`is`("devkit.split.mode.custom.icons", false)
-  }
-
-  @JvmStatic
   fun getDescriptorIcon(descriptorFile: PsiFile): Icon? {
-    if (!isCustomIconsEnabled() || DumbService.isDumb(descriptorFile.project)) return null
-    val kind = getOrComputeModuleKindFast(descriptorFile) ?: return null
-    return getKindIcon(kind, descriptorFile.name)
+    val fastIcon = getFastDescriptorIcon(descriptorFile) ?: return null
+    if (!isAccurateIconsEnabled() || DumbService.isDumb(descriptorFile.project)) return fastIcon
+
+    val virtualFile = descriptorFile.virtualFile ?: return fastIcon
+    return IconDeferrer.getInstance().deferAsync(fastIcon, DescriptorIconDeferredKey(descriptorFile.project, virtualFile)) {
+      getAccurateDescriptorIcon(descriptorFile, fastIcon)
+    }
   }
 
   @JvmStatic
@@ -47,6 +50,22 @@ object SplitModeModuleKindIcons {
   // heuristic to avoid using split mode specific shared module icon for any module that is technically shared
   private fun followsSharedModuleNamingConvention(moduleName: @NlsSafe String): Boolean {
     return moduleName.endsWith(".shared.xml") || moduleName.endsWith(".common.xml") || moduleName.contains(".frontback")
+  }
+
+  private fun isAccurateIconsEnabled(): Boolean {
+    return RegistryManager.getInstance().`is`("devkit.split.mode.custom.icons")
+  }
+
+  private fun getFastDescriptorIcon(descriptorFile: PsiFile): Icon? {
+    val kind = getOrComputeModuleKindFast(descriptorFile) ?: return null
+    return getKindIcon(kind, descriptorFile.name)
+  }
+
+  private suspend fun getAccurateDescriptorIcon(descriptorFile: PsiFile, fastIcon: Icon): Icon {
+    return smartReadAction(descriptorFile.project) {
+      val kind = recognizeSplitModeModuleKind(descriptorFile)?.kind
+      kind?.let { getKindIcon(it, descriptorFile.name) } ?: fastIcon
+    }
   }
 
   private fun recognizeLightweightModuleKind(descriptorFile: PsiFile): SplitModeApiRestrictionsService.ModuleKind? {
@@ -88,3 +107,8 @@ object SplitModeModuleKindIcons {
     }
   }
 }
+
+private data class DescriptorIconDeferredKey(
+  val project: Project,
+  val virtualFile: VirtualFile,
+)
