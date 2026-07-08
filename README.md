@@ -129,7 +129,7 @@ docker run --rm --user "$(id -u)" --volume "${PWD}:/community" intellij_idea_env
 
 
 ---
-## Running IntelliJ IDEA
+## Running IntelliJ IDEA from IDEA
 
 To run the IntelliJ IDEA that was built from source, choose _Run | Run..._ from the main menu
 and choose the preconfigured run configuration `Run //build:idea_community`.
@@ -137,6 +137,12 @@ and choose the preconfigured run configuration `Run //build:idea_community`.
 To run tests on the build, apply these settings to the _Run | Edit Configurations... | Templates | JUnit_ configuration tab:
 * Working dir: `<IDEA_HOME>/bin`
 * VM options:  `-ea`
+
+## Running IntelliJ IDEA from the command line
+
+```shell
+./bazel.cmd run //build:idea_community
+```
 
 ### Running IntelliJ IDEA in a CI/CD environment
 
