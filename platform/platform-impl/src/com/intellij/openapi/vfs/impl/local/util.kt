@@ -71,6 +71,7 @@ fun readAttributesUsingEel(nioPath: Path): FileAttributes {
     return FileAttributes.fromNio(nioPath, nioAttributes)
   }
   else {
+    @OptIn(EelDelicateApi::class)
     val eelPath = nioPath.asEelPath(eelDescriptor)
     val directAccessPath = (nioPath.fileSystem as? EelMountProvider)?.getMountRoot(eelPath)?.takeIf {
       eelPath.fsBlocking {
@@ -103,6 +104,7 @@ fun listWithAttributesUsingEel(
     if (eelDescriptor === LocalEelDescriptor) {
       return LocalFileSystemImpl.listWithAttributesImpl(nioPath, filter)
     }
+    @OptIn(EelDelicateApi::class)
     val eelPath = nioPath.asEelPath(eelDescriptor)
     val directAccessPath = (nioPath.fileSystem as? EelMountProvider)?.getMountRoot(eelPath)?.takeIf {
       eelPath.fsBlocking {
@@ -163,6 +165,7 @@ fun withPrefetchForRemoteRoots(roots: Collection<@JvmWildcard VirtualFile>, bloc
       val nioPath = root.fileSystem.getNioPath(root) ?: return@mapNotNull null
       val descriptor = nioPath.getEelDescriptor()
       if (descriptor === LocalEelDescriptor) return@mapNotNull null
+      @OptIn(EelDelicateApi::class)
       val eelPath = nioPath.asEelPath(descriptor)
       // Skip FS root — prefetching entire remote filesystem is wasteful,
       // VFS refresh from root only checks cached children anyway

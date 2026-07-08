@@ -106,7 +106,7 @@ class TerminalLocalPathTranslator(private val descriptor: EelDescriptor) {
       return null
     }
     try {
-      return absolutePath.asEelPath(descriptor)
+      return absolutePath.asEelPath()
     }
     catch (e: Exception) {
       translateWindowsDrivePathToMountedWslPath(absolutePath)?.let {
@@ -174,7 +174,7 @@ class TerminalLocalPathTranslator(private val descriptor: EelDescriptor) {
       val newPathString = eelRootPath.wslRoot + winPathString.substring(path.wslRoot.length)
       try {
         val newPath = Path.of(newPathString)
-        return newPath.asEelPath(descriptor).toString()
+        return newPath.asEelPath().toString()
       }
       catch (e: Exception) {
         LOG.debug(e) { "Failed to translate $newPathString after changing wsl prefix" }
