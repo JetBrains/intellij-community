@@ -394,7 +394,7 @@ def _read_configure_tag(module_ctx):
         substitutions = {},
     )
 
-def _resolve_with_facts(module_ctx, config, repository_credentials):
+def _resolve_with_facts(module_ctx, config):
     if not config.deps:
         return _EMPTY_RESOLUTION_JSON
 
@@ -402,7 +402,7 @@ def _resolve_with_facts(module_ctx, config, repository_credentials):
     if fact_key in module_ctx.facts:
         return module_ctx.facts[fact_key]
 
-    return _resolve_fresh(module_ctx, config, repository_credentials)
+    return _resolve_fresh(module_ctx, config)
 
 def _resolver_binary(module_ctx):
     host_key = _host_key(module_ctx)
@@ -437,7 +437,7 @@ def _host_key(module_ctx):
 
     return "%s_%s" % (os_key, arch_key)
 
-def _resolve_fresh(module_ctx, config, repository_credentials):
+def _resolve_fresh(module_ctx, config):
     resolver_binary = _resolver_binary(module_ctx)
     module_ctx.download(
         url = ["%s/%s" % (_RESOLVER_BINARY_URL_PREFIX, resolver_binary.filename)],
@@ -466,6 +466,8 @@ def _resolve_fresh(module_ctx, config, repository_credentials):
         _maven_coordinate_parts(target_coordinate)
         args.extend(["--substitution", "%s=%s" % (source_module_id, target_coordinate)])
 
+    netrc = module_ctx.getenv("NETRC") or ""
+    repository_credentials = _repository_credentials(module_ctx, config.repositories, netrc)
     if repository_credentials:
         credentials_file = "repository-credentials.json"
         module_ctx.file(credentials_file, json.encode(repository_credentials), executable = False)
@@ -555,9 +557,7 @@ def _register_artifact_repositories(resolution):
 
 def _kmp_extension_impl(module_ctx):
     config = _read_configure_tag(module_ctx)
-    netrc = module_ctx.getenv("NETRC") or ""
-    repository_credentials = _repository_credentials(module_ctx, config.repositories, netrc)
-    resolution_json = _resolve_with_facts(module_ctx, config, repository_credentials)
+    resolution_json = _resolve_with_facts(module_ctx, config)
     resolution = json.decode(resolution_json)
     _register_artifact_repositories(resolution)
 
