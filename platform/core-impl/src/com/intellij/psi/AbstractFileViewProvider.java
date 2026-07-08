@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -191,9 +192,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
       if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
         document = FileDocumentManager.getInstance().getCachedDocument(file);
         if (document == null) {
-          LOG.error("Attempt to interact with uninitialized document " + file + " in versioned environment.\n" +
-                    "It is assumed that versioned environment is used after the initialization process of the editor, and there are enough hard references to document at this point.\n" +
-                    "To fix this error, ensure that you are not interacting with a document before it is fully loaded.");
+          FileDocumentManagerBase.assertDocumentInitializedIfVersionedEnvironment(file);
         }
       } else {
         document = FileDocumentManager.getInstance().getDocument(file, myManager.getProject());

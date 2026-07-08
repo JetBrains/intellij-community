@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -19,7 +20,6 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.FileContentUtilCore;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -34,6 +34,8 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public abstract class FileDocumentManagerBase extends FileDocumentManager {
+  private static final Logger LOG = Logger.getInstance(FileDocumentManagerBase.class);
+
   public static final Key<Document> HARD_REF_TO_DOCUMENT_KEY = Key.create("HARD_REF_TO_DOCUMENT_KEY");
   public static final Key<Boolean> TRACK_NON_PHYSICAL = Key.create("TRACK_NON_PHYSICAL");
 
@@ -50,8 +52,8 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   }
 
   @Override
-  @RequiresReadLock
   public final @Nullable Document getDocument(@NotNull VirtualFile file) {
+    InternalPsiVersioning.assertReadAccessOrVersionedEnvironment();
     return getDocumentWithoutReadAccessAssert(file);
   }
 
@@ -67,7 +69,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     }
 
     if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
-      // todo: we need to rely on cached document here. At the moment of usage of versioned environment, the document should already be initialized.
+      assertDocumentInitializedIfVersionedEnvironment(file);
       return null;
     }
 
@@ -111,6 +113,13 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     fileContentLoaded(file, document);
 
     return document;
+  }
+
+  @ApiStatus.Internal
+  public static void assertDocumentInitializedIfVersionedEnvironment(@NotNull VirtualFile file) {
+    LOG.error("Attempt to interact with uninitialized document " + file + " in versioned environment.\n" +
+              "It is assumed that versioned environment is used after the initialization process of the editor, and there are enough hard references to document at this point.\n" +
+              "To fix this error, ensure that you are not interacting with a document before it is fully loaded.");
   }
 
   private static void fireFileBindingChanged(Document document, @Nullable VirtualFile oldFile, @Nullable VirtualFile newFile) {
