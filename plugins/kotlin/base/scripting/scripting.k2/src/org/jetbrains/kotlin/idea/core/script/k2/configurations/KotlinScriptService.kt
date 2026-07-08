@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.idea.core.script.k2.getVirtualFile
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId
 import org.jetbrains.kotlin.idea.core.script.k2.modules.modifyKotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinScriptProcessingFilter
@@ -181,21 +182,30 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
 
         project.workspaceModel.update("updating kotlin script entities [$KotlinScriptEntitySource]") { storage ->
             if (!storage.containsScriptEntity(scriptUrl)) {
-                val libraryIds = generateScriptLibraryEntities(project, configuration, definition).toList()
-                for ((id, sources) in libraryIds) {
-                    val existingLibrary = storage.resolve(id)
+                val libraries = generateScriptLibraryEntities(project, configuration, definition).toList()
+                val libraryIds = mutableListOf<KotlinScriptLibraryEntityId>()
+                for (library in libraries) {
+                    val libraryId = KotlinScriptLibraryEntityId(library.scope, library.classes)
+                    libraryIds += libraryId
+
+                    val existingLibrary = storage.resolve(libraryId)
                     if (existingLibrary == null) {
-                        storage addEntity KotlinScriptLibraryEntity(id.classes, setOf(scriptUrl), KotlinScriptEntitySource) {
-                            this.sources += sources
+                        storage addEntity KotlinScriptLibraryEntity(
+                            library.scope,
+                            library.classes,
+                            setOf(scriptUrl),
+                            KotlinScriptEntitySource
+                        ) {
+                            this.sources += library.sources
                         }
                     } else {
                         storage.modifyKotlinScriptLibraryEntity(existingLibrary) {
-                            this.sources += sources
+                            this.sources += library.sources
                             this.usedInScripts += scriptUrl
                         }
                     }
                 }
-                storage addEntity KotlinScriptEntity(scriptUrl, libraryIds.map { it.first }, KotlinScriptEntitySource) {
+                storage addEntity KotlinScriptEntity(scriptUrl, libraryIds, KotlinScriptEntitySource) {
                     this.configurationId = configuration.getOrCreateScriptConfigurationId(storage, KotlinScriptEntitySource)
                     this.sdkId = configuration.sdkId
                 }

@@ -217,12 +217,15 @@ class GradleKotlinScriptEntityProvider(val project: Project) {
         sources: Collection<VirtualFileUrl> = listOf(),
         scriptUrl: VirtualFileUrl
     ): KotlinScriptLibraryEntityId {
-        val id = KotlinScriptLibraryEntityId(classUrl)
+        val libraryClasses = listOf(classUrl)
+        val libraryScope = entitySource.kotlinScriptLibraryScope()
+        val id = KotlinScriptLibraryEntityId(libraryScope, libraryClasses)
         val existingLibrary = storage.resolve(id)
 
         if (existingLibrary == null) {
             storage addEntity KotlinScriptLibraryEntity(
-                classes = id.classes,
+                scope = libraryScope,
+                classes = libraryClasses,
                 usedInScripts = setOf(scriptUrl),
                 entitySource = entitySource
             ) {
@@ -268,11 +271,14 @@ class GradleKotlinScriptEntityProvider(val project: Project) {
                 }
             }
         }.forEach { (classUrl, sourceUrl) ->
-            val id = KotlinScriptLibraryEntityId(classUrl)
+            val libraryClasses = listOf(classUrl)
+            val libraryScope = entitySource.kotlinScriptLibraryScope()
+            val id = KotlinScriptLibraryEntityId(libraryScope, libraryClasses)
             val existingLibrary = storage.resolve(id)
             if (existingLibrary == null) {
                 storage addEntity KotlinScriptLibraryEntity(
-                    classes = id.classes,
+                    scope = libraryScope,
+                    classes = libraryClasses,
                     usedInScripts = setOf(scriptUrl),
                     entitySource = entitySource
                 ) {
@@ -315,12 +321,15 @@ class GradleKotlinScriptEntityProvider(val project: Project) {
 
         val groupedSources = sources.removeOnMatch(predicate)
 
-        val id = KotlinScriptLibraryEntityId(groupedClasses)
+        val libraryClasses = groupedClasses.toList()
+        val libraryScope = entitySource.kotlinScriptLibraryScope()
+        val id = KotlinScriptLibraryEntityId(libraryScope, libraryClasses)
         val existingLibrary = storage.resolve(id)
 
         if (existingLibrary == null) {
             storage addEntity KotlinScriptLibraryEntity(
-                classes = groupedClasses,
+                scope = libraryScope,
+                classes = libraryClasses,
                 usedInScripts = setOf(scriptUrl),
                 entitySource = entitySource,
             ) {
@@ -335,6 +344,8 @@ class GradleKotlinScriptEntityProvider(val project: Project) {
 
         return id
     }
+
+    private fun GradleKotlinScriptEntitySource.kotlinScriptLibraryScope(): String = "Gradle ($projectPath)"
 
     private fun <T> MutableCollection<T>.removeOnMatch(predicate: Predicate<T>): MutableList<T> {
         val removed = mutableListOf<T>()
