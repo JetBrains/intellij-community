@@ -25830,7 +25830,7 @@ function createRenameSchema() {
 }
 
 // proxy-tools/registry.ts
-var BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set(["create_new_file", "execute_terminal_command", "execute_tool"]), EXTRA_REPLACED_TOOL_NAMES = [
+var BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set(["create_new_file", "execute_terminal_command", "execute_tool", "skill_search"]), EXTRA_REPLACED_TOOL_NAMES = [
   "search_in_files_by_text",
   "search_in_files_by_regex",
   "find_files_by_glob",
