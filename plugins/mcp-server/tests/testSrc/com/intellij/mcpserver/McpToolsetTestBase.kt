@@ -7,11 +7,11 @@ import com.intellij.mcpserver.impl.util.asTool
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -86,7 +86,10 @@ abstract class McpToolsetTestBase {
   @BeforeEach
   fun prepareProject() {
     project.basePath?.let { Path.of(it).refreshAndFindVirtualFileOrDirectory()?.refresh(false, true) }
-    DumbService.getInstance(project).waitForSmartMode()
+    // Wait for queued/running scanning and indexing tasks, not only smart mode: `waitForSmartMode` can return
+    // while a scanning task is queued but has not flipped the project into dumb mode yet, letting the search
+    // execute against stale trigram indexes.
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
 
