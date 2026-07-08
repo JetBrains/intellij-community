@@ -11,6 +11,7 @@ import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionResour
 import org.jetbrains.idea.devkit.inspections.remotedev.createSplitModeExcludedModulesScopeXml
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
@@ -26,7 +27,7 @@ internal class SplitModeExcludedModulesScopeConsistencyTest {
 
   @Test
   fun `SplitModeExcludedModules scopes are generated from monorepo features without split mode support`() {
-    val projectRoot = PathManager.getHomeDir()
+    val projectRoot = getMonorepoRoot()
     val expectedXml = createSplitModeExcludedModulesScopeXml(
       SplitModeInspectionResourceReader.getInstance(project),
       SplitModeInspectionResourceReadMode.BUNDLED_ONLY,
@@ -46,4 +47,9 @@ internal class SplitModeExcludedModulesScopeConsistencyTest {
       )
     }
   }
+
+  private fun getMonorepoRoot() = sequenceOf(PathManager.getHomeDir(), PathManager.getHomeDir().parent)
+    .filterNotNull()
+    .firstOrNull { it.resolve(MONOREPO_FEATURES_WITHOUT_SPLIT_MODE_SUPPORT_RELATIVE_PATH).exists() }
+    ?: PathManager.getHomeDir()
 }
