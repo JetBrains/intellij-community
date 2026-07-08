@@ -47,6 +47,9 @@ open class TypeEvalContextImpl internal constructor(
 
   @ApiStatus.Internal
   val typeEngine: PyTypeEngine? = constraints.myOrigin?.let {
+    if (isNotebookExternalTypeEngineDisabled(it)) {
+      return@let null
+    }
     ModuleUtilCore.findModuleForFile(it)
   }?.let { module ->
     PyTypeEngineProvider.createTypeResolver(module)
@@ -85,6 +88,12 @@ open class TypeEvalContextImpl internal constructor(
 
   override fun maySwitchToAST(element: PsiElement): Boolean {
     return constraints.myAllowStubToAST && !element.inPyiFile() || inOrigin(element)
+  }
+
+  private fun isNotebookExternalTypeEngineDisabled(origin: PsiFile): Boolean {
+    val realFile = origin.originalFile.virtualFile ?: return false
+    return realFile.extension.equals("ipynb", ignoreCase = true) &&
+           !Registry.`is`("python.lsp.type.engine.notebooks", false)
   }
 
   @ApiStatus.Internal
