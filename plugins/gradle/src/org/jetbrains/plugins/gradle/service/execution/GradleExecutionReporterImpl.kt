@@ -19,6 +19,7 @@ import org.jetbrains.plugins.gradle.issue.GradleIssueFailure
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionReporter.GradleExecutionFailureReport
 import org.jetbrains.plugins.gradle.service.project.BaseProjectImportErrorHandler.getErrorFilePosition
 import org.jetbrains.plugins.gradle.statistics.GradleModelBuilderMessageCollector
+import org.jetbrains.plugins.gradle.statistics.GradleModelBuilderMessageCollector.FailureGroup
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
@@ -154,7 +155,7 @@ internal class GradleExecutionReporterImpl(
     val severity: GradleExecutionFailureReport.Severity = GradleExecutionFailureReport.Severity.ERROR,
     val isInternal: Boolean = false,
     val isSuppressed: Boolean = false,
-    val group: String? = null,
+    val group: FailureGroup? = null,
     val title: @NlsSafe String? = null,
     val text: @NlsSafe String? = null,
     val targetPath: Path? = null,
@@ -169,7 +170,7 @@ internal class GradleExecutionReporterImpl(
     override fun withSuppressed(isSuppressed: Boolean): GradleExecutionFailureReportImpl =
       copy(isSuppressed = isSuppressed)
 
-    override fun withGroup(group: String?): GradleExecutionFailureReportImpl =
+    override fun withGroup(group: FailureGroup?): GradleExecutionFailureReportImpl =
       copy(group = group)
 
     override fun withTitle(title: @NlsSafe String?): GradleExecutionFailureReportImpl =

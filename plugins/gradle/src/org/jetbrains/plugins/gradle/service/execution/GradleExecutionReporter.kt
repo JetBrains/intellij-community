@@ -3,10 +3,12 @@ package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.build.events.MessageEvent
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.plugins.gradle.issue.GradleIssueFailure
+import org.jetbrains.plugins.gradle.statistics.GradleModelBuilderMessageCollector
 import java.nio.file.Path
 
 /**
@@ -67,7 +69,8 @@ interface GradleExecutionReporter {
     /**
      * Sets the statistics group for Gradle failure reporting, or disables statistics reporting when `null`.
      */
-    fun withGroup(group: String?): GradleExecutionFailureReport
+    @ApiStatus.Internal
+    fun withGroup(group: GradleModelBuilderMessageCollector.FailureGroup?): GradleExecutionFailureReport
 
     /**
      * Overrides the message event title. When omitted, the failure message is used as the title.

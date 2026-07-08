@@ -25,6 +25,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.issue.GradleIssueFailure;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionReporter.GradleExecutionFailureReport;
 import org.jetbrains.plugins.gradle.statistics.GradleModelBuilderMessageCollector;
+import org.jetbrains.plugins.gradle.statistics.GradleModelBuilderMessageCollector;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.MessageReporter;
 
@@ -122,7 +123,7 @@ public final class GradleProgressListener implements ProgressListener, org.gradl
       .withSeverity(getSeverity(message))
       .withInternal(message.isInternal() && message.getKind() == Message.Kind.ERROR)
       .withSuppressed(message.isInternal())
-      .withGroup(message.getGroup())
+      .withGroup(GradleModelBuilderMessageCollector.FailureGroup.findByMessageOrNull(message.getGroup()))
       .withTitle(message.getTitle())
       .withText(message.getText())
       .withTargetPath(ObjectUtils.doIfNotNull(message.getTargetPath(), it -> Path.of(it)))
