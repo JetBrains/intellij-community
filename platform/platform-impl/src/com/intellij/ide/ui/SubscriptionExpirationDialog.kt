@@ -87,7 +87,7 @@ class SubscriptionExpirationDialog(project: Project?, private val settings: Subs
       buttonsGroup {
         val listener = ActionListener { e ->
           selectionButton = when (e.actionCommand) {
-            IdeBundle.message("subscription.dialog.activate.button", productDescriptor.platformName) -> 0
+            productDescriptor.activateButtonText -> 0
             IdeBundle.message("subscription.dialog.promise.button") -> 1
             IdeBundle.message("subscription.dialog.extend.button") -> 2
             else -> 3
@@ -96,7 +96,7 @@ class SubscriptionExpirationDialog(project: Project?, private val settings: Subs
         }
 
         row {
-          radioButton(IdeBundle.message("subscription.dialog.activate.button", productDescriptor.platformName), 0).component.addActionListener(listener)
+          radioButton(productDescriptor.activateButtonText, 0).component.addActionListener(listener)
         }
         if (settings.showPromise) {
           row {
@@ -141,11 +141,12 @@ class SubscriptionExpirationDialog(project: Project?, private val settings: Subs
   override fun getCancelActionText(): @Nls String = IdeBundle.message("subscription.dialog.cancel.button", productDescriptor.applicationName)
 }
 
-private data class ProductDescriptor(val applicationName: String, val platformName: String, val promoUrl: String, val imagePath: String) {
+private data class ProductDescriptor(val applicationName: String, val platformName: String, val activateButtonText: @Nls String, val promoUrl: String, val imagePath: String) {
   companion object {
     val idea = ProductDescriptor(
       applicationName = IdeBundle.message("subscription.dialog.idea"),
       platformName = IdeBundle.message("subscription.dialog.ultimate"),
+      activateButtonText = IdeBundle.message("subscription.dialog.activate.button.ultimate"),
       promoUrl = "https://www.jetbrains.com/products/compare/?product=idea&product=idea-ult",
       imagePath = "/images/IdeaBannerLogo.png",
     )
@@ -153,6 +154,7 @@ private data class ProductDescriptor(val applicationName: String, val platformNa
     val pyCharm = ProductDescriptor(
       applicationName = IdeBundle.message("subscription.dialog.pycharm"),
       platformName = IdeBundle.message("subscription.dialog.pro"),
+      activateButtonText = IdeBundle.message("subscription.dialog.activate.button.pro"),
       promoUrl = "https://www.jetbrains.com/pycharm/editions",
       imagePath = "/images/PyCharmBannerLogo.png",
     )
