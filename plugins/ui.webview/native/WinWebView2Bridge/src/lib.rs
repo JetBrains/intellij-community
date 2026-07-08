@@ -25,8 +25,8 @@ use windows::{
         System::{Com::*, LibraryLoader::GetModuleHandleW, Threading::GetCurrentThreadId},
         UI::{
             Input::KeyboardAndMouse::{
-                GetAsyncKeyState, GetKeyState, SetFocus, VIRTUAL_KEY, VK_CONTROL, VK_F4, VK_LSHIFT,
-                VK_LWIN, VK_MENU, VK_RSHIFT, VK_RWIN, VK_SHIFT,
+                GetKeyState, SetFocus, VIRTUAL_KEY, VK_CONTROL, VK_LSHIFT, VK_LWIN, VK_MENU,
+                VK_RSHIFT, VK_RWIN, VK_SHIFT,
             },
             Shell::SHCreateMemStream,
             WindowsAndMessaging::*,
@@ -2928,37 +2928,30 @@ fn is_shift_key(virtual_key: jint) -> bool {
         || virtual_key == VK_RSHIFT.0 as jint
 }
 
-fn is_window_close_shortcut(message: u32, virtual_key: jint, modifier_flags: jint) -> bool {
-    let key_transition = matches!(message, WM_KEYDOWN | WM_SYSKEYDOWN | WM_KEYUP | WM_SYSKEYUP);
-    let non_shift_modifiers = modifier_flags & (MODIFIER_CONTROL | MODIFIER_ALT | MODIFIER_META);
-    key_transition && virtual_key == VK_F4.0 as jint && non_shift_modifiers == MODIFIER_ALT
-}
-
 unsafe fn forward_system_key_to_awt_root_window(
     hwnd: HWND,
     message: u32,
     keyboard_event: &KBDLLHOOKSTRUCT,
 ) -> bool {
+    // AWT/JBR can close windows and run menu/system-key handling only when the Java KeyEvent carries
+    // the original native MSG. Recreating Alt+F4/F10/etc. in Kotlin would post a synthetic KeyEvent
+    // without that MSG, so the hook forwards the real WM_SYSKEY* message to the root AWT window.
     let root = GetAncestor(hwnd, GA_ROOT);
-    let Some(system_message) = system_key_message_from_keyboard_hook_message(message) else {
+    if !is_system_key_message(message) {
         return false;
-    };
+    }
     !root.0.is_null()
         && PostMessageW(
             Some(root),
-            system_message,
+            message,
             WPARAM(keyboard_event.vkCode as usize),
             LPARAM(key_event_lparam_from_low_level_keyboard_event(keyboard_event) as isize),
         )
         .is_ok()
 }
 
-fn system_key_message_from_keyboard_hook_message(message: u32) -> Option<u32> {
-    match message {
-        WM_KEYDOWN | WM_SYSKEYDOWN => Some(WM_SYSKEYDOWN),
-        WM_KEYUP | WM_SYSKEYUP => Some(WM_SYSKEYUP),
-        _ => None,
-    }
+fn is_system_key_message(message: u32) -> bool {
+    matches!(message, WM_SYSKEYDOWN | WM_SYSKEYUP)
 }
 
 unsafe fn register_keyboard_interop_window(hwnd: HWND) {
@@ -3014,12 +3007,9 @@ unsafe fn handle_keyboard_interop_event(message: u32, keyboard_event: KBDLLHOOKS
         return;
     }
 
-    let virtual_key = keyboard_event.vkCode as jint;
-    if is_window_close_shortcut(
-        message,
-        virtual_key,
-        keyboard_hook_modifier_flags(&keyboard_event),
-    ) {
+    // System keys are owned by the Windows/AWT message pipeline. Kotlin deduplicates matching
+    // WebView2 AcceleratorKeyPressed callbacks by key-event kind and does not synthesize them again.
+    if is_system_key_message(message) {
         if let Some(hwnd) = focused_keyboard_interop_window() {
             forward_system_key_to_awt_root_window(hwnd, message, &keyboard_event);
         }
@@ -3029,33 +3019,15 @@ unsafe fn handle_keyboard_interop_event(message: u32, keyboard_event: KBDLLHOOKS
     schedule_shift_fallback_if_needed(message, keyboard_event);
 }
 
-unsafe fn keyboard_hook_modifier_flags(event: &KBDLLHOOKSTRUCT) -> jint {
-    let mut flags = 0;
-    if is_key_async_down(VK_SHIFT) {
-        flags |= MODIFIER_SHIFT;
-    }
-    if is_key_async_down(VK_CONTROL) {
-        flags |= MODIFIER_CONTROL;
-    }
-    if is_key_async_down(VK_MENU) || event.flags.contains(LLKHF_ALTDOWN) {
-        flags |= MODIFIER_ALT;
-    }
-    if is_key_async_down(VK_LWIN) || is_key_async_down(VK_RWIN) {
-        flags |= MODIFIER_META;
-    }
-    flags
-}
-
-unsafe fn is_key_async_down(virtual_key: VIRTUAL_KEY) -> bool {
-    (GetAsyncKeyState(virtual_key.0 as i32) as u16 & 0x8000) != 0
-}
-
 unsafe fn schedule_shift_fallback_if_needed(message: u32, keyboard_event: KBDLLHOOKSTRUCT) {
     let virtual_key = keyboard_event.vkCode as jint;
     if !is_shift_key(virtual_key) {
         return;
     }
 
+    // WebView2 AcceleratorKeyPressed does not report bare Shift transitions, but the IDE gesture
+    // handler needs them for double-Shift. Post them back to the container HWND so the JNI callback
+    // runs on the WebView dispatcher thread and shares the normal Kotlin shortcut router.
     let Some(hwnd) = focused_keyboard_interop_window() else {
         return;
     };

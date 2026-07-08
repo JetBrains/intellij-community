@@ -228,6 +228,109 @@ internal object WebViewFocusRobotTestSupport {
     }
   }
 
+  suspend fun runBrowserTextNavigationScenario(
+    frame: JFrame,
+    scope: CoroutineScope,
+    engine: WebViewEngineBridge,
+    nativeHostPeer: NativeWebViewHostPeer,
+    tempDir: Path,
+  ) {
+    val robot = createRobotOrSkip()
+    val bus = WebViewMessageBusImpl(scope, engine)
+    val field = JTextField().apply {
+      preferredSize = Dimension(1, 32)
+      caret = DefaultCaret().apply { blinkRate = 0 }
+    }
+    val host = SwingWebViewHostPanel(scope, engine, bus.interop.createWebViewFocusEntrySink(), nativeHostPeer)
+    val focusRegistration = bus.interop.registerWebViewFocusExitHandler(host)
+    engine.connectMessageBus { rawJson -> bus.transferFromJs(rawJson) }
+    writeFocusInteropPage(tempDir)
+
+    try {
+      SwingUtilities.invokeAndWait {
+        frame.contentPane.removeAll()
+        frame.contentPane.layout = BorderLayout()
+        frame.contentPane.add(field, BorderLayout.SOUTH)
+        frame.contentPane.add(host, BorderLayout.CENTER)
+        frame.toFront()
+        frame.revalidate()
+        frame.repaint()
+      }
+      assertTrue(waitUntilShowing(host, 5.seconds), "WebView host component did not become showing")
+      assertTrue(waitUntilShowing(field, 5.seconds), "Swing text field did not become showing")
+
+      engine.loadAsset(WebViewAssetRoot.fromDirectory(tempDir), WebViewAssetPath.indexHtml())
+      waitForJavaScriptResult(
+        webView = engine,
+        script = "Boolean(window.__WVI__ && window['__wviFocusInteropReady'])",
+        expected = "true",
+        description = "Text navigation test page did not load WebView bridge and platform features",
+      )
+
+      focusSwingFieldWithRobot(robot, frame, field, "Swing field did not receive initial focus", skipIfUnavailable = true)
+      clearText(field)
+      typeKey(robot, KeyEvent.VK_1)
+      val swingFieldPreflightDiagnostics = buildCurrentFocusDiagnostics(frame, field)
+      assumeTrue(
+        waitForFieldText(field, "1", emptyList(), assertOnFailure = false),
+        "AWT Robot key input is not delivered to the focused Swing field; $swingFieldPreflightDiagnostics",
+      )
+
+      clickWebElementCenter(robot, host, engine, "web-input")
+      waitForFocusOwnerNot(field, "WebView activation did not clear the previous Swing focus owner")
+      waitForJavaScriptResult(
+        webView = engine,
+        script = """
+          (() => {
+            const input = document.getElementById('web-input');
+            if (!input) return false;
+            input.value = 'alpha beta';
+            input.focus();
+            input.setSelectionRange(input.value.length, input.value.length);
+            return input.selectionStart === 10 && input.selectionEnd === 10;
+          })()
+        """.trimIndent(),
+        expected = "true",
+        description = "WebView input did not prepare the initial caret position",
+      )
+
+      pressCtrlArrow(robot, KeyEvent.VK_LEFT)
+      waitForJavaScriptResult(
+        webView = engine,
+        script = """
+          (() => {
+            const input = document.getElementById('web-input');
+            return input && input.selectionStart === 6 && input.selectionEnd === 6;
+          })()
+        """.trimIndent(),
+        expected = "true",
+        description = "Ctrl+Left did not move the WebView input caret by word",
+      )
+
+      pressCtrlShiftArrow(robot, KeyEvent.VK_RIGHT)
+      waitForJavaScriptResult(
+        webView = engine,
+        script = """
+          (() => {
+            const input = document.getElementById('web-input');
+            return input && input.selectionStart === 6 && input.selectionEnd === 10;
+          })()
+        """.trimIndent(),
+        expected = "true",
+        description = "Ctrl+Shift+Right did not select the WebView input word",
+      )
+    }
+    finally {
+      focusRegistration.close()
+      bus.close()
+      SwingUtilities.invokeAndWait {
+        field.caret.blinkRate = 0
+        field.caret.deinstall(field)
+        frame.contentPane.removeAll()
+      }
+    }
+  }
+
   suspend fun runAltF4WindowCloseScenario(
     frame: JFrame,
     scope: CoroutineScope,
@@ -1250,6 +1353,32 @@ internal object WebViewFocusRobotTestSupport {
     robot.keyPress(keyCode)
     robot.keyRelease(keyCode)
     robot.waitForIdle()
+  }
+
+  private fun pressCtrlArrow(robot: Robot, keyCode: Int) {
+    robot.keyPress(KeyEvent.VK_CONTROL)
+    try {
+      robot.keyPress(keyCode)
+      robot.keyRelease(keyCode)
+    }
+    finally {
+      robot.keyRelease(KeyEvent.VK_CONTROL)
+      robot.waitForIdle()
+    }
+  }
+
+  private fun pressCtrlShiftArrow(robot: Robot, keyCode: Int) {
+    robot.keyPress(KeyEvent.VK_CONTROL)
+    robot.keyPress(KeyEvent.VK_SHIFT)
+    try {
+      robot.keyPress(keyCode)
+      robot.keyRelease(keyCode)
+    }
+    finally {
+      robot.keyRelease(KeyEvent.VK_SHIFT)
+      robot.keyRelease(KeyEvent.VK_CONTROL)
+      robot.waitForIdle()
+    }
   }
 
   private fun doubleTapModifier(robot: Robot, keyCode: Int) {

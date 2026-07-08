@@ -41,6 +41,17 @@ The backend supports:
 - Kotlin-to-JavaScript delivery through `window.__WVI__.__deliver(rawJson)`;
 - accelerator shortcut forwarding from WebView2 into the IDE event queue where applicable.
 
+## Keyboard And Shortcut Interop
+
+The Windows backend keeps browser editing native and forwards only the keys that belong to IDE or OS-level handling:
+
+- WebView2 keeps normal typing, text editing, IME/dead-key handling, and browser text navigation shortcuts such as `Ctrl+Left`, `Ctrl+Right`, and related selection/deletion variants.
+- WebView2 `AcceleratorKeyPressed` is routed through Kotlin for IDE accelerators. Browser-owned editing shortcuts are filtered out before the IDE consumes them.
+- Bare Shift is supplied by the native bridge because WebView2 does not report it through `AcceleratorKeyPressed`; this is required for double-Shift IDE gestures. Bare Ctrl stays on the WebView2 accelerator path.
+- Windows system keys observed as `WM_SYSKEYDOWN`/`WM_SYSKEYUP` inside WebView focus are forwarded as native messages to the root AWT window. Kotlin does not synthesize duplicate Swing events for WebView2 `SYSTEM_KEY_*` callbacks.
+
+Do not replace this with full Swing keyboard ownership for WebView content. That would break native browser editing behavior and IME handling.
+
 ## Asset Serving
 
 Asset-backed pages navigate to the shared internal `ij-webview-asset://assets/...` origin. The native bridge registers that WebView2 custom scheme when creating the shared environment, then registers a per-WebView2 `WebResourceRequested` filter and delegates matching requests back to Kotlin through that view's `WinWebView2Bridge.Callbacks.resolveAsset`.
@@ -72,6 +83,7 @@ For Windows backend changes, run on Windows:
 ```powershell
 .\tests.cmd --module intellij.platform.ui.webview.tests --test com.intellij.ui.webview.WindowsWebViewSmokeTest
 .\tests.cmd --module intellij.platform.ui.webview.tests --test com.intellij.ui.webview.WinWebViewShortcutInteropTest
+.\tests.cmd --module intellij.platform.ui.webview.tests --test com.intellij.ui.webview.WebViewFocusInteropRobotTest
 .\tests.cmd --module intellij.platform.ui.webview.tests --test com.intellij.ui.webview.WebViewRuntimeTest
 ```
 

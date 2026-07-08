@@ -21,6 +21,9 @@ internal object WinWebViewShortcutInterop {
   internal const val MODIFIER_META: Int = 1 shl 3
 
   fun handleAcceleratorKeyPressed(target: Component?, keyEventKind: Int, virtualKey: Int, modifierFlags: Int, keyEventLParam: Int): Boolean {
+    // SYSTEM_KEY_* events are forwarded as native Windows MSGs by WinWebView2Bridge. Posting a synthetic
+    // Swing KeyEvent here would lose native MSG metadata and can also double-dispatch the same keystroke.
+    if (isNativeSystemKeyForwardedToAwt(keyEventKind)) return false
     if (target == null || !target.isShowing) return false
 
     val eventSource = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow ?: target
@@ -53,6 +56,12 @@ internal object WinWebViewShortcutInterop {
 
   internal fun isShortcutCandidate(keyCode: Int, modifiersEx: Int): Boolean {
     return WebViewShortcutRouter.isShortcutCandidate(keyCode, modifiersEx)
+  }
+
+  // Mirrors the native hook contract: every WM_SYSKEYDOWN/WM_SYSKEYUP observed inside WebView focus is
+  // already posted to the AWT root window, regardless of the Alt-context bit in keyEventLParam.
+  internal fun isNativeSystemKeyForwardedToAwt(keyEventKind: Int): Boolean {
+    return keyEventKind == KEY_EVENT_KIND_SYSTEM_KEY_DOWN || keyEventKind == KEY_EVENT_KIND_SYSTEM_KEY_UP
   }
 
   private fun modifierFlagsToJavaModifiers(modifierFlags: Int): Int {

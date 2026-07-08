@@ -11,6 +11,10 @@ internal enum class WebViewShortcutRouting {
 }
 
 internal object WebViewShortcutRouter {
+  // Ownership model:
+  // - browser/WebView keeps normal input, text editing, selection, IME, and browser text navigation;
+  // - IDE receives true IDE accelerators and bare modifier gestures;
+  // - native backends may forward OS-level system keys before this synthetic accelerator path sees them.
   fun route(event: KeyEvent): WebViewShortcutRouting {
     if (isModifierGestureCandidate(event)) {
       return WebViewShortcutRouting.FORWARD_TO_IDE_KEEP_BROWSER_HANDLING
@@ -23,8 +27,7 @@ internal object WebViewShortcutRouter {
 
   fun isShortcutCandidate(keyCode: Int, modifiersEx: Int): Boolean {
     if (keyCode == KeyEvent.VK_UNDEFINED || isModifierKey(keyCode)) return false
-    if (isNativeWindowShortcut(keyCode, modifiersEx)) return false
-    if (isBrowserEditingShortcut(keyCode, modifiersEx)) return false
+    if (isBrowserEditingShortcut(keyCode, modifiersEx) || isBrowserTextNavigationShortcut(keyCode, modifiersEx)) return false
 
     val commandModifiers = InputEvent.CTRL_DOWN_MASK or InputEvent.ALT_DOWN_MASK or InputEvent.META_DOWN_MASK
     return modifiersEx and commandModifiers != 0 || keyCode in KeyEvent.VK_F1..KeyEvent.VK_F24 || keyCode == KeyEvent.VK_ESCAPE
@@ -45,12 +48,20 @@ internal object WebViewShortcutRouter {
     return WebViewEditCommand.matchingCommand(keyCode, modifiersEx, WebViewEditCommand.DEFAULTS) != null
   }
 
-  private fun isNativeWindowShortcut(keyCode: Int, modifiersEx: Int): Boolean {
+  // Keep WebView-owned caret movement/deletion in the browser editor. These shortcuts are not IDE
+  // accelerators while focus is inside editable WebView content; consuming them breaks native input fields.
+  private fun isBrowserTextNavigationShortcut(keyCode: Int, modifiersEx: Int): Boolean {
     val nonShiftModifiers = modifiersEx and (InputEvent.CTRL_DOWN_MASK or
-                                            InputEvent.ALT_DOWN_MASK or
-                                            InputEvent.META_DOWN_MASK or
-                                            InputEvent.ALT_GRAPH_DOWN_MASK)
-    return keyCode == KeyEvent.VK_F4 && nonShiftModifiers == InputEvent.ALT_DOWN_MASK
+                                             InputEvent.ALT_DOWN_MASK or
+                                             InputEvent.META_DOWN_MASK or
+                                             InputEvent.ALT_GRAPH_DOWN_MASK)
+    if (nonShiftModifiers != InputEvent.CTRL_DOWN_MASK) return false
+    return keyCode == KeyEvent.VK_LEFT ||
+           keyCode == KeyEvent.VK_RIGHT ||
+           keyCode == KeyEvent.VK_HOME ||
+           keyCode == KeyEvent.VK_END ||
+           keyCode == KeyEvent.VK_BACK_SPACE ||
+           keyCode == KeyEvent.VK_DELETE
   }
 
   private fun isModifierKey(keyCode: Int): Boolean {

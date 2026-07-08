@@ -168,7 +168,7 @@ Use the same status legend everywhere; don't invent new icons.
 - [Markdown WebView Preview API](interop/Markdown-WebView-Preview-API-Plan.md) — 🚫 blocked on approval for broad Markdown preview API changes.
 
 ### `backends/` — Native rendering / engine impls
-- [Windows WebView2 Implementation](backends/windows-webview2-implementation-plan.md) — ✅ done.
+- [Windows WebView2 Implementation](backends/windows-webview2-implementation-plan.md) — ✅ done; includes keyboard and shortcut interop ownership.
 - [Windows WebView2 Application Mode](backends/windows-webview2-application-mode-plan.md) — ✅ implemented.
 - [macOS WKWebView Application Mode](backends/macos-wkwebview-application-mode-plan.md) — ✅ implemented.
 - [Windows WebView2 Off-EDT](backends/windows-webview2-off-edt-plan.md) — Stage 1 ✅, Stages 2–3 ⬜.

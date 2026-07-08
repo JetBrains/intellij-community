@@ -134,6 +134,26 @@ class WebViewFocusInteropRobotTest {
 
   @Test
   @EnabledOnOs(OS.WINDOWS)
+  fun browserTextNavigationShortcutsStayInsideWebView(): Unit = runBlocking {
+    val tempDir = Files.createTempDirectory("webview-text-navigation-test")
+    val facade = createPlatformEngine(scope!!)
+    try {
+      WebViewFocusRobotTestSupport.runBrowserTextNavigationScenario(
+        frame!!,
+        scope!!,
+        facade,
+        createNativeHostPeer(scope!!, facade),
+        tempDir,
+      )
+    }
+    finally {
+      facade.close()
+      tempDir.toFile().deleteRecursively()
+    }
+  }
+
+  @Test
+  @EnabledOnOs(OS.WINDOWS)
   fun altF4InsideWebViewClosesFrame(): Unit = runBlocking {
     val tempDir = Files.createTempDirectory("webview-alt-f4-test")
     val facade = createPlatformEngine(scope!!)

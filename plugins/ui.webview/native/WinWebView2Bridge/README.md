@@ -2,6 +2,8 @@
 
 Rust/JNI bridge for the Windows WebView2 system WebView backend.
 
+Runtime design, including keyboard and shortcut interop, is documented in `../../docs/backends/windows-webview2-implementation-plan.md`.
+
 ## Output
 
 The crate is a `cdylib` and produces `win_webview2_bridge.dll`.
@@ -20,6 +22,24 @@ community/plugins/ui.webview/lib/webview-native/win/aarch64/win_webview2_bridge.
 ```
 
 The Kotlin bridge loads this loose file from the WebView plugin path, with a source-tree fallback for running from sources.
+
+## Prerequisites
+
+Build from Windows with:
+
+- PowerShell 7 (`pwsh`) available on `PATH`;
+- Rust installed through `rustup`, with the MSVC toolchain selected;
+- Visual Studio 2022 Build Tools or Visual Studio 2022 Community with the C++ desktop toolchain;
+- MSVC v143 x64/x86 build tools and a Windows SDK installed by the Visual Studio setup;
+- MSVC ARM64 cross-build tools when building `aarch64-pc-windows-msvc` from an x64 host.
+
+Install both Rust targets before running `-All`:
+
+```text
+rustup target add x86_64-pc-windows-msvc aarch64-pc-windows-msvc
+```
+
+The build links `WebView2LoaderStatic.lib` through `webview2-com-sys`, so no separate WebView2 loader DLL is required next to the bridge DLL.
 
 ## Updating The Committed DLLs
 
@@ -40,17 +60,9 @@ pwsh -File community/plugins/ui.webview/native/WinWebView2Bridge/build.ps1 -Targ
 
 Stop any dev IDE process that has loaded the DLL before copying; Windows locks loaded DLL files.
 
-The MSVC build statically links `WebView2LoaderStatic.lib` through `webview2-com-sys`, so do not commit a separate `WebView2Loader.dll` next to the bridge DLL.
-
 ## Toolchain Notes
 
 The build script prepends the rustup-managed `%USERPROFILE%\.cargo\bin` to `PATH` when it exists. This avoids picking up standalone Rust installations that may not have the requested targets installed.
-
-Install both Rust targets before running `-All`:
-
-```text
-rustup target add x86_64-pc-windows-msvc aarch64-pc-windows-msvc
-```
 
 For the arm64 target, the script tries to find Visual Studio `vcvarsall.bat` and runs Cargo from the `x64_arm64` developer environment. If that fails, initialize the environment manually and rerun the arm64 target command:
 

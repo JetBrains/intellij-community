@@ -61,6 +61,9 @@ class WinWebViewShortcutInteropTest {
 
     assertFalse(WinWebViewShortcutInterop.isShortcutCandidate(KeyEvent.VK_A, 0))
     assertFalse(WinWebViewShortcutInterop.isShortcutCandidate(KeyEvent.VK_SHIFT, InputEvent.SHIFT_DOWN_MASK))
+    assertFalse(WinWebViewShortcutInterop.isShortcutCandidate(KeyEvent.VK_LEFT, InputEvent.CTRL_DOWN_MASK))
+    assertFalse(WinWebViewShortcutInterop.isShortcutCandidate(KeyEvent.VK_RIGHT, InputEvent.CTRL_DOWN_MASK or InputEvent.SHIFT_DOWN_MASK))
+    assertFalse(WinWebViewShortcutInterop.isShortcutCandidate(KeyEvent.VK_DELETE, InputEvent.CTRL_DOWN_MASK))
   }
 
   @Test
@@ -120,14 +123,19 @@ class WinWebViewShortcutInteropTest {
   }
 
   @Test
-  fun `lets native window close shortcut fall through`() {
-    val altF4 = createWindowsKeyEvent(
-      virtualKey = VK_F4,
-      modifierFlags = WinWebViewShortcutInterop.MODIFIER_ALT,
-      keyEventKind = WinWebViewShortcutInterop.KEY_EVENT_KIND_SYSTEM_KEY_DOWN,
-    )
+  fun `routes browser text navigation to browser only`() {
+    val ctrlLeft = createWindowsKeyEvent(VK_LEFT, WinWebViewShortcutInterop.MODIFIER_CONTROL)
+    val ctrlShiftRight = createWindowsKeyEvent(VK_RIGHT, WinWebViewShortcutInterop.MODIFIER_CONTROL or WinWebViewShortcutInterop.MODIFIER_SHIFT)
 
-    assertEquals(WebViewShortcutRouting.BROWSER_ONLY, WebViewShortcutRouter.route(altF4))
+    assertEquals(WebViewShortcutRouting.BROWSER_ONLY, WebViewShortcutRouter.route(ctrlLeft))
+    assertEquals(WebViewShortcutRouting.BROWSER_ONLY, WebViewShortcutRouter.route(ctrlShiftRight))
+  }
+
+  @Test
+  fun `leaves native system keys for AWT message forwarding`() {
+    assertTrue(WinWebViewShortcutInterop.isNativeSystemKeyForwardedToAwt(WinWebViewShortcutInterop.KEY_EVENT_KIND_SYSTEM_KEY_DOWN))
+    assertTrue(WinWebViewShortcutInterop.isNativeSystemKeyForwardedToAwt(WinWebViewShortcutInterop.KEY_EVENT_KIND_SYSTEM_KEY_UP))
+    assertFalse(WinWebViewShortcutInterop.isNativeSystemKeyForwardedToAwt(WinWebViewShortcutInterop.KEY_EVENT_KIND_KEY_DOWN))
   }
 
   @Test
@@ -194,6 +202,8 @@ class WinWebViewShortcutInteropTest {
     private const val VK_F4: Int = 0x73
     private const val VK_SHIFT: Int = 0x10
     private const val VK_CONTROL: Int = 0x11
+    private const val VK_LEFT: Int = 0x25
+    private const val VK_RIGHT: Int = 0x27
     private const val VK_LSHIFT: Int = 0xA0
     private const val VK_RSHIFT: Int = 0xA1
     private const val VK_LCONTROL: Int = 0xA2
