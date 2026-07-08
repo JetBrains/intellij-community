@@ -3,6 +3,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
 import com.intellij.testFramework.TestDataPath
@@ -14,8 +15,8 @@ import org.junit.jupiter.api.assertThrows
 
 @PyDefaultTestApplication
 @TestClassInfo(contentRootPath ="python-pyproject/test")
-@TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/hatch_workspace_path_dependency")
-internal class HatchWorkspacePathDependencyTest {
+@TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/hatch_path_dependency")
+internal class HatchPathDependencyTest {
   companion object {
     private val tempDirFixture = tempPathFixture()
     private val projectFixture = projectFixture(pathFixture = tempDirFixture)
@@ -25,13 +26,12 @@ internal class HatchWorkspacePathDependencyTest {
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
     f.reloadProject()
-    // PY-87339 Hatch monorepo local dependencies are not show in settings
-    // PY-86924 Hatch workspace members are not handled correctly
+    // PY-90798 Hatch path dependencies with relative paths (context formatters (for example {root:uri} and {root:parent:uri})) are not supported
     assertThrows<AssertionError> {
       f.assertProjectStructure(
         ExpectedModule("my-hatch-monorepo", contentRoot = ".", deps = listOf("package_a", "package_b")),
-        ExpectedModule("package_a", contentRoot = "packages/package_a"),
-        ExpectedModule("package_b", contentRoot = "packages/package_b", deps = listOf("package_a")),
+        ExpectedModule("package_a", contentRoot = "packages" / "package_a"),
+        ExpectedModule("package_b", contentRoot = "packages" / "package_b", deps = listOf("package_a")),
       )
     }
   }

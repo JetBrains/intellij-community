@@ -11,8 +11,6 @@ description = "A Hatch monorepo example"
 requires-python = ">=3.12"
 dependencies = [
     "requests",
-    "package_a @ {root:uri}/packages/package_a",
-    "package_b @ {root:uri}/packages/package_b",
 ]
 
 [tool.hatch.envs.default]
