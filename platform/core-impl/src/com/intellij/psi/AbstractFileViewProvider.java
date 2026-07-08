@@ -354,26 +354,17 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   public long getModificationStamp() {
     // do not call plain `getContent` here -- it will lead to heavy loading of text because of existence of `FrozenFileContent`
     // until one purposefully requests the actual content, we would not load the file into memory.
-    Content content = myContent.get();
-    if (content == null) {
-      content = new VirtualFileContent();
-      myContent.set(content);
-    }
+    Content content = getContentImpl(false);
     return content.getModificationStamp();
   }
 
-  @Override
-  public boolean supportsIncrementalReparse(@NotNull Language rootLanguage) {
-    return true;
-  }
-
-  private @NotNull Content getContent() {
+  private @NotNull Content getContentImpl(boolean checkFrozen) {
     Content storedContent = myContent.get();
     if (storedContent == null) {
       storedContent = new VirtualFileContent();
       myContent.set(storedContent);
     }
-    if (cacheContentInVersionedEnvironment() && storedContent instanceof VirtualFileContent) {
+    if (checkFrozen && cacheContentInVersionedEnvironment() && storedContent instanceof VirtualFileContent) {
       // Once someone decided to retrieve the content, we need to return consistent data from this function.
       // So we are fixing the content for this snapshot by freezing the text and modstamp.
       FrozenFileContent frozenFileContent = new FrozenFileContent((VirtualFileContent)storedContent);
@@ -382,6 +373,15 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     } else {
       return storedContent;
     }
+  }
+
+  @Override
+  public boolean supportsIncrementalReparse(@NotNull Language rootLanguage) {
+    return true;
+  }
+
+  private @NotNull Content getContent() {
+    return getContentImpl(true);
   }
 
   /**
@@ -575,9 +575,9 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   private static class FrozenFileContent implements Content {
     private final @NotNull CharSequence text;
     private final long modificationStamp;
-    private final VirtualFileContent delegate;
+    private final @NotNull VirtualFileContent delegate;
 
-    FrozenFileContent(VirtualFileContent originalContent) {
+    FrozenFileContent(@NotNull VirtualFileContent originalContent) {
       this.delegate = originalContent;
       this.text = originalContent.getText();
       this.modificationStamp = originalContent.getModificationStamp();
