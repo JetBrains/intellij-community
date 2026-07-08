@@ -19,6 +19,7 @@ import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.tools.ide.util.common.replaceSpecialCharactersWithHyphens
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
+import org.opentest4j.TestAbortedException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
@@ -55,6 +56,9 @@ internal class DriverWithDetailedLogging(private val driver: Driver, logUiHierar
     return driver.withContext(dispatcher, semantics) {
       try {
         code()
+      }
+      catch (e: TestAbortedException) {
+        throw e
       }
       catch (e: Throwable) {
         throw detailedException(e)
