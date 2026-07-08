@@ -172,7 +172,12 @@ open class StatisticsFileEventLogger(
 
   override fun dispose() {
     lastEventFlushFuture?.cancel(false)
-    flush()
+    try {
+      flush().get(1, TimeUnit.SECONDS)
+    }
+    catch (_: Exception) {
+      // executor may already be shut down, interrupted, or timed out; last event is lost in that case
+    }
     logExecutor.shutdown()
     Disposer.dispose(writer)
   }

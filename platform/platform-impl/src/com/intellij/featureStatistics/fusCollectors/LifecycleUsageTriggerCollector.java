@@ -152,8 +152,8 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   public static void onIdeClose(boolean restart) {
     var providers = IdeShutdownSessionTypeProvider.EP_NAME.getExtensionList();
     SessionType sessionType = providers.isEmpty() ? SessionType.SMART_ONLY : providers.getFirst().sessionType();
-    IDE_CLOSE.log(restartField.with(restart), sessionTypeField.with(sessionType));
     PROJECT_MAX_SIMULTANEOUS.log(MAX_SIMULTANEOUS_PROJECTS.get());
+    IDE_CLOSE.log(restartField.with(restart), sessionTypeField.with(sessionType));
   }
 
   public static void onProjectOpenFinished(@NotNull Project project, long time, boolean isTab) {
