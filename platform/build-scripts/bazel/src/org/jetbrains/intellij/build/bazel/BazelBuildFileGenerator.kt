@@ -1169,6 +1169,12 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
       options.put("progressive", false)
     }
   }
+  // warn: allWarningsAsErrors (-Werror). Default warn = "off" comes from create_kotlinc_options.
+  handleArgument(K2JVMCompilerArguments::allWarningsAsErrors) {
+    if (it) {
+      options.put("warn", "error")
+    }
+  }
   //x_allow_kotlin_package
   handleArgument(K2JVMCompilerArguments::allowKotlinPackage) {
     if (it) {
