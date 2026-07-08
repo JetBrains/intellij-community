@@ -20,6 +20,7 @@ import com.intellij.openapi.fileChooser.FileChooserDialog
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
+import com.intellij.openapi.fileChooser.universal.UniversalFileChooser.Panel
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor.MountStatus
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.DumbAwareAction
@@ -186,7 +187,7 @@ object UniversalFileChooser {
     okAction: Runnable,
     private val okEnabledUpdater: (Boolean) -> Unit = {},
     contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
-  ) : JPanel() {
+  ) : JPanel(), FileBrowserPanel {
 
     companion object {
       private val FILE_VIEW_KEY: Key<FileView?> = Key.create<FileView>("universalFileChooser.fileView")
@@ -466,7 +467,7 @@ object UniversalFileChooser {
     }
 
 
-    fun getSelectedFiles(): List<Path> {
+    override fun getSelectedFiles(): List<Path> {
       val fileView = getActiveFileView()
       return fileView?.getSelectedFiles() ?: emptyList()
     }
@@ -1073,4 +1074,61 @@ object UniversalFileChooser {
     ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any())
   }
 
+}
+
+@ApiStatus.Experimental
+interface FileBrowserPanel {
+  /**
+   * Returns the files and/or directories currently selected in the active tab of the panel.
+   */
+  fun getSelectedFiles(): List<Path>
+}
+
+object FileBrowser {
+  /**
+   * Creates an embeddable file browsing panel.
+   *
+   * The [parentDisposable] owns the panel's lifecycle: background loaders, listeners, and the
+   * internal coroutine scope are released when it is disposed. Callers should not rely on any
+   * dialog-close events.
+   *
+   * @param project           project context used by the browser. [ProjectManager.getInstance.defaultProject] for a global context.
+   * @param descriptor        file chooser descriptor
+   * @param parentDisposable  disposable owning the returned panel
+   * @param contributors      contributors (tabs) to display; defaults to all registered
+   *                          [UniversalFileChooserContributor] extensions
+   * @param onDefaultAction   optional callback invoked when the user triggers the default action
+   *                          on the current selection (Enter / double-click).
+   */
+  @ApiStatus.Experimental
+  @JvmStatic
+  fun createPanel(
+    project: Project,
+    descriptor: FileChooserDescriptor,
+    parentDisposable: Disposable,
+    contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
+    onDefaultAction: Runnable = Runnable {},
+  ): FileBrowserPanel {
+    return Panel(parentDisposable, descriptor, project, onDefaultAction, {}, contributors)
+  }
+
+  /**
+   * Creates an embeddable file browsing panel. The same as
+   * [createFilePanel(Project, FileChooserDescriptor, Disposable, Collection<UniversalFileChooserContributor>, Runnable)] but for a specific
+   * root path. Other roots are not shown.
+   *
+   * @return The created file panel, or null if the root contributor cannot be determined.
+   */
+  @ApiStatus.Experimental
+  @JvmStatic
+  fun createPanel(
+    project: Project,
+    descriptor: FileChooserDescriptor,
+    parentDisposable: Disposable,
+    root: Path,
+    onDefaultAction: Runnable = Runnable {},
+  ): FileBrowserPanel? {
+    val contributor = UniversalFileChooserContributor.findOwner(root) ?: return null
+    return createPanel(project, descriptor, parentDisposable, listOf(SingleRootContributor(contributor, root)), onDefaultAction)
+  }
 }

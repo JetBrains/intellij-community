@@ -3072,6 +3072,8 @@ c:com.intellij.openapi.fileChooser.tree.FileNode
 - getName():java.lang.String
 - isHidden():Z
 - isValid():Z
+f:com.intellij.openapi.fileChooser.universal.FileBrowser
+- sf:INSTANCE:com.intellij.openapi.fileChooser.universal.FileBrowser
 f:com.intellij.openapi.fileEditor.LayoutActionsFloatingToolbar
 - com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 f:com.intellij.openapi.fileEditor.SplitEditorToolbar
