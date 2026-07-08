@@ -4,7 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.AnnotatorStatisticsCollector;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.PluginExceptionUtil;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
@@ -231,14 +231,6 @@ final class AnnotatorRunner {
   }
 
   private static Annotator cloneTemplate(@NotNull Annotator template) {
-    Annotator annotator;
-    try {
-      annotator = ReflectionUtil.newInstance(template.getClass());
-    }
-    catch (Exception e) {
-      LOG.error(PluginException.createByClass(e, template.getClass()));
-      return null;
-    }
-    return annotator;
+    return PluginExceptionUtil.computeOrLogPluginException(template.getClass(), () -> ReflectionUtil.newInstance(template.getClass()));
   }
 }
