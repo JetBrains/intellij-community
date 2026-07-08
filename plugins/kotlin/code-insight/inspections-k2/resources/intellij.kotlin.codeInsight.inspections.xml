@@ -2409,5 +2409,12 @@
             key="convert.to.comparisons"
             language="kotlin"
     />
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.ReplaceWithCallWithContextCallInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.replace.with.with.context" bundle="messages.KotlinBundle"/>
   </extensions>
 </idea-plugin>
