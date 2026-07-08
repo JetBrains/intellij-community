@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.core.script.k2.configurations
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
+import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.readAction
@@ -130,6 +131,10 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         }
     }
 
+    private class CircularScriptException(override val message: String) : Throwable(message)
+    private val notificationGroup: NotificationGroup
+        get() = NotificationGroupManager.getInstance().getNotificationGroup("KotlinScriptNotificationGroup")
+
     private suspend fun update(virtualFile: VirtualFile, definition: ScriptDefinition) {
         if (KotlinScriptEntityProvider.provide(project, virtualFile) != null) return
 
@@ -139,7 +144,7 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         val (rootConfiguration, importedConfigurations) = try {
             val rootConfiguration = resolveConfiguration(virtualFile, definition)
             val importedConfigurations = topologicalSort(nodes = listOf(rootConfiguration), reportCycle = {
-                throw IllegalStateException(
+                throw CircularScriptException(
                     KotlinBaseScriptingBundle.message(
                         "script.part.circular.file.import.chain", it.valueOrNull()?.script?.name ?: "<null>"
                     )
@@ -152,11 +157,18 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
 
             rootConfiguration to importedConfigurations
         } catch (e: Throwable) {
-            NotificationGroupManager.getInstance().getNotificationGroup("KotlinScriptNotificationGroup").createNotification(
-                KotlinBaseScriptingBundle.message("circular.script.import"),
-                e.message ?: KotlinBaseScriptingBundle.message("script.configuration.failed.unknown", virtualFile.name),
-                NotificationType.ERROR,
-            ).notify(project)
+            when (e) {
+                is CircularScriptException -> notificationGroup.createNotification(
+                    KotlinBaseScriptingBundle.message("circular.script.import"),
+                    e.message,
+                    NotificationType.ERROR,
+                )
+                else -> notificationGroup.createNotification(
+                    KotlinBaseScriptingBundle.message("script.processing.failed"),
+                    e.message ?: KotlinBaseScriptingBundle.message("script.configuration.failed.unknown", virtualFile.name),
+                    NotificationType.ERROR,
+                )
+            }.notify(project)
             return
         }
 
@@ -164,7 +176,7 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
             is ResultWithDiagnostics.Success<ScriptCompilationConfigurationWrapper> -> rootConfiguration.value.configuration
             is ResultWithDiagnostics.Failure -> {
                 rootConfiguration.reports.forEach {
-                    NotificationGroupManager.getInstance().getNotificationGroup("KotlinScriptNotificationGroup").createNotification(
+                    notificationGroup.createNotification(
                         KotlinBaseScriptingBundle.message("script.configuration.failed", virtualFile.name),
                         it.message,
                         when (it.severity) {
