@@ -16,7 +16,6 @@
 + -com-intellij-tasks-
 + -com-intellij-tasks-timeTracking-
 + -org-jetbrains-plugins-haml-
-+ -com-intellij-lang-puppet-
 + -Git4Idea-
 + -org-jetbrains-plugins-github-
 + -Docker-
