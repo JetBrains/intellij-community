@@ -171,6 +171,7 @@
                                           providerId="python.requirements.inlay.toml"/>
 
     <pluginSuggestionProvider order="first" implementation="com.jetbrains.python.suggestions.PycharmProSuggestionProvider"/>
+    <pluginSuggestionProvider implementation="com.jetbrains.python.suggestions.MarimoSuggestionProvider"/>
     <postStartupActivity implementation="com.jetbrains.python.poetry.PoetryPyProjectTomlPostStartupActivity"/>
     <postStartupActivity implementation="com.jetbrains.python.psi.resolve.PyPartialStubMarkersInvalidatorActivity"/>
 
