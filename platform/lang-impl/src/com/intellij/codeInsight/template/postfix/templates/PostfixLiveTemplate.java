@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.completion.OffsetTranslator;
 import com.intellij.codeInsight.completion.command.CommandCompletionFactory;
 import com.intellij.codeInsight.completion.command.CommandCompletionService;
+import com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService;
 import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
@@ -111,6 +112,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     if (key == null) return key;
     if (project == null) return key;
     if (language == null) return key;
+    if (!ApplicationCommandCompletionService.Companion.getInstance().commandCompletionEnabled()) return key;
     boolean showAsSeparateGroup = PostfixTemplatesSettings.getInstance().isShowAsSeparateGroup();
     if (!showAsSeparateGroup) return key;
     CommandCompletionService completionService = project.getService(CommandCompletionService.class);
