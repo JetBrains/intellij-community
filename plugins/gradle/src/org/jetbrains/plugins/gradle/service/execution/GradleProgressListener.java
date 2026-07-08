@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.service.execution;
 
 import com.google.gson.GsonBuilder;
 import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.FileDownloadEventImpl;
 import com.intellij.build.events.impl.FileDownloadedEventImpl;
 import com.intellij.execution.process.ProcessOutputType;
@@ -24,6 +23,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.issue.GradleIssueFailure;
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionReporter.GradleExecutionFailureReport;
+import org.jetbrains.plugins.gradle.statistics.GradleModelBuilderMessageCollector;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.MessageReporter;
 
@@ -118,7 +119,7 @@ public final class GradleProgressListener implements ProgressListener, org.gradl
     }
 
     myReporter.failure(createGradleIssueFailure(message))
-      .withKind(MessageEvent.Kind.valueOf(message.getKind().name()))
+      .withSeverity(getSeverity(message))
       .withInternal(message.isInternal() && message.getKind() == Message.Kind.ERROR)
       .withSuppressed(message.isInternal())
       .withGroup(message.getGroup())
@@ -127,6 +128,14 @@ public final class GradleProgressListener implements ProgressListener, org.gradl
       .withTargetPath(ObjectUtils.doIfNotNull(message.getTargetPath(), it -> Path.of(it)))
       .report();
     return true;
+  }
+
+  private static @NotNull GradleExecutionFailureReport.Severity getSeverity(@NotNull Message message) {
+    return switch (message.getKind()) {
+      case ERROR -> GradleExecutionFailureReport.Severity.ERROR;
+      case WARNING -> GradleExecutionFailureReport.Severity.WARNING;
+      case INFO -> GradleExecutionFailureReport.Severity.INFO;
+    };
   }
 
   private static @Nullable Message parseModelBuilderMessage(String eventDescription) {

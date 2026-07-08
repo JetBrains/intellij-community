@@ -38,10 +38,19 @@ interface GradleExecutionReporter {
   interface GradleExecutionFailureReport {
 
     /**
-     * Sets the build message severity.
-     * Defaults to [MessageEvent.Kind.ERROR].
+     * Defines the severity of a build message.
      */
-    fun withKind(kind: MessageEvent.Kind): GradleExecutionFailureReport
+    enum class Severity {
+      ERROR,
+      WARNING,
+      INFO
+    }
+
+    /**
+     * Sets the build message severity.
+     * Defaults to [Severity.ERROR].
+     */
+    fun withSeverity(severity: Severity): GradleExecutionFailureReport
 
     /**
      * Marks the failure as internal.

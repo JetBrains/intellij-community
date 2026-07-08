@@ -50,12 +50,10 @@ internal class GradleExecutionReporterImpl(
 
   private fun reportFusEvent(report: GradleExecutionFailureReportImpl) {
     val group = report.group ?: return
-    val kind = when (report.kind) {
-      MessageEvent.Kind.ERROR -> GradleModelBuilderMessageCollector.FailureKind.ERROR
-      MessageEvent.Kind.WARNING -> GradleModelBuilderMessageCollector.FailureKind.WARNING
-      MessageEvent.Kind.INFO -> GradleModelBuilderMessageCollector.FailureKind.INFO
-      MessageEvent.Kind.STATISTICS -> GradleModelBuilderMessageCollector.FailureKind.INFO
-      MessageEvent.Kind.SIMPLE -> GradleModelBuilderMessageCollector.FailureKind.INFO
+    val kind = when (report.severity) {
+      GradleExecutionFailureReport.Severity.ERROR -> GradleModelBuilderMessageCollector.FailureKind.ERROR
+      GradleExecutionFailureReport.Severity.WARNING -> GradleModelBuilderMessageCollector.FailureKind.WARNING
+      GradleExecutionFailureReport.Severity.INFO -> GradleModelBuilderMessageCollector.FailureKind.INFO
     }
     GradleModelBuilderMessageCollector.logFailure(taskId.project, taskId.id, kind, group)
   }
@@ -87,14 +85,23 @@ internal class GradleExecutionReporterImpl(
     val title = report.title ?: report.failure.message ?: return
     val description = report.text ?: report.failure.description ?: report.failure.message ?: return
     val filePosition = getErrorFilePosition(report.failure, projectRoot)
-    if (processedMessageKeys.add(MessageKey(report.kind, title, description, filePosition))) {
-      val messageEvent = MessageEvent.builder(title, report.kind)
+    val messageEventKind = report.severity.getEventKind()
+    if (processedMessageKeys.add(MessageKey(messageEventKind, title, description, filePosition))) {
+      val messageEvent = MessageEvent.builder(title, messageEventKind)
         .withDescription(description)
         .withParentId(taskId)
         .withFilePosition(filePosition)
         .withNavigatable(createFileNavigatable(report) ?: createTargetNavigatable(report))
         .build()
       listener.onStatusChange(ExternalSystemBuildEvent(taskId, messageEvent))
+    }
+  }
+
+  private fun GradleExecutionFailureReport.Severity.getEventKind(): MessageEvent.Kind {
+    return when (this) {
+      GradleExecutionFailureReport.Severity.ERROR -> MessageEvent.Kind.ERROR
+      GradleExecutionFailureReport.Severity.WARNING -> MessageEvent.Kind.WARNING
+      GradleExecutionFailureReport.Severity.INFO -> MessageEvent.Kind.INFO
     }
   }
 
@@ -144,7 +151,7 @@ internal class GradleExecutionReporterImpl(
   private data class GradleExecutionFailureReportImpl(
     private val failureHandler: GradleExecutionReporterImpl,
     val failure: GradleIssueFailure,
-    val kind: MessageEvent.Kind = MessageEvent.Kind.ERROR,
+    val severity: GradleExecutionFailureReport.Severity = GradleExecutionFailureReport.Severity.ERROR,
     val isInternal: Boolean = false,
     val isSuppressed: Boolean = false,
     val group: String? = null,
@@ -153,8 +160,8 @@ internal class GradleExecutionReporterImpl(
     val targetPath: Path? = null,
   ) : GradleExecutionFailureReport {
 
-    override fun withKind(kind: MessageEvent.Kind): GradleExecutionFailureReportImpl =
-      copy(kind = kind)
+    override fun withSeverity(severity: GradleExecutionFailureReport.Severity): GradleExecutionFailureReportImpl =
+      copy(severity = severity)
 
     override fun withInternal(isInternal: Boolean): GradleExecutionFailureReportImpl =
       copy(isInternal = isInternal)
