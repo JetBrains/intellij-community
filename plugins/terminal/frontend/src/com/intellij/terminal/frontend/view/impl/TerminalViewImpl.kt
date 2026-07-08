@@ -83,7 +83,6 @@ import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputPsiFile
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.block.ui.addToLayer
 import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
-import org.jetbrains.plugins.terminal.block.ui.isTerminalOutputScrollChangingActionInProgress
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalSourceNavigationInfo
@@ -581,13 +580,7 @@ class TerminalViewImpl(
     // Document modifications can change the scroll position.
     // Mark them with the corresponding flag to indicate that this change is not caused by the explicit user action.
     model.addListener(parentDisposable, object : TerminalOutputModelListener {
-      override fun beforeContentChanged(model: TerminalOutputModel) {
-        editor.isTerminalOutputScrollChangingActionInProgress = true
-      }
-
       override fun afterContentChanged(event: TerminalContentChangeEvent) {
-        editor.isTerminalOutputScrollChangingActionInProgress = false
-
         // Repaint the whole screen to update all changed highlightings.
         repaintEditorScreen(editor)
 

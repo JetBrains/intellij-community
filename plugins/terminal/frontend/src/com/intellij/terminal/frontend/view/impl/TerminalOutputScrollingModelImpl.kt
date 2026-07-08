@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend.view.impl
 
+import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -23,7 +24,6 @@ import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
 import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
-import org.jetbrains.plugins.terminal.block.ui.doTerminalOutputScrollChangingAction
 import org.jetbrains.plugins.terminal.block.ui.doWithoutScrollingAnimation
 import org.jetbrains.plugins.terminal.block.ui.isTerminalOutputScrollChangingActionInProgress
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
@@ -31,6 +31,7 @@ import org.jetbrains.plugins.terminal.view.TerminalCursorOffsetChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
+import java.awt.event.MouseEvent
 import kotlin.math.max
 
 /**
@@ -73,9 +74,10 @@ class TerminalOutputScrollingModelImpl(
 
     editor.scrollingModel.addVisibleAreaListener(object : VisibleAreaListener {
       override fun visibleAreaChanged(e: VisibleAreaEvent) {
-        // Filter programmatic changes of the scroll offset to handle only changes happened
-        // in a result of user actions (mouse wheel scroll, scrollbar thumb dragging).
-        if (editor.isTerminalOutputScrollChangingActionInProgress) {
+        val curEvent = IdeEventQueue.getInstance().trueCurrentEvent
+        // Take into account only changes happened as a result of user actions (mouse wheel scroll, scrollbar thumb dragging),
+        // or if this viewport change is done under the special flag (isTerminalOutputScrollChangingActionInProgress).
+        if (curEvent !is MouseEvent && !editor.isTerminalOutputScrollChangingActionInProgress) {
           return
         }
 
@@ -150,10 +152,8 @@ class TerminalOutputScrollingModelImpl(
     }
 
     if (scrollY != editor.scrollingModel.verticalScrollOffset) {
-      editor.doTerminalOutputScrollChangingAction {
-        editor.doWithoutScrollingAnimation {
-          editor.scrollingModel.scrollVertically(scrollY)
-        }
+      editor.doWithoutScrollingAnimation {
+        editor.scrollingModel.scrollVertically(scrollY)
       }
     }
 
