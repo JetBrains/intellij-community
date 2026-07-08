@@ -575,4 +575,14 @@ class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
     #             └ EXPECTED_VARIANCE NULL
     """.trimIndent())
 
+  @TestFor(issues = ["PY-88800"])
+  @Test
+  fun `Contravariant arguments in nested functions`() = test("""
+    class B[T]:
+        def f1(self):
+            def f2(a: T): # nested uses of T are ignored by variance expectation
+    #                 └ EXPECTED_VARIANCE NULL
+                ...
+    """.trimIndent())
+
 }
