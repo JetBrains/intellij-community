@@ -14,6 +14,10 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.orNull
@@ -25,7 +29,6 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.areCompilerPl
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.create
@@ -254,16 +257,25 @@ class KtCompilerPluginsCache private constructor(
         private fun CommonCompilerArguments.getOriginalPluginClasspaths(project: Project): List<Path> {
             val pluginClassPaths = this.pluginClasspaths
 
-            if (pluginClassPaths.isNullOrEmpty()) return emptyList()
+            if (pluginClassPaths.isEmpty()) return emptyList()
 
             val layoutService = KotlinPluginLayoutService.getInstance(project)
 
             val pathMacroManager = PathMacroManager.getInstance(project)
             val expandedPluginClassPaths = pluginClassPaths.map { pathMacroManager.expandPath(it) }
 
+            val eelDescriptor = project.getEelDescriptor()
+
             return expandedPluginClassPaths.mapNotNull {
+                val pathString = it ?: return@mapNotNull null
                 runCatching {
-                    layoutService.resolveRelativeToRemoteKotlinc(Path.of(it))
+                    val path =
+                        if (eelDescriptor == LocalEelDescriptor) {
+                            Path.of(pathString)
+                        } else {
+                            EelPath.parse(pathString, eelDescriptor).asNioPath()
+                        }
+                    layoutService.resolveRelativeToRemoteKotlinc(path)
                 }.getOrLogException(LOG)
             }
         }
