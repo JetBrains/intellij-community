@@ -57,6 +57,10 @@ internal class MarkdownListMarkerBackspaceHandlerDelegate: BackspaceHandlerDeleg
 
   override fun charDeleted(c: Char, file: PsiFile, editor: Editor): Boolean {
     val item = item ?: return false // for smart cast
+    // `this` is an application-level singleton (cached in the BackspaceHandlerDelegate extension point),
+    // so it must not keep a strong reference to a PSI element once the operation is over: doing so retains
+    // the whole project (see _LastInSuiteTest.testProjectLeak -> "Found a leaked instance of class ...ProjectImpl").
+    this.item = null
     val document = editor.document
 
     val createsNewList = listWillBeSplitToTwoLists(item, document)
