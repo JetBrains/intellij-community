@@ -1594,6 +1594,7 @@ plugins/terminal
 plugins/terminal/backend
 plugins/terminal/cloud
 plugins/terminal/completion
+plugins/terminal/emulator
 plugins/terminal/frontend
 plugins/terminal/sh
 plugins/terminal/tests

@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend.view.impl
 
 import com.intellij.openapi.application.ModalityState
@@ -87,6 +88,7 @@ private suspend fun prepareStartupOptions(
     .workingDirectory(processOptions.workingDirectory)
     .envVariables(processOptions.envVariables)
     .processType(processOptions.processType)
+    .emulatorType(processOptions.emulatorType)
 
   return if (calculateSizeFromComponent) {
     baseOptions.initialTermSize(terminal.awaitLaidOutTermSize()).build()

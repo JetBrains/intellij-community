@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants.INTELLIJ_DEPENDENCIES_URL
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
+import org.jetbrains.intellij.build.dependencies.TerminalLibGhosttyVtDownloader
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import kotlin.io.path.exists
@@ -74,6 +75,20 @@ object NativeBinaryDownloader {
   suspend fun getLibWebp(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path {
     val (archiveFile, unpackedDir) = downloadAndUnpack(context, "libwebpVersion", LIBWEBP_ID)
     return findFile(archiveFile, unpackedDir, libName(os, arch, "webp_jni"))
+  }
+
+  /**
+   * Downloads and unpacks the libghostty-vt archive and returns a path to a library for the given platform.
+   */
+  fun getLibGhosttyVt(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path {
+    val unpackedDir = TerminalLibGhosttyVtDownloader.getOrDownloadLibRoot(context.paths.communityHomeDirRoot)
+    // match `LibGhosttyVtLocator.libraryPath` with lowercase directory names
+    val relativePath = "${os.osName.lowercase()}-${arch.archName.lowercase()}/${os.libraryName("ghostty-vt")}"
+    val file = unpackedDir.resolve(relativePath)
+    check(file.isRegularFile()) {
+      "Library '${relativePath}' not found in '${unpackedDir}'"
+    }
+    return file
   }
 
   private suspend fun downloadAndUnpack(context: BuildContext, propertyName: String, artifactId: String): Pair<Path, Path> {

@@ -15,6 +15,9 @@
 - name: lib/modules/intellij.terminal.cloud.jar
   contentModules:
   - name: intellij.terminal.cloud
+- name: lib/modules/intellij.terminal.emulator.jar
+  contentModules:
+  - name: intellij.terminal.emulator
 - name: lib/modules/intellij.terminal.frontend.jar
   contentModules:
   - name: intellij.terminal.frontend

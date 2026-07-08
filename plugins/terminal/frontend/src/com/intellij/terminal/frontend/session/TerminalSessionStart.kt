@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalExecutorServiceManagerImpl
+import com.intellij.terminal.frontend.session.ghostty.createGhosttyTerminalSession
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jediterm.core.typeahead.TerminalTypeAheadManager
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
 import org.jetbrains.plugins.terminal.util.closeConnectorAndStopEmulation
@@ -55,13 +57,19 @@ fun createTerminalSession(
   settings: JBTerminalSystemSettingsProviderBase,
   coroutineScope: CoroutineScope,
 ): TerminalSession {
+  val emulatorType = options.emulatorType ?: TerminalEmulatorType.default
+  if (emulatorType == TerminalEmulatorType.Ghostty) {
+    return createGhosttyTerminalSession(project, ttyConnector, options, settings, coroutineScope)
+  }
+
   val observableTtyConnector = ttyConnector as? ObservableTtyConnector ?: ObservableTtyConnector(ttyConnector)
 
   val maxHistoryLinesCount = AdvancedSettings.getInt("terminal.buffer.max.lines.count")
   val services: JediTermServices = createJediTermServices(observableTtyConnector, options, maxHistoryLinesCount, settings)
 
   val outputScope = coroutineScope.childScope("Terminal output forwarding")
-  val shellIntegrationController = TerminalShellIntegrationController(services.controller)
+  val shellIntegrationController = TerminalShellIntegrationController()
+  services.controller.addCustomCommandListener { shellIntegrationController.processCustomCommand(it) }
   if (project != null) {
     shellIntegrationController.addListener(TerminalShellIntegrationStatisticsListener(project))
   }

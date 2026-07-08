@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend.toolwindow.impl
 
 import com.intellij.ide.trustedProjects.TrustedProjects
@@ -46,6 +47,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalTabCloseListener
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
@@ -360,6 +362,8 @@ class TerminalToolWindowTabsManagerImpl(
       private set
     var processType: TerminalProcessType = TerminalProcessType.SHELL
       private set
+    var emulatorType: TerminalEmulatorType? = null
+      private set
     @NlsSafe var tabName: String? = null
       private set
     var isUserDefinedName: Boolean = false
@@ -396,6 +400,11 @@ class TerminalToolWindowTabsManagerImpl(
 
     override fun processType(processType: TerminalProcessType): TerminalToolWindowTabBuilder {
       this.processType = processType
+      return this
+    }
+
+    override fun emulatorType(emulatorType: TerminalEmulatorType?): TerminalToolWindowTabBuilder {
+      this.emulatorType = emulatorType
       return this
     }
 
@@ -454,6 +463,7 @@ class TerminalToolWindowTabsManagerImpl(
         workingDirectory = workingDirectory,
         envVariables = envVariables,
         processType = processType,
+        emulatorType = emulatorType,
       )
     }
   }

@@ -222,6 +222,14 @@ object CommunityRepositoryModules {
     pluginAuto("intellij.terminal") { spec ->
       spec.withModule("intellij.terminal.completion")
       spec.withResource("resources/shell-integrations", "shell-integrations")
+      // bundle the libghostty-vt native library
+      for ((os, arch, libc) in SUPPORTED_DISTRIBUTIONS) {
+        val dirName = os.osName.lowercase() + "-" + arch.archName.lowercase()
+        // `allowInDevMode = true`: load libghostty-vt when running from a dev build
+        spec.withGeneratedPlatformResources(os, arch, libc, allowInDevMode = true) { targetDir, context ->
+          copyFileToDir(NativeBinaryDownloader.getLibGhosttyVt(context, os, arch), targetDir.resolve("libghostty-vt/$dirName"))
+        }
+      }
     },
     pluginAuto(listOf("intellij.textmate.plugin")) { spec ->
       spec.withResourceFromModule("intellij.textmate", "lib/bundles", "lib/bundles")

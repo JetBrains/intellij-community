@@ -1,0 +1,5 @@
+# Recorded pty output: raw byte streams that must never be line-ending normalized. The repository's
+# `text=auto` makes git guess per file, and it guesses "text" for the ones that happen to contain no binary
+# bytes (selective_erasure, sgr) -- committing them then strips every CR, so a bare LF no longer returns to
+# column 1 and the replay produces a staircase. Mark them binary so the line-endings survive.
+*.recording binary

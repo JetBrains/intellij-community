@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.tests.reworked.util
 
 import com.google.common.base.Ascii
@@ -19,26 +20,36 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
+import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCursorPositionChangedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalInitialStateEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
-import org.jetbrains.plugins.terminal.startup.TerminalProcessType
+import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
+import org.jetbrains.plugins.terminal.session.impl.dto.toState
 import org.jetbrains.plugins.terminal.util.ShellEelProcess
+import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
+import org.jetbrains.plugins.terminal.view.impl.updateContent
 import org.junit.Assert
 import org.junit.Assume
 import org.junit.jupiter.api.Assumptions
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 internal object TerminalSessionTestUtil {
   /** Starts the same terminal session used in production */
@@ -99,21 +110,30 @@ internal object TerminalSessionTestUtil {
   }
 
   /**
-   * Creates the production [TerminalSession] backed by an in-memory [LoopbackTtyConnector]
-   * instead of a real shell process. Write raw ANSI/VT sequences to [LoopbackTtyConnector.feed]
-   * and observe the resulting events in [TerminalSession.getOutputFlow].
+   * Creates the production [TerminalSession] via [createTerminalSession], but backed by an in-memory
+   * [LoopbackTtyConnector] instead of a real shell process.
    *
-   * The session uses [TerminalProcessType.NON_SHELL], so shell integration and working directory
-   * tracking are disabled. Cancel [coroutineScope] to terminate the session.
+   * The returned connector is the injection point: pass raw ANSI/VT sequences to
+   * [LoopbackTtyConnector.feed] and observe the resulting events in
+   * [TerminalSession.getOutputFlow]. [TerminalProcessType.NON_SHELL] is used to keep the pipeline minimal
+   * (no shell-integration / working-directory tracking).
+   *
+   * The session lifecycle is bound to [coroutineScope]; cancel it to stop the emulation.
+   *
+   * [emulatorType] is the emulator explicitly requested for the session; null (the default) leaves the
+   * choice to [TerminalEmulatorType.default], matching production behavior.
    */
   fun createLoopbackTerminalSession(
     project: Project,
     coroutineScope: CoroutineScope,
+    emulatorType: TerminalEmulatorType? = null,
   ): Pair<TerminalSession, LoopbackTtyConnector> {
     val connector = LoopbackTtyConnector()
     val options = ShellStartupOptions.Builder()
       .initialTermSize(TermSize(80, 24))
       .processType(TerminalProcessType.NON_SHELL)
+      .workingDirectory(System.getProperty("user.home"))
+      .emulatorType(emulatorType)
       .build()
     val session = createTerminalSession(project, connector, options, JBTerminalSystemSettingsProvider(), coroutineScope)
     return session to connector
@@ -203,29 +223,104 @@ internal class TestTerminalSessionResult(
  *
  * Keeping a single active subscription also keeps the emulation running: the session only reads its output while
  * there is at least one collector of the output flow.
+ *
+ * Besides the raw events, every event is applied to real output models the way `StateAwareTerminalSession`
+ * applies them in production, so a test can assert the document the whole event stream produces — see
+ * [documentText] and [alternateBufferText].
  */
 internal class TerminalOutputEventCollector(
   session: TerminalSession,
   scope: CoroutineScope,
 ) {
-  private val mutableEvents = MutableSharedFlow<TerminalOutputEvent>(replay = Int.MAX_VALUE)
+  // Unbounded replay: the await and history queries below index this history, so nothing may be dropped.
+  // Private on purpose: the session's own flow replays one batch and is consumed exactly once, so awaiting
+  // and history queries only work through this accumulator — see the class KDoc.
+  private val events = MutableSharedFlow<TerminalOutputEvent>(replay = Int.MAX_VALUE)
 
-  val events: SharedFlow<TerminalOutputEvent> = mutableEvents
+  // Content and cursor updates go to the model of the buffer that the last applied state says is active,
+  // mirroring StateAwareTerminalSession. Guarded by modelLock: the collection coroutine writes, tests read.
+  private val modelLock = ReentrantLock()
+  private val outputModel = TerminalTestUtil.createOutputModel()
+  private val alternateBufferModel = TerminalTestUtil.createOutputModel()
+  private var isAlternateScreenBuffer = false
 
   init {
     scope.launch {
       session.getOutputFlow().collect { batch ->
         for (event in batch) {
-          mutableEvents.emit(event)
+          applyToModel(event)
+          events.emit(event)
         }
       }
     }
   }
+
+  /**
+   * Suspends until an event of [type] matching [predicate] arrives, checking already-collected events
+   * first and ignoring the first [skipCount] of them (see [currentEventCount]). Prefer the reified
+   * [awaitEvent] and [awaitEventAfter] extensions.
+   */
+  suspend fun <T : TerminalOutputEvent> awaitEvent(type: Class<T>, skipCount: Int = 0, predicate: (T) -> Boolean = { true }): T {
+    return events.drop(skipCount)
+      .mapNotNull { event -> if (type.isInstance(event)) type.cast(event) else null }
+      .first(predicate)
+  }
+
+  /**
+   * Number of events collected so far. Pass the returned value to [awaitEventAfter] or [eventsSince] to
+   * address only the events emitted *after* this point — useful when an action re-emits events that look
+   * identical to earlier ones (for example, a resize re-reporting existing content).
+   */
+  fun currentEventCount(): Int = events.replayCache.size
+
+  /** The events collected after the first [startIndex] ones (see [currentEventCount]), in emission order. */
+  fun eventsSince(startIndex: Int): List<TerminalOutputEvent> = events.replayCache.drop(startIndex)
+
+  /** The [TerminalContentUpdatedEvent]s collected so far, in emission order. */
+  fun contentUpdates(): List<TerminalContentUpdatedEvent> = events.replayCache.filterIsInstance<TerminalContentUpdatedEvent>()
+
+  /**
+   * The primary-buffer document produced by applying every collected event to a real output model —
+   * what the UI would show (modulo rendering) after this session's whole event stream.
+   */
+  fun documentText(): String = modelLock.withLock { outputModel.document.text }
+
+  /** [documentText] split into logical lines: a soft-wrapped line stays a single entry. */
+  fun documentLines(): List<String> = documentText().split('\n')
+
+  /** The alternate-buffer document; see [documentText]. */
+  fun alternateBufferText(): String = modelLock.withLock { alternateBufferModel.document.text }
+
+  private fun applyToModel(event: TerminalOutputEvent) {
+    modelLock.withLock {
+      when (event) {
+        is TerminalInitialStateEvent -> {
+          outputModel.restoreFromState(event.outputModelState.toState())
+          alternateBufferModel.restoreFromState(event.alternateBufferState.toState())
+          isAlternateScreenBuffer = event.sessionState.isAlternateScreenBuffer
+        }
+        is TerminalStateChangedEvent -> isAlternateScreenBuffer = event.state.isAlternateScreenBuffer
+        is TerminalContentUpdatedEvent -> currentModel().updateContent(event)
+        is TerminalCursorPositionChangedEvent -> currentModel().updateCursorPosition(event.logicalLineIndex, event.columnIndex)
+        else -> Unit
+      }
+    }
+  }
+
+  private fun currentModel(): MutableTerminalOutputModel =
+    if (isAlternateScreenBuffer) alternateBufferModel else outputModel
 }
 
 /** Suspends until an event of type [T] matching [predicate] is emitted (checking already-received events too). */
 internal suspend inline fun <reified T : TerminalOutputEvent> TerminalOutputEventCollector.awaitEvent(
-  crossinline predicate: (T) -> Boolean = { true },
-): T {
-  return events.filterIsInstance<T>().first { predicate(it) }
-}
+  noinline predicate: (T) -> Boolean = { true },
+): T = awaitEvent(T::class.java, predicate = predicate)
+
+/**
+ * Like [awaitEvent], but skips the first [skipCount] already-collected events
+ * (see [TerminalOutputEventCollector.currentEventCount]).
+ */
+internal suspend inline fun <reified T : TerminalOutputEvent> TerminalOutputEventCollector.awaitEventAfter(
+  skipCount: Int,
+  noinline predicate: (T) -> Boolean = { true },
+): T = awaitEvent(T::class.java, skipCount, predicate)
