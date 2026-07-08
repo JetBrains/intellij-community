@@ -11,6 +11,7 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.sudo.SudoCommandProvider
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -22,8 +23,9 @@ import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.spawnProcess
 import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.eel.spawnProcess
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.IdeUtilIoBundle
 import com.intellij.util.io.SuperUserStatus
@@ -114,13 +116,20 @@ object ExecUtil {
 
   @JvmStatic
   @RequiresBackgroundThread(generateAssertion = false)
-  fun execAndReadLine(commandLine: GeneralCommandLine): String? = try {
-    val process = commandLine.createProcess()
-    BufferedReader(InputStreamReader(process.inputStream, commandLine.charset)).use { it.readLine() }
-  }
-  catch (e: ExecutionException) {
-    logger<ExecUtil>().debug(e)
-    null
+  fun execAndReadLine(commandLine: GeneralCommandLine): String? {
+    val application = ApplicationManager.getApplication()
+    if (application != null && !application.isUnitTestMode()) {
+      ThreadingAssertions.softAssertBackgroundThread()
+    }
+
+    return try {
+      val process = commandLine.createProcess()
+      BufferedReader(InputStreamReader(process.inputStream, commandLine.charset)).use { it.readLine() }
+    }
+    catch (e: ExecutionException) {
+      logger<ExecUtil>().debug(e)
+      null
+    }
   }
 
   /**

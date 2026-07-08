@@ -3,7 +3,10 @@ package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +47,11 @@ public class CapturingProcessHandler extends OSProcessHandler {
    */
   @RequiresBackgroundThread(generateAssertion = false)
   public final @NotNull ProcessOutput runProcess() {
+    Application application = ApplicationManager.getApplication();
+    if (application != null && !application.isUnitTestMode()) {
+      ThreadingAssertions.softAssertBackgroundThread();
+    }
+
     return myProcessRunner.runProcess();
   }
 
@@ -54,6 +62,11 @@ public class CapturingProcessHandler extends OSProcessHandler {
    */
   @RequiresBackgroundThread(generateAssertion = false)
   public ProcessOutput runProcess(int timeoutInMilliseconds) {
+    Application application = ApplicationManager.getApplication();
+    if (application != null && !application.isUnitTestMode()) {
+      ThreadingAssertions.softAssertBackgroundThread();
+    }
+
     return myProcessRunner.runProcess(timeoutInMilliseconds);
   }
 
