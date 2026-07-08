@@ -1,11 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
-import com.jetbrains.python.allure.Layers
-import com.jetbrains.python.allure.Subsystems
-
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.idea.TestFor
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyInspectionTestCase
 import com.jetbrains.python.fixtures.fixme
 
@@ -627,5 +626,24 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
 
       assert_type(f(Sink[object](), Sink[int]()), int)
       """)
+  }
+
+  @TestFor(issues = ["PY-88624"])
+  fun testOverloadedInitSelfTypeOverridesDefaultTypeParameter() {
+    doTestByText("""
+                   from typing import reveal_type, assert_type, overload
+                   
+                   class Class[T=list[int] | None]:
+                       @overload
+                       def __init__(self: Class[None]) -> None: ...
+                   
+                       @overload
+                       def __init__(self, x: T) -> None: ...
+                   
+                       def __init__(self, *args, **kwargs) -> None: ...
+                   
+                   assert_type(Class(), Class[None])
+                   assert_type(Class(1), Class[int])
+                   """.trimIndent())
   }
 }
