@@ -114,9 +114,9 @@ class PinentryExecutionTest : GitSingleRepoTest() {
   }
 
   fun `test pinentry shouldn't be configured twice`() {
-    assertTrue(GpgAgentConfigurator.getInstance(project).canBeConfigured(project))
+    assertTrue(GpgAgentConfigurator.getInstance(project).canBeConfigured())
     configureGpgAgent(createPathLocator().resolvePaths()!!)
-    assertFalse(GpgAgentConfigurator.getInstance(project).canBeConfigured(project))
+    assertFalse(GpgAgentConfigurator.getInstance(project).canBeConfigured())
   }
 
   fun `test pinentry fallbak preserved after update`() {

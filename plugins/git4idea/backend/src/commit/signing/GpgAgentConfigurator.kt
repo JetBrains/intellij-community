@@ -59,6 +59,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.copyTo
 import kotlin.io.path.exists
 import kotlin.io.path.writeText
@@ -69,6 +70,11 @@ private val LOG = logger<GpgAgentConfigurator>()
 @Service(Service.Level.PROJECT)
 internal class GpgAgentConfigurator(private val project: Project, private val cs: CoroutineScope) : Disposable {
   private val configurationLock = Mutex()
+
+  @Volatile
+  private var canBeConfiguredCached = false
+
+  private val refreshInProgress = AtomicBoolean(false)
 
   companion object {
     @JvmStatic
@@ -118,15 +124,39 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
         notificator.proposeCustomPinentryAgentConfiguration()
       }.debounceBatch(100.milliseconds).collect {
         updateExistingPinentryLauncher()
+        requestCanBeConfiguredRefresh()
       }
     }
 
     notificator.proposeCustomPinentryAgentConfiguration()
     updateExistingPinentryLauncher()
+    requestCanBeConfiguredRefresh()
+  }
+
+  fun canBeConfiguredCached(): Boolean {
+    requestCanBeConfiguredRefresh()
+    return canBeConfiguredCached
+  }
+
+  fun requestCanBeConfiguredRefresh() {
+    if (!refreshInProgress.compareAndSet(false, true)) return
+    cs.launch(Dispatchers.IO) {
+      try {
+        canBeConfiguredCached = canBeConfiguredCalculation()
+      }
+      finally {
+        refreshInProgress.set(false)
+      }
+    }
   }
 
   @RequiresBackgroundThread
-  fun canBeConfigured(project: Project): Boolean {
+  fun canBeConfigured(): Boolean {
+    return canBeConfiguredCalculation()
+  }
+
+  @RequiresBackgroundThread
+  private fun canBeConfiguredCalculation(): Boolean {
     val executable = GitExecutableManager.getInstance().getExecutable(project)
     // Additional condition extending isEnabled check.
     // We want to show the configuration notification in Remote Development mode or in WSL only.
@@ -174,6 +204,9 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
         }
         catch (e: VcsException) {
           project.service<GpgAgentConfigurationNotificator>().notifyConfigurationFailed(GitBundle.message("gpg.pinentry.agent.configuration.exception", e.message))
+        }
+        finally {
+          requestCanBeConfiguredRefresh()
         }
       }
     }
