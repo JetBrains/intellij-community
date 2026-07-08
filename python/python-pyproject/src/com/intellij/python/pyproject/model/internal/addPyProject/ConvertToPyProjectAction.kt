@@ -2,6 +2,6 @@
 package com.intellij.python.pyproject.model.internal.addPyProject
 
 /**
- * Action to show [AddPyProjectDialog], ask user for a project name, and create a new pyproject
+ * Convert directory to pyproject
  */
-internal class AddPyProjectAction : PyProjectActionImpl(forNewProject = true)
+internal class ConvertToPyProjectAction : PyProjectActionImpl(forNewProject = false)

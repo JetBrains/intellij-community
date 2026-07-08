@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.getPathMatcher
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.PyProjectToml
@@ -12,6 +13,7 @@ import com.intellij.python.pyproject.model.spi.PyProjectCreator
 import com.intellij.python.pyproject.model.spi.PyProjectManager
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
+import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.intellij.python.uv.backend.UV_TOOL
 import com.intellij.python.uv.backend.runtime.createUvToolRuntime
 import com.intellij.python.uv.backend.runtime.uvCli
@@ -20,7 +22,10 @@ import com.intellij.python.uv.common.UV_UI_INFO
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.impl.ToolBasedProjectCreator
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.Dispatchers
@@ -34,11 +39,15 @@ import kotlin.io.path.relativeTo
 
 
 internal class UvPyProjectManager : PyProjectManager, PyProjectCreator by ToolBasedProjectCreator(
-  createRuntime = { fs, _ ->
-    val tool = UV_TOOL.getToolExecutableOrError(fs, null).getOr { return@ToolBasedProjectCreator it }
-    Result.success(createUvToolRuntime(tool.path))
-  },
-  createProject = { name, runtime -> runtime.uvCli().init(name) }
+  object : ToolBasedProjectCreator.PyToolFuns {
+    override suspend fun createRuntime(fs: EelFileSystem, where: Directory): Result<PyToolRuntime, PyError> {
+      val tool = UV_TOOL.getToolExecutableOrError(fs, null).getOr { return it }
+      return Result.success(createUvToolRuntime(tool.path))
+    }
+
+    override suspend fun createProject(name: @NlsSafe String?, runtime: PyToolRuntime, where: Directory): PyResult<*> =
+      runtime.uvCli().init(name)
+  }
 ) {
 
   override val id: ToolId = UV_TOOL_ID

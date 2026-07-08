@@ -11,15 +11,29 @@ import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.toEelFileSystem
 import com.jetbrains.python.venvReader.Directory
 
+/**
+ * Adaptor for [PyProjectCreator] for managers that use [PyToolRuntime].
+ * Configure it with [PyToolFuns]
+ */
 internal class ToolBasedProjectCreator(
-  private val createRuntime: suspend (EelFileSystem, where: Directory) -> Result<PyToolRuntime, PyError>,
-  private val createProject: suspend (name: @NlsSafe String, runtime: PyToolRuntime) -> PyResult<*>,
+  private val funs: PyToolFuns,
 ) : PyProjectCreator {
+
   override suspend fun createProject(
     where: Directory,
-    name: @NlsSafe String,
+    name: @NlsSafe String?,
   ): PyResult<Unit> {
-    val runtime = createRuntime(where.toEelFileSystem(), where).getOr { return it }
-    return createProject(name, runtime.withWorkingDirectory(where)).mapSuccess { }
+    val runtime = funs.createRuntime(where.toEelFileSystem(), where).getOr { return it }
+    return funs.createProject(name, runtime.withWorkingDirectory(where), where).mapSuccess { }
+  }
+
+  internal interface PyToolFuns {
+    suspend fun createRuntime(fs: EelFileSystem, where: Directory): Result<PyToolRuntime, PyError>
+
+    /**
+     * See [PyProjectCreator.createProject] for semantics.
+     * [runtime] was created by [createRuntime]
+     */
+    suspend fun createProject(name: @NlsSafe String?, runtime: PyToolRuntime, where: Directory): PyResult<*>
   }
 }

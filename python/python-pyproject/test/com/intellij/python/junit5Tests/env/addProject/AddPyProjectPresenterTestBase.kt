@@ -11,8 +11,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.internal.addPyProject.AddPyProjectAction
-import com.intellij.python.pyproject.model.internal.addPyProject.AddPyProjectPresenter
-import com.intellij.python.pyproject.model.internal.addPyProject.projectCreationModel
+import com.intellij.python.pyproject.model.internal.addPyProject.ConvertToPyProjectAction
+import com.intellij.python.pyproject.model.internal.addPyProject.PyProjectPresenter
+import com.intellij.python.pyproject.model.internal.addPyProject.projectCreationPresenter
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -29,23 +30,31 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.NullSource
 import org.junit.jupiter.params.provider.ValueSource
+import kotlin.io.path.pathString
 import kotlin.io.path.readText
 
 @TestOnly
 abstract class AddPyProjectPresenterTestBase protected constructor(
   private val toolName: @NlsSafe String,
   private val additionalChecks: AdditionalChecks?,
+  // For poetry bug workaround https://github.com/python-poetry/poetry/issues/10974
+  private val spacesInProjectNamesLeadToBug: Boolean = false
 ) {
   private val sdkFixture by pySdkFixture()
   private val pathFixture = tempPathFixture()
   private val projectFixture = projectFixture(pathFixture)
-  private val module by projectFixture
-    .moduleFixture(pathFixture, addPathToSourceRoot = true, moduleTypeId = PyNames.MODULE)
+  private val module by projectFixture.moduleFixture(pathFixture, addPathToSourceRoot = true, moduleTypeId = PyNames.MODULE)
 
+  /**
+   * There are two modes: with [projectName] ([AddPyProjectAction] is used) and when [projectName] is `null` -> [ConvertToPyProjectAction]
+   */
   @ParameterizedTest
   @ValueSource(strings = ["myProject", "my project"])
-  fun testNewProject(projectName: @NlsSafe String): Unit = timeoutRunBlocking {
+  @NullSource
+  fun testPyProject(projectName: @NlsSafe String?): Unit = timeoutRunBlocking {
+
     val sdk = sdkFixture.sdk
     val additionalData = additionalChecks?.additionalData
     additionalData?.let { additionalDataToSet ->
@@ -56,19 +65,26 @@ abstract class AddPyProjectPresenterTestBase protected constructor(
       }
     }
 
-    val sut = ensureActionIsVisibleAndGetPresenter()
-    sut.projectName = projectName
+    val sut = ensureActionIsVisibleAndGetPresenter(forNewProject = projectName != null)
+    if (projectName != null) {
+      sut.projectName = projectName
+    }
     sut.createProject().orThrow()
-    val baseTempDir = pathFixture.get().resolve(sut.projectName)
-    val toml = PyProjectToml.parse(baseTempDir.resolve("pyproject.toml").readText())!!
-    Assertions.assertEquals(PyPackageName.normalizeProjectName(projectName), toml.project.name)
+    val tempDir = pathFixture.get()
+    // For no projectName we create project in the same dir
+    val projectDir = if (projectName != null) tempDir.resolve(sut.projectName) else tempDir
+    val toml = PyProjectToml.parse(projectDir.resolve("pyproject.toml").readText())!!
+    val expectedProjectName = projectName ?: projectDir.fileName.pathString
+    if (' ' !in expectedProjectName || !spacesInProjectNamesLeadToBug) {
+      Assertions.assertEquals(PyPackageName.normalizeProjectName(expectedProjectName), toml.project.name)
+    }
     assertThat(sut.actionText).contains(toolName)
     additionalChecks?.fileNames?.forEach { fileName ->
-      assertThat(baseTempDir.resolve(fileName)).isRegularFile
+      assertThat(projectDir.resolve(fileName)).isRegularFile
     }
   }
 
-  private suspend fun ensureActionIsVisibleAndGetPresenter(): AddPyProjectPresenter {
+  private suspend fun ensureActionIsVisibleAndGetPresenter(forNewProject: Boolean): PyProjectPresenter {
     val sdk = sdkFixture.sdk
     withSdkConfigurationLock(projectFixture.get()) {
       withContext(Dispatchers.IO) {
@@ -76,22 +92,22 @@ abstract class AddPyProjectPresenterTestBase protected constructor(
       }
     }
 
-    val action = ActionManager.getInstance().getAction("AddPyProject") as AddPyProjectAction
-    val context = SimpleDataContext.builder()
-      .add(CommonDataKeys.VIRTUAL_FILE, pathFixture.get().refreshAndGetVirtualDirectory())
-      .add(LangDataKeys.MODULE, module)
-      .add(CommonDataKeys.PROJECT, projectFixture.get())
-      .build()
+    val actionManager = ActionManager.getInstance()
+    val action = if (forNewProject) {
+      actionManager.getAction("AddPyProject") as AddPyProjectAction
+    }
+    else {
+      actionManager.getAction("ConvertToPyProject") as ConvertToPyProjectAction
+    }
+
+    val context = SimpleDataContext.builder().add(CommonDataKeys.VIRTUAL_FILE, pathFixture.get().refreshAndGetVirtualDirectory())
+      .add(LangDataKeys.MODULE, module).add(CommonDataKeys.PROJECT, projectFixture.get()).build()
     val event = AnActionEvent.createEvent(context, null, "..", ActionUiKind.POPUP, null)
     action.update(event)
     Assertions.assertTrue(event.presentation.isEnabledAndVisible)
     assertThat(event.presentation.text).contains(toolName)
-    return event.projectCreationModel!!
+    return event.projectCreationPresenter(forNewProject)!!
   }
 
-  protected data class AdditionalChecks(val additionalData: PythonSdkAdditionalData, val fileNames: Set<String>) {
-    init {
-      check(fileNames.isNotEmpty())
-    }
-  }
+  protected data class AdditionalChecks(val additionalData: PythonSdkAdditionalData, val fileNames: Set<String>)
 }

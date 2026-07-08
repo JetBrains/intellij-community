@@ -27,8 +27,11 @@ internal class PoetryPyProjectManager : PyProjectManager {
 
   override suspend fun createProject(
     where: Directory,
-    name: @NlsSafe String,
-  ): PyResult<Unit> = runPoetry(where, "new", name).mapSuccess { }
+    name: @NlsSafe String?,
+  ): PyResult<Unit> {
+    val args = if (name != null) arrayOf("new", name) else arrayOf("init")
+    return runPoetry(where, *args, "-n").mapSuccess { }
+  }
 
   override suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory> = emptySet()
 

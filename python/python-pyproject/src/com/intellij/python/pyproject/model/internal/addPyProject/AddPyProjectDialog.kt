@@ -14,7 +14,7 @@ import javax.swing.JComponent
 /**
  * Dialog to ask user for project name
  */
-internal class AddPyProjectDialog(project: Project, private val presenter: AddPyProjectPresenter) : DialogWrapper(project) {
+internal class AddPyProjectDialog(project: Project, private val presenter: PyProjectPresenter) : DialogWrapper(project) {
 
   init {
     title = presenter.actionText

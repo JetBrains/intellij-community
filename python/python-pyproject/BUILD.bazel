@@ -157,6 +157,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
+        "//libraries/junit5-pioneer",
+        "//libraries/junit5-pioneer:junit5-pioneer_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/assertj-core",
         "//libraries/assertj-core:assertj-core_test_lib",
