@@ -1,13 +1,39 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "get_auth")
 
-_RESOLUTION_FACTS_VERSION = "resolution.v27"
+_RESOLUTION_FACTS_VERSION = "resolution.v30"
 
-_RESOLVER_JAR_VERSION = "0.0.18"
-_RESOLVER_JAR_SHA256 = "3c2e02642e69993ad3820b911079ea068ff506079b8434f66d4b838e1430a16d"
-_RESOLVER_JAR_URLS = [
-    "https://cache-redirector.jetbrains.com/github.com/JetBrains/bazel-kmp-resolver/releases/download/%s/bazel-kmp-resolver-jvm-executable.jar" % _RESOLVER_JAR_VERSION,
-]
+_RESOLVER_VERSION = "0.0.23"
+_RESOLVER_BINARY_URL_PREFIX = (
+    "https://cache-redirector.jetbrains.com/github.com/JetBrains/bazel-kmp-resolver/releases/download/%s" % _RESOLVER_VERSION
+)
+_RESOLVER_BINARIES = {
+    "linux_arm64": struct(
+        filename = "bazel-kmp-resolver-linux-arm64",
+        sha256 = "040972e90da08eaca0d92a803d738ef8ca860e8063295734de8b5f5264237dc6",
+    ),
+    "linux_x64": struct(
+        filename = "bazel-kmp-resolver-linux-x64",
+        sha256 = "a2dd40104acb6e2613a104934de68845a2cf85987232074d80f4ffe7e819a5da",
+    ),
+    "macos_arm64": struct(
+        filename = "bazel-kmp-resolver-macos-arm64",
+        sha256 = "4947c215d0d35d13bdd5b019450ea7e24527f5cd8320ead97d375aee89ac1cc3",
+    ),
+    "macos_x64": struct(
+        filename = "bazel-kmp-resolver-macos-x64",
+        sha256 = "5f0fd01a55c45325ecc8e50e4d7f1f04bc6441a11fac82e8edf81f079e24f691",
+    ),
+    "windows_x64": struct(
+        filename = "bazel-kmp-resolver-windows-x64.exe",
+        sha256 = "20ded9afca231ba33860f1cd563359bc47fc8aa2b26204ce97e32d1f9a30daa0",
+    ),
+    "windows_arm64": struct(
+        # TODO: GraalVM does not support ARM64 Windows yet, so use the x64 binary for now.
+        filename = "bazel-kmp-resolver-windows-x64.exe",
+        sha256 = "20ded9afca231ba33860f1cd563359bc47fc8aa2b26204ce97e32d1f9a30daa0",
+    ),
+}
 
 # See https://github.com/JetBrains/bazel-kmp-resolver/tree/main/testResources for example of production JSONs that could be returned by the resolver
 _EMPTY_RESOLUTION_JSON = json.encode({
@@ -174,7 +200,6 @@ def _dependency_labels(library_id, variant, field, target_names, target_names_by
     dependencies = variant.get(field, [])
     labels = {}
     for dependency_id in dependencies:
-        dependency_module_id = _maven_module_id(dependency_id)
         dependency_module_id = _maven_module_id(dependency_id)
         target_name = target_names.get(dependency_id)
         if target_name == None:
@@ -379,21 +404,52 @@ def _resolve_with_facts(module_ctx, config, repository_credentials):
 
     return _resolve_fresh(module_ctx, config, repository_credentials)
 
+def _resolver_binary(module_ctx):
+    host_key = _host_key(module_ctx)
+    resolver_binary = _RESOLVER_BINARIES.get(host_key)
+    if resolver_binary == None:
+        fail("No bazel-kmp-resolver binary available for host %s (%s/%s)" % (
+            host_key,
+            module_ctx.os.name,
+            module_ctx.os.arch,
+        ))
+    return resolver_binary
+
+def _host_key(module_ctx):
+    os_name = module_ctx.os.name.lower()
+    arch = module_ctx.os.arch.lower()
+
+    if "linux" in os_name:
+        os_key = "linux"
+    elif "mac" in os_name or "darwin" in os_name:
+        os_key = "macos"
+    elif "windows" in os_name:
+        os_key = "windows"
+    else:
+        fail("Unsupported bazel-kmp-resolver host OS: %s" % module_ctx.os.name)
+
+    if arch in ["amd64", "x86_64", "x64"]:
+        arch_key = "x64"
+    elif arch in ["arm64", "aarch64"]:
+        arch_key = "arm64"
+    else:
+        fail("Unsupported bazel-kmp-resolver host architecture: %s" % module_ctx.os.arch)
+
+    return "%s_%s" % (os_key, arch_key)
+
 def _resolve_fresh(module_ctx, config, repository_credentials):
-    resolver_jar = "bazel-kmp-resolver.jar"
+    resolver_binary = _resolver_binary(module_ctx)
     module_ctx.download(
-        url = _RESOLVER_JAR_URLS,
-        output = resolver_jar,
-        sha256 = _RESOLVER_JAR_SHA256,
+        url = ["%s/%s" % (_RESOLVER_BINARY_URL_PREFIX, resolver_binary.filename)],
+        output = resolver_binary.filename,
+        sha256 = resolver_binary.sha256,
+        executable = True,
     )
-    java = module_ctx.path(Label("//build:java.cmd"))  # TODO: replace that by making the resolver a standalone binary instead
 
     resolution_path = "resolution.json"
     module_ctx.file(resolution_path, "")
     args = [
-        java,
-        "-jar",
-        resolver_jar,
+        module_ctx.path(resolver_binary.filename),
         "--output-manifest-file",
         module_ctx.path(resolution_path),
         "--allowed-concurrent-connections=15",
