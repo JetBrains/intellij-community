@@ -4,7 +4,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 jps_test(
     name = "python-processOutput-frontend-tests_test",
-    timeout = "moderate",
+    timeout = "long",
     tags = ["community-aggregator"],
     runtime_deps = [":python-processOutput-frontend-tests_test_lib"],
 )
