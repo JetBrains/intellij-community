@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference;
 
+import com.intellij.diagnostic.PluginExceptionUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -52,7 +53,7 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
   }
 
   static @NotNull ProviderInfo<ElementPattern<?>> @NotNull [] appendToArray(@NotNull ProviderInfo<ElementPattern<?>> @Nullable [] psiReferenceProviders,
-                                                                           @NotNull ProviderInfo<ElementPattern<?>> newInfo) {
+                                                                            @NotNull ProviderInfo<ElementPattern<?>> newInfo) {
     @SuppressWarnings("unchecked")
     ProviderInfo<ElementPattern<?>>[] newProviders = psiReferenceProviders == null ? new ProviderInfo[]{newInfo}
                                                                                    : ArrayUtil.append(psiReferenceProviders, newInfo);
@@ -80,7 +81,8 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
     }
   }
 
-  static @NotNull ProviderInfo<ElementPattern<?>> @NotNull [] removeFromArray(@NotNull PsiReferenceProvider provider, @NotNull ProviderInfo<ElementPattern<?>> @NotNull [] array) {
+  static @NotNull ProviderInfo<ElementPattern<?>> @NotNull [] removeFromArray(@NotNull PsiReferenceProvider provider,
+                                                                              @NotNull ProviderInfo<ElementPattern<?>> @NotNull [] array) {
     int i = ContainerUtil.indexOf(array, trinity -> trinity.provider.equals(provider));
     if (i != -1) {
       //noinspection unchecked
@@ -103,8 +105,12 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
     SharedProcessingContext sharedProcessingContext = new SharedProcessingContext();
 
     for (ProviderInfo<ElementPattern<?>> info : providerList) {
-      if (hints != PsiReferenceService.Hints.NO_HINTS && !info.provider.acceptsHints(position, hints)) {
-        continue;
+      if (hints != PsiReferenceService.Hints.NO_HINTS) {
+        Boolean hintAccepted = PluginExceptionUtil.computeOrLogPluginException(
+          info.provider.getClass(),
+          () -> info.provider.acceptsHints(position, hints)
+        );
+        if (hintAccepted == null || !hintAccepted.booleanValue()) continue;
       }
 
       ProcessingContext context = new ProcessingContext(sharedProcessingContext);
