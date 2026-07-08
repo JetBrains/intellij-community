@@ -980,6 +980,9 @@ public final class PyStdlibDocumentationLinkProvider implements PythonDocumentat
     VirtualFile vFile = file.getVirtualFile();
     if (vFile != null && sdk != null && PySkeletonUtil.isStdLib(vFile, sdk)) {
       QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, originalElement);
+      if (qName == null) {
+        return null;
+      }
       return getStdlibUrlFor(element, qName, sdk);
     }
     return null;
