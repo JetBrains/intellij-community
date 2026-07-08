@@ -98,26 +98,26 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
               else it.map { event -> ThrottledOneItem(event) }
             }
             .collect { throttledItems ->
-            if (searchDisposable?.isDisposed == true) {
-              return@collect
-            }
-            if (!firstLogged) {
-              firstLogged = true
-              LOG.debug { "FiF: first collected item batch (size=${throttledItems.items.size})" }
-            }
-            throttledItems.items.forEach { item ->
-              val usage = UsageInfoModel.createUsageInfoModel(project, item, initScope, onUpdateModelCallback)
-              if (searchDisposable == null || !Disposer.tryRegister(searchDisposable, usage)) {
-                Disposer.dispose(usage)
+              if (searchDisposable?.isDisposed == true) {
                 return@collect
               }
+              if (!firstLogged) {
+                firstLogged = true
+                LOG.debug { "FiF: first collected item batch (size=${throttledItems.items.size})" }
+              }
+              throttledItems.items.forEach { item ->
+                val usage = UsageInfoModel.createUsageInfoModel(project, item, initScope, onUpdateModelCallback)
+                if (searchDisposable == null || !Disposer.tryRegister(searchDisposable, usage)) {
+                  Disposer.dispose(usage)
+                  return@collect
+                }
 
-              val shouldContinue = onResult(usage)
-              if (!shouldContinue) {
-                return@collect
+                val shouldContinue = onResult(usage)
+                if (!shouldContinue) {
+                  return@collect
+                }
               }
             }
-          }
           LOG.debug { "FiF: collect completed normally" }
         }
         catch (ce: CancellationException) {
