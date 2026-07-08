@@ -151,7 +151,65 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A { fun f(value: Long): Int = 1 }
       """.trimIndent(),
-      "Method signature was changed from <code>A.f(Int)</code>: <code>Int</code> to <code>A.f(Long)</code>: <code>Int</code>",
+      "Method signature was changed for method: <br/><code>A.f</code>",
+    )
+  }
+
+  @Test
+  fun `method parameter type changed with overloaded method`() {
+    assertIncompatible(
+      "method parameter type changed with overloaded method",
+      """
+        class A {
+          fun f(value: Int): Int = value
+          fun f(value: String): Int = value.length
+        }
+      """.trimIndent(),
+      """
+        class A {
+          fun f(value: String): Int = value.length
+          fun f(value: Long): Int = 1
+        }
+      """.trimIndent(),
+      "Method signature was changed for method: <br/><code>A.f</code>",
+    )
+  }
+
+  @Test
+  fun `method overload added`() {
+    assertIncompatible(
+      "method overload added",
+      """
+        class A {
+          fun f(value: String): Int = value.length
+        }
+      """.trimIndent(),
+      """
+        class A {
+          fun f(value: String): Int = value.length
+          fun f(value: Long): Int = 1
+        }
+      """.trimIndent(),
+      "Method was added: <br/><code>A.f(Long)</code>: <code>Int</code>",
+    )
+  }
+
+  @Test
+  fun `method overload removed`() {
+    assertIncompatible(
+      "method overload removed",
+      """
+        class A {
+          fun f(value: String): Int = value.length
+          fun f(value: Long): Int = 1
+        }
+      """.trimIndent(),
+      """
+        class A {
+          fun f(value: String): Int = value.length
+        }
+      """.trimIndent(),
+      "Method was removed: <br/><code>A.f(Long)</code>: <code>Int</code>",
     )
   }
 
@@ -401,7 +459,25 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
       """
         class A(value: Long)
       """.trimIndent(),
-      "Method signature was changed from <code>A(Int)</code> to <code>A(Long)</code>",
+      "Constructor signature was changed for class: <br/><code>A</code>",
+    )
+  }
+
+  @Test
+  fun `constructor parameter type changed with overloaded constructor`() {
+    assertIncompatible(
+      "constructor parameter type changed with overloaded constructor",
+      """
+        class A(value: Int) {
+          constructor(value: String) : this(value.length)
+        }
+      """.trimIndent(),
+      """
+        class A(value: String) {
+          constructor(value: Long) : this(value.toString())
+        }
+      """.trimIndent(),
+      "Constructor signature was changed for class: <br/><code>A</code>",
     )
   }
 
