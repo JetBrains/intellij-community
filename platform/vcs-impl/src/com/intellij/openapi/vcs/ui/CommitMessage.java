@@ -49,10 +49,12 @@ import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.SoftWrapsEditorCustomization;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBLoadingPanel;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.vcs.commit.CommitMessageListener;
 import com.intellij.vcs.commit.CommitMessageUi;
 import com.intellij.vcs.commit.message.BodyLimitSettings;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
@@ -83,6 +85,8 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
   private final @NotNull JBLoadingPanel myLoadingPanel;
 
   private final @Nullable @Nls String myMessagePlaceholder;
+
+  private final EventDispatcher<CommitMessageListener> myCommitMessageDispatcher = EventDispatcher.create(CommitMessageListener.class);
 
   private static final @NotNull EditorCustomization COLOR_SCHEME_FOR_CURRENT_UI_THEME_CUSTOMIZATION = editor -> {
     preventRecursiveBackground(editor.getComponent());
@@ -136,6 +140,12 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
     myEditorField.setPlaceholder(myMessagePlaceholder);
     myEditorField.setShowPlaceholderWhenFocused(true);
     myEditorField.getAccessibleContext().setAccessibleName(VcsBundle.message("commit.message.editor.accessible.name"));
+    myEditorField.addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(@NotNull DocumentEvent event) {
+        myCommitMessageDispatcher.getMulticaster().onTextChanged(getComment());
+      }
+    });
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this, 0);
     myLoadingPanel.add(myEditorField, BorderLayout.CENTER);
@@ -163,6 +173,11 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
     setBorder(createEmptyBorder());
 
     updateOnInspectionProfileChanged(project);
+  }
+
+  @Override
+  public void addCommitMessageListener(@NotNull CommitMessageListener listener) {
+    myCommitMessageDispatcher.addListener(listener);
   }
 
   @Override
