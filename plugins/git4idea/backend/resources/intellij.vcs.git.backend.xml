@@ -32,6 +32,8 @@
 
     <action id="Git.Log" class="git4idea.log.GitShowExternalLogAction">
       <add-to-group group-id="Vcs.Browse"/>
+      <add-to-group group-id="Vcs.Log.ToolWindow.TabActions.DropDown" relative-to-action="Vcs.ShowConsoleTab" anchor="after"/>
+      <synonym key="action.Git.Log.synonym"/>
     </action>
 
     <action class="git4idea.log.GitBrowseRepoAtRevisionAction" id="Git.BrowseRepoAtRevision"/>
