@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
@@ -236,8 +237,13 @@ class LeakReporter(private val coroutineScope: CoroutineScope) {
    * Uploads [snapshot] to [UPLOADS_URL] under a cancellable progress and returns its browse URL, or `null` if the upload
    * failed or the user cancelled it (in which case the caller falls back to a manual upload).
    */
-  private suspend fun uploadSnapshotOrNull(project: Project?, snapshot: Path): String? =
-    try {
+  private suspend fun uploadSnapshotOrNull(project: Project?, snapshot: Path): String? {
+    if (!Registry.`is`("dev.leak.detection.autoupload.snapshot")) {
+      LOG.info("Memory snapshot upload is turned off by a registry key (dev.leak.detection.autoupload.snapshot)")
+      return null
+    }
+
+    return try {
       captureUnderProgress(project, "progress.title.uploading.snapshot", "modal.progress.title.uploading.snapshot") {
         // runInterruptible ties cancellation to thread interruption so the blocking upload aborts immediately;
         // LogUploader.uploadFile is a blocking JDK HttpClient.send call with no cancellation checks of its own.
@@ -268,6 +274,7 @@ class LeakReporter(private val coroutineScope: CoroutineScope) {
 
       null
     }
+  }
 
   private fun captureSnapshot(): Path? {
     if (!MemoryDumpHelper.memoryDumpAvailable()) {

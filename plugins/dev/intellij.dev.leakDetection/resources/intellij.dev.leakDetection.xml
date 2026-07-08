@@ -8,6 +8,8 @@
                  description="Auto-run disposed Project/Editor leak detection when the Welcome Screen is shown (internal builds only)."/>
     <registryKey key="dev.leak.detection.editor.staleThresholdMs" defaultValue="10000"
                  description="Editors still referenced this many milliseconds after disposal are reported as leaks."/>
+    <registryKey key="dev.leak.detection.autoupload.snapshot" defaultValue="false"
+                 description="Try to auto-upload a memory snapshot. It's turned off by default for now, because of regular timeout exceptions."/>
     <editorFactoryListener implementation="com.intellij.dev.leakDetection.LeakCandidateEditorListener"/>
     <postStartupActivity implementation="com.intellij.dev.leakDetection.LeakCandidateProjectListener"/>
   </extensions>
