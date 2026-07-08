@@ -14,6 +14,7 @@ import com.intellij.driver.sdk.ui.components.common.toolwindows.debugToolWindow
 import com.intellij.driver.sdk.ui.components.elements.accessibleTree
 import com.intellij.driver.sdk.ui.components.elements.list
 import com.intellij.driver.sdk.ui.components.elements.tree
+import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.ui.shouldBe
 import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.waitFor
@@ -126,19 +127,30 @@ class PlatformDebugSteps(private val ideFrame: IdeaFrameUI) {
     }
   }
 
-  fun checkFirstDebuggerFrame(frameText: String) {
+  fun checkFirstDebuggerFrame(vararg frameTexts: String, timeout: Duration = 15.seconds) {
+    require(frameTexts.isNotEmpty()) { "At least one expected frame text must be provided" }
     step("Check debugger top frame") {
       ideFrame.run {
         debugToolWindow {
           waitFound(10.seconds)
           val xDebuggerFrames = list(xQuery { byClass("XDebuggerFramesList") })
-          shouldBe("XDebuggerFramesList is Empty or Loading") {
-            xDebuggerFrames.items.isNotEmpty() && (xDebuggerFrames.items.findLast { it.contains("Loading") } == null)
-          }
-          shouldBe(
-            "Top frame does not contain '$frameText': ${xDebuggerFrames.selectedItems.single()}"
+          should(
+            message = "Top frame does not contain any of ${frameTexts.toList()}",
+            timeout = timeout,
+            errorMessage = {
+              val frames = xDebuggerFrames.items
+              when {
+                frames.isEmpty() -> "XDebuggerFramesList is empty"
+                frames.any { it.contains("Loading") } -> "XDebuggerFramesList is still loading: $frames"
+                else -> "Top frame does not contain any of ${frameTexts.toList()}: ${xDebuggerFrames.selectedItems.singleOrNull().orEmpty()}"
+              }
+            },
           ) {
-            xDebuggerFrames.selectedItems.single().contains(frameText)
+            val frames = xDebuggerFrames.items
+            val topFrame = xDebuggerFrames.selectedItems.singleOrNull()
+            frames.isNotEmpty() &&
+            frames.none { it.contains("Loading") } &&
+            topFrame != null && frameTexts.any { topFrame.contains(it) }
           }
         }
       }
