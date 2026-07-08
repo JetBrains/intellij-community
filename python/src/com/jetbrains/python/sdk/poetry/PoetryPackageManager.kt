@@ -80,7 +80,7 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
     }
 
   override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
-    return addPackages(specifications.map { it.copy(requirement = pyRequirement(it.name, null)) }, emptyList())
+    return addPackages(specifications.toList(), emptyList())
   }
 
   override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?): PyResult<Unit> {
