@@ -39,6 +39,7 @@ public class FlexAdapter extends LexerBase {
     myBufferEnd = endOffset;
     myFlex.reset(myText, startOffset, endOffset, initialState);
     myTokenType = null;
+    myFailed = false;
   }
 
   @Override
