@@ -6,10 +6,13 @@ import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildIssueEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.pom.Navigatable
+import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.plugins.gradle.issue.GradleIssueChecker
 import org.jetbrains.plugins.gradle.issue.GradleIssueData
 import org.jetbrains.plugins.gradle.issue.GradleIssueFailure
@@ -23,8 +26,15 @@ import kotlin.io.path.isRegularFile
 private val LOG = logger<GradleExecutionReporter>()
 
 internal class GradleExecutionReporterImpl(
-  private val context: GradleExecutionContextImpl,
+  private val projectPath: String,
+  private val taskId: ExternalSystemTaskId,
+  private val listener: ExternalSystemTaskNotificationListener,
 ) : GradleExecutionReporter {
+
+  var buildEnvironment: BuildEnvironment? = null
+
+  private val projectRoot: Path
+    get() = buildEnvironment?.buildIdentifier?.rootDir?.toPath() ?: Path.of(projectPath)
 
   private val processedMessageKeys = HashSet<MessageKey>()
   private val processedIssueKeys = HashSet<IssueKey>()
@@ -47,7 +57,7 @@ internal class GradleExecutionReporterImpl(
       MessageEvent.Kind.STATISTICS -> GradleModelBuilderMessageCollector.FailureKind.INFO
       MessageEvent.Kind.SIMPLE -> GradleModelBuilderMessageCollector.FailureKind.INFO
     }
-    GradleModelBuilderMessageCollector.logFailure(context.project, context.taskId.id, kind, group)
+    GradleModelBuilderMessageCollector.logFailure(taskId.project, taskId.id, kind, group)
   }
 
   private fun reportLoggerEvent(report: GradleExecutionFailureReportImpl) {
@@ -76,37 +86,37 @@ internal class GradleExecutionReporterImpl(
   private fun reportMessageEvent(report: GradleExecutionFailureReportImpl) {
     val title = report.title ?: report.failure.message ?: return
     val description = report.text ?: report.failure.description ?: report.failure.message ?: return
-    val filePosition = getErrorFilePosition(report.failure, context.projectRoot)
+    val filePosition = getErrorFilePosition(report.failure, projectRoot)
     if (processedMessageKeys.add(MessageKey(report.kind, title, description, filePosition))) {
       val messageEvent = MessageEvent.builder(title, report.kind)
         .withDescription(description)
-        .withParentId(context.taskId)
+        .withParentId(taskId)
         .withFilePosition(filePosition)
         .withNavigatable(createFileNavigatable(report) ?: createTargetNavigatable(report))
         .build()
-      context.listener.onStatusChange(ExternalSystemBuildEvent(context.taskId, messageEvent))
+      listener.onStatusChange(ExternalSystemBuildEvent(taskId, messageEvent))
     }
   }
 
   private fun reportIssueEvent(report: GradleExecutionFailureReportImpl): Boolean {
-    val filePosition = getErrorFilePosition(report.failure, context.projectRoot)
-    val issueData = GradleIssueData.createIssueData(context.projectRoot, report.failure, context.buildEnvironmentOrNull, filePosition)
+    val filePosition = getErrorFilePosition(report.failure, projectRoot)
+    val issueData = GradleIssueData.createIssueData(projectRoot, report.failure, buildEnvironment, filePosition)
     val issues = GradleIssueChecker.getKnownIssuesCheckList().mapNotNull { it.check(issueData) }
     for (issue in issues) {
       if (processedIssueKeys.add(IssueKey(issue.title, issue.description, filePosition))) {
         val issueEvent = BuildIssueEvent.builder(issue, MessageEvent.Kind.ERROR)
-          .withParentId(context.taskId)
+          .withParentId(taskId)
           .withFilePosition(filePosition)
           .build()
-        context.listener.onStatusChange(ExternalSystemBuildEvent(context.taskId, issueEvent))
+        listener.onStatusChange(ExternalSystemBuildEvent(taskId, issueEvent))
       }
     }
     return issues.isNotEmpty()
   }
 
   private fun createFileNavigatable(report: GradleExecutionFailureReportImpl): Navigatable? {
-    val filePosition = getErrorFilePosition(report.failure, context.projectRoot) ?: return null
-    return FileNavigatable(context.project, filePosition)
+    val filePosition = getErrorFilePosition(report.failure, projectRoot) ?: return null
+    return FileNavigatable(taskId.project, filePosition)
   }
 
   private fun createTargetNavigatable(report: GradleExecutionFailureReportImpl): Navigatable? {
@@ -115,7 +125,7 @@ internal class GradleExecutionReporterImpl(
                       .map { targetPath.resolve(it) }
                       .firstOrNull { it.isRegularFile() }
                     ?: return null
-    return FileNavigatable(context.project, FilePosition(buildFile, 0, 0))
+    return FileNavigatable(taskId.project, FilePosition(buildFile, 0, 0))
   }
 
   private data class MessageKey(
@@ -166,11 +176,5 @@ internal class GradleExecutionReporterImpl(
 
     override fun report(): Unit =
       failureHandler.reportFailure(this)
-  }
-
-  companion object {
-    private val GradleExecutionContextImpl.projectRoot: Path
-      get() = buildEnvironmentOrNull?.buildIdentifier?.rootDir?.toPath()
-              ?: Path.of(projectPath)
   }
 }

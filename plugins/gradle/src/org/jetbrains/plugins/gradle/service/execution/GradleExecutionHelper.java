@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.build.events.MessageEvent;
@@ -145,7 +145,9 @@ public final class GradleExecutionHelper {
 
       // do not use connection.getModel methods since it doesn't allow to handle progress events
       // and we can miss gradle tooling client side events like distribution download.
-      GradleProgressListener gradleProgressListener = new GradleProgressListener(context, context.getProjectPath());
+      GradleProgressListener gradleProgressListener = new GradleProgressListener(
+        context.getTaskId(), context.getReporter(), context.getListener(), context.getProjectPath()
+      );
       modelBuilder.addProgressListener((ProgressListener)gradleProgressListener);
       modelBuilder.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
       modelBuilder.setStandardOutput(new OutputWrapper(listener, taskId, true));
@@ -312,7 +314,9 @@ public final class GradleExecutionHelper {
     @NotNull GradleExecutionContext context
   ) {
     var buildRootDir = getBuildRoot(context.getBuildEnvironment());
-    var progressListener = new GradleProgressListener(context, buildRootDir.toString());
+    var progressListener = new GradleProgressListener(
+      context.getTaskId(), context.getReporter(), context.getListener(), buildRootDir.toString()
+    );
     operation.addProgressListener((ProgressListener)progressListener);
     operation.addProgressListener(
       progressListener,
@@ -553,7 +557,9 @@ public final class GradleExecutionHelper {
 
         // do not use connection.getModel methods since it doesn't allow to handle progress events
         // and we can miss gradle tooling client side events like distribution download.
-        GradleProgressListener gradleProgressListener = new GradleProgressListener(context, context.getProjectPath());
+        GradleProgressListener gradleProgressListener = new GradleProgressListener(
+          context.getTaskId(), context.getReporter(), context.getListener(), context.getProjectPath()
+        );
         modelBuilder.addProgressListener((ProgressListener)gradleProgressListener);
         modelBuilder.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
         modelBuilder.setStandardOutput(new OutputWrapper(listener, taskId, true));

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -24,20 +24,19 @@ open class GradleExecutionContextImpl(
 
   private var _buildEnvironment: BuildEnvironment? = null
   override var buildEnvironment: BuildEnvironment
-    get() = checkNotNull(buildEnvironmentOrNull) {
+    get() = checkNotNull(_buildEnvironment) {
       "The Gradle Daemon connection wasn't acquired for $taskId.\n" +
       "See [org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper#execute] from more details."
     }
     set(value) {
       _buildEnvironment = value
+      _reporter.buildEnvironment = value
     }
-
-  val buildEnvironmentOrNull: BuildEnvironment? by ::_buildEnvironment
 
   override val gradleVersion: GradleVersion
     get() = GradleVersion.version(buildEnvironment.gradle.gradleVersion)
 
-  private var _reporter: GradleExecutionReporter = GradleExecutionReporterImpl(this)
+  private var _reporter: GradleExecutionReporterImpl = GradleExecutionReporterImpl(projectPath, taskId, listener)
   override val reporter: GradleExecutionReporter by ::_reporter
 
   constructor(context: GradleExecutionContextImpl) :
