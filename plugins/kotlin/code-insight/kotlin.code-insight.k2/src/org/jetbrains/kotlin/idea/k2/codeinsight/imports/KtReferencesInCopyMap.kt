@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.util.descendants
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.psi.KtFile
@@ -12,13 +14,26 @@ internal class KtReferencesInCopyMap(
     /**
      * Allows one to quickly navigate from [KtReference]s in the original [KtFile] to corresponding references in its copy.
      *
-     * Throws [NoSuchElementException] if no references found for [originalReference].
+     * Returns `null` if no references were found for [originalReference].
      */
-    fun findReferenceInCopy(originalReference: KtReference): KtReference {
-        return referenceMap.getValue(originalReference)
+    fun findReferenceInCopy(originalReference: KtReference): KtReference? {
+        val reference = referenceMap[originalReference]
+
+        if (reference == null) {
+            LOG.error(buildString {
+                appendLine("Reference ${originalReference} not found")
+
+                val referenceMapRendered = referenceMap.entries.joinToString(";") { (key, value) -> "'$key' -> '$value'" }
+                appendLine("referenceMap: $referenceMapRendered")
+            })
+        }
+
+        return reference
     }
 
     companion object {
+        private val LOG: Logger = logger<KtReferencesInCopyMap>()
+
         /**
          * Populates [KtReferencesInCopyMap] with references from [originalFile] and corresponding references from [copyFile].
          *
