@@ -42,7 +42,12 @@ internal class SpecificationReplacementQuickFix(
     private val underline: SmartPsiFileRange, @NlsSafe private val replacement: Replacement,
   ) : ChoiceVariantIntentionAction(), HighPriorityAction, DumbAware, EventTrackingIntentionAction {
 
-    override fun getName(): @IntentionName String = replacement.description ?: replacement.value
+    override fun getName(): @IntentionName String {
+      val name = replacement.description ?: replacement.value
+      if (name.isBlank()) return GrazieBundle.message("grazie.grammar.quickfix.remove.typo.tooltip")
+      return name
+    }
+
     override fun getFamilyName(): @IntentionFamilyName String = Companion.familyName
     override fun getFileModifierForPreview(target: PsiFile): FileModifier = ReplacementPreview(index, total, underline, replacement)
     override fun isShowSubmenu(): Boolean = true

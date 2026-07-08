@@ -60,6 +60,19 @@ internal class SpecificationInspectionTest : BaseTestCase() {
     myFixture.checkResult("This is the specification")
   }
 
+  @Test
+  fun `test remove quick fix`() {
+    myFixture.enableInspections(
+      SpecificationTestInspection(
+        listOf(TestIssue("Security issues", 8, 17, listOf("")))
+      )
+    )
+    myFixture.configureByText("AGENT.md", "This is <warning descr=\"Security issues\"><caret>security </warning>issue")
+    myFixture.checkHighlighting()
+    myFixture.launchAction(findSingleIntention("Remove"))
+    myFixture.checkResult("This is issue")
+  }
+
   internal class SpecificationTestInspection(private val issues: List<LlmIssue<TestIssue>>) : SpecificationBaseInspection<TestIssue>() {
     override fun getAnalyzer(file: PsiFile): LlmAnalyzer<TestIssue> = TestLlmAnalyzer(issues)
   }
