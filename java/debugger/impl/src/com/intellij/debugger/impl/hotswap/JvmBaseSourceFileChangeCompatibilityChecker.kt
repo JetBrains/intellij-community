@@ -160,7 +160,13 @@ abstract class JvmBaseSourceFileChangeCompatibilityChecker(
 
     fun <T : Any> cached(element: PsiElement, token: Long, type: String, dependency: PsiElement, compute: () -> T): T {
       val key = ShapeKey(element.createSmartPointer(), type)
-      val contentHash = dependency.text.hashCode()
+      val dependencySnapshot = dependency.text
+      if (dependencySnapshot == null) {
+        LOG.error("Dependency snapshot computation failed: ${dependency.javaClass.name}. Unsupported?\n" +
+                  "at ${dependency.containingFile?.virtualFile?.path}")
+        return compute()
+      }
+      val contentHash = dependencySnapshot.hashCode()
       synchronized(shapes) {
         val existing = shapes[key]
         if (existing != null && existing.token == token && existing.contentHash == contentHash) {
