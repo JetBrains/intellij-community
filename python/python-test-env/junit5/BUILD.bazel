@@ -14,7 +14,6 @@ jps_test(
 ### skip generation section `test intellij.python.test.env.junit5`
 
 ### auto-generated section `build intellij.python.test.env.junit5` start
-
 jvm_library(
     name = "junit5",
     srcs = glob(

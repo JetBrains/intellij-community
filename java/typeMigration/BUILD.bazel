@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.java.typeMigration.tests`
 
 ### auto-generated section `build intellij.java.typeMigration` start
-
 jvm_library(
     name = "typeMigration",
     srcs = glob(
@@ -108,7 +107,6 @@ exports_files(
 ### auto-generated section `iml intellij.java.typeMigration` end
 
 ### auto-generated section `build intellij.java.typeMigration.tests` start
-
 jvm_library(
     name = "typeMigration-tests",
     srcs = glob(

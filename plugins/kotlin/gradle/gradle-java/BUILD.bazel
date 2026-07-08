@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test kotlin.gradle.gradle-java.tests`
 
 ### auto-generated section `build kotlin.gradle.gradle-java` start
-
 create_kotlinc_options(
     name = "custom_gradle-java",
     opt_in = [
@@ -215,7 +214,6 @@ exports_files(
 ### auto-generated section `iml kotlin.gradle.gradle-java` end
 
 ### auto-generated section `build kotlin.gradle.gradle-java.tests` start
-
 create_kotlinc_options(
     name = "custom_kotlin-gradle-gradle-java-tests",
     opt_in = [

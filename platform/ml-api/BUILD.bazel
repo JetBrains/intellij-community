@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.ml` start
-
 jvm_library(
     name = "ml",
     srcs = glob(

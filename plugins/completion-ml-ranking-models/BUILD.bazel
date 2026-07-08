@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.completionMlRankingModels.tests`
 
 ### auto-generated section `build intellij.completionMlRankingModels` start
-
 jvm_library(
     name = "completion-ml-ranking-models",
     srcs = glob(
@@ -85,7 +84,6 @@ exports_files(
 ### auto-generated section `iml intellij.completionMlRankingModels` end
 
 ### auto-generated section `build intellij.completionMlRankingModels.tests` start
-
 jvm_library(
     name = "completionMlRankingModels-tests",
     srcs = glob(

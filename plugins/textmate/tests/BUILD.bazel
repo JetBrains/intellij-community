@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.textmate.tests`
 
 ### auto-generated section `build intellij.textmate.tests` start
-
 jvm_library(
     name = "tests",
     srcs = glob(

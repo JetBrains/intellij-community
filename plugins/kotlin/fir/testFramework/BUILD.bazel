@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build kotlin.fir.testFramework` start
-
 create_kotlinc_options(
     name = "custom_testFramework",
     opt_in = [
@@ -75,7 +74,6 @@ exports_files(
 ### auto-generated section `iml kotlin.fir.testFramework` end
 
 ### auto-generated section `test kotlin.fir.testFramework` start
-
 jps_test(
     name = "testFramework_test",
     runtime_deps = [":testFramework_test_lib"],

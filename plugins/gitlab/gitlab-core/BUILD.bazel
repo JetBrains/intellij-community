@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 ### auto-generated section `build intellij.vcs.gitlab` start
-
 resourcegroup(
     name = "vcs-gitlab_resources",
     srcs = glob(
@@ -172,7 +171,6 @@ exports_files(
 ### auto-generated section `iml intellij.vcs.gitlab` end
 
 ### auto-generated section `build intellij.vcs.gitlab.tests` start
-
 jvm_library(
     name = "vcs-gitlab-tests",
     srcs = glob(
@@ -332,7 +330,6 @@ exports_files(
 ### auto-generated section `iml intellij.vcs.gitlab.tests` end
 
 ### auto-generated section `test intellij.vcs.gitlab.tests` start
-
 jps_test(
     name = "vcs-gitlab-tests_test",
     runtime_deps = [":vcs-gitlab-tests_test_lib"],

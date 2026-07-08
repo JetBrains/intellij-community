@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.maven.server.eventListener.tests`
 
 ### auto-generated section `build intellij.maven.server.eventListener` start
-
 jvm_library(
     name = "server-eventListener",
     srcs = glob(
@@ -67,7 +66,6 @@ exports_files(
 ### auto-generated section `iml intellij.maven.server.eventListener` end
 
 ### auto-generated section `build intellij.maven.server.eventListener.tests` start
-
 jvm_library(
     name = "server-eventListener-tests",
     srcs = glob(

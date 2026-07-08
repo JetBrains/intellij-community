@@ -12,7 +12,6 @@ jps_test(
 ### skip generation section `test intellij.platform.buildScripts.productDsl.tests`
 
 ### auto-generated section `build intellij.platform.buildScripts.productDsl` start
-
 create_kotlinc_options(
     name = "custom_product-dsl",
     opt_in = [
@@ -104,7 +103,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.buildScripts.productDsl` end
 
 ### auto-generated section `build intellij.platform.buildScripts.productDsl.tests` start
-
 create_kotlinc_options(
     name = "custom_buildScripts-productDsl-tests",
     opt_in = [

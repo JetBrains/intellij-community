@@ -12,7 +12,6 @@ jps_test(
 ### skip generation section `test intellij.platform.jewel.markdown.extensions.images.tests`
 
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.images` start
-
 create_kotlinc_options(
     name = "custom_images",
     opt_in = [
@@ -98,7 +97,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.jewel.markdown.extensions.images` end
 
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.images.tests` start
-
 create_kotlinc_options(
     name = "custom_jewel-markdown-extensions-images-tests",
     opt_in = [

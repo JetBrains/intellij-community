@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.tools.ide.metrics.collector.tests`
 
 ### auto-generated section `build intellij.tools.ide.metrics.collector` start
-
 create_kotlinc_options(
     name = "custom_ide-metrics-collector",
     opt_in = ["kotlin.time.ExperimentalTime"],
@@ -102,7 +101,6 @@ exports_files(
 ### auto-generated section `iml intellij.tools.ide.metrics.collector` end
 
 ### auto-generated section `build intellij.tools.ide.metrics.collector.tests` start
-
 create_kotlinc_options(
     name = "custom_ide-metrics-collector-tests",
     opt_in = ["kotlin.time.ExperimentalTime"],

@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.searchEverywhereMl.typos.tests`
 
 ### auto-generated section `build intellij.searchEverywhereMl.typos` start
-
 jvm_library(
     name = "typos",
     srcs = glob(
@@ -98,7 +97,6 @@ exports_files(
 ### auto-generated section `iml intellij.searchEverywhereMl.typos` end
 
 ### auto-generated section `build intellij.searchEverywhereMl.typos.tests` start
-
 jvm_library(
     name = "searchEverywhereMl-typos-tests",
     srcs = glob(

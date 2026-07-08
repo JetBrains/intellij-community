@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.structuralSearch.tests`
 
 ### auto-generated section `build intellij.platform.structuralSearch` start
-
 jvm_library(
     name = "structuralSearch",
     srcs = glob(
@@ -113,7 +112,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.structuralSearch` end
 
 ### auto-generated section `build intellij.platform.structuralSearch.tests` start
-
 jvm_library(
     name = "structuralSearch-tests",
     srcs = glob(

@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.java.guiForms.compiler.tests`
 
 ### auto-generated section `build intellij.java.guiForms.compiler` start
-
 jvm_library(
     name = "java-guiForms-compiler",
     srcs = glob(
@@ -81,7 +80,6 @@ exports_files(
 ### auto-generated section `iml intellij.java.guiForms.compiler` end
 
 ### auto-generated section `build intellij.java.guiForms.compiler.tests` start
-
 jvm_library(
     name = "java-guiForms-compiler-tests",
     srcs = glob(

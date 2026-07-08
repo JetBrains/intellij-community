@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.statsCollector.tests`
 
 ### auto-generated section `build intellij.statsCollector` start
-
 jvm_library(
     name = "stats-collector",
     srcs = glob(
@@ -90,7 +89,6 @@ exports_files(
 ### auto-generated section `iml intellij.statsCollector` end
 
 ### auto-generated section `build intellij.statsCollector.tests` start
-
 jvm_library(
     name = "statsCollector-tests",
     srcs = glob(

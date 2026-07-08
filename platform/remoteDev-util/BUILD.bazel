@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.remoteDev.util.tests`
 
 ### auto-generated section `build intellij.remoteDev.util` start
-
 jvm_library(
     name = "remoteDev-util",
     srcs = glob(
@@ -155,7 +154,6 @@ exports_files(
 ### auto-generated section `iml intellij.remoteDev.util` end
 
 ### auto-generated section `build intellij.remoteDev.util.tests` start
-
 jvm_library(
     name = "remoteDev-util-tests",
     srcs = glob(

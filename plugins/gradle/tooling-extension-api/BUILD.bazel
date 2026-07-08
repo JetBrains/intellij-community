@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.gradle.toolingExtension` start
-
 create_kotlinc_options(
     name = "custom_toolingExtension",
     jvm_target = "8",

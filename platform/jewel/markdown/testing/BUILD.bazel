@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.jewel.markdown.testing` start
-
 create_kotlinc_options(
     name = "custom_testing",
     opt_in = [
@@ -78,7 +77,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.jewel.markdown.testing` end
 
 ### auto-generated section `test intellij.platform.jewel.markdown.testing` start
-
 jps_test(
     name = "testing_test",
     runtime_deps = [":testing_test_lib"],

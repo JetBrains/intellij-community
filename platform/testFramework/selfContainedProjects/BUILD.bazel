@@ -28,7 +28,6 @@ jps_test(
 ### skip generation section `test intellij.platform.testFramework.selfContainedProjects`
 
 ### auto-generated section `build intellij.platform.testFramework.selfContainedProjects` start
-
 jvm_library(
     name = "selfContainedProjects",
     srcs = glob(
@@ -88,7 +87,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.testFramework.selfContainedProjects` end
 
 ### auto-generated section `build intellij.platform.testFramework.selfContainedProjects.tests` start
-
 jvm_library(
     name = "selfContainedProjects-tests",
     srcs = glob(

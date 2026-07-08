@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.jvm.debugger.core` start
-
 create_kotlinc_options(
     name = "custom_core",
     opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"],

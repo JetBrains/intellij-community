@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.testng.tests`
 
 ### auto-generated section `build intellij.testng` start
-
 resourcegroup(
     name = "testng_resources",
     srcs = glob(
@@ -165,7 +164,6 @@ exports_files(
 ### auto-generated section `iml intellij.testng` end
 
 ### auto-generated section `build intellij.testng.tests` start
-
 jvm_library(
     name = "testng-tests",
     srcs = glob(

@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.devkit.gradle.tests`
 
 ### auto-generated section `build intellij.devkit.gradle` start
-
 jvm_library(
     name = "gradle",
     srcs = glob(
@@ -122,7 +121,6 @@ exports_files(
 ### auto-generated section `iml intellij.devkit.gradle` end
 
 ### auto-generated section `build intellij.devkit.gradle.tests` start
-
 jvm_library(
     name = "gradle-tests",
     srcs = glob(

@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build fleet.build.s3` start
-
 create_kotlinc_options(
     name = "custom_s3",
     opt_in = [
@@ -85,7 +84,6 @@ exports_files(
 ### auto-generated section `iml fleet.build.s3` end
 
 ### auto-generated section `test fleet.build.s3` start
-
 jps_test(
     name = "s3_test",
     runtime_deps = [":s3_test_lib"],

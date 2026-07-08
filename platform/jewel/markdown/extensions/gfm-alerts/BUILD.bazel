@@ -12,7 +12,6 @@ jps_test(
 ### skip generation section `test intellij.platform.jewel.markdown.extensions.gfmAlerts.tests`
 
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmAlerts` start
-
 create_kotlinc_options(
     name = "custom_gfm-alerts",
     opt_in = [
@@ -92,7 +91,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.jewel.markdown.extensions.gfmAlerts` end
 
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmAlerts.tests` start
-
 create_kotlinc_options(
     name = "custom_jewel-markdown-extensions-gfmAlerts-tests",
     opt_in = [

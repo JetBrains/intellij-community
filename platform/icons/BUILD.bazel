@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 ### auto-generated section `build intellij.platform.icons` start
-
 resourcegroup(
     name = "icons_resources",
     srcs = glob(

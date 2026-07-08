@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.execution.process.mediator.client.tests`
 
 ### auto-generated section `build intellij.execution.process.mediator.client` start
-
 jvm_library(
     name = "client",
     srcs = glob(
@@ -89,7 +88,6 @@ exports_files(
 ### auto-generated section `iml intellij.execution.process.mediator.client` end
 
 ### auto-generated section `build intellij.execution.process.mediator.client.tests` start
-
 jvm_library(
     name = "execution-process-mediator-client-tests",
     srcs = glob(

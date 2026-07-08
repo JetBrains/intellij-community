@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.keymap.vscode` start
-
 jvm_library(
     name = "keymap-vscode",
     srcs = glob(

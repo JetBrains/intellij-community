@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.platform.testFramework` start
-
 jvm_provided_library(
     name = "libraries_junit5_provided",
     lib = "//libraries/junit5",
@@ -260,7 +259,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.testFramework` end
 
 ### auto-generated section `build intellij.platform.testFramework.tests` start
-
 jvm_library(
     name = "testFramework-tests",
     srcs = glob(
@@ -482,7 +480,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.testFramework.tests` end
 
 ### auto-generated section `test intellij.platform.testFramework.tests` start
-
 jps_test(
     name = "testFramework-tests_test",
     runtime_deps = [":testFramework-tests_test_lib"],

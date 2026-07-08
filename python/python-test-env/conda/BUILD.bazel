@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.test.env.conda` start
-
 jvm_library(
     name = "conda",
     srcs = glob(
@@ -84,7 +83,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.test.env.conda` end
 
 ### auto-generated section `test intellij.python.test.env.conda` start
-
 jps_test(
     name = "conda_test",
     runtime_deps = [":conda_test_lib"],

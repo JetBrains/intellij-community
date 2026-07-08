@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
 
 ### auto-generated section `build intellij.platform.ui.jcef` start
-
 kt_javac_options(
     name = "custom-javac-options",
     add_exports = [

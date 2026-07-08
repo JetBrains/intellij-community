@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.test.env.plain` start
-
 jvm_library(
     name = "plain",
     srcs = glob(
@@ -95,7 +94,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.test.env.plain` end
 
 ### auto-generated section `test intellij.python.test.env.plain` start
-
 jps_test(
     name = "plain_test",
     runtime_deps = [":plain_test_lib"],

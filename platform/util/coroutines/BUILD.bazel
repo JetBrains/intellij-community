@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.util.coroutines.tests`
 
 ### auto-generated section `build intellij.platform.util.coroutines` start
-
 jvm_library(
     name = "coroutines",
     srcs = glob(
@@ -67,7 +66,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.util.coroutines` end
 
 ### auto-generated section `build intellij.platform.util.coroutines.tests` start
-
 jvm_library(
     name = "coroutines-tests",
     srcs = glob(

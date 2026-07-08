@@ -181,7 +181,6 @@ exports_files(
 ### auto-generated section `iml intellij.performanceTesting` end
 
 ### auto-generated section `build intellij.performanceTesting.tests` start
-
 jvm_library(
     name = "tests",
     srcs = glob(

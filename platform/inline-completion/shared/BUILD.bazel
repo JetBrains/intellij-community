@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.inline.completion` start
-
 jvm_library(
     name = "inline-completion",
     srcs = glob(

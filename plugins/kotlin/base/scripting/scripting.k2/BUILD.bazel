@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.base.scripting` start
-
 jvm_library(
     name = "kotlin-base-scripting",
     srcs = glob(
@@ -164,7 +163,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.base.scripting` end
 
 ### auto-generated section `build intellij.kotlin.base.scripting.tests` start
-
 jvm_library(
     name = "kotlin-base-scripting-tests",
     srcs = glob(
@@ -342,7 +340,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.base.scripting.tests` end
 
 ### auto-generated section `test intellij.kotlin.base.scripting.tests` start
-
 jps_test(
     name = "kotlin-base-scripting-tests_test",
     runtime_deps = [":kotlin-base-scripting-tests_test_lib"],

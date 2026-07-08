@@ -12,7 +12,6 @@ jps_test(
 ### skip generation section `test intellij.gradle.completion.tests`
 
 ### auto-generated section `build intellij.gradle.completion` start
-
 create_kotlinc_options(
     name = "custom_completion",
     opt_in = [
@@ -124,7 +123,6 @@ exports_files(
 ### auto-generated section `iml intellij.gradle.completion` end
 
 ### auto-generated section `build intellij.gradle.completion.tests` start
-
 create_kotlinc_options(
     name = "custom_completion-tests",
     opt_in = [

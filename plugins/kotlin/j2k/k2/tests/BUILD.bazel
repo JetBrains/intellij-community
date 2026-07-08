@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.j2k.tests` start
-
 create_kotlinc_options(
     name = "custom_tests",
     opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"],
@@ -101,7 +100,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.j2k.tests` end
 
 ### auto-generated section `test intellij.kotlin.j2k.tests` start
-
 jps_test(
     name = "tests_test",
     runtime_deps = [":tests_test_lib"],

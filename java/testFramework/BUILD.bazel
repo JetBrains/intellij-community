@@ -13,7 +13,6 @@ jps_test(
 ### skip generation section `test intellij.java.testFramework.tests`
 
 ### auto-generated section `build intellij.java.testFramework` start
-
 jvm_provided_library(
     name = "libraries_junit5_provided",
     lib = "//libraries/junit5",
@@ -230,7 +229,6 @@ exports_files(
 ### auto-generated section `iml intellij.java.testFramework` end
 
 ### auto-generated section `build intellij.java.testFramework.tests` start
-
 jvm_library(
     name = "testFramework-tests",
     srcs = glob(

@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.jsonpath.tests`
 
 ### auto-generated section `build intellij.jsonpath` start
-
 jvm_library(
     name = "jsonpath",
     srcs = glob(
@@ -103,7 +102,6 @@ exports_files(
 ### auto-generated section `iml intellij.jsonpath` end
 
 ### auto-generated section `build intellij.jsonpath.tests` start
-
 jvm_library(
     name = "jsonpath-tests",
     srcs = glob(

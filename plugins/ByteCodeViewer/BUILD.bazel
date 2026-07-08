@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.java.byteCodeViewer.tests`
 
 ### auto-generated section `build intellij.java.byteCodeViewer` start
-
 create_kotlinc_options(
     name = "custom_java-byteCodeViewer",
     x_explicit_api_mode = "strict",
@@ -106,7 +105,6 @@ exports_files(
 ### auto-generated section `iml intellij.java.byteCodeViewer` end
 
 ### auto-generated section `build intellij.java.byteCodeViewer.tests` start
-
 create_kotlinc_options(
     name = "custom_java-byteCodeViewer-tests",
     x_explicit_api_mode = "strict",

@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.exporters` start
-
 create_kotlinc_options(
     name = "custom_telemetry.exporters",
     opt_in = ["kotlinx.serialization.ExperimentalSerializationApi"],

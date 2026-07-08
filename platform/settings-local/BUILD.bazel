@@ -12,7 +12,6 @@ jps_test(
 ### skip generation section `test intellij.platform.settings.local.tests`
 
 ### auto-generated section `build intellij.platform.settings.local` start
-
 create_kotlinc_options(
     name = "custom_settings-local",
     opt_in = ["com.intellij.util.xmlb.SettingsInternalApi"],
@@ -112,7 +111,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.settings.local` end
 
 ### auto-generated section `build intellij.platform.settings.local.tests` start
-
 create_kotlinc_options(
     name = "custom_settings-local-tests",
     opt_in = ["com.intellij.util.xmlb.SettingsInternalApi"],

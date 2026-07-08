@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.j2k` start
-
 create_kotlinc_options(
     name = "custom_kotlin-j2k",
     opt_in = [

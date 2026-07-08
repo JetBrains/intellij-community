@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 ### auto-generated section `build intellij.python.test.env.core` start
-
 resourcegroup(
     name = "core_test_resources",
     srcs = glob(
@@ -106,7 +105,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.test.env.core` end
 
 ### auto-generated section `test intellij.python.test.env.core` start
-
 jps_test(
     name = "core_test",
     runtime_deps = [":core_test_lib"],

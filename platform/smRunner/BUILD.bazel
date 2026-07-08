@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.smRunner.tests`
 
 ### auto-generated section `build intellij.platform.smRunner` start
-
 jvm_library(
     name = "smRunner",
     srcs = glob(
@@ -123,7 +122,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.smRunner` end
 
 ### auto-generated section `build intellij.platform.smRunner.tests` start
-
 jvm_library(
     name = "smRunner-tests",
     srcs = glob(

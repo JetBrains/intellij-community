@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.syntax.psi.tests`
 
 ### auto-generated section `build intellij.platform.syntax.psi.tests` start
-
 jvm_library(
     name = "psi-tests",
     srcs = glob(

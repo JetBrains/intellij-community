@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.python.sdk.tests`
 
 ### auto-generated section `build intellij.python.sdk` start
-
 jvm_library(
     name = "sdk",
     srcs = glob(
@@ -149,7 +148,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.sdk` end
 
 ### auto-generated section `build intellij.python.sdk.tests` start
-
 jvm_library(
     name = "sdk-tests",
     srcs = glob(

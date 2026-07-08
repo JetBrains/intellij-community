@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.images.tests`
 
 ### auto-generated section `build intellij.platform.images` start
-
 jvm_library(
     name = "images",
     srcs = glob(
@@ -114,7 +113,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.images` end
 
 ### auto-generated section `build intellij.platform.images.tests` start
-
 jvm_library(
     name = "images-tests",
     srcs = glob(

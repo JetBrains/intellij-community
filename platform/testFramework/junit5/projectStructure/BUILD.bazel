@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.testFramework.junit5.projectStructure.tests`
 
 ### auto-generated section `build intellij.platform.testFramework.junit5.projectStructure` start
-
 jvm_library(
     name = "projectStructure",
     srcs = glob(
@@ -90,7 +89,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.testFramework.junit5.projectStructure` end
 
 ### auto-generated section `build intellij.platform.testFramework.junit5.projectStructure.tests` start
-
 jvm_library(
     name = "testFramework-junit5-projectStructure-tests",
     srcs = glob(

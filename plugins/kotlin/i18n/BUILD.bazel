@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.i18n` start
-
 jvm_library(
     name = "i18n",
     srcs = glob(

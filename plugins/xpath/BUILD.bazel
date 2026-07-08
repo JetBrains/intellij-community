@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.xpath.tests`
 
 ### auto-generated section `build intellij.xpath` start
-
 jvm_library(
     name = "xpath",
     srcs = glob(
@@ -145,7 +144,6 @@ exports_files(
 ### auto-generated section `iml intellij.xpath` end
 
 ### auto-generated section `build intellij.xpath.tests` start
-
 jvm_library(
     name = "xpath-tests",
     srcs = glob(

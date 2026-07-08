@@ -12,7 +12,6 @@ jps_test(
 ### skip generation section `test intellij.platform.syntax.extensions.tests`
 
 ### auto-generated section `build intellij.platform.syntax.extensions` start
-
 create_kotlinc_options(
     name = "custom_extensions",
     jvm_target = "8",
@@ -84,7 +83,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.syntax.extensions` end
 
 ### auto-generated section `build intellij.platform.syntax.extensions.tests` start
-
 jvm_library(
     name = "extensions-tests",
     srcs = glob(

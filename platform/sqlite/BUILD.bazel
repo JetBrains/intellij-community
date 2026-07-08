@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.sqlite.tests`
 
 ### auto-generated section `build intellij.platform.sqlite` start
-
 jvm_library(
     name = "sqlite",
     srcs = glob(
@@ -71,7 +70,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.sqlite` end
 
 ### auto-generated section `build intellij.platform.sqlite.tests` start
-
 jvm_library(
     name = "sqlite-tests",
     srcs = glob(

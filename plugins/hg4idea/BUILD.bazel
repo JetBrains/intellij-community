@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.vcs.hg` start
-
 jvm_library(
     name = "vcs-hg",
     srcs = glob(
@@ -120,7 +119,6 @@ exports_files(
 ### auto-generated section `iml intellij.vcs.hg` end
 
 ### auto-generated section `build intellij.vcs.hg.tests` start
-
 jvm_library(
     name = "vcs-hg-tests",
     srcs = glob(
@@ -239,7 +237,6 @@ exports_files(
 ### auto-generated section `iml intellij.vcs.hg.tests` end
 
 ### auto-generated section `test intellij.vcs.hg.tests` start
-
 jps_test(
     name = "vcs-hg-tests_test",
     runtime_deps = [":vcs-hg-tests_test_lib"],

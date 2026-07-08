@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.evaluationPlugin.languages.java.tests`
 
 ### auto-generated section `build intellij.evaluationPlugin.languages.java` start
-
 jvm_library(
     name = "java",
     srcs = glob(
@@ -117,7 +116,6 @@ exports_files(
 ### auto-generated section `iml intellij.evaluationPlugin.languages.java` end
 
 ### auto-generated section `build intellij.evaluationPlugin.languages.java.tests` start
-
 jvm_library(
     name = "evaluationPlugin-languages-java-tests",
     srcs = glob(

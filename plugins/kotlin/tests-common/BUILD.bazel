@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.common.tests` start
-
 jvm_library(
     name = "common-tests",
     srcs = glob(
@@ -133,7 +132,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.common.tests` end
 
 ### auto-generated section `test intellij.kotlin.common.tests` start
-
 jps_test(
     name = "common-tests_test",
     runtime_deps = [":common-tests_test_lib"],

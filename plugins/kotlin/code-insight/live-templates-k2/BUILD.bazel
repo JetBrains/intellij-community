@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.codeInsight.liveTemplates` start
-
 create_kotlinc_options(
     name = "custom_kotlin-codeInsight-liveTemplates",
     opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
@@ -96,7 +95,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.codeInsight.liveTemplates` end
 
 ### auto-generated section `build intellij.kotlin.codeInsight.liveTemplates.tests` start
-
 create_kotlinc_options(
     name = "custom_kotlin-codeInsight-liveTemplates-tests",
     opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
@@ -189,7 +187,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.codeInsight.liveTemplates.tests` end
 
 ### auto-generated section `test intellij.kotlin.codeInsight.liveTemplates.tests` start
-
 jps_test(
     name = "kotlin-codeInsight-liveTemplates-tests_test",
     runtime_deps = [":kotlin-codeInsight-liveTemplates-tests_test_lib"],

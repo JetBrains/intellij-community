@@ -20,7 +20,6 @@ kt_compiler_plugin(
 )
 
 ### auto-generated section `build fleet.compiler.plugins.expects` start
-
 create_kotlinc_options(
     name = "custom_expects",
     opt_in = ["org.jetbrains.kotlin.config.MessageCollectorAccess"],

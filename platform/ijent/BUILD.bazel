@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.ijent.tests`
 
 ### auto-generated section `build intellij.platform.ijent` start
-
 jvm_library(
     name = "ijent",
     srcs = glob(
@@ -78,7 +77,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.ijent` end
 
 ### auto-generated section `build intellij.platform.ijent.tests` start
-
 jvm_library(
     name = "ijent-tests",
     srcs = glob(

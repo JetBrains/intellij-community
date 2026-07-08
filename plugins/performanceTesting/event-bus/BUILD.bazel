@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.tools.ide.starter.bus.tests`
 
 ### auto-generated section `build intellij.tools.ide.starter.bus` start
-
 jvm_library(
     name = "tools-ide-starter-bus",
     srcs = glob(
@@ -79,7 +78,6 @@ exports_files(
 ### auto-generated section `iml intellij.tools.ide.starter.bus` end
 
 ### auto-generated section `build intellij.tools.ide.starter.bus.tests` start
-
 jvm_library(
     name = "tools-ide-starter-bus-tests",
     srcs = glob(

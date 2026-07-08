@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.repository.search.completion.tests`
 
 ### auto-generated section `build intellij.repository.search.completion` start
-
 jvm_library(
     name = "completion",
     srcs = glob(
@@ -82,7 +81,6 @@ exports_files(
 ### auto-generated section `iml intellij.repository.search.completion` end
 
 ### auto-generated section `build intellij.repository.search.completion.tests` start
-
 create_kotlinc_options(
     name = "custom_repository-search-completion-tests",
     opt_in = ["kotlinx.coroutines.ExperimentalCoroutinesApi"],

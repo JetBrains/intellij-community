@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.execution.tests`
 
 ### auto-generated section `build intellij.platform.execution.impl` start
-
 jvm_library(
     name = "execution-impl",
     srcs = glob(
@@ -183,7 +182,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.execution.impl` end
 
 ### auto-generated section `build intellij.platform.execution.tests` start
-
 jvm_library(
     name = "execution-tests",
     srcs = glob(

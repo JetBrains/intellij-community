@@ -12,7 +12,6 @@ jps_test(
 ### skip generation section `test intellij.platform.jewel.markdown.core.tests`
 
 ### auto-generated section `build intellij.platform.jewel.markdown.core` start
-
 create_kotlinc_options(
     name = "custom_core",
     opt_in = [
@@ -95,7 +94,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.jewel.markdown.core` end
 
 ### auto-generated section `build intellij.platform.jewel.markdown.core.tests` start
-
 create_kotlinc_options(
     name = "custom_jewel-markdown-core-tests",
     opt_in = [

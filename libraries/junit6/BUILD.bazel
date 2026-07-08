@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.junit6` start
-
 jvm_library(
     name = "junit6",
     srcs = glob(

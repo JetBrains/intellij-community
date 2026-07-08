@@ -12,7 +12,6 @@ jps_test(
 ### skip generation section `test intellij.platform.jewel.ideLafBridge.tests`
 
 ### auto-generated section `build intellij.platform.jewel.ideLafBridge` start
-
 create_kotlinc_options(
     name = "custom_ide-laf-bridge",
     opt_in = [
@@ -136,7 +135,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.jewel.ideLafBridge` end
 
 ### auto-generated section `build intellij.platform.jewel.ideLafBridge.tests` start
-
 create_kotlinc_options(
     name = "custom_ideLafBridge-tests",
     opt_in = [

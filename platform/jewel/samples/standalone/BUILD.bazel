@@ -9,7 +9,6 @@ java_binary(
 )
 
 ### auto-generated section `build intellij.platform.jewel.samples.standalone` start
-
 create_kotlinc_options(
     name = "custom_standalone",
     opt_in = [

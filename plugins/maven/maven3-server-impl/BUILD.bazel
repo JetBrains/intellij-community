@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.maven.server.m3.impl` start
-
 jvm_library(
     name = "server-m3-impl",
     srcs = glob(

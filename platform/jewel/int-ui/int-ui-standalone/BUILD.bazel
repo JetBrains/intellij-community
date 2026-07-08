@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.jewel.intUi.standalone` start
-
 create_kotlinc_options(
     name = "custom_jewel-intUi-standalone",
     opt_in = [

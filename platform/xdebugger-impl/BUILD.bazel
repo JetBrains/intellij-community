@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.debugger.impl` start
-
 create_kotlinc_options(
     name = "custom_debugger-impl",
     x_context_parameters = True,
@@ -175,7 +174,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.debugger.impl` end
 
 ### auto-generated section `build intellij.platform.debugger.impl.tests` start
-
 create_kotlinc_options(
     name = "custom_debugger-impl-tests",
     x_context_parameters = True,
@@ -350,7 +348,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.debugger.impl.tests` end
 
 ### auto-generated section `test intellij.platform.debugger.impl.tests` start
-
 jps_test(
     name = "debugger-impl-tests_test",
     runtime_deps = [":debugger-impl-tests_test_lib"],

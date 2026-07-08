@@ -16,7 +16,6 @@ java_binary(
 )
 
 ### auto-generated section `build intellij.mps.build` start
-
 jvm_library(
     name = "build",
     srcs = glob(
@@ -72,7 +71,6 @@ exports_files(
 ### auto-generated section `iml intellij.mps.build` end
 
 ### auto-generated section `build intellij.mps.build.tests` start
-
 jvm_library(
     name = "build-tests",
     srcs = glob(
@@ -127,7 +125,6 @@ exports_files(
 ### auto-generated section `iml intellij.mps.build.tests` end
 
 ### auto-generated section `test intellij.mps.build.tests` start
-
 jps_test(
     name = "build-tests_test",
     runtime_deps = [":build-tests_test_lib"],

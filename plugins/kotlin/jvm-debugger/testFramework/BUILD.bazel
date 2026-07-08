@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 ### skip generation section `test kotlin.jvm-debugger.testFramework`
 
 ### auto-generated section `build kotlin.jvm-debugger.testFramework` start
-
 jvm_library(
     name = "testFramework",
     srcs = glob(

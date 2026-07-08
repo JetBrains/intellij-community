@@ -18,7 +18,6 @@ jps_test(
 ### skip generation section `test intellij.testng.rt.tests`
 
 ### auto-generated section `build intellij.testng.rt.tests` start
-
 jvm_library(
     name = "tests",
     srcs = glob(

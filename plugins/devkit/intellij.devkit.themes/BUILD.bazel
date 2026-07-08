@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.devkit.themes` start
-
 jvm_library(
     name = "themes",
     srcs = glob(
@@ -107,7 +106,6 @@ exports_files(
 ### auto-generated section `iml intellij.devkit.themes` end
 
 ### auto-generated section `build intellij.devkit.themes.tests` start
-
 jvm_library(
     name = "themes-tests",
     srcs = glob(
@@ -207,7 +205,6 @@ exports_files(
 ### auto-generated section `iml intellij.devkit.themes.tests` end
 
 ### auto-generated section `test intellij.devkit.themes.tests` start
-
 jps_test(
     name = "themes-tests_test",
     runtime_deps = [":themes-tests_test_lib"],

@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.jewel.uiTests` start
-
 create_kotlinc_options(
     name = "custom_ui-tests",
     opt_in = [
@@ -85,7 +84,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.jewel.uiTests` end
 
 ### auto-generated section `test intellij.platform.jewel.uiTests` start
-
 jps_test(
     name = "ui-tests_test",
     runtime_deps = [":ui-tests_test_lib"],

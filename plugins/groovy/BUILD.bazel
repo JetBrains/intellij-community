@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.groovy` start
-
 jvm_library(
     name = "groovy",
     srcs = glob(
@@ -219,7 +218,6 @@ exports_files(
 ### auto-generated section `iml intellij.groovy` end
 
 ### auto-generated section `build intellij.groovy.tests` start
-
 jvm_library(
     name = "groovy-tests",
     srcs = glob(
@@ -445,7 +443,6 @@ exports_files(
 ### auto-generated section `iml intellij.groovy.tests` end
 
 ### auto-generated section `test intellij.groovy.tests` start
-
 jps_test(
     name = "groovy-tests_test",
     runtime_deps = [":groovy-tests_test_lib"],
@@ -453,7 +450,6 @@ jps_test(
 ### auto-generated section `test intellij.groovy.tests` end
 
 ### auto-generated section `build intellij.groovy.tests.main` start
-
 jvm_library(
     name = "groovy-tests-main",
     srcs = glob(

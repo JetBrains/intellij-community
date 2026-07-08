@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.regexp.tests`
 
 ### auto-generated section `build intellij.regexp` start
-
 jvm_library(
     name = "regexp",
     srcs = glob(
@@ -100,7 +99,6 @@ exports_files(
 ### auto-generated section `iml intellij.regexp` end
 
 ### auto-generated section `build intellij.regexp.tests` start
-
 jvm_library(
     name = "regexp-tests",
     srcs = glob(

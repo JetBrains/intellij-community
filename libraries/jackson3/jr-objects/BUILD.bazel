@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.jackson3.jr.objects` start
-
 jvm_library(
     name = "libraries-jackson3-jr-objects",
     srcs = glob(

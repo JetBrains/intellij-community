@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.junit.v5.rt.tests` start
-
 jvm_library(
     name = "junit-v5-rt-tests",
     srcs = glob(
@@ -133,7 +132,6 @@ exports_files(
 ### auto-generated section `iml intellij.junit.v5.rt.tests` end
 
 ### auto-generated section `test intellij.junit.v5.rt.tests` start
-
 jps_test(
     name = "junit-v5-rt-tests_test",
     runtime_deps = [":junit-v5-rt-tests_test_lib"],

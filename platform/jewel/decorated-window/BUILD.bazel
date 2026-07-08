@@ -12,7 +12,6 @@ jps_test(
 ### skip generation section `test intellij.platform.jewel.decoratedWindow.tests`
 
 ### auto-generated section `build intellij.platform.jewel.decoratedWindow` start
-
 create_kotlinc_options(
     name = "custom_decorated-window",
     opt_in = [
@@ -91,7 +90,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.jewel.decoratedWindow` end
 
 ### auto-generated section `build intellij.platform.jewel.decoratedWindow.tests` start
-
 create_kotlinc_options(
     name = "custom_decoratedWindow-tests",
     opt_in = [

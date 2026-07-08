@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.base.util` start
-
 create_kotlinc_options(
     name = "custom_util",
     opt_in = [
@@ -112,7 +111,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.base.util` end
 
 ### auto-generated section `build intellij.kotlin.base.util.tests` start
-
 create_kotlinc_options(
     name = "custom_kotlin-base-util-tests",
     opt_in = [
@@ -215,7 +213,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.base.util.tests` end
 
 ### auto-generated section `test intellij.kotlin.base.util.tests` start
-
 jps_test(
     name = "kotlin-base-util-tests_test",
     runtime_deps = [":kotlin-base-util-tests_test_lib"],

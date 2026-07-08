@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.evaluationPlugin.tests`
 
 ### auto-generated section `build intellij.evaluationPlugin` start
-
 jvm_library(
     name = "evaluation-plugin",
     srcs = glob(
@@ -120,7 +119,6 @@ exports_files(
 ### auto-generated section `iml intellij.evaluationPlugin` end
 
 ### auto-generated section `build intellij.evaluationPlugin.tests` start
-
 jvm_library(
     name = "evaluationPlugin-tests",
     srcs = glob(

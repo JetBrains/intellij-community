@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.devkit.apiDump.lang.tests`
 
 ### auto-generated section `build intellij.devkit.apiDump.lang` start
-
 jvm_library(
     name = "apiDump-lang",
     srcs = glob(
@@ -96,7 +95,6 @@ exports_files(
 ### auto-generated section `iml intellij.devkit.apiDump.lang` end
 
 ### auto-generated section `build intellij.devkit.apiDump.lang.tests` start
-
 jvm_library(
     name = "apiDump-lang-tests",
     srcs = glob(

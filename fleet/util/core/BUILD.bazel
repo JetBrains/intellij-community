@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build fleet.util.core` start
-
 create_kotlinc_options(
     name = "custom_core",
     opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"],

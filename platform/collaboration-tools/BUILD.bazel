@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.collaborationTools.tests`
 
 ### auto-generated section `build intellij.platform.collaborationTools` start
-
 jvm_library(
     name = "collaboration-tools",
     srcs = glob(
@@ -159,7 +158,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.collaborationTools` end
 
 ### auto-generated section `build intellij.platform.collaborationTools.tests` start
-
 jvm_library(
     name = "collaborationTools-tests",
     srcs = glob(

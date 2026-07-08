@@ -16,7 +16,6 @@ jps_test(
 ### skip generation section `test intellij.platform.testFramework.monorepo.tests`
 
 ### auto-generated section `build intellij.platform.testFramework.monorepo` start
-
 jvm_library(
     name = "monorepo",
     srcs = glob(
@@ -96,7 +95,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.testFramework.monorepo` end
 
 ### auto-generated section `build intellij.platform.testFramework.monorepo.tests` start
-
 jvm_library(
     name = "monorepo-tests",
     srcs = glob(

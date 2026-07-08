@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.groovy.tests` start
-
 jvm_library(
     name = "kotlin-gradle-codeInsight-groovy-tests",
     srcs = glob(
@@ -71,7 +70,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.gradle.codeInsight.groovy.tests` end
 
 ### auto-generated section `test intellij.kotlin.gradle.codeInsight.groovy.tests` start
-
 jps_test(
     name = "kotlin-gradle-codeInsight-groovy-tests_test",
     runtime_deps = [":kotlin-gradle-codeInsight-groovy-tests_test_lib"],

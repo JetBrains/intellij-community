@@ -25,7 +25,6 @@ webview_plugin_zip(
 )
 
 ### auto-generated section `build intellij.platform.ui.webview.demo` start
-
 jvm_library(
     name = "demo",
     srcs = glob(

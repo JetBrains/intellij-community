@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.python.pytools.tests`
 
 ### auto-generated section `build intellij.python.pytools.tests` start
-
 jvm_library(
     name = "tests",
     srcs = glob(

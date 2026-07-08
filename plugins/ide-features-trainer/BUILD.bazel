@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.featuresTrainer.tests`
 
 ### auto-generated section `build intellij.featuresTrainer` start
-
 jvm_library(
     name = "featuresTrainer",
     srcs = glob(
@@ -149,7 +148,6 @@ exports_files(
 ### auto-generated section `iml intellij.featuresTrainer` end
 
 ### auto-generated section `build intellij.featuresTrainer.tests` start
-
 jvm_library(
     name = "featuresTrainer-tests",
     srcs = glob(

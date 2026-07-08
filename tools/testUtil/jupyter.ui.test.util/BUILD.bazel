@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.jupyter.ui.test.util` start
-
 jvm_library(
     name = "jupyter.ui.test.util",
     srcs = glob(

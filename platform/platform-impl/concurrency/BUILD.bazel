@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.ide.concurrency.tests`
 
 ### auto-generated section `build intellij.platform.ide.concurrency` start
-
 jvm_library(
     name = "concurrency",
     srcs = glob(
@@ -87,7 +86,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.ide.concurrency` end
 
 ### auto-generated section `build intellij.platform.ide.concurrency.tests` start
-
 jvm_library(
     name = "ide-concurrency-tests",
     srcs = glob(

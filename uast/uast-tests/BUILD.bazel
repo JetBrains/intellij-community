@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.uast.tests`
 
 ### auto-generated section `build intellij.platform.uast.tests` start
-
 jvm_library(
     name = "tests",
     srcs = glob(

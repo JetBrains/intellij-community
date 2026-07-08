@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.eclipse.tests`
 
 ### auto-generated section `build intellij.eclipse` start
-
 jvm_library(
     name = "eclipse",
     srcs = glob(
@@ -150,7 +149,6 @@ exports_files(
 ### auto-generated section `iml intellij.eclipse` end
 
 ### auto-generated section `build intellij.eclipse.tests` start
-
 jvm_library(
     name = "eclipse-tests",
     srcs = glob(

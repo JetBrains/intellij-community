@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build kotlin.jvm-debugger.evaluation` start
-
 jvm_library(
     name = "evaluation",
     srcs = glob(

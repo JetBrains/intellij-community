@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.debugger.impl.frontend.tests`
 
 ### auto-generated section `build intellij.platform.debugger.impl.frontend` start
-
 jvm_library(
     name = "frontend",
     srcs = glob(
@@ -124,7 +123,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.debugger.impl.frontend` end
 
 ### auto-generated section `build intellij.platform.debugger.impl.frontend.tests` start
-
 jvm_library(
     name = "debugger-impl-frontend-tests",
     srcs = glob(

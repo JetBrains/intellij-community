@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.vcs.dvcs` start
-
 jvm_library(
     name = "vcs-dvcs",
     srcs = glob(

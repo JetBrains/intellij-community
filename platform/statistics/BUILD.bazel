@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.statistics.tests`
 
 ### auto-generated section `build intellij.platform.statistics` start
-
 jvm_library(
     name = "statistics",
     srcs = glob(
@@ -143,7 +142,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.statistics` end
 
 ### auto-generated section `build intellij.platform.statistics.tests` start
-
 jvm_library(
     name = "statistics-tests",
     srcs = glob(

@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.testFramework.junit5.jimfs.tests`
 
 ### auto-generated section `build intellij.platform.testFramework.junit5.jimfs` start
-
 jvm_library(
     name = "junit5.jimfs",
     srcs = glob(
@@ -66,7 +65,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.testFramework.junit5.jimfs` end
 
 ### auto-generated section `build intellij.platform.testFramework.junit5.jimfs.tests` start
-
 jvm_library(
     name = "junit5-jimfs-tests",
     srcs = glob(

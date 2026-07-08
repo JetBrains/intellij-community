@@ -12,7 +12,6 @@ jps_test(
 ### skip generation section `test intellij.platform.debugger.impl.ui.tests`
 
 ### auto-generated section `build intellij.platform.debugger.impl.ui` start
-
 create_kotlinc_options(
     name = "custom_ui",
     x_context_parameters = True,
@@ -159,7 +158,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.debugger.impl.ui` end
 
 ### auto-generated section `build intellij.platform.debugger.impl.ui.tests` start
-
 create_kotlinc_options(
     name = "custom_debugger-impl-ui-tests",
     x_context_parameters = True,

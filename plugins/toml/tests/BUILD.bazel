@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.toml.tests`
 
 ### auto-generated section `build intellij.toml.tests` start
-
 jvm_library(
     name = "tests",
     srcs = glob(

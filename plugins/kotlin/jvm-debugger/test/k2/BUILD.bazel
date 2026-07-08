@@ -20,7 +20,6 @@ jps_test(
 ### skip generation section `test intellij.kotlin.jvm.debugger.test`
 
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test` start
-
 create_kotlinc_options(
     name = "custom_kotlin-jvm-debugger-test",
     x_context_parameters = True,

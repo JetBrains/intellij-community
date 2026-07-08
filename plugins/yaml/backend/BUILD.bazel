@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.yaml.backend.tests`
 
 ### auto-generated section `build intellij.yaml.backend` start
-
 jvm_library(
     name = "backend",
     srcs = glob(
@@ -139,7 +138,6 @@ exports_files(
 ### auto-generated section `iml intellij.yaml.backend` end
 
 ### auto-generated section `build intellij.yaml.backend.tests` start
-
 jvm_library(
     name = "backend-tests",
     srcs = glob(

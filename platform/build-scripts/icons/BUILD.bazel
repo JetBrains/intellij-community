@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.images.build.tests`
 
 ### auto-generated section `build intellij.platform.images.build` start
-
 jvm_provided_library(
     name = "platform_util_xmlDom_provided",
     lib = "//platform/util/xmlDom",
@@ -115,7 +114,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.images.build` end
 
 ### auto-generated section `build intellij.platform.images.build.tests` start
-
 jvm_library(
     name = "images-build-tests",
     srcs = glob(

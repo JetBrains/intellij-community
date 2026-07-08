@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.icons.impl.intellij.tests`
 
 ### auto-generated section `build intellij.platform.icons.impl.intellij.tests` start
-
 jvm_library(
     name = "tests",
     srcs = glob(

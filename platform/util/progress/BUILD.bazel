@@ -12,7 +12,6 @@ jps_test(
 ### skip generation section `test intellij.platform.util.progress.tests`
 
 ### auto-generated section `build intellij.platform.util.progress` start
-
 create_kotlinc_options(
     name = "custom_progress",
     jvm_target = "8",
@@ -84,7 +83,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.util.progress` end
 
 ### auto-generated section `build intellij.platform.util.progress.tests` start
-
 jvm_library(
     name = "progress-tests",
     srcs = glob(

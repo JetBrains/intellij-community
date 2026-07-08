@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.pycharm.community.ide.impl` start
-
 jvm_library(
     name = "impl",
     srcs = glob(
@@ -187,7 +186,6 @@ exports_files(
 ### auto-generated section `iml intellij.pycharm.community.ide.impl` end
 
 ### auto-generated section `build intellij.pycharm.community.ide.impl.tests` start
-
 jvm_library(
     name = "pycharm-community-ide-impl-tests",
     srcs = glob(
@@ -362,7 +360,6 @@ exports_files(
 ### auto-generated section `iml intellij.pycharm.community.ide.impl.tests` end
 
 ### auto-generated section `test intellij.pycharm.community.ide.impl.tests` start
-
 jps_test(
     name = "pycharm-community-ide-impl-tests_test",
     runtime_deps = [":pycharm-community-ide-impl-tests_test_lib"],

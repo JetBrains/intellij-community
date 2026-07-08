@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.backend.observation.tests`
 
 ### auto-generated section `build intellij.platform.backend.observation` start
-
 jvm_library(
     name = "observation",
     srcs = glob(
@@ -64,7 +63,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.backend.observation` end
 
 ### auto-generated section `build intellij.platform.backend.observation.tests` start
-
 jvm_library(
     name = "observation-tests",
     srcs = glob(

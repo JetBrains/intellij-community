@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.textmate.joni.tests`
 
 ### auto-generated section `build intellij.textmate.joni` start
-
 jvm_library(
     name = "joni",
     srcs = glob(
@@ -68,7 +67,6 @@ exports_files(
 ### auto-generated section `iml intellij.textmate.joni` end
 
 ### auto-generated section `build intellij.textmate.joni.tests` start
-
 jvm_library(
     name = "joni-tests",
     srcs = glob(

@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.ide.nonModalWelcomeScreen.tests`
 
 ### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen` start
-
 jvm_library(
     name = "non-modal-welcome-screen",
     srcs = glob(
@@ -111,7 +110,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.ide.nonModalWelcomeScreen` end
 
 ### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen.tests` start
-
 jvm_library(
     name = "ide-nonModalWelcomeScreen-tests",
     srcs = glob(

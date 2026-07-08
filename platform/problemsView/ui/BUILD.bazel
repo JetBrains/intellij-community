@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.problemView.ui.tests`
 
 ### auto-generated section `build intellij.platform.problemView.ui` start
-
 jvm_library(
     name = "ui",
     srcs = glob(
@@ -141,7 +140,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.problemView.ui` end
 
 ### auto-generated section `build intellij.platform.problemView.ui.tests` start
-
 jvm_library(
     name = "problemView-ui-tests",
     srcs = glob(

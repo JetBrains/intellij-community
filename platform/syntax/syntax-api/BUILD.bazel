@@ -12,7 +12,6 @@ jps_test(
 ### skip generation section `test intellij.platform.syntax.tests`
 
 ### auto-generated section `build intellij.platform.syntax` start
-
 create_kotlinc_options(
     name = "custom_syntax",
     jvm_target = "8",
@@ -83,7 +82,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.syntax` end
 
 ### auto-generated section `build intellij.platform.syntax.tests` start
-
 jvm_library(
     name = "tests",
     srcs = glob(

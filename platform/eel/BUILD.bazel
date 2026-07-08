@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.eel.tests`
 
 ### auto-generated section `build intellij.platform.eel` start
-
 jvm_library(
     name = "eel",
     srcs = glob(
@@ -63,7 +62,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.eel` end
 
 ### auto-generated section `build intellij.platform.eel.codegen` start
-
 jvm_library(
     name = "eel-codegen",
     srcs = glob(
@@ -169,7 +167,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.eel.codegen` end
 
 ### auto-generated section `test intellij.platform.eel.codegen` start
-
 jps_test(
     name = "eel-codegen_test",
     runtime_deps = [":eel-codegen_test_lib"],
@@ -177,7 +174,6 @@ jps_test(
 ### auto-generated section `test intellij.platform.eel.codegen` end
 
 ### auto-generated section `build intellij.platform.eel.tests` start
-
 jvm_library(
     name = "eel-tests",
     srcs = glob(

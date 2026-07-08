@@ -7,7 +7,6 @@ filegroup(
 )
 
 ### auto-generated section `build intellij.textmate` start
-
 jvm_library(
     name = "textmate",
     srcs = glob(

@@ -85,7 +85,6 @@ intellij_dev_binary_community(
 )
 
 ### auto-generated section `build intellij.idea.community.build` start
-
 jvm_library(
     name = "build",
     srcs = glob(
@@ -163,7 +162,6 @@ exports_files(
 ### auto-generated section `iml intellij.idea.community.build` end
 
 ### auto-generated section `build intellij.idea.community.build.zip` start
-
 jvm_library(
     name = "zip",
     srcs = ["@rules_jvm//zip:zip_sources"],
@@ -207,7 +205,6 @@ exports_files(
 ### auto-generated section `iml intellij.idea.community.build.zip` end
 
 ### auto-generated section `build intellij.platform.jps.build.dependencyGraph` start
-
 jvm_library(
     name = "dependency-graph",
     srcs = ["@rules_jvm//dependency-graph:dependency-graph_sources"],
@@ -261,7 +258,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.jps.build.dependencyGraph` end
 
 ### auto-generated section `build intellij.platform.jps.build.javac.rt` start
-
 jvm_library(
     name = "build-javac-rt",
     srcs = ["@rules_jvm//jps-builders-6:build-javac-rt_sources"],

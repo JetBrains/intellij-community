@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.refactorings.rename` start
-
 create_kotlinc_options(
     name = "custom_kotlin-refactorings-rename",
     opt_in = [
@@ -100,7 +99,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.refactorings.rename` end
 
 ### auto-generated section `build intellij.kotlin.refactorings.rename.tests` start
-
 create_kotlinc_options(
     name = "custom_kotlin-refactorings-rename-tests",
     opt_in = [
@@ -217,7 +215,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.refactorings.rename.tests` end
 
 ### auto-generated section `test intellij.kotlin.refactorings.rename.tests` start
-
 jps_test(
     name = "kotlin-refactorings-rename-tests_test",
     runtime_deps = [":kotlin-refactorings-rename-tests_test_lib"],

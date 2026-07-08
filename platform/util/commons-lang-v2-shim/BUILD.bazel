@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.util.commonsLangV2Shim` start
-
 jvm_library(
     name = "commons-lang-v2-shim",
     srcs = glob(

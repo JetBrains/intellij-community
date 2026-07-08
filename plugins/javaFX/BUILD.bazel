@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.javaFX.tests`
 
 ### auto-generated section `build intellij.javaFX` start
-
 jvm_library(
     name = "javaFX",
     srcs = glob(
@@ -156,7 +155,6 @@ exports_files(
 ### auto-generated section `iml intellij.javaFX` end
 
 ### auto-generated section `build intellij.javaFX.properties` start
-
 jvm_library(
     name = "javaFX-properties",
     srcs = glob(
@@ -224,7 +222,6 @@ exports_files(
 ### auto-generated section `iml intellij.javaFX.properties` end
 
 ### auto-generated section `build intellij.javaFX.tests` start
-
 jvm_library(
     name = "javaFX-tests",
     srcs = glob(

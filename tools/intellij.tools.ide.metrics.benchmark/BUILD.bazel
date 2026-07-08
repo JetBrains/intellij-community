@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.tools.ide.metrics.benchmark.tests`
 
 ### auto-generated section `build intellij.tools.ide.metrics.benchmark` start
-
 jvm_provided_library(
     name = "libraries_junit4_provided",
     lib = "//libraries/junit4",
@@ -97,7 +96,6 @@ exports_files(
 ### auto-generated section `iml intellij.tools.ide.metrics.benchmark` end
 
 ### auto-generated section `build intellij.tools.ide.metrics.benchmark.tests` start
-
 jvm_library(
     name = "ide-metrics-benchmark-tests",
     srcs = glob(

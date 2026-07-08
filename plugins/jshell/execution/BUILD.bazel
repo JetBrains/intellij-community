@@ -18,7 +18,6 @@ exports_files(
 ### auto-generated section `local-libs` end
 
 ### auto-generated section `build intellij.java.jshell.execution` start
-
 jvm_library(
     name = "execution",
     srcs = glob(

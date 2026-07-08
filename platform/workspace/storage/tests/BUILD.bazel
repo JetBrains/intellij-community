@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.workspace.storage.tests` start
-
 create_kotlinc_options(
     name = "custom_tests",
     opt_in = [
@@ -97,7 +96,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.workspace.storage.tests` end
 
 ### auto-generated section `test intellij.platform.workspace.storage.tests` start
-
 jps_test(
     name = "tests_test",
     runtime_deps = [":tests_test_lib"],

@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.compose.ide.plugin.shared` start
-
 create_kotlinc_options(
     name = "custom_ide-plugin-shared",
     x_context_parameters = True,
@@ -112,7 +111,6 @@ exports_files(
 ### auto-generated section `iml intellij.compose.ide.plugin.shared` end
 
 ### auto-generated section `build intellij.compose.ide.plugin.shared.tests` start
-
 create_kotlinc_options(
     name = "custom_ide-plugin-shared-tests",
     opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
@@ -213,7 +211,6 @@ exports_files(
 ### auto-generated section `iml intellij.compose.ide.plugin.shared.tests` end
 
 ### auto-generated section `test intellij.compose.ide.plugin.shared.tests` start
-
 jps_test(
     name = "ide-plugin-shared-tests_test",
     runtime_deps = [":ide-plugin-shared-tests_test_lib"],

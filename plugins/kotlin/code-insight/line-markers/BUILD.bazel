@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.codeInsight.lineMarkers` start
-
 create_kotlinc_options(
     name = "custom_line-markers",
     opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"],
@@ -127,7 +126,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.codeInsight.lineMarkers` end
 
 ### auto-generated section `build intellij.kotlin.codeInsight.lineMarkers.tests` start
-
 create_kotlinc_options(
     name = "custom_kotlin-codeInsight-lineMarkers-tests",
     opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"],
@@ -249,7 +247,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.codeInsight.lineMarkers.tests` end
 
 ### auto-generated section `test intellij.kotlin.codeInsight.lineMarkers.tests` start
-
 jps_test(
     name = "kotlin-codeInsight-lineMarkers-tests_test",
     runtime_deps = [":kotlin-codeInsight-lineMarkers-tests_test_lib"],

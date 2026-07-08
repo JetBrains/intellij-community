@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.codeowners.runtime.resolver` start
-
 jvm_library(
     name = "codeowners-runtime-resolver",
     srcs = glob(

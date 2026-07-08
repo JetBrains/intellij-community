@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.compilerPlugins.scripting` start
-
 jvm_library(
     name = "scripting",
     srcs = glob(

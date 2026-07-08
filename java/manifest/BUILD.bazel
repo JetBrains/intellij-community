@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.java.manifest.tests`
 
 ### auto-generated section `build intellij.java.manifest` start
-
 jvm_library(
     name = "manifest",
     srcs = glob(
@@ -99,7 +98,6 @@ exports_files(
 ### auto-generated section `iml intellij.java.manifest` end
 
 ### auto-generated section `build intellij.java.manifest.tests` start
-
 jvm_library(
     name = "manifest-tests",
     srcs = glob(

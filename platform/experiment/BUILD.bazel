@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.experiment.tests`
 
 ### auto-generated section `build intellij.platform.experiment` start
-
 jvm_library(
     name = "experiment",
     srcs = glob(
@@ -74,7 +73,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.experiment` end
 
 ### auto-generated section `build intellij.platform.experiment.tests` start
-
 jvm_library(
     name = "experiment-tests",
     srcs = glob(

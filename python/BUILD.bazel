@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 ### auto-generated section `build intellij.pycharm.community` start
-
 resourcegroup(
     name = "pycharm-community_resources",
     srcs = glob(
@@ -72,7 +71,6 @@ exports_files(
 ### auto-generated section `iml intellij.pycharm.community` end
 
 ### auto-generated section `build intellij.pycharm.community.customization` start
-
 jvm_library(
     name = "pycharm-community-customization",
     srcs = glob(
@@ -124,7 +122,6 @@ exports_files(
 ### auto-generated section `iml intellij.pycharm.community.customization` end
 
 ### auto-generated section `build intellij.pycharm.community.main` start
-
 jvm_library(
     name = "pycharm-community-main",
     srcs = glob(
@@ -256,7 +253,6 @@ exports_files(
 ### auto-generated section `iml intellij.pycharm.community.main` end
 
 ### auto-generated section `build intellij.python.commonTests` start
-
 jvm_library(
     name = "python-commonTests",
     srcs = glob(
@@ -335,7 +331,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.commonTests` end
 
 ### auto-generated section `test intellij.python.commonTests` start
-
 jps_test(
     name = "python-commonTests_test",
     runtime_deps = [":python-commonTests_test_lib"],
@@ -343,7 +338,6 @@ jps_test(
 ### auto-generated section `test intellij.python.commonTests` end
 
 ### auto-generated section `build intellij.python.community.impl` start
-
 jvm_library(
     name = "python-community-impl",
     srcs = glob(
@@ -685,7 +679,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.community.impl` end
 
 ### auto-generated section `build intellij.python.community.impl.tests` start
-
 jvm_library(
     name = "python-community-impl-tests",
     srcs = glob(
@@ -994,7 +987,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.community.impl.tests` end
 
 ### auto-generated section `build intellij.python.community.plugin.main` start
-
 jvm_library(
     name = "python-community-plugin-main",
     srcs = glob(
@@ -1048,7 +1040,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.community.plugin.main` end
 
 ### auto-generated section `build intellij.python.community.plugin.modules` start
-
 jvm_library(
     name = "python-community-plugin-modules",
     srcs = glob(
@@ -1100,7 +1091,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.community.plugin.modules` end
 
 ### auto-generated section `build intellij.python.community.tests` start
-
 jvm_library(
     name = "python-community-tests",
     srcs = glob(
@@ -1435,7 +1425,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.community.tests` end
 
 ### auto-generated section `test intellij.python.community.tests` start
-
 jps_test(
     name = "python-community-tests_test",
     runtime_deps = [":python-community-tests_test_lib"],
@@ -1443,7 +1432,6 @@ jps_test(
 ### auto-generated section `test intellij.python.community.tests` end
 
 ### auto-generated section `build intellij.python.helpers` start
-
 jvm_library(
     name = "python-helpers",
     srcs = glob(
@@ -1481,7 +1469,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.helpers` end
 
 ### auto-generated section `build intellij.python.helpers.tests` start
-
 resourcegroup(
     name = "python-helpers-tests_test_resources",
     srcs = glob(
@@ -1535,7 +1522,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.helpers.tests` end
 
 ### auto-generated section `build intellij.python.pydev` start
-
 jvm_library(
     name = "python-pydev",
     srcs = glob(

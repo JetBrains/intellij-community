@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.eel.nioFs` start
-
 jvm_library(
     name = "eel-nioFs",
     srcs = glob(

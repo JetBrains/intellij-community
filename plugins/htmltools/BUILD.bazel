@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.html.tools.tests`
 
 ### auto-generated section `build intellij.html.tools` start
-
 jvm_library(
     name = "html-tools",
     srcs = glob(
@@ -99,7 +98,6 @@ exports_files(
 ### auto-generated section `iml intellij.html.tools` end
 
 ### auto-generated section `build intellij.html.tools.tests` start
-
 jvm_library(
     name = "html-tools-tests",
     srcs = glob(

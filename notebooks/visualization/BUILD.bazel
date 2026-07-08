@@ -12,7 +12,6 @@ jps_test(
 ### skip generation section `test intellij.notebooks.visualization.tests`
 
 ### auto-generated section `build intellij.notebooks.visualization` start
-
 create_kotlinc_options(
     name = "custom_visualization",
     opt_in = [
@@ -124,7 +123,6 @@ exports_files(
 ### auto-generated section `iml intellij.notebooks.visualization` end
 
 ### auto-generated section `build intellij.notebooks.visualization.tests` start
-
 create_kotlinc_options(
     name = "custom_visualization-tests",
     opt_in = [

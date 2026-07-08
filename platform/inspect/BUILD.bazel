@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.inspect.tests`
 
 ### auto-generated section `build intellij.platform.inspect` start
-
 jvm_library(
     name = "inspect",
     srcs = glob(
@@ -137,7 +136,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.inspect` end
 
 ### auto-generated section `build intellij.platform.inspect.tests` start
-
 jvm_library(
     name = "inspect-tests",
     srcs = glob(

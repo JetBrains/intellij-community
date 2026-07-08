@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.jps.model.tests`
 
 ### auto-generated section `build intellij.platform.jps.model.impl` start
-
 jvm_library(
     name = "model-impl",
     srcs = glob(
@@ -73,7 +72,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.jps.model.impl` end
 
 ### auto-generated section `build intellij.platform.jps.model.tests` start
-
 jvm_library(
     name = "model-tests",
     srcs = glob(

@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.ant.tests`
 
 ### auto-generated section `build intellij.ant` start
-
 jvm_library(
     name = "ant",
     srcs = glob(
@@ -173,7 +172,6 @@ exports_files(
 ### auto-generated section `iml intellij.ant` end
 
 ### auto-generated section `build intellij.ant.tests` start
-
 jvm_library(
     name = "ant-tests",
     srcs = glob(

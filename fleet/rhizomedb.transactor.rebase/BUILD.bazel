@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build fleet.rhizomedb.transactor.rebase` start
-
 create_kotlinc_options(
     name = "custom_rhizomedb.transactor.rebase",
     opt_in = [

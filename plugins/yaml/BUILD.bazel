@@ -14,7 +14,6 @@ jps_test(
 ### skip generation section `test intellij.yaml.tests`
 
 ### auto-generated section `build intellij.yaml` start
-
 jvm_library(
     name = "yaml",
     srcs = glob(
@@ -111,7 +110,6 @@ exports_files(
 ### auto-generated section `iml intellij.yaml` end
 
 ### auto-generated section `build intellij.yaml.tests` start
-
 jvm_library(
     name = "yaml-tests",
     srcs = glob(

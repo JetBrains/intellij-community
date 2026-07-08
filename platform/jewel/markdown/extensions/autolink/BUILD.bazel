@@ -12,7 +12,6 @@ jps_test(
 ### skip generation section `test intellij.platform.jewel.markdown.extensions.autolink.tests`
 
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.autolink` start
-
 create_kotlinc_options(
     name = "custom_autolink",
     opt_in = [
@@ -91,7 +90,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.jewel.markdown.extensions.autolink` end
 
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.autolink.tests` start
-
 create_kotlinc_options(
     name = "custom_jewel-markdown-extensions-autolink-tests",
     opt_in = [

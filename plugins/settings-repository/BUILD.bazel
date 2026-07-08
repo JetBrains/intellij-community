@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.settingsRepository` start
-
 jvm_library(
     name = "settings-repository",
     srcs = glob(
@@ -124,7 +123,6 @@ exports_files(
 ### auto-generated section `iml intellij.settingsRepository` end
 
 ### auto-generated section `build intellij.settingsRepository.tests` start
-
 jvm_library(
     name = "settingsRepository-tests",
     srcs = glob(
@@ -234,7 +232,6 @@ exports_files(
 ### auto-generated section `iml intellij.settingsRepository.tests` end
 
 ### auto-generated section `test intellij.settingsRepository.tests` start
-
 jps_test(
     name = "settingsRepository-tests_test",
     runtime_deps = [":settingsRepository-tests_test_lib"],

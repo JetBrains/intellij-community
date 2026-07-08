@@ -12,7 +12,6 @@ jps_test(
 ### skip generation section `test intellij.platform.whatsNew.tests`
 
 ### auto-generated section `build intellij.platform.whatsNew` start
-
 create_kotlinc_options(
     name = "custom_whatsNew",
     opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"],
@@ -109,7 +108,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.whatsNew` end
 
 ### auto-generated section `build intellij.platform.whatsNew.tests` start
-
 create_kotlinc_options(
     name = "custom_whatsNew-tests",
     opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"],

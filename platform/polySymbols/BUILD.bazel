@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.polySymbols.tests`
 
 ### auto-generated section `build intellij.platform.polySymbols` start
-
 jvm_library(
     name = "polySymbols",
     srcs = glob(
@@ -112,7 +111,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.polySymbols` end
 
 ### auto-generated section `build intellij.platform.polySymbols.testFramework` start
-
 jvm_provided_library(
     name = "libraries_junit4_provided",
     lib = "//libraries/junit4",
@@ -231,7 +229,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.polySymbols.testFramework` end
 
 ### auto-generated section `build intellij.platform.polySymbols.tests` start
-
 jvm_library(
     name = "polySymbols-tests",
     srcs = glob(

@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.vcs.github.tests`
 
 ### auto-generated section `build intellij.vcs.github` start
-
 resourcegroup(
     name = "vcs-github_resources",
     srcs = glob(
@@ -216,7 +215,6 @@ exports_files(
 ### auto-generated section `iml intellij.vcs.github` end
 
 ### auto-generated section `build intellij.vcs.github.tests` start
-
 jvm_library(
     name = "vcs-github-tests",
     srcs = glob(

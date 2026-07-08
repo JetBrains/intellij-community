@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.turboComplete.tests`
 
 ### auto-generated section `build intellij.turboComplete` start
-
 jvm_library(
     name = "turboComplete",
     srcs = glob(
@@ -85,7 +84,6 @@ exports_files(
 ### auto-generated section `iml intellij.turboComplete` end
 
 ### auto-generated section `build intellij.turboComplete.tests` start
-
 jvm_library(
     name = "turboComplete-tests",
     srcs = glob(

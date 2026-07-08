@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.opentelemetry.extension.kotlin` start
-
 jvm_library(
     name = "opentelemetry-extension-kotlin",
     srcs = glob(

@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.ml.features` start
-
 jvm_library(
     name = "ml-features",
     srcs = glob(

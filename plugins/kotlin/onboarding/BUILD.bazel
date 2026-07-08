@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.kotlin.onboarding.tests`
 
 ### auto-generated section `build intellij.kotlin.onboarding` start
-
 jvm_library(
     name = "onboarding",
     srcs = glob(
@@ -114,7 +113,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.onboarding` end
 
 ### auto-generated section `build intellij.kotlin.onboarding.tests` start
-
 jvm_library(
     name = "onboarding-tests",
     srcs = glob(

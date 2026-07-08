@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.instanceContainer.tests`
 
 ### auto-generated section `build intellij.platform.instanceContainer` start
-
 jvm_library(
     name = "instanceContainer",
     srcs = glob(
@@ -66,7 +65,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.instanceContainer` end
 
 ### auto-generated section `build intellij.platform.instanceContainer.tests` start
-
 jvm_library(
     name = "instanceContainer-tests",
     srcs = glob(

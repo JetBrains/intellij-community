@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.platform.util.text.matching.tests`
 
 ### auto-generated section `build intellij.platform.util.text.matching` start
-
 jvm_library(
     name = "text-matching",
     srcs = glob(
@@ -70,7 +69,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.util.text.matching` end
 
 ### auto-generated section `build intellij.platform.util.text.matching.tests` start
-
 jvm_library(
     name = "text-matching-tests",
     srcs = glob(

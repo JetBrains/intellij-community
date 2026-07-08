@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.editorconfig.backend.tests`
 
 ### auto-generated section `build intellij.editorconfig.backend` start
-
 resourcegroup(
     name = "backend_resources",
     srcs = glob(
@@ -143,7 +142,6 @@ exports_files(
 ### auto-generated section `iml intellij.editorconfig.backend` end
 
 ### auto-generated section `build intellij.editorconfig.backend.tests` start
-
 jvm_library(
     name = "backend-tests",
     srcs = glob(

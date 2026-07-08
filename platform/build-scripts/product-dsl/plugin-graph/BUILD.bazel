@@ -12,7 +12,6 @@ jps_test(
 ### skip generation section `test intellij.platform.pluginGraph.tests`
 
 ### auto-generated section `build intellij.platform.pluginGraph` start
-
 create_kotlinc_options(
     name = "custom_plugin-graph",
     opt_in = [
@@ -80,7 +79,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.pluginGraph` end
 
 ### auto-generated section `build intellij.platform.pluginGraph.tests` start
-
 create_kotlinc_options(
     name = "custom_pluginGraph-tests",
     opt_in = [

@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.base.codeInsight` start
-
 create_kotlinc_options(
     name = "custom_code-insight",
     opt_in = [
@@ -162,7 +161,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.base.codeInsight` end
 
 ### auto-generated section `build intellij.kotlin.base.codeInsight.tests` start
-
 create_kotlinc_options(
     name = "custom_kotlin-base-codeInsight-tests",
     opt_in = [
@@ -315,7 +313,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.base.codeInsight.tests` end
 
 ### auto-generated section `test intellij.kotlin.base.codeInsight.tests` start
-
 jps_test(
     name = "kotlin-base-codeInsight-tests_test",
     runtime_deps = [":kotlin-base-codeInsight-tests_test_lib"],

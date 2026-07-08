@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.dev.leakDetection` start
-
 jvm_library(
     name = "leakDetection",
     srcs = glob(
@@ -76,7 +75,6 @@ exports_files(
 ### auto-generated section `iml intellij.dev.leakDetection` end
 
 ### auto-generated section `build intellij.dev.leakDetection.tests` start
-
 jvm_library(
     name = "leakDetection-tests",
     srcs = glob(
@@ -156,7 +154,6 @@ exports_files(
 ### auto-generated section `iml intellij.dev.leakDetection.tests` end
 
 ### auto-generated section `test intellij.dev.leakDetection.tests` start
-
 jps_test(
     name = "leakDetection-tests_test",
     runtime_deps = [":leakDetection-tests_test_lib"],

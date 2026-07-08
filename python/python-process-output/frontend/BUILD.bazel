@@ -12,7 +12,6 @@ jps_test(
 ### skip generation section `test intellij.python.processOutput.frontend.tests`
 
 ### auto-generated section `build intellij.python.processOutput.frontend` start
-
 create_kotlinc_options(
     name = "custom_frontend",
     opt_in = ["kotlin.time.ExperimentalTime"],
@@ -141,7 +140,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.processOutput.frontend` end
 
 ### auto-generated section `build intellij.python.processOutput.frontend.tests` start
-
 create_kotlinc_options(
     name = "custom_python-processOutput-frontend-tests",
     opt_in = ["kotlin.time.ExperimentalTime"],
