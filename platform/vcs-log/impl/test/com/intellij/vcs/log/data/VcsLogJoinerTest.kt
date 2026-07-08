@@ -766,4 +766,73 @@ class VcsLogJoinerTest {
       }
     }
   }
+
+  @Test
+  fun droppedParentRemovedWhenNoRefChange() {
+    // X's parent changes from A to B (no ref change — X is still the only ref).
+    // A becomes unreachable and should be removed from the log.
+    runTest {
+      fullLog {
+        +"4|-x|-a"
+        +"3|-a|-b"
+        +"2|-b|-c"
+        +"1|-c|-"
+      }
+      recentCommits {
+        +"4|-x|-b"
+        +"2|-b|-c"
+        +"1|-c|-"
+      }
+      oldRefs {
+        +"x"
+      }
+      newRefs {
+        +"x"
+      }
+      expected {
+        +"x"
+        +"b"
+        +"c"
+      }
+      expectedWithParents {
+        +"x|-b"
+        +"b|-c"
+        +"c"
+      }
+    }
+  }
+
+  @Test
+  fun droppedParentSurvivesIfReachableElsewhere() {
+    // X's parent changes from A to B, but A is still reachable through another ref Y.
+    // A should NOT be removed.
+    runTest {
+      fullLog {
+        +"4|-x|-a"
+        +"3|-a|-c"
+        +"3|-y|-a"
+        +"1|-c|-"
+      }
+      recentCommits {
+        +"4|-x|-c"
+        +"3|-y|-a"
+        +"3|-a|-c"
+        +"1|-c|-"
+      }
+      oldRefs {
+        +"x"
+        +"y"
+      }
+      newRefs {
+        +"x"
+        +"y"
+      }
+      expected {
+        +"x"
+        +"y"
+        +"a"
+        +"c"
+      }
+    }
+  }
 }

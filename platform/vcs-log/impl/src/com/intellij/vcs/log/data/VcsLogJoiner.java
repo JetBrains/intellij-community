@@ -188,10 +188,20 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
           if (isGreen) {
             currentRed.remove(commit.getId());
             // For recently fetched commits, propagate their updated parents instead of
-            // the stale ones from savedLog. This prevents stale parents (e.g., removed
-            // commits) from being incorrectly marked as green.
+            // the stale ones from savedLog. Parents that were dropped (in savedLog but not
+            // in firstBlock) become red candidates — they may be unreachable now.
             List<CommitId> updatedParents = recentCommitParents.get(commit.getId());
-            currentGreen.addAll(updatedParents != null ? updatedParents : commit.getParents());
+            if (updatedParents != null) {
+              currentGreen.addAll(updatedParents);
+              for (CommitId oldParent : commit.getParents()) {
+                if (!updatedParents.contains(oldParent)) {
+                  currentRed.add(oldParent);
+                }
+              }
+            }
+            else {
+              currentGreen.addAll(commit.getParents());
+            }
           }
           else {
             markRealRedNode(commit.getId());
