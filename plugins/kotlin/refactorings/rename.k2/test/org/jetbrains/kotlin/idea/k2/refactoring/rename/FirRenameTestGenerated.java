@@ -408,6 +408,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/lambdaParameterRedeclaration/lambdaParameterRedeclaration.test");
     }
 
+    @TestMetadata("localVariableNoConflictInDifferentWhenBranches/localVariableNoConflictInDifferentWhenBranches.test")
+    public void testLocalVariableNoConflictInDifferentWhenBranches_LocalVariableNoConflictInDifferentWhenBranches() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/localVariableNoConflictInDifferentWhenBranches/localVariableNoConflictInDifferentWhenBranches.test");
+    }
+
     @TestMetadata("memberFunctionRedeclaration/memberFunctionRedeclaration.test")
     public void testMemberFunctionRedeclaration_MemberFunctionRedeclaration() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/memberFunctionRedeclaration/memberFunctionRedeclaration.test");
