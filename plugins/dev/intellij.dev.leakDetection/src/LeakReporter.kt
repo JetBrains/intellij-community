@@ -3,7 +3,9 @@ package com.intellij.dev.leakDetection
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.actions.RevealFileAction
+import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.logsUploader.LogUploader
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -13,15 +15,18 @@ import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
+import com.intellij.util.system.OS
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +38,7 @@ import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.datatransfer.StringSelection
+import java.lang.management.ManagementFactory
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
@@ -94,7 +100,49 @@ class LeakReporter(private val coroutineScope: CoroutineScope) {
     notification.notify(project)
   }
 
-  fun buildReport(leaks: List<LeakInfo>): String {
+  fun buildReport(leaks: List<LeakInfo>): String = buildString {
+    append("IDE state: ").append(ideStateInfo()).append('\n')
+    append("OS: ").append(osInfo()).append("\n\n")
+    append("```\n")
+    append(ideInfo()).append("\n\n")
+    append(buildLeaksReport(leaks).trimEnd('\n')).append("\n```")
+  }
+
+  private fun ideStateInfo(): String {
+    val openProjects = ProjectUtilCore.getOpenProjects()
+    return when {
+      openProjects.isEmpty() && WelcomeFrame.getInstance() != null -> "All projects are closed, welcome screen"
+      openProjects.isEmpty() -> "All projects are closed"
+      else -> "${openProjects.size} project(s) open: ${openProjects.joinToString { it.name }}"
+    }
+  }
+
+  private fun osInfo(): String {
+    val name = System.getProperty("os.name", "unknown")
+    return when {
+      OS.isGenericUnix() && System.getenv("WAYLAND_DISPLAY") != null -> "$name, Wayland"
+      OS.isGenericUnix() -> "$name, X11"
+      else -> name
+    }
+  }
+
+  private fun ideInfo(): String {
+    val appInfo = ApplicationInfoEx.getInstanceEx()
+    val nonBundled = PluginManagerCore.loadedPlugins.filter { !it.isBundled }.sortedBy { it.name }
+    val uptimeMs = ManagementFactory.getRuntimeMXBean().uptime
+    val hours = uptimeMs / 3_600_000
+    val minutes = (uptimeMs % 3_600_000) / 60_000
+    return buildString {
+      append("# IDE: ").append(appInfo.fullApplicationName).append(" Build #").append(appInfo.build.asString()).append('\n')
+      append("# JVM: ").append(System.getProperty("java.runtime.version", "unknown")).append(' ')
+        .append(System.getProperty("os.arch", "")).append('\n')
+      append("# Uptime: ").append(hours).append("h ").append(minutes).append("m\n")
+      append("# Non-bundled plugins (").append(nonBundled.size).append("): ")
+        .append(nonBundled.joinToString(", ") { "${it.name} (${it.version})" })
+    }
+  }
+
+  private fun buildLeaksReport(leaks: List<LeakInfo>): String {
     // Squash leaks that share the same structural reference path (ignoring identity hashes and array indices), so a
     // report with many near-identical retention chains stays readable: each distinct path is printed only once.
     val groups = LinkedHashMap<String, MutableList<LeakInfo>>()
