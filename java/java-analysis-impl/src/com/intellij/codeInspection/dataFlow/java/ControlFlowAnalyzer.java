@@ -2514,17 +2514,71 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
 
       addConditionalErrorThrow();
-      List<? extends MethodContract> contracts = constructor == null ? Collections.emptyList() :
-                                                 JavaMethodContractUtil.getMethodCallContracts(constructor, null);
-      contracts = DfaUtil.addRangeContracts(constructor, contracts);
-      DfaVariableValue constructorResult = constructor == null ? null : createTempVariable(type);
-      addInstruction(new MethodCallInstruction(expression, contracts, constructorResult));
-      processFailResult(constructor, contracts, expression);
+      if (isInitializableRecord(constructor, expression)) {
+        initializeRecordConstructor(expression, type, constructor);
+      }
+      else {
+        List<? extends MethodContract> contracts = constructor == null ? Collections.emptyList() :
+                                                   JavaMethodContractUtil.getMethodCallContracts(constructor, null);
+        contracts = DfaUtil.addRangeContracts(constructor, contracts);
+        addInstruction(new MethodCallInstruction(expression, contracts));
+        processFailResult(constructor, contracts, expression);
+      }
 
       addMethodThrows(constructorOrClass);
     }
 
     finishElement(expression);
+  }
+
+  private static boolean isInitializableRecord(@Nullable PsiMethod constructor,
+                                               @NotNull PsiNewExpression expression) {
+    if (constructor == null ||
+        !JavaPsiRecordUtil.isCanonicalConstructor(constructor) ||
+        JavaPsiRecordUtil.isCompactConstructor(constructor) ||
+        JavaPsiRecordUtil.isExplicitCanonicalConstructor(constructor)) {
+      return false;
+    }
+    PsiClass recordClass = constructor.getContainingClass();
+    if (recordClass == null || !recordClass.isRecord()) return false;
+    PsiRecordComponent[] components = recordClass.getRecordComponents();
+    PsiExpressionList argumentList = expression.getArgumentList();
+    int slotCount = MethodCallUtils.isVarArgCall(expression)
+                    ? constructor.getParameterList().getParametersCount()
+                    : (argumentList == null ? 0 : argumentList.getExpressionCount());
+    if (slotCount == 0) return false;
+    return slotCount == components.length;
+  }
+
+  /**
+   * Creates the instructions modeling an implicit canonical record constructor call. On entry the stack holds
+   * {@code [qualifier, arg0, ..., argN]}; on exit it holds the freshly created record object.
+   */
+  private void initializeRecordConstructor(@NotNull PsiNewExpression expression,
+                                           @Nullable PsiType type,
+                                           @NotNull PsiMethod constructor) {
+    PsiClass recordClass = constructor.getContainingClass();
+    PsiRecordComponent[] components = Objects.requireNonNull(recordClass).getRecordComponents();
+    DfaVariableValue result = createTempVariable(type);
+    DfType recordType = type == null ? DfTypes.NOT_NULL_OBJECT.meet(DfTypes.LOCAL_OBJECT) :
+                         TypeConstraints.exact(type)
+                           .asDfType()
+                           .meet(DfTypes.NOT_NULL_OBJECT)
+                           .meet(DfTypes.LOCAL_OBJECT);
+    addInstruction(new PushValueInstruction(recordType, null));
+    addInstruction(new SimpleAssignmentInstruction(null, result));
+    addInstruction(new PopInstruction());
+    for (int i = components.length - 1; i >= 0; i--) {
+      PsiField field = JavaPsiRecordUtil.getFieldForComponent(components[i]);
+      DfaValue fieldValue = field == null ? null : new PlainDescriptor(field).createValue(myFactory, result);
+      if (fieldValue instanceof DfaVariableValue fieldVar) {
+        addInstruction(new SimpleAssignmentInstruction(null, fieldVar));
+      }
+      addInstruction(new PopInstruction());
+    }
+
+    addInstruction(new PopInstruction()); //qualifier
+    addInstruction(new PushInstruction(result, new JavaExpressionAnchor(expression)));
   }
 
   private void initializeSmallArray(PsiArrayType type, PsiExpression[] dimensions) {

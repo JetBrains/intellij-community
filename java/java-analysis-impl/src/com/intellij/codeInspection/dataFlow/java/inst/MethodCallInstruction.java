@@ -28,7 +28,6 @@ import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.MutabilityProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
@@ -57,13 +56,11 @@ import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiSuperExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
@@ -105,8 +102,6 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
   private final List<MethodContract> myContracts;
   private final Nullability[] myArgRequiredNullability;
   private final Nullability myReturnNullability;
-  //temporary variable used `this` for constructors
-  private final @Nullable DfaVariableValue myConstructorResult;
 
   public MethodCallInstruction(@NotNull PsiMethodReferenceExpression reference, @NotNull List<? extends MethodContract> contracts) {
     super(new JavaMethodReferenceReturnAnchor(reference));
@@ -136,16 +131,9 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
                                : calcArgRequiredNullability(resolveResult.getSubstitutor(),
                                                             myTargetMethod.getParameterList().getParameters());
     myMutation = MutationSignature.fromMethod(myTargetMethod);
-    myConstructorResult = null;
   }
 
   public MethodCallInstruction(@NotNull PsiCall call, @NotNull List<? extends MethodContract> contracts) {
-    this(call, contracts, null);
-  }
-
-  public MethodCallInstruction(@NotNull PsiCall call,
-                               @NotNull List<? extends MethodContract> contracts,
-                               @Nullable DfaVariableValue constructorResult) {
     super(call instanceof PsiExpression expr ? new JavaExpressionAnchor(expr) : null);
     myContext = call;
     myContracts = Collections.unmodifiableList(contracts);
@@ -168,13 +156,6 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
 
     myMutation = MutationSignature.fromCall(call);
     myReturnNullability = call instanceof PsiNewExpression ? Nullability.NOT_NULL : DfaPsiUtil.getElementNullabilityForRead(myType, myTargetMethod);
-    myConstructorResult = constructorResult;
-  }
-
-  @Override
-  public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
-    if (myConstructorResult == null || !(myContext instanceof PsiCall call)) return this;
-    return new MethodCallInstruction(call, myContracts, myConstructorResult.bindToFactory(factory));
   }
 
   /**
@@ -306,39 +287,6 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
       result[i++] = nextState(interpreter, state);
     }
     return result;
-  }
-
-  private void updateRecordConstructorFields(@NotNull DfaValueFactory factory,
-                                             @NotNull DfaMemoryState state,
-                                             @NotNull DfaValue result,
-                                             DfaValue @Nullable [] argValues) {
-    if (!(myTargetMethod != null &&
-          JavaPsiRecordUtil.isCanonicalConstructor(myTargetMethod) &&
-          !JavaPsiRecordUtil.isCompactConstructor(myTargetMethod) &&
-          !JavaPsiRecordUtil.isExplicitCanonicalConstructor(myTargetMethod))) {
-      return;
-    }
-
-    if (myConstructorResult == null || result != myConstructorResult || argValues == null) {
-      return;
-    }
-
-    PsiClass recordClass = myTargetMethod.getContainingClass();
-    if (recordClass == null || !recordClass.isRecord()) {
-      return;
-    }
-    PsiRecordComponent[] components = recordClass.getRecordComponents();
-    if (components.length != argValues.length) {
-      return;
-    }
-    for (int i = 0; i < components.length; i++) {
-      PsiField field = JavaPsiRecordUtil.getFieldForComponent(components[i]);
-      if (field == null) continue;
-      DfaValue fieldValue = new PlainDescriptor(field).createValue(factory, myConstructorResult);
-      if (fieldValue instanceof DfaVariableValue fieldVar) {
-        state.setVarValue(fieldVar, argValues[i]);
-      }
-    }
   }
 
   public @Nullable PsiCall getCallExpression() {
@@ -479,13 +427,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     }
 
     DfType dfType = getMethodResultType(state, factory, realMethod, qualifierValue);
-    DfaValue result = factory.fromDfType(dfType);
-    if (myConstructorResult != null && myTargetMethod != null && myTargetMethod.isConstructor()) {
-      state.setVarValue(myConstructorResult, result);
-      updateRecordConstructorFields(factory, state, myConstructorResult, callArguments.getArguments());
-      return myConstructorResult;
-    }
-    return result;
+    return factory.fromDfType(dfType);
   }
 
   private @NotNull DfType getMethodResultType(@NotNull DfaMemoryState state,
