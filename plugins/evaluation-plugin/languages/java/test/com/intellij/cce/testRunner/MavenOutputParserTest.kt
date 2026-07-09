@@ -1,4 +1,4 @@
-package com.intellij.cce.testrunner
+package com.intellij.cce.testRunner
 
 
 import com.intellij.cce.java.test.MavenOutputParser
