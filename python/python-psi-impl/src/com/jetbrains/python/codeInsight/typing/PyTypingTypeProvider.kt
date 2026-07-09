@@ -1897,6 +1897,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
 
     @ApiStatus.Internal
+    @JvmStatic
     fun getAnnotationValue(owner: PyAnnotationOwner, context: TypeEvalContext): PyExpression? {
       if (context.maySwitchToAST(owner)) {
         val annotation = owner.annotation

@@ -21,7 +21,6 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ast.PyAstFunction
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
 import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage
@@ -413,18 +412,6 @@ object PyTypeUtil {
       is PyCallableType -> sequenceOf(functionType)
       is PyOverloadType -> functionType.items.filterNotNull().asSequence()
       else -> emptySequence()
-    }
-  }
-
-  @ApiStatus.Internal
-  @JvmStatic
-  fun isInstanceMember(resolveResults: List<@JvmWildcard RatedResolveResult>, context: TypeEvalContext): Boolean {
-    return resolveResults.any {
-      val element = it.element
-      element is PyTargetExpression &&
-      PyTypingTypeProvider.getAnnotationValue(element, context) != null &&
-      !PyTypingTypeProvider.isClassVar(element, context) &&
-      !(PyTypingTypeProvider.isFinal(element, context) && element.hasAssignedValue())
     }
   }
 

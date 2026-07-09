@@ -583,7 +583,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       .anyMatch(type -> type instanceof PyCallableType && !(type instanceof PyClassLikeType));
 
     if (!isMethod) return null;
-    if (PyTypeUtil.isInstanceMember(resolveResults, context)) return null;
+    if (isInstanceMember(resolveResults, context)) return null;
 
     List<@Nullable PyType> providedTypes = StreamEx.of(resolveResults)
       .map(r -> r.getElement())
@@ -612,6 +612,17 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
 
     return Ref.create(PyTypeUtil.getTypeOfBoundMember(classType, selfType, resolveResults, context, errors));
+  }
+
+  private static boolean isInstanceMember(@NotNull List<? extends RatedResolveResult> resolveResults,
+                                          @NotNull TypeEvalContext context) {
+    return ContainerUtil.exists(resolveResults, it -> {
+      PsiElement element = it.getElement();
+      return element instanceof PyTargetExpression targetExpression &&
+             PyTypingTypeProvider.getAnnotationValue(targetExpression, context) != null &&
+             !PyTypingTypeProvider.isClassVar(targetExpression, context) &&
+             !(PyTypingTypeProvider.isFinal(targetExpression, context) && targetExpression.hasAssignedValue());
+    });
   }
 
   private @Nullable PyType getTypeFromProviders(@NotNull TypeEvalContext context) {
