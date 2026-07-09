@@ -775,6 +775,8 @@ c:com.intellij.codeInsight.documentation.DocumentationComponent
 - getText():java.lang.String
 c:com.intellij.codeInsight.documentation.DocumentationManager
 - com.intellij.codeInsight.documentation.DockablePopupManager
+- com.intellij.openapi.Disposable
+- dispose():V
 - getDocInfoHint():com.intellij.openapi.ui.popup.JBPopup
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.documentation.DocumentationManager
 - s:getOriginalElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
