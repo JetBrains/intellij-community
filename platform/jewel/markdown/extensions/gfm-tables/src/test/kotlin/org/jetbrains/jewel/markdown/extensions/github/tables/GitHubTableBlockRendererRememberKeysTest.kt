@@ -91,7 +91,7 @@ public class GitHubTableBlockRendererRememberKeysTest {
                 MarkdownTestTheme {
                     val renderer = DefaultMarkdownBlockRenderer(markdownStyling, listOf(rendererExtension))
                     renderer.RenderBlocks(
-                        blocks,
+                        blocks = blocks,
                         enabled = enabled,
                         onUrlClick = { url -> clickedUrl = url },
                         modifier = Modifier,
