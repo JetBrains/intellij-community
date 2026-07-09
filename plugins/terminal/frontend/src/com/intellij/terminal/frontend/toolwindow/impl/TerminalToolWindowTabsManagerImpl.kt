@@ -269,8 +269,12 @@ internal class TerminalToolWindowTabsManagerImpl(
       sourceNavigationProjectPath = builder.sourceNavigationProjectPath,
       startupFusInfo = builder.startupFusInfo,
     )
-    val scope = coroutineScope.childScope("TerminalView")
-    val terminal = doCreateTerminalViewAndStartSession(viewOptions, builder.backendTabId, scope)
+    val terminal = doCreateTerminalViewAndStartSession(
+      project = project,
+      options = viewOptions,
+      existingBackendTabId = builder.backendTabId,
+      coroutineScope = coroutineScope.childScope("TerminalView")
+    )
     terminal.title.change {
       if (builder.isUserDefinedName) {
         userDefinedTitle = builder.tabName
@@ -284,6 +288,7 @@ internal class TerminalToolWindowTabsManagerImpl(
   }
 
   private fun doCreateTerminalViewAndStartSession(
+    project: Project,
     options: TerminalViewBuilderOptions,
     existingBackendTabId: Int?,
     coroutineScope: CoroutineScope,
@@ -295,12 +300,13 @@ internal class TerminalToolWindowTabsManagerImpl(
       coroutineScope = coroutineScope,
       sourceNavigationProjectPath = options.sourceNavigationProjectPath,
     )
-    createBackendTabAndStartSession(terminalView, options, existingBackendTabId)
+    createBackendTabAndStartSession(project, terminalView, options, existingBackendTabId)
     return terminalView
   }
 
   @OptIn(AwaitCancellationAndInvoke::class)
   private fun createBackendTabAndStartSession(
+    project: Project,
     terminal: TerminalViewImpl,
     options: TerminalViewBuilderOptions,
     existingBackendTabId: Int?,
@@ -319,10 +325,11 @@ internal class TerminalToolWindowTabsManagerImpl(
       scope = terminal.coroutineScope.childScope("Backend tab name updating")
     )
 
-    scheduleSessionStart(terminal, options, backendTabId)
+    scheduleSessionStart(project, terminal, options, backendTabId)
   }
 
   private suspend fun scheduleSessionStart(
+    project: Project,
     terminal: TerminalViewImpl,
     options: TerminalViewBuilderOptions,
     backendTabId: Int,
@@ -331,16 +338,17 @@ internal class TerminalToolWindowTabsManagerImpl(
       withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
         // Non-cancellable because we expect it to be called only once even if the component was hidden immediately.
         terminal.component.initOnShow("Terminal Session start", context = NonCancellable) {
-          doScheduleSessionStart(terminal, options.processOptions, backendTabId, calculateSizeFromComponent = true)
+          doScheduleSessionStart(project, terminal, options.processOptions, backendTabId, calculateSizeFromComponent = true)
         }
       }
     }
     else {
-      doScheduleSessionStart(terminal, options.processOptions, backendTabId, calculateSizeFromComponent = false)
+      doScheduleSessionStart(project, terminal, options.processOptions, backendTabId, calculateSizeFromComponent = false)
     }
   }
 
   private fun doScheduleSessionStart(
+    project: Project,
     terminal: TerminalViewImpl,
     processOptions: TerminalRequestedProcessOptions,
     backendTabId: Int,
@@ -348,7 +356,7 @@ internal class TerminalToolWindowTabsManagerImpl(
   ) = terminal.coroutineScope.launch(CoroutineName("Terminal Session start")) {
     val options = prepareStartupOptions(terminal, processOptions, calculateSizeFromComponent)
     val sessionTab = TerminalTabsManager.getInstance(project).startTerminalSessionForTab(backendTabId, options)
-    connectSessionToTerminal(terminal, sessionTab.sessionId!!)
+    connectSessionToTerminal(project, terminal, sessionTab.sessionId!!)
   }
 
   private suspend fun prepareStartupOptions(
@@ -375,6 +383,7 @@ internal class TerminalToolWindowTabsManagerImpl(
   }
 
   private suspend fun connectSessionToTerminal(
+    project: Project,
     terminal: TerminalViewImpl,
     sessionId: TerminalSessionId,
   ) = withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
