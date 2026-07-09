@@ -1510,7 +1510,6 @@ public class HighlightInfo implements Segment {
     };
     computation.accept(registrarDelegate);
     assertIntentionActionDescriptorsAreRangeMarkerBased(getIntentionActionDescriptors(offsetStore));
-    fireQuickFixesAvailable(lazyDescriptors, project, document);
     if (!lazyDescriptors.isEmpty()) {
       if (LOG.isTraceEnabled()) {
         LOG.trace("computeQuickFixesSynchronously finished: " + lazyDescriptors);
@@ -1548,9 +1547,8 @@ public class HighlightInfo implements Segment {
         Future<List<IntentionActionDescriptor>> future = description.future();
         if (future == null) {
           Consumer<? super QuickFixActionRegistrar> computer = description.fixesComputer();
-          future = ReadAction.nonBlocking(() -> doComputeLazyQuickFixes(document, project, description.psiModificationStamp(), computer))
-            .wrapProgress(progressIndicator.get())
-            .submit(ForkJoinPool.commonPool());
+          future = ReadAction.nonBlocking(() -> doComputeLazyQuickFixes(document, project, description.psiModificationStamp(), computer)).wrapProgress(progressIndicator.get()).submit(ForkJoinPool.commonPool())
+            .onSuccess(descriptors -> fireQuickFixesAvailable(descriptors, project, document));
           return new LazyFixDescription(computer, PsiManager.getInstance(project).getModificationTracker().getModificationCount(), future);
         }
         return description;
