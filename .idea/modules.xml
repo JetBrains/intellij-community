@@ -1558,7 +1558,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/pratt/intellij.platform.pratt.iml" filepath="$PROJECT_DIR$/platform/pratt/intellij.platform.pratt.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/problemsView/backend/intellij.platform.problemView.backend.iml" filepath="$PROJECT_DIR$/platform/problemsView/backend/intellij.platform.problemView.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/problemsView/backend/intellij.platform.problemView.backend.tests.iml" filepath="$PROJECT_DIR$/platform/problemsView/backend/intellij.platform.problemView.backend.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/problemsView/buildView/intellij.platform.problemView.buildView.iml" filepath="$PROJECT_DIR$/platform/problemsView/buildView/intellij.platform.problemView.buildView.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/problemsView/collector/intellij.platform.problemView.collector.iml" filepath="$PROJECT_DIR$/platform/problemsView/collector/intellij.platform.problemView.collector.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/problemsView/core/intellij.platform.problemView.core.iml" filepath="$PROJECT_DIR$/platform/problemsView/core/intellij.platform.problemView.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/problemsView/frontend/intellij.platform.problemView.frontend.iml" filepath="$PROJECT_DIR$/platform/problemsView/frontend/intellij.platform.problemView.frontend.iml" />

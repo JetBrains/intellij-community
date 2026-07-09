@@ -32,6 +32,7 @@
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.problemsView.backend.ProblemsViewRpcProvider"/>
     <problemsViewPanelProvider implementation="com.intellij.platform.problemsView.backend.BackendProblemsViewHighlightingPanelProvider" order="first"/>
     <problemsViewPanelProvider implementation="com.intellij.platform.problemsView.backend.BackendProblemsViewProjectErrorsPanelProvider"/>
+    
+    <buildProgressListenerRegistrar implementation="com.intellij.platform.problemsView.backend.BuildViewProblemsListenerRegistrar"/>
   </extensions>
-
   </idea-plugin>

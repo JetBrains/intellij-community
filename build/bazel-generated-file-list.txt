@@ -818,7 +818,6 @@ platform/polySymbols
 platform/polySymbols/backend
 platform/pratt
 platform/problemsView/backend
-platform/problemsView/buildView
 platform/problemsView/collector
 platform/problemsView/core
 platform/problemsView/frontend
