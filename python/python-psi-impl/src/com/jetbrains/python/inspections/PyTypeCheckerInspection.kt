@@ -149,10 +149,19 @@ open class PyTypeCheckerInspection : PyInspection() {
   @JvmField
   var mypyCompatibleAttributeVariance: Boolean = false
 
+  /**
+   * When true, checks an override of a base class attribute without a type annotation against the inferred type of the attribute.
+   * When false, checks only an override of an annotated attribute.
+   */
+  @JvmField
+  var checkInferredAttributeOverrides: Boolean = false
+
   override fun getOptionsPane(): OptPane {
     return OptPane.pane(
       OptPane.checkbox("mypyCompatibleAttributeVariance",
-                       PyPsiBundle.message("INSP.type.checker.mypy.compatible.attribute.variance"))
+                       PyPsiBundle.message("INSP.type.checker.mypy.compatible.attribute.variance")),
+      OptPane.checkbox("checkInferredAttributeOverrides",
+                       PyPsiBundle.message("INSP.type.checker.check.inferred.attribute.overrides")),
     )
   }
 
@@ -168,7 +177,7 @@ open class PyTypeCheckerInspection : PyInspection() {
     if (context.usesExternalTypeEngine) {
       return PsiElementVisitor.EMPTY_VISITOR
     }
-    val visitor = Visitor(holder, context, mypyCompatibleAttributeVariance)
+    val visitor = Visitor(holder, context, mypyCompatibleAttributeVariance, checkInferredAttributeOverrides)
     return PyReachableElementVisitor(visitor, context)
   }
 
@@ -176,6 +185,7 @@ open class PyTypeCheckerInspection : PyInspection() {
     holder: ProblemsHolder,
     context: TypeEvalContext,
     private val mypyCompatibleAttributeVariance: Boolean = false,
+    private val checkInferredAttributeOverrides: Boolean = false,
   ) : PyInspectionVisitor(holder, context) {
     override val holder = super.holder!!
 
@@ -825,56 +835,86 @@ open class PyTypeCheckerInspection : PyInspection() {
     }
 
     /**
-     * Checks the type of an annotated class attribute that overrides an attribute of the nearest ancestor class.
-     * The override must have the inherited type, because a mutable attribute is invariant.
-     * The override of a read-only attribute, such as a frozen dataclass field, can have a subtype of the inherited type.
-     * With [mypyCompatibleAttributeVariance], reports only an override type that is not a subtype of the inherited type.
+     * Checks the type of a class attribute that overrides an attribute of the nearest ancestor class.
+     * An annotated override must have the inherited type, because a mutable attribute is invariant.
+     * An annotated override of a read-only attribute, such as a frozen dataclass field, can have a subtype of the inherited type.
+     * The value of an unannotated override must be assignable to the inherited type.
+     * Without [checkInferredAttributeOverrides], skips an override of an inherited attribute without a type annotation.
      */
     private fun checkOverriddenAttributeType(node: PyTargetExpression) {
       if (node.isQualified || !isClassAttribute(node)) return
       val ownerClass = getScopeOwner(node) as? PyClass ?: return
       val name = node.name ?: return
-      val ownType = resolvedDeclaredType(node) ?: return
+      val ownDeclaredType = resolvedDeclaredType(node)
 
       for (ancestor in ownerClass.getAncestorClasses(myTypeEvalContext)) {
         val inherited = ancestor.findClassAttribute(name, false, myTypeEvalContext) ?: continue
         if (inherited === node) continue
         // PyFinalInspection reports an override of a `Final` attribute.
         if (PyTypingTypeProvider.isFinal(inherited, myTypeEvalContext)) return
-        val inheritedType = specializeInheritedType(ownerClass, inheritedDeclaredType(inherited)
+        val inheritedDeclaredType = declaredTypeFromStub(inherited)
+        if (inheritedDeclaredType == null && !checkInferredAttributeOverrides) return
+        val inheritedType = specializeForClass(ownerClass, inheritedDeclaredType
                                                                 ?: upcastLiteralToClass(myTypeEvalContext.getType(inherited)))
-        val subtypeOfBase = match(inheritedType, ownType, myTypeEvalContext)
-        val compatible = if (mypyCompatibleAttributeVariance || isEffectivelyReadOnly(inherited, myTypeEvalContext)) subtypeOfBase
-                         else subtypeOfBase && match(ownType, inheritedType, myTypeEvalContext)
-        if (!compatible) {
-          val messageKey = if (subtypeOfBase) "INSP.type.checker.overridden.attribute.type.not.invariant"
-                           else "INSP.type.checker.overridden.attribute.type.incompatible"
-          val anchor = node.annotation?.value ?: node
-          registerTypeMismatch(
-            PyTypeCheckerSuppressionCode.BAD_ASSIGNMENT, anchor, inheritedType, ownType,
-            typeMismatchMessage(inheritedType, ownType, anchor, messageKey),
-            ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-          )
+
+        if (ownDeclaredType != null) {
+          checkReannotatedOverride(node, inheritedType, ownDeclaredType, isEffectivelyReadOnly(inherited, myTypeEvalContext))
+        }
+        else {
+          checkUnannotatedOverrideValue(node, inheritedType)
         }
         return
       }
     }
 
     /**
-     * Returns the declared type of [inherited], an attribute of an ancestor class.
-     * The ancestor class can be in another file, so this function reads the annotation only from the stub.
+     * Returns the declared type of [attribute].
+     * The attribute can be in another file, so this function reads the annotation only from the stub.
      */
-    private fun inheritedDeclaredType(inherited: PyTargetExpression): PyType? {
-      if (inherited.annotationValue == null && inherited.typeCommentAnnotation == null) return null
-      return myTypeEvalContext.getType(inherited)
+    private fun declaredTypeFromStub(attribute: PyTargetExpression): PyType? {
+      if (attribute.annotationValue == null && attribute.typeCommentAnnotation == null) return null
+      return myTypeEvalContext.getType(attribute)
     }
 
     /**
-     * Replaces the type parameters of the ancestor classes in [inheritedType] with the type arguments that [ownerClass] gives them.
+     * Replaces the type parameters of the ancestor classes in [memberType] with the type arguments that [ownerClass] gives them.
      */
-    private fun specializeInheritedType(ownerClass: PyClass, inheritedType: PyType?): PyType? {
-      val ownerType = (myTypeEvalContext.getType(ownerClass) as? PyClassType)?.toInstance() ?: return inheritedType
-      return specializeMemberType(ownerType, ownerType, inheritedType, myTypeEvalContext)
+    private fun specializeForClass(ownerClass: PyClass, memberType: PyType?): PyType? {
+      val ownerType = (myTypeEvalContext.getType(ownerClass) as? PyClassType)?.toInstance() ?: return memberType
+      return specializeMemberType(ownerType, ownerType, memberType, myTypeEvalContext)
+    }
+
+    /**
+     * Reports an annotated override with a type other than [inheritedType].
+     * For a [readOnly] inherited attribute or with [mypyCompatibleAttributeVariance], reports only an override type that is not a subtype of [inheritedType].
+     */
+    private fun checkReannotatedOverride(node: PyTargetExpression, inheritedType: PyType?, ownType: PyType?, readOnly: Boolean) {
+      val subtypeOfBase = match(inheritedType, ownType, myTypeEvalContext)
+      val compatible = if (mypyCompatibleAttributeVariance || readOnly) subtypeOfBase
+                       else subtypeOfBase && match(ownType, inheritedType, myTypeEvalContext)
+      if (compatible) return
+      val messageKey = if (subtypeOfBase) "INSP.type.checker.overridden.attribute.type.not.invariant"
+                       else "INSP.type.checker.overridden.attribute.type.incompatible"
+      val anchor = node.annotation?.value ?: node
+      registerTypeMismatch(
+        PyTypeCheckerSuppressionCode.BAD_ASSIGNMENT, anchor, inheritedType, ownType,
+        typeMismatchMessage(inheritedType, ownType, anchor, messageKey),
+        ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+      )
+    }
+
+    /**
+     * Reports an unannotated override with a value that is not assignable to [inheritedType].
+     */
+    private fun checkUnannotatedOverrideValue(node: PyTargetExpression, inheritedType: PyType?) {
+      val assignedValue = node.findAssignedValue() ?: return
+      val valueType = upcastLiteralToClass(myTypeEvalContext.getType(assignedValue))
+      if (match(inheritedType, valueType, myTypeEvalContext)) return
+      registerTypeMismatch(
+        PyTypeCheckerSuppressionCode.BAD_ASSIGNMENT, assignedValue, inheritedType, valueType,
+        typeMismatchMessage(inheritedType, valueType, assignedValue),
+        ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+      )
     }
 
     private fun <T> getClassAttributeType(attribute: T): Ref<PyType?>? where T : PyQualifiedExpression?, T : PyReferenceOwner? {
