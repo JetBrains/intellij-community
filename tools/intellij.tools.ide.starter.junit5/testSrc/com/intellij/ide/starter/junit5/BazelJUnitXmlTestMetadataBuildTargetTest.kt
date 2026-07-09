@@ -2,8 +2,7 @@
 package com.intellij.ide.starter.junit5
 
 import com.intellij.platform.testFramework.teamCity.BazelJUnitXmlTestMetadataReporter
-import com.intellij.platform.testFramework.teamCity.BazelJUnitXmlTestMetadataReporter.MetadataScenario
-import com.intellij.platform.testFramework.teamCity.BazelJUnitXmlTestMetadataReporter.TeamCityMetadataWorkflow
+import com.intellij.platform.testFramework.teamCity.BazelJUnitXmlTestMetadataReporter.BazelTestReportsWorkflow
 import com.intellij.platform.testFramework.teamCity.BazelJUnitXmlTestMetadataReporter.TestNameFormat
 import com.intellij.platform.testFramework.teamCity.BazelJUnitXmlTestMetadataReporter.createBazelTestLogMetadataWorkflow
 import com.intellij.platform.testFramework.teamCity.BazelJUnitXmlTestMetadataReporter.createBazelTestOwnersMetadataWorkflow
@@ -143,7 +142,7 @@ class BazelJUnitXmlTestMetadataBuildTargetTest {
   }
 
   @Test
-  fun `reports metadata for custom scenario over bazel test reports`(@TempDir tempRoot: Path) {
+  fun `reports metadata for custom workflow over bazel test reports`(@TempDir tempRoot: Path) {
     val execroot = tempRoot / "2bd3cb95011b89f245615c4315705f58" / "execroot" / "_main"
     val javaRunfiles = execroot / "bazel-out" / "local_linux-fastbuild" / "bin" / "build" / "report.runfiles"
     javaRunfiles.createDirectories()
@@ -160,14 +159,18 @@ class BazelJUnitXmlTestMetadataBuildTargetTest {
     val lines = captureStdout {
       runBazelTestReportsWorkflow(
         javaRunfilesPath = javaRunfiles,
-        workflow = TeamCityMetadataWorkflow(
-          testNameFormat = TestNameFormat.NAME,
-          scenario = MetadataScenario(
-            metadataName = "Custom Metadata",
-            metadataType = TeamCityReporter.MetadataType.TEXT,
-            metadataValue = { junitXmlPath, testCase -> "${junitXmlPath.fileName}:${testCase.className}" },
-          ),
-        ),
+        workflow = BazelTestReportsWorkflow { testReports ->
+          for (report in testReports.junitXmlReports) {
+            for (testCase in report.testCases) {
+              TeamCityReporter.reportTestMetadata(
+                testName = TestNameFormat.NAME.format(testCase),
+                value = "${report.path.fileName}:${testCase.className}",
+                name = "Custom Metadata",
+                type = TeamCityReporter.MetadataType.TEXT,
+              )
+            }
+          }
+        },
       )
     }
 
