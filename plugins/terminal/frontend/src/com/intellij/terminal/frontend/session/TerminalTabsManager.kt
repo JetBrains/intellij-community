@@ -44,12 +44,6 @@ internal class TerminalTabsManager(private val project: Project, private val cor
     }
   }
 
-  suspend fun getTerminalTabs(): List<TerminalSessionTab> {
-    return tabsLock.withLock {
-      getTerminalTabsNoLock()
-    }
-  }
-
   /** Caller must hold [tabsLock] */
   private fun getTerminalTabsNoLock(): List<TerminalSessionTab> {
     return tabsMap.values.toList()

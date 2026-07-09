@@ -37,7 +37,6 @@ import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 internal fun createTerminalView(
   project: Project,
   options: TerminalViewBuilderOptions,
-  existingBackendTabId: Int?,
   coroutineScope: CoroutineScope,
 ): TerminalView {
   val terminalView = TerminalViewImpl(
@@ -47,7 +46,7 @@ internal fun createTerminalView(
     coroutineScope = coroutineScope,
     sourceNavigationProjectPath = options.sourceNavigationProjectPath,
   )
-  createBackendTabAndStartSession(project, terminalView, options, existingBackendTabId)
+  createBackendTabAndStartSession(project, terminalView, options)
   return terminalView
 }
 
@@ -56,9 +55,8 @@ private fun createBackendTabAndStartSession(
   project: Project,
   terminal: TerminalViewImpl,
   options: TerminalViewBuilderOptions,
-  existingBackendTabId: Int?,
 ) = terminal.coroutineScope.launch {
-  val backendTabId = existingBackendTabId ?: TerminalTabsManager.getInstance(project).createNewTerminalTab().id
+  val backendTabId = TerminalTabsManager.getInstance(project).createNewTerminalTab().id
 
   terminal.coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
     TerminalTabsManager.getInstance(project).closeTerminalTab(backendTabId)

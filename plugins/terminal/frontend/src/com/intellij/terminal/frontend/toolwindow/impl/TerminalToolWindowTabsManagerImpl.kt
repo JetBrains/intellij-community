@@ -20,7 +20,6 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.action.TerminalAgentsAvailabilityService
 import com.intellij.terminal.frontend.action.TerminalRenameTabAction
 import com.intellij.terminal.frontend.fus.TerminalFocusFusService
-import com.intellij.terminal.frontend.session.TerminalTabsManager
 import com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabBuilder
@@ -48,10 +47,11 @@ import org.jetbrains.plugins.terminal.TerminalTabCloseListener
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.TerminalToolWindowInitializer
 import org.jetbrains.plugins.terminal.TerminalToolWindowPanel
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay
+import org.jetbrains.plugins.terminal.settings.impl.TerminalSessionPersistedTab
+import org.jetbrains.plugins.terminal.settings.impl.TerminalTabsStorage
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.createDefaultTabName
 import java.lang.ref.WeakReference
@@ -260,7 +260,6 @@ internal class TerminalToolWindowTabsManagerImpl(
     val terminal = createTerminalView(
       project = project,
       options = viewOptions,
-      existingBackendTabId = builder.backendTabId,
       coroutineScope = coroutineScope.childScope("TerminalView")
     )
     terminal.title.change {
@@ -316,7 +315,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     private fun scheduleTabsRestoring(manager: TerminalToolWindowTabsManagerImpl) {
       if (TrustedProjects.isProjectTrusted(manager.project)) {
         manager.tabsRestoredDeferred = manager.coroutineScope.async {
-          val tabs: List<TerminalSessionTab> = TerminalTabsManager.getInstance(manager.project).getTerminalTabs()
+          val tabs: List<TerminalSessionPersistedTab> = TerminalTabsStorage.getInstance(manager.project).getStoredTabs()
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             restoreTabs(tabs, manager)
           }
@@ -324,7 +323,7 @@ internal class TerminalToolWindowTabsManagerImpl(
       }
     }
 
-    private fun restoreTabs(tabs: List<TerminalSessionTab>, manager: TerminalToolWindowTabsManagerImpl) {
+    private fun restoreTabs(tabs: List<TerminalSessionPersistedTab>, manager: TerminalToolWindowTabsManagerImpl) {
       for (tab in tabs) {
         val builder = manager.createTabBuilder() as TerminalToolWindowTabBuilderImpl
         with(builder) {
@@ -334,7 +333,6 @@ internal class TerminalToolWindowTabsManagerImpl(
           processType(tab.processType ?: TerminalProcessType.SHELL)
           tabName(tab.name)
           userDefinedName(tab.isUserDefinedName)
-          backendTabId(tab.id)
           requestFocus(false)  // Otherwise it may trigger the tool window showing
           // Pass null as a trigger time because we don't need to track latency in this case.
           startupFusInfo(TerminalStartupFusInfo(TerminalTabOpeningWay.TABS_RESTORE, triggerTime = null))
@@ -378,9 +376,6 @@ internal class TerminalToolWindowTabsManagerImpl(
     var sourceNavigationProjectPath: String? = null
       private set
     var startupFusInfo: TerminalStartupFusInfo? = null
-      private set
-
-    var backendTabId: Int? = null
       private set
 
     override fun workingDirectory(directory: String?): TerminalToolWindowTabBuilder {
@@ -445,11 +440,6 @@ internal class TerminalToolWindowTabsManagerImpl(
 
     override fun startupFusInfo(startupFusInfo: TerminalStartupFusInfo?): TerminalToolWindowTabBuilder {
       this.startupFusInfo = startupFusInfo
-      return this
-    }
-
-    fun backendTabId(id: Int?): TerminalToolWindowTabBuilder {
-      backendTabId = id
       return this
     }
 
