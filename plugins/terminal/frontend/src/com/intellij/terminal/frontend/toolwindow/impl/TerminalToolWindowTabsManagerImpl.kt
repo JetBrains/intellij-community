@@ -8,7 +8,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -309,17 +308,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     val backendTabId = existingBackendTabId ?: TerminalTabsManager.getInstance(project).createNewTerminalTab().id
 
     terminal.coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
-      // Backend terminal session tab lifecycle is not directly bound to the terminal frontend lifecycle.
-      // We need to close the backend session when the terminal is closed explicitly.
-      // And don't need it when a user is closing the project leaving the terminal tabs opened: to be able to reconnect back.
-      // So we send close event only if the terminal is closed explicitly: backend will close it on its termination.
-      // It is not easy to determine whether it is explicit closing or not, so we use the heuristic.
-      if (!isTerminalToolWindowClosing()) {
-        // Do not block frontend terminal scope cancellation by backend session termination request.
-        coroutineScope.launch {
-          TerminalTabsManager.getInstance(project).closeTerminalTab(backendTabId)
-        }
-      }
+      TerminalTabsManager.getInstance(project).closeTerminalTab(backendTabId)
     }
 
     // Ideally, the backend tab should be under the tab scope, but now it has the lifecycle of the terminal scope
@@ -394,12 +383,6 @@ internal class TerminalToolWindowTabsManagerImpl(
     terminal.connectToSession(session)
 
     installPortForwarding(terminal, terminal.coroutineScope.childScope("PortForwarding"))
-  }
-
-  @Suppress("DEPRECATION")
-  private fun isTerminalToolWindowClosing(): Boolean {
-    val toolWindow = project.serviceIfCreated<ToolWindowManager>()?.getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID)
-    return toolWindow?.contentManagerIfCreated?.isDisposed == true
   }
 
   private fun getToolWindow(): ToolWindow {
