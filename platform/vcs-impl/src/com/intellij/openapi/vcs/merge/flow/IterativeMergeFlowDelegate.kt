@@ -379,7 +379,8 @@ internal class IterativeMergeFlowDelegate(
 
   private fun TreeTable.installTableContextMenu() {
     val group = DefaultActionGroup().apply {
-      add(object : DumbAwareAction(VcsBundle.message("multiple.file.iterative.merge.accept", columnNames[1])) {
+      val (yoursLabel, theirsLabel) = MergeUIUtil.getYoursAndTheirsLabes(columnNames)
+      add(object : DumbAwareAction(VcsBundle.message("multiple.file.iterative.merge.accept", yoursLabel)) {
         override fun actionPerformed(e: AnActionEvent) {
           acceptForResolution(MergeSession.Resolution.AcceptedYours)
         }
@@ -391,7 +392,7 @@ internal class IterativeMergeFlowDelegate(
 
         override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
       })
-      add(object : DumbAwareAction(VcsBundle.message("multiple.file.iterative.merge.accept", columnNames[2])) {
+      add(object : DumbAwareAction(VcsBundle.message("multiple.file.iterative.merge.accept", theirsLabel)) {
         override fun actionPerformed(e: AnActionEvent) {
           acceptForResolution(MergeSession.Resolution.AcceptedTheirs)
         }

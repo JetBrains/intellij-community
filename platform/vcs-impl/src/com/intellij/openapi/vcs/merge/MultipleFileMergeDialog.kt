@@ -303,8 +303,9 @@ open class MultipleFileMergeDialog(
             }
           }
 
+          val (yoursLabel, theirsLabel) = MergeUIUtil.getYoursAndTheirsLabes(columns)
           withContext(Dispatchers.UiWithModelAccess) {
-            acceptRevisionForIterativeResolution(iterativeFilesWithModels, resolution, columns[1].name, columns[2].name)
+            acceptRevisionForIterativeResolution(iterativeFilesWithModels, resolution, yoursLabel, theirsLabel)
           }
           acceptRevision(resolution, nonIterativeFiles)
         }
