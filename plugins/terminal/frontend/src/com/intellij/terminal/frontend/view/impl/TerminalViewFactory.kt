@@ -1,19 +1,14 @@
 package com.intellij.terminal.frontend.view.impl
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.session.TerminalSessionsManager
-import com.intellij.terminal.frontend.session.TerminalTabsManager
 import com.intellij.terminal.frontend.toolwindow.impl.TerminalRequestedProcessOptions
-import com.intellij.terminal.frontend.toolwindow.impl.updateBackendTabNameOnTitleChange
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.portForwarding.installPortForwarding
-import com.intellij.util.AwaitCancellationAndInvoke
-import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.initOnShow
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.CoroutineName
@@ -25,7 +20,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
-import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 
 /**
@@ -46,49 +40,25 @@ internal fun createTerminalView(
     coroutineScope = coroutineScope,
     sourceNavigationProjectPath = options.sourceNavigationProjectPath,
   )
-  createBackendTabAndStartSession(project, terminalView, options)
+  scheduleSessionStart(project, terminalView, options)
   return terminalView
 }
 
-@OptIn(AwaitCancellationAndInvoke::class)
-private fun createBackendTabAndStartSession(
+private fun scheduleSessionStart(
   project: Project,
   terminal: TerminalViewImpl,
   options: TerminalViewBuilderOptions,
 ) = terminal.coroutineScope.launch {
-  val backendTabId = TerminalTabsManager.getInstance(project).createNewTerminalTab().id
-
-  terminal.coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
-    TerminalTabsManager.getInstance(project).closeTerminalTab(backendTabId)
-  }
-
-  // Ideally, the backend tab should be under the tab scope, but now it has the lifecycle of the terminal scope
-  updateBackendTabNameOnTitleChange(
-    terminal,
-    backendTabId,
-    project,
-    scope = terminal.coroutineScope.childScope("Backend tab name updating")
-  )
-
-  scheduleSessionStart(project, terminal, options, backendTabId)
-}
-
-private suspend fun scheduleSessionStart(
-  project: Project,
-  terminal: TerminalViewImpl,
-  options: TerminalViewBuilderOptions,
-  backendTabId: Int,
-) {
   if (options.deferSessionStartUntilUiShown) {
     withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
       // Non-cancellable because we expect it to be called only once even if the component was hidden immediately.
       terminal.component.initOnShow("Terminal Session start", context = NonCancellable) {
-        doScheduleSessionStart(project, terminal, options.processOptions, backendTabId, calculateSizeFromComponent = true)
+        doScheduleSessionStart(project, terminal, options.processOptions, calculateSizeFromComponent = true)
       }
     }
   }
   else {
-    doScheduleSessionStart(project, terminal, options.processOptions, backendTabId, calculateSizeFromComponent = false)
+    doScheduleSessionStart(project, terminal, options.processOptions, calculateSizeFromComponent = false)
   }
 }
 
@@ -96,12 +66,15 @@ private fun doScheduleSessionStart(
   project: Project,
   terminal: TerminalViewImpl,
   processOptions: TerminalRequestedProcessOptions,
-  backendTabId: Int,
   calculateSizeFromComponent: Boolean,
 ) = terminal.coroutineScope.launch(CoroutineName("Terminal Session start")) {
   val options = prepareStartupOptions(terminal, processOptions, calculateSizeFromComponent)
-  val sessionTab = TerminalTabsManager.getInstance(project).startTerminalSessionForTab(backendTabId, options)
-  connectSessionToTerminal(project, terminal, sessionTab.sessionId!!)
+
+  val sessionScope = terminal.coroutineScope.childScope("TerminalSession")
+  val session = TerminalSessionsManager.getInstance(project).startSession(options, sessionScope).session
+  terminal.connectToSession(session)
+
+  installPortForwarding(terminal, terminal.coroutineScope.childScope("PortForwarding"))
 }
 
 private suspend fun prepareStartupOptions(
@@ -125,16 +98,4 @@ private suspend fun prepareStartupOptions(
   else {
     baseOptions.initialTermSize(TermSize(80, 20)).build()
   }
-}
-
-private suspend fun connectSessionToTerminal(
-  project: Project,
-  terminal: TerminalViewImpl,
-  sessionId: TerminalSessionId,
-) = withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
-  val session = TerminalSessionsManager.getInstance(project).getSession(sessionId)
-                ?: error("Failed to find TerminalSession with ID: $sessionId")
-  terminal.connectToSession(session)
-
-  installPortForwarding(terminal, terminal.coroutineScope.childScope("PortForwarding"))
 }
