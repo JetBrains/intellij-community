@@ -1,0 +1,7 @@
+// FIX: Remove explicit type arguments
+// WITH_STDLIB
+
+var x: List<String> = listOf<String>()
+    set(value) {
+        field = listOf<caret><String>()
+    }
