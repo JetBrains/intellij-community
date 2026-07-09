@@ -26,7 +26,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 class IncorrectListNumberingInspection: LocalInspectionTool() {
-  private val settings = MarkdownCodeInsightSettings.getInstance()
+  private val settings by lazy { MarkdownCodeInsightSettings.getInstance() }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     if (settings.state.listNumberingType == ListNumberingType.PREVIOUS_NUMBER) return PsiElementVisitor.EMPTY_VISITOR
