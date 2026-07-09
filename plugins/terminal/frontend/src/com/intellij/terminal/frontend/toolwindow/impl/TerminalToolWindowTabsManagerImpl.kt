@@ -12,6 +12,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
@@ -30,6 +31,7 @@ import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.toolwindow.findTabByContent
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
+import com.intellij.terminal.frontend.view.impl.TerminalViewBuilderOptions
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.terminal.frontend.view.portForwarding.installPortForwarding
 import com.intellij.ui.content.ContentFactory
@@ -157,6 +159,8 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   private fun createTab(builder: TerminalToolWindowTabBuilderImpl): TerminalToolWindowTab {
     val terminal = createTerminalViewAndStartSession(builder)
+    project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).terminalViewCreated(terminal)
+
     val tab = doCreateTab(terminal, builder.closeOnProcessTermination)
     addToTabsList(tab)
     if (builder.shouldAddToToolWindow) {
@@ -254,7 +258,20 @@ internal class TerminalToolWindowTabsManagerImpl(
   }
 
   private fun createTerminalViewAndStartSession(builder: TerminalToolWindowTabBuilderImpl): TerminalView {
-    val terminal = createTerminalView(builder.startupFusInfo, builder.sourceNavigationProjectPath)
+    val processOptions = TerminalRequestedProcessOptions(
+      shellCommand = builder.shellCommand,
+      workingDirectory = builder.workingDirectory,
+      envVariables = builder.envVariables,
+      processType = builder.processType,
+    )
+    val viewOptions = TerminalViewBuilderOptions(
+      processOptions = processOptions,
+      deferSessionStartUntilUiShown = builder.deferSessionStartUntilUiShown,
+      sourceNavigationProjectPath = builder.sourceNavigationProjectPath,
+      startupFusInfo = builder.startupFusInfo,
+    )
+    val scope = coroutineScope.childScope("TerminalView")
+    val terminal = doCreateTerminalViewAndStartSession(viewOptions, builder.backendTabId, scope)
     terminal.title.change {
       if (builder.isUserDefinedName) {
         userDefinedTitle = builder.tabName
@@ -264,28 +281,29 @@ internal class TerminalToolWindowTabsManagerImpl(
       }
     }
 
-    val processOptions = TerminalRequestedProcessOptions(
-      shellCommand = builder.shellCommand,
-      workingDirectory = builder.workingDirectory,
-      envVariables = builder.envVariables,
-      processType = builder.processType,
-    )
-    createBackendTabAndStartSession(terminal, processOptions, builder.deferSessionStartUntilUiShown, builder.backendTabId)
-
-    project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).terminalViewCreated(terminal)
     return terminal
   }
 
-  private fun createTerminalView(fusInfo: TerminalStartupFusInfo?, sourceNavigationProjectPath: String?): TerminalViewImpl {
-    val scope = coroutineScope.childScope("Terminal")
-    return TerminalViewImpl(project, JBTerminalSystemSettingsProvider(), fusInfo, scope, sourceNavigationProjectPath)
+  private fun doCreateTerminalViewAndStartSession(
+    options: TerminalViewBuilderOptions,
+    existingBackendTabId: Int?,
+    coroutineScope: CoroutineScope,
+  ): TerminalView {
+    val terminalView = TerminalViewImpl(
+      project = project,
+      settings = JBTerminalSystemSettingsProvider(),
+      startupFusInfo = options.startupFusInfo,
+      coroutineScope = coroutineScope,
+      sourceNavigationProjectPath = options.sourceNavigationProjectPath,
+    )
+    createBackendTabAndStartSession(terminalView, options, existingBackendTabId)
+    return terminalView
   }
 
   @OptIn(AwaitCancellationAndInvoke::class)
   private fun createBackendTabAndStartSession(
     terminal: TerminalViewImpl,
-    processOptions: TerminalRequestedProcessOptions,
-    deferSessionStartUntilUiShown: Boolean,
+    options: TerminalViewBuilderOptions,
     existingBackendTabId: Int?,
   ) = terminal.coroutineScope.launch {
     val backendTabId = existingBackendTabId ?: TerminalTabsManager.getInstance(project).createNewTerminalTab().id
@@ -312,25 +330,24 @@ internal class TerminalToolWindowTabsManagerImpl(
       scope = terminal.coroutineScope.childScope("Backend tab name updating")
     )
 
-    scheduleSessionStart(terminal, processOptions, deferSessionStartUntilUiShown, backendTabId)
+    scheduleSessionStart(terminal, options, backendTabId)
   }
 
   private suspend fun scheduleSessionStart(
     terminal: TerminalViewImpl,
-    processOptions: TerminalRequestedProcessOptions,
-    deferSessionStartUntilUiShown: Boolean,
+    options: TerminalViewBuilderOptions,
     backendTabId: Int,
   ) {
-    if (deferSessionStartUntilUiShown) {
+    if (options.deferSessionStartUntilUiShown) {
       withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
         // Non-cancellable because we expect it to be called only once even if the component was hidden immediately.
         terminal.component.initOnShow("Terminal Session start", context = NonCancellable) {
-          doScheduleSessionStart(terminal, processOptions, backendTabId, calculateSizeFromComponent = true)
+          doScheduleSessionStart(terminal, options.processOptions, backendTabId, calculateSizeFromComponent = true)
         }
       }
     }
     else {
-      doScheduleSessionStart(terminal, processOptions, backendTabId, calculateSizeFromComponent = false)
+      doScheduleSessionStart(terminal, options.processOptions, backendTabId, calculateSizeFromComponent = false)
     }
   }
 
@@ -471,7 +488,7 @@ internal class TerminalToolWindowTabsManagerImpl(
       private set
     var processType: TerminalProcessType = TerminalProcessType.SHELL
       private set
-    var tabName: String? = null
+    @NlsSafe var tabName: String? = null
       private set
     var isUserDefinedName: Boolean = false
       private set
