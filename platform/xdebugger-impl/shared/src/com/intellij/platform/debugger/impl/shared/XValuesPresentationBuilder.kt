@@ -5,6 +5,7 @@ import com.intellij.platform.debugger.impl.rpc.XDebuggerTreeNodeHyperlinkDto
 import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorDto
 import com.intellij.platform.debugger.impl.rpc.XValueComputeChildrenEvent
 import com.intellij.platform.debugger.impl.rpc.XValueId
+import com.intellij.platform.debugger.impl.rpc.XValuePresentationDataDto
 import com.intellij.platform.debugger.impl.rpc.XValueSerializedPresentation
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -19,7 +20,15 @@ data class XValueStateFlows(
   val presentationFlow: Flow<XValueSerializedPresentation>,
   val fullValueEvaluatorFlow: Flow<XFullValueEvaluatorDto?>,
   val additionalLinkFlow: Flow<XDebuggerTreeNodeHyperlinkDto?>,
-)
+) {
+  companion object {
+    fun create(presentationData: XValuePresentationDataDto): XValueStateFlows = XValueStateFlows(
+      presentationData.presentation.toFlow(),
+      presentationData.fullValueEvaluator.toFlow(),
+      presentationData.additionalLink.toFlow()
+    )
+  }
+}
 
 @ApiStatus.Internal
 class XValuesPresentationBuilder {
