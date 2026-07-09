@@ -29,10 +29,10 @@ http_file(
 )
 
 http_file(
-    name = "ai_grazie-grazie-rule-engine-0_3_258_http",
-    downloaded_file_path = "grazie-rule-engine-0.3.258.jar",
-    sha256 = "4471e7d583aac4ca2dd10def0ba3427b6e967a7647e80c13307e0ebd0ed648be",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.258/grazie-rule-engine-0.3.258.jar",
+    name = "ai_grazie-grazie-rule-engine-0_3_261_http",
+    downloaded_file_path = "grazie-rule-engine-0.3.261.jar",
+    sha256 = "980412becb7767ab746be7436f6f4a97be01deaa84de37e0a4a6a01283a6371c",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.261/grazie-rule-engine-0.3.261.jar",
 )
 
 http_file(
@@ -43,10 +43,10 @@ http_file(
 )
 
 http_file(
-    name = "ai_grazie-grazie-rule-engine-0_3_258-sources_http",
-    downloaded_file_path = "grazie-rule-engine-0.3.258-sources.jar",
-    sha256 = "030e5de2dc2b45bddb786b8460a9ac32b772b233a27ca2b97fe3674ea3666a81",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.258/grazie-rule-engine-0.3.258-sources.jar",
+    name = "ai_grazie-grazie-rule-engine-0_3_261-sources_http",
+    downloaded_file_path = "grazie-rule-engine-0.3.261-sources.jar",
+    sha256 = "40cf15b3b95d5dda4c6b8033feb8dc3184b60b33ece1b9d9194822544ecc8349",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.261/grazie-rule-engine-0.3.261-sources.jar",
 )
 
 http_file(
@@ -57,17 +57,17 @@ http_file(
 )
 
 http_file(
-    name = "ai_grazie-grazie-rules-llm-0_3_258_http",
-    downloaded_file_path = "grazie-rules-llm-0.3.258.jar",
-    sha256 = "c59ca734b95f604cf0d6cbc72d104c1204b12213ac77f947b0edf092d35883e2",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.3.258/grazie-rules-llm-0.3.258.jar",
+    name = "ai_grazie-grazie-rules-llm-0_3_261_http",
+    downloaded_file_path = "grazie-rules-llm-0.3.261.jar",
+    sha256 = "22e379609bf248bfbfa0676688503242a7fd135fc6b68f64670c23c336f0ff07",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.3.261/grazie-rules-llm-0.3.261.jar",
 )
 
 http_file(
-    name = "ai_grazie-grazie-rules-llm-0_3_258-sources_http",
-    downloaded_file_path = "grazie-rules-llm-0.3.258-sources.jar",
-    sha256 = "c90d27e914ebff10f3b0f19918602fc574a04dbe567e3d93aa24146e3a2ea7c4",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.3.258/grazie-rules-llm-0.3.258-sources.jar",
+    name = "ai_grazie-grazie-rules-llm-0_3_261-sources_http",
+    downloaded_file_path = "grazie-rules-llm-0.3.261-sources.jar",
+    sha256 = "4ee4c711c580b56ba81ac9b903f25e0dc1a61f0801c436ede10b0f6f1f12a8ef",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.3.261/grazie-rules-llm-0.3.261-sources.jar",
 )
 
 http_file(
