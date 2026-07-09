@@ -1,6 +1,6 @@
 package com.intellij.terminal.frontend.view.impl
 
-import com.intellij.terminal.frontend.toolwindow.impl.TerminalRequestedProcessOptions
+import com.intellij.terminal.frontend.toolwindow.TerminalRequestedProcessOptions
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 
 internal data class TerminalViewBuilderOptions(

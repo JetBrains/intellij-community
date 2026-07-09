@@ -58,7 +58,12 @@ internal class TerminalDockContainer private constructor(
     val reworkedTerminalFile = content.getReworkedTerminalFile()
     if (reworkedTerminalFile != null) {
       val manager = TerminalToolWindowTabsManager.getInstance(project)
-      manager.attachTab(reworkedTerminalFile.terminalView, nearestManager, reworkedTerminalFile.closeOnProcessTermination)
+      manager.attachTab(
+        view = reworkedTerminalFile.terminalView,
+        contentManager = nearestManager,
+        closeOnProcessTermination = reworkedTerminalFile.closeOnProcessTermination,
+        processOptions = reworkedTerminalFile.processOptions,
+      )
     }
     else if (classicTerminalFile != null) {
       val engine = TerminalEngine.CLASSIC // Engine doesn't matter here because we will reuse the existing terminal widget.
