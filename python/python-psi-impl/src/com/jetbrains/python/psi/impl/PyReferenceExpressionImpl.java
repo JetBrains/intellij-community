@@ -600,11 +600,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       // Widen literal types for non-Final instance attributes in cross-method access.
       // Same-function flow-sensitive access takes an early return via getQualifiedReferenceTypeByControlFlow
       // and never reaches this code, so widening here only applies to cross-scope resolution.
-      if (anchor.isQualified()
-          && target instanceof PyTargetExpression targetExpr
-          && targetExpr.isQualified()
-          && !PyTypingTypeProvider.isFinal(targetExpr, context)) {
-        type = PyLiteralType.upcastLiteralToClass(type);
+      if (anchor.isQualified() && target instanceof PyTargetExpression targetExpr && targetExpr.isQualified()) {
+        type = PyTypeUtil.upcastAttributeLiteral(targetExpr, type, context);
       }
       return Ref.create(type);
     }

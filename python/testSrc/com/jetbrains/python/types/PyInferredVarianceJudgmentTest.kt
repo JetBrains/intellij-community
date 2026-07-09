@@ -192,6 +192,40 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues = ["PY-90863"])
+  fun `Generic subclass of a frozen dataclass`() = test("""
+    from dataclasses import dataclass
+    @dataclass(frozen=True)
+    class Base:
+        pass
+    class A[T](Base):
+    #       └ INFERRED_VARIANCE COVARIANT
+        attr: T
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-90863"])
+  @TestCaseOptions(additionalSdkRoots = [SdkRoot("packages", OrderRootTypeEnum.CLASSES)])
+  fun `Generic attrs frozen class`() = test("""
+    import attrs
+    @attrs.frozen
+    class A[T]:
+    #       └ INFERRED_VARIANCE COVARIANT
+        attr: T
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-90863"])
+  fun `Generic dataclass_transform class with frozen_default`() = test("""
+    from typing import dataclass_transform
+    @dataclass_transform(frozen_default=True)
+    class ModelBase: ...
+    class A[T](ModelBase):
+    #       └ INFERRED_VARIANCE COVARIANT
+        attr: T
+    """.trimIndent())
+
+  @Test
   fun `Generic class final attribute in quotes`() = test("""
     from typing import Final
     class A[T]:

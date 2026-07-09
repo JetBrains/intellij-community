@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.PyUtil.isObjectClass
 import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
 import com.jetbrains.python.psi.impl.PyTypeProvider
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
@@ -576,12 +577,7 @@ object PyTypeUtil {
     val last = elements.last()
     val lastType = getResolvedElementType(last, context, anchor)
     if (lastType !is PyFunctionType) {
-      val memberType = if (last is PyTargetExpression && last.isQualified && !PyTypingTypeProvider.isFinal(last, context)) {
-        PyLiteralType.upcastLiteralToClass(lastType)
-      }
-      else {
-        lastType
-      }
+      val memberType = if (last is PyTargetExpression && last.isQualified) upcastAttributeLiteral(last, lastType, context) else lastType
       if (elementsWithDeclaredType.isEmpty() && memberType.isNoneType) {
         /* we support a special case where we convert an unannotated attribute of `None` to `UnsafeUnion[None, Unknown]`
           this is because there are frequently cases in real code where inferring `None` would lead to undesirable false positives:
@@ -629,6 +625,25 @@ object PyTypeUtil {
 
     overloads.reverse()
     return PyOverloadType(overloads, impl)
+  }
+
+  /**
+   * Widens the literal [type] of the mutable attribute [target] to its class.
+   * A `Final` attribute keeps its literal type.
+   * An unannotated attribute that overrides an annotated attribute of an ancestor class also keeps its literal type.
+   * Such an attribute has the declared type of the ancestor attribute.
+   * So its literal type comes from that declaration, not from the assigned value.
+   * For example, `self.x = 5` in a subclass keeps the type `Literal[5]` of `x: Literal[5]` in the base class.
+   * The widened type `int` would contradict the declaration in the base class.
+   */
+  @ApiStatus.Internal
+  @JvmStatic
+  fun upcastAttributeLiteral(target: PyTargetExpression, type: PyType?, context: TypeEvalContext): PyType? {
+    if (PyTypingTypeProvider.isFinal(target, context)) return type
+    val widened = PyLiteralType.upcastLiteralToClass(type)
+    if (widened == type) return type
+    if (target is PyTargetExpressionImpl && target.getInheritedDeclaredAttributeType(context) != null) return type
+    return widened
   }
 
   private fun getResolvedElementType(element: PyTypedElement, context: TypeEvalContext, anchor: PsiElement?): PyType? {

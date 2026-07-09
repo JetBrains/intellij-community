@@ -12,6 +12,8 @@ import com.jetbrains.python.codeInsight.stdlib.PyDataclassParametersBuilder
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassResolver
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassTransformType
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibDataclassType
+import com.jetbrains.python.codeInsight.stdlib.isFrozenInAnyDataclassOfHierarchy
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyKnownDecorator
@@ -91,6 +93,36 @@ fun parseDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclas
       .withStubBuilder { PyDataclassStubImpl.create(it) }
       .compute(context)
   }
+
+/**
+ * Returns true if instances of [cls] reject an assignment to an attribute.
+ * The dataclass can be a standard, attrs, or `dataclass_transform` dataclass, and `frozen_default` applies.
+ * The resolver of the nearest dataclass in the MRO of [cls] decides.
+ * By default, [cls] is frozen when it or one of its dataclass ancestors is frozen.
+ *
+ * @see PyDataclassResolver.isFrozenInstance
+ */
+@ApiStatus.Internal
+fun isFrozenDataclass(cls: PyClass, context: TypeEvalContext): Boolean {
+  val resolver = (sequenceOf(cls) + cls.getAncestorClasses(context))
+    .firstNotNullOfOrNull { parseDataclassParameters(it, context) }
+    ?.type
+    ?.resolver
+  return resolver?.isFrozenInstance(cls, context) ?: isFrozenInAnyDataclassOfHierarchy(cls, context)
+}
+
+/**
+ * Returns true if [attribute] is a class or instance attribute of a frozen dataclass, so its value cannot change.
+ * A `ClassVar` is not frozen, because an assignment through the class object can change it.
+ *
+ * @see isFrozenDataclass
+ */
+@ApiStatus.Internal
+fun isFrozenAttribute(attribute: PyTargetExpression, context: TypeEvalContext): Boolean {
+  if (!PyUtil.isAttribute(attribute) || PyTypingTypeProvider.isClassVar(attribute, context)) return false
+  val cls = attribute.containingClass ?: return false
+  return isFrozenDataclass(cls, context)
+}
 
 /**
  * This method MUST be used only while building stub for dataclass.
