@@ -4,46 +4,33 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions.copyConcatenatedStringT
 
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.analysis.api.KaSession
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiBasedModCommandAction
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
-import java.awt.datatransfer.StringSelection
 
 internal class CopyConcatenatedStringToClipboardIntention :
-    KotlinApplicableModCommandAction<KtBinaryExpression, Unit>(KtBinaryExpression::class) {
+    PsiBasedModCommandAction<KtBinaryExpression>(KtBinaryExpression::class.java) {
 
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("copy.concatenation.text.to.clipboard")
 
-    override fun isFileAllowed(file: PsiFile): Boolean =
-        true
+    override fun getPresentation(context: ActionContext, element: KtBinaryExpression): Presentation? {
+        if (element.operationToken != KtTokens.PLUS) return null
 
-    override fun getApplicableRanges(element: KtBinaryExpression): List<TextRange> =
-        ApplicabilityRange.self(element)
+        val isString = analyze(element) {
+            element.expressionType?.isStringType == true
+        }
+        if (!isString) return null
 
-    override fun isApplicableByPsi(element: KtBinaryExpression): Boolean =
-        element.operationToken == KtTokens.PLUS
-
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
-        val isString = element.expressionType?.isStringType == true
-        return isString.asUnit
+        return super.getPresentation(context, element)
     }
 
-    override fun invoke(
-        actionContext: ActionContext,
-        element: KtBinaryExpression,
-        elementContext: Unit,
-        updater: ModPsiUpdater,
-    ) {
+    override fun perform(context: ActionContext, element: KtBinaryExpression): ModCommand {
         val text = ConcatenatedStringGenerator().create(element)
-        CopyPasteManager.getInstance().setContents(StringSelection(text))
+        return ModCommand.copyToClipboard(text)
     }
 }
