@@ -123,7 +123,7 @@ internal class AppCommandCompletionSettings(
   private fun calculateFromRegistry(): Boolean {
     // unit tests
     if (ApplicationManager.getApplication().isUnitTestMode() &&
-        Registry.`is`("ide.completion.command.force.enabled")) {
+        Registry.`is`("ide.completion.command.force.enabled", false)) {
       return true
     }
 
@@ -132,11 +132,11 @@ internal class AppCommandCompletionSettings(
       PlatformUtils.isIntelliJ() ||
       NewRdCompletionSupport.isFrontendRdCompletionOn(null) && NewRdCompletionSupport.getInstance().isFrontendForIntelliJBackend()
     ) {
-      if (Registry.`is`("ide.completion.command.force.enabled")) {
+      if (Registry.`is`("ide.completion.command.force.enabled", false)) {
         return true
       }
 
-      if (Registry.`is`("ide.completion.command.enabled")) {
+      if (Registry.`is`("ide.completion.command.enabled", false)) {
         return !ApplicationManager.getApplication().isUnitTestMode()
       }
     }

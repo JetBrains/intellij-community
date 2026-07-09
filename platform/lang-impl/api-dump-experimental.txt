@@ -578,7 +578,7 @@ c:com.intellij.codeInsight.template.postfix.templates.ParenthesizedPostfixTempla
 - *:createModExpander():com.intellij.codeInsight.template.postfix.templates.PostfixModExpander
 c:com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate
 - com.intellij.codeInsight.template.CustomLiveTemplateBase
-- *s:computeTemplateKeyWithoutContextChecking(com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider,java.lang.CharSequence,I):java.lang.String
+- *s:computeTemplateKeyWithoutContextChecking(com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider,com.intellij.openapi.project.Project,com.intellij.lang.Language,java.lang.CharSequence,I):java.lang.String
 *:com.intellij.codeInsight.template.postfix.templates.PostfixModExpander
 - a:expand(com.intellij.modcommand.ActionContext,com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider,com.intellij.openapi.util.TextRange):com.intellij.modcommand.ModCommand
 - s:psiUpdateRemovingTemplateKey(com.intellij.modcommand.ActionContext,com.intellij.openapi.util.TextRange,java.util.function.Consumer):com.intellij.modcommand.ModCommand
