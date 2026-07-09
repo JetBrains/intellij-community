@@ -390,7 +390,7 @@ class ShelveChangesManager @Internal constructor(
 
   @Throws(IOException::class, VcsException::class)
   fun shelveChanges(
-    changes: MutableCollection<out Change>,
+    changes: Collection<Change>,
     commitMessage: String,
     rollback: Boolean,
   ): ShelvedChangeList {
@@ -399,7 +399,7 @@ class ShelveChangesManager @Internal constructor(
 
   @Throws(IOException::class, VcsException::class)
   fun shelveChanges(
-    changes: MutableCollection<out Change>,
+    changes: Collection<Change>,
     commitMessage: String,
     rollback: Boolean,
     markToBeDeleted: Boolean,
@@ -409,7 +409,7 @@ class ShelveChangesManager @Internal constructor(
 
   @Throws(IOException::class, VcsException::class)
   fun shelveChanges(
-    changes: MutableCollection<out Change>,
+    changes: Collection<Change>,
     commitMessage: String,
     rollback: Boolean,
     markToBeDeleted: Boolean,
@@ -436,7 +436,7 @@ class ShelveChangesManager @Internal constructor(
 
   @Throws(VcsException::class, IOException::class)
   private fun createShelfFromChanges(
-    changes: MutableCollection<out Change>,
+    changes: Collection<Change>,
     commitMessage: String,
     markToBeDeleted: Boolean,
     honorExcludedFromCommit: Boolean,
@@ -604,7 +604,7 @@ class ShelveChangesManager @Internal constructor(
     }
   }
 
-  private fun rollbackChangesAfterShelve(changes: MutableCollection<out Change>, honorExcludedFromCommit: Boolean) {
+  private fun rollbackChangesAfterShelve(changes: Collection<Change>, honorExcludedFromCommit: Boolean) {
     val operationName = UIUtil.removeMnemonic(RollbackChangesDialog.operationNameByChanges(project, changes))
     val modalContext = ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext()
     tracer.spanBuilder(Shelve.RollbackAfterShelve.getName()).use {
@@ -1009,7 +1009,7 @@ class ShelveChangesManager @Internal constructor(
     }.queue()
   }
 
-  private fun rememberShelvingFiles(changes: MutableCollection<out Change>) {
+  private fun rememberShelvingFiles(changes: Collection<Change>) {
     shelvingFilesCache = changes.mapNotNullTo(HashSet(), Change::getVirtualFile)
   }
 
