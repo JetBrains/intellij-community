@@ -10,6 +10,7 @@
     <module name="intellij.xml.analysis"/>
     <module name="intellij.xml.dom"/>
     <module name="intellij.xml.psi"/>
+    <module name="kotlin.fir.frontend-independent"/>
   </dependencies>
   <!-- endregion -->
 

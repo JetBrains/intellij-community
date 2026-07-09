@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.kotlin.base.analysis"/>
     <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="kotlin.fir.frontend-independent"/>
   </dependencies>
   <!-- endregion -->
   <resource-bundle>messages.KotlinInternalBundle</resource-bundle>

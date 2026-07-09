@@ -292,6 +292,7 @@
     <module name="intellij.kotlin.base.codeInsight" loading="embedded"/>
     <module name="intellij.kotlin.base.codeInsight.minimal" loading="embedded"/>
     <module name="intellij.kotlin.codeInsight.shared" loading="embedded"/>
+    <module name="kotlin.fir.frontend-independent" loading="embedded"/>
     <module name="intellij.kotlin.jvm.debugger.base.util" loading="embedded"/>
     <module name="intellij.kotlin.jvm.debugger.coroutines" loading="embedded"/>
     <module name="intellij.kotlin.base.projectStructure" loading="embedded"/>

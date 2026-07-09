@@ -1,0 +1,17 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java"/>
+    <module name="intellij.java.analysis.impl"/>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.resources"/>
+    <module name="intellij.kotlin.codeInsight.shared"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

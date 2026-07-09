@@ -125,7 +125,6 @@
   - name: intellij.kotlin.base.compilerConfiguration.ui
   - name: intellij.kotlin.base.statistics
   - name: intellij.kotlin.ide
-  - name: kotlin.fir.frontend-independent
   - name: intellij.kotlin.compilerPlugins.parcelize.common
   - name: intellij.kotlin.compilerPlugins.parcelize
   - name: intellij.kotlin.compilerPlugins.support
@@ -182,6 +181,9 @@
   - name: intellij.kotlin.gradle.java
   - name: kotlin.gradle.scripting.shared
   - name: intellij.kotlin.gradle.scripting
+- name: lib/kotlin.fir.frontend-independent.jar
+  contentModules:
+  - name: kotlin.fir.frontend-independent
 - name: lib/kotlinc.allopen-compiler-plugin.jar
   library: kotlinc.allopen-compiler-plugin
   files:
