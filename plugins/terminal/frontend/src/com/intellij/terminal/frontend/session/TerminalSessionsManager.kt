@@ -59,6 +59,7 @@ class TerminalSessionsManager(private val project: Project) {
     val sessionId = storeSession(started.session, scope)
 
     return TerminalSessionStartResult(
+      started.session,
       started.configuredOptions,
       sessionId,
       started.ttyConnector,
@@ -104,6 +105,7 @@ class TerminalSessionsManager(private val project: Project) {
 
 @ApiStatus.Internal
 data class TerminalSessionStartResult(
+  val session: TerminalSession,
   val configuredOptions: ShellStartupOptions,
   val sessionId: TerminalSessionId,
   val ttyConnector: ObservableTtyConnector,
