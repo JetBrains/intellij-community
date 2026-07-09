@@ -4,7 +4,11 @@ package com.intellij.collaboration.ui.codereview
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.DimensionRestrictions
+import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.collaboration.util.filePath
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CellRendererPanel
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ColoredTreeCellRenderer
@@ -61,7 +65,18 @@ internal class CodeReviewProgressRendererComponent(
     verticalAlignment = JLabel.CENTER
   }
 
+  private val jumpToSourceIconLabel = JLabel().apply {
+    border = JBUI.Borders.empty()
+    icon = AllIcons.Actions.EditSource
+    horizontalAlignment = JLabel.CENTER
+    verticalAlignment = JLabel.CENTER
+  }
+
   private val invisiblePlaceholder = JLabel().apply {
+    isVisible = false
+  }
+
+  private val invisibleJumpToSourcePlaceholder = JLabel().apply {
     isVisible = false
   }
 
@@ -71,6 +86,21 @@ internal class CodeReviewProgressRendererComponent(
 
     val sizeRestriction = object : DimensionRestrictions {
       override fun getWidth(): Int = checkbox.preferredSize.width
+      override fun getHeight(): Int? = null
+    }
+    layout = SizeRestrictedSingleComponentLayout().apply {
+      prefSize = sizeRestriction
+      minSize = sizeRestriction
+      maxSize = sizeRestriction
+    }
+  }
+
+  private val jumpToSourceContainer = JPanel().apply {
+    isOpaque = false
+    border = JBUI.Borders.empty()
+
+    val sizeRestriction = object : DimensionRestrictions {
+      override fun getWidth(): Int = jumpToSourceIconLabel.preferredSize.width
       override fun getHeight(): Int? = null
     }
     layout = SizeRestrictedSingleComponentLayout().apply {
@@ -95,6 +125,12 @@ internal class CodeReviewProgressRendererComponent(
   }
 
   @RequiresEdt
+  fun jumpToSourceIconBounds(cellSize: Dimension): Rectangle? {
+    bounds = Rectangle(0, 0, cellSize.width, cellSize.height)
+    return jumpToSourceIconLabel.calculateBoundsWithin(this)
+  }
+
+  @RequiresEdt
   fun prepareComponent(tree: JTree, value: Any, selected: Boolean, expanded: Boolean, leaf: Boolean, row: Int, hasFocus: Boolean): JComponent {
     value as ChangesBrowserNode<*>
     val state = codeReviewProgressStateProvider(value)
@@ -108,7 +144,7 @@ internal class CodeReviewProgressRendererComponent(
 
     // if loading, don't show any icons yet
     if (isStateContainerShown(leaf, expanded) && !state.isLoading) {
-      add(updateStateContainer(tree, state, row, leaf), BorderLayout.EAST)
+      add(updateStateContainer(tree, value, state, row, leaf), BorderLayout.EAST)
     }
 
     return this
@@ -121,14 +157,24 @@ internal class CodeReviewProgressRendererComponent(
       (this as? JComponent)?.border = JBUI.Borders.empty()
     }
 
-  private fun updateStateContainer(tree: JTree, state: NodeCodeReviewProgressState, row: Int, isLeaf: Boolean): JComponent =
+  private fun updateStateContainer(tree: JTree, node: ChangesBrowserNode<*>, state: NodeCodeReviewProgressState, row: Int, isLeaf: Boolean): JComponent =
     stateContainer.apply {
       removeAll()
+
+      val isHovered = TreeHoverListener.getHoveredRow(tree) == row
 
       val commentIconLabel = updateCommentIconLabel(state)
       commentIconLabel?.let(::add)
 
-      val isHovered = TreeHoverListener.getHoveredRow(tree) == row
+      if (isLeaf) {
+        // the slot is reserved for every leaf so the row layout doesn't shift on hover
+        add(jumpToSourceContainer.apply {
+          removeAll()
+          val canJumpToSource = isHovered && node.navigatableVirtualFile() != null
+          add(if (canJumpToSource) jumpToSourceIconLabel else invisibleJumpToSourcePlaceholder)
+        })
+      }
+
       val rightSideComp = if (isLeaf && hasViewedState && (isHovered || state.isRead)) {
         updateViewedCheckbox(state)
       }
@@ -184,3 +230,6 @@ private fun JComponent.calculateBoundsWithin(parent: JComponent): Rectangle? {
 
   return bounds
 }
+
+internal fun ChangesBrowserNode<*>.navigatableVirtualFile(): VirtualFile? =
+  (userObject as? RefComparisonChange)?.filePath?.virtualFile

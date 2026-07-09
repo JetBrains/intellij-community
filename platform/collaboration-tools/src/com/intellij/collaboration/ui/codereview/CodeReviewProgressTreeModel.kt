@@ -7,6 +7,7 @@ import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
@@ -23,7 +24,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import java.awt.Dimension
 import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
@@ -44,6 +47,7 @@ fun ChangesTree.setupCodeReviewProgressModel(vm: CodeReviewChangeListViewModel, 
     codeReviewProgressStateProvider = model::getState
   )
   installViewedStateToggleHandler(vm, model)
+  installJumpToSourceHandler(vm)
 
   model.addChangeListener {
     repaint()
@@ -66,42 +70,60 @@ private fun ChangesTree.installViewedStateToggleHandler(
   val tree = this
 
   if (vm is CodeReviewChangeListViewModel.WithViewedState) {
-    addMouseListener(object : MouseAdapter() {
-      override fun mouseClicked(e: MouseEvent) {
-        if (!SwingUtilities.isLeftMouseButton(e)) return
+    installRendererComponentClickHandler(CodeReviewProgressRendererComponent::checkboxBounds) { node ->
+      val change = node.userObject as? RefComparisonChange ?: return@installRendererComponentClickHandler
 
-        val row = getClosestRowForLocation(1, e.y)
-        if (row < 0) return
+      val state = model.getState(node)
+      val isViewed = !state.isRead
 
-        val path = getPathForRow(row)
-        val cellBounds = tree.ui?.asSafely<CustomBoundsTreeUI>()?.getActualPathBounds(tree, path) ?: return
-        val positionInCell = Point(e.x - cellBounds.x, e.y - cellBounds.y)
-
-        val node = path.lastPathComponent as? ChangesBrowserNode<*> ?: return
-
-        // get the top-level rendered cell component
-        val component = cellRenderer.getTreeCellRendererComponent(
-          tree, node,
-          isRowSelected(row),
-          isExpanded(row),
-          getModel().isLeaf(node),
-          row, true)
-
-        if (component !is CodeReviewProgressRendererComponent) return
-        val checkboxBounds = component.checkboxBounds(cellBounds.size) ?: return
-
-        if (checkboxBounds.contains(positionInCell)) {
-          val change = node.userObject as? RefComparisonChange ?: return
-
-          val state = model.getState(node)
-          val isViewed = !state.isRead
-
-          vm.setViewedState(listOf(change), isViewed)
-          tree.repaint()
-        }
-      }
-    })
+      vm.setViewedState(listOf(change), isViewed)
+      tree.repaint()
+    }
   }
+}
+
+private fun ChangesTree.installJumpToSourceHandler(vm: CodeReviewChangeListViewModel) {
+  installRendererComponentClickHandler(CodeReviewProgressRendererComponent::jumpToSourceIconBounds) { node ->
+    val file = node.navigatableVirtualFile() ?: return@installRendererComponentClickHandler
+    OpenFileDescriptor(vm.project, file).navigate(true)
+  }
+}
+
+private fun ChangesTree.installRendererComponentClickHandler(
+  boundsInCell: (CodeReviewProgressRendererComponent, Dimension) -> Rectangle?,
+  handler: (ChangesBrowserNode<*>) -> Unit,
+) {
+  val tree = this
+
+  addMouseListener(object : MouseAdapter() {
+    override fun mouseClicked(e: MouseEvent) {
+      if (!SwingUtilities.isLeftMouseButton(e)) return
+
+      val row = getClosestRowForLocation(1, e.y)
+      if (row < 0) return
+
+      val path = getPathForRow(row)
+      val cellBounds = tree.ui?.asSafely<CustomBoundsTreeUI>()?.getActualPathBounds(tree, path) ?: return
+      val positionInCell = Point(e.x - cellBounds.x, e.y - cellBounds.y)
+
+      val node = path.lastPathComponent as? ChangesBrowserNode<*> ?: return
+
+      // get the top-level rendered cell component
+      val component = cellRenderer.getTreeCellRendererComponent(
+        tree, node,
+        isRowSelected(row),
+        isExpanded(row),
+        getModel().isLeaf(node),
+        row, true)
+
+      if (component !is CodeReviewProgressRendererComponent) return
+      val componentBounds = boundsInCell(component, cellBounds.size) ?: return
+
+      if (componentBounds.contains(positionInCell)) {
+        handler(node)
+      }
+    }
+  })
 }
 
 /**
