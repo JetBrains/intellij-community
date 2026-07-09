@@ -35,7 +35,6 @@ internal class TerminalTabsManager(private val project: Project, private val cor
   private val tabsMap: MutableMap<Int, TerminalSessionTab> = LinkedHashMap()
   private val tabsLock = Mutex()
   private val tabIdCounter = AtomicInteger(0)
-  private val detachedTabs: MutableSet<Int> = HashSet()
 
   init {
     val storedTabs = TerminalTabsStorage.getInstance(project).getStoredTabs()
@@ -53,7 +52,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
 
   /** Caller must hold [tabsLock] */
   private fun getTerminalTabsNoLock(): List<TerminalSessionTab> {
-    return tabsMap.values.filter { it.id !in detachedTabs }
+    return tabsMap.values.toList()
   }
 
   suspend fun createNewTerminalTab(): TerminalSessionTab {
@@ -108,7 +107,6 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       scope.awaitCancellationAndInvoke {
         updateTabsAndStore { tabs ->
           tabs.remove(tabId)
-          detachedTabs -= tabId
         }
       }
 
@@ -140,7 +138,6 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       else {
         // The session was not started - just remove the tab.
         tabs.remove(tabId)
-        detachedTabs -= tabId
       }
     }
   }
@@ -239,12 +236,6 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       processType = processType,
       sessionId = null,
     )
-  }
-
-  suspend fun detachTerminalTab(tabId: Int) {
-    updateTabsAndStore {
-      detachedTabs += tabId
-    }
   }
 
   companion object {
