@@ -102,8 +102,8 @@ internal abstract class ColumnBasedTableAction: AnAction() {
         file,
         document,
         offset,
-        tableGetter = { file, document, offset -> TableUtils.findTable(file, offset) },
-        columnIndexGetter = { file, document, offset -> TableUtils.findCellIndex(file, offset) }
+        tableGetter = { file, _, offset -> TableUtils.findTable(file, offset) },
+        columnIndexGetter = { file, _, offset -> TableUtils.findCellIndex(file, offset) }
       )
     }
   }
