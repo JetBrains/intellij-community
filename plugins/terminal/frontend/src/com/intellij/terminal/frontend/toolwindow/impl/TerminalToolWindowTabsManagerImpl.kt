@@ -79,8 +79,6 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   private var tabsRestoredDeferred: Deferred<Unit> = CompletableDeferred(Unit)
 
-  private val detachedTabs = DetachedTabs(project, coroutineScope)
-
   init {
     project.messageBus.connect(coroutineScope).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
       override fun toolWindowShown(toolWindow: ToolWindow) {
@@ -291,8 +289,6 @@ internal class TerminalToolWindowTabsManagerImpl(
     existingBackendTabId: Int?,
   ) = terminal.coroutineScope.launch {
     val backendTabId = existingBackendTabId ?: TerminalTabsManager.getInstance(project).createNewTerminalTab().id
-
-    detachedTabs.onTabCreated(terminal, backendTabId)
 
     terminal.coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
       // Backend terminal session tab lifecycle is not directly bound to the terminal frontend lifecycle.
