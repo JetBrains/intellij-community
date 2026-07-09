@@ -334,15 +334,9 @@ internal class TerminalToolWindowTabsManagerImpl(
     backendTabId: Int,
     calculateSizeFromComponent: Boolean,
   ) = terminal.coroutineScope.launch {
-    if (builder.sessionId != null) {
-      // Session is already started for this tab, reuse it
-      connectSessionToTerminal(terminal, builder.sessionId!!)
-    }
-    else {
-      val options = prepareStartupOptions(terminal, builder, calculateSizeFromComponent)
-      val sessionTab = TerminalTabsManager.getInstance(project).startTerminalSessionForTab(backendTabId, options)
-      connectSessionToTerminal(terminal, sessionTab.sessionId!!)
-    }
+    val options = prepareStartupOptions(terminal, builder, calculateSizeFromComponent)
+    val sessionTab = TerminalTabsManager.getInstance(project).startTerminalSessionForTab(backendTabId, options)
+    connectSessionToTerminal(terminal, sessionTab.sessionId!!)
   }
 
   private suspend fun prepareStartupOptions(
@@ -445,7 +439,6 @@ internal class TerminalToolWindowTabsManagerImpl(
           tabName(tab.name)
           userDefinedName(tab.isUserDefinedName)
           backendTabId(tab.id)
-          sessionId(tab.sessionId)
           requestFocus(false)  // Otherwise it may trigger the tool window showing
           // Pass null as a trigger time because we don't need to track latency in this case.
           startupFusInfo(TerminalStartupFusInfo(TerminalTabOpeningWay.TABS_RESTORE, triggerTime = null))
@@ -492,8 +485,6 @@ internal class TerminalToolWindowTabsManagerImpl(
       private set
 
     var backendTabId: Int? = null
-      private set
-    var sessionId: TerminalSessionId? = null
       private set
 
     override fun workingDirectory(directory: String?): TerminalToolWindowTabBuilder {
@@ -563,11 +554,6 @@ internal class TerminalToolWindowTabsManagerImpl(
 
     fun backendTabId(id: Int?): TerminalToolWindowTabBuilder {
       backendTabId = id
-      return this
-    }
-
-    fun sessionId(id: TerminalSessionId?): TerminalToolWindowTabBuilder {
-      sessionId = id
       return this
     }
 
