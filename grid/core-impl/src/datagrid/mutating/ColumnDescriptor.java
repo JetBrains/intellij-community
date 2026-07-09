@@ -28,6 +28,7 @@ public interface ColumnDescriptor {
     HIDDEN,
     INDEX,
     VIRTUAL,
-    MULTI_DIMENSIONAL_ARRAY
+    MULTI_DIMENSIONAL_ARRAY,
+    JSON_ARRAY
   }
 }
