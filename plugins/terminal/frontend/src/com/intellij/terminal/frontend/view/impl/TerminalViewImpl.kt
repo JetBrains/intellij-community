@@ -243,9 +243,7 @@ class TerminalViewImpl(
     val alternateBufferMouseEventsHandler = TerminalMouseEventsHandlerImpl(
       alternateBufferEditor,
       terminalInput,
-      sessionModel,
-      encodingManager,
-      settings,
+      sessionDeferred,
     )
 
     configureOutputEditor(
@@ -293,9 +291,7 @@ class TerminalViewImpl(
     val outputEditorMouseEventsHandler = TerminalMouseEventsHandlerImpl(
       outputEditor,
       terminalInput,
-      sessionModel,
-      encodingManager,
-      settings,
+      sessionDeferred,
     )
 
     configureOutputEditor(
@@ -614,7 +610,7 @@ class TerminalViewImpl(
     }
 
     setupKeyEventsHandling(editor, settings, keyEventsHandler, parentDisposable)
-    setupMouseEventsHandling(editor, sessionModel, settings, mouseEventsHandler, parentDisposable)
+    setupMouseEventsHandling(editor, mouseEventsHandler, parentDisposable)
 
     TerminalOutputEditorInputMethodSupport(
       editor,

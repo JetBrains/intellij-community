@@ -38,12 +38,6 @@ internal class TerminalMouseEventsHandlingTest : BasePlatformTestCase() {
     val events = mutableListOf<MouseGridEvent>()
     setupMouseEventsHandling(
       editor = editor,
-      sessionModel = TerminalSessionModelImpl().apply {
-        updateTerminalState(terminalState.value.copy(mouseMode = MouseMode.MOUSE_REPORTING_NORMAL))
-      },
-      settings = object : JBTerminalSystemSettingsProviderBase() {
-        override fun enableMouseReporting(): Boolean = true
-      },
       eventsHandler = RecordingTerminalMouseEventsHandler(events),
       disposable = testRootDisposable,
     )
@@ -72,12 +66,6 @@ internal class TerminalMouseEventsHandlingTest : BasePlatformTestCase() {
     val events = mutableListOf<MouseGridEvent>()
     setupMouseEventsHandling(
       editor = editor,
-      sessionModel = TerminalSessionModelImpl().apply {
-        updateTerminalState(terminalState.value.copy(mouseMode = MouseMode.MOUSE_REPORTING_NORMAL))
-      },
-      settings = object : JBTerminalSystemSettingsProviderBase() {
-        override fun enableMouseReporting(): Boolean = true
-      },
       eventsHandler = RecordingTerminalMouseEventsHandler(events),
       disposable = testRootDisposable,
     )
@@ -111,12 +99,6 @@ internal class TerminalMouseEventsHandlingTest : BasePlatformTestCase() {
     val events = mutableListOf<MouseGridEvent>()
     setupMouseEventsHandling(
       editor = editor,
-      sessionModel = TerminalSessionModelImpl().apply {
-        updateTerminalState(terminalState.value.copy(mouseMode = MouseMode.MOUSE_REPORTING_NORMAL))
-      },
-      settings = object : JBTerminalSystemSettingsProviderBase() {
-        override fun enableMouseReporting(): Boolean = true
-      },
       eventsHandler = RecordingTerminalMouseEventsHandler(events),
       disposable = testRootDisposable,
     )
@@ -148,12 +130,6 @@ internal class TerminalMouseEventsHandlingTest : BasePlatformTestCase() {
     val events = mutableListOf<MouseGridEvent>()
     setupMouseEventsHandling(
       editor = editor,
-      sessionModel = TerminalSessionModelImpl().apply {
-        updateTerminalState(terminalState.value.copy(mouseMode = MouseMode.MOUSE_REPORTING_NORMAL))
-      },
-      settings = object : JBTerminalSystemSettingsProviderBase() {
-        override fun enableMouseReporting(): Boolean = true
-      },
       eventsHandler = RecordingTerminalMouseEventsHandler(events),
       disposable = testRootDisposable,
     )
@@ -185,12 +161,6 @@ internal class TerminalMouseEventsHandlingTest : BasePlatformTestCase() {
     val events = mutableListOf<MouseGridEvent>()
     setupMouseEventsHandling(
       editor = editor,
-      sessionModel = TerminalSessionModelImpl().apply {
-        updateTerminalState(terminalState.value.copy(mouseMode = MouseMode.MOUSE_REPORTING_NORMAL))
-      },
-      settings = object : JBTerminalSystemSettingsProviderBase() {
-        override fun enableMouseReporting(): Boolean = true
-      },
       eventsHandler = RecordingTerminalMouseEventsHandler(events),
       disposable = testRootDisposable,
     )
@@ -236,24 +206,8 @@ internal class TerminalMouseEventsHandlingTest : BasePlatformTestCase() {
   private class RecordingTerminalMouseEventsHandler(
     private val events: MutableList<MouseGridEvent>,
   ) : TerminalMouseEventsHandler {
-    override fun mousePressed(x: Int, y: Int, event: MouseEvent) {
+    override fun onMouseEvent(x: Int, y: Int, event: MouseEvent) {
       events += MouseGridEvent.Pressed(x, y)
-    }
-
-    override fun mouseReleased(x: Int, y: Int, event: MouseEvent) {
-      events += MouseGridEvent.Released(x, y)
-    }
-
-    override fun mouseMoved(x: Int, y: Int, event: MouseEvent) {
-      events += MouseGridEvent.Moved(x, y)
-    }
-
-    override fun mouseDragged(x: Int, y: Int, event: MouseEvent) {
-      events += MouseGridEvent.Dragged(x, y)
-    }
-
-    override fun mouseWheelMoved(x: Int, y: Int, event: MouseWheelEvent) {
-      events += MouseGridEvent.WheelMoved(x, y)
     }
   }
 

@@ -1,6 +1,12 @@
 package com.intellij.terminal.frontend.session
 
 import com.intellij.platform.eel.EelDescriptor
+import java.awt.event.MouseEvent
+import java.awt.event.MouseWheelEvent
+import com.jediterm.terminal.emulator.mouse.MouseEventProcessingSettings
+import com.jediterm.terminal.emulator.mouse.TerminalMouseEventEncoder
+import com.jediterm.terminal.ui.input.AwtMouseEvent
+import com.jediterm.terminal.ui.input.AwtMouseWheelEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -21,7 +27,11 @@ internal class TerminalSessionImpl(
   outputFlow: Flow<List<TerminalOutputEvent>>,
   override val coroutineScope: CoroutineScope,
   private val ttyConnector: LocalTerminalTtyConnector,
+  private val terminalDisplay: TerminalDisplayImpl,
+  private val terminal: ObservableJediTerminal,
 ) : TerminalSession {
+  private val myMouseEventEncoder: TerminalMouseEventEncoder = TerminalMouseEventEncoder()
+
   @Volatile
   override var isClosed: Boolean = false
     private set
@@ -59,5 +69,30 @@ internal class TerminalSessionImpl(
     return withContext(Dispatchers.IO) {
       TerminalUtil.hasRunningCommands(ttyConnector)
     }
+  }
+
+  override fun processMouseEvent(
+    e: MouseEvent,
+    x: Int,
+    y: Int,
+  ): ByteArray? {
+    val mouseEvent = if (e is MouseWheelEvent) AwtMouseWheelEvent(e) else AwtMouseEvent(e)
+    return myMouseEventEncoder.encode(
+      mouseEvent,
+      x,
+      y,
+      terminalDisplay.mouseMode,
+      terminalDisplay.mouseFormat,
+      terminal,
+      createMouseEventSettings()
+    )
+  }
+
+  private fun createMouseEventSettings(): MouseEventProcessingSettings {
+    return MouseEventProcessingSettings(
+      terminalDisplay.settings.enableMouseReporting(),
+      terminal.alternativeBufferEnabled,
+      terminalDisplay.settings.simulateMouseScrollWithArrowKeysInAlternativeScreen(),
+    )
   }
 }

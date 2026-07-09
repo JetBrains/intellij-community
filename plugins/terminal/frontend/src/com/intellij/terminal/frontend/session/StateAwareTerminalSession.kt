@@ -7,6 +7,7 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.util.coroutines.flow.IncrementalUpdateFlowProducer
 import com.intellij.platform.util.coroutines.flow.MutableStateWithIncrementalUpdates
 import com.intellij.util.asDisposable
+import java.awt.event.MouseEvent
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -150,6 +151,12 @@ internal class StateAwareTerminalSession(
     get() = delegate.isClosed
 
   override suspend fun hasRunningCommands(): Boolean = delegate.hasRunningCommands()
+
+  override fun processMouseEvent(
+    e: MouseEvent,
+    x: Int,
+    y: Int,
+  ): ByteArray? = delegate.processMouseEvent(e, x, y)
 
   companion object {
     private val LOG = logger<StateAwareTerminalSession>()

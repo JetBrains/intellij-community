@@ -24,19 +24,16 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.frontend.action.SendShortcutToTerminalAction
 import com.intellij.terminal.frontend.view.TerminalAllowedActionsProvider
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalEscapeBehaviorChangeNotification
-import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import java.awt.AWTEvent
 import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelListener
 import javax.swing.KeyStroke
 
@@ -318,52 +315,38 @@ internal fun setupKeyEventsHandling(
 @VisibleForTesting
 fun setupMouseEventsHandling(
   editor: EditorEx,
-  sessionModel: TerminalSessionModel,
-  settings: JBTerminalSystemSettingsProviderBase,
   eventsHandler: TerminalMouseEventsHandler,
   disposable: Disposable,
 ) {
-  fun isRemoteMouseAction(e: MouseEvent): Boolean {
-    return sessionModel.terminalState.value.mouseMode != MouseMode.MOUSE_REPORTING_NONE && !e.isShiftDown
-  }
-
   // TODO: I suspect that Y positions should be screen-start based (without history).
   //  But it is not clear how to track the screen start. Need to investigate.
   editor.addEditorMouseListener(object : EditorMouseListener {
     override fun mousePressed(event: EditorMouseEvent) {
-      if (settings.enableMouseReporting() && isRemoteMouseAction(event.mouseEvent)) {
-        val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
-        eventsHandler.mousePressed(cell.column, cell.line, event.mouseEvent)
-      }
+      val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
+      eventsHandler.onMouseEvent(cell.column, cell.line, event.mouseEvent)
     }
 
     override fun mouseReleased(event: EditorMouseEvent) {
-      if (settings.enableMouseReporting() && isRemoteMouseAction(event.mouseEvent)) {
-        val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
-        eventsHandler.mouseReleased(cell.column, cell.line, event.mouseEvent)
-      }
+      val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
+      eventsHandler.onMouseEvent(cell.column, cell.line, event.mouseEvent)
     }
   }, disposable)
 
   editor.addEditorMouseMotionListener(object : EditorMouseMotionListener {
     override fun mouseMoved(event: EditorMouseEvent) {
-      if (settings.enableMouseReporting() && isRemoteMouseAction(event.mouseEvent)) {
-        val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
-        eventsHandler.mouseMoved(cell.column, cell.line, event.mouseEvent)
-      }
+      val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
+      eventsHandler.onMouseEvent(cell.column, cell.line, event.mouseEvent)
     }
 
     override fun mouseDragged(event: EditorMouseEvent) {
-      if (settings.enableMouseReporting() && isRemoteMouseAction(event.mouseEvent)) {
-        val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
-        eventsHandler.mouseDragged(cell.column, cell.line, event.mouseEvent)
-      }
+      val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
+      eventsHandler.onMouseEvent(cell.column, cell.line, event.mouseEvent)
     }
   }, disposable)
 
   val mouseWheelListener = MouseWheelListener { event ->
     val cell = editor.mousePointToGridCell(event.point, editor.xyToVisualPosition(event.point).line)
-    eventsHandler.mouseWheelMoved(cell.column, cell.line, event)
+    eventsHandler.onMouseEvent(cell.column, cell.line, event)
   }
   editor.scrollPane.addMouseWheelListener(mouseWheelListener)
   Disposer.register(disposable, Disposable {

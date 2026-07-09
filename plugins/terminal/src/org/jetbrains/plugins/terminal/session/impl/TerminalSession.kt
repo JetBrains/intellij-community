@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.session.impl
 
 import com.intellij.platform.eel.EelDescriptor
+import java.awt.event.MouseEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -57,4 +58,16 @@ interface TerminalSession {
    * Can be accessed from any thread.
    */
   val isClosed: Boolean
+
+  /**
+   * Encodes the given mouse event into bytes that can be sent to the terminal process.
+   *
+   * [x] and [y] are terminal grid coordinates of the event, zero-based relative to the terminal screen start.
+   * Returns encoded bytes, or `null` when the event should not be forwarded to the terminal.
+   */
+  fun processMouseEvent(
+    e: MouseEvent,
+    x: Int,
+    y: Int,
+  ): ByteArray?
 }

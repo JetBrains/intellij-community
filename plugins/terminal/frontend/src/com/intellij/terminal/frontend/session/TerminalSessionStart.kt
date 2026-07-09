@@ -101,6 +101,8 @@ fun createTerminalSession(
     outputFlow = outputFlow.asSharedFlow(),
     coroutineScope = coroutineScope,
     ttyConnector = ttyConnector.original as LocalTerminalTtyConnector,
+    terminalDisplay = services.terminalDisplay,
+    terminal = services.controller,
   )
 }
 

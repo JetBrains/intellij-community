@@ -20,7 +20,7 @@ import org.jetbrains.plugins.terminal.block.ui.TerminalUi
  * 3. Providing default background and foreground for "color query" (OSC 11).
  */
 @ApiStatus.Internal
-class TerminalDisplayImpl(private val settings: DefaultSettingsProvider) : TerminalDisplay {
+class TerminalDisplayImpl(val settings: DefaultSettingsProvider) : TerminalDisplay {
   private var cursorX: Int = 0
   private var cursorY: Int = 0
 
