@@ -19,6 +19,7 @@ import com.intellij.driver.sdk.ui.shouldBe
 import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForIndicators
+import com.intellij.driver.sdk.waitNotNull
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfo.isMac
 import java.awt.event.KeyEvent
@@ -87,8 +88,12 @@ class PlatformDebugSteps(private val ideFrame: IdeaFrameUI) {
     step("Click $kindOfStep") {
       ideFrame.run {
         debugToolWindow {
-          val button = xx { byAccessibleName(kindOfStep) }.list().last()
-          waitFor(message = "Step button is not enabled", timeout = timeout) { button.isEnabled() }
+          // Re-query the button on every poll: the debug toolbar recreates its ActionButtons when the
+          // session state changes, so a reference captured once may stay disabled while the live button
+          // is already enabled.
+          val button = waitNotNull(message = "$kindOfStep button did not become enabled", timeout = timeout) {
+            xx { byAccessibleName(kindOfStep) }.list().lastOrNull { it.isEnabled() }
+          }
           button.click()
         }
       }
