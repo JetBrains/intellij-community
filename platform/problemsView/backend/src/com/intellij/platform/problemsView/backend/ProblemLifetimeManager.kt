@@ -10,11 +10,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
 @Service(Service.Level.PROJECT)
-@ApiStatus.Internal
 internal class ProblemLifetimeManager {
 
   private val problemIds = IdValueStore<Problem>()

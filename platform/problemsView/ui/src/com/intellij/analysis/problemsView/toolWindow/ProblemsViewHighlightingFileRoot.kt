@@ -30,16 +30,16 @@ open class ProblemsViewHighlightingFileRoot(
     override val project = panel.project
   }
 
+  init {
+    Disposer.register(this, provider)
+  }
+
   val lifetime: ProblemLifetime = HighlightingProblemsLifetimeService.getInstance(panel.project).createRootLifetime(this)
   private val problemEventsFlow = HighlightingProblemEventFlow(lifetime.coroutineScope)
   val problemEvents: Flow<ProblemEvent> = problemEventsFlow.getFlowWithHistory()
 
   private val watcher: ProblemsViewHighlightingWatcher =
     ProblemsViewHighlightingWatcher(provider, this, file, document, HighlightSeverity.TEXT_ATTRIBUTES.myVal + 1)
-
-  init {
-    Disposer.register(this, provider)
-  }
 
   override fun findProblem(highlighter: RangeHighlighterEx): Problem? = watcher.findProblem(highlighter)
 

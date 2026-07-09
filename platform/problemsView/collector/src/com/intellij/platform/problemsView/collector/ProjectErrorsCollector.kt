@@ -26,13 +26,13 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 
 @ApiStatus.Internal
-class ProjectErrorsCollector(val project: Project, cs: CoroutineScope) : ProblemsCollector {
+class ProjectErrorsCollector(val project: Project, coroutineScope: CoroutineScope) : ProblemsCollector {
   private val providerClassFilter = Registry.stringValue("ide.problems.view.provider.class.filter").split(" ,/|").toSet()
   private val fileProblems = mutableMapOf<VirtualFile, MutableSet<FileProblem>>()
   private val otherProblems = mutableSetOf<Problem>()
   private val problemCount = AtomicInteger()
 
-  private val problemEvents = ProjectErrorsEventFlow(cs)
+  private val problemEvents = ProjectErrorsEventFlow(coroutineScope)
 
   init {
     VirtualFileManager.getInstance().addAsyncFileListener({ onVfsChanges(it); null }, project)
