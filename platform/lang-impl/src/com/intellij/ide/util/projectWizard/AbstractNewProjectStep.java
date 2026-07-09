@@ -4,7 +4,7 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.OpenProjectTaskKt;
-import com.intellij.ide.impl.TrustedPaths;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -198,16 +198,20 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     }
   }
 
-  public static <T> Project doGenerateProject(@Nullable Project projectToClose,
-                                              @NotNull String locationString,
-                                              @Nullable DirectoryProjectGenerator<T> generator,
-                                              @NotNull T settings) {
-    OpenProjectTask options = createOpenProjectOptions(projectToClose, null);
+  public static <T> Project doGenerateProject(
+    @Nullable Project projectToClose,
+    @NotNull String locationString,
+    @Nullable DirectoryProjectGenerator<T> generator,
+    @NotNull T settings
+  ) {
+    var options = createOpenProjectOptions(projectToClose, null);
     return doGenerateProject(locationString, generator, settings, options);
   }
 
-  protected static @NotNull OpenProjectTask createOpenProjectOptions(@Nullable Project projectToClose,
-                                                                     @Nullable Consumer<? super UserDataHolder> extraUserData) {
+  protected static @NotNull OpenProjectTask createOpenProjectOptions(
+    @Nullable Project projectToClose,
+    @Nullable Consumer<? super UserDataHolder> extraUserData
+  ) {
     return OpenProjectTaskKt.OpenProjectTask(builder -> {
       builder.setProjectToClose(projectToClose);
       builder.setNewProject(true);
@@ -248,7 +252,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     }
     catch (IOException e) {
       LOG.warn(e);
-      String message = ActionsBundle.message("action.NewDirectoryProject.cannot.create.dir", location.toString());
+      var message = ActionsBundle.message("action.NewDirectoryProject.cannot.create.dir", location.toString());
       Messages.showErrorDialog(options.getProjectToClose(), message, ActionsBundle.message("action.NewDirectoryProject.title"));
       return null;
     }
@@ -259,11 +263,11 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     }
 
     if (baseDir.getChildren().length > 0) {
-      String title = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.title");
-      String message = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.text", location.toString());
-      String yesText = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.create.new");
-      String noText = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.open.existing");
-      int result = Messages.showYesNoDialog(options.getProjectToClose(), message, title, yesText, noText, Messages.getQuestionIcon());
+      var title = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.title");
+      var message = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.text", location.toString());
+      var yesText = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.create.new");
+      var noText = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.open.existing");
+      var result = Messages.showYesNoDialog(options.getProjectToClose(), message, title, yesText, noText, Messages.getQuestionIcon());
       if (result == Messages.NO) {
         return PlatformProjectOpenProcessor.Companion.doOpenProject(location, OpenProjectTask.build());
       }
@@ -271,12 +275,12 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
 
     RecentProjectsManager.getInstance().setLastProjectCreationLocation(location.getParent());
 
-    if (generator instanceof TemplateProjectDirectoryGenerator) {
-      ((TemplateProjectDirectoryGenerator<?>)generator).generateProject(baseDir.getName(), locationString);
+    if (generator instanceof TemplateProjectDirectoryGenerator<?> tpg) {
+      tpg.generateProject(baseDir.getName(), locationString);
     }
 
-    TrustedPaths.getInstance().setProjectPathTrusted(location, true);
-    Project project = ProjectManagerEx.getInstanceEx().openProject(location, options);
+    TrustedProjects.setProjectTrusted(location, true);
+    var project = ProjectManagerEx.getInstanceEx().openProject(location, options);
     if (project != null && generator != null && !(generator instanceof TemplateProjectDirectoryGenerator)) {
       generator.generateProject(project, baseDir, settings, ModuleManager.getInstance(project).getModules()[0]);
     }
