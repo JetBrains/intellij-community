@@ -147,7 +147,6 @@ internal class MultiverseFileViewProviderCache(
     // reassignment of code insight contexts is a complex operation that involves complicated concurrency invariants
     // hence, we defer reassignment until this view provider is accessed under read lock
     // for quick access inside psi versioning transaction, we allow ourselves to observe a not-yet-assigned context
-    // todo: should we forbid context instantiation inside versioned environment completely?
     if (!InternalPsiVersioning.isInsideVersioningButNotLocks()) {
       val contextMapping = reassignProvidersWithOutdatedContextToActualContexts(vFile, fileMap)
       if (contextMapping.isNotEmpty()) {

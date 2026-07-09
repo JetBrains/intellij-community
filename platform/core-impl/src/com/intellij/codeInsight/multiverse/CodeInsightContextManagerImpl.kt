@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.impl.PsiManagerEx
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.AtomicMapCache
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -165,6 +166,11 @@ class CodeInsightContextManagerImpl(
     val preferredContext = getPreferredContext(fileViewProvider.virtualFile)
 
     val setContext = trySetContext(fileViewProvider, preferredContext)
+
+    if (setContext != anyContext()) {
+      // at the moment, we do not allow context assignment in versioned environment
+      InternalPsiVersioning.assertNotInFreezePsiVersion()
+    }
 
     log.trace { "context of FileViewProvider ${fileViewProvider.virtualFile.path} is set to $setContext" }
 
