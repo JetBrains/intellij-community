@@ -14,7 +14,7 @@ import com.intellij.platform.debugger.impl.rpc.XExpressionDto
 import com.intellij.platform.debugger.impl.rpc.XSourcePositionDto
 import com.intellij.platform.debugger.impl.rpc.xExpression
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProject
+import com.intellij.platform.project.findProjectOrNull
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
@@ -37,18 +37,18 @@ internal class BackendXBreakpointApi : XBreakpointApi {
   }
 
   override suspend fun setDefaultSuspendPolicy(project: ProjectId, breakpointTypeId: XBreakpointTypeId, policy: SuspendPolicy) {
-    val project = project.findProject()
+    val project = project.findProjectOrNull() ?: return
     val type = XBreakpointUtil.findType(breakpointTypeId.id) ?: return
     getBreakpointManager(project).setDefaultSuspendPolicy(type, policy)
   }
 
   override suspend fun getDefaultGroup(project: ProjectId): String? {
-    val project = project.findProject()
+    val project = project.findProjectOrNull() ?: return null
     return getBreakpointManager(project).defaultGroup
   }
 
   override suspend fun setDefaultGroup(project: ProjectId, group: String?) {
-    val project = project.findProject()
+    val project = project.findProjectOrNull() ?: return
     getBreakpointManager(project).defaultGroup = group
   }
 

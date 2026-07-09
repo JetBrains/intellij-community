@@ -5,17 +5,18 @@ import com.intellij.platform.debugger.impl.rpc.XDebugHotSwapCurrentSessionStatus
 import com.intellij.platform.debugger.impl.rpc.XDebugHotSwapSessionId
 import com.intellij.platform.debugger.impl.rpc.XDebuggerHotSwapApi
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProject
+import com.intellij.platform.project.findProjectOrNull
 import com.intellij.xdebugger.hotswap.HotSwapSource
 import com.intellij.xdebugger.impl.hotswap.HotSwapSessionManagerImpl
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics
 import com.intellij.xdebugger.impl.hotswap.findHotSwapSession
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 
 internal class BackendXDebuggerHotSwapApi : XDebuggerHotSwapApi {
   override suspend fun currentSessionStatus(projectId: ProjectId): Flow<XDebugHotSwapCurrentSessionStatus?> {
-    val project = projectId.findProject()
+    val project = projectId.findProjectOrNull() ?: return emptyFlow()
     return HotSwapSessionManagerImpl.getInstance(project).currentStatusFlow.map { state ->
       if (state == null) return@map null
       val (session, status) = state
@@ -35,7 +36,7 @@ internal class BackendXDebuggerHotSwapApi : XDebuggerHotSwapApi {
   }
 
   override suspend fun hide(projectId: ProjectId) {
-    val project = projectId.findProject()
+    val project = projectId.findProjectOrNull() ?: return
     HotSwapSessionManagerImpl.getInstance(project).hide()
   }
 }
