@@ -151,10 +151,6 @@
 
     <stacktrace.fold substring="at kotlinx.coroutines."/>
 
-    <codeInsight.linkHandler
-            prefix="#kotlinClass/"
-            handlerClass="org.jetbrains.kotlin.idea.highlighter.markers.KotlinClassTooltipLinkHandler"/>
-
     <referenceImporter
             id="KotlinReferenceImporter"
             implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporter"/>
@@ -169,8 +165,6 @@
     <lang.elementManipulator
             forClass="org.jetbrains.kotlin.psi.KtStringTemplateExpression"
             implementationClass="org.jetbrains.kotlin.psi.psiUtil.KtStringTemplateExpressionManipulator"/>
-
-      <qualifiedNameProvider implementation="org.jetbrains.kotlin.idea.KotlinQualifiedNameProvider"/>
 
     <packageDependencies.visitor
             language="kotlin"
@@ -281,13 +275,6 @@
 
   <!-- Line markers -->
   <extensions defaultExtensionNs="com.intellij">
-    <runLineMarkerContributor
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor"/>
-
-    <java.class.action.suppressor implementation="org.jetbrains.kotlin.idea.core.KotlinJavaClassActionSuppressor"/>
-
-    <lang.inspectionSuppressor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.inspections.suppress.KotlinInspectionSuppressor"/>
     <optionController implementation="org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProvider"/>
     <optionController implementation="org.jetbrains.kotlin.idea.configuration.KotlinDependencyProvider"/>
     <optionController implementation="org.jetbrains.kotlin.idea.configuration.JpsDependencyProvider"/>

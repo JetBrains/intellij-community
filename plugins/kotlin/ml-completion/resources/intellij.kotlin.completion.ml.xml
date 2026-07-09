@@ -3,6 +3,7 @@
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.completion.ml.ranking"/>
     <module name="intellij.platform.ide.internal"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
     <!-- endregion -->
   </dependencies>
 

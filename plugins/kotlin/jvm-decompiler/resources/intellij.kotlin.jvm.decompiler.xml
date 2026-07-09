@@ -4,6 +4,7 @@
     <plugin id="org.jetbrains.java.decompiler"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.highlighting"/>
     <module name="kotlin.jvm.shared"/>

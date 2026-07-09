@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.completion.impl"/>
     <module name="intellij.kotlin.highlighting.minimal"/>

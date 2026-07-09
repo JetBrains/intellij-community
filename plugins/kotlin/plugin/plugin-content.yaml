@@ -4,6 +4,9 @@
 - name: lib/intellij.kotlin.base.analysis.jar
   contentModules:
   - name: intellij.kotlin.base.analysis
+- name: lib/intellij.kotlin.base.codeInsight.jar
+  contentModules:
+  - name: intellij.kotlin.base.codeInsight
 - name: lib/intellij.kotlin.base.projectStructure.jar
   contentModules:
   - name: intellij.kotlin.base.projectStructure
@@ -118,7 +121,6 @@
   - name: intellij.kotlin.base.kdoc
   - name: intellij.kotlin.base.platforms
   - name: intellij.kotlin.base.facet
-  - name: intellij.kotlin.base.codeInsight
   - name: intellij.kotlin.base.analysis.utils
   - name: intellij.kotlin.base.compilerConfiguration.ui
   - name: intellij.kotlin.base.statistics
