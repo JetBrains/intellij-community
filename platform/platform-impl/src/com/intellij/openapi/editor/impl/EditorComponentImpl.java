@@ -239,11 +239,21 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     sink.set(CommonDataKeys.EDITOR, editor);
     sink.set(CommonDataKeys.CARET, editor.getCaretModel().getCurrentCaret());
 
-    LogicalPosition location = editor.myLastMousePressedLocation;
-    if (location == null) {
-        location = editor.getCaretModel().getLogicalPosition();
+    LogicalPosition pressedLocation = editor.myLastMousePressedLocation;
+    LogicalPosition location = pressedLocation != null ? pressedLocation : editor.getCaretModel().getLogicalPosition();
+    boolean virtualSpace = EditorCoreUtil.inVirtualSpace(editor, location);
+    // IJPL-52267: log whenever EDITOR_VIRTUAL_SPACE is derived from a retained mouse-press location instead
+    // of the caret. When the press location is virtual but the caret is not, this is precisely the value that
+    // wrongly disables keyboard Go To Declaration / Find Usages — correlate the "press #N" with the
+    // GotoDeclarationAction:trace "reason=virtualSpace" line and the focusLost trace for the same press.
+    if (pressedLocation != null && EditorImpl.MOUSE_PRESS_LOG.isTraceEnabled()) {
+      LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
+      EditorImpl.MOUSE_PRESS_LOG.trace("[press #" + editor.myMousePressSeq + "] EDITOR_VIRTUAL_SPACE served from press location=" +
+                                       pressedLocation + " virtualSpace=" + virtualSpace +
+                                       " caret=" + caret + " caretVirtualSpace=" + EditorCoreUtil.inVirtualSpace(editor, caret) +
+                                       " ageMs=" + (System.nanoTime() - editor.myMousePressTimestampNanos) / 1_000_000);
     }
-    sink.set(CommonDataKeys.EDITOR_VIRTUAL_SPACE, EditorCoreUtil.inVirtualSpace(editor, location));
+    sink.set(CommonDataKeys.EDITOR_VIRTUAL_SPACE, virtualSpace);
   }
 
   @DirtyUI
