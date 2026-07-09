@@ -1,6 +1,7 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.kotlin.base.analysis"/>
     <module name="intellij.kotlin.base.projectStructure"/>
   </dependencies>
   <!-- endregion -->

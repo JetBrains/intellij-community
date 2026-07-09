@@ -68,6 +68,7 @@
   <dependencies>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
+    <module name="intellij.kotlin.base.analysis"/>
     <module name="intellij.kotlin.base.analysis.platform"/>
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.searching"/>

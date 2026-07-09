@@ -1,11 +1,12 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.psi"/>
-    <module name="intellij.platform.structuralSearch"/>
+    <module name="intellij.kotlin.base.analysis"/>
     <module name="intellij.kotlin.codeInsight.liveTemplates"/>
-    <!-- endregion -->
+    <module name="intellij.platform.structuralSearch"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <structuralsearch.profile implementation="org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch.KotlinStructuralSearchProfile"/>
     <structuralsearch.filterProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch.filters.KotlinFilterProvider"/>

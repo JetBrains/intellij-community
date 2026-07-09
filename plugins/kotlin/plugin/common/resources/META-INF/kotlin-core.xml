@@ -93,10 +93,6 @@
                     interface="org.jetbrains.kotlin.idea.fir.extensions.KotlinFirCompilerPluginConfigurationForIdeProvider"
                     dynamic="true"/>
 
-    <extensionPoint qualifiedName="org.jetbrains.kotlin.kotlinInjectedFilesAnalysisProvider"
-                    interface="org.jetbrains.kotlin.idea.base.analysis.KotlinIdeInjectedFilesAnalysisPromoter"
-                    dynamic="true"/>
-
     <extensionPoint qualifiedName="org.jetbrains.kotlin.implementationDetailClassNameCheckerProvider"
                     interface="org.jetbrains.kotlin.idea.base.psi.extensions.ImplementationDetailClassNameCheckerProvider"
                     dynamic="true"/>
@@ -119,10 +115,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <gotoRelatedProvider implementation="org.jetbrains.kotlin.idea.goto.KotlinExpectOrActualGotoRelatedProvider"/>
-
-    <applicationService serviceInterface="org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider"
-                        serviceImplementation="org.jetbrains.kotlin.idea.base.analysis.builtins.IdeBuiltInsVirtualFileProviderImpl"/>
     <applicationService serviceInterface="org.jetbrains.kotlin.psi.KtPsiMutationService"
                         serviceImplementation="org.jetbrains.kotlin.idea.base.psi.KtPsiMutationServiceImpl"/>
 
@@ -133,12 +125,6 @@
       <projectService
             serviceInterface="org.jetbrains.kotlin.idea.facet.KotlinFacetEditorProviderService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinFacetEditorProviderServiceImpl"/>
-    <projectService
-            serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.analysis.RootKindMatcherImpl"/>
-
-    <psi.batchReferenceProcessingSuppressor implementation="org.jetbrains.kotlin.idea.base.analysis.KotlinBatchReferenceProcessingSuppressor"/>
-
     <applicationConfigurable
             groupId="language"
             bundle="messages.KotlinPreferencesBundle"
@@ -174,10 +160,6 @@
             implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporter"/>
 
     <breadcrumbsInfoProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinBreadcrumbsInfoProvider"/>
-
-    <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinImportAliasGotoDeclarationHandler"/>
-    <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDestructuringGotoDeclarationHandler"/>
-
 
     <createFromTemplateHandler implementation="org.jetbrains.kotlin.idea.actions.KotlinCreateFromTemplateHandler"/>
 
@@ -278,17 +260,7 @@
     />
   </extensions>
 
-  <!-- Line markers -->
-  <extensions defaultExtensionNs="com.intellij">
-
-  </extensions>
-
   <projectListeners>
-    <listener class="org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService$PackageCacheBulkFileListener"
-              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
-    <listener class="org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService$PackageCacheModuleRootListener"
-              topic="com.intellij.openapi.roots.ModuleRootListener"/>
-
       <listener class="org.jetbrains.kotlin.idea.configuration.notifications.ExternalKotlinCompilerProjectDataImportListener"
                 topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"/>
 
@@ -481,8 +453,6 @@
   <!-- Declaration search and Find Usages -->
   <extensions defaultExtensionNs="com.intellij">
     <actionConfigurationCustomizer implementation="org.jetbrains.kotlin.idea.actions.KotlinActionsManager"/>
-    <searchEverywhereResultsEqualityProvider implementation="org.jetbrains.kotlin.idea.searcheverywhere.KtSearchEverywhereEqualityProvider"/>
-
     <refactoring.safeDelete.JavaSafeDeleteDelegate
             id="kotlinJavaSafeDeleteDelegate"
             language="kotlin"
@@ -495,11 +465,6 @@
 
     <usageToPsiElementProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinUsageToPsiElementProvider"/>
 
-    <usageFeaturesProvider implementation="org.jetbrains.kotlin.idea.findUsages.similarity.KotlinUsageSimilarityFeaturesProvider"/>
-
-    <readWriteAccessDetector implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector"
-                             id="kotlin"
-                             order="first"/> <!--before lombok -->
     <projectService
       serviceInterface="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider"
       serviceImplementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProviderImpl"/>

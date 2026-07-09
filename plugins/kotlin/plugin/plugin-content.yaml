@@ -1,12 +1,18 @@
 - name: lib/frontend-split/kotlin-frontend.jar
   modules:
   - name: kotlin.frontend.split
+- name: lib/intellij.kotlin.base.analysis.jar
+  contentModules:
+  - name: intellij.kotlin.base.analysis
 - name: lib/intellij.kotlin.base.projectStructure.jar
   contentModules:
   - name: intellij.kotlin.base.projectStructure
 - name: lib/intellij.kotlin.base.resources.jar
   contentModules:
   - name: intellij.kotlin.base.resources
+- name: lib/intellij.kotlin.base.scripting.shared.jar
+  contentModules:
+  - name: intellij.kotlin.base.scripting.shared
 - name: lib/intellij.kotlin.codeInsight.shared.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.shared
@@ -112,7 +118,6 @@
   - name: intellij.kotlin.base.kdoc
   - name: intellij.kotlin.base.platforms
   - name: intellij.kotlin.base.facet
-  - name: intellij.kotlin.base.analysis
   - name: intellij.kotlin.base.codeInsight
   - name: intellij.kotlin.base.analysis.utils
   - name: intellij.kotlin.base.compilerConfiguration.ui
@@ -271,9 +276,6 @@
 - name: lib/modules/intellij.kotlin.base.scripting.scratch.definition.jar
   contentModules:
   - name: intellij.kotlin.base.scripting.scratch.definition
-- name: lib/modules/intellij.kotlin.base.scripting.shared.jar
-  contentModules:
-  - name: intellij.kotlin.base.scripting.shared
 - name: lib/modules/intellij.kotlin.codeInsight.base.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.base
