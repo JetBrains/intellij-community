@@ -46,6 +46,7 @@ import com.jetbrains.python.psi.types.PySelfType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParameterType;
+import com.jetbrains.python.psi.types.PyTypeRendererFeature;
 import com.jetbrains.python.psi.types.PyTypeVarTupleType;
 import com.jetbrains.python.psi.types.PyTypeVarType;
 import com.jetbrains.python.psi.types.PyTypeVisitorExt;
@@ -78,36 +79,21 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   protected int myDepth = 0;
   protected final @NotNull TypeEvalContext myTypeEvalContext;
-  protected final EnumSet<Feature> myRenderingFeatures;
-
-  public enum Feature {
-    /**
-     * Render fully qualified names of all classes and type forms, e.g. {@code typing.Callable[[mod.MyClass], typing.Any]}.
-     */
-    USE_FQN,
-    /**
-     * Render internal "unsafe" unions as {@code UnsafeUnion[...]}, otherwise render them as regular union types.
-     */
-    UNSAFE_UNION,
-    /**
-     * Render bounds and constraints of TypeVars.
-     */
-    TYPE_VAR_BOUNDS,
-  }
+  protected final EnumSet<PyTypeRendererFeature> myRenderingFeatures;
 
   protected final boolean isRenderingFqn() {
-    return myRenderingFeatures.contains(Feature.USE_FQN);
+    return myRenderingFeatures.contains(PyTypeRendererFeature.USE_FQN);
   }
 
   protected final boolean isRenderingTypeVarBounds() {
-    return myRenderingFeatures.contains(Feature.TYPE_VAR_BOUNDS);
+    return myRenderingFeatures.contains(PyTypeRendererFeature.TYPE_VAR_BOUNDS);
   }
 
   protected final boolean isRenderingUnsafeUnion() {
-    return myRenderingFeatures.contains(Feature.UNSAFE_UNION);
+    return myRenderingFeatures.contains(PyTypeRendererFeature.UNSAFE_UNION);
   }
 
-  private PyTypeRenderer(@NotNull TypeEvalContext typeEvalContext, @NotNull EnumSet<Feature> features) {
+  private PyTypeRenderer(@NotNull TypeEvalContext typeEvalContext, @NotNull EnumSet<PyTypeRendererFeature> features) {
     myTypeEvalContext = typeEvalContext;
     myRenderingFeatures = features;
   }
@@ -115,7 +101,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   static abstract class HtmlRenderer extends PyTypeRenderer {
     private final @NotNull PsiElement myAnchor;
 
-    private HtmlRenderer(@NotNull TypeEvalContext typeEvalContext, @NotNull PsiElement anchor, @NotNull EnumSet<Feature> features) {
+    private HtmlRenderer(@NotNull TypeEvalContext typeEvalContext, @NotNull PsiElement anchor, @NotNull EnumSet<PyTypeRendererFeature> features) {
       super(typeEvalContext, features);
       myAnchor = anchor;
     }
@@ -152,7 +138,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   static final class RichDocumentation extends HtmlRenderer {
     RichDocumentation(@NotNull TypeEvalContext typeEvalContext, @NotNull PsiElement anchor) {
-      super(typeEvalContext, anchor, EnumSet.noneOf(Feature.class));
+      super(typeEvalContext, anchor, EnumSet.noneOf(PyTypeRendererFeature.class));
     }
   }
 
@@ -163,7 +149,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
    * protocol used by Quick Documentation. Intended for rich inspection tooltips.
    */
   static final class TooltipDocumentation extends HtmlRenderer {
-    TooltipDocumentation(@NotNull TypeEvalContext typeEvalContext, @NotNull PsiElement anchor, @NotNull EnumSet<Feature> features) {
+    TooltipDocumentation(@NotNull TypeEvalContext typeEvalContext, @NotNull PsiElement anchor, @NotNull EnumSet<PyTypeRendererFeature> features) {
       super(typeEvalContext, anchor, features);
     }
 
@@ -184,20 +170,20 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   }
 
   static final class Documentation extends PyTypeRenderer {
-    Documentation(@NotNull TypeEvalContext typeEvalContext, @NotNull EnumSet<Feature> features) {
+    Documentation(@NotNull TypeEvalContext typeEvalContext, @NotNull EnumSet<PyTypeRendererFeature> features) {
       super(typeEvalContext, features);
     }
   }
 
   public static final class TypeHint extends PyTypeRenderer {
-    private static final EnumSet<Feature> SUPPORTED_FEATURES = EnumSet.of(Feature.USE_FQN);
+    private static final EnumSet<PyTypeRendererFeature> SUPPORTED_FEATURES = EnumSet.of(PyTypeRendererFeature.USE_FQN);
 
-    public TypeHint(@NotNull TypeEvalContext typeEvalContext, @NotNull EnumSet<Feature> features) {
+    public TypeHint(@NotNull TypeEvalContext typeEvalContext, @NotNull EnumSet<PyTypeRendererFeature> features) {
       super(typeEvalContext, validateFeatures(features));
     }
 
-    private static @NotNull EnumSet<Feature> validateFeatures(@NotNull EnumSet<Feature> features) {
-      EnumSet<Feature> unsupported = EnumSet.copyOf(features);
+    private static @NotNull EnumSet<PyTypeRendererFeature> validateFeatures(@NotNull EnumSet<PyTypeRendererFeature> features) {
+      EnumSet<PyTypeRendererFeature> unsupported = EnumSet.copyOf(features);
       unsupported.removeAll(SUPPORTED_FEATURES);
       if (!unsupported.isEmpty()) {
         throw new IllegalArgumentException("Unsupported features for type hint rendering " + unsupported);

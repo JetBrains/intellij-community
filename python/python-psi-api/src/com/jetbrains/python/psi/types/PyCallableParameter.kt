@@ -73,14 +73,14 @@ interface PyCallableParameter {
    * Also includes argument type if `context` is not null and filter returns `false` for it.
    */
   fun getPresentableText(includeDefaultValue: Boolean, context: TypeEvalContext?, typeFilter: (PyType?) -> Boolean): String =
-    getPresentableText(includeDefaultValue, context, false, typeFilter)
+    getPresentableText(includeDefaultValue, context, emptySet(), typeFilter)
 
   /**
-   * @param includeDefaultValue       if true, include the default value after an "=".
-   * @param context                   context to be used to resolve argument type
-   * @param renderTypeParameterBounds if true and the argument type is a type parameter, also render its
-   *   upper bound or constraints, e.g. `bar: T ≤: str` instead of just `bar: T`.
-   * @param typeFilter                predicate to be used to ignore resolved argument type
+   * @param includeDefaultValue  if true, include the default value after an "=".
+   * @param context              context to be used to resolve argument type
+   * @param typeRendererFeatures rendering features to enable when formatting the argument type, e.g.
+   *   [PyTypeRendererFeature.TYPE_VAR_BOUNDS] to render `bar: T ≤: str` instead of just `bar: T`.
+   * @param typeFilter           predicate to be used to ignore resolved argument type
    * @return canonical representation of parameter.
    * Includes asterisks for *param and **param.
    * Also includes argument type if `context` is not null and filter returns `false` for it.
@@ -89,7 +89,7 @@ interface PyCallableParameter {
   fun getPresentableText(
     includeDefaultValue: Boolean,
     context: TypeEvalContext?,
-    renderTypeParameterBounds: Boolean,
+    typeRendererFeatures: Set<PyTypeRendererFeature>,
     typeFilter: (PyType?) -> Boolean,
   ): String
 

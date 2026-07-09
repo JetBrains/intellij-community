@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyStructuralType;
+import com.jetbrains.python.psi.types.PyTypeRendererFeature;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 
 import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAnyOrUnknown;
@@ -154,7 +155,8 @@ public final class PyParameterInfoUtils {
               parameterDescription.setAnnotation(last ? annotationText : (annotationText + ", "));
             }
           }
-          stringBuilder.append(parameter.getPresentableText(true, context, true, type -> isAnyOrUnknown(type) || type instanceof PyStructuralType));
+          stringBuilder.append(parameter.getPresentableText(true, context, EnumSet.of(PyTypeRendererFeature.TYPE_VAR_BOUNDS),
+                                                             type -> isAnyOrUnknown(type) || type instanceof PyStructuralType));
           if (!last) stringBuilder.append(", ");
           final int hintIndex = parameterDescriptions.size();
           parameterToHintIndex.put(parameter, hintIndex);

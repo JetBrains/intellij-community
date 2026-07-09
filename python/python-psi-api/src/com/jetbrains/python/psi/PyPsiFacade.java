@@ -2,17 +2,22 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeRendererFeature;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 
 public abstract class PyPsiFacade {
@@ -32,6 +37,20 @@ public abstract class PyPsiFacade {
   public abstract @Nullable PyType createTupleType(@NotNull List<PyType> members, @NotNull PsiElement anchor);
 
   public abstract @Nullable PyType parseTypeAnnotation(@NotNull String annotation, @NotNull PsiElement anchor);
+
+  /**
+   * Render a {@link PyType} into a human-readable string, e.g. for presentation in the UI.
+   *
+   * @param type     the type to render, or {@code null} to render the "unknown" type
+   * @param context  context used to infer extra types
+   * @param features optional features tweaking the rendering, e.g.
+   *                 {@link PyTypeRendererFeature#TYPE_VAR_BOUNDS} to render {@code T ≤: str} instead of just {@code T}
+   * @return a plain-text representation of the type
+   */
+  @ApiStatus.Experimental
+  public abstract @NotNull @NlsSafe String renderType(@Nullable PyType type,
+                                                      @NotNull TypeEvalContext context,
+                                                      @NotNull Set<PyTypeRendererFeature> features);
 
   /**
    * Retrieve a top-level class by its qualified name. The name provided is supposed to be <em>fully qualified absolute name</em>
