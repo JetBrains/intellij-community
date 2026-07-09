@@ -126,7 +126,7 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
         field -> new PyTypedDictType.FieldTypeAndTotality(
           field.getValue().getValue(),
           clone(field.getValue().getType()),
-          new PyTypedDictType.TypedDictFieldQualifiers()
+          field.getValue().getQualifiers()
         )
       )
     );

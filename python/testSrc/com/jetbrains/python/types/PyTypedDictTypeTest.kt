@@ -1388,6 +1388,34 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       foo(**{"description": "foo"})
       #      ^^^^^^^^^^^^^^^^^^^^ WARNING Extra key 'description' for TypedDict 'EmptyKwargs' FIXME
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90856"])
+    fun `non-total Unpack TypedDict kwargs in method and function`() = test("""
+      from typing import TypedDict, Unpack
+
+      class ReqArgs(TypedDict):
+          req_arg: int
+
+      class OptArgs(TypedDict, total=False):
+          opt_arg1: int
+          opt_arg2: str
+
+      class Foo:
+          def m_req(self, **kwargs: Unpack[ReqArgs]) -> None: ...
+          def m_opt(self, **kwargs: Unpack[OptArgs]) -> None: ...
+
+      def f_req(**kwargs: Unpack[ReqArgs]) -> None: ...
+      def f_opt(**kwargs: Unpack[OptArgs]) -> None: ...
+
+      Foo().m_req()
+      #           └ WARNING Parameter 'req_arg' unfilled
+      Foo().m_opt()
+      Foo().m_opt(opt_arg1=1)
+      f_req()
+      #     └ WARNING Parameter 'req_arg' unfilled
+      f_opt()
+      """.trimIndent())
   }
 
   @Test
