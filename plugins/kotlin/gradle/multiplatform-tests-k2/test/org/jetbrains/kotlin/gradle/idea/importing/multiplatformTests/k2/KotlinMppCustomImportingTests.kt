@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests.k2
 import junit.framework.AssertionFailedError
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
+import org.jetbrains.kotlin.gradle.multiplatformTests.isAgp9OrHigher
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.buildGradleModel
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.buildKotlinMPPGradleModel
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
@@ -137,7 +138,7 @@ class KotlinMppCustomImportingTests : AbstractKotlinMppGradleImportingTest() {
             jvmMain.assertNoAndroidSourceSetInfo()
             jvmTest.assertNoAndroidSourceSetInfo()
 
-            val isAgp9OrHigher = (agpVersion?.version?.substringBefore('.')?.toIntOrNull() ?: 0) >= 9
+            val isAgp9OrHigher = agpVersion.isAgp9OrHigher()
             if (model.getKotlinGradlePluginVersionOrFail().supportsKotlinAndroidMultiplatformSourceSetLayoutVersion2()) {
                 if (isAgp9OrHigher) {
                     // AGP 9 + kotlin.androidLibrary currently does not expose androidSourceSetInfo for KMP Android source sets

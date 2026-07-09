@@ -214,7 +214,7 @@ class KotlinMppTestProperties(
                 put(AndroidGradlePluginVersionTestsProperty.id, it)
             }
 
-            val isAgp9OrHigher = (agpVersion?.version?.substringBefore('.')?.toIntOrNull() ?: 0) >= 9
+            val isAgp9OrHigher = agpVersion.isAgp9OrHigher()
 
             if (kotlinVersion.version < KotlinGradlePluginVersions.V_2_1_0) {
                 put("androidTargetPlaceholder", if (isAgp9OrHigher) "" else "android()")

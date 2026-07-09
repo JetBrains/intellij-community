@@ -4,6 +4,7 @@
 package org.jetbrains.kotlin.gradle.multiplatformTests.testProperties
 
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.gradle.multiplatformTests.isAgp9OrHigher
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import kotlin.reflect.KProperty
@@ -21,7 +22,7 @@ internal fun SimpleProperties(
     kotlinVersion: KotlinToolingVersion,
     agpVersion: String? = null
 ) : Map<String, String> {
-    val isAgp9OrHigher = (agpVersion?.substringBefore('.')?.toIntOrNull() ?: 0) >= 9
+    val isAgp9OrHigher = agpVersion.isAgp9OrHigher()
     val result: MutableMap<String, String> = mutableMapOf()
 
     fun simplePropertyWithValue(defaultValue: String) = object {
