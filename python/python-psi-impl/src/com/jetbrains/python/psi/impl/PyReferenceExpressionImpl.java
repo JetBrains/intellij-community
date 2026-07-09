@@ -792,7 +792,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final List<ReadWriteInstruction> earlierWrites = StreamEx.of(flow)
       .select(ReadWriteInstruction.class)
       .filter(rw -> rw.num() < thisInstructionNum && rw.getAccess().isWriteAccess() && name.equals(rw.getName()))
-      .sortedByInt(Instruction::num)
       .toList();
     if (earlierWrites.size() < WARM_DEF_USE_THRESHOLD) return;
     ourWarmingDefUseChain.set(Boolean.TRUE);
