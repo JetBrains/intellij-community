@@ -1348,7 +1348,7 @@ object PyTypeChecker {
           // mismatch is buried inside a parameterized type (`list[set[int]]` vs `list[set[None]]`).
           { protocolMember.name?.let {
               PyMismatchStep.Attribute(it,
-                                       subclassElementType(expected, actual, subclassElementMember.type, actualSubstitutions, protocolContext)
+                                       subclassElementType(expected, actual, subclassElementMember, subclassElementMember.type, actualSubstitutions, protocolContext)
                                          ?.let { t -> codifiedType(protocolContext, t) },
                                        codifiedType(protocolContext, protocolElementType)) } },
           { isMatchingProtocolMember(expected, actual, protocolMember, subclassElementMember, protocolElementType, expectedSubstitutions, actualSubstitutions, protocolContext) }
@@ -1377,7 +1377,7 @@ object PyTypeChecker {
       return false
     }
 
-    val subclassElementType = subclassElementType(expected, actual, subclassElementMember.type, actualSubstitutions, protocolContext)
+    val subclassElementType = subclassElementType(expected, actual, subclassElementMember, subclassElementMember.type, actualSubstitutions, protocolContext)
     if (!match(protocolElementType, subclassElementType, protocolContext).getOrDefault(true)) {
       return false
     }
@@ -1385,7 +1385,7 @@ object PyTypeChecker {
       // The write type is contravariant. For a plain attribute, it is the member type, so the member is invariant.
       val protocolWriteType = substitute(dropSelfInProtocolMember(expected, protocolMember.writeType(context), context),
                                          expectedSubstitutions, context)
-      val subclassWriteType = subclassElementType(expected, actual, subclassElementMember.writeType(context), actualSubstitutions, protocolContext)
+      val subclassWriteType = subclassElementType(expected, actual, subclassElementMember, subclassElementMember.writeType(context), actualSubstitutions, protocolContext)
         .widenClassObjectLiteral(context)
       return match(subclassWriteType, protocolWriteType, protocolContext).getOrDefault(true)
     }
@@ -1395,13 +1395,15 @@ object PyTypeChecker {
   /** The subclass member's element type as compared against the protocol: `self` bound to [actual] and dropped, then
    *  the subclass's own type substitutions applied. */
   private fun subclassElementType(
-    expected: PyClassType, actual: PyClassType, subclassElementType: PyType?,
+    expected: PyClassType, actual: PyClassType, subclassElementMember: PyTypeMember, subclassElementType: PyType?,
     actualSubstitutions: GenericSubstitutions, protocolContext: MatchContext,
   ): PyType? {
     val context = protocolContext.context
     var result = substituteSelfInProtocolMember(actual, subclassElementType, context)
     result = dropSelfInProtocolMember(expected, result, context)
-    return substitute(result, actualSubstitutions, context)
+    result = substitute(result, actualSubstitutions, context)
+    // An unannotated attribute can take any value of its class, so its inferred literal type widens to the class.
+    return if (subclassElementMember.isUnannotatedAttribute()) PyLiteralType.upcastLiteralToClassDeep(result, context) else result
   }
 
   private fun match(expectedProtocol: PyClassType, actualModule: PyModuleType, matchContext: MatchContext): Boolean {
@@ -1451,6 +1453,14 @@ object PyTypeChecker {
     if (!isWritable) return false
     val element = element
     return element !is PyTargetExpression || !PyExpectedVarianceJudgment.isEffectivelyReadOnly(element, context)
+  }
+
+  /**
+   * Returns true when the member is a plain attribute without a type annotation.
+   */
+  private fun PyTypeMember.isUnannotatedAttribute(): Boolean {
+    val target = element as? PyTargetExpression ?: return false
+    return target.annotationValue == null && target.typeCommentAnnotation == null
   }
 
   /**

@@ -1548,6 +1548,56 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-90858"])
+    fun `mutable attribute rejects a bool value against int protocol`() = test("""
+      from typing import Protocol
+
+      class A(Protocol):
+          a: int
+
+      class B:
+          a = True
+
+      a: A = B()
+      #      ^^^ WARNING Expected type 'A', got 'B' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90858"])
+    fun `mutable attribute rejects a widened value against a Literal protocol`() = test("""
+      from typing import Literal, Protocol
+
+      class A(Protocol):
+          a: Literal[3]
+
+      class B:
+          def __init__(self):
+              self.a = 3
+
+      class C:
+          a = 3
+
+      b: A = B()
+      #      ^^^ WARNING Expected type 'A', got 'B' instead
+      c: A = C()
+      #      ^^^ WARNING Expected type 'A', got 'C' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90858"])
+    fun `mutable attribute matches an exact Literal value`() = test("""
+      from typing import Literal, Protocol
+
+      class A(Protocol):
+          a: Literal[3]
+
+      class B:
+          a: Literal[3] = 3
+
+      a: A = B()
+      """.trimIndent())
+
+    @Test
     @TestFor(issues = ["PY-87917"])
     fun `read only property is covariant and allows a subtype`() = test("""
       from typing import Protocol
