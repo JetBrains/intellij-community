@@ -45,6 +45,7 @@ import com.intellij.psi.util.PsiUtilBase
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.PsiVersioningService
 import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -66,6 +67,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -438,6 +440,17 @@ internal class FileViewProviderVersioningConsistencyTest {
       readActionBlocking {
         assertConsistentFileViewProviderSnapshot(file, nextText)
       }
+    }
+  }
+
+  @Test
+  fun `access to uninitialized document is forbidden in versioned environment`() {
+    val file = LightVirtualFile()
+    InternalPsiVersioning.freezePsiVersion {
+      val exception = assertThrows<IllegalStateException> {
+        FileDocumentManager.getInstance().getDocument(file)
+      }
+      assertTrue { exception.message!!.contains("Attempt to interact with uninitialized document") }
     }
   }
 

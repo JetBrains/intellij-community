@@ -99,7 +99,7 @@ object InternalPsiVersioning {
     if (isInsideVersioningButNotLocks()) {
       return
     }
-    ThreadingAssertions.assertReadAccess()
+    ThreadingAssertions.softAssertReadAccess()
   }
 
   @JvmStatic
