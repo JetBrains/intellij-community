@@ -494,11 +494,29 @@ open class PyTypeCheckerInspection : PyInspection() {
 
         val expected = getEnumValueType(scopeOwner, myTypeEvalContext)
         val actual = info.assignedValueType
-        if (!match(expected, actual, myTypeEvalContext)) {
-          registerTypeMismatch(PyTypeCheckerSuppressionCode.BAD_ASSIGNMENT, assignedValue, expected, actual,
-                               typeMismatchMessage(expected, actual, assignedValue),
-                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+        // The whole assigned value matches the member value type: fine (also covers plain enums whose value type
+        // is itself inferred as a tuple, e.g. `class C(Enum): A = 1, 2`).
+        if (match(expected, actual, myTypeEvalContext)) return
+
+        // A member declared as a tuple `(value, label, ...)` passes its elements to the enum's __new__/__init__
+        // (e.g. django TextChoices/IntegerChoices). By convention the first element is the actual member value,
+        // so validate only it against the scalar value type; the remaining elements are extra constructor
+        // arguments (label, encoding, ...). PyEnumInspection currently skips such tuples entirely.
+        val tuple = flattenParens(assignedValue) as? PyTupleExpression
+        if (tuple != null) {
+          val valueExpression = tuple.elements.firstOrNull() ?: return
+          val valueType = myTypeEvalContext.getType(valueExpression)
+          if (!match(expected, valueType, myTypeEvalContext)) {
+            registerTypeMismatch(PyTypeCheckerSuppressionCode.BAD_ASSIGNMENT, valueExpression, expected, valueType,
+                                 typeMismatchMessage(expected, valueType, valueExpression),
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+          }
+          return
         }
+
+        registerTypeMismatch(PyTypeCheckerSuppressionCode.BAD_ASSIGNMENT, assignedValue, expected, actual,
+                             typeMismatchMessage(expected, actual, assignedValue),
+                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
         return
       }
 

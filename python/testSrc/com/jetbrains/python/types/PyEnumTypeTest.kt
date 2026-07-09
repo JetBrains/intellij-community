@@ -671,6 +671,24 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
+    @TestFor(issues = ["PY-88892"])
+    fun `enum member declared as a value-label tuple validates only the value element`() = test("""
+      from enum import Enum, StrEnum, IntEnum
+
+      class MyTextChoices(StrEnum):
+          A = "A", "A"   # OK: the value element 'A' is a str; the rest are constructor args (django TextChoices form)
+
+      class MyIntChoices(IntEnum):
+          B = 1, "label" # OK: same for the int-based enum
+
+      class MyPlainEnum(Enum):
+          C = 1, 2       # OK: value type is inferred as the tuple itself
+
+      class MyBadChoices(StrEnum):
+          BAD = 1, "label" # WARNING Expected type 'str', got 'Literal[1]' instead
+      """)
+
+    @Test
     @TestFor(issues = ["PY-87344"])
     fun `iterating an Enum type and instance`() = test(TestOptions(enablePyAnyType = false), """
       from enum import Enum
