@@ -39,6 +39,7 @@ import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.initOnShow
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -265,7 +266,13 @@ internal class TerminalToolWindowTabsManagerImpl(
       }
     }
 
-    createBackendTabAndStartSession(terminal, builder)
+    val processOptions = TerminalRequestedProcessOptions(
+      shellCommand = builder.shellCommand,
+      workingDirectory = builder.workingDirectory,
+      envVariables = builder.envVariables,
+      processType = builder.processType,
+    )
+    createBackendTabAndStartSession(terminal, processOptions, builder.deferSessionStartUntilUiShown, builder.backendTabId)
 
     project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).terminalViewCreated(terminal)
     return terminal
@@ -279,9 +286,11 @@ internal class TerminalToolWindowTabsManagerImpl(
   @OptIn(AwaitCancellationAndInvoke::class)
   private fun createBackendTabAndStartSession(
     terminal: TerminalViewImpl,
-    builder: TerminalToolWindowTabBuilderImpl,
+    processOptions: TerminalRequestedProcessOptions,
+    deferSessionStartUntilUiShown: Boolean,
+    existingBackendTabId: Int?,
   ) = terminal.coroutineScope.launch {
-    val backendTabId = builder.backendTabId ?: TerminalTabsManager.getInstance(project).createNewTerminalTab().id
+    val backendTabId = existingBackendTabId ?: TerminalTabsManager.getInstance(project).createNewTerminalTab().id
 
     detachedTabs.onTabCreated(terminal, backendTabId)
 
@@ -307,48 +316,49 @@ internal class TerminalToolWindowTabsManagerImpl(
       scope = terminal.coroutineScope.childScope("Backend tab name updating")
     )
 
-    scheduleSessionStart(terminal, builder, backendTabId)
+    scheduleSessionStart(terminal, processOptions, deferSessionStartUntilUiShown, backendTabId)
   }
 
   private suspend fun scheduleSessionStart(
     terminal: TerminalViewImpl,
-    builder: TerminalToolWindowTabBuilderImpl,
+    processOptions: TerminalRequestedProcessOptions,
+    deferSessionStartUntilUiShown: Boolean,
     backendTabId: Int,
   ) {
-    if (builder.deferSessionStartUntilUiShown) {
+    if (deferSessionStartUntilUiShown) {
       withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
         // Non-cancellable because we expect it to be called only once even if the component was hidden immediately.
         terminal.component.initOnShow("Terminal Session start", context = NonCancellable) {
-          doScheduleSessionStart(terminal, builder, backendTabId, calculateSizeFromComponent = true)
+          doScheduleSessionStart(terminal, processOptions, backendTabId, calculateSizeFromComponent = true)
         }
       }
     }
     else {
-      doScheduleSessionStart(terminal, builder, backendTabId, calculateSizeFromComponent = false)
+      doScheduleSessionStart(terminal, processOptions, backendTabId, calculateSizeFromComponent = false)
     }
   }
 
   private fun doScheduleSessionStart(
     terminal: TerminalViewImpl,
-    builder: TerminalToolWindowTabBuilderImpl,
+    processOptions: TerminalRequestedProcessOptions,
     backendTabId: Int,
     calculateSizeFromComponent: Boolean,
-  ) = terminal.coroutineScope.launch {
-    val options = prepareStartupOptions(terminal, builder, calculateSizeFromComponent)
+  ) = terminal.coroutineScope.launch(CoroutineName("Terminal Session start")) {
+    val options = prepareStartupOptions(terminal, processOptions, calculateSizeFromComponent)
     val sessionTab = TerminalTabsManager.getInstance(project).startTerminalSessionForTab(backendTabId, options)
     connectSessionToTerminal(terminal, sessionTab.sessionId!!)
   }
 
   private suspend fun prepareStartupOptions(
     terminal: TerminalView,
-    builder: TerminalToolWindowTabBuilderImpl,
+    processOptions: TerminalRequestedProcessOptions,
     calculateSizeFromComponent: Boolean,
   ): ShellStartupOptions {
     val baseOptions = ShellStartupOptions.Builder()
-      .shellCommand(builder.shellCommand)
-      .workingDirectory(builder.workingDirectory)
-      .envVariables(builder.envVariables)
-      .processType(builder.processType)
+      .shellCommand(processOptions.shellCommand)
+      .workingDirectory(processOptions.workingDirectory)
+      .envVariables(processOptions.envVariables)
+      .processType(processOptions.processType)
 
     return if (calculateSizeFromComponent) {
       withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
