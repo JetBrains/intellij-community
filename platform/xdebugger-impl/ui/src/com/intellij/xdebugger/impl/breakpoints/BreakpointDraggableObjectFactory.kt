@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
@@ -9,6 +11,8 @@ import com.intellij.platform.debugger.impl.shared.proxy.XLightLineBreakpointProx
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Cursor
 import java.awt.dnd.DnDConstants
@@ -22,20 +26,24 @@ class BreakpointDraggableObjectFactory(
   fun create(): GutterDraggableObject {
     return object : GutterDraggableObject {
       override fun copy(line: Int, file: VirtualFile?, actionId: Int): Boolean {
-        if (canMoveTo(line, file)) {
+        if (file != null && canMoveTo(line, file)) {
           // TODO IJPL-185322 implement DnD for light breakpoints?
           val lineBreakpoint = breakpoint as? XLineBreakpointProxy ?: return false
           if (isCopyAction(actionId)) {
-            breakpointManager.copyLineBreakpoint(lineBreakpoint, file!!, line)
+            breakpointManager.copyLineBreakpoint(lineBreakpoint, file, line)
           }
           else {
-            lineBreakpoint.setFileUrl(file!!.url)
-            lineBreakpoint.setLine(line)
-            val sessionProxy = XDebugManagerProxy.getInstance().getCurrentSessionProxy(lineBreakpoint.project)
-            if (sessionProxy != null) {
-              breakpointManager.onBreakpointRemoval(lineBreakpoint, sessionProxy)
+            val project = lineBreakpoint.project
+            val cs = project.service<BreakpointDraggableObjectFactoryScopeProvider>().cs
+            cs.launch { // switch to avoid blocking url call on EDT
+              lineBreakpoint.setFileUrl(file.url)
+              lineBreakpoint.setLine(line)
+              val sessionProxy = XDebugManagerProxy.getInstance().getCurrentSessionProxy(project)
+              if (sessionProxy != null) {
+                breakpointManager.onBreakpointRemoval(lineBreakpoint, sessionProxy)
+              }
+              DebuggerUIUtil.notifyBreakpointAttachments(lineBreakpoint)
             }
-            DebuggerUIUtil.notifyBreakpointAttachments(lineBreakpoint)
             return true
           }
         }
@@ -71,3 +79,6 @@ class BreakpointDraggableObjectFactory(
     }
   }
 }
+
+@Service(Service.Level.PROJECT)
+private class BreakpointDraggableObjectFactoryScopeProvider(val cs: CoroutineScope)

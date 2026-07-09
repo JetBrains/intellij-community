@@ -110,7 +110,7 @@ internal class FrontendXLineBreakpointVisualizationManager(
     busConnection.subscribe(EditorColorsManager.TOPIC, MyEditorColorsListener())
     busConnection.subscribe(FileDocumentManagerListener.TOPIC, object : FileDocumentManagerListener {
       override fun fileContentLoaded(file: VirtualFile, document: Document) {
-        manager.getFileBreakpoints(file.url).asSequence()
+        manager.getFileBreakpoints(file).asSequence()
           .filter { it.getHighlighter() == null }
           .forEach { queueBreakpointUpdate(it) }
       }
