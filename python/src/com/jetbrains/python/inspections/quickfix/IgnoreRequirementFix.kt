@@ -29,9 +29,12 @@ internal class IgnoreRequirementFix(private val packagesToIgnore: Set<String>) :
     SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
 
     val inspection = PyPackageRequirementsInspection.Helper.getInstance(element) ?: return
-    inspection.ignoredPackages = (inspection.ignoredPackages + packagesToIgnore).distinct().toMutableList()
-
-    val profileManager = ProjectInspectionProfileManager.Companion.getInstance(project)
+    inspection.ignoredPackages.apply {
+      val newList = (this + packagesToIgnore).distinct()
+      clear()
+      addAll(newList)
+    }
+    val profileManager = ProjectInspectionProfileManager.getInstance(project)
     profileManager.fireProfileChanged()
 
     val notificationMessage = when {
@@ -53,13 +56,13 @@ internal class IgnoreRequirementFix(private val packagesToIgnore: Set<String>) :
     profileManager: ProjectInspectionProfileManager,
   ): NotificationAction =
     NotificationAction.createSimpleExpiring(ActionsBundle.message("action.\$Undo.text")) {
-      inspection.ignoredPackages = (inspection.ignoredPackages - packagesToIgnore).toMutableList()
+      inspection.ignoredPackages.removeAll(packagesToIgnore)
       profileManager.fireProfileChanged()
     }
 
   private fun createEditSettingsAction(project: Project): NotificationAction =
     NotificationAction.createSimpleExpiring(PyBundle.message("notification.action.edit.settings")) {
-      val profile = ProjectInspectionProfileManager.Companion.getInstance(project).currentProfile
+      val profile = ProjectInspectionProfileManager.getInstance(project).currentProfile
       val toolName = PyPackageRequirementsInspection::class.java.simpleName
       EditInspectionToolsSettingsAction.editToolSettings(project, profile, toolName)
     }

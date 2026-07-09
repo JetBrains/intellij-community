@@ -153,7 +153,7 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
     myFixture.configureByText("requirements.txt", "pkg[extras]");
 
     final PyPackageRequirementsInspection inspection = new PyPackageRequirementsInspection();
-    inspection.getIgnoredPackages().add("pkg");
+    inspection.ignoredPackages.add("pkg");
 
     myFixture.enableInspections(inspection);
     myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());

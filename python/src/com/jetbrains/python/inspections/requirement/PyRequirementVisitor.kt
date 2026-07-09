@@ -6,14 +6,17 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiElement
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.quickfix.IgnoreRequirementFix
 import com.jetbrains.python.inspections.quickfix.PyAddToDeclaredPackagesQuickFix
 import com.jetbrains.python.inspections.quickfix.SyncProjectQuickFix
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.listDeclaredPackagesAsync
 import com.jetbrains.python.packaging.utils.PyPackageManagerModuleHelpers
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFromImportStatement
@@ -29,7 +32,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class PyRequirementVisitor(
   holder: ProblemsHolder?,
-  val ignoredPackages: Collection<String>,
+  val ignoredPackages: Collection<PyPackageName>,
   context: TypeEvalContext,
 ) : PyInspectionVisitor(holder, context) {
   override fun visitPyFromImportStatement(node: PyFromImportStatement) {
@@ -41,6 +44,7 @@ class PyRequirementVisitor(
     node.importElements.mapNotNull { it.importReferenceExpression }.forEach { checkPackageNameInRequirements(it) }
   }
 
+  @RequiresBackgroundThread
   private fun checkPackageNameInRequirements(importedExpression: PyQualifiedExpression) {
     if (PyInspectionExtension.EP_NAME.extensionList.any { it.ignorePackageNameInRequirements(importedExpression) }) {
       return
@@ -56,14 +60,14 @@ class PyRequirementVisitor(
 
     val sdk = module.pythonSdk ?: return
     val manager = PythonPackageManager.forSdk(module.project, sdk)
-    if (manager.listDeclaredPackagesSnapshot() == null) return
+    val declared = manager.listDeclaredPackagesAsync() ?: return
 
-    val installedNotDeclaredChecker = InstalledButNotDeclaredChecker(ignoredPackages, manager)
+    val installedNotDeclaredChecker = InstalledButNotDeclaredChecker(ignoredPackages, declared)
     val packageName = installedNotDeclaredChecker.getUndeclaredPackageName(importedPyModule = importedPyModule) ?: return
 
 
-    val fixes = arrayOf(PyAddToDeclaredPackagesQuickFix(manager, packageName),
-                        IgnoreRequirementFix(setOf(packageName)))
+    val fixes = arrayOf(PyAddToDeclaredPackagesQuickFix(manager, packageName.name),
+                        IgnoreRequirementFix(setOf(packageName.name)))
 
     registerProblem(
       packageReferenceExpression,
@@ -79,6 +83,7 @@ class PyRequirementVisitor(
     checkPackagesHaveBeenInstalled(node, module)
   }
 
+  @RequiresBackgroundThread
   private fun checkPackagesHaveBeenInstalled(file: PsiElement, module: Module) {
     if (PyPackageManagerModuleHelpers.isRunningPackagingTasks(module))
       return
