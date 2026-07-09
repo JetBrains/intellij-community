@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.types
 
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.idea.TestFor
 import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
@@ -129,6 +130,48 @@ class PyClassesTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-89201"])
+    fun `unannotated override with an incompatible value is an error`() = test("""
+      class A:
+          a: int
+
+      class B(A):
+          a = "str"  # WARNING Expected type 'int', got 'str' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-89201"])
+    fun `unannotated override with a subtype value is allowed`() = test("""
+      class A:
+          a: int
+
+      class B(A):
+          a = True
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-89201"])
+    fun `unannotated override of an inferred base attribute is not checked by default`() = test("""
+      class A:
+          a = 1
+
+      class B(A):
+          a = "str"
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-89201"])
+    fun `unannotated override of an inferred base attribute is checked with the option`() = testWithInspection(
+      PyTypeCheckerInspection().also { it.checkInferredAttributeOverrides = true },
+      """
+      class A:
+          a = 1
+
+      class B(A):
+          a = <warning descr="Expected type 'int', got 'str' instead">"str"</warning>
+      """.trimIndent())
+
+    @Test
     fun `override of an imported attribute reads the stubs`() {
       test("""
         from mod import A
@@ -171,12 +214,23 @@ class PyClassesTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    fun `override of an inferred base attribute`() = test("""
+    fun `annotated override of an inferred base attribute is not checked by default`() = test("""
       class A:
           a = 1
 
       class B(A):
-          a: str  # WARNING Type 'str' of the overridden attribute is not compatible with the inherited type 'int'
+          a: str
+      """.trimIndent())
+
+    @Test
+    fun `annotated override of an inferred base attribute is checked with the option`() = testWithInspection(
+      PyTypeCheckerInspection().also { it.checkInferredAttributeOverrides = true },
+      """
+      class A:
+          a = 1
+
+      class B(A):
+          a: <warning descr="Type 'str' of the overridden attribute is not compatible with the inherited type 'int'">str</warning>
       """.trimIndent())
 
     @Test
@@ -313,6 +367,12 @@ class PyClassesTypeTest : PyCodeInsightTestCase() {
         class C(A):
             a: <warning descr="Type 'str' of the overridden attribute is not compatible with the inherited type 'int'">str</warning>
       """.trimIndent())
+      myFixture.enableInspections(inspection)
+      myFixture.checkHighlighting(true, false, false)
+    }
+
+    private fun testWithInspection(inspection: LocalInspectionTool, text: String) {
+      myFixture.configureByText("aaa.py", text)
       myFixture.enableInspections(inspection)
       myFixture.checkHighlighting(true, false, false)
     }
