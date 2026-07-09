@@ -63,7 +63,6 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
     return buildLibraryList(isCommunity) {
         kotlincForIdeWithStandardNaming("kotlinc.allopen-compiler-plugin", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.analysis-api-k2", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-fe10", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.analysis-api", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.analysis-api-impl-base", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.analysis-api-platform-interface", kotlincCoordinates)

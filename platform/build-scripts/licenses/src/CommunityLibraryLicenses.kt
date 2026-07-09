@@ -1526,7 +1526,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlin-tooling-core"),
     jetbrainsLibrary("kotlinc.allopen-compiler-plugin"),
     jetbrainsLibrary("kotlinc.analysis-api"),
-    jetbrainsLibrary("kotlinc.analysis-api-fe10"),
     jetbrainsLibrary("kotlinc.analysis-api-impl-base"),
     jetbrainsLibrary("kotlinc.analysis-api-k2"),
     jetbrainsLibrary("kotlinc.analysis-api-platform-interface"),

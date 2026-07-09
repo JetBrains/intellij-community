@@ -8168,28 +8168,6 @@ java_library(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/analysis-api-fe10-for-ide-2.4.20-dev-9133.jar_copy",
-    src = "@org_jetbrains_kotlin-analysis-api-fe10-for-ide-2_4_20-dev-9133_http//file",
-    out = "org.jetbrains.kotlin/analysis-api-fe10-for-ide-2.4.20-dev-9133.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlinc-analysis-api-fe10",
-    jar = "@org_jetbrains_kotlin-analysis-api-fe10-for-ide-2_4_20-dev-9133_http//file",
-    source_jar = "@org_jetbrains_kotlin-analysis-api-fe10-for-ide-2_4_20-dev-9133-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "kotlinc-analysis-api-fe10-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":kotlinc-analysis-api-fe10"],
-)
-
-copy_file(
     name = "org.jetbrains.kotlin/analysis-api-impl-base-for-ide-2.4.20-dev-9133.jar_copy",
     src = "@org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_4_20-dev-9133_http//file",
     out = "org.jetbrains.kotlin/analysis-api-impl-base-for-ide-2.4.20-dev-9133.jar",

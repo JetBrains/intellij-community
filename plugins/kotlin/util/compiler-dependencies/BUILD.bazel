@@ -26,7 +26,6 @@ jvm_library(
         ":compiler-dependencies",
         "@lib//:kotlinc-allopen-compiler-plugin-provided",
         "@lib//:kotlinc-analysis-api-k2-provided",
-        "@lib//:kotlinc-analysis-api-fe10-provided",
         "@lib//:kotlinc-analysis-api-provided",
         "@lib//:kotlinc-analysis-api-impl-base-provided",
         "@lib//:kotlinc-analysis-api-platform-interface-provided",
