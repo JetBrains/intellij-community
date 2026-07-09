@@ -70,7 +70,7 @@ import static com.intellij.internal.statistic.eventLog.events.EventFields.Long;
 import static com.intellij.notification.NotificationAction.createSimpleExpiring;
 
 @ApiStatus.Internal
-@SuppressWarnings("NonConstantLogger")
+@SuppressWarnings({"NonConstantLogger", "UseOptimizedEelFunctions", "SplitModeApiUsage"})
 public final class OldDirectoryCleaner {
   @ApiStatus.Internal
   public static final class Stats extends CounterUsagesCollector {
@@ -336,7 +336,7 @@ public final class OldDirectoryCleaner {
       table.getColumnModel().getColumn(2).setCellRenderer(renderer);
       table.getColumnModel().getColumn(3).setHeaderRenderer(renderer);
       table.getColumnModel().getColumn(3).setCellRenderer(renderer);
-      myModel.addTableModelListener(e -> updateOkButton());
+      myModel.addTableModelListener(_ -> updateOkButton());
       var panel = new JPanel(new BorderLayout(0, JBUI.scale(5)));
       panel.add(new JBLabel(message("old.dirs.dialog.text")), BorderLayout.NORTH);
       var tableScroll = new JBScrollPane(table);

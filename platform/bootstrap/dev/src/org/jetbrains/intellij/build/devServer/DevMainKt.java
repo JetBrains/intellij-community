@@ -46,7 +46,8 @@ public final class DevMainKt {
   }
 
   private static String build(MethodHandles.Lookup lookup, PathClassLoader classLoader, String[] rawArgs) throws Throwable {
-    AbstractMap.SimpleImmutableEntry<String, Collection<Path>> mainClassAndClassPath;
+    String mainClass;
+    Collection<Path> classPath;
 
     // do not use classLoader as a parent - make sure that we don't make the initial classloader dirty
     // (say, do not load kotlin coroutine classes)
@@ -54,14 +55,17 @@ public final class DevMainKt {
     try (var tempClassLoader = new URLClassLoader(classLoader.getUrls().toArray(URL[]::new), ClassLoader.getPlatformClassLoader())) {
       var implClass = tempClassLoader.loadClass("org.jetbrains.intellij.build.devServer.DevMainImpl");
 
-      //noinspection unchecked
-      mainClassAndClassPath = (AbstractMap.SimpleImmutableEntry<String, Collection<Path>>)lookup
+      @SuppressWarnings({"unchecked", "ConfusingArgumentToVarargsMethod"})
+      var mainClassAndClassPath = (AbstractMap.SimpleImmutableEntry<String, Collection<Path>>)lookup
         .findStatic(implClass, "buildDevMain", MethodType.methodType(AbstractMap.SimpleImmutableEntry.class, String[].class))
         .invokeExact(rawArgs);
+
+      mainClass = mainClassAndClassPath.getKey();
+      classPath = mainClassAndClassPath.getValue();
     }
 
-    classLoader.reset(mainClassAndClassPath.getValue());
+    classLoader.reset(classPath);
 
-    return mainClassAndClassPath.getKey();
+    return mainClass;
   }
 }

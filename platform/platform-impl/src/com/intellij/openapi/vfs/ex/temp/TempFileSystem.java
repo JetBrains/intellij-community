@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.ex.temp;
 
 import com.intellij.openapi.util.Key;
@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -30,8 +29,8 @@ import java.util.Map;
 import java.util.Set;
 
 @ApiStatus.Internal
-@SuppressWarnings("removal")
-public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePointerCapableFileSystem, TempFileSystemMarker {
+@SuppressWarnings({"removal", "UnnecessaryFullyQualifiedName"})
+public class TempFileSystem extends com.intellij.openapi.vfs.impl.local.LocalFileSystemBase implements VirtualFilePointerCapableFileSystem, TempFileSystemMarker {
   private static final String TEMP_PROTOCOL = "temp";
 
   private final FSItem myRoot = new FSDir();
@@ -54,13 +53,13 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
   private static final Key<FSItem> FS_ITEM_KEY = Key.create("FS_ITEM_KEY");
 
   private @Nullable FSItem convert(@NotNull VirtualFile file) {
-    VirtualFile parentFile = file.getParent();
+    var parentFile = file.getParent();
     if (parentFile == null) {
       return myRoot;
     }
-    FSItem item = file.getUserData(FS_ITEM_KEY);
+    var item = file.getUserData(FS_ITEM_KEY);
     if (item == null) {
-      FSItem parentItem = convert(parentFile);
+      var parentItem = convert(parentFile);
       if (parentItem == null || !parentItem.isDirectory()) {
         return null;
       }
@@ -71,7 +70,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
   }
 
   private @NotNull FSDir convertDirectory(@NotNull VirtualFile dir) throws IOException {
-    FSItem fsItem = convertAndCheck(dir);
+    var fsItem = convertAndCheck(dir);
     if (!fsItem.isDirectory()) {
       throw new IOException("Not a directory: " + dir.getPath());
     }
@@ -79,7 +78,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
   }
 
   private @NotNull FSItem convertAndCheck(@NotNull VirtualFile file) {
-    FSItem fsItem = convert(file);
+    var fsItem = convert(file);
     if (fsItem == null) {
       //MAYBE RC: NoSuchFileException seems to fit better:
       // 1. it is an IOException -- no need to catch out-of-nothing IllegalStateException (see LightPlatformTestCase.tearDownSourceRoot())
@@ -91,8 +90,8 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
 
   @Override
   public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String name) throws IOException {
-    FSDir fsDir = convertDirectory(parent);
-    FSItem existing = fsDir.findChild(name);
+    var fsDir = convertDirectory(parent);
+    var existing = fsDir.findChild(name);
     if (existing == null) {
       fsDir.addChild(name, new FSDir());
     }
@@ -110,7 +109,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
 
   @Override
   public @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String name) throws IOException {
-    FSDir fsDir = convertDirectory(parent);
+    var fsDir = convertDirectory(parent);
     if (fsDir.findChild(name) != null) throw new IOException("File " + name + " already exists in " + parent.getPath());
     fsDir.addChild(name, new FSFile());
     return new FakeVirtualFile(parent, name);
@@ -118,7 +117,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
 
   @TestOnly
   public void createIfNotExists(@NotNull VirtualFile parent, @NotNull String name) throws IOException {
-    FSDir fsDir = convertDirectory(parent);
+    var fsDir = convertDirectory(parent);
     if (fsDir.findChild(name) == null) {
       fsDir.addChild(name, new FSFile());
     }
@@ -134,7 +133,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
 
   @Override
   public void deleteFile(Object requestor, @NotNull VirtualFile file) throws IOException {
-    FSDir parent = convertAndCheckParent(file);
+    var parent = convertAndCheckParent(file);
     parent.removeChild(file.getName(), file.getParent());
     clearFsItemCache(file);
   }
@@ -145,12 +144,12 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
 
   @Override
   public void moveFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) throws IOException {
-    FSItem fsItem = convertAndCheck(file);
-    FSItem newParentItem = convertAndCheck(newParent);
-    FSDir oldParentItem = convertAndCheckParent(file);
+    var fsItem = convertAndCheck(file);
+    var newParentItem = convertAndCheck(newParent);
+    var oldParentItem = convertAndCheckParent(file);
     if (!newParentItem.isDirectory()) throw new IOException("Target is not a directory: " + file.getPath());
-    FSDir newDir = (FSDir)newParentItem;
-    String name = file.getName();
+    var newDir = (FSDir)newParentItem;
+    var name = file.getName();
     if (newDir.findChild(name) != null) throw new IOException("Directory already contains a file named " + name);
     oldParentItem.removeChild(name, file.getParent());
     newDir.addChild(name, fsItem);
@@ -174,7 +173,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
 
   @Override
   public String @NotNull [] list(@NotNull VirtualFile file) {
-    FSItem fsItem = convertAndCheck(file);
+    var fsItem = convertAndCheck(file);
     return fsItem.list();
   }
 
@@ -190,13 +189,13 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
 
   @Override
   public long getTimeStamp(@NotNull VirtualFile file) {
-    FSItem fsItem = convertAndCheck(file);
+    var fsItem = convertAndCheck(file);
     return fsItem.myTimestamp;
   }
 
   @Override
   public void setTimeStamp(@NotNull VirtualFile file, long timeStamp) {
-    FSItem fsItem = convertAndCheck(file);
+    var fsItem = convertAndCheck(file);
     fsItem.myTimestamp = timeStamp > 0 ? timeStamp : currentTime();
   }
 
@@ -206,19 +205,19 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
 
   @Override
   public boolean isWritable(@NotNull VirtualFile file) {
-    FSItem fsItem = convertAndCheck(file);
+    var fsItem = convertAndCheck(file);
     return fsItem.myWritable;
   }
 
   @Override
   public void setWritable(@NotNull VirtualFile file, boolean writableFlag) {
-    FSItem fsItem = convertAndCheck(file);
+    var fsItem = convertAndCheck(file);
     fsItem.myWritable = writableFlag;
   }
 
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
-    FSItem fsItem = convertAndCheck(file);
+    var fsItem = convertAndCheck(file);
     if (!(fsItem instanceof FSFile)) throw new IOException("Not a file: " + file.getPath());
     return ((FSFile)fsItem).myContent;
   }
@@ -234,7 +233,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
       @Override
       public void close() throws IOException {
         super.close();
-        FSItem fsItem = convertAndCheck(file);
+        var fsItem = convertAndCheck(file);
         if (!(fsItem instanceof FSFile)) throw new IOException("Not a file: " + file.getPath());
         ((FSFile)fsItem).myContent = toByteArray();
         setTimeStamp(file, timeStamp);
@@ -260,11 +259,11 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
       return false;
     }
 
-    protected FSItem findChild(@NotNull String name) {
+    protected @Nullable FSItem findChild(String name) {
       return null;
     }
 
-    protected @NotNull String @NotNull [] list() {
+    protected String[] list() {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
   }
@@ -273,7 +272,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
     private final Map<String, FSItem> myChildren = new LinkedHashMap<>();
 
     @Override
-    protected @Nullable FSItem findChild(@NotNull String name) {
+    protected @Nullable FSItem findChild(String name) {
       return myChildren.get(name);
     }
 
@@ -294,7 +293,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
     }
 
     @Override
-    protected @NotNull String @NotNull [] list() {
+    protected String[] list() {
       return ArrayUtil.toStringArray(myChildren.keySet());
     }
   }
@@ -304,8 +303,8 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
   }
 
   private void setName(@NotNull VirtualFile file, @NotNull String name) {
-    FSDir parent = convertAndCheckParent(file);
-    FSItem fsItem = convertAndCheck(file);
+    var parent = convertAndCheckParent(file);
+    var fsItem = convertAndCheck(file);
     parent.myChildren.remove(file.getName());
     parent.myChildren.put(name, fsItem);
     clearFsItemCache(file.getParent());
@@ -318,7 +317,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
 
   @Override
   public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    FSItem item = convert(file);
+    var item = convert(file);
     if (item == null) return null;
     long length = item instanceof FSFile ? ((FSFile)item).myContent.length : 0;
     // let's make TempFileSystem case-sensitive
@@ -326,9 +325,11 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
   }
 
   @Override
-  public @NotNull Set<LocalFileSystem.WatchRequest> replaceWatchedRoots(@NotNull Collection<LocalFileSystem.WatchRequest> watchRequests,
-                                                                        @Nullable Collection<String> recursiveRoots,
-                                                                        @Nullable Collection<String> flatRoots) {
+  public @NotNull Set<LocalFileSystem.WatchRequest> replaceWatchedRoots(
+    @NotNull Collection<LocalFileSystem.WatchRequest> watchRequests,
+    @Nullable Collection<String> recursiveRoots,
+    @Nullable Collection<String> flatRoots
+  ) {
     throw new IncorrectOperationException();
   }
 
