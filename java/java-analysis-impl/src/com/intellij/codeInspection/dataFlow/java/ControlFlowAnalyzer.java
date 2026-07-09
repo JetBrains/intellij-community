@@ -2515,7 +2515,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
       addConditionalErrorThrow();
       if (isInitializableRecord(constructor, expression)) {
-        initializeRecordConstructor(expression, type, constructor);
+        initializeRecordConstructor(constructor, expression);
       }
       else {
         List<? extends MethodContract> contracts = constructor == null ? Collections.emptyList() :
@@ -2554,17 +2554,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    * Creates the instructions modeling an implicit canonical record constructor call. On entry the stack holds
    * {@code [qualifier, arg0, ..., argN]}; on exit it holds the freshly created record object.
    */
-  private void initializeRecordConstructor(@NotNull PsiNewExpression expression,
-                                           @Nullable PsiType type,
-                                           @NotNull PsiMethod constructor) {
-    PsiClass recordClass = constructor.getContainingClass();
-    PsiRecordComponent[] components = Objects.requireNonNull(recordClass).getRecordComponents();
-    DfaVariableValue result = createTempVariable(type);
-    DfType recordType = type == null ? DfTypes.NOT_NULL_OBJECT.meet(DfTypes.LOCAL_OBJECT) :
-                         TypeConstraints.exact(type)
-                           .asDfType()
-                           .meet(DfTypes.NOT_NULL_OBJECT)
-                           .meet(DfTypes.LOCAL_OBJECT);
+  private void initializeRecordConstructor(@NotNull PsiMethod constructor, @NotNull PsiNewExpression expression) {
+    PsiClass recordClass = Objects.requireNonNull(constructor.getContainingClass());
+    DfType baseType = TypeConstraints.exactClass(recordClass).asDfType();
+    PsiRecordComponent[] components = recordClass.getRecordComponents();
+    DfaVariableValue result = myCurrentFlow.createTempVariable(baseType);
+    DfType recordType = baseType.meet(DfTypes.NOT_NULL_OBJECT).meet(DfTypes.LOCAL_OBJECT);
     addInstruction(new PushValueInstruction(recordType, null));
     addInstruction(new SimpleAssignmentInstruction(null, result));
     addInstruction(new PopInstruction());
