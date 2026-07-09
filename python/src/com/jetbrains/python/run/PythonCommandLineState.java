@@ -330,6 +330,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
    */
   protected @NotNull ProcessHandler startProcess(PythonProcessStarter processStarter, CommandLinePatcher... patchers)
     throws ExecutionException {
+    PyLaunchPreparer.prepareAllBlocking(getEnvironment());
+
     GeneralCommandLine commandLine = generateCommandLine(patchers);
 
     // Extend command line
@@ -355,6 +357,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
    */
   protected @NotNull ProcessHandler startProcess(@NotNull PythonScriptTargetedCommandLineBuilder builder)
     throws ExecutionException {
+    PyLaunchPreparer.prepareAllBlocking(getEnvironment());
+
     HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest = getPythonTargetInterpreter();
 
     Sdk sdk = getSdk();

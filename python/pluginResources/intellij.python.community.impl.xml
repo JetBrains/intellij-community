@@ -817,6 +817,8 @@
                     interface="com.jetbrains.python.run.PythonCommandLineEnvironmentProvider" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pythonCommandLineTargetEnvironmentProvider"
                     interface="com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.pyLaunchPreparer"
+                    interface="com.jetbrains.python.run.PyLaunchPreparer" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.magicLiteral"
                     interface="com.jetbrains.python.magicLiteral.PyMagicLiteralExtensionPoint"
                     dynamic="true"/>
