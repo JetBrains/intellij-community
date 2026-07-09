@@ -271,10 +271,10 @@ class KtCompilerPluginsCache private constructor(
                 runCatching {
                     val path =
                         if (eelDescriptor == LocalEelDescriptor) {
-                            Path.of(pathString)
+                            null
                         } else {
-                            EelPath.parse(pathString, eelDescriptor).asNioPath()
-                        }
+                            runCatching { EelPath.parse(pathString, eelDescriptor).asNioPath() }.getOrNull()
+                        } ?: Path.of(pathString)
                     layoutService.resolveRelativeToRemoteKotlinc(path)
                 }.getOrLogException(LOG)
             }
