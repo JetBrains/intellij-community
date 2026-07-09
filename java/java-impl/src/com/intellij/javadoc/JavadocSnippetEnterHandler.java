@@ -107,7 +107,7 @@ public final class JavadocSnippetEnterHandler implements EnterHandlerDelegate {
   }
 
   /// Adjust the document text to have the start of the comment line up with the rest
-  /// This method exist because the start of the line in Markdown is in the pre-process step instead of post process
+  /// This method exists because the start of the line in Markdown is in the pre-process step instead of post-process
   private static void adjustMarkdownStart(PsiSnippetDocTag host, Editor editor) {
     PsiDocComment comment = Objects.requireNonNull(PsiTreeUtil.getParentOfType(host, PsiDocComment.class));
 
@@ -127,6 +127,9 @@ public final class JavadocSnippetEnterHandler implements EnterHandlerDelegate {
     if (indentDifference > 0) {
       hostDocument.replaceString(caretOffset, caretOffset, " ".repeat(indentDifference));
       hostDocument.replaceString(lineStartOffset, lineStartOffset + indentDifference, "");
+    }
+    else {
+      hostDocument.replaceString(lineStartOffset, lineStartOffset, " ".repeat(Math.abs(indentDifference))); 
     }
   }
 

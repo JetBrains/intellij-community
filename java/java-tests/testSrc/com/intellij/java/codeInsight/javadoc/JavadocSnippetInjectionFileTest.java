@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.EqualsToFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicReference;
@@ -27,15 +28,20 @@ public class JavadocSnippetInjectionFileTest extends LightQuickFixParameterizedT
     final PsiElement snippet = PsiUtilCore.getElementAtOffset(getFile(), offset);
 
     final PsiClass injectedClass = getInjectedClass(snippet);
-
+    if (injectedClass == null)  {
+      // There should be no "after" file since there is no state
+      assertFalse(new File(JavaTestUtil.getJavaTestDataPath(), getBasePath() + "/after" + testName).exists());
+    } else {
     EqualsToFile.assertEqualsToFile(
       "Injected code",
       new File(JavaTestUtil.getJavaTestDataPath(), getBasePath() + "/after" + testName),
       injectedClass.getText()
     );
+    }
   }
 
-  private @NotNull PsiClass getInjectedClass(PsiElement element) {
+  /// @return the injected class, or null if the injection is disabled
+  private @Nullable PsiClass getInjectedClass(PsiElement element) {
     final PsiSnippetDocTag snippet = PsiTreeUtil.getParentOfType(element, PsiSnippetDocTag.class);
     final AtomicReference<PsiElement> injected = new AtomicReference<>();
     final InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(getProject());

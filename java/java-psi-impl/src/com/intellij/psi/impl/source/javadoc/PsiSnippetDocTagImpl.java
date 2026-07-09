@@ -127,14 +127,14 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
     for (int i = firstLine; i < Math.min(lastLine, lines.length); i++) {
       final String line = lines[i];
       final int size = line.length() + 1;
-      final int indentSize = getIndentSize(line, totalMinIndent);
+      final int indentSize = getIndentSize(line, totalMinIndent, isMarkdown);
 
       ranges.add(TextRange.create(0, size - indentSize).shiftRight(startOffset + indentSize));
       startOffset += size;
     }
 
     final String line = lines[lastLine];
-    final int indentSize = getIndentSize(line, totalMinIndent);
+    final int indentSize = getIndentSize(line, totalMinIndent, isMarkdown);
 
     final int endOffset = snippetBodyTextRangeRelativeToSnippet.getEndOffset();
     final int lastLineStartOffset = Math.min(endOffset, startOffset + indentSize);
@@ -145,22 +145,27 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
   }
 
   /**
-   * Usually leading asterisks of a javadoc are aligned so the common indent for lines in snippet body is obvious,
-   * but nevertheless javadoc can have multiple leading asterisks, and they don't have to be aligned.
+   * Usually leading chars of a javadoc are aligned so the common indent for lines in snippet body is obvious,
+   * but nevertheless javadoc can have multiple leading asterisks or forward slashes, and they don't have to be aligned.
    * This method either returns the passed indent or, if the passed indent is too short, which will result in leaving some leading
-   * asterisks after stripping the indent from the line, the indent that goes after the last leading asterisk.
+   * characters after stripping the indent from the line, the indent that goes after the last leading characters.
+   * 
    * @param line a line to calculate the indent size for
    * @param indent an indent that is minimal across all the lines in the snippet body
-   * @return the indent that is either the passed indent, or a new indent that goes after the last leading asterisk.
+   * @param isMarkdown whether the snippet is in a Markdown comment
+   * @return the indent that is either the passed indent, or a new indent that goes after the last leading chars.
    */
   @Contract(pure = true)
-  private static @Range(from = 0, to = Integer.MAX_VALUE) int getIndentSize(final @NotNull String line, int indent) {
-    final int ownLineIndent = CharArrayUtil.shiftForward(line, 0, " *");
+  private static @Range(from = 0, to = Integer.MAX_VALUE) int getIndentSize(final @NotNull String line, int indent, boolean isMarkdown) {
+    final int ownLineIndent =
+      isMarkdown
+      ? CharArrayUtil.shiftForward(line, CharArrayUtil.shiftForward(line, CharArrayUtil.shiftForward(line, 0, " "), "/"), " ")
+      : CharArrayUtil.shiftForward(line, 0, " *");
 
     final String maxPossibleIndent = line.substring(0, ownLineIndent);
-    final int lastAsteriskInIndent = maxPossibleIndent.lastIndexOf('*', ownLineIndent);
+    final int lastCharInIndent = maxPossibleIndent.lastIndexOf(isMarkdown ? '/' : '*', ownLineIndent);
 
-    return lastAsteriskInIndent >= indent ? lastAsteriskInIndent + 1 : indent;
+    return lastCharInIndent >= indent ? lastCharInIndent + 1 : indent;
   }
 
   @Contract(pure = true)
