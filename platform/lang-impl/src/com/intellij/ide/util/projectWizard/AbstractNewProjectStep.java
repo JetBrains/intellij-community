@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.RecentProjectsManager;
@@ -12,17 +12,19 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,9 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -224,13 +224,27 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     });
   }
 
-  public static <T> Project doGenerateProject(@NotNull String locationString,
-                                              @Nullable DirectoryProjectGenerator<T> generator,
-                                              @NotNull T settings,
-                                              @NotNull OpenProjectTask options) {
-    Path location = Paths.get(locationString);
+  public static <T> Project doGenerateProject(
+    @NotNull String locationString,
+    @Nullable DirectoryProjectGenerator<T> generator,
+    @NotNull T settings,
+    @NotNull OpenProjectTask options
+  ) {
+    var location = Path.of(locationString);
+    var baseDir = (VirtualFile)null;
+
     try {
-      Files.createDirectories(location);
+      baseDir = ProgressManager.getInstance().run(new Task.WithResult<@Nullable VirtualFile, IOException>(null, ActionsBundle.message("action.NewDirectoryProject.dir.progress"), false) {
+        @Override
+        protected @Nullable VirtualFile compute(@NotNull ProgressIndicator indicator) throws IOException {
+          NioFiles.createDirectories(location);
+          var baseDir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(location);
+          if (baseDir != null) {
+            VfsUtil.markDirtyAndRefresh(false, true, true, baseDir);
+          }
+          return baseDir;
+        }
+      });
     }
     catch (IOException e) {
       LOG.warn(e);
@@ -239,13 +253,10 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       return null;
     }
 
-    VirtualFile baseDir = WriteAction.compute(
-      () -> LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(location.toString())));
     if (baseDir == null) {
       LOG.error("Couldn't find '" + location + "' in VFS");
       return null;
     }
-    VfsUtil.markDirtyAndRefresh(false, true, true, baseDir);
 
     if (baseDir.getChildren().length > 0) {
       String title = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.title");
