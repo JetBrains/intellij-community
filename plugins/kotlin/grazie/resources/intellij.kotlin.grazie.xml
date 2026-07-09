@@ -1,10 +1,11 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="tanvd.grazi"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.grazie.core"/>
-    <!-- endregion -->
+    <module name="intellij.platform.backend"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij.grazie">
     <textExtractor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.grazie.KotlinTextExtractor"/>
