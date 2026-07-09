@@ -148,7 +148,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     messageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileUrlChangeAdapter() {
       @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
-        myLineBreakpointManager.onFileDeleted(event.getFile().getUrl());
+        myLineBreakpointManager.onFileDeleted(event.getFile());
       }
 
       @Override

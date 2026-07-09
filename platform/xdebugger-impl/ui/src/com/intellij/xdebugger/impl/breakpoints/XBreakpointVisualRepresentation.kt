@@ -266,23 +266,26 @@ class XBreakpointVisualRepresentation(
   fun createBreakpointDraggableObject(): GutterDraggableObject {
     return object : GutterDraggableObject {
       override fun copy(line: Int, file: VirtualFile?, actionId: Int): Boolean {
-        if (canMoveTo(line, file)) {
+        if (file != null && canMoveTo(line, file)) {
           // TODO IJPL-185322 implement DnD for light breakpoints?
           if (myBreakpoint !is XLineBreakpointProxy) {
             return false
           }
           val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(myProject)
           if (isCopyAction(actionId)) {
-            breakpointManager.copyLineBreakpoint(myBreakpoint, file!!, line)
+            breakpointManager.copyLineBreakpoint(myBreakpoint, file, line)
           }
           else {
-            myBreakpoint.setFileUrl(file!!.url)
-            myBreakpoint.setLine(line)
-            val sessionProxy = XDebugManagerProxy.getInstance().getCurrentSessionProxy(myProject)
-            if (sessionProxy != null) {
-              breakpointManager.onBreakpointRemoval(myBreakpoint, sessionProxy)
+            val cs = myProject.service<BreakpointDraggableObjectScopeProvider>().cs
+            cs.launch { // switch to avoid blocking url call on EDT
+              myBreakpoint.setFileUrl(file.url)
+              myBreakpoint.setLine(line)
+              val sessionProxy = XDebugManagerProxy.getInstance().getCurrentSessionProxy(myProject)
+              if (sessionProxy != null) {
+                breakpointManager.onBreakpointRemoval(myBreakpoint, sessionProxy)
+              }
+              DebuggerUIUtil.notifyBreakpointAttachments(myBreakpoint)
             }
-            DebuggerUIUtil.notifyBreakpointAttachments(myBreakpoint)
             return true
           }
         }
@@ -335,6 +338,9 @@ class XBreakpointVisualRepresentation(
     }
   }
 }
+
+@Service(Service.Level.PROJECT)
+private class BreakpointDraggableObjectScopeProvider(val cs: CoroutineScope)
 
 @Service(Service.Level.PROJECT)
 private class RedrawInlaysService(private val cs: CoroutineScope) {

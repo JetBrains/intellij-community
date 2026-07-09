@@ -46,7 +46,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.debugger.impl.rpc.XBreakpointId
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLightLineBreakpointProxy
@@ -76,8 +76,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import java.awt.event.MouseEvent
+import java.util.concurrent.ConcurrentHashMap
 
 private val log = logger<XLineBreakpointManager>()
 
@@ -90,7 +90,9 @@ class XLineBreakpointManager(
 ): XLineBreakpointManagerProxy {
   private val cs = coroutineScope.childScope("XLineBreakpointManager")
 
-  private val myBreakpoints = MultiMap.createConcurrent<String, XLineBreakpointProxy>()
+  private val myBreakpointsById = ConcurrentHashMap<XBreakpointId, XLineBreakpointProxy>()
+  private val myBreakpointsByFile = MultiMap.createConcurrent<VirtualFile, XLineBreakpointProxy>()
+
   private val breakpointUpdateQueue: MergingUpdateQueue = MergingUpdateQueue.mergingUpdateQueue(
     name = "XLine breakpoints",
     mergingTimeSpan = 300,
@@ -114,8 +116,7 @@ class XLineBreakpointManager(
 
       Registry.get(XDebuggerUtil.INLINE_BREAKPOINTS_KEY).addListener(object : RegistryValueListener {
         override fun afterValueChanged(value: RegistryValue) {
-          for (fileUrl in myBreakpoints.keySet()) {
-            val file = VirtualFileManager.getInstance().findFileByUrl(fileUrl) ?: continue
+          for (file in myBreakpointsByFile.keySet()) {
             if (XDebuggerUtil.areInlineBreakpointsEnabled(file)) continue
             val document = FileDocumentManager.getInstance().getDocument(file) ?: continue
             // Multiple breakpoints on the single line should be joined in this case.
@@ -129,7 +130,7 @@ class XLineBreakpointManager(
     busConnection.subscribe(EditorColorsManager.TOPIC, MyEditorColorsListener())
     busConnection.subscribe(FileDocumentManagerListener.TOPIC, object : FileDocumentManagerListener {
       override fun fileContentLoaded(file: VirtualFile, document: Document) {
-        myBreakpoints[file.url].asSequence()
+        getFileBreakpoints(file).asSequence()
           .filter { it.getHighlighter() == null }
           .forEach { queueBreakpointUpdate(it) }
       }
@@ -140,15 +141,13 @@ class XLineBreakpointManager(
     }
   }
 
-  @ApiStatus.Internal
-  fun onFileDeleted(url: String) {
-    removeBreakpoints(myBreakpoints[url])
+  fun onFileDeleted(file: VirtualFile) {
+    removeBreakpoints(getFileBreakpoints(file))
   }
 
-  @ApiStatus.Internal
   fun onFileUrlChanged(oldUrl: String, newUrl: String) {
-    myBreakpoints.values().forEach { breakpoint ->
-      val url = breakpoint.getFile()?.url ?: breakpoint.getFileUrl()
+    getAllBreakpoints().forEach { breakpoint ->
+      val url = breakpoint.getFileUrl()
       if (FileUtil.startsWith(url, oldUrl)) {
         breakpoint.setFileUrl(newUrl + url.substring(oldUrl.length))
       }
@@ -175,25 +174,40 @@ class XLineBreakpointManager(
     if (initUI) {
       updateBreakpointNow(breakpoint)
     }
-    val fileUrl = breakpoint.getFile()?.url ?: breakpoint.getFileUrl()
-    log.debug { "Register line breakpoint ${breakpoint.id} ${breakpoint.javaClass.simpleName}: $fileUrl" }
-    myBreakpoints.putValue(fileUrl, breakpoint)
+    myBreakpointsById[breakpoint.id] = breakpoint
+    log.debug { "Register line breakpoint ${breakpoint.id} ${breakpoint.javaClass.simpleName}: ${breakpoint.getFileUrl()}" }
+    val file = breakpoint.getFile()
+    if (file != null) {
+      myBreakpointsByFile.putValue(file, breakpoint)
+    }
+    else {
+      log.warn("Breakpoint(${breakpoint.id}) file is not found during registration: ${breakpoint.getFileUrl()}")
+    }
   }
 
   fun unregisterBreakpoint(breakpoint: XLineBreakpointProxy) {
-    val fileUrl = breakpoint.getFile()?.url ?: breakpoint.getFileUrl()
-    val removed = myBreakpoints.remove(fileUrl, breakpoint)
-    log.debug { "Unregister line breakpoint ${breakpoint.id} [removed=$removed] ${breakpoint.javaClass.simpleName}: $fileUrl" }
+    val removed = myBreakpointsById.remove(breakpoint.id) != null
+    val removedByFile = breakpoint.getFile()?.let { myBreakpointsByFile.remove(it, breakpoint) } ?: false
+    if (removed != removedByFile) {
+      val associatedFile = myBreakpointsByFile.entrySet().firstOrNull { it.value == breakpoint }?.key
+      if (associatedFile != null) {
+        myBreakpointsByFile.remove(associatedFile, breakpoint)
+      }
+    }
+    log.debug { "Unregister line breakpoint ${breakpoint.id} [removed=$removed] ${breakpoint.javaClass.simpleName}: ${breakpoint.getFileUrl()}" }
   }
 
   override fun getDocumentBreakpointProxies(document: Document): Collection<XLineBreakpointProxy> {
     val file = FileDocumentManager.getInstance().getFile(document) ?: return emptyList()
-    return myBreakpoints[file.url]
+    return getFileBreakpoints(file)
   }
 
-  @TestOnly
   override fun getAllBreakpoints(): Collection<XLineBreakpointProxy> {
-    return myBreakpoints.values()
+    return myBreakpointsById.values
+  }
+
+  fun getFileBreakpoints(file: VirtualFile): Collection<XLineBreakpointProxy> {
+    return myBreakpointsByFile[file]
   }
 
   @RequiresEdt
@@ -408,7 +422,7 @@ class XLineBreakpointManager(
   fun queueAllBreakpointsUpdate() {
     breakpointUpdateQueue.queue(object : Update("all breakpoints") {
       override fun run() {
-        for (breakpoint in myBreakpoints.values()) {
+        for (breakpoint in getAllBreakpoints()) {
           breakpoint.doUpdateUI()
         }
       }
