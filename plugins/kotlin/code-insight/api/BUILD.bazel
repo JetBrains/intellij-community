@@ -23,6 +23,10 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_api",
     module_name = "intellij.kotlin.codeInsight.api",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,

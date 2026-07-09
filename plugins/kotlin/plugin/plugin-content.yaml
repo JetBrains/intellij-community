@@ -16,6 +16,9 @@
 - name: lib/intellij.kotlin.base.scripting.shared.jar
   contentModules:
   - name: intellij.kotlin.base.scripting.shared
+- name: lib/intellij.kotlin.codeInsight.api.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight.api
 - name: lib/intellij.kotlin.codeInsight.shared.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.shared
@@ -146,11 +149,9 @@
   - name: intellij.kotlin.uast.idea.base
   - name: intellij.kotlin.migration
   - name: kotlin.inspections
-  - name: intellij.kotlin.codeInsight.api
   - name: intellij.kotlin.codeInsight.utils
   - name: intellij.kotlin.codeInsight.descriptions
   - name: intellij.kotlin.codeInsight.overrideImplement
-  - name: kotlin.fir
   - name: intellij.kotlin.searching.base
   - name: intellij.kotlin.uast
   - name: intellij.kotlin.uast.idea
@@ -478,6 +479,9 @@
 - name: lib/modules/kotlin.base.injection.jar
   contentModules:
   - name: kotlin.base.injection
+- name: lib/modules/kotlin.fir.jar
+  contentModules:
+  - name: kotlin.fir
 - name: lib/modules/kotlin.jvm.shared.jar
   contentModules:
   - name: kotlin.jvm.shared

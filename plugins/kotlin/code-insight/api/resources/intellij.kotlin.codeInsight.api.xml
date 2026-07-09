@@ -1,0 +1,9 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

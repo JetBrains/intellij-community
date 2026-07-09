@@ -24,6 +24,10 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_fir",
     module_name = "kotlin.fir",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     exports = ["//plugins/kotlin/frontend-independent"],
     runtime_deps = [

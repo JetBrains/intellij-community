@@ -28,7 +28,6 @@
   <xi:include href="native.xml"/>
   <xi:include href="facets-base.xml"/>
   <xi:include href="jvm.xml"/>
-  <xi:include href="searching-k2.xml"/>
   <xi:include href="extensions.xml"/>
 
   <xi:include href="ultimate-plugin.k2.xml">
@@ -74,16 +73,9 @@
     <resolveScopeEnlarger implementation="org.jetbrains.kotlin.idea.base.analysis.builtins.KotlinBuiltInsResolveScopeEnlarger" />
 
 
-    <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider"
-                    serviceImplementation="org.jetbrains.kotlin.idea.fir.extensions.KtCompilerPluginsProviderIdeImpl"/>
     <!-- fir-specific -->
-    <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider"
-                        serviceImplementation="org.jetbrains.kotlin.idea.fir.plugin.K2KotlinPluginModeProvider"/>
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.codeInsight.overrideImplement.OverrideImplementFacility"
                         serviceImplementation="org.jetbrains.kotlin.idea.core.overrideImplement.OverrideImplementFacilityImpl"/>
-    <projectService
-            serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService"
-            serviceImplementation="org.jetbrains.kotlin.idea.fir.FirLibrarySourceScopeService"/>
 
     <applicationService serviceInterface="org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService"
                         serviceImplementation="org.jetbrains.uast.kotlin.internal.FirIdeaKotlinUastResolveProviderService"/>
@@ -120,22 +112,10 @@
              order="after sameModule, before knownElement"/>
 
     <!-- -->
-    <codeInsight.typeInfo language="kotlin"
-                          implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinHighLevelExpressionTypeProvider"/>
 
     <codeInsight.implementMethod language="kotlin" implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersHandler"/>
     <codeInsight.overrideMethod language="kotlin" implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.KtOverrideMembersHandler"/>
 
-    <codeInsight.parameterInfo language="kotlin"
-                               implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelFunctionParameterInfoHandler"/>
-    <codeInsight.parameterInfo language="kotlin"
-                               implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelLambdaParameterInfoHandler"/>
-    <codeInsight.parameterInfo language="kotlin"
-                               implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelArrayAccessParameterInfoHandler"/>
-    <codeInsight.parameterInfo language="kotlin"
-                               implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelClassTypeArgumentInfoHandler"/>
-    <codeInsight.parameterInfo language="kotlin"
-                               implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelFunctionTypeArgumentInfoHandler"/>
   </extensions>
 
   <extensionPoints>
@@ -152,9 +132,8 @@
 
 
   <extensions defaultExtensionNs="com.intellij">
-    <iconProvider implementation="org.jetbrains.kotlin.idea.FirKotlinIconProvider"/>
 
-      <postStartupActivity implementation="org.jetbrains.kotlin.idea.PluginStartupActivity"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.PluginStartupActivity"/>
     <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.update.KotlinPluginUpdateCheckerStartActivity"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
@@ -162,11 +141,6 @@
       <!--suppress LightServiceMigrationXML -->
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService"/>
 
-    <lang.importOptimizer language="kotlin" implementationClass="org.jetbrains.kotlin.idea.imports.KotlinFirImportOptimizer"/>
-
-    <applicationService
-            serviceInterface="org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressionChecker"
-            serviceImplementation="org.jetbrains.kotlin.idea.inspections.suppress.KotlinK2SuppressionChecker"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -291,7 +265,9 @@
     <module name="intellij.kotlin.base.analysis" loading="embedded"/>
     <module name="intellij.kotlin.base.codeInsight" loading="embedded"/>
     <module name="intellij.kotlin.base.codeInsight.minimal" loading="embedded"/>
+    <module name="intellij.kotlin.codeInsight.api" loading="embedded"/>
     <module name="intellij.kotlin.codeInsight.shared" loading="embedded"/>
+    <module name="kotlin.fir"/>
     <module name="kotlin.fir.frontend-independent" loading="embedded"/>
     <module name="intellij.kotlin.jvm.debugger.base.util" loading="embedded"/>
     <module name="intellij.kotlin.jvm.debugger.coroutines" loading="embedded"/>

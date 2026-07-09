@@ -2,7 +2,8 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java.psi"/>
-  </dependencies>
+      <module name="intellij.kotlin.codeInsight.api"/>
+</dependencies>
   <!-- endregion -->
 
   <extensionPoints>

@@ -11,6 +11,7 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.codeInsight"/>
     <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.codeInsight.api"/>
     <module name="intellij.kotlin.codeInsight.fixes"/>
     <module name="kotlin.fir.frontend-independent"/>
   </dependencies>

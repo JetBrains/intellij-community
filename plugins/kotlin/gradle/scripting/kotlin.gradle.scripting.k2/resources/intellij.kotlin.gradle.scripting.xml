@@ -1,6 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.gradle.scripting.k2">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.kotlin.codeInsight.api"/>
     <module name="intellij.kotlin.gradle.tooling"/>
     <module name="intellij.gradle"/>
     <module name="intellij.kotlin.gradle.gradle"/>

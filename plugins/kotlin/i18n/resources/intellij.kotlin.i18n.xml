@@ -2,6 +2,7 @@
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.java-i18n"/>
+    <module name="intellij.kotlin.codeInsight.api"/>
     <module name="kotlin.fir.frontend-independent"/>
     <!-- endregion -->
   </dependencies>
