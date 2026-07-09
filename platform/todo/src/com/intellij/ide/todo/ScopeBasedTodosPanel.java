@@ -82,7 +82,7 @@ public final class ScopeBasedTodosPanel extends TodoPanel {
 
   private TodoScopeChooser initScopeChooser(String preselect) {
     if (shouldUseSplitTodo()) {
-      FrontendScopeChooser scopeChooser = new FrontendScopeChooser(myProject, preselect, ScopesFilterConditionType.OTHER);
+      FrontendScopeChooser scopeChooser = new FrontendScopeChooser(myProject, preselect, ScopesFilterConditionType.TODO);
       Disposer.register(this, scopeChooser);
       return new FrontendTodoScopeChooserImpl(scopeChooser);
     }
