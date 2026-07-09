@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.intellij.plugins.markdown.ui.preview
+package com.intellij.markdown.frontend.preview
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditor
@@ -10,6 +10,9 @@ import com.intellij.openapi.project.currentOrDefaultProject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditorProvider
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

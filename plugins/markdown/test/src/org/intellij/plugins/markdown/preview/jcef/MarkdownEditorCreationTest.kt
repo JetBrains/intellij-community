@@ -1,7 +1,7 @@
 package org.intellij.plugins.markdown.preview.jcef
 
 import com.intellij.idea.TestFor
-import org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider
+import com.intellij.markdown.frontend.preview.MarkdownSplitEditorProvider
 import com.intellij.markdown.jcef.preview.JCEFHtmlPanelProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileEditorManager
