@@ -22,6 +22,8 @@ class MermaidPreviewFileEditorProvider : WeighedFileEditorProvider(), AsyncFileE
     return file.isMermaidFile() && JBCefApp.isSupported()
   }
 
+  override fun acceptRequiresReadAction(): Boolean = false
+
   override suspend fun createFileEditor(
     project: Project,
     file: VirtualFile,
