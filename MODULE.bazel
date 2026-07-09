@@ -131,3 +131,5 @@ use_repo(
     use_extension("//build:jps_dynamic_deps_community.bzl", "jps_dynamic_deps_community_extension"),
     "jps_dynamic_deps_community",
 )
+
+include("//:fleet/kmp.MODULE.bazel")

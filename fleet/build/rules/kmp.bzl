@@ -1,7 +1,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "get_auth")
 
-_RESOLUTION_FACTS_VERSION = "resolution.v30"
+_RESOLUTION_FACTS_VERSION = "resolution.v31"
 
 _RESOLVER_VERSION = "0.0.23"
 _RESOLVER_BINARY_URL_PREFIX = (
@@ -466,7 +466,7 @@ def _resolve_fresh(module_ctx, config):
         _maven_coordinate_parts(target_coordinate)
         args.extend(["--substitution", "%s=%s" % (source_module_id, target_coordinate)])
 
-    netrc = module_ctx.getenv("NETRC") or ""
+    netrc = module_ctx.os.environ.get("NETRC", "")  # Read NETRC without taking into account as an input of the repository_rule, authentication does not matter in the reproducibility of the resolution
     repository_credentials = _repository_credentials(module_ctx, config.repositories, netrc)
     if repository_credentials:
         credentials_file = "repository-credentials.json"

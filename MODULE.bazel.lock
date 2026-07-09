@@ -417,6 +417,615 @@
         }
       }
     },
+    "//fleet/build/rules:kmp.bzl%kmp": {
+      "general": {
+        "bzlTransitiveDigest": "kL2YYsxQpznpXUPzHKBg91bEwf3y7R2DwppNPFaFsec=",
+        "usagesDigest": "FKEgvSsQR81i8xGvyl3x2GzCXiQ76h0eRIJCa0JhLs4=",
+        "recordedInputs": [
+          "REPO_MAPPING:,bazel_tools bazel_tools"
+        ],
+        "generatedRepoSpecs": {
+          "io_github_turansky_seskar-seskar-core-wasm-js-4_40_0-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "seskar-core-wasm-js-4.40.0-sources.jar",
+              "integrity": "sha512-bzBHxd4TxesTxZ9MWD2oSF+IFHk97xXnxCm1BdP0jBbbkICVstjWzW/5pyCztAVytzxsksi1wZ1PnrBgY69VXw==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/turansky/seskar/seskar-core-wasm-js/4.40.0/seskar-core-wasm-js-4.40.0-sources.jar"
+              ]
+            }
+          },
+          "io_github_turansky_seskar-seskar-core-wasm-js-4_40_0_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "seskar-core-wasm-js-4.40.0.klib",
+              "integrity": "sha512-guAv/tL4Vod2Hcg5edTSM7DNM3dVxDFw0rDX9lxjguYdmHnLTq4OgegGhvbejx2TLa/hY2iT6OApMMiINGRLLQ==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/turansky/seskar/seskar-core-wasm-js/4.40.0/seskar-core-wasm-js-4.40.0.klib"
+              ]
+            }
+          },
+          "io_ktor-ktor-client-core-wasm-js-3_4_1-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "ktor-client-core-wasm-js-3.4.1-sources.jar",
+              "integrity": "sha512-HvMIPCtCBFGpSB6n0EnsGvn+Va8WFP7jjRv5NelhFWhI3O1txu/KGiEWr3YT7s5M4d+PxQslAI1noTjAxHJmNA==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-core-wasm-js/3.4.1/ktor-client-core-wasm-js-3.4.1-sources.jar"
+              ]
+            }
+          },
+          "io_ktor-ktor-client-core-wasm-js-3_4_1_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "ktor-client-core-wasm-js-3.4.1.klib",
+              "integrity": "sha512-5yHw+o+Yy2O6/dMLULjOnDpLvkvG04ihjr3WhjJq0+eCU31YPPWF3q/HD0ibFRnUR6kjX8fERmqcXEaMDaVXXg==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-core-wasm-js/3.4.1/ktor-client-core-wasm-js-3.4.1.klib"
+              ]
+            }
+          },
+          "io_ktor-ktor-events-wasm-js-3_4_1-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "ktor-events-wasm-js-3.4.1-sources.jar",
+              "integrity": "sha512-faqEdkOsy+wND/drHjFcvBuo7Cec+S6Hez8YYbxAT7gKjRPnYOGrgUcUBHW2T7K+BxMYnzBvqShzrJJj/qkyJg==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-events-wasm-js/3.4.1/ktor-events-wasm-js-3.4.1-sources.jar"
+              ]
+            }
+          },
+          "io_ktor-ktor-events-wasm-js-3_4_1_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "ktor-events-wasm-js-3.4.1.klib",
+              "integrity": "sha512-3dMdEdOfRfGUlLAJbL+Z85rexsyRdW/QJmud03Aw+wKOvqGHAU2sTY8NGvV1TtV2uSxu/Do0KgDT0JN++BTytg==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-events-wasm-js/3.4.1/ktor-events-wasm-js-3.4.1.klib"
+              ]
+            }
+          },
+          "io_ktor-ktor-http-cio-wasm-js-3_4_1-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "ktor-http-cio-wasm-js-3.4.1-sources.jar",
+              "integrity": "sha512-vhrEoPRwDP9epXsO6BKnN4++WGJhE7VVCaHdbSY/VFhlLadmpyvQb96NQXtcbRRQUdhWLgR9zDj9p/fJDz51AQ==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-http-cio-wasm-js/3.4.1/ktor-http-cio-wasm-js-3.4.1-sources.jar"
+              ]
+            }
+          },
+          "io_ktor-ktor-http-cio-wasm-js-3_4_1_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "ktor-http-cio-wasm-js-3.4.1.klib",
+              "integrity": "sha512-Zz1HFuBrxBAUeu2bCoaFGELig8qzYKFoJBYJDrgwwhNwcKydGGZixG5wmsX3fxTCKkP1CU8lL6W4ZkTLbFuEGA==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-http-cio-wasm-js/3.4.1/ktor-http-cio-wasm-js-3.4.1.klib"
+              ]
+            }
+          },
+          "io_ktor-ktor-http-wasm-js-3_4_1-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "ktor-http-wasm-js-3.4.1-sources.jar",
+              "integrity": "sha512-i2VfZUFuftbFlavHl87kLw6wenJaM/CE8vzlXE7haelsaprqIuLtU7UPNbbIqMqrQ7ZeJbkTri+ZEPB45YbyQg==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-http-wasm-js/3.4.1/ktor-http-wasm-js-3.4.1-sources.jar"
+              ]
+            }
+          },
+          "io_ktor-ktor-http-wasm-js-3_4_1_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "ktor-http-wasm-js-3.4.1.klib",
+              "integrity": "sha512-j31Cwc+TooQ23zzqNHMRs9YBYGzZA9Ytl+ZTKwZAiDMMu3GLEtT12AzJM8giTL22ihrEAhWj6FIVnjgxbne3Dw==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-http-wasm-js/3.4.1/ktor-http-wasm-js-3.4.1.klib"
+              ]
+            }
+          },
+          "io_ktor-ktor-io-wasm-js-3_4_1-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "ktor-io-wasm-js-3.4.1-sources.jar",
+              "integrity": "sha512-B2UFGuqwlhCs0vFGq7QEY0t+fZUDpcvhmUWlg25/ecNdqf5ld4ucGHmID4boyAdtnJ6d7589JF0tn7E4N0okCA==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-io-wasm-js/3.4.1/ktor-io-wasm-js-3.4.1-sources.jar"
+              ]
+            }
+          },
+          "io_ktor-ktor-io-wasm-js-3_4_1_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "ktor-io-wasm-js-3.4.1.klib",
+              "integrity": "sha512-qBzDyhrVU1avyYEMZI/bY2RDK4QhCVnj5qG5IAwft6UniHDP3EweaFGczkRu1I6IVmKRTClIm+AJXBLHLKLJ0Q==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-io-wasm-js/3.4.1/ktor-io-wasm-js-3.4.1.klib"
+              ]
+            }
+          },
+          "io_ktor-ktor-serialization-wasm-js-3_4_1-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "ktor-serialization-wasm-js-3.4.1-sources.jar",
+              "integrity": "sha512-tPPuRER0hmHLSvittBGVcNSwartiLn85JhVmhOjXBhCn4kIrRt7IjubSfbty8pUNjWmREy1hIgQgV0d7pLegmA==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-serialization-wasm-js/3.4.1/ktor-serialization-wasm-js-3.4.1-sources.jar"
+              ]
+            }
+          },
+          "io_ktor-ktor-serialization-wasm-js-3_4_1_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "ktor-serialization-wasm-js-3.4.1.klib",
+              "integrity": "sha512-VlrYJ2JrZPuPjUgwrC1TP/vhITAe8p1uIzOZ/1sHp9dN2nwTX7obwj3t6ETBWBFG5IOWmohxWCB1YKIFodmKkg==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-serialization-wasm-js/3.4.1/ktor-serialization-wasm-js-3.4.1.klib"
+              ]
+            }
+          },
+          "io_ktor-ktor-sse-wasm-js-3_4_1-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "ktor-sse-wasm-js-3.4.1-sources.jar",
+              "integrity": "sha512-ZuvC7NoD4dlr9/htsRn3EMeY2RL8AQZqYlFcxKuDmWKbBkHAiuDmDVwvF2jwkx6IyHZ1j4nPP1lV0JHEqi8qPA==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-sse-wasm-js/3.4.1/ktor-sse-wasm-js-3.4.1-sources.jar"
+              ]
+            }
+          },
+          "io_ktor-ktor-sse-wasm-js-3_4_1_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "ktor-sse-wasm-js-3.4.1.klib",
+              "integrity": "sha512-Ze6wLf3G/F+cQAxDNopD6MxyL8U6QfoQvg4f5C+T/sJ4RQeuVzt0zqsCLzuubBV58InUJylpV9jVbAqNFtW4nw==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-sse-wasm-js/3.4.1/ktor-sse-wasm-js-3.4.1.klib"
+              ]
+            }
+          },
+          "io_ktor-ktor-utils-wasm-js-3_4_1-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "ktor-utils-wasm-js-3.4.1-sources.jar",
+              "integrity": "sha512-MC9f//L7hBSkSKEpDhylPD4bMXNWFZhbusLZq2PfD5fDOfs0hmxIRdChLJE20b8CxmekVYIbg5OWpfC7tikKsQ==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-utils-wasm-js/3.4.1/ktor-utils-wasm-js-3.4.1-sources.jar"
+              ]
+            }
+          },
+          "io_ktor-ktor-utils-wasm-js-3_4_1_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "ktor-utils-wasm-js-3.4.1.klib",
+              "integrity": "sha512-re8nv6BZDoau3aaRsWIv7jqSvZReGOQ037FhFW29RydaUu8l9vlqP/FFB4O93DlAe237XZQpNLsnwumTo3p1Nw==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-utils-wasm-js/3.4.1/ktor-utils-wasm-js-3.4.1.klib"
+              ]
+            }
+          },
+          "io_ktor-ktor-websocket-serialization-wasm-js-3_4_1-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "ktor-websocket-serialization-wasm-js-3.4.1-sources.jar",
+              "integrity": "sha512-5/6MXQ8bq3R1VQf8/IIUvsYJNXNsDcGtVPEHYRXKWPY9QHAvOFA7Oyo7nY0CulW5HWL11OMmuby1xFSFkljj+A==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-websocket-serialization-wasm-js/3.4.1/ktor-websocket-serialization-wasm-js-3.4.1-sources.jar"
+              ]
+            }
+          },
+          "io_ktor-ktor-websocket-serialization-wasm-js-3_4_1_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "ktor-websocket-serialization-wasm-js-3.4.1.klib",
+              "integrity": "sha512-FnsqsOwdry/Zi4sG3GiafPFh8x7926AyGF3k8HufzzLUkv0sZmXOtpi92oQvhOFQmxHSwKs6OK/pmiaEgeNnUA==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-websocket-serialization-wasm-js/3.4.1/ktor-websocket-serialization-wasm-js-3.4.1.klib"
+              ]
+            }
+          },
+          "io_ktor-ktor-websockets-wasm-js-3_4_1-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "ktor-websockets-wasm-js-3.4.1-sources.jar",
+              "integrity": "sha512-C34CaFqbc3MMFFdhq+DP0ndZZ5LQwYSJtFeWeWeY/9NMuFqhS8qWl3n3SG+o9U5EYqnZD2KLQxdidrH3L3xmQw==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-websockets-wasm-js/3.4.1/ktor-websockets-wasm-js-3.4.1-sources.jar"
+              ]
+            }
+          },
+          "io_ktor-ktor-websockets-wasm-js-3_4_1_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "ktor-websockets-wasm-js-3.4.1.klib",
+              "integrity": "sha512-eC/HIHZxv857Yg+7YA++s8qWTxzLjtkSP6BQvFXoJfug71YVWIJbSvtJVZtuQPpFKLT11wdTC3cg74Ux9tYRJw==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-websockets-wasm-js/3.4.1/ktor-websockets-wasm-js-3.4.1.klib"
+              ]
+            }
+          },
+          "org_jetbrains-annotations-wasmJs-26_0_2-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "annotations-wasmJs-26.0.2-sources.jar",
+              "integrity": "sha512-0iGMOgxapOl0owsddSCL8F6Y/gJjRtCRqKn8EECt3TgtfQNJgQaEcaNbn4mHY3xoZSncuXwCBwUh3CMVHjs5/w==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/annotations-wasmJs/26.0.2/annotations-wasmJs-26.0.2-sources.jar"
+              ]
+            }
+          },
+          "org_jetbrains-annotations-wasmJs-26_0_2_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "annotations-wasmJs-26.0.2.klib",
+              "integrity": "sha512-nmH53Ub/4QAZZUSbb6IdkJk5AJXPZD7ogXutgqtjcMSIJRCqYNdp1Bdg94hVDGHxzgNwL6dNgPSd/BIOU7sgcw==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/annotations-wasmJs/26.0.2/annotations-wasmJs-26.0.2.klib"
+              ]
+            }
+          },
+          "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-core-wasm-js-1_10_2-intellij-1-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlinx-coroutines-core-wasm-js-1.10.2-intellij-1-sources.jar",
+              "integrity": "sha512-Sf9kOQRmHIzlAks7QYi0kb7jmT71rso527oumP8LAWUyImLtstdN0vadcXyXYs5cAxIGYuoOJnDJfCnpsZzmWg==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-core-wasm-js/1.10.2-intellij-1/kotlinx-coroutines-core-wasm-js-1.10.2-intellij-1-sources.jar"
+              ]
+            }
+          },
+          "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-core-wasm-js-1_10_2-intellij-1_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlinx-coroutines-core-wasm-js-1.10.2-intellij-1.klib",
+              "integrity": "sha512-waP/KfBN4KBctOvYp/oVYS0bAjnCvA4V+4LepIP8fHgTubFXDBcixtHpDCg7EY3FCiOmAUlS18s9JKUrBDY31Q==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-core-wasm-js/1.10.2-intellij-1/kotlinx-coroutines-core-wasm-js-1.10.2-intellij-1.klib"
+              ]
+            }
+          },
+          "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-test-wasm-js-1_10_2-intellij-1-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlinx-coroutines-test-wasm-js-1.10.2-intellij-1-sources.jar",
+              "integrity": "sha512-qYqtcghHjRtWX9O0ai5wyaO38fYzLczDEGzMmdYU2Ln9xQM4hu+gpVZ1rkRQcVufXIzcTAYoKY7bQZpyr2eepg==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-test-wasm-js/1.10.2-intellij-1/kotlinx-coroutines-test-wasm-js-1.10.2-intellij-1-sources.jar"
+              ]
+            }
+          },
+          "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-test-wasm-js-1_10_2-intellij-1_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlinx-coroutines-test-wasm-js-1.10.2-intellij-1.klib",
+              "integrity": "sha512-jaJUJXqs4jRJrAlKieekY9zkw3cSGP9oTik8YTLihxe9+d7dhPns2P1UbjiD+PlV3xZ0GlEO+HERaBBMsVF/Ag==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-test-wasm-js/1.10.2-intellij-1/kotlinx-coroutines-test-wasm-js-1.10.2-intellij-1.klib"
+              ]
+            }
+          },
+          "org_jetbrains_kotlin-kotlin-stdlib-wasm-js-2_4_0-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlin-stdlib-wasm-js-2.4.0-sources.jar",
+              "integrity": "sha512-Y359hJFYRzzWaabyRzDNfZxzl3dUn9eGxvdyMM9uDUaz3NfDdlW9xNnxSPmRY8GkDlxQH7l2OXy3rLmewmna6g==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-wasm-js/2.4.0/kotlin-stdlib-wasm-js-2.4.0-sources.jar",
+                "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib-wasm-js/2.4.0/kotlin-stdlib-wasm-js-2.4.0-sources.jar"
+              ]
+            }
+          },
+          "org_jetbrains_kotlin-kotlin-stdlib-wasm-js-2_4_0_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlin-stdlib-wasm-js-2.4.0.klib",
+              "integrity": "sha512-J9Vz6SLs71t58T0sdbSerBvL4YYCmmk7Y4vJdQZ47c3jqBCx3mYcBC5EEa7njqZ8SbruzaGz6QYbAnOCoahJRg==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-wasm-js/2.4.0/kotlin-stdlib-wasm-js-2.4.0.klib",
+                "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib-wasm-js/2.4.0/kotlin-stdlib-wasm-js-2.4.0.klib"
+              ]
+            }
+          },
+          "org_jetbrains_kotlin-kotlin-test-wasm-js-2_4_0-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlin-test-wasm-js-2.4.0-sources.jar",
+              "integrity": "sha512-alSQ7rBFRlJkD+ij6DVYJzdQFxyHqV+1UcnNPYJerqch5XFy5qh1POnom0Ktpb3S2YnSPTHXUn2bajdPdXzehA==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test-wasm-js/2.4.0/kotlin-test-wasm-js-2.4.0-sources.jar",
+                "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-test-wasm-js/2.4.0/kotlin-test-wasm-js-2.4.0-sources.jar"
+              ]
+            }
+          },
+          "org_jetbrains_kotlin-kotlin-test-wasm-js-2_4_0_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlin-test-wasm-js-2.4.0.klib",
+              "integrity": "sha512-OqPNvv4fWKygPqF86i0bVm4z5nGjA6jmMvcVUdt0zBDrEHi+aNZMtqAqM6mXyPTj7cueg3R3yOLxdZ+ibCLAPQ==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test-wasm-js/2.4.0/kotlin-test-wasm-js-2.4.0.klib",
+                "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-test-wasm-js/2.4.0/kotlin-test-wasm-js-2.4.0.klib"
+              ]
+            }
+          },
+          "org_jetbrains_kotlin-wrappers-kotlin-browser-wasm-js-2026_4_12-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlin-browser-wasm-js-2026.4.12-sources.jar",
+              "integrity": "sha512-sWykxQcXEfcWxM2l5PI5VLngzDJyB7z/8vzPiosHLG7KnRwMTRBd4GCLc6Jg7irYFxh2WXe7rvGdFcRc6N8dPg==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-browser-wasm-js/2026.4.12/kotlin-browser-wasm-js-2026.4.12-sources.jar"
+              ]
+            }
+          },
+          "org_jetbrains_kotlin-wrappers-kotlin-browser-wasm-js-2026_4_12_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlin-browser-wasm-js-2026.4.12.klib",
+              "integrity": "sha512-fsMdXYTLYdrZtT2xb1OCOv4zSCD2udTmnVp4KJyuqu/y1lWfPYzBAUf14ohT3n/zgYYrKEISDAP8UzKxzbD0Jw==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-browser-wasm-js/2026.4.12/kotlin-browser-wasm-js-2026.4.12.klib"
+              ]
+            }
+          },
+          "org_jetbrains_kotlin-wrappers-kotlin-cssom-core-wasm-js-2026_4_12-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlin-cssom-core-wasm-js-2026.4.12-sources.jar",
+              "integrity": "sha512-suYrtEnskzURfdEpl0O9PQ266iHTDN/1lMFfDCfRrOLJuW+dBgV87atPOxlzrFKzvOP+YZf2Rngj+AxIcbGqDg==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-cssom-core-wasm-js/2026.4.12/kotlin-cssom-core-wasm-js-2026.4.12-sources.jar"
+              ]
+            }
+          },
+          "org_jetbrains_kotlin-wrappers-kotlin-cssom-core-wasm-js-2026_4_12_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlin-cssom-core-wasm-js-2026.4.12.klib",
+              "integrity": "sha512-DZdlGq7Bu4MDeV3lbL0lHS7iOx+sDBkoaYqJOC6xTjH8l8Hq75eikdxRKP6HFjol42s2mtZLxDldb+XYsk4VhQ==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-cssom-core-wasm-js/2026.4.12/kotlin-cssom-core-wasm-js-2026.4.12.klib"
+              ]
+            }
+          },
+          "org_jetbrains_kotlin-wrappers-kotlin-js-core-wasm-js-2026_4_12-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlin-js-core-wasm-js-2026.4.12-sources.jar",
+              "integrity": "sha512-bwZVzTCxGe1yuOxyd57ga7BF+2XLvox0IwV3vKCuNbSxqPw3vURcXUMxgVDIQkYJKl4R2RNt4LyRWSfMu6nYsQ==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-js-core-wasm-js/2026.4.12/kotlin-js-core-wasm-js-2026.4.12-sources.jar"
+              ]
+            }
+          },
+          "org_jetbrains_kotlin-wrappers-kotlin-js-core-wasm-js-2026_4_12_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlin-js-core-wasm-js-2026.4.12.klib",
+              "integrity": "sha512-/Llfe+Jv4vUZ8EIP6QmFO6XCf2zFWb9KWDUUCfBR+H427tEguiSJD9NB5k+uWl2qUfaMysYkjFXPwxPWzTmvgA==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-js-core-wasm-js/2026.4.12/kotlin-js-core-wasm-js-2026.4.12.klib"
+              ]
+            }
+          },
+          "org_jetbrains_kotlin-wrappers-kotlin-js-plain-object-wasm-js-2026_4_12-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlin-js-plain-object-wasm-js-2026.4.12-sources.jar",
+              "integrity": "sha512-fVG8TZhKSRLg7EiAloqBbVAYdc6gEm/qorYLGgRK0P/vCiJzr9rc7+csJw/M6VKQh4wlk6bjiHfy2Bj0QK2olg==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-js-plain-object-wasm-js/2026.4.12/kotlin-js-plain-object-wasm-js-2026.4.12-sources.jar"
+              ]
+            }
+          },
+          "org_jetbrains_kotlin-wrappers-kotlin-js-plain-object-wasm-js-2026_4_12_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlin-js-plain-object-wasm-js-2026.4.12.klib",
+              "integrity": "sha512-Io4kSXY+9bhAkL6kHcOpzIyIyN55baRmFbV7BL5tnT6/vIlk56cOv0FBn3D2Hywo9sGMZ1QeyljEQBSlBpfeCA==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-js-plain-object-wasm-js/2026.4.12/kotlin-js-plain-object-wasm-js-2026.4.12.klib"
+              ]
+            }
+          },
+          "org_jetbrains_kotlin-wrappers-kotlin-js-wasm-js-2026_4_12-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlin-js-wasm-js-2026.4.12-sources.jar",
+              "integrity": "sha512-T/uVWyDFrmg9X3HfsnOx7fDEZrn0J659fqH6hHYUxETvvQ0dsg8ieEtGJ1v02fHFLk8HfgxJh4D2PMWQRkAG4Q==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-js-wasm-js/2026.4.12/kotlin-js-wasm-js-2026.4.12-sources.jar"
+              ]
+            }
+          },
+          "org_jetbrains_kotlin-wrappers-kotlin-js-wasm-js-2026_4_12_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlin-js-wasm-js-2026.4.12.klib",
+              "integrity": "sha512-fjDl2VzetabJ7oB7ym0u/ubeoEfaJGPg8qEtVMikPRqMgetozxiyFcKhVe693srcJIMESH59+yZNnE+jZzzqIA==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-js-wasm-js/2026.4.12/kotlin-js-wasm-js-2026.4.12.klib"
+              ]
+            }
+          },
+          "org_jetbrains_kotlin-wrappers-kotlin-web-wasm-js-2026_4_12-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlin-web-wasm-js-2026.4.12-sources.jar",
+              "integrity": "sha512-ckNST9bKuwFo3gbCutxwcQfyzrOPrIr0J1uRRoDJMu8NpndF2R0SowkEr/uKZc0rkHCW4mdx8DJjaGdqyrxp4Q==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-web-wasm-js/2026.4.12/kotlin-web-wasm-js-2026.4.12-sources.jar"
+              ]
+            }
+          },
+          "org_jetbrains_kotlin-wrappers-kotlin-web-wasm-js-2026_4_12_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlin-web-wasm-js-2026.4.12.klib",
+              "integrity": "sha512-TfgWqAJ9ceXgFZlBsQtOhC+EyYPWEeepBOpR8aw2w++29bgDot4wE2Cpf+NUtlXzD3XRdys76rQrW1kAzmjDVQ==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-web-wasm-js/2026.4.12/kotlin-web-wasm-js-2026.4.12.klib"
+              ]
+            }
+          },
+          "org_jetbrains_kotlinx-atomicfu-wasm-js-0_31_0-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "atomicfu-wasm-js-0.31.0-sources.jar",
+              "integrity": "sha512-arkTHWamjVfDapzWKkTU+jEj8dJ9N/A9MiPBePAcIdsfIyYEDE7hvEQks/yh5MPa9Ah2Icn9Y/KVLqpck5zvfQ==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/atomicfu-wasm-js/0.31.0/atomicfu-wasm-js-0.31.0-sources.jar"
+              ]
+            }
+          },
+          "org_jetbrains_kotlinx-atomicfu-wasm-js-0_31_0_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "atomicfu-wasm-js-0.31.0.klib",
+              "integrity": "sha512-WRtFqWRWyv1MDQMoLB4nQy8mwD5YlxznzMlCs5YGUhpQIVbIS5ryFLykA2mhMhpU+LGBS+J1zakxDRUDYdtI+A==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/atomicfu-wasm-js/0.31.0/atomicfu-wasm-js-0.31.0.klib"
+              ]
+            }
+          },
+          "org_jetbrains_kotlinx-kotlinx-browser-wasm-js-0_5_0-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlinx-browser-wasm-js-0.5.0-sources.jar",
+              "integrity": "sha512-1XBNdVrBX+uX1xtfHZs7uw0EJkhDMDjP0WDZmzRGc8rVjT6cfmcbaVg0u7bf08D4OLm1Q4UGFsjYrp3A0mI6Rg==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-browser-wasm-js/0.5.0/kotlinx-browser-wasm-js-0.5.0-sources.jar"
+              ]
+            }
+          },
+          "org_jetbrains_kotlinx-kotlinx-browser-wasm-js-0_5_0_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlinx-browser-wasm-js-0.5.0.klib",
+              "integrity": "sha512-8cGFMUe1j9W2s1AeX+G8mQ5Qb7lTxmyVcDQAOW1/lRvYzu/QGpt9z8kOxBXuetLNyG26aOzy66+UOdhWeqiO4w==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-browser-wasm-js/0.5.0/kotlinx-browser-wasm-js-0.5.0.klib"
+              ]
+            }
+          },
+          "org_jetbrains_kotlinx-kotlinx-collections-immutable-wasm-js-0_5_0-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlinx-collections-immutable-wasm-js-0.5.0-sources.jar",
+              "integrity": "sha512-6lP2QBKdjrIwJLMKoQPF/rCyz3T2CGVAmOH7edfwQT7/oJRGo1kdV6MFmMPEeFm0yqGuaTxCB732j9ZkTJCIBQ==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-collections-immutable-wasm-js/0.5.0/kotlinx-collections-immutable-wasm-js-0.5.0-sources.jar"
+              ]
+            }
+          },
+          "org_jetbrains_kotlinx-kotlinx-collections-immutable-wasm-js-0_5_0_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlinx-collections-immutable-wasm-js-0.5.0.klib",
+              "integrity": "sha512-Ll9fAtzR6N7aZ4Wrwe97cqksHUTlP9LjBp/pPE9rZZrIYQwfJdgnGE9Yp1dTNBdgv7IT+XIpcnrKXsXKbKv8bA==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-collections-immutable-wasm-js/0.5.0/kotlinx-collections-immutable-wasm-js-0.5.0.klib"
+              ]
+            }
+          },
+          "org_jetbrains_kotlinx-kotlinx-io-bytestring-wasm-js-0_8_2-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlinx-io-bytestring-wasm-js-0.8.2-sources.jar",
+              "integrity": "sha512-AmVgiPjOaLQ3HMnTziwA8HIj4YV7vobiIr9Dx3UGJmtJPu3mBrf92Jc73uaiV5rtDEI+IFhHr8JqKmvUl3xXPw==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-bytestring-wasm-js/0.8.2/kotlinx-io-bytestring-wasm-js-0.8.2-sources.jar"
+              ]
+            }
+          },
+          "org_jetbrains_kotlinx-kotlinx-io-bytestring-wasm-js-0_8_2_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlinx-io-bytestring-wasm-js-0.8.2.klib",
+              "integrity": "sha512-4gtEPZnXBc8qnN+2m3aWkeXe58pVw68U7lJxI+f5zV5nSqRiCO429TOimiZ9TkZ6QeatSFEvOJjZDL1ShDgKhg==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-bytestring-wasm-js/0.8.2/kotlinx-io-bytestring-wasm-js-0.8.2.klib"
+              ]
+            }
+          },
+          "org_jetbrains_kotlinx-kotlinx-io-core-wasm-js-0_8_2-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlinx-io-core-wasm-js-0.8.2-sources.jar",
+              "integrity": "sha512-iB4V2Adz1hoZ7xPDZXFaL1cwOZYe3uyYw/K3CR1DZwANUnX1CxBtB2Fal917ixRL3la9p2xKlQASF594O8KLlg==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-core-wasm-js/0.8.2/kotlinx-io-core-wasm-js-0.8.2-sources.jar"
+              ]
+            }
+          },
+          "org_jetbrains_kotlinx-kotlinx-io-core-wasm-js-0_8_2_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlinx-io-core-wasm-js-0.8.2.klib",
+              "integrity": "sha512-t0pcAxETpBbU+9lI6Ezj1cvBueG9oJSUCu4dwcu+pfLiwBthFmpZM4ChHAjS8VIei+sl7gnW9TqHIpaWIGVqQg==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-core-wasm-js/0.8.2/kotlinx-io-core-wasm-js-0.8.2.klib"
+              ]
+            }
+          },
+          "org_jetbrains_kotlinx-kotlinx-serialization-core-wasm-js-1_9_0-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlinx-serialization-core-wasm-js-1.9.0-sources.jar",
+              "integrity": "sha512-qQ2bFwjNCvCK9QLUiB5QcT8p+26KyUCDcHhYVL/sMpDqQFJTZl5fwgEkRNq/Pe+R9pzM/C0MCSHps7tb9jYLnw==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-core-wasm-js/1.9.0/kotlinx-serialization-core-wasm-js-1.9.0-sources.jar"
+              ]
+            }
+          },
+          "org_jetbrains_kotlinx-kotlinx-serialization-core-wasm-js-1_9_0_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlinx-serialization-core-wasm-js-1.9.0.klib",
+              "integrity": "sha512-T3TB66CKuZqllqQY522YPG7JrSypKk/Pump46BSmGpqEof6RO7QyQYs+0ZCs+ZWjigLjf8rFqhqH5ZBQKnjJUg==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-core-wasm-js/1.9.0/kotlinx-serialization-core-wasm-js-1.9.0.klib"
+              ]
+            }
+          },
+          "org_jetbrains_kotlinx-kotlinx-serialization-json-wasm-js-1_9_0-sources_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlinx-serialization-json-wasm-js-1.9.0-sources.jar",
+              "integrity": "sha512-eqDWVrh3bsXOupz0WpIvGWSJKBhz5bscgbNQh6yhOJ6laqkX2Xrbgtx8JZvAySyPYCGAbwxqGWM72yZdAh5Ydw==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-wasm-js/1.9.0/kotlinx-serialization-json-wasm-js-1.9.0-sources.jar"
+              ]
+            }
+          },
+          "org_jetbrains_kotlinx-kotlinx-serialization-json-wasm-js-1_9_0_http": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_file",
+            "attributes": {
+              "downloaded_file_path": "kotlinx-serialization-json-wasm-js-1.9.0.klib",
+              "integrity": "sha512-eAB9rgBCdaJ/b1xsxZzv86yXTmvDT9Z6Vyc+sYlbqqLEgiHiiLO71QfiIzr+VQ7C/CMD5b1EohRsPK1bNhLtWQ==",
+              "urls": [
+                "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-wasm-js/1.9.0/kotlinx-serialization-json-wasm-js-1.9.0.klib"
+              ]
+            }
+          },
+          "kmp_deps": {
+            "repoRuleId": "@@//fleet/build/rules:kmp.bzl%_kmp_deps_repository",
+            "attributes": {
+              "build_file_content": "load(\"@rules_jvm//:wasmjs.bzl\", \"wasmjs_import\")\n\npackage(default_visibility = [\"//visibility:public\"])\n\n# io.github.turansky.seskar:seskar-core:4.40.0\nwasmjs_import(\n    name = \"io_github_turansky_seskar_seskar_core_wasm_js_4_40_0\",\n    klib = \"@io_github_turansky_seskar-seskar-core-wasm-js-4_40_0_http//file\",\n    source_jar = \"@io_github_turansky_seskar-seskar-core-wasm-js-4_40_0-sources_http//file\",\n    deps = [\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n    ],\n)\n\n# io.ktor:ktor-client-core:3.4.1\nwasmjs_import(\n    name = \"io_ktor_ktor_client_core_wasm_js_3_4_1\",\n    klib = \"@io_ktor-ktor-client-core-wasm-js-3_4_1_http//file\",\n    source_jar = \"@io_ktor-ktor-client-core-wasm-js-3_4_1-sources_http//file\",\n    deps = [\n        \":org_jetbrains_kotlinx_kotlinx_browser\",\n    ],\n    exported_deps = [\n        \":io_ktor_ktor_events\",\n        \":io_ktor_ktor_http\",\n        \":io_ktor_ktor_http_cio\",\n        \":io_ktor_ktor_sse\",\n        \":io_ktor_ktor_websocket_serialization\",\n        \":org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core\",\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n        \":org_jetbrains_kotlinx_atomicfu\",\n    ],\n)\n\n# io.ktor:ktor-events:3.4.1\nwasmjs_import(\n    name = \"io_ktor_ktor_events_wasm_js_3_4_1\",\n    klib = \"@io_ktor-ktor-events-wasm-js-3_4_1_http//file\",\n    source_jar = \"@io_ktor-ktor-events-wasm-js-3_4_1-sources_http//file\",\n    deps = [\n        \":org_jetbrains_kotlinx_kotlinx_browser\",\n    ],\n    exported_deps = [\n        \":io_ktor_ktor_utils\",\n        \":org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core\",\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n        \":org_jetbrains_kotlinx_atomicfu\",\n    ],\n)\n\n# io.ktor:ktor-http-cio:3.4.1\nwasmjs_import(\n    name = \"io_ktor_ktor_http_cio_wasm_js_3_4_1\",\n    klib = \"@io_ktor-ktor-http-cio-wasm-js-3_4_1_http//file\",\n    source_jar = \"@io_ktor-ktor-http-cio-wasm-js-3_4_1-sources_http//file\",\n    deps = [\n        \":org_jetbrains_kotlinx_kotlinx_browser\",\n    ],\n    exported_deps = [\n        \":io_ktor_ktor_http\",\n        \":io_ktor_ktor_io\",\n        \":org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core\",\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n        \":org_jetbrains_kotlinx_atomicfu\",\n    ],\n)\n\n# io.ktor:ktor-http:3.4.1\nwasmjs_import(\n    name = \"io_ktor_ktor_http_wasm_js_3_4_1\",\n    klib = \"@io_ktor-ktor-http-wasm-js-3_4_1_http//file\",\n    source_jar = \"@io_ktor-ktor-http-wasm-js-3_4_1-sources_http//file\",\n    deps = [\n        \":org_jetbrains_kotlinx_kotlinx_browser\",\n    ],\n    exported_deps = [\n        \":io_ktor_ktor_utils\",\n        \":org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core\",\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n        \":org_jetbrains_kotlinx_atomicfu\",\n        \":org_jetbrains_kotlinx_kotlinx_serialization_core\",\n    ],\n)\n\n# io.ktor:ktor-io:3.4.1\nwasmjs_import(\n    name = \"io_ktor_ktor_io_wasm_js_3_4_1\",\n    klib = \"@io_ktor-ktor-io-wasm-js-3_4_1_http//file\",\n    source_jar = \"@io_ktor-ktor-io-wasm-js-3_4_1-sources_http//file\",\n    deps = [\n        \":org_jetbrains_kotlinx_kotlinx_browser\",\n    ],\n    exported_deps = [\n        \":org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core\",\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n        \":org_jetbrains_kotlinx_atomicfu\",\n        \":org_jetbrains_kotlinx_kotlinx_io_core\",\n    ],\n)\n\n# io.ktor:ktor-serialization:3.4.1\nwasmjs_import(\n    name = \"io_ktor_ktor_serialization_wasm_js_3_4_1\",\n    klib = \"@io_ktor-ktor-serialization-wasm-js-3_4_1_http//file\",\n    source_jar = \"@io_ktor-ktor-serialization-wasm-js-3_4_1-sources_http//file\",\n    deps = [\n        \":org_jetbrains_kotlinx_kotlinx_browser\",\n    ],\n    exported_deps = [\n        \":io_ktor_ktor_websockets\",\n        \":org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core\",\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n        \":org_jetbrains_kotlinx_atomicfu\",\n    ],\n)\n\n# io.ktor:ktor-sse:3.4.1\nwasmjs_import(\n    name = \"io_ktor_ktor_sse_wasm_js_3_4_1\",\n    klib = \"@io_ktor-ktor-sse-wasm-js-3_4_1_http//file\",\n    source_jar = \"@io_ktor-ktor-sse-wasm-js-3_4_1-sources_http//file\",\n    deps = [\n        \":org_jetbrains_kotlinx_kotlinx_browser\",\n    ],\n    exported_deps = [\n        \":io_ktor_ktor_utils\",\n        \":org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core\",\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n        \":org_jetbrains_kotlinx_atomicfu\",\n    ],\n)\n\n# io.ktor:ktor-utils:3.4.1\nwasmjs_import(\n    name = \"io_ktor_ktor_utils_wasm_js_3_4_1\",\n    klib = \"@io_ktor-ktor-utils-wasm-js-3_4_1_http//file\",\n    source_jar = \"@io_ktor-ktor-utils-wasm-js-3_4_1-sources_http//file\",\n    deps = [\n        \":org_jetbrains_kotlinx_kotlinx_browser\",\n    ],\n    exported_deps = [\n        \":io_ktor_ktor_io\",\n        \":org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core\",\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n        \":org_jetbrains_kotlinx_atomicfu\",\n        \":org_jetbrains_kotlinx_kotlinx_serialization_core\",\n    ],\n)\n\n# io.ktor:ktor-websocket-serialization:3.4.1\nwasmjs_import(\n    name = \"io_ktor_ktor_websocket_serialization_wasm_js_3_4_1\",\n    klib = \"@io_ktor-ktor-websocket-serialization-wasm-js-3_4_1_http//file\",\n    source_jar = \"@io_ktor-ktor-websocket-serialization-wasm-js-3_4_1-sources_http//file\",\n    deps = [\n        \":org_jetbrains_kotlinx_kotlinx_browser\",\n    ],\n    exported_deps = [\n        \":io_ktor_ktor_serialization\",\n        \":org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core\",\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n        \":org_jetbrains_kotlinx_atomicfu\",\n    ],\n)\n\n# io.ktor:ktor-websockets:3.4.1\nwasmjs_import(\n    name = \"io_ktor_ktor_websockets_wasm_js_3_4_1\",\n    klib = \"@io_ktor-ktor-websockets-wasm-js-3_4_1_http//file\",\n    source_jar = \"@io_ktor-ktor-websockets-wasm-js-3_4_1-sources_http//file\",\n    deps = [\n        \":org_jetbrains_kotlinx_kotlinx_browser\",\n    ],\n    exported_deps = [\n        \":io_ktor_ktor_http\",\n        \":io_ktor_ktor_utils\",\n        \":org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core\",\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n        \":org_jetbrains_kotlinx_atomicfu\",\n    ],\n)\n\n# org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core:1.10.2-intellij-1\nwasmjs_import(\n    name = \"org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core_wasm_js_1_10_2_intellij_1\",\n    klib = \"@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-core-wasm-js-1_10_2-intellij-1_http//file\",\n    source_jar = \"@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-core-wasm-js-1_10_2-intellij-1-sources_http//file\",\n    exported_deps = [\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n        \":org_jetbrains_kotlinx_atomicfu\",\n    ],\n)\n\n# org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-test:1.10.2-intellij-1\nwasmjs_import(\n    name = \"org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_test_wasm_js_1_10_2_intellij_1\",\n    klib = \"@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-test-wasm-js-1_10_2-intellij-1_http//file\",\n    source_jar = \"@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-test-wasm-js-1_10_2-intellij-1-sources_http//file\",\n    exported_deps = [\n        \":org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core\",\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n        \":org_jetbrains_kotlinx_atomicfu\",\n    ],\n)\n\n# org.jetbrains.kotlin-wrappers:kotlin-browser:2026.4.12\nwasmjs_import(\n    name = \"org_jetbrains_kotlin_wrappers_kotlin_browser_wasm_js_2026_4_12\",\n    klib = \"@org_jetbrains_kotlin-wrappers-kotlin-browser-wasm-js-2026_4_12_http//file\",\n    source_jar = \"@org_jetbrains_kotlin-wrappers-kotlin-browser-wasm-js-2026_4_12-sources_http//file\",\n    deps = [\n        \":io_github_turansky_seskar_seskar_core\",\n        \":org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core\",\n        \":org_jetbrains_kotlin_wrappers_kotlin_js_plain_object\",\n    ],\n    exported_deps = [\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n        \":org_jetbrains_kotlin_wrappers_kotlin_cssom_core\",\n        \":org_jetbrains_kotlin_wrappers_kotlin_js\",\n        \":org_jetbrains_kotlin_wrappers_kotlin_web\",\n    ],\n)\n\n# org.jetbrains.kotlin-wrappers:kotlin-cssom-core:2026.4.12\nwasmjs_import(\n    name = \"org_jetbrains_kotlin_wrappers_kotlin_cssom_core_wasm_js_2026_4_12\",\n    klib = \"@org_jetbrains_kotlin-wrappers-kotlin-cssom-core-wasm-js-2026_4_12_http//file\",\n    source_jar = \"@org_jetbrains_kotlin-wrappers-kotlin-cssom-core-wasm-js-2026_4_12-sources_http//file\",\n    deps = [\n        \":io_github_turansky_seskar_seskar_core\",\n    ],\n    exported_deps = [\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n        \":org_jetbrains_kotlin_wrappers_kotlin_js\",\n    ],\n)\n\n# org.jetbrains.kotlin-wrappers:kotlin-js-core:2026.4.12\nwasmjs_import(\n    name = \"org_jetbrains_kotlin_wrappers_kotlin_js_core_wasm_js_2026_4_12\",\n    klib = \"@org_jetbrains_kotlin-wrappers-kotlin-js-core-wasm-js-2026_4_12_http//file\",\n    source_jar = \"@org_jetbrains_kotlin-wrappers-kotlin-js-core-wasm-js-2026_4_12-sources_http//file\",\n    deps = [\n        \":io_github_turansky_seskar_seskar_core\",\n    ],\n    exported_deps = [\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n    ],\n)\n\n# org.jetbrains.kotlin-wrappers:kotlin-js-plain-object:2026.4.12\nwasmjs_import(\n    name = \"org_jetbrains_kotlin_wrappers_kotlin_js_plain_object_wasm_js_2026_4_12\",\n    klib = \"@org_jetbrains_kotlin-wrappers-kotlin-js-plain-object-wasm-js-2026_4_12_http//file\",\n    source_jar = \"@org_jetbrains_kotlin-wrappers-kotlin-js-plain-object-wasm-js-2026_4_12-sources_http//file\",\n    deps = [\n        \":io_github_turansky_seskar_seskar_core\",\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n    ],\n)\n\n# org.jetbrains.kotlin-wrappers:kotlin-js:2026.4.12\nwasmjs_import(\n    name = \"org_jetbrains_kotlin_wrappers_kotlin_js_wasm_js_2026_4_12\",\n    klib = \"@org_jetbrains_kotlin-wrappers-kotlin-js-wasm-js-2026_4_12_http//file\",\n    source_jar = \"@org_jetbrains_kotlin-wrappers-kotlin-js-wasm-js-2026_4_12-sources_http//file\",\n    deps = [\n        \":io_github_turansky_seskar_seskar_core\",\n        \":org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core\",\n        \":org_jetbrains_kotlin_wrappers_kotlin_js_plain_object\",\n    ],\n    exported_deps = [\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n        \":org_jetbrains_kotlin_wrappers_kotlin_js_core\",\n    ],\n)\n\n# org.jetbrains.kotlin-wrappers:kotlin-web:2026.4.12\nwasmjs_import(\n    name = \"org_jetbrains_kotlin_wrappers_kotlin_web_wasm_js_2026_4_12\",\n    klib = \"@org_jetbrains_kotlin-wrappers-kotlin-web-wasm-js-2026_4_12_http//file\",\n    source_jar = \"@org_jetbrains_kotlin-wrappers-kotlin-web-wasm-js-2026_4_12-sources_http//file\",\n    deps = [\n        \":io_github_turansky_seskar_seskar_core\",\n        \":org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core\",\n        \":org_jetbrains_kotlin_wrappers_kotlin_js_plain_object\",\n    ],\n    exported_deps = [\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n        \":org_jetbrains_kotlin_wrappers_kotlin_js\",\n    ],\n)\n\n# org.jetbrains.kotlin:kotlin-stdlib:2.4.0\nwasmjs_import(\n    name = \"org_jetbrains_kotlin_kotlin_stdlib_wasm_js_2_4_0\",\n    klib = \"@org_jetbrains_kotlin-kotlin-stdlib-wasm-js-2_4_0_http//file\",\n    source_jar = \"@org_jetbrains_kotlin-kotlin-stdlib-wasm-js-2_4_0-sources_http//file\",\n)\n\n# org.jetbrains.kotlin:kotlin-test:2.4.0\nwasmjs_import(\n    name = \"org_jetbrains_kotlin_kotlin_test_wasm_js_2_4_0\",\n    klib = \"@org_jetbrains_kotlin-kotlin-test-wasm-js-2_4_0_http//file\",\n    source_jar = \"@org_jetbrains_kotlin-kotlin-test-wasm-js-2_4_0-sources_http//file\",\n    exported_deps = [\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n    ],\n)\n\n# org.jetbrains.kotlinx:atomicfu:0.31.0\nwasmjs_import(\n    name = \"org_jetbrains_kotlinx_atomicfu_wasm_js_0_31_0\",\n    klib = \"@org_jetbrains_kotlinx-atomicfu-wasm-js-0_31_0_http//file\",\n    source_jar = \"@org_jetbrains_kotlinx-atomicfu-wasm-js-0_31_0-sources_http//file\",\n    deps = [\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n    ],\n)\n\n# org.jetbrains.kotlinx:kotlinx-browser:0.5.0\nwasmjs_import(\n    name = \"org_jetbrains_kotlinx_kotlinx_browser_wasm_js_0_5_0\",\n    klib = \"@org_jetbrains_kotlinx-kotlinx-browser-wasm-js-0_5_0_http//file\",\n    source_jar = \"@org_jetbrains_kotlinx-kotlinx-browser-wasm-js-0_5_0-sources_http//file\",\n    deps = [\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n    ],\n)\n\n# org.jetbrains.kotlinx:kotlinx-collections-immutable:0.5.0\nwasmjs_import(\n    name = \"org_jetbrains_kotlinx_kotlinx_collections_immutable_wasm_js_0_5_0\",\n    klib = \"@org_jetbrains_kotlinx-kotlinx-collections-immutable-wasm-js-0_5_0_http//file\",\n    source_jar = \"@org_jetbrains_kotlinx-kotlinx-collections-immutable-wasm-js-0_5_0-sources_http//file\",\n    exported_deps = [\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n    ],\n)\n\n# org.jetbrains.kotlinx:kotlinx-io-bytestring:0.8.2\nwasmjs_import(\n    name = \"org_jetbrains_kotlinx_kotlinx_io_bytestring_wasm_js_0_8_2\",\n    klib = \"@org_jetbrains_kotlinx-kotlinx-io-bytestring-wasm-js-0_8_2_http//file\",\n    source_jar = \"@org_jetbrains_kotlinx-kotlinx-io-bytestring-wasm-js-0_8_2-sources_http//file\",\n    exported_deps = [\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n    ],\n)\n\n# org.jetbrains.kotlinx:kotlinx-io-core:0.8.2\nwasmjs_import(\n    name = \"org_jetbrains_kotlinx_kotlinx_io_core_wasm_js_0_8_2\",\n    klib = \"@org_jetbrains_kotlinx-kotlinx-io-core-wasm-js-0_8_2_http//file\",\n    source_jar = \"@org_jetbrains_kotlinx-kotlinx-io-core-wasm-js-0_8_2-sources_http//file\",\n    exported_deps = [\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n        \":org_jetbrains_kotlinx_kotlinx_io_bytestring\",\n    ],\n)\n\n# org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0\nwasmjs_import(\n    name = \"org_jetbrains_kotlinx_kotlinx_serialization_core_wasm_js_1_9_0\",\n    klib = \"@org_jetbrains_kotlinx-kotlinx-serialization-core-wasm-js-1_9_0_http//file\",\n    source_jar = \"@org_jetbrains_kotlinx-kotlinx-serialization-core-wasm-js-1_9_0-sources_http//file\",\n    exported_deps = [\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n    ],\n)\n\n# org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0\nwasmjs_import(\n    name = \"org_jetbrains_kotlinx_kotlinx_serialization_json_wasm_js_1_9_0\",\n    klib = \"@org_jetbrains_kotlinx-kotlinx-serialization-json-wasm-js-1_9_0_http//file\",\n    source_jar = \"@org_jetbrains_kotlinx-kotlinx-serialization-json-wasm-js-1_9_0-sources_http//file\",\n    exported_deps = [\n        \":org_jetbrains_kotlin_kotlin_stdlib\",\n        \":org_jetbrains_kotlinx_kotlinx_serialization_core\",\n    ],\n)\n\n# org.jetbrains:annotations:26.0.2\nwasmjs_import(\n    name = \"org_jetbrains_annotations_wasmjs_26_0_2\",\n    klib = \"@org_jetbrains-annotations-wasmJs-26_0_2_http//file\",\n    source_jar = \"@org_jetbrains-annotations-wasmJs-26_0_2-sources_http//file\",\n)\n\nalias(\n    name = \"io_github_turansky_seskar_seskar_core\",\n    actual = \":io_github_turansky_seskar_seskar_core_wasm_js_4_40_0\",\n)\n\nalias(\n    name = \"io_ktor_ktor_client_core\",\n    actual = \":io_ktor_ktor_client_core_wasm_js_3_4_1\",\n)\n\nalias(\n    name = \"io_ktor_ktor_events\",\n    actual = \":io_ktor_ktor_events_wasm_js_3_4_1\",\n)\n\nalias(\n    name = \"io_ktor_ktor_http\",\n    actual = \":io_ktor_ktor_http_wasm_js_3_4_1\",\n)\n\nalias(\n    name = \"io_ktor_ktor_http_cio\",\n    actual = \":io_ktor_ktor_http_cio_wasm_js_3_4_1\",\n)\n\nalias(\n    name = \"io_ktor_ktor_io\",\n    actual = \":io_ktor_ktor_io_wasm_js_3_4_1\",\n)\n\nalias(\n    name = \"io_ktor_ktor_serialization\",\n    actual = \":io_ktor_ktor_serialization_wasm_js_3_4_1\",\n)\n\nalias(\n    name = \"io_ktor_ktor_sse\",\n    actual = \":io_ktor_ktor_sse_wasm_js_3_4_1\",\n)\n\nalias(\n    name = \"io_ktor_ktor_utils\",\n    actual = \":io_ktor_ktor_utils_wasm_js_3_4_1\",\n)\n\nalias(\n    name = \"io_ktor_ktor_websocket_serialization\",\n    actual = \":io_ktor_ktor_websocket_serialization_wasm_js_3_4_1\",\n)\n\nalias(\n    name = \"io_ktor_ktor_websockets\",\n    actual = \":io_ktor_ktor_websockets_wasm_js_3_4_1\",\n)\n\nalias(\n    name = \"org_jetbrains_annotations\",\n    actual = \":org_jetbrains_annotations_wasmjs_26_0_2\",\n)\n\nalias(\n    name = \"org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core\",\n    actual = \":org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core_wasm_js_1_10_2_intellij_1\",\n)\n\nalias(\n    name = \"org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_test\",\n    actual = \":org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_test_wasm_js_1_10_2_intellij_1\",\n)\n\nalias(\n    name = \"org_jetbrains_kotlin_kotlin_stdlib\",\n    actual = \":org_jetbrains_kotlin_kotlin_stdlib_wasm_js_2_4_0\",\n)\n\nalias(\n    name = \"org_jetbrains_kotlin_kotlin_test\",\n    actual = \":org_jetbrains_kotlin_kotlin_test_wasm_js_2_4_0\",\n)\n\nalias(\n    name = \"org_jetbrains_kotlin_wrappers_kotlin_browser\",\n    actual = \":org_jetbrains_kotlin_wrappers_kotlin_browser_wasm_js_2026_4_12\",\n)\n\nalias(\n    name = \"org_jetbrains_kotlin_wrappers_kotlin_cssom_core\",\n    actual = \":org_jetbrains_kotlin_wrappers_kotlin_cssom_core_wasm_js_2026_4_12\",\n)\n\nalias(\n    name = \"org_jetbrains_kotlin_wrappers_kotlin_js\",\n    actual = \":org_jetbrains_kotlin_wrappers_kotlin_js_wasm_js_2026_4_12\",\n)\n\nalias(\n    name = \"org_jetbrains_kotlin_wrappers_kotlin_js_core\",\n    actual = \":org_jetbrains_kotlin_wrappers_kotlin_js_core_wasm_js_2026_4_12\",\n)\n\nalias(\n    name = \"org_jetbrains_kotlin_wrappers_kotlin_js_plain_object\",\n    actual = \":org_jetbrains_kotlin_wrappers_kotlin_js_plain_object_wasm_js_2026_4_12\",\n)\n\nalias(\n    name = \"org_jetbrains_kotlin_wrappers_kotlin_web\",\n    actual = \":org_jetbrains_kotlin_wrappers_kotlin_web_wasm_js_2026_4_12\",\n)\n\nalias(\n    name = \"org_jetbrains_kotlinx_atomicfu\",\n    actual = \":org_jetbrains_kotlinx_atomicfu_wasm_js_0_31_0\",\n)\n\nalias(\n    name = \"org_jetbrains_kotlinx_kotlinx_browser\",\n    actual = \":org_jetbrains_kotlinx_kotlinx_browser_wasm_js_0_5_0\",\n)\n\nalias(\n    name = \"org_jetbrains_kotlinx_kotlinx_collections_immutable\",\n    actual = \":org_jetbrains_kotlinx_kotlinx_collections_immutable_wasm_js_0_5_0\",\n)\n\nalias(\n    name = \"org_jetbrains_kotlinx_kotlinx_io_bytestring\",\n    actual = \":org_jetbrains_kotlinx_kotlinx_io_bytestring_wasm_js_0_8_2\",\n)\n\nalias(\n    name = \"org_jetbrains_kotlinx_kotlinx_io_core\",\n    actual = \":org_jetbrains_kotlinx_kotlinx_io_core_wasm_js_0_8_2\",\n)\n\nalias(\n    name = \"org_jetbrains_kotlinx_kotlinx_serialization_core\",\n    actual = \":org_jetbrains_kotlinx_kotlinx_serialization_core_wasm_js_1_9_0\",\n)\n\nalias(\n    name = \"org_jetbrains_kotlinx_kotlinx_serialization_json\",\n    actual = \":org_jetbrains_kotlinx_kotlinx_serialization_json_wasm_js_1_9_0\",\n)\n"
+            }
+          }
+        },
+        "moduleExtensionMetadata": {
+          "explicitRootModuleDirectDeps": [
+            "kmp_deps"
+          ],
+          "explicitRootModuleDirectDevDeps": [],
+          "useAllRepos": "NO",
+          "reproducible": false
+        }
+      }
+    },
     "@@aspect_rules_js+//npm:extensions.bzl%pnpm": {
       "general": {
         "bzlTransitiveDigest": "fiC9VAVeCXFPSfQFY8VJ8XkWlROSTmUKSu+8Nr2/OJ4=",
@@ -1179,6 +1788,9 @@
     }
   },
   "facts": {
+    "//fleet/build/rules:kmp.bzl%kmp": {
+      "[\"resolution.v31\",[\"io.ktor:ktor-client-core:3.4.1\",\"io.ktor:ktor-events:3.4.1\",\"io.ktor:ktor-http:3.4.1\",\"io.ktor:ktor-http-cio:3.4.1\",\"io.ktor:ktor-io:3.4.1\",\"io.ktor:ktor-serialization:3.4.1\",\"io.ktor:ktor-sse:3.4.1\",\"io.ktor:ktor-utils:3.4.1\",\"io.ktor:ktor-websocket-serialization:3.4.1\",\"io.ktor:ktor-websockets:3.4.1\",\"org.jetbrains:annotations:26.0.2\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core:1.10.2-intellij-1\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-test:1.10.2-intellij-1\",\"org.jetbrains.kotlin:kotlin-stdlib:2.4.0\",\"org.jetbrains.kotlin:kotlin-test:2.4.0\",\"org.jetbrains.kotlin-wrappers:kotlin-browser:2026.4.12\",\"org.jetbrains.kotlinx:kotlinx-collections-immutable:0.5.0\",\"org.jetbrains.kotlinx:kotlinx-io-core:0.7.0\",\"org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0\",\"org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0\"],[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2\",\"https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies\",\"https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2\",\"https://cache-redirector.jetbrains.com/clojars.org/repo\",\"https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev\",\"https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/teamcity-rest-client/teamcity-rest-client\",\"https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public\",\"https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/jcs/maven\",\"https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public\",\"https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ki/maven\",\"https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/apl/product-analytics-platform-public\",\"https://packages.jetbrains.team/maven/p/ij/code-with-me-lobby-server\",\"https://packages.jetbrains.team/maven/p/ij/intellij-private-dependencies\",\"https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper\",\"https://packages.jetbrains.team/maven/p/ccrm/flcc-local-models\",\"https://packages.jetbrains.team/maven/p/ccrm/flcc-native-server\",\"https://packages.jetbrains.team/maven/p/iuia/qa-automation-maven\",\"https://packages.jetbrains.team/maven/p/automatically-generating-unit-tests/public\",\"https://packages.jetbrains.team/maven/p/toolbox-enterprise/public\",\"https://packages.jetbrains.team/maven/p/fleet/fleet-qa-maven\",\"https://packages.jetbrains.team/maven/p/bazel/plugins\",\"https://packages.jetbrains.team/maven/p/firework/dev\",\"https://packages.jetbrains.team/maven/p/ij/grazie-platform\",\"https://cache-redirector.jetbrains.com/repo.gradle.org/gradle/libs-releases\",\"https://packages.jetbrains.team/maven/p/ij/jcp-github\",\"https://packages.jetbrains.team/maven/p/kt/bootstrap\",\"https://packages.jetbrains.team/maven/p/kt/experimental\"],[[\"org.jetbrains.kotlinx:kotlinx-coroutines-core\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core:1.10.2-intellij-1\"],[\"org.jetbrains.kotlinx:kotlinx-coroutines-core-wasm-js\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core-wasm-js:1.10.2-intellij-1\"],[\"org.jetbrains.kotlinx:kotlinx-coroutines-debug\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-debug:1.10.2-intellij-1\"],[\"org.jetbrains.kotlinx:kotlinx-coroutines-debug-wasm-js\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-debug-wasm-js:1.10.2-intellij-1\"],[\"org.jetbrains.kotlinx:kotlinx-coroutines-guava\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-guava:1.10.2-intellij-1\"],[\"org.jetbrains.kotlinx:kotlinx-coroutines-guava-wasm-js\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-guava-wasm-js:1.10.2-intellij-1\"],[\"org.jetbrains.kotlinx:kotlinx-coroutines-slf4j\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-slf4j:1.10.2-intellij-1\"],[\"org.jetbrains.kotlinx:kotlinx-coroutines-slf4j-wasm-js\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-slf4j-wasm-js:1.10.2-intellij-1\"],[\"org.jetbrains.kotlinx:kotlinx-coroutines-test\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-test:1.10.2-intellij-1\"],[\"org.jetbrains.kotlinx:kotlinx-coroutines-test-wasm-js\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-test-wasm-js:1.10.2-intellij-1\"]]]": "{\"askedCoordinates\":[\"io.ktor:ktor-client-core:3.4.1\",\"io.ktor:ktor-events:3.4.1\",\"io.ktor:ktor-http-cio:3.4.1\",\"io.ktor:ktor-http:3.4.1\",\"io.ktor:ktor-io:3.4.1\",\"io.ktor:ktor-serialization:3.4.1\",\"io.ktor:ktor-sse:3.4.1\",\"io.ktor:ktor-utils:3.4.1\",\"io.ktor:ktor-websocket-serialization:3.4.1\",\"io.ktor:ktor-websockets:3.4.1\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core:1.10.2-intellij-1\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-test:1.10.2-intellij-1\",\"org.jetbrains.kotlin-wrappers:kotlin-browser:2026.4.12\",\"org.jetbrains.kotlin:kotlin-stdlib:2.4.0\",\"org.jetbrains.kotlin:kotlin-test:2.4.0\",\"org.jetbrains.kotlinx:kotlinx-collections-immutable:0.5.0\",\"org.jetbrains.kotlinx:kotlinx-io-core:0.7.0\",\"org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0\",\"org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0\",\"org.jetbrains:annotations:26.0.2\"],\"askedRepositories\":[\"https://cache-redirector.jetbrains.com/clojars.org/repo\",\"https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2\",\"https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev\",\"https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper\",\"https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/apl/product-analytics-platform-public\",\"https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public\",\"https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies\",\"https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/jcs/maven\",\"https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ki/maven\",\"https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public\",\"https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/teamcity-rest-client/teamcity-rest-client\",\"https://cache-redirector.jetbrains.com/repo.gradle.org/gradle/libs-releases\",\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2\",\"https://packages.jetbrains.team/maven/p/automatically-generating-unit-tests/public\",\"https://packages.jetbrains.team/maven/p/bazel/plugins\",\"https://packages.jetbrains.team/maven/p/ccrm/flcc-local-models\",\"https://packages.jetbrains.team/maven/p/ccrm/flcc-native-server\",\"https://packages.jetbrains.team/maven/p/firework/dev\",\"https://packages.jetbrains.team/maven/p/fleet/fleet-qa-maven\",\"https://packages.jetbrains.team/maven/p/ij/code-with-me-lobby-server\",\"https://packages.jetbrains.team/maven/p/ij/grazie-platform\",\"https://packages.jetbrains.team/maven/p/ij/intellij-private-dependencies\",\"https://packages.jetbrains.team/maven/p/ij/jcp-github\",\"https://packages.jetbrains.team/maven/p/iuia/qa-automation-maven\",\"https://packages.jetbrains.team/maven/p/kt/bootstrap\",\"https://packages.jetbrains.team/maven/p/kt/experimental\",\"https://packages.jetbrains.team/maven/p/toolbox-enterprise/public\"],\"libraries\":{\"io.github.turansky.seskar:seskar-core:4.40.0\":{\"id\":\"io.github.turansky.seskar:seskar-core:4.40.0\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"io.github.turansky.seskar:seskar-core:4.40.0\",\"variantId\":\"io.github.turansky.seskar:seskar-core-wasm-js:4.40.0\",\"dependencies\":[\"org.jetbrains.kotlin:kotlin-stdlib\"],\"exportedDependencies\":[],\"klib\":{\"integrity\":\"sha512-guAv/tL4Vod2Hcg5edTSM7DNM3dVxDFw0rDX9lxjguYdmHnLTq4OgegGhvbejx2TLa/hY2iT6OApMMiINGRLLQ==\",\"groupId\":\"io.github.turansky.seskar\",\"artifactId\":\"seskar-core-wasm-js\",\"version\":\"4.40.0\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/turansky/seskar/seskar-core-wasm-js/4.40.0/seskar-core-wasm-js-4.40.0.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-bzBHxd4TxesTxZ9MWD2oSF+IFHk97xXnxCm1BdP0jBbbkICVstjWzW/5pyCztAVytzxsksi1wZ1PnrBgY69VXw==\",\"groupId\":\"io.github.turansky.seskar\",\"artifactId\":\"seskar-core-wasm-js\",\"version\":\"4.40.0\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/turansky/seskar/seskar-core-wasm-js/4.40.0/seskar-core-wasm-js-4.40.0-sources.jar\"]}}]},\"io.ktor:ktor-client-core:3.4.1\":{\"id\":\"io.ktor:ktor-client-core:3.4.1\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"io.ktor:ktor-client-core:3.4.1\",\"variantId\":\"io.ktor:ktor-client-core-wasm-js:3.4.1\",\"dependencies\":[\"org.jetbrains.kotlinx:kotlinx-browser\"],\"exportedDependencies\":[\"io.ktor:ktor-events\",\"io.ktor:ktor-http\",\"io.ktor:ktor-http-cio\",\"io.ktor:ktor-sse\",\"io.ktor:ktor-websocket-serialization\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core\",\"org.jetbrains.kotlin:kotlin-stdlib\",\"org.jetbrains.kotlinx:atomicfu\"],\"klib\":{\"integrity\":\"sha512-5yHw+o+Yy2O6/dMLULjOnDpLvkvG04ihjr3WhjJq0+eCU31YPPWF3q/HD0ibFRnUR6kjX8fERmqcXEaMDaVXXg==\",\"groupId\":\"io.ktor\",\"artifactId\":\"ktor-client-core-wasm-js\",\"version\":\"3.4.1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-core-wasm-js/3.4.1/ktor-client-core-wasm-js-3.4.1.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-HvMIPCtCBFGpSB6n0EnsGvn+Va8WFP7jjRv5NelhFWhI3O1txu/KGiEWr3YT7s5M4d+PxQslAI1noTjAxHJmNA==\",\"groupId\":\"io.ktor\",\"artifactId\":\"ktor-client-core-wasm-js\",\"version\":\"3.4.1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-core-wasm-js/3.4.1/ktor-client-core-wasm-js-3.4.1-sources.jar\"]}}]},\"io.ktor:ktor-events:3.4.1\":{\"id\":\"io.ktor:ktor-events:3.4.1\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"io.ktor:ktor-events:3.4.1\",\"variantId\":\"io.ktor:ktor-events-wasm-js:3.4.1\",\"dependencies\":[\"org.jetbrains.kotlinx:kotlinx-browser\"],\"exportedDependencies\":[\"io.ktor:ktor-utils\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core\",\"org.jetbrains.kotlin:kotlin-stdlib\",\"org.jetbrains.kotlinx:atomicfu\"],\"klib\":{\"integrity\":\"sha512-3dMdEdOfRfGUlLAJbL+Z85rexsyRdW/QJmud03Aw+wKOvqGHAU2sTY8NGvV1TtV2uSxu/Do0KgDT0JN++BTytg==\",\"groupId\":\"io.ktor\",\"artifactId\":\"ktor-events-wasm-js\",\"version\":\"3.4.1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-events-wasm-js/3.4.1/ktor-events-wasm-js-3.4.1.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-faqEdkOsy+wND/drHjFcvBuo7Cec+S6Hez8YYbxAT7gKjRPnYOGrgUcUBHW2T7K+BxMYnzBvqShzrJJj/qkyJg==\",\"groupId\":\"io.ktor\",\"artifactId\":\"ktor-events-wasm-js\",\"version\":\"3.4.1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-events-wasm-js/3.4.1/ktor-events-wasm-js-3.4.1-sources.jar\"]}}]},\"io.ktor:ktor-http-cio:3.4.1\":{\"id\":\"io.ktor:ktor-http-cio:3.4.1\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"io.ktor:ktor-http-cio:3.4.1\",\"variantId\":\"io.ktor:ktor-http-cio-wasm-js:3.4.1\",\"dependencies\":[\"org.jetbrains.kotlinx:kotlinx-browser\"],\"exportedDependencies\":[\"io.ktor:ktor-http\",\"io.ktor:ktor-io\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core\",\"org.jetbrains.kotlin:kotlin-stdlib\",\"org.jetbrains.kotlinx:atomicfu\"],\"klib\":{\"integrity\":\"sha512-Zz1HFuBrxBAUeu2bCoaFGELig8qzYKFoJBYJDrgwwhNwcKydGGZixG5wmsX3fxTCKkP1CU8lL6W4ZkTLbFuEGA==\",\"groupId\":\"io.ktor\",\"artifactId\":\"ktor-http-cio-wasm-js\",\"version\":\"3.4.1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-http-cio-wasm-js/3.4.1/ktor-http-cio-wasm-js-3.4.1.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-vhrEoPRwDP9epXsO6BKnN4++WGJhE7VVCaHdbSY/VFhlLadmpyvQb96NQXtcbRRQUdhWLgR9zDj9p/fJDz51AQ==\",\"groupId\":\"io.ktor\",\"artifactId\":\"ktor-http-cio-wasm-js\",\"version\":\"3.4.1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-http-cio-wasm-js/3.4.1/ktor-http-cio-wasm-js-3.4.1-sources.jar\"]}}]},\"io.ktor:ktor-http:3.4.1\":{\"id\":\"io.ktor:ktor-http:3.4.1\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"io.ktor:ktor-http:3.4.1\",\"variantId\":\"io.ktor:ktor-http-wasm-js:3.4.1\",\"dependencies\":[\"org.jetbrains.kotlinx:kotlinx-browser\"],\"exportedDependencies\":[\"io.ktor:ktor-utils\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core\",\"org.jetbrains.kotlin:kotlin-stdlib\",\"org.jetbrains.kotlinx:atomicfu\",\"org.jetbrains.kotlinx:kotlinx-serialization-core\"],\"klib\":{\"integrity\":\"sha512-j31Cwc+TooQ23zzqNHMRs9YBYGzZA9Ytl+ZTKwZAiDMMu3GLEtT12AzJM8giTL22ihrEAhWj6FIVnjgxbne3Dw==\",\"groupId\":\"io.ktor\",\"artifactId\":\"ktor-http-wasm-js\",\"version\":\"3.4.1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-http-wasm-js/3.4.1/ktor-http-wasm-js-3.4.1.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-i2VfZUFuftbFlavHl87kLw6wenJaM/CE8vzlXE7haelsaprqIuLtU7UPNbbIqMqrQ7ZeJbkTri+ZEPB45YbyQg==\",\"groupId\":\"io.ktor\",\"artifactId\":\"ktor-http-wasm-js\",\"version\":\"3.4.1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-http-wasm-js/3.4.1/ktor-http-wasm-js-3.4.1-sources.jar\"]}}]},\"io.ktor:ktor-io:3.4.1\":{\"id\":\"io.ktor:ktor-io:3.4.1\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"io.ktor:ktor-io:3.4.1\",\"variantId\":\"io.ktor:ktor-io-wasm-js:3.4.1\",\"dependencies\":[\"org.jetbrains.kotlinx:kotlinx-browser\"],\"exportedDependencies\":[\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core\",\"org.jetbrains.kotlin:kotlin-stdlib\",\"org.jetbrains.kotlinx:atomicfu\",\"org.jetbrains.kotlinx:kotlinx-io-core\"],\"klib\":{\"integrity\":\"sha512-qBzDyhrVU1avyYEMZI/bY2RDK4QhCVnj5qG5IAwft6UniHDP3EweaFGczkRu1I6IVmKRTClIm+AJXBLHLKLJ0Q==\",\"groupId\":\"io.ktor\",\"artifactId\":\"ktor-io-wasm-js\",\"version\":\"3.4.1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-io-wasm-js/3.4.1/ktor-io-wasm-js-3.4.1.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-B2UFGuqwlhCs0vFGq7QEY0t+fZUDpcvhmUWlg25/ecNdqf5ld4ucGHmID4boyAdtnJ6d7589JF0tn7E4N0okCA==\",\"groupId\":\"io.ktor\",\"artifactId\":\"ktor-io-wasm-js\",\"version\":\"3.4.1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-io-wasm-js/3.4.1/ktor-io-wasm-js-3.4.1-sources.jar\"]}}]},\"io.ktor:ktor-serialization:3.4.1\":{\"id\":\"io.ktor:ktor-serialization:3.4.1\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"io.ktor:ktor-serialization:3.4.1\",\"variantId\":\"io.ktor:ktor-serialization-wasm-js:3.4.1\",\"dependencies\":[\"org.jetbrains.kotlinx:kotlinx-browser\"],\"exportedDependencies\":[\"io.ktor:ktor-websockets\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core\",\"org.jetbrains.kotlin:kotlin-stdlib\",\"org.jetbrains.kotlinx:atomicfu\"],\"klib\":{\"integrity\":\"sha512-VlrYJ2JrZPuPjUgwrC1TP/vhITAe8p1uIzOZ/1sHp9dN2nwTX7obwj3t6ETBWBFG5IOWmohxWCB1YKIFodmKkg==\",\"groupId\":\"io.ktor\",\"artifactId\":\"ktor-serialization-wasm-js\",\"version\":\"3.4.1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-serialization-wasm-js/3.4.1/ktor-serialization-wasm-js-3.4.1.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-tPPuRER0hmHLSvittBGVcNSwartiLn85JhVmhOjXBhCn4kIrRt7IjubSfbty8pUNjWmREy1hIgQgV0d7pLegmA==\",\"groupId\":\"io.ktor\",\"artifactId\":\"ktor-serialization-wasm-js\",\"version\":\"3.4.1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-serialization-wasm-js/3.4.1/ktor-serialization-wasm-js-3.4.1-sources.jar\"]}}]},\"io.ktor:ktor-sse:3.4.1\":{\"id\":\"io.ktor:ktor-sse:3.4.1\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"io.ktor:ktor-sse:3.4.1\",\"variantId\":\"io.ktor:ktor-sse-wasm-js:3.4.1\",\"dependencies\":[\"org.jetbrains.kotlinx:kotlinx-browser\"],\"exportedDependencies\":[\"io.ktor:ktor-utils\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core\",\"org.jetbrains.kotlin:kotlin-stdlib\",\"org.jetbrains.kotlinx:atomicfu\"],\"klib\":{\"integrity\":\"sha512-Ze6wLf3G/F+cQAxDNopD6MxyL8U6QfoQvg4f5C+T/sJ4RQeuVzt0zqsCLzuubBV58InUJylpV9jVbAqNFtW4nw==\",\"groupId\":\"io.ktor\",\"artifactId\":\"ktor-sse-wasm-js\",\"version\":\"3.4.1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-sse-wasm-js/3.4.1/ktor-sse-wasm-js-3.4.1.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-ZuvC7NoD4dlr9/htsRn3EMeY2RL8AQZqYlFcxKuDmWKbBkHAiuDmDVwvF2jwkx6IyHZ1j4nPP1lV0JHEqi8qPA==\",\"groupId\":\"io.ktor\",\"artifactId\":\"ktor-sse-wasm-js\",\"version\":\"3.4.1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-sse-wasm-js/3.4.1/ktor-sse-wasm-js-3.4.1-sources.jar\"]}}]},\"io.ktor:ktor-utils:3.4.1\":{\"id\":\"io.ktor:ktor-utils:3.4.1\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"io.ktor:ktor-utils:3.4.1\",\"variantId\":\"io.ktor:ktor-utils-wasm-js:3.4.1\",\"dependencies\":[\"org.jetbrains.kotlinx:kotlinx-browser\"],\"exportedDependencies\":[\"io.ktor:ktor-io\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core\",\"org.jetbrains.kotlin:kotlin-stdlib\",\"org.jetbrains.kotlinx:atomicfu\",\"org.jetbrains.kotlinx:kotlinx-serialization-core\"],\"klib\":{\"integrity\":\"sha512-re8nv6BZDoau3aaRsWIv7jqSvZReGOQ037FhFW29RydaUu8l9vlqP/FFB4O93DlAe237XZQpNLsnwumTo3p1Nw==\",\"groupId\":\"io.ktor\",\"artifactId\":\"ktor-utils-wasm-js\",\"version\":\"3.4.1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-utils-wasm-js/3.4.1/ktor-utils-wasm-js-3.4.1.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-MC9f//L7hBSkSKEpDhylPD4bMXNWFZhbusLZq2PfD5fDOfs0hmxIRdChLJE20b8CxmekVYIbg5OWpfC7tikKsQ==\",\"groupId\":\"io.ktor\",\"artifactId\":\"ktor-utils-wasm-js\",\"version\":\"3.4.1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-utils-wasm-js/3.4.1/ktor-utils-wasm-js-3.4.1-sources.jar\"]}}]},\"io.ktor:ktor-websocket-serialization:3.4.1\":{\"id\":\"io.ktor:ktor-websocket-serialization:3.4.1\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"io.ktor:ktor-websocket-serialization:3.4.1\",\"variantId\":\"io.ktor:ktor-websocket-serialization-wasm-js:3.4.1\",\"dependencies\":[\"org.jetbrains.kotlinx:kotlinx-browser\"],\"exportedDependencies\":[\"io.ktor:ktor-serialization\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core\",\"org.jetbrains.kotlin:kotlin-stdlib\",\"org.jetbrains.kotlinx:atomicfu\"],\"klib\":{\"integrity\":\"sha512-FnsqsOwdry/Zi4sG3GiafPFh8x7926AyGF3k8HufzzLUkv0sZmXOtpi92oQvhOFQmxHSwKs6OK/pmiaEgeNnUA==\",\"groupId\":\"io.ktor\",\"artifactId\":\"ktor-websocket-serialization-wasm-js\",\"version\":\"3.4.1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-websocket-serialization-wasm-js/3.4.1/ktor-websocket-serialization-wasm-js-3.4.1.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-5/6MXQ8bq3R1VQf8/IIUvsYJNXNsDcGtVPEHYRXKWPY9QHAvOFA7Oyo7nY0CulW5HWL11OMmuby1xFSFkljj+A==\",\"groupId\":\"io.ktor\",\"artifactId\":\"ktor-websocket-serialization-wasm-js\",\"version\":\"3.4.1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-websocket-serialization-wasm-js/3.4.1/ktor-websocket-serialization-wasm-js-3.4.1-sources.jar\"]}}]},\"io.ktor:ktor-websockets:3.4.1\":{\"id\":\"io.ktor:ktor-websockets:3.4.1\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"io.ktor:ktor-websockets:3.4.1\",\"variantId\":\"io.ktor:ktor-websockets-wasm-js:3.4.1\",\"dependencies\":[\"org.jetbrains.kotlinx:kotlinx-browser\"],\"exportedDependencies\":[\"io.ktor:ktor-http\",\"io.ktor:ktor-utils\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core\",\"org.jetbrains.kotlin:kotlin-stdlib\",\"org.jetbrains.kotlinx:atomicfu\"],\"klib\":{\"integrity\":\"sha512-eC/HIHZxv857Yg+7YA++s8qWTxzLjtkSP6BQvFXoJfug71YVWIJbSvtJVZtuQPpFKLT11wdTC3cg74Ux9tYRJw==\",\"groupId\":\"io.ktor\",\"artifactId\":\"ktor-websockets-wasm-js\",\"version\":\"3.4.1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-websockets-wasm-js/3.4.1/ktor-websockets-wasm-js-3.4.1.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-C34CaFqbc3MMFFdhq+DP0ndZZ5LQwYSJtFeWeWeY/9NMuFqhS8qWl3n3SG+o9U5EYqnZD2KLQxdidrH3L3xmQw==\",\"groupId\":\"io.ktor\",\"artifactId\":\"ktor-websockets-wasm-js\",\"version\":\"3.4.1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-websockets-wasm-js/3.4.1/ktor-websockets-wasm-js-3.4.1-sources.jar\"]}}]},\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core:1.10.2-intellij-1\":{\"id\":\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core:1.10.2-intellij-1\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core:1.10.2-intellij-1\",\"variantId\":\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core-wasm-js:1.10.2-intellij-1\",\"dependencies\":[],\"exportedDependencies\":[\"org.jetbrains.kotlin:kotlin-stdlib\",\"org.jetbrains.kotlinx:atomicfu\",\"org.jetbrains.kotlinx:atomicfu-wasm-js\"],\"klib\":{\"integrity\":\"sha512-waP/KfBN4KBctOvYp/oVYS0bAjnCvA4V+4LepIP8fHgTubFXDBcixtHpDCg7EY3FCiOmAUlS18s9JKUrBDY31Q==\",\"groupId\":\"org.jetbrains.intellij.deps.kotlinx\",\"artifactId\":\"kotlinx-coroutines-core-wasm-js\",\"version\":\"1.10.2-intellij-1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-core-wasm-js/1.10.2-intellij-1/kotlinx-coroutines-core-wasm-js-1.10.2-intellij-1.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-Sf9kOQRmHIzlAks7QYi0kb7jmT71rso527oumP8LAWUyImLtstdN0vadcXyXYs5cAxIGYuoOJnDJfCnpsZzmWg==\",\"groupId\":\"org.jetbrains.intellij.deps.kotlinx\",\"artifactId\":\"kotlinx-coroutines-core-wasm-js\",\"version\":\"1.10.2-intellij-1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-core-wasm-js/1.10.2-intellij-1/kotlinx-coroutines-core-wasm-js-1.10.2-intellij-1-sources.jar\"]}},{\"type\":\"wasmjs\",\"id\":\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core:1.10.2-intellij-1\",\"variantId\":\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core-wasm-js:1.10.2-intellij-1\",\"dependencies\":[],\"exportedDependencies\":[\"org.jetbrains.kotlin:kotlin-stdlib\",\"org.jetbrains.kotlinx:atomicfu\",\"org.jetbrains.kotlinx:atomicfu-wasm-js\"],\"klib\":{\"integrity\":\"sha512-8SphTDxmXU+XVBvoED1QuRvjICXgs65zKoYAzJRDbkoxmam3aP2k55kDm96enA62ow/h3aMJWu7Ojmdh0VkY3w==\",\"groupId\":\"org.jetbrains.intellij.deps.kotlinx\",\"artifactId\":\"kotlinx-coroutines-core-wasm-js\",\"version\":\"1.10.2-intellij-1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-core-wasm-js/1.10.2-intellij-1/kotlinx-coroutines-core-wasm-js-1.10.2-intellij-1.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-5n2MXwJ8W7vXRqStmNtfOIIGQD6kp4Y1U2KmE9BKsIB9LBfhXUSOUt5LsQziJBC/7FfkmfCqkLrUHfC8XA2/8w==\",\"groupId\":\"org.jetbrains.intellij.deps.kotlinx\",\"artifactId\":\"kotlinx-coroutines-core-wasm-js\",\"version\":\"1.10.2-intellij-1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-core-wasm-js/1.10.2-intellij-1/kotlinx-coroutines-core-wasm-js-1.10.2-intellij-1-sources.jar\"]}}]},\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-test:1.10.2-intellij-1\":{\"id\":\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-test:1.10.2-intellij-1\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-test:1.10.2-intellij-1\",\"variantId\":\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-test-wasm-js:1.10.2-intellij-1\",\"dependencies\":[],\"exportedDependencies\":[\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core\",\"org.jetbrains.kotlin:kotlin-stdlib\",\"org.jetbrains.kotlinx:atomicfu\",\"org.jetbrains.kotlinx:atomicfu-wasm-js\"],\"klib\":{\"integrity\":\"sha512-jaJUJXqs4jRJrAlKieekY9zkw3cSGP9oTik8YTLihxe9+d7dhPns2P1UbjiD+PlV3xZ0GlEO+HERaBBMsVF/Ag==\",\"groupId\":\"org.jetbrains.intellij.deps.kotlinx\",\"artifactId\":\"kotlinx-coroutines-test-wasm-js\",\"version\":\"1.10.2-intellij-1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-test-wasm-js/1.10.2-intellij-1/kotlinx-coroutines-test-wasm-js-1.10.2-intellij-1.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-qYqtcghHjRtWX9O0ai5wyaO38fYzLczDEGzMmdYU2Ln9xQM4hu+gpVZ1rkRQcVufXIzcTAYoKY7bQZpyr2eepg==\",\"groupId\":\"org.jetbrains.intellij.deps.kotlinx\",\"artifactId\":\"kotlinx-coroutines-test-wasm-js\",\"version\":\"1.10.2-intellij-1\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-test-wasm-js/1.10.2-intellij-1/kotlinx-coroutines-test-wasm-js-1.10.2-intellij-1-sources.jar\"]}}]},\"org.jetbrains.kotlin-wrappers:kotlin-browser:2026.4.12\":{\"id\":\"org.jetbrains.kotlin-wrappers:kotlin-browser:2026.4.12\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"org.jetbrains.kotlin-wrappers:kotlin-browser:2026.4.12\",\"variantId\":\"org.jetbrains.kotlin-wrappers:kotlin-browser-wasm-js:2026.4.12\",\"dependencies\":[\"io.github.turansky.seskar:seskar-core\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core\",\"org.jetbrains.kotlin-wrappers:kotlin-js-plain-object\"],\"exportedDependencies\":[\"org.jetbrains.kotlin-wrappers:kotlin-cssom-core\",\"org.jetbrains.kotlin-wrappers:kotlin-js\",\"org.jetbrains.kotlin-wrappers:kotlin-web\",\"org.jetbrains.kotlin:kotlin-stdlib\"],\"klib\":{\"integrity\":\"sha512-fsMdXYTLYdrZtT2xb1OCOv4zSCD2udTmnVp4KJyuqu/y1lWfPYzBAUf14ohT3n/zgYYrKEISDAP8UzKxzbD0Jw==\",\"groupId\":\"org.jetbrains.kotlin-wrappers\",\"artifactId\":\"kotlin-browser-wasm-js\",\"version\":\"2026.4.12\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-browser-wasm-js/2026.4.12/kotlin-browser-wasm-js-2026.4.12.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-sWykxQcXEfcWxM2l5PI5VLngzDJyB7z/8vzPiosHLG7KnRwMTRBd4GCLc6Jg7irYFxh2WXe7rvGdFcRc6N8dPg==\",\"groupId\":\"org.jetbrains.kotlin-wrappers\",\"artifactId\":\"kotlin-browser-wasm-js\",\"version\":\"2026.4.12\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-browser-wasm-js/2026.4.12/kotlin-browser-wasm-js-2026.4.12-sources.jar\"]}}]},\"org.jetbrains.kotlin-wrappers:kotlin-cssom-core:2026.4.12\":{\"id\":\"org.jetbrains.kotlin-wrappers:kotlin-cssom-core:2026.4.12\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"org.jetbrains.kotlin-wrappers:kotlin-cssom-core:2026.4.12\",\"variantId\":\"org.jetbrains.kotlin-wrappers:kotlin-cssom-core-wasm-js:2026.4.12\",\"dependencies\":[\"io.github.turansky.seskar:seskar-core\"],\"exportedDependencies\":[\"org.jetbrains.kotlin-wrappers:kotlin-js\",\"org.jetbrains.kotlin:kotlin-stdlib\"],\"klib\":{\"integrity\":\"sha512-DZdlGq7Bu4MDeV3lbL0lHS7iOx+sDBkoaYqJOC6xTjH8l8Hq75eikdxRKP6HFjol42s2mtZLxDldb+XYsk4VhQ==\",\"groupId\":\"org.jetbrains.kotlin-wrappers\",\"artifactId\":\"kotlin-cssom-core-wasm-js\",\"version\":\"2026.4.12\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-cssom-core-wasm-js/2026.4.12/kotlin-cssom-core-wasm-js-2026.4.12.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-suYrtEnskzURfdEpl0O9PQ266iHTDN/1lMFfDCfRrOLJuW+dBgV87atPOxlzrFKzvOP+YZf2Rngj+AxIcbGqDg==\",\"groupId\":\"org.jetbrains.kotlin-wrappers\",\"artifactId\":\"kotlin-cssom-core-wasm-js\",\"version\":\"2026.4.12\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-cssom-core-wasm-js/2026.4.12/kotlin-cssom-core-wasm-js-2026.4.12-sources.jar\"]}}]},\"org.jetbrains.kotlin-wrappers:kotlin-js-core:2026.4.12\":{\"id\":\"org.jetbrains.kotlin-wrappers:kotlin-js-core:2026.4.12\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"org.jetbrains.kotlin-wrappers:kotlin-js-core:2026.4.12\",\"variantId\":\"org.jetbrains.kotlin-wrappers:kotlin-js-core-wasm-js:2026.4.12\",\"dependencies\":[\"io.github.turansky.seskar:seskar-core\"],\"exportedDependencies\":[\"org.jetbrains.kotlin:kotlin-stdlib\"],\"klib\":{\"integrity\":\"sha512-/Llfe+Jv4vUZ8EIP6QmFO6XCf2zFWb9KWDUUCfBR+H427tEguiSJD9NB5k+uWl2qUfaMysYkjFXPwxPWzTmvgA==\",\"groupId\":\"org.jetbrains.kotlin-wrappers\",\"artifactId\":\"kotlin-js-core-wasm-js\",\"version\":\"2026.4.12\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-js-core-wasm-js/2026.4.12/kotlin-js-core-wasm-js-2026.4.12.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-bwZVzTCxGe1yuOxyd57ga7BF+2XLvox0IwV3vKCuNbSxqPw3vURcXUMxgVDIQkYJKl4R2RNt4LyRWSfMu6nYsQ==\",\"groupId\":\"org.jetbrains.kotlin-wrappers\",\"artifactId\":\"kotlin-js-core-wasm-js\",\"version\":\"2026.4.12\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-js-core-wasm-js/2026.4.12/kotlin-js-core-wasm-js-2026.4.12-sources.jar\"]}}]},\"org.jetbrains.kotlin-wrappers:kotlin-js-plain-object:2026.4.12\":{\"id\":\"org.jetbrains.kotlin-wrappers:kotlin-js-plain-object:2026.4.12\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"org.jetbrains.kotlin-wrappers:kotlin-js-plain-object:2026.4.12\",\"variantId\":\"org.jetbrains.kotlin-wrappers:kotlin-js-plain-object-wasm-js:2026.4.12\",\"dependencies\":[\"io.github.turansky.seskar:seskar-core\",\"org.jetbrains.kotlin:kotlin-stdlib\"],\"exportedDependencies\":[],\"klib\":{\"integrity\":\"sha512-Io4kSXY+9bhAkL6kHcOpzIyIyN55baRmFbV7BL5tnT6/vIlk56cOv0FBn3D2Hywo9sGMZ1QeyljEQBSlBpfeCA==\",\"groupId\":\"org.jetbrains.kotlin-wrappers\",\"artifactId\":\"kotlin-js-plain-object-wasm-js\",\"version\":\"2026.4.12\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-js-plain-object-wasm-js/2026.4.12/kotlin-js-plain-object-wasm-js-2026.4.12.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-fVG8TZhKSRLg7EiAloqBbVAYdc6gEm/qorYLGgRK0P/vCiJzr9rc7+csJw/M6VKQh4wlk6bjiHfy2Bj0QK2olg==\",\"groupId\":\"org.jetbrains.kotlin-wrappers\",\"artifactId\":\"kotlin-js-plain-object-wasm-js\",\"version\":\"2026.4.12\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-js-plain-object-wasm-js/2026.4.12/kotlin-js-plain-object-wasm-js-2026.4.12-sources.jar\"]}}]},\"org.jetbrains.kotlin-wrappers:kotlin-js:2026.4.12\":{\"id\":\"org.jetbrains.kotlin-wrappers:kotlin-js:2026.4.12\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"org.jetbrains.kotlin-wrappers:kotlin-js:2026.4.12\",\"variantId\":\"org.jetbrains.kotlin-wrappers:kotlin-js-wasm-js:2026.4.12\",\"dependencies\":[\"io.github.turansky.seskar:seskar-core\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core\",\"org.jetbrains.kotlin-wrappers:kotlin-js-plain-object\"],\"exportedDependencies\":[\"org.jetbrains.kotlin-wrappers:kotlin-js-core\",\"org.jetbrains.kotlin:kotlin-stdlib\"],\"klib\":{\"integrity\":\"sha512-fjDl2VzetabJ7oB7ym0u/ubeoEfaJGPg8qEtVMikPRqMgetozxiyFcKhVe693srcJIMESH59+yZNnE+jZzzqIA==\",\"groupId\":\"org.jetbrains.kotlin-wrappers\",\"artifactId\":\"kotlin-js-wasm-js\",\"version\":\"2026.4.12\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-js-wasm-js/2026.4.12/kotlin-js-wasm-js-2026.4.12.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-T/uVWyDFrmg9X3HfsnOx7fDEZrn0J659fqH6hHYUxETvvQ0dsg8ieEtGJ1v02fHFLk8HfgxJh4D2PMWQRkAG4Q==\",\"groupId\":\"org.jetbrains.kotlin-wrappers\",\"artifactId\":\"kotlin-js-wasm-js\",\"version\":\"2026.4.12\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-js-wasm-js/2026.4.12/kotlin-js-wasm-js-2026.4.12-sources.jar\"]}}]},\"org.jetbrains.kotlin-wrappers:kotlin-web:2026.4.12\":{\"id\":\"org.jetbrains.kotlin-wrappers:kotlin-web:2026.4.12\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"org.jetbrains.kotlin-wrappers:kotlin-web:2026.4.12\",\"variantId\":\"org.jetbrains.kotlin-wrappers:kotlin-web-wasm-js:2026.4.12\",\"dependencies\":[\"io.github.turansky.seskar:seskar-core\",\"org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core\",\"org.jetbrains.kotlin-wrappers:kotlin-js-plain-object\"],\"exportedDependencies\":[\"org.jetbrains.kotlin-wrappers:kotlin-js\",\"org.jetbrains.kotlin:kotlin-stdlib\"],\"klib\":{\"integrity\":\"sha512-TfgWqAJ9ceXgFZlBsQtOhC+EyYPWEeepBOpR8aw2w++29bgDot4wE2Cpf+NUtlXzD3XRdys76rQrW1kAzmjDVQ==\",\"groupId\":\"org.jetbrains.kotlin-wrappers\",\"artifactId\":\"kotlin-web-wasm-js\",\"version\":\"2026.4.12\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-web-wasm-js/2026.4.12/kotlin-web-wasm-js-2026.4.12.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-ckNST9bKuwFo3gbCutxwcQfyzrOPrIr0J1uRRoDJMu8NpndF2R0SowkEr/uKZc0rkHCW4mdx8DJjaGdqyrxp4Q==\",\"groupId\":\"org.jetbrains.kotlin-wrappers\",\"artifactId\":\"kotlin-web-wasm-js\",\"version\":\"2026.4.12\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin-wrappers/kotlin-web-wasm-js/2026.4.12/kotlin-web-wasm-js-2026.4.12-sources.jar\"]}}]},\"org.jetbrains.kotlin:kotlin-stdlib:2.4.0\":{\"id\":\"org.jetbrains.kotlin:kotlin-stdlib:2.4.0\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"org.jetbrains.kotlin:kotlin-stdlib:2.4.0\",\"variantId\":\"org.jetbrains.kotlin:kotlin-stdlib-wasm-js:2.4.0\",\"dependencies\":[],\"exportedDependencies\":[],\"klib\":{\"integrity\":\"sha512-J9Vz6SLs71t58T0sdbSerBvL4YYCmmk7Y4vJdQZ47c3jqBCx3mYcBC5EEa7njqZ8SbruzaGz6QYbAnOCoahJRg==\",\"groupId\":\"org.jetbrains.kotlin\",\"artifactId\":\"kotlin-stdlib-wasm-js\",\"version\":\"2.4.0\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-wasm-js/2.4.0/kotlin-stdlib-wasm-js-2.4.0.klib\",\"https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib-wasm-js/2.4.0/kotlin-stdlib-wasm-js-2.4.0.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-Y359hJFYRzzWaabyRzDNfZxzl3dUn9eGxvdyMM9uDUaz3NfDdlW9xNnxSPmRY8GkDlxQH7l2OXy3rLmewmna6g==\",\"groupId\":\"org.jetbrains.kotlin\",\"artifactId\":\"kotlin-stdlib-wasm-js\",\"version\":\"2.4.0\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-wasm-js/2.4.0/kotlin-stdlib-wasm-js-2.4.0-sources.jar\",\"https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib-wasm-js/2.4.0/kotlin-stdlib-wasm-js-2.4.0-sources.jar\"]}}]},\"org.jetbrains.kotlin:kotlin-test:2.4.0\":{\"id\":\"org.jetbrains.kotlin:kotlin-test:2.4.0\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"org.jetbrains.kotlin:kotlin-test:2.4.0\",\"variantId\":\"org.jetbrains.kotlin:kotlin-test-wasm-js:2.4.0\",\"dependencies\":[],\"exportedDependencies\":[\"org.jetbrains.kotlin:kotlin-stdlib\"],\"klib\":{\"integrity\":\"sha512-OqPNvv4fWKygPqF86i0bVm4z5nGjA6jmMvcVUdt0zBDrEHi+aNZMtqAqM6mXyPTj7cueg3R3yOLxdZ+ibCLAPQ==\",\"groupId\":\"org.jetbrains.kotlin\",\"artifactId\":\"kotlin-test-wasm-js\",\"version\":\"2.4.0\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test-wasm-js/2.4.0/kotlin-test-wasm-js-2.4.0.klib\",\"https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-test-wasm-js/2.4.0/kotlin-test-wasm-js-2.4.0.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-alSQ7rBFRlJkD+ij6DVYJzdQFxyHqV+1UcnNPYJerqch5XFy5qh1POnom0Ktpb3S2YnSPTHXUn2bajdPdXzehA==\",\"groupId\":\"org.jetbrains.kotlin\",\"artifactId\":\"kotlin-test-wasm-js\",\"version\":\"2.4.0\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test-wasm-js/2.4.0/kotlin-test-wasm-js-2.4.0-sources.jar\",\"https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-test-wasm-js/2.4.0/kotlin-test-wasm-js-2.4.0-sources.jar\"]}}]},\"org.jetbrains.kotlinx:atomicfu:0.31.0\":{\"id\":\"org.jetbrains.kotlinx:atomicfu:0.31.0\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"org.jetbrains.kotlinx:atomicfu:0.31.0\",\"variantId\":\"org.jetbrains.kotlinx:atomicfu-wasm-js:0.31.0\",\"dependencies\":[\"org.jetbrains.kotlin:kotlin-stdlib\"],\"exportedDependencies\":[],\"klib\":{\"integrity\":\"sha512-WRtFqWRWyv1MDQMoLB4nQy8mwD5YlxznzMlCs5YGUhpQIVbIS5ryFLykA2mhMhpU+LGBS+J1zakxDRUDYdtI+A==\",\"groupId\":\"org.jetbrains.kotlinx\",\"artifactId\":\"atomicfu-wasm-js\",\"version\":\"0.31.0\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/atomicfu-wasm-js/0.31.0/atomicfu-wasm-js-0.31.0.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-arkTHWamjVfDapzWKkTU+jEj8dJ9N/A9MiPBePAcIdsfIyYEDE7hvEQks/yh5MPa9Ah2Icn9Y/KVLqpck5zvfQ==\",\"groupId\":\"org.jetbrains.kotlinx\",\"artifactId\":\"atomicfu-wasm-js\",\"version\":\"0.31.0\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/atomicfu-wasm-js/0.31.0/atomicfu-wasm-js-0.31.0-sources.jar\"]}}]},\"org.jetbrains.kotlinx:kotlinx-browser:0.5.0\":{\"id\":\"org.jetbrains.kotlinx:kotlinx-browser:0.5.0\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"org.jetbrains.kotlinx:kotlinx-browser:0.5.0\",\"variantId\":\"org.jetbrains.kotlinx:kotlinx-browser-wasm-js:0.5.0\",\"dependencies\":[\"org.jetbrains.kotlin:kotlin-stdlib\"],\"exportedDependencies\":[],\"klib\":{\"integrity\":\"sha512-8cGFMUe1j9W2s1AeX+G8mQ5Qb7lTxmyVcDQAOW1/lRvYzu/QGpt9z8kOxBXuetLNyG26aOzy66+UOdhWeqiO4w==\",\"groupId\":\"org.jetbrains.kotlinx\",\"artifactId\":\"kotlinx-browser-wasm-js\",\"version\":\"0.5.0\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-browser-wasm-js/0.5.0/kotlinx-browser-wasm-js-0.5.0.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-1XBNdVrBX+uX1xtfHZs7uw0EJkhDMDjP0WDZmzRGc8rVjT6cfmcbaVg0u7bf08D4OLm1Q4UGFsjYrp3A0mI6Rg==\",\"groupId\":\"org.jetbrains.kotlinx\",\"artifactId\":\"kotlinx-browser-wasm-js\",\"version\":\"0.5.0\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-browser-wasm-js/0.5.0/kotlinx-browser-wasm-js-0.5.0-sources.jar\"]}}]},\"org.jetbrains.kotlinx:kotlinx-collections-immutable:0.5.0\":{\"id\":\"org.jetbrains.kotlinx:kotlinx-collections-immutable:0.5.0\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"org.jetbrains.kotlinx:kotlinx-collections-immutable:0.5.0\",\"variantId\":\"org.jetbrains.kotlinx:kotlinx-collections-immutable-wasm-js:0.5.0\",\"dependencies\":[],\"exportedDependencies\":[\"org.jetbrains.kotlin:kotlin-stdlib\"],\"klib\":{\"integrity\":\"sha512-Ll9fAtzR6N7aZ4Wrwe97cqksHUTlP9LjBp/pPE9rZZrIYQwfJdgnGE9Yp1dTNBdgv7IT+XIpcnrKXsXKbKv8bA==\",\"groupId\":\"org.jetbrains.kotlinx\",\"artifactId\":\"kotlinx-collections-immutable-wasm-js\",\"version\":\"0.5.0\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-collections-immutable-wasm-js/0.5.0/kotlinx-collections-immutable-wasm-js-0.5.0.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-6lP2QBKdjrIwJLMKoQPF/rCyz3T2CGVAmOH7edfwQT7/oJRGo1kdV6MFmMPEeFm0yqGuaTxCB732j9ZkTJCIBQ==\",\"groupId\":\"org.jetbrains.kotlinx\",\"artifactId\":\"kotlinx-collections-immutable-wasm-js\",\"version\":\"0.5.0\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-collections-immutable-wasm-js/0.5.0/kotlinx-collections-immutable-wasm-js-0.5.0-sources.jar\"]}}]},\"org.jetbrains.kotlinx:kotlinx-io-bytestring:0.8.2\":{\"id\":\"org.jetbrains.kotlinx:kotlinx-io-bytestring:0.8.2\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"org.jetbrains.kotlinx:kotlinx-io-bytestring:0.8.2\",\"variantId\":\"org.jetbrains.kotlinx:kotlinx-io-bytestring-wasm-js:0.8.2\",\"dependencies\":[],\"exportedDependencies\":[\"org.jetbrains.kotlin:kotlin-stdlib\"],\"klib\":{\"integrity\":\"sha512-4gtEPZnXBc8qnN+2m3aWkeXe58pVw68U7lJxI+f5zV5nSqRiCO429TOimiZ9TkZ6QeatSFEvOJjZDL1ShDgKhg==\",\"groupId\":\"org.jetbrains.kotlinx\",\"artifactId\":\"kotlinx-io-bytestring-wasm-js\",\"version\":\"0.8.2\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-bytestring-wasm-js/0.8.2/kotlinx-io-bytestring-wasm-js-0.8.2.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-AmVgiPjOaLQ3HMnTziwA8HIj4YV7vobiIr9Dx3UGJmtJPu3mBrf92Jc73uaiV5rtDEI+IFhHr8JqKmvUl3xXPw==\",\"groupId\":\"org.jetbrains.kotlinx\",\"artifactId\":\"kotlinx-io-bytestring-wasm-js\",\"version\":\"0.8.2\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-bytestring-wasm-js/0.8.2/kotlinx-io-bytestring-wasm-js-0.8.2-sources.jar\"]}}]},\"org.jetbrains.kotlinx:kotlinx-io-core:0.8.2\":{\"id\":\"org.jetbrains.kotlinx:kotlinx-io-core:0.8.2\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"org.jetbrains.kotlinx:kotlinx-io-core:0.8.2\",\"variantId\":\"org.jetbrains.kotlinx:kotlinx-io-core-wasm-js:0.8.2\",\"dependencies\":[],\"exportedDependencies\":[\"org.jetbrains.kotlin:kotlin-stdlib\",\"org.jetbrains.kotlinx:kotlinx-io-bytestring\"],\"klib\":{\"integrity\":\"sha512-t0pcAxETpBbU+9lI6Ezj1cvBueG9oJSUCu4dwcu+pfLiwBthFmpZM4ChHAjS8VIei+sl7gnW9TqHIpaWIGVqQg==\",\"groupId\":\"org.jetbrains.kotlinx\",\"artifactId\":\"kotlinx-io-core-wasm-js\",\"version\":\"0.8.2\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-core-wasm-js/0.8.2/kotlinx-io-core-wasm-js-0.8.2.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-iB4V2Adz1hoZ7xPDZXFaL1cwOZYe3uyYw/K3CR1DZwANUnX1CxBtB2Fal917ixRL3la9p2xKlQASF594O8KLlg==\",\"groupId\":\"org.jetbrains.kotlinx\",\"artifactId\":\"kotlinx-io-core-wasm-js\",\"version\":\"0.8.2\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-core-wasm-js/0.8.2/kotlinx-io-core-wasm-js-0.8.2-sources.jar\"]}}]},\"org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0\":{\"id\":\"org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0\",\"variantId\":\"org.jetbrains.kotlinx:kotlinx-serialization-core-wasm-js:1.9.0\",\"dependencies\":[],\"exportedDependencies\":[\"org.jetbrains.kotlin:kotlin-stdlib\"],\"klib\":{\"integrity\":\"sha512-T3TB66CKuZqllqQY522YPG7JrSypKk/Pump46BSmGpqEof6RO7QyQYs+0ZCs+ZWjigLjf8rFqhqH5ZBQKnjJUg==\",\"groupId\":\"org.jetbrains.kotlinx\",\"artifactId\":\"kotlinx-serialization-core-wasm-js\",\"version\":\"1.9.0\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-core-wasm-js/1.9.0/kotlinx-serialization-core-wasm-js-1.9.0.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-qQ2bFwjNCvCK9QLUiB5QcT8p+26KyUCDcHhYVL/sMpDqQFJTZl5fwgEkRNq/Pe+R9pzM/C0MCSHps7tb9jYLnw==\",\"groupId\":\"org.jetbrains.kotlinx\",\"artifactId\":\"kotlinx-serialization-core-wasm-js\",\"version\":\"1.9.0\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-core-wasm-js/1.9.0/kotlinx-serialization-core-wasm-js-1.9.0-sources.jar\"]}}]},\"org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0\":{\"id\":\"org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0\",\"variantId\":\"org.jetbrains.kotlinx:kotlinx-serialization-json-wasm-js:1.9.0\",\"dependencies\":[],\"exportedDependencies\":[\"org.jetbrains.kotlin:kotlin-stdlib\",\"org.jetbrains.kotlinx:kotlinx-serialization-core\"],\"klib\":{\"integrity\":\"sha512-eAB9rgBCdaJ/b1xsxZzv86yXTmvDT9Z6Vyc+sYlbqqLEgiHiiLO71QfiIzr+VQ7C/CMD5b1EohRsPK1bNhLtWQ==\",\"groupId\":\"org.jetbrains.kotlinx\",\"artifactId\":\"kotlinx-serialization-json-wasm-js\",\"version\":\"1.9.0\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-wasm-js/1.9.0/kotlinx-serialization-json-wasm-js-1.9.0.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-eqDWVrh3bsXOupz0WpIvGWSJKBhz5bscgbNQh6yhOJ6laqkX2Xrbgtx8JZvAySyPYCGAbwxqGWM72yZdAh5Ydw==\",\"groupId\":\"org.jetbrains.kotlinx\",\"artifactId\":\"kotlinx-serialization-json-wasm-js\",\"version\":\"1.9.0\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-wasm-js/1.9.0/kotlinx-serialization-json-wasm-js-1.9.0-sources.jar\"]}}]},\"org.jetbrains:annotations:26.0.2\":{\"id\":\"org.jetbrains:annotations:26.0.2\",\"variants\":[{\"type\":\"wasmjs\",\"id\":\"org.jetbrains:annotations:26.0.2\",\"variantId\":\"org.jetbrains:annotations-wasmJs:26.0.2\",\"dependencies\":[],\"exportedDependencies\":[],\"klib\":{\"integrity\":\"sha512-nmH53Ub/4QAZZUSbb6IdkJk5AJXPZD7ogXutgqtjcMSIJRCqYNdp1Bdg94hVDGHxzgNwL6dNgPSd/BIOU7sgcw==\",\"groupId\":\"org.jetbrains\",\"artifactId\":\"annotations-wasmJs\",\"version\":\"26.0.2\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/annotations-wasmJs/26.0.2/annotations-wasmJs-26.0.2.klib\"]},\"sourceJar\":{\"integrity\":\"sha512-0iGMOgxapOl0owsddSCL8F6Y/gJjRtCRqKn8EECt3TgtfQNJgQaEcaNbn4mHY3xoZSncuXwCBwUh3CMVHjs5/w==\",\"groupId\":\"org.jetbrains\",\"artifactId\":\"annotations-wasmJs\",\"version\":\"26.0.2\",\"urls\":[\"https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/annotations-wasmJs/26.0.2/annotations-wasmJs-26.0.2-sources.jar\"]}}]}}}"
+    },
     "@@rules_go+//go:extensions.bzl%go_sdk": {
       "1.22.4": {
         "aix_ppc64": [
