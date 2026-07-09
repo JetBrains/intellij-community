@@ -1,301 +1,288 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.execution.build;
+package org.jetbrains.idea.maven.execution.build
 
-import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.configurations.ParametersList;
-import com.intellij.execution.configurations.RunConfigurationModule;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.scratch.JavaScratchConfiguration;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.artifacts.ArtifactProperties;
-import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
-import com.intellij.task.ExecuteRunConfigurationTask;
-import com.intellij.task.ModuleBuildTask;
-import com.intellij.task.ModuleFilesBuildTask;
-import com.intellij.task.ModuleResourcesBuildTask;
-import com.intellij.task.ProjectModelBuildTask;
-import com.intellij.task.ProjectTask;
-import com.intellij.task.ProjectTaskContext;
-import com.intellij.task.ProjectTaskNotification;
-import com.intellij.task.ProjectTaskResult;
-import com.intellij.task.ProjectTaskRunner;
-import com.intellij.task.impl.JpsProjectTaskRunner;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
-import org.jetbrains.idea.maven.execution.MavenRunner;
-import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import com.intellij.execution.Executor
+import com.intellij.execution.configurations.ModuleBasedConfiguration
+import com.intellij.execution.configurations.ParametersList
+import com.intellij.execution.configurations.RunConfigurationModule
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.ProgramRunner
+import com.intellij.execution.scratch.JavaScratchConfiguration
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.module.ModuleManager.Companion.getInstance
+import com.intellij.openapi.project.Project
+import com.intellij.packaging.artifacts.Artifact
+import com.intellij.packaging.artifacts.ArtifactProperties
+import com.intellij.task.ExecuteRunConfigurationTask
+import com.intellij.task.ModuleBuildTask
+import com.intellij.task.ModuleFilesBuildTask
+import com.intellij.task.ModuleResourcesBuildTask
+import com.intellij.task.ProjectModelBuildTask
+import com.intellij.task.ProjectTask
+import com.intellij.task.ProjectTaskContext
+import com.intellij.task.ProjectTaskNotification
+import com.intellij.task.ProjectTaskResult
+import com.intellij.task.ProjectTaskRunner
+import com.intellij.task.impl.JpsProjectTaskRunner
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
+import org.jetbrains.idea.maven.execution.MavenRunner
+import org.jetbrains.idea.maven.execution.MavenRunnerParameters
+import org.jetbrains.idea.maven.execution.build.MavenProjectTaskRunnerUtil.runBatch
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenUtil.isMavenModule
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+class MavenProjectTaskRunner : ProjectTaskRunner() {
+  override fun run(project: Project, context: ProjectTaskContext, vararg tasks: ProjectTask): Promise<Result> {
+    val promise = AsyncPromise<Result>()
+    val callback: ProjectTaskNotification = ProjectTaskNotificationAdapter(promise)
+    val taskMap = JpsProjectTaskRunner.groupBy(listOf(*tasks))
 
-import static java.util.Collections.emptyList;
-import static java.util.stream.Collectors.joining;
-import static org.jetbrains.idea.maven.utils.MavenUtil.isMavenModule;
+    buildModuleFiles(project, callback, getFromGroupedMap(taskMap, ModuleFilesBuildTask::class.java))
+    buildModules(project, callback, getFromGroupedMap(taskMap, ModuleResourcesBuildTask::class.java))
+    buildModules(project, callback, getFromGroupedMap(taskMap, ModuleBuildTask::class.java))
 
-public final class MavenProjectTaskRunner extends ProjectTaskRunner {
-  @Override
-  public Promise<Result> run(@NotNull Project project, @NotNull ProjectTaskContext context, ProjectTask @NotNull ... tasks) {
-    AsyncPromise<Result> promise = new AsyncPromise<>();
-    ProjectTaskNotification callback = new ProjectTaskNotificationAdapter(promise);
-    Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = JpsProjectTaskRunner.groupBy(Arrays.asList(tasks));
-
-    buildModuleFiles(project, context, callback, getFromGroupedMap(taskMap, ModuleFilesBuildTask.class, emptyList()));
-    buildModules(project, context, callback, getFromGroupedMap(taskMap, ModuleResourcesBuildTask.class, emptyList()));
-    buildModules(project, context, callback, getFromGroupedMap(taskMap, ModuleBuildTask.class, emptyList()));
-
-    buildArtifacts(project, context, callback, getFromGroupedMap(taskMap, ProjectModelBuildTask.class, emptyList()));
-    return promise;
+    buildArtifacts(project, context, callback, getFromGroupedMap(taskMap, ProjectModelBuildTask::class.java))
+    return promise
   }
 
-  @Override
-  public boolean canRun(@NotNull Project project, @NotNull ProjectTask projectTask, @Nullable ProjectTaskContext context) {
-    if (context != null && context.getRunConfiguration() instanceof JavaScratchConfiguration) {
-      return false;
+  override fun canRun(project: Project, projectTask: ProjectTask, context: ProjectTaskContext?): Boolean {
+    if (context != null && context.runConfiguration is JavaScratchConfiguration) {
+      return false
     }
 
-    if (!MavenRunner.getInstance(project).getSettings().isDelegateBuildToMaven()) {
-      return false;
+    if (!MavenRunner.getInstance(project).settings.isDelegateBuildToMaven) {
+      return false
     }
 
-    if (projectTask instanceof ModuleBuildTask moduleBuildTask) {
-      return isMavenModule(moduleBuildTask.getModule());
+    if (projectTask is ModuleBuildTask) {
+      return isMavenModule(projectTask.getModule())
     }
 
-    if (projectTask instanceof ProjectModelBuildTask<?> buildTask) {
-      if (buildTask.getBuildableElement() instanceof Artifact artifact) {
-        MavenArtifactProperties properties = null;
-        for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
-          if (provider instanceof MavenArtifactPropertiesProvider) {
-            ArtifactProperties<?> artifactProperties = artifact.getProperties(provider);
-            if (artifactProperties instanceof MavenArtifactProperties) {
-              properties = (MavenArtifactProperties)artifactProperties;
-              break;
+    if (projectTask is ProjectModelBuildTask<*>) {
+      val artifact = projectTask.getBuildableElement()
+      if (artifact is Artifact) {
+        var properties: MavenArtifactProperties? = null
+        for (provider in artifact.getPropertiesProviders()) {
+          if (provider is MavenArtifactPropertiesProvider) {
+            val artifactProperties: ArtifactProperties<*>? = artifact.getProperties(provider)
+            if (artifactProperties is MavenArtifactProperties) {
+              properties = artifactProperties as MavenArtifactProperties
+              break
             }
           }
         }
-        if (properties == null || properties.getModuleName() == null) {
-          return false;
+        if (properties?.getModuleName() == null) {
+          return false
         }
 
-        Module module = ModuleManager.getInstance(project).findModuleByName(properties.getModuleName());
+        val module = getInstance(project).findModuleByName(properties.getModuleName())
         if (!isMavenModule(module)) {
-          return false;
+          return false
         }
 
-        for (MavenArtifactBuilder artifactBuilder : MavenArtifactBuilder.EP_NAME.getExtensions()) {
-          if (artifactBuilder.isApplicable(buildTask)) {
-            return true;
+        for (artifactBuilder in MavenArtifactBuilder.EP_NAME.extensions) {
+          if (artifactBuilder.isApplicable(projectTask)) {
+            return true
           }
         }
       }
     }
 
-    if (projectTask instanceof ExecuteRunConfigurationTask task) {
-      RunProfile runProfile = task.getRunProfile();
-      if (runProfile instanceof JavaScratchConfiguration) {
-        return false;
+    if (projectTask is ExecuteRunConfigurationTask) {
+      val runProfile = projectTask.getRunProfile()
+      if (runProfile is JavaScratchConfiguration) {
+        return false
       }
-      if (runProfile instanceof ModuleBasedConfiguration) {
-        RunConfigurationModule module = ((ModuleBasedConfiguration<?, ?>)runProfile).getConfigurationModule();
-        if (!isMavenModule(module.getModule())) {
-          return false;
+      if (runProfile is ModuleBasedConfiguration<*, *>) {
+        val module: RunConfigurationModule = runProfile.getConfigurationModule()
+        if (!isMavenModule(module.module)) {
+          return false
         }
-        for (MavenExecutionEnvironmentProvider environmentProvider : MavenExecutionEnvironmentProvider.EP_NAME.getExtensions()) {
-          if (environmentProvider.isApplicable(task)) {
-            return true;
+        for (environmentProvider in MavenExecutionEnvironmentProvider.EP_NAME.extensions) {
+          if (environmentProvider.isApplicable(projectTask)) {
+            return true
           }
         }
       }
     }
 
-    return false;
+    return false
   }
 
-  @Override
-  public @Nullable ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
-                                                                   @NotNull ExecuteRunConfigurationTask task,
-                                                                   @Nullable Executor executor) {
-    for (MavenExecutionEnvironmentProvider environmentProvider : MavenExecutionEnvironmentProvider.EP_NAME.getExtensions()) {
+  override fun createExecutionEnvironment(
+    project: Project,
+    task: ExecuteRunConfigurationTask,
+    executor: Executor?,
+  ): ExecutionEnvironment? {
+    for (environmentProvider in MavenExecutionEnvironmentProvider.EP_NAME.extensions) {
       if (environmentProvider.isApplicable(task)) {
-        return environmentProvider.createExecutionEnvironment(project, task, executor);
+        return environmentProvider.createExecutionEnvironment(project, task, executor)
       }
     }
-    return null;
+    return null
   }
 
-  private static <T extends ProjectTask> List<? extends T>
-  getFromGroupedMap(Map<Class<? extends ProjectTask>, List<ProjectTask>> map, Class<T> key, List<? extends T> defaultValue) {
-    List<?> result = map.get(key);
-    if (result == null) return defaultValue;
-    //noinspection unchecked
-    return (List<? extends T>)result;
-  }
-
-  private static void buildModules(@NotNull Project project,
-                                   @NotNull ProjectTaskContext context,
-                                   @Nullable ProjectTaskNotification callback,
-                                   @NotNull Collection<? extends ModuleBuildTask> moduleBuildTasks) {
-    if (moduleBuildTasks.isEmpty()) return;
-
-    MavenRunner mavenRunner = MavenRunner.getInstance(project);
-    MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(project);
-
-    MavenExplicitProfiles explicitProfiles = mavenProjectsManager.getExplicitProfiles();
-    Map<MavenProject, List<MavenProject>> rootProjectsToModules = new HashMap<>();
-
-    boolean buildOnlyResources = false;
-    for (ModuleBuildTask moduleBuildTask : moduleBuildTasks) {
-      MavenProject mavenProject = mavenProjectsManager.findProject(moduleBuildTask.getModule());
-      if (mavenProject == null) continue;
-
-      buildOnlyResources = buildOnlyResources || moduleBuildTask instanceof ModuleResourcesBuildTask;
-      MavenProject rootProject = mavenProjectsManager.findRootProject(mavenProject);
-      rootProjectsToModules.computeIfAbsent(rootProject, p -> new ArrayList<>()).add(mavenProject);
-    }
-
-    boolean clean = moduleBuildTasks.stream().anyMatch(task -> !(task instanceof ModuleFilesBuildTask) && !task.isIncrementalBuild());
-    boolean compileOnly = moduleBuildTasks.stream().allMatch(task -> task instanceof ModuleFilesBuildTask);
-    boolean includeDependentModules = moduleBuildTasks.stream().anyMatch(ModuleBuildTask::isIncludeDependentModules);
-    String goal = getGoal(buildOnlyResources, compileOnly);
-    List<MavenRunnerParameters> commands = new ArrayList<>();
-    for (Map.Entry<MavenProject, List<MavenProject>> entry : rootProjectsToModules.entrySet()) {
-      ParametersList parameters = new ParametersList();
-      if (clean) {
-        parameters.add("clean");
-      }
-      parameters.add(goal);
-
-      List<MavenProject> mavenProjects = entry.getValue();
-      if (!includeDependentModules) {
-        if (mavenProjects.size() > 1) {
-          parameters.add("--projects");
-          parameters.add(mavenProjects.stream()
-                           .map(MavenProject::getMavenId)
-                           .map(mavenId -> mavenId.getGroupId() + ":" + mavenId.getArtifactId())
-                           .collect(joining(",")));
+  private class ProjectTaskNotificationAdapter(private val myPromise: AsyncPromise<in Result>) : ProjectTaskNotification {
+    override fun finished(taskResult: ProjectTaskResult) {
+      myPromise.setResult(object : Result {
+        override fun isAborted(): Boolean {
+          return taskResult.isAborted
         }
-        else {
-          parameters.add("--non-recursive");
+
+        override fun hasErrors(): Boolean {
+          return taskResult.errors > 0
         }
-      }
-
-      VirtualFile pomFile = (mavenProjects.size() > 1 ? entry.getKey() : mavenProjects.get(0)).getFile();
-      commands.add(new MavenRunnerParameters(true,
-                                             pomFile.getParent().getPath(),
-                                             pomFile.getName(),
-                                             parameters.getList(),
-                                             explicitProfiles.getEnabledProfiles(),
-                                             explicitProfiles.getDisabledProfiles()));
+      })
     }
-
-    runBatch(project, mavenRunner, "Maven Build", commands, context, callback);
   }
 
-  private static @NotNull String getGoal(boolean buildOnlyResources, boolean compileOnly) {
-    if (buildOnlyResources) {
-      return "resources:resources";
-    }
-    return compileOnly ? "compile" : "install";
+}
+
+private fun <T : ProjectTask> getFromGroupedMap(
+  map: MutableMap<Class<out ProjectTask>, List<ProjectTask>>,
+  key: Class<T>,
+): List<T> {
+  val result = map[key] ?: return emptyList()
+  return result.filterIsInstance(key)
+}
+
+private fun buildModules(
+  project: Project,
+  callback: ProjectTaskNotification?,
+  moduleBuildTasks: Collection<ModuleBuildTask>,
+) {
+  if (moduleBuildTasks.isEmpty()) return
+
+  val mavenProjectsManager = MavenProjectsManager.getInstance(project)
+
+  val explicitProfiles = mavenProjectsManager.explicitProfiles
+  val rootProjectsToModules: MutableMap<MavenProject, MutableList<MavenProject>> = HashMap()
+
+  var buildOnlyResources = false
+  for (moduleBuildTask in moduleBuildTasks) {
+    val mavenProject = mavenProjectsManager.findProject(moduleBuildTask.getModule())
+    if (mavenProject == null) continue
+
+    buildOnlyResources = buildOnlyResources || moduleBuildTask is ModuleResourcesBuildTask
+    val rootProject = mavenProjectsManager.findRootProject(mavenProject)
+    rootProjectsToModules.computeIfAbsent(rootProject) { mutableListOf(mavenProject) }
   }
 
-  public static void runBatch(@NotNull Project project,
-                              @NotNull MavenRunner mavenRunner,
-                              @NotNull String title,
-                              @NotNull List<MavenRunnerParameters> commands,
-                              @NotNull ProjectTaskContext context,
-                              @Nullable ProjectTaskNotification callback) {
+  val clean = moduleBuildTasks.any { it !is ModuleFilesBuildTask && !it.isIncrementalBuild() }
+  val compileOnly = moduleBuildTasks.all { it is ModuleFilesBuildTask }
+  val includeDependentModules = moduleBuildTasks.any { it.isIncludeDependentModules() }
+  val goal: String = getGoal(buildOnlyResources, compileOnly)
+  val commands: MutableList<MavenRunnerParameters> = ArrayList()
+  for ((key, mavenProjects) in rootProjectsToModules) {
+    val parameters = ParametersList()
+    if (clean) {
+      parameters.add("clean")
+    }
+    parameters.add(goal)
 
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-
-
-      FileDocumentManager.getInstance().saveAllDocuments();
-      for (MavenRunnerParameters command : commands) {
-        MavenRunConfigurationType.runConfiguration(project, command, null, null, descriptor -> {
-          if(callback == null){
-            return;
+    if (!includeDependentModules) {
+      if (mavenProjects.size > 1) {
+        parameters.add("--projects")
+        parameters.add(
+          mavenProjects.joinToString(",") {
+            val id = it.mavenId
+            "${id.groupId}:${id.artifactId}"
           }
-          ProcessHandler handler = descriptor.getProcessHandler();
-          if (handler != null) {
-            handler.addProcessListener(new ProcessListener() {
-              @Override
-              public void processTerminated(@NotNull ProcessEvent event) {
-                if (event.getExitCode() == 0) {
-                  callback.finished(new ProjectTaskResult(false, 0, 0));
+        )
+      }
+      else {
+        parameters.add("--non-recursive")
+      }
+    }
+
+    val pomFile = (if (mavenProjects.size > 1) key else mavenProjects[0]).file
+    commands.add(
+      MavenRunnerParameters(
+        true,
+        pomFile.getParent().getPath(),
+        pomFile.getName(),
+        parameters.getList(),
+        explicitProfiles.enabledProfiles,
+        explicitProfiles.disabledProfiles
+      )
+    )
+  }
+
+  runBatch(project, commands, callback)
+}
+
+private fun getGoal(buildOnlyResources: Boolean, compileOnly: Boolean): String {
+  if (buildOnlyResources) {
+    return "resources:resources"
+  }
+  return if (compileOnly) "compile" else "install"
+}
+
+object MavenProjectTaskRunnerUtil {
+  @JvmStatic
+   fun runBatch(
+    project: Project,
+    commands: MutableList<MavenRunnerParameters>,
+    callback: ProjectTaskNotification?,
+  ) {
+    ApplicationManager.getApplication().invokeAndWait(Runnable {
+      FileDocumentManager.getInstance().saveAllDocuments()
+      for (command in commands) {
+        MavenRunConfigurationType.runConfiguration(
+          project,
+          command,
+          null,
+          null,
+          ProgramRunner.Callback { descriptor ->
+            if (callback == null) {
+              return@Callback
+            }
+            val handler = descriptor.processHandler
+            handler?.addProcessListener(object : ProcessListener {
+              override fun processTerminated(event: ProcessEvent) {
+                if (event.exitCode == 0) {
+                  callback.finished(ProjectTaskResult(false, 0, 0))
                 }
                 else {
-                  callback.finished(new ProjectTaskResult(true, 0, 0));
+                  callback.finished(ProjectTaskResult(true, 0, 0))
                 }
               }
-            });
-          }
-        }, true);
+            })
+          },
+          true
+        )
       }
-    });
+    })
   }
+}
 
-  private static void buildModuleFiles(@NotNull Project project,
-                                       @NotNull ProjectTaskContext context,
-                                       @Nullable ProjectTaskNotification callback,
-                                       @NotNull Collection<? extends ModuleFilesBuildTask> moduleFilesBuildTasks) {
-    buildModules(project, context, callback, moduleFilesBuildTasks);
-  }
+private fun buildModuleFiles(
+  project: Project,
+  callback: ProjectTaskNotification?,
+  moduleFilesBuildTasks: Collection<ModuleFilesBuildTask>,
+) {
+  buildModules(project, callback, moduleFilesBuildTasks)
+}
 
-  private static void buildArtifacts(@NotNull Project project,
-                                     @NotNull ProjectTaskContext context,
-                                     @Nullable ProjectTaskNotification callback,
-                                     List<? extends ProjectModelBuildTask> tasks) {
-    for (ProjectModelBuildTask buildTask : tasks) {
-      if (buildTask.getBuildableElement() instanceof Artifact) {
-        for (MavenArtifactBuilder artifactBuilder : MavenArtifactBuilder.EP_NAME.getExtensions()) {
-          if (artifactBuilder.isApplicable(buildTask)) {
-            artifactBuilder.build(project, buildTask, context, callback);
-          }
+private fun buildArtifacts(
+  project: Project,
+  context: ProjectTaskContext,
+  callback: ProjectTaskNotification?,
+  tasks: List<ProjectModelBuildTask<*>>,
+) {
+  for (buildTask in tasks) {
+    if (buildTask.getBuildableElement() is Artifact) {
+      for (artifactBuilder in MavenArtifactBuilder.EP_NAME.extensions) {
+        if (artifactBuilder.isApplicable(buildTask)) {
+          artifactBuilder.build(project, buildTask, context, callback)
         }
       }
-    }
-  }
-
-  private static final class ProjectTaskNotificationAdapter implements ProjectTaskNotification {
-    private final @NotNull AsyncPromise<? super Result> myPromise;
-
-    private ProjectTaskNotificationAdapter(@NotNull AsyncPromise<? super Result> promise) {
-      myPromise = promise;
-    }
-
-    @Override
-    public void finished(@SuppressWarnings("deprecation") @NotNull ProjectTaskResult taskResult) {
-      myPromise.setResult(new Result() {
-        @Override
-        public boolean isAborted() {
-          return taskResult.isAborted();
-        }
-
-        @Override
-        public boolean hasErrors() {
-          return taskResult.getErrors() > 0;
-        }
-      });
     }
   }
 }
