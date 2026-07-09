@@ -218,6 +218,7 @@ internal abstract class DocumentElfMutator(
         newModStamp,
         changeEvent.isWholeTextReplaced,
         clearLineFlags,
+        false,
       )
     }
   }

@@ -7,6 +7,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.modTree.ModificationTree;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.IncorrectOperationException;
@@ -267,8 +268,73 @@ public class DocumentTest extends LightPlatformTestCase {
     assertFalse(document.isInBulkUpdate());
   }
 
+  public void testModTreeAfterInsertAtBeginning() {
+    DocumentImpl document = new DocumentImpl("abc", true);
+
+    document.insertString(0, "x");
+
+    ModificationTree tree = document.getCore().snapshot().modTree();
+    assertEquals("xabc", document.getText());
+    assertToCurrentOffsets(tree, 1, 2, 3, 4);
+    assertToVersion0Offsets(tree, 0, 0, 1, 2, 3);
+  }
+
+  public void testModTreeAfterDeleteMiddleOfOriginalText() {
+    DocumentImpl document = new DocumentImpl("abcdef", true);
+
+    document.deleteString(2, 4);
+
+    ModificationTree tree = document.getCore().snapshot().modTree();
+    assertEquals("abef", document.getText());
+    assertToCurrentOffsets(tree, 0, 1, 2, 2, 2, 3, 4);
+    assertToVersion0Offsets(tree, 0, 1, 4, 5, 6);
+  }
+
+  public void testModTreeAfterReplaceMiddleOfOriginalText() {
+    DocumentImpl document = new DocumentImpl("abcdef", true);
+
+    document.replaceString(2, 4, "XYZ");
+
+    ModificationTree tree = document.getCore().snapshot().modTree();
+    assertEquals("abXYZef", document.getText());
+    assertToCurrentOffsets(tree, 0, 1, 5, 5, 5, 6, 7);
+    assertToVersion0Offsets(tree, 0, 1, 4, 4, 4, 4, 5, 6);
+  }
+
+  public void testModTreeAfterDeletingInsertedTextRestoresOriginalMapping() {
+    DocumentImpl document = new DocumentImpl("abc", true);
+
+    document.insertString(1, "XYZ");
+    document.deleteString(1, 4);
+
+    ModificationTree tree = document.getCore().snapshot().modTree();
+    assertEquals("abc", document.getText());
+    assertToCurrentOffsets(tree, 0, 1, 2, 3);
+    assertToVersion0Offsets(tree, 0, 1, 2, 3);
+  }
+
   private void runWriteCommandAction(Runnable action) {
     WriteCommandAction.runWriteCommandAction(getProject(), action);
+  }
+
+  private static void assertToCurrentOffsets(ModificationTree tree, int... expectedCurrentOffsets) {
+    for (int version0Offset = 0; version0Offset < expectedCurrentOffsets.length; version0Offset++) {
+      assertEquals(
+        "toCurrentOffset(" + version0Offset + ")",
+        expectedCurrentOffsets[version0Offset],
+        tree.toCurrentOffset(version0Offset)
+      );
+    }
+  }
+
+  private static void assertToVersion0Offsets(ModificationTree tree, int... expectedVersion0Offsets) {
+    for (int currentOffset = 0; currentOffset < expectedVersion0Offsets.length; currentOffset++) {
+      assertEquals(
+        "toVersion0Offset(" + currentOffset + ")",
+        expectedVersion0Offsets[currentOffset],
+        tree.toVersion0Offset(currentOffset)
+      );
+    }
   }
 
   private static void mustThrow(Runnable runnable) {

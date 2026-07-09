@@ -326,6 +326,7 @@ internal abstract class DocumentMutatorImpl(
             newModStamp,
             changeEvent.isWholeTextReplaced,
             clearLineFlags,
+            false,
           )
         }
       }
