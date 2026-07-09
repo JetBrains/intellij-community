@@ -25,21 +25,25 @@ internal class JsonSchemaVersionConverter : Converter<JsonSchemaVersion?>() {
   }
 
   private fun canBeSerializedInto(version: JsonSchemaVersion, effectiveSerialisedValue: String): Boolean {
-    return getPossibleSerializedValues(version).any { it == effectiveSerialisedValue }
+    val normalizedValue = normalizeGroupingSeparators(effectiveSerialisedValue)
+    return getPossibleSerializedValues(version).any { possibleValue ->
+      possibleValue == effectiveSerialisedValue || normalizeGroupingSeparators(possibleValue) == normalizedValue
+    }
   }
 
   private fun getPossibleSerializedValues(version: JsonSchemaVersion): Sequence<String> {
-    val versionNumber = when (version) {
-      JsonSchemaVersion.SCHEMA_4 -> 4
-      JsonSchemaVersion.SCHEMA_6 -> 6
-      JsonSchemaVersion.SCHEMA_7 -> 7
-      JsonSchemaVersion.SCHEMA_2019_09 -> 201909
-      JsonSchemaVersion.SCHEMA_2020_12 -> 202012
-    }
-
+    val versionSuffix = version.presentableVersionSuffix
     return sequenceOf(
-      JsonBundle.message("schema.of.version", versionNumber),
-      JsonBundle.message("schema.of.version.deprecated", versionNumber)
+      JsonBundle.message("schema.of.version", versionSuffix),
+      JsonBundle.message("schema.of.version.deprecated", versionSuffix)
     )
+  }
+
+  private fun normalizeGroupingSeparators(value: String): String {
+    return value.replace(GROUPING_SEPARATORS, "")
+  }
+
+  companion object {
+    private val GROUPING_SEPARATORS = Regex("[\\s\\u00A0\\u202F\\u2019',.]")
   }
 }

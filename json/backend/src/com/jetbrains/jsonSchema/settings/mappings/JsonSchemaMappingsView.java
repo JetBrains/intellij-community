@@ -370,14 +370,7 @@ public final class JsonSchemaMappingsView implements Disposable {
 
   private static @NlsSafe String getPresentableSchemaName(@Nullable JsonSchemaVersion version) {
     if (version == null) return "unknown";
-    var versionSuffix = switch (version) {
-      case SCHEMA_4 -> "v4";
-      case SCHEMA_6 -> "v6";
-      case SCHEMA_7 -> "v7";
-      case SCHEMA_2019_09 -> "2019.09";
-      case SCHEMA_2020_12 -> "2020.12";
-    };
-
+    var versionSuffix = version.getPresentableVersionSuffix();
     return JsonBundle.message("schema.of.version", versionSuffix);
   }
 }

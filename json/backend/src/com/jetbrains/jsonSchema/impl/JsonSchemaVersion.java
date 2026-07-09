@@ -22,13 +22,17 @@ public enum JsonSchemaVersion {
 
   @Override
   public String toString() {
-    return JsonBundle.message("schema.of.version", switch (this) {
-      case SCHEMA_4 -> 4;
-      case SCHEMA_6 -> 6;
-      case SCHEMA_7 -> 7;
-      case SCHEMA_2019_09 -> 201909;
-      case SCHEMA_2020_12 -> 202012;
-    });
+    return JsonBundle.message("schema.of.version", getPresentableVersionSuffix());
+  }
+
+  public @NotNull String getPresentableVersionSuffix() {
+    return switch (this) {
+      case SCHEMA_4 -> "4";
+      case SCHEMA_6 -> "6";
+      case SCHEMA_7 -> "7";
+      case SCHEMA_2019_09 -> "2019.09";
+      case SCHEMA_2020_12 -> "2020.12";
+    };
   }
 
 
