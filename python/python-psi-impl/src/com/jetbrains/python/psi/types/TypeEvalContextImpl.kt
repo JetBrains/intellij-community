@@ -58,6 +58,7 @@ open class TypeEvalContextImpl internal constructor(
   protected val myEvaluatedReturn: MutableMap<PyCallable?, PyType?> = getConcurrentMapForCachingTypes()
   protected val contextTypeCache: ConcurrentMap<Pair<Any, Any>, PyType> = getConcurrentMapForCachingTypes()
   protected val myVarianceCache: MutableMap<PyTypeParameterType, PyTypeParameterType.Variance> = getConcurrentMapForCaching()
+  protected val mySubstitutionsCache: MutableMap<SubstitutionsIdentifier, PyTypeChecker.GenericSubstitutions> = getConcurrentMapForCaching()
 
   internal constructor(
     allowDataFlow: Boolean,
@@ -179,6 +180,18 @@ open class TypeEvalContextImpl internal constructor(
     return myEvaluatedReturn[callable]?.also {
       assertValid(it, callable)
     }
+  }
+
+  fun putSubstitutions(si: SubstitutionsIdentifier, substitutions: PyTypeChecker.GenericSubstitutions) {
+    mySubstitutionsCache[si] = substitutions
+  }
+
+  fun removeSubstitutions(si: SubstitutionsIdentifier) {
+    mySubstitutionsCache.remove(si)
+  }
+
+  open fun getKnownSubstitutions(si: SubstitutionsIdentifier): PyTypeChecker.GenericSubstitutions? {
+    return mySubstitutionsCache[si]
   }
 
   private fun getLibraryContext(project: Project): TypeEvalContext {
@@ -325,8 +338,31 @@ open class TypeEvalContextImpl internal constructor(
     }
   }
 
-  class AssumptionContext(val myParent: TypeEvalContextImpl, element: PyTypedElement, type: PyType?) :
+  /**
+   * Use a temporary context to avoid that during computations, intermediate type results pollute the parent context's cache.
+   * A temporary context is stacked on top of the parent context and will first check its own cache and then delegate to the parent
+   * context's cache. New results will be stored in the temporary context's cache but eventually will be dropped when the temporary
+   * context is disposed.
+   */
+  @ApiStatus.Experimental
+  open class TemporaryContext(val myParent: TypeEvalContextImpl, val keepUncapturedTypeParameters: Boolean = false) :
     TypeEvalContextImpl(myParent.constraints) {
+
+    override fun getKnownType(element: PyTypedElement): PyType? {
+      return super.getKnownType(element) ?: myParent.getKnownType(element)
+    }
+
+    override fun getKnownReturnType(callable: PyCallable): PyType? {
+      return super.getKnownReturnType(callable) ?: myParent.getKnownReturnType(callable)
+    }
+
+    override fun getKnownSubstitutions(si: SubstitutionsIdentifier): PyTypeChecker.GenericSubstitutions? {
+      return super.getKnownSubstitutions(si) ?: myParent.getKnownSubstitutions(si)
+    }
+  }
+
+  class AssumptionContext(myParent: TypeEvalContextImpl, element: PyTypedElement, type: PyType?) :
+    TemporaryContext(myParent) {
 
     val myInstructionCache: MutableMap<List<Any>, PyType> = ConcurrentHashMap()
 
@@ -359,7 +395,7 @@ open class TypeEvalContextImpl internal constructor(
           return knownType
         }
         current = current.myParent
-      } 
+      }
       return current.getKnownType(element)
     }
 
@@ -542,3 +578,6 @@ open class TypeEvalContextImpl internal constructor(
       get() = this.language == PyiLanguageDialect.getInstance()
   }
 }
+
+data class SubstitutionsIdentifier(val expression: PyExpression, val callableType: PyCallableType? = null)
+

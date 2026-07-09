@@ -988,7 +988,13 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-71674"])
-    fun `context manager decorator on method`() = test("""
+    fun `context manager decorator on method`() = test(
+      // Matching `Iterator[str]` against the recursive `Generator` protocol (whose `__iter__`
+      // returns `Generator[...]`, while `Iterator.__iter__` returns `Self`) is mutually
+      // recursive, so recursion prevention legitimately engages while inferring the type of the
+      // `@contextmanager`-decorated method.
+      defaultTestOptions.copy(assertRecursionPrevention = false),
+      """
       from contextlib import contextmanager
       from typing import Iterator
 

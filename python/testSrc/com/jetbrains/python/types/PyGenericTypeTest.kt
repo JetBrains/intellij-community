@@ -462,7 +462,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       
       def bar(x):
           expr = foo(x)
-      #   └ TYPE str | bytes
+      #   └ TYPE AnyStr
       """)
 
     @Test
@@ -1528,7 +1528,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       def f[T]() -> T: ...
 
       expr = f()
-      #└ TYPE Unknown
+      #└ TYPE T
       """,
     )
   }

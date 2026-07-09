@@ -47,7 +47,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
               y = attr.ib(default=0)
               z = attr.ib(default=attr.Factory(list))
           
-          Weak1(1, <warning descr="Expected type 'int', got 'Literal[\\"str\\"]' instead">"str"</warning>, <warning descr="Expected type 'list[_T]', got 'Literal[2]' instead">2</warning>)
+          Weak1(1, <warning descr="Expected type 'int', got 'Literal[\\"str\\"]' instead">"str"</warning>, <warning descr="Expected type 'list', got 'Literal[2]' instead">2</warning>)
           
           
           @attr.s

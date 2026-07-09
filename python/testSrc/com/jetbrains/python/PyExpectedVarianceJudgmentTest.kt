@@ -359,7 +359,7 @@ class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
     T1 = TypeVar("T1")
     class Box(Generic[T1]): ...
     Box_TA: TypeAlias = Box[T1]
-    #                       └ EXPECTED_VARIANCE NULL FIXME INVARIANT
+    #                       └ EXPECTED_VARIANCE INVARIANT
     my_box: Box_TA[int]
     #              └ EXPECTED_VARIANCE INVARIANT
     """.trimIndent())
@@ -372,7 +372,7 @@ class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
     
     T = TypeVar("T")
     A_Alias_1: TypeAlias = ClassA[T]
-    #                             └ EXPECTED_VARIANCE NULL FIXME COVARIANT
+    #                             └ EXPECTED_VARIANCE INVARIANT FIXME COVARIANT
     
     obj: A_Alias_1[int] #
     #              └ EXPECTED_VARIANCE COVARIANT

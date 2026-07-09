@@ -751,11 +751,11 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x, y, z: int = ...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x, y, z: int = ...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg3>").getTextOffset()).check("x, z: int = ...", new String[]{"x, "});
-        feignCtrlP(marks.get("<arg4>").getTextOffset()).check("x, y, z: list[_T] = ...", new String[]{"x, "});
+        feignCtrlP(marks.get("<arg4>").getTextOffset()).check("x, y, z: list = ...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x, y: int = ...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg6>").getTextOffset()).check("x, y: str = ...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg7>").getTextOffset()).check("x: int | Unknown = ...", new String[]{"x: int | Unknown = ..."});
-        feignCtrlP(marks.get("<arg8>").getTextOffset()).check("x, y, z: list[_T] = ...", new String[]{"x, "});
+        feignCtrlP(marks.get("<arg8>").getTextOffset()).check("x, y, z: list = ...", new String[]{"x, "});
       }
     );
   }

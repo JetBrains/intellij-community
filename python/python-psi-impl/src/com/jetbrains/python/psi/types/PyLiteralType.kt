@@ -258,13 +258,13 @@ class PyLiteralType private constructor(
             promoteTuple(value)
           }
           is PySetLiteralExpression -> {
-            promoteListOrSet(expectedType, value, value.elements.asList(), PyNames.SET)
+            promoteListOrSet(expectedType, value, value.elements.asList(), PyNames.SET) // TODO: PY-90855
           }
           is PySetCompExpression -> {
             promoteListOrSet(expectedType, value, listOfNotNull(value.resultExpression), PyNames.SET)
           }
           is PyListLiteralExpression -> {
-            promoteListOrSet(expectedType, value, value.elements.asList(), "list")
+            promoteListOrSet(expectedType, value, value.elements.asList(), "list") // TODO: PY-90855
           }
           is PyListCompExpression -> {
             promoteListOrSet(expectedType, value, listOfNotNull(value.resultExpression), "list")

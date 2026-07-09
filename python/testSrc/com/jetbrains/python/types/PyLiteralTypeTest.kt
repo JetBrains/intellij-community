@@ -949,7 +949,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
       def f[T: Literal[1]](t: T) -> list[T]: ...
       expr = f(1)
-      #└ TYPE list[Unknown] FIXME list[Literal[1]]
+      #└ TYPE list[Literal[1]]
       """)
   }
 }

@@ -43,7 +43,7 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
     @Test
     fun `list literal of many mixed values`() = test("""
       expr = ['1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-      #└ TYPE list[UnsafeUnion[str | int, Unknown]]
+      #└ TYPE list[str | int]
       """)
 
     @Test
@@ -61,7 +61,7 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
     @Test
     fun `set literal of many mixed values`() = test("""
       expr = {'1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
-      #└ TYPE set[UnsafeUnion[str | int, Unknown]]
+      #└ TYPE set[str | int]
       """)
 
     @Test

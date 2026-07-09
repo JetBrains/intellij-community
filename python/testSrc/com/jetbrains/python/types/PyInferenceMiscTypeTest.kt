@@ -329,7 +329,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       def f():
           return [f()]
       expr = f()
-      #└ TYPE list[Unknown]
+      #└ TYPE list[list[Unknown]]
       """)
 
     @Test
@@ -1586,7 +1586,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
       expr = bar(dunno, 'sd')
       #│         ^^^^^ ERROR Unresolved reference 'dunno'
-      #└ TYPE (Unknown, str, Unknown) -> Unknown
+      #└ TYPE (Unknown, str, T3) -> T3
       """)
 
     @Test

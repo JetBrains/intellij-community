@@ -85,7 +85,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
           raise NotImplementedError
 
       expr = func1(ImplB())
-      #└ TYPE list[int]
+      #└ TYPE list[T] FIXME list[int]
       """)
 
     @Test

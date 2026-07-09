@@ -901,7 +901,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   @Override
   public String toString() {
-    String result = (isValid() ? "" : "[INVALID] ") + "PyClassType: " + getClassQName();
+    String name = getClassQName() == null ? getName() : getClassQName();
+    String result = (isValid() ? "" : "[INVALID] ") + "PyClassType: " + name;
     if (!myTypeArguments.isEmpty()) {
       result += "[" + StringUtil.join(myTypeArguments, String::valueOf, ", ") + "]";
     }

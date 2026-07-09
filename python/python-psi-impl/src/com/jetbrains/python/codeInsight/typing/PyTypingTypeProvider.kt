@@ -2332,7 +2332,9 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
 
     private fun getTypePreventingRecursion(expression: PyExpression, context: Context): Ref<PyType?>? {
-      return RecursionManager.doPreventingRecursion<Ref<PyType?>?>(expression, false, Computable { getType(expression, context) })
+      return RecursionManager.doPreventingRecursion(expression, false) {
+        getType(expression, context)
+      }
     }
 
     // See https://peps.python.org/pep-0484/#scoping-rules-for-type-variables
