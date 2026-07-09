@@ -3,7 +3,7 @@ package com.jetbrains.python.psi.types
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.parseStdOrDataclassTransformDataclassParameters
+import com.jetbrains.python.codeInsight.isFrozenAttribute
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.CALLABLE
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.CALLABLE_EXT
@@ -190,13 +190,7 @@ object PyExpectedVarianceJudgment {
   /** Return true iff the given element is effectively read-only due to being final, read-only, or frozen. */
   @JvmStatic
   fun isEffectivelyReadOnly(targetExpr: PyTargetExpression, context: TypeEvalContext): Boolean {
-    if (isFinal(targetExpr, context) || isReadOnly(targetExpr, context)) {
-      return true
-    }
-
-    val containingClass = targetExpr.containingClass ?: return false
-    val isFrozen = parseStdOrDataclassTransformDataclassParameters(containingClass, context)?.frozen ?: false
-    return isFrozen
+    return isFinal(targetExpr, context) || isReadOnly(targetExpr, context) || isFrozenAttribute(targetExpr, context)
   }
 
 }

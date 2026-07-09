@@ -570,6 +570,17 @@ abstract class PyCodeInsightTestCase {
     }
   }
 
+  /**
+   * Asserts that the test did not load the AST of [fileName].
+   * The code under test must read this file only from its stubs.
+   */
+  protected fun assertFileNotParsed(fileName: String) {
+    runReadActionBlocking {
+      val virtualFile = myFixture.findFileInTempDir(fileName) ?: error("No file $fileName")
+      PyTestCase.assertNotParsed(myFixture.psiManager.findFile(virtualFile))
+    }
+  }
+
   private fun assertSdkRootsNotParsed(currentFile: PsiFile) {
     val testSdk = PythonSdkUtil.findPythonSdk(currentFile)
     if (testSdk == null) {

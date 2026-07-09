@@ -211,6 +211,10 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
             return literalType;
           }
         }
+        final PyType inheritedDeclaredType = getInheritedDeclaredAttributeType(context);
+        if (inheritedDeclaredType != null) {
+          return inheritedDeclaredType;
+        }
         var resultType = assignedValue.getType(context);
         if (ScopeUtil.getScopeOwner(this) instanceof PyClass) {
           return PyLiteralType.upcastLiteralToClass(resultType);
@@ -278,6 +282,29 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       return excType;
     }
     return PyAnyType.getUnknown();
+  }
+
+  /**
+   * Returns the declared type of an annotated attribute with the same name in an ancestor class.
+   * An unannotated class or instance attribute that overrides such an attribute keeps this type.
+   * Returns {@code null} for an annotated target, for a target that is not an attribute, and when no such ancestor attribute exists.
+   */
+  @ApiStatus.Internal
+  public @Nullable PyType getInheritedDeclaredAttributeType(@NotNull TypeEvalContext context) {
+    if (getAnnotationValue() != null || getTypeCommentAnnotation() != null) return null;
+    if (!PyUtil.isAttribute(this)) return null;
+    final String name = getName();
+    if (name == null) return null;
+    final PyClass containingClass = getContainingClass();
+    if (containingClass == null) return null;
+    for (PyClass ancestor : containingClass.getAncestorClasses(context)) {
+      final PyTargetExpression inherited = ancestor.findClassAttribute(name, false, context);
+      if (inherited == null || inherited == this) continue;
+      if (inherited.getAnnotationValue() != null || inherited.getTypeCommentAnnotation() != null) {
+        return context.getType(inherited);
+      }
+    }
+    return null;
   }
 
   /**

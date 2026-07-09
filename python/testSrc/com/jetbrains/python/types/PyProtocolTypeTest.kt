@@ -1695,6 +1695,60 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-87917"])
+    fun `field of a dataclass_transform class with frozen_default does not match a mutable attribute`() = test("""
+      from typing import Protocol, dataclass_transform
+
+      class B(Protocol):
+          x: int
+
+      @dataclass_transform(frozen_default=True)
+      def model(cls): ...
+
+      @model
+      class C:
+          x: int
+
+      b: B = C(1)
+      #      ^^^^ WARNING Expected type 'B', got 'C' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
+    fun `attribute of a subclass of a frozen dataclass does not match a mutable attribute`() = test("""
+      from dataclasses import dataclass
+      from typing import Protocol
+
+      class B(Protocol):
+          y: int
+
+      @dataclass(frozen=True)
+      class C:
+          x: int
+
+      class D(C):
+          y: int
+
+      b: B = D(1)
+      #      ^^^^ WARNING Expected type 'B', got 'D' instead
+      """.trimIndent())
+
+    @TestFor(issues = ["PY-87917"])
+    fun `class variable of a frozen dataclass matches a mutable class variable`() = test("""
+      from dataclasses import dataclass
+      from typing import ClassVar, Protocol
+
+      class B(Protocol):
+          x: ClassVar[int]
+
+      @dataclass(frozen=True)
+      class C:
+          x: ClassVar[int] = 1
+
+      b: B = C()
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
     fun `mutable attribute matches a read only property`() = test("""
       from typing import Protocol
 

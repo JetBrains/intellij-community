@@ -9,6 +9,7 @@ import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Attrs
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.PyDataclassParameters
 import com.jetbrains.python.codeInsight.getDataclassKind
+import com.jetbrains.python.codeInsight.isFrozenDataclass
 import com.jetbrains.python.codeInsight.parseDataclassParameters
 import com.jetbrains.python.codeInsight.resolveDataclassFieldParameters
 import com.jetbrains.python.codeInsight.stdlib.PyAttrsDataclassType
@@ -182,9 +183,7 @@ internal open class PyCommonDataclassVisitor(holder: ProblemsHolder?, context: T
   private fun checkMutatingFrozenAttribute(expression: PyQualifiedExpression) {
     val cls = getInstancePyClass(expression.qualifier) ?: return
 
-    val allClasses = listOf(cls) + cls.getAncestorClasses(myTypeEvalContext)
-    val allClassesAttributes = allClasses.mapNotNull { parseDataclassParameters(it, myTypeEvalContext) }
-    if (allClassesAttributes.any { it.frozen == true }) {
+    if (isFrozenDataclass(cls, myTypeEvalContext)) {
       registerProblem(expression,
                       PyPsiBundle.problemMessage("INSP.dataclasses.object.attribute.read.only", CodifiedParam.ofReference(cls), expression.name),
                       ProblemHighlightType.GENERIC_ERROR)
