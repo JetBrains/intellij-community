@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
-import com.intellij.openapi.editor.impl.ad.isRhizomeAdRebornEnabled
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl
 import com.intellij.openapi.editor.impl.view.EditorPainter
 import com.intellij.openapi.editor.impl.zombie.Necropolis
@@ -37,7 +36,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.removeUserData
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.FileThreadingContracts
 import com.intellij.psi.impl.PsiDocumentManagerBase
@@ -219,9 +217,8 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
     highlighter: EditorHighlighter?,
     afterCreation: ((EditorImpl) -> Unit)?,
   ): EditorImpl {
-    hackyPutEditorIdToDocument(document)
     val editor = EditorImpl(document, isViewer, project, kind, file, highlighter)
-    putEditorId(document, editor)
+    editor.putEditorId()
     markLightFileExposedInEditor(kind, file)
     // must be _before_ event firing
     afterCreation?.invoke(editor)
@@ -311,23 +308,6 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
 
 private fun collectAllEditors(): Sequence<Editor> {
   return ClientEditorManager.getAllInstances().asSequence().flatMap { it.editorsSequence() }
-}
-
-private fun hackyPutEditorIdToDocument(document: Document) {
-  if (isRhizomeAdRebornEnabled) {
-    if (document.getUserData(KERNEL_EDITOR_ID_KEY) == null) {
-      document.putUserData(KERNEL_EDITOR_ID_KEY, EditorId.create())
-    }
-  }
-}
-
-private fun putEditorId(document: Document, editor: EditorImpl) {
-  if (isRhizomeAdRebornEnabled) {
-    editor.putUserData(KERNEL_EDITOR_ID_KEY, document.removeUserData(KERNEL_EDITOR_ID_KEY))
-  }
-  else {
-    editor.putEditorId()
-  }
 }
 
 private fun markLightFileExposedInEditor(kind: EditorKind, file: VirtualFile?) {

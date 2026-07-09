@@ -705,9 +705,6 @@
                     interface="com.intellij.execution.process.CommandLineEnvCustomizer"
                     dynamic="true"/>
 
-    <extensionPoint name="adEntityProvider"
-                    interface="com.intellij.openapi.editor.impl.ad.document.AdEntityProvider"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.editor.rd.localSupport" dynamic="true"
                     beanClass="com.intellij.openapi.editor.rd.LocalEditorSupportBean"/>
     <extensionPoint name="usagePresentationProvider"

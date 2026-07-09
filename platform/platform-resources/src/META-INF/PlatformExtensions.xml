@@ -2249,12 +2249,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
               topic="com.intellij.openapi.application.ApplicationActivationListener"
               activeInTestMode="false" activeInHeadlessMode="false"/>
 
-    <listener class="com.intellij.openapi.editor.impl.ad.document.AdDocumentManagerImpl$AdFileDocumentBindingListener"
-              topic="com.intellij.openapi.fileEditor.impl.FileDocumentBindingListener" />
-
-    <listener class="com.intellij.openapi.editor.impl.ad.markup.AdDocumentMarkupManagerImpl$AdDocumentMarkupListener"
-              topic="com.intellij.openapi.editor.impl.DocumentMarkupListener" />
-
     <listener class="com.intellij.ide.file.XdgTrashBinPreloader" topic="com.intellij.ide.AppLifecycleListener"
               os="unix" activeInTestMode="false" activeInHeadlessMode="false"/>
 

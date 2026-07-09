@@ -35,7 +35,6 @@ public final class LogicalPositionCache implements PrioritizedDocumentListener, 
   // will be visible for reads (happening under read action)
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private boolean myUpdateInProgress;
-  private long myDocumentStamp = Long.MIN_VALUE;
 
   LogicalPositionCache(EditorView view) {
     myView = view;
@@ -50,14 +49,12 @@ public final class LogicalPositionCache implements PrioritizedDocumentListener, 
 
   @Override
   public void beforeDocumentChange(@NotNull DocumentEvent event) {
-    assert !myView.isAd();
     myUpdateInProgress = true;
     myDocumentChangeOldEndLine = getAdjustedLineNumber(event.getOffset() + event.getOldLength());
   }
 
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
-    assert !myView.isAd();
     try {
       int startLine = myDocument.getLineNumber(event.getOffset());
       int newEndLine = getAdjustedLineNumber(event.getOffset() + event.getNewLength());
@@ -87,7 +84,6 @@ public final class LogicalPositionCache implements PrioritizedDocumentListener, 
   }
 
   synchronized @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
-    resetIfOutdated();
     if (myUpdateInProgress) throw new IllegalStateException();
     int textLength = myDocument.getTextLength();
     if (offset <= 0 || textLength == 0) {
@@ -100,7 +96,6 @@ public final class LogicalPositionCache implements PrioritizedDocumentListener, 
   }
 
   synchronized int offsetToLogicalColumn(int line, int intraLineOffset) {
-    resetIfOutdated();
     if (myUpdateInProgress) throw new IllegalStateException();
     if (line < 0 || line >= myDocument.getLineCount()) return 0;
     LineData lineData = getLineInfo(line);
@@ -108,7 +103,6 @@ public final class LogicalPositionCache implements PrioritizedDocumentListener, 
   }
 
   synchronized int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    resetIfOutdated();
     int line = pos.line;
     int column = pos.column;
     if (line >= myDocument.getLineCount()) return myDocument.getTextLength();
@@ -225,13 +219,6 @@ public final class LogicalPositionCache implements PrioritizedDocumentListener, 
     }
     catch (Exception e) {
       return "invalid (" + e.getMessage() + ")";
-    }
-  }
-
-  private void resetIfOutdated() {
-    if (myView.isAd() && myDocumentStamp != myDocument.getModificationStamp()) {
-      reset(true);
-      myDocumentStamp = myDocument.getModificationStamp();
     }
   }
 

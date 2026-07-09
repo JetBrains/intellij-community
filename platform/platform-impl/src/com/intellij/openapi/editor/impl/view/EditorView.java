@@ -154,12 +154,12 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   public @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
-    assertEditorAccessible();
+    EditorThreading.assertInteractionAllowed();
     return myMapper.offsetToLogicalPosition(offset);
   }
 
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    assertEditorAccessible();
+    EditorThreading.assertInteractionAllowed();
     return myMapper.logicalPositionToOffset(pos);
   }
 
@@ -615,10 +615,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return myPrefixAttributes;
   }
 
-  boolean isAd() {
-    return myEditorModel.isAd();
-  }
-
   EditorImpl getEditor() {
     return myEditor;
   }
@@ -837,12 +833,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       invalidateFoldRegionLayouts();
       myCharWidthCache.clear();
       getFoldingModel().updateCachedOffsets();
-    }
-  }
-
-  private void assertEditorAccessible() {
-    if (!myEditorModel.isAd()) {
-      EditorThreading.assertInteractionAllowed();
     }
   }
 

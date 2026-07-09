@@ -39,8 +39,6 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.impl.ad.isRhizomeAdRebornEnabled
-import com.intellij.openapi.editor.impl.ad.util.ThreadLocalRhizomeDB
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher
@@ -1113,8 +1111,6 @@ internal fun performActivity(e: AWTEvent, runnable: () -> Unit) {
     }
   }
 
-  setImplicitThreadLocalRhizomeIfEnabled()
-
   if (transactionGuard == null) {
     runnable()
   }
@@ -1384,19 +1380,6 @@ private fun abracadabraDaberBoreh(eventQueue: IdeEventQueue) {
     .findConstructor(aClass, MethodType.methodType(Void.TYPE, EventQueue::class.java))
   val postEventQueue = constructor.invoke(eventQueue)
   AppContext.getAppContext().put("PostEventQueue", postEventQueue)
-}
-
-private fun setImplicitThreadLocalRhizomeIfEnabled() {
-  if (isRhizomeAdRebornEnabled) {
-    // It is a workaround on tricky `updateDbInTheEventDispatchThread()` where
-    // the thread local DB is reset by `fleet.kernel.DbSource.ContextElement.restoreThreadContext`
-    try {
-      ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
-    }
-    catch (e: Exception) {
-      Logs.LOG.error(e)
-    }
-  }
 }
 
 /**

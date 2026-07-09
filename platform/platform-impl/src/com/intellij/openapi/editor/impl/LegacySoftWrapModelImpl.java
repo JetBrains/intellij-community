@@ -236,7 +236,6 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
       storage.removeAll();
       mySoftWrapNotifier.notifySoftWrapsChanged();
       editor.myView.reinitSettings();
-      if (editor.myAdView != null) editor.myView.reinitSettings();
       if (AsyncEditorLoader.isEditorLoaded(editor)) {
         editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
       }

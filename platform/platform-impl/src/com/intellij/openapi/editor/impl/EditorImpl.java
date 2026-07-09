@@ -121,7 +121,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
-import com.intellij.openapi.editor.impl.ad.AdTheManager;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModel;
@@ -521,10 +520,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public final boolean myDisableRtl = Registry.is("editor.disable.rtl");
 
   private final EditorModel myEditorModel;
-  private final @Nullable EditorModel myAdEditorModel;
-
   final EditorView myView;
-  final @Nullable EditorView myAdView;
 
   private final TextDrawingCallback myTextDrawingCallback;
 
@@ -683,15 +679,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.register(myDisposable, myFocusModeModel);
 
     myEditorModel = new EditorModelImpl(this);
-    myAdEditorModel = AdTheManager.getInstance().getEditorModel(this);
 
     myView = new EditorView(this, myEditorModel);
-    myAdView = myAdEditorModel == null ? null : new EditorView(this, myAdEditorModel);
 
     myTextDrawingCallback = new EditorTextDrawingCallback(myView);
 
     myView.reinitSettings();
-    if (myAdView != null) myAdView.reinitSettings();
 
     if (LOG.isDebugEnabled()) {
       float scaledEditorFontSize = UISettingsUtils.getInstance().getScaledEditorFontSize();
@@ -717,10 +710,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.register(myDisposable, myScrollingPositionKeeper);
 
     addListeners();
-
-    if (myAdEditorModel != null) {
-      AdTheManager.getInstance().bindEditor(this);
-    }
   }
 
   private void addListeners() {
@@ -1068,9 +1057,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int endLine = document.getLineNumber(end);
         if (start != end && (newChange.fontStyleChanged() || newChange.foregroundColorChanged())) {
           myView.invalidateRange(start, end, newChange.fontStyleChanged());
-          if (myAdView != null) {
-            myAdView.invalidateRange(start, end, newChange.fontStyleChanged());
-          }
         }
         if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of the batch folding operation everything is repainted
           repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
@@ -1189,7 +1175,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     EditorThreading.run(() -> {
       mySoftWrapModel.recalculate();
       myView.setPrefix(prefixText, attributes);
-      if (myAdView != null) myAdView.setPrefix(prefixText, attributes);
     });
   }
 
@@ -1401,7 +1386,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public void resetSizes() {
     myView.reset();
-    if (myAdView != null) myAdView.reset();
   }
 
   @Override
@@ -1443,7 +1427,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     caretRepaintService.restart();
 
     myView.reinitSettings();
-    if (myAdView != null) myAdView.reinitSettings();
     myFoldingModel.refreshSettings();
     myFoldingModel.rebuild();
     myInlayModel.reinitSettings();
@@ -1525,10 +1508,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Disposer.dispose(myCaretModel);
       Disposer.dispose(mySoftWrapModel);
       Disposer.dispose(myView);
-      if (myAdView != null) {
-        Disposer.dispose(myAdView);
-        Disposer.dispose(myAdEditorModel);
-      }
       clearCaretThread();
       caretMoveProcessor.clear();
 
@@ -2045,16 +2024,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int logicalToVisualLine(int logicalLine) {
     return logicalLine < getEditorModel().getDocument().getLineCount()
            ? offsetToVisualLine(getEditorModel().getDocument().getLineStartOffset(logicalLine))
-           : myAdView == null
-             ? logicalToVisualPosition(new LogicalPosition(logicalLine, 0)).line
-             : myAdView.logicalToVisualPosition(new LogicalPosition(logicalLine, 0), false).line;
+           : logicalToVisualPosition(new LogicalPosition(logicalLine, 0)).line;
   }
 
   int logicalLineToY(int line) {
     int visualLine = logicalToVisualLine(line);
-    return myAdView == null
-            ? visualLineToY(visualLine)
-            : myAdView.visualLineToY(visualLine);
+    return visualLineToY(visualLine);
   }
 
   @Override
@@ -2129,7 +2104,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (invalidateTextLayout) {
       myView.invalidateRange(startOffset, minEndOffset, true);
-      if (myAdView != null) myAdView.invalidateRange(startOffset, minEndOffset, true);
     }
 
     if (!isShowing()) {
@@ -2146,15 +2120,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // We do repaint in case of equal offsets. There is a possible case that there is a soft wrap at the same offset,
     // and it does occupy a particular amount of visual space that may be necessary to repaint.
     if (startOffset <= minEndOffset) {
-      int startLine; int endLine;
-      if (myAdView != null) {
-        startLine = myAdView.offsetToVisualLine(startOffset, false);
-        endLine = myAdView.offsetToVisualLine(minEndOffset, true);
-      }
-      else {
-        startLine = myView.offsetToVisualLine(startOffset, false);
-        endLine = myView.offsetToVisualLine(minEndOffset, true);
-      }
+      int startLine = myView.offsetToVisualLine(startOffset, false);
+      int endLine = myView.offsetToVisualLine(minEndOffset, true);
       doRepaint(startLine, endLine);
     }
   }
@@ -2203,15 +2170,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    */
   private void doRepaint(int startVisualLine, int endVisualLine) {
     Rectangle visibleArea = getScrollingModel().getVisibleArea();
-    int yStart; int height;
-    if (myAdView != null) {
-      yStart = myAdView.visualLineToY(startVisualLine);
-      height = myAdView.visualLineToYRange(endVisualLine)[1] + 2 - yStart;
-    }
-    else {
-      yStart = visualLineToY(startVisualLine);
-      height = visualLineToYRange(endVisualLine)[1] + 2 - yStart;
-    }
+    int yStart = visualLineToY(startVisualLine);
+    int height = visualLineToYRange(endVisualLine)[1] + 2 - yStart;
     myEditorComponent.repaintEditorComponent(visibleArea.x, yStart, visibleArea.x + visibleArea.width, height);
     myGutterComponent.repaint(0, yStart, myGutterComponent.getWidth(), height);
     if (myStickyLinesManager != null) {
@@ -2223,7 +2183,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myInlayModel.isInBatchMode()) LOG.error("Document bulk mode shouldn't be started from batch inlay operation");
 
     myView.getPreferredSize(); // make sure size is calculated (in case it will be required while bulk mode is active)
-    if (myAdView != null) myAdView.getPreferredSize();
 
     myScrollingModel.onBulkDocumentUpdateStarted();
 
@@ -2620,12 +2579,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    if (myAdView != null) {
-      myAdView.paint(g);
-    }
-    else {
-      myView.paint(g);
-    }
+    myView.paint(g);
 
     boolean isBackgroundImageSet = IdeBackgroundUtil.isEditorBackgroundImageSet(myProject);
     if (myBackgroundImageSet != isBackgroundImageSet) {
@@ -6091,9 +6045,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @ApiStatus.Experimental
   @ApiStatus.Internal
   public @NotNull EditorModel getEditorModel() {
-    if (myAdEditorModel != null) {
-      return myAdEditorModel;
-    }
     return myEditorModel;
   }
 
