@@ -6,6 +6,7 @@ import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -80,6 +81,7 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
     @JvmStatic
     fun isEnabled(project: Project, executable: GitExecutable): Boolean =
       (Registry.`is`("git.commit.gpg.signing.enable.embedded.pinentry", false) || application.isUnitTestMode)
+      && TrustedProjects.isProjectTrusted(project)
       && (isRemDevOrWsl(executable) || isLocalUnix(executable))
       && signingIsEnabledInAnyRepo(project)
 
@@ -223,6 +225,9 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
     existingConfig: GpgAgentConfig?,
     pinentryFallback: String,
   ) {
+    if (!TrustedProjects.isProjectTrusted(project)) {
+      LOG.warn("Cannot configure ${gpgAgentPaths.gpgAgentConf} in safe mode")
+    }
     val gpgAgentConfPath = gpgAgentPaths.gpgAgentConf
     generatePinentryLauncher(gitExecutable, gpgAgentPaths, pinentryFallback)
     var backupCreated = false
@@ -286,6 +291,9 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
   }
 
   private suspend fun writeAgentConfig(config: GpgAgentConfig) = withContext(Dispatchers.IO) {
+    if (!TrustedProjects.isProjectTrusted(project)) {
+      throw IOException("Cannot change config ${config.path} in safe mode")
+    }
     try {
       config.writeToFile()
     }
@@ -296,6 +304,9 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
   }
 
   private suspend fun restartAgent(executor: GitExecutable) {
+    if (!TrustedProjects.isProjectTrusted(project)) {
+      throw IOException("Cannot restart Gpg Agent in safe mode")
+    }
     try {
       val output = withContext(Dispatchers.IO) {
         createGpgAgentExecutor(executor).execute("gpg-connect-agent", "reloadagent", "/bye")
