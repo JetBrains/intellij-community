@@ -33,4 +33,9 @@ interface TerminalToolWindowTab {
    * Whether to close the tool window tab when the process terminates on its own.
    */
   val closeOnProcessTermination: Boolean
+
+  /**
+   * Terminal process startup options that were specified in the [TerminalToolWindowTabBuilder].
+   */
+  val processOptions: TerminalRequestedProcessOptions
 }

@@ -28,7 +28,7 @@ internal class TerminalInEditorSupport : ToolWindowInEditorSupport {
     editorWindow: EditorWindow,
   ) {
     tab.content.putUserData(TAB_DETACHED_KEY, Unit)
-    val file = TerminalViewVirtualFile(tab.view, tab.closeOnProcessTermination)
+    val file = TerminalViewVirtualFile(tab.view, tab.closeOnProcessTermination, tab.processOptions)
 
     file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, true)
     try {

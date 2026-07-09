@@ -3,7 +3,6 @@ package com.intellij.terminal.frontend.toolwindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager.Companion.getInstance
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
@@ -61,6 +60,7 @@ interface TerminalToolWindowTabsManager {
     view: TerminalView,
     contentManager: ContentManager?,
     closeOnProcessTermination: Boolean,
+    processOptions: TerminalRequestedProcessOptions,
   ): TerminalToolWindowTab
 
   @Deprecated("Use TerminalTabsManagerListener.TOPIC instead")

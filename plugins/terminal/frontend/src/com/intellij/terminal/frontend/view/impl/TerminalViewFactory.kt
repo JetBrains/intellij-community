@@ -6,7 +6,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.session.TerminalSessionsManager
-import com.intellij.terminal.frontend.toolwindow.impl.TerminalRequestedProcessOptions
+import com.intellij.terminal.frontend.toolwindow.TerminalRequestedProcessOptions
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.portForwarding.installPortForwarding
 import com.intellij.util.ui.initOnShow

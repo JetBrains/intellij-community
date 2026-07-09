@@ -20,6 +20,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.action.TerminalAgentsAvailabilityService
 import com.intellij.terminal.frontend.action.TerminalRenameTabAction
 import com.intellij.terminal.frontend.fus.TerminalFocusFusService
+import com.intellij.terminal.frontend.toolwindow.TerminalRequestedProcessOptions
 import com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabBuilder
@@ -115,8 +116,13 @@ internal class TerminalToolWindowTabsManagerImpl(
     return tab.view
   }
 
-  override fun attachTab(view: TerminalView, contentManager: ContentManager?, closeOnProcessTermination: Boolean): TerminalToolWindowTab {
-    val tab = doCreateTab(view, closeOnProcessTermination)
+  override fun attachTab(
+    view: TerminalView,
+    contentManager: ContentManager?,
+    closeOnProcessTermination: Boolean,
+    processOptions: TerminalRequestedProcessOptions,
+  ): TerminalToolWindowTab {
+    val tab = doCreateTab(view, closeOnProcessTermination, processOptions)
     addToTabsList(tab)
     addTabToToolWindow(tab, contentManager, true)
     return tab
@@ -148,7 +154,11 @@ internal class TerminalToolWindowTabsManagerImpl(
     val terminal = createTerminalViewAndStartSession(builder)
     project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).terminalViewCreated(terminal)
 
-    val tab = doCreateTab(terminal, builder.closeOnProcessTermination)
+    val tab = doCreateTab(
+      terminal = terminal,
+      closeOnProcessTermination = builder.closeOnProcessTermination,
+      processOptions = builder.getRequestedProcessOptions()
+    )
     addToTabsList(tab)
     if (builder.shouldAddToToolWindow) {
       addTabToToolWindow(tab, builder.contentManager, builder.requestFocus)
@@ -162,7 +172,11 @@ internal class TerminalToolWindowTabsManagerImpl(
   }
 
   @OptIn(AwaitCancellationAndInvoke::class)
-  private fun doCreateTab(terminal: TerminalView, closeOnProcessTermination: Boolean): TerminalToolWindowTab {
+  private fun doCreateTab(
+    terminal: TerminalView,
+    closeOnProcessTermination: Boolean,
+    processOptions: TerminalRequestedProcessOptions,
+  ): TerminalToolWindowTab {
     val panel = TerminalToolWindowPanel()
     panel.setContent(terminal.component)
     val content = ContentFactory.getInstance().createContent(panel, null, false)
@@ -211,7 +225,7 @@ internal class TerminalToolWindowTabsManagerImpl(
       manager.removeContent(content, true)
     }
 
-    return TerminalToolWindowTabImpl(terminal, content, closeOnProcessTermination)
+    return TerminalToolWindowTabImpl(terminal, content, closeOnProcessTermination, processOptions)
   }
 
   private fun addTabToToolWindow(
@@ -245,14 +259,8 @@ internal class TerminalToolWindowTabsManagerImpl(
   }
 
   private fun createTerminalViewAndStartSession(builder: TerminalToolWindowTabBuilderImpl): TerminalView {
-    val processOptions = TerminalRequestedProcessOptions(
-      shellCommand = builder.shellCommand,
-      workingDirectory = builder.workingDirectory,
-      envVariables = builder.envVariables,
-      processType = builder.processType,
-    )
     val viewOptions = TerminalViewBuilderOptions(
-      processOptions = processOptions,
+      processOptions = builder.getRequestedProcessOptions(),
       deferSessionStartUntilUiShown = builder.deferSessionStartUntilUiShown,
       sourceNavigationProjectPath = builder.sourceNavigationProjectPath,
       startupFusInfo = builder.startupFusInfo,
@@ -445,6 +453,15 @@ internal class TerminalToolWindowTabsManagerImpl(
 
     override fun createTab(): TerminalToolWindowTab {
       return createTab(this)
+    }
+
+    fun getRequestedProcessOptions(): TerminalRequestedProcessOptions {
+      return TerminalRequestedProcessOptionsImpl(
+        shellCommand = shellCommand,
+        workingDirectory = workingDirectory,
+        envVariables = envVariables,
+        processType = processType,
+      )
     }
   }
 
