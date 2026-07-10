@@ -525,7 +525,8 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
         throw UnsupportedOperationException("Unsupported file attribute view $attributes")
       }
     }
-    return rawMap.filterKeys { requestedAttributes.contains(it) }
+    // "*" means every attribute of the view, per Files.readAttributes(Path, String) semantics.
+    return if ("*" in requestedAttributes) rawMap else rawMap.filterKeys { it in requestedAttributes }
   }
 
   private fun parseAttributesParameter(parameter: String): Pair<String, List<String>> {
