@@ -2,6 +2,7 @@ package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.options.OptPane
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
@@ -16,17 +17,34 @@ import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.types.PyClassLikeType
+import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyClassTypeImpl
 import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyType
-import com.jetbrains.python.psi.types.PyTypeUtil.isOverlappingWith
+import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
+import com.jetbrains.python.psi.types.PyTypeUtil.isSubtypeRelated
+import com.jetbrains.python.psi.types.PyTypedDictType
+import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyInvalidCastInspection : PyInspection() {
+  @JvmField
+  var ignoreGenericVariance: Boolean = true
+
+  @JvmField
+  var ignoreTypedDictStructure: Boolean = true
+
+  override fun getOptionsPane(): OptPane {
+    return OptPane.pane(
+      OptPane.checkbox("ignoreGenericVariance", PyPsiBundle.message("INSP.invalid.cast.ignore.generic.variance")),
+      OptPane.checkbox("ignoreTypedDictStructure", PyPsiBundle.message("INSP.invalid.cast.ignore.typed.dict.structure"))
+    )
+  }
+
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val context = PyInspectionVisitor.getContext(session)
-    if (context.usesExternalTypeEngine) {
-      return PsiElementVisitor.EMPTY_VISITOR
-    }
+    val ignoreGenericVariance = ignoreGenericVariance
+    val ignoreTypedDictStructure = ignoreTypedDictStructure
     return object : PyInspectionVisitor(holder, context) {
       override fun visitPyCallExpression(callExpression: PyCallExpression) {
         val callees = callExpression.multiResolveCalleeFunction(resolveContext)
@@ -39,10 +57,29 @@ class PyInvalidCastInspection : PyInspection() {
         val args = callExpression.getArguments()
         if (args.size != 2) return
         val targetTypeRef = PyTypingTypeProvider.getType(args[0], myTypeEvalContext)
-        val targetType = Ref.deref(targetTypeRef)
+        val targetType = targetTypeRef.derefOrUnknown()
         val actualType = myTypeEvalContext.getType(args[1])
 
-        if (targetType.isOverlappingWith(actualType, myTypeEvalContext)) return
+        if (targetType.isSubtypeRelated(actualType, myTypeEvalContext)) return
+
+        // Relax the subtype-relation check according to the enabled options:
+        //  - ignoring generic variance erases generic type arguments, so e.g. casting 'list[int]' to 'list[object]'
+        //    is treated as subtype-related;
+        //  - ignoring TypedDict structure treats a TypedDict as a plain 'dict', so e.g. a 'dict[str, object]' may be
+        //    cast to a TypedDict.
+        if (ignoreGenericVariance || ignoreTypedDictStructure) {
+          var relaxedTarget = targetType
+          var relaxedActual = actualType
+          if (ignoreGenericVariance) {
+            relaxedTarget = relaxedTarget.eraseGenericParameters()
+            relaxedActual = relaxedActual.eraseGenericParameters()
+          }
+          if (ignoreTypedDictStructure) {
+            relaxedTarget = relaxedTarget.eraseTypedDictStructure()
+            relaxedActual = relaxedActual.eraseTypedDictStructure()
+          }
+          if (relaxedTarget.isSubtypeRelated(relaxedActual, myTypeEvalContext)) return
+        }
         val fromName = PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)
         val toName = PythonDocumentationProvider.getVerboseTypeName(targetType, myTypeEvalContext)
 
@@ -81,11 +118,33 @@ private class AddIntermediateCastQuickFix(private val typeText: String) : PsiUpd
   }
 }
 
+/**
+ * Erases generic type arguments so that parameterized types are compared by their base class only,
+ * making the subtype-relation check insensitive to the variance of generic parameters
+ * (e.g. `list[int]` becomes plain `list`). Union members are erased element-wise.
+ */
+private fun PyType?.eraseGenericParameters(): PyType? = when (this) {
+  is PyUnionType -> this.map { it.eraseGenericParameters() }
+  is PyCollectionType -> PyClassTypeImpl(this.pyClass, this.isDefinition)
+  else -> this
+}
+
+/**
+ * Replaces TypedDict types with their underlying `dict` class, so that the subtype-relation check ignores the structural
+ * details of a TypedDict and treats it as a plain dictionary (e.g. a `dict[str, object]` may be cast to a TypedDict).
+ * Union members are erased element-wise.
+ */
+private fun PyType?.eraseTypedDictStructure(): PyType? = when (this) {
+  is PyUnionType -> this.map { it.eraseTypedDictStructure() }
+  is PyTypedDictType -> PyClassTypeImpl(this.pyClass, this.isDefinition)
+  else -> this
+}
+
 private fun computeSuggestedIntermediateTypeName(targetType: PyType?, actualType: PyType?, context: TypeEvalContext): String {
   val objectName = "object"
 
   fun toNonCollectionClassLike(t: PyType?): PyClassLikeType? = when (t) {
-    is PyCollectionType -> null // avoid suggesting collection classes like 'list' as an intermediate type
+    is PyClassType if t.isParameterized -> null // avoid suggesting collection classes like 'list' as an intermediate type
     is PyClassLikeType -> t
     else -> null
   }

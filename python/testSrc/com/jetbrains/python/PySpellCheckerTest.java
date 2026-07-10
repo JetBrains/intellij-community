@@ -1,11 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
 
+@Subsystems.IDE
+@Layers.Functional
 public class PySpellCheckerTest extends PyTestCase {
   public void testPlainTextSplitter() {
     doTest();

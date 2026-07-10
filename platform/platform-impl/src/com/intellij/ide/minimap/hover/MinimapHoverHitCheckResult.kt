@@ -8,7 +8,7 @@ import javax.swing.Icon
 data class MinimapHoverHitCheckResult(
   val entry: MinimapRenderEntry,
   val rect: Rectangle,
-  val text: String?,
+  val text: String,
   val icon: Icon?,
   val declarationWidth: Int,
 )

@@ -5,7 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.lang.Language
 import com.jetbrains.python.PythonLanguage
-import com.jetbrains.python.documentation.doctest.PyDocstringLanguageDialect
+import com.jetbrains.python.documentation.doctest.PyDoctestLanguageDialect
 import org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider
 import java.util.Locale
 
@@ -20,7 +20,7 @@ import java.util.Locale
 internal class PyCodeFenceLanguageProvider : CodeFenceLanguageProvider {
   override fun getLanguageByInfoString(infoString: String): Language? =
     when (infoString.lowercase(Locale.getDefault())) {
-      "pycon", "python-repl" -> PyDocstringLanguageDialect.getInstance()
+      "pycon", "python-repl" -> PyDoctestLanguageDialect.getInstance()
       "py", "python3" -> PythonLanguage.INSTANCE
       else -> null
     }
@@ -29,7 +29,7 @@ internal class PyCodeFenceLanguageProvider : CodeFenceLanguageProvider {
     return listOf(
       LookupElementBuilder
         .create("pycon")
-        .withIcon(PyDocstringLanguageDialect.getInstance().associatedFileType?.icon)
+        .withIcon(PyDoctestLanguageDialect.getInstance().associatedFileType?.icon)
         .withTypeText("Python console"),
     )
   }

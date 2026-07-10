@@ -1,6 +1,6 @@
 package<EOLError descr="Package name must be a '.'-separated identifier list placed on a single line"></EOLError>
 
-<error descr="[FUNCTION_DECLARATION_WITH_NO_NAME] Function declaration must have a name">fun ()</error> {
+<error descr="[FUNCTION_DECLARATION_WITH_NO_NAME]">fun ()</error> {
 
 }
 

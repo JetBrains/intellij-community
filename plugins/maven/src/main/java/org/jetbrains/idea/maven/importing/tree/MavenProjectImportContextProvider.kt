@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.tree
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.util.JDOMUtil
@@ -12,9 +11,9 @@ import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId.Companion.
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId.Companion.SOURCES
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.text.nullize
 import org.jdom.Element
 import org.jetbrains.idea.maven.buildtool.MavenSyncSession
-import org.jetbrains.idea.maven.importing.getDependencyTypesFromImporters
 import org.jetbrains.idea.maven.importing.MavenImportUtil.MAIN_SUFFIX
 import org.jetbrains.idea.maven.importing.MavenImportUtil.TEST_SUFFIX
 import org.jetbrains.idea.maven.importing.MavenImportUtil.adjustLevelAndNotify
@@ -29,7 +28,13 @@ import org.jetbrains.idea.maven.importing.MavenImportUtil.isCompileExecution
 import org.jetbrains.idea.maven.importing.MavenImportUtil.isTestCompileExecution
 import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil.selectScope
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
-import org.jetbrains.idea.maven.importing.tree.dependency.*
+import org.jetbrains.idea.maven.importing.getDependencyTypesFromImporters
+import org.jetbrains.idea.maven.importing.tree.dependency.AttachedJarDependency
+import org.jetbrains.idea.maven.importing.tree.dependency.BaseDependency
+import org.jetbrains.idea.maven.importing.tree.dependency.LibraryDependency
+import org.jetbrains.idea.maven.importing.tree.dependency.MavenImportDependency
+import org.jetbrains.idea.maven.importing.tree.dependency.ModuleDependency
+import org.jetbrains.idea.maven.importing.tree.dependency.SystemDependency
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter.Companion.JAVADOC_TYPE
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenConstants
@@ -39,10 +44,11 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectModifications
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.project.SupportedRequestType
-import org.jetbrains.idea.maven.toolchains.*
+import org.jetbrains.idea.maven.toolchains.ToolchainFinder
+import org.jetbrains.idea.maven.toolchains.ToolchainResolverSession
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.util.*
+import java.util.TreeMap
 import java.util.function.Function
 
 private const val INITIAL_CAPACITY_TEST_DEPENDENCY_LIST: Int = 4
@@ -51,12 +57,12 @@ private val IMPORTED_CLASSIFIERS = setOf("client")
 internal class MavenProjectImportContextProvider(
   private val dependencyTypes: Set<String>,
   private val myMavenProjectToModuleName: Map<MavenProject, String>,
-  private val syncSession: MavenSyncSession
+  private val syncSession: MavenSyncSession,
 ) {
   private val myProject: Project = syncSession.project
   private val myProjectsTree: MavenProjectsTree = syncSession.projectsTree
   private val myToolchainSession = ToolchainResolverSession.forSession(syncSession)
-  private val toolchainFinder =ToolchainFinder()
+  private val toolchainFinder = ToolchainFinder()
   suspend fun getAllModules(projectsWithChanges: Map<MavenProject, MavenProjectModifications>): List<MavenTreeModuleImportData> {
     val allModules: MutableList<MavenProjectImportData> = ArrayList<MavenProjectImportData>()
     val moduleImportDataByMavenId: MutableMap<MavenId, MavenProjectImportData> = TreeMap<MavenId, MavenProjectImportData>(
@@ -162,7 +168,9 @@ internal class MavenProjectImportContextProvider(
 
     val scope = selectScope(artifact.scope)
 
-    val depProject = myProjectsTree.findProject(artifact.mavenId)
+    val mavenIdDep = MavenId(artifact.mavenId.groupId, artifact.mavenId.artifactId, artifact.baseVersion.nullize() ?: artifact.version)
+
+    val depProject = myProjectsTree.findProject(mavenIdDep)
 
     if (depProject != null) {
       MavenLog.LOG.trace("Dependency project $depProject")

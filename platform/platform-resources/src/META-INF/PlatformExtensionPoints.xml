@@ -109,6 +109,8 @@
                     area="IDEA_PROJECT"
                     dynamic="true"/>
 
+    <extensionPoint name="nonModalSettingsPolicy" interface="com.intellij.openapi.options.NonModalSettingsPolicy" dynamic="true"/>
+
     <extensionPoint name="undoProvider" interface="com.intellij.openapi.command.impl.UndoProvider" dynamic="true"/>
     <extensionPoint name="projectUndoProvider" interface="com.intellij.openapi.command.impl.UndoProvider"
                     area="IDEA_PROJECT" dynamic="true"/>
@@ -703,9 +705,6 @@
                     interface="com.intellij.execution.process.CommandLineEnvCustomizer"
                     dynamic="true"/>
 
-    <extensionPoint name="adEntityProvider"
-                    interface="com.intellij.openapi.editor.impl.ad.document.AdEntityProvider"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.editor.rd.localSupport" dynamic="true"
                     beanClass="com.intellij.openapi.editor.rd.LocalEditorSupportBean"/>
     <extensionPoint name="usagePresentationProvider"
@@ -713,6 +712,9 @@
                     dynamic="true"/>
     <extensionPoint name="uiPluginManagerController"
                     interface="com.intellij.ide.plugins.newui.UiPluginManagerController"
+                    dynamic="true"/>
+    <extensionPoint name="pluginUpdatesProvider"
+                    interface="com.intellij.ide.plugins.newui.PluginUpdatesProvider"
                     dynamic="true"/>
     <extensionPoint name="pluginManagerCustomizer"
                     interface="com.intellij.ide.plugins.newui.PluginManagerCustomizer"

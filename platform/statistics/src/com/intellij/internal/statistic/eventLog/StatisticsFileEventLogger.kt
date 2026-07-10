@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.concurrency.resetThreadContext
@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataV
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -62,6 +63,7 @@ open class StatisticsFileEventLogger(
           return@Runnable
         }
         val data = dataProvider() ?: return@Runnable
+        val eventData = HashMap(data).also { it.remove(FeatureUsageData.JCP_DATA_KEY) }
         val event = LogEvent(
           session = sessionId,
           build = build,
@@ -69,7 +71,7 @@ open class StatisticsFileEventLogger(
           time = eventTime,
           group = LogEventGroup(group.id, group.version.toString()),
           recorderVersion = recorderVersion,
-          event = LogEventAction(eventId, isState, HashMap(data)),
+          event = LogEventAction(eventId, isState, eventData),
         )
           .also { if (escapeCharsInData) it.escape() else it.escapeExceptData() }
         val validatedEvent = validator.validateEvent(event)
@@ -105,10 +107,12 @@ open class StatisticsFileEventLogger(
     }
     else {
       logLastEvent()
-      lastEvent =
-        if (StatisticsRecorderUtil.isTestModeEnabled(recorderId))
-          FusEvent(event, rawEventId, rawData)
-        else FusEvent(event, null, null)
+      val keepRawData = StatisticsRecorderUtil.isTestModeEnabled(recorderId) ||
+                        service<EventLogListenersManager>().hasJcpListener(recorderId)
+      lastEvent = if (keepRawData)
+        FusEvent(event, rawEventId, rawData)
+      else
+        FusEvent(event, null, null)
       lastEventTime = event.time
       lastEventCreatedTime = createdTime
     }
@@ -168,7 +172,12 @@ open class StatisticsFileEventLogger(
 
   override fun dispose() {
     lastEventFlushFuture?.cancel(false)
-    flush()
+    try {
+      flush().get(1, TimeUnit.SECONDS)
+    }
+    catch (_: Exception) {
+      // executor may already be shut down, interrupted, or timed out; last event is lost in that case
+    }
     logExecutor.shutdown()
     Disposer.dispose(writer)
   }

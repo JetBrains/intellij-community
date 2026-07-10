@@ -142,6 +142,25 @@ internal class BasicPolySymbolScope(
       }
     }
 
+  override fun equals(other: Any?): Boolean =
+    other === this || other is BasicPolySymbolScope
+    && other.providesKinds == providesKinds
+    && other.requiresResolveValue == requiresResolveValue
+    && other.exclusiveForKinds == exclusiveForKinds
+    && other.exclusiveForPredicate == exclusiveForPredicate
+    && other.codeCompletionFilter == codeCompletionFilter
+    && other.nameMatchFilter == nameMatchFilter
+
+  override fun hashCode(): Int {
+    val result = providesKinds.hashCode()
+    result * 31 + requiresResolveValue.hashCode()
+    result * 31 + exclusiveForKinds.hashCode()
+    result * 31 + exclusiveForPredicate.hashCode()
+    result * 31 + codeCompletionFilter.hashCode()
+    result * 31 + nameMatchFilter.hashCode()
+    return result
+  }
+
   private class BasicSearchMap(namesProvider: PolySymbolNamesProvider) : SearchMap<PolySymbol>(namesProvider) {
     override fun Sequence<PolySymbol>.mapAndFilter(params: PolySymbolQueryParams): Sequence<PolySymbol> = this
 

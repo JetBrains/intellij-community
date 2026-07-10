@@ -1,0 +1,13 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="com.jetbrains.performancePlugin"/>
+    <module name="intellij.platform.problemView.shared"/>
+    <module name="intellij.platform.problemView.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.jetbrains.performancePlugin">
+    <commandProvider implementation="com.intellij.performanceTesting.problemsView.ProblemsViewCommandProvider"/>
+  </extensions>
+</idea-plugin>

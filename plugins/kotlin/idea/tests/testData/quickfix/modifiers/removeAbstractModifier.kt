@@ -1,6 +1,6 @@
 // "Make 'abstract()' not abstract" "true"
-// K2_ERROR: Modifier 'abstract' is not applicable to 'constructor'.
-// K2_ERROR: Use the 'constructor' keyword after the modifiers of the primary constructor.
+// K2_ERROR: MISSING_CONSTRUCTOR_KEYWORD
+// K2_ERROR: WRONG_MODIFIER_TARGET
 
 class A <caret>abstract() {
 

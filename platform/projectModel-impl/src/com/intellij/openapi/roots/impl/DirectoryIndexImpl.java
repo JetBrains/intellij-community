@@ -29,6 +29,7 @@ import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridges;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -125,7 +126,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   }
 
   @Override
-  public @NotNull List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir) {
+  public @NotNull @Unmodifiable List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir) {
     checkAvailability();
     if (myProject.isDefault()) return Collections.emptyList();
     WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(fileOrDir, true, true, true, true, true, true, false);
@@ -135,7 +136,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   }
 
   @Override
-  public @NotNull Set<String> getDependentUnloadedModules(@NotNull Module module) {
+  public @NotNull @Unmodifiable Set<String> getDependentUnloadedModules(@NotNull Module module) {
     checkAvailability();
     if (Registry.is("use.wsm.for.dependent.unloaded.modules", true)) {
       ModuleEntity moduleEntity = ModuleBridges.findModuleEntity(module, WorkspaceModel.getInstance(myProject).getCurrentSnapshot());

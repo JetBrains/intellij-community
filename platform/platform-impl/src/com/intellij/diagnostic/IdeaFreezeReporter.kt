@@ -14,6 +14,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -22,7 +23,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.fs.EelFiles
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.SmartList
-import com.intellij.util.application
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -39,9 +39,12 @@ import java.nio.file.Path
 import java.util.Collections
 import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.name
 
 private val FREEZE_NOTIFIER_EP: ExtensionPointName<FreezeNotifier> = ExtensionPointName("com.intellij.diagnostic.freezeNotifier")
 private val FREEZE_ANALYSIS_EP: ExtensionPointName<FreezeAnalysis> = ExtensionPointName("com.intellij.diagnostic.freezeAnalysis")
+
+private val LOG = fileLogger()
 
 internal class IdeaFreezeReporter : PerformanceListener {
   private var dumpTask: IdeaFreezeSamplingTask? = null
@@ -82,14 +85,6 @@ internal class IdeaFreezeReporter : PerformanceListener {
       if (overwrite || !Files.exists(appInfoFile)) {
         Files.createDirectories(appInfoFile.parent)
         Files.writeString(appInfoFile, appInfoString)
-      }
-    }
-
-    internal fun report(event: LogMessage) {
-      // only report to JB
-      val plugin = PluginManagerCore.getPlugin(analyzeFreeze(event))
-      if (plugin == null || PluginManagerCore.isDevelopedByJetBrains(plugin)) {
-        MessagePool.getInstance().addErrorMessage(event)
       }
     }
 
@@ -171,6 +166,8 @@ internal class IdeaFreezeReporter : PerformanceListener {
 
     try {
       if (Registry.`is`("freeze.reporter.enabled", false)) {
+        LOG.debug("UI freeze recorded")
+
         if (((durationMs / 1000).toInt() > FREEZE_THRESHOLD || ApplicationManagerEx.isInIntegrationTest()) && !stacktraceCommonPart.isNullOrEmpty()) {
           val dumps = ArrayList(currentDumps) // defensive copy
           if (dumpTask.isValid() && dumps.size >= 2) {
@@ -181,9 +178,14 @@ internal class IdeaFreezeReporter : PerformanceListener {
             }
 
             val loggingEvent = createEvent(dumpTask, durationMs, attachments, reportDir, PerformanceWatcher.getInstance(), finished = true)
-            service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
-              processDumps(dumps, reportDir, loggingEvent, durationMs)
+            if (loggingEvent != null) {
+              service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
+                processDumps(dumps, reportDir, loggingEvent, durationMs)
+              }
             }
+          }
+          else {
+            LOG.debug("UI freeze recorded, but not enough dumps collected")
           }
         }
       }
@@ -194,21 +196,25 @@ internal class IdeaFreezeReporter : PerformanceListener {
     }
   }
 
-  private suspend fun processDumps(dumps: ArrayList<ThreadDump>, reportDir: Path?, loggingEvent: LogMessage?, durationMs: Long) {
-    if (loggingEvent != null && (application.isEAP || application.isInternal)) {
-      if (ExceptionAutoReportUtil.isAutoReportEnabled() && ExceptionAutoReportUtil.isAutoReportableException(loggingEvent)) {
-        MessagePool.getInstance().addErrorMessage(loggingEvent)
-        return
-      }
-      else if (application.isEAP || application.isInternal) {
-        // plugin freezes are reported separately via com.intellij.diagnostic.FreezeNotifier
-        report(loggingEvent)
-      }
-    }
+  private suspend fun processDumps(dumps: ArrayList<ThreadDump>, reportDir: Path?, loggingEvent: LogMessage, durationMs: Long) {
+    if (dumps.isNotEmpty()) {
+      reportToIndicator(loggingEvent) // always put freezes to MessagePool
 
-    if (reportDir != null && loggingEvent != null && dumps.isNotEmpty()) {
-      for (notifier in FREEZE_NOTIFIER_EP.extensionList) {
-        notifier.notifyFreeze(loggingEvent, dumps, reportDir, durationMs)
+      if (ExceptionAutoReportUtil.isAutoReportEnabled() && ExceptionAutoReportUtil.isAutoReportableException(loggingEvent)) {
+        LOG.debug("UI freeze will be automatically reported, do not show to user")
+
+        val reason = analyzeFreeze(loggingEvent)
+        if (reason != null) {
+          LifecycleUsageTriggerCollector.pluginFreezeDetected(reason, durationMs, false)
+        }
+
+        return // do not show freeze notifications, reported automatically
+      }
+
+      if (reportDir != null) {
+        for (notifier in FREEZE_NOTIFIER_EP.extensionList) {
+          notifier.notifyFreeze(loggingEvent, dumps, reportDir, durationMs)
+        }
       }
     }
   }
@@ -289,6 +295,10 @@ ${if (finished) "" else if (appClosing) "IDE is closing. " else "IDE KILLED! "}S
     val report = createReportAttachment(durationInSeconds, reportText)
     return LogMessage(Freeze(commonStack), message, attachments + report)
   }
+}
+
+internal fun reportToIndicator(event: LogMessage) {
+  MessagePool.getInstance().addErrorMessage(event)
 }
 
 @ApiStatus.Internal
@@ -420,6 +430,8 @@ private suspend fun reportUnfinishedFreezes() {
 
     // report deadly freeze
     if (duration > FREEZE_THRESHOLD) {
+      logger<IdeaFreezeReporter>().info("Detected unfinished freeze ${dir.name} with duration ${duration}ms")
+
       try {
         LifecycleUsageTriggerCollector.onDeadlockDetected()
         if (isUnfinishedFreezeReportEnabled()) {
@@ -482,7 +494,7 @@ private suspend fun reportDeadlocks(files: List<Path>, duration: Int, dir: Path)
   if (message != null && throwable != null && !attachments.isEmpty()) {
     val event = LogMessage(throwable, message, attachments)
     event.appInfo = appInfo
-    IdeaFreezeReporter.report(event)
+    reportToIndicator(event)
   }
 }
 

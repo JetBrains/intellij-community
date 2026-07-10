@@ -1,0 +1,23 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="com.intellij.modules.jcef"/>
+    <module name="intellij.libraries.jcef"/>
+    <module name="intellij.markdown"/>
+    <module name="intellij.platform.ui.jcef"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="org.intellij.markdown">
+    <html.panel.provider implementation="com.intellij.markdown.jcef.preview.JCEFHtmlPanelProvider"/>
+    <browserPreviewExtensionProvider implementation="com.intellij.markdown.jcef.extensions.ProcessLinksExtension$Provider"/>
+
+    <markdownExportProvider implementation="com.intellij.markdown.jcef.fileActions.export.MarkdownPdfExportProvider"/>
+    <markdownExportProvider implementation="com.intellij.markdown.jcef.fileActions.export.MarkdownHtmlExportProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.markdown.jcef.fileActions.export.MarkdownHtmlExportSettings"/>
+    <applicationSettings service="com.intellij.markdown.jcef.fileActions.export.MarkdownHtmlExportSettings"/>
+  </extensions>
+</idea-plugin>

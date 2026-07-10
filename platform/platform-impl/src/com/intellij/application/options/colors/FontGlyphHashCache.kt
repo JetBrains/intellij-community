@@ -4,11 +4,9 @@ package com.intellij.application.options.colors
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.jetbrains.JBR
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 import java.awt.font.FontRenderContext
 
-@ApiStatus.Internal
 internal class FontGlyphHashCache {
   data class FontKey(val fontFamily: String, val features: String) {
     companion object {

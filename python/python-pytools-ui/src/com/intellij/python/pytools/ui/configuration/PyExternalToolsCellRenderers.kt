@@ -54,7 +54,7 @@ internal interface PathCellHost {
 /**
  * Status provider used by the Lookup-column renderers to decorate each chain step (SDK, PATH,
  * uvx) with a ✓ / ✗ / ◐ glyph. Implemented by the configurable since the renderers don't have
- * direct access to the [UvController] or the project SDK list.
+ * direct access to the [PyToolManagementController] or the project SDK list.
  */
 internal interface ModeCellHost {
   fun modeStatusFor(toolRow: ToolRow, mode: ExecutableDiscoveryMode): ChainStepStatus
@@ -66,7 +66,6 @@ internal interface ModeCellHost {
  * string when the cell value isn't a [ExecutableDiscoveryMode]. Shared between the combobox
  * and read-only renderers so both go through the same null-handling path.
  */
-@Suppress("HardCodedStringLiteral")
 private fun renderChainText(host: ModeCellHost?, table: JTable, value: Any?, row: Int): String {
   val mode = value as? ExecutableDiscoveryMode ?: return ""
   val toolRow = (table.model as? ListTableModel<*>)?.getRowValue(row) as? ToolRow
@@ -176,7 +175,7 @@ internal class ToolCellRenderer(private val host: ToolCellHost) : JPanel(null), 
     // handler exits early, and the cursor stays default. Same rule mirrored in
     // hover hit-testing and the table mouseClicked listener.
     paintGear = (row == host.hoveredRow) && (toolRow?.staged?.enabled == true)
-    gearEnabled = toolRow?.tool?.detailConfigurable != null
+    gearEnabled = toolRow?.detailConfigurableProvider != null
     return this
   }
 

@@ -2443,20 +2443,77 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         .withJavaPlugin()
         .withMavenCentral()
         .addImplementationDependency("junit:junit:4.11")
-        .addPrefix("afterEvaluate {",
-                   "    def mainSourceSet = sourceSets['main']",
-                   "    def mainClassPath = mainSourceSet.compileClasspath",
-                   "    def exclusion = mainClassPath.filter { it.name.contains('junit') }",
-                   "    mainSourceSet.compileClasspath = mainClassPath - exclusion",
-                   "}")
+        .addPrefix("""
+                     afterEvaluate {
+                         def mainSourceSet = sourceSets['main']
+                         def mainClassPath = mainSourceSet.compileClasspath
+                         def exclusion = mainClassPath.filter { it.name.contains('junit') }
+                         mainSourceSet.compileClasspath = mainClassPath - exclusion
+                     }""")
         .generate()
     );
 
     assertModules("project", "project.main", "project.test");
 
-    assertModuleLibDeps("project.main", "Gradle: junit:junit:4.11", "Gradle: org.hamcrest:hamcrest-core:1.3");
+    assertModuleLibDeps("project.main", "Gradle: org.hamcrest:hamcrest-core:1.3", "Gradle: junit:junit:4.11");
     assertModuleLibDepScope("project.main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
-    assertModuleLibDepScope("project.main", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project.main", "Gradle: junit:junit:4.11", DependencyScope.RUNTIME);
+
+    assertModuleLibDeps("project.test", "Gradle: junit:junit:4.11", "Gradle: org.hamcrest:hamcrest-core:1.3");
+    assertModuleLibDepScope("project.test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project.test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+  }
+
+  @Test
+  public void testModifiedSourceSetClasspathFileCollectionCallableDependenciesFromCallable() throws Exception {
+    importProject(
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .withMavenCentral()
+        .addImplementationDependency("junit:junit:4.11")
+        .addPrefix("""
+                     afterEvaluate {
+                         def mainSourceSet = sourceSets['main']
+                         def mainClassPath = mainSourceSet.compileClasspath
+                         def exclusion = mainClassPath.filter { it.name.contains('junit') }
+                         mainSourceSet.compileClasspath = project.files { mainClassPath - exclusion }
+                     }""")
+        .generate()
+    );
+
+    assertModules("project", "project.main", "project.test");
+
+    assertModuleLibDeps("project.main", "Gradle: org.hamcrest:hamcrest-core:1.3", "Gradle: junit:junit:4.11");
+    assertModuleLibDepScope("project.main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project.main", "Gradle: junit:junit:4.11", DependencyScope.RUNTIME);
+
+    assertModuleLibDeps("project.test", "Gradle: junit:junit:4.11", "Gradle: org.hamcrest:hamcrest-core:1.3");
+    assertModuleLibDepScope("project.test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project.test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+  }
+
+  @Test
+  public void testModifiedSourceSetClasspathFileCollectionCallableDependenciesFromProvider() throws Exception {
+    importProject(
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .withMavenCentral()
+        .addImplementationDependency("junit:junit:4.11")
+        .addPrefix("""
+                     afterEvaluate {
+                         def mainSourceSet = sourceSets['main']
+                         def mainClassPath = mainSourceSet.compileClasspath
+                         def exclusion = mainClassPath.filter { it.name.contains('junit') }
+                         mainSourceSet.compileClasspath = project.files(project.provider { mainClassPath - exclusion })
+                     }""")
+        .generate()
+    );
+
+    assertModules("project", "project.main", "project.test");
+
+    assertModuleLibDeps("project.main", "Gradle: org.hamcrest:hamcrest-core:1.3", "Gradle: junit:junit:4.11");
+    assertModuleLibDepScope("project.main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project.main", "Gradle: junit:junit:4.11", DependencyScope.RUNTIME);
 
     assertModuleLibDeps("project.test", "Gradle: junit:junit:4.11", "Gradle: org.hamcrest:hamcrest-core:1.3");
     assertModuleLibDepScope("project.test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);

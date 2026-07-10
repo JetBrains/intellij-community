@@ -20,6 +20,7 @@ import com.intellij.ui.components.JBList
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
@@ -145,7 +146,7 @@ class CommitsBrowserComponentBuilder(private val project: Project,
         val hashAndAuthor = CommitPresentationUtil.formatCommitHashAndAuthor(commit.id, commit.author, commit.authorTime, commit.committer,
                                                                              commit.commitTime)
 
-        val presentation = object : CommitPresentationUtil.CommitPresentation(project, commit.root, commit.fullMessage, hashAndAuthor,
+        val presentation = object : CommitPresentationUtil.CommitPresentation(project, CommitId(commit.id, commit.root), commit.fullMessage, hashAndAuthor,
                                                                               MultiMap.empty()) {
           override fun getText(): String {
             val separator = myRawMessage.indexOf("\n\n")

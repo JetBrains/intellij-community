@@ -7,12 +7,20 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.inspections.dependencies.DependencyMap
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
-import org.jetbrains.annotations.ApiStatus
+import com.jetbrains.python.psi.getStringOrNull
+import org.toml.lang.psi.TomlFile
+import org.toml.lang.psi.TomlInlineTable
+import org.toml.lang.psi.TomlLiteral
+import org.toml.lang.psi.TomlTable
+import org.toml.lang.psi.ext.getValueByKey
 
-@ApiStatus.Internal
-object PipEnvParser {
+private val dependencyHeaders = setOf("packages", "dev-packages")
+private const val versionKey = "version"
+
+internal object PipEnvParser {
   private val gson = Gson()
 
   @JvmStatic
@@ -22,6 +30,32 @@ object PipEnvParser {
     val devPackages = pipFileLock.devPackages?.let { toRequirements(it) } ?: emptyList()
     return packages + devPackages
   }
+
+  @JvmStatic
+  fun getPipFileDependenciesMap(file: TomlFile): DependencyMap =
+    file
+      .children
+      .filterIsInstance<TomlTable>()
+      .filter { it.header.key?.text in dependencyHeaders }
+      .flatMap {
+        it.entries.mapNotNull { keyValue ->
+          val versionString = when (val value = keyValue.value) {
+            is TomlLiteral -> value.getStringOrNull()
+            is TomlInlineTable ->
+              value
+                .getValueByKey(versionKey)
+                ?.let { tomlValue -> tomlValue as? TomlLiteral }
+                ?.getStringOrNull()
+            else -> null
+          }
+
+          (PyRequirementParser.fromLine("${keyValue.key.text}${versionString ?: ""}")
+           ?: PyRequirementParser.fromLine(keyValue.key.text))
+            ?.let { pyRequirement -> pyRequirement to keyValue }
+        }
+      }
+      .let { mapOf(*it.toTypedArray()) }
+  
 
   @RequiresBackgroundThread
   private fun toRequirements(packages: Map<String, PipFileLockPackage>): List<PyRequirement> =
@@ -41,5 +75,4 @@ object PipEnvParser {
       Result.failure(e)
     }
   }
-
 }

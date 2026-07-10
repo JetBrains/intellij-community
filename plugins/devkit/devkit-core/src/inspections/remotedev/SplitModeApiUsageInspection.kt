@@ -17,7 +17,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil.buildModuleKindMismatchMessage
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil.buildModuleKindMismatchTooltipMessage
-import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindResolver.doesApiKindMatchExpectedModuleKind
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindResolver.isApiUsageAllowed
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.ModuleAnalysis
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeQodanaInspectionScopeLimiter
@@ -26,7 +26,6 @@ import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.UField
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.UQualifiedReferenceExpression
 import org.jetbrains.uast.USimpleNameReferenceExpression
@@ -38,7 +37,7 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 @VisibleForTesting
 @ApiStatus.Internal
-class SplitModeApiUsageInspection : DevKitUastInspectionBase(UClass::class.java, UField::class.java, UMethod::class.java) {
+class SplitModeApiUsageInspection : DevKitUastInspectionBase(UClass::class.java, UMethod::class.java) {
 
   override fun isAllowed(holder: ProblemsHolder): Boolean {
     return super.isAllowed(holder)
@@ -115,10 +114,11 @@ class SplitModeApiUsageInspection : DevKitUastInspectionBase(UClass::class.java,
     val resolvedApi = resolveApiUsage(expression) ?: return
     val sourcePsi = expression.sourcePsi ?: return
     val restrictionsService = SplitModeApiRestrictionsService.getInstance(sourcePsi.project)
-    val expectedModuleKind = restrictionsService.getCodeApiKind(resolvedApi.qualifiedName, resolvedApi.owner) ?: return
+    val apiRestriction = restrictionsService.getCodeApiRestriction(resolvedApi.qualifiedName, resolvedApi.owner) ?: return
+    val expectedModuleKind = apiRestriction.targetModuleKind
     val currentModuleType = currentModuleAnalysis.resolvedModuleKind
 
-    if (!doesApiKindMatchExpectedModuleKind(currentModuleType, expectedModuleKind)) {
+    if (!isApiUsageAllowed(currentModuleAnalysis, apiRestriction)) {
       val hint = restrictionsService.getCodeApiHint(resolvedApi.qualifiedName)
       val message = buildModuleKindMismatchMessage(resolvedApi.qualifiedName, expectedModuleKind, currentModuleType, hint)
       val tooltipMessage = buildModuleKindMismatchTooltipMessage(resolvedApi.qualifiedName, expectedModuleKind, currentModuleType, hint)
@@ -127,17 +127,18 @@ class SplitModeApiUsageInspection : DevKitUastInspectionBase(UClass::class.java,
         return
       }
       val regularFixes = SplitModeDependencyQuickFixes.createMismatchFixes(module, null, expectedModuleKind)
-      val suppressionFix =
-        SplitModeInspectionExclusionsService.getInstance(sourcePsi.project).createSuppressionFixIfApplicable(sourcePsi,
-                                                                                                             SPLIT_MODE_API_USAGE_SHORT_NAME)
-      val fixes = if (suppressionFix != null) regularFixes + suppressionFix else regularFixes
+      val suppressionFixes = SplitModeInspectionExclusionsService.getInstance(sourcePsi.project).createCommonSuppressionQuickFixes(
+        sourcePsi,
+        SPLIT_MODE_API_USAGE_SHORT_NAME,
+      )
+      val fixes = regularFixes + suppressionFixes
 
       descriptors.add(
         manager.createProblemDescriptor(
           sourcePsi,
           null,
           message,
-          ProblemHighlightType.WEAK_WARNING,
+          ProblemHighlightType.WARNING,
           tooltipMessage,
           isOnTheFly,
           *fixes,

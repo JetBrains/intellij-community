@@ -33,6 +33,9 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -52,6 +55,7 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
 
   private val isCacheSaved = AtomicBoolean(true)
   private val saveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val saveMutex = Mutex()
 
   private lateinit var virtualFileUrlManager: VirtualFileUrlManager
   override val cacheFile: Path by lazy { initCacheFile() }
@@ -113,17 +117,18 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
 
   @TestOnly
   override fun saveCacheNow() {
-    doCacheSaving()
+    runBlocking { withContext(Dispatchers.IO) { doCacheSaving() } }
   }
 
   @Internal
-  fun doCacheSavingOnProjectClose() {
+  suspend fun doCacheSavingOnProjectClose() {
     if (isCacheSaved.get()) return
-    doCacheSaving()
+    withContext(Dispatchers.IO) { doCacheSaving() }
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  private fun doCacheSaving(): Unit = saveWorkspaceModelCachesTimeMs.addMeasuredTime {
+  private suspend fun doCacheSaving(): Unit = saveMutex.withLock {
+    saveWorkspaceModelCachesTimeMs.addMeasuredTime {
     isCacheSaved.set(true)
     val workspaceModel = WorkspaceModel.getInstance(project)
     val storage = prepareStorage(workspaceModel)
@@ -152,6 +157,7 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
     else {
       Files.deleteIfExists(cacheFile)
       Files.deleteIfExists(unloadedEntitiesCacheFile)
+    }
     }
   }
 

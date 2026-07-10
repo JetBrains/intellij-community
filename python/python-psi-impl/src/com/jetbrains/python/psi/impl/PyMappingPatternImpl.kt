@@ -9,7 +9,7 @@ import com.jetbrains.python.psi.PyKeyValuePattern
 import com.jetbrains.python.psi.PyMappingPattern
 import com.jetbrains.python.psi.PyPattern
 import com.jetbrains.python.psi.PyPsiFacade
-import com.jetbrains.python.psi.types.PyCollectionType
+import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl
 import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyNeverType
@@ -48,12 +48,11 @@ class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappin
 
     val patternMappingType = wrapInMappingType(PyUnionType.union(keyTypes), PyUnionType.union(valueTypes))
 
-    val filteredType = PyCaptureContext.getCaptureType(this, context).components.filter { captureType: PyType? ->
+    val matchingComponents = PyCaptureContext.getCaptureType(this, context).components.filter { captureType: PyType? ->
       val mappingType = captureType.convertToType("typing.Mapping", this, context) ?: return@filter false
       PyTypeChecker.match(mappingType, patternMappingType, context)
-    }.let {
-      PyUnionType.union(it)
     }
+    val filteredType = if (matchingComponents.isEmpty()) null else PyUnionType.union(matchingComponents)
 
     return filteredType ?: patternMappingType
   }
@@ -62,9 +61,9 @@ class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappin
     val sequenceMember = pattern.findParentInFile(withSelf = true) { this === it.parent }
     if (sequenceMember is PyDoubleStarPattern) {
       val mappingType = context.getType(this).convertToType("typing.Mapping", pattern, context)
-      if (mappingType is PyCollectionType) {
+      if (mappingType is PyClassType && mappingType.isParameterized) {
         val dict = PyBuiltinCache.getInstance(pattern).getClass("dict") ?: return null
-        return PyCollectionTypeImpl(dict, false, mappingType.getElementTypes())
+        return PyCollectionTypeImpl(dict, false, mappingType.getTypeArguments())
       }
       return null
     }
@@ -89,8 +88,8 @@ private fun PyType?.getValueType(sequenceMember: PyKeyValuePattern, context: Typ
   }
   val mappingType = this.convertToType("typing.Mapping", sequenceMember, context)
                     ?: return PyNeverType.NEVER
-  if (mappingType is PyCollectionType) {
-    return mappingType.elementTypes[1]
+  if (mappingType is PyClassType && mappingType.isParameterized) {
+    return mappingType.typeArguments[1]
   }
   return null
 }

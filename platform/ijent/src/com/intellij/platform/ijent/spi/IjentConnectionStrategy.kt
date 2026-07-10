@@ -19,7 +19,7 @@ interface IjentConnectionStrategy {
   }
 
   data class Tcp(
-    val connectionInfo: TcpDeployInfo.FixedPort,
+    val connectionInfo: TcpDeployInfo,
     val tlsData: MutualTlsCertificates? = null,
     val proxy: IjentTcpProxyInformation? = null,
   ) : IjentConnectionStrategy {

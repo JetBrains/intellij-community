@@ -1,0 +1,31 @@
+{
+  "name": "@jetbrains/intellij-webview-testkit",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./node": {
+      "types": "./src/node.ts",
+      "default": "./src/node.ts"
+    },
+    "./vite": {
+      "types": "./src/vite.ts",
+      "default": "./src/vite.ts"
+    }
+  },
+  "bin": {
+    "webview-preview": "./src/cli.ts"
+  },
+  "peerDependencies": {
+    "@jetbrains/intellij-webview": "*",
+    "vite": "^8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@jetbrains/intellij-webview": {
+      "optional": true
+    }
+  }
+}

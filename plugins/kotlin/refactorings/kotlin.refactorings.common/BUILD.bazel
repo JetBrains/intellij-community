@@ -1,10 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build kotlin.refactorings.common` start
+### auto-generated section `build intellij.kotlin.refactorings.base` start
 
 create_kotlinc_options(
-    name = "custom_kotlin-refactorings-common",
+    name = "custom_kotlin-refactorings-base",
     opt_in = [
         "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
         "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
@@ -14,7 +14,7 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "kotlin-refactorings-common",
+    name = "kotlin-refactorings-base",
     srcs = glob(
         [
             "src/**/*.kt",
@@ -23,8 +23,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_kotlin-refactorings-common",
-    module_name = "kotlin.refactorings.common",
+    kotlinc_opts = ":custom_kotlin-refactorings-base",
+    module_name = "intellij.kotlin.refactorings.base",
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -72,18 +72,18 @@ jvm_library(
 )
 
 jvm_library(
-    name = "kotlin-refactorings-common_test_lib",
+    name = "kotlin-refactorings-base_test_lib",
     testonly = True,
     srcs = glob(
         [],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_kotlin-refactorings-common",
-    module_name = "kotlin.refactorings.common",
+    kotlinc_opts = ":custom_kotlin-refactorings-base",
+    module_name = "intellij.kotlin.refactorings.base",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":kotlin-refactorings-common",
+        ":kotlin-refactorings-base",
         "//java/java-indexing-api:indexing_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/lang-api:lang_test_lib",
@@ -125,13 +125,13 @@ jvm_library(
         "//plugins/kotlin/references:references_test_lib",
     ],
 )
-### auto-generated section `build kotlin.refactorings.common` end
+### auto-generated section `build intellij.kotlin.refactorings.base` end
 
-### auto-generated section `iml kotlin.refactorings.common` start
+### auto-generated section `iml intellij.kotlin.refactorings.base` start
 exports_files(
     [
-        "kotlin.refactorings.common.iml",
+        "intellij.kotlin.refactorings.base.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml kotlin.refactorings.common` end
+### auto-generated section `iml intellij.kotlin.refactorings.base` end

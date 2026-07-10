@@ -278,7 +278,8 @@ public final class PatchApplier {
     AtomicBoolean doRollback = new AtomicBoolean();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       UndoApplyPatchDialog undoApplyPatchDialog = new UndoApplyPatchDialog(project, filePaths, shouldInformAboutBinaries);
-      doRollback.set(undoApplyPatchDialog.showAndGet());
+      undoApplyPatchDialog.show();
+      doRollback.set(undoApplyPatchDialog.isOK());
     });
     return doRollback.get();
   }

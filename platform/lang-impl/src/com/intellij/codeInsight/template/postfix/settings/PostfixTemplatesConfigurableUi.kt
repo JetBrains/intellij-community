@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -63,7 +63,7 @@ internal class PostfixTemplatesConfigurableUi : Disposable {
         postfixTemplatesGroupCompletion = checkBox(CodeInsightBundle.message("postfix.completion.option.group.enabled"))
           .component
       }
-    }.visible(GroupedCompletionContributor.isGroupEnabledInApp())
+    }.visible(GroupedCompletionContributor.isGroupEnabled(null))
     row {
       completionEnabledCheckbox = checkBox(CodeInsightBundle.message("postfix.completion.option.autopopup"))
         .component

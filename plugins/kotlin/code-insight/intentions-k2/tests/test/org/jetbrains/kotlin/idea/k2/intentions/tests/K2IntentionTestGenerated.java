@@ -2067,6 +2067,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/constructor2.kt");
             }
 
+            @TestMetadata("contextParameters.kt")
+            public void testContextParameters() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/contextParameters.kt");
+            }
+
             @TestMetadata("conversion.kt")
             public void testConversion() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/conversion.kt");
@@ -8795,6 +8800,26 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("iterable.kt")
         public void testIterable() throws Exception {
             runTest("../../../idea/tests/testData/intentions/addForLoopIndices/iterable.kt");
+        }
+
+        @TestMetadata("nameBasedDestructuringComplete.kt")
+        public void testNameBasedDestructuringComplete() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/nameBasedDestructuringComplete.kt");
+        }
+
+        @TestMetadata("nameBasedDestructuringCompleteWithValue.kt")
+        public void testNameBasedDestructuringCompleteWithValue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/nameBasedDestructuringCompleteWithValue.kt");
+        }
+
+        @TestMetadata("nameBasedDestructuringNameMismatch.kt")
+        public void testNameBasedDestructuringNameMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/nameBasedDestructuringNameMismatch.kt");
+        }
+
+        @TestMetadata("nameBasedDestructuringOnlySyntax.kt")
+        public void testNameBasedDestructuringOnlySyntax() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/nameBasedDestructuringOnlySyntax.kt");
         }
 
         @TestMetadata("noBody.kt")
@@ -15597,6 +15622,54 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("zeroIterations.kt")
         public void testZeroIterations() throws Exception {
             runTest("../../../idea/tests/testData/intentions/replaceForEachWithRepeat/zeroIterations.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites")
+    public static class AddParameterNameAtAllCallsites extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("enumPrimaryConstructor.kt")
+        public void testEnumPrimaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/enumPrimaryConstructor.kt");
+        }
+
+        @TestMetadata("enumSecondaryConstructor.kt")
+        public void testEnumSecondaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/enumSecondaryConstructor.kt");
+        }
+
+        @TestMetadata("javaUsage.kt")
+        public void testJavaUsage() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/javaUsage.kt");
+        }
+
+        @TestMetadata("lambdaArgument.kt")
+        public void testLambdaArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/lambdaArgument.kt");
+        }
+
+        @TestMetadata("nested.kt")
+        public void testNested() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/nested.kt");
+        }
+
+        @TestMetadata("primaryConstructor.kt")
+        public void testPrimaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/primaryConstructor.kt");
+        }
+
+        @TestMetadata("secondaryConstructor.kt")
+        public void testSecondaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/secondaryConstructor.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/simple.kt");
         }
     }
 }

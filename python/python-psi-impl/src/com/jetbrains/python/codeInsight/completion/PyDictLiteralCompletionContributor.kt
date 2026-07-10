@@ -14,18 +14,23 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.IconManager
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
+import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyAssignmentStatement
+import com.jetbrains.python.psi.PyCallSiteExpression
 import com.jetbrains.python.psi.PyDictLiteralExpression
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyKeyValueExpression
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PyReturnStatement
 import com.jetbrains.python.psi.PySequenceExpression
 import com.jetbrains.python.psi.PySetLiteralExpression
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyTupleExpression
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper.mapArguments
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -65,7 +70,7 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
   ) {
     val typeEvalContext = TypeEvalContext.codeCompletion(originalElement.project, originalElement.containingFile)
     val quote = getForcedQuote(possibleSequenceExpr, originalElement)
-    PyCallExpressionHelper.getMappedParameters(possibleSequenceExpr, PyResolveContext.defaultContext(typeEvalContext))?.forEach {
+    getMappedParameters(possibleSequenceExpr, PyResolveContext.defaultContext(typeEvalContext))?.forEach {
       addCompletionForTypedDictKeys(it.getType(typeEvalContext), possibleSequenceExpr, result, quote)
     }
   }
@@ -80,6 +85,36 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
       return usedQuotes.singleOrNull() ?: DEFAULT_QUOTE
     }
     return ""
+  }
+
+  /**
+   * `argument` can be (parenthesized) expression or a value of a [PyKeywordArgument]
+   */
+  private fun getMappedParameters(argument: PyExpression, resolveContext: PyResolveContext): List<PyCallableParameter>? {
+    var argument = argument
+    while (true) {
+      val newArgument = argument.parent
+      newArgument as? PyParenthesizedExpression ?: break
+      argument = newArgument
+    }
+
+    (argument.parent as? PyKeywordArgument)?.let {
+      assert(it.valueExpression === argument)
+      argument = it
+    }
+
+    var parent = argument.parent
+    if (parent is PyArgumentList) {
+      parent = parent.parent
+    }
+    if (parent !is PyCallSiteExpression) {
+      return null
+    }
+
+    val finalArgument = argument
+    return mapArguments(parent, resolveContext).mapNotNull {
+      it.mappedParameters[finalArgument]
+    }
   }
 
   private fun addCompletionToAssignment(

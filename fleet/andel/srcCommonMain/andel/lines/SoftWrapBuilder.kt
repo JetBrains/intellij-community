@@ -16,6 +16,8 @@ interface SoftWrapBuilder {
         foldsMeasurer: (Fold) -> Float,
         lastLine: Boolean,
         targetWidth: Float = Float.POSITIVE_INFINITY,
+        /** Font scale of the line being built, see [LineScale]: scales char widths and the wrap budget. */
+        scale: Float = 1f,
     ): List<LineData>
 
     fun clone(width: Float, charWidth: Float): SoftWrapBuilder
@@ -28,7 +30,8 @@ data class LineData(
   val interlineHeightAbove: LineBasedHeight,
   val interlineHeightBelow: LineBasedHeight,
   val width: Float,
+  val ownHeight: LineBasedHeight = LineBasedHeight.ONE_LINE,
 ) {
   val totalHeight: LineBasedHeight
-    get() = interlineHeightAbove + LineBasedHeight.ONE_LINE + interlineHeightBelow
+    get() = interlineHeightAbove + ownHeight + interlineHeightBelow
 }

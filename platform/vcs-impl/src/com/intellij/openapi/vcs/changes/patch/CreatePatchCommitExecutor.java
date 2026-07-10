@@ -115,7 +115,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
           patchPath = getDefaultPatchPath(myProject);
         }
       }
-      myPanel.setFileName(ShelveChangesManager.suggestPatchName(myProject, commitMessage, new File(patchPath), null).toPath());
+      myPanel.setFileName(ShelveChangesManager.suggestPatchName(myProject, commitMessage, Paths.get(patchPath), null));
       myPanel.setToClipboard(PropertiesComponent.getInstance(myProject).getBoolean(VCS_PATCH_TO_CLIPBOARD, false));
       File commonAncestor = ChangesUtil.findCommonAncestor(changes);
       myPanel.setCommonParentPath(commonAncestor);
@@ -359,7 +359,10 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
                                                                                @NotNull ShelvedChangeList shelvedList,
                                                                                @Nullable Collection<String> selectedPaths) {
     try {
-      List<TextFilePatch> textFilePatches = ShelveChangesManager.loadPatches(project, shelvedList.getPath(), null);
+      Path patchPath = shelvedList.getPath();
+      if (patchPath == null) return Collections.emptyList();
+
+      List<TextFilePatch> textFilePatches = ShelveChangesManager.loadPatches(project, patchPath, null);
       List<TextFilePatch> result = ContainerUtil.isEmpty(selectedPaths) ? textFilePatches : ContainerUtil.filter(textFilePatches, patch -> {
         return selectedPaths.contains(patch.getAfterName());
       });
@@ -387,7 +390,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     if (name == null) return null;
     try {
       Path path = oldBase.resolve(name);
-      return newBase.relativize(path).toString().replace(File.separatorChar, '/');
+      return FileUtil.toSystemIndependentName(newBase.relativize(path).toString());
     }
     catch (IllegalArgumentException e) {
       LOG.warn(String.format("Can't update patch base: base1: %s; base2: %s; path: %s", oldBase, newBase, name), e);

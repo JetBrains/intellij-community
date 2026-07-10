@@ -119,23 +119,11 @@ public class NullityInferrer {
     }
 
     final Query<PsiReference> references = ReferencesSearch.search(variable);
-    for (final PsiReference reference : references.asIterable()) {
-      final PsiElement element = reference.getElement();
-      if (!(element instanceof PsiReferenceExpression)) {
-        continue;
-      }
-      final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiAssignmentExpression assignment)) {
-        continue;
-      }
-
-      if (assignment.getLExpression().equals(element) &&
-          !expressionIsNeverNull(assignment.getRExpression())) {
-        return false;
-      }
-    }
-
-    return true;
+    return !references.anyMatch(reference ->
+      reference.getElement() instanceof PsiReferenceExpression element &&
+      element.getParent() instanceof PsiAssignmentExpression assignment &&
+      assignment.getLExpression().equals(element) &&
+      !expressionIsNeverNull(assignment.getRExpression()));
   }
 
   private boolean variableSometimesAssignedNull(@NotNull PsiVariable variable) {
@@ -145,22 +133,11 @@ public class NullityInferrer {
     }
 
     final Query<PsiReference> references = ReferencesSearch.search(variable);
-    for (final PsiReference reference : references.asIterable()) {
-      final PsiElement element = reference.getElement();
-      if (!(element instanceof PsiReferenceExpression)) {
-        continue;
-      }
-      final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiAssignmentExpression assignment)) {
-        continue;
-      }
-
-      if (assignment.getLExpression().equals(element) && expressionIsSometimesNull(assignment.getRExpression())) {
-        return true;
-      }
-    }
-
-    return false;
+    return references.anyMatch(reference ->
+      reference.getElement() instanceof PsiReferenceExpression element &&
+      element.getParent() instanceof PsiAssignmentExpression assignment &&
+      assignment.getLExpression().equals(element) &&
+      expressionIsSometimesNull(assignment.getRExpression()));
   }
 
   public void collect(@NotNull PsiFile file) {

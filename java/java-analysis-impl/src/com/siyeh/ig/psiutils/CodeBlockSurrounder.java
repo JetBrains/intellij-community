@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -981,8 +981,7 @@ public abstract class CodeBlockSurrounder {
       String extractedCondition = orChain ? ct.text(lOperands) : BoolUtils.getNegatedExpressionText(lOperands, ct);
       String ifText = "if(" + extractedCondition + ") " + keyword + " " + orChain + ";";
       PsiStatement ifStatement = factory.createStatementFromText(ifText, returnOrYieldStatement);
-      myCreatedIf = (PsiIfStatement)CodeStyleManager.getInstance(project)
-        .reformat(returnOrYieldStatement.getParent().addBefore(ifStatement, returnOrYieldStatement));
+      myCreatedIf = (PsiIfStatement)returnOrYieldStatement.getParent().addBefore(ifStatement, returnOrYieldStatement);
       ct.replaceAndRestoreComments(Objects.requireNonNull(condition), rOperands);
       return returnOrYieldStatement;
     }

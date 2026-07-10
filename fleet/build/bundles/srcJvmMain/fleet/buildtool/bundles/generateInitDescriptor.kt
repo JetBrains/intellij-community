@@ -71,7 +71,6 @@ suspend fun generateInitDescriptor(
         version = null,
         logger = logger,
         shadowedJarSpecs = listOf(dockCoroutinesShadowedJarSpec),
-        scrambledJarSpecs = emptyList(),
         moveFileSpecs = listOf(FleetPluginResourceMoveSpec),
       )
 

@@ -29,10 +29,12 @@ import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<GitAddCommitToRemoteBranchOperation>()
 
-internal class GitAddCommitToRemoteBranchOperation(
+@ApiStatus.Internal
+class GitAddCommitToRemoteBranchOperation(
   private val project: Project,
   private val repository: GitRepository,
   private val commits: List<VcsFullCommitDetails>,

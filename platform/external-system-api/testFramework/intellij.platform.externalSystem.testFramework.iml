@@ -30,5 +30,7 @@
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="PROVIDED" />
   </component>
 </module>

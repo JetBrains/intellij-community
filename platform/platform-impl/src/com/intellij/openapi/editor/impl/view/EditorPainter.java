@@ -71,8 +71,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.PeekableIterator;
-import com.intellij.util.containers.PeekableIteratorWrapper;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.floats.FloatList;
@@ -104,8 +102,6 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -427,7 +423,7 @@ public final class EditorPainter implements TextDrawingCallback {
       );
     }
 
-    private SelectionLinePainter mySelectionLinePainter = null;
+    private SelectionVisualModel mySelectionModelView = null;
 
     private float selectionExtensionWidth() {
       // We need a singular width since otherwise end-of-line selections don't align
@@ -450,13 +446,10 @@ public final class EditorPainter implements TextDrawingCallback {
     private void paintBackground() {
       float selectionExtensionWidth = selectionExtensionWidth();
 
-      mySelectionLinePainter = new SelectionLinePainter(
-        myGraphics,
-        myLineHeight,
-        myYShift,
-        myEditor,
-        selectionExtensionWidth
-      );
+      SelectionInlayQueries selectionInlayQueries = new SelectionInlayQueries(myEditor);
+      mySelectionModelView = myView.getSelectionVisualModel();
+      mySelectionModelView.setYShift(myYShift);
+      mySelectionModelView.invalidateArea(new Rectangle2D.Double(myClip.x, myClip.y + myYShift, myClip.width, myClip.height));
 
       int lineCount = myView.getVisibleLineCount();
       boolean calculateMarginWidths = Registry.is("editor.adjust.right.margin") && isMarginShown() && myStartVisualLine < lineCount;
@@ -466,16 +459,6 @@ public final class EditorPainter implements TextDrawingCallback {
       boolean paintAllSoftWraps = myEditor.getSettings().isAllSoftWrapsShown();
       float whiteSpaceScale = getWhiteSpaceScale(myEditor);
       final BasicStroke whiteSpaceStroke = new BasicStroke(calcFeatureSize(1, whiteSpaceScale));
-
-      PeekableIterator<Caret> caretIterator = null;
-      if (myInlayModel.hasBlockElements()) {
-        Iterator<Caret> carets = myCaretModel.getAllCarets()
-          .stream()
-          .filter(Caret::hasSelection)
-          .sorted(Comparator.comparingInt(Caret::getSelectionStart))
-          .iterator();
-        caretIterator = new PeekableIteratorWrapper<>(carets);
-      }
 
       final VisualPosition primarySelectionStart = mySelectionModel.getSelectionStartPosition();
       final VisualPosition primarySelectionEnd = mySelectionModel.getSelectionEndPosition();
@@ -500,16 +483,21 @@ public final class EditorPainter implements TextDrawingCallback {
         int visualLine = visLinesIterator.getVisualLine();
         if (visualLine > myEndVisualLine + 1) break;
         int y = visLinesIterator.getY() + myYShift;
-        mySelectionLinePainter.associateWithVisualLine(y, visualLine);
 
         if (calculateMarginWidths) myMarginPositions.y()[visualLine - myStartVisualLine] = y;
         if (y > prevY) {
-          boolean selection = mySelectionLinePainter.isAllBlockInlaysAboveSelected(visualLine);
+          boolean selection = selectionInlayQueries.isAllBlockInlaysAboveSelected(visualLine);
           TextAttributes attributes = getBetweenLinesAttributes(selection, visLinesIterator.getVisualLineStartOffset());
 
           myBetweenLinesAttributes.put(visualLine, attributes);
           if (selection && shouldUseNewSelection()) {
-            mySelectionLinePainter.paintAllBlockInlaysAbove(visualLine);
+            for (Inlay<?> blockInlay : selectionInlayQueries.blockInlaysAbove(visualLine)) {
+              Rectangle bounds = blockInlay.getBounds();
+              if (bounds == null) continue;
+              float left = bounds.x - (myEditor.isRightAligned() ? selectionExtensionWidth : 0f);
+              float right = bounds.x + bounds.width + (myEditor.isRightAligned() ? 0f : selectionExtensionWidth);
+              mySelectionModelView.paintBlock(new Rectangle2D.Double(left, bounds.y + myYShift, right - left, bounds.height));
+            }
           } else {
             paintBackground(attributes, startX, prevY, endX - startX, y - prevY);
           }
@@ -528,10 +516,7 @@ public final class EditorPainter implements TextDrawingCallback {
             if (shouldUseNewSelection()
                 && it.isInSelection(true)
                 && myEditor.isRightAligned()) {
-              mySelectionLinePainter.paintSelection(new Rectangle2D.Float(
-                xEnd - selectionExtensionWidth, y,
-                selectionExtensionWidth, myLineHeight
-              ));
+              mySelectionModelView.paintBlock(new Rectangle2D.Double(xEnd - selectionExtensionWidth, y, selectionExtensionWidth, myLineHeight));
             }
             if (softWrap == null) return;
             paintSelectionOnSecondSoftWrapLineIfNecessary(visualLine, columnEnd, xEnd, y, primarySelectionStart, primarySelectionEnd);
@@ -555,9 +540,7 @@ public final class EditorPainter implements TextDrawingCallback {
                 !paintFoldingBackground(foldRegionInnerAttributes, xStart, y, xEnd - xStart, foldRegion)) {
               paintBackground(attributes, xStart, y, xEnd - xStart);
               if (isSelection && shouldUseNewSelection()) {
-                mySelectionLinePainter.paintSelection(new Rectangle2D.Float(
-                  xStart, y, xEnd - xStart, myLineHeight
-                ));
+                mySelectionModelView.paintBlock(new Rectangle2D.Double(xStart, y, xEnd - xStart, myLineHeight));
               }
             }
             Inlay inlay = fragment.getCurrentInlay();
@@ -609,17 +592,13 @@ public final class EditorPainter implements TextDrawingCallback {
             CustomFoldRegion cfr = visLinesIterator.getCustomFoldRegion();
             if (cfr != null) {
               float paintWidth = endX - startX;
-              if (shouldUseNewSelection() && mySelectionLinePainter.isCFRInSelection(cfr)) {
+              if (shouldUseNewSelection() && isSelected(cfr)) {
                 paintWidth = cfr.getWidthInPixels();
                 backgroundAttributes.setBackgroundColor(selectionBackgroundColor());
 
-                float start = startX - (myEditor.isRightAligned() ? selectionExtensionWidth : 0.0f);
-                float end = start + paintWidth + (myEditor.isRightAligned() ? 0.0f : selectionExtensionWidth);
-                mySelectionLinePainter.paintSelection(
-                  new Rectangle2D.Float(
-                    start, y, end - start, cfr.getHeightInPixels()
-                  )
-                );
+              float start = startX - (myEditor.isRightAligned() ? selectionExtensionWidth : 0.0f);
+              float end = start + paintWidth + (myEditor.isRightAligned() ? 0.0f : selectionExtensionWidth);
+                mySelectionModelView.paintBlock(new Rectangle2D.Double(start, y, end - start, cfr.getHeightInPixels()));
               } else {
                 paintBackground(backgroundAttributes, startX, y, paintWidth, cfr.getHeightInPixels());
               }
@@ -631,9 +610,7 @@ public final class EditorPainter implements TextDrawingCallback {
             }
             paintBackground(backgroundAttributes.getBackgroundColor(), x, y, endX - x, myLineHeight);
             if (it.hasPastLineEndExtension() && shouldUseNewSelection() && !myEditor.isRightAligned()) {
-              mySelectionLinePainter.paintSelection(
-                new Rectangle2D.Float(x, y, selectionExtensionWidth, myLineHeight)
-              );
+              mySelectionModelView.paintBlock(new Rectangle2D.Double(x, y, selectionExtensionWidth, myLineHeight));
             }
             int offset = it.getEndOffset();
             SoftWrapEx softWrap = mySoftWrapModel.getSoftWrapEx(offset);
@@ -672,7 +649,7 @@ public final class EditorPainter implements TextDrawingCallback {
         prevY = y + visLinesIterator.getLineHeight();
         visLinesIterator.advance();
       }
-      mySelectionLinePainter.flush();
+      mySelectionModelView.paint(myGraphics, new Rectangle2D.Double(myClip.x, myClip.y, myClip.width, myClip.height), myLineHeight);
       if (calculateMarginWidths && myEndVisualLine >= lineCount - 1) {
         myMarginPositions.y()[myMarginPositions.y().length - 1] = myMarginPositions.y()[myMarginPositions.y().length - 2] + myLineHeight;
       }
@@ -726,7 +703,7 @@ public final class EditorPainter implements TextDrawingCallback {
       }
       float endX = (float)Math.min(clipEndX, myView.visualPositionToXY(new VisualPosition(visualLine, selectionRange.second)).getX());
       if (shouldUseNewSelection()) {
-        mySelectionLinePainter.paintSelection(new Rectangle2D.Float(startX, y, endX - startX, myLineHeight));
+        mySelectionModelView.paintBlock(new Rectangle2D.Double(startX, y, endX - startX, myLineHeight));
       } else {
         paintBackground(selectionBackgroundColor(), startX, y, endX - startX);
       }
@@ -747,7 +724,7 @@ public final class EditorPainter implements TextDrawingCallback {
                    (float)myView.visualPositionToXY(selectionEndPosition).getX() : xEnd;
 
       if (shouldUseNewSelection()) {
-        mySelectionLinePainter.paintSelection(new Rectangle2D.Float(startX, y, endX - startX, myLineHeight));
+        mySelectionModelView.paintBlock(new Rectangle2D.Double(startX, y, endX - startX, myLineHeight));
       } else {
         paintBackground(selectionBackgroundColor(), startX, y, endX - startX);
       }
@@ -780,7 +757,7 @@ public final class EditorPainter implements TextDrawingCallback {
                    : clipEndX;
 
       if (shouldUseNewSelection()) {
-        mySelectionLinePainter.paintSelection(new Rectangle2D.Float(startX, y, endX - startX, myLineHeight));
+        mySelectionModelView.paintBlock(new Rectangle2D.Double(startX, y, endX - startX, myLineHeight));
       } else {
         paintBackground(selectionBackgroundColor(), startX, y, endX - startX);
       }

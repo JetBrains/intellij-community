@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.actions
 
 import com.intellij.idea.AppMode
@@ -66,10 +66,6 @@ abstract class XDebuggerTreeActionBase : AnAction(), ActionRemoteBehaviorSpecifi
      */
     @JvmStatic
     fun getSelectedNodes(dataContext: DataContext): List<XValueNodeImpl> {
-      if (!SplitDebuggerMode.isSplitDebugger()) {
-        return XDebuggerTree.SELECTED_NODES.getData(dataContext) ?: emptyList()
-      }
-
       if (showSplitWarnings() && AppMode.isRemoteDevHost()) {
         LOG.error("""
           XDebuggerTreeActionBase should not be used in Rem-Dev mode:
@@ -126,7 +122,6 @@ abstract class XDebuggerTreeActionBase : AnAction(), ActionRemoteBehaviorSpecifi
       selectedSplitValues: List<XDebuggerTreeSelectedValue>,
       dataContext: DataContext,
     ): List<XDebuggerTreeSelectedValue> {
-      if (!SplitDebuggerMode.isSplitDebugger()) return emptyList()
       val selectedNodes = XDebuggerTree.SELECTED_NODES.getData(dataContext) ?: return emptyList()
 
       val splitValueNodes = selectedSplitValues.map { it.node }

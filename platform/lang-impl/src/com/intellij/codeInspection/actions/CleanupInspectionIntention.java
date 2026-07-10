@@ -38,6 +38,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -110,7 +111,7 @@ public final class CleanupInspectionIntention implements IntentionAction, HighPr
     return message;
   }
 
-  private List<ProblemDescriptor> getDescriptors(@NotNull Project project, PsiFile targetFile) {
+  private @Unmodifiable List<ProblemDescriptor> getDescriptors(@NotNull Project project, PsiFile targetFile) {
     try {
       return ReadAction.nonBlocking(() -> ProgressManager.getInstance().runProcess(() -> {
         InspectionManager inspectionManager = InspectionManager.getInstance(project);

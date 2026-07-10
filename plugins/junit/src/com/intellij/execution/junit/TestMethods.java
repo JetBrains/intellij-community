@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit;
 
@@ -23,11 +23,14 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.rt.execution.TestListenerProtocol;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class TestMethods extends TestMethod {
   private static final Logger LOG = Logger.getInstance(TestMethods.class);
@@ -51,15 +54,41 @@ public class TestMethods extends TestMethod {
     final Module module = configurationModule.getModule();
     final GlobalSearchScope searchScope = module != null ? module.getModuleRuntimeScope(true)
                                                          : GlobalSearchScope.allScope(project);
-    ReadAction.run(() -> addClassesListToJavaParameters(myFailedTests, testInfo -> testInfo != null
-                                                                                   ? getTestPresentation(testInfo, project, searchScope)
-                                                                                   : null,
-                                                        isRunningUnderSuite(getConfiguration(), myFailedTests)
+    final Collection<? extends AbstractTestProxy> failedTests = collectFailedTests(myFailedTests);
+    ReadAction.run(() -> addClassesListToJavaParameters(failedTests, testInfo -> testInfo != null
+                                                                                 ? getTestPresentation(testInfo, project, searchScope)
+                                                                                 : null,
+                                                        isRunningUnderSuite(getConfiguration(), failedTests)
                                                         ? ""
                                                         : data.getPackageName(),
                                                         true, javaParameters));
 
     return javaParameters;
+  }
+
+  private static @NotNull Collection<? extends AbstractTestProxy> collectFailedTests(@NotNull Collection<? extends AbstractTestProxy> failedTests) {
+    final Set<AbstractTestProxy> result = new LinkedHashSet<>();
+    for (AbstractTestProxy test : failedTests) {
+      if (test.isLeaf() && TestListenerProtocol.CLASS_CONFIGURATION.equals(test.getName())) {
+        final AbstractTestProxy classSuite = test.getParent();
+        boolean expanded = false;
+        if (classSuite != null) {
+          for (AbstractTestProxy child : classSuite.getAllTests()) {
+            if (child.isLeaf() && !TestListenerProtocol.CLASS_CONFIGURATION.equals(child.getName())) {
+              result.add(child);
+              expanded = true;
+            }
+          }
+        }
+        if (!expanded) {
+          result.add(test); //no launched tests are known: fall back to rerunning the whole class (see: getTestPresentation)
+        }
+      }
+      else {
+        result.add(test);
+      }
+    }
+    return result;
   }
 
   private static boolean isRunningUnderSuite(@NotNull JUnitConfiguration configuration, @NotNull Collection<? extends AbstractTestProxy> failedTests) {
@@ -99,8 +128,11 @@ public class TestMethods extends TestMethod {
   }
 
   public static @Nullable String getTestPresentation(AbstractTestProxy testInfo, Project project, GlobalSearchScope searchScope) {
-    final Location location = testInfo.getLocation(project, searchScope);
+    final Location<?> location = testInfo.getLocation(project, searchScope);
     final PsiElement element = location != null ? location.getPsiElement() : null;
+    if (element instanceof PsiClass && TestListenerProtocol.CLASS_CONFIGURATION.equals(testInfo.getName())) {
+      return JavaExecutionUtil.getRuntimeQualifiedName((PsiClass)element);
+    }
     if (element instanceof PsiMethod) {
       String nodeId = TestUniqueId.getEffectiveNodeId(testInfo, project, searchScope);
       if (nodeId != null) {

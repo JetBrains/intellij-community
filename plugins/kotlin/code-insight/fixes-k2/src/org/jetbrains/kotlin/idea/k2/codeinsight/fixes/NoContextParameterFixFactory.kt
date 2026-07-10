@@ -1,56 +1,233 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
+import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaScopeImplicitArgumentValue
+import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaSubtypingErrorTypePolicy
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.config.ApiVersion
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
 
 @OptIn(KaExperimentalApi::class)
 internal object NoContextParameterFixFactory {
+    private val CONTEXT_FQ_NAME: FqName = FqName("kotlin.context")
+    private val ANONYMOUS_NAME: Name = Name.identifier("_")
+
     val noContextArgument = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NoContextArgument ->
-        val expression = diagnostic.psi as? KtExpression
-            ?: return@ModCommandBased emptyList()
+        val expression = diagnostic.psi as? KtExpression ?: return@ModCommandBased emptyList()
+        val symbol = diagnostic.symbol as? KaContextParameterSymbol ?: return@ModCommandBased emptyList()
+        val requiredType = symbol.returnType
+        val requiredTypeText = requiredType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.INVARIANT)
+        val requiredTypeFqNameText = requiredType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
 
-        val symbol = diagnostic.symbol as? KaContextParameterSymbol
-            ?: return@ModCommandBased emptyList()
-
-        val contextType = symbol.returnType.render(renderer = KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
         buildList {
-            findSurroundingContextCall(expression)?.let {
-                add(AddContextParameterToExistingContextFix(it))
-            }
-            if (expression is KtCallElement) {
-                val wrapper = if (expression.languageVersionSettings.apiVersion >= ApiVersion.KOTLIN_2_2) {
-                    SurroundCallWithContextFix.Wrapper.CONTEXT
+            val surroundingCall = findSurroundingContextCall(expression)
+            val candidates = findValueCandidates(expression, surroundingCall, requiredType)
+            if (surroundingCall != null) {
+                if (!candidates.isEmpty()) {
+                    candidates.forEach { candidateName ->
+                        add(
+                            AddContextParameterToExistingContextFix(
+                                surroundingCall,
+                                candidateName,
+                                requiredTypeText,
+                                requiredTypeFqNameText
+                            )
+                        )
+                    }
                 } else {
-                    SurroundCallWithContextFix.Wrapper.WITH
+                    add(AddContextParameterToExistingContextFix(surroundingCall, null, requiredTypeText, requiredTypeFqNameText))
                 }
-                add(SurroundCallWithContextFix(expression, wrapper))
+            } else {
+                val wrapper = contextWrapperFor(expression)
+                if (!candidates.isEmpty()) {
+                    candidates.forEach { candidateName ->
+                        add(SurroundCallWithContextFix(expression, wrapper, candidateName, requiredTypeText, requiredTypeFqNameText))
+                    }
+                } else {
+                    add(SurroundCallWithContextFix(expression, wrapper, null, requiredTypeText, requiredTypeFqNameText))
+                }
             }
+
+            if (expression is KtCallElement &&
+                expression.languageVersionSettings.supportsFeature(LanguageFeature.ExplicitContextArguments)
+            ) {
+                addIfNotNull(buildExplicitContextArgumentFix(expression, symbol))
+            }
+
             val containingFunction = expression.getStrictParentOfType<KtNamedFunction>()
             if (containingFunction != null && !containingFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-                add(AddContextParameterFix(expression, listOf(contextType)))
+                add(
+                    AddContextParameterFix.ForEnclosingFunction(
+                        element = expression,
+                        contextParameter =
+                            AddContextParameterFix.ContextParameter(name = null, type = requiredTypeText),
+                    )
+                )
             }
         }
     }
-    private fun findSurroundingContextCall(element: KtElement): KtCallExpression? {
-        val lambdaArg = element.getStrictParentOfType<KtLambdaArgument>() ?: return null
-        val parentCall = lambdaArg.parent as? KtCallExpression ?: return null
-        val callee = parentCall.calleeExpression?.text ?: return null
-        if (callee != "context") return null
-        return parentCall
+
+    private fun contextWrapperFor(expression: KtElement): SurroundCallWithContextFix.Wrapper =
+        if (expression.languageVersionSettings.apiVersion >= ApiVersion.KOTLIN_2_2) {
+            SurroundCallWithContextFix.Wrapper.CONTEXT
+        } else {
+            SurroundCallWithContextFix.Wrapper.WITH
+        }
+
+    private fun KaSession.findSurroundingContextCall(element: KtElement): KtCallExpression? {
+        val parentCall = element.getStrictParentOfType<KtLambdaArgument>()?.parent as? KtCallExpression ?: return null
+        val calleeName = (parentCall.calleeExpression as? KtNameReferenceExpression)?.getReferencedName()
+        if (calleeName != CONTEXT_FQ_NAME.shortName().asString()) return null
+        val resolvedFqName = parentCall.resolveToCall()?.singleFunctionCallOrNull()?.symbol?.callableId?.asSingleFqName()
+        return if (resolvedFqName == null || resolvedFqName == CONTEXT_FQ_NAME) parentCall else null
     }
+
+    private fun KaSession.findValueCandidates(
+        useSite: KtElement,
+        surroundingContextCall: KtCallExpression?,
+        requiredType: KaType,
+    ): Set<String> {
+        if (surroundingContextCall != null &&
+            innerContextScopeAlreadyContainsType(useSite, surroundingContextCall, requiredType)
+        ) return emptySet()
+
+        val scopeContext = useSite.containingKtFile.scopeContext(useSite)
+        return buildSet {
+            // Named callables visible at the use site: local vals/vars, parameters,
+            // properties of enclosing classes, top-level declarations. Checking inside file, imports pollute candidates.
+            scopeContext.compositeScope().callables.forEach { sym ->
+                if (sym !is KaVariableSymbol) return@forEach
+                if (sym.receiverParameter != null) return@forEach
+                val name = sym.name
+                if (sym.psi?.containingFile != useSite.containingFile) return@forEach
+                if (name == ANONYMOUS_NAME) return@forEach
+                if (sym.returnType.isSubtypeOf(requiredType)) add(name.asString())
+            }
+
+            // Context parameters of enclosing declarations are exposed as implicit argument values.
+            scopeContext.implicitValues.forEach { value ->
+                if (value !is KaScopeImplicitArgumentValue) return@forEach
+                val name = value.symbol.name
+                if (name == ANONYMOUS_NAME) return@forEach
+                if (value.type.isSubtypeOf(requiredType)) add(name.asString())
+            }
+        }
+    }
+
+
+    private fun KaSession.innerContextScopeAlreadyContainsType(
+        useSite: KtElement,
+        surroundingContextCall: KtCallExpression,
+        requiredType: KaType,
+    ): Boolean {
+        // Existing positional arguments of context(...).
+        val hasMatchingArg = surroundingContextCall.valueArguments
+            .mapNotNull { it.getArgumentExpression()?.expressionType }
+            .any { it.isSubtypeOf(requiredType) }
+        if (hasMatchingArg) return true
+
+        // Context parameters from enclosing declarations propagate into the lambda's context scope.
+        return useSite.containingKtFile.scopeContext(useSite).implicitValues
+            .filterIsInstance<KaScopeImplicitArgumentValue>()
+            .any { it.type.isSubtypeOf(requiredType) }
+    }
+
+    context(_: KaSession)
+    private fun buildExplicitContextArgumentFix(
+        callElement: KtCallElement,
+        currentSymbol: KaContextParameterSymbol,
+    ): AddExplicitContextArgumentFix? {
+        val candidate = callElement.resolveToCallCandidates()
+            .firstNotNullOfOrNull { it.candidate as? KaFunctionCall<*> } ?: return null
+
+        val contextParamSignatures = candidate.signature.contextParameters.ifEmpty { return null }
+        val arguments = callElement.valueArgumentList?.arguments.orEmpty()
+        val existingArgNames = arguments.mapNotNullTo(hashSetOf()) { it.getArgumentName()?.asName }
+
+        val missingContextParams = contextParamSignatures.filter { it.symbol.name !in existingArgNames }
+        if (missingContextParams.isEmpty()) return null
+        // Bail out for _: Anonymous
+        if (missingContextParams.any { it.symbol.name.isSpecial }) return null
+
+        // Emit the fix only once per call site.
+        if (missingContextParams.first().symbol.name != currentSymbol.name) return null
+
+        // Skip entirely if any name would clash with a value parameter of some candidate.
+        if (missingContextParams.any { wouldCauseOverloadAmbiguity(callElement, it.symbol.name) }) return null
+
+        // Pool of unnamed arguments we may rename, keeping enough left for required positional value parameters.
+        val requiredPositionalCount = candidate.symbol.valueParameters
+            .count { !it.hasDefaultValue && !it.isVararg && it.name !in existingArgNames }
+        val renamableArguments = arguments.withIndex()
+            .filter { (_, arg) -> arg.getArgumentName() == null }
+            .toMutableList()
+
+        fun pickRenameTarget(paramReturnType: KaType): IndexedValue<KtValueArgument>? {
+            val canSpareOne = renamableArguments.size > requiredPositionalCount
+            if (!canSpareOne) return null
+
+            val matchIndex = renamableArguments.indexOfFirst { (_, argument) ->
+                argument.getArgumentExpression()?.expressionType?.isSubtypeOf(paramReturnType, KaSubtypingErrorTypePolicy.STRICT) == true
+            }
+            return if (matchIndex >= 0) renamableArguments.removeAt(matchIndex) else null
+        }
+
+        val contextParameterFixes = missingContextParams.map { paramSignature ->
+            val name = paramSignature.symbol.name
+            val renameTarget = pickRenameTarget(paramSignature.returnType)
+
+            if (renameTarget != null) {
+                AddExplicitContextArgumentFix.ContextParameterFix.AddArgumentName(name, renameTarget.index)
+            } else {
+                val type = paramSignature.returnType.render(
+                    KaTypeRendererForSource.WITH_SHORT_NAMES,
+                    Variance.INVARIANT
+                )
+                AddExplicitContextArgumentFix.ContextParameterFix.Insert(name, type)
+            }
+        }
+
+        return AddExplicitContextArgumentFix(callElement, contextParameterFixes)
+    }
+
+    context(_: KaSession)
+    private fun wouldCauseOverloadAmbiguity(
+        callElement: KtCallElement,
+        contextParamName: Name,
+    ): Boolean {
+        return callElement.resolveToCallCandidates().any { candidateInfo ->
+            val symbol = (candidateInfo.candidate as? KaFunctionCall<*>)?.symbol ?: return@any false
+            symbol.valueParameters.any { it.name == contextParamName }
+        }
+    }
+
 }

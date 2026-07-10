@@ -2,9 +2,10 @@
 package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.target.HostPort
+import org.jetbrains.plugins.gradle.tooling.proxy.serializer.GradleToolingProxySerializer
+import org.jetbrains.plugins.gradle.tooling.proxy.serializer.GradleToolingProxySerializerFactory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.service.remote.MultiLoaderObjectInputStream
 import com.intellij.openapi.externalSystem.util.wsl.connectRetrying
 import com.intellij.openapi.progress.ProgressManager
 import kotlinx.coroutines.CancellationException
@@ -25,12 +26,11 @@ import org.gradle.tooling.internal.provider.action.BuildActionSerializer
 import org.jetbrains.plugins.gradle.service.execution.GradleServerConfigurationProvider
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetIntermediateResultHandler
-import java.io.ByteArrayInputStream
 import java.net.InetAddress
 
 internal class ToolingProxyConnector(
   private val hostPort: HostPort,
-  private val classloaderHolder: GradleToolingProxyClassloaderHolder,
+  private val serializer: GradleToolingProxySerializer
 ) {
 
   private companion object {
@@ -142,10 +142,7 @@ internal class ToolingProxyConnector(
 
   private fun deserializeIfNeeded(value: Any?): Any? {
     val bytes = value as? ByteArray ?: return value
-    val deserialized = MultiLoaderObjectInputStream(ByteArrayInputStream(bytes), classloaderHolder.getClassloaders()).use {
-      it.readObject()
-    }
-    return deserialized
+    return serializer.deserialize(bytes)
   }
 
   class ToolingProxyConnectorFactory(
@@ -157,7 +154,9 @@ internal class ToolingProxyConnector(
 
     fun getConnector(host: String, port: Int): ToolingProxyConnector {
       val address = resolveRemoteAddress(host, port)
-      return ToolingProxyConnector(address, classloaderHolder)
+      val serializerClassLoader = classloaderHolder.getClassloader()
+      val serializer = GradleToolingProxySerializerFactory.getSerializer(serializerClassLoader)
+      return ToolingProxyConnector(address, serializer)
     }
 
     private fun resolveRemoteAddress(host: String, port: Int): HostPort {

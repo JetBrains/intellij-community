@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.actions
 
+import com.intellij.ide.ui.VirtualFileAppearanceListener
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -101,6 +102,32 @@ class MarkExcludeRootActionTest {
 
     assertThat(runReadActionBlocking { fileIndex.isExcluded(file) }).isFalse()
     assertThat(runReadActionBlocking { fileIndex.isInContent(file) }).isTrue()
+  }
+
+  @Test
+  fun `excluding a file fires a virtual-file-appearance event for it`() {
+    val file = projectModel.baseProjectDir.newVirtualFile("module/content/generated.bin")
+    val changed = mutableListOf<VirtualFile>()
+    ApplicationManager.getApplication().messageBus.connect(disposableRule.disposable)
+      .subscribe(VirtualFileAppearanceListener.TOPIC, VirtualFileAppearanceListener { changed.add(it) })
+
+    invoke(MarkExcludeRootAction(), file)
+
+    assertThat(changed).contains(file)
+  }
+
+  @Test
+  fun `unmarking a file fires a virtual-file-appearance event for it`() {
+    val file = projectModel.baseProjectDir.newVirtualFile("module/content/generated.bin")
+    invoke(MarkExcludeRootAction(), file)
+
+    val changed = mutableListOf<VirtualFile>()
+    ApplicationManager.getApplication().messageBus.connect(disposableRule.disposable)
+      .subscribe(VirtualFileAppearanceListener.TOPIC, VirtualFileAppearanceListener { changed.add(it) })
+
+    invoke(UnmarkRootAction(), file)
+
+    assertThat(changed).contains(file)
   }
 
   @Test

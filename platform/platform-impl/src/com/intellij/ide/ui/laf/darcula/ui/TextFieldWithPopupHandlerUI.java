@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.laf.MouseDragSelectionEventHandler;
+import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -58,11 +59,9 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -70,8 +69,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Path2D;
-import java.awt.geom.RoundRectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.LinkedHashMap;
@@ -902,21 +899,8 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       myIconHolder.paintBackground(g, r);
 
       if (hasFocus()) {
-        Graphics2D g2 = (Graphics2D)g.create();
-        try {
-          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-          g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-          g2.setColor(JBUI.CurrentTheme.ActionButton.focusedBorder());
-          float arc = DarculaUIUtil.BUTTON_ARC.getFloat();
-          float lw = DarculaUIUtil.LW.getFloat();
-          Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-          border.append(new RoundRectangle2D.Float(r.x, r.y, r.width, r.height, arc, arc), false);
-          border.append(new RoundRectangle2D.Float(r.x + lw, r.y + lw, r.width - lw * 2, r.height - lw * 2, arc - lw, arc - lw), false);
-          g2.fill(border);
-        }
-        finally {
-          g2.dispose();
-        }
+        DarculaNewUIUtil.INSTANCE.drawRoundedRectangle(g, r, JBUI.CurrentTheme.Focus.focusColor(),
+                                                       DarculaUIUtil.BUTTON_ARC.getFloat(), DarculaUIUtil.LW.getFloat());
       }
 
       super.paintComponent(g);

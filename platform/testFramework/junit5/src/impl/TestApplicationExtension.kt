@@ -6,12 +6,14 @@ package com.intellij.testFramework.junit5.impl
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.common.BazelTestUtil
 import com.intellij.testFramework.common.assertDisposerEmpty
 import com.intellij.testFramework.common.assertNonDefaultProjectsAreNotLeaked
 import com.intellij.testFramework.common.cleanApplicationState
 import com.intellij.testFramework.common.disposeTestApplication
 import com.intellij.testFramework.common.initTestApplication
+import com.intellij.testFramework.common.isApplicationInitialized
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitForAppLeakingThreads
 import com.intellij.util.ui.EDT
@@ -24,6 +26,7 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import java.lang.AutoCloseable
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.seconds
 
 @TestOnly
@@ -47,8 +50,20 @@ fun ExtensionContext.testApplication(): Result<Unit> {
 }
 
 @TestOnly
+fun testApplicationToken(): AutoCloseable = TestApplicationResource(initTestApplication())
+
+
+private val useCount = AtomicInteger(0)
+
+@TestOnly
 private class TestApplicationResource(val initializationResult: Result<Unit>) : AutoCloseable {
+  init {
+    useCount.incrementAndGet()
+  }
   override fun close() {
+    if (useCount.decrementAndGet() != 0 || !isApplicationInitialized) {
+      return
+    }
     check(!EDT.isCurrentThreadEdt())
     if (!initializationResult.isSuccess) {
       return
@@ -67,6 +82,7 @@ private class TestApplicationResource(val initializationResult: Result<Unit>) : 
         val application = ApplicationManager.getApplication()
         application.messageBus.syncPublisher(AppLifecycleListener.TOPIC).appWillBeClosed(false)
         yield()
+        LeakHunter.cleanupAllProjects()
         waitForAppLeakingThreads(application, 10, TimeUnit.SECONDS)
         assertNonDefaultProjectsAreNotLeaked() // TODO? ability to disable this check for local (=non-build-server) runs
         yield()

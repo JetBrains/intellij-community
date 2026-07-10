@@ -15,18 +15,30 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.idea.TestFor;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedFunctionInspection;
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalVariableInspection;
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedParameterInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
+@Subsystems.Inspections
+@Layers.Functional
 public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
 
   public void testPy2() {
-    final PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
+    final PyUnusedLocalVariableInspection inspection = new PyUnusedLocalVariableInspection();
     inspection.ignoreTupleUnpacking = false;
-    inspection.ignoreLambdaParameters = false;
-    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doTest(inspection));
+    final PyUnusedParameterInspection parameterInspection = new PyUnusedParameterInspection();
+    parameterInspection.ignoreLambdaParameters = false;
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doTest(inspection, parameterInspection));
   }
 
   public void testNonlocal() {
@@ -132,23 +144,22 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
 
   // PY-27435
   public void testVariableStartingWithUnderscore() {
-    final PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
+    final PyUnusedLocalVariableInspection inspection = new PyUnusedLocalVariableInspection();
     inspection.ignoreVariablesStartingWithUnderscore = false;
     doTest(inspection);
   }
 
   // PY-20893
   public void testExceptionTargetStartingWithUnderscore() {
-    final PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
+    final PyUnusedLocalVariableInspection inspection = new PyUnusedLocalVariableInspection();
     inspection.ignoreVariablesStartingWithUnderscore = true;
     doTest(inspection);
   }
 
   // PY-31388
   public void testIgnoringVariablesStartingWithUnderscore() {
-    final PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
+    final PyUnusedLocalVariableInspection inspection = new PyUnusedLocalVariableInspection();
     inspection.ignoreVariablesStartingWithUnderscore = true;
-    inspection.ignoreLambdaParameters = false;
     inspection.ignoreLoopIterationVariables = false;
     inspection.ignoreTupleUnpacking = false;
     doTest(inspection);
@@ -284,16 +295,46 @@ def test():
     doTest();
   }
 
+  @TestFor(issues="PY-39449")
+  public void testDeletedParameterIsNotReportedAsUnused() {
+    doTestByText(
+      """
+        def myfunction(arg):
+            del arg
+        """);
+  }
+
+  @TestFor(issues="PY-39449")
+  public void testDeletedLocalVariableIsNotReportedAsUnused() {
+    doTestByText(
+      """
+        def myfunction():
+            value = 42
+            del value
+        """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
-    return PyUnusedLocalInspection.class;
+    return PyUnusedLocalVariableInspection.class;
   }
 
-  private void doTest(@NotNull PyUnusedLocalInspection inspection) {
-    final String path = "inspections/PyUnusedLocalInspection/" + getTestName(true) + ".py";
+  // Parameter and function reporting now live in separate inspections; enable them too so the shared testData keeps matching.
+  @NotNull
+  @Override
+  protected List<Class<? extends LocalInspectionTool>> getAdditionalInspectionClasses() {
+    return List.of(PyUnusedParameterInspection.class, PyUnusedFunctionInspection.class);
+  }
+
+  private void doTest(@NotNull PyUnusedLocalVariableInspection inspection) {
+    doTest(inspection, new PyUnusedParameterInspection());
+  }
+
+  private void doTest(@NotNull PyUnusedLocalVariableInspection inspection, @NotNull PyUnusedParameterInspection parameterInspection) {
+    final String path = "inspections/PyUnusedLocalVariableInspection/" + getTestName(true) + ".py";
     myFixture.configureByFile(path);
-    myFixture.enableInspections(inspection);
+    myFixture.enableInspections(inspection, parameterInspection, new PyUnusedFunctionInspection());
     myFixture.checkHighlighting(true, false, true);
   }
 }

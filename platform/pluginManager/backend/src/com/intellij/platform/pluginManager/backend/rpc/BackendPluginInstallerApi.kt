@@ -36,7 +36,7 @@ internal class BackendPluginInstallerApi : PluginInstallerApi {
 
   override suspend fun unloadDynamicPlugin(pluginId: PluginId, isUpdate: Boolean): Boolean {
     val pluginDescriptor = PluginManagerCore.findPlugin(pluginId)?.getMainDescriptor() ?: return false
-    return PluginInstaller.unloadDynamicPlugin(null, pluginDescriptor, isUpdate)
+    return PluginInstaller.unloadDynamicPlugin(pluginDescriptor)
   }
 
   override suspend fun resetSession(sessionId: String, removeSession: Boolean): Map<PluginId, Boolean> {

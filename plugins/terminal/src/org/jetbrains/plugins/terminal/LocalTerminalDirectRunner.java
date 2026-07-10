@@ -5,7 +5,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
+import com.intellij.platform.eel.provider.RemoteProjectPathProviderKt;
 import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.util.TimeoutUtil;
@@ -31,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -61,12 +64,16 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   public @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions) {
     ShellStartupOptions updatedOptions = LocalOptionsConfigurer.configureStartupOptions(baseOptions, myProject);
 
-    if (IdeProductMode.isFrontend() && updatedOptions.getEelDescriptorNotNull() == LocalEelDescriptor.INSTANCE) {
+    if (IdeProductMode.isFrontend() && !IdeProductMode.isLight() && updatedOptions.getEelDescriptorNotNull() == LocalEelDescriptor.INSTANCE) {
       throw new IllegalStateException(("""
                                          It is prohibited to start a local process in RemDev mode. Something went wrong.
                                          Requested options: %s
                                          Configured options: %s
-                                         """).formatted(baseOptions, updatedOptions));
+                                         Project EelDescriptor: %s
+                                         Remote project path: %s
+                                         """).formatted(baseOptions, updatedOptions,
+                                                        EelProviderUtil.getEelDescriptor(myProject),
+                                                        RemoteProjectPathProviderKt.getRemoteProjectBaseNioPath(myProject)));
     }
 
     if (updatedOptions.getProcessType() == TerminalProcessType.SHELL && enableShellIntegration()) {
@@ -129,6 +136,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       LOG.info("Started " + processHolder.getPtyProcess().getClass().getName() + " in " + TimeoutUtil.getDurationMillis(startNano)
                + " ms from " + stringifyProcessInfo(command, workingDir, initialTermSize, envs, !LOG.isDebugEnabled()));
       return processHolder;
+    }
+    catch (CancellationException e) {
+      // The terminal startup was canceled, e.g., the terminal tab, or the project was closed during startup.
+      // Propagate the cancellation as-is instead of wrapping it into an ExecutionException.
+      throw e;
     }
     catch (Exception e) {
       throw new ExecutionException("Failed to start " + stringifyProcessInfo(command, workingDir, initialTermSize, envs, false), e);

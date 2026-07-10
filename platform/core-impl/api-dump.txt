@@ -652,7 +652,9 @@ c:com.intellij.pom.tree.events.impl.ChangeInfoImpl
 a:com.intellij.psi.AbstractFileViewProvider
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.psi.FileViewProvider
+- correspondsToRealFile():Z
 - f:markInvalidated():V
+- supportsSendingPsiEvents():Z
 com.intellij.psi.CustomHighlighterTokenType
 - sf:CHARACTER:com.intellij.psi.tree.IElementType
 - sf:CUSTOM_CONTENT:com.intellij.psi.tree.IElementType
@@ -751,7 +753,7 @@ a:com.intellij.psi.impl.FakePsiElement
 - com.intellij.psi.PsiNamedElement
 - <init>():V
 - pf:getElementIcon(I):javax.swing.Icon
-- f:getIcon(I):javax.swing.Icon
+- getIcon(I):javax.swing.Icon
 - getIcon(Z):javax.swing.Icon
 - getText():java.lang.String
 - getTextLength():I
@@ -783,6 +785,7 @@ a:com.intellij.psi.impl.PsiDocumentManagerBase
 - com.intellij.openapi.editor.event.DocumentListener
 - com.intellij.psi.PsiDocumentManager
 - commitDocument(com.intellij.openapi.editor.Document):V
+- getDocumentForNonPhysicalLightFile(com.intellij.psi.PsiFile):com.intellij.openapi.editor.Document
 - getPsiFile(com.intellij.openapi.editor.Document):com.intellij.psi.PsiFile
 - getSynchronizer():com.intellij.psi.impl.PsiToDocumentSynchronizer
 - isCommitInProgress():Z
@@ -1101,7 +1104,7 @@ a:com.intellij.psi.impl.source.tree.CompositePsiElement
 - copy():com.intellij.psi.PsiElement
 - getChildren():com.intellij.psi.PsiElement[]
 - getContainingFile():com.intellij.psi.PsiFile
-- getFirstChild():com.intellij.psi.PsiElement
+- f:getFirstChild():com.intellij.psi.PsiElement
 - getLanguage():com.intellij.lang.Language
 - getLastChild():com.intellij.psi.PsiElement
 - getName():java.lang.String
@@ -1167,7 +1170,7 @@ c:com.intellij.psi.impl.source.tree.LeafPsiElement
 - getContext():com.intellij.psi.PsiElement
 - getLanguage():com.intellij.lang.Language
 - getName():java.lang.String
-- getNextSibling():com.intellij.psi.PsiElement
+- f:getNextSibling():com.intellij.psi.PsiElement
 - getNode():com.intellij.lang.ASTNode
 - getOriginalElement():com.intellij.psi.PsiElement
 - getParent():com.intellij.psi.PsiElement
@@ -1405,6 +1408,8 @@ f:com.intellij.util.indexing.FileContentImpl
 - s:createByFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.indexing.FileContent
 - getPsiFile():com.intellij.psi.PsiFile
 c:com.intellij.util.ref.DebugReflectionUtil$BackLink
+- getValue():java.lang.Object
+- prev():com.intellij.util.ref.DebugReflectionUtil$BackLink
 org.picocontainer.MutablePicoContainer
 - a:getComponentAdapter(java.lang.Object):org.picocontainer.ComponentAdapter
 - registerComponentImplementation(java.lang.Class):org.picocontainer.ComponentAdapter

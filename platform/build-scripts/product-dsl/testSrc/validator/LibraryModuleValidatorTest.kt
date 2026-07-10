@@ -9,9 +9,6 @@ import org.jetbrains.intellij.build.productLayout.dependency.jpsProject
 import org.jetbrains.intellij.build.productLayout.dependency.pluginGraph
 import org.jetbrains.intellij.build.productLayout.dependency.runValidationRule
 import org.jetbrains.intellij.build.productLayout.dependency.testGenerationModel
-import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContextImpl
-import org.jetbrains.intellij.build.productLayout.pipeline.Slots
-import org.jetbrains.intellij.build.productLayout.stats.SuppressionType
 import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.junit.jupiter.api.Test
@@ -76,7 +73,7 @@ class LibraryModuleValidatorTest {
   }
 
   @Test
-  fun `update suppressions records violations without diffs`(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
+  fun `update suppressions skips fixes without recording suppressions`(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
     val jps = jpsProject(tempDir) {
       library("JUnit4")
       module("intellij.libraries.junit4") {
@@ -105,23 +102,11 @@ class LibraryModuleValidatorTest {
       updateSuppressions = true,
     )
 
-    val ctx = ComputeContextImpl(model)
-    ctx.initSlot(Slots.LIBRARY_SUPPRESSIONS)
-    ctx.initErrorSlot(LibraryModuleValidator.id)
-    val nodeCtx = ctx.forNode(LibraryModuleValidator.id)
-    LibraryModuleValidator.execute(nodeCtx)
-    ctx.finalizeNodeErrors(LibraryModuleValidator.id)
+    runValidationRule(LibraryModuleValidator, model)
 
     assertThat(strategy.getDiffs())
       .describedAs("No diffs should be generated in updateSuppressions mode")
       .isEmpty()
-
-    val suppressions = ctx.tryGet(Slots.LIBRARY_SUPPRESSIONS) ?: emptyList()
-    assertThat(suppressions).anySatisfy { usage ->
-      assertThat(usage.sourceModule.value).isEqualTo("test.plugin")
-      assertThat(usage.suppressedDep).isEqualTo("JUnit4")
-      assertThat(usage.type).isEqualTo(SuppressionType.LIBRARY_REPLACEMENT)
-    }
   }
 
   @Test

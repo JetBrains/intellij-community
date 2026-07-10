@@ -97,14 +97,23 @@ git4idea.commands.Git
 - a:runCommand(com.intellij.openapi.util.Computable):git4idea.commands.GitCommandResult
 - a:runCommand(git4idea.commands.GitLineHandler):git4idea.commands.GitCommandResult
 - a:runCommandWithoutCollectingOutput(git4idea.commands.GitLineHandler):git4idea.commands.GitCommandResult
+- a:runHook(git4idea.repo.GitRepository,java.lang.String,java.util.List,java.util.List):git4idea.commands.GitCommandResult
+f:git4idea.commands.GitCommand
+- sf:HOOK:git4idea.commands.GitCommand
+- sf:NOTES:git4idea.commands.GitCommand
 c:git4idea.commands.GitCommandResult
 - s:error(java.lang.String):git4idea.commands.GitCommandResult
 - getOutputOrThrow(I[]):java.lang.String
+- getPresentableErrorOutput():java.util.List
 - success(I[]):Z
 - throwOnError(I[]):V
 a:git4idea.commands.GitHandler
 - addParameters(java.lang.String[]):V
 - setInputProcessor(com.intellij.util.ThrowableConsumer):V
+git4idea.commands.GitHttpAuthenticator
+- a:getPresentableErrorMessage(java.util.List):java.lang.String
+c:git4idea.commands.GitImpl
+- runHook(git4idea.repo.GitRepository,java.lang.String,java.util.List,java.util.List):git4idea.commands.GitCommandResult
 c:git4idea.commands.GitLineHandler
 - addLineListener(git4idea.commands.GitLineHandlerListener):V
 - p:processTerminated(I):V
@@ -165,8 +174,11 @@ f:git4idea.history.GitHistoryTraverserProviderKt
 - sf:getTraverser(com.intellij.openapi.project.Project):git4idea.history.GitHistoryTraverser
 a:git4idea.ignore.GitRepositoryIgnoredFilesHolder
 - a:containsFile(com.intellij.openapi.vcs.FilePath):Z
+f:git4idea.index.GitIndexUtil
+- s:isNullHash(java.lang.String):Z
 f:git4idea.log.GitLogProvider
 - <init>(com.intellij.openapi.project.Project):V
+- isFullHash(com.intellij.openapi.vfs.VirtualFile,java.lang.String):Z
 f:git4idea.log.GitRefManager
 - sf:getRefType(java.lang.String):com.intellij.vcs.log.VcsRefType
 c:git4idea.merge.GitConflictResolver
@@ -195,6 +207,8 @@ f:git4idea.rebase.GitSquashedCommitsMessage
 - f:canAutosquash(java.lang.String,java.util.Set):Z
 - f:formatAmendSpecificCommitMessage(java.lang.String,java.lang.String):java.lang.String
 - f:getSubject(java.lang.String):java.lang.String
+git4idea.remote.GitHttpAuthDataProvider
+- getPresentableErrorMessage(java.util.List):java.lang.String
 f:git4idea.remote.hosting.GitAsyncExtensionsKt
 - sf:changesSignalFlow(git4idea.repo.GitRepository):kotlinx.coroutines.flow.Flow
 - sf:findFirstRemoteBranchTrackedByCurrent(git4idea.repo.GitRepoInfo):git4idea.GitRemoteBranch
@@ -210,13 +224,31 @@ f:git4idea.remote.hosting.SingleHostedGitRepositoryConnectionManagerImpl
 f:git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 - <init>(git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModel):V
 git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModel$Error
+e:git4idea.repo.GitObjectFormat
+- java.lang.Enum
+- sf:Companion:git4idea.repo.GitObjectFormat$Companion
+- sf:SHA1:git4idea.repo.GitObjectFormat
+- sf:SHA256:git4idea.repo.GitObjectFormat
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getHexSize():I
+- f:getValue():java.lang.String
+- sf:parse(java.lang.String):git4idea.repo.GitObjectFormat
+- sf:parseOrNull(java.lang.String):git4idea.repo.GitObjectFormat
+- s:valueOf(java.lang.String):git4idea.repo.GitObjectFormat
+- s:values():git4idea.repo.GitObjectFormat[]
+f:git4idea.repo.GitObjectFormat$Companion
+- f:parse(java.lang.String):git4idea.repo.GitObjectFormat
+- f:parseOrNull(java.lang.String):git4idea.repo.GitObjectFormat
 f:git4idea.repo.GitRefUtil
 - s:addRefsHeadsPrefixIfNeeded(java.lang.String):java.lang.String
 - s:getCurrentReference(git4idea.repo.GitRepository):git4idea.GitReference
 git4idea.repo.GitRepository
 - a:getBranchTrackInfo(java.lang.String):git4idea.repo.GitBranchTrackInfo
+- getFullHashLength():I
 git4idea.repo.GitRepositoryChangeListener
 - a:repositoryChanged(git4idea.repo.GitRepository):V
+f:git4idea.repo.GitRepositoryImpl
+- getFullHashLength():I
 f:git4idea.repo.GitRepositoryManager
 - s:getInstance(com.intellij.openapi.project.Project):git4idea.repo.GitRepositoryManager
 f:git4idea.repo.GitSubmoduleKt
@@ -249,6 +281,8 @@ c:git4idea.ui.branch.GitCompareBranchesHelper
 - <init>(com.intellij.openapi.project.Project):V
 f:git4idea.update.GitUpdateSessionKt
 - sf:getBodyForUpdateNotification(java.lang.Integer):java.lang.String
+a:git4idea.update.GitUpdater
+- p:hasRemoteChanges(git4idea.GitBranch):Z
 f:git4idea.util.GitFileUtils
 - sf:INSTANCE:git4idea.util.GitFileUtils
 - sf:addFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.Collection):V

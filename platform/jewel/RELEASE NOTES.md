@@ -1,5 +1,80 @@
 # Jewel Release Notes
 
+## v0.39 (2026-07-14)
+
+| Min supported IJP versions | Compose Multiplatform version |
+|----------------------------|-------------------------------|
+| 2026.2                     | 1.11.0                        |
+
+### ⚠️ Important Changes
+
+* **[JEWEL-993](https://youtrack.jetbrains.com/issue/JEWEL-993)** By default, scrollbars in scrollable containers and tabs
+  on macOS now respect the visibility option chosen in the user's macOS settings. To change the behaviour, provide a fixed
+  style, either `ScrollbarVisibility.WhenScrolling` or `ScrollbarVisibility.AlwaysVisible`
+  ([#3407](https://github.com/JetBrains/intellij-community/pull/3407))
+* **[JEWEL-1257](https://youtrack.jetbrains.com/issue/JEWEL-1257)** `ThemeColorPalette` now supports the Islands
+  palette format, which changes how palette colours are indexed ([#3523](https://github.com/JetBrains/intellij-community/pull/3523))
+* **[JEWEL-1290](https://youtrack.jetbrains.com/issue/JEWEL-1290)** `*DefaultBanner` no longer fills the available
+  width by default; it now wraps its content instead. If you want banners to span the full width, be sure to add
+  `modifier = Modifier.fillMaxWidth()` ([#3466](https://github.com/JetBrains/intellij-community/pull/3466))
+
+### New features
+
+* **[JEWEL-1257](https://youtrack.jetbrains.com/issue/JEWEL-1257)** Added support for the Islands colour palette format
+  in `ThemeColorPalette` ([#3523](https://github.com/JetBrains/intellij-community/pull/3523))
+  * `ThemeColorPalette` now includes a new `isIslands` parameter to distinguish between Islands and non-Islands theme
+    palettes, and its colour accessors support both classic and Islands indexing schemes
+  * `BridgeThemeColorPalette` now parses Islands palette keys, too, when applicable
+  * When using colour accessors, use the native index scheme for the palette: classic themes use `1, 2, 3, …`, while
+    Islands themes use `10, 20, 30, …`. For example, the Islands equivalent of `blueOrNull(1)` is `blueOrNull(10)`, and
+    `redOrNull(3)` becomes `redOrNull(30)`
+  * Note that at the time of writing the official Islands themes also contain the non-Islands palette entries, but that
+    is not guaranteed to be the case for third-party themes or in the future
+  * Contrary to non-Islands palettes, the Islands palette is identical in both light and dark themes, and semantic tokens
+    are layered on top of it; semantic tokens are not officially supported yet in Jewel, but you can read them from LaF
+* **[JEWEL-1267](https://youtrack.jetbrains.com/issue/JEWEL-1267)** Added support for sized images in Markdown
+  rendering — HTML `<img>` tags with `width` and `height` attributes, and GitLab flavoured Markdown image attribute blocks
+  (`{width=100 height=5px}`) are now parsed and rendered at the specified dimensions, with proportional scaling when
+  only one dimension is provided. ([#3527](https://github.com/JetBrains/intellij-community/pull/3527))
+  * For now, only pixel/unitless dimensions are supported. Percent sizing is ignored
+* **[JEWEL-1285](https://youtrack.jetbrains.com/issue/JEWEL-1285)** A new variation of `Popup` is available that takes
+  a `windowShape` factory, letting you apply a custom shape to the window that holds the popup
+  ([#3449](https://github.com/JetBrains/intellij-community/pull/3449))
+  * This is only useful when the `jewel.customPopupRender` system property flag is enabled, your project runs as a
+    standalone app (IJP plugins are unaffected), and `compose.interop.blending` is not enabled
+  * Keep in mind that clipping the window to a shape has limitations: Swing's `WindowTranslucency` can't render concave
+    corners properly, so depending on your shape you may see jagged edges. For this reason, it's highly encouraged to
+    also enable `compose.interop.blending` in your system properties
+
+### Bug fixes
+
+* **[JEWEL-1075](https://youtrack.jetbrains.com/issue/JEWEL-1075)** `VerticallyScrollableContainer` and
+  `HorizontallyScrollableContainer` no longer crash with `IllegalArgumentException` when placed inside a layout that
+  queries intrinsic measurements ([#3471](https://github.com/JetBrains/intellij-community/pull/3471))
+* **[JEWEL-1138](https://youtrack.jetbrains.com/issue/JEWEL-1138)** Markdown images now scale to fit the available
+  width and adjust their vertical space accordingly ([#3525](https://github.com/JetBrains/intellij-community/pull/3525))
+* **[JEWEL-1205](https://youtrack.jetbrains.com/issue/JEWEL-1205)** Menu items now have the correct size when rendered in
+  Presentation Mode ([#3419](https://github.com/JetBrains/intellij-community/pull/3419))
+* **[JEWEL-1287](https://youtrack.jetbrains.com/issue/JEWEL-1287)** Fixed `LazyTree` multi-selection highlights so
+  adjacent selected rows merge into a continuous selection block ([#3452](https://github.com/JetBrains/intellij-community/pull/3452))
+* **[JEWEL-1290](https://youtrack.jetbrains.com/issue/JEWEL-1290)** The paddings for `*DefaultBanner` components are now
+  customizable ([#3466](https://github.com/JetBrains/intellij-community/pull/3466))
+* **[JEWEL-1327](https://youtrack.jetbrains.com/issue/JEWEL-1327)** Markdown ordered lists no longer crash when the list
+  starts with `0`. For number formats such as roman and alphabetical, an item with index `0` renders as `0` and then
+  continues in the expected format (i.e., `i` for roman, `a` for alphabetical)
+  ([#3552](https://github.com/JetBrains/intellij-community/pull/3552))
+* **[IJPL-176416](https://youtrack.jetbrains.com/issue/IJPL-176416)** Improved standalone icon rendering with fading
+  animated icons and better interop with the old animated icons
+
+### Deprecated API
+
+* **[JEWEL-1257](https://youtrack.jetbrains.com/issue/JEWEL-1257)** The `ThemeColorPalette` constructor without the
+  `isIslands` parameter was removed from the visible API; specify `isIslands` when constructing palettes
+  ([#3523](https://github.com/JetBrains/intellij-community/pull/3523))
+  * The API is retained for binary compatibility for the time being, but please migrate as soon as possible
+* **[JEWEL-1285](https://youtrack.jetbrains.com/issue/JEWEL-1285)** `Popup` components without the `windowShape`
+  parameter are now deprecated ([#3449](https://github.com/JetBrains/intellij-community/pull/3449))
+
 ## v0.38 (2026-06-30)
 
 | Min supported IJP versions | Compose Multiplatform version |
@@ -24,7 +99,7 @@
   * Text context menu actions now respect the actual `enabled` state exposed by CMP
 * **[IJPL-176416](https://youtrack.jetbrains.com/issue/IJPL-176416)** Fixed standalone icon rendering so icons react
   correctly to theme, scaling, and update events after the new Icons API changes
-  ([`e6b2fee0`](https://github.com/JetBrains/intellij-community/commit/e6b2fee02b46c6d0cf6a6d1e0bc952240b977775))
+  ([`f5b0e05a`](https://github.com/JetBrains/intellij-community/commit/f5b0e05a9faab6566a7dfa2773db574171b66c35))
 
 ## v0.37 (2026-06-02)
 

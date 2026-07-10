@@ -161,10 +161,10 @@ class PluginUiModelAdapter(
     set(value) {
       if (pluginDescriptor is PluginNode) {
         if (value == null) {
-          pluginDescriptor.setReviewComments(PageContainer(0, 0))
+          pluginDescriptor.setReviewComments(PageContainer(0, true))
           return
         }
-        val container = PageContainer(value.myPageSize, value.myCurrentPage, value.items)
+        val container = PageContainer(value.currentPage, value.hasNextPage, value.items)
         pluginDescriptor.setReviewComments(container)
       }
     }

@@ -37,19 +37,30 @@ internal fun GitObjectRepository.findCommitsRange(
 }
 
 /**
+ * @property newHead The resulting head commit
+ * @property rewrittenList A mapping from the original commit to the corresponding rewritten commit
+ */
+internal data class ChainCommitsResult(
+  val newHead: Oid,
+  val rewrittenList: List<Pair<Oid, Oid>>,
+)
+
+/**
  * Chains commits sequentially on top of a base commit, preserving their original content
  * but updating parent references to form a linear history.
  */
-internal suspend fun GitObjectRepository.chainCommits(base: Oid, commits: List<GitObject.Commit>): Oid {
-  var currentNewCommit = base
+internal suspend fun GitObjectRepository.chainCommits(base: Oid, commits: List<GitObject.Commit>): ChainCommitsResult {
+  var head = base
+  val rewrittenList = mutableListOf<Pair<Oid, Oid>>()
   reportSequentialProgress(commits.size) { reporter ->
-    for ((i, commit) in commits.withIndex()) {
-      currentNewCommit = commitTreeWithOverrides(commit, parentsOids = listOf(currentNewCommit))
+    for (commit in commits) {
+      head = commitTreeWithOverrides(commit, parentsOids = listOf(head))
+      rewrittenList += commit.oid to head
 
       reporter.itemStep()
     }
   }
-  return currentNewCommit
+  return ChainCommitsResult(head, rewrittenList)
 }
 
 /**

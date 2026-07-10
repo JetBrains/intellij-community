@@ -11,13 +11,16 @@
     <a href="https://plugins.jetbrains.com/docs/intellij/welcome.html?from=com.intellij.dev&utm_source=product&utm_campaign=devkit">Learn More!</a></p>
   ]]></description>
 
+  <!--suppress AllContentModulesOptionalLoadingRule -->
   <content namespace="jetbrains">
+    <module name="intellij.platform.statistics.devkit"/>
+    <module name="intellij.platform.ide.ui.inspector"/>
     <module name="intellij.dev.psiViewer"/>
     <module name="intellij.dev.codeInsight"/>
+    <module name="intellij.dev.leakDetection"/>
     <module name="intellij.java.dev"/>
     <module name="intellij.groovy.dev"/>
     <module name="intellij.kotlin.dev"/>
-    <module name="intellij.platform.statistics.devkit"/>
     <module name="intellij.php.dev"/>
   </content>
 

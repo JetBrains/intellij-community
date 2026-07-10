@@ -36,11 +36,12 @@ internal class MoveFunctionToClassIntention : SelfTargetingRangeIntention<KtName
                 candidates = findTargetClassCandidates(element)
             }
         }
+        if (candidates == null) return
 
         K2MoveToClassDialog(
             project = element.project,
             declaration = element,
-            candidates = candidates ?: return,
+            candidates = candidates,
         ).show()
     }
 

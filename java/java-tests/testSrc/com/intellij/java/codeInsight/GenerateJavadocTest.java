@@ -8,8 +8,10 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.TestDataPath;
 
 @HeavyPlatformTestCase.WrapInCommand
+@TestDataPath("$CONTENT_ROOT/testData/codeInsight/generateJavadoc/")
 public class GenerateJavadocTest extends LightJavaCodeInsightTestCase {
   public void test1() { doTest(); }
   public void test2() { doTest(); }

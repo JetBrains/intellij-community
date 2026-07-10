@@ -5,4 +5,4 @@ def foo(*args):
     pass
 
 
-foo(<warning descr="Expected type 'str', got 'int' instead">1</warning>, '1')
+foo(<warning descr="Expected type 'str', got 'Literal[1]' instead">1</warning>, '1')

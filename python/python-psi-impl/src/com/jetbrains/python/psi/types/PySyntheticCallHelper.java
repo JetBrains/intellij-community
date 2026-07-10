@@ -13,10 +13,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,7 +36,7 @@ public final class PySyntheticCallHelper {
    * @param context       TypeEvalContext
    * @return The resulting type of the function call.
    */
-  public static PyType getCallType(@NotNull PyFunction function,
+  public static @Nullable PyType getCallType(@NotNull PyFunction function,
                                    @Nullable PyType receiverType,
                                    @NotNull List<PyType> argumentTypes,
                                    @NotNull TypeEvalContext context) {
@@ -71,9 +69,9 @@ public final class PySyntheticCallHelper {
                                                          @Nullable PyType receiverType,
                                                          @NotNull List<PyType> arguments,
                                                          @NotNull TypeEvalContext context) {
-    PyType type = context.getType(function);
-    if (type instanceof PyFunctionType functionType) {
-      return getCallTypeOnTypesOnly(functionType, receiverType, arguments, context);
+    PyCallableType type = getFunctionType(function, receiverType, context);
+    if (type != null) {
+      return getCallTypeOnTypesOnly(type, receiverType, arguments, context);
     }
     return null;
   }
@@ -84,9 +82,11 @@ public final class PySyntheticCallHelper {
                                                         @NotNull TypeEvalContext context) {
     SyntheticCallArgumentsMapping argumentsMapping = mapArgumentsOnTypes(arguments, callableType, context);
     Map<Ref<PyType>, PyCallableParameter> actualParameters = argumentsMapping.getMappedParameters();
-    List<PyCallableParameter> allParameters = ContainerUtil.notNullize(callableType.getParameters(context));
     PyType returnType = callableType.getReturnType(context);
-    return analyzeCallTypeOnTypesOnly(returnType, actualParameters, allParameters, receiverType, context);
+    GenericSubstitutions substitutions = PyTypeChecker.unifyGenericCallOnArgumentTypes(receiverType, actualParameters, context);
+    GenericSubstitutions substitutionsWithUnresolvedReturnGenerics =
+      PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics(callableType, returnType, substitutions, context);
+    return PyTypeChecker.substitute(returnType, substitutionsWithUnresolvedReturnGenerics, context);
   }
 
   static @NotNull List<PyFunction> resolveFunctionsByArgumentTypes(@NotNull String functionName,
@@ -138,84 +138,63 @@ public final class PySyntheticCallHelper {
           return matchingOverloads;
         }
       }
-      return List.of(matchingOverloads.get(0));
+      return List.of(matchingOverloads.getFirst());
     }
     return functions;
-  }
-
-  private static @Nullable PyType analyzeCallTypeOnTypesOnly(@Nullable PyType type,
-                                                             @NotNull Map<Ref<PyType>, PyCallableParameter> actualParameters,
-                                                             @NotNull Collection<PyCallableParameter> allParameters,
-                                                             @Nullable PyType receiverType,
-                                                             @NotNull TypeEvalContext context) {
-    GenericSubstitutions substitutions = PyTypeChecker.unifyGenericCallOnArgumentTypes(receiverType, actualParameters, context);
-    GenericSubstitutions substitutionsWithUnresolvedReturnGenerics =
-      PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics(allParameters, type, substitutions, context);
-    return PyTypeChecker.substitute(type, substitutionsWithUnresolvedReturnGenerics, context);
   }
 
   private static @NotNull SyntheticCallArgumentsMapping mapArgumentsOnTypes(@NotNull List<PyType> arguments,
                                                                             @NotNull PyCallableType functionType,
                                                                             @NotNull TypeEvalContext context) {
     List<PyCallableParameter> parameters = functionType.getParameters(context);
-    if (parameters == null) return SyntheticCallArgumentsMapping.empty(functionType);
+    if (parameters == null) return new SyntheticCallArgumentsMapping(Collections.emptyMap(), Collections.emptyList());
 
-    int safeImplicitOffset = Math.min(functionType.getImplicitOffset(), parameters.size());
-    List<PyCallableParameter> explicitParameters = parameters.subList(safeImplicitOffset, parameters.size());
-    List<PyCallableParameter> implicitParameters = parameters.subList(0, safeImplicitOffset);
-    List<PyType> unmappedArguments = arguments.subList(Math.min(explicitParameters.size(), arguments.size()), arguments.size());
+    List<PyType> unmappedArguments = arguments.subList(Math.min(parameters.size(), arguments.size()), arguments.size());
 
     Map<Ref<PyType>, PyCallableParameter> mappedParams = new HashMap<>();
 
-    for (int i = 0; i < explicitParameters.size(); i++) {
+    for (int i = 0; i < parameters.size(); i++) {
       if (i < arguments.size()) {
-        mappedParams.put(Ref.create(arguments.get(i)), explicitParameters.get(i));
+        mappedParams.put(Ref.create(arguments.get(i)), parameters.get(i));
       }
     }
 
-    return new SyntheticCallArgumentsMapping(functionType, implicitParameters, mappedParams, unmappedArguments);
+    return new SyntheticCallArgumentsMapping(mappedParams, unmappedArguments);
   }
 
   private static boolean matchesByArgumentTypesOnTypesOnly(@NotNull PyFunction callable,
                                                            @Nullable PyType receiverType,
                                                            @NotNull List<PyType> arguments,
                                                            @NotNull TypeEvalContext context) {
-    PyType functionType = context.getType(callable);
-    if (!(functionType instanceof PyFunctionType)) {
+    PyCallableType functionType = getFunctionType(callable, receiverType, context);
+    if (functionType == null) {
       return false;
     }
-    SyntheticCallArgumentsMapping fullMapping = mapArgumentsOnTypes(arguments, (PyFunctionType)functionType, context);
+    SyntheticCallArgumentsMapping fullMapping = mapArgumentsOnTypes(arguments, functionType, context);
 
     if (!fullMapping.getUnmappedArguments().isEmpty()) return false;
 
-    Map<Ref<PyType>, PyCallableParameter> allMappedParameters = new LinkedHashMap<>();
-    PyCallableParameter firstImplicit = ContainerUtil.getFirstItem(fullMapping.getImplicitParameters());
-    if (firstImplicit != null) {
-      allMappedParameters.put(Ref.create(receiverType), firstImplicit);
-    }
-    allMappedParameters.putAll(fullMapping.getMappedParameters());
+    return PyTypeChecker.unifyGenericCallOnArgumentTypes(receiverType, fullMapping.getMappedParameters(), context) != null;
+  }
 
-    return PyTypeChecker.unifyGenericCallOnArgumentTypes(receiverType, allMappedParameters, context) != null;
+  private static @Nullable PyCallableType getFunctionType(@NotNull PyFunction function,
+                                                          @Nullable PyType receiverType,
+                                                          @NotNull TypeEvalContext context) {
+    PyType type = context.getType(function);
+    if (!(type instanceof PyFunctionType functionType)) return null;
+    if (receiverType == null) return functionType;
+    PyTypeUtil.FunctionBindingResult bindingResult = PyTypeUtil.bindFunction(functionType, receiverType, context);
+    return bindingResult != null ? bindingResult.getBoundMethodType() : null;
   }
 
   private static class SyntheticCallArgumentsMapping {
-    private final @Nullable PyCallableType myReceiverType;
-    private final @NotNull List<PyCallableParameter> myImplicitParameters;
     private final @NotNull List<PyType> myUnmappedArguments;
     private final @NotNull Map<Ref<PyType>, PyCallableParameter> myMappedParameters;
 
-    SyntheticCallArgumentsMapping(@Nullable PyCallableType receiverType,
-                                  @NotNull List<PyCallableParameter> implicitParameters,
-                                  @NotNull Map<Ref<PyType>, PyCallableParameter> mappedParameters,
+    SyntheticCallArgumentsMapping(@NotNull Map<Ref<PyType>, PyCallableParameter> mappedParameters,
                                   @NotNull List<PyType> unmappedArguments) {
-      myReceiverType = receiverType;
-      myImplicitParameters = implicitParameters;
       myMappedParameters = mappedParameters;
       myUnmappedArguments = unmappedArguments;
-    }
-
-    @NotNull List<PyCallableParameter> getImplicitParameters() {
-      return myImplicitParameters;
     }
 
     @NotNull Map<Ref<PyType>, PyCallableParameter> getMappedParameters() {
@@ -224,14 +203,6 @@ public final class PySyntheticCallHelper {
 
     private @NotNull List<PyType> getUnmappedArguments() {
       return myUnmappedArguments;
-    }
-
-    @Nullable PyCallableType getReceiverType() {
-      return myReceiverType;
-    }
-
-    public static @NotNull SyntheticCallArgumentsMapping empty(@NotNull PyCallableType receiverType) {
-      return new SyntheticCallArgumentsMapping(receiverType, Collections.emptyList(), Collections.emptyMap(), Collections.emptyList());
     }
   }
 }

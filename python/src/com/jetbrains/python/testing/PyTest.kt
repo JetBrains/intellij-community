@@ -10,6 +10,12 @@ import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
 import com.intellij.execution.testframework.AbstractTestProxy
+import com.intellij.execution.testframework.CompositePrintable
+import com.intellij.execution.testframework.TestFrameworkRunningModel
+import com.intellij.execution.testframework.sm.runner.SMTestProxy
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView
+import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
+import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -21,6 +27,7 @@ import com.intellij.util.execution.ParametersListUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
+import com.jetbrains.python.run.PythonScriptExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.testing.PyTestSharedForm.create
@@ -49,14 +56,56 @@ class PyPyTestExecutionEnvironment(configuration: PyTestConfiguration, environme
     envs[PYTEST_RUN_CONFIG] = "True"
   }
 
-  override fun customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
-                                                       envs: MutableMap<String, TargetEnvironmentFunction<String>>,
-                                                       passParentEnvs: Boolean) {
+  override fun customizePythonExecutionEnvironmentVars(
+    helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
+    envs: MutableMap<String, TargetEnvironmentFunction<String>>,
+    passParentEnvs: Boolean,
+  ) {
     super.customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, envs, passParentEnvs)
     envs[PYTEST_RUN_CONFIG] = constant("True")
   }
-}
 
+  override fun addAfterParameters(cmd: GeneralCommandLine) {
+    cmd.parametersList.getParamsGroup(GROUP_SCRIPT)?.addParameter(PYTEST_SKIP_PASSED_OUTPUT_DEFAULT_ARG)
+    cmd.parametersList.getParamsGroup(GROUP_SCRIPT)?.addParameter(PYTEST_REPORT_LOGS_AS_TEST_LOG_ARG)
+  }
+
+  override fun addAfterParameters(
+    targetEnvironmentRequest: TargetEnvironmentRequest,
+    testScriptExecution: PythonScriptExecution,
+  ) {
+    testScriptExecution.addParameter(constant(PYTEST_SKIP_PASSED_OUTPUT_DEFAULT_ARG))
+    testScriptExecution.addParameter(constant(PYTEST_REPORT_LOGS_AS_TEST_LOG_ARG))
+  }
+
+  override fun customizeConsoleView(consoleView: ConsoleView) {
+    installScrollToBottomOnFailedPytestSelection(consoleView)
+  }
+
+  private fun installScrollToBottomOnFailedPytestSelection(consoleView: ConsoleView) {
+    if (consoleView !is SMTRunnerConsoleView) {
+      return
+    }
+
+    consoleView.resultsViewer.addEventsListener(object : TestResultsViewer.EventsListener {
+      override fun onSelected(
+        selectedTestProxy: SMTestProxy?,
+        viewer: TestResultsViewer,
+        model: TestFrameworkRunningModel,
+      ) {
+        if (selectedTestProxy != null &&
+            selectedTestProxy.children.isEmpty() &&
+            selectedTestProxy.isDefect && !selectedTestProxy.isInProgress) {
+          CompositePrintable.invokeInAlarm(Runnable {
+            consoleView.performWhenNoDeferredOutput(Runnable {
+              consoleView.scrollTo(consoleView.contentSize)
+            })
+          })
+        }
+      }
+    })
+  }
+}
 
 class PyTestConfiguration(project: Project, factory: PyTestFactory)
   : PyAbstractTestConfiguration(project, factory),
@@ -77,6 +126,8 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
       PyTestSettingsEditor(this)
     }
   }
+
+  override val isTargetRequired: Boolean = false
 
   override fun isNewUiSupported(): Boolean = true
 
@@ -99,9 +150,11 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
     ParametersListUtil.parse(additionalArguments)
       .filter(String::isNotEmpty)
 
-  override fun getTestSpecsForRerun(request: TargetEnvironmentRequest,
-                                    scope: GlobalSearchScope,
-                                    locations: List<Pair<Location<*>, AbstractTestProxy>>): List<TargetEnvironmentFunction<String>> =
+  override fun getTestSpecsForRerun(
+    request: TargetEnvironmentRequest,
+    scope: GlobalSearchScope,
+    locations: List<Pair<Location<*>, AbstractTestProxy>>,
+  ): List<TargetEnvironmentFunction<String>> =
     // py.test reruns tests by itself, so we only need to run same configuration and provide --last-failed
     target.generateArgumentsLine(request, this) +
     listOf(rawArgumentsSeparator, "--last-failed").map(::constant) +
@@ -150,3 +203,5 @@ class PyTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFactory<P
 }
 
 private const val PYTEST_RUN_CONFIG: String = "PYTEST_RUN_CONFIG"
+private const val PYTEST_SKIP_PASSED_OUTPUT_DEFAULT_ARG: String = "--jb-skippassedoutput-default"
+private const val PYTEST_REPORT_LOGS_AS_TEST_LOG_ARG: String = "--jb-report-logs-as-test-log"

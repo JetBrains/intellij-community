@@ -1,7 +1,5 @@
 from _typeshed import Incomplete
 
-name: str
-
 class SourceCodeContainer:
     sourceContext: Incomplete
     text: Incomplete

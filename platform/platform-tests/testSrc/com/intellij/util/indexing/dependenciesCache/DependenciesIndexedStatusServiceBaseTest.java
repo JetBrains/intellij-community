@@ -612,7 +612,7 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
   }
 
   protected @NotNull Project getProject() {
-    return projectModelRule.project;
+    return projectModelRule.getProject();
   }
 
   protected StatusMark assertNothingToRescan() {

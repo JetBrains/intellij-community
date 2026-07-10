@@ -6461,6 +6461,7 @@ c:com.intellij.ui.InplaceButton
 - setMouseDeadzone(com.intellij.util.ui.TimedDeadzone$Length):V
 - setPainting(Z):V
 - setTransform(I,I):V
+- p:shouldPaintHover():Z
 pc:com.intellij.ui.InplaceButton$AccessibleInplaceButton
 - javax.swing.JComponent$AccessibleJComponent
 - javax.accessibility.AccessibleAction
@@ -6784,6 +6785,7 @@ a:com.intellij.ui.PopupHandler
 - s:installPopupMenu(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.ui.PopupHandler
 - s:installPopupMenu(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String,javax.swing.event.PopupMenuListener):com.intellij.ui.PopupHandler
 - s:installPopupMenu(javax.swing.JComponent,java.lang.String,java.lang.String):com.intellij.ui.PopupHandler
+- s:installPopupMenu(javax.swing.JComponent,javax.swing.JComponent,java.lang.String,java.lang.String):com.intellij.ui.PopupHandler
 - s:installRowSelectionTablePopup(javax.swing.JTable,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.ui.PopupHandler
 - s:installSelectionListPopup(javax.swing.JList,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.ui.PopupHandler
 - s:installUnknownPopupHandler(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.ActionManager):java.awt.event.MouseListener
@@ -8505,28 +8507,6 @@ f:com.intellij.ui.components.panels.VerticalLayout
 - minimumLayoutSize(java.awt.Container):java.awt.Dimension
 - preferredLayoutSize(java.awt.Container):java.awt.Dimension
 - removeLayoutComponent(java.awt.Component):V
-c:com.intellij.ui.components.panels.Wrapper
-- javax.swing.JPanel
-- com.intellij.openapi.ui.NullableComponent
-- <init>():V
-- <init>(java.awt.LayoutManager):V
-- <init>(java.awt.LayoutManager,javax.swing.JComponent):V
-- <init>(java.awt.LayoutManager,Z):V
-- <init>(javax.swing.JComponent):V
-- <init>(Z):V
-- getPreferredSize():java.awt.Dimension
-- getTargetComponent():javax.swing.JComponent
-- isNull():Z
-- requestFocus():V
-- f:requestFocus(Z):Z
-- requestFocusInWindow():Z
-- requestFocusInternal():V
-- setContent(javax.swing.JComponent):V
-- f:setHorizontalSizeReferent(javax.swing.JComponent):com.intellij.ui.components.panels.Wrapper
-- f:setVerticalSizeReferent(javax.swing.JComponent):com.intellij.ui.components.panels.Wrapper
-f:com.intellij.ui.components.panels.Wrapper$North
-- com.intellij.ui.components.panels.Wrapper
-- <init>(javax.swing.JComponent):V
 c:com.intellij.ui.content.ContentManagerAdapter
 - com.intellij.ui.content.ContentManagerListener
 - <init>():V
@@ -8725,22 +8705,6 @@ f:com.intellij.ui.dsl.builder.VerticalComponentGap
 - f:getTop():java.lang.Boolean
 - hashCode():I
 f:com.intellij.ui.dsl.builder.VerticalComponentGap$Companion
-f:com.intellij.ui.dsl.gridLayout.Gaps
-- <init>():V
-- <init>(I,I,I,I):V
-- b:<init>(I,I,I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():I
-- f:component2():I
-- f:component3():I
-- f:component4():I
-- f:copy(I,I,I,I):com.intellij.ui.dsl.gridLayout.Gaps
-- bs:copy$default(com.intellij.ui.dsl.gridLayout.Gaps,I,I,I,I,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.Gaps
-- equals(java.lang.Object):Z
-- f:getBottom():I
-- f:getLeft():I
-- f:getRight():I
-- f:getTop():I
-- hashCode():I
 com.intellij.ui.dsl.gridLayout.Grid
 - a:getColumnsGaps():java.util.List
 - a:getResizableColumns():java.util.Set

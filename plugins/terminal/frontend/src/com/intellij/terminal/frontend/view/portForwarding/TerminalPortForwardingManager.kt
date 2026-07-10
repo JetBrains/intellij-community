@@ -1,14 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend.view.portForwarding
 
-import com.intellij.openapi.components.service
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
+import com.intellij.openapi.extensions.ExtensionPointName
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Application-level service that performs TCP port forwarding from the IDE host environment to any
+ * Application-level extension that performs TCP port forwarding from the IDE host environment to any
  * EEL environment and tracks the active forwardings so multiple terminals on the same physical
  * machine share a single tunnel per remote port.
  *
@@ -45,7 +46,19 @@ interface TerminalPortForwardingManager {
   fun stopForwarding(eelMachine: EelMachine, remotePort: Int)
 
   companion object {
+    private val EP_NAME: ExtensionPointName<TerminalPortForwardingManager> =
+      ExtensionPointName.create("org.jetbrains.plugins.terminal.portForwardingManager")
+
+    val DATA_KEY: DataKey<TerminalPortForwardingManager> = DataKey.create("TerminalPortForwardingManager")
+
+    /**
+     * Returns the highest-priority registered implementation: [TerminalPortForwardingManagerImpl] in the monolith,
+     * or the Remote Dev thin-client implementation (declared with `order="first"`) when the RD client is loaded.
+     */
     @JvmStatic
-    fun getInstance(): TerminalPortForwardingManager = service()
+    fun getInstance(): TerminalPortForwardingManager {
+      return EP_NAME.findFirstSafe { true }
+             ?: error("No ${TerminalPortForwardingManager::class.simpleName} implementation is registered")
+    }
   }
 }

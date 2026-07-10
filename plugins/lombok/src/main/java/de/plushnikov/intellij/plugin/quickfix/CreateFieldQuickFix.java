@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.LombokBundle;
@@ -54,7 +55,7 @@ public class CreateFieldQuickFix extends PsiUpdateModCommandAction<PsiClass> {
 
     final PsiModifierList modifierList = psiField.getModifierList();
     if (modifierList != null) {
-      for (String modifier : myModifiers) {
+      for (@PsiModifier.ModifierConstant String modifier : myModifiers) {
         modifierList.setModifierProperty(modifier, true);
       }
     }

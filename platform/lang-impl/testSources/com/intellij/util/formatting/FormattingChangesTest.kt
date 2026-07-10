@@ -26,9 +26,9 @@ class FormattingChangesTest : BasePlatformTestCase() {
     }
     val changes = detectFormattingChanges(myFixture.file)
     if (changes == null) throw AssertionFailedError()
-    assertEquals(original, changes.preFormatText)
-    assertEquals(formatted, changes.postFormatText)
-    assertEquals(changes.mismatches.size, 2)
+    assertSameLines(original, changes.preFormatText.toString())
+    assertSameLines(formatted, changes.postFormatText.toString())
+    assertEquals(2, changes.mismatches.size)
     changes.mismatches[0].run {
       // the '\n' before indentation is included, it is a single continuous segment of whitespaces
       assertEquals(TextRange(6, 9), preFormatRange)

@@ -1,0 +1,10 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="com.intellij.mermaid"/>
+    <module name="intellij.spellchecker"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <spellchecker.support language="Mermaid" implementationClass="com.intellij.mermaid.spellchecker.MermaidSpellcheckingStrategy"/>
+  </extensions>
+</idea-plugin>

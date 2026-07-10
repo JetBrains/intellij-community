@@ -21,6 +21,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/base/plugin",
         "//platform/core-api:core",
         "//platform/core-impl",
         "//platform/util",
@@ -42,6 +43,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":jsr223",
+        "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/util:util_test_lib",

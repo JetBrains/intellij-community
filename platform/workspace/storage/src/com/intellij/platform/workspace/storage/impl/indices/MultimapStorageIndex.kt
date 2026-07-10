@@ -10,7 +10,6 @@ import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.annotations.TestOnly
 
 private typealias BidirectionalMap = BidirectionalLongMultiMap<SymbolicEntityId<*>>
-//private typealias BidirectionalMap = BidirectionalMultiMap<EntityId, PersistentEntityId<*>>
 
 internal sealed class AbstractMultimapStorageIndex protected constructor(
   internal open val index: BidirectionalMap,

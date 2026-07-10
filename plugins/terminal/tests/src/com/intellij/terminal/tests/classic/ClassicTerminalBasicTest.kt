@@ -92,6 +92,33 @@ class ClassicTerminalBasicTest(private val shellPath: Path) {
     Assert.assertEquals(expectedOutputLines, actualOutputLines)
   }
 
+  @Test
+  fun `multiline command lines should be executed in order`() {
+    val outputFile = Files.createTempFile("output", ".txt")
+    val session = startSession()
+    val commandCount = 3
+    // Regression for classic Windows PowerShell: Markdown sends the whole code fence as one multiline command.
+    val command = (1..commandCount).joinToString("\n") { i ->
+      if (isPowerShell()) {
+        val path = outputFile.toString().replace("'", "''")
+        "Add-Content -Path '$path' -Value $i -Encoding ASCII"
+      }
+      else {
+        "echo $i >> ${CommandLineUtil.posixQuote(outputFile.toString())}"
+      }
+    }
+
+    session.executeCommand(command)
+    val finishMarker = "All commands have been executed"
+    session.executeCommand("echo " + CommandLineUtil.posixQuote(finishMarker))
+    session.awaitScreenLinesEndWith(listOf(finishMarker), 60_000)
+    val actualOutputLines = Files.readAllLines(outputFile, StandardCharsets.US_ASCII)
+
+    outputFile.delete()
+    val expectedOutputLines = (1..commandCount).map { it.toString() }
+    Assert.assertEquals(expectedOutputLines, actualOutputLines)
+  }
+
   private fun createWidget(): ShellTerminalWidget {
     return ShellTerminalWidget(projectRule.project, JBTerminalSystemSettingsProvider(), disposableRule.disposable)
   }

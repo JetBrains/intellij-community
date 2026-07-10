@@ -208,7 +208,6 @@
     <module name="intellij.platform.experiment" loading="embedded"/>
     <module name="intellij.platform.ide.impl" loading="embedded"/>
     <module name="intellij.platform.rd.community" loading="embedded"/>
-    <module name="intellij.platform.ide.ui.inspector" loading="embedded"/>
     <module name="intellij.platform.remote.core" loading="embedded"/>
     <module name="intellij.platform.ide.remote" loading="embedded"/>
     <module name="intellij.platform.threadDumpParser" loading="embedded"/>
@@ -283,12 +282,6 @@
     <module name="intellij.platform.debugger.impl" loading="embedded"/>
     <!-- endregion -->
 
-    <!-- region nested: problemsView -->
-    <module name="intellij.platform.problemsView.frontend"/>
-    <module name="intellij.platform.problemsView.backend"/>
-    <module name="intellij.platform.problemsView.shared"/>
-    <!-- endregion -->
-
     <!-- region direct modules -->
     <module name="intellij.platform.scopes" loading="embedded"/>
     <module name="intellij.platform.scopes.backend"/>
@@ -301,6 +294,7 @@
     <module name="intellij.platform.pluginManager.shared"/>
     <module name="intellij.platform.pluginManager.backend"/>
     <module name="intellij.platform.pluginManager.frontend"/>
+    <module name="intellij.platform.ide.updateChecker.backend"/>
     <module name="intellij.platform.execution.impl.frontend"/>
     <module name="intellij.platform.execution.impl.backend"/>
     <module name="intellij.platform.eel.tcp"/>

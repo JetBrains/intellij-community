@@ -638,7 +638,7 @@ class FrontendXDebuggerSession(
   override fun muteBreakpoints(value: Boolean) {
     // Optimistic update
     sessionData.isBreakpointsMuted = value
-    manager.breakpointsManager.getLineBreakpointManager().queueAllBreakpointsUpdate()
+    manager.breakpointsManager.getLineBreakpointVisualizationManager().queueAllBreakpointsUpdate()
   }
 
   override fun isInactiveSlaveBreakpoint(breakpoint: XBreakpointProxy): Boolean {

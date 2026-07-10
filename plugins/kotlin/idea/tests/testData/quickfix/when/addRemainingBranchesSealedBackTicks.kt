@@ -1,6 +1,6 @@
 // "Add remaining branches" "true"
 // WITH_STDLIB
-// K2_ERROR: 'when' expression must be exhaustive. Add the 'B', 'C', 'is D', 'is `false`', '`null`', 'is `true`', 'null' branches or an 'else' branch.
+// K2_ERROR: NO_ELSE_IN_WHEN
 
 sealed class FooSealed
 object A: FooSealed()

@@ -13,6 +13,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.inspectProtocolSubclass
 import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.codeInsight.typing.isRuntimeCheckable
+import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyClassPattern
@@ -247,10 +248,10 @@ class PyProtocolInspection : PyInspection() {
           val elementName = if (element is PsiNameIdentifierOwner) element.name else return@forEach
 
           if (!PyTypeChecker.match(expectedMember.type, it.type, myTypeEvalContext)) {
-            registerProblem(place, PyPsiBundle.message("INSP.protocol.element.type.incompatible.with.protocol", elementName, protocol.name))
+            registerProblem(place, PyPsiBundle.problemMessage("INSP.protocol.element.type.incompatible.with.protocol", elementName, CodifiedParam.ofReference(protocol.pyClass)))
           }
           else if (expectedMember.isWritable && !it.isWritable || expectedMember.isDeletable && !it.isDeletable) {
-            registerProblem(place, PyPsiBundle.message("INSP.protocol.element.type.not.writable", elementName, protocol.name))
+            registerProblem(place, PyPsiBundle.problemMessage("INSP.protocol.element.type.not.writable", elementName, CodifiedParam.ofReference(protocol.pyClass)))
           }
         }
     }
@@ -262,7 +263,7 @@ class PyProtocolInspection : PyInspection() {
         val cls = resolveResult.getElement()
         if (cls is PyClass) {
           if (cls.isProtocol(myTypeEvalContext)) {
-            registerProblem(node, PyPsiBundle.message("INSP.protocol.cannot.instantiate.protocol.class", cls.name))
+            registerProblem(node, PyPsiBundle.problemMessage("INSP.protocol.cannot.instantiate.protocol.class", CodifiedParam.ofReference(cls)))
           }
         }
       }

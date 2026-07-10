@@ -24,4 +24,8 @@
     <module name="intellij.json.structureView" loading="optional"/>
     <module name="intellij.json.syntax" loading="embedded"/>
   </content>  
+
+  <content>
+    <module name="intellij.libraries.joni" loading="required"/>
+  </content>
 </idea-plugin>

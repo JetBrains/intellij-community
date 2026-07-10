@@ -5,11 +5,13 @@ import com.intellij.execution.Executor
 import com.intellij.lang.Language
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 interface MarkdownRunner {
   companion object {
-    internal val EP_NAME: ExtensionPointName<MarkdownRunner> = ExtensionPointName.create("org.intellij.markdown.markdownRunner")
+    @ApiStatus.Internal
+    val EP_NAME: ExtensionPointName<MarkdownRunner> = ExtensionPointName.create("org.intellij.markdown.markdownRunner")
   }
 
   /**

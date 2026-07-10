@@ -51,6 +51,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -484,7 +485,16 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     clearContents();
     getContext().getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitElement(@NotNull RefEntity refEntity) {
-        refEntity = refineElement(refEntity);
+        try {
+          refEntity = refineElement(refEntity);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+          refEntity = null;
+        }
         if (refEntity == null) return;
         registerContentEntry(refEntity, RefJavaUtil.getInstance().getPackageName(refEntity));
       }

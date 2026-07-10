@@ -27,7 +27,7 @@ import java.util.Set;
  *       }
  *
  *       @Override
- *       public @NotNull Traversal visitPyGenericType(@NotNull PyCollectionType genericType) {
+ *       public @NotNull Traversal visitPyClassType(@NotNull PyClassType classType) {
  *         // Irrelevant, don't go deeper
  *         return Traversal.PRUNE;
  *       }
@@ -150,8 +150,8 @@ public final class PyRecursiveTypeVisitor extends PyTypeVisitorExt<PyRecursiveTy
     }
 
     @Override
-    public @NotNull List<@Nullable PyType> visitPyGenericType(@NotNull PyCollectionType genericType) {
-      return genericType.getElementTypes();
+    public @NotNull List<@Nullable PyType> visitPyClassType(@NotNull PyClassType classType) {
+      return classType.getTypeArguments();
     }
 
     @Override

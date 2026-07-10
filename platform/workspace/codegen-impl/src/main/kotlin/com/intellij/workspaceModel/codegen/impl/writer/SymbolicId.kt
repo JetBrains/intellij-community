@@ -23,8 +23,16 @@ fun ObjClass<*>.referencesInSymbolicId(): Set<OwnProperty<*, *>>? {
   val references = parts.mapNotNull { regexForSymbolicIdReference.getFirstMatch(it) }.toSet()
   if (references.isEmpty()) return null
 
-  val referencesInUse = allFields.filter { it.name in references }.toSet()
-  // TODO: sanity check that for every reference we have found a property
+  val referencesInUse = mutableSetOf<OwnProperty<*, *>>()
+  for (reference in references) {
+    val referenceField = allFields.singleOrNull { it.name == reference }
+    if (referenceField == null) {
+      // TODO: pass reporter here
+      throw RuntimeException("Cannot find property for reference $reference")
+    }
+    referencesInUse.add(referenceField)
+  }
+
   return referencesInUse
 }
 
@@ -47,8 +55,8 @@ private fun symbolicIdPropertyToRepresentation(property: OwnProperty<*, *>): Sym
   return SymbolicIdRepresentation(javaType = symbolicIdType, args = args)
 }
 
-fun LinesBuilder.symbolicIdReferenceCode(field: ObjProperty<*, *>) {
-  val referencesInSymbolicId = field.receiver.referencesInSymbolicId() ?: return
+fun LinesBuilder.symbolicIdReferenceCode(receiver: ObjClass<*>, field: ObjProperty<*, *>) {
+  val referencesInSymbolicId = receiver.referencesInSymbolicId() ?: return
   val referenceInSymbolicId = referencesInSymbolicId.find { it.name == field.name }
   if (referenceInSymbolicId != null) {
     val syntheticName = referenceNameToSyntheticSymbolicIdFieldName(field.name)
@@ -78,7 +86,7 @@ fun LinesBuilder.symbolicIdIsInitializedCode(objClass: ObjClass<*>) {
   val referencesInSymbolicId = objClass.referencesInSymbolicId()
   if (referencesInSymbolicId.isNullOrEmpty()) {
     return
-  } 
+  }
   for (reference in referencesInSymbolicId) {
     val syntheticName = referenceNameToSyntheticSymbolicIdFieldName(reference.name)
     val capitalizedSyntheticName = syntheticName.replaceFirstChar { it.titlecaseChar() }

@@ -40,6 +40,7 @@ jvm_library(
         "//platform/util/coroutines",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
+        "//platform/recentFiles/shared:recentFiles",
         "//platform/recentFiles/frontend",
         "//platform/analysis-api:analysis",
         "//platform/vcs-api/shared",
@@ -83,6 +84,7 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//platform/recentFiles/shared:recentFiles_test_lib",
         "//platform/recentFiles/frontend:frontend_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/vcs-api/shared:shared_test_lib",
@@ -191,6 +193,8 @@ jvm_library(
         "//platform/vcs-impl/shared:vcs-impl-shared-tests_test_lib",
         "//fleet/rhizomedb",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.vcs.impl.frontend.tests` end

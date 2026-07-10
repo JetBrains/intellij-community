@@ -1,6 +1,6 @@
 // PROBLEM: none
-// K2_ERROR: Function invocation 'count()' expected.
 // WITH_STDLIB
+// K2_ERROR: FUNCTION_CALL_EXPECTED
 
 fun test(items: Iterable<Int>) {
     ite<caret>ms.count > 0

@@ -2,6 +2,7 @@
 package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -10,9 +11,9 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.quickfix.PyRemoveAssignmentQuickFix
 import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyCallExpression
-import com.jetbrains.python.psi.PyLambdaExpression
 import com.jetbrains.python.psi.PyExpressionStatement
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyLambdaExpression
 import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -58,12 +59,12 @@ class PyNoneFunctionAssignmentInspection : PyInspection() {
         is PyLambdaExpression -> return
         is PyAssignmentStatement -> {
           registerProblem(
-            parent, PyPsiBundle.message("INSP.none.function.assignment", callee.name),
-            PyRemoveAssignmentQuickFix()
+            parent, PyPsiBundle.problemMessage("INSP.none.function.assignment", callee.name),
+            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, PyRemoveAssignmentQuickFix()
           )
         }
         else -> {
-          registerProblem(call, PyPsiBundle.message("INSP.none.function.assignment", callee.name))
+          registerProblem(call, PyPsiBundle.problemMessage("INSP.none.function.assignment", callee.name))
         }
       }
     }

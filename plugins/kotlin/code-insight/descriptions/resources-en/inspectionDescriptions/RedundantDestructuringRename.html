@@ -1,0 +1,14 @@
+<html>
+<body>
+Reports name-based destructuring declarations where the explicit variable rename repeats the property name.
+<p><b>Example:</b></p>
+<pre><code>
+  data class Foo(val bar: String)
+  (val bar = bar) = Foo("")
+</code></pre>
+<p>The quick-fix removes the redundant rename:</p>
+<pre><code>
+  (val bar) = Foo("")
+</code></pre>
+</body>
+</html>

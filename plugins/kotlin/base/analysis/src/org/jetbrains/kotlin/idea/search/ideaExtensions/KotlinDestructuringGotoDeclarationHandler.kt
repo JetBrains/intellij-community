@@ -36,8 +36,8 @@ class KotlinDestructuringGotoDeclarationHandler : GotoDeclarationHandler {
 
         if (parent is KtNameReferenceExpression) {
             val entry = parent.parent as? KtDestructuringDeclarationEntry ?: return null
-            val destructuring = entry.parent as? KtDestructuringDeclaration ?: return null
-            if (destructuring.isFullForm) {
+            if (entry.parent !is KtDestructuringDeclaration) return null
+            if (entry.initializer == parent) {
                 return entry
             }
         }

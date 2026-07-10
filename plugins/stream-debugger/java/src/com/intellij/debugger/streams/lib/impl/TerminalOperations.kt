@@ -13,9 +13,9 @@ import com.intellij.debugger.streams.trace.impl.handler.unified.OptionalTerminat
  * @author Vitaliy.Bibaev
  */
 
-class MatchingOperation(name: String, interpreter: CallTraceInterpreter)
+open class MatchingOperation(name: String, interpreter: CallTraceInterpreter)
   : TerminalOperationBase(name, { call, _, dsl -> MatchHandler(call, dsl) }, interpreter, AllToResultResolver())
 
-class OptionalResultOperation(name: String)
+open class OptionalResultOperation(name: String)
   : TerminalOperationBase(name, { call, expr, dsl -> OptionalTerminationHandler(call, expr, dsl) },
                           OptionalTraceInterpreter(), OptionalOrderResolver())

@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.KeyWithDefaultValue;
 import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -89,6 +90,24 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
   @Override
   public String getSessionName() {
     return environment.getRunProfile().getName();
+  }
+
+  @ApiStatus.Internal
+  public boolean hasVmParameter(@NotNull String parameter) {
+    if (state instanceof JavaCommandLine commandLine) {
+      try {
+        return commandLine.getJavaParameters().getVMParametersList().getParameters().contains(parameter);
+      }
+      catch (ExecutionException ignore) {
+      }
+    }
+    return false;
+  }
+
+  @ApiStatus.Internal
+  public static boolean hasEnhancedClassRedefinitionEnabled(@NotNull DebugEnvironment environment) {
+    return environment instanceof DefaultDebugEnvironment debugEnvironment &&
+           debugEnvironment.hasVmParameter("-XX:+AllowEnhancedClassRedefinition");
   }
 
   @Override

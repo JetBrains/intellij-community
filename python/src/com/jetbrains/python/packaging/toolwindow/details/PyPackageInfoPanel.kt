@@ -21,7 +21,7 @@ import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class PyPackageInfoPanel(val project: Project) : Disposable {
+internal class PyPackageInfoPanel(val project: Project) : Disposable {
   private val infoController = PyPackageDescriptionController(project).also {
     Disposer.register(this, it)
   }

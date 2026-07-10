@@ -2,6 +2,15 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
+jps_test(
+    name = "whatsNew-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":whatsNew-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.whatsNew.tests`
+
 ### auto-generated section `build intellij.platform.whatsNew` start
 
 create_kotlinc_options(
@@ -180,6 +189,10 @@ jvm_library(
         "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/util/coroutines",
         "//platform/util/coroutines:coroutines_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.whatsNew.tests` end
@@ -192,11 +205,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.whatsNew.tests` end
-
-### auto-generated section `test intellij.platform.whatsNew.tests` start
-
-jps_test(
-    name = "whatsNew-tests_test",
-    runtime_deps = [":whatsNew-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.whatsNew.tests` end

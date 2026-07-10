@@ -25,7 +25,7 @@ class UvTool(runtime: PyToolRuntime) : UvCommand("tool", runtime) {
    *  Useful for breaking out of a previously pinned install (uv leaves the existing entry alone
    *  otherwise, and `uv tool upgrade` is bounded by the original constraints so it cannot help).
    */
-  suspend fun install(name: String, reinstall: Boolean? = null): PyResult<String> {
+  suspend fun install(name: String, reinstall: Boolean = false): PyResult<String> {
     val options = listOf(reinstall to "--reinstall").makeOptions()
     return executeAndHandleErrors("install", name, *options, transformer = ZeroCodeStdoutTransformer)
   }
@@ -40,43 +40,55 @@ class UvTool(runtime: PyToolRuntime) : UvCommand("tool", runtime) {
   }
 
   /**
-   * List installed tools
+   * `uv tool list`, parsed into one [UvToolListResult] per installed tool. Optional fields are filled
+   * according to the flags: [outdated] populates [UvToolListResult.latestVersion] for tools with a newer
+   * release (uv 0.10.10+ lists only those), and [showPaths] populates [UvToolListResult.envPath] plus the
+   * [UvToolListResult.executables] map (entry-point name -> path).
+   *
+   * uv prints a header line `name vVERSION [latest: NEWER]? (env/path)?` per tool, optionally followed
+   * (with `--show-paths`) by one `- entrypoint (exe/path)` line per entry point (a tool may expose
+   * several). Paths may contain spaces, so the parenthesized tails are matched greedily.
    */
-  suspend fun list(showVersionSpecifiers: Boolean? = null, showPaths: Boolean? = null, outdated: Boolean? = null): PyResult<String> {
+  suspend fun list(showVersionSpecifiers: Boolean = false, showPaths: Boolean = false, outdated: Boolean = false): PyResult<List<UvToolListResult>> {
     val options = listOf(
       showVersionSpecifiers to "--show-version-specifiers",
       showPaths to "--show-paths",
       outdated to "--outdated",
     ).makeOptions()
-    return executeAndHandleErrors("list", *options, transformer = ZeroCodeStdoutTransformer)
-  }
+    val stdout = executeAndHandleErrors("list", *options, transformer = ZeroCodeStdoutTransformer).getOr { return it }
 
-  /**
-   * Parsed form of `uv tool list --show-paths`. Each header line `name vX.Y.Z (path/to/env)` becomes one entry;
-   * the `- executable` lines under each header are ignored (they are re-derivable from the env directory).
-   */
-  suspend fun listInstalled(): PyResult<List<UvInstalledTool>> {
-    val stdout = list(showPaths = true).getOr { return it }
-    val headerRegex = Regex("""^(\S+) v(\S+) \((.+)\)$""")
-    val tools = stdout.lineSequence()
-      .mapNotNull { headerRegex.matchEntire(it.trim()) }
-      .map { UvInstalledTool(name = it.groupValues[1], version = it.groupValues[2], envPath = Path.of(it.groupValues[3])) }
-      .toList()
-    return Result.success(tools)
-  }
+    val headerRegex = Regex("""^(\S+) v(\S+)(?: \[latest:\s*(\S+)])?(?: \((.+)\))?$""")
+    val entryPointRegex = Regex("""^-\s+(\S+)\s+\((.+)\)$""")
 
-  /**
-   * Parsed form of `uv tool list --outdated` (available since uv 0.10.10). Each header line
-   * `name vCURRENT [latest: NEWER]` becomes one entry; subordinate `- executable` lines are ignored.
-   * Returns only tools that have a newer release available.
-   */
-  suspend fun listOutdated(): PyResult<List<UvOutdatedTool>> {
-    val stdout = list(outdated = true).getOr { return it }
-    val headerRegex = Regex("""^(\S+) v(\S+) \[latest:\s*(\S+)]$""")
-    val tools = stdout.lineSequence()
-      .mapNotNull { headerRegex.matchEntire(it.trim()) }
-      .map { UvOutdatedTool(name = it.groupValues[1], currentVersion = it.groupValues[2], latestVersion = it.groupValues[3]) }
-      .toList()
+    val tools = mutableListOf<UvToolListResult>()
+    var pending: UvToolListResult? = null
+    val executables = linkedMapOf<String, Path>()
+
+    fun flushPending() {
+      val tool = pending ?: return
+      tools += tool.copy(executables = executables.toMap())
+      executables.clear()
+      pending = null
+    }
+
+    for (rawLine in stdout.lineSequence()) {
+      val line = rawLine.trim()
+      val header = headerRegex.matchEntire(line)
+      if (header != null) {
+        flushPending()
+        pending = UvToolListResult(
+          name = header.groupValues[1],
+          version = header.groupValues[2],
+          latestVersion = header.groupValues[3].ifEmpty { null },
+          envPath = header.groupValues[4].ifEmpty { null }?.let(Path::of),
+        )
+        continue
+      }
+      if (pending == null) continue
+      val entryPoint = entryPointRegex.matchEntire(line) ?: continue
+      executables[entryPoint.groupValues[1]] = Path.of(entryPoint.groupValues[2])
+    }
+    flushPending()
     return Result.success(tools)
   }
 
@@ -91,22 +103,25 @@ class UvTool(runtime: PyToolRuntime) : UvCommand("tool", runtime) {
   suspend fun updateShell(): PyResult<Unit> = TODO()
 
   /**
-   * Show the path to the uv tools directory
+   * `uv tool dir` — the directory uv stores tools in, or (with [bin] = true) the directory their
+   * executables are placed on `PATH`. uv prints a single path line, parsed here into a [Path].
    */
-  suspend fun dir(bin: Boolean? = null): PyResult<String> {
+  suspend fun dir(bin: Boolean = false): PyResult<Path> {
     val options = listOf(bin to "--bin").makeOptions()
-    return executeAndHandleErrors("dir", *options, transformer = ZeroCodeStdoutTransformer)
-  }
-
-  /**
-   * Convenience wrapper over [dir] with `--bin` that returns a parsed [Path].
-   */
-  suspend fun binDir(): PyResult<Path> {
-    val output = dir(bin = true).getOr { return it }
+    val output = executeAndHandleErrors("dir", *options, transformer = ZeroCodeStdoutTransformer).getOr { return it }
     return Result.success(Path.of(output.trim()))
   }
 }
 
-data class UvInstalledTool(val name: String, val version: String, val envPath: Path)
-
-data class UvOutdatedTool(val name: String, val currentVersion: String, val latestVersion: String)
+/**
+ * One entry of `uv tool list`. [name] and installed [version] are always present; [latestVersion] is
+ * set only for outdated tools (`--outdated`), and [envPath] plus [executables] (each entry point's name
+ * mapped to its path, insertion-ordered as uv printed them) only with `--show-paths`.
+ */
+data class UvToolListResult(
+  val name: String,
+  val version: String,
+  val latestVersion: String? = null,
+  val envPath: Path? = null,
+  val executables: Map<String, Path> = emptyMap(),
+)

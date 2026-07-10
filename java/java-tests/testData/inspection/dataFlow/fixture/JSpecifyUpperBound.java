@@ -17,5 +17,5 @@ class BoundTest<T extends Object, T2, T3 extends @Nullable Object> {
 
   T2 retT2(@Nullable T2 x) { return <warning descr="Expression 'x' might evaluate to null but is returned by the method declared as @NullMarked">x</warning>; }
 
-  T3 retT3(@Nullable T3 x) { return x; }
+  T3 retT3(@Nullable T3 x) { return <warning descr="Expression 'x' might evaluate to null but is returned from a method whose type-variable return type may be instantiated as non-null">x</warning>; }
 }

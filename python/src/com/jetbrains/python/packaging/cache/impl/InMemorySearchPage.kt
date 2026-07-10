@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.cache.impl
 
+import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.cache.PythonPackageSearchPage
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
 import org.jetbrains.annotations.ApiStatus
@@ -12,8 +13,8 @@ import org.jetbrains.annotations.ApiStatus
 class InMemorySearchPage(
   private val items: List<String>,
 ) : PythonPackageSearchPage {
-  override fun iterator(): Iterator<String> =
-    items.iterator()
+  override fun contents(): Result<List<String>, PythonPackageSearchPage.DataInvalidatedError> =
+    Result.Success(items)
 
   companion object {
     /**

@@ -1,0 +1,16 @@
+UFile (package = ) [public final class LocalContextFunctionKt {...]
+    UClass (name = LocalContextFunctionKt) [public final class LocalContextFunctionKt {...}]
+        UMethod (name = outer) [public static final fun outer() : void {...}]
+            UBlockExpression [{...}] : void
+                UDeclarationsExpression [var local: kotlin.jvm.functions.Function3<? super C1,? super C2,? super C3,? extends kotlin.Unit> = fun (@org.jetbrains.annotations.NotNull var c3: C3) {...}]
+                    UVariable (name = local) [var local: kotlin.jvm.functions.Function3<? super C1,? super C2,? super C3,? extends kotlin.Unit> = fun (@org.jetbrains.annotations.NotNull var c3: C3) {...}]
+                        ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var c3: C3) {...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function3<? super @org.jetbrains.annotations.NotNull() C1, ? super @org.jetbrains.annotations.NotNull() C2, ? super @org.jetbrains.annotations.NotNull() C3, ? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
+                            UParameter (name = c3) [@org.jetbrains.annotations.NotNull var c3: C3]
+                                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+                            UBlockExpression [{...}] : void
+    UClass (name = C1) [public final class C1 {...}]
+        UMethod (name = C1) [public fun C1() = UastEmptyExpression]
+    UClass (name = C2) [public final class C2 {...}]
+        UMethod (name = C2) [public fun C2() = UastEmptyExpression]
+    UClass (name = C3) [public final class C3 {...}]
+        UMethod (name = C3) [public fun C3() = UastEmptyExpression]

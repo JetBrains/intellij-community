@@ -1,6 +1,6 @@
 // "Change type to MutableMap" "true"
 // WITH_STDLIB
-// K2_ERROR: No 'set' operator method providing array access.
+// K2_ERROR: NO_SET_METHOD
 fun main() {
     val map = foo()
     map[2<caret>] = "b"

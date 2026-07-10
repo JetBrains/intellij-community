@@ -10,12 +10,13 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
+import com.intellij.psi.AbstractFileViewProvider;
+import com.intellij.psi.FileThreadingContracts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
@@ -206,8 +207,9 @@ public class CompositeElement extends TreeElement {
   }
 
   private static void assertThreading(@NotNull PsiFile file) {
-    if (!ApplicationManager.getApplication().isWriteAccessAllowed() && !isNonPhysicalOrInjected(file)) {
-      LOG.error("Threading assertion. " + getThreadingDiagnostics(file));
+    if (!isNonPhysicalOrInjected(file)) {
+      FileThreadingContracts.assertPsiModificationHasWriteAccess(file.getViewProvider().getVirtualFile(),
+                                                                 () -> "Threading assertion. " + getThreadingDiagnostics(file));
     }
   }
 
@@ -215,11 +217,18 @@ public class CompositeElement extends TreeElement {
     return "psiFile: " + psiFile +
            "; psiFile.getViewProvider(): " + psiFile.getViewProvider() +
            "; psiFile.isPhysical(): " + psiFile.isPhysical() +
+           "; nonPhysicalRequiringAppLock: " + requiresAppLock(psiFile) +
            "; nonPhysicalOrInjected: " + isNonPhysicalOrInjected(psiFile);
   }
 
   private static boolean isNonPhysicalOrInjected(@NotNull PsiFile psiFile) {
-    return psiFile instanceof DummyHolder || psiFile.getViewProvider() instanceof FreeThreadedFileViewProvider || !psiFile.isPhysical();
+    return psiFile instanceof DummyHolder
+           || psiFile.getViewProvider() instanceof FreeThreadedFileViewProvider
+           || (!psiFile.isPhysical() && !requiresAppLock(psiFile));
+  }
+
+  private static boolean requiresAppLock(@NotNull PsiFile psiFile) {
+    return FileThreadingContracts.requiresApplicationLockForModifications(psiFile.getViewProvider().getVirtualFile());
   }
 
   @Override

@@ -8,6 +8,7 @@ import com.intellij.psi.tree.OuterLanguageElementType;
 import org.intellij.markdown.flavours.gfm.GFMElementTypes;
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes;
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserDefinition;
+import org.intellij.plugins.markdown.lang.parser.blocks.AdmonitionMarkerProvider;
 import org.intellij.plugins.markdown.lang.parser.blocks.CommentElementTypesKt;
 import org.intellij.plugins.markdown.lang.parser.blocks.DefinitionListMarkerProvider;
 import org.intellij.plugins.markdown.lang.parser.blocks.frontmatter.FrontMatterHeaderMarkerProvider;
@@ -126,4 +127,7 @@ public interface MarkdownElementTypes {
 
   @ApiStatus.Experimental
   IElementType ALERT = platformType(GFMElementTypes.ALERT);
+
+  @ApiStatus.Experimental
+  IElementType ADMONITION = platformType(AdmonitionMarkerProvider.ADMONITION);
 }

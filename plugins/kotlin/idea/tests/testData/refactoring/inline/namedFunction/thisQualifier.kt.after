@@ -1,0 +1,20 @@
+class Character {
+    val greeter = Greeter()
+
+    class Greeter {
+        fun helloo() {
+            println("helloo")
+        }
+    }
+}
+
+
+object Context
+
+fun main() {
+    with(Character()) {
+        with(Context) {
+            greeter.helloo()
+        }
+    }
+}

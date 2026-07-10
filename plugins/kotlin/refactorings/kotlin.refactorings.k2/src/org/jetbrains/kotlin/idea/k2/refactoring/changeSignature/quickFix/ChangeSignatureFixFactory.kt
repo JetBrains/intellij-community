@@ -45,7 +45,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
 import org.jetbrains.kotlin.builtins.StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME
- import org.jetbrains.kotlin.builtins.functions.isSuspendOrKSuspendFunction
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.approximateAnonymousObjectToSupertypeOrSelf
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
@@ -362,17 +361,18 @@ object ChangeSignatureFixFactory {
         val paramInfos = input.expectedParameterTypes ?: return null
 
         val changeInfo = KotlinChangeInfo(descriptor)
+        val oldParameters = changeInfo.newParameters.toList()
         changeInfo.clearParameters()
 
         val nameValidator = getNameValidator(callable)
 
-        for (paramInfo in paramInfos.dropLast(1)) {
-            val paramName = paramInfo.name
+        for ((index, paramInfo) in paramInfos.dropLast(1).withIndex()) {
+            val oldParameter = oldParameters.getOrNull(index)
             changeInfo.addParameter(
                 KotlinParameterInfo(
-                    originalIndex = -1,
+                    originalIndex = if (oldParameter == null) -1 else index,
                     originalType = KotlinTypeInfo(paramInfo.type, callable),
-                    name = suggestNameByName(paramName, nameValidator),
+                    name =  oldParameter?.name?.takeIf { it.isNotEmpty() } ?: suggestNameByName(paramInfo.name, nameValidator),
                     valOrVar = KotlinValVar.None,
                     defaultValueForCall = null,
                     defaultValueAsDefaultParameter = false,

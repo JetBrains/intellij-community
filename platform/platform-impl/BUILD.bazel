@@ -96,6 +96,7 @@ jvm_library(
         "//platform/built-in-server-api:builtInServer",
         "//platform/observable",
         "@lib//:kotlin-stdlib",
+        "@lib//:diogen-analysis",
         "//libraries/stream",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/netty/codec-http:libraries-netty-codec-http",
@@ -189,6 +190,7 @@ jvm_library(
         "//platform/forms_rt:java-guiForms-rt",
         "//fleet/rhizomedb",
         "@lib//:jetbrains-intellij-deps-java-atk-wrapper-linux",
+        "//platform/eel-nioFs-impl",
     ],
 )
 
@@ -351,6 +353,7 @@ jvm_library(
         "//libraries/rd/core:core_test_lib",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/eel-nioFs-impl:eel-nioFs-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.impl` end
@@ -523,6 +526,7 @@ jvm_library(
         "//platform/built-in-server-api:builtInServer_test_lib",
         "//platform/observable",
         "@lib//:kotlin-stdlib",
+        "@lib//:diogen-analysis",
         "//libraries/stream",
         "//libraries/stream:stream_test_lib",
         "//libraries/kotlinx/coroutines/core",
@@ -641,6 +645,7 @@ jvm_library(
         "//platform/util/coroutines",
         "//platform/util/coroutines:coroutines_test_lib",
         "@lib//:jetbrains-annotations",
+        "@lib//:kotlinx-coroutines-test",
         "//libraries/lz4",
         "//libraries/lz4:lz4_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",

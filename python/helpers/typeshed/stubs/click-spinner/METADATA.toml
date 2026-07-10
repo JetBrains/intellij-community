@@ -1,2 +1,3 @@
-version = "0.1.*"
+version = "0.1.11"
 upstream-repository = "https://github.com/click-contrib/click-spinner"
+obsolete-since = "0.2.0" # Released on 2026-06-23

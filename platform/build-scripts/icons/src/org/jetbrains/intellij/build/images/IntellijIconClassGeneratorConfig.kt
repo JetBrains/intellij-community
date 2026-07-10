@@ -34,6 +34,9 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         className = "DockerIcons",
         packageName = "com.intellij.docker"
       )
+      "intellij.cidr.debugger.dap" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.jetbrains.cidr.execution.debugger.backend.dap",
+      )
       "intellij.clouds.docker.gateway" -> IntellijIconClassGeneratorModuleConfig(
         className = "DockerGatewayIcons",
         packageName = "com.intellij.clouds.docker.gateway"

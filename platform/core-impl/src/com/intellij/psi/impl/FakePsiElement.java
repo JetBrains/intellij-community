@@ -20,7 +20,6 @@ import javax.swing.Icon;
  * @author Dmitry Avdeev
  */
 public abstract class FakePsiElement extends PsiElementBase implements PsiNamedElement, ItemPresentation {
-
   @Override
   public ItemPresentation getPresentation() {
     return this;
@@ -107,7 +106,7 @@ public abstract class FakePsiElement extends PsiElementBase implements PsiNamedE
   }
 
   @Override
-  public final Icon getIcon(int flags) {
+  public Icon getIcon(int flags) {
     return super.getIcon(flags);
   }
 

@@ -127,6 +127,10 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//java/compiler/instrumentation-util",
         "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.jps.tests` end

@@ -292,8 +292,8 @@ public final class JobLauncherImpl extends JobLauncher {
           myStatus = Status.EXECUTED;
         }
         catch (Throwable throwable) {
-          myStatus = Status.CANCELED;
           completeExceptionally(throwable);
+          myStatus = Status.CANCELED;
         }
         finally {
           if (myOnDoneCallback != null) {
@@ -305,7 +305,12 @@ public final class JobLauncherImpl extends JobLauncher {
 
       @Override
       public String toString() {
-        return "ForkJoinTask: "+state();
+        State state = state();
+        return "ForkJoinTask: " + state + ":"+switch (state) {
+          case RUNNING, SUCCESS -> "";
+          case FAILED -> getException();
+          case CANCELLED -> getForkJoinTaskTag();
+        };
       }
     };
 
@@ -406,12 +411,17 @@ public final class JobLauncherImpl extends JobLauncher {
       @Override
       public Boolean call() {
         boolean[] result = new boolean[1];
+        return ThreadContext.installThreadContext(myContext, true, () -> {
         ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+          T element = myFirstTask;
           try {
-            T element = myFirstTask;
             while (true) {
-              if (element == null) element = failedToProcess.poll();
-              if (element == null) element = things.take();
+              if (element == null) {
+                element = failedToProcess.poll();
+              }
+              if (element == null) {
+                element = things.take();
+              }
 
               if (element == tombStone) {
                 things.put(tombStone); // return just popped tombStone to the 'things' queue for everybody else to see it
@@ -419,25 +429,8 @@ public final class JobLauncherImpl extends JobLauncher {
                 result[0] = true;
                 break;
               }
-              try {
-                T finalElement = element;
-                boolean shouldBreak = ThreadContext.installThreadContext(myContext, true, () -> {
-                  ProgressManager.checkCanceled();
-                  if (!thingProcessor.process(finalElement)) {
-                    return true;
-                  }
-                  return false;
-                });
-                if (shouldBreak) {
-                  break;
-                }
-              }
-              catch (RuntimeException|Error e) {
-                if (logAllExceptions) {
-                  LOG.info("Failed to process " + element + ". Add too failed query.", e);
-                }
-                failedToProcess.add(element);
-                throw e;
+              if (!thingProcessor.process(element)) {
+                break;
               }
               element = null;
             }
@@ -445,9 +438,17 @@ public final class JobLauncherImpl extends JobLauncher {
           catch (InterruptedException e) {
             throw new RuntimeException(e);
           }
+          catch (RuntimeException|Error e) {
+            if (logAllExceptions && !Logger.shouldRethrow(e)) {
+              LOG.info("Failed to process " + element + ". Add too failed query.", e);
+            }
+            failedToProcess.add(element);
+            throw e;
+          }
         }, progress);
         return result[0];
-      }
+      });
+    }
 
       @Override
       public @NonNls String toString() {

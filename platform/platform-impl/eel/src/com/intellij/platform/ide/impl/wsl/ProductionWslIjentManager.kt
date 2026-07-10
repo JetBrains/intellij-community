@@ -8,26 +8,46 @@ import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.ijent.IjentId
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentSession
-import com.intellij.platform.ijent.IjentSessionRegistry
+import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.ParentOfIjentScopes
+import com.intellij.platform.ijent.currentCoroutineDispatcher
 import com.intellij.platform.ijent.spi.IjentThreadPool
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 
 @ApiStatus.Internal
 @VisibleForTesting
 class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentManager {
-  private val myCache: MutableMap<String, IjentId> = ConcurrentHashMap()
+  private val counter = AtomicLong()
+
+  // keyed by ijentIdLabel, e.g. "wsl:Ubuntu:root"
+  private val ijents: MutableMap<String, Deferred<IjentSession.Posix>> = ConcurrentHashMap()
   private val initializedIjents: MutableSet<String> = ContainerUtil.newConcurrentSet()
+
+  private fun unregister(label: String): Boolean {
+    val deferred = ijents.remove(label)
+    if (deferred != null) {
+      deferred.invokeOnCompletion { if (it == null) deferred.getCompleted().close() }
+      val message = "Explicitly unregistered and closed during initialization: $label"
+      deferred.cancel(message, IjentUnavailableException.ClosedByApplication(message))
+    }
+    return deferred != null
+  }
 
   override val isIjentAvailable: Boolean
     get() = WslIjentAvailabilityService.getInstance().runWslCommandsViaIjent()
@@ -41,34 +61,66 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
     )
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
   private suspend fun getIjentSession(
     wslDistribution: WSLDistribution,
     project: Project?,
     rootUser: Boolean,
     sessionScope: ParentOfIjentScopes,
   ): IjentSession.Posix {
-    val ijentIdLabel = ijentIdLabel(wslDistribution, rootUser)
-    val ijentId = myCache.computeIfAbsent(ijentIdLabel) { ijentName ->
-      val ijentId = IjentSessionRegistry.register(ijentName) { ijentId ->
-        val ijentSession = wslDistribution.createIjentSession(
-          sessionScope,
-          project,
-          ijentId.toString(),
-          wslCommandLineOptionsModifier = { it.setSudo(rootUser) },
-        )
-        sessionScope.s.coroutineContext.job.invokeOnCompletion {
-          ijentSession.close()
+    val label = ijentIdLabel(wslDistribution, rootUser)
+    val currentDispatcher = currentCoroutineDispatcher()
+
+    val deferred = ijents.compute(label) { key, oldDeferred ->
+      val reused: Deferred<IjentSession.Posix>? = when {
+        oldDeferred == null -> null
+        !oldDeferred.isCompleted -> oldDeferred
+        oldDeferred.getCompletionExceptionOrNull() != null -> null
+        oldDeferred.getCompleted().isRunning -> oldDeferred
+        else -> null
+      }
+
+      reused ?: run {
+        val sessionLabel = "ijent-${counter.getAndIncrement()}-${key.replace(Regex("[^A-Za-z0-9-]"), "-")}"
+        val actual = GlobalScope.async(currentDispatcher, start = CoroutineStart.LAZY) {
+          createIjentSession(wslDistribution, project, rootUser, sessionScope, sessionLabel)
         }
-        ijentSession
+
+        sessionScope.s.coroutineContext.job.invokeOnCompletion {
+          unregister(key)
+        }
+
+        actual
       }
-      sessionScope.s.coroutineContext.job.invokeOnCompletion {
-        IjentSessionRegistry.unregister(ijentId)
-        myCache.remove(ijentName)
-      }
-      ijentId
+    }!!
+
+    initializedIjents.add(label)
+
+    try {
+      return deferred.await()
     }
-    initializedIjents.add(ijentIdLabel)
-    return IjentSessionRegistry.get(ijentId)
+    catch (err: Throwable) {
+      throw IjentUnavailableException.unwrapFromCancellationExceptions(err)
+    }
+  }
+
+  private suspend fun createIjentSession(
+    wslDistribution: WSLDistribution,
+    project: Project?,
+    rootUser: Boolean,
+    sessionScope: ParentOfIjentScopes,
+    sessionLabel: String,
+  ): IjentSession.Posix {
+    val session = wslDistribution.createIjentSession(
+      sessionScope,
+      project,
+      sessionLabel,
+      wslCommandLineOptionsModifier = { it.setSudo(rootUser) },
+    )
+    sessionScope.s.coroutineContext.job.invokeOnCompletion {
+      session.close()
+    }
+    return session
   }
 
   override suspend fun getIjentApi(descriptor: EelDescriptor?, wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi {
@@ -94,9 +146,8 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
 
   @VisibleForTesting
   fun dropCache() {
-    myCache.values.removeAll { ijentId ->
-      IjentSessionRegistry.unregister(ijentId)
-      true
+    for (label in ijents.keys.toList()) {
+      unregister(label)
     }
   }
 }

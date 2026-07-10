@@ -1,10 +1,10 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.core.lib.impl
 
+import com.intellij.debugger.streams.core.lib.EvaluateExpressionBasedLibrarySupport
 import com.intellij.debugger.streams.core.lib.HandlerFactory
 import com.intellij.debugger.streams.core.lib.IntermediateOperation
 import com.intellij.debugger.streams.core.lib.InterpreterFactory
-import com.intellij.debugger.streams.core.lib.LibrarySupport
 import com.intellij.debugger.streams.core.lib.Operation
 import com.intellij.debugger.streams.core.lib.ResolverFactory
 import com.intellij.debugger.streams.core.lib.TerminalOperation
@@ -20,13 +20,16 @@ import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
 /**
  * @author Vitaliy.Bibaev
  */
-abstract class LibrarySupportBase(private val compatibleLibrary: LibrarySupport = LibrarySupportBase.EMPTY) : LibrarySupport {
-  companion object {
-    val EMPTY: LibrarySupport = DefaultLibrarySupport()
-  }
+abstract class LibrarySupportBase(private val compatibleLibrary: EvaluateExpressionBasedLibrarySupport = LibrarySupportBase.EMPTY) :
+  EvaluateExpressionBasedLibrarySupport {
 
   private val mySupportedIntermediateOperations: MutableMap<String, IntermediateOperation> = mutableMapOf()
   private val mySupportedTerminalOperations: MutableMap<String, TerminalOperation> = mutableMapOf()
+
+  protected val supportedIntermediateOperations: Map<String, IntermediateOperation>
+    get() = mySupportedIntermediateOperations
+  protected val supportedTerminalOperations: Map<String, TerminalOperation>
+    get() = mySupportedTerminalOperations
 
   final override fun createHandlerFactory(dsl: Dsl): HandlerFactory {
     val compatibleLibraryFactory = compatibleLibrary.createHandlerFactory(dsl)
@@ -75,5 +78,9 @@ abstract class LibrarySupportBase(private val compatibleLibrary: LibrarySupport 
       StreamCallType.TERMINATOR -> mySupportedTerminalOperations[name]
       else -> error("Unsupported call type: $callType for call: $name")
     }
+  }
+
+  companion object {
+    val EMPTY: EvaluateExpressionBasedLibrarySupport = DefaultLibrarySupport()
   }
 }

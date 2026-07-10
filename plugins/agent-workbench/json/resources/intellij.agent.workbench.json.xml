@@ -1,7 +1,0 @@
-<idea-plugin>
-  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-  <dependencies>
-    <module name="intellij.agent.workbench.filewatch"/>
-  </dependencies>
-  <!-- endregion -->
-</idea-plugin>

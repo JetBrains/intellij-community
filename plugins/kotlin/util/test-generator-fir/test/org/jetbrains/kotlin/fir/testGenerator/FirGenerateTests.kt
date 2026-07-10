@@ -101,6 +101,7 @@ import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithComp
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithCompilerPluginsWithCompiledLibTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithCompilerPluginsWithCrossLibTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithCompilerPluginsWithLibTest
+import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithCompilerPluginsInSourceTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithCrossLibTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithLibTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceToCompiledKotlinResolveInJavaTest
@@ -175,7 +176,6 @@ private fun assembleWorkspace(): TWorkspace = workspace() {
     generateK2RefactoringsTests()
     generateK2SearchTests()
     generateK2RefIndexTests()
-    generateK2AnalysisApiTests()
     generateK2InjectionTests()
     generateProjectStructureTest()
     generateK2GradleTests()
@@ -273,6 +273,10 @@ private fun assembleWorkspace(): TWorkspace = workspace() {
 
         testClass<AbstractFirReferenceResolveWithCompilerPluginsWithCrossLibTest> {
             model("resolve/referenceWithCompilerPluginsWithLib", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractFirReferenceResolveWithCompilerPluginsInSourceTest> {
+            model("resolve/referenceWithCompilerPluginsInSource", pattern = DIRECTORY, isRecursive = false)
         }
 
         testClass<AbstractReferenceResolveInLibrarySourcesFirTest> {

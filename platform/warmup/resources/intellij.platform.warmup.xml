@@ -20,6 +20,7 @@
   <extensionPoints>
     <extensionPoint name="projectIndexesWarmupSupport" interface="com.intellij.warmup.ProjectIndexesWarmupSupport" area="IDEA_PROJECT"/>
     <extensionPoint name="projectBuildWarmupSupport" interface="com.intellij.warmup.ProjectBuildWarmupSupport" area="IDEA_PROJECT"/>
+    <extensionPoint name="warmup.threadDumpSupport" interface="com.intellij.warmup.util.AdditionalThreadDumpSupport" dynamic="true" />
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <appStarter id="warmup" implementation="com.intellij.warmup.ProjectCachesWarmup" internal="true"/>

@@ -73,14 +73,14 @@ class IconTestRun(
 
 class TestIconManager: DefaultIconManager() {
   override val resolverService: DeferredIconResolverService
-    get() = TODO("not implemented")
+    get() = throw NotImplementedError()
 
   override suspend fun sendDeferredNotifications(id: IconIdentifier, result: Icon) {
-    TODO("not implemented")
+    throw NotImplementedError()
   }
 
   override fun markDeferredIconUnused(id: IconIdentifier) {
-    TODO("not implemented")
+    throw NotImplementedError()
   }
 
   override fun icon(designer: IconDesigner.() -> Unit): Icon {
@@ -176,6 +176,7 @@ class TestPaintingContext(
   override val offsetY: Int = 0,
   override val slotWidth: Int? = null,
   override val slotHeight: Int? = null,
+  override val alpha: Float = 1f
 ) : LayerPaintingContext {
   override fun drawImage(
     image: ImageResource,
@@ -201,7 +202,7 @@ class TestPaintingContext(
     alpha: Float,
     mode: DrawMode,
   ) {
-    TODO("not implemented")
+    throw NotImplementedError()
   }
 
   override fun drawRect(
@@ -213,7 +214,7 @@ class TestPaintingContext(
     alpha: Float,
     mode: DrawMode,
   ) {
-    TODO("not implemented")
+    throw NotImplementedError()
   }
 
   override fun createNestedLayer(
@@ -222,6 +223,7 @@ class TestPaintingContext(
     slotWidth: Int?,
     slotHeight: Int?,
     scale: Float,
+    alpha: Float,
     overrideColorFilter: ColorFilter?,
   ): LayerPaintingContext {
     return TestPaintingContext(
@@ -230,7 +232,8 @@ class TestPaintingContext(
       x ?: offsetX,
       y ?: offsetY,
       slotWidth,
-      slotHeight
+      slotHeight,
+      alpha
     )
   }
 

@@ -1,1 +1,1 @@
-@file:<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: suppress">suppress</error>(return <error descr="[UNRESOLVED_REFERENCE] Unresolved reference: a">a</error>)
+@file:<error descr="[UNRESOLVED_REFERENCE]">suppress</error>(return <error descr="[UNRESOLVED_REFERENCE]">a</error>)

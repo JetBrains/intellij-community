@@ -1,42 +1,37 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2016 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven
 
-import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.maven.testFramework.fixtures.MavenCustomRepositoryHelper
+import com.intellij.maven.testFramework.fixtures.assertOrderedElementsAreEqual
+import com.intellij.maven.testFramework.fixtures.mavenFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import org.jetbrains.idea.maven.utils.MavenPluginInfo
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.nio.file.Path
 
-class MavenPluginInfoReaderTest : MavenTestCase() {
-  override fun runInDispatchThread() = false
+@TestApplication
+class MavenPluginInfoReaderTest {
+  private val maven by mavenFixture()
 
   private var p: MavenPluginInfo? = null
 
-  override fun setUp() {
-    super.setUp()
-    repositoryPath = MavenCustomRepositoryHelper(dir, "plugins").getTestData("plugins")
+  @BeforeEach
+  fun setUp() {
+    val repositoryPath = MavenCustomRepositoryHelper(maven.dir, "plugins").getTestData("plugins")
     p = MavenArtifactUtil.readPluginInfo(Path.of(repositoryPath.toAbsolutePath().toString(), "org/apache/maven/plugins", "maven-compiler-plugin", "2.0.2", "maven-compiler-plugin-2.0.2.jar"))
   }
 
+  @Test
   fun testLoadingPluginInfo() {
     assertEquals("org.apache.maven.plugins", p!!.groupId)
     assertEquals("maven-compiler-plugin", p!!.artifactId)
     assertEquals("2.0.2", p!!.version)
   }
 
+  @Test
   fun testGoals() {
     assertEquals("compiler", p!!.goalPrefix)
 

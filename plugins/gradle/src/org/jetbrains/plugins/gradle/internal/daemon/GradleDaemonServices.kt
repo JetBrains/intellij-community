@@ -175,11 +175,15 @@ private fun getObject(bytes: ByteArray?): Any? {
 }
 
 fun getConnections() : Map<ClassPath, ConsumerConnection> {
-  val sharedConnectorFactory = getStaticFieldValue(
+  val sharedConnectorFactory: GradleConnectorFactory? = getStaticFieldValue(
     ConnectorServices::class.java,
     GradleConnectorFactory::class.java,
     "sharedConnectorFactory"
-  ) as GradleConnectorFactory
+  )
+  // since Gradle 9.6.0 sharedConnectorFactory is lazy initialized and the static field value could be null
+  if (sharedConnectorFactory == null) {
+    return emptyMap()
+  }
   val defaultGradleConnectorFactoryClass = ConnectorServices::class.java.declaredClasses
     .find { it.canonicalName == "org.gradle.tooling.internal.consumer.ConnectorServices.DefaultGradleConnectorFactory" }
   if (defaultGradleConnectorFactoryClass == null) {

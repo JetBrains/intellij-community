@@ -1,8 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
@@ -149,10 +148,9 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
         // execute in impatient mode
         // to not deadlock when the indexing process waits under a write action for the queue to load contents in other threads
         // and that another thread asks JspManager for encoding which requires read action for PSI
-        ((ApplicationEx)ApplicationManager.getApplication())
-          .executeByImpatientReader(() -> LoadTextUtil.detectCharsetAndSetBOM(this, bytes, fileType));
+        ApplicationManagerEx.getApplicationEx().executeByImpatientReader(() -> LoadTextUtil.detectCharsetAndSetBOM(this, bytes, fileType));
       }
-      catch (ProcessCanceledException ignored) {
+      catch (ProcessCanceledException _) {
       }
     }
     return bytes;

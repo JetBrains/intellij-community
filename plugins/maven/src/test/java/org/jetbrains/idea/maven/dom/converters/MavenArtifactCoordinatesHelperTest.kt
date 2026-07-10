@@ -1,17 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.converters
 
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
 import com.intellij.openapi.application.readAction
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.xml.impl.ConvertContextFactory
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesHelper.getMavenId
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
-import org.jetbrains.idea.maven.fixtures.createModulePom
-import org.jetbrains.idea.maven.fixtures.createProjectPom
-import org.jetbrains.idea.maven.fixtures.importProjectAsync
-import org.jetbrains.idea.maven.fixtures.mavenDomFixture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass

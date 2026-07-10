@@ -18,14 +18,15 @@ import kotlin.io.path.Path
 /**
  * Binary that isn't python. To be used to test validation.
  */
-val randomBinary: PythonBinary = Path(
-  if (SystemInfoRt.isWindows) {
-    // ftp.exe is faster than cmd.exe and powershell.exe
-    PathEnvironmentVariableUtil.findInPath("ftp.exe")?.path ?: error("No ftp on Windows?")
-  }
-  else {
-    "/bin/sh"
-  })
+val randomBinary: PythonBinary
+  get() = Path(
+    if (SystemInfoRt.isWindows) {
+      // ftp.exe is faster than cmd.exe and powershell.exe
+      PathEnvironmentVariableUtil.findInPath("ftp.exe")?.path ?: error("No ftp on Windows?")
+    }
+    else {
+      "/bin/sh"
+    })
 
 /**
  * Fails if [this] is not [Result.Failure]

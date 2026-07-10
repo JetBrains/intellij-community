@@ -29,6 +29,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/references",
         "@lib//:kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-analysis-api",
         "//plugins/kotlin/injection/base:kotlin-base-injection",
@@ -59,6 +60,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-injection",
+        "//plugins/kotlin/references:references_test_lib",
         "//plugins/kotlin/injection/base:kotlin-base-injection_test_lib",
         "//plugins/kotlin/base/util:util_test_lib",
         "//plugins/kotlin/base/psi:psi_test_lib",

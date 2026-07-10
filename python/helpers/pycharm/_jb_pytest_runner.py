@@ -10,9 +10,13 @@ import warnings
 if sys.version_info[:2] >= (3, 10):
     from importlib.metadata import entry_points as iter_entry_points
 else:
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=DeprecationWarning)
-        from pkg_resources import iter_entry_points
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=DeprecationWarning)
+            from pkg_resources import iter_entry_points
+    except ImportError:
+        def iter_entry_points(group):
+            return ()
 
 from _jb_runner_tools import jb_patch_separator, jb_doc_args, JB_DISABLE_BUFFERING, \
     start_protocol, parse_arguments, set_parallel_mode, jb_finish_tests, \
@@ -21,6 +25,8 @@ from teamcity import pytest_plugin
 import os
 
 _DOCTEST_MODULES_ARG = "--doctest-modules"
+_JB_SKIP_PASSED_OUTPUT_DEFAULT_ARG = "--jb-skippassedoutput-default"
+_JB_REPORT_LOGS_AS_TEST_LOG_ARG = "--jb-report-logs-as-test-log"
 
 def _add_module_to_target(module_name, python_parts):
     # Doctest: Find the fully qualified name of the target module by checking each
@@ -38,6 +44,13 @@ def _add_module_to_target(module_name, python_parts):
 
 
 if __name__ == '__main__':
+    skip_passed_output_default = _JB_SKIP_PASSED_OUTPUT_DEFAULT_ARG in sys.argv
+    while _JB_SKIP_PASSED_OUTPUT_DEFAULT_ARG in sys.argv:
+        sys.argv.remove(_JB_SKIP_PASSED_OUTPUT_DEFAULT_ARG)
+    report_logs_as_test_log = _JB_REPORT_LOGS_AS_TEST_LOG_ARG in sys.argv
+    while _JB_REPORT_LOGS_AS_TEST_LOG_ARG in sys.argv:
+        sys.argv.remove(_JB_REPORT_LOGS_AS_TEST_LOG_ARG)
+
     path, targets, additional_args = parse_arguments()
     sys.argv += additional_args
 
@@ -61,6 +74,11 @@ if __name__ == '__main__':
             plugins_to_load.append(pytest_plugin)
 
     args = sys.argv[1:]
+    if skip_passed_output_default:
+        pytest_plugin.set_skip_passed_output_default(True)
+    if report_logs_as_test_log:
+        pytest_plugin.set_report_logs_as_test_log(True)
+
     if "--jb-show-summary" in args:
         args.remove("--jb-show-summary")
     elif int(pytest.__version__.split('.')[0]) >= 6:

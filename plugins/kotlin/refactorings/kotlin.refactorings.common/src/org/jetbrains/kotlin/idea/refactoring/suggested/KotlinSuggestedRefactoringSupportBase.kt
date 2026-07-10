@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 abstract class KotlinSuggestedRefactoringSupportBase : SuggestedRefactoringSupport {
     override fun isAnchor(psiElement: PsiElement): Boolean {
         if (psiElement !is KtDeclaration) return false
-        if (psiElement is KtParameter && psiElement.ownerFunction != null) return false
+        if (psiElement is KtParameter && psiElement.ownerDeclaration != null) return false
         return true
     }
     

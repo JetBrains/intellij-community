@@ -471,7 +471,7 @@ fun Dispatchers.ui(kind: UiDispatcherKind = UiDispatcherKind.STRICT, immediate: 
  * ### Locking Behavior
  * This dispatcher is different from [Dispatchers.EDT] in the aspect of handling the Read/Write lock:
  * the computations scheduled by this dispatcher **are not protected by the Write-Intent lock** (see [Application]),
- * and it is forbidden to initiate read or write actions inside.
+ * and initiating read or write actions inside is reported as an error.
  *
  * ### Ordering Guarantees
  * This dispatcher is fair: two `launch(Dispatchers.UI)` are executed in the order of their scheduling.

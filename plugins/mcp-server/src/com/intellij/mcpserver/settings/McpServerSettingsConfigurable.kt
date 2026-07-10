@@ -14,6 +14,7 @@ import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.McpServerTerminalPromotionDismissalState
 import com.intellij.mcpserver.util.getConsentDialog
 import com.intellij.mcpserver.util.getHelpLink
+import com.intellij.mcpserver.util.getPathForMcp
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.UI
@@ -182,17 +183,17 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
         indent {
           row {
             button(McpServerBundle.message("copy.mcp.server.sse.configuration"), {
-              val json = createSseServerJsonEntry(McpServerService.getInstance().port, ProjectUtil.getProjectForComponent(settingsPanel)?.basePath)
+              val json = createSseServerJsonEntry(McpServerService.getInstance().port, ProjectUtil.getProjectForComponent(settingsPanel)?.getPathForMcp())
               CopyPasteManager.getInstance().setContents(TextTransferable(McpClient.json.encodeToString(json) as CharSequence))
               showCopiedBallon(it)
             })
             button(McpServerBundle.message("copy.mcp.server.stdio.configuration"), {
-              val json = createStdioMcpServerJsonConfiguration(McpServerService.getInstance().port, ProjectUtil.getProjectForComponent(settingsPanel)?.basePath)
+              val json = createStdioMcpServerJsonConfiguration(McpServerService.getInstance().port, ProjectUtil.getProjectForComponent(settingsPanel)?.getPathForMcp())
               CopyPasteManager.getInstance().setContents(TextTransferable(McpClient.json.encodeToString(json) as CharSequence))
               showCopiedBallon(it)
             })
             button(McpServerBundle.message("copy.mcp.server.stream.configuration"), {
-              val json = createStreamableServerJsonEntry(McpServerService.getInstance().port, ProjectUtil.getProjectForComponent(settingsPanel)?.basePath)
+              val json = createStreamableServerJsonEntry(McpServerService.getInstance().port, ProjectUtil.getProjectForComponent(settingsPanel)?.getPathForMcp())
               CopyPasteManager.getInstance().setContents(TextTransferable(McpClient.json.encodeToString(json) as CharSequence))
               showCopiedBallon(it)
             })
@@ -401,7 +402,7 @@ private class CheckboxWithValidation(@Nls checkboxText: String, var validator: C
 
 private object ConsentValidator : CheckboxValidator {
   override fun isValidNewValue(isSelected: Boolean, project: Project?): Boolean =
-    if (isSelected) getConsentDialog(project) else true
+    !isSelected || getConsentDialog(project)
 }
 
 private interface CheckboxValidator {

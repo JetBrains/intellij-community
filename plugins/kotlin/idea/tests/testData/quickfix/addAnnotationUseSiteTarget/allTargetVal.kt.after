@@ -1,8 +1,8 @@
 // "Add use-site target" "true"
 // CHOSEN_OPTION: ALL|Add use-site target 'all'
 // COMPILER_ARGUMENTS: -Xannotation-target-all
+// K2_ERROR: WRONG_ANNOTATION_TARGET
 
-// K2_ERROR: This annotation is not applicable to target 'top level property with backing field'. Applicable targets: getter, setter
 
 @Target(AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
 annotation class Anno

@@ -56,7 +56,7 @@ sealed interface JdkProxyProvider {
     fun ensureDefault(): Unit = ensureDefaultProxyProviderImpl()
 
     private var javaProxyInstallationFlag: Boolean = false
-    private val proxyAuthNotificationSuppressed = AtomicBoolean(true)
+    private val proxyAuthNotificationSuppressed = AtomicBoolean(false)
     private val proxyAuthNotificationActive = AtomicBoolean(false)
 
     @Synchronized

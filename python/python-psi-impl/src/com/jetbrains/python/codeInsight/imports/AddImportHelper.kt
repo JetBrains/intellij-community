@@ -29,7 +29,7 @@ import com.jetbrains.python.codeInsight.imports.ImportLocationHelper.Companion.g
 import com.jetbrains.python.codeInsight.imports.PyNestedClassUtils.findTopLevelClass
 import com.jetbrains.python.codeInsight.imports.PyRelativeImportData.Companion.fromString
 import com.jetbrains.python.documentation.docstrings.DocStringUtil
-import com.jetbrains.python.documentation.doctest.PyDocstringFile
+import com.jetbrains.python.documentation.doctest.PyDoctestFile
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyElement
@@ -546,7 +546,7 @@ object AddImportHelper {
       val manager = InjectedLanguageManager.getInstance(file.project)
       val injectionHost = manager.getInjectionHost(file)
       val insideDoctest =
-        file is PyDocstringFile && injectionHost != null && DocStringUtil.getParentDefinitionDocString(injectionHost) === injectionHost
+        file is PyDoctestFile && injectionHost != null && DocStringUtil.getParentDefinitionDocString(injectionHost) === injectionHost
 
       val insertParent: PsiElement
       if (insertBefore != null && insertBefore.parent != null) {

@@ -22,6 +22,9 @@
 - name: lib/modules/intellij.devkit.gradle.jar
   contentModules:
   - name: intellij.devkit.gradle
+- name: lib/modules/intellij.devkit.gradle.tooling.jar
+  contentModules:
+  - name: intellij.devkit.gradle.tooling
 - name: lib/modules/intellij.devkit.i18n.jar
   contentModules:
   - name: intellij.devkit.i18n

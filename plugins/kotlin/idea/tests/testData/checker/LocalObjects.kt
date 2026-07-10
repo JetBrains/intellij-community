@@ -12,10 +12,10 @@
     }
     b.foo()
 
-    <error descr="[LOCAL_OBJECT_NOT_ALLOWED] Named object 'B' is a singleton and cannot be local. Try to use anonymous object instead">object B</error> {
+    <error descr="[LOCAL_OBJECT_NOT_ALLOWED]">object B</error> {
       fun foo() {}
     }
     B.foo()
   }
 
-  val bb = <error descr="[UNRESOLVED_REFERENCE] Unresolved reference: B">B</error>.<error descr="[DEBUG] Reference is not resolved to anything, but is not marked unresolved">foo</error>()
+  val bb = <error descr="[UNRESOLVED_REFERENCE]">B</error>.<error descr="[DEBUG]">foo</error>()

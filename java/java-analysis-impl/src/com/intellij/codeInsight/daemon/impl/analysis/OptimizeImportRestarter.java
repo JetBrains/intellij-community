@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.modcommand.ActionContext;
@@ -117,9 +116,8 @@ public final class OptimizeImportRestarter implements Disposable {
         ReadAction.nonBlocking(() -> optimizeFix.getPresentation(context) != null ? optimizeFix.perform(context) : ModCommand.nop())
           .expireWhen(() -> myProject.isDisposed() || psiFile.getModificationStamp() != request.modificationStampBefore())
           .finishOnUiThread(ModalityState.defaultModalityState(),
-                            command -> CommandProcessor.getInstance().executeCommand(
-                              myProject, () -> ModCommandExecutor.getInstance().executeInBatch(context, command),
-                              CodeInsightBundle.message("process.optimize.imports"), null))
+                            command -> CommandProcessor.getInstance()
+                                .runUndoTransparentAction(() -> ModCommandExecutor.getInstance().executeInBatch(context, command)))
           .submit(AppExecutorUtil.getAppExecutorService());
       scheduledFutures.add(future);
       future.onProcessed(_->scheduledFutures.remove(future));

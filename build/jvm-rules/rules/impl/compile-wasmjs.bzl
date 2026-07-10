@@ -23,7 +23,7 @@ visibility("private")
 KtWasmJsInfo = provider(
     doc = "Information required to compile Kotlin to Wasm/JS",
     fields = {
-        "compile_klibs": "depset(File): klibs visible on the compiler classpath, added to the compile library path of *direct* dependents",
+        "compile_klibs": "depset(File): klibs visible on the compiler classpath of *direct* dependents",
         "link_klibs": "depset(File): klibs that must be given to the Wasm/JS linker, propagated transitively",
         "klib": "File: klib of this module",
         "source_jar": "File: sources of this module",
@@ -69,17 +69,19 @@ def wasmjs_produce_module_actions(ctx, rule_kind):
 
     compile_exported_deps_klibs = depset([], transitive = [d[KtWasmJsInfo].compile_klibs for d in ctx.attr.exports])
     compile_deps_klibs = depset([], transitive = [d[KtWasmJsInfo].compile_klibs for d in ctx.attr.deps])
+    compile_libraries = depset([], transitive = [compile_exported_deps_klibs, compile_deps_klibs])
 
     link_exported_deps_klibs = depset([], transitive = [d[KtWasmJsInfo].link_klibs for d in ctx.attr.exports])
     link_deps_klibs = depset([], transitive = [d[KtWasmJsInfo].link_klibs for d in ctx.attr.deps])
-    link_libraries = depset([], transitive = [link_exported_deps_klibs, link_deps_klibs])
+    link_runtime_deps_klibs = depset([], transitive = [d[KtWasmJsInfo].link_klibs for d in ctx.attr.runtime_deps])
+    link_libraries = depset([], transitive = [link_exported_deps_klibs, link_deps_klibs, link_runtime_deps_klibs])
 
-    exported_deps_exported_compiler_plugins = depset([], transitive = [dep[KotlinInfo].exported_compiler_plugins for dep in ctx.attr.exports if dep[KotlinInfo]])
+    exported_deps_exported_compiler_plugins = depset([], transitive = [dep[KotlinInfo].exported_compiler_plugins for dep in ctx.attr.exports if KotlinInfo in dep])
 
     if not srcs:
         return [
             KtWasmJsInfo(
-                compile_klibs = depset([], transitive = [compile_exported_deps_klibs]),
+                compile_klibs = compile_exported_deps_klibs,
                 link_klibs = depset([], transitive = [link_libraries]),
                 klib = None,
                 source_jar = None,  # TODO: support that
@@ -95,8 +97,6 @@ def wasmjs_produce_module_actions(ctx, rule_kind):
                 js = [],
             ),
         ]
-
-    compile_libraries = depset([], transitive = [compile_exported_deps_klibs, compile_deps_klibs])
 
     compile_args = _create_wasmjs_compilation_common_args(ctx)
     klib_out = ctx.actions.declare_file("%s_%s.klib" % (ctx.attr.module_name, ctx.label.name))
@@ -160,7 +160,7 @@ def wasmjs_produce_module_actions(ctx, rule_kind):
     link_args = _create_wasmjs_compilation_common_args(ctx)
     link_args.add("-ir-output-dir", mjs_out.path)
     link_args.add("-Xir-produce-js")
-    link_args.add("-Xinclude=%s" % klib_out.path)  # TODO: what is the `-Xinclude`, is that what will be linked? Do we need `runtime_deps_klibs` here?
+    link_args.add("-Xinclude=%s" % klib_out.path)  # TODO: what is the `-Xinclude`, is that what will be linked?
     link_args.add("-Xir-dce")
     link_args.add_joined("-libraries", [klib.path for klib in all_link_libraries.to_list()], join_with = ctx.configuration.host_path_separator, omit_if_empty = True)
 

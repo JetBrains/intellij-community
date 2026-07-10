@@ -38,10 +38,10 @@ import com.intellij.psi.impl.source.JavaDummyElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.util.CommentUtil;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -273,7 +273,9 @@ final class RecordBuilder {
     PsiDocComment existingComment = fieldAccessor.getDocComment();
     PsiJavaParserFacade parserFacade = JavaPsiFacade.getElementFactory(myOriginClass.getProject());
     if (existingComment == null) {
-      PsiDocComment newComment = parserFacade.createDocCommentFromText("/***/", fieldAccessor);
+      PsiDocComment newComment =
+        parserFacade.createDocCommentFromText(CommentUtil.convertToDocComment(fieldAccessor.getContainingFile(), ""),
+                                              fieldAccessor);
       Arrays.stream(throwsReferenceTypes).forEach(rt -> newComment.add(createDocTag(parserFacade, rt)));
       fieldAccessor.addBefore(newComment, fieldAccessor.getFirstChild());
     }

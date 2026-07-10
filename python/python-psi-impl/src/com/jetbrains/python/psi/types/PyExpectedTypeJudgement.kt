@@ -1,22 +1,33 @@
 package com.jetbrains.python.psi.types
 
+import com.intellij.openapi.util.RecursionManager
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.StackOverflowPreventedException
 import com.intellij.psi.PsiElement
+import com.intellij.psi.tree.IElementType
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore.flattenParens
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyAssignmentExpression
 import com.jetbrains.python.psi.PyAssignmentStatement
+import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyCallExpression
-import com.jetbrains.python.psi.PyCallSiteExpression
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyDictCompExpression
 import com.jetbrains.python.psi.PyDictLiteralExpression
 import com.jetbrains.python.psi.PyDoubleStarExpression
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyGeneratorExpression
 import com.jetbrains.python.psi.PyKeyValueExpression
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyLambdaExpression
+import com.jetbrains.python.psi.PyListCompExpression
 import com.jetbrains.python.psi.PyListLiteralExpression
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyParameter
@@ -24,6 +35,7 @@ import com.jetbrains.python.psi.PyParameterList
 import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PyReturnStatement
 import com.jetbrains.python.psi.PySequenceExpression
+import com.jetbrains.python.psi.PySetCompExpression
 import com.jetbrains.python.psi.PySetLiteralExpression
 import com.jetbrains.python.psi.PySliceItem
 import com.jetbrains.python.psi.PyStarArgument
@@ -36,13 +48,14 @@ import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyYieldExpression
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
+import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
 import com.jetbrains.python.psi.types.PyTypeChecker.substitute
-import com.jetbrains.python.psi.types.PyTypeChecker.unifyGenericCall
 
 
 object PyExpectedTypeJudgement {
+  private val recursionGuard = RecursionManager.createGuard<Pair<PsiElement, TypeEvalContext>>("PyExpectedTypeJudgement")
 
   /**
    * Computes the expected type of the given expression from its usage in the AST.
@@ -69,13 +82,21 @@ object PyExpectedTypeJudgement {
    * implied supertype `List`, to then retrieve the type of `List`s type parameter.
    */
   @JvmStatic
-  fun getExpectedType(expr: PyExpression, ctxOriginal: TypeEvalContext): PyType? {
+  fun getExpectedType(expr: PyExpression, ctx: TypeEvalContext): PyType? {
+    try {
+      return recursionGuard.computePreventingRecursion<PyType?, Throwable>(Pair(expr.parent, ctx), false) {
+        doGetExpectedType(expr, ctx)
+      }
+    }
+    catch (_: StackOverflowPreventedException) {
+      return PyAnyType.unknown
+    }
+  }
+
+  fun doGetExpectedType(expr: PyExpression, ctx: TypeEvalContext): PyType? {
     // Traverse the AST upwards to find the root expression (either assignment, function call, return statement)
     // Do this recursively to easily map the result type to the original sub-element.
     // Example: x2: str; x1, (x2, x3) = (42, (expr, "spam")) # expr is the requested sub-element, the whole tuple is the root expression
-
-    // use a context copy to (a) avoid types being cached in the original context, (b) avoid control flow analysis to happen.
-    val ctx = TypeEvalContext.codeInsightFallback(expr.project)
 
     val parent = expr.parent
     when (parent) {
@@ -87,7 +108,7 @@ object PyExpectedTypeJudgement {
 
       is PyAssignmentExpression -> {
         val expectedType = fromWalrus(expr, ctx)
-        if (expectedType != null) return expectedType
+        if (expectedType != null && !expectedType.isUnknown) return expectedType
         return getExpectedType(parent, ctx)
       }
 
@@ -102,7 +123,7 @@ object PyExpectedTypeJudgement {
           if (PyNames.ITERABLE == typeOfStarParent?.name) {
             return typeOfStarParent
           }
-          if (typeOfStarParent is PyCollectionType) {
+          if (typeOfStarParent is PyClassType && typeOfStarParent.isParameterized) {
             // upcast to Iterable
             return createIterableType(expr, typeOfStarParent.iteratedItemType)
           }
@@ -116,9 +137,9 @@ object PyExpectedTypeJudgement {
           if (PyNames.MAPPING == typeOfDoubleStarParent?.name) {
             return typeOfDoubleStarParent
           }
-          if (typeOfDoubleStarParent is PyCollectionType) {
+          if (typeOfDoubleStarParent is PyClassType && typeOfDoubleStarParent.isParameterized) {
             // upcast to Map
-            return PyCollectionTypeImpl.createTypeByQName(expr, "typing." + PyNames.MAPPING, false, typeOfDoubleStarParent.elementTypes)
+            return PyCollectionTypeImpl.createTypeByQName(expr, "typing." + PyNames.MAPPING, false, typeOfDoubleStarParent.typeArguments)
           }
         }
         return null
@@ -137,7 +158,7 @@ object PyExpectedTypeJudgement {
         if (typeOfParentTuple is PyTupleType && typeOfParentTuple.elementTypes.isNotEmpty()) {
           return getElementTypeAtTupleIndex(parent, typeOfParentTuple, indexOfExpr)
         }
-        if (typeOfParentTuple is PyCollectionType) {
+        if (typeOfParentTuple is PyClassType && typeOfParentTuple.isParameterized) {
           return typeOfParentTuple.iteratedItemType
         }
         return null
@@ -147,24 +168,28 @@ object PyExpectedTypeJudgement {
       is PyListLiteralExpression,
         -> {
         val typeOfParentList = getExpectedType(parent, ctx)
-        if (typeOfParentList is PyCollectionType) {
+        if (typeOfParentList is PyClassType && typeOfParentList.isParameterized) {
           return typeOfParentList.iteratedItemType
         }
         return null
       }
 
       is PyKeyValueExpression -> {
-        if (parent.parent is PyDictLiteralExpression) {
-          val parentDict = parent.parent as PyDictLiteralExpression
-          val typeOfParentDict = getExpectedType(parentDict, ctx)
-          if (typeOfParentDict is PyCollectionType && typeOfParentDict.elementTypes.size == 2) {
-            val index = if (parent.key == expr) 0 else 1
-            return typeOfParentDict.elementTypes[index]
-          }
-          if (typeOfParentDict is PyUnpackedTypedDictType && parent.key is PyStringLiteralExpression) {
-            val argName = (parent.key as PyStringLiteralExpression).stringValue
-            return typeOfParentDict.typedDictType.getElementType(argName)
-          }
+        val grandParent = parent.parent
+        val typeOfParentDict = when (grandParent) {
+          is PyDictLiteralExpression
+            -> getExpectedType(grandParent, ctx)
+          is PyDictCompExpression if (grandParent.resultExpression === parent)
+            -> getExpectedType(grandParent, ctx)
+          else -> return null
+        }
+        if (typeOfParentDict is PyClassType && typeOfParentDict.typeArguments.size == 2) {
+          val index = if (parent.key == expr) 0 else 1
+          return typeOfParentDict.typeArguments[index]
+        }
+        if (typeOfParentDict is PyUnpackedTypedDictType && parent.key is PyStringLiteralExpression) {
+          val argName = (parent.key as PyStringLiteralExpression).stringValue
+          return typeOfParentDict.typedDictType.getElementType(argName)
         }
         return null
       }
@@ -195,6 +220,22 @@ object PyExpectedTypeJudgement {
         }
         return null
       }
+
+      is PyListCompExpression,
+      is PySetCompExpression,
+      is PyGeneratorExpression
+        -> {
+        if (parent.resultExpression === expr) {
+          val expectedComprehensionType = getExpectedType(parent, ctx) ?: return null
+          if (expectedComprehensionType is PyClassType && expectedComprehensionType.isParameterized) {
+            return expectedComprehensionType.typeArguments.firstOrNull()
+          }
+        }
+      }
+
+      is PyBinaryExpression -> {
+        return fromBinaryExpression(expr, parent, ctx)
+      }
     }
 
     // Compute the expected type from a given root statement/expression
@@ -221,8 +262,7 @@ object PyExpectedTypeJudgement {
         paramType = fromStarArgument(callArgument, mapping, ctx)
       }
       else {
-        val param = mappedParameters[callArgument]
-                    ?: return null // This would be a union with Any, hence return null here already
+        val param = mappedParameters[callArgument] ?: continue
 
         val paramTypeOrUnpacked = param.getArgumentType(ctx)
         if (paramTypeOrUnpacked is PyUnpackedTupleType) {
@@ -239,7 +279,8 @@ object PyExpectedTypeJudgement {
           paramType = paramTypeOrUnpacked
         }
       }
-      argTypes.add(substituteTypeVars(paramType, callSite, mappedParameters, ctx))
+
+      argTypes.add(substituteTypeVars(paramType, mapping, ctx))
     }
 
     return PyUnionType.union(argTypes)
@@ -312,16 +353,11 @@ object PyExpectedTypeJudgement {
 
   private fun substituteTypeVars(
     paramType: PyType?,
-    callSite: PyCallSiteExpression,
-    mappedParameters: Map<PyExpression, PyCallableParameter>,
+    mapping: PyCallExpression.PyArgumentsMapping,
     ctx: TypeEvalContext,
   ): PyType? {
     if (!paramType.hasGenerics(ctx)) return paramType
-
-    val receiver = callSite.getReceiver(null)
-    val substitutions = unifyGenericCall(receiver, mappedParameters, ctx) // might cause recursion
-    if (substitutions == null) return paramType
-
+    val substitutions = PyTypeInferenceCspFactory.unifyReceiver(mapping, ctx)
     return substitute(paramType, substitutions, ctx)
   }
 
@@ -353,10 +389,10 @@ object PyExpectedTypeJudgement {
       is PySequenceExpression -> {
         // try to mutually descent the nested sequences both on lhs and on rhs
         val tupleElementTypes = ArrayList<PyType?>()
-        for (idx in 0 until lhs.elements.size) {
-          val lhsElem = lhs.elements[idx]
+        for ((idx, element) in lhs.elements.withIndex()) {
+          val lhsElem = element
           val rhsElem = if (rhs is PySequenceExpression) rhs.elements[idx] else null
-          val elemType = fromLhs(lhsElem, rhsElem, ctx)
+          val elemType = fromLhs(lhsElem, rhsElem, ctx) ?: PyAnyType.unknown
           tupleElementTypes.add(elemType)
         }
         if (rhs is PyTupleExpression) {
@@ -374,8 +410,11 @@ object PyExpectedTypeJudgement {
               iterableElementTypes.add(tupleElementType)
             }
           }
-          if (iterableElementTypes.contains(null)) {
-            return createIterableType(lhs, null) // simplify
+          if (iterableElementTypes.contains(PyAnyType.unknown)) {
+            return createIterableType(lhs, PyAnyType.unknown) // simplify
+          }
+          if (iterableElementTypes.contains(PyAnyType.any)) {
+            return createIterableType(lhs, PyAnyType.any) // simplify
           }
           val iterableElementTypesUnion = PyUnionType.union(iterableElementTypes)
           return createIterableType(lhs, iterableElementTypesUnion)
@@ -398,7 +437,7 @@ object PyExpectedTypeJudgement {
 
       is PySubscriptionExpression -> {
         val operandType = ctx.getType(lhs.operand)
-        val iterableType = if (operandType is PyCollectionType) operandType.iteratedItemType else null
+        val iterableType = if (operandType is PyClassType && operandType.isParameterized) operandType.iteratedItemType else PyAnyType.any
         if (lhs.indexExpression is PySliceItem) {
           return createIterableType(lhs, iterableType)
         }
@@ -451,7 +490,7 @@ object PyExpectedTypeJudgement {
 
     val returnType = ctx.getReturnType(funScope)
     val generatorDescriptor = PyTypingTypeProvider.GeneratorTypeDescriptor.fromGenerator(returnType)
-    val yieldType = generatorDescriptor?.yieldType
+    val yieldType = generatorDescriptor?.yieldType ?: PyAnyType.unknown
     if (parent.isDelegating) {
       return createIterableType(expr, yieldType)
     }
@@ -507,7 +546,194 @@ object PyExpectedTypeJudgement {
     return null
   }
 
-  private fun createIterableType(anchor: PsiElement, elementType: PyType?): PyCollectionTypeImpl? {
+  /**
+   * Computes the expected type of the operand [expr] inside the binary expression [binaryExpr]:
+   * - **Rich comparison** (`<`, `>`, `<=`, `>=`, `==`, `!=`, `<>`): synthetic dunder protocol (e.g., `__lt__`), unioned with `Any`
+   * - **Membership** (`in`, `not in`): `__contains__` protocol for the container operand
+   * - **Identity** (`is`, `is not`): no expectation, returns null
+   * - **Short-circuit logical** (`and`, `or`): propagates the parent's expected type
+   * - **Sequence repetition** (`seq * int` or `int * seq`): `SupportsIndex` (`__index__() -> int`) for the non-sequence operand
+   * - **Arithmetic, bitwise, shift, matmul** (`+`, `-`, `*`, `/`, `//`, `%`, `**`, `@`, `<<`, `>>`, `&`, `|`, `^`):
+   *   synthetic operator protocol (e.g., `__add__`/`__radd__`), unioned with `Any`
+   * - **Fallback**: Otherwise propagate the parent's expected type.
+   */
+  private fun fromBinaryExpression(expr: PyExpression, binaryExpr: PyBinaryExpression, ctx: TypeEvalContext): PyType? {
+    val operator = binaryExpr.operator
+    if (operator == null) {
+      return null
+    }
+
+    val comparisonProtocolType = fromComparisonExpression(expr, binaryExpr, operator, ctx)
+    if (comparisonProtocolType != null) {
+      return comparisonProtocolType
+    }
+    if (PyTokenTypes.COMPARISON_OPERATIONS.contains(operator)) {
+      return null
+    }
+
+    val expectedTypeOfWholeExpr = getExpectedType(binaryExpr, ctx)
+
+    // Short-circuit operators: `a and b`, `a or b` evaluate to one of the operands.
+    if (operator == PyTokenTypes.AND_KEYWORD || operator == PyTokenTypes.OR_KEYWORD) {
+      return expectedTypeOfWholeExpr
+    }
+
+    if (operator == PyTokenTypes.MULT) {
+      // Special case for sequence repetition: [1,2] * count.
+      val otherOperand: PyExpression? = when {
+        expr === binaryExpr.leftExpression -> binaryExpr.rightExpression
+        expr === binaryExpr.rightExpression -> binaryExpr.leftExpression
+        else -> null
+      }
+      if (otherOperand != null) {
+        val cache = PyBuiltinCache.getInstance(expr)
+        val intType = cache.intType
+        val typeOfOther = ctx.getType(otherOperand)
+        if (isSequenceLike(typeOfOther)) {
+          // Create:  `__index__() -> int`, i.e. `SupportsIndex`.
+          val syntheticType = createSyntheticDunderProtocolType(expr, "__index__", null, intType, ctx)
+          return syntheticType
+        }
+      }
+    }
+
+    val operatorProtocolType = fromOperatorExpression(expr, binaryExpr, operator, ctx)
+    if (operatorProtocolType != null) {
+      return operatorProtocolType
+    }
+
+    // Fallback: propagate the parent's expected type.
+    return expectedTypeOfWholeExpr
+  }
+
+  /**
+   * Binary operator operands are constrained structurally by Python's operator protocol.
+   * Since Python may let the other operand compensate via the direct/reflected fallback path,
+   * the synthetic expectation is unioned with `Any`.
+   */
+  private fun fromOperatorExpression(expr: PyExpression, binaryExpr: PyBinaryExpression, operator: IElementType, ctx: TypeEvalContext): PyType? {
+    val leftExpr = binaryExpr.leftExpression
+    val rightExpr = binaryExpr.rightExpression
+
+    val methodName = when (operator) {
+                       PyTokenTypes.PLUS -> if (expr === leftExpr) "__add__" else if (expr === rightExpr) "__radd__" else null
+                       PyTokenTypes.MINUS -> if (expr === leftExpr) "__sub__" else if (expr === rightExpr) "__rsub__" else null
+                       PyTokenTypes.MULT -> if (expr === leftExpr) "__mul__" else if (expr === rightExpr) "__rmul__" else null
+                       PyTokenTypes.AT -> if (expr === leftExpr) "__matmul__" else if (expr === rightExpr) "__rmatmul__" else null
+                       PyTokenTypes.DIV -> if (expr === leftExpr) "__truediv__" else if (expr === rightExpr) "__rtruediv__" else null
+                       PyTokenTypes.FLOORDIV -> if (expr === leftExpr) "__floordiv__" else if (expr === rightExpr) "__rfloordiv__" else null
+                       PyTokenTypes.PERC -> if (expr === leftExpr) "__mod__" else if (expr === rightExpr) "__rmod__" else null
+                       PyTokenTypes.EXP -> if (expr === leftExpr) "__pow__" else if (expr === rightExpr) "__rpow__" else null
+                       PyTokenTypes.LTLT -> if (expr === leftExpr) "__lshift__" else if (expr === rightExpr) "__rlshift__" else null
+                       PyTokenTypes.GTGT -> if (expr === leftExpr) "__rshift__" else if (expr === rightExpr) "__rrshift__" else null
+                       PyTokenTypes.AND -> if (expr === leftExpr) "__and__" else if (expr === rightExpr) "__rand__" else null
+                       PyTokenTypes.OR -> if (expr === leftExpr) "__or__" else if (expr === rightExpr) "__ror__" else null
+                       PyTokenTypes.XOR -> if (expr === leftExpr) "__xor__" else if (expr === rightExpr) "__rxor__" else null
+                       else -> null
+                     } ?: return null
+
+    val otherOperand = when {
+                         expr === leftExpr -> rightExpr
+                         expr === rightExpr -> leftExpr
+                         else -> null
+                       } ?: return null
+
+    val otherOperandType = ctx.getType(otherOperand)
+    val expectedResultType = getExpectedType(binaryExpr, ctx).takeUnless { it is PyAnyType } ?: PyAnyType.any
+    val syntheticType = createSyntheticDunderProtocolType(expr, methodName, Ref.create(otherOperandType), expectedResultType, ctx)
+
+    return PyUnionType.union(syntheticType, PyAnyType.any)
+  }
+
+  private fun fromComparisonExpression(expr: PyExpression, binaryExpr: PyBinaryExpression, operator: IElementType, ctx: TypeEvalContext): PyType? {
+    val leftExpr = binaryExpr.leftExpression
+    val rightExpr = binaryExpr.rightExpression
+
+    val methodName = when (operator) {
+                       PyTokenTypes.LT -> if (expr === leftExpr) "__lt__" else if (expr === rightExpr) "__gt__" else null
+                       PyTokenTypes.GT -> if (expr === leftExpr) "__gt__" else if (expr === rightExpr) "__lt__" else null
+                       PyTokenTypes.LE -> if (expr === leftExpr) "__le__" else if (expr === rightExpr) "__ge__" else null
+                       PyTokenTypes.GE -> if (expr === leftExpr) "__ge__" else if (expr === rightExpr) "__le__" else null
+                       PyTokenTypes.EQEQ -> if (expr === leftExpr || expr === rightExpr) "__eq__" else null
+
+                       PyTokenTypes.NE,
+                       PyTokenTypes.NE_OLD,
+                         -> if (expr === leftExpr || expr === rightExpr) "__ne__" else null
+
+                       // `x in y` / `x not in y`: the container side is constrained.
+                       PyTokenTypes.IN_KEYWORD,
+                       PyTokenTypes.NOT_KEYWORD,
+                         -> if (expr === rightExpr) "__contains__" else null
+
+                       // `is` / `is not` does not rely on a user-defined API.
+                       PyTokenTypes.IS_KEYWORD -> null
+
+                       else -> null
+                     } ?: return null
+
+    val argumentType = when (operator) {
+      PyTokenTypes.IN_KEYWORD,
+      PyTokenTypes.NOT_KEYWORD,
+        -> ctx.getType(leftExpr)
+
+      else -> when {
+        expr === leftExpr && rightExpr != null -> ctx.getType(rightExpr)
+        expr === rightExpr -> ctx.getType(leftExpr)
+        else -> null
+      }
+    }
+
+    val boolType = PyBuiltinCache.getInstance(expr).boolType ?: PyAnyType.any
+    val syntheticType = createSyntheticDunderProtocolType(expr, methodName, Ref.create(argumentType), boolType, ctx)
+
+    return when (operator) {
+      PyTokenTypes.IN_KEYWORD,
+      PyTokenTypes.NOT_KEYWORD,
+        -> syntheticType
+
+      else -> PyUnionType.union(syntheticType, PyAnyType.any)
+    }
+  }
+
+  // TODO: Either refactor this so that [PyStructuralType] is enhanced and used here. Or refactor its callers so that we do not need
+  //       to create a synthetic protocol types at all, but instead use an naive approach to compute an expected type.
+  private fun createSyntheticDunderProtocolType(
+    anchor: PsiElement,
+    methodName: String,
+    argumentType: Ref<PyType?>?,
+    returnType: PyType?,
+    ctx: TypeEvalContext,
+  ): PyType {
+    val argumentTypeText = renderTypeHint(argumentType?.get(), ctx)
+    val argumentText = if (argumentType == null) "" else """, other: $argumentTypeText, /"""
+    val returnTypeText = renderTypeHint(returnType, ctx)
+    val text = """
+    import typing
+    class _Supports$methodName(typing.Protocol):
+      def $methodName(self$argumentText) -> $returnTypeText: ...
+    """.trimIndent()
+
+    val codeFragment = PyExpressionCodeFragmentImpl(anchor.project, "dummy.py", text, false)
+    codeFragment.context = anchor.containingFile
+
+    val cls = PsiTreeUtil.findChildOfType(codeFragment, PyClass::class.java)
+              ?: error("Failed to create synthetic protocol class from text:\n$text")
+
+    return PyClassTypeImpl(cls, false)
+  }
+
+  private fun isSequenceLike(type: PyType?): Boolean {
+    if (type == null) return false
+    if (type is PyCollectionType) return true
+    return type.name == PyNames.TYPE_STR || type.name == PyNames.BYTES || type.name == PyNames.TYPE_BYTEARRAY
+  }
+
+  private fun renderTypeHint(type: PyType?, ctx: TypeEvalContext): String {
+    if (type == null) return "Any"
+    return PythonDocumentationProvider.getTypeHint(type, ctx)
+  }
+
+  private fun createIterableType(anchor: PsiElement, elementType: PyType?): PyClassTypeImpl? {
     return PyCollectionTypeImpl.createTypeByQName(anchor, "typing." + PyNames.ITERABLE, false, listOf(elementType))
   }
 }

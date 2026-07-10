@@ -1,5 +1,5 @@
 // "Create interface 'A'" "true"
-// K2_ERROR: Unresolved reference 'A'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 package p
 
 fun foo(): <caret>A = throw Throwable("")

@@ -63,7 +63,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-class PyPackageDescriptionController(val project: Project) : Disposable {
+internal class PyPackageDescriptionController(val project: Project) : Disposable {
   private val latestText: String
     get() = message("python.toolwindow.packages.latest.version.label")
 

@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.onboarding">
+<idea-plugin>
 
   <projectListeners>
     <listener topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"

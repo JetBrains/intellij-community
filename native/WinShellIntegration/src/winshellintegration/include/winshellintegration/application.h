@@ -62,15 +62,6 @@ namespace intellij::ui::win
         Application& operator=(Application&&) = delete;
 
     public: // modifiers
-        /// @brief Specifies a unique application-defined Application User Model ID (AppUserModelID) that
-        ///        identifies the current process to the taskbar.
-        ///
-        /// See docs for Application::UserModelId type for more info.
-        ///
-        /// @exception std::system_error in case of failed system call
-        /// @exception exceptions derived from std::exception in case of some internal errors
-        void setAppUserModelId(const UserModelId& appId) noexcept(false);
-
         /// @brief Notifies the system that an document has been accessed,
         ///        for the purposes of tracking those items used most recently and most frequently.
         ///
@@ -126,7 +117,6 @@ namespace intellij::ui::win
 
     public: // getters
         /// @brief Returns a unique application-defined Application User Model ID (AppUserModelID)
-        ///        previously set by Application::setAppUserModelId method.
         ///
         /// See docs for Application::UserModelId type for more info about AppUserModelIDs.
         ///

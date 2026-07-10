@@ -98,12 +98,13 @@ f:com.intellij.platform.icons.impl.intellij.rendering.SwingIconLayerRenderer
 - setImage(com.intellij.platform.icons.rendering.ImageResource):V
 - setLayout(com.intellij.platform.icons.impl.rendering.layers.LayerLayout):V
 f:com.intellij.platform.icons.impl.intellij.rendering.SwingLayerPaintingContext
-- <init>(java.awt.Component,java.awt.Graphics,I,I,java.lang.Integer,java.lang.Integer,java.lang.Integer,java.lang.Integer,com.intellij.platform.icons.filters.ColorFilter,com.intellij.platform.icons.rendering.ScalingContext):V
-- b:<init>(java.awt.Component,java.awt.Graphics,I,I,java.lang.Integer,java.lang.Integer,java.lang.Integer,java.lang.Integer,com.intellij.platform.icons.filters.ColorFilter,com.intellij.platform.icons.rendering.ScalingContext,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- createNestedLayer(java.lang.Integer,java.lang.Integer,java.lang.Integer,java.lang.Integer,F,com.intellij.platform.icons.filters.ColorFilter):com.intellij.platform.icons.rendering.LayerPaintingContext
+- <init>(java.awt.Component,java.awt.Graphics,I,I,java.lang.Integer,java.lang.Integer,java.lang.Integer,java.lang.Integer,com.intellij.platform.icons.filters.ColorFilter,F,com.intellij.platform.icons.rendering.ScalingContext):V
+- b:<init>(java.awt.Component,java.awt.Graphics,I,I,java.lang.Integer,java.lang.Integer,java.lang.Integer,java.lang.Integer,com.intellij.platform.icons.filters.ColorFilter,F,com.intellij.platform.icons.rendering.ScalingContext,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- createNestedLayer(java.lang.Integer,java.lang.Integer,java.lang.Integer,java.lang.Integer,F,F,com.intellij.platform.icons.filters.ColorFilter):com.intellij.platform.icons.rendering.LayerPaintingContext
 - drawCircle(com.intellij.platform.icons.design.Color,I,I,F,F,com.intellij.platform.icons.rendering.DrawMode):V
 - drawImage(com.intellij.platform.icons.rendering.ImageResource,I,I,java.lang.Integer,java.lang.Integer,I,I,java.lang.Integer,java.lang.Integer,F,com.intellij.platform.icons.filters.ColorFilter):V
 - drawRect(com.intellij.platform.icons.design.Color,I,I,I,I,F,com.intellij.platform.icons.rendering.DrawMode):V
+- getAlpha():java.lang.Float
 - f:getC():java.awt.Component
 - f:getG():java.awt.Graphics
 - getOffsetX():I

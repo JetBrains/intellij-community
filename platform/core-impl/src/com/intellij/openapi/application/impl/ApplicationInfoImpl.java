@@ -98,6 +98,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myDefaultDarkLaf;
   private String myDefaultClassicDarkLaf;
 
+  private boolean myUseSpecialAnniversarySplash = true;
+
   private static final Logger LOG = Logger.getInstance(ApplicationInfoImpl.class);
 
   // if application loader was not used
@@ -211,7 +213,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
             myDefaultClassicDarkLaf = laf.trim();
           }
         }
+        break;
 
+        case "splash": {
+          myUseSpecialAnniversarySplash = Boolean.parseBoolean(getAttributeValue(child, "use-special-anniversary-splash"));
+        }
         break;
       }
     }
@@ -400,7 +406,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   private @Nullable String specialAnniversarySplash(String imageUrl) {
-    if (getVersionName().equals("IntelliJ IDEA")) {
+    if (myUseSpecialAnniversarySplash && getVersionName().equals("IntelliJ IDEA")) {
       LocalDate startDate = LocalDate.of(2026, Month.JULY, 5);
       LocalDate endDate = LocalDate.of(2026, Month.JULY, 13);
       LocalDate nowDate = LocalDate.now();

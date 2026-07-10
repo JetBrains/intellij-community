@@ -21,7 +21,7 @@ final class InspectionProfilerDataHolder {
    */
   static void saveStats(@NotNull PsiFile psiFile, @NotNull List<? extends InspectionRunner.InspectionContext> contexts,
                         @NotNull HighlightInfoUpdaterImpl highlightInfoUpdater) {
-    if (!psiFile.getViewProvider().isPhysical()) {
+    if (!psiFile.getViewProvider().correspondsToRealFile()) {
       // ignore editor text fields/consoles etc
       return;
     }

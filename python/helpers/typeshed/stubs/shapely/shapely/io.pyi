@@ -1,12 +1,13 @@
 from _typeshed import Incomplete
 from typing import Literal, TypeAlias, overload
+from typing_extensions import Unpack
 
 import numpy as np
 from numpy.typing import NDArray
 
 from ._enum import ParamEnum
 from ._ragged_array import from_ragged_array as from_ragged_array, to_ragged_array as to_ragged_array
-from ._typing import ArrayLikeSeq, GeoArray, OptGeoArrayLikeSeq
+from ._typing import ArrayLikeSeq, GeoArray, OptGeoArrayLikeSeq, UFuncKwargs
 from .geometry.base import BaseGeometry
 from .lib import Geometry
 
@@ -30,7 +31,7 @@ def to_wkt(
     trim: bool = True,
     output_dimension: _OutputDimension | None = None,
     old_3d: bool = False,
-    **kwargs,
+    **kwargs: Unpack[UFuncKwargs],
 ) -> None: ...
 @overload
 def to_wkt(
@@ -39,7 +40,7 @@ def to_wkt(
     trim: bool = True,
     output_dimension: _OutputDimension | None = None,
     old_3d: bool = False,
-    **kwargs,
+    **kwargs: Unpack[UFuncKwargs],
 ) -> str: ...
 @overload
 def to_wkt(
@@ -48,7 +49,7 @@ def to_wkt(
     trim: bool = True,
     output_dimension: _OutputDimension | None = None,
     old_3d: bool = False,
-    **kwargs,
+    **kwargs: Unpack[UFuncKwargs],
 ) -> NDArray[np.str_]: ...
 
 @overload
@@ -59,7 +60,7 @@ def to_wkb(
     byte_order: int = -1,
     include_srid: bool = False,
     flavor: Literal["iso", "extended"] = "extended",
-    **kwargs,
+    **kwargs: Unpack[UFuncKwargs],
 ) -> None: ...
 @overload
 def to_wkb(
@@ -69,7 +70,7 @@ def to_wkb(
     byte_order: int = -1,
     include_srid: bool = False,
     flavor: Literal["iso", "extended"] = "extended",
-    **kwargs,
+    **kwargs: Unpack[UFuncKwargs],
 ) -> bytes: ...
 @overload
 def to_wkb(
@@ -79,7 +80,7 @@ def to_wkb(
     byte_order: int = -1,
     include_srid: bool = False,
     flavor: Literal["iso", "extended"] = "extended",
-    **kwargs,
+    **kwargs: Unpack[UFuncKwargs],
 ) -> str: ...
 @overload
 def to_wkb(
@@ -89,7 +90,7 @@ def to_wkb(
     byte_order: int = -1,
     include_srid: bool = False,
     flavor: Literal["iso", "extended"] = "extended",
-    **kwargs,
+    **kwargs: Unpack[UFuncKwargs],
 ) -> bytes | str: ...
 @overload
 def to_wkb(
@@ -99,7 +100,7 @@ def to_wkb(
     byte_order: int = -1,
     include_srid: bool = False,
     flavor: Literal["iso", "extended"] = "extended",
-    **kwargs,
+    **kwargs: Unpack[UFuncKwargs],
 ) -> NDArray[np.bytes_]: ...
 @overload
 def to_wkb(
@@ -109,7 +110,7 @@ def to_wkb(
     byte_order: int = -1,
     include_srid: bool = False,
     flavor: Literal["iso", "extended"] = "extended",
-    **kwargs,
+    **kwargs: Unpack[UFuncKwargs],
 ) -> NDArray[np.str_]: ...
 @overload
 def to_wkb(
@@ -119,43 +120,57 @@ def to_wkb(
     byte_order: int = -1,
     include_srid: bool = False,
     flavor: Literal["iso", "extended"] = "extended",
-    **kwargs,
+    **kwargs: Unpack[UFuncKwargs],
 ) -> NDArray[np.bytes_] | NDArray[np.str_]: ...
 
 @overload
-def to_geojson(geometry: None, indent: int | None = None, **kwargs) -> None: ...
+def to_geojson(geometry: None, indent: int | None = None, **kwargs: Unpack[UFuncKwargs]) -> None: ...
 @overload
-def to_geojson(geometry: Geometry, indent: int | None = None, **kwargs) -> str: ...
+def to_geojson(geometry: Geometry, indent: int | None = None, **kwargs: Unpack[UFuncKwargs]) -> str: ...
 @overload
-def to_geojson(geometry: OptGeoArrayLikeSeq, indent: int | None = None, **kwargs) -> NDArray[np.str_]: ...
+def to_geojson(geometry: OptGeoArrayLikeSeq, indent: int | None = None, **kwargs: Unpack[UFuncKwargs]) -> NDArray[np.str_]: ...
 
-@overload
-def from_wkt(geometry: None, on_invalid: Literal["raise", "warn", "ignore", "fix"] = "raise", **kwargs) -> None: ...
-@overload
-def from_wkt(geometry: str, on_invalid: Literal["raise", "warn", "ignore", "fix"] = "raise", **kwargs) -> BaseGeometry: ...  # type: ignore[overload-overlap]
 @overload
 def from_wkt(
-    geometry: ArrayLikeSeq[str | None], on_invalid: Literal["raise", "warn", "ignore", "fix"] = "raise", **kwargs
+    geometry: None, on_invalid: Literal["raise", "warn", "ignore", "fix"] = "raise", **kwargs: Unpack[UFuncKwargs]
+) -> None: ...
+@overload
+def from_wkt(  # type: ignore[overload-overlap]
+    geometry: str, on_invalid: Literal["raise", "warn", "ignore", "fix"] = "raise", **kwargs: Unpack[UFuncKwargs]
+) -> BaseGeometry: ...
+@overload
+def from_wkt(
+    geometry: ArrayLikeSeq[str | None],
+    on_invalid: Literal["raise", "warn", "ignore", "fix"] = "raise",
+    **kwargs: Unpack[UFuncKwargs],
 ) -> GeoArray: ...
 
 @overload
-def from_wkb(geometry: None, on_invalid: Literal["raise", "warn", "ignore", "fix"] = "raise", **kwargs) -> None: ...
+def from_wkb(
+    geometry: None, on_invalid: Literal["raise", "warn", "ignore", "fix"] = "raise", **kwargs: Unpack[UFuncKwargs]
+) -> None: ...
+@overload
+def from_wkb(  # type: ignore[overload-overlap]
+    geometry: str | bytes, on_invalid: Literal["raise", "warn", "ignore", "fix"] = "raise", **kwargs: Unpack[UFuncKwargs]
+) -> BaseGeometry: ...
 @overload
 def from_wkb(
-    geometry: str | bytes, on_invalid: Literal["raise", "warn", "ignore", "fix"] = "raise", **kwargs
-) -> BaseGeometry: ...  # type: ignore[overload-overlap]
-@overload
-def from_wkb(
-    geometry: ArrayLikeSeq[str | bytes | None], on_invalid: Literal["raise", "warn", "ignore", "fix"] = "raise", **kwargs
+    geometry: ArrayLikeSeq[str | bytes | None],
+    on_invalid: Literal["raise", "warn", "ignore", "fix"] = "raise",
+    **kwargs: Unpack[UFuncKwargs],
 ) -> GeoArray: ...
 
 @overload
-def from_geojson(geometry: None, on_invalid: Literal["raise", "warn", "ignore", "fix"] = "raise", **kwargs) -> None: ...
+def from_geojson(
+    geometry: None, on_invalid: Literal["raise", "warn", "ignore", "fix"] = "raise", **kwargs: Unpack[UFuncKwargs]
+) -> None: ...
+@overload
+def from_geojson(  # type: ignore[overload-overlap]
+    geometry: str | bytes, on_invalid: Literal["raise", "warn", "ignore", "fix"] = "raise", **kwargs: Unpack[UFuncKwargs]
+) -> BaseGeometry: ...
 @overload
 def from_geojson(
-    geometry: str | bytes, on_invalid: Literal["raise", "warn", "ignore", "fix"] = "raise", **kwargs
-) -> BaseGeometry: ...  # type: ignore[overload-overlap]
-@overload
-def from_geojson(
-    geometry: ArrayLikeSeq[str | bytes | None], on_invalid: Literal["raise", "warn", "ignore", "fix"] = "raise", **kwargs
+    geometry: ArrayLikeSeq[str | bytes | None],
+    on_invalid: Literal["raise", "warn", "ignore", "fix"] = "raise",
+    **kwargs: Unpack[UFuncKwargs],
 ) -> GeoArray: ...

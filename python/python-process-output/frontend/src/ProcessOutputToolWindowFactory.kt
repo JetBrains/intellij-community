@@ -5,7 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.python.common.sdk.SdkAwareToolWindowFactory
+import com.intellij.python.community.common.sdk.SdkAwareToolWindowFactory
 import com.intellij.python.processOutput.frontend.ProcessOutputBundle.message
 import com.intellij.python.processOutput.frontend.ui.components.ToolWindow
 import org.jetbrains.annotations.ApiStatus

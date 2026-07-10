@@ -1,6 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Components;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -14,6 +18,9 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.Nullable;
 
+@Subsystems.CodeInsight
+@Components.Parsing
+@Layers.Functional
 public class PyControlFlowBuilderTest extends LightMarkedTestCase {
 
   @Override

@@ -7,9 +7,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.extensions.toPsi
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -20,7 +22,9 @@ import com.jetbrains.python.packaging.common.toPythonPackages
 import com.jetbrains.python.packaging.setupPy.SetupPyHelpers
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.associatedModuleDir
+import com.jetbrains.python.sdk.pipenv.PipEnvParser
 import org.jetbrains.annotations.TestOnly
+import org.toml.lang.psi.TomlFile
 import java.nio.file.Path
 
 @TestOnly
@@ -38,6 +42,12 @@ internal class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPack
       .withPackageNames(packageNames)
       .withPackageDetails(packageDetails)
       .withRepoPackagesVersions(packageVersions)
+
+  // Non-null so the empty-dependency-file inspection can offer its "export dependencies" quick fix in tests.
+  override val dependenciesExporter: DependenciesExporter =
+    object : DependenciesExporter {
+      override fun export(file: PsiFile) {}
+    }
 
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> {
     return PyResult.success(emptyList())
@@ -90,32 +100,39 @@ internal class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPack
       val providerType = sdk.getUserData(REQUIREMENTS_PROVIDER_KEY) ?: return emptyList()
       sdk.associatedModuleDir ?: return emptyList()
 
-      return listOf(
-        when (providerType) {
-          RequirementsProviderType.REQUIREMENTS_TXT -> Path.of("requirements.txt")
-          RequirementsProviderType.SETUP_PY -> Path.of("setup.py")
-          RequirementsProviderType.ENVIRONMENT_YML -> Path.of("environment.yml")
-        }
-      )
+      return listOf(Path.of(providerType.filename))
     }
 
   override suspend fun listDeclaredPackages(): PyResult<List<PythonPackage>>? {
     val providerType = sdk.getUserData(REQUIREMENTS_PROVIDER_KEY) ?: return null
     val moduleDir = sdk.associatedModuleDir ?: return null
+    val dependenciesFile = moduleDir.findChild(providerType.filename) ?: return null
 
     return when (providerType) {
       RequirementsProviderType.REQUIREMENTS_TXT -> {
-        val requirementsFile = moduleDir.findChild("requirements.txt") ?: return null
-        extractFromRequirementsTxt(requirementsFile)
+        extractFromRequirementsTxt(dependenciesFile)
       }
       RequirementsProviderType.SETUP_PY -> {
-        val setupPyFile = moduleDir.findChild("setup.py") ?: return null
-        extractFromSetupPy(setupPyFile)
+        extractFromSetupPy(dependenciesFile)
       }
       RequirementsProviderType.ENVIRONMENT_YML -> {
-        val environmentYmlFile = moduleDir.findChild("environment.yml") ?: return null
-        extractFromEnvironmentYml(environmentYmlFile)
+        extractFromEnvironmentYml(dependenciesFile)
       }
+      RequirementsProviderType.PYPROJECT_TOML -> {
+        // The dependencies inspection parses pyproject.toml's [project].dependencies via its own
+        // injection-aware provider, so the manager only needs to expose the file as tracked here.
+        PyResult.success(emptyList())
+      }
+      RequirementsProviderType.PIPFILE -> {
+        extractFromPipfile(dependenciesFile)
+      }
+    }
+  }
+
+  private suspend fun extractFromPipfile(file: VirtualFile): PyResult<List<PythonPackage>> {
+    return readAction {
+      val pipfile = file.toPsi(project) as TomlFile
+      PyResult.success(PipEnvParser.getPipFileDependenciesMap(pipfile).keys.toList().map { it.toPythonPackage() })
     }
   }
 

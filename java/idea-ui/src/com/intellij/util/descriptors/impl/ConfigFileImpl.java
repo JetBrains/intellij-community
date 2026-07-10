@@ -23,7 +23,8 @@ import java.lang.ref.SoftReference;
 
 public final class ConfigFileImpl extends SimpleModificationTracker implements ConfigFile {
   private @NotNull ConfigFileInfo myInfo;
-  private final VirtualFilePointer myFilePointer;
+  private final String myUrl;
+  private volatile VirtualFilePointer myFilePointer;
   private volatile Reference<PsiFile> myPsiFile;
   private final ConfigFileContainerImpl myContainer;
   private final Project myProject;
@@ -31,16 +32,27 @@ public final class ConfigFileImpl extends SimpleModificationTracker implements C
   public ConfigFileImpl(final @NotNull ConfigFileContainerImpl container, final @NotNull ConfigFileInfo configuration) {
     myContainer = container;
     myInfo = configuration;
-    final VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
-    myFilePointer = pointerManager.create(configuration.getUrl(), this, new VirtualFilePointerListener() {
-      @Override
-      public void validityChanged(final VirtualFilePointer @NotNull [] pointers) {
-        myPsiFile = null;
-        VfsThreadingUtil.runActionOnEdtRegardlessOfCurrentThread(ConfigFileImpl.this::onChange);
-      }
-    });
-    onChange();
+    myUrl = configuration.getUrl();
     myProject = myContainer.getProject();
+    onChange();
+  }
+
+  // Created lazily: building a pointer descends the VFS, which is a slow operation forbidden on EDT.
+  // Facets (and thus their descriptor containers) are constructed on EDT (IDEA-382085), so we defer
+  // pointer creation until the file is actually queried. The validity listener becomes active then.
+  private synchronized @NotNull VirtualFilePointer getFilePointer() {
+    VirtualFilePointer pointer = myFilePointer;
+    if (pointer == null) {
+      pointer = VirtualFilePointerManager.getInstance().create(myUrl, this, new VirtualFilePointerListener() {
+        @Override
+        public void validityChanged(final VirtualFilePointer @NotNull [] pointers) {
+          myPsiFile = null;
+          VfsThreadingUtil.runActionOnEdtRegardlessOfCurrentThread(ConfigFileImpl.this::onChange);
+        }
+      });
+      myFilePointer = pointer;
+    }
+    return pointer;
   }
 
   private void onChange() {
@@ -50,7 +62,8 @@ public final class ConfigFileImpl extends SimpleModificationTracker implements C
 
   @Override
   public String getUrl() {
-    return myFilePointer.getUrl();
+    VirtualFilePointer pointer = myFilePointer;
+    return pointer != null ? pointer.getUrl() : myUrl;
   }
 
   public void setInfo(final @NotNull ConfigFileInfo info) {
@@ -59,7 +72,8 @@ public final class ConfigFileImpl extends SimpleModificationTracker implements C
 
   @Override
   public @Nullable VirtualFile getVirtualFile() {
-    return myFilePointer.isValid() ? myFilePointer.getFile() : null;
+    VirtualFilePointer pointer = getFilePointer();
+    return pointer.isValid() ? pointer.getFile() : null;
   }
 
   @Override

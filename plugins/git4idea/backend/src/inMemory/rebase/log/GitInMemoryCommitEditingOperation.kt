@@ -11,6 +11,9 @@ import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitUtil
 import git4idea.commands.Git
+import git4idea.commands.GitCommand
+import git4idea.commands.GitHandlerInputProcessorUtil
+import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
 import git4idea.inMemory.GitObjectRepository
 import git4idea.inMemory.findCommitsRange
@@ -21,6 +24,8 @@ import git4idea.rebase.interactive.getRebaseUpstreamFor
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.reset.GitResetMode
 import git4idea.util.GitPreservingProcess
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
@@ -55,6 +60,11 @@ internal abstract class GitInMemoryCommitEditingOperation(
       }
       else {
         updateRefToNewHead(result.newHead)
+      }
+
+      if (result.rewrittenList.isNotEmpty()) {
+        copyNotesForRewrite(result.rewrittenList)
+        runPostRewriteHook(result.rewrittenList)
       }
 
       objectRepo.repository.update()
@@ -106,6 +116,36 @@ internal abstract class GitInMemoryCommitEditingOperation(
     )
   }
 
+  private suspend fun copyNotesForRewrite(rewrittenList: List<Pair<Oid, Oid>>) {
+    val lines = rewrittenList.toLines()
+    val handler = GitLineHandler(objectRepo.repository.project, objectRepo.repository.root, GitCommand.NOTES).apply {
+      setSilent(true)
+      addParameters("copy", "--for-rewrite=rebase")
+      setInputProcessor(GitHandlerInputProcessorUtil.writeLines(lines, charset))
+    }
+    val result = withContext(Dispatchers.IO) {
+      Git.getInstance().runCommand(handler)
+    }
+
+    if (!result.success()) {
+      LOG.warn("git notes copy --for-rewrite=rebase exited with errors: ${result.errorOutputAsJoinedString}")
+    }
+  }
+
+  private suspend fun runPostRewriteHook(rewrittenList: List<Pair<Oid, Oid>>) {
+    val lines = rewrittenList.toLines()
+    val result = withContext(Dispatchers.IO) {
+      Git.getInstance().runHook(objectRepo.repository, "post-rewrite", listOf("rebase"), lines)
+    }
+
+    if (!result.success()) {
+      LOG.warn("post-rewrite hook exited with errors: ${result.errorOutputAsJoinedString}")
+    }
+  }
+
+  private fun List<Pair<Oid, Oid>>.toLines(): List<String> =
+    this.map { (old, new) -> "${old.hex()} ${new.hex()}" }
+
   protected fun assertCurrentRevMatchesInitialHead(performUpdate: Boolean = true) {
     if (performUpdate) {
       objectRepo.repository.update()
@@ -116,11 +156,16 @@ internal abstract class GitInMemoryCommitEditingOperation(
     }
   }
 
+  /**
+   * @property rewrittenList A mapping from the original commit
+   * to the corresponding rewritten commit. Serves as input to `post-rewrite` git hook
+   */
   protected data class CommitEditingResult(
     val newHead: Oid,
     val requiresWorkingTreeUpdate: Boolean,
     val commitToFocus: Oid? = null,
     val commitToFocusOnUndo: Oid? = null,
+    val rewrittenList: List<Pair<Oid, Oid>> = emptyList()
   )
 
   companion object {

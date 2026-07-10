@@ -1,22 +1,18 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.project.stateStore
+import com.intellij.util.lang.JavaVersion
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.nio.file.Path
 import java.util.Properties
 
-private val LOG = logger<SdkmanrcConfigurationProvider>()
-
 public data class SdkmanReleaseData(val target: String,
                                     val version: String,
                                     val flavour: String? = null,
-                                    val vendor: String? = null) {
+                                    val vendor: String? = null) : JdkReleaseData {
   public companion object {
     private val regex: Regex = Regex("(\\d+(?:\\.\\d+)*)(?:\\.([^-]+))?-?(\\S*)?")
 
@@ -31,36 +27,28 @@ public data class SdkmanReleaseData(val target: String,
     }
   }
 
-  public fun matchVersionString(versionString: @NlsSafe String): Boolean {
-    LOG.info("Matching '$versionString'")
-    if (version !in versionString) return false
+  override val javaVersion: JavaVersion? = JavaVersion.tryParse(version)
 
-    val variant = when {
-      vendor == "adpt" && flavour == "hs" -> JdkVersionDetector.Variant.AdoptOpenJdk_HS
-      vendor == "adpt" && flavour == "j9" -> JdkVersionDetector.Variant.AdoptOpenJdk_J9
-      vendor == "albba" -> JdkVersionDetector.Variant.Dragonwell
-      vendor == "amzn" -> JdkVersionDetector.Variant.Corretto
-      vendor == "bsg" -> JdkVersionDetector.Variant.BiSheng
-      vendor == "graal" -> JdkVersionDetector.Variant.GraalVM
-      vendor == "graalce" -> JdkVersionDetector.Variant.GraalVMCE
-      vendor == "jbr" -> JdkVersionDetector.Variant.JBR
-      vendor == "kona" -> JdkVersionDetector.Variant.Kona
-      vendor == "librca" -> JdkVersionDetector.Variant.Liberica
-      vendor == "ms" -> JdkVersionDetector.Variant.Microsoft
-      vendor == "oracle" -> JdkVersionDetector.Variant.Oracle
-      vendor == "open" -> JdkVersionDetector.Variant.Oracle
-      vendor == "sapmchn" -> JdkVersionDetector.Variant.SapMachine
-      vendor == "sem" -> JdkVersionDetector.Variant.Semeru
-      vendor == "tem" -> JdkVersionDetector.Variant.Temurin
-      vendor == "zulu" -> JdkVersionDetector.Variant.Zulu
+  override val variant: JdkVersionDetector.Variant = when (vendor) {
+      "adpt" if flavour == "hs" -> JdkVersionDetector.Variant.AdoptOpenJdk_HS
+      "adpt" if flavour == "j9" -> JdkVersionDetector.Variant.AdoptOpenJdk_J9
+      "albba" -> JdkVersionDetector.Variant.Dragonwell
+      "amzn" -> JdkVersionDetector.Variant.Corretto
+      "bsg" -> JdkVersionDetector.Variant.BiSheng
+      "graal" -> JdkVersionDetector.Variant.GraalVM
+      "graalce" -> JdkVersionDetector.Variant.GraalVMCE
+      "jbr" -> JdkVersionDetector.Variant.JBR
+      "kona" -> JdkVersionDetector.Variant.Kona
+      "librca" -> JdkVersionDetector.Variant.Liberica
+      "ms" -> JdkVersionDetector.Variant.Microsoft
+      "oracle" -> JdkVersionDetector.Variant.Oracle
+      "open" -> JdkVersionDetector.Variant.Oracle
+      "sapmchn" -> JdkVersionDetector.Variant.SapMachine
+      "sem" -> JdkVersionDetector.Variant.Semeru
+      "tem" -> JdkVersionDetector.Variant.Temurin
+      "zulu" -> JdkVersionDetector.Variant.Zulu
       else -> JdkVersionDetector.Variant.Unknown
-    }
-
-    // Check vendor
-    val variantName = variant.displayName
-    return versionString.contains(variantName)
   }
-
 }
 
 private const val SDKMANRC = ".sdkmanrc"
@@ -88,16 +76,6 @@ public class SdkmanrcConfigurationProvider: ExternalJavaConfigurationProvider<Sd
       .firstOrNull { it.groupValues.getOrNull(1)?.contains(releaseData.target) == true }
       ?.range ?: return null
     return TextRange(range.first, range.last)
-  }
-
-  override fun matchAgainstSdk(releaseData: SdkmanReleaseData, sdk: Sdk): Boolean {
-    val versionString = sdk.versionString ?: return false
-    return releaseData.matchVersionString(versionString)
-  }
-
-  override fun matchAgainstPath(releaseData: SdkmanReleaseData, path: String): Boolean {
-    val info = SdkVersionUtil.getJdkVersionInfo(path) ?: return false
-    return releaseData.matchVersionString(info.displayVersionString())
   }
 
   override fun getDownloadCommandFor(releaseData: SdkmanReleaseData): String {

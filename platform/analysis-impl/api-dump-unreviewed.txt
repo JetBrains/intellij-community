@@ -467,7 +467,6 @@ com.intellij.codeInsight.daemon.impl.HighlightingSession
 - a:getPsiFile():com.intellij.psi.PsiFile
 - a:getVisibleRange():com.intellij.openapi.util.ProperTextRange
 - a:isCanceled():Z
-- a:isEssentialHighlightingOnly():Z
 f:com.intellij.codeInsight.daemon.impl.IdentifierUtil
 - <init>():V
 - s:getNameIdentifier(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement

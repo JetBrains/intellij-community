@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.actions;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
+
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -22,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@Subsystems.IDE
+@Layers.Functional
 public class PyMarkAsNamespacePackageActionTest extends PyTestCase {
   private static final String PLAIN_DIR = "plainDirectory";
   private static final String NAMESPACE_PACK_DIR = "namespacePackage";

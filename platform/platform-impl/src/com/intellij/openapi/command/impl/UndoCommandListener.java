@@ -12,9 +12,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CancellationException;
 
-
 final class UndoCommandListener implements SeparatedCommandListener {
-  private final @NotNull ComponentManager componentManager;
+  private final @NotNull ComponentManager appOrProject;
   private final @NotNull UndoManagerImpl undoManager;
 
   @SuppressWarnings("unused")
@@ -27,11 +26,12 @@ final class UndoCommandListener implements SeparatedCommandListener {
     this(ApplicationManager.getApplication(), UndoManager.getGlobalInstance());
   }
 
+  /// @noinspection UnsafeOpenServiceCast
   private UndoCommandListener(
-    @NotNull ComponentManager componentManager,
+    @NotNull ComponentManager appOrProject,
     @NotNull UndoManager undoManager
   ) {
-    this.componentManager = componentManager;
+    this.appOrProject = appOrProject;
     this.undoManager = (UndoManagerImpl)undoManager;
   }
 
@@ -58,16 +58,16 @@ final class UndoCommandListener implements SeparatedCommandListener {
 
   private @NotNull CmdEvent eventWithProject(@NotNull CmdEvent cmdEvent) {
     if (cmdEvent.isTransparent()) {
-      var project = (componentManager instanceof Project) ? (Project) componentManager : null;
+      var project = (appOrProject instanceof Project project0) ? project0 : null;
       return ((CmdEventTransparent) cmdEvent).withProject(project);
     }
     return cmdEvent;
   }
 
   private void safePerform(@NotNull Runnable runnable) {
-    if (componentManager.isDisposed()) {
+    if (appOrProject.isDisposed()) {
       throw new UndoIllegalStateException(
-        "Cannot perform a command, corresponding componentManager is disposed " + componentManager
+        "Cannot perform a command, corresponding componentManager is disposed " + appOrProject
       );
     }
     try {

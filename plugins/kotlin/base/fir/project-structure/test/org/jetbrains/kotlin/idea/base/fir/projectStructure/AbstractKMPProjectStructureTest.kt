@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.projectStructure
 
+import org.jetbrains.kotlin.idea.artifacts.KotlinNativeVersion
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinMultiPlatformProjectDescriptor
@@ -17,10 +18,14 @@ abstract class AbstractKMPProjectStructureTest : KotlinLightCodeInsightFixtureTe
         val allModules = project.getAllKaModules()
 
         val txt = KaModuleStructureTxtRenderer.render(allModules)
-        KotlinTestUtils.assertEqualsToFile(testDataPath / "kaModules.txt", txt)
+        KotlinTestUtils.assertEqualsToFile(testDataPath / "kaModules.txt", sanitizeText(txt))
 
         val mermaid = KaModuleStructureMermaidRenderer.render(allModules)
-        KotlinTestUtils.assertEqualsToFile(testDataPath / "kaModules.mmd", mermaid)
+        KotlinTestUtils.assertEqualsToFile(testDataPath / "kaModules.mmd", sanitizeText(mermaid))
+    }
+
+    private fun sanitizeText(text: String): String {
+        return text.replace(KotlinNativeVersion.resolvedKotlinGradlePluginVersion, "<kgp_version>")
     }
 
     override fun tearDown() {

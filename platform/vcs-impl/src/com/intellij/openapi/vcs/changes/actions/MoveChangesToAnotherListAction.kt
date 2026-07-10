@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.idea.ActionsBundle
@@ -77,21 +77,34 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
   }
 
   companion object {
+    internal fun moveSelectedChangesTo(project: Project, virtualFiles: Array<VirtualFile>?, targetList: LocalChangeList) {
+      with(MoveChangesHandler(project)) {
+        addChangesForFiles(virtualFiles)
+        if (!isEmpty)
+          moveTo(project, targetList, changes, unversionedFiles)
+      }
+    }
+
     @JvmStatic
     fun askAndMove(project: Project, changes: Collection<Change>, unversionedFiles: List<VirtualFile>): Boolean {
       if (changes.isEmpty() && unversionedFiles.isEmpty()) return false
 
-      val targetList = askTargetList(project, changes)
-      if (targetList != null) {
-        val changeListManager = ChangeListManagerEx.getInstanceEx(project)
+      val targetList = askTargetList(project, changes) ?: return false
+      moveTo(project, targetList, changes, unversionedFiles)
+      return true
+    }
 
-        changeListManager.moveChangesTo(targetList, *changes.toTypedArray())
-        if (unversionedFiles.isNotEmpty()) {
-          ScheduleForAdditionAction.Manager.addUnversionedFilesToVcsInBackground(project, targetList, unversionedFiles)
-        }
-        return true
+    private fun moveTo(
+      project: Project,
+      targetList: LocalChangeList,
+      changes: Collection<Change>,
+      unversionedFiles: List<VirtualFile>,
+    ) {
+      val changeListManager = ChangeListManagerEx.getInstanceEx(project)
+      changeListManager.moveChangesTo(targetList, *changes.toTypedArray())
+      if (unversionedFiles.isNotEmpty()) {
+        ScheduleForAdditionAction.Manager.addUnversionedFilesToVcsInBackground(project, targetList, unversionedFiles)
       }
-      return false
     }
 
     private fun guessPreferredList(lists: Collection<LocalChangeList>): ChangeList? {
@@ -160,9 +173,12 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
 private class MoveChangesHandler(val project: Project) {
   private val changeListManager = ChangeListManager.getInstance(project)
 
-  val unversionedFiles = mutableListOf<VirtualFile>()
-  val changedFiles = mutableListOf<VirtualFile>()
-  val changes = mutableListOf<Change>()
+  val unversionedFiles: List<VirtualFile>
+    field = mutableListOf()
+  val changedFiles: List<VirtualFile>
+    field = mutableListOf()
+  val changes: List<Change>
+    field = mutableListOf()
 
   val isEmpty get() = changes.isEmpty() && unversionedFiles.isEmpty()
 

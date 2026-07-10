@@ -404,8 +404,7 @@ class PluginDownloader private constructor(
       if (!canUnload) {
         return false
       }
-      val options = DynamicPlugins.UnloadPluginOptions().withDisable(false).withUpdate(true).withWaitForClassloaderUnload(true)
-      return DynamicPlugins.unloadPlugin(plugin, options)
+      return DynamicPlugins.unloadPlugin(plugin)
     }
 
     @JvmStatic

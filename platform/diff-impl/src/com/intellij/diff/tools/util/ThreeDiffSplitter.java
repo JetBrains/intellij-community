@@ -23,6 +23,7 @@ import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.diff.tools.util.DiffSplitter.paintTitleSeparator;
 import static com.intellij.diff.tools.util.DiffSplitter.redispatchWheelEventsToDivider;
 
 public class ThreeDiffSplitter extends JPanel {
@@ -159,6 +160,7 @@ public class ThreeDiffSplitter extends JPanel {
     protected void paintComponent(Graphics g) {
       super.paintComponent(g);
       if (myPainter != null) myPainter.paint(g, this);
+      paintTitleSeparator(g, this, myContents);
     }
 
     @RequiresEdt

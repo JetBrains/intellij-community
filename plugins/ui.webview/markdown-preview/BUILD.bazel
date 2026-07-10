@@ -1,0 +1,122 @@
+load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//plugins/ui.webview:webview_plugin_zip.bzl", "webview_plugin_zip")
+
+native_binary(
+    name = "build_web_assets",
+    src = "//plugins/ui.webview:build-web-assets",
+    env = {
+        "WEBVIEW_SRC_DIR": "community/plugins/ui.webview/markdown-preview/webview-src",
+    },
+    tags = [
+        "local",
+        "manual",
+    ],
+)
+
+alias(
+    name = "webview-preview",
+    actual = ":markdown-webview-preview",
+    visibility = ["//visibility:public"],
+)
+
+webview_plugin_zip(
+    name = "markdown_webview_preview_plugin_zip",
+    out = "markdown-webview-preview.zip",
+    files = {
+        ":markdown-webview-preview.jar": "lib/org.intellij.plugins.markdown.webview.preview.jar",
+    },
+    root_dir = "markdown-webview-preview",
+    visibility = ["//visibility:public"],
+)
+
+### auto-generated section `build intellij.markdown.webview.preview` start
+
+jvm_library(
+    name = "markdown-webview-preview",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.markdown.webview.preview",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/execution",
+        "//platform/platform-api:ide",
+        "//platform/platform-impl:ide-impl",
+        "//platform/ide-core",
+        "//platform/indexing-api:indexing",
+        "//platform/project/shared:project",
+        "//platform/projectModel-api:projectModel",
+        "//plugins/ui.webview",
+        "//platform/util",
+        "//platform/util/coroutines",
+        "//platform/util:util-ui",
+        "//plugins/markdown/core:markdown",
+    ],
+)
+
+jvm_library(
+    name = "markdown-webview-preview_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.markdown.webview.preview",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":markdown-webview-preview",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
+        "//platform/project/shared:project_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//plugins/ui.webview:ui.webview_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//plugins/markdown/core:markdown_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+    ],
+)
+### auto-generated section `build intellij.markdown.webview.preview` end
+
+### auto-generated section `iml intellij.markdown.webview.preview` start
+exports_files(
+    [
+        "intellij.markdown.webview.preview.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.markdown.webview.preview` end

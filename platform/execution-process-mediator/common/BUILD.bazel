@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "execution-process-mediator-common-tests_test",
+    timeout = "moderate",
+    jvm_flags = ["-ea"],
+    tags = ["community-aggregator"],
+    runtime_deps = [":execution-process-mediator-common-tests_test_lib"],
+)
+### skip generation section `test intellij.execution.process.mediator.common.tests`
+
 ### auto-generated section `build intellij.execution.process.mediator.common` start
 
 jvm_library(
@@ -124,11 +133,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.execution.process.mediator.common.tests` end
-
-### auto-generated section `test intellij.execution.process.mediator.common.tests` start
-
-jps_test(
-    name = "execution-process-mediator-common-tests_test",
-    runtime_deps = [":execution-process-mediator-common-tests_test_lib"],
-)
-### auto-generated section `test intellij.execution.process.mediator.common.tests` end

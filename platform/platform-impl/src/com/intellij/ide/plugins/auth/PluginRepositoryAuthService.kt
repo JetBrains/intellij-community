@@ -2,9 +2,11 @@
 package com.intellij.ide.plugins.auth
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.ApiStatus
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Collects custom auth headers from EPs and optionally provides a HttpRequests.ConnectionTuner with injected headers
@@ -23,13 +25,7 @@ class PluginRepositoryAuthService {
 
   fun getAllCustomHeaders(url: String): Map<String, String> {
     val contributors = PluginRepositoryAuthProvider.EP_NAME.extensionsIfPointIsRegistered.filter {
-      try {
-        it.canHandle(url)
-      }
-      catch (e: Exception) {
-        thisLogger().warn("Error while checking if a provider can handle URL($url), assuming false", e)
-        false
-      }
+      runProviderOperation(url, "checking if a provider can handle URL($url)", false) { it.canHandle(url) }
     }
 
     if (contributors.isEmpty()) return emptyMap()
@@ -38,12 +34,24 @@ class PluginRepositoryAuthService {
       thisLogger().warn("Multiple contributors tried to inject headers in to url($url): ${contributors.joinToString { it.javaClass.simpleName }}")
     }
 
-    return try {
+    return runProviderOperation(url, "getting custom headers from provider for URL($url)", emptyMap()) {
       contributors.first().getAuthHeaders(url)
     }
-    catch (e: Exception) {
-      thisLogger().warn("Failed to get custom headers from provider for URL($url), returning emptyMap()", e)
-      emptyMap()
+  }
+
+  private inline fun <T> runProviderOperation(url: String, operationDescription: String, fallback: T, operation: () -> T): T {
+    try {
+      return operation()
+    }
+    catch (e: Throwable) {
+      if (e is ControlFlowException || e is CancellationException) {
+        throw e
+      }
+      if (e is Exception || e is LinkageError) {
+        thisLogger().warn("Failed while $operationDescription, assuming no custom headers for URL($url)", e)
+        return fallback
+      }
+      throw e
     }
   }
 }

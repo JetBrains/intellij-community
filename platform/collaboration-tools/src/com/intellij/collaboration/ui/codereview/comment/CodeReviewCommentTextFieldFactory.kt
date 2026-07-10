@@ -5,17 +5,15 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
-import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory.ScrollOnChangePolicy
 import com.intellij.collaboration.ui.util.bindEnabledIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.collaboration.util.exceptionOrNull
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.application.UiWithModelAccessImmediate
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.ui.JBColor
@@ -25,17 +23,17 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
-import java.awt.Rectangle
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
 import javax.swing.Action
 import javax.swing.JComponent
 
@@ -60,10 +58,21 @@ object CodeReviewCommentTextFieldFactory {
       component.background = fieldBackground
       asSafely<EditorEx>()?.backgroundColor = fieldBackground
     }
-    cs.launchNow {
+    // editor release sometimes needs model access and has to happen even when cs was canceled
+    cs.launch(start = CoroutineStart.ATOMIC, context = Dispatchers.UiWithModelAccessImmediate) {
       try {
-        editor.document.bindTextIn(this, vm.text)
-        awaitCancellation()
+        coroutineScope {
+          launch {
+            editor.document.bindTextIn(this, vm.text)
+            awaitCancellation()
+          }
+          launch {
+            editor.scrollToCursorPositionOnTyping()
+          }
+          launch {
+            editor.revalidateComponentOnTyping()
+          }
+        }
       }
       finally {
         withContext(NonCancellable) {
@@ -71,9 +80,7 @@ object CodeReviewCommentTextFieldFactory {
         }
       }
     }
-    // also forces component revalidation on newline
-    // if this is removed, a separate document listener is required
-    editor.installScrollIfChangedController(ScrollOnChangePolicy.ScrollToField)
+
     val textLength = editor.document.textLength
     if (textLength > 0) {
       editor.selectionModel.setSelection(0, textLength)
@@ -130,40 +137,6 @@ object CodeReviewCommentTextFieldFactory {
     }
 
     return CommentInputActionsComponentFactory.attachActions(cs, inputField, actions)
-  }
-
-  private fun Editor.installScrollIfChangedController(policy: ScrollOnChangePolicy) {
-    if (policy == ScrollOnChangePolicy.DontScroll) return
-
-    fun scroll() {
-      val editor = this
-      val parent = editor.component.parent as? JComponent ?: return
-      when (policy) {
-        is ScrollOnChangePolicy.ScrollToComponent -> {
-          val componentToScroll = policy.component
-          parent.scrollRectToVisible(Rectangle(0, 0, componentToScroll.width, componentToScroll.height))
-        }
-        ScrollOnChangePolicy.ScrollToField -> {
-          parent.scrollRectToVisible(Rectangle(0, 0, parent.width, parent.height))
-        }
-        else -> Unit
-      }
-    }
-
-    document.addDocumentListener(object : DocumentListener {
-      override fun documentChanged(event: DocumentEvent) {
-        scroll()
-      }
-    })
-
-    component.addComponentListener(object : ComponentAdapter() {
-      override fun componentResized(e: ComponentEvent?) {
-        val parent = e?.component?.parent ?: return
-        if (UIUtil.isFocusAncestor(parent)) {
-          scroll()
-        }
-      }
-    })
   }
 
   private fun <T, R> StateFlow<T>.mapToValueModel(cs: CoroutineScope, mapper: (T) -> R): SingleValueModel<R> =

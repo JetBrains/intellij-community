@@ -24,6 +24,7 @@
     <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.usageView.impl"/>
+    <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
@@ -45,7 +46,7 @@
 
     <daemon.changeLocalityDetector implementation="com.intellij.ide.todo.MultiLineTodoLocalityDetector"/>
     <projectService serviceImplementation="com.intellij.ide.todo.nodes.TodoTreeHelper" open="true"/>
-    <projectService serviceImplementation="com.intellij.ide.todo.TodoView" open="true" client="all"/>
+    <projectService serviceImplementation="com.intellij.ide.todo.TodoView" open="true"/>
 
     <projectService serviceInterface="com.intellij.psi.impl.cache.TodoCacheManager" open="true"
                     serviceImplementation="com.intellij.psi.impl.cache.impl.EmptyTodoCacheManager"/>

@@ -155,7 +155,9 @@ internal class RequirementDocumentationTarget(
     append("<html><body style=\"margin:0;padding:0\">")
 
     val summary = metadata?.summary?.takeIf { it.isNotBlank() }
-    val projectUrls = metadata?.projectUrls?.entries?.toList().orEmpty()
+    // safeProjectUrls, not the raw map: unsafe-scheme URLs (e.g. javascript:) must never become a
+    // clickable link that RequirementDocumentationLinkHandler would hand to HTMLEditorProvider (PY-90871).
+    val projectUrls = metadata?.safeProjectUrls?.entries?.toList().orEmpty()
     val link = packageLink(installed, repository, localPackagePath)
 
     if (summary != null) {

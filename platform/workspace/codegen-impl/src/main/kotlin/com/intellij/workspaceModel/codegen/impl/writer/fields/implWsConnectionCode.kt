@@ -1,5 +1,6 @@
 package com.intellij.workspaceModel.codegen.impl.writer.fields
 
+import com.intellij.workspaceModel.codegen.deft.meta.ExtProperty
 import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
@@ -7,17 +8,18 @@ import com.intellij.workspaceModel.codegen.impl.writer.extensions.getRefType
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaFullName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.refsFields
 
-val ObjProperty<*, *>.refsConnectionId: String
-  get() = if (name == "parent") {
-    val originalField = receiver.refsFields.first { it.valueType.javaType == valueType.javaType }
+fun getRefsConnectionId(objProperty: ObjProperty<*, *>): String {
+  return if ((objProperty is ExtProperty<*, *>) && objProperty.name == "parent") {
+    val originalField = objProperty.receiver.refsFields.first { it.valueType.javaType == objProperty.valueType.javaType }
     "${originalField.name.uppercase()}_CONNECTION_ID"
   }
-  else "${name.uppercase()}_CONNECTION_ID"
+  else "${objProperty.name.uppercase()}_CONNECTION_ID"
+}
 
 val ObjProperty<*, *>.refsConnectionIdCode: String
   get() = buildString {
     val ref = valueType.getRefType()
-    append("internal val $refsConnectionId: ${ConnectionId} = ConnectionId.create(")
+    append("internal val ${getRefsConnectionId(this@refsConnectionIdCode)}: ${ConnectionId} = ConnectionId.create(")
     if (ref.child) {
       append("${receiver.javaFullName}::class.java, ${ref.javaType}::class.java,")
     }

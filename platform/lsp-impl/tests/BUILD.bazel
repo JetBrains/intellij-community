@@ -14,6 +14,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//libraries/lsp4j",
+        "//libraries/lsp4j/jsonrpc",
         "//platform/testRunner",
         "//libraries/misc/plugin",
     ],
@@ -42,6 +44,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":tests",
+        "//libraries/lsp4j:lsp4j_test_lib",
+        "//libraries/lsp4j/jsonrpc:jsonrpc_test_lib",
         "//platform/testRunner:testRunner_test_lib",
         "//libraries/misc/plugin:plugin_test_lib",
         "//platform/ide-core:ide-core_test_lib",
@@ -50,8 +54,10 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:eclipse-lsp4j",
-        "@lib//:eclipse-lsp4j-jsonrpc",
+        "//libraries/lsp4j",
+        "//libraries/lsp4j:lsp4j_test_lib",
+        "//libraries/lsp4j/jsonrpc",
+        "//libraries/lsp4j/jsonrpc:jsonrpc_test_lib",
         "//platform/lsp",
         "//platform/lsp:lsp_test_lib",
         "//platform/lsp/testFramework",
@@ -88,6 +94,10 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//xml/xml-psi-impl:psi-impl",
         "//xml/xml-psi-impl:psi-impl_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.lsp.impl.tests` end

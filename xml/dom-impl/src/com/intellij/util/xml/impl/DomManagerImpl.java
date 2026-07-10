@@ -5,7 +5,6 @@ import com.intellij.ide.highlighter.DomSupportEnabled;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -132,7 +131,7 @@ public final class DomManagerImpl extends DomManager {
       }
     }, parent);
 
-    VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
+    VirtualFileManager.getInstance().addAsyncFileListenerBackgroundable(new AsyncFileListener() {
       @Override
       public @Nullable ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
         List<DomEvent> domEvents = new ArrayList<>();
@@ -176,11 +175,13 @@ public final class DomManagerImpl extends DomManager {
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        if (!file.isDirectory() && FileTypeRegistry.getInstance().isFileOfType(file, XmlFileType.INSTANCE)) {
+        if (!file.isDirectory()) {
           PsiFile psiFile = fileManager.getCachedPsiFile(file);
-          DomFileElementImpl<?> domElement = psiFile instanceof XmlFile ? getCachedFileElement((XmlFile)psiFile) : null;
-          if (domElement != null) {
-            events.add(new DomEvent(domElement, false));
+          if (psiFile instanceof XmlFile xmlFile) {
+            DomFileElementImpl<?> domElement = getCachedFileElement(xmlFile);
+            if (domElement != null) {
+              events.add(new DomEvent(domElement, false));
+            }
           }
         }
         return true;

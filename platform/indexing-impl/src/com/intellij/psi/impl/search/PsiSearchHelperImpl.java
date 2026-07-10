@@ -563,7 +563,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                      @NotNull ProgressIndicator progress,
                                                                      @NotNull AtomicBoolean stopped,
                                                                      @NotNull Processor<? super VirtualFile> localProcessor) {
-    ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     // doesn't work with coroutine based progress
     // if (!app.isDispatchThread()) {
     //  CoreProgressManager.assertUnderProgress(progress);
@@ -627,7 +627,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
             JobLauncher.getInstance().invokeConcurrentlyUnderProgress(files, wrapper, processor);
             processorCanceled = stopped.get();
           }
-          catch (ProcessCanceledException e) {
+          catch (ProcessCanceledException _) {
             // wrapper can interrupt us (means write action is about to start) or by genuine exception in progress
             progress.checkCanceled();
           }

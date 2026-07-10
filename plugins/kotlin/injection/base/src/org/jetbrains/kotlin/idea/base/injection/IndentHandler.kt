@@ -53,6 +53,9 @@ class TrimIndentHandler(private val marginChar: String? = null) : IndentHandler 
                 } else
                     whitespaces
                 minLength = minLength?.coerceAtMost(indent) ?: indent
+            } else if (i != 0 && i != linesRanges.lastIndex) {
+                val length = lineText.length
+                minLength = minLength?.coerceAtMost(length) ?: length
             }
         }
 

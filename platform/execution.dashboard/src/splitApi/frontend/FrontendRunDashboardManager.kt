@@ -34,6 +34,7 @@ import com.intellij.platform.execution.serviceView.shouldEnableServicesViewInCur
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.content.Content
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -53,6 +54,17 @@ internal class FrontendRunDashboardManager(private val project: Project) : RunDa
   private val statusFilter = RunDashboardStatusFilter()
   private val configurationTypes = MutableStateFlow(emptySet<String>())
   private var isInitialized = MutableStateFlow(false)
+
+  /**
+   * Content id of a run content the frontend has just attached and whose service node selection should be
+   * re-established once the authoritative service list arrives from the backend.
+   *
+   * The frontend optimistically fabricates a node for a frontend-created content (e.g. a debug tab) reusing the
+   * main service uuid, but the backend assigns the real additional service its own unique uuid. Since the tree
+   * node identity (and thus selection) is keyed by uuid, the optimistic selection is dropped when the backend
+   * list replaces the fabricated one. Selection is therefore re-resolved by the stable content id instead.
+   */
+  private val pendingSelectionContentId = AtomicReference<RunContentDescriptorIdImpl?>()
 
   override fun isInitialized(): Boolean {
     return isInitialized.value
@@ -81,6 +93,23 @@ internal class FrontendRunDashboardManager(private val project: Project) : RunDa
       frontendDtos.value = updatesFromBackend
 
       updateDashboard(true)
+
+      reselectPendingServiceIfNeeded(updatesFromBackend)
+    }
+  }
+
+  private suspend fun reselectPendingServiceIfNeeded(services: List<RunDashboardServiceDto>) {
+    val pending = pendingSelectionContentId.get() ?: return
+    val targetDto = services.find { it.contentId == pending } ?: return
+    // Consume the request only when the authoritative node is finally present, so a re-select isn't lost to an
+    // unrelated earlier push, and isn't repeated on every subsequent update.
+    if (!pendingSelectionContentId.compareAndSet(pending, null)) return
+
+    val configurationNode = FrontendRunConfigurationNode(project, FrontendRunDashboardService(targetDto))
+    withContext(Dispatchers.EDT) {
+      (ServiceViewManager.getInstance(project) as ServiceViewManagerImpl?)
+        ?.trackingSelect(configurationNode, RunDashboardServiceViewContributor::class.java,
+                         targetDto.isActivateToolWindowBeforeRun, targetDto.isFocusToolWindowBeforeRun)
     }
   }
 
@@ -322,6 +351,9 @@ internal class FrontendRunDashboardManager(private val project: Project) : RunDa
 
         frontendDtos.value = newDtos
         updateDashboard(true)
+        // The fabricated node above reuses the main service uuid and will be discarded when the backend pushes the
+        // real (possibly differently keyed) service list; remember the content so selection can follow it there.
+        pendingSelectionContentId.set(contentId)
         RunDashboardServiceViewContributorHelper.scheduleAttachRunContentDescriptorId(project, null, contentId)
         break
       }
@@ -331,6 +363,8 @@ internal class FrontendRunDashboardManager(private val project: Project) : RunDa
   fun detachServiceRunContentDescriptor(content: Content) {
     val descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content) ?: return
     val contentId = descriptor.id ?: return
+
+    pendingSelectionContentId.getAndUpdate { pending -> if (pending == contentId) null else pending }
 
     val newDtos = ArrayList(frontendDtos.value)
     for ((index, serviceDto) in newDtos.withIndex()) {

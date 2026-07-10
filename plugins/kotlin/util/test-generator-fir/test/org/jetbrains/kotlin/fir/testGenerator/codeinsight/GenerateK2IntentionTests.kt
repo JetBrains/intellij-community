@@ -180,6 +180,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/replaceRepeatWithForLoop", pattern = pattern)
             model("${idea}intentions/replaceForLoopWithRepeat", pattern = pattern)
             model("${idea}intentions/replaceForEachWithRepeat", pattern = pattern)
+            model("${idea}intentions/addParameterNameAtAllCallsites", pattern = pattern)
         }
 
         testClass<AbstractK2IntentionInInjectionTest> {

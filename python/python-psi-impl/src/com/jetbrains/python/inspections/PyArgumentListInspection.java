@@ -28,6 +28,8 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyKeywordArgument;
 import com.jetbrains.python.psi.PyStarArgument;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.ParamHelper;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
@@ -85,22 +87,22 @@ public final class PyArgumentListInspection extends PyInspection {
     @Override
     public void visitPyDecorator(@NotNull PyDecorator deco) {
       if (deco.hasArgumentList()) return;
-      final PyCallableType callableType = ContainerUtil.getFirstItem(deco.multiResolveCallee(getResolveContext()));
+      final PyCallableType callableType =
+        ContainerUtil.getFirstItem(deco.multiResolveCallee(getResolveContext()));
       if (callableType != null) {
         final PyCallable callable = callableType.getCallable();
         if (callable == null) return;
-        final int firstParamOffset = callableType.getImplicitOffset();
         final List<PyCallableParameter> params = callableType.getParameters(myTypeEvalContext);
         if (params == null) return;
 
-        final PyCallableParameter allegedFirstParam = ContainerUtil.getOrElse(params, firstParamOffset - 1, null);
+        final PyCallableParameter allegedFirstParam = ContainerUtil.getOrElse(params, 0, null);
         if (allegedFirstParam == null || allegedFirstParam.isKeywordContainer()) {
           // no parameters left to pass function implicitly, or wrong param type
-          registerProblem(deco, PyPsiBundle.message("INSP.function.lacks.positional.argument",
+          registerProblem(deco, PyPsiBundle.problemMessage("INSP.function.lacks.positional.argument",
                                                     callable.getName())); // TODO: better names for anon lambdas
         }
         else { // possible unfilled params
-          for (int i = firstParamOffset; i < params.size(); i++) {
+          for (int i = 1; i < params.size(); i++) {
             final PyCallableParameter parameter = params.get(i);
             if (parameter.isKeywordOnlySeparator() || parameter.isPositionOnlySeparator()) {
               continue;
@@ -108,12 +110,24 @@ public final class PyArgumentListInspection extends PyInspection {
             // param tuples, non-starred or non-default won't do
             if (!parameter.isKeywordContainer() && !parameter.isPositionalContainer() && !parameter.hasDefaultValue()) {
               final String parameterName = parameter.getName();
-              registerProblem(deco, PyPsiBundle.message("INSP.parameter.unfilled", parameterName == null ? "(...)" : parameterName));
+              registerProblem(deco, PyPsiBundle.problemMessage("INSP.parameter.unfilled", parameterName == null ? "(...)" : parameterName));
             }
           }
         }
       }
       // else: this case is handled by arglist visitor
+    }
+
+    @Override
+    public void visitPyClass(@NotNull PyClass node) {
+      // A class definition implicitly calls `__init_subclass__` of its base classes with the
+      // class-definition keyword arguments (e.g. `z="a"` in `class B(A, z="a")`).
+      if (node.getArguments(null).isEmpty()) return;
+      final PyArgumentList argumentList = node.getSuperClassExpressionList();
+      if (argumentList == null) return;
+      final List<PyCallExpression.PyArgumentsMapping> mappings = PyCallExpressionHelper.mapArguments(node, getResolveContext());
+      final ProblemHighlightType override = downgradeHighlightForTypeEngine ? ProblemHighlightType.INFORMATION : null;
+      highlightMappingProblems(argumentList, getHolder(), mappings, myTypeEvalContext, override);
     }
   }
 
@@ -121,7 +135,7 @@ public final class PyArgumentListInspection extends PyInspection {
                                             @NotNull ProblemsHolder holder,
                                             @NotNull PyResolveContext resolveContext,
                                             @Nullable ProblemHighlightType highlightOverride) {
-    if (node.getParent() instanceof PyClass) return; // `(object)` in `class Foo(object)` is also an arg list
+    if (node.getParent() instanceof PyClass) return; // `(object)` in `class Foo(object)` is also an arg list, handled in `visitPyClass`
     final PyCallExpression call = node.getCallExpression();
     if (call == null) return;
 
@@ -138,6 +152,18 @@ public final class PyArgumentListInspection extends PyInspection {
       }
     }
 
+    highlightMappingProblems(node, holder, mappings, context, highlightOverride);
+  }
+
+  /**
+   * Highlights unexpected arguments, unfilled parameters or otherwise incorrect arguments described by {@code mappings}
+   * on the given argument list {@code node} (a call's argument list or a class' base classes list).
+   */
+  private static void highlightMappingProblems(@NotNull PyArgumentList node,
+                                               @NotNull ProblemsHolder holder,
+                                               @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
+                                               @NotNull TypeEvalContext context,
+                                               @Nullable ProblemHighlightType highlightOverride) {
     if (!mappings.isEmpty()) {
       boolean specificMismatchKindReported = false;
       if (ContainerUtil.all(mappings, mapping -> !mapping.getUnmappedArguments().isEmpty())) {
@@ -207,7 +233,7 @@ public final class PyArgumentListInspection extends PyInspection {
       if (!param.hasDefaultValue()) {
         String name = param.getName();
         if (name != null) {
-          registerProblem(holder, rpar, PyPsiBundle.message("INSP.parameter.unfilled", name), highlightOverride);
+          registerProblem(holder, rpar, PyPsiBundle.problemMessage("INSP.parameter.unfilled", name), highlightOverride);
         }
       }
     }
@@ -224,6 +250,17 @@ public final class PyArgumentListInspection extends PyInspection {
     else {
       holder.registerProblem(element, message, fixes);
     }
+  }
+
+  private static void registerProblem(@NotNull ProblemsHolder holder,
+                                      @NotNull PsiElement element,
+                                      @NotNull PyInspectionMessages.ProblemMessage message,
+                                      @Nullable ProblemHighlightType highlightOverride) {
+    ProblemsHolder.ProblemBuilder builder = holder.problem(element, message.description()).tooltip(message.tooltip());
+    if (highlightOverride != null) {
+      builder = builder.highlight(highlightOverride);
+    }
+    builder.register();
   }
 
   private static boolean objectMethodCallViaSuper(@NotNull PyCallExpression call, @NotNull PyFunction function) {
@@ -342,7 +379,7 @@ public final class PyArgumentListInspection extends PyInspection {
               .of(mappings.get(0).getUnmappedParameters())
               .map(PyCallableParameter::getName)
               .filter(Objects::nonNull)
-              .forEach(name -> registerProblem(holder, psi, PyPsiBundle.message("INSP.parameter.unfilled", name), highlightOverride));
+              .forEach(name -> registerProblem(holder, psi, PyPsiBundle.problemMessage("INSP.parameter.unfilled", name), highlightOverride));
           }
         }
       );
@@ -380,8 +417,7 @@ public final class PyArgumentListInspection extends PyInspection {
     final List<PyMismatchTooltips.Slot> argumentSlots = new ArrayList<>();
     for (PyExpression argument : node.getArguments()) {
       final boolean matched = ContainerUtil.exists(mappings, mapping -> !containsIdentity(mapping.getUnmappedArguments(), argument));
-      argumentSlots.add(new PyMismatchTooltips.Slot(
-        PyMismatchTooltips.actualArgumentText(argument, context.getType(argument), context), matched));
+      argumentSlots.add(PyMismatchTooltips.argumentSlot(argument, context.getType(argument), context, matched));
     }
 
     final List<List<PyMismatchTooltips.Slot>> expectedRows = new ArrayList<>();
@@ -390,11 +426,10 @@ public final class PyArgumentListInspection extends PyInspection {
       final PyCallableType callableType = mapping.getCallableType();
       final List<PyCallableParameter> parameters = callableType == null ? null : callableType.getParameters(context);
       if (parameters != null) {
-        for (int i = callableType.getImplicitOffset(); i < parameters.size(); i++) {
-          final PyCallableParameter parameter = parameters.get(i);
+        for (PyCallableParameter parameter : parameters) {
           if (parameter.isPositionOnlySeparator() || parameter.isKeywordOnlySeparator()) continue;
           final boolean matched = !containsIdentity(mapping.getUnmappedParameters(), parameter);
-          row.add(new PyMismatchTooltips.Slot(PyMismatchTooltips.parameterText(parameter, context), matched));
+          row.add(PyMismatchTooltips.parameterSlot(parameter, context, matched));
         }
       }
       expectedRows.add(row);

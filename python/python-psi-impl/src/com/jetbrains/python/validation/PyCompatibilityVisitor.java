@@ -53,6 +53,7 @@ import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyBreakStatement;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyComprehensionElement;
 import com.jetbrains.python.psi.PyComprehensionForComponent;
 import com.jetbrains.python.psi.PyContinueStatement;
 import com.jetbrains.python.psi.PyDecorator;
@@ -263,6 +264,13 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
       }
     }
 
+    // PEP 798: unpacking in comprehensions/generator expressions, e.g. [*it for it in its]
+    if (isComprehensionResultExpression(node)) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON315) && registerForLanguageLevel(level),
+                                     PyPsiBundle.message("INSP.compatibility.feature.support.unpacking.in.comprehensions"),
+                                     node);
+    }
+
     PsiElement parent = node.getParent();
     if (parent instanceof PyAnnotation && PyStarAnnotatorVisitor.isVariadicArg(parent.getParent())) {
       registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON311) &&
@@ -276,9 +284,21 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
   public void visitPyDoubleStarExpression(@NotNull PyDoubleStarExpression node) {
     super.visitPyDoubleStarExpression(node);
 
+    // PEP 798: double-star unpacking in dict comprehensions, e.g. {**d for d in dicts}
+    if (isComprehensionResultExpression(node)) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON315) && registerForLanguageLevel(level),
+                                     PyPsiBundle.message("INSP.compatibility.feature.support.unpacking.in.comprehensions"),
+                                     node);
+      return;
+    }
+
     registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON35) && registerForLanguageLevel(level),
                                    PyPsiBundle.message("INSP.compatibility.feature.support.starred.expressions.in.dicts"),
                                    node);
+  }
+
+  private static boolean isComprehensionResultExpression(@NotNull PyExpression node) {
+    return node.getParent() instanceof PyComprehensionElement comprehension && comprehension.getResultExpression() == node;
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.codeInsight.hint.HintUtil
@@ -8,7 +8,9 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -188,8 +190,13 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
 
         delay(request.delay)
 
-        withContext(Dispatchers.EDT) {
-          doShowNow(tooltip = request.tooltip, animationEnabled = request.animationEnabled)
+        // `ModalityState.stateForComponent` must be called on the EDT, so switch
+        // there first to read it, then re-dispatch under the proper modality to show the tooltip.
+        withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
+          val modality = ModalityState.stateForComponent(request.tooltip.component)
+          withContext(Dispatchers.UI + modality.asContextElement()) {
+            doShowNow(tooltip = request.tooltip, animationEnabled = request.animationEnabled)
+          }
         }
       }
     }
@@ -201,7 +208,7 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
 
         delay(serviceAsync<RegistryManager>().intValue("ide.tooltip.autoDismissDeadZone").milliseconds)
 
-        withContext(Dispatchers.EDT) {
+        withContext(Dispatchers.UI) {
           hideCurrentNow(animationEnabled)
         }
       }

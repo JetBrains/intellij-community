@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.v2.ScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,8 +26,13 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
@@ -120,8 +126,84 @@ public fun VerticallyScrollableContainer(
         userScrollEnabled = true,
         scrollbarEnabled,
         scrollbarInteractionSource,
+        adapter = null,
         content,
     )
+}
+
+/**
+ * A vertically scrollable container that follows the standard visual styling.
+ *
+ * This version of the container owns the scrollable modifier, and you must not apply one to the [content]. If you wish
+ * to retain control over the scroll modifier and own the scroll, use the overload with a [ScrollableState] parameter.
+ *
+ * Provides a container with a vertical scrollbar that matches the platform's native appearance. On macOS, the scrollbar
+ * appears next to the content, while on Windows/Linux it overlays the content. The scrollbar's visibility and behavior
+ * adapt to the platform conventions.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/scrollbar.html)
+ *
+ * **Usage example:**
+ * [`Scrollbars.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Scrollbars.kt)
+ *
+ * **Swing equivalent:**
+ * [`JBScrollBar`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/JBScrollBar.java)
+ *
+ * @param modifier Modifier to be applied to the container
+ * @param scrollbarModifier Modifier to be applied to the scrollbar
+ * @param scrollState The state of the scroll
+ * @param style The visual styling for the scrollbar
+ * @param reverseLayout Reverse the direction of scrolling, when `true`, 0 [ScrollState.value] will mean bottom, when
+ *   `false`, 0 [ScrollState.value] will mean top
+ * @param userScrollEnabled Whether scrolling is enabled or not
+ * @param scrollbarEnabled Whether the scrollbar is enabled or not; usually matches [userScrollEnabled]
+ * @param scrollbarInteractionSource The interaction source used for the scrollbar
+ * @param content The main content of the scrollable container
+ * @see com.intellij.ui.components.JBScrollBar
+ */
+@Deprecated("Use the overload with adapter parameter instead.", level = DeprecationLevel.HIDDEN)
+@Composable
+public fun VerticallyScrollableContainer(
+    modifier: Modifier = Modifier,
+    scrollbarModifier: Modifier = Modifier,
+    scrollState: ScrollState = rememberScrollState(),
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    reverseLayout: Boolean = false,
+    userScrollEnabled: Boolean = true,
+    scrollbarEnabled: Boolean = userScrollEnabled,
+    scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    content: @Composable BoxScope.() -> Unit,
+) {
+    var keepVisible by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    ScrollableContainerImpl(
+        verticalScrollbar = {
+            VerticalScrollbar(
+                scrollState = scrollState,
+                modifier = scrollbarModifier,
+                style = style,
+                keepVisible = keepVisible,
+                enabled = scrollbarEnabled,
+                reverseLayout = reverseLayout,
+                interactionSource = scrollbarInteractionSource,
+            )
+        },
+        verticalScrollbarVisible = scrollState.canScroll,
+        verticalScrollbarPosition = ScrollbarPosition.End,
+        horizontalScrollbar = null,
+        horizontalScrollbarVisible = false,
+        horizontalScrollbarPosition = ScrollbarPosition.End,
+        scrollbarStyle = style,
+        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
+    ) {
+        Box(
+            Modifier.layoutId(ID_CONTENT)
+                .verticalScroll(scrollState, reverseScrolling = reverseLayout, enabled = userScrollEnabled)
+        ) {
+            content()
+        }
+    }
 }
 
 /**
@@ -164,6 +246,7 @@ public fun VerticallyScrollableContainer(
     userScrollEnabled: Boolean = true,
     scrollbarEnabled: Boolean = userScrollEnabled,
     scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    adapter: ScrollbarAdapter? = null,
     content: @Composable BoxScope.() -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
@@ -179,6 +262,7 @@ public fun VerticallyScrollableContainer(
                 enabled = scrollbarEnabled,
                 reverseLayout = reverseLayout,
                 interactionSource = scrollbarInteractionSource,
+                adapter = adapter,
             )
         },
         verticalScrollbarVisible = scrollState.canScroll,
@@ -288,6 +372,7 @@ public fun VerticallyScrollableContainer(
         reverseLayout,
         scrollbarEnabled,
         scrollbarInteractionSource,
+        adapter = null,
         content,
     )
 }
@@ -350,6 +435,7 @@ public fun VerticallyScrollableContainer(
         reverseLayout,
         scrollbarEnabled,
         scrollbarInteractionSource,
+        adapter = null,
         content,
     )
 }
@@ -386,6 +472,7 @@ public fun VerticallyScrollableContainer(
  * @param content The main content of the scrollable container
  * @see com.intellij.ui.components.JBScrollBar
  */
+@Deprecated("Use the overload with adapter parameter instead.", level = DeprecationLevel.HIDDEN)
 @Composable
 public fun VerticallyScrollableContainer(
     scrollState: ScrollableState,
@@ -410,6 +497,81 @@ public fun VerticallyScrollableContainer(
                 enabled = scrollbarEnabled,
                 reverseLayout = reverseLayout,
                 interactionSource = scrollbarInteractionSource,
+            )
+        },
+        verticalScrollbarVisible = scrollState.canScroll,
+        verticalScrollbarPosition = ScrollbarPosition.End,
+        horizontalScrollbar = null,
+        horizontalScrollbarVisible = false,
+        horizontalScrollbarPosition = ScrollbarPosition.End,
+        scrollbarStyle = style,
+        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
+    ) {
+        Box(Modifier.layoutId(ID_CONTENT)) { content() }
+    }
+}
+
+/**
+ * A vertically scrollable container that follows the standard visual styling.
+ *
+ * This version of the container does not own the scrollable modifier, and as such you must apply one to the [content],
+ * or use a state shared with a lazy layout in the [content]. If you wish to use a simpler version for non-lazy content
+ * that owns the scroll, use the overload with an optional [ScrollState] parameter.
+ *
+ * Provides a container with a vertical scrollbar that matches the platform's native appearance. On macOS, the scrollbar
+ * appears next to the content, while on Windows/Linux it overlays the content. The scrollbar's visibility and behavior
+ * adapt to the platform conventions.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/scrollbar.html)
+ *
+ * **Usage example:**
+ * [`Scrollbars.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Scrollbars.kt)
+ *
+ * **Swing equivalent:**
+ * [`JBScrollBar`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/JBScrollBar.java)
+ *
+ * @param scrollState The state of the scroll
+ * @param modifier Modifier to be applied to the container
+ * @param scrollbarModifier Modifier to be applied to the scrollbar
+ * @param style The visual styling for the scrollbar
+ * @param reverseLayout Reverse the direction of scrolling, when `true`, 0 [ScrollState.value] will mean bottom, when
+ *   `false`, 0 [ScrollState.value] will mean top
+ * @param scrollbarEnabled Whether the scrollbar is enabled or not. Note that this does not impact the user's ability to
+ *   scroll the container, which is controlled by the component that owns the [scrollState] (e.g., via a
+ *   `userScrollEnabled` parameter)
+ * @param scrollbarInteractionSource The interaction source used for the scrollbar
+ * @param adapter The [ScrollbarAdapter] used by the scrollbar to compute the thumb position and size. When null, a
+ *   default adapter is derived from [scrollState]. See [VerticalScrollbar] for the full contract, including the
+ *   supported [scrollState] types and remembering requirements.
+ * @param content The main content of the scrollable container
+ * @see com.intellij.ui.components.JBScrollBar
+ */
+@Composable
+public fun VerticallyScrollableContainer(
+    scrollState: ScrollableState,
+    modifier: Modifier = Modifier,
+    scrollbarModifier: Modifier = Modifier,
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    reverseLayout: Boolean = false,
+    scrollbarEnabled: Boolean = true,
+    scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    adapter: ScrollbarAdapter? = null,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    var keepVisible by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    ScrollableContainerImpl(
+        verticalScrollbar = {
+            VerticalScrollbar(
+                scrollState = scrollState,
+                modifier = scrollbarModifier,
+                style = style,
+                keepVisible = keepVisible,
+                enabled = scrollbarEnabled,
+                reverseLayout = reverseLayout,
+                interactionSource = scrollbarInteractionSource,
+                adapter = adapter,
             )
         },
         verticalScrollbarVisible = scrollState.canScroll,
@@ -512,6 +674,7 @@ public fun HorizontallyScrollableContainer(
  * @param content The content to be displayed in the scrollable container
  * @see com.intellij.ui.components.JBScrollBar
  */
+@Deprecated("Use the overload with adapter parameter instead.", level = DeprecationLevel.HIDDEN)
 @Composable
 public fun HorizontallyScrollableContainer(
     modifier: Modifier = Modifier,
@@ -534,6 +697,68 @@ public fun HorizontallyScrollableContainer(
         userScrollEnabled,
         scrollbarEnabled,
         scrollbarInteractionSource,
+        null,
+        content,
+    )
+}
+
+/**
+ * A horizontally scrollable container that follows the standard visual styling.
+ *
+ * This version of the container owns the scrollable modifier, and you must not apply one to the [content]. If you wish
+ * to retain control over the scroll modifier and own the scroll, use the overload with a [ScrollableState] parameter.
+ *
+ * Provides a container with a horizontal scrollbar that matches the platform's native appearance. On macOS, the
+ * scrollbar appears below the content, while on Windows/Linux it overlays the content. The scrollbar's visibility and
+ * behavior adapt to the platform conventions.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/scrollbar.html)
+ *
+ * **Usage example:**
+ * [`Scrollbars.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Scrollbars.kt)
+ *
+ * **Swing equivalent:**
+ * [`JBScrollBar`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/JBScrollBar.java)
+ *
+ * @param modifier Modifier to be applied to the container
+ * @param scrollbarModifier Modifier to be applied to the scrollbar
+ * @param scrollState The state object to control and observe scrolling
+ * @param style The visual styling configuration for the scrollbar
+ * @param reverseLayout Reverse the direction of scrolling, when `true`, 0 [ScrollState.value] will mean bottom, when
+ *   `false`, 0 [ScrollState.value] will mean top
+ * @param userScrollEnabled Whether scrolling is enabled or not
+ * @param scrollbarEnabled Whether scrollbars are enabled or not; usually matches [userScrollEnabled]
+ * @param scrollbarInteractionSource Source of interactions for the scrollbar
+ * @param adapter The [ScrollbarAdapter] used by the scrollbar to compute the thumb position and size. When null, a
+ *   default adapter is derived from [scrollState]. See [HorizontalScrollbar] for the full contract, including the
+ *   supported [scrollState] types and remembering requirements.
+ * @param content The content to be displayed in the scrollable container
+ * @see com.intellij.ui.components.JBScrollBar
+ */
+@Composable
+public fun HorizontallyScrollableContainer(
+    modifier: Modifier = Modifier,
+    scrollbarModifier: Modifier = Modifier,
+    scrollState: ScrollState = rememberScrollState(),
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    reverseLayout: Boolean = false,
+    userScrollEnabled: Boolean = true,
+    scrollbarEnabled: Boolean = userScrollEnabled,
+    scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    adapter: ScrollbarAdapter? = null,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    HorizontallyScrollableContainer(
+        ScrollbarPosition.End,
+        modifier,
+        scrollbarModifier,
+        scrollState,
+        style,
+        reverseLayout,
+        userScrollEnabled,
+        scrollbarEnabled,
+        scrollbarInteractionSource,
+        adapter,
         content,
     )
 }
@@ -549,6 +774,7 @@ internal fun HorizontallyScrollableContainer(
     userScrollEnabled: Boolean = true,
     scrollbarEnabled: Boolean = userScrollEnabled,
     scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    adapter: ScrollbarAdapter? = null,
     content: @Composable BoxScope.() -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
@@ -567,6 +793,7 @@ internal fun HorizontallyScrollableContainer(
                 enabled = scrollbarEnabled,
                 reverseLayout = reverseLayout,
                 interactionSource = scrollbarInteractionSource,
+                adapter = adapter,
             )
         },
         horizontalScrollbarVisible = scrollState.canScroll,
@@ -641,6 +868,7 @@ public fun HorizontallyScrollableContainer(
         reverseLayout,
         scrollbarEnabled,
         scrollbarInteractionSource,
+        null,
         content,
     )
 }
@@ -703,6 +931,7 @@ public fun HorizontallyScrollableContainer(
         reverseLayout,
         scrollbarEnabled,
         scrollbarInteractionSource,
+        null,
         content,
     )
 }
@@ -739,6 +968,7 @@ public fun HorizontallyScrollableContainer(
  * @param content The main content of the scrollable container
  * @see com.intellij.ui.components.JBScrollBar
  */
+@Deprecated("Use the overload with adapter parameter instead.", level = DeprecationLevel.HIDDEN)
 @Composable
 public fun HorizontallyScrollableContainer(
     scrollState: ScrollableState,
@@ -765,6 +995,81 @@ public fun HorizontallyScrollableContainer(
                 enabled = scrollbarEnabled,
                 reverseLayout = reverseLayout,
                 interactionSource = scrollbarInteractionSource,
+            )
+        },
+        verticalScrollbarPosition = ScrollbarPosition.End,
+        horizontalScrollbarVisible = scrollState.canScroll,
+        horizontalScrollbarPosition = ScrollbarPosition.End,
+        scrollbarStyle = style,
+        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
+    ) {
+        Box(Modifier.layoutId(ID_CONTENT)) { content() }
+    }
+}
+
+/**
+ * A horizontally scrollable container that follows the standard visual styling.
+ *
+ * This version of the container does not own the scrollable modifier, and as such you must apply one to the [content],
+ * or use a state shared with a lazy layout in the [content]. If you wish to use a simpler version for non-lazy content
+ * that owns the scroll, use the overload with an optional [ScrollState] parameter.
+ *
+ * Provides a container with a horizontal scrollbar that matches the platform's native appearance. On macOS, the
+ * scrollbar appears below the content, while on Windows/Linux it overlays the content. The scrollbar's visibility and
+ * behavior adapt to the platform conventions.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/scrollbar.html)
+ *
+ * **Usage example:**
+ * [`Scrollbars.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Scrollbars.kt)
+ *
+ * **Swing equivalent:**
+ * [`JBScrollBar`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/JBScrollBar.java)
+ *
+ * @param scrollState The state of the scroll
+ * @param modifier Modifier to be applied to the container
+ * @param scrollbarModifier Modifier to be applied to the scrollbar
+ * @param style The visual styling for the scrollbar
+ * @param reverseLayout Reverse the direction of scrolling, when `true`, 0 [ScrollState.value] will mean bottom, when
+ *   `false`, 0 [ScrollState.value] will mean top
+ * @param scrollbarEnabled Whether the scrollbar is enabled or not. Note that this does not impact the user's ability to
+ *   scroll the container, which is controlled by the component that owns the [scrollState] (e.g., via a
+ *   `userScrollEnabled` parameter)
+ * @param scrollbarInteractionSource The interaction source used for the scrollbar
+ * @param adapter The [ScrollbarAdapter] used by the scrollbar to compute the thumb position and size. When null, a
+ *   default adapter is derived from [scrollState]. See [HorizontalScrollbar] for the full contract, including the
+ *   supported [scrollState] types and remembering requirements.
+ * @param content The main content of the scrollable container
+ * @see com.intellij.ui.components.JBScrollBar
+ */
+@Composable
+public fun HorizontallyScrollableContainer(
+    scrollState: ScrollableState,
+    modifier: Modifier = Modifier,
+    scrollbarModifier: Modifier = Modifier,
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    reverseLayout: Boolean = false,
+    scrollbarEnabled: Boolean = true,
+    scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    adapter: ScrollbarAdapter? = null,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    var keepVisible by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    ScrollableContainerImpl(
+        verticalScrollbar = null,
+        verticalScrollbarVisible = false,
+        horizontalScrollbar = {
+            HorizontalScrollbar(
+                scrollState = scrollState,
+                modifier = scrollbarModifier,
+                style = style,
+                keepVisible = keepVisible,
+                enabled = scrollbarEnabled,
+                reverseLayout = reverseLayout,
+                interactionSource = scrollbarInteractionSource,
+                adapter = adapter,
             )
         },
         verticalScrollbarPosition = ScrollbarPosition.End,
@@ -824,102 +1129,227 @@ private fun ScrollableContainerImpl(
                 Box(Modifier.layoutId(ID_HORIZONTAL_SCROLLBAR)) { horizontalScrollbar() }
             }
         },
-        modifier,
-    ) { measurables, incomingConstraints ->
-        val verticalScrollbarMeasurable = measurables.find { it.layoutId == ID_VERTICAL_SCROLLBAR }
-        val horizontalScrollbarMeasurable = measurables.find { it.layoutId == ID_HORIZONTAL_SCROLLBAR }
+        modifier = modifier,
+        measurePolicy =
+            object : MeasurePolicy {
+                override fun MeasureScope.measure(
+                    measurables: List<Measurable>,
+                    constraints: Constraints,
+                ): MeasureResult {
+                    if (verticalScrollbar != null) {
+                        check(constraints.hasBoundedHeight) {
+                            "VerticallyScrollableContainer was measured with an unbounded maximum " +
+                                "height, which is not supported. One of the common reasons is " +
+                                "nesting it inside another vertically scrollable layout such as " +
+                                "Column(Modifier.verticalScroll()) or another " +
+                                "VerticallyScrollableContainer. Use Modifier.height(), " +
+                                "Modifier.fillMaxHeight(), or Modifier.weight(1f) inside a Column " +
+                                "to provide a bounded height."
+                        }
+                    }
+                    if (horizontalScrollbar != null) {
+                        check(constraints.hasBoundedWidth) {
+                            "HorizontallyScrollableContainer was measured with an unbounded maximum " +
+                                "width, which is not supported. One of the common reasons is " +
+                                "nesting it inside another horizontally scrollable layout such as " +
+                                "Row(Modifier.horizontalScroll()) or another " +
+                                "HorizontallyScrollableContainer. Use Modifier.width(), " +
+                                "Modifier.fillMaxWidth(), or Modifier.weight(1f) inside a Row to " +
+                                "provide a bounded width."
+                        }
+                    }
 
-        // Leaving the bottom-end corner empty when both scrollbars visible at the same time
-        val accountForVerticalScrollbar = verticalScrollbarMeasurable != null && verticalScrollbarVisible
-        val accountForHorizontalScrollbar = horizontalScrollbarMeasurable != null && horizontalScrollbarVisible
-        val sizeOffsetWhenBothVisible =
-            if (accountForVerticalScrollbar && accountForHorizontalScrollbar) {
-                scrollbarStyle.scrollbarVisibility.trackThicknessExpanded.roundToPx()
-            } else {
-                0
-            }
+                    val verticalScrollbarMeasurable = measurables.find { it.layoutId == ID_VERTICAL_SCROLLBAR }
+                    val horizontalScrollbarMeasurable = measurables.find { it.layoutId == ID_HORIZONTAL_SCROLLBAR }
 
-        val verticalScrollbarPlaceable =
-            if (accountForVerticalScrollbar) {
-                val verticalScrollbarConstraints =
-                    Constraints.fixedHeight(incomingConstraints.maxHeight - sizeOffsetWhenBothVisible)
-                verticalScrollbarMeasurable.measure(verticalScrollbarConstraints)
-            } else {
-                null
-            }
+                    // Leaving the bottom-end corner empty when both scrollbars visible at the same time
+                    val accountForVerticalScrollbar = verticalScrollbarMeasurable != null && verticalScrollbarVisible
+                    val accountForHorizontalScrollbar =
+                        horizontalScrollbarMeasurable != null && horizontalScrollbarVisible
+                    val sizeOffsetWhenBothVisible =
+                        if (accountForVerticalScrollbar && accountForHorizontalScrollbar) {
+                            scrollbarStyle.scrollbarVisibility.trackThicknessExpanded.roundToPx()
+                        } else {
+                            0
+                        }
 
-        val horizontalScrollbarPlaceable =
-            if (accountForHorizontalScrollbar) {
-                val horizontalScrollbarConstraints =
-                    Constraints.fixedWidth(incomingConstraints.maxWidth - sizeOffsetWhenBothVisible)
-                horizontalScrollbarMeasurable.measure(horizontalScrollbarConstraints)
-            } else {
-                null
-            }
+                    // Query scrollbar intrinsic sizes instead of measuring them upfront. This breaks
+                    // the layout dependency cycle that would crash when incomingConstraints are
+                    // unbounded (e.g., inside a Column with IntrinsicSize): measuring a scrollbar
+                    // with fixedHeight/fixedWidth of Int.MAX_VALUE is illegal, but querying its
+                    // intrinsic size is always safe.
+                    val vScrollbarIntrinsicWidth =
+                        if (accountForVerticalScrollbar) {
+                            verticalScrollbarMeasurable.maxIntrinsicWidth(constraints.maxHeight)
+                        } else {
+                            0
+                        }
 
-        val isMacOs = hostOs == OS.MacOS
-        val contentMeasurable = measurables.find { it.layoutId == ID_CONTENT } ?: error("Content not provided")
-        val contentConstraints =
-            computeContentConstraints(
-                scrollbarStyle,
-                isMacOs,
-                incomingConstraints,
-                verticalScrollbarPlaceable,
-                horizontalScrollbarPlaceable,
-            )
-        val contentPlaceable = contentMeasurable.measure(contentConstraints)
+                    val hScrollbarIntrinsicHeight =
+                        if (accountForHorizontalScrollbar) {
+                            horizontalScrollbarMeasurable.maxIntrinsicHeight(constraints.maxWidth)
+                        } else {
+                            0
+                        }
 
-        val isAlwaysVisible = scrollbarStyle.scrollbarVisibility is AlwaysVisible
-        val vScrollbarWidth =
-            when {
-                !isMacOs -> 0
-                isAlwaysVisible -> verticalScrollbarPlaceable?.width ?: 0
-                else -> 0
-            }
-        val width = contentPlaceable.width + vScrollbarWidth
+                    val isMacOs = hostOs == OS.MacOS
+                    val contentMeasurable =
+                        measurables.find { it.layoutId == ID_CONTENT } ?: error("Content not provided")
+                    val contentConstraints =
+                        computeContentConstraints(
+                            scrollbarStyle,
+                            isMacOs,
+                            constraints,
+                            vScrollbarIntrinsicWidth,
+                            hScrollbarIntrinsicHeight,
+                        )
+                    val contentPlaceable = contentMeasurable.measure(contentConstraints)
 
-        val hScrollbarHeight =
-            when {
-                !isMacOs -> 0
-                isAlwaysVisible -> horizontalScrollbarPlaceable?.height ?: 0
-                else -> 0
-            }
-        val height = contentPlaceable.height + hScrollbarHeight
+                    val isAlwaysVisible = scrollbarStyle.scrollbarVisibility is AlwaysVisible
+                    val vScrollbarWidth =
+                        when {
+                            !isMacOs -> 0
+                            isAlwaysVisible -> vScrollbarIntrinsicWidth
+                            else -> 0
+                        }
+                    val width = contentPlaceable.width + vScrollbarWidth
 
-        layout(width, height) {
-            contentPlaceable.placeRelative(x = 0, y = 0, zIndex = 0f)
-            verticalScrollbarPlaceable?.placeRelative(
-                x =
-                    when (verticalScrollbarPosition) {
-                        ScrollbarPosition.Start -> 0
-                        ScrollbarPosition.End -> width - verticalScrollbarPlaceable.width
-                    },
-                y = 0,
-                zIndex = 1f,
-            )
-            horizontalScrollbarPlaceable?.placeRelative(
-                x = 0,
-                y =
-                    when (horizontalScrollbarPosition) {
-                        ScrollbarPosition.Start -> 0
-                        ScrollbarPosition.End -> height - horizontalScrollbarPlaceable.height
-                    },
-                zIndex = 1f,
-            )
-        }
-    }
+                    val hScrollbarHeight =
+                        when {
+                            !isMacOs -> 0
+                            isAlwaysVisible -> hScrollbarIntrinsicHeight
+                            else -> 0
+                        }
+                    val height = contentPlaceable.height + hScrollbarHeight
+
+                    // Now that content is measured and the container dimensions are known (bounded
+                    // even if incomingConstraints were unbounded), measure the scrollbars with
+                    // concrete sizes.
+                    val verticalScrollbarPlaceable =
+                        if (accountForVerticalScrollbar) {
+                            val safeVerticalScrollbarHeightConstraint =
+                                (height - sizeOffsetWhenBothVisible).coerceAtLeast(0)
+                            val verticalScrollbarConstraints =
+                                Constraints.fixedHeight(safeVerticalScrollbarHeightConstraint)
+                            verticalScrollbarMeasurable.measure(verticalScrollbarConstraints)
+                        } else {
+                            null
+                        }
+
+                    val horizontalScrollbarPlaceable =
+                        if (accountForHorizontalScrollbar) {
+                            val safeHorizontalScrollbarWidthConstraint =
+                                (width - sizeOffsetWhenBothVisible).coerceAtLeast(0)
+                            val horizontalScrollbarConstraints =
+                                Constraints.fixedWidth(safeHorizontalScrollbarWidthConstraint)
+                            horizontalScrollbarMeasurable.measure(horizontalScrollbarConstraints)
+                        } else {
+                            null
+                        }
+
+                    return layout(width, height) {
+                        contentPlaceable.placeRelative(x = 0, y = 0, zIndex = 0f)
+                        verticalScrollbarPlaceable?.placeRelative(
+                            x =
+                                when (verticalScrollbarPosition) {
+                                    ScrollbarPosition.Start -> 0
+                                    ScrollbarPosition.End -> width - verticalScrollbarPlaceable.width
+                                },
+                            y = 0,
+                            zIndex = 1f,
+                        )
+                        horizontalScrollbarPlaceable?.placeRelative(
+                            x = 0,
+                            y =
+                                when (horizontalScrollbarPosition) {
+                                    ScrollbarPosition.Start -> 0
+                                    ScrollbarPosition.End -> height - horizontalScrollbarPlaceable.height
+                                },
+                            zIndex = 1f,
+                        )
+                    }
+                }
+
+                // Intrinsic overrides prevent the default fallback from re-running the measure
+                // block with Constraints.Infinity, which would trip the bounded-constraints checks
+                // above. They also provide correct values for IntrinsicSize parents.
+                //
+                // Cross-axis (the axis the container sizes itself to match its content):
+                //   - VerticallyScrollableContainer   → width  delegates to content + scrollbar
+                //   - HorizontallyScrollableContainer → height delegates to content + scrollbar
+                // Scroll-axis (must be bounded by the parent — no natural size):
+                //   - Always returns 0
+
+                // These overrides skip verticalScrollbarVisible/horizontalScrollbarVisible intentionally.
+                // Intrinsic queries run before the measure pass, so checking scroll state here would
+                // cause IntrinsicSize parents to resize as content becomes scrollable. The cost is that
+                // a non-scrollable container inside an IntrinsicSize parent reserves track space it
+                // doesn't actually need.
+                override fun IntrinsicMeasureScope.maxIntrinsicWidth(
+                    measurables: List<IntrinsicMeasurable>,
+                    height: Int,
+                ): Int {
+                    val contentWidth = measurables[0].maxIntrinsicWidth(height)
+                    if (verticalScrollbar == null) return contentWidth
+                    val isMacOs = hostOs == OS.MacOS
+                    val isAlwaysVisible = scrollbarStyle.scrollbarVisibility is AlwaysVisible
+                    if (!isMacOs || !isAlwaysVisible) return contentWidth
+                    // Vertical scrollbar is always at index 1 when present
+                    return contentWidth + measurables[1].maxIntrinsicWidth(height)
+                }
+
+                override fun IntrinsicMeasureScope.minIntrinsicWidth(
+                    measurables: List<IntrinsicMeasurable>,
+                    height: Int,
+                ): Int {
+                    val contentWidth = measurables[0].minIntrinsicWidth(height)
+                    if (verticalScrollbar == null) return contentWidth
+                    val isMacOs = hostOs == OS.MacOS
+                    val isAlwaysVisible = scrollbarStyle.scrollbarVisibility is AlwaysVisible
+                    if (!isMacOs || !isAlwaysVisible) return contentWidth
+                    return contentWidth + measurables[1].minIntrinsicWidth(height)
+                }
+
+                override fun IntrinsicMeasureScope.maxIntrinsicHeight(
+                    measurables: List<IntrinsicMeasurable>,
+                    width: Int,
+                ): Int {
+                    if (verticalScrollbar != null) return 0
+                    val contentHeight = measurables[0].maxIntrinsicHeight(width)
+                    if (horizontalScrollbar == null) return contentHeight
+                    val isMacOs = hostOs == OS.MacOS
+                    val isAlwaysVisible = scrollbarStyle.scrollbarVisibility is AlwaysVisible
+                    if (!isMacOs || !isAlwaysVisible) return contentHeight
+                    // Horizontal scrollbar is at index 1 when only horizontal is present
+                    return contentHeight + measurables[1].maxIntrinsicHeight(width)
+                }
+
+                override fun IntrinsicMeasureScope.minIntrinsicHeight(
+                    measurables: List<IntrinsicMeasurable>,
+                    width: Int,
+                ): Int {
+                    if (verticalScrollbar != null) return 0
+                    val contentHeight = measurables[0].minIntrinsicHeight(width)
+                    if (horizontalScrollbar == null) return contentHeight
+                    val isMacOs = hostOs == OS.MacOS
+                    val isAlwaysVisible = scrollbarStyle.scrollbarVisibility is AlwaysVisible
+                    if (!isMacOs || !isAlwaysVisible) return contentHeight
+                    return contentHeight + measurables[1].minIntrinsicHeight(width)
+                }
+            },
+    )
 }
 
 private fun computeContentConstraints(
     scrollbarStyle: ScrollbarStyle,
     isMacOs: Boolean,
     incomingConstraints: Constraints,
-    verticalScrollbarPlaceable: Placeable?,
-    horizontalScrollbarPlaceable: Placeable?,
+    verticalScrollbarWidth: Int,
+    horizontalScrollbarHeight: Int,
 ): Constraints {
     val visibility = scrollbarStyle.scrollbarVisibility
-    val scrollbarWidth = verticalScrollbarPlaceable?.width ?: 0
-    val scrollbarHeight = horizontalScrollbarPlaceable?.height ?: 0
+    val scrollbarWidth = verticalScrollbarWidth
+    val scrollbarHeight = horizontalScrollbarHeight
 
     val maxWidth = incomingConstraints.maxWidth
     val maxHeight = incomingConstraints.maxHeight

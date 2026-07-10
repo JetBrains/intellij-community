@@ -8,10 +8,10 @@ import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.intellij.plugins.markdown.MarkdownTestingUtil
-import org.intellij.plugins.markdown.editor.lists.inspections.IncorrectListNumberingInspection
-import org.intellij.plugins.markdown.editor.tables.inspections.MarkdownIncorrectTableFormattingInspection
-import org.intellij.plugins.markdown.editor.tables.inspections.MarkdownNoTableBordersInspection
-import org.intellij.plugins.markdown.lang.references.paths.MarkdownUnresolvedFileReferenceInspection
+import com.intellij.markdown.backend.inspections.IncorrectListNumberingInspection
+import com.intellij.markdown.backend.inspections.MarkdownIncorrectTableFormattingInspection
+import com.intellij.markdown.backend.inspections.MarkdownNoTableBordersInspection
+import com.intellij.markdown.backend.inspections.MarkdownUnresolvedFileReferenceInspection
 import org.intellij.plugins.markdown.model.psi.headers.UnresolvedHeaderReferenceInspection
 
 class MarkdownHighlightingPerformanceTest : BasePlatformTestCase() {

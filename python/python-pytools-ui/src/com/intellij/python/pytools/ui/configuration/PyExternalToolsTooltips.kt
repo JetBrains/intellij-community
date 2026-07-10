@@ -103,7 +103,7 @@ private fun lookupStrategyText(mode: com.intellij.python.pytools.configuration.E
  */
 private fun toolColumnTooltip(toolRow: ToolRow, host: TooltipHost, eventX: Int, cellRect: Rectangle): String {
   val onGear = isOverIcon(eventX, cellRect, PythonPytoolsUIIcons.Settings.iconWidth)
-  if (onGear && toolRow.staged.enabled && toolRow.tool.detailConfigurable != null) {
+  if (onGear && toolRow.staged.enabled && toolRow.detailConfigurableProvider != null) {
     return PyToolsUiBundle.message("settings.external.tools.edit.tooltip", toolRow.tool.presentableName)
   }
   // Match the cell-rendering rule: a disabled tool's options aren't surfaced anywhere — its
@@ -215,7 +215,7 @@ private fun buildPathTooltip(
  */
 private fun actionHintFor(kind: PathIconKind, latestVersion: String?): String? = when (kind) {
   PathIconKind.NONE -> null
-  PathIconKind.INSTALL -> PyToolsUiBundle.message("settings.external.tools.install.via.uv.tooltip")
+  PathIconKind.INSTALL -> PyToolsUiBundle.message("settings.external.tools.install.tooltip")
   PathIconKind.RESET -> PyToolsUiBundle.message("settings.external.tools.path.reset.tooltip")
   PathIconKind.UPGRADE -> if (latestVersion != null) {
     PyToolsUiBundle.message("settings.external.tools.path.upgrade.to.version.tooltip", latestVersion)

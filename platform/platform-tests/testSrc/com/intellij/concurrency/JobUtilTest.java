@@ -222,7 +222,7 @@ public class JobUtilTest extends LightPlatformTestCase {
           }
       };
       if (runInReadAction) {
-        ReadAction.run(runnable);
+        ReadAction.runBlocking(runnable);
       }
       else {
         runnable.run();
@@ -440,7 +440,7 @@ public class JobUtilTest extends LightPlatformTestCase {
       ProgressIndicator wrapper = new DaemonProgressIndicator();
       try {
         // avoid "attach listener"/"write action" race
-        ReadAction.run(() -> {
+        ReadAction.runBlocking(() -> {
           wrapper.start();
           ProgressIndicatorUtils.forceWriteActionPriority(wrapper, disposable);
           // there is a chance we are racing with write action, in which case just registered listener might not be called, retry.
@@ -450,7 +450,7 @@ public class JobUtilTest extends LightPlatformTestCase {
         });
         // use wrapper here to cancel early when write action start but do not affect the original indicator
         ((JobLauncherImpl)JobLauncher.getInstance()).processQueue(queue, failedQueue, wrapper, TOMB_STONE, _ -> {
-          ReadAction.run(() -> {
+          ReadAction.runBlocking(() -> {
             ProgressManager.checkCanceled();
             //TimeoutUtil.sleep(1);
             ProgressManager.checkCanceled();
@@ -760,7 +760,7 @@ public class JobUtilTest extends LightPlatformTestCase {
   }
   public void testPCEThrownFromProcessorMustPropagateOutwards() {
     List<Integer> ints = IntStream.range(1, 123_271).boxed().collect(Collectors.toList());
-    int N = 100;
+    int N = 1000;
     for (int i=0; i<N; i++) {
       assertThrows(ProcessCanceledException.class, () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(ints, new DaemonProgressIndicator(), _ -> {
         throw new ProcessCanceledException(new RuntimeException("xxx"));

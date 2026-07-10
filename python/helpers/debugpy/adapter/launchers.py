@@ -155,6 +155,24 @@ def spawn_debuggee(
                 request_args["cwd"] = cwd
             if shell_expand_args:
                 request_args["argsCanBeInterpretedByShell"] = True
+
+                # VS Code debugger extension may pass us an argument indicating the 
+                # quoting character to use in the terminal. Otherwise default based on platform.
+                default_quote = '"' if os.name != "nt" else "'"
+                quote_char = arguments["terminalQuoteCharacter"] if "terminalQuoteCharacter" in arguments else default_quote
+
+                # VS code doesn't quote arguments if `argsCanBeInterpretedByShell` is true,
+                # so we need to do it ourselves for the arguments up to the first argument passed to
+                # debugpy (this should be the python file to run).
+                args = request_args["args"]
+                for i in range(len(args)):
+                    s = args[i]
+                    if " " in s and not ((s.startswith('"') and s.endswith('"')) or (s.startswith("'") and s.endswith("'"))):
+                        s = f"{quote_char}{s}{quote_char}"
+                    args[i] = s
+                    if i > 0 and args[i-1] == "--":
+                        break
+
             try:
                 # It is unspecified whether this request receives a response immediately, or only
                 # after the spawned command has completed running, so do not block waiting for it.

@@ -78,10 +78,12 @@ class PluginBooleanOptionDescriptor internal constructor(private val myDescripto
         }
 
         if (autoSwitchedDescriptors.size > descriptors.size) {
+          val userInitiatedNames = MyPluginModel.getPluginNames(descriptors)
+          val autoSwitchedNames = MyPluginModel.getPluginNames(autoSwitchedDescriptors) - userInitiatedNames
           val content = IdeBundle.message(
             if (enable) "plugins.auto.enabled.notification.content" else "plugins.auto.disabled.notification.content",
-            MyPluginModel.joinPluginNamesOrIds(MyPluginModel.getPluginNames(descriptors)),
-            MyPluginModel.joinPluginNamesOrIds(MyPluginModel.getPluginNames(autoSwitchedDescriptors))
+            MyPluginModel.joinPluginNamesOrIds(userInitiatedNames),
+            MyPluginModel.joinPluginNamesOrIds(autoSwitchedNames)
           )
           showAutoSwitchNotification(autoSwitchedDescriptors, pluginEnabler, content, enable)
         }

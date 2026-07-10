@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PySetCompExpression;
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl;
+import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +24,7 @@ public class PySetCompExpressionImpl extends PyComprehensionElementImpl implemen
     final var cache = PyBuiltinCache.getInstance(this);
     final var setType = cache.getSetType();
     if (setType != null && resultExpr != null) {
-      final var type = context.getType(resultExpr);
+      final var type = PyLiteralType.upcastLiteralToClass(getResultElementType(resultExpr, context));
       return new PyCollectionTypeImpl(setType.getPyClass(), false, Collections.singletonList(type));
     }
     return setType;

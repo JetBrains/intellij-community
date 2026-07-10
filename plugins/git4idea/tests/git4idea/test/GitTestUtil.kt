@@ -32,6 +32,7 @@ import git4idea.config.GitVersionSpecialty
 import git4idea.log.GitLogProvider
 import git4idea.push.GitPushSource
 import git4idea.push.GitPushTarget
+import git4idea.repo.GitObjectFormat
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -88,10 +89,10 @@ fun createFileStructure(rootDir: VirtualFile, vararg paths: String) {
   rootDir.refresh(false, true)
 }
 
-internal fun initRepo(project: Project?, repoRoot: Path, makeInitialCommit: Boolean) {
+internal fun initRepo(project: Project?, repoRoot: Path, makeInitialCommit: Boolean, objectFormat: GitObjectFormat = GitObjectFormat.SHA1) {
   Files.createDirectories(repoRoot)
   cd(repoRoot.toString())
-  gitInit(project)
+  gitInit(project, "--object-format=${objectFormat.value}")
   setupDefaultUsername(project)
   setupLocalIgnore(repoRoot)
   if (makeInitialCommit) {
@@ -143,8 +144,8 @@ private fun disableGitGc(project: Project) {
  */
 fun createRepository(project: Project, root: String) = createRepository(project, Paths.get(root), true)
 
-internal fun createRepository(project: Project, root: Path, makeInitialCommit: Boolean): GitRepository {
-  initRepo(project, root, makeInitialCommit)
+internal fun createRepository(project: Project, root: Path, makeInitialCommit: Boolean, objectFormat: GitObjectFormat = GitObjectFormat.SHA1): GitRepository {
+  initRepo(project, root, makeInitialCommit, objectFormat)
   LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.resolve(GitUtil.DOT_GIT))!!
   return registerRepo(project, root)
 }

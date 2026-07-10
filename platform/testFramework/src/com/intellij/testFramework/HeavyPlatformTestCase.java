@@ -12,6 +12,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -583,20 +584,24 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   @Override
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    UITestUtil.replaceIdeEventQueueSafely();
-    try {
-      wrapTestRunnable(() -> runBareImpl(testRunnable)).run();
-    }
-    finally {
+    // This override does not delegate to UsefulTestCase#runBare, so it must toggle the stress-test flag itself; otherwise
+    // performance/stress tests executed via JUnit4 (which never calls run(TestResult)) would run with isInStressTest=false.
+    ApplicationManagerEx.runInStressTest(isStressTest(), () -> {
+      UITestUtil.replaceIdeEventQueueSafely();
       try {
-        EdtTestUtil.runInEdtAndWait(() -> {
-          cleanupApplicationCaches(getProject());
-          resetAllFields();
-        });
+        wrapTestRunnable(() -> runBareImpl(testRunnable)).run();
       }
-      catch (Throwable ignored) {
+      finally {
+        try {
+          EdtTestUtil.runInEdtAndWait(() -> {
+            cleanupApplicationCaches(getProject());
+            resetAllFields();
+          });
+        }
+        catch (Throwable ignored) {
+        }
       }
-    }
+    });
   }
 
   private void runBareImpl(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {

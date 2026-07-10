@@ -1,5 +1,5 @@
-// K2_ERROR: Target label does not denote a function.
-// K2_AFTER_ERROR: Unresolved label.
+// K2_AFTER_ERROR: UNRESOLVED_LABEL
+// K2_ERROR: NOT_A_FUNCTION_LABEL
 
 fun testValLabelInReturn() {
     <caret>L@ val fn = { return@L }

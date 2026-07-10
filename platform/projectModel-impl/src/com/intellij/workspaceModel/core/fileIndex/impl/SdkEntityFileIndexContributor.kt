@@ -64,7 +64,19 @@ class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity>, 
     sdkId: SdkId,
   ) : SdkRootFileSetData(sdkId), ModuleOrLibrarySourceRootData
 
-  internal open class SdkRootFileSetData(internal val sdkId: SdkId) : JvmPackageRootDataInternal {
+  internal open class SdkRootFileSetData(override val sdkId: SdkId) : JvmPackageRootDataInternal, SdkFileSetData {
     override val packagePrefix: String = ""
   }
+}
+
+/**
+ * Marker for file sets that belong to an SDK.
+ *
+ * Unlike [SdkEntityFileIndexContributor.SdkRootFileSetData] this interface does NOT extend [JvmPackageRootDataInternal],
+ * so implementors that only need SDK attribution (e.g. external annotation roots) can be recognized as SDK file sets
+ * without making the root participate in JVM package resolution.
+ */
+@ApiStatus.Internal
+interface SdkFileSetData : WorkspaceFileSetData {
+  val sdkId: SdkId
 }

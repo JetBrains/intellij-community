@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.plus
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 import kotlin.io.path.div
@@ -21,11 +22,11 @@ import kotlin.io.path.writeText
  * in modules which match [isPlatformModule].
  */
 fun main(): Unit = runBlocking {
-  generateApiDumps(this, MonorepoProjectStructure.communityProject.modules)
+  generateApiDumps(this, MonorepoProjectStructure.communityProject)
 }
 
-suspend fun generateApiDumps(coroutineScope: CoroutineScope, wantedModules: List<JpsModule>) {
-  val modules = wantedModules
+suspend fun generateApiDumps(coroutineScope: CoroutineScope, project: JpsProject) {
+  val modules = project.modules
     .filter {
       it.isPlatformModule()
       || it.firstContentRoot().let { it != null && (it / MODULE_API_DUMP_FILE_NAME).exists() }
@@ -37,7 +38,7 @@ suspend fun generateApiDumps(coroutineScope: CoroutineScope, wantedModules: List
   for (module in modules) {
     projectApi.discoverModule(module)
   }
-  val exposedThirdPartyApiFilter: FileApiClassFilter = globalExposedThirdPartyClasses(modules)
+  val exposedThirdPartyApiFilter: FileApiClassFilter = globalExposedThirdPartyClasses(project)
   var reviewedModules = 0
   var privateApiExposures = 0
   var privateApiExposuresInUnreviewedModules = 0

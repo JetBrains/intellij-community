@@ -59,7 +59,7 @@ class K2MppRegressionTests : AbstractKotlinMppGradleImportingTest(), ReferenceTa
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "7.6.3+")
+    @PluginTargetVersions(pluginVersion = "2.1.0+", gradleVersion = "7.6.3+")
     fun testComposeApp() {
         doTest {
             onlyCheckers(LibraryKindsChecker)

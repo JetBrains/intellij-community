@@ -5,6 +5,7 @@ import com.intellij.maven.testFramework.assertWithinTimeout
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Disposer
@@ -146,6 +147,7 @@ abstract class AbstractMavenImportingTest : KotlinMavenImportingTestCase() {
     }
 
     protected open fun checkExpected(afterDirectory: Path) {
+        FileDocumentManager.getInstance().saveAllDocuments()
         val expected = afterDirectory.refreshAndGetVirtualDirectory()
         PlatformTestUtil.assertDirectoriesEqual(
             expected,

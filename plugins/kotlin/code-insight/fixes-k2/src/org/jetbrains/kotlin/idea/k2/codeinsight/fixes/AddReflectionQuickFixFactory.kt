@@ -10,9 +10,9 @@ import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager
-import org.jetbrains.kotlin.idea.configuration.KotlinLibraryVersionProvider
 import org.jetbrains.kotlin.idea.configuration.isProjectSyncPendingOrInProgress
 import org.jetbrains.kotlin.idea.configuration.withScope
+import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.inspections.libraries.AddKotlinLibraryQuickFix
 
 internal object AddReflectionQuickFixFactory {
@@ -27,9 +27,7 @@ internal object AddReflectionQuickFixFactory {
       ?: return@ModCommandBased emptyList()
     if (dependencyManager.isProjectSyncPendingOrInProgress()) return@ModCommandBased emptyList()
 
-    val version = KotlinLibraryVersionProvider.EP_NAME.extensionList.firstNotNullOfOrNull {
-      it.getVersion(module, GROUP_ID, ARTIFACT_ID)
-    } ?: KotlinPluginLayout.standaloneCompilerVersion.artifactVersion
+    val version = (getRuntimeLibraryVersion(module) ?: KotlinPluginLayout.standaloneCompilerVersion).artifactVersion
 
     val virtualFile = element.containingFile.virtualFile
     val scope = if (virtualFile != null && ProjectFileIndex.getInstance(module.project).isInTestSourceContent(virtualFile)) {

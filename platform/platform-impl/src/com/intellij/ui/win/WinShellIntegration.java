@@ -2,7 +2,6 @@
 package com.intellij.ui.win;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.Service;
@@ -12,7 +11,6 @@ import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Path;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -37,6 +35,7 @@ final class WinShellIntegration implements Disposable {
       parent.clearRecentTasksList();
     }
 
+    @SuppressWarnings("SSBasedInspection")
     void setRecentTasksList(@NotNull JumpTask @NotNull [] recentTasks) {
       parent.setRecentTasksList(recentTasks);
     }
@@ -105,9 +104,6 @@ final class WinShellIntegration implements Disposable {
         return;
       }
 
-      var appId = ApplicationInfo.getInstance().getFullApplicationName();
-      setAppUserModelIdNative(appId);
-
       initializeNative();
 
       nativeIsInitialized = true;
@@ -116,16 +112,13 @@ final class WinShellIntegration implements Disposable {
     private final ThreadPoolExecutor comExecutor = ConcurrencyUtil.newSingleThreadExecutor("Windows Shell integration");
     private boolean nativeIsInitialized = false;
 
-    // NB: does not require native to be initialized
-    private native void setAppUserModelIdNative(String appUserModelId);
-
     private native void initializeNative();
     private native void clearRecentTasksListNative();
     private native void setRecentTasksListNative(JumpTask[] recentTasks);
 
     static {
       var lib = PathManager.findBinFile("WinShellIntegrationBridge.dll");
-      assert lib != null : "Shell Integration lib missing; bin=" + NioFiles.list(Path.of(PathManager.getBinPath()));
+      assert lib != null : "Shell Integration lib missing; bin=" + NioFiles.list(PathManager.getBinDir());
       System.load(lib.toString());
     }
   }

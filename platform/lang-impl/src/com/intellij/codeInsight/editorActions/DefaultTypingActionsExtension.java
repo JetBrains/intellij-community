@@ -9,6 +9,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -126,6 +127,9 @@ public class DefaultTypingActionsExtension implements TypingActionsExtension {
   }
 
   protected void adjustLineIndent(@NotNull Project project, @NotNull Editor editor, int startOffset, int endOffset) {
+    if (!Elf.getElf().isPsiInteractionAllowed()) {
+      return;
+    }
     Document document = editor.getDocument();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     documentManager.commitDocument(document);

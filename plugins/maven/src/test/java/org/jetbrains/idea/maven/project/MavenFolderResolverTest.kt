@@ -3,13 +3,13 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
-import org.jetbrains.idea.maven.fixtures.createProjectPom
-import org.jetbrains.idea.maven.fixtures.importProjectAsync
-import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail

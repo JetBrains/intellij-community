@@ -11,7 +11,7 @@ import java.util.Map;
 
 public class ConvertStringIntentionTest extends GroovyLatestTest implements ActionTest {
   @Test
-  public void convert_single_quoted_to_dollar_slashy() {
+  public void convertSingleQuotedToDollarSlashy() {
     LinkedHashMap<String, String> data = new LinkedHashMap<>();
     data.put("/", "/");
     data.put("$", "$$");
@@ -29,7 +29,7 @@ public class ConvertStringIntentionTest extends GroovyLatestTest implements Acti
   }
 
   @Test
-  public void convert_slashy_to_dollar_slashy() {
+  public void convertSlashyToDollarSlashy() {
     LinkedHashMap<String, String> data = new LinkedHashMap<>();
     data.put("\\/", "/");
     data.put("$", "$$");
@@ -41,6 +41,20 @@ public class ConvertStringIntentionTest extends GroovyLatestTest implements Acti
     for (Map.Entry<String, String> entry : data.entrySet()) {
       doActionTest(GroovyIntentionsBundle.message("convert.to.dollar.slash.regex.intention.name"), "print(<caret>/" + entry.getKey() + "/)",
                    "print(<caret>$/" + entry.getValue() + "/$)");
+    }
+  }
+
+  @Test
+  public void convertDollarSlashyToGString() {
+    LinkedHashMap<String, String> data = new LinkedHashMap<>();
+    data.put("\\u21aF", "\u21aF");
+    data.put("\\\\u21aF", "\\\\\\\\u21aF");
+    for (Map.Entry<String, String> entry : data.entrySet()) {
+      doActionTest(
+        GroovyIntentionsBundle.message("convert.string.to.g.string.intention.name"),
+        "print(<caret>$/" + entry.getKey() + "/$)",
+        "print(<caret>\"" + entry.getValue() + "\")"
+      );
     }
   }
 }

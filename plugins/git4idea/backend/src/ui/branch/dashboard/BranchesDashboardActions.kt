@@ -1,12 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
-import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
 import com.intellij.dvcs.DvcsUtil.disableActionIfAnyRepositoryIsFresh
-import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.getCommonCurrentBranch
 import com.intellij.dvcs.ui.DvcsBundle
-import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -15,7 +12,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CompositeShortcutSet
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.ApplicationBundle
@@ -48,7 +44,6 @@ import git4idea.remote.removeRemotes
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import git4idea.ui.branch.BranchGroupingAction
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.createOrCheckoutNewBranch
 import git4idea.ui.branch.hasRemotes
@@ -56,7 +51,6 @@ import git4idea.ui.branch.isTrackingInfosExist
 import git4idea.ui.branch.updateBranches
 import org.jetbrains.annotations.Nls
 import java.util.Locale
-import java.util.function.Supplier
 import javax.swing.Icon
 
 internal object BranchesDashboardActions {
@@ -500,46 +494,6 @@ internal object BranchesDashboardActions {
   class ChangeBranchFilterAction : SelectionHandlingModeAction(BranchesDashboardTreeSelectionHandler.SelectionAction.FILTER)
 
   class NavigateLogToBranchAction : SelectionHandlingModeAction(BranchesDashboardTreeSelectionHandler.SelectionAction.NAVIGATE)
-
-  class GroupingSettingsGroup : DefaultActionGroup(), DumbAware {
-    override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.EDT
-    }
-
-    override fun update(e: AnActionEvent) {
-      e.presentation.isPopupGroup = GroupBranchByRepositoryAction.isEnabledAndVisible(e)
-    }
-  }
-
-  class GroupBranchByDirectoryAction : BranchGroupingAction(GroupingKey.GROUPING_BY_DIRECTORY) {
-    override fun update(e: AnActionEvent) {
-      super.update(e)
-
-      val groupByDirectory: Supplier<String> = DvcsBundle.messagePointer("action.text.branch.group.by.directory")
-      val groupingSeparator: () -> String = messagePointer("group.Git.Log.Branches.Grouping.Settings.text")
-
-      e.presentation.text =
-        if (GroupBranchByRepositoryAction.isEnabledAndVisible(e)) groupByDirectory.get() //NON-NLS
-        else groupingSeparator() + " " + groupByDirectory.get() //NON-NLS
-    }
-
-    override fun setSelected(e: AnActionEvent, state: Boolean) {
-      super.setSelected(e, state)
-      e.project?.let { saveSettingsForRemoteDevelopment(e.coroutineScope, it) }
-    }
-  }
-
-  class GroupBranchByRepositoryAction : BranchGroupingAction(GroupingKey.GROUPING_BY_REPOSITORY) {
-    override fun update(e: AnActionEvent) {
-      super.update(e)
-      e.presentation.isEnabledAndVisible = isEnabledAndVisible(e)
-    }
-
-    companion object {
-      fun isEnabledAndVisible(e: AnActionEvent): Boolean =
-        e.project?.let(RepositoryChangesBrowserNode.Companion::getColorManager)?.hasMultiplePaths() ?: false
-    }
-  }
 
   class HideBranchesAction : DumbAwareAction() {
     override fun getActionUpdateThread(): ActionUpdateThread {

@@ -7,5 +7,7 @@ interface Foo {
 
 context(c1: Foo)
 fun String.bar() {
-    foo()
+    with(c1) {
+        this@bar.foo()
+    }
 }

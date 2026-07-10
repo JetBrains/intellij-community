@@ -28,6 +28,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="PROVIDED" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
@@ -39,7 +40,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="PROVIDED" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
   </component>

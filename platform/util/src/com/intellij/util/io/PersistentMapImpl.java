@@ -286,7 +286,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
         myEnumerator.lockStorageWrite();
         try {
           long previousRecord;
-          final int id;
+          int id;
           if (myDirectlyStoreLongFileOffsetMode) {
             previousRecord = ((PersistentBTreeEnumerator<Key>)myEnumerator).getNonNegativeValue(key);
             id = -1;
@@ -296,7 +296,10 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
             previousRecord = readValueId(id);
           }
 
-          long headerRecord = myValueStorage.appendBytes(bytes.toByteArraySequence(), previousRecord);
+          long headerRecord = myValueStorage.appendBytes(
+            bytes.getInternalBuffer(), 0, bytes.size(),
+            previousRecord
+          );
 
           if (myDirectlyStoreLongFileOffsetMode) {
             ((PersistentBTreeEnumerator<Key>)myEnumerator).putNonNegativeValue(key, headerRecord);

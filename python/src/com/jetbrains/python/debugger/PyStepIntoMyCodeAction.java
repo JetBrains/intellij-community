@@ -79,7 +79,7 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase
       return;
     }
     if (session.getDebugProcess() instanceof PyStepIntoSupport support) {
-      String reason = support.getCanApplyJustMyCodeChange() ? support.getStepIntoMyCodeUnavailableReason() : null;
+      String reason = support.getStepIntoMyCodeUnavailableReason();
       event.getPresentation().setDescription(reason != null ? reason : "");
     }
   }
@@ -99,6 +99,9 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase
     if (!(session.getDebugProcess() instanceof PyStepIntoSupport support)) return null;
     if (support.isStepIntoMyCodeAvailable()) return null;
     if (!support.getCanApplyJustMyCodeChange()) return null;
-    return new TooltipLink(PyBundle.message("debugger.step.into.my.code.switch.link"), () -> support.applyJustMyCodeChange(true));
+    String messageKey = support.getWillRestartOnJustMyCodeChange()
+      ? "debugger.step.into.my.code.switch.link"
+      : "debugger.step.into.my.code.switch.link.no.restart";
+    return new TooltipLink(PyBundle.message(messageKey), () -> support.applyJustMyCodeChange(true));
   }
 }

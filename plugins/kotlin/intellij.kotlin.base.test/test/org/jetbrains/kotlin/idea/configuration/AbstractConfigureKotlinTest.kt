@@ -9,24 +9,42 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.job
+import kotlinx.coroutines.joinAll
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.configuration.ui.KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME
 import org.junit.Assert
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.minutes
 
 abstract class AbstractConfigureKotlinTest : AbstractConfigureKotlinTestBase() {
+    override fun runInDispatchThread(): Boolean = false
+
     protected fun doTestConfigureModulesWithNonDefaultSetup(configurator: KotlinWithLibraryConfigurator<*>) {
         modules.forEach { assertNotConfigured(it, configurator) }
-        configurator.configure(myProject, emptyList())
-        IndexingTestUtil.waitUntilIndexesAreReady(project)
+        runInEdtAndGet {
+            configurator.configure(myProject, emptyList())
+        }
+        waitConfiguredAndIndexed()
         modules.forEach { assertProperlyConfigured(it, configurator) }
     }
 
+    protected fun waitConfiguredAndIndexed() {
+        timeoutRunBlocking(1.minutes) {
+            coroutineScope.coroutineContext.job.children.toList().joinAll()
+        }
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
+    }
+
     override fun setUp() {
-        super.setUp()
-        waitForKotlinSettingsConfiguration()
+        runInEdtAndGet {
+            super.setUp()
+            waitForKotlinSettingsConfiguration()
+        }
     }
 
     private fun waitForKotlinSettingsConfiguration() {
@@ -92,7 +110,7 @@ abstract class AbstractConfigureKotlinTest : AbstractConfigureKotlinTestBase() {
               writeAction.invoke()
             }
         }
-        IndexingTestUtil.waitUntilIndexesAreReady(project)
+        waitConfiguredAndIndexed()
         collector.showNotification()
     }
 

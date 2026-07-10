@@ -1,6 +1,11 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.groovy.spock.rt` start
+
+jvm_provided_library(
+    name = "libraries_junit4_provided",
+    lib = "//libraries/junit4",
+)
 
 jvm_library(
     name = "spock-rt",
@@ -18,9 +23,9 @@ jvm_library(
     deps = [
         # do not sort,
         "//plugins/junit_rt:junit-rt",
-        "@lib//:junit4-provided",
         "@lib//:groovy-spock-rt-spockframework-spock-core-provided",
         "@lib//:opentest4j-provided",
+        ":libraries_junit4_provided",
     ],
 )
 
@@ -38,7 +43,8 @@ jvm_library(
         # do not sort,
         ":spock-rt",
         "//plugins/junit_rt:junit-rt_test_lib",
-        "@lib//:junit4-provided",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "@lib//:groovy-spock-rt-spockframework-spock-core-provided",
         "@lib//:opentest4j-provided",
     ],

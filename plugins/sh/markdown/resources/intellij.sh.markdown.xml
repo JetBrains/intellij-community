@@ -1,12 +1,11 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="org.intellij.plugins.markdown"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.markdown"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.sh.core"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="org.intellij.markdown">
     <markdownRunner implementation="com.intellij.sh.markdown.ShMarkdownRunner"/>
   </extensions>

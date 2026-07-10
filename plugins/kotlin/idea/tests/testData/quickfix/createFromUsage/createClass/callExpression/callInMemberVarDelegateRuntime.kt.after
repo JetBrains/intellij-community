@@ -1,5 +1,3 @@
-import kotlin.properties.ReadWriteProperty
-
 // "Create class 'Foo'" "true"
 // DISABLE_ERRORS
 // IGNORE_K2

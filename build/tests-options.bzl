@@ -58,6 +58,7 @@ JAVA_TEST_FLAGS = [
     "-Didea.reset.classpath.from.manifest=true",
     "-Dintellij.build.use.compiled.classes=false",
     "-Djava.util.zip.use.nio.for.zip.file.access=true",
+    "-ea",
 ]
 
 JAVA_TEST_ARGS = [

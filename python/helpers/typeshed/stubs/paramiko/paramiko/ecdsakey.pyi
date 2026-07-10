@@ -1,11 +1,11 @@
 from _typeshed import FileDescriptorOrPath, ReadableBuffer
 from collections.abc import Callable, Sequence
-from typing import IO, Any
+from typing import Any
 
 from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurve, EllipticCurvePrivateKey, EllipticCurvePublicKey
 from cryptography.hazmat.primitives.hashes import HashAlgorithm
 from paramiko.message import Message
-from paramiko.pkey import PKey
+from paramiko.pkey import PKey, _HasReadlines
 
 class _ECDSACurve:
     nist_name: str
@@ -35,9 +35,11 @@ class ECDSAKey(PKey):
         filename: FileDescriptorOrPath | None = None,
         password: str | None = None,
         vals: tuple[EllipticCurvePrivateKey, EllipticCurvePublicKey] | None = None,
-        file_obj: IO[str] | None = None,
+        file_obj: _HasReadlines | None = None,
         validate_point: bool = True,
     ) -> None: ...
+    @classmethod
+    def identifiers(cls) -> list[str]: ...
     @classmethod
     def supported_key_format_identifiers(cls: Any) -> list[str]: ...
     def asbytes(self) -> bytes: ...
@@ -47,8 +49,8 @@ class ECDSAKey(PKey):
     def can_sign(self) -> bool: ...
     def sign_ssh_data(self, data: bytes, algorithm: str | None = None) -> Message: ...
     def verify_ssh_sig(self, data: bytes, msg: Message) -> bool: ...
-    def write_private_key_file(self, filename: FileDescriptorOrPath, password: str | None = None) -> None: ...
-    def write_private_key(self, file_obj: IO[str], password: str | None = None) -> None: ...
+    @property
+    def private_key(self) -> EllipticCurvePrivateKey | None: ...
     @classmethod
     def generate(
         cls, curve: EllipticCurve = ..., progress_func: Callable[..., object] | None = None, bits: int | None = None

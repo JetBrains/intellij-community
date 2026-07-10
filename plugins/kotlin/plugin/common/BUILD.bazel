@@ -20,6 +20,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//plugins/kotlin/base/resources:kotlin-base-resources",
         "@lib//:kotlin-stdlib",
         "@lib//:jetbrains-annotations",
     ],
@@ -34,7 +35,11 @@ jvm_library(
     ),
     module_name = "kotlin.plugin.common",
     visibility = ["//visibility:public"],
-    runtime_deps = [":common"],
+    runtime_deps = [
+        # do not sort,
+        ":common",
+        "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    ],
 )
 ### auto-generated section `build kotlin.plugin.common` end
 

@@ -47,8 +47,13 @@
       "lineSeparatorColor": "#6A6173"
     },
 
-    "Island.arc": 0,
-    "Island.arc.compact": 0,
+    "Island": {
+      "arc": 0,
+      "arc.compact": 0,
+      "ToolWindow.insets": "1,0,0,0",
+      "Editor.insets": "0,0,0,0"
+    },
+    "Islands.emptyGap": 0,
 
     "ActionButton": {
       "hoverBackground": "#000000",
@@ -623,7 +628,9 @@
 
     "TitlePane.Button.hoverBackground": "#3333FF",
 
-    "Window.border" : "1,1,1,1,E6E6E6",
+    "Dialog.border": {
+      "os.linux": "1,1,1,1,E6E6E6"
+    },
 
     "textInactiveText" : "#E0861F",
 

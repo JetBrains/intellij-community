@@ -5,6 +5,7 @@ import com.intellij.codeInsight.navigation.activateFileWithPsiElement
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces.PROJECT_VIEW_POPUP
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -20,6 +21,7 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.CommandProcessorEx
 import com.intellij.openapi.command.UndoConfirmationPolicy
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
@@ -33,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
@@ -51,7 +52,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.codeInsight.pathBeforeJavaToKotlinConversion
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
-import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
+import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.statistics.ConversionType
@@ -59,19 +60,19 @@ import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getAllFilesRecursively
 import org.jetbrains.kotlin.j2k.ConverterSettings
+import org.jetbrains.kotlin.j2k.ConversionResult
+import org.jetbrains.kotlin.j2k.ExternalCodeProcessing
+import org.jetbrains.kotlin.j2k.J2KKotlinConfigurationService
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
 import org.jetbrains.kotlin.j2k.J2kPostprocessorExtension
 import org.jetbrains.kotlin.j2k.J2kPreprocessorExtension
-import org.jetbrains.kotlin.j2k.convertJavaFilesToKotlin
-import org.jetbrains.kotlin.j2k.getJ2kKind
 import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.ExternalUsagesFixer
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.io.path.notExists
+import kotlin.time.TimedValue
 import kotlin.time.measureTimedValue
 
 class JavaToKotlinActionGroup : DefaultActionGroup() {
@@ -103,10 +104,9 @@ open class JavaToKotlinAction : AnAction() {
             showNothingToConvertErrorMessage(project)
             return
         }
-        val j2kKind = getJ2kKind()
-        val j2kConverterExtension = J2kConverterExtension.extension(j2kKind)
+        val configurationService = project.service<J2KKotlinConfigurationService>()
         if (shouldSkipConversionOfErroneousCode(javaFiles, project)) return
-        if (j2kConverterExtension.doCheckBeforeConversion(project, module)) {
+        if (configurationService.checkKotlinIsConfigured(module)) {
             val launch = e.coroutineScope.launch {
                 JavaToKotlinActionHandler.convertFiles(
                     files = javaFiles,
@@ -116,7 +116,7 @@ open class JavaToKotlinAction : AnAction() {
             }
             j2kJob?.set(launch)
         } else {
-            j2kConverterExtension.setUpAndConvert(project, module, javaFiles) { files, project, module ->
+            configurationService.setUpAndConvert(module, javaFiles) { files, project, module ->
                 val launch = e.coroutineScope.launch {
                     JavaToKotlinActionHandler.convertFiles(
                         files = files,
@@ -205,44 +205,19 @@ object JavaToKotlinActionHandler {
         module: Module,
         enableExternalCodeProcessing: Boolean = true,
         askExternalCodeProcessing: Boolean = true,
-        bodyFilter: ((PsiElement) -> Boolean)? = null,
         settings: ConverterSettings = ConverterSettings.defaultSettings,
-        preprocessorExtensions: List<J2kPreprocessorExtension> = J2kPreprocessorExtension.EP_NAME.extensionList,
-        postprocessorExtensions: List<J2kPostprocessorExtension> = J2kPostprocessorExtension.EP_NAME.extensionList
     ) {
         val javaFiles = files.filter { it.virtualFile.isWritable }.ifEmpty { return }
-        val j2kKind = getJ2kKind()
 
-        val (result, conversionTime) = measureTimedValue {
-            withModalProgress(project, phaseDescription) {
-                withCommandOnEdt(project) {
-                    convertJavaFilesToKotlin(
-                        files = javaFiles,
-                        project = project,
-                        module = module,
-                        bodyFilter = bodyFilter,
-                        settings = settings,
-                        preprocessorExtensions = preprocessorExtensions,
-                        postprocessorExtensions = postprocessorExtensions,
-                        j2kKind = j2kKind,
-                    )
-                }
-            }
-        }
-
-        // TODO: Support K2 J2K in FUS
-        J2KFusCollector.log(
-            ConversionType.FILES,
-            j2kKind == K1_NEW,
-            conversionTime.inWholeMilliseconds,
-            result.javaLines,
-            javaFiles.size
+        val result = runConversion(
+            javaFiles = javaFiles,
+            project = project,
+            module = module,
+            settings = settings,
         )
 
         val externalCodeProcessing = result.externalCodeProcessing
-        val usages = if (enableExternalCodeProcessing && externalCodeProcessing != null) readAction {
-            result.externalCodeProcessing.collectUsages()
-        } else emptyList()
+        val usages = collectExternalUsages(enableExternalCodeProcessing, externalCodeProcessing)
 
         val userConfirmed = !askExternalCodeProcessing || withContext(Dispatchers.EDT) {
             Messages.showYesNoDialog(
@@ -253,32 +228,75 @@ object JavaToKotlinActionHandler {
             ) == Messages.YES
         }
 
+        commitConversionResult(
+            project = project,
+            result = result,
+            externalCodeProcessing = externalCodeProcessing,
+            usages = usages,
+            userConfirmed = userConfirmed,
+        )
+    }
+
+    private suspend fun runConversion(
+        javaFiles: List<PsiJavaFile>,
+        project: Project,
+        module: Module,
+        settings: ConverterSettings,
+    ): ConversionResult {
+        val (result, conversionTime) = measureTimedValue {
+            withModalProgress(project, phaseDescription) {
+                withCommandOnEdt(project) {
+                    J2kConverterExtension.convertJavaFilesToKotlin(
+                        files = javaFiles,
+                        project = project,
+                        module = module,
+                        settings = settings,
+                    )
+                }
+            }
+        }
+
+        J2KFusCollector.log(
+            ConversionType.FILES,
+            conversionTime.inWholeMilliseconds,
+            result.javaLines,
+            javaFiles.size
+        )
+
+        return result
+    }
+
+    private suspend fun collectExternalUsages(
+        enableExternalCodeProcessing: Boolean,
+        externalCodeProcessing: ExternalCodeProcessing?,
+    ): List<ExternalUsagesFixer.JKMemberInfoWithUsages> {
+        if (!enableExternalCodeProcessing || externalCodeProcessing == null) return emptyList()
+        return readAction { externalCodeProcessing.collectUsages() }
+    }
+
+    private suspend fun commitConversionResult(
+        project: Project,
+        result: ConversionResult,
+        externalCodeProcessing: ExternalCodeProcessing?,
+        usages: List<ExternalUsagesFixer.JKMemberInfoWithUsages>,
+        userConfirmed: Boolean,
+    ) {
         withCommandOnEdt(project) {
+            val preparedResults = prepareResultsToSave(result.kotlinCodeByJavaFile)
             val newFiles = edtWriteAction {
-                saveResults(result.kotlinCodeByJavaFile)
-                    .map { it.toPsiFile(project) as KtFile }
-                    .onEach { it.commitAndUnblockDocument() }
+                applyResults(project, preparedResults)
             }
 
-            if (externalCodeProcessing != null) {
-                val contextElement = newFiles.firstOrNull()
-                if (contextElement != null) {
-                    readAction {
-                        analyze(contextElement) {
-                            externalCodeProcessing.bindJavaDeclarationsToConvertedKotlinOnes(newFiles)
-                        }
-                    }
-                }
+            bindExternalCodeProcessing(project, externalCodeProcessing, newFiles)
 
-                if (userConfirmed && usages.isNotEmpty()) {
-                    edtWriteAction {
-                        ExternalUsagesFixer(usages).fix()
-                    }
+            if (externalCodeProcessing != null && userConfirmed && usages.isNotEmpty()) {
+                edtWriteAction {
+                    ExternalUsagesFixer(usages).fix()
                 }
             }
 
             edtWriteAction {
-                PsiDocumentManager.getInstance(project).commitAllDocuments()
+                FileDocumentManager.getInstance().saveAllDocuments()
                 newFiles.singleOrNull()?.let {
                     FileEditorManager.getInstance(project).openFile(it.virtualFile, true)
                 }
@@ -286,51 +304,93 @@ object JavaToKotlinActionHandler {
         }
     }
 
-    private fun saveResults(kotlinCodeByJavaFile: Map<PsiJavaFile, String>): List<VirtualFile> {
-        fun uniqueKotlinFileName(javaFile: VirtualFile): String {
-            val nioFile = javaFile.fileSystem.getNioPath(javaFile)
-
-            var i = 0
-            while (true) {
-                val fileName = javaFile.nameWithoutExtension + (if (i > 0) i else "") + ".kt"
-                if (nioFile == null || nioFile.resolveSibling(fileName).notExists()) return fileName
-                i++
+    private fun bindExternalCodeProcessing(
+        project: Project,
+        externalCodeProcessing: ExternalCodeProcessing?,
+        newFiles: List<KtFile>,
+    ) {
+        if (externalCodeProcessing == null) return
+        val contextElement = newFiles.firstOrNull() ?: return
+        project.runReadActionInSmartMode {
+            analyze(contextElement) {
+                externalCodeProcessing.bindJavaDeclarationsToConvertedKotlinOnes(newFiles)
             }
         }
+    }
 
-        val result = ArrayList<VirtualFile>()
+    private fun prepareResultsToSave(kotlinCodeByJavaFile: Map<PsiJavaFile, String>): List<PreparedConversionResult> {
+        val reservedFileNamesByDirectory = mutableMapOf<VirtualFile, MutableSet<String>>()
+        val result = ArrayList<PreparedConversionResult>()
         for ((psiFile, text) in kotlinCodeByJavaFile) {
-            try {
-                val document = PsiDocumentManager.getInstance(psiFile.project).getDocument(psiFile)
-                val errorMessage = when {
-                    document == null -> KotlinBundle.message("action.j2k.error.cant.find.document", psiFile.name)
-                    !document.isWritable -> KotlinBundle.message("action.j2k.error.read.only", psiFile.name)
-                    else -> null
-                }
-                if (errorMessage != null) {
-                    val message = KotlinBundle.message("action.j2k.error.cant.save.result", errorMessage)
-                    MessagesEx.error(psiFile.project, message).showLater()
-                    continue
-                }
-                document!!.replaceString(0, document.textLength, text)
-                FileDocumentManager.getInstance().saveDocument(document)
-
-                val virtualFile = psiFile.virtualFile
-                if (ScratchRootType.getInstance().containsFile(virtualFile)) {
-                    val mapping = ScratchFileService.getInstance().scratchesMapping
-                    mapping.setMapping(virtualFile, KotlinFileType.INSTANCE.language)
-                } else {
-                    val fileName = uniqueKotlinFileName(virtualFile)
-                    virtualFile.putUserData(pathBeforeJavaToKotlinConversion, virtualFile.path)
-                    virtualFile.rename(this, fileName)
-                }
-                result += virtualFile
-            } catch (e: IOException) {
-                MessagesEx.error(psiFile.project, e.message ?: "").showLater()
+            val document = PsiDocumentManager.getInstance(psiFile.project).getDocument(psiFile)
+            val errorMessage = when {
+                document == null -> KotlinBundle.message("action.j2k.error.cant.find.document", psiFile.name)
+                !document.isWritable -> KotlinBundle.message("action.j2k.error.read.only", psiFile.name)
+                else -> null
             }
+            if (errorMessage != null) {
+                val message = KotlinBundle.message("action.j2k.error.cant.save.result", errorMessage)
+                MessagesEx.error(psiFile.project, message).showLater()
+                continue
+            }
+
+            val virtualFile = psiFile.virtualFile
+            val newFileName = if (ScratchRootType.getInstance().containsFile(virtualFile)) {
+                null
+            } else {
+                uniqueKotlinFileName(virtualFile, reservedFileNamesByDirectory)
+            }
+            result += PreparedConversionResult(virtualFile, document!!, text, newFileName)
         }
         return result
     }
+
+    private fun applyResults(project: Project, preparedResults: List<PreparedConversionResult>): List<KtFile> {
+        val updatedFiles = ArrayList<VirtualFile>()
+        preparedResults.forEach { preparedResult ->
+            preparedResult.document.replaceString(0, preparedResult.document.textLength, preparedResult.text)
+        }
+        for ((virtualFile, _, _, newFileName) in preparedResults) {
+            try {
+                if (newFileName == null) {
+                    val mapping = ScratchFileService.getInstance().scratchesMapping
+                    mapping.setMapping(virtualFile, KotlinFileType.INSTANCE.language)
+                } else {
+                    virtualFile.putUserData(pathBeforeJavaToKotlinConversion, virtualFile.path)
+                    virtualFile.rename(this, newFileName)
+                }
+                updatedFiles += virtualFile
+            } catch (e: IOException) {
+                MessagesEx.error(project, e.message ?: "").showLater()
+            }
+        }
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+        return updatedFiles.mapNotNull { it.toPsiFile(project) as? KtFile }
+    }
+
+    private fun uniqueKotlinFileName(
+        javaFile: VirtualFile,
+        reservedFileNamesByDirectory: MutableMap<VirtualFile, MutableSet<String>>,
+    ): String {
+        val parent = javaFile.parent
+        val reservedFileNames = reservedFileNamesByDirectory.getOrPut(parent) {
+            parent.children.mapTo(mutableSetOf()) { it.name }
+        }
+
+        var i = 0
+        while (true) {
+            val fileName = javaFile.nameWithoutExtension + (if (i > 0) i else "") + ".kt"
+            if (reservedFileNames.add(fileName)) return fileName
+            i++
+        }
+    }
+
+    private data class PreparedConversionResult(
+        val virtualFile: VirtualFile,
+        val document: Document,
+        val text: String,
+        val newFileName: String?,
+    )
 }
 
 private fun isBuiltInActionEnabled(e: AnActionEvent): Boolean {
@@ -362,7 +422,7 @@ private fun isBuiltInActionEnabled(e: AnActionEvent): Boolean {
     return files.any(::isWritableJavaFile)
 }
 
-suspend inline fun <T> withCommandOnEdt(project: Project, action: () -> T): T {
+suspend inline fun <T> withCommandOnEdt(project: Project, crossinline action: suspend () -> T): T {
     val commandProcessor = CommandProcessor.getInstance() as CommandProcessorEx
     val token = withContext(Dispatchers.EDT) {
         writeIntentReadAction {
@@ -376,7 +436,7 @@ suspend inline fun <T> withCommandOnEdt(project: Project, action: () -> T): T {
     }
     var throwable: Throwable? = null
     return try {
-        action()
+        withContext(Dispatchers.Default) { action() }
     } catch (e: Throwable) {
         throwable = e
         throw e

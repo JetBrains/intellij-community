@@ -19,6 +19,7 @@ import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterType
 import com.jetbrains.python.codeInsight.parseDataclassParameters
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
 import com.jetbrains.python.psi.PyAnnotation
 import com.jetbrains.python.psi.PyAnnotationOwner
 import com.jetbrains.python.psi.PyAugAssignmentStatement
@@ -79,8 +80,8 @@ class PyFinalInspection : PyInspection() {
 
         @NlsSafe val superClassList = finalSuperClasses.joinToString { "'${it.name}'" }
         registerProblem(node.nameIdentifier,
-                        PyPsiBundle.message("INSP.final.super.classes.are.marked.as.final.and.should.not.be.subclassed",
-                                            superClassList, finalSuperClasses.size))
+                        PyPsiBundle.problemMessage("INSP.final.super.classes.are.marked.as.final.and.should.not.be.subclassed",
+                                                   superClassList, finalSuperClasses.size))
       }
 
       if (!PyiUtil.isInsideStub(node)) {
@@ -92,6 +93,7 @@ class PyFinalInspection : PyInspection() {
       }
 
       checkOverridingInheritedFinalWithNewOne(node)
+      checkOverridingInheritedNonFinalWithFinal(node)
     }
 
     override fun visitPyFunction(node: PyFunction) {
@@ -112,7 +114,8 @@ class PyFinalInspection : PyInspection() {
             ?.let {
               @NlsSafe val qualifiedName = it.qualifiedName ?: (it.containingClass?.name + "." + it.name)
               registerProblem(node.nameIdentifier,
-                              PyPsiBundle.message("INSP.final.method.marked.as.final.should.not.be.overridden", qualifiedName))
+                              PyPsiBundle.problemMessage("INSP.final.method.marked.as.final.should.not.be.overridden",
+                                                         CodifiedParam.ofReference(it, qualifiedName)))
             }
         }
         if (!PyiUtil.isInsideStub(node)) {
@@ -318,8 +321,33 @@ class PyFinalInspection : PyInspection() {
 
       for (commonFinal in newFinals.keys.intersect(inheritedFinals.keys)) {
         @NlsSafe val qualifiedName = "$ancestorName.$commonFinal"
-        registerProblem(newFinals[commonFinal], PyPsiBundle.message("INSP.final.final.attribute.could.not.be.overridden", qualifiedName))
+        registerProblem(newFinals[commonFinal], PyPsiBundle.problemMessage("INSP.final.final.attribute.could.not.be.overridden", qualifiedName))
         notRegistered.remove(commonFinal)
+      }
+    }
+
+    private fun checkOverridingInheritedNonFinalWithFinal(cls: PyClass) {
+      // A final attribute initialized in a class body is a class variable (PEP 591). Overriding a writable
+      // inherited attribute with a final one narrows it to read-only, which violates the Liskov substitution
+      // principle. Overriding an inherited *final* attribute is reported by checkOverridingInheritedFinalWithNewOne.
+      val newClassLevelFinals = cls.classAttributes
+        .filter { isFinal(it) }
+        .mapNotNull { attribute -> attribute.name?.let { it to attribute } }
+        .toMap()
+      if (newClassLevelFinals.isEmpty()) return
+
+      val notRegistered = newClassLevelFinals.keys.toMutableSet()
+      for (ancestor in cls.getAncestorClasses(myTypeEvalContext)) {
+        if (notRegistered.isEmpty()) break
+        for (name in notRegistered.toList()) {
+          val inherited = ancestor.findClassAttribute(name, false, myTypeEvalContext) ?: continue
+          // The nearest ancestor declaring the attribute decides which message (if any) applies.
+          notRegistered.remove(name)
+          if (!isFinal(inherited) && inherited.hasExplicitType()) {
+            registerProblem(newClassLevelFinals.getValue(name),
+                            PyPsiBundle.message("INSP.final.can.not.override.non.final.attribute.with.final", name, ancestor.name))
+          }
+        }
       }
     }
 
@@ -370,12 +398,12 @@ class PyFinalInspection : PyInspection() {
 
       for (e in resolved.mapNotNull { it as? PyTargetExpression }) {
         if (isFinal(e) && !PyDefUseUtil.isDefinedBefore(target, e)) {
-          registerProblem(target, PyPsiBundle.message("INSP.final.final.target.could.not.be.reassigned", target.name))
+          registerProblem(target, PyPsiBundle.problemMessage("INSP.final.final.target.could.not.be.reassigned", target.name))
           return
         }
         if (e.parent.let { it is PyNonlocalStatement || it is PyGlobalStatement } &&
             PyUtil.multiResolveTopPriority(e, resolveContext).any { it is PyTargetExpression && isFinal(it) }) {
-          registerProblem(target, PyPsiBundle.message("INSP.final.final.target.could.not.be.reassigned", target.name))
+          registerProblem(target, PyPsiBundle.problemMessage("INSP.final.final.target.could.not.be.reassigned", target.name))
           return
         }
       }
@@ -394,7 +422,7 @@ class PyFinalInspection : PyInspection() {
           isFinal = resolvesToClassVarFinal(classAttribute.annotation?.value)
         }
         if (isFinal) {
-          registerProblem(target, PyPsiBundle.message("INSP.final.final.target.could.not.be.reassigned", name))
+          registerProblem(target, PyPsiBundle.problemMessage("INSP.final.final.target.could.not.be.reassigned", name))
         }
       }
     }
@@ -409,14 +437,14 @@ class PyFinalInspection : PyInspection() {
             ScopeUtil.getScopeOwner(target).let { it is PyFunction && PyUtil.turnConstructorIntoClass(it) == cls }) {
           return
         }
-        registerProblem(target, PyPsiBundle.message("INSP.final.final.target.could.not.be.reassigned", name))
+        registerProblem(target, PyPsiBundle.problemMessage("INSP.final.final.target.could.not.be.reassigned", name))
       }
 
       for (ancestor in cls.getAncestorClasses(myTypeEvalContext)) {
         val inheritedClassAttribute = ancestor.findClassAttribute(name, false, myTypeEvalContext)
         if (inheritedClassAttribute != null && !inheritedClassAttribute.hasAssignedValue() && isFinal(inheritedClassAttribute)) {
           @NlsSafe val qualifiedName = "${ancestor.name}.$name"
-          registerProblem(target, PyPsiBundle.message("INSP.final.final.target.could.not.be.reassigned", qualifiedName))
+          registerProblem(target, PyPsiBundle.problemMessage("INSP.final.final.target.could.not.be.reassigned", qualifiedName))
           return
         }
       }
@@ -428,7 +456,7 @@ class PyFinalInspection : PyInspection() {
           PyClassImpl.collectInstanceAttributes(init, attributesInInit)
           if (attributesInInit[name].any { it != target && isFinal(it) }) {
             @NlsSafe val qualifiedName = (if (cls == current) "" else "${current.name}.") + name
-            registerProblem(target, PyPsiBundle.message("INSP.final.final.target.could.not.be.reassigned", qualifiedName))
+            registerProblem(target, PyPsiBundle.problemMessage("INSP.final.final.target.could.not.be.reassigned", qualifiedName))
             break
           }
         }
@@ -444,7 +472,7 @@ class PyFinalInspection : PyInspection() {
 
         if (ancestorClassAttribute != null && ancestorClassAttribute.hasAssignedValue() && isFinal(ancestorClassAttribute)) {
           @NlsSafe val qualifiedName = "${ancestor.name}.$name"
-          registerProblem(target, PyPsiBundle.message("INSP.final.final.target.could.not.be.reassigned", qualifiedName))
+          registerProblem(target, PyPsiBundle.problemMessage("INSP.final.final.target.could.not.be.reassigned", qualifiedName))
           break
         }
       }
@@ -490,6 +518,9 @@ class PyFinalInspection : PyInspection() {
     private fun <T> isFinal(node: T): Boolean where T : PyAnnotationOwner, T : PyTypeCommentOwner {
       return PyTypingTypeProvider.isFinal(node, myTypeEvalContext)
     }
+
+    private fun PyTargetExpression.hasExplicitType(): Boolean =
+      annotationValue != null || typeCommentAnnotation != null
 
     private fun resolvesToFinal(expression: PyExpression?): Boolean {
       return expression is PyReferenceExpression &&

@@ -43,6 +43,10 @@
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.IndentStrategy"/>
     </extensionPoint>
 
+    <extensionPoint name="lang.formatter.alignmentWhitespacePolicy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.formatting.AlignmentWhitespacePolicy"/>
+    </extensionPoint>
+
     <extensionPoint name="fileIndentOptionsProvider" interface="com.intellij.psi.codeStyle.FileIndentOptionsProvider" dynamic="true"/>
     <extensionPoint name="fileCodeStyleProvider" interface="com.intellij.psi.codeStyle.FileCodeStyleProvider" dynamic="true"/>
     <extensionPoint name="codeFormattingDataPreparer" interface="com.intellij.psi.impl.source.codeStyle.CodeFormattingDataPreparer" dynamic="true"/>

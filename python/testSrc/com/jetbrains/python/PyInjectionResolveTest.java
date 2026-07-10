@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -28,6 +31,8 @@ import com.jetbrains.python.psi.PyReferenceOwner;
 /**
  * @author Mikhail Golubev
  */
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyInjectionResolveTest extends PyResolveTestCase {
   @Override
   protected PsiElement doResolve() {

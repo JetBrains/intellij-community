@@ -28,7 +28,7 @@ public class PyIntroduceFieldTest extends PyIntroduceTestCase {
   }
 
   public void testUniqueName() {  // PY-4409
-    doTestSuggestions(PyExpression.class, "s1");
+    doTestSuggestions(PyExpression.class, "l1");
   }
 
   public void testPy4453() {

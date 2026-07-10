@@ -80,9 +80,7 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
         }
       }
     }
-    if (SplitDebuggerMode.isSplitDebugger()) {
-      startContentSelectionListening()
-    }
+    startContentSelectionListening()
   }
 
   private suspend fun initCapabilities() {
@@ -92,9 +90,6 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
   }
 
   private fun initSessions() = cs.launch {
-    // When the registry flag is not set, we would prefer to have XDebugSessionProxy.Monolith in a listener
-    // see com.intellij.xdebugger.impl.MonolithListenerAdapter
-    val shouldTriggerListener = SplitDebuggerMode.isSplitDebugger()
     durableWithStateReset(block = {
       val (sessionsList, eventFlow) = XDebuggerManagerApi.getInstance().sessions(project.projectId())
       for (sessionDto in sessionsList) {
@@ -104,17 +99,13 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
         when (event) {
           is XDebuggerManagerSessionEvent.ProcessStarted -> {
             val session = createDebuggerSession(event.sessionDto)
-            if (shouldTriggerListener) {
-              project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).sessionStarted(session)
-            }
+            project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).sessionStarted(session)
           }
           is XDebuggerManagerSessionEvent.ProcessStopped -> {
             sessionsFlow.update { sessions ->
               val sessionToRemove = sessions.firstOrNull { it.id == event.sessionId }
               if (sessionToRemove != null) {
-                if (shouldTriggerListener) {
-                  project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).sessionStopped(sessionToRemove)
-                }
+                project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).sessionStopped(sessionToRemove)
                 sessions - sessionToRemove
               }
               else {
@@ -129,18 +120,14 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
             val currentSession = findSessionById(sessions, event.currentSession)
             currentSessionId = event.currentSession
             updateCurrentSession()
-            if (shouldTriggerListener) {
-              project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).activeSessionChanged(previousSession, currentSession)
-            }
+            project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).activeSessionChanged(previousSession, currentSession)
           }
         }
       }
     }, stateReset = {
       sessionsFlow.update { currentSessions ->
-        if (shouldTriggerListener) {
-          for (session in currentSessions) {
-            project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).sessionStopped(session)
-          }
+        for (session in currentSessions) {
+          project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).sessionStopped(session)
         }
         listOf()
       }

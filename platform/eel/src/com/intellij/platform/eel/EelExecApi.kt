@@ -23,7 +23,26 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Methods related to process execution: start a process, collect stdin/stdout/stderr of the process, etc.
+ * Process execution inside the environment: starting a process and accessing its standard streams (stdin, stdout, stderr).
+ *
+ * Use this instead of `ProcessBuilder` when the process belongs to the project environment — it runs the process *there* (in WSL,
+ * a container, …), not on the IDE host. Reach it via [EelApi.exec].
+ *
+ * [spawnProcess] is the entry point. It takes a builder (see [ExecuteProcessOptions]); configure it fluently and finish with `eelIt()`:
+ * ```kotlin
+ * val process = eel.exec.spawnProcess(exePath)
+ *   .args("--version")
+ *   .workingDirectory(projectRoot)
+ *   .eelIt()
+ * val exitCode = process.exitCode.await()
+ * ```
+ * The result is an [EelProcess] whose stdin/stdout/stderr and exit code are accessed through that handle.
+ *
+ * All arguments and paths must be valid *for the environment*, with no automatic host↔environment path mapping: if a value is a path
+ * the spawned process will read, pass the environment-side form (e.g. an [EelPath] / `asEelPath()`), not the host path.
+ *
+ * Besides spawning, this API also exposes the environment's executable lookup ([findExeFilesInPath]) and its environment variables
+ * ([environmentVariables]).
  */
 @ApiStatus.Experimental
 sealed interface EelExecApi {
@@ -63,8 +82,16 @@ sealed interface EelExecApi {
     }
   }
 
+  /**
+   * Options for [spawnProcess]: the executable plus how to run it (arguments, working directory, environment, terminal mode, lifetime).
+   *
+   * Normally built fluently via the [spawnProcess] builder rather than implemented directly.
+   */
   @ApiStatus.Experimental
   interface ExecuteProcessOptions {
+    /**
+     * Command-line arguments passed to the process, not including the executable itself.
+     */
     @get:ApiStatus.Experimental
     val args: List<String> get() = listOf()
 
@@ -114,7 +141,7 @@ sealed interface EelExecApi {
   @Suppress("FunctionName")
   @ApiStatus.Internal
   @ApiStatus.Obsolete
-  fun `_private useEnvironmentVariableDefaultInFetchLoginShellEnvVariables`(): Boolean = false
+  suspend fun `_private useEnvironmentVariableDefaultInFetchLoginShellEnvVariables`(): EnvironmentVariablesOptions.Mode? = null
 
   /**
    * Use [environmentVariables] instead.
@@ -126,9 +153,12 @@ sealed interface EelExecApi {
   @ApiStatus.Experimental
   @ApiStatus.Obsolete
   suspend fun fetchLoginShellEnvVariables(): Map<String, String> {
-    if (`_private useEnvironmentVariableDefaultInFetchLoginShellEnvVariables`()) {
-      @Suppress("checkedExceptions")
-      return environmentVariables().eelIt().await()
+    when (val delegateToMode = `_private useEnvironmentVariableDefaultInFetchLoginShellEnvVariables`()) {
+      null -> {}
+      else -> {
+        @Suppress("checkedExceptions")
+        return environmentVariables().mode(delegateToMode).eelIt().await()
+      }
     }
 
     return when (this) {
@@ -197,6 +227,12 @@ sealed interface EelExecApi {
    */
   @ApiStatus.Experimental
   fun environmentVariables(@GeneratedBuilder opts: EnvironmentVariablesOptions): EnvironmentVariablesDeferred
+
+  /**
+   * Returns the path to the user's login shell on the Eel target.
+   */
+  @ApiStatus.Internal
+  suspend fun getUserLoginShell(): EelPath
 
   /**
    * Indicates on the failure during fetching environment variables.
@@ -291,6 +327,14 @@ sealed interface EelExecApi {
        */
       @EelDelicateApi
       LOGIN_INTERACTIVE,
+
+      /**
+       * Like [LOGIN_INTERACTIVE], but uses the unified [LoginShellSpawner.spawnLoginShell] pipeline.
+       *
+       * **Notice:** MAY throw [EnvironmentVariablesException].
+       */
+      @ApiStatus.Internal
+      LOGIN_INTERACTIVE_VIA_SHELL,
     }
   }
 
@@ -475,6 +519,9 @@ sealed interface EelExecApi {
   }
 }
 
+/**
+ * [EelExecApi] for a POSIX environment. Spawns an [EelPosixProcess] and exposes POSIX environment-variable options.
+ */
 @ApiStatus.Experimental
 interface EelExecPosixApi : EelExecApi {
   @ThrowsChecked(ExecuteProcessException::class)
@@ -489,6 +536,9 @@ interface EelExecPosixApi : EelExecApi {
   interface PosixEnvironmentVariablesOptions : EelExecApi.EnvironmentVariablesOptions
 }
 
+/**
+ * [EelExecApi] for a Windows environment. Spawns an [EelWindowsProcess] and exposes Windows environment-variable options.
+ */
 @ApiStatus.Experimental
 interface EelExecWindowsApi : EelExecApi {
   @ThrowsChecked(ExecuteProcessException::class)
@@ -503,15 +553,22 @@ interface EelExecWindowsApi : EelExecApi {
   interface WindowsEnvironmentVariablesOptions : EelExecApi.EnvironmentVariablesOptions
 }
 
+/**
+ * Returns the first executable named [exe] found in the environment's `PATH`, or `null` if none — like the Unix `which` command.
+ *
+ * Convenience over [findExeFilesInPath].
+ */
 @ApiStatus.Experimental
 suspend fun EelExecApi.where(exe: String): EelPath? {
   return this.findExeFilesInPath(exe).firstOrNull()
 }
 
+/** Convenience builder over `spawnProcess` for an executable given as an [EelPath], pre-filling [ExecuteProcessOptions.args]. */
 @ApiStatus.Experimental
 fun EelExecApi.spawnProcess(exe: EelPath, vararg args: String): EelExecApiHelpers.SpawnProcess =
   spawnProcess(exe.toString()).args(*args)
 
+/** Convenience builder over `spawnProcess` for an executable given by path or name, pre-filling [ExecuteProcessOptions.args]. */
 @ApiStatus.Experimental
 fun EelExecApi.spawnProcess(exe: String, vararg args: String): EelExecApiHelpers.SpawnProcess =
   spawnProcess(exe).args(*args)

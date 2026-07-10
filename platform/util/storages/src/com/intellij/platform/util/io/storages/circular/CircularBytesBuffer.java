@@ -16,9 +16,8 @@ import java.nio.ByteBuffer;
  * Entries added to the queue by {@linkplain #append(ByteBuffer)} method. if there is no space for the new entry,
  * {@linkplain #append(ByteBuffer)} throws {@linkplain QueueFullException}.
  * <p>
- * Entries could be read by {@linkplain #read(DataReader)} -- either "read and keep the entry in queue" or "read and mark
- * the entry processed" (which effectively removes the entry from the queue, even though technically it may be just marked
- * as 'consumed')
+ * Entries could be read by {@linkplain #read(DataReader)} without consuming them, or by
+ * {@linkplain #readConsuming(ConsumingDataReader)} with an option to mark entries as processed.
  * <p>
  */
 @ApiStatus.Internal
@@ -49,16 +48,24 @@ public interface CircularBytesBuffer extends Closeable, Flushable {
   void append(@NotNull ByteBufferWriter writer,
               int entrySize) throws IOException, QueueFullException;
 
+  /** Deliver not-yet-processed entries to the reader, without marking them processed. */
+  void read(@NotNull DataReader reader) throws IOException;
+
   /**
    * Deliver not-yet-processed entries to the reader.
    * If the reader returns true -- mark the entry 'processed' (=consumed), otherwise leave it unprocessed.
    * Processed entries will not be delivered to the reader anymore in the subsequent calls to this method.
+   * 'Consumption' is atomic and only-once: only one reader can mark a record consumed.
    *
    * @return # of entries consumed
    */
-  int read(@NotNull DataReader reader) throws IOException;
+  int readConsuming(@NotNull ConsumingDataReader reader) throws IOException;
 
   interface DataReader {
+    void read(@NotNull ByteBuffer entryData);
+  }
+
+  interface ConsumingDataReader {
     /** @return true to mark the entry as processed (=consumed), false to keep the entry unprocessed */
     boolean read(@NotNull ByteBuffer entryData);
   }

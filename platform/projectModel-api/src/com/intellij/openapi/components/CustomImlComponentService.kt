@@ -46,6 +46,8 @@ import org.jetbrains.annotations.ApiStatus
  *   }
  * }
  * ```
+
+ * Also note that for [CustomImlComponentService] to work, the [com.intellij.platform.workspace.jps.serialization.CustomImlComponentNameContributor] extension point must be implemented.
  */
 @ApiStatus.Experimental
 interface CustomImlComponentService {

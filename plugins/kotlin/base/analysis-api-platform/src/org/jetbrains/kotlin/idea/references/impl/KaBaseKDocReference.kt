@@ -29,7 +29,7 @@ internal class KaBaseKDocReference(element: KDocName) : KDocReference(element), 
         referenceTargetSymbols.flatMap { symbol ->
             when (symbol) {
                 is KaSyntheticJavaPropertySymbol -> listOfNotNull(symbol.javaGetterSymbol.psi, symbol.javaSetterSymbol?.psi)
-                is KaSymbol -> getPsiDeclarations(symbol)
+                is KaSymbol -> symbol.getPsiDeclarations()
             }
         }
     }

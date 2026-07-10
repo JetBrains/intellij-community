@@ -10,6 +10,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
+import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
 import com.jetbrains.python.psi.PyAnnotation
 import com.jetbrains.python.psi.PyAnnotationOwner
 import com.jetbrains.python.psi.PyAssignmentStatement
@@ -178,12 +179,15 @@ class PyClassVarInspection : PyInspection() {
       for (ancestor in cls.getAncestorClasses(myTypeEvalContext)) {
         val ancestorClassAttribute = ancestor.findClassAttribute(name, false, myTypeEvalContext)
         if (ancestorClassAttribute != null && ancestorClassAttribute.hasExplicitType() && target.hasExplicitType()) {
-          if (ancestorClassAttribute.isClassVar() && !target.isClassVar()) {
-            registerProblem(target, PyPsiBundle.message("INSP.class.var.can.not.override.class.variable", name, ancestor.name))
+          // PEP 591: a final attribute initialized in a class body is a class variable, not an instance variable,
+          // so it must not be reported as overriding a class variable with an instance one. The illegal narrowing
+          // of a writable attribute to a final one is reported separately by PyFinalInspection
+          if (ancestorClassAttribute.isClassVar() && !target.isClassVar() && !target.isFinalClassVariable()) {
+            registerProblem(target, PyPsiBundle.problemMessage("INSP.class.var.can.not.override.class.variable", name, CodifiedParam.ofReference(ancestor)))
             break
           }
           if (!ancestorClassAttribute.isClassVar() && target.isClassVar()) {
-            registerProblem(target, PyPsiBundle.message("INSP.class.var.can.not.override.instance.variable", name, ancestor.name))
+            registerProblem(target, PyPsiBundle.problemMessage("INSP.class.var.can.not.override.instance.variable", name, CodifiedParam.ofReference(ancestor)))
             break
           }
         }
@@ -195,7 +199,7 @@ class PyClassVarInspection : PyInspection() {
       for (ancestor in listOf(cls) + cls.getAncestorClasses(myTypeEvalContext)) {
         val inheritedClassAttribute = ancestor.findClassAttribute(name, false, myTypeEvalContext)
         if (inheritedClassAttribute != null && inheritedClassAttribute.isClassVar()) {
-          registerProblem(target, PyPsiBundle.message("INSP.class.var.can.not.be.assigned.to.instance", name))
+          registerProblem(target, PyPsiBundle.problemMessage("INSP.class.var.can.not.be.assigned.to.instance", name))
           return
         }
       }
@@ -206,6 +210,9 @@ class PyClassVarInspection : PyInspection() {
 
     private fun <T> T.isClassVar(): Boolean where T : PyAnnotationOwner, T : PyTypeCommentOwner =
       PyTypingTypeProvider.isClassVar(this, myTypeEvalContext)
+
+    private fun PyTargetExpression.isFinalClassVariable(): Boolean =
+      hasAssignedValue() && PyTypingTypeProvider.isFinal(this, myTypeEvalContext)
 
     private fun resolvesToClassVar(expression: PyExpression): Boolean {
       return expression is PyReferenceExpression &&

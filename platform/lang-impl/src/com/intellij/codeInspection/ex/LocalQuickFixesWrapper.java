@@ -50,10 +50,10 @@ public final class LocalQuickFixesWrapper extends QuickFixAction {
   }
 
   @Override
-  protected ModCommandExecutor.@NotNull BatchExecutionResult applyFix(final @NotNull Project project,
-                                                                      final @NotNull GlobalInspectionContextImpl context,
-                                                                      final CommonProblemDescriptor @NotNull [] descriptors,
-                                                                      final @NotNull Set<? super PsiElement> ignoredElements) {
+  protected ModCommandExecutor.@NotNull BatchExecutionResult applyFix(@NotNull Project project,
+                                                                      @NotNull GlobalInspectionContextImpl context,
+                                                                      CommonProblemDescriptor @NotNull [] descriptors,
+                                                                      @NotNull Set<? super PsiElement> ignoredElements) {
     ModCommandExecutor.BatchExecutionResult result = ModCommandExecutor.Result.NOTHING;
     for (LocalQuickFixWrapper fixAction : myFixActions) {
       result = result.compose(fixAction.applyFix(project, context, descriptors, ignoredElements));

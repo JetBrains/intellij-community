@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.compose.ide.plugin.resources">
+<idea-plugin package="com.intellij.compose.ide.plugin.resources" visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
@@ -7,20 +7,31 @@
     <module name="intellij.compose.ide.plugin.gradleTooling.rt"/>
     <module name="intellij.compose.ide.plugin.shared"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.xml.impl"/>
     <module name="kotlin.gradle.gradle-java"/>
   </dependencies>
   <!-- endregion -->
+  <resource-bundle>messages.ComposeIdeBundle</resource-bundle>
   <extensionPoints>
     <extensionPoint
       dynamic="true"
       qualifiedName="com.intellij.compose.ide.plugin.resources.drawablePreviewRenderer"
       interface="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.BaseVectorDrawablePreviewRenderer"/>
+    <extensionPoint
+      dynamic="true"
+      qualifiedName="com.intellij.compose.ide.plugin.resources.vectorIconPicker"
+      interface="com.intellij.compose.ide.plugin.resources.actions.vectorAsset.BaseVectorIconPicker"/>
+    <extensionPoint
+      dynamic="true"
+      qualifiedName="com.intellij.compose.ide.plugin.resources.dataProvider"
+      interface="com.intellij.compose.ide.plugin.resources.ComposeResourcesDataProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij.compose.ide.plugin.resources">
     <drawablePreviewRenderer
       implementation="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourcesDrawablePreviewRenderer"
       order="last"/>
+    <dataProvider implementation="com.intellij.compose.ide.plugin.resources.gradle.GradleComposeResourcesDataProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -32,6 +43,9 @@
     <customLiveTemplate
       implementation="com.intellij.compose.ide.plugin.resources.emmetLikeTemplates.ComposeResourcesEmmetLikeCustomLiveTemplate"
       order="before emmet"/>
+    <completion.contributor language="kotlin"
+                            implementationClass="com.intellij.compose.ide.plugin.resources.completion.ComposeResourcesCompletionContributor"
+                            order="first, before KotlinCompletionContributor"/>
     <gotoDeclarationHandler implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesGotoDeclarationHandler"/>
     <renamePsiElementProcessor id="ComposeResources"
                                implementation="com.intellij.compose.ide.plugin.resources.rename.ComposeResourcesRenameProcessor"
@@ -45,7 +59,7 @@
     <renameHandler implementation="com.intellij.compose.ide.plugin.resources.rename.ComposeResourcesXmlRenameHandler"/>
     <postStartupActivity
       implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesGenerationService$ComposeResourcesWatcherActivity"/>
-    <externalProjectDataService implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesDataService"/>
+    <externalProjectDataService implementation="com.intellij.compose.ide.plugin.resources.gradle.ComposeResourcesDataService"/>
     <usageTypeProvider implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageTypeProvider" order="first"/>
     <!-- find usages -->
     <findUsagesHandlerFactory
@@ -57,14 +71,24 @@
     <lang.foldingBuilder language="kotlin"
                          implementationClass="com.intellij.compose.ide.plugin.resources.folding.ComposeResourcesFoldingBuilder"/>
     <fileEditorProvider implementation="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourceEditorProvider"/>
+    <xml.xmlExtension implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesDrawableXmlExtension"/>
+    <xml.schemaProvider implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesDrawableXmlSchemaProvider"/>
+    <xml.elementDescriptorProvider
+      implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesDrawableXmlElementDescriptorProvider"/>
   </extensions>
-
+  <actions>
+    <action id="compose.newVectorAsset"
+            class="com.intellij.compose.ide.plugin.resources.actions.vectorAsset.ComposeResourcesNewVectorAsset"
+            icon="com.intellij.compose.ide.plugin.shared.icons.ComposeIdePluginSharedIcons.ComposeMultiplatform">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
+    </action>
+  </actions>
   <projectListeners>
-    <listener class="com.intellij.compose.ide.plugin.resources.ComposeResourcesManager$ComposeResourcesProjectDataImportListener"
+    <listener class="com.intellij.compose.ide.plugin.resources.gradle.GradleComposeResourcesManager$ComposeResourcesProjectDataImportListener"
               topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
-    <projectResolve implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesProjectResolver"/>
+    <projectResolve implementation="com.intellij.compose.ide.plugin.resources.gradle.ComposeResourcesProjectResolver"/>
   </extensions>
 </idea-plugin>

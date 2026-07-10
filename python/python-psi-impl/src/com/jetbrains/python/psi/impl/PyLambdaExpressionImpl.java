@@ -88,7 +88,7 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
       }
     }
     return new PyFunctionTypeImpl(
-      this, map(getParameterList().getParameters(), param -> PyCallableParameterImpl.psi(param, null))
+      this, map(getParameterList().getParameters(), param -> PyCallableParameterImpl.psi(param, PyAnyType.getUnknown()))
     );
   }
 
@@ -118,11 +118,6 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
         PyUnionType.union(yieldTypes), PyUnionType.union(sendTypes), context.getType(body), this);
     }
     return context.getType(body);
-  }
-
-  @Override
-  public @Nullable PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteOwner callSite) {
-    return context.getReturnType(this);
   }
 
   @Override

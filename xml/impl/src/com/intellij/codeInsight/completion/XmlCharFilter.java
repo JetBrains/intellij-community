@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
@@ -21,6 +22,11 @@ public class XmlCharFilter extends CharFilter {
 
   public static boolean isInXmlContext(Lookup lookup) {
     if (!lookup.isCompletion()) return false;
+
+    if (!Elf.getElf().isPsiInteractionAllowed()) {
+      // TODO: rework for lock-free typing, getContainingFile requires RA on EDT
+      return false;
+    }
 
     PsiElement psiElement = lookup.getPsiElement();
     PsiFile file = lookup.getPsiFile();

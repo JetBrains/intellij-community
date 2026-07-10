@@ -1,5 +1,7 @@
 package com.intellij.mcpserver.elicitation
 
+import com.intellij.lang.Language
+import com.intellij.mcpserver.projectOrNull
 import com.intellij.openapi.extensions.ExtensionPointName
 import io.modelcontextprotocol.kotlin.sdk.server.ServerSession
 import kotlinx.coroutines.currentCoroutineContext
@@ -68,21 +70,53 @@ class McpElicitationCliProvider : McpElicitationProvider {
     val session = currentCoroutineContext()[McpSessionElement]?.session ?: return null
     // checking client capabilities (it's not related to CLI/no-CLI checks)
     if (session.clientCapabilities?.elicitation == null) return null
+    // Render the parts to ANSI. Code highlighting and styling are safe only in the read-only message.
+    val message = renderToAnsi(form.messageParts, currentCoroutineContext().projectOrNull)
     return session
-      .createElicitation(form.message, form.toRequestedSchema())
+      .createElicitation(message, form.toRequestedSchema())
       .toElicitationResult(deserializer)
   }
 }
 
 /**
- * A structured elicitation request: a [message] to show the user plus the [fields]
- * to collect. Build it with [buildElicitationForm].
+ * An elicitation request: ordered [messageParts] shown to the user plus the [fields] to fill in.
+ * Build it with [buildElicitationForm].
  */
 @ConsistentCopyVisibility
 data class ElicitationForm internal constructor(
-  val message: String,
+  val messageParts: List<ElicitationMessagePart>,
   val fields: List<ElicitationField>,
 )
+
+/**
+ * One segment of an [ElicitationForm] message. The provider renders the parts in order and joins them
+ * with no separator (line breaks live inside [Text]). Each session kind renders its own way (the CLI
+ * provider emits ANSI). Not serialized.
+ */
+sealed interface ElicitationMessagePart {
+  /** Plain text, shown as is. Put newlines here. */
+  data class Text(val text: String) : ElicitationMessagePart
+
+  /** Source code, syntax-highlighted for [language]. */
+  data class Code(val text: String, val language: Language) : ElicitationMessagePart
+
+  /** Styled text: font [styles] and an optional [color]. */
+  data class Styled(
+    val text: String,
+    val styles: Set<FontStyle> = emptySet(),
+    val color: TextColor? = null,
+  ) : ElicitationMessagePart
+
+  /** Font style for a [Styled] segment. */
+  enum class FontStyle { BOLD, ITALIC, UNDERLINE }
+
+  /**
+   * Color for a [Styled] segment, named after the basic terminal colors. The renderer maps each color
+   * to its concrete output; the terminal picks the real shade, so it follows the terminal theme.
+   * Names show intent, not an exact color.
+   */
+  enum class TextColor { RED, GREEN, YELLOW }
+}
 
 /**
  * One field in an [ElicitationForm]. Each concrete variant maps to a primitive MCP

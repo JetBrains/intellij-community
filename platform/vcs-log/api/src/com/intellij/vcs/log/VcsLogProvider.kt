@@ -15,6 +15,7 @@ import com.intellij.vcs.log.graph.PermanentGraph
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.CalledInAny
 
 /**
  * Provides the information needed to build the VCS log, such as the list of most recent commits with their parents.
@@ -168,6 +169,18 @@ interface VcsLogProvider {
    * @return branch that is currently checked out in the specified root.
    */
   fun getCurrentBranch(root: VirtualFile): String?
+
+  /**
+   * Returns true if [hash] has the full commit hash format in the given root.
+   * Can be used to say if we have to do a lookup by hash prefix.
+   *
+   * E.g., Git repositories may have both 40 and 64 length hex hashes.
+   */
+  @CalledInAny
+  fun isFullHash(root: VirtualFile, hash: String): Boolean {
+    // SHA-1 is assumed by default
+    return hash.length == 40 && hash.all { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' }
+  }
 
   /**
    * Returns [VcsLogDiffHandler] for this provider in order to support comparing commits and with local version from log-based file history.

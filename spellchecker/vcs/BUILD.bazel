@@ -1,0 +1,63 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.spellchecker.vcs` start
+
+jvm_library(
+    name = "vcs",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.spellchecker.vcs",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/core-ui",
+        "//platform/util",
+        "//platform/vcs-api:vcs",
+        "//platform/vcs-impl",
+        "//spellchecker",
+    ],
+)
+
+jvm_library(
+    name = "vcs_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.spellchecker.vcs",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":vcs",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/vcs-api:vcs_test_lib",
+        "//platform/vcs-impl:vcs-impl_test_lib",
+        "//spellchecker:spellchecker_test_lib",
+    ],
+)
+### auto-generated section `build intellij.spellchecker.vcs` end
+
+### auto-generated section `iml intellij.spellchecker.vcs` start
+exports_files(
+    [
+        "intellij.spellchecker.vcs.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.spellchecker.vcs` end

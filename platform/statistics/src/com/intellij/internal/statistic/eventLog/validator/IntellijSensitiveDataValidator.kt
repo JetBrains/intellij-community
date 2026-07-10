@@ -19,12 +19,11 @@ import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.jetbrains.fus.reporting.MessageBus
 import com.jetbrains.fus.reporting.MetadataStorage
+import com.jetbrains.fus.reporting.RemoteConfig
 import com.jetbrains.fus.reporting.api.IEventContext
 import com.jetbrains.fus.reporting.api.IEventGroupRules
 import com.jetbrains.fus.reporting.api.IEventGroupsFilterRules
 import com.jetbrains.fus.reporting.api.IGroupValidators
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.util.concurrent.ConcurrentHashMap
 
@@ -120,9 +119,9 @@ open class IntellijSensitiveDataValidator protected constructor(
     }
 
     private val EMPTY_METADATA_STORAGE: MetadataStorage<EventLogBuild> = object : MetadataStorage<EventLogBuild> {
-      override suspend fun update(scope: CoroutineScope): Job = Job()
-      override fun update(): Boolean = false
-      override fun reload() {}
+      override suspend fun scheduleUpdate() = Unit
+      override suspend fun update(): Boolean = false
+      override suspend fun reload() {}
       override fun getFieldsToAnonymize(groupId: String, eventId: String): Set<String> = emptySet()
       override fun getSkipAnonymizationIds(): Set<String> = emptySet()
       override fun getGroupValidators(groupId: String): IGroupValidators<EventLogBuild> = object : IGroupValidators<EventLogBuild> {
@@ -146,6 +145,9 @@ open class IntellijSensitiveDataValidator protected constructor(
 
   val messageBus: MessageBus
     get() = fusComponents!!.messageBus
+
+  val remoteConfig: RemoteConfig
+    get() = fusComponents!!.remoteConfig
 
   open suspend fun isGroupAllowed(group: EventLogGroup): Boolean {
     if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) {
@@ -224,7 +226,7 @@ open class IntellijSensitiveDataValidator protected constructor(
            rule.getEventIdRules().any { it is TestModeValidationRule }
   }
 
-  fun update() {
+  suspend fun update() {
     validationRulesStorage.update()
   }
 }

@@ -6,7 +6,7 @@ package com.jetbrains.python.psi.stubs;
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
 import org.jetbrains.annotations.Nullable;
 
-public interface PyDataclassFieldStub extends CustomTargetExpressionStub {
+public interface PyDataclassFieldStub extends CustomTargetExpressionStub, PydanticFieldConfig {
 
   /**
    * @return true if default value is specified, false otherwise.
@@ -33,6 +33,4 @@ public interface PyDataclassFieldStub extends CustomTargetExpressionStub {
   @Nullable Boolean kwOnly();
 
   @Nullable String getAlias();
-
-  @Nullable Boolean frozen();
 }

@@ -132,6 +132,34 @@ class SeSelectionListenerTest {
     assertNotNull(listener.getSelectionState())
   }
 
+  /**
+   * The user opens Search Everywhere and types a. The results include an item that the user selects manually,
+   * and that item is not the first one in the list. Then the user keeps typing and refines the query to ab.
+   *
+   * When the query changes, the results are not rebuilt instantly. First, an intermediate result state arrives where the previously selected
+   * item is not present yet. At that moment, the UI may temporarily keep the selection on the
+   * first item. But the system must not forget which item the user had selected before.
+   */
+  @Test
+  fun returnsMatchingIndex_afterPatternChanged_whenStateWasKeptForNonInitialPattern() {
+    val model = newModel()
+    val saved = item()
+    // Initial results for pattern "a": the previously selected item is not present yet.
+    model.addItems(item())
+    val listener = SeSelectionListener(SeSelectionState("a", saved), newList(model), model)
+
+    // Switching to pattern "ab" in a non-initial search update must keep the saved selection state.
+    assertEquals(0, listener.getIndexToSelect(maxVisibleRowCountLarge, "ab", isInitialSearchPattern = false, isEndEvent = false))
+    assertNotNull(listener.getSelectionState())
+
+    // More results for the same updated pattern arrive later, including the saved item reappearing.
+    val reappearedMatch = item().also { markEqual(it, saved) }
+    model.addItems(item(), reappearedMatch, item())
+
+    // The listener must still use the preserved state and return the reappeared item's index.
+    assertEquals(2, listener.getIndexToSelect(maxVisibleRowCountLarge, "ab", isInitialSearchPattern = false, isEndEvent = false))
+  }
+
   @Test
   fun returnsMatchingIndex_whenSavedItemFoundWithinVisibleRange() {
     val model = newModel()
@@ -141,6 +169,17 @@ class SeSelectionListenerTest {
     val listener = SeSelectionListener(SeSelectionState("p", saved), newList(model), model)
 
     assertEquals(2, listener.getIndexToSelect(maxVisibleRowCountLarge, "p", isInitialSearchPattern = false, isEndEvent = false))
+  }
+
+  @Test
+  fun returnsMatchingIndex_whenSavedItemFoundAtLastVisibleIndex() {
+    val model = newModel()
+    val saved = item()
+    val match = item().also { markEqual(it, saved) }
+    model.addItems(item(), item(), item(), item(), item(), item(), item(), item(), item(), match) // match at index 9
+    val listener = SeSelectionListener(SeSelectionState("p", saved), newList(model), model)
+
+    assertEquals(9, listener.getIndexToSelect(maxVisibleRowCountLarge, "p", isInitialSearchPattern = false, isEndEvent = false))
   }
 
   @Test
@@ -226,6 +265,29 @@ class SeSelectionListenerTest {
   }
 
   @Test
+  fun saveSelectionState_restoresMatchingItem_afterResultsAreRebuiltForAnotherTab() {
+    val model = newModel()
+    val selectedInFirstTab = item()
+    val list = newList(model)
+    model.addItems(item(), item(), selectedInFirstTab)
+    list.selectedIndex = 2
+    val listener = SeSelectionListener(null, list, model)
+
+    // Simulate that the user explicitly selected a non-first item in the first tab.
+    listener.saveSelectionState("query")
+
+    // Switching to another tab clears the old results and loads a different list for the same query.
+    list.withProgrammaticSelectionChange { model.reset() }
+
+    // The second tab contains the same logical item again, but as a different object.
+    val matchingItemInSecondTab = item().also { markEqual(it, selectedInFirstTab) }
+    model.addItems(item(), matchingItemInSecondTab, item())
+
+    // The preserved selection must be restored to the matching item in the second tab.
+    assertEquals(1, listener.getIndexToSelect(maxVisibleRowCountLarge, "query", isInitialSearchPattern = false, isEndEvent = false))
+  }
+
+  @Test
   fun saveSelectionState_noOp_whenSelectedRowIsMoreRow() {
     val model = newModel()
     model.addItems(item())
@@ -279,6 +341,22 @@ class SeSelectionListenerTest {
     }
 
     assertTrue(flagInsideBlock)
+    assertFalse(list.isProgrammaticSelectionChange)
+  }
+
+  @Test
+  fun withProgrammaticSelectionChange_restoresFlagAfterException() {
+    val list = newList(newModel().apply { addItems(item()) })
+    assertFalse(list.isProgrammaticSelectionChange)
+
+    val exception = org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException::class.java) {
+      list.withProgrammaticSelectionChange {
+        assertTrue(list.isProgrammaticSelectionChange)
+        throw IllegalStateException("boom")
+      }
+    }
+
+    assertEquals("boom", exception.message)
     assertFalse(list.isProgrammaticSelectionChange)
   }
 

@@ -8,27 +8,18 @@ import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.DelegatingComponentManagerEx
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
 import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.components.service
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScopeCache
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
-import com.intellij.openapi.roots.ExternalProjectSystemRegistry
-import com.intellij.openapi.roots.ProjectModelElement
-import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.ui.Queryable
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.serviceContainer.getComponentManagerEx
 import com.intellij.serviceContainer.precomputeModuleLevelExtensionModel
 import com.intellij.util.messages.MessageBus
-import com.intellij.util.xmlb.annotations.MapAnnotation
-import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -43,6 +34,7 @@ open class ModuleImpl(
   @Volatile
   private var isModuleAdded = false
   private var name: String? = null
+  private val options = HashMap<String, String>()
 
   private val moduleScopeProvider = lazy {
     project.service<ModuleScopeProviderFactory>().createProvider(this)
@@ -108,20 +100,15 @@ open class ModuleImpl(
   }
 
   override fun setOption(key: String, value: String?) {
-    val manager = getOptionManager()
     if (value == null) {
-      if (manager.state.options.remove(key) != null) {
-        manager.incModificationCount()
-      }
+      options.remove(key)
     }
-    else if (value != manager.state.options.put(key, value)) {
-      manager.incModificationCount()
+    else {
+      options.put(key, value)
     }
   }
 
-  private fun getOptionManager(): DeprecatedModuleOptionManager = (this as Module).getService(DeprecatedModuleOptionManager::class.java)
-
-  override fun getOptionValue(key: String): String? = getOptionManager().state.options.get(key)
+  override fun getOptionValue(key: String): String? = options.get(key)
 
   override fun getModuleScope(): GlobalSearchScope = getModuleScopeProvider().moduleScope
 
@@ -168,32 +155,5 @@ open class ModuleImpl(
 
   override fun <T : Any?> putUserData(key: Key<T?>, value: T?) {
     componentManager.putUserData(key, value)
-  }
-}
-
-@State(name = "DeprecatedModuleOptionManager", useLoadedStateAsExisting = false)
-internal class DeprecatedModuleOptionManager(private val module: Module)
-  : SimpleModificationTracker(), PersistentStateComponent<DeprecatedModuleOptionManager.State?>, ProjectModelElement {
-  override fun getExternalSource(): ProjectModelExternalSource? {
-    if (state.options.size > 1 || state.options.size == 1 && !state.options.containsKey(Module.ELEMENT_TYPE)) {
-      return null
-    }
-    else {
-      return ExternalProjectSystemRegistry.getInstance().getExternalSource(module)
-    }
-  }
-
-  class State {
-    @Property(surroundWithTag = false)
-    @MapAnnotation(surroundKeyWithTag = false, surroundValueWithTag = false, surroundWithTag = false, entryTagName = "option")
-    val options = HashMap<String, String?>()
-  }
-
-  private var state = State()
-
-  override fun getState(): State = state
-
-  override fun loadState(state: State) {
-    this.state = state
   }
 }

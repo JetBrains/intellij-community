@@ -89,6 +89,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -599,7 +600,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
    * @deprecated Use {@link XDebuggerWatchesManager#getWatchEntries} directly
    */
   @Deprecated
-  protected @NotNull List<XExpression> getExpressions() {
+  protected @NotNull @Unmodifiable List<XExpression> getExpressions() {
     return ContainerUtil.map(ContainerUtil.notNullize(getWatchesManager().getWatchEntries(myConfigurationName)), XWatch::getExpression);
   }
 

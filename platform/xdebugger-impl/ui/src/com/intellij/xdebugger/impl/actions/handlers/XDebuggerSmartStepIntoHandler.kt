@@ -247,7 +247,9 @@ class SmartStepData(
 
   private fun setCurrentVariantHighlighterAttributes(attributesKey: TextAttributesKey) {
     val index = myVariants.indexOfOrNull(myCurrentVariant) ?: return
-    myHighlighters[index].setTextAttributesKey(attributesKey)
+    if (myHighlighters[index].isValid) {
+      myHighlighters[index].setTextAttributesKey(attributesKey)
+    }
   }
 
   internal fun stepInto(variant: VariantInfo) {

@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.jetbrains.plugins.gradle.testFramework.util.GradleTestEelUtilKt.assumeOnLocalEnvironmentOnly;
 
 /**
  * @author Vladislav.Soroka
@@ -238,6 +239,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
   @Test
   public void testJdkName() throws Exception {
+    assumeOnLocalEnvironmentOnly(this, "JDK should be explicitly defined by the test environment");
     Sdk myJdk = IdeaTestUtil.getMockJdk17("MyJDK");
     edt(() -> ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(myJdk, getMyProject())));
     importProject(

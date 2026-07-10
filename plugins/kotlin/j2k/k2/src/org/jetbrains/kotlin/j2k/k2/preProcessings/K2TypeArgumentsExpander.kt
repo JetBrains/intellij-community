@@ -20,50 +20,65 @@ class K2TypeArgumentsExpander: J2kPreprocessorExtension {
         project: Project,
         files: List<PsiJavaFile>
     ) {
-
-
         for (file in files) {
-            val map = mutableMapOf<PsiMethodCallExpression, PsiReferenceParameterList>()
-            readAction {
-                file.accept(object : JavaRecursiveElementWalkingVisitor() {
-                    override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
-                        super.visitMethodCallExpression(expression)
-
-                        if (expression.typeArguments.isNotEmpty()) return
-
-                        val resolveResult = expression.resolveMethodGenerics()
-                        if (resolveResult is MethodCandidateInfo && resolveResult.isApplicable) {
-                            val method = resolveResult.element
-                            if (method.isConstructor || !method.hasTypeParameters()) return
-
-                            // Avoid incorrect type arguments insertion that will lead to red code
-                            QualifiedNameProviderUtil.getQualifiedName(method)?.let { methodName ->
-                                if (methodName.startsWith("java.util.stream.Stream#collect") ||
-                                    methodName.startsWith("java.util.stream.Collectors")
-                                ) {
-                                    return
-                                }
-                            }
-                        }
-
-                        val typeArgumentList = AddTypeArgumentsFix.addTypeArguments(expression, null, false)
-                            ?.safeAs<PsiMethodCallExpression>()
-                            ?.typeArgumentList
-                        if (typeArgumentList != null) {
-                            map.put(expression, typeArgumentList)
-                        }
-                    }
-                })
-            }
-            val sortedEntries = readAction { map.entries.sortedBy { -it.key.textRange.startOffset } }
-            for (entry in sortedEntries) {
+            val updates = readAction { collectPsiUpdates(file) }
+            for ((original, replacement) in updates) {
                 edtWriteAction {
                     CodeStyleManager.getInstance(project).performActionWithFormatterDisabled {
-                        entry.key.typeArgumentList.replace(entry.value)
+                        original.replace(replacement)
                     }
                 }
             }
         }
     }
 
+    private fun collectPsiUpdates(file: PsiJavaFile): List<PsiTypeArgumentsUpdate> = buildList {
+        collectTypeArgumentUpdates(file) { originalTypeArgumentList, replacementTypeArgumentList ->
+            add(PsiTypeArgumentsUpdate(originalTypeArgumentList, replacementTypeArgumentList))
+        }
+    }.sortedByDescending { it.original.textRange.startOffset }
+
+    private inline fun collectTypeArgumentUpdates(
+        file: PsiJavaFile,
+        crossinline
+        onUpdate: (originalTypeArgumentList: PsiReferenceParameterList, replacementTypeArgumentList: PsiReferenceParameterList) -> Unit,
+    ) {
+        file.accept(object : JavaRecursiveElementWalkingVisitor() {
+            override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
+                super.visitMethodCallExpression(expression)
+
+                val originalTypeArgumentList = expression.typeArgumentList
+                val replacementTypeArgumentList = expression.findReplacementTypeArgumentList() ?: return
+                onUpdate(originalTypeArgumentList, replacementTypeArgumentList)
+            }
+        })
+    }
+
+    private fun PsiMethodCallExpression.findReplacementTypeArgumentList(): PsiReferenceParameterList? {
+        if (typeArguments.isNotEmpty()) return null
+
+        val resolveResult = resolveMethodGenerics()
+        if (resolveResult is MethodCandidateInfo && resolveResult.isApplicable) {
+            val method = resolveResult.element
+            if (method.isConstructor || !method.hasTypeParameters()) return null
+
+            // Avoid incorrect type arguments insertion that will lead to red code
+            QualifiedNameProviderUtil.getQualifiedName(method)?.let { methodName ->
+                if (methodName.startsWith("java.util.stream.Stream#collect") ||
+                    methodName.startsWith("java.util.stream.Collectors")
+                ) {
+                    return null
+                }
+            }
+        }
+
+        return AddTypeArgumentsFix.addTypeArguments(this, null, false)
+            ?.safeAs<PsiMethodCallExpression>()
+            ?.typeArgumentList
+    }
+
+    private data class PsiTypeArgumentsUpdate(
+        val original: PsiReferenceParameterList,
+        val replacement: PsiReferenceParameterList,
+    )
 }

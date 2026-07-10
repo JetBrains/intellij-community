@@ -104,7 +104,7 @@ internal class CheckClassLoadingAction : DumbAwareAction(), ActionRemoteBehavior
 
   private fun buildClassLoadingMap(className: String): Map<PluginModuleDescriptor, Class<*>?> {
     val loadingResults = mutableMapOf<PluginModuleDescriptor, Class<*>?>()
-    val pluginSet = PluginManagerCore.getPluginSet().resolvedPluginSet ?: error("resolved plugin set is not set")
+    val pluginSet = PluginManagerCore.getPluginSet().resolvedPluginSet
     for (moduleGroup in pluginSet.runtimeModuleGroupGraph.sortedGroups) {
       for (module in moduleGroup.sortedDescriptors) {
         if (module !is PluginModuleDescriptor) continue

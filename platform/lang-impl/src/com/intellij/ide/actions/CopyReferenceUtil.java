@@ -87,7 +87,7 @@ public final class CopyReferenceUtil {
       }
     }
 
-    return ContainerUtil.mapNotNull(elements, element -> element instanceof PsiFile && !((PsiFile)element).getViewProvider().isPhysical()
+    return ContainerUtil.mapNotNull(elements, element -> element instanceof PsiFile && !((PsiFile)element).getViewProvider().correspondsToRealFile()
                                                          ? null
                                                          : adjustElement(element)).stream().distinct().collect(Collectors.toList());
   }

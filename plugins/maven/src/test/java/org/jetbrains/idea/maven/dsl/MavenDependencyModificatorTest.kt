@@ -2,14 +2,14 @@
 package org.jetbrains.idea.maven.dsl
 
 import com.intellij.buildsystem.model.DeclaredDependency
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
-import org.jetbrains.idea.maven.fixtures.createModulePom
-import org.jetbrains.idea.maven.fixtures.createProjectPom
-import org.jetbrains.idea.maven.fixtures.importProjectAsync
-import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test

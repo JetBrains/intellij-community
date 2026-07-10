@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.copyright">
+<idea-plugin>
   <dependencies>
     <plugin id="com.intellij.copyright"/>
   </dependencies>

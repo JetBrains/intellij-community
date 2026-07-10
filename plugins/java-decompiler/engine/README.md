@@ -17,7 +17,7 @@ Fernflower is bundles as in IntelliJ IDEA and is primarily used to show Java cod
 Fernflower can be run from the command line in stand-alone mode using the following command:
 
 ```console
-java -jar fernflower.jar [-<option>=<value>]* [<source>]+ <destination>`
+java -jar fernflower.jar [-<option>=<value>]* [<source>]+ <destination>
 ```
 
 `*` means zero or more times

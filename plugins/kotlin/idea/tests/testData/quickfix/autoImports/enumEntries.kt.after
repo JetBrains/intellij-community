@@ -1,5 +1,5 @@
 // "Import enum entry 'ImportEnum.BLUE'" "true"
-// K2_ERROR: Unresolved reference 'BLUE'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 package e
 
 enum class ImportEnum {

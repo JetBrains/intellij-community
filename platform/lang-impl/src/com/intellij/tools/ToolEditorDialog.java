@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools;
 
-import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -12,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -97,22 +95,6 @@ public class ToolEditorDialog extends DialogWrapper {
     MacrosDialog.addTextFieldExtension((ExtendableTextField)content.programField.getTextField());
     MacrosDialog.addTextFieldExtension((ExtendableTextField)content.argumentsField.getTextField());
     MacrosDialog.addTextFieldExtension((ExtendableTextField)content.workingDirField.getTextField());
-  }
-
-  @Override
-  protected @Nullable ValidationInfo doValidate() {
-    if (content.nameField.getText().trim().isEmpty()) {
-      return new ValidationInfo(ToolsBundle.message("dialog.message.specify.the.tool.name"), content.nameField);
-    }
-
-    for (String s : OUTPUT_FILTERS_SPLITTER.fun(content.outputFilterField.getText())) {
-      if (!s.contains(RegexpFilter.FILE_PATH_MACROS)) {
-        return new ValidationInfo(
-          ToolsBundle.message("dialog.message.each.output.filter.must.contain.0.macro", RegexpFilter.FILE_PATH_MACROS), content.outputFilterField);
-      }
-    }
-
-    return null;
   }
 
   public Tool getData() {

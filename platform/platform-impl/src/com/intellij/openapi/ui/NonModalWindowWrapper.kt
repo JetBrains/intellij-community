@@ -8,10 +8,12 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -20,16 +22,18 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.FullScreenSupport
+import com.intellij.ui.ScreenUtil
 import com.intellij.ui.ToolbarService
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.FlowPreview
@@ -46,6 +50,7 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.EventQueue
 import java.awt.Frame
+import java.awt.Rectangle
 import java.awt.Toolkit
 import java.awt.Window
 import java.awt.event.AWTEventListener
@@ -53,11 +58,13 @@ import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 import javax.swing.JDialog
 import javax.swing.JFrame
 import javax.swing.JRootPane
 import javax.swing.KeyStroke
+import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.RootPaneContainer
 import kotlin.time.Duration.Companion.seconds
 
@@ -175,7 +182,13 @@ abstract class NonModalWindowWrapper(
    * [switchWindowMode], which requires [activeWindow] to be initialised — so the action must
    * not be activated before [initWindow] is called.)
    */
-  fun createModeAction(): ToggleAction = object : ToggleAction(
+  fun createModeAction(): ToggleAction {
+    val action = PinWindowAction()
+    ActionUtil.mergeFrom(action, ACTION_PIN_WINDOW_ID)
+    return action
+  }
+
+  private inner class PinWindowAction : ToggleAction(
     IdeBundle.messagePointer("action.ToggleAction.text.pin.window"),
     IdeBundle.messagePointer("action.ToggleAction.description.pin.window"),
     AllIcons.General.Pin_tab,
@@ -202,6 +215,7 @@ abstract class NonModalWindowWrapper(
     this.minWindowSize = minSize
     activeWindow = createAwtWindow(isFloat, content, minSize, initialSize)
     loadAndRegisterWindowState(activeWindow)
+    fitWindowToScreen(activeWindow)
     installWindowListeners()
     installToolkitListener()
   }
@@ -210,6 +224,36 @@ abstract class NonModalWindowWrapper(
     val key = dimensionKey ?: return
     val state = WindowStateService.getInstance(project).getState(key, window)
     state?.applyTo(window)
+  }
+
+  /**
+   * Clamps the window's `minimumSize` to the available screen area. This prevents the window
+   * manager from re-expanding the window beyond the screen after it has been shrunk.
+   *
+   * Called at init and on pin/unpin, plus continuously from the `setBounds` overrides in
+   * [FloatDialog] and [WindowFrame] so that dragging the window to a smaller monitor also
+   * re-clamps the minimum size (otherwise the user cannot resize the window down to fit).
+   *
+   * Continuous **bounds** fitting is enforced by those same `setSize`/`setBounds` overrides,
+   * mirroring [DialogWrapperPeerImpl][com.intellij.openapi.ui.impl.DialogWrapperPeerImpl].
+   */
+  private fun fitWindowToScreen(window: Window) {
+    clampMinimumSizeToScreen(window)
+  }
+
+  /**
+   * If the window's `minimumSize` exceeds the screen it currently occupies, shrink it.
+   * This is intentionally cheap: only two [Dimension] and one [Rectangle] allocation.
+   */
+  private fun clampMinimumSizeToScreen(window: Window) {
+    val screenBounds = ScreenUtil.getScreenRectangle(window.location)
+    val minSize = window.minimumSize
+    if (minSize.width > screenBounds.width || minSize.height > screenBounds.height) {
+      window.minimumSize = Dimension(
+        minOf(minSize.width, screenBounds.width),
+        minOf(minSize.height, screenBounds.height),
+      )
+    }
   }
 
   // ── Window creation and mode switching ──────────────────────────────────────
@@ -232,6 +276,7 @@ abstract class NonModalWindowWrapper(
         dialog.setLocationRelativeTo(dialog.owner)
         dialog.glassPane = IdeGlassPaneImpl(dialog.rootPane)
         ComponentUtil.decorateWindowHeader(dialog.rootPane)
+        dialog.rootPane.border = JBUI.CurrentTheme.Window.getDialogBorder(false)
         dialog.accessibleContext.accessibleName = getAccessibleWindowName()
         val wd = Disposer.newDisposable(frameDisposable)
         windowDisposable = wd
@@ -254,6 +299,7 @@ abstract class NonModalWindowWrapper(
         frame.setLocationRelativeTo(getIdeJFrame())
         frame.glassPane = IdeGlassPaneImpl(frame.rootPane)
         ComponentUtil.decorateWindowHeader(frame.rootPane)
+        frame.rootPane.border = JBUI.CurrentTheme.Window.getDialogBorder(false)
         frame.accessibleContext.accessibleName = getAccessibleWindowName()
         val wd = Disposer.newDisposable(frameDisposable)
         windowDisposable = wd
@@ -267,12 +313,34 @@ abstract class NonModalWindowWrapper(
     }
   }
 
-  private inner class FloatDialog(owner: JFrame?, title: String) : JDialog(owner, title, false), UiDataProvider {
+  private inner class FloatDialog(owner: Window?, title: String) : JDialog(owner, title, ModalityType.MODELESS), UiDataProvider {
     init {
       defaultCloseOperation = DO_NOTHING_ON_CLOSE
       background = UIUtil.getPanelBackground()
-      focusTraversalPolicy = IdeFocusTraversalPolicy()
+      focusTraversalPolicy = LayoutFocusTraversalPolicy()
       UIUtil.markAsPossibleOwner(this)
+    }
+
+    override fun setSize(width: Int, height: Int) {
+      val rect = Rectangle(location.x, location.y, width, height)
+      ScreenUtil.fitToScreen(rect)
+      super.setSize(rect.width, rect.height)
+      if (location.x != rect.x || location.y != rect.y) {
+        setLocation(rect.x, rect.y)
+      }
+    }
+
+    override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
+      clampMinimumSizeToScreen(this)
+      val rect = Rectangle(x, y, width, height)
+      ScreenUtil.fitToScreen(rect)
+      super.setBounds(rect.x, rect.y, rect.width, rect.height)
+    }
+
+    override fun setBounds(r: Rectangle) {
+      clampMinimumSizeToScreen(this)
+      ScreenUtil.fitToScreen(r)
+      super.setBounds(r)
     }
 
     override fun uiDataSnapshot(sink: DataSink): Unit = this@NonModalWindowWrapper.uiDataSnapshot(sink)
@@ -282,7 +350,29 @@ abstract class NonModalWindowWrapper(
     init {
       defaultCloseOperation = DO_NOTHING_ON_CLOSE
       background = UIUtil.getPanelBackground()
-      focusTraversalPolicy = IdeFocusTraversalPolicy()
+      focusTraversalPolicy = LayoutFocusTraversalPolicy()
+    }
+
+    override fun setSize(width: Int, height: Int) {
+      val rect = Rectangle(location.x, location.y, width, height)
+      ScreenUtil.fitToScreen(rect)
+      super.setSize(rect.width, rect.height)
+      if (location.x != rect.x || location.y != rect.y) {
+        setLocation(rect.x, rect.y)
+      }
+    }
+
+    override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
+      clampMinimumSizeToScreen(this)
+      val rect = Rectangle(x, y, width, height)
+      ScreenUtil.fitToScreen(rect)
+      super.setBounds(rect.x, rect.y, rect.width, rect.height)
+    }
+
+    override fun setBounds(r: Rectangle) {
+      clampMinimumSizeToScreen(this)
+      ScreenUtil.fitToScreen(r)
+      super.setBounds(r)
     }
 
     override fun uiDataSnapshot(sink: DataSink): Unit = this@NonModalWindowWrapper.uiDataSnapshot(sink)
@@ -299,10 +389,11 @@ abstract class NonModalWindowWrapper(
     windowListener?.let { activeWindow.removeWindowListener(it) }
     windowListener = null
     content.parent?.remove(content)
-    activeWindow.dispose()
+    disposeWindow(activeWindow)
     windowDisposable?.let { Disposer.dispose(it) }
     windowDisposable = null
     activeWindow = createAwtWindow(toFloat, content, minWindowSize, bounds.size)
+    fitWindowToScreen(activeWindow)
     installWindowListeners()
     savedDefaultButton?.let { (activeWindow as RootPaneContainer).rootPane.defaultButton = it }
     activeWindow.bounds = bounds
@@ -345,14 +436,34 @@ abstract class NonModalWindowWrapper(
     windowListener = adapter
     activeWindow.addWindowListener(adapter)
 
-    // ESC / Cmd-W: ask the subclass whether it is safe to close.
-    val closeHandler = ActionListener { e ->
+    // Two-layer ESC close:
+    // Layer 1: AnAction — fires at IdeKeyEventDispatcher level, before Swing bindings.
+    //   Handles combo boxes, trees, tables whose ESC is a pure Swing InputMap entry.
+    // Layer 2: WHEN_IN_FOCUSED_WINDOW — Swing fallback when Layer 1 is shadowed
+    //   by a closer AnAction ancestor (e.g. ClearTextAction on SearchTextField).
+    val escAction = object : AnAction() {
+      override fun actionPerformed(e: AnActionEvent) {
+        if (PopupUtil.handleEscKeyEvent()) return
+        val event = e.inputEvent ?: EventQueue.getCurrentEvent() ?: return
+        if (canClose(event)) close()
+      }
+    }
+    escAction.registerCustomShortcutSet(ActionUtil.getShortcutSet(IdeActions.ACTION_EDITOR_ESCAPE), rootPane)
+
+    val escSwingHandler = ActionListener { e ->
+      if (PopupUtil.handleEscKeyEvent()) return@ActionListener
       val current = EventQueue.getCurrentEvent()
       if (canClose(current as? KeyEvent ?: e)) close()
     }
     rootPane.registerKeyboardAction(
-      closeHandler, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW)
-    ActionUtil.registerForEveryKeyboardShortcut(rootPane, closeHandler, CommonShortcuts.getCloseActiveWindow())
+      escSwingHandler, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW)
+
+    val cmdWHandler = ActionListener { e ->
+      if (PopupUtil.handleEscKeyEvent()) return@ActionListener
+      val current = EventQueue.getCurrentEvent()
+      if (canClose(current as? KeyEvent ?: e)) close()
+    }
+    ActionUtil.registerForEveryKeyboardShortcut(rootPane, cmdWHandler, CommonShortcuts.getCloseActiveWindow())
 
     installAdditionalShortcuts(rootPane)
   }
@@ -364,12 +475,28 @@ abstract class NonModalWindowWrapper(
       withContext(ModalityState.any().asContextElement()) {
         val globallyActiveWindow = MutableStateFlow<Window?>(null)
 
+        // Track whether a child dialog of our window was recently active.
+        // When a child is activated, this flag is set immediately — before any debounce.
+        // The child dialog may then redirect focus elsewhere (e.g. to a browser for OAuth),
+        // and after the debounce, the globally active window would be null (or the browser),
+        // not the child. Without this flag, we'd incorrectly treat it as an app-switch and
+        // reset the configurable. The flag is cleared when our own window is re-activated.
+        // This approach does NOT rely on WindowEvent.oppositeWindow, so it works on Wayland.
+        val deactivatedToChild = AtomicBoolean(false)
+
         launch {
           val toolkit = Toolkit.getDefaultToolkit()
           val listener = AWTEventListener { event ->
             when (event.id) {
               WindowEvent.WINDOW_ACTIVATED -> {
-                globallyActiveWindow.value = event.source as Window
+                val activated = event.source as Window
+                if (activated !== activeWindow && activated.isSameOrOwnedBy(activeWindow)) {
+                  // A child dialog of our window just got focus.
+                  // Remember this so that if the child redirects focus elsewhere (e.g. browser),
+                  // we don't treat it as a genuine app-switch.
+                  deactivatedToChild.set(true)
+                }
+                globallyActiveWindow.value = activated
               }
               WindowEvent.WINDOW_DEACTIVATED -> {
                 // Guesswork: if the app lost focus for good, this will be the last value for a while.
@@ -400,12 +527,29 @@ abstract class NonModalWindowWrapper(
             if (globallyActiveWindow == null) 1.seconds else 0.seconds
           }
           .map { globallyActiveWindow ->
-            LOG.debug { "Active window changed: $globallyActiveWindow" }
+            LOG.debug { "Active window changed: $globallyActiveWindow, deactivatedToChild=$deactivatedToChild" }
             // Don't trigger "deactivate" when focus moves to an owned child dialog (e.g. a file chooser opened
             // by a configurable): changes made there are intentional and should not be rolled back.
             // Don't trigger "activate" when returning from an owned child dialog.
             // All other cases — including null (another OS app) and unrelated windows — are genuine app-switches.
-            globallyActiveWindow != null && globallyActiveWindow.isSameOrOwnedBy(activeWindow)
+            if (globallyActiveWindow != null && globallyActiveWindow.isSameOrOwnedBy(activeWindow)) {
+              // Our window or a child has focus — clear the child flag only when it's the main window itself,
+              // not a child: we need the flag to survive while a child is active, in case the child
+              // redirects focus to an external app (e.g. browser for OAuth) before the debounce fires again.
+              if (globallyActiveWindow === activeWindow) {
+                deactivatedToChild.set(false)
+              }
+              true
+            }
+            else if (deactivatedToChild.get()) {
+              // We lost focus to a child dialog initially, but by the time the debounce fired,
+              // the active window is something else (e.g. a browser opened by the child for OAuth).
+              // Treat this as still being in child interaction — don't reset.
+              true
+            }
+            else {
+              false
+            }
           }
           .distinctUntilChanged()
           .collect { isOurWindowActive ->
@@ -423,7 +567,7 @@ abstract class NonModalWindowWrapper(
 
   // ── Utilities ────────────────────────────────────────────────────────────────
 
-  /** Returns the IDE's JFrame for [project]; used as the [JDialog] owner in Float mode. */
+  /** Returns the IDE's JFrame for [project]; used as a fallback [JDialog] owner in Float mode. */
   protected fun getIdeJFrame(): JFrame? =
     ComponentUtil.getWindow(WindowManager.getInstance().getIdeFrame(project)?.component) as? JFrame
 
@@ -465,8 +609,17 @@ abstract class NonModalWindowWrapper(
   override fun dispose() {
     isDisposed = true
     windowListener?.let { activeWindow.removeWindowListener(it) }
+    windowListener = null
     Disposer.dispose(frameDisposable)
-    activeWindow.dispose()
+    disposeWindow(activeWindow)
+  }
+
+  private fun disposeWindow(window: Window) {
+    window.dispose()
+    val rootPane = (window as? RootPaneContainer)?.rootPane
+    rootPane?.resetKeyboardActions()
+    DialogWrapper.cleanupRootPane(rootPane)
+    DialogWrapper.cleanupWindowListeners(window)
   }
 }
 
@@ -481,3 +634,5 @@ private fun Window.isSameOrOwnedBy(ancestor: Window): Boolean {
 }
 
 private val LOG = logger<NonModalWindowWrapper>()
+
+internal const val ACTION_PIN_WINDOW_ID = "NonModalWindow.PinUnpin"

@@ -4,19 +4,19 @@ class MyClass {
     val value: Int = 42
 
     fun inside(param: String) {
-        with(param) {
+        context(param) {
             doSomething()
         }
     }
 
     fun inside1(param: String) {
-        with(param) {
+        context(param) {
             this@MyClass.doSomething()
         }
     }
 
     fun inside2(param: String, another: MyClass) {
-        with(param) {
+        context(param) {
             another.doSomething()
         }
     }
@@ -28,7 +28,7 @@ fun MyClass.doSomething() {
 }
 
 fun MyClass.foo() {
-    with("param1") {
+    context("param1") {
         doSomething()
     }
 }
@@ -45,12 +45,12 @@ class Bar {
 
 fun usage() {
     val obj = MyClass()
-    with("test") {
+    context("test") {
         obj.doSomething()
     }
 
     with(obj) {
-        with("inside with") {
+        context("inside with") {
             doSomething()
         }
     }

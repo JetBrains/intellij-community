@@ -1,0 +1,131 @@
+MODULES
+project
+
+project.androidTest
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in project.Foo
+
+project.appleMain
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in project.Foo
+
+project.appleTest
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in project.Foo
+
+project.commonMain
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in project.Foo
+
+project.commonTest
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in project.Foo
+
+project.iosArm64Main
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in project.Foo,project.ios
+
+project.iosArm64Test
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in project.Foo,project.ios
+
+project.iosMain
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in project.Foo
+
+project.iosSimulatorArm64Main
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in project.Foo,project.ios
+
+project.iosSimulatorArm64Test
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in project.Foo,project.ios
+
+project.iosTest
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in project.Foo
+
+project.iosX64Main
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in project.Foo,project.ios
+
+project.iosX64Test
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in project.Foo,project.ios
+
+project.jsMain
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -main call -opt-in project.Foo
+
+project.jsTest
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -main call -opt-in project.Foo
+
+project.jvmAndroidMain
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in project.Foo
+
+project.jvmAndroidTest
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in project.Foo
+
+project.jvmMain
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in project.Foo,jvm.Foo
+
+project.jvmTest
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in project.Foo,jvm.Foo
+
+project.main
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in project.Foo
+
+project.nativeMain
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in project.Foo
+
+project.nativeTest
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in project.Foo
+
+project.unitTest
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in project.Foo
+
+project.webMain
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in project.Foo
+
+project.webTest
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in project.Foo
+
+
+Test configuration:
+- showing only following facet fields: languageLevel, apiLevel, compilerSettings

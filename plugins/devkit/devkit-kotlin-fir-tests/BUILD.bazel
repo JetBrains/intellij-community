@@ -133,6 +133,10 @@ jvm_library(
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework_test_lib",
         "//plugins/devkit/intellij.devkit.themes:themes-tests",
         "//plugins/devkit/intellij.devkit.themes:themes-tests_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.kotlin.fir.tests` end

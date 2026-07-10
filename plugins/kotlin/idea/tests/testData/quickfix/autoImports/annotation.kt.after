@@ -1,7 +1,7 @@
 import org.jetbrains.annotations.TestOnly
 
 // "Import class 'TestOnly'" "true"
-// K2_ERROR: Unresolved reference 'TestOnly'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 @TestOnly
 fun foo() {}

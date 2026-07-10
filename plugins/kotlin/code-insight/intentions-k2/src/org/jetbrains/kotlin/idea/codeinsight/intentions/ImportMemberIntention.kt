@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.components.importableFqName
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFileSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.isTopLevel
@@ -63,9 +64,10 @@ internal class ImportMemberIntention :
                 ?: return null
         
         val file = element.containingKtFile
-        return computeContext(file, symbol)?.takeUnless {
-            symbol.isTopLevel && symbol.containingFile?.isInSamePackage(file) == true
+        if (symbol is KaDeclarationSymbol && symbol.isTopLevel && symbol.containingFile?.isInSamePackage(file) == true) {
+            return null
         }
+        return computeContext(file, symbol)
     }
 
     override fun invoke(

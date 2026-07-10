@@ -1,6 +1,6 @@
 // "Change 'y' to '*y'" "false"
-// K2_ERROR: Argument type mismatch: actual type is 'IntArray', but 'String' was expected.
-// K2_AFTER_ERROR: Argument type mismatch: actual type is 'IntArray', but 'String' was expected.
+// K2_AFTER_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 fun foo(vararg x: String) {}
 

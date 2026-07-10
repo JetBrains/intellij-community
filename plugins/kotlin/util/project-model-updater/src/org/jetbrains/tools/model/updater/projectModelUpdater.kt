@@ -19,14 +19,21 @@ internal fun updateProjectModel(preferences: GeneratorPreferences) {
 
     val resolverSettings = readJpsResolverSettings(communityRoot, monorepoRoot)
 
-    val kotlinDependenciesBazelFile = communityRoot.resolve("plugins/kotlin/kotlin_test_dependencies.bzl")
-    kotlinDependenciesBazelFile.writeText(
-        kotlinDependenciesBazelFile.readText()
-            .replace(kotlinCompilerCliVersionRegex, "kotlinCompilerCliVersion = \"${preferences.kotlincArtifactVersion}\"")
-            .replace(kotlincKotlinJpsPluginTestsVersionRegex, "kotlincKotlinJpsPluginTestsVersion = \"${preferences.jpsArtifactVersion}\"")
+    val kotlincArtifactCoordinates = preferences.kotlincArtifactCoordinates
+    val jpsArtifactCoordinates = preferences.jpsArtifactCoordinates
+
+    fun effectiveRepositoryUrl(coordinates: ArtifactCoordinates): String? {
+        return coordinates.takeIf { it.mode != GeneratorPreferences.ArtifactMode.BOOTSTRAP }?.repository?.url
+    }
+
+    BazelKotlinDependencyFacade.update(
+        newKotlincRepositoryUrl = effectiveRepositoryUrl(kotlincArtifactCoordinates),
+        newKotlinCompilerCliVersion = kotlincArtifactCoordinates.version,
+        newJpsPluginRepositoryUrl = effectiveRepositoryUrl(jpsArtifactCoordinates),
+        newKotlinJpsPluginTestsVersion = jpsArtifactCoordinates.version,
     )
 
-    KotlinTestsDependenciesUtil.updateChecksum(isUpToDateCheck = false)
+    KotlinTestsDependenciesUtil.updateChecksums(isUpToDateCheck = false)
 
     fun processRoot(root: Path, libraries: List<JpsLibrary>) {
         println("Processing kotlinc libraries in '$root'...")
@@ -42,8 +49,8 @@ internal fun updateProjectModel(preferences: GeneratorPreferences) {
     val communityLibraries = generateKotlincLibraries(preferences, isCommunity = true)
     processRoot(communityRoot, communityLibraries)
     regenerateCompilerDependenciesIml(communityRoot, communityLibraries)
-    updateLatestGradlePluginVersion(communityRoot, preferences.kotlinGradlePluginVersion)
-    updateKGPVersionForKotlinNativeTests(communityRoot, preferences.kotlinGradlePluginVersion)
+    updateLatestGradlePluginVersion(communityRoot, preferences.kotlinGradlePluginArtifactVersion)
+    updateKGPVersionForKotlinNativeTests(communityRoot, preferences.kotlinNativeArtifactVersion)
 
     if (monorepoRoot != null && preferences.convertJpsToBazel == true) {
         convertJpsToBazel(monorepoRoot)
@@ -86,9 +93,6 @@ private fun regenerateProjectLibraries(dotIdea: Path, newLibraries: List<JpsLibr
         redundantLibrary.deleteExisting()
     }
 }
-
-internal val kotlinCompilerCliVersionRegex: Regex = Regex("""kotlinCompilerCliVersion\s*=\s*"(\S+)"""")
-internal val kotlincKotlinJpsPluginTestsVersionRegex: Regex = Regex("""kotlincKotlinJpsPluginTestsVersion\s*=\s*"(\S+)"""")
 
 /**
  * Updates the `KotlinGradlePluginVersions.kt` source file to contain the latest [kotlinGradlePluginVersion]

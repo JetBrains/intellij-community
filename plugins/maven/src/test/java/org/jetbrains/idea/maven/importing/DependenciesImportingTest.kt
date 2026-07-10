@@ -1,7 +1,45 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.idea.TestFor
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertExportedDeps
+import com.intellij.maven.testFramework.fixtures.assertModuleLibDep
+import com.intellij.maven.testFramework.fixtures.assertModuleLibDepScope
+import com.intellij.maven.testFramework.fixtures.assertModuleLibDeps
+import com.intellij.maven.testFramework.fixtures.assertModuleModuleDepScope
+import com.intellij.maven.testFramework.fixtures.assertModuleModuleDeps
+import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.assertOrderedElementsAreEqual
+import com.intellij.maven.testFramework.fixtures.assertProjectLibraries
+import com.intellij.maven.testFramework.fixtures.assertProjectLibraryCoordinates
+import com.intellij.maven.testFramework.fixtures.assumeMaven3
+import com.intellij.maven.testFramework.fixtures.assumeMaven4
+import com.intellij.maven.testFramework.fixtures.assumeModel_4_0_0
+import com.intellij.maven.testFramework.fixtures.assumeVersionMoreThan
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.doImportProjectsAsync
+import com.intellij.maven.testFramework.fixtures.envVar
+import com.intellij.maven.testFramework.fixtures.getModule
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.importProjectWithProfiles
+import com.intellij.maven.testFramework.fixtures.importProjectsAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.mn
+import com.intellij.maven.testFramework.fixtures.moduleTag
+import com.intellij.maven.testFramework.fixtures.modulesTag
+import com.intellij.maven.testFramework.fixtures.projectPath
+import com.intellij.maven.testFramework.fixtures.projectsTree
+import com.intellij.maven.testFramework.fixtures.removeFromLocalRepository
+import com.intellij.maven.testFramework.fixtures.repositoryPathCanonical
+import com.intellij.maven.testFramework.fixtures.setIgnoredFilesPathForNextImport
+import com.intellij.maven.testFramework.fixtures.updateAllProjects
+import com.intellij.maven.testFramework.fixtures.updateAllProjectsFullSync
+import com.intellij.maven.testFramework.fixtures.updateModulePom
+import com.intellij.maven.testFramework.fixtures.updateProjectPom
+import com.intellij.maven.testFramework.fixtures.updateSettingsXmlFully
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.edtWriteAction
@@ -24,61 +62,23 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomNioRepositoryHelper
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.Arrays
 import kotlin.io.path.exists
-import com.intellij.testFramework.junit5.TestApplication
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
-import org.jetbrains.idea.maven.fixtures.assertExportedDeps
-import org.jetbrains.idea.maven.fixtures.assertModuleLibDep
-import org.jetbrains.idea.maven.fixtures.assertModuleLibDepScope
-import org.jetbrains.idea.maven.fixtures.assertModuleLibDeps
-import org.jetbrains.idea.maven.fixtures.assertModuleModuleDepScope
-import org.jetbrains.idea.maven.fixtures.assertModuleModuleDeps
-import org.jetbrains.idea.maven.fixtures.assertModules
-import org.jetbrains.idea.maven.fixtures.assertOrderedElementsAreEqual
-import org.jetbrains.idea.maven.fixtures.assertProjectLibraries
-import org.jetbrains.idea.maven.fixtures.assertProjectLibraryCoordinates
-import org.jetbrains.idea.maven.fixtures.assumeMaven3
-import org.jetbrains.idea.maven.fixtures.assumeModel_4_0_0
-import org.jetbrains.idea.maven.fixtures.assumeVersionMoreThan
-import org.jetbrains.idea.maven.fixtures.createModulePom
-import org.jetbrains.idea.maven.fixtures.createProjectPom
-import org.jetbrains.idea.maven.fixtures.createProjectSubFile
-import org.jetbrains.idea.maven.fixtures.doImportProjectsAsync
-import org.jetbrains.idea.maven.fixtures.envVar
-import org.jetbrains.idea.maven.fixtures.getModule
-import org.jetbrains.idea.maven.fixtures.importProjectAsync
-import org.jetbrains.idea.maven.fixtures.importProjectWithProfiles
-import org.jetbrains.idea.maven.fixtures.importProjectsAsync
-import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
-import org.jetbrains.idea.maven.fixtures.mn
-import org.jetbrains.idea.maven.fixtures.moduleTag
-import org.jetbrains.idea.maven.fixtures.modulesTag
-import org.jetbrains.idea.maven.fixtures.projectPath
-import org.jetbrains.idea.maven.fixtures.projectsTree
-import org.jetbrains.idea.maven.fixtures.removeFromLocalRepository
-import org.jetbrains.idea.maven.fixtures.repositoryPathCanonical
-import org.jetbrains.idea.maven.fixtures.setIgnoredFilesPathForNextImport
-import org.jetbrains.idea.maven.fixtures.updateAllProjects
-import org.jetbrains.idea.maven.fixtures.updateAllProjectsFullSync
-import org.jetbrains.idea.maven.fixtures.updateModulePom
-import org.jetbrains.idea.maven.fixtures.updateProjectPom
-import org.jetbrains.idea.maven.fixtures.updateSettingsXmlFully
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.params.ParameterizedClass
-import org.junit.jupiter.params.provider.ArgumentsSource
-import org.junit.jupiter.api.BeforeEach
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
 
 @TestApplication
 @ParameterizedClass
@@ -2812,6 +2812,42 @@ class DependenciesImportingTest(mavenVersion: String, modelVersion: String) {
     val module = maven.projectsManager.findProject(maven.getModule(maven.mn("project", "m1")))
     assertNotNull(module)
     maven.assertModuleModuleDeps("m1", "m2")
+    assertEmpty(module!!.problems)
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-388560"])
+  fun testParentWithCiFriendlyVersionResolvedViaRelativePath() =runBlocking {
+    // The child references its parent at the already-flattened concrete version (1.0-SNAPSHOT),
+    // while the parent pom on disk still declares its own version through the CI-friendly
+    // ${'$'}{revision} property. The relativePath parent must be accepted instead of falling back
+    // to the local repository, which would leak the literal ${'$'}{revision} into the artifact path.
+    maven.createModulePom("m1", """
+      <artifactId>m1</artifactId>
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+      </parent>
+      """.trimIndent())
+
+    maven.importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>${'$'}{revision}</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                      <module>m1</module>
+                    </modules>
+                    <properties>
+                      <revision>1.0-SNAPSHOT</revision>
+                    </properties>
+                      """.trimIndent())
+
+    maven.assertModules("project", "m1")
+    val module = maven.projectsManager.findProject(maven.getModule(maven.mn("project", "m1")))
+    assertNotNull(module)
     assertEmpty(module!!.problems)
   }
 }

@@ -48,6 +48,7 @@ jvm_library(
         "//libraries/asm-tools",
         "//platform/bazel-runfiles",
         "//platform/util/base",
+        "//platform/util",
         ":libraries_junit5-launcher_provided",
         ":libraries_junit5_provided",
         ":libraries_junit5-vintage_provided",
@@ -80,6 +81,7 @@ jvm_library(
         "//libraries/asm-tools:asm-tools_test_lib",
         "//platform/bazel-runfiles:bazel-runfiles_test_lib",
         "//platform/util/base:base_test_lib",
+        "//platform/util:util_test_lib",
     ],
 )
 ### auto-generated section `build intellij.tools.testsBootstrap` end

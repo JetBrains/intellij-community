@@ -1,5 +1,5 @@
 // "Add else branch" "true"
-// K2_ERROR: 'when' expression must be exhaustive. Add the 'G', 'B' branches or an 'else' branch.
+// K2_ERROR: NO_ELSE_IN_WHEN
 enum class Color { R, G, B }
 fun use(c: Color) {
     <caret>when (c) {

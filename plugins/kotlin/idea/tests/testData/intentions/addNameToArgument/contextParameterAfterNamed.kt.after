@@ -3,7 +3,7 @@
 // INTENTION_TEXT: "Add 'x =' to argument"
 // AFTER-WARNING: Parameter 'x' is never used
 // AFTER-WARNING: Parameter 'a' is never used
-// K2_ERROR: Too many arguments for 'context(x: String) fun foo(a: String): String'.
+// K2_ERROR: TOO_MANY_ARGUMENTS
 
 
 context(x: String)

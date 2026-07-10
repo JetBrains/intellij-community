@@ -4,7 +4,6 @@ package com.intellij.maven.testFramework
 import com.intellij.application.options.CodeStyle
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
-import com.intellij.testFramework.CompilerBuildTestUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -53,6 +52,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.testFramework.CodeStyleSettingsTracker
+import com.intellij.testFramework.CompilerBuildTestUtil
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
@@ -85,11 +85,14 @@ import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.io.path.absolutePathString
 
 abstract class MavenImportingTestCase : MavenTestCase() {
 
@@ -99,10 +102,91 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   private var myProjectTracker: AutoImportProjectTracker? = null
   private var isAutoReloadEnabled = false
   protected lateinit var myDisposable: Disposable
+  private var myProjectPom: VirtualFile? = null
+  private val myAllPoms: MutableSet<VirtualFile> = mutableSetOf()
 
   // plugin resolution is slow and many tests do not need it
   protected open fun skipPluginResolution(): Boolean {
     return true
+  }
+
+  var projectPom: VirtualFile
+    get() = myProjectPom!!
+    set(projectPom) {
+      myProjectPom = projectPom
+    }
+
+  fun addPom(pom: VirtualFile) {
+    myAllPoms.add(pom)
+  }
+
+  protected fun createProjectPom(
+    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+    omitModelVersionTag: Boolean = false,
+  ): VirtualFile {
+    return createPomFile(projectRoot, xml, omitModelVersionTag).also { myProjectPom = it }
+  }
+
+  protected fun updateProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+    val pom = createProjectPom(xml)
+    refreshFiles(listOf(pom))
+    return pom
+  }
+
+  protected fun createPomFile(
+    dir: VirtualFile, fileName: String = "pom.xml",
+    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+    omitModelVersionTag: Boolean = false,
+  ): VirtualFile {
+    val filePath = Path.of(dir.path, fileName)
+    setPomContent(filePath, xml, omitModelVersionTag)
+    dir.refresh(false, false)
+    val f = dir.findChild(fileName) ?: throw AssertionError("can't find file ${filePath.absolutePathString()} in VFS")
+    myAllPoms.add(f)
+    refreshFiles(listOf(f))
+    return f
+  }
+
+  protected fun setRawPomFile(content: String) {
+    Files.write(projectPath.resolve("pom.xml"), content.toByteArray(StandardCharsets.UTF_8))
+    projectRoot.refresh(false, false)
+    val f = projectRoot.findChild("pom.xml") ?: throw AssertionError("can't find pom.xml in vfs")
+    myProjectPom = f
+    refreshFiles(listOf(f))
+  }
+
+  protected fun createPomFile(
+    dir: VirtualFile,
+    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+    omitModelVersionTag: Boolean = false,
+  ): VirtualFile {
+    return createPomFile(dir, "pom.xml", xml, omitModelVersionTag)
+  }
+
+  private fun setPomContent(
+    file: Path,
+    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?,
+    omitModelVersionTag: Boolean = false,
+  ) {
+    setFileContent(file, createPomXml(xml, omitModelVersionTag))
+  }
+
+  protected fun createModulePom(
+    relativePath: String,
+    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+    omitModelVersionTag: Boolean = false,
+  ): VirtualFile {
+    return createPomFile(createProjectSubDir(relativePath), xml, omitModelVersionTag)
+  }
+
+  protected fun updateModulePom(
+    relativePath: String,
+    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+    omitModelVersionTag: Boolean = false,
+  ): VirtualFile {
+    val pom = createModulePom(relativePath, xml, omitModelVersionTag)
+    refreshFiles(listOf(pom))
+    return pom
   }
 
   @Throws(Exception::class)

@@ -51,9 +51,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.coroutineContext
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.takeWhile
@@ -78,12 +76,12 @@ interface Transactor : CoroutineContext.Element {
   val middleware: TransactorMiddleware
 
   /**
-   * Current db value
-   * Returns snapshot of last known db
+   * Source of the current db.
+   * [DbSource.latest] returns a snapshot of the last known db, [DbSource.flow] emits every new db version.
    *
-   * Be aware that [] and [ChangeScope] already carry db with them so this property may give you a db version that is different from context one
+   * Be aware that [change] and [ChangeScope] already carry db with them so this property may give you a db version that is different from context one
    */
-  val dbState: StateFlow<DB>
+  val dbSource: DbSource
 
   /**
    * Issues the change
@@ -205,7 +203,7 @@ fun interface Subscriber<T> {
   suspend fun CoroutineScope.subscribed(initial: DB, changes: ReceiveChannel<Change>): T
 }
 
-val Transactor.lastKnownDb: DB get() = dbState.value
+val Transactor.lastKnownDb: DB get() = dbSource.latest
 
 object OnCompleteKey : ChangeScopeKey<MutableList<(Transactor) -> Unit>>
 object DeferredChangeKey : ChangeScopeKey<Deferred<Change>>
@@ -373,7 +371,7 @@ suspend fun <T> withTransactor(
       extraBufferCapacity = logBufferSize,
       onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
-    val stateFlow = MutableStateFlow<DB>(initialDb)
+    val mutableDbSource = MutableDbSource(debugName = "kernel $kernelId", initial = initialDb)
     sharedFlow.emit(TransactorEvent.Init(timestamp = 0L, db = initialDb))
 
     val transactor = object : Transactor {
@@ -382,8 +380,7 @@ suspend fun <T> withTransactor(
       @Deprecated("will be removed")
       override val meta: MutableOpenMap<Transactor> = OpenMap<Transactor>().mutable()
 
-      override val dbState: StateFlow<DB>
-        get() = stateFlow
+      override val dbSource: DbSource = mutableDbSource.readOnly()
 
       override fun changeAsync(f: ChangeScope.() -> Unit): Deferred<Change> {
         val deferred = CompletableDeferred<Change>()
@@ -462,7 +459,7 @@ suspend fun <T> withTransactor(
                 // in a sense the cancellation is a rogue one, we should treat it as a simple change failure, and thus keep it INSIDE runCatching
                 changeTask.rendezvous.await()
                 val timedChange = measureTimedValue {
-                  val dbBefore = stateFlow.value
+                  val dbBefore = mutableDbSource.latest
                   span("change", {
                     set("ts", (dbBefore.timestamp + 1).toString())
                     cause = changeTask.causeSpan
@@ -483,7 +480,7 @@ suspend fun <T> withTransactor(
                               location = changeTask.causeSpan)
                 val change = timedChange.value
                 Transactor.logger.trace { "[$transactor] broadcasting change [${change.dbBefore.timestamp} -> ${change.dbAfter.timestamp}] $change" }
-                stateFlow.value = change.dbAfter
+                mutableDbSource.set(change.dbAfter)
                 check(sharedFlow.tryEmit(
                   TransactorEvent.SequentialChange(
                     timestamp = ts++,
@@ -516,14 +513,16 @@ suspend fun <T> withTransactor(
       }.apply {
         invokeOnCompletion { x ->
           // TheEnd marks the flow as terminated in case someone is consuming the log out of scope
-          // not updating [stateFlow] here, because a database is always a database, it won't change anything
           check(sharedFlow.tryEmit(TransactorEvent.TheEnd(x))) {
             "changeFlow should have been created with drop-oldest"
           }
+          // poison the db source so that readers via [DbSource] fail after the transactor has stopped,
+          // instead of being handed a stale snapshot forever
+          mutableDbSource.close(x)
         }
       }.use {
         try {
-          withContext(transactor + DbSource.ContextElement(FlowDbSource(transactor.dbState, debugName = "kernel $transactor"))) {
+          withContext(transactor + DbSource.ContextElement(transactor.dbSource)) {
             body(transactor)
           }
         }

@@ -2,7 +2,6 @@ package fleet.codepoints
 
 import fleet.util.multiplatform.Actual
 
-@Actual internal fun codepointsToStringJvm(vararg codepoints: Int): String = java.lang.String(codepoints, 0, codepoints.size).toString()
 @Actual internal fun codepointOfJvm(highSurrogate: Char, lowSurrogate: Char): Codepoint = Codepoint(Character.toCodePoint(highSurrogate, lowSurrogate))
 @Actual internal fun highSurrogateJvm(codepoint: Int): Char = Character.highSurrogate(codepoint)
 @Actual internal fun lowSurrogateJvm(codepoint: Int): Char = Character.lowSurrogate(codepoint)

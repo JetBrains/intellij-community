@@ -6,7 +6,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 
-internal class UnresolvedDependencyIssueTest {
+class UnresolvedDependencyIssueTest {
+
   @Test
   fun `test unresolved dependency during sync in offline mode has valid quick-fix`() {
     val syncIssue = UnresolvedDependencySyncIssue(

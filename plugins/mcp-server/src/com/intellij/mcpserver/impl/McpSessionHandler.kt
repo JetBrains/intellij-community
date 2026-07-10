@@ -23,7 +23,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.diagnostic.traceThrowable
-import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.telemetry.IJNoopTracer
 import com.intellij.platform.diagnostic.telemetry.IJTracer
@@ -32,7 +32,6 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.TracerLevel
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.application
-import com.intellij.util.asDisposable
 import io.ktor.util.toMap
 import io.modelcontextprotocol.kotlin.sdk.server.RegisteredTool
 import io.modelcontextprotocol.kotlin.sdk.server.Server
@@ -57,7 +56,10 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import java.util.concurrent.atomic.AtomicReference
@@ -126,57 +128,86 @@ internal class McpSessionHandler(
     invocationMode = McpToolInvocationMode.VIA_ROUTER,
   )
 
-  private val projectPathParamToStrip: String? =
-    if (!projectPathFromInitialRequest.isNullOrBlank()) projectPathParameterName else null
-
   val mcpTools = toolsProvider.mcpTools
-
-  private var previousTools: List<McpTool>? = null
 
   private val sessionAwaiter = CompletableDeferred<ServerSession>()
   private val sessionRoots = AtomicReference<Set<String>?>(null)
+  private val resolvedSessionProject = AtomicReference<Project?>(null)
 
-  init {
-    // Process initial tools immediately to fix race condition
-    processToolsUpdate(mcpTools.value)
-    FileDocumentManager.getInstance().overrideConflictsSolverEnabled(false, sessionScope.asDisposable())
-  }
+  /**
+   * Serializes concurrent [updateTools] invocations (the initial explicit call from [McpServerService],
+   * the [mcpTools] flow collector, and [setSessionRoots]) so their remove/add halves cannot interleave
+   * and momentarily expose an empty tools list to the client.
+   */
+  private val updateMutex = Mutex()
+
+  /**
+   * Names of currently registered tools mapped to the `projectPath`-strip mode used when they were
+   * registered (i.e. whether [projectPathParameterName] was stripped from their input schema).
+   * Guarded by [updateMutex].
+   */
+  private val registeredToolsStrippedMode = mutableMapOf<String, Boolean>()
+
+  /**
+   * Last [updateTools] inputs that were successfully applied. Lets repeated calls with an unchanged
+   * tools list reference and unchanged `projectKnownUpfront` mode short-circuit before computing or
+   * applying a diff. This covers the StateFlow's initial replay right after the explicit pre-init
+   * call from [McpServerService], the `clientInfo`-update echo through the tools flow, and repeated
+   * roots notifications that report the same set — for the whole session lifetime, not just the
+   * first emission. Guarded by [updateMutex].
+   */
+  private var lastAppliedToolsState: AppliedToolsState? = null
 
   fun updateClientInfo(newClientInfo: Implementation) {
     toolsProvider.updateClientInfo(newClientInfo)
   }
 
-  /**
-   * Processes tool updates by applying filters and updating MCP server tools.
-   * This method extracts the logic from collectLatest handler.
-   */
-  private fun processToolsUpdate(updatedTools: List<McpTool>) {
-    val previousToolNames = previousTools?.map { it.descriptor.name }?.toSet() ?: emptySet()
-    val newToolNames = updatedTools.map { it.descriptor.name }.toSet()
+  internal suspend fun updateTools() {
+    updateTools(mcpTools.value)
+  }
 
-    // Find tools to remove (in previous but not in new)
-    val toolsToRemove = previousToolNames - newToolNames
+  private suspend fun updateTools(newTools: List<McpTool>): Unit = updateMutex.withLock {
+    val resolvedProject = try {
+      resolveSessionProject()
+    }
+    catch (t: Throwable) {
+      logger.trace { "Tools update could not resolve a target project: ${t.message}" }
+      null
+    }
+    resolvedSessionProject.set(resolvedProject)
+    val projectKnownUpfront = !projectPathFromInitialRequest.isNullOrBlank() || resolvedProject != null
+
+    val newState = AppliedToolsState(tools = newTools, projectKnownUpfront = projectKnownUpfront)
+    if (lastAppliedToolsState?.matches(newState) == true) {
+      return@withLock
+    }
+
+    val desiredNames = newTools.mapTo(mutableSetOf()) { it.descriptor.name }
+
+    val toolsToRemove = registeredToolsStrippedMode.entries
+      .filter { (name, stripped) -> name !in desiredNames || stripped != projectKnownUpfront }
+      .map { it.key }
     if (toolsToRemove.isNotEmpty()) {
       logger.trace { "Removing tools from MCP server: $toolsToRemove" }
-      mcpServer.removeTools(toolsToRemove.toList())
+      mcpServer.removeTools(toolsToRemove)
+      toolsToRemove.forEach { registeredToolsStrippedMode.remove(it) }
     }
 
-    // Find tools to add (in new but not in previous)
-    val toolNamesToAdd = newToolNames - previousToolNames
-    val toolsToAdd = updatedTools.filter { it.descriptor.name in toolNamesToAdd }
+    val toolsToAdd = newTools.filter { it.descriptor.name !in registeredToolsStrippedMode }
     if (toolsToAdd.isNotEmpty()) {
       logger.trace { "Adding tools to MCP server: ${toolsToAdd.map { it.descriptor.name }}" }
-      mcpServer.addTools(toolsToAdd.map { mcpToolToRegisteredTool(it) })
+      mcpServer.addTools(toolsToAdd.map { mcpToolToRegisteredTool(it, projectKnownUpfront) })
+      toolsToAdd.forEach { registeredToolsStrippedMode[it.descriptor.name] = projectKnownUpfront }
     }
 
-    previousTools = updatedTools
+    lastAppliedToolsState = newState
   }
 
   /**
    * Creates and configures a new session with the given transport.
    * Sets up onClose handler, onInitialized handler and launches the tool updates collector.
    */
-  suspend fun createAndInitializeSession(transport: Transport, scope: CoroutineScope): ServerSession {
+  suspend fun createAndInitializeSession(transport: Transport): ServerSession {
     val session = mcpServer.createSession(transport)
     sessionAwaiter.complete(session)
     val sessionId = session.sessionId
@@ -189,7 +220,7 @@ internal class McpSessionHandler(
     sessionScope.launch {
       logger.trace { "Subscribing to MCP tools updates for session ${sessionId}" }
       mcpTools.collectLatest { updatedTools ->
-        processToolsUpdate(updatedTools)
+        updateTools(updatedTools)
       }
     }
 
@@ -209,6 +240,7 @@ internal class McpSessionHandler(
           transportType = transportType,
           startTimeMs = System.currentTimeMillis(),
           localAgentId = sessionOptions.localAgentId,
+          toolsCount = mcpTools.value.size,
         )
       }
 
@@ -219,6 +251,7 @@ internal class McpSessionHandler(
             "Roots for session ${session.sessionId} cleared"
           }
           sessionRoots.set(null)
+          resolvedSessionProject.set(null)
         }
         session.setNotificationHandler<RootsListChangedNotification>(Method.Defined.NotificationsRootsListChanged) {
           sessionScope.async {
@@ -226,7 +259,7 @@ internal class McpSessionHandler(
             logger.trace {
               "Received roots list changed notification for session ${session.sessionId}: $roots roots"
             }
-            sessionRoots.set(roots)
+            setSessionRoots(roots)
           }
         }
         sessionScope.launch {
@@ -234,7 +267,7 @@ internal class McpSessionHandler(
           logger.trace {
             "Initialized roots for session ${session.sessionId}: $roots roots"
           }
-          sessionRoots.set(roots)
+          setSessionRoots(roots)
         }
       }
 
@@ -256,29 +289,43 @@ internal class McpSessionHandler(
     return session
   }
 
-  private fun mcpToolToRegisteredTool(mcpTool: McpTool): RegisteredTool {
-    val tool = mcpTool.toSdkTool(stripPropertyName = projectPathParamToStrip)
+  private suspend fun setSessionRoots(roots: Set<String>) {
+    sessionRoots.set(roots)
+    updateTools()
+  }
+
+  /**
+   * Throws if no suitable project can be determined; callers decide how to handle that.
+   */
+  @Throws(McpExpectedError::class)
+  private suspend fun resolveSessionProject(
+    projectPathFromArgument: String? = null,
+    projectPathFromCallHeader: String? = null,
+  ): Project {
+    return service<McpSessionProjectResolver>().resolveSessionProject(
+      projectPathFromArgument = projectPathFromArgument,
+      projectPathFromCallHeader = projectPathFromCallHeader,
+      projectPathFromSessionHeader = projectPathFromInitialRequest,
+      roots = sessionRoots.get() ?: emptySet(),
+    )
+  }
+
+  private fun mcpToolToRegisteredTool(mcpTool: McpTool, projectKnownUpfront: Boolean): RegisteredTool {
+    val tool = mcpTool.toSdkTool(stripPropertyName = if (projectKnownUpfront) projectPathParameterName else null)
     return RegisteredTool(tool) { request ->
       val session = sessionAwaiter.await()
       val httpRequest = currentCoroutineContext().httpRequestOrNull
 
-      // todo this code to get project could be simplified
       val projectPathFromMcpRequest = (request.arguments?.get(projectPathParameterName) as? JsonPrimitive)?.content
       val projectPathFromCallHeader =
         httpRequest?.headers?.get(IJ_MCP_SERVER_PROJECT_PATH)
         ?: (request.meta?.get(IJ_MCP_SERVER_PROJECT_PATH) as? JsonPrimitive)?.content
+
       val project = try {
-        val roots = sessionRoots.get() ?: emptySet()
-        logger.trace {
-          "Locating project for session ${session.sessionId}... roots: $roots, ${projectPathParameterName}: $projectPathFromMcpRequest, " +
-          "callHeaderProjectPath: $projectPathFromCallHeader, sessionHeaderProjectPath: $projectPathFromInitialRequest"
-        }
-        McpProjectLocationInputs(
+        resolveSessionProject(
           projectPathFromArgument = projectPathFromMcpRequest,
           projectPathFromCallHeader = projectPathFromCallHeader,
-          projectPathFromSessionHeader = projectPathFromInitialRequest,
-          roots = roots,
-        ).resolveProject()
+        )
       }
       catch (tce: TimeoutCancellationException) {
         logger.trace { "Calling of tool '${mcpTool.descriptor.name}' has been timed out: ${tce.message}" }
@@ -378,7 +425,7 @@ internal class McpSessionHandler(
                 )
 
                 application.messageBus.syncPublisher(ToolCallListener.TOPIC)
-                  .afterMcpToolCall(mcpTool.descriptor, sideEffectResult.events, null, additionalData)
+                  .afterMcpToolCall(mcpTool.descriptor, sideEffectResult.events, null, additionalData, sideEffectResult.result.deepCopy())
                 sideEffectResult.result
               }
               catch (ce: CancellationException) {
@@ -421,10 +468,30 @@ internal class McpSessionHandler(
       return@RegisteredTool callToolResult
     }
   }
+
+  private data class AppliedToolsState(
+    val tools: List<McpTool>,
+    val projectKnownUpfront: Boolean,
+  ) {
+    fun matches(other: AppliedToolsState): Boolean =
+      tools === other.tools && projectKnownUpfront == other.projectKnownUpfront
+  }
 }
 
 private suspend fun ServerSession.roots(): Set<String> {
   return listRoots().roots.map { it.uri }.toSet()
+}
+
+private fun McpToolCallResult.deepCopy(): McpToolCallResult {
+  val copiedContent: Array<McpToolCallResultContent> = content.map { content ->
+    when (content) {
+      is McpToolCallResultContent.Text -> McpToolCallResultContent.Text(content.text)
+    }
+  }.toTypedArray()
+  val copiedStructuredContent = structuredContent?.let {
+    Json.decodeFromString(JsonObject.serializer(), Json.encodeToString(JsonObject.serializer(), it))
+  }
+  return McpToolCallResult(copiedContent, copiedStructuredContent, isError)
 }
 
 private fun McpToolCallResult.toSdkToolCallResult(): CallToolResult {

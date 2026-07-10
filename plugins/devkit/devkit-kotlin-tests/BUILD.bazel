@@ -103,6 +103,8 @@ jvm_library(
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.kotlin.tests` end

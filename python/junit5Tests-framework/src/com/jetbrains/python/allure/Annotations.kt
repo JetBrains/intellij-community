@@ -1,4 +1,4 @@
-// Copyright 2000-2026 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.allure
 
 import io.qameta.allure.LabelAnnotation
@@ -38,6 +38,10 @@ object Subsystems {
   @Inherited
   annotation class Inspections
 
+  @Subsystem("LSP Tools")
+  @Inherited
+  annotation class LspTools
+
   @Subsystem("Interpreters")
   @Inherited
   annotation class Interpreters
@@ -45,6 +49,54 @@ object Subsystems {
   @Subsystem("Packaging. Requirements")
   @Inherited
   annotation class PackagingRequirements
+
+  @Subsystem("Editing")
+  @Inherited
+  annotation class Editing
+
+  @Subsystem("Formatter")
+  @Inherited
+  annotation class Formatter
+
+  @Subsystem("Quick Documentation")
+  @Inherited
+  annotation class QuickDocumentation
+
+  @Subsystem("IDE")
+  @Inherited
+  annotation class IDE
+
+  @Subsystem("Debugger")
+  @Inherited
+  annotation class Debugger
+
+  @Subsystem("Typing")
+  @Inherited
+  annotation class Typing
+
+  @Subsystem("Python Console")
+  @Inherited
+  annotation class PythonConsole
+
+  @Subsystem("Parsing")
+  @Inherited
+  annotation class Parsing
+
+  @Subsystem("Test Runner")
+  @Inherited
+  annotation class TestRunner
+
+  @Subsystem("Run")
+  @Inherited
+  annotation class Run
+
+  @Subsystem("Remote Interpreters")
+  @Inherited
+  annotation class RemoteInterpreters
+
+  @Subsystem("Project Templates")
+  @Inherited
+  annotation class ProjectTemplates
 }
 
 object Components {
@@ -83,6 +135,90 @@ object Components {
   @Component("Completion")
   @Inherited
   annotation class Completion
+
+  @Component("Highlighting")
+  @Inherited
+  annotation class Highlighting
+
+  @Component("Navigation")
+  @Inherited
+  annotation class Navigation
+
+  @Component("Find Usages")
+  @Inherited
+  annotation class FindUsages
+
+  @Component("Feature Trainer")
+  @Inherited
+  annotation class FeatureTrainer
+
+  @Component("Parsing")
+  @Inherited
+  annotation class Parsing
+
+  @Component("Type Inference")
+  @Inherited
+  annotation class TypeInference
+
+  @Component("Pyrefly")
+  @Inherited
+  annotation class Pyrefly
+
+  @Component("Ty")
+  @Inherited
+  annotation class Ty
+
+  @Component("Inlay Hints")
+  @Inherited
+  annotation class InlayHints
+
+  @Component("Call Hierarchy")
+  @Inherited
+  annotation class CallHierarchy
+
+  @Component("Stubs")
+  @Inherited
+  annotation class Stubs
+
+  @Component("pytest")
+  @Inherited
+  annotation class Pytest
+
+  @Component("unittest")
+  @Inherited
+  annotation class Unittest
+
+  @Component("Conda")
+  @Inherited
+  annotation class Conda
+
+  @Component("Hatch")
+  @Inherited
+  annotation class Hatch
+
+  @Component("Target")
+  @Inherited
+  annotation class RemoteTarget
+
+  @Component("SSH")
+  @Inherited
+  annotation class Ssh
+
+  @Component("Eel")
+  @Inherited
+  annotation class Eel
+
+  @Component("pip")
+  @Inherited
+  annotation class Pip
+
+  @Component("Requirements")
+  @Inherited
+  annotation class Requirements
+
+  @Component("Docstrings")
+  @Inherited
+  annotation class Docstrings
 }
 
 object Layers {

@@ -7,5 +7,5 @@ import org.jetbrains.annotations.TestOnly
 @ApiStatus.Internal
 @TestOnly
 fun interface Lsp4jServerWrapper {
-  fun wrapLsp4jServer(lspServer: LspServer, lsp4jServer: Lsp4jServer): Lsp4jServer
+  fun wrapLsp4jServer(lspClient: LspClient, lsp4jServer: Lsp4jServer): Lsp4jServer
 }

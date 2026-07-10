@@ -2,16 +2,20 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 @ApiStatus.Internal
 public final class CommentJoinLinesHandler implements JoinRawLinesHandlerDelegate {
@@ -39,6 +43,17 @@ public final class CommentJoinLinesHandler implements JoinRawLinesHandlerDelegat
        * <-- like this
        */
       end = StringUtil.skipWhitespaceForward(text, end + 1);
+    }
+    else if (sameComment &&
+             commenter instanceof CodeDocumentationAwareCommenter codeCommenter &&
+             codeCommenter.getDocumentationLineCommentPrefix() != null) {
+      // Handle documentation line comments
+      for (String prefix : Objects.requireNonNull(codeCommenter.getDocumentationLineCommentPrefixes())) {
+        if (Strings.startsWith(text, end, prefix)) {
+          end = StringUtil.skipWhitespaceForward(text, end + prefix.length());
+          break;
+        }
+      }
     }
     else if (!sameComment && !(blockCommentSuffix != null && CharArrayUtil.regionMatches(text, start - 2, blockCommentSuffix))) {
       for (String lineCommentPrefix : commenter.getLineCommentPrefixes()) {

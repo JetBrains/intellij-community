@@ -687,6 +687,7 @@ a:com.intellij.codeInsight.template.Expression
 - <init>():V
 - a:calculateLookupItems(com.intellij.codeInsight.template.ExpressionContext):com.intellij.codeInsight.lookup.LookupElement[]
 - a:calculateResult(com.intellij.codeInsight.template.ExpressionContext):com.intellij.codeInsight.template.Result
+- getStaticLookupStrings():java.util.List
 com.intellij.codeInsight.template.ExpressionContext
 - sf:SELECTION:com.intellij.openapi.util.Key
 - a:getEditor():com.intellij.openapi.editor.Editor
@@ -746,6 +747,7 @@ f:com.intellij.codeInsight.template.impl.ConstantNode
 - com.intellij.codeInsight.template.Expression
 - <init>(com.intellij.codeInsight.template.Result):V
 - <init>(java.lang.String):V
+- getStaticLookupStrings():java.util.List
 - withLookupItems(java.util.Collection):com.intellij.codeInsight.template.impl.ConstantNode
 - withLookupItems(com.intellij.codeInsight.lookup.LookupElement[]):com.intellij.codeInsight.template.impl.ConstantNode
 - withLookupStrings(java.util.Collection):com.intellij.codeInsight.template.impl.ConstantNode
@@ -1490,7 +1492,7 @@ com.intellij.modcommand.ModCommandService
 - a:chooseFileAndPerform(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.modcommand.ModCommandAction,I):com.intellij.modcommand.ModCommandWithContext
 - s:getInstance():com.intellij.modcommand.ModCommandService
 - a:insertText(com.intellij.modcommand.ActionContext,java.lang.String,Z):com.intellij.modcommand.ModCommand
-- a:psiUpdate(com.intellij.modcommand.ActionContext,java.util.function.Consumer,java.util.function.Consumer):com.intellij.modcommand.ModCommand
+- a:psiUpdate(com.intellij.modcommand.ActionContext,Z,java.util.function.Consumer):com.intellij.modcommand.ModCommand
 - a:unwrap(com.intellij.codeInspection.LocalQuickFix):com.intellij.modcommand.ModCommandAction
 - a:updateOption(com.intellij.psi.PsiElement,com.intellij.codeInspection.InspectionProfileEntry,java.util.function.Consumer):com.intellij.modcommand.ModCommand
 - a:wrap(com.intellij.modcommand.ModCommandAction):com.intellij.codeInsight.intention.IntentionAction
@@ -1678,6 +1680,7 @@ com.intellij.openapi.fileEditor.FileEditorManagerListener
 - fileOpened(com.intellij.openapi.fileEditor.FileEditorManager,com.intellij.openapi.vfs.VirtualFile):V
 - fileOpenedSync(com.intellij.openapi.fileEditor.FileEditorManager,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.Pair):V
 - fileOpenedSync(com.intellij.openapi.fileEditor.FileEditorManager,com.intellij.openapi.vfs.VirtualFile,java.util.List):V
+- filePinStateChanged(com.intellij.openapi.fileEditor.FileEditorManager,com.intellij.openapi.vfs.VirtualFile):V
 - selectionChanged(com.intellij.openapi.fileEditor.FileEditorManagerEvent):V
 com.intellij.openapi.fileEditor.FileEditorManagerListener$Before
 - java.util.EventListener

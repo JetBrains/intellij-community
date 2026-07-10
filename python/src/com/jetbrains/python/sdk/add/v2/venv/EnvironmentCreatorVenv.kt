@@ -82,6 +82,8 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
         selectedSdkProperty = model.state.baseInterpreter,
         validationRequestor = validationRequestor,
         onPathSelected = model::addManuallyAddedSystemPython,
+        // venv creation requires Python 3.8+; older bases stay selectable but are flagged invalid.
+        additionalValidation = { venvBaseVersionError(it) },
       )
 
 

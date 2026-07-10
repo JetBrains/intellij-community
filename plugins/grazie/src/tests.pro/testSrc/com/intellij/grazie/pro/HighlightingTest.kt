@@ -664,11 +664,11 @@ class HighlightingTest : BaseTestCase() {
   companion object {
     @JvmStatic
     fun enableLanguages(langs: Set<Lang>, disposable: Disposable) {
+      GrazieTestBase.loadLangs(langs, disposable)
       EdtInvocationManager.invokeAndWaitIfNeeded {
         GrazieConfig.update { it.copy(enabledLanguages = langs) }
         UIUtil.dispatchAllInvocationEvents()
       }
-      GrazieTestBase.loadLangs(langs, disposable)
     }
 
     @JvmStatic

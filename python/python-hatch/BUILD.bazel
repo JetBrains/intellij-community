@@ -49,6 +49,7 @@ jvm_library(
         "//python/python-exec-service/execService.python",
         "//python/python-process-output/common",
         "//python/python-pytools:pytools",
+        "//platform/util/jdom",
     ],
 )
 
@@ -84,6 +85,7 @@ jvm_library(
         "//python/python-exec-service/execService.python:execService.python_test_lib",
         "//python/python-process-output/common:common_test_lib",
         "//python/python-pytools:pytools_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.hatch` end

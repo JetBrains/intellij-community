@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.runConfigurations.jvm">
+<idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java.execution.impl"/>
@@ -7,12 +7,22 @@
     <module name="intellij.kotlin.base.scripting.shared"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.testFrameworkProvider"
+            interface="org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider"
+            dynamic="true"/>
+  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <configurationType implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.script.KotlinStandaloneScriptRunConfigurationType"/>
 
     <runConfigurationProducer
             implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.script.KotlinStandaloneScriptRunConfigurationProducer"/>
 
-    <javaMainMethodProvider implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.KotlinMainMethodProvider"/> 
+    <consoleFilterProvider implementation="org.jetbrains.kotlin.idea.run.KotlinConsoleFilterProvider"/>
+    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer" id="kotlinMain"/>
+    <configurationType implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationType"/>
+
+    <javaMainMethodProvider implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.KotlinMainMethodProvider"/>
   </extensions>
 </idea-plugin>

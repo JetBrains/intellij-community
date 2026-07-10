@@ -2,7 +2,7 @@ from typing import Any
 from typing_extensions import Self
 
 from requests import Response, Session
-from requests.sessions import _Auth, _Data, _Files, _ParamsMappingValueType
+from requests._types import AuthType, DataType, FilesType, _ParamsMappingValueType
 
 from .serialize import Serializer
 
@@ -18,9 +18,15 @@ class Resource(ResourceAttributesMixin):
     def get(self, **kwargs: _ParamsMappingValueType) -> Response: ...
     def options(self, **kwargs: _ParamsMappingValueType) -> Response: ...
     def head(self, **kwargs: _ParamsMappingValueType) -> Response: ...
-    def post(self, data: _Data | None = None, files: _Files | None = None, **kwargs: _ParamsMappingValueType) -> Response: ...
-    def patch(self, data: _Data | None = None, files: _Files | None = None, **kwargs: _ParamsMappingValueType) -> Response: ...
-    def put(self, data: _Data | None = None, files: _Files | None = None, **kwargs: _ParamsMappingValueType) -> Response: ...
+    def post(
+        self, data: DataType | None = None, files: FilesType | None = None, **kwargs: _ParamsMappingValueType
+    ) -> Response: ...
+    def patch(
+        self, data: DataType | None = None, files: FilesType | None = None, **kwargs: _ParamsMappingValueType
+    ) -> Response: ...
+    def put(
+        self, data: DataType | None = None, files: FilesType | None = None, **kwargs: _ParamsMappingValueType
+    ) -> Response: ...
     def delete(self, **kwargs: _ParamsMappingValueType) -> Response: ...
     def url(self) -> str: ...
 
@@ -29,7 +35,7 @@ class API(ResourceAttributesMixin):
     def __init__(
         self,
         base_url: str | None = None,
-        auth: _Auth | None = None,
+        auth: AuthType | None = None,
         format: str | None = None,
         append_slash: bool = True,
         session: Session | None = None,

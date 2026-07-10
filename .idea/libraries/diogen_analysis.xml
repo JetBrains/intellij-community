@@ -1,0 +1,27 @@
+<component name="libraryTable">
+  <library name="diogen-analysis" type="repository">
+    <properties jar-repository-id="intellij-dependencies" maven-id="org.jetbrains.diogen:diogen-analysis:0.1.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/diogen/diogen-analysis/0.1.0/diogen-analysis-0.1.0.jar">
+          <sha256sum>911185567a8dacb8c90c81c98ec08663c4414887ae097819bdde4ecf191e75c0</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/hankcs/aho-corasick-double-array-trie/1.2.3/aho-corasick-double-array-trie-1.2.3.jar">
+          <sha256sum>564f0fc690d50702a313510b9a72e9505ace6e81108e84f65de4feb0da244eb8</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+        <dependency maven-id="org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/diogen/diogen-analysis/0.1.0/diogen-analysis-0.1.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/hankcs/aho-corasick-double-array-trie/1.2.3/aho-corasick-double-array-trie-1.2.3.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/diogen/diogen-analysis/0.1.0/diogen-analysis-0.1.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/hankcs/aho-corasick-double-array-trie/1.2.3/aho-corasick-double-array-trie-1.2.3-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

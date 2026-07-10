@@ -8,8 +8,6 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.terminal.frontend.session.TerminalSessionsManager
 import com.intellij.terminal.frontend.session.createTerminalSession
 import com.intellij.terminal.frontend.session.startTerminalProcess
-import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil.createShellCommand
-import com.intellij.util.EnvironmentUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.asDisposable
 import com.jediterm.core.util.TermSize
@@ -74,7 +72,7 @@ internal object TerminalSessionTestUtil {
     TerminalTestUtil.setTerminalEngineForTest(TerminalEngine.REWORKED, coroutineScope.asDisposable())
 
     val allOptions = options.builder()
-      .envVariables(options.envVariables + mapOf(EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE to "true", "HISTFILE" to "/dev/null"))
+      .envVariables(options.envVariables + mapOf("DISABLE_AUTO_UPDATE" to "true", "HISTFILE" to "/dev/null"))
       .initialTermSize(options.initialTermSize ?: TermSize(80, 24))
       .build()
 

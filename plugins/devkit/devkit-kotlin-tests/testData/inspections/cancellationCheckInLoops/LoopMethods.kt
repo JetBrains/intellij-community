@@ -37,22 +37,22 @@ class Testing {
   @RequiresReadLock
   fun suspendingLambdaContext(array: Array<String>, list: List<String>, map: Map<String, String>, iterator: Iterator<String>, sequence: Sequence<String>) {
     withSuspendLambda {
-      array.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEach</warning> { doSomething() }
-      array.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEachIndexed</warning> { index, s -> doSomething() }
+      array.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEach</warning> { doSomething() }
+      array.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEachIndexed</warning> { index, s -> doSomething() }
 
-      list.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEach</warning> { doSomething() }
-      list.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEachIndexed</warning> { index, s -> doSomething() }
+      list.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEach</warning> { doSomething() }
+      list.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEachIndexed</warning> { index, s -> doSomething() }
 
-      sequence.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEach</warning> { doSomething() }
-      sequence.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEachIndexed</warning> { index, s -> doSomething() }
+      sequence.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEach</warning> { doSomething() }
+      sequence.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEachIndexed</warning> { index, s -> doSomething() }
 
-      map.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEach</warning> { e -> doSomething() }
-      map.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEach</warning> { k, v -> doSomething() }
+      map.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEach</warning> { e -> doSomething() }
+      map.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEach</warning> { k, v -> doSomething() }
 
-      iterator.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEach</warning> { doSomething() }
-      iterator.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEachRemaining</warning> { doSomething() }
+      iterator.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEach</warning> { doSomething() }
+      iterator.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEachRemaining</warning> { doSomething() }
 
-      ContainerUtil.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">process</warning>(list) {
+      ContainerUtil.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">process</warning>(list) {
         true
       }
     }
@@ -60,22 +60,22 @@ class Testing {
 
   @RequiresReadLock
   suspend fun suspendingFunctionContext(array: Array<String>, list: List<String>, map: Map<String, String>, iterator: Iterator<String>, sequence: Sequence<String>) {
-    array.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEach</warning> { doSomething() }
-    array.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEachIndexed</warning> { index, s -> doSomething() }
+    array.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEach</warning> { doSomething() }
+    array.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEachIndexed</warning> { index, s -> doSomething() }
 
-    list.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEach</warning> { doSomething() }
-    list.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEachIndexed</warning> { index, s -> doSomething() }
+    list.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEach</warning> { doSomething() }
+    list.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEachIndexed</warning> { index, s -> doSomething() }
 
-    sequence.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEach</warning> { doSomething() }
-    sequence.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEachIndexed</warning> { index, s -> doSomething() }
+    sequence.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEach</warning> { doSomething() }
+    sequence.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEachIndexed</warning> { index, s -> doSomething() }
 
-    map.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEach</warning> { e -> doSomething() }
-    map.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEach</warning> { k, v -> doSomething() }
+    map.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEach</warning> { e -> doSomething() }
+    map.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEach</warning> { k, v -> doSomething() }
 
-    iterator.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEach</warning> { doSomething() }
-    iterator.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEachRemaining</warning> { doSomething() }
+    iterator.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEach</warning> { doSomething() }
+    iterator.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEachRemaining</warning> { doSomething() }
 
-    ContainerUtil.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">process</warning>(list) {
+    ContainerUtil.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">process</warning>(list) {
       true
     }
   }

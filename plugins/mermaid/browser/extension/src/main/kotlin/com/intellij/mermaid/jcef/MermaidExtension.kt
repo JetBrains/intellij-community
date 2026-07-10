@@ -5,9 +5,11 @@ import com.intellij.mermaid.api.appendTo
 import com.intellij.mermaid.jcef.impl.decode
 import kotlinx.browser.window
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onStart
 import org.w3c.dom.Element
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.asList
@@ -33,8 +35,9 @@ private suspend fun performRender() {
 suspend fun renderBlocks(blocks: List<HTMLElement>) {
   coroutineScope {
     for (block in blocks) {
-      // renderAsync for some reason depends on some global state,
-      // so it is not possible to run it in parallel
+      // Cancellation-safe boundary: drop remaining stale blocks if a newer render arrived. A single
+      // block's render is non-cancellable (renderBlock), so renders never overlap (shared global state).
+      ensureActive()
       processBlock(block)
     }
   }
@@ -60,13 +63,16 @@ suspend fun processBlock(block: HTMLElement) {
 }
 
 suspend fun markdownExtensionMain() {
-  coroutineScope {
-    launch {
-      // TODO: Work started on previous patch event probably needs to be cancelled, if there is already a new event
-      IncrementalDom.afterPatchEvents().onEach { performRender() }.collect()
-    }
-    launch {
+  // Cached SVGs are pinned to their render-time max-width, so on a resize we drop the cache and
+  // re-render. A single collector serializes patches and resizes so mermaid renders never overlap.
+  val patches = IncrementalDom.afterPatchEvents().map { false }
+  val resizes = bodyWidthChangeEvents().map { true }
+  merge(patches, resizes)
+    .onStart { emit(false) } // initial render
+    .collectLatest { isResize ->
+      if (isResize) {
+        nodeToCacheIdAndContent.clear()
+      }
       performRender()
     }
-  }
 }

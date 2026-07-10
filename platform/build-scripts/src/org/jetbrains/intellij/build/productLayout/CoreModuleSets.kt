@@ -136,6 +136,19 @@ object CoreModuleSets {
   }
 
   /**
+   * Eclipse LSP4J library wrapper modules used by LSP and DAP support.
+   *
+   * Kept separate from `librariesPlatform()` because LSP4J is not a universal platform dependency.
+   * Kept embedded because LSP support modules are embedded.
+   */
+  fun librariesLsp4j(): ModuleSet = moduleSet("libraries.lsp4j", outputModule = "intellij.platform.lsp") {
+    embeddedModule("intellij.libraries.eclipse.lsp4j")
+    embeddedModule("intellij.libraries.eclipse.lsp4j.debug")
+    embeddedModule("intellij.libraries.eclipse.lsp4j.jsonrpc")
+    embeddedModule("intellij.libraries.eclipse.lsp4j.jsonrpc.debug")
+  }
+
+  /**
    * Jackson 2 library wrapper modules.
    *
    * Kept as a dedicated module set so that `librariesPlatform()` stays focused on truly universal utilities.
@@ -367,7 +380,6 @@ object CoreModuleSets {
 
     embeddedModule("intellij.platform.rd.community")
 
-    embeddedModule("intellij.platform.ide.ui.inspector")
     embeddedModule("intellij.platform.remote.core")
     embeddedModule("intellij.platform.ide.remote")
     embeddedModule("intellij.platform.threadDumpParser")

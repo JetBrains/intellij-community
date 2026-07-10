@@ -139,6 +139,7 @@ abstract class FoldRegionsTree {
     int[] startOffsets = ArrayUtil.newIntArray(topLevelRegions.length);
     int[] endOffsets = ArrayUtil.newIntArray(topLevelRegions.length);
     int[] foldedLines = ArrayUtil.newIntArray(topLevelRegions.length);
+    int[] startVisualLines = ArrayUtil.newIntArray(topLevelRegions.length);
     int[] customYAdjustment = ArrayUtil.newIntArray(topLevelRegions.length);
 
     int foldedLinesSum = 0;
@@ -149,7 +150,9 @@ abstract class FoldRegionsTree {
       startOffsets[i] = region.getStartOffset();
       endOffsets[i] = region.getEndOffset() - 1;
       Document document = region.getDocument();
-      foldedLinesSum += document.getLineNumber(region.getEndOffset()) - document.getLineNumber(region.getStartOffset());
+      int startLine = document.getLineNumber(region.getStartOffset());
+      startVisualLines[i] = startLine - foldedLinesSum;
+      foldedLinesSum += document.getLineNumber(region.getEndOffset()) - startLine;
       foldedLines[i] = foldedLinesSum;
       if (region instanceof CustomFoldRegion) {
         currentCustomYAdjustment += ((CustomFoldRegion)region).getHeightInPixels() - lineHeight;
@@ -157,7 +160,8 @@ abstract class FoldRegionsTree {
       customYAdjustment[i] = currentCustomYAdjustment;
     }
 
-    CachedData data = new CachedData(visibleRegions, topLevelRegions, startOffsets, endOffsets, foldedLines, customYAdjustment, computeTopFoldedInlaysHeight(topLevelRegions, startOffsets, endOffsets));
+    CachedData data = new CachedData(visibleRegions, topLevelRegions, startOffsets, endOffsets, foldedLines, startVisualLines,
+                                     customYAdjustment, computeTopFoldedInlaysHeight(topLevelRegions, startOffsets, endOffsets));
     myCachedData = data;
     return data;
   }
@@ -320,6 +324,18 @@ abstract class FoldRegionsTree {
     return foldedLines[foldedLines.length - 1];
   }
 
+  int getLogicalLineForVisualLineWithoutSoftWraps(int visualLine) {
+    if (!isFoldingEnabled()) {
+      return visualLine;
+    }
+    CachedData cachedData = ensureAvailableDataIfPossible();
+    if (cachedData == null) {
+      return visualLine;
+    }
+    int idx = getLastTopLevelIndexBeforeVisualLine(cachedData, visualLine);
+    return idx == -1 ? visualLine : visualLine + cachedData.topFoldedLines[idx];
+  }
+
   int getHeightOfFoldedBlockInlaysBefore(int idx) {
     if (!isFoldingEnabled() || idx == -1) {
       return 0;
@@ -380,6 +396,25 @@ abstract class FoldRegionsTree {
     return i < 0 ? - i - 2 : i;
   }
 
+  private static int getLastTopLevelIndexBeforeVisualLine(@NotNull CachedData cachedData, int visualLine) {
+    return upperBound(cachedData.topStartVisualLines, visualLine - 1) - 1;
+  }
+
+  private static int upperBound(int @NotNull [] values, int value) {
+    int low = 0;
+    int high = values.length;
+    while (low < high) {
+      int mid = (low + high) >>> 1;
+      if (values[mid] <= value) {
+        low = mid + 1;
+      }
+      else {
+        high = mid;
+      }
+    }
+    return low;
+  }
+
   @Nullable
   FoldRegion getRegionAt(int startOffset, int endOffset) {
     FoldRegionImpl[] found = {null};
@@ -407,12 +442,14 @@ abstract class FoldRegionsTree {
                             int @NotNull [] topStartOffsets,
                             int @NotNull [] topEndOffsets,
                             int @NotNull [] topFoldedLines,
+                            int @NotNull [] topStartVisualLines,
                             int @NotNull [] topCustomYAdjustment,
                             int @NotNull [] topFoldedInlaysHeight) {
     private static final int[] NOT_YET_COMPUTED = new int[1]; // do not inline, needs unique identity
     private @NotNull CachedData clearCachedInlayValues() {
       return topFoldedInlaysHeight == NOT_YET_COMPUTED ? this :
-        new CachedData(visibleRegions, topLevelRegions, topStartOffsets, topEndOffsets, topFoldedLines, topCustomYAdjustment, NOT_YET_COMPUTED);
+        new CachedData(visibleRegions, topLevelRegions, topStartOffsets, topEndOffsets, topFoldedLines, topStartVisualLines,
+                       topCustomYAdjustment, NOT_YET_COMPUTED);
     }
   }
   private @Nullable CachedData ensureInlayDataAvailableIfPossible() {
@@ -425,7 +462,7 @@ abstract class FoldRegionsTree {
     }
     int[] topFoldedInlaysHeight = computeTopFoldedInlaysHeight(data.topLevelRegions, data.topStartOffsets, data.topEndOffsets);
     CachedData newData = new CachedData(data.visibleRegions, data.topLevelRegions, data.topStartOffsets, data.topEndOffsets,
-                                        data.topFoldedLines, data.topCustomYAdjustment, topFoldedInlaysHeight);
+                                        data.topFoldedLines, data.topStartVisualLines, data.topCustomYAdjustment, topFoldedInlaysHeight);
     myCachedData = newData;
     return newData;
   }

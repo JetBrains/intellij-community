@@ -85,7 +85,7 @@ public abstract class PerformFixesModalTask implements SequentialTask {
 
   @Override
   public boolean iteration(@NotNull ProgressIndicator indicator) {
-    final @Nullable Pair<CommonProblemDescriptor, Boolean> pair = nextDescriptor();
+    @Nullable Pair<CommonProblemDescriptor, Boolean> pair = nextDescriptor();
     if (pair == null) {
       return isDone();
     }

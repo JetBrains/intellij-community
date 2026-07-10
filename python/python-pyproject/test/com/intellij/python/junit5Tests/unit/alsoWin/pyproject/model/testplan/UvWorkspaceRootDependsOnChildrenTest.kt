@@ -3,7 +3,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
-import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.SEP
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
 import com.intellij.testFramework.TestDataPath
@@ -27,8 +27,8 @@ internal class UvWorkspaceRootDependsOnChildrenTest {
     f.reloadProject()
     f.assertProjectStructure(
       ExpectedModule("pythonproject", contentRoot = ".", deps = listOf("sub-project-a", "sub-project-b"), sourceRoots = listOf(".", "src")),
-      ExpectedModule("sub-project-a", contentRoot = "sub-projects${SEP}sub-project-a", sourceRoots = listOf("sub-projects${SEP}sub-project-a${SEP}src")),
-      ExpectedModule("sub-project-b", contentRoot = "sub-projects${SEP}sub-project-b", sourceRoots = listOf("sub-projects${SEP}sub-project-b${SEP}src")),
+      ExpectedModule("sub-project-a", contentRoot = "sub-projects" / "sub-project-a", sourceRoots = listOf("sub-projects" / "sub-project-a" / "src")),
+      ExpectedModule("sub-project-b", contentRoot = "sub-projects" / "sub-project-b", sourceRoots = listOf("sub-projects" / "sub-project-b" / "src")),
     )
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
@@ -30,6 +31,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
+import org.jetbrains.plugins.terminal.LocalTtyConnectorClosingException
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.original
 import java.nio.file.Files
@@ -71,12 +73,27 @@ suspend fun TtyConnector.closeAndWaitFor(timeout: Duration): Int? {
   return withContext(Dispatchers.IO) {
     val localTtyConnector = original as? LocalTerminalTtyConnector
     if (localTtyConnector != null) {
-      localTtyConnector.closeSafely()
+      localTtyConnector.closeAndWaitFor(timeout)
     }
-    else close()
-
-    waitFor(timeout)
+    else {
+      close()
+      waitFor(timeout)
+    }
   }
+}
+
+private suspend fun LocalTerminalTtyConnector.closeAndWaitFor(timeout: Duration): Int? {
+  try {
+    closeSafely()
+  }
+  catch (e: LocalTtyConnectorClosingException) {
+    logger<LocalTerminalTtyConnector>().warn(e.message, e.cause)
+    // No need to wait for the connector to close because closing activities failed
+    // So, let's return null immediately.
+    return null
+  }
+
+  return waitFor(timeout)
 }
 
 /**

@@ -1,9 +1,9 @@
 // "Import extension function 'B.extension'" "true"
 // WITH_STDLIB
-// K2_ERROR: Cannot infer type for type parameter 'R'. Specify it explicitly.
-// K2_ERROR: Cannot infer type for type parameter 'R'. Specify it explicitly.
-// K2_ERROR: Cannot infer type for type parameter 'R'. Specify it explicitly.
-// K2_ERROR: Unresolved reference 'extension' on receiver of type 'B'.
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_ERROR: UNRESOLVED_REFERENCE
 package p
 
 class A

@@ -150,7 +150,15 @@ interface ThreadingSupport {
   fun <T> withLocksProhibited(advice: String, action: () -> T): T
 
   /**
-   * If locking is prohibited for this thread (via [withLocksProhibited]),
+   * Reports  any attempt to use R/W locks on this thread inside [action].
+   * Unlike [withLocksProhibited], lock acquisition is allowed to proceed after reporting.
+   * The reported exception will be logger as [error][com.intellij.openapi.diagnostic.Logger.error] with an instance of [LockAccessDisallowed].
+   */
+  @ApiStatus.Internal
+  fun <T> withLocksSoftlyProhibited(advice: String, action: () -> T): T = withLocksProhibited(advice, action)
+
+  /**
+   * If locking is prohibited for this thread (via [withLocksProhibited] or [withLocksSoftlyProhibited]),
    * this function will return not-null string with advice on how to fix the problem
    */
   @ApiStatus.Internal

@@ -15,6 +15,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
+
 public final class PyTypeVarTypeImpl implements PyTypeVarType {
   private final @NotNull String myName;
   private final @NotNull List<@Nullable PyType> myConstraints;
@@ -46,7 +48,9 @@ public final class PyTypeVarTypeImpl implements PyTypeVarType {
                     @Nullable PyQualifiedNameOwner declarationElement,
                     @Nullable PyQualifiedNameOwner scopeOwner) {
     myName = name;
+    constraints.forEach(PyAnyType::validate);
     myConstraints = constraints;
+    PyAnyType.validate(bound);
     myBound = bound;
     myDefaultType = defaultType;
     myVariance = variance;
@@ -66,7 +70,7 @@ public final class PyTypeVarTypeImpl implements PyTypeVarType {
                                                                     @NotNull AccessDirection direction,
                                                                     @NotNull PyResolveContext resolveContext) {
     PyType bound = getBoundPromotedToClassObjectTypesIfNeeded();
-    if (bound != null) {
+    if (!isUnknown(bound)) {
       return bound.resolveMember(name, location, direction, resolveContext);
     }
     PyType defaultType = getDefaultTypePromotedToClassObjectTypesIfNeeded();
@@ -81,7 +85,7 @@ public final class PyTypeVarTypeImpl implements PyTypeVarType {
                                                   @NotNull PsiElement location,
                                                   @NotNull ProcessingContext context) {
     PyType bound = getBoundPromotedToClassObjectTypesIfNeeded();
-    if (bound != null) {
+    if (!isUnknown(bound)) {
       return bound.getCompletionVariants(completionPrefix, location, context);
     }
 

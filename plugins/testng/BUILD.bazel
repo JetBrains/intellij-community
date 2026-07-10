@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
+jps_test(
+    name = "testng-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":testng-tests_test_lib"],
+)
+### skip generation section `test intellij.testng.tests`
+
 ### auto-generated section `build intellij.testng` start
 
 resourcegroup(
@@ -129,7 +137,8 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//java/java-impl-refactorings:impl-refactorings_test_lib",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
@@ -264,7 +273,8 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//platform/forms_rt:java-guiForms-rt",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/platform-util-io:ide-util-io",
         "//java/java-impl-refactorings:impl-refactorings",
         "//java/java-impl-refactorings:impl-refactorings_test_lib",
@@ -286,6 +296,28 @@ jvm_library(
         "//jps/model-api:model_test_lib",
         "//platform/statistics",
         "//platform/statistics:statistics_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//java/plugin",
+        "//java/plugin:plugin_test_lib",
+        "//aether-dependency-resolver/plugin",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
+        "//libraries/misc/plugin",
+        "//libraries/misc/plugin:plugin_test_lib",
+        "//libraries/lucene.common",
+        "//libraries/lucene.common:lucene.common_test_lib",
+        "//platform/structure-view-impl/plugin",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//platform/todo/plugin",
+        "//platform/todo/plugin:plugin_test_lib",
+        "//platform/testRunner/plugin",
+        "//platform/testRunner/plugin:plugin_test_lib",
+        "//platform/structuralsearch/plugin",
+        "//platform/structuralsearch/plugin:plugin_test_lib",
+        "//java/structuralsearch-java:structuralSearch",
+        "//java/structuralsearch-java:structuralSearch_test_lib",
+        "//plugins/IntelliLang:langInjection",
+        "//plugins/IntelliLang:langInjection_test_lib",
     ],
 )
 ### auto-generated section `build intellij.testng.tests` end
@@ -298,11 +330,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.testng.tests` end
-
-### auto-generated section `test intellij.testng.tests` start
-
-jps_test(
-    name = "testng-tests_test",
-    runtime_deps = [":testng-tests_test_lib"],
-)
-### auto-generated section `test intellij.testng.tests` end

@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "tests_test",
+    timeout = "long",
+    jvm_flags = ["-Dintellij.build.test.ignoreFirstAndLastTests=true"],
+    tags = ["community-aggregator"],
+    runtime_deps = [":tests_test_lib"],
+)
+### skip generation section `test intellij.markdown.tests`
+
 ### auto-generated section `build intellij.markdown.tests` start
 
 jvm_library(
@@ -14,6 +23,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//plugins/markdown/core:markdown",
+        "//plugins/markdown/jcef",
         "//plugins/markdown/java",
         "//java/execution/impl",
         "//plugins/markdown/fenceInjection",
@@ -37,6 +47,7 @@ jvm_library(
         "//platform/platform-util-netty:ide-util-netty",
         "//libraries/jsoup",
         "//libraries/jcef",
+        "//platform/ui.jcef",
         "//plugins/jcef/plugin",
         "//platform/util-ex",
         "//libraries/markdown",
@@ -78,6 +89,8 @@ jvm_library(
         # do not sort,
         "//plugins/markdown/core:markdown",
         "//plugins/markdown/core:markdown_test_lib",
+        "//plugins/markdown/jcef",
+        "//plugins/markdown/jcef:jcef_test_lib",
         "//plugins/markdown/core/backend",
         "//plugins/markdown/core/backend:backend_test_lib",
         "//plugins/markdown/java",
@@ -128,6 +141,12 @@ jvm_library(
         "//xml/xml-psi-api:psi_test_lib",
         "//plugins/yaml",
         "//plugins/yaml:yaml_test_lib",
+        "//json",
+        "//json:json_test_lib",
+        "//json/backend",
+        "//json/backend:backend_test_lib",
+        "//libraries/lucene.common",
+        "//libraries/lucene.common:lucene.common_test_lib",
         "//xml/xml-psi-impl:psi-impl",
         "//xml/xml-psi-impl:psi-impl_test_lib",
         "//platform/built-in-server-api:builtInServer",
@@ -148,10 +167,16 @@ jvm_library(
         "//xml/langInjection:langInjection_test_lib",
         "//platform/platform-tests:tests",
         "//platform/platform-tests:tests_test_lib",
+        "//platform/todo",
+        "//platform/todo:todo_test_lib",
+        "//libraries/fastutil",
+        "//libraries/fastutil:fastutil_test_lib",
         "//libraries/jsoup",
         "//libraries/jsoup:jsoup_test_lib",
         "//libraries/jcef",
         "//libraries/jcef:jcef_test_lib",
+        "//platform/ui.jcef",
+        "//platform/ui.jcef:ui.jcef_test_lib",
         "//libraries/assertj-core",
         "//libraries/assertj-core:assertj-core_test_lib",
         "//platform/util-ex",
@@ -164,6 +189,8 @@ jvm_library(
         "//plugins/toml:toml_test_lib",
         "//plugins/toml/core",
         "//plugins/toml/core:core_test_lib",
+        "//plugins/toml/json",
+        "//plugins/toml/json:json_test_lib",
         "//plugins/yaml/backend",
         "//plugins/yaml/backend:backend_test_lib",
         "//platform/testFramework/junit5",
@@ -196,6 +223,12 @@ jvm_library(
         "//plugins/textmate:textmate_test_lib",
         "//plugins/textmate/plugin",
         "//plugins/textmate/plugin:plugin_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//plugins/grazie/src/test:grazie-tests",
+        "//plugins/grazie/src/test:grazie-tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.markdown.tests` end
@@ -208,11 +241,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.markdown.tests` end
-
-### auto-generated section `test intellij.markdown.tests` start
-
-jps_test(
-    name = "tests_test",
-    runtime_deps = [":tests_test_lib"],
-)
-### auto-generated section `test intellij.markdown.tests` end

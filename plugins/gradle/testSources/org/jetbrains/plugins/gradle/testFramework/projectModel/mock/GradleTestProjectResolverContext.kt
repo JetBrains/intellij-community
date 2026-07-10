@@ -2,11 +2,14 @@
 package org.jetbrains.plugins.gradle.testFramework.projectModel.mock
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.testFramework.common.mock.notImplemented
+import com.intellij.testFramework.common.mock.requireImplemented
+import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.tooling.model.ProjectModel
 import org.gradle.tooling.model.idea.IdeaProject
 import org.jetbrains.plugins.gradle.model.ExternalProject
@@ -21,26 +24,31 @@ import org.junit.jupiter.api.assertNotNull
 
 class GradleTestProjectResolverContext private constructor() {
 
-  private val models = mutableMapOf<Class<*>, Map<out ProjectModel, *>>()
-
-  fun <T> putModels(modelClass: Class<T>, models: Map<out ProjectModel, T>) {
-    this.models[modelClass] = models
-  }
+  val models = mutableMapOf<Class<*>, Map<out ProjectModel, *>>()
+  var buildEnvironment: BuildEnvironment? = null
+  var listener: ExternalSystemTaskNotificationListener? = null
 
   @Suppress("JavaDefaultMethodsNotOverriddenByDelegation")
   private class ProjectResolverContextImpl(
     override val project: Project,
-    private val models: Map<Class<*>, Map<out ProjectModel, *>>,
+    private val configuration: GradleTestProjectResolverContext,
   ) : ProjectResolverContext by notImplemented<ProjectResolverContext>() {
 
     override val projectPath: String = project.basePath!!
+
     override val taskId = ExternalSystemTaskId.create(GradleConstants.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, project)
-    override fun getBuildSrcGroup(): String? = null
-    override fun isResolveModulePerSourceSet(): Boolean = true
     override fun getExternalSystemTaskId(): ExternalSystemTaskId = taskId
 
+    override val buildEnvironment: BuildEnvironment
+      get() = configuration.requireImplemented(GradleTestProjectResolverContext::buildEnvironment)
+    override val listener: ExternalSystemTaskNotificationListener
+      get() = configuration.requireImplemented(GradleTestProjectResolverContext::listener)
+
+    override fun getBuildSrcGroup(): String? = null
+    override fun isResolveModulePerSourceSet(): Boolean = true
+
     override fun <T> getProjectModel(projectModel: ProjectModel, modelClass: Class<T>): T {
-      val modelsForClass = models[modelClass]
+      val modelsForClass = configuration.models[modelClass]
       assertNotNull(modelsForClass) {
         "Unexpected request for model class\n" +
         " modelClass=$modelClass"
@@ -66,7 +74,7 @@ class GradleTestProjectResolverContext private constructor() {
     fun projectResolverContext(project: Project, configure: (GradleTestProjectResolverContext) -> Unit = {}): ProjectResolverContext {
       val configuration = GradleTestProjectResolverContext()
       configure(configuration)
-      return ProjectResolverContextImpl(project, configuration.models)
+      return ProjectResolverContextImpl(project, configuration)
     }
 
     fun projectResolverContext(
@@ -77,8 +85,8 @@ class GradleTestProjectResolverContext private constructor() {
       val externalProjectModels = ideaProject.modules.zip(externalProjects).toMap()
       val sourceSetModels = externalProjectModels.mapValues { it.value.sourceSetModel }
       return projectResolverContext(project) {
-        it.putModels(ExternalProject::class.java, externalProjectModels)
-        it.putModels(GradleSourceSetModel::class.java, sourceSetModels)
+        it.models[ExternalProject::class.java] = externalProjectModels
+        it.models[GradleSourceSetModel::class.java] = sourceSetModels
       }
     }
   }

@@ -3,6 +3,7 @@ package com.intellij.platform.eel.impl.fileChooser
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.universal.FileWatcherAdapter
+import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileChangeType
 import com.intellij.platform.eel.fs.EelFileSystemApi.WatchedPath
 import com.intellij.platform.eel.fs.UnwatchOptionsBuilder
@@ -27,8 +28,9 @@ class EelFileWatcherAdapter : FileWatcherAdapter {
       try {
         val descriptor = path.getEelDescriptor()
         val eelApi = descriptor.toEelApi()
-        val eelPath = path.asEelPath(descriptor)
         val changesFlow = eelApi.fs.watchChanges()
+        @OptIn(EelDelicateApi::class)
+        val eelPath = path.asEelPath(descriptor)
         eelApi.fs.addWatchRoots(
           WatchOptionsBuilder()
             .changeTypes(setOf(FileChangeType.CREATED, FileChangeType.DELETED, FileChangeType.CHANGED))
@@ -58,6 +60,7 @@ class EelFileWatcherAdapter : FileWatcherAdapter {
     try {
       val descriptor = path.getEelDescriptor()
       val eelApi = descriptor.toEelApi()
+      @OptIn(EelDelicateApi::class)
       val eelPath = path.asEelPath(descriptor)
       eelApi.fs.unwatch(UnwatchOptionsBuilder(eelPath).build())
     }

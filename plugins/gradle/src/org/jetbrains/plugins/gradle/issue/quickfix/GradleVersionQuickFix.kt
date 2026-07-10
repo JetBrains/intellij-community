@@ -4,13 +4,13 @@ package org.jetbrains.plugins.gradle.issue.quickfix
 import com.intellij.build.SyncViewManager
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.ide.actions.ShowLogAction
-import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemAutoImportAwareListener
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.NO_PROGRESS_ASYNC
@@ -206,13 +206,16 @@ class GradleVersionQuickFix(
 
   // Auto-import and indexing should be disabled while Gradle wrapper is in an incorrect state and cannot be used
   private suspend fun <T> runBatchChange(project: Project, execution: suspend () -> T): T {
-    val publisher = BackgroundTaskUtil.syncPublisher(BatchFileChangeListener.TOPIC)
-    publisher.batchChangeStarted(project, GradleBundle.message("grable.execution.name.upgrade.wrapper"))
+    // BatchFileChangeListener.TOPIC should be used there, but it was substituted to ExternalSystemAutoImportAwareListener.TOPIC only
+    // to disable auto-sync. Indexing could happen during the execution.
+    // The original topic should be returned as a result of IDEA-389819.
+    val publisher = BackgroundTaskUtil.syncPublisher(project, ExternalSystemAutoImportAwareListener.TOPIC)
+    publisher.autoImportAwareOperationStarted()
     try {
       return execution.invoke()
     }
     finally {
-      publisher.batchChangeCompleted(project)
+      publisher.autoImportAwareOperationCompleted()
     }
   }
 

@@ -8,8 +8,8 @@
 // ACTION: Propagate 'UnstableApi' opt-in requirement to 'foo'
 // RUNTIME_WITH_SCRIPT_RUNTIME
 // LANGUAGE_VERSION: 2.1
-// K2_ERROR: This class or interface requires opt-in to be implemented. Its usage must be marked with '@UnstableApi' or '@OptIn(UnstableApi::class)'
-// K2_AFTER_ERROR: This class or interface requires opt-in to be implemented. Its usage must be marked with '@UnstableApi' or '@OptIn(UnstableApi::class)'
+// K2_ERROR: OPT_IN_TO_INHERITANCE_ERROR
+// K2_AFTER_ERROR: OPT_IN_TO_INHERITANCE_ERROR
 
 @RequiresOptIn
 annotation class UnstableApi

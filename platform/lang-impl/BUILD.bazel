@@ -156,6 +156,7 @@ jvm_library(
         "//fleet/rhizomedb",
         "//platform/testIntegration",
         "//platform/testIntegration-ui",
+        "//platform/eel-nioFs",
     ],
 )
 
@@ -293,6 +294,7 @@ jvm_library(
         "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/testIntegration:testIntegration_test_lib",
         "//platform/testIntegration-ui:testIntegration-ui_test_lib",
+        "//platform/eel-nioFs:eel-nioFs_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.lang.impl` end
@@ -433,7 +435,8 @@ jvm_library(
         "//platform/vcs-api:vcs_test_lib",
         "//libraries/oro-matcher",
         "//libraries/oro-matcher:oro-matcher_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/platform-impl:ide-impl",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
@@ -552,6 +555,10 @@ jvm_library(
         "//platform/platform-impl:ide-impl-tests_test_lib",
         "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests",
         "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.lang.tests` end

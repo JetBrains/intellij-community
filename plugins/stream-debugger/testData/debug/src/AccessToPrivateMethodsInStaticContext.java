@@ -2,7 +2,7 @@ import java.util.stream.Stream;
 
 public class AccessToPrivateMethodsInStaticContext {
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     Stream.generate(() -> 1).limit(10).peek(x -> method(x)).filter(x -> x % 2 == 0).count();
   }
 

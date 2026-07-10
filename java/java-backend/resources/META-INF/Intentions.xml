@@ -1,5 +1,4 @@
 <idea-plugin>
-
   <extensions defaultExtensionNs="com.intellij">
     <intentionAction>
       <language>JAVA</language>

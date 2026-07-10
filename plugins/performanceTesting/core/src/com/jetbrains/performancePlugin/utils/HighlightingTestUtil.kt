@@ -25,13 +25,18 @@ class HighlightingTestUtil {
 
     @JvmStatic
     fun storeProcessFinishedTime(scopeName: String, spanName: String, vararg additionalAttributes: Pair<String, String>) {
+      val nowMs = System.currentTimeMillis()
       val span = TelemetryManager.getTracer(Scope(scopeName))
         .spanBuilder(spanName)
-        .setStartTimestamp(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+        .setStartTimestamp(nowMs, TimeUnit.MILLISECONDS)
         .startSpan()
-        .setAttribute("finish", System.currentTimeMillis())
-      additionalAttributes.forEach { attributesPair -> span.setAttribute(attributesPair.first, attributesPair.second) }
-      span.end(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+        .setAttribute("finish", nowMs)
+      try {
+        additionalAttributes.forEach { span.setAttribute(it.first, it.second) }
+      }
+      finally {
+        span.end(nowMs, TimeUnit.MILLISECONDS)
+      }
     }
 
 
@@ -57,7 +62,7 @@ class HighlightingTestUtil {
     suspend fun waitForCondition(checkInterval: Long = 500, condition: suspend () -> Boolean) {
       while (true) {
         if (condition()) return
-        delay(checkInterval)
+        delay(checkInterval.milliseconds)
       }
     }
 
@@ -72,7 +77,7 @@ class HighlightingTestUtil {
         while (true) {
           val value = condition()
           if (value != null) return@withTimeoutOrNull value
-          delay(checkInterval)
+          delay(checkInterval.milliseconds)
         }
       }
       @Suppress("UNCHECKED_CAST")

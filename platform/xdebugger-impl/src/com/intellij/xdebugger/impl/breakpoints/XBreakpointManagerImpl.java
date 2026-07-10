@@ -43,6 +43,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement;
 import com.intellij.xdebugger.impl.BreakpointManagerState;
@@ -107,10 +108,9 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     myDebuggerManager = debuggerManager;
     myCoroutineScope = coroutineScope;
     myDependentBreakpointManager = new XDependentBreakpointManager(this);
-    myLineBreakpointManager = new XLineBreakpointManager(project, coroutineScope, !SplitDebuggerMode.isSplitDebugger(),
-                                                         MonolithBreakpointManagerKt.asProxy(this));
+    myLineBreakpointManager = new XLineBreakpointManager(project, MonolithBreakpointManagerKt.asProxy(this));
 
-    XBreakpointType.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+    XBreakpointType.EXTENSION_POINT_NAME.addExtensionPointListener(coroutineScope, new ExtensionPointListener<>() {
       @SuppressWarnings("unchecked")
       @Override
       public void extensionAdded(@NotNull XBreakpointType type, @NotNull PluginDescriptor pluginDescriptor) {
@@ -142,7 +142,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
           myDefaultBreakpoints.remove(type);
         });
       }
-    }, debuggerManager);
+    });
 
     messageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileUrlChangeAdapter() {
       @Override
@@ -262,7 +262,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
       }
       myAllBreakpoints.add(breakpoint);
       if (breakpoint instanceof XLineBreakpointImpl<?> lineBreakpoint) {
-        myLineBreakpointManager.registerBreakpoint(asProxy(lineBreakpoint), initUI);
+        myLineBreakpointManager.registerBreakpoint(asProxy(lineBreakpoint));
       }
     });
     sendBreakpointEvent(type, listener -> listener.breakpointAdded(breakpoint));
@@ -285,9 +285,6 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
 
   public void fireBreakpointChanged(XBreakpointBase<?, ?, ?> breakpoint) {
     if (isRegistered(breakpoint)) {
-      if (breakpoint instanceof XLineBreakpointImpl<?> lineBreakpoint) {
-        myLineBreakpointManager.breakpointChanged(asProxy(lineBreakpoint));
-      }
       sendBreakpointEvent(breakpoint.getType(), listener -> listener.breakpointChanged(breakpoint));
     }
   }
@@ -394,13 +391,12 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   }
 
   @Override
-  public @NotNull <T extends XBreakpointProperties> XLineBreakpoint<T> addLineBreakpoint(final XLineBreakpointType<T> type,
-                                                                                         final @NotNull String fileUrl,
-                                                                                         final int line,
-                                                                                         final @Nullable T properties,
-                                                                                         boolean temporary,
-                                                                                         final @NotNull XLineBreakpointVerticalPlacement placement) {
-    return addLineBreakpoint(type, fileUrl, line, properties, temporary, placement, true);
+  public @NotNull <T extends XBreakpointProperties> XLineBreakpoint<T> addLineBreakpoint(XLineBreakpointType<T> type,
+                                                                                         @NotNull String fileUrl,
+                                                                                         int line,
+                                                                                         @Nullable T properties,
+                                                                                         @NotNull XLineBreakpointAdditionalInfo additionalInfo) {
+    return addLineBreakpoint(type, fileUrl, line, properties, additionalInfo, true);
   }
 
   @Override
@@ -409,26 +405,40 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
                                                                                          final int line,
                                                                                          final @Nullable T properties,
                                                                                          boolean temporary) {
-    return addLineBreakpoint(type, fileUrl, line, properties, temporary, XLineBreakpointVerticalPlacement.ON_LINE, true);
+    XLineBreakpointAdditionalInfo additionalInfo = new XLineBreakpointAdditionalInfo.Builder()
+      .setTemporary(temporary)
+      .build();
+    return addLineBreakpoint(type, fileUrl, line, properties, additionalInfo);
   }
 
   public @NotNull <T extends XBreakpointProperties> XLineBreakpoint<T> addLineBreakpoint(final XLineBreakpointType<T> type,
                                                                                          final @NotNull String fileUrl,
                                                                                          final int line,
                                                                                          final @Nullable T properties,
-                                                                                         boolean temporary,
-                                                                                         final @NotNull XLineBreakpointVerticalPlacement placement,
+                                                                                         final @NotNull XLineBreakpointAdditionalInfo additionalInfo,
                                                                                          boolean initUI) {
     return withLockMaybeCancellable(myLock, () -> {
-      LineBreakpointState state = new LineBreakpointState(true, type.getId(), fileUrl, line, temporary, placement,
+      LineBreakpointState state = new LineBreakpointState(true, type.getId(), fileUrl, line, additionalInfo.isTemporary(), additionalInfo.getVerticalPlacement(),
                                                                ++myTime, type.getDefaultSuspendPolicy());
       getBreakpointDefaults(type).applyDefaults(state);
       state.setGroup(myDefaultGroup);
       XLineBreakpointImpl<T> breakpoint = new XLineBreakpointImpl<>(type, this, properties,
                                                                     state);
+      applyAdditionalInfo(breakpoint, additionalInfo);
       addBreakpoint(breakpoint, false, initUI);
       return breakpoint;
     });
+  }
+
+  private static <T extends XBreakpointProperties> void applyAdditionalInfo(@NotNull XLineBreakpointImpl<T> breakpoint,
+                                                                            @NotNull XLineBreakpointAdditionalInfo additionalInfo) {
+    if (additionalInfo.getSuspendPolicy() != null) {
+      breakpoint.setSuspendPolicy(additionalInfo.getSuspendPolicy());
+    }
+    if (additionalInfo.getLogExpressionIfEnabled() != null) {
+      breakpoint.setLogMessage(true);
+      breakpoint.setLogExpression(additionalInfo.getLogExpressionIfEnabled());
+    }
   }
 
   @Override
@@ -552,14 +562,8 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     presentation.setErrorMessage(errorMessage);
     presentation.setIcon(icon);
     lineBreakpoint.setCustomizedPresentation(presentation);
-    if (SplitDebuggerMode.isSplitDebugger()) {
-      // for split, we call update directly since visual presentation is disabled on the backend
-      lineBreakpoint.fireBreakpointPresentationUpdated(null);
-    }
-    else {
-      myLineBreakpointManager.queueBreakpointUpdate(breakpoint,
-                                                    () -> lineBreakpoint.fireBreakpointPresentationUpdated(null));
-    }
+    // we call update directly since visual presentation is disabled on the backend
+    lineBreakpoint.fireBreakpointPresentationUpdated(null);
   }
 
   @ApiStatus.Internal
@@ -685,7 +689,6 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
         }
 
         myDependentBreakpointManager.loadState();
-        myLineBreakpointManager.updateBreakpointsUI();
         myDefaultGroup = state.getDefaultGroup();
         myFirstLoadDone = true;
       });

@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
-import com.intellij.accessibility.enableScreenReaderSupportIfNecessary
+import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.CustomConfigMigrationOption
@@ -62,7 +62,7 @@ internal suspend fun importConfigIfNeeded(
         CustomConfigMigrationOption.MergeConfigs.writeConfigMarkerFile()
       }
     }
-    log.info("config importing not performed in headless mode")
+    log.info("config importing skipped in headless mode")
     return null
   }
 
@@ -77,12 +77,13 @@ internal suspend fun importConfigIfNeeded(
 
   if (ClassicUiToIslandsMigration.isEnabledFeature) {
     ClassicUiToIslandsMigration.enableNewUiWithIslands(logDeferred)
-  } else {
+  }
+  else {
     enableNewUi(logDeferred, isNewUser)
   }
 
   if (isNewUser && InitialConfigImportState.isStartupWizardEnabled()) {
-    log.info("Will enter initial app wizard flow.")
+    log.info("entering the initial app wizard flow")
     val result = CompletableDeferred<Boolean>()
     isInitialStart = result
     return result
@@ -124,7 +125,7 @@ private suspend fun importConfig(
 
   span("screen reader checking") {
     runCatching {
-      enableScreenReaderSupportIfNecessary()
+      AccessibilityUtils.enableScreenReaderSupportIfNecessary()
     }.getOrLogException(log)
   }
 }

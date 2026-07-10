@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.idea.TestFor
@@ -10,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.TestDataFile
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.replaceService
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.documentation.docstrings.DocStringFormat
@@ -42,14 +46,21 @@ import com.jetbrains.python.inspections.PyTrailingSemicolonInspection
 import com.jetbrains.python.inspections.PyUnboundLocalVariableInspection
 import com.jetbrains.python.inspections.PyUnnecessaryBackslashInspection
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
-import com.jetbrains.python.packaging.management.TestPypiPackageCache
+import com.jetbrains.python.packaging.cache.impl.InMemorySearchPage
 import com.jetbrains.python.packaging.pip.PyPiPackageCache
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.quickFixes.PyRenameElementQuickFixTest
 import org.intellij.lang.regexp.inspection.RegExpRedundantEscapeInspection
 import org.jetbrains.annotations.NonNls
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyBoolean
+import org.mockito.ArgumentMatchers.anyInt
+import org.mockito.ArgumentMatchers.anyString
+import org.mockito.Mockito
 
 @TestDataPath("\$CONTENT_ROOT/../testData/inspections/")
+@Subsystems.QuickFixes
+@Layers.Functional
 class PyQuickFixTest : PyTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor? = ourPy2Descriptor
 
@@ -99,12 +110,22 @@ class PyQuickFixTest : PyTestCase() {
   }
 
   // PY-42307
-  fun testInstallAndImportPackageByNameAlias() {
-    val packageCache = TestPypiPackageCache()
-    packageCache.testPackages = setOf("pandas")
-    ApplicationManager.getApplication().replaceService(PyPiPackageCache::class.java,
-                                                       packageCache,
-                                                       testRootDisposable)
+  fun testInstallAndImportPackageByNameAlias(): Unit = timeoutRunBlocking {
+    val mock = Mockito.mock(PyPiPackageCache::class.java)
+    Mockito.`when`(mock.reloadCache(anyBoolean())).thenReturn(Result.success(Unit))
+    Mockito.`when`(mock.search(anyString(), anyInt())).thenReturn(
+      InMemorySearchPage.resultFromMatches(listOf("pandas"), 1)
+    )
+    Mockito.`when`(mock.contains(anyString())).thenReturn(true)
+
+    ApplicationManager
+      .getApplication()
+      .replaceService(
+        PyPiPackageCache::class.java,
+        mock,
+        testRootDisposable,
+      )
+
     myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)
     myFixture.configureByText(PythonFileType.INSTANCE, "pd<caret>.array()")
     myFixture.findSingleIntention("Import 'turtle.pd'") // standard library

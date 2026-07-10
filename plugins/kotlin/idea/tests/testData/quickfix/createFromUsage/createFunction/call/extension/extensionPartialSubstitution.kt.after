@@ -7,10 +7,10 @@
 
 class A<T>(val items: List<T>) {
     fun test(): Int {
-        return items.foo<T, Int>(2, "2")
+        return items.foo<Int>(2, "2")
     }
 }
 
-private fun <E, T> List<E>.foo(t: T, s: String): T {
+private fun <T> List<T>.foo(t: T, string: String): T {
     TODO("Not yet implemented")
 }

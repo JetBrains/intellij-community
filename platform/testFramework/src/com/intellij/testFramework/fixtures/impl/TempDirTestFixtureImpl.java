@@ -140,7 +140,9 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
         VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(myTempDir.toString()));
         if (virtualFile != null) {
           WriteAction.runAndWait(() -> {
-            virtualFile.delete(this);
+            if(virtualFile.isValid()) {
+              virtualFile.delete(this);
+            }
           });
         }
       }

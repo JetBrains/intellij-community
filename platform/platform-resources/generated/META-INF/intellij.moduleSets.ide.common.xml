@@ -211,7 +211,6 @@
     <module name="intellij.platform.experiment" loading="embedded"/>
     <module name="intellij.platform.ide.impl" loading="embedded"/>
     <module name="intellij.platform.rd.community" loading="embedded"/>
-    <module name="intellij.platform.ide.ui.inspector" loading="embedded"/>
     <module name="intellij.platform.remote.core" loading="embedded"/>
     <module name="intellij.platform.ide.remote" loading="embedded"/>
     <module name="intellij.platform.threadDumpParser" loading="embedded"/>
@@ -286,12 +285,6 @@
     <module name="intellij.platform.debugger.impl" loading="embedded"/>
     <!-- endregion -->
 
-    <!-- region nested: essential > problemsView -->
-    <module name="intellij.platform.problemsView.frontend"/>
-    <module name="intellij.platform.problemsView.backend"/>
-    <module name="intellij.platform.problemsView.shared"/>
-    <!-- endregion -->
-
     <!-- region direct modules -->
     <module name="intellij.platform.scopes" loading="embedded"/>
     <module name="intellij.platform.scopes.backend"/>
@@ -304,6 +297,7 @@
     <module name="intellij.platform.pluginManager.shared"/>
     <module name="intellij.platform.pluginManager.backend"/>
     <module name="intellij.platform.pluginManager.frontend"/>
+    <module name="intellij.platform.ide.updateChecker.backend"/>
     <module name="intellij.platform.execution.impl.frontend"/>
     <module name="intellij.platform.execution.impl.backend"/>
     <module name="intellij.platform.eel.tcp"/>
@@ -338,39 +332,36 @@
     <module name="intellij.platform.jewel.markdown.core"/>
     <!-- endregion -->
 
-    <!-- region nested: vcs -->
-    <!-- region nested: vcs > vcs.shared -->
+    <!-- region nested: vcs.shared -->
     <module name="intellij.platform.vcs.core" loading="embedded"/>
     <module name="intellij.platform.vcs.shared" loading="embedded"/>
     <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.dvcs.impl.shared"/>
     <!-- endregion -->
 
+    <!-- region nested: lsp -->
+    <!-- region nested: lsp > libraries.lsp4j -->
+    <module name="intellij.libraries.eclipse.lsp4j" loading="embedded"/>
+    <module name="intellij.libraries.eclipse.lsp4j.debug" loading="embedded"/>
+    <module name="intellij.libraries.eclipse.lsp4j.jsonrpc" loading="embedded"/>
+    <module name="intellij.libraries.eclipse.lsp4j.jsonrpc.debug" loading="embedded"/>
+    <!-- endregion -->
+
     <!-- region direct modules -->
-    <module name="intellij.platform.vcs.impl"/>
-    <module name="intellij.platform.vcs.impl.exec"/>
-    <module name="intellij.platform.vcs.impl.debugger"/>
-    <module name="intellij.platform.vcs.impl.lang"/>
-    <module name="intellij.platform.vcs.impl.lang.actions"/>
-    <module name="intellij.platform.vcs.log"/>
-    <module name="intellij.platform.vcs.log.impl"/>
-    <module name="intellij.platform.sqlite"/>
-    <module name="intellij.platform.vcs.log.graph"/>
-    <module name="intellij.platform.vcs.log.graph.impl"/>
-    <module name="intellij.platform.vcs.dvcs"/>
-    <module name="intellij.platform.vcs.dvcs.impl"/>
-    <module name="intellij.platform.vcs" loading="embedded"/>
+    <module name="intellij.platform.lsp" loading="embedded"/>
+    <module name="intellij.platform.lsp.impl" loading="embedded"/>
+    <module name="intellij.platform.lsp.impl.structureView"/>
     <!-- endregion -->
     <!-- endregion -->
 
     <!-- region nested: xml -->
-    <module name="intellij.xml.dom" loading="embedded"/>
-    <module name="intellij.xml.dom.impl" loading="embedded"/>
+    <module name="intellij.xml.dom"/>
+    <module name="intellij.xml.dom.impl"/>
     <module name="intellij.xml.structureView"/>
     <module name="intellij.xml.structureView.impl"/>
     <module name="intellij.xml.psi" loading="embedded"/>
     <module name="intellij.xml.psi.impl" loading="embedded"/>
-    <module name="intellij.xml.analysis" loading="embedded"/>
+    <module name="intellij.xml.analysis"/>
     <module name="intellij.xml.emmet"/>
     <module name="intellij.xml.emmet.backend"/>
     <module name="intellij.xml.emmet.frontend"/>
@@ -378,8 +369,8 @@
     <module name="intellij.xml.parser" loading="embedded"/>
     <module name="intellij.xml.syntax" loading="embedded"/>
     <module name="intellij.relaxng"/>
-    <module name="intellij.xml.impl" loading="embedded"/>
-    <module name="intellij.xml.analysis.impl" loading="embedded"/>
+    <module name="intellij.xml.impl"/>
+    <module name="intellij.xml.analysis.impl"/>
     <module name="intellij.libraries.cglib" loading="embedded"/>
     <module name="intellij.libraries.xerces" loading="embedded"/>
     <module name="intellij.xml.langInjection"/>
@@ -395,10 +386,6 @@
     <module name="intellij.platform.collaborationTools"/>
     <module name="intellij.platform.collaborationTools.auth"/>
     <module name="intellij.platform.collaborationTools.auth.base"/>
-    <module name="intellij.platform.tasks"/>
-    <module name="intellij.platform.tasks.impl"/>
-    <module name="intellij.platform.tasks.impl.bookmarks"/>
-    <module name="intellij.platform.tasks.impl.debugger"/>
     <module name="intellij.platform.scriptDebugger.ui"/>
     <module name="intellij.platform.scriptDebugger.backend"/>
     <module name="intellij.platform.scriptDebugger.protocolReaderRuntime"/>
@@ -409,6 +396,7 @@
     <module name="intellij.platform.inspect"/>
     <module name="intellij.settingsSync.core"/>
     <module name="intellij.spellchecker"/>
+    <module name="intellij.spellchecker.vcs"/>
     <module name="intellij.spellchecker.xml"/>
     <module name="intellij.platform.buildView"/>
     <module name="intellij.platform.buildView.backend"/>
@@ -416,13 +404,14 @@
     <module name="intellij.emojipicker"/>
     <module name="intellij.platform.ide.impl.wsl"/>
     <module name="intellij.platform.diagnostic.telemetry.agent.extension"/>
-    <module name="intellij.platform.polySymbols.backend" loading="embedded"/>
+    <module name="intellij.platform.polySymbols.backend"/>
     <module name="intellij.regexp" loading="embedded"/>
     <module name="intellij.platform.langInjection"/>
     <module name="intellij.platform.langInjection.backend"/>
     <module name="intellij.libraries.grpc"/>
     <module name="intellij.libraries.grpc.netty.shaded"/>
     <module name="intellij.libraries.jspecify"/>
+    <module name="intellij.platform.vcs" loading="embedded"/>
     <module name="intellij.libraries.batik" loading="embedded"/>
     <!-- endregion -->
   </content>

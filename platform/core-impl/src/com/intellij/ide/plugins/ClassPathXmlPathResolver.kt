@@ -54,13 +54,11 @@ class ClassPathXmlPathResolver(
 
     if (resource == null) {
       val log = logger<ClassPathXmlPathResolver>()
-      val moduleId = path.removeSuffix(".xml")
       when {
         isRunningFromSourcesWithoutDevBuild && isV2ModulePath(path) && dataLoader.emptyDescriptorIfCannotResolve -> {
           log.trace("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). ")
           return PluginDescriptorBuilder.builder().apply {
             visibility = ModuleVisibilityValue.PUBLIC
-            `package` = "unresolved.$moduleId"
           }
         }
         else -> {

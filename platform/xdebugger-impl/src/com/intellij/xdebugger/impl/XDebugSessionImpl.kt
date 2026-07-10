@@ -13,7 +13,6 @@ import com.intellij.execution.impl.RunContentDescriptorLifecycleListener
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.rpc.toDto
-import com.intellij.execution.runners.BackendExecutionEnvironmentProxy
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.RunTab
 import com.intellij.execution.storeGlobally
@@ -42,7 +41,6 @@ import com.intellij.platform.debugger.impl.rpc.XDebugSessionPausedInfo
 import com.intellij.platform.debugger.impl.rpc.XDebugTabLayouterDto
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabAbstractInfo
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabInfo
-import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabInfoNoInit
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.util.coroutines.childScope
@@ -280,7 +278,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   val hasSessionTab: Boolean get() = mySessionTab.isCompleted
 
   private val isTabInitialized: Boolean
-    get() = myTabInitDataFlow.value != null && (SplitDebuggerMode.isSplitDebugger() || hasSessionTab)
+    get() = myTabInitDataFlow.value != null
 
   private fun assertSessionTabInitialized() {
     val initialized = isTabInitialized
@@ -524,7 +522,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
    */
   @ApiStatus.Obsolete
   fun runWhenTabReady(block: (XDebugSessionTab?) -> Unit) {
-    if (AppMode.isRemoteDevHost() && SplitDebuggerMode.isSplitDebugger()) {
+    if (AppMode.isRemoteDevHost()) {
       if (SplitDebuggerMode.showSplitWarnings()) {
         LOG.error("[Split debugger] Debugger tab is not accessible in RemDev on backend")
       }
@@ -552,7 +550,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
       // See "TODO [Debugger.RunnerLayoutUi]" to see usages which are not yet properly migrated.
       LOG.warn("[Split debugger] RunnerLayoutUi should not be used in split mode from XDebugSession")
     }
-    return if (SplitDebuggerMode.isSplitDebugger() && AppMode.isRemoteDevHost()) {
+    return if (AppMode.isRemoteDevHost()) {
       getMockRunContentDescriptorIfInitialized()?.runnerLayoutUi
     }
     else {
@@ -563,7 +561,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   override fun runWhenUiReady(block: Consumer<RunnerLayoutUi>) {
     tabCoroutineScope.launch(Dispatchers.EDT) {
       assertSessionTabInitialized()
-      val ui = if (SplitDebuggerMode.isSplitDebugger() && AppMode.isRemoteDevHost()) {
+      val ui = if (AppMode.isRemoteDevHost()) {
         getMockRunContentDescriptorIfInitialized()?.runnerLayoutUi
       }
       else {
@@ -582,115 +580,100 @@ class XDebugSessionImpl @JvmOverloads constructor(
   /**
    * TODO When we move to RD-first approach, @RequiresEdt requirements in [XDebuggerManager] can be removed
    */
-  @OptIn(AwaitCancellationAndInvoke::class)
   private fun initSessionTab(contentToReuse: RunContentDescriptor?, shouldShowTab: Boolean) {
     val forceNewDebuggerUi = debugProcess.forceShowNewDebuggerUi()
     val withFramesCustomization = debugProcess.allowFramesViewCustomization()
     val defaultFramesViewKey: String? = debugProcess.getDefaultFramesViewKey()
 
-    if (SplitDebuggerMode.isSplitDebugger()) {
-      if (shouldShowTab) {
-        myShowTabDeferred.complete(Unit)
-      }
-      val localTabScope = tabCoroutineScope.childScope("ExecutionEnvironmentDto")
-      val tabClosedChannel = Channel<Unit>()
-      val additionalTabComponentManager = XDebugSessionAdditionalTabComponentManager(localTabScope)
-      val runContentDescriptorId = CompletableDeferred<RunContentDescriptorIdImpl>()
-      val tabLayouterDto = CompletableDeferred<XDebugTabLayouterDto>()
-      val executionEnvironmentId = executionEnvironment?.storeGlobally(localTabScope)
+    if (shouldShowTab) {
+      myShowTabDeferred.complete(Unit)
+    }
+    val localTabScope = tabCoroutineScope.childScope("ExecutionEnvironmentDto")
+    val tabClosedChannel = Channel<Unit>()
+    val additionalTabComponentManager = XDebugSessionAdditionalTabComponentManager(localTabScope)
+    val runContentDescriptorId = CompletableDeferred<RunContentDescriptorIdImpl>()
+    val tabLayouterDto = CompletableDeferred<XDebugTabLayouterDto>()
+    val executionEnvironmentId = executionEnvironment?.storeGlobally(localTabScope)
 
-      val tabInfo = XDebuggerSessionTabInfo(myIcon?.rpcId(), forceNewDebuggerUi, withFramesCustomization, defaultFramesViewKey,
-                                            executionEnvironmentId, executionEnvironment?.toDto(localTabScope),
-                                            additionalTabComponentManager.id, tabClosedChannel,
-                                            runContentDescriptorId, myShowTabDeferred, tabLayouterDto, contentToReuse)
-      if (myTabInitDataFlow.compareAndSet(null, tabInfo)) {
-        // This is a mock tab used in backend only
-        // Using a RunTab as a mock component let us reuse context reusing,
-        // e.g. execution environment is present in the context of the mock descriptor
-        val runTab = object : RunTab(project, GlobalSearchScope.allScope(project),
-                                     "Debug", "Debug", sessionName) {
-          init {
-            myEnvironment = executionEnvironment
-            myUi.getContentManager().addUiDataProvider { sink ->
-              sink[XDebugSessionData.DATA_KEY] = sessionData
+    val tabInfo = XDebuggerSessionTabInfo(myIcon?.rpcId(), forceNewDebuggerUi, withFramesCustomization, defaultFramesViewKey,
+                                          executionEnvironmentId, executionEnvironment?.toDto(localTabScope),
+                                          additionalTabComponentManager.id, tabClosedChannel,
+                                          runContentDescriptorId, myShowTabDeferred, tabLayouterDto, contentToReuse)
+    if (myTabInitDataFlow.compareAndSet(null, tabInfo)) {
+      // This is a mock tab used in backend only
+      // Using a RunTab as a mock component let us reuse context reusing,
+      // e.g. execution environment is present in the context of the mock descriptor
+      val runTab = object : RunTab(project, GlobalSearchScope.allScope(project),
+                                   "Debug", "Debug", sessionName) {
+        init {
+          myEnvironment = executionEnvironment
+          myUi.getContentManager().addUiDataProvider { sink ->
+            sink[XDebugSessionData.DATA_KEY] = sessionData
+          }
+        }
+
+        val component get() = myUi.component
+        val ui get() = myUi
+
+        val consoleManger by lazy { createLogConsoleManager(additionalTabComponentManager) { debugProcess.processHandler } }
+      }
+      val disposable = createEdtDisposable(localTabScope.asDisposable())
+
+      val remoteDevHost = AppMode.isRemoteDevHost()
+      val layoutBridge = RunnerLayoutUiBridge(project, disposable)
+      // This is a mock descriptor used in backend only
+      val mockDescriptor = object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), runTab.component,
+                                                         sessionName, myIcon, null) {
+        init {
+          runnerLayoutUi = if (remoteDevHost) layoutBridge else runTab.ui
+        }
+
+        override fun isHiddenContent(): Boolean = true
+      }
+      Disposer.register(disposable, runTab)
+      Disposer.register(disposable, mockDescriptor)
+      val descriptorId = mockDescriptor.storeGlobally(localTabScope)
+      runContentDescriptorId.complete(descriptorId)
+      mockDescriptor.id = descriptorId
+
+      val runConfiguration = executionEnvironment?.runProfile
+      if (remoteDevHost && runConfiguration != null) {
+        val logFilesManager = LogFilesManager(project, runTab.consoleManger, disposable)
+        RunTab.configureLogConsoles(runConfiguration, logFilesManager, debugProcess.processHandler)
+      }
+
+      val tabLayouter = debugProcess.createTabLayouter()
+      val tabLayouterId = XDebugTabLayouterModel(tabLayouter, layoutBridge).storeGlobally(localTabScope)
+      tabLayouterDto.complete(XDebugTabLayouterDto(tabLayouterId, tabLayouter))
+
+      debuggerManager.coroutineScope.launch(start = CoroutineStart.ATOMIC) {
+        try {
+          tabClosedChannel.receiveCatching()
+        }
+        finally {
+          tabClosedChannel.close()
+          tabCoroutineScope.cancel()
+        }
+      }
+      myMockRunContentDescriptor = mockDescriptor
+      debugProcess.sessionInitialized()
+      project.messageBus.connect(localTabScope)
+        .subscribe(RUN_CONTENT_DESCRIPTOR_LIFECYCLE_TOPIC, object : RunContentDescriptorLifecycleListener {
+          override fun beforeContentShown(descriptor: RunContentDescriptor, executor: Executor) {
+            if (descriptor === mockDescriptor) {
+              myShowTabDeferred.complete(Unit)
             }
           }
 
-          val component get() = myUi.component
-          val ui get() = myUi
-
-          val consoleManger by lazy { createLogConsoleManager(additionalTabComponentManager) { debugProcess.processHandler } }
-        }
-        val disposable = createEdtDisposable(localTabScope.asDisposable())
-
-        val remoteDevHost = AppMode.isRemoteDevHost()
-        val layoutBridge = RunnerLayoutUiBridge(project, disposable)
-        // This is a mock descriptor used in backend only
-        val mockDescriptor = object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), runTab.component,
-                                                           sessionName, myIcon, null) {
-          init {
-            runnerLayoutUi = if (remoteDevHost) layoutBridge else runTab.ui
+          override fun afterContentShown(descriptor: RunContentDescriptor, executor: Executor) {
           }
-
-          override fun isHiddenContent(): Boolean = true
-        }
-        Disposer.register(disposable, runTab)
-        Disposer.register(disposable, mockDescriptor)
-        val descriptorId = mockDescriptor.storeGlobally(localTabScope)
-        runContentDescriptorId.complete(descriptorId)
-        mockDescriptor.id = descriptorId
-
-        val runConfiguration = executionEnvironment?.runProfile
-        if (remoteDevHost && runConfiguration != null) {
-          val logFilesManager = LogFilesManager(project, runTab.consoleManger, disposable)
-          RunTab.configureLogConsoles(runConfiguration, logFilesManager, debugProcess.processHandler)
-        }
-
-        val tabLayouter = debugProcess.createTabLayouter()
-        val tabLayouterId = XDebugTabLayouterModel(tabLayouter, layoutBridge).storeGlobally(localTabScope)
-        tabLayouterDto.complete(XDebugTabLayouterDto(tabLayouterId, tabLayouter))
-
-        debuggerManager.coroutineScope.launch(start = CoroutineStart.ATOMIC) {
-          try {
-            tabClosedChannel.receiveCatching()
-          }
-          finally {
-            tabClosedChannel.close()
-            tabCoroutineScope.cancel()
-          }
-        }
-        myMockRunContentDescriptor = mockDescriptor
-        debugProcess.sessionInitialized()
-        project.messageBus.connect(localTabScope)
-          .subscribe(RUN_CONTENT_DESCRIPTOR_LIFECYCLE_TOPIC, object : RunContentDescriptorLifecycleListener {
-            override fun beforeContentShown(descriptor: RunContentDescriptor, executor: Executor) {
-              if (descriptor === mockDescriptor) {
-                myShowTabDeferred.complete(Unit)
-              }
-            }
-
-            override fun afterContentShown(descriptor: RunContentDescriptor, executor: Executor) {
-            }
-          })
-      }
-      else {
-        localTabScope.cancel()
-        tabClosedChannel.close()
-      }
+        })
     }
     else {
-      if (myTabInitDataFlow.compareAndSet(null, XDebuggerSessionTabInfoNoInit)) {
-        val proxy = this.asProxy()
-        val tab = XDebugSessionTab.create(proxy, myIcon, executionEnvironment?.let { BackendExecutionEnvironmentProxy(it) }, contentToReuse,
-                                          forceNewDebuggerUi, withFramesCustomization, defaultFramesViewKey)
-        tabInitialized(tab)
-        myMockRunContentDescriptor = tab.runContentDescriptor
-        debugProcess.sessionInitialized()
-        if (shouldShowTab) {
-          tab.showTab()
-        }
-      }
+      localTabScope.cancel()
+      tabClosedChannel.close()
     }
+
     setUpOutputToFile()
   }
 
@@ -721,12 +704,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   fun showSessionTab() {
-    if (SplitDebuggerMode.isSplitDebugger()) {
-      myShowTabDeferred.complete(Unit)
-    }
-    else {
-      sessionTab?.showTab()
-    }
+    myShowTabDeferred.complete(Unit)
   }
 
   val valueMarkers: XValueMarkers<*, *>?
@@ -842,7 +820,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
     if (!areBreakpointDisabled()) {
       processAllBreakpoints(!muted, muted)
     }
-    debuggerManager.breakpointManager.lineBreakpointManager.queueAllBreakpointsUpdate()
     myDispatcher.getMulticaster().breakpointsMuted(muted)
   }
 
@@ -1034,15 +1011,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
         reportBreakpointVerified(breakpoint, delay)
       }
     }
-    val debuggerManager = debuggerManager.breakpointManager
-    if (SplitDebuggerMode.isSplitDebugger() && breakpoint is XLineBreakpointImpl<*>) {
+    if (breakpoint is XLineBreakpointImpl<*>) {
       // for useFeProxy we call update directly since visual presentation is disabled on the backend
       breakpoint.fireBreakpointPresentationUpdated(this)
-    }
-    else {
-      debuggerManager.lineBreakpointManager.queueBreakpointUpdate(breakpoint) {
-        (breakpoint as XBreakpointBase<*, *, *>).fireBreakpointPresentationUpdated(this)
-      }
     }
   }
 
@@ -1146,7 +1117,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
       val added = myInactiveSlaveBreakpoints.add(breakpoint)
       if (added) {
         processAllHandlers(breakpoint, false)
-        debuggerManager.breakpointManager.lineBreakpointManager.queueBreakpointUpdate(breakpoint)
       }
     }
   }
@@ -1184,13 +1154,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
           initSessionTab(null, shouldShowTab = true)
         }
         val topFrameIsAbsent = topFramePosition == null
-        if (SplitDebuggerMode.isSplitDebugger()) {
-          myPausedEvents.tryEmit(XDebugSessionPausedInfo(effectiveAttract, topFrameIsAbsent))
-        }
-        else {
-          // We have to keep this code because Code with Me expects BE to work with tab similar to monolith
-          sessionTab?.onPause(effectiveAttract, topFrameIsAbsent)
-        }
+        myPausedEvents.tryEmit(XDebugSessionPausedInfo(effectiveAttract, topFrameIsAbsent))
       })
     }
 

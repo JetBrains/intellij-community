@@ -238,7 +238,8 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
     private final @Nullable PyExpression myDefaultValue;
 
     public FieldTypeAndDefaultValue(@Nullable PyType type, @Nullable PyExpression defaultValue) {
-      myType = type;
+        PyAnyType.validate(type);
+        myType = type;
       myDefaultValue = defaultValue;
     }
 

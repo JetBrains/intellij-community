@@ -3,7 +3,6 @@ package com.intellij.spellchecker.statistics
 
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.psi.PsiElement
 import com.intellij.spellchecker.inspections.SpellCheckingInspection.SpellCheckingScope
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy.getSpellcheckingStrategy
@@ -31,10 +30,10 @@ class SpellcheckerRateTracker private constructor(
   companion object {
     private fun determineDomain(element: PsiElement): String {
       val strategy = getSpellcheckingStrategy(element)
-      if (CommitMessage.isCommitMessage(element)) {
-        return "commit"
+      SpellcheckerDomainProvider.findDomain(element)?.let {
+        return it
       }
-      else if (strategy.elementFitsScope(element, setOf(SpellCheckingScope.Literals))) {
+      if (strategy.elementFitsScope(element, setOf(SpellCheckingScope.Literals))) {
         return "literal"
       }
       else if (strategy.elementFitsScope(element, setOf(SpellCheckingScope.Comments))) {

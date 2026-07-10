@@ -28,7 +28,7 @@ class ArrayField(CheckPostgresInstalledMixin, CheckFieldDefaultMixin, Field[_ST,
     default_error_messages: ClassVar[_ErrorMessagesDict]
     base_field: Field
     size: int | None
-    default_validators: Sequence[_ValidatorCallable]
+    default_validators: list[_ValidatorCallable]
     from_db_value: Any
     def __init__(
         self,

@@ -1,39 +1,35 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertContain
+import com.intellij.maven.testFramework.fixtures.assertDoNotContain
+import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.importProjectsAsync
+import com.intellij.maven.testFramework.fixtures.initProjectsManager
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.updateAllProjects
+import com.intellij.maven.testFramework.fixtures.updateProjectPom
+import com.intellij.maven.testFramework.fixtures.waitForImportWithinTimeout
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
-import org.jetbrains.idea.maven.fixtures.assertContain
-import org.jetbrains.idea.maven.fixtures.assertDoNotContain
-import org.jetbrains.idea.maven.fixtures.assertModules
-import org.jetbrains.idea.maven.fixtures.createModulePom
-import org.jetbrains.idea.maven.fixtures.importProjectAsync
-import org.jetbrains.idea.maven.fixtures.importProjectsAsync
-import org.jetbrains.idea.maven.fixtures.initProjectsManager
-import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
-import org.jetbrains.idea.maven.fixtures.updateAllProjects
-import org.jetbrains.idea.maven.fixtures.updateProjectPom
-import org.jetbrains.idea.maven.fixtures.waitForImportWithinTimeout
 import org.jetbrains.idea.maven.tasks.MavenKeymapExtension
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager
-import java.io.IOException
-import com.intellij.testFramework.junit5.TestApplication
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.AfterEach
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
+import java.io.IOException
 
 @TestApplication
 @ParameterizedClass

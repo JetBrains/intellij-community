@@ -3,5 +3,5 @@
 // HIGHLIGHTER_ATTRIBUTES_KEY
 
 interface Interface {
-    <!HIGHLIGHTING("severity='WARNING'; descr='[REDUNDANT_OPEN_IN_INTERFACE] Modifier 'open' is redundant for abstract interface members.'; highlightingTextAttributesKey='NOT_USED_ELEMENT_ATTRIBUTES'")!>open<!> fun foo()
+    <!HIGHLIGHTING("severity='WARNING'; descr='[REDUNDANT_OPEN_IN_INTERFACE]'; highlightingTextAttributesKey='NOT_USED_ELEMENT_ATTRIBUTES'")!>open<!> fun foo()
 }

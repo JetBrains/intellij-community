@@ -47,17 +47,19 @@ import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -81,6 +83,7 @@ public final class JUnit5TeamCityRunner {
   private static final String REVERSE_ORDER = System.getProperty("intellij.build.test.reverse.order");
   private static final String INCLUDE_TAGS = System.getProperty("intellij.build.test.tags");
   private static final String EXCLUDE_TAGS = System.getProperty("intellij.build.test.excluded.tags");
+  private static final String RIDER_TEST_EXECUTION_LISTENER = System.getProperty("intellij.build.test.rider.test.execution.listener");
 
   static boolean isUnderTeamCity() {
     var teamCityVersion = System.getenv("TEAMCITY_VERSION");
@@ -148,7 +151,7 @@ public final class JUnit5TeamCityRunner {
         .build();
       TestPlan testPlan = launcher.discover(discoveryRequest);
 
-      listener = isUnderTeamCity() ? new TCExecutionListener() : new ConsoleTestExecutionListener();
+      listener = isUnderTeamCity() ? getTeamCityListener() : new ConsoleTestExecutionListener();
 
       if (LIST_CLASSES != null) {
         saveListOfTestClasses(testPlan);  // save only
@@ -212,6 +215,16 @@ public final class JUnit5TeamCityRunner {
     if (isUnderTeamCity()) {
       System.out.println(new TestFinished(testName, 0));
     }
+  }
+
+  private static TestExecutionListenerEx getTeamCityListener()
+    throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    if (RIDER_TEST_EXECUTION_LISTENER == null)
+      return new TCExecutionListener();
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    //noinspection unchecked
+    Class<TestExecutionListenerEx> tcListenerClass = (Class<TestExecutionListenerEx>) Class.forName(RIDER_TEST_EXECUTION_LISTENER, true, classLoader);
+    return tcListenerClass.getDeclaredConstructor().newInstance();
   }
 
   private static boolean assertNoUnhandledExceptions_isLeak(String testFailedServiceMessage) {
@@ -471,6 +484,8 @@ public final class JUnit5TeamCityRunner {
     private long myCurrentTestStart = 0;
     private int myFinishCount = 0;
     private boolean myHasFailures = false;
+    // Test suites currently open via testSuiteStarted; TeamCity prefixes test names with exactly these
+    private final Deque<String> myOpenSuites = new ArrayDeque<>();
     private static final int MAX_STACKTRACE_MESSAGE_LENGTH =
       Integer.getInteger("intellij.build.test.stacktrace.max.length", 100 * 1024);
 
@@ -533,7 +548,11 @@ public final class JUnit5TeamCityRunner {
       }
       else if (hasNonTrivialParent(testIdentifier)) {
         myFinishCount = 0;
-        if (shouldReportAsTestSuite(testIdentifier)) myPrintStream.println(new TestSuiteStarted(getName(testIdentifier)));
+        if (shouldReportAsTestSuite(testIdentifier)) {
+          String suiteName = getName(testIdentifier);
+          myOpenSuites.addLast(suiteName);
+          myPrintStream.println(new TestSuiteStarted(suiteName));
+        }
       }
     }
 
@@ -570,7 +589,7 @@ public final class JUnit5TeamCityRunner {
           testFailure(testIdentifier, ServiceMessageTypes.TEST_IGNORED, throwableOptional, duration, reason);
         }
 
-        TestLocationStorage.recordTestLocation(testIdentifier, status, getTestNameForMetadata(testIdentifier));
+        TestLocationStorage.recordTestLocation(testIdentifier, status, fullTestName(testIdentifier));
 
         testFinished(testIdentifier, duration);
         myFinishCount++;
@@ -596,7 +615,10 @@ public final class JUnit5TeamCityRunner {
             myFinishCount = 0;
           }
         }
-        if (shouldReportAsTestSuite) myPrintStream.println(new TestSuiteFinished(getName(testIdentifier)));
+        if (shouldReportAsTestSuite) {
+          myPrintStream.println(new TestSuiteFinished(getName(testIdentifier)));
+          myOpenSuites.pollLast();
+        }
         if (status == TestExecutionResult.Status.ABORTED) myCurrentTestStart = 1;  // mark ignored classes as #smthExecuted
       }
       else {
@@ -617,6 +639,27 @@ public final class JUnit5TeamCityRunner {
 
     private static boolean hasNonTrivialParent(TestIdentifier testIdentifier) {
       return testIdentifier.getParentId().isPresent();
+    }
+
+    /**
+     * The full name TeamCity knows this test by: the test suites currently open (exactly as reported via
+     * testSuiteStarted) prepended to the testStarted name — except that TeamCity omits a suite whose name the
+     * test name already starts with (e.g. the class-named suite of a JUnit 4 Parameterized runner). Suites are
+     * not deduplicated against each other, only against the test name (verified against production build logs
+     * and the TeamCity testOccurrences API). testMetadata attached after the run is matched against precisely
+     * this composed name.
+     */
+    private String fullTestName(TestIdentifier testIdentifier) {
+      String name = getName(testIdentifier);
+      if (myOpenSuites.isEmpty()) return name;
+      StringBuilder result = new StringBuilder();
+      for (String suite : myOpenSuites) {
+        // the '.' boundary matters: a name continuing the suite with '$' (nested class) keeps the prefix in TC
+        if (!name.equals(suite) && !name.startsWith(suite + ".")) {
+          result.append(suite).append(": ");
+        }
+      }
+      return result.append(name).toString();
     }
 
     private static boolean shouldReportAsTestSuite(TestIdentifier testIdentifier) {
@@ -756,49 +799,6 @@ public final class JUnit5TeamCityRunner {
       ex.printStackTrace(writer);
       writer.close();
       return stringWriter.toString();
-    }
-
-    /**
-     * Required for TC to match parametrized and factory tests when we attach metadata after the run
-     */
-    private String getFullTestPath(TestIdentifier testIdentifier) {
-      List<String> names = new ArrayList<>();
-      Optional<TestIdentifier> parent = myTestPlan.getParent(testIdentifier);
-      boolean isImmediateParent = true;
-
-      while (parent.isPresent()) {
-        TestIdentifier p = parent.get();
-        if (hasNonTrivialParent(p)) {
-          // Skip class-level parent only if it's the immediate parent of a method test
-          // (getName already includes the class name)
-          boolean skipClassParent = isImmediateParent
-                                    && p.getSource().orElse(null) instanceof ClassSource cs
-                                    && testIdentifier.getSource().orElse(null) instanceof MethodSource ms
-                                    && cs.getClassName().equals(ms.getClassName());
-
-          if (!skipClassParent) {
-            names.add(p.getSource().map(s -> switch (s) {
-              case ClassSource source -> source.getClassName();
-              case MethodSource ms -> ms.getClassName() + "." + p.getDisplayName();
-              default -> p.getDisplayName();
-            }).orElse(p.getDisplayName()));
-          }
-        }
-        parent = myTestPlan.getParent(p);
-        isImmediateParent = false;
-      }
-
-      Collections.reverse(names);
-      names.add(getName(testIdentifier));
-      return String.join(": ", names);
-    }
-
-    private String getTestNameForMetadata(TestIdentifier testIdentifier) {
-      boolean parentIsMethodSource = myTestPlan.getParent(testIdentifier)
-        .flatMap(TestIdentifier::getSource)
-        .filter(source -> source instanceof MethodSource)
-        .isPresent();
-      return parentIsMethodSource ? getFullTestPath(testIdentifier) : getName(testIdentifier);
     }
 
     static class LimitedStackTracePrintWriter extends PrintWriter {

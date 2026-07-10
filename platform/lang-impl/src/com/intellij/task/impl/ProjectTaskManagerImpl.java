@@ -40,6 +40,7 @@ import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -378,7 +379,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     }
   }
 
-  private static @NotNull Function0<List<String>> moduleOutputPathsProvider(@NotNull Module module) {
+  private static @NotNull Function0<@Unmodifiable List<String>> moduleOutputPathsProvider(@NotNull Module module) {
     return () -> ReadAction.computeBlocking(() -> {
       return JBIterable.of(OrderEnumerator.orderEntries(module).withoutSdk().withoutLibraries().getClassesRoots())
         .filterMap(file -> file.isDirectory() && !file.getFileSystem().isReadOnly() ? file.getPath() : null)

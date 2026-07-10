@@ -3,16 +3,11 @@
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
     <plugin id="com.intellij.modules.java-capable"/>
-    <module name="intellij.platform.vcs"/>
-    <module name="intellij.regexp"/>
     <module name="intellij.platform.externalSystem"/>
     <module name="intellij.platform.externalSystem.impl"/>
     <module name="intellij.platform.todo.backend"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.java.frontback.impl"/>
-    <module name="intellij.java.psi"/>
-    <module name="intellij.java.psi.impl"/>
-    <module name="intellij.java.syntax"/>
     <module name="intellij.java"/>
     <module name="intellij.java.analysis.impl"/>
     <module name="intellij.java.codeserver.core"/>
@@ -21,7 +16,10 @@
     <module name="intellij.java.execution"/>
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.indexing.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
     <module name="intellij.java.structureView"/>
+    <module name="intellij.java.syntax"/>
     <module name="intellij.jsp"/>
     <module name="intellij.jsp.spi"/>
     <module name="intellij.platform.structureView"/>
@@ -97,6 +95,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <vfsUrlImageSourceRemapper implementation="com.intellij.codeInsight.documentation.JrtImageSourceRemapper"/>
+
     <applicationService
       open="true"
       serviceImplementation="com.intellij.refactoring.introduceVariable.JavaIntroduceVariableService"/>
@@ -106,6 +106,8 @@
       serviceImplementation="com.intellij.refactoring.introduceField.JavaIntroduceFieldService"/>
 
     <registryKey defaultValue="false" description="Enable postfix mod completion" key="postfix.template.mod.completion.enabled"/>
+    <advancedSetting id="java.suggest.creating.java.sources.in.irrelevant.source.roots" default="false"
+                     groupKey="advanced.settings.group.java" bundle="messages.JavaBundle"/>
     <applicationSettings service="com.intellij.codeInsight.hints.AnnotationInlaySettings"/>
     <projectSettings service="com.intellij.javadoc.JavadocGenerationManager"/>
     <projectSettings service="com.intellij.ui.logging.JvmLoggingSettingsStorage"/>

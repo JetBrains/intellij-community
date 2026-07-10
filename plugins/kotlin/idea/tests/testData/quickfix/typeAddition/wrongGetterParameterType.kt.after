@@ -1,5 +1,5 @@
 // "Change getter type to Int" "true"
-// K2_ERROR: Getter return type must be equal to the type of the property, i.e. 'Int'.
+// K2_ERROR: WRONG_GETTER_RETURN_TYPE
 class A() {
     val i: Int
         get(): Int = 1

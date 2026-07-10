@@ -220,6 +220,10 @@ com.intellij.lang.annotation.AnnotationBuilder
 - <init>(com.intellij.openapi.vfs.VirtualFile,java.lang.String,com.intellij.openapi.fileTypes.FileType):V
 - getParent():com.intellij.openapi.vfs.VirtualFile
 - isDirectory():Z
+*:com.intellij.modcommand.LocalQuickFixWithModCommandFallback
+- com.intellij.codeInspection.LocalQuickFix
+- a:getFallbackModCommandAction():com.intellij.modcommand.ModCommandAction
+- s:getFallbackModCommandActionFor(com.intellij.codeInspection.LocalQuickFix):com.intellij.modcommand.ModCommandAction
 com.intellij.modcommand.ModCommand
 - *s:chooseMultipleMembers(java.lang.String,java.util.List,java.util.List,java.util.function.Function):com.intellij.modcommand.ModCommand
 - *s:chooseMultipleMembers(java.lang.String,java.util.List,java.util.function.Function):com.intellij.modcommand.ModCommand
@@ -354,7 +358,8 @@ com.intellij.modcommand.ModTemplateBuilder
 *f:com.intellij.modcompletion.ModCompletionItemProvider$CompletionContext
 - java.lang.Record
 - com.intellij.codeInsight.completion.BaseCompletionParameters
-- <init>(com.intellij.codeInsight.completion.CompletionProcess,com.intellij.psi.PsiFile,I,com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.codeInsight.completion.PrefixMatcher,I,com.intellij.codeInsight.completion.CompletionType):V
+- <init>(com.intellij.codeInsight.completion.CompletionProcess,com.intellij.psi.PsiFile,I,com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.codeInsight.completion.PrefixMatcher,I,com.intellij.codeInsight.completion.CompletionType,com.intellij.codeInsight.completion.CompletionParameters):V
+- asCompletionParameters():com.intellij.codeInsight.completion.CompletionParameters
 - element():com.intellij.psi.PsiElement
 - f:equals(java.lang.Object):Z
 - getCompletionType():com.intellij.codeInsight.completion.CompletionType
@@ -371,6 +376,7 @@ com.intellij.modcommand.ModTemplateBuilder
 - isSmart():Z
 - matcher():com.intellij.codeInsight.completion.PrefixMatcher
 - offset():I
+- oldParameters():com.intellij.codeInsight.completion.CompletionParameters
 - original():com.intellij.psi.PsiElement
 - originalFile():com.intellij.psi.PsiFile
 - prefix():java.lang.String

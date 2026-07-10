@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
+jps_test(
+    name = "kotlin-gradle-tooling-impl-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":kotlin-gradle-tooling-impl-tests_test_lib"],
+)
+
+### skip generation section `test intellij.kotlin.gradle.tooling.impl.tests`
+
 ### auto-generated section `build intellij.kotlin.gradle.tooling.impl` start
 
 jvm_provided_library(
@@ -62,7 +71,8 @@ jvm_library(
         "//plugins/kotlin/base/project-model:project-model_test_lib",
         "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "@lib//:kotlin-test-junit",
         "@lib//:kotlin-test",
         "//platform/extensions",
@@ -128,7 +138,8 @@ jvm_library(
         "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "@lib//:kotlin-test-junit",
         "@lib//:kotlin-test",
         "//platform/extensions",
@@ -149,11 +160,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.kotlin.gradle.tooling.impl.tests` end
-
-### auto-generated section `test intellij.kotlin.gradle.tooling.impl.tests` start
-
-jps_test(
-    name = "kotlin-gradle-tooling-impl-tests_test",
-    runtime_deps = [":kotlin-gradle-tooling-impl-tests_test_lib"],
-)
-### auto-generated section `test intellij.kotlin.gradle.tooling.impl.tests` end

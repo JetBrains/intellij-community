@@ -1,5 +1,5 @@
 // "Create parameter 'newparam'" "true"
-// K2_ERROR: No parameter with name 'newparam' found.
+// K2_ERROR: NAMED_PARAMETER_NOT_FOUND
 
 fun foo() {
     bar(

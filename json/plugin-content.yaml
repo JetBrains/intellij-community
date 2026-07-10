@@ -23,11 +23,13 @@
       - name: $MAVEN_REPOSITORY$/tools/jackson/core/jackson-databind/3/jackson-databind-3.jar
       jackson-core-3:
       - name: $MAVEN_REPOSITORY$/tools/jackson/core/jackson-core/3/jackson-core-3.jar
-  library: joni
-  files:
-  - name: $MAVEN_REPOSITORY$/org/jruby/joni/joni/2/joni-2.jar
-  - name: $MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1/jcodings-1.jar
-  reason: <- intellij.json.networknt.wrapper
 - name: lib/modules/intellij.json.structureView.jar
   contentModules:
   - name: intellij.json.structureView
+- name: lib/modules/intellij.libraries.joni.jar
+  contentModules:
+  - name: intellij.libraries.joni
+    libraries:
+      joni:
+      - name: $MAVEN_REPOSITORY$/org/jruby/joni/joni/2/joni-2.jar
+      - name: $MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1/jcodings-1.jar

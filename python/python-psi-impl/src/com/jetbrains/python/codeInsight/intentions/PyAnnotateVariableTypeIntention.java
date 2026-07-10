@@ -21,7 +21,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.AnnotationInfo;
 import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.Pep484IncompatibleTypeException;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
-import com.jetbrains.python.documentation.doctest.PyDocstringFile;
+import com.jetbrains.python.documentation.doctest.PyDoctestFile;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyAssignmentStatement;
@@ -49,9 +49,12 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
+import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
+
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAnyOrUnknown;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +76,7 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
-    if (!(psiFile instanceof PyFile) || psiFile instanceof PyDocstringFile) {
+    if (!(psiFile instanceof PyFile) || psiFile instanceof PyDoctestFile) {
       return false;
     }
     final List<PyTargetExpression> resolved = findSuitableTargetsUnderCaret(project, editor, psiFile);
@@ -240,7 +243,8 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
 
   private static void insertVariableAnnotation(@NotNull PyTargetExpression target) {
     final TypeEvalContext context = TypeEvalContext.userInitiated(target.getProject(), target.getContainingFile());
-    final PyType inferredType = getInferredTypeOrObject(target, context);
+    final PyType rawType = getInferredTypeOrObject(target, context);
+    final PyType inferredType = isInsideTupleUnpacking(target) ? rawType : PyLiteralType.upcastLiteralToClass(rawType);
     PyTypeHintGenerationUtil.checkPep484Compatibility(inferredType, context);
     final String annotationText = PythonDocumentationProvider.getTypeHint(inferredType, context);
     final String fqnTypeExr = PythonDocumentationProvider.getFullyQualifiedTypeHint(inferredType, context);
@@ -284,11 +288,12 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
     final StringBuilder builder = new StringBuilder();
     final List<String> fullyQualifiedTypeHints = new ArrayList<>();
     final ArrayList<TextRange> typeRanges = new ArrayList<>();
-    generateNestedTypeHint(topmostTarget, context, builder, fullyQualifiedTypeHints, typeRanges);
+    generateNestedTypeHint(topmostTarget, true, context, builder, fullyQualifiedTypeHints, typeRanges);
     return new AnnotationInfo(builder.toString(), fullyQualifiedTypeHints, typeRanges);
   }
 
   private static void generateNestedTypeHint(@NotNull PsiElement target,
+                                             boolean widenLiterals,
                                              @NotNull TypeEvalContext context,
                                              @NotNull StringBuilder builder,
                                              @NotNull List<String> fullyQualifiedTypeHints,
@@ -296,7 +301,7 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
     if (target instanceof PyParenthesizedExpression) {
       final PyExpression contained = ((PyParenthesizedExpression)target).getContainedExpression();
       if (contained != null) {
-        generateNestedTypeHint(contained, context, builder, fullyQualifiedTypeHints, typeRanges);
+        generateNestedTypeHint(contained, widenLiterals, context, builder, fullyQualifiedTypeHints, typeRanges);
       }
     }
     else if (target instanceof PyTupleExpression) {
@@ -306,12 +311,13 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
         if (i > 0) {
           builder.append(", ");
         }
-        generateNestedTypeHint(elements[i], context, builder, fullyQualifiedTypeHints, typeRanges);
+        generateNestedTypeHint(elements[i], false, context, builder, fullyQualifiedTypeHints, typeRanges);
       }
       builder.append(")");
     }
     else if (target instanceof PyTypedElement) {
-      final PyType singleTargetType = getInferredTypeOrObject((PyTypedElement)target, context);
+      final PyType rawLeafType = getInferredTypeOrObject((PyTypedElement)target, context);
+      final PyType singleTargetType = widenLiterals ? PyLiteralType.upcastLiteralToClass(rawLeafType) : rawLeafType;
       PyTypeHintGenerationUtil.checkPep484Compatibility(singleTargetType, context);
       final String singleTargetAnnotation = PythonDocumentationProvider.getTypeHint(singleTargetType, context);
       fullyQualifiedTypeHints.add(PythonDocumentationProvider.getFullyQualifiedTypeHint(singleTargetType, context));
@@ -322,7 +328,12 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
 
   private static @Nullable PyType getInferredTypeOrObject(@NotNull PyTypedElement target, @NotNull TypeEvalContext context) {
     final PyType inferred = context.getType(target);
-    return inferred != null ? inferred : PyBuiltinCache.getInstance(target).getObjectType();
+    return !isAnyOrUnknown(inferred) ? inferred : PyBuiltinCache.getInstance(target).getObjectType();
+  }
+
+  private static boolean isInsideTupleUnpacking(@NotNull PyTargetExpression target) {
+    PsiElement parent = PsiTreeUtil.skipParentsOfType(target, PyParenthesizedExpression.class);
+    return parent instanceof PyTupleExpression;
   }
 
   @Override

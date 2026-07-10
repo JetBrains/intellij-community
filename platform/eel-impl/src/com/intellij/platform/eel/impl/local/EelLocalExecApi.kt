@@ -21,6 +21,7 @@ import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelPosixProcess
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.EelWindowsProcess
+import com.intellij.platform.eel.environmentVariablesAwaitReporter
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.LocalEelExecApi
 import com.intellij.platform.eel.channels.EelDelicateApi
@@ -45,6 +46,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.nanoseconds
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -103,31 +105,43 @@ class EelLocalExecPosixApi(
       EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE -> {
         environmentVariablesCache.getDeferred(mode, opts)
       }
+
+      EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE_VIA_SHELL -> {
+        environmentVariablesCache.getDeferred(EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE, opts)
+      }
     }
   }
 
-  private fun makeEnvironmentVariablesDeferred(mode: EelExecApi.EnvironmentVariablesOptions.Mode?): Deferred<Map<String, String>> {
+  private fun makeEnvironmentVariablesDeferred(mode: EelExecApi.EnvironmentVariablesOptions.Mode): Deferred<Map<String, String>> {
     val interactive = when (mode) {
       EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE -> false
       EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE -> true
 
       EelExecApi.EnvironmentVariablesOptions.Mode.DEFAULT,
       EelExecApi.EnvironmentVariablesOptions.Mode.MINIMAL,
-      null
+      EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE_VIA_SHELL,
         -> error("unreachable")
     }
 
     return service<CoroutineScopeService>().coroutineScope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
+      val reporter = environmentVariablesAwaitReporter()
+      reporter?.started(descriptor, mode)
+      val startNs = System.nanoTime()
       try {
         val shell = getUserShell()
         // Timeout is chosen at random.
-        ShellEnvironmentReader.readEnvironment(ShellEnvironmentReader.shellCommand(shell, null, interactive, null), 30_000).first
+        val envs = ShellEnvironmentReader.readEnvironment(ShellEnvironmentReader.shellCommand(shell, null, interactive, null), 30_000).first
+        reporter?.finished(descriptor, mode, (System.nanoTime() - startNs).nanoseconds, Result.success(envs))
+        envs
       }
       catch (err: CancellationException) {
+        reporter?.finished(descriptor, mode, (System.nanoTime() - startNs).nanoseconds, Result.failure(err))
         throw err
       }
       catch (err: Exception) {
-        throw EelExecApi.EnvironmentVariablesException(err.message.orEmpty(), err)
+        val wrapped = EelExecApi.EnvironmentVariablesException(err.message.orEmpty(), err)
+        reporter?.finished(descriptor, mode, (System.nanoTime() - startNs).nanoseconds, Result.failure(wrapped))
+        throw wrapped
       }
     }
   }
@@ -199,9 +213,9 @@ class EelLocalExecPosixApi(
     }
 
     if (shell == null) {
-      val err = IllegalStateException("No shell detected for the current user")
-      errorsToAttach.forEach(err::addSuppressed)
-      throw err
+      // The last resort. It may be not what the user wants to see.
+      LOG.info("Failed to get OS-specific shell. Using /bin/sh as a fallback", errorsToAttach.lastOrNull())
+      shell = "/bin/sh"
     }
 
     return shell
@@ -210,6 +224,10 @@ class EelLocalExecPosixApi(
 
   override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> =
     findExeFilesInPath(binaryName, LOG)
+
+  override suspend fun getUserLoginShell(): EelPath {
+    return EelPath.parse(getUserShell(), descriptor)
+  }
 
   override suspend fun createExternalCli(options: EelExecApi.ExternalCliOptions): EelExecApi.ExternalCliEntrypoint {
     TODO("Not yet implemented")
@@ -242,6 +260,15 @@ class EelLocalExecWindowsApi : EelExecWindowsApi, LocalEelExecApi {
 
   override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> =
     findExeFilesInPath(binaryName, LOG)
+
+  override suspend fun getUserLoginShell(): EelPath {
+    for (name in listOf("pwsh.exe", "powershell.exe")) {
+      val found = findExeFilesInPath(name, LOG).firstOrNull()
+      if (found != null) return found
+    }
+    val systemRoot = System.getenv("SystemRoot") ?: "C:\\Windows"
+    return EelPath.parse("$systemRoot\\System32\\cmd.exe", descriptor)
+  }
 
   override suspend fun createExternalCli(options: EelExecApi.ExternalCliOptions): EelExecApi.ExternalCliEntrypoint {
     TODO("Not yet implemented")

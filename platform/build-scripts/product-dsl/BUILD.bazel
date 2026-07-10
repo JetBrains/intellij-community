@@ -2,6 +2,15 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
+jps_test(
+    name = "buildScripts-productDsl-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":buildScripts-productDsl-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.buildScripts.productDsl.tests`
+
 ### auto-generated section `build intellij.platform.buildScripts.productDsl` start
 
 create_kotlinc_options(
@@ -184,11 +193,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.buildScripts.productDsl.tests` end
-
-### auto-generated section `test intellij.platform.buildScripts.productDsl.tests` start
-
-jps_test(
-    name = "buildScripts-productDsl-tests_test",
-    runtime_deps = [":buildScripts-productDsl-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.buildScripts.productDsl.tests` end

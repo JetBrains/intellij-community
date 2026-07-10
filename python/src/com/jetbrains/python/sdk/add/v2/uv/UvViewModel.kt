@@ -14,7 +14,7 @@ import com.jetbrains.python.sdk.uv.impl.getUvExecutable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 
-class UvViewModel<P : PathHolder>(
+internal class UvViewModel<P : PathHolder>(
   fileSystem: FileSystem<P>,
   propertyGraph: PropertyGraph,
   projectPathFlows: ProjectPathFlows,

@@ -1,7 +1,7 @@
 // WITH_STDLIB
 // COMPILER_ARGUMENTS: -Xcontext-parameters
-// K2_ERROR: Property must be initialized.
-// K2_ERROR: Syntax error: Incomplete code.
 // PROBLEM: none
+// K2_ERROR: MUST_BE_INITIALIZED
+// K2_ERROR: SYNTAX
 
 val foo: context(<caret>Int.()

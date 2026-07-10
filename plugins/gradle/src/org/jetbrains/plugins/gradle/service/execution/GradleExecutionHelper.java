@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.build.events.MessageEvent;
@@ -33,6 +33,7 @@ import com.intellij.util.lang.JavaVersion;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
+import org.gradle.tooling.BuildCancelledException;
 import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.CancellationToken;
 import org.gradle.tooling.GradleConnector;
@@ -144,7 +145,9 @@ public final class GradleExecutionHelper {
 
       // do not use connection.getModel methods since it doesn't allow to handle progress events
       // and we can miss gradle tooling client side events like distribution download.
-      GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId, context.getProjectPath());
+      GradleProgressListener gradleProgressListener = new GradleProgressListener(
+        context.getTaskId(), context.getReporter(), context.getListener(), context.getProjectPath()
+      );
       modelBuilder.addProgressListener((ProgressListener)gradleProgressListener);
       modelBuilder.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
       modelBuilder.setStandardOutput(new OutputWrapper(listener, taskId, true));
@@ -241,6 +244,9 @@ public final class GradleExecutionHelper {
         catch (CancellationException | ExternalSystemException e) {
           throw e;
         }
+        catch (BuildCancelledException e) {
+          throw new ProcessCanceledException(e);
+        }
         catch (Exception ex) {
           throw GradleProjectResolver.createProjectResolverChain()
             .getUserFriendlyError(buildEnvironment, ex, context.getProjectPath(), null);
@@ -277,7 +283,7 @@ public final class GradleExecutionHelper {
 
     setupJavaHome(operation, settings, id, listener, buildEnvironment);
 
-    setupProgressListeners(operation, settings, id, listener, buildEnvironment);
+    setupProgressListeners(operation, settings, effectiveContext);
 
     setupStandardIO(operation, settings, id, listener);
 
@@ -305,12 +311,12 @@ public final class GradleExecutionHelper {
   private static void setupProgressListeners(
     @NotNull LongRunningOperation operation,
     @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskId id,
-    @NotNull ExternalSystemTaskNotificationListener listener,
-    @NotNull BuildEnvironment buildEnvironment
+    @NotNull GradleExecutionContext context
   ) {
-    var buildRootDir = getBuildRoot(buildEnvironment);
-    var progressListener = new GradleProgressListener(listener, id, buildRootDir.toString());
+    var buildRootDir = getBuildRoot(context.getBuildEnvironment());
+    var progressListener = new GradleProgressListener(
+      context.getTaskId(), context.getReporter(), context.getListener(), buildRootDir.toString()
+    );
     operation.addProgressListener((ProgressListener)progressListener);
     operation.addProgressListener(
       progressListener,
@@ -551,7 +557,9 @@ public final class GradleExecutionHelper {
 
         // do not use connection.getModel methods since it doesn't allow to handle progress events
         // and we can miss gradle tooling client side events like distribution download.
-        GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId, context.getProjectPath());
+        GradleProgressListener gradleProgressListener = new GradleProgressListener(
+          context.getTaskId(), context.getReporter(), context.getListener(), context.getProjectPath()
+        );
         modelBuilder.addProgressListener((ProgressListener)gradleProgressListener);
         modelBuilder.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
         modelBuilder.setStandardOutput(new OutputWrapper(listener, taskId, true));
@@ -559,7 +567,7 @@ public final class GradleExecutionHelper {
 
         buildEnvironment = modelBuilder.get();
       }
-      catch (ExternalSystemException e) {
+      catch (ExternalSystemException | CancellationException e) {
         throw e;
       }
       catch (Exception ex) {

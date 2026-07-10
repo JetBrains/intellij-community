@@ -20,6 +20,7 @@ jvm_library(
         "//python/ide/implTraining/intellij.pycharm.community.ide.implTraining:pycharm-community-ide-implTraining",
         "//platform/whatsNew",
         "//platform/platform-impl:ide-impl",
+        "//python/ide/customization.backend",
     ],
 )
 
@@ -39,6 +40,7 @@ jvm_library(
         "//python/ide/implTraining/intellij.pycharm.community.ide.implTraining:pycharm-community-ide-implTraining_test_lib",
         "//platform/whatsNew:whatsNew_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//python/ide/customization.backend:customization.backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.pycharm.community.customization.shared` end

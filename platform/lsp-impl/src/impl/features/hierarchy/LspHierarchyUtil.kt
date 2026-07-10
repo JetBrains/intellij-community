@@ -34,6 +34,6 @@ internal fun findSupportingClient(
   clientPredicate: (LspClientImpl, VirtualFile) -> Boolean,
 ): LspClientImpl? =
   LspClientManagerImpl.getInstanceImpl(project)
-    .getAllRunningClients()
+    .getRunningClients()
     .filter { it.isSupportedFile(file) }
     .firstOrNull { clientPredicate(it, file) }

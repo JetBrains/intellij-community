@@ -400,6 +400,62 @@ com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntityBuilde
 - a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
 - a:setFilePath(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
 - a:setParentEntity(com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder):V
+f:com.intellij.java.workspace.entities.JavaCompilerOptionsKt
+- sf:getJavaCompilerOptions(com.intellij.platform.workspace.jps.entities.ModuleEntity):com.intellij.java.workspace.entities.JavaModuleCompilerOptionsEntity
+- sf:getJavaCompilerSettings(com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity):com.intellij.java.workspace.entities.JavaCompilerProjectSettingsEntity
+com.intellij.java.workspace.entities.JavaCompilerProjectSettingsEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntity
+- a:getAdditionalOptions():java.util.List
+- getDebuggingInfo():Z
+- getDeprecation():Z
+- getGenerateNoWarnings():Z
+- getMaximumHeapSize():I
+- getPreferTargetJdkCompiler():Z
+- a:getProjectSettings():com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
+com.intellij.java.workspace.entities.JavaCompilerProjectSettingsEntityBuilder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getAdditionalOptions():java.util.List
+- a:getDebuggingInfo():Z
+- a:getDeprecation():Z
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getGenerateNoWarnings():Z
+- a:getMaximumHeapSize():I
+- a:getPreferTargetJdkCompiler():Z
+- a:getProjectSettings():com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityBuilder
+- a:setAdditionalOptions(java.util.List):V
+- a:setDebuggingInfo(Z):V
+- a:setDeprecation(Z):V
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setGenerateNoWarnings(Z):V
+- a:setMaximumHeapSize(I):V
+- a:setPreferTargetJdkCompiler(Z):V
+- a:setProjectSettings(com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityBuilder):V
+f:com.intellij.java.workspace.entities.JavaCompilerProjectSettingsEntityModifications
+- sf:createJavaCompilerProjectSettingsEntity(java.util.List,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.JavaCompilerProjectSettingsEntityBuilder
+- sf:createJavaCompilerProjectSettingsEntity(java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaCompilerProjectSettingsEntityBuilder
+- bs:createJavaCompilerProjectSettingsEntity$default(java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.JavaCompilerProjectSettingsEntityBuilder
+- sf:getJavaCompilerSettings(com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityBuilder):com.intellij.java.workspace.entities.JavaCompilerProjectSettingsEntityBuilder
+- sf:modifyJavaCompilerProjectSettingsEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.JavaCompilerProjectSettingsEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaCompilerProjectSettingsEntity
+- sf:setJavaCompilerSettings(com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityBuilder,com.intellij.java.workspace.entities.JavaCompilerProjectSettingsEntityBuilder):V
+com.intellij.java.workspace.entities.JavaModuleCompilerOptionsEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntity
+- a:getAdditionalOptions():java.util.List
+- a:getModule():com.intellij.platform.workspace.jps.entities.ModuleEntity
+com.intellij.java.workspace.entities.JavaModuleCompilerOptionsEntityBuilder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getAdditionalOptions():java.util.List
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getModule():com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
+- a:setAdditionalOptions(java.util.List):V
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setModule(com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder):V
+f:com.intellij.java.workspace.entities.JavaModuleCompilerOptionsEntityModifications
+- sf:createJavaModuleCompilerOptionsEntity(java.util.List,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.JavaModuleCompilerOptionsEntityBuilder
+- sf:createJavaModuleCompilerOptionsEntity(java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaModuleCompilerOptionsEntityBuilder
+- bs:createJavaModuleCompilerOptionsEntity$default(java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.JavaModuleCompilerOptionsEntityBuilder
+- sf:getJavaCompilerOptions(com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder):com.intellij.java.workspace.entities.JavaModuleCompilerOptionsEntityBuilder
+- sf:modifyJavaModuleCompilerOptionsEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.JavaModuleCompilerOptionsEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaModuleCompilerOptionsEntity
+- sf:setJavaCompilerOptions(com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder,com.intellij.java.workspace.entities.JavaModuleCompilerOptionsEntityBuilder):V
 com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 - com.intellij.platform.workspace.storage.WorkspaceEntity
 - sf:Companion:com.intellij.java.workspace.entities.JavaModuleSettingsEntity$Companion

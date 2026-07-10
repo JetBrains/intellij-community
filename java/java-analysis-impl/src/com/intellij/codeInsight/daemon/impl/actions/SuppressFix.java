@@ -30,6 +30,7 @@ import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.CommentUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,7 +123,10 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentModCo
   private void suppressByDocComment(@NotNull Project project, PsiJavaDocumentedElement container) {
     PsiDocComment docComment = container.getDocComment();
     if (docComment == null) {
-      String commentText = "/** @" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME + " " + getID(container) + "*/";
+      String commentText = CommentUtil.convertToDocComment(container.getContainingFile(),
+                                                               "@" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME +
+                                                               " " +
+                                                               getID(container));
       docComment = JavaPsiFacade.getElementFactory(project).createDocCommentFromText(commentText);
       PsiElement firstChild = container.getFirstChild();
       container.addBefore(docComment, firstChild);

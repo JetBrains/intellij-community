@@ -11,7 +11,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
-import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.common.tools.ToolId
+import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.community.impl.poetry.common.poetryPath
 import com.intellij.python.community.services.systemPython.SystemPythonService
@@ -40,7 +41,8 @@ import com.jetbrains.python.sdk.poetry.getPoetryExecutable
 import com.jetbrains.python.sdk.poetry.runPoetry
 import com.jetbrains.python.sdk.poetry.setupPoetry
 import com.jetbrains.python.sdk.poetry.suggestedSdkName
-import com.jetbrains.python.util.ShowingMessageErrorSync
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.withProject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
@@ -99,11 +101,11 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
      */
     else if (poetryLockExists || (isPoetryProject && checkToml)) {
       val pathPersister: (Path) -> Unit = { path -> PropertiesComponent.getInstance().poetryPath = path.toString() }
-      val toolName = "poetry"
+      val tool = PoetryPyTool.getInstance()
       EnvCheckerResult.SuggestToolInstallation(
-        toolToInstall = toolName,
+        toolToInstall = tool.packageName.name,
         pathPersister = pathPersister,
-        intentionName = PyBundle.message("sdk.create.custom.venv.install.fix.title.using.pip", "poetry")
+        intentionName = PyBundle.message("sdk.create.custom.venv.install.fix.title", tool.presentableName)
       )
     }
     else EnvCheckerResult.CannotConfigure
@@ -138,7 +140,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
         basePythonBinaryPath = baseSystemPython.pythonBinary,
         installPackages = true,
         init = tomlFile == null,
-        errorSink = ShowingMessageErrorSync.withProject(module.project)
+        errorSink = ErrorSink().withProject(module.project)
       ).getOr { return@withBackgroundProgress it }
 
       val path = poetry.resolvePythonBinary()

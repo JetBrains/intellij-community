@@ -1,6 +1,16 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.kotlin.base.testFramework` start
+
+jvm_provided_library(
+    name = "libraries_junit4_provided",
+    lib = "//libraries/junit4",
+)
+
+jvm_provided_library(
+    name = "libraries_junit5_provided",
+    lib = "//libraries/junit5",
+)
 
 jvm_library(
     name = "testFramework",
@@ -40,6 +50,8 @@ jvm_library(
         "//java/java-runtime:rt",
         "//platform/code-style-api:codeStyle",
         "//plugins/kotlin/formatter/minimal",
+        ":libraries_junit4_provided",
+        ":libraries_junit5_provided",
     ],
 )
 
@@ -77,6 +89,10 @@ jvm_library(
         "//java/java-runtime:rt_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
         "//plugins/kotlin/formatter/minimal:minimal_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.testFramework` end

@@ -188,6 +188,12 @@ jvm_library(
         "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
         "//platform/usageView",
         "//platform/usageView:usageView_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.tests` end
@@ -247,6 +253,8 @@ jvm_library(
         "//plugins/maven-server-api/test:maven-server-tests_test_lib",
         "//plugins/maven/src/test:maven-tests",
         "//plugins/maven/src/test:maven-tests_test_lib",
+        "//plugins/maven/groovy:groovy-tests",
+        "//plugins/maven/groovy:groovy-tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.tests.main` end

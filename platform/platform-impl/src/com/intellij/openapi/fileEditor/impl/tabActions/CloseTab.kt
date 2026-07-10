@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.ui.ShadowAction
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.SystemInfo
@@ -107,10 +108,18 @@ internal class CloseTab(
     val window = if (ActionPlaces.EDITOR_TAB == e.place) editorWindow else fileEditorManager.currentWindow
     if (window != null) {
       if (e.inputEvent is MouseEvent && BitUtil.isSet(e.inputEvent!!.modifiersEx, InputEvent.ALT_DOWN_MASK)) {
-        window.closeAllExcept(file)
+        val filesToClose = window.fileList.mapNotNull { candidateFile ->
+          if (candidateFile != file && !window.isFilePinned(candidateFile)) {
+            window.getComposite(candidateFile)?.let { Pair.create(it, window) }
+          }
+          else {
+            null
+          }
+        }
+        fileEditorManager.closeFilesWithChecks(filesToClose)
       }
       else {
-        fileEditorManager.closeFile(file = file, window = window)
+        fileEditorManager.closeFileWithChecks(file = file, window = window)
       }
     }
 

@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -13,6 +14,8 @@ import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
+private const val JCP_LISTENER_CLASS = "com.intellij.ml.llm.core.statistics.fus.jcp.JcpEventsInterceptor"
+
 @ApiStatus.Internal
 @Service(Service.Level.APP)
 class EventLogListenersManager(coroutineScope: CoroutineScope) {
@@ -22,6 +25,7 @@ class EventLogListenersManager(coroutineScope: CoroutineScope) {
 
   private val subscribers = MultiMap.createConcurrent<String, StatisticsEventLogListener>()
   private var listenersFromEP = ConcurrentCollectionFactory.createConcurrentMap<String, StatisticsEventLogListener>()
+  private val jcpListenerByRecorder = ConcurrentCollectionFactory.createConcurrentMap<String, Boolean>()
 
   init {
     if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(ExternalEventLogSettings.EP_NAME)) {
@@ -62,7 +66,7 @@ class EventLogListenersManager(coroutineScope: CoroutineScope) {
 
   private fun unsubscribeExtension(listenerProvider: ExternalEventLogListenerProvider) {
     if (listenersFromEP.isEmpty()) return
-    val listener = listenersFromEP[listenerProvider.javaClass.name] ?: return
+    val listener = listenersFromEP.remove(listenerProvider.javaClass.name) ?: return
     // Do not filter providers by isForceCollectionEnabled flag as it can be dynamic
     StatisticsEventLogProviderUtil.getEventLogProviders().forEach {
       unsubscribe(listener, it.recorderId)
@@ -70,11 +74,20 @@ class EventLogListenersManager(coroutineScope: CoroutineScope) {
   }
 
   fun notifySubscribers(recorderId: String, validatedEvent: LogEvent, rawEventId: String?, rawData: Map<String, Any>?, isFromLocalRecorder: Boolean) {
+    val testMode = StatisticsRecorderUtil.isTestModeEnabled(recorderId)
+    val effectiveRawEventId = if (testMode) rawEventId else null
+    val effectiveRawData = if (testMode) rawData?.let { HashMap(it).apply { remove(FeatureUsageData.JCP_DATA_KEY) } } else null
+
     val listeners = subscribers[recorderId]
     for (listener in listeners) {
       try {
         if (!isFromLocalRecorder || isLocalAllowed(listener)) {
-          listener.onLogEvent(validatedEvent, rawEventId, rawData)
+          if (isJcpListener(listener)) {
+            listener.onLogEvent(validatedEvent, rawEventId, rawData)
+          }
+          else {
+            listener.onLogEvent(validatedEvent, effectiveRawEventId, effectiveRawData)
+          }
         }
       } catch (e: Exception) {
         logger.warnInProduction(e)
@@ -86,14 +99,30 @@ class EventLogListenersManager(coroutineScope: CoroutineScope) {
     return listener.javaClass.name == "com.intellij.ae.database.core.baseEvents.fus.Listener"
   }
 
+  /**
+   * Tells whether the JCP listener is subscribed for [recorderId], so the JCP payload is worth carrying to it.
+   * The result is cached and recomputed only when subscriptions change, making it cheap to call while logging.
+   */
+  fun hasJcpListener(recorderId: String): Boolean {
+    return jcpListenerByRecorder.getOrPut(recorderId) {
+      subscribers[recorderId].any { isJcpListener(it) }
+    }
+  }
+
+  private fun isJcpListener(listener: StatisticsEventLogListener): Boolean {
+    return listener.javaClass.name == JCP_LISTENER_CLASS && getPluginInfo(listener.javaClass).isDevelopedByJetBrains()
+  }
+
   fun subscribe(subscriber: StatisticsEventLogListener, recorderId: String) {
     if (!getPluginInfo(subscriber.javaClass).isDevelopedByJetBrains()) return
 
     subscribers.putValue(recorderId, subscriber)
+    jcpListenerByRecorder.remove(recorderId)
   }
 
   fun unsubscribe(subscriber: StatisticsEventLogListener, recorderId: String) {
     subscribers.remove(recorderId, subscriber)
+    jcpListenerByRecorder.remove(recorderId)
   }
 }
 

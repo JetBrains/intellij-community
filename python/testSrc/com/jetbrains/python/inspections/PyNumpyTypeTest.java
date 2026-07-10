@@ -15,10 +15,15 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyNumpyTypeTest extends PyTestCase {
   public static final String TEST_DIRECTORY = "inspections/PyNumpyType/";
 

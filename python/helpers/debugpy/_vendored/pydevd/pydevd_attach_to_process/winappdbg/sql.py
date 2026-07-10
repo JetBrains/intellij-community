@@ -850,10 +850,10 @@ class CrashDAO(BaseDAO):
 
         # Validate the parameters.
         if since and until and since > until:
-            warnings.warn("CrashDAO.find() got the 'since' and 'until'" " arguments reversed, corrected automatically.")
+            warnings.warn("CrashDAO.find() got the 'since' and 'until' arguments reversed, corrected automatically.")
             since, until = until, since
         if limit is not None and not limit:
-            warnings.warn("CrashDAO.find() was set a limit of 0 results," " returning without executing a query.")
+            warnings.warn("CrashDAO.find() was set a limit of 0 results, returning without executing a query.")
             return []
 
         # Build the SQL query.
@@ -915,7 +915,7 @@ class CrashDAO(BaseDAO):
 
         # Validate the parameters.
         if limit is not None and not limit:
-            warnings.warn("CrashDAO.find_by_example() was set a limit of 0" " results, returning without executing a query.")
+            warnings.warn("CrashDAO.find_by_example() was set a limit of 0 results, returning without executing a query.")
             return []
 
         # Build the query.

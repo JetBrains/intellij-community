@@ -11,6 +11,6 @@ class A<T>(val items: List<T>) {
     }
 }
 
-private fun <E, T, U> List<E>.foo(t: T, u: U): T {
+private fun <T, U, V> List<T>.foo(u: U, v: V): U {
     TODO("Not yet implemented")
 }

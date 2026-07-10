@@ -55,6 +55,20 @@ class MarkdownCharacterGridCustomizerTest {
     assertThat(editor.characterGrid).isNull()
   }
 
+  @Test
+  fun `grid mode activates for file with supplementary-plane emoji and table`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val editor = openMarkdownFile(
+      """
+      | h | 🚀 |
+      |---|----|
+      | a | b  |
+      """.trimIndent()
+    )
+    awaitGridMode(editor, expectActive = true)
+    assertThat(editor.settings.characterGridWidthMultiplier).isEqualTo(1.0f)
+    assertThat(editor.characterGrid).isNotNull
+  }
+
   private fun openMarkdownFile(content: String): EditorImpl {
     val file = LightVirtualFile("test.md", content)
     val manager = fileEditorManagerFixture.get()

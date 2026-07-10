@@ -2,7 +2,6 @@
 package com.intellij.codeowners.runtime.resolver
 
 import com.intellij.codeowners.monorepo.resolver.TestOwnerResolver
-import com.intellij.tests.TestLocationStorage
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.div
@@ -31,17 +30,11 @@ class TestClassCodeOwnerResolverImpl {
 
   fun getOwnerGroupName(testClass: Class<*>): String? {
     val r = resolver ?: return null
-    val locationInfo = TestLocationStorage.getTestLocationInfo(testClass) ?: return null
-    return r.getOwner(locationInfo.moduleName(), locationInfo.packagePath(), locationInfo.fileName())?.owner?.stringName
+    return r.getOwner(testClass.name)
   }
 
   private fun createResolver(): TestOwnerResolver? {
     val dir = ultimateRoot / "out" / "artifacts" / "codeowners"
-    return TestOwnerResolver.create(
-      ultimateRoot,
-      dir / "file-locations.ndjson",
-      dir / "module-paths.ndjson",
-      dir / "ownership-mapping-generated.yaml",
-    )
+    return TestOwnerResolver.create(dir / TestOwnerResolver.TEST_CLASS_OWNERS_FILE_NAME)
   }
 }

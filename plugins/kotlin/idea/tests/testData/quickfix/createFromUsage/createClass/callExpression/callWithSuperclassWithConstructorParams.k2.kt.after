@@ -1,7 +1,7 @@
 // "Create class 'Foo'" "true"
 // ERROR: No value passed for parameter 'n'
-// K2_ERROR: Unresolved reference 'Foo'.
-// K2_AFTER_ERROR: No value passed for parameter 'n'.
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 open class A(n: Int)
 

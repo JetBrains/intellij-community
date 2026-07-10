@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.hotswap
 
+import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -33,6 +34,11 @@ class HotSwapDebugSessionManager(project: Project, cs: CoroutineScope) : XDebugg
   }
 
   fun findHotSwapSession(process: XDebugProcess): HotSwapSession<*>? = sessions[process]?.hotSwapSession
+
+  fun restart(process: XDebugProcess) {
+    val environment = process.session.executionEnvironment ?: return
+    ExecutionUtil.restart(environment)
+  }
 
   override fun processStarted(debugProcess: XDebugProcess) {
     if (!Registry.`is`("debugger.hotswap.floating.toolbar")) return

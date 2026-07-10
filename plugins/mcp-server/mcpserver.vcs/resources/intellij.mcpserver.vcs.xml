@@ -11,5 +11,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.vcs.VcsToolset"/>
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.vcs.ChangeListToolset"/>
   </extensions>
 </idea-plugin>

@@ -35,7 +35,7 @@ internal object LibrariesRequiredForWorkspace {
   private val gradle = ModuleLibrary("intellij.gradle")
   private val gradleToolingExtension = ModuleLibrary("intellij.gradle.toolingExtension")
   private val gradleExternalSystemImpl = ModuleLibrary("intellij.platform.externalSystem.impl")
-  private val pyCommon = ModuleLibrary("intellij.python.common")
+  private val pyCommon = ModuleLibrary("intellij.python.community.common")
   private val cidrProjectModel = ModuleLibrary("intellij.cidr.projectModel")
   private val kotlinBaseScripting = ModuleLibrary("intellij.kotlin.base.scripting")
   private val androidProjectSystem = ModuleLibrary("intellij.android.projectSystem")

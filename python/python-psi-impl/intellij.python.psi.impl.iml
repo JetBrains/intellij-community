@@ -54,5 +54,6 @@
     <orderEntry type="module" module-name="intellij.python.requirements" />
     <orderEntry type="module" module-name="intellij.toml" />
     <orderEntry type="module" module-name="intellij.toml.core" />
+    <orderEntry type="module" module-name="intellij.libraries.markdown" />
   </component>
 </module>

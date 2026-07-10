@@ -46,4 +46,8 @@ public class IntermediateOperationResolveTest extends TraceExecutionTestCase {
   public void testLimit() {
     doTest(false);
   }
+
+  public void testTakeWhile() {
+    doTest(false);
+  }
 }

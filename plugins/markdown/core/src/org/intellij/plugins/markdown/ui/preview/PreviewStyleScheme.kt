@@ -10,6 +10,8 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownAlertTitle.AlertType
+import org.intellij.plugins.markdown.highlighting.alertTitleColorKey
 import java.awt.Color
 
 class PreviewStyleScheme(
@@ -20,7 +22,8 @@ class PreviewStyleScheme(
   val linkActiveForegroundColor: Color,
   val infoForegroundColor: Color,
   val separatorColor: Color,
-  val fenceBackgroundColor: Color
+  val fenceBackgroundColor: Color,
+  val alertColors: Map<String, Color>
 ) {
 
   companion object {
@@ -48,7 +51,14 @@ class PreviewStyleScheme(
         infoForegroundColor = infoForeground,
         separatorColor = separatorColor,
         fenceBackgroundColor = markdownFenceBackground,
+        alertColors = AlertType.entries.associate { type ->
+          type.name.lowercase() to scheme.alertColor(type)
+        },
       )
+    }
+
+    private fun EditorColorsScheme.alertColor(type: AlertType): Color {
+      return getAttributes(alertTitleColorKey(type))?.foregroundColor ?: defaultForeground
     }
 
     private fun obtainColorScheme(): EditorColorsScheme {

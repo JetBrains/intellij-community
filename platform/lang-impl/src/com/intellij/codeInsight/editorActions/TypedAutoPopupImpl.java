@@ -9,6 +9,7 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -18,7 +19,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import java.util.List;
-
 
 final class TypedAutoPopupImpl {
   private static final Logger LOG = Logger.getInstance(TypedAutoPopupImpl.class);
@@ -71,9 +71,9 @@ final class TypedAutoPopupImpl {
       if (element == null) {
         return false;
       }
-      language = element.getLanguage();
+      language = getElementLanguage(file, element);
     }
-    List<CompletionContributor> contributors = CompletionContributor.forLanguageHonorDumbness(language, file.getProject());
+    List<CompletionContributor> contributors = CompletionContributor.forLanguageHonorDumbness(language, file.getProject(), editor);
     if (contributors.isEmpty()) {
       return false;
     }
@@ -104,7 +104,7 @@ final class TypedAutoPopupImpl {
     if (element == null) {
       return false;
     }
-    Language language = element.getLanguage();
+    Language language = getElementLanguage(file, element);
     ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     if (definition != null) {
       TokenSet stringLiteralElements = definition.getStringLiteralElements();
@@ -116,6 +116,10 @@ final class TypedAutoPopupImpl {
       if (stringLiteralElements.contains(elementType)) {
         return true;
       }
+      if (!Elf.getElf().isPsiInteractionAllowed()) {
+        // TODO: rework for lock-free typing, element.getParent() requires RA on EDT
+        return false;
+      }
       PsiElement parent = element.getParent();
       if (parent != null) {
         ASTNode parentNode = parent.getNode();
@@ -123,5 +127,13 @@ final class TypedAutoPopupImpl {
       }
     }
     return false;
+  }
+
+  private static @NotNull Language getElementLanguage(@NotNull PsiFile file, @NotNull PsiElement element) {
+    // TODO: rework for lock-free typing, element.getLanguage() requires RA on EDT
+    if (Elf.getElf().isPsiInteractionAllowed()) {
+      return element.getLanguage();
+    }
+    return file.getLanguage();
   }
 }

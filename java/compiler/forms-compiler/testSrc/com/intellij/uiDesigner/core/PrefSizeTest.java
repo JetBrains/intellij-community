@@ -15,17 +15,20 @@
  */
 package com.intellij.uiDesigner.core;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import java.awt.Dimension;
 import java.awt.Insets;
 
-public final class PrefSizeTest extends TestCase{
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public final class PrefSizeTest {
   /**
    * control(min size 110, pref size 120) control(min size 215, pref size 225)
    */ 
+  @Test
   public void test1() {
     final GridLayoutManager layoutManager = new GridLayoutManager(1,2, new Insets(0,0,0,0), 0, 0);
     final JPanel panel = new JPanel(layoutManager);
@@ -64,6 +67,7 @@ public final class PrefSizeTest extends TestCase{
 
   }
 
+  @Test
   public void test2() {
     final GridLayoutManager layoutManager = new GridLayoutManager(1,3); // min cell size should
     layoutManager.setHGap(0);

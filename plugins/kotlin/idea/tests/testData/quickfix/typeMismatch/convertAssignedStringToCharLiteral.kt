@@ -1,8 +1,8 @@
 // "Convert string to character literal" "true"
 // ERROR: A 'return' expression required in a function with a block body ('{...}')
-// K2_ERROR: Assignment type mismatch: actual type is 'String', but 'Char' was expected.
-// K2_ERROR: Missing return statement.
-// K2_AFTER_ERROR: Missing return statement.
+// K2_AFTER_ERROR: NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY
+// K2_ERROR: ASSIGNMENT_TYPE_MISMATCH
+// K2_ERROR: NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY
 fun bar(): Char {
     val c: Char
     c = "."<caret>

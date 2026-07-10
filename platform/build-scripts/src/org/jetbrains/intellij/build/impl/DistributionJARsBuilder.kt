@@ -683,6 +683,19 @@ internal suspend fun layoutPlatformDistribution(
           val sourceBytes = context.outputProvider.readFileContentFromModuleOutput(module, relativePath) ?: error("app info not found")
           val patchedBytes = injectAppInfo(inFileBytes = sourceBytes, newFieldValue = context.appInfoXml)
           moduleOutputPatcher.patchModuleOutput(moduleName = moduleName, path = relativePath, content = patchedBytes)
+
+          // keep the packaged descriptor in sync with the baked constant, so it isn't shipped with raw placeholders
+          val appInfoModuleName = context.productProperties.applicationInfoModule
+          val appInfoResourcePath = "idea/${context.productProperties.platformPrefix ?: ""}ApplicationInfo.xml"
+          val appInfoModule = context.outputProvider.findRequiredModule(appInfoModuleName)
+          if (context.outputProvider.readFileContentFromModuleOutput(appInfoModule, appInfoResourcePath) != null) {
+            moduleOutputPatcher.patchModuleOutput(
+              moduleName = appInfoModuleName,
+              path = appInfoResourcePath,
+              content = context.appInfoXml,
+              overwrite = PatchOverwriteMode.TRUE,
+            )
+          }
         }
       }
     }

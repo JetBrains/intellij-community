@@ -1,0 +1,162 @@
+package com.intellij.grazie.ide.language.markdown.semantics.analyzer
+
+import ai.grazie.api.gateway.client.SuspendableAPIGatewayClient
+import ai.grazie.rules.promptAnalysis.ContradictionAnalyzer.Contradiction
+import ai.grazie.rules.promptAnalysis.ContradictionAnalyzer.LlmContradiction
+import ai.grazie.rules.promptAnalysis.LlmAnalyzer
+import ai.grazie.rules.promptAnalysis.LlmAnalyzer.LlmIssue
+import ai.grazie.rules.promptAnalysis.LlmAnalyzer.Specification
+import ai.grazie.rules.promptAnalysis.LlmAnalyzer.WithSpending
+import ai.grazie.utils.mpp.money.Credit
+import com.intellij.grazie.GrazieBundle
+import com.intellij.grazie.cloud.APIQueries
+import com.intellij.grazie.ide.language.markdown.semantics.fus.SpecificationFUSCollector
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.util.runWithCheckCanceled
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.openapi.util.getOrCreateUserData
+import com.intellij.psi.PsiFile
+import com.intellij.util.ExceptionUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import kotlinx.coroutines.sync.Mutex
+import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentHashMap
+
+private typealias IssuesWithSpending<T> = WithSpending<Map<String, List<LlmIssue<T>>>>
+private typealias AnalyzerCacheKey<T> = Key<Cache<LlmIssue<T>>>
+
+private val log = Logger.getInstance(SpecificationAnalyzer::class.java)
+
+@ApiStatus.Experimental
+internal object SpecificationAnalyzer {
+  private val mutexKeys = ConcurrentHashMap<String, Key<Mutex>>()
+  private val cacheKeys = ConcurrentHashMap<String, AnalyzerCacheKey<LlmIssue<*>>>()
+
+  @RequiresBackgroundThread
+  fun <T> analyze(analyzer: LlmAnalyzer<T>, file: PsiFile, files: Set<PsiFile>, client: SuspendableAPIGatewayClient): List<LlmIssue<T>> {
+    @Suppress("UNCHECKED_CAST") val analyzerKey = cacheKeys
+      .computeIfAbsent(analyzer.javaClass.name) { Key.create("cache key for ${analyzer.javaClass.name}") }
+      as AnalyzerCacheKey<T>
+    val storages = files.map { Storage(it, analyzerKey) }
+    val dependencies = storages.mapTo(HashSet()) { it.name }
+
+    try {
+      val targetStorage = storages.first { it.file == file }
+      val textLength = targetStorage.text.length
+      if (storages.any { it.isOutdated(dependencies) })
+        return executeRequestWithLock(analyzer, files) {
+          val newStorages = storages.map { it.copy(cache = it.file.getUserData(analyzerKey)) }
+          if (newStorages.none { it.isOutdated(dependencies) }) {
+            return@executeRequestWithLock newStorages.first { it.file == file }.cache!!.data
+          }
+
+          val specifications = newStorages.mapTo(HashSet()) { getSpecification(it) }
+          val start = System.currentTimeMillis()
+          val analyzerName = analyzer::class.simpleName
+          log.info("$analyzerName starts executing request with lock")
+          val analysis = analyze(analyzer, specifications, client)
+          val timeMs = System.currentTimeMillis() - start
+          val credits = analysis.spentCredits / Credit.CREDITS_IN_DOLLAR
+          log.info("""
+            Analyzing text with $analyzerName took $timeMs ms on
+            text with length ${textLength} and used $credits credits.
+          """.trimIndent())
+          SpecificationFUSCollector.analysisCompleted(analyzerName!!, specifications, analysis, timeMs)
+
+          newStorages.forEach { storage ->
+            storage.file.putUserData(
+              analyzerKey,
+              Cache(storage.text, dependencies, storage.stamp, analysis.data[storage.name].orEmpty())
+            )
+          }
+          analysis.data[targetStorage.name].orEmpty()
+        }
+      return storages.first { it.file == file }.cache!!.data
+    }
+    catch (e: Throwable) {
+      val cause = ExceptionUtil.getRootCause(e)
+      if (cause is ProcessCanceledException) {
+        throw cause
+      }
+      throw e
+    }
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun <T> analyze(
+    analyzer: LlmAnalyzer<T>, specifications: Set<Specification<T>>, client: SuspendableAPIGatewayClient
+  ): IssuesWithSpending<T> {
+    val analysis = analyzer.analyze(specifications, client)
+    if (analysis.data.values.asSequence().flatMap { it }.any { it.issue is Contradiction }) {
+      return analyzeContradictions(analysis as IssuesWithSpending<Contradiction>) as IssuesWithSpending<T>
+    }
+    return analysis
+  }
+
+  private fun analyzeContradictions(analysis: IssuesWithSpending<Contradiction>): IssuesWithSpending<Contradiction> {
+    val newAnalysis = HashMap<String, MutableList<LlmIssue<Contradiction>>>()
+    analysis.data.forEach { (path, issues) ->
+      issues.forEach { issue ->
+        newAnalysis.computeIfAbsent(path) { ArrayList() }.add(issue)
+        val contradiction = Contradiction(
+          "", "", GrazieBundle.message("specification.contradiction.message"),
+          issue.issue.contradictsStartOffset, issue.issue.contradictsEndOffset,
+          issue.issue.startOffset, issue.issue.endOffset, emptyList<String>(),
+          issue.issue.contradictsPath, issue.issue.path
+        )
+        newAnalysis.computeIfAbsent(issue.issue.contradictsPath) { ArrayList() }
+          .add(LlmContradiction(contradiction, issue.issue.contradictsStartOffset, issue.issue.contradictsEndOffset))
+      }
+    }
+
+    return WithSpending(newAnalysis, analysis.spentCredits)
+  }
+
+  private fun <T> getSpecification(storage: Storage<T>): Specification<T> {
+    val name = storage.name
+    return if (storage.cache == null) Specification(name, storage.text)
+    else Specification(name, storage.text, storage.cache.text, storage.cache.data)
+  }
+
+  private fun <T> executeRequestWithLock(
+    analyzer: LlmAnalyzer<T>, files: Collection<PsiFile>, action: suspend () -> List<LlmIssue<T>>,
+  ): List<LlmIssue<T>> {
+    val mutexKey = mutexKeys.computeIfAbsent(analyzer.javaClass.name) { Key.create("mutex key for ${analyzer.javaClass.name}") }
+    val mutexes = getMutexes(files, mutexKey)
+    return runWithCheckCanceled {
+      APIQueries.handleExceptions(files.first().project) {
+        mutexes.withLock {
+          action()
+        }
+      }
+    } ?: emptyList()
+  }
+
+  private fun getMutexes(files: Collection<PsiFile>, mutexKey: Key<Mutex>): List<Mutex> =
+    files.sortedBy { it.viewProvider.virtualFile.path }.map { (it as UserDataHolderEx).getOrCreateUserData(mutexKey) { Mutex() } }
+
+  private suspend inline fun <T> List<Mutex>.withLock(action: () -> T): T {
+    val locked = ArrayList<Mutex>(size)
+    return try {
+      this.forEach {
+        it.lock()
+        locked.add(it)
+      }
+      action()
+    } finally {
+      locked.forEach { it.unlock() }
+    }
+  }
+}
+
+private data class Storage<T>(val file: PsiFile, val name: String, val text: String, val stamp: Long, val cache: Cache<LlmIssue<T>>?) {
+  constructor(file: PsiFile, analyzerKey: AnalyzerCacheKey<T>) :
+    this(file, file.viewProvider.virtualFile.path, file.text, file.viewProvider.modificationStamp, file.getUserData(analyzerKey))
+
+  fun isOutdated(dependencies: Set<String>): Boolean =
+    cache == null || cache.stamp < this.stamp || cache.dependencies != dependencies
+}
+
+private data class Cache<T>(val text: String, val dependencies: Set<String>, val stamp: Long, val data: List<T>)

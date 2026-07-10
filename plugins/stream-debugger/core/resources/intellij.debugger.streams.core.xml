@@ -7,4 +7,7 @@
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.platform.debugger.streams.librarySupport" interface="com.intellij.debugger.streams.core.lib.LibrarySupportProvider" dynamic="true"/>
   </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <statistics.counterUsagesCollector implementationClass="com.intellij.debugger.streams.core.statistics.StreamDebuggerStatisticsCollector"/>
+  </extensions>
 </idea-plugin>

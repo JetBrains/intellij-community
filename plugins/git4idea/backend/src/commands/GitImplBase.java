@@ -175,7 +175,9 @@ public abstract class GitImplBase implements Git {
       try (GitHandlerAuthenticationManager authenticationManager = GitHandlerAuthenticationManager.prepare(project, handler, version)) {
         try (GitHandlerRebaseEditorManager ignored = prepareGeneralPurposeEditor(project, handler)) {
           GitCommandResult result = doRun(handler, version, outputCollector);
-          return GitCommandResult.withAuthentication(result, authenticationManager.isHttpAuthFailed());
+          return GitCommandResult.withAuthentication(result,
+                                                     authenticationManager.isHttpAuthFailed(),
+                                                     authenticationManager.getPresentableAuthFailureMessage(outputCollector.myErrorOutput));
         }
       }
       catch (IOException e) {

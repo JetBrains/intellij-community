@@ -2,8 +2,8 @@ val foo: Cyclic<*>
 
 // "Create property 'foo'" "true"
 // ERROR: Property must be initialized
-// K2_ERROR: Unresolved reference 'foo'.
-// K2_AFTER_ERROR: Property must be initialized.
+// K2_AFTER_ERROR: MUST_BE_INITIALIZED
+// K2_ERROR: UNRESOLVED_REFERENCE
 class Cyclic<E : Cyclic<E>>
 
 fun test() {

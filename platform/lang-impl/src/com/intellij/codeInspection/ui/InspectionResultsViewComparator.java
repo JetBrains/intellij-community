@@ -65,8 +65,8 @@ public final class InspectionResultsViewComparator implements Comparator<Inspect
       return compareEntities(((RefElementNode)node1).getElement(), ((RefElementNode)node2).getElement());
     }
     if (node1 instanceof ProblemDescriptionNode && node2 instanceof ProblemDescriptionNode) {
-      final CommonProblemDescriptor descriptor1 = ((ProblemDescriptionNode)node1).getDescriptor();
-      final CommonProblemDescriptor descriptor2 = ((ProblemDescriptionNode)node2).getDescriptor();
+      CommonProblemDescriptor descriptor1 = ((ProblemDescriptionNode)node1).getDescriptor();
+      CommonProblemDescriptor descriptor2 = ((ProblemDescriptionNode)node2).getDescriptor();
       if (descriptor1 instanceof ProblemDescriptor && descriptor2 instanceof ProblemDescriptor) {
         int diff = ((ProblemDescriptor)descriptor1).getLineNumber() - ((ProblemDescriptor)descriptor2).getLineNumber();
         if (diff != 0) {
@@ -85,8 +85,8 @@ public final class InspectionResultsViewComparator implements Comparator<Inspect
                                                      ((ProblemDescriptor)descriptor1).getEndElement());
         if (diff != 0) return diff;
 
-        final TextRange range1 = ((ProblemDescriptor)descriptor1).getTextRangeInElement();
-        final TextRange range2 = ((ProblemDescriptor)descriptor2).getTextRangeInElement();
+        TextRange range1 = ((ProblemDescriptor)descriptor1).getTextRangeInElement();
+        TextRange range2 = ((ProblemDescriptor)descriptor2).getTextRangeInElement();
         if (range1 != null && range2 != null) {
           diff = range1.getStartOffset() - range2.getStartOffset();
           if (diff != 0) return diff;
@@ -116,7 +116,7 @@ public final class InspectionResultsViewComparator implements Comparator<Inspect
     return 0;
   }
 
-  public static int compareEntities(final RefEntity entity1, final RefEntity entity2) {
+  public static int compareEntities(RefEntity entity1, RefEntity entity2) {
     if (entity1 != null && entity2 != null) {
       int cmp = compareEntitiesByName(entity1, entity2);
       if (cmp != 0) return cmp;
@@ -133,11 +133,11 @@ public final class InspectionResultsViewComparator implements Comparator<Inspect
       return cmp;
     }
     if (entity1 instanceof RefElement && entity2 instanceof RefElement) {
-      final SmartPsiElementPointer<?> p1 = ((RefElement)entity1).getPointer();
-      final SmartPsiElementPointer<?> p2 = ((RefElement)entity2).getPointer();
+      SmartPsiElementPointer<?> p1 = ((RefElement)entity1).getPointer();
+      SmartPsiElementPointer<?> p2 = ((RefElement)entity2).getPointer();
       if (p1 != null && p2 != null) {
-        final VirtualFile file1 = p1.getVirtualFile();
-        final VirtualFile file2 = p2.getVirtualFile();
+        VirtualFile file1 = p1.getVirtualFile();
+        VirtualFile file2 = p2.getVirtualFile();
 
         if (file1 != null && file1.isValid() && file2 != null && file2.isValid()) {
           int cmp = PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getPsiElement(), ((RefElement)entity2).getPsiElement());
@@ -157,7 +157,7 @@ public final class InspectionResultsViewComparator implements Comparator<Inspect
   }
 
   private static int compareEntitiesByName(RefEntity entity1, RefEntity entity2) {
-    final int nameComparing = entity1.getName().compareToIgnoreCase(entity2.getName());
+    int nameComparing = entity1.getName().compareToIgnoreCase(entity2.getName());
     if (nameComparing != 0) {
       return nameComparing;
     }

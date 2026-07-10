@@ -25,7 +25,6 @@ interface XBreakpointAttachment {
 
   /**
    * Called when the breakpoint's state changes:
-   * - Breakpoint creation
    * - Breakpoint changes via the "Edit Breakpoint" popup
    * - State-changing interactions via gutter (drag-and-drop, enable, disable)
    */

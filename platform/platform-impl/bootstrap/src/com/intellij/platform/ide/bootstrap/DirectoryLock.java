@@ -276,19 +276,7 @@ public final class DirectoryLock {
 
   private @Nullable CliResult tryListen() throws IOException {
     var serverChannel = ServerSocketChannel.open(myFallbackMode ? StandardProtocolFamily.INET : StandardProtocolFamily.UNIX);
-
-    SocketAddress address;
-    if (myFallbackMode) {
-      Files.writeString(myPortFile, "0", StandardOpenOption.CREATE_NEW);
-      address = new InetSocketAddress(InetAddress.getByAddress(new byte[]{127, 0, 0, 1}), 0);
-    }
-    else if (myRedirectedPortFile != null) {
-      Files.writeString(myPortFile, myRedirectedPortFile.toString(), StandardOpenOption.CREATE_NEW);
-      address = UnixDomainSocketAddress.of(myRedirectedPortFile);
-    }
-    else {
-      address = UnixDomainSocketAddress.of(myPortFile);
-    }
+    var address = getListenAddress();
 
     LOG.debug("binding to " + address);
     serverChannel.bind(address);
@@ -312,24 +300,26 @@ public final class DirectoryLock {
     return null;
   }
 
+  private SocketAddress getListenAddress() throws IOException {
+    if (myFallbackMode) {
+      Files.writeString(myPortFile, "0", StandardOpenOption.CREATE_NEW);
+      return new InetSocketAddress(InetAddress.getByAddress(new byte[]{127, 0, 0, 1}), 0);
+    }
+    else if (myRedirectedPortFile != null) {
+      Files.writeString(myPortFile, myRedirectedPortFile.toString(), StandardOpenOption.CREATE_NEW);
+      return UnixDomainSocketAddress.of(myRedirectedPortFile);
+    }
+    else {
+      return UnixDomainSocketAddress.of(myPortFile);
+    }
+  }
+
   private CliResult tryConnect(List<String> args, Path currentDirectory) throws IOException {
     var pf = myFallbackMode ? StandardProtocolFamily.INET : StandardProtocolFamily.UNIX;
+    var address = getConnectAddress();
+
     try (var socketChannel = SocketChannel.open(pf); var selector = Selector.open()) {
       socketChannel.configureBlocking(false);
-
-      SocketAddress address;
-      if (myFallbackMode) {
-        var port = 0;
-        try { port = Integer.parseInt(Files.readString(myPortFile)); }
-        catch (NumberFormatException e) { throw new SocketException("Invalid port; " + e.getMessage()); }
-        address = new InetSocketAddress(InetAddress.getByAddress(new byte[]{127, 0, 0, 1}), port);
-      }
-      else if (myRedirectedPortFile != null) {
-        address = UnixDomainSocketAddress.of(Files.readString(myPortFile));
-      }
-      else {
-        address = UnixDomainSocketAddress.of(myPortFile);
-      }
 
       LOG.debug("connecting to " + address);
       socketChannel.register(selector, SelectionKey.OP_CONNECT);
@@ -362,6 +352,21 @@ public final class DirectoryLock {
         LOG.debug(e);
         throw new IOException("Communication interrupted", e);
       }
+    }
+  }
+
+  private SocketAddress getConnectAddress() throws IOException {
+    if (myFallbackMode) {
+      var port = 0;
+      try { port = Integer.parseInt(Files.readString(myPortFile)); }
+      catch (NumberFormatException e) { throw new SocketException("Invalid port; " + e.getMessage()); }
+      return new InetSocketAddress(InetAddress.getByAddress(new byte[]{127, 0, 0, 1}), port);
+    }
+    else if (myRedirectedPortFile != null) {
+      return UnixDomainSocketAddress.of(Files.readString(myPortFile));
+    }
+    else {
+      return UnixDomainSocketAddress.of(myPortFile);
     }
   }
 

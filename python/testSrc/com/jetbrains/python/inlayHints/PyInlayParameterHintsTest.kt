@@ -1,10 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inlayHints
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Components
+
 import com.intellij.codeInsight.hints.Option
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.fixtures.PyTestCase
 
+@Subsystems.CodeInsight
+@Components.InlayHints
+@Layers.Functional
 class PyInlayParameterHintsTest : PyTestCase() {
 
   fun testHintsShownForFunctionCallWithMultipleArguments() {

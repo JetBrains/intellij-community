@@ -1,11 +1,12 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.coil"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.ktor.client"/>
     <module name="intellij.platform.jewel.foundation"/>
     <module name="intellij.platform.jewel.markdown.core"/>
     <module name="intellij.platform.jewel.ui"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 </idea-plugin>

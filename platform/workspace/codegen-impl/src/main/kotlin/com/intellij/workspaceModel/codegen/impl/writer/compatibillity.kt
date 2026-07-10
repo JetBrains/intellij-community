@@ -25,18 +25,18 @@ private val DEPRECATION = "@${Deprecated::class.fqn}(message = \"Use new API ins
 
 private fun String.capitalizeFirstChar(): String = replaceFirstChar { if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() }
 
-fun ObjClass<*>.generateCompatabilityBuilder(): String =
+fun generateCompatabilityBuilder(objClass: ObjClass<*>): String =
   lines {
-    if (!requiresCompatibility) {
+    if (!objClass.requiresCompatibility) {
       return@lines
     }
-    val (typeParameter, typeDeclaration) = if (builderWithTypeParameter) "<T>" to "<T: $javaFullName>" else "" to ""
-    val message = "Use $defaultJavaBuilderName instead"
+    val (typeParameter, typeDeclaration) = if (objClass.builderWithTypeParameter) "<T>" to "<T: ${objClass.javaFullName}>" else "" to ""
+    val message = "Use ${objClass.defaultJavaBuilderName} instead"
     line("@${Deprecated::class.fqn}(message = \"$message\")")
-    val superFields = allSuperClasses.flatMap { it.allFields.map { it.name } }.toSet()
-    val refsFields = allRefsFields.filter { it.name !in superFields  && it.valueType !is ValueType.Collection<*, *>}
+    val superFields = objClass.allSuperClasses.flatMap { it.allFields.map { it.name } }.toSet()
+    val refsFields = objClass.allRefsFields.filter { it.name !in superFields && it.valueType !is ValueType.Collection<*, *>}
     if (refsFields.isNotEmpty()) {
-      section("interface Builder$typeDeclaration : $defaultJavaBuilderName$typeParameter") {
+      section("interface Builder$typeDeclaration : ${objClass.defaultJavaBuilderName}$typeParameter") {
         refsFields
           .forEach { field ->
             line(DEPRECATION)
@@ -47,18 +47,18 @@ fun ObjClass<*>.generateCompatabilityBuilder(): String =
       }
     }
     else {
-      line("interface Builder$typeDeclaration : $defaultJavaBuilderName$typeParameter")
+      line("interface Builder$typeDeclaration : ${objClass.defaultJavaBuilderName}$typeParameter")
     }
   }
 
-fun ObjClass<*>.generateCompatibilityCompanion(): String =
+fun generateCompatibilityCompanion(objClass: ObjClass<*>): String =
   lines {
-    if (!requiresCompatibility) {
+    if (!objClass.requiresCompatibility) {
       return@lines
     }
-    val builderGeneric = if (openness.extendable) "<$javaFullName>" else ""
-    section("companion object : ${EntityType}<$javaFullName, Builder$builderGeneric>()") {
-      val mandatoryFields = allFields.mandatoryFields()
+    val builderGeneric = if (objClass.openness.extendable) "<${objClass.javaFullName}>" else ""
+    section("companion object : ${EntityType}<${objClass.javaFullName}, Builder$builderGeneric>()") {
+      val mandatoryFields = objClass.allFields.mandatoryFields()
       line(DEPRECATION)
       line("@${JvmOverloads::class.fqn}")
       line("@${JvmStatic::class.fqn}")
@@ -69,10 +69,10 @@ fun ObjClass<*>.generateCompatibilityCompanion(): String =
           line("${field.name}: ${field.valueType.javaType},")
         }
         line("init: (Builder$builderGeneric.() -> Unit)? = null,")
-        line("): Builder$builderGeneric = ${javaFullName}Type.compatibilityInvoke(${mandatoryFields.joinToString(", ") { it.name }}, init)")
+        line("): Builder$builderGeneric = ${objClass.javaFullName}Type.compatibilityInvoke(${mandatoryFields.joinToString(", ") { it.name }}, init)")
       }
       else {
-        line("${generatedCodeVisibilityModifier}operator fun invoke(init: (Builder$builderGeneric.() -> Unit)? = null): Builder$builderGeneric = = ${javaFullName}Type.compatibilityInvoke(init)")
+        line("${generatedCodeVisibilityModifier}operator fun invoke(init: (Builder$builderGeneric.() -> Unit)? = null): Builder$builderGeneric = = ${objClass.javaFullName}Type.compatibilityInvoke(init)")
       }
     }
   }

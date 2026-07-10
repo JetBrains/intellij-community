@@ -8,6 +8,7 @@ import com.intellij.psi.util.parentOfType
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider.Helper.isTypingTypedDictInheritor
 import com.jetbrains.python.codeInsight.typing.isProtocol
+import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyDecoratable
 import com.jetbrains.python.psi.PyDecorator
@@ -47,7 +48,11 @@ class PyDisjointBaseInspection : PyInspection() {
           if (PyDisjointBaseUtil.areDisjoint(type1, type2, myTypeEvalContext)) {
             registerProblem(
               node.nameIdentifier ?: node,
-              PyPsiBundle.message("INSP.disjoint.base.class.cannot.inherit.from.disjoint.bases", name1, name2)
+              PyPsiBundle.problemMessage(
+                "INSP.disjoint.base.class.cannot.inherit.from.disjoint.bases",
+                CodifiedParam.ofReference(type1.pyClass, name1),
+                CodifiedParam.ofReference(type2.pyClass, name2)
+              )
             )
             return
           }

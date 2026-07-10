@@ -1,8 +1,8 @@
 // "class org.jetbrains.kotlin.idea.quickfix.AddFunctionParametersFix" "false"
 // K2_ACTION: "class org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeSignatureFixFactory$ParameterQuickFix" "false"
 // ERROR: Too many arguments for public open fun equals(other: Any?): Boolean defined in java.lang.Object
-// K2_ERROR: Too many arguments for 'fun equals(p0: Any?): Boolean'.
-// K2_AFTER_ERROR: Too many arguments for 'fun equals(p0: Any?): Boolean'.
+// K2_ERROR: TOO_MANY_ARGUMENTS
+// K2_AFTER_ERROR: TOO_MANY_ARGUMENTS
 
 fun f(d: java.lang.Object) {
     d.equals("a", <caret>"b")

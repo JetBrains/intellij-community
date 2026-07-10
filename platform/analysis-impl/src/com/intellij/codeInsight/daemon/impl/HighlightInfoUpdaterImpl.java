@@ -9,8 +9,6 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -50,19 +48,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -79,7 +69,6 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.Icon;
 import java.lang.ref.Reference;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1026,7 +1015,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
    */
   @ApiStatus.Internal
   public synchronized void saveLatencies(@NotNull PsiFile psiFile, @NotNull @Unmodifiable Map<Object, ToolLatencies> latencies) {
-    if (!psiFile.getViewProvider().isPhysical()) {
+    if (!psiFile.getViewProvider().correspondsToRealFile()) {
       // ignore editor text fields/consoles etc.
       return;
     }
@@ -1117,7 +1106,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
                                         @NotNull WhatTool toolIdPredicate,
                                         @NotNull Consumer<? super ManagedHighlighterRecycler> invalidPsiRecyclerConsumer) {
     ManagedHighlighterRecycler.runWithRecycler(session, "runWithInvalidPsiRecycler", invalidPsiRecycler -> {
-      processQueues(session.getDocument());
       ProgressManager.checkCanceled();
       recycleInvalidPsiElements(session.getPsiFile(), session, invalidPsiRecycler, toolIdPredicate);
       ScheduledFuture<?> future;
@@ -1126,7 +1114,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       }
       else {
         // after some time kill highlighters for invalid elements automatically, because it seems they are not going to be reused
-        future = AppExecutorUtil.getAppScheduledExecutorService().schedule(() ->
+        future = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
           ProgressManager.getInstance().executeProcessUnderProgress(() -> {
             // grab RA first, to avoid deadlock when InvalidPsi.toString() tries to obtain RA again from within this monitor
             ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
@@ -1140,8 +1128,9 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
                 incinerateAndRemoveFromDataAtomically(invalidPsiRecycler, "(invalidPsiRecycler session timed-out)");
               }
             });
-          }, session.getProgressIndicator())
-          , Registry.intValue("highlighting.delay.invalid.psi.info.kill.ms"), TimeUnit.MILLISECONDS);
+          }, session.getProgressIndicator());
+          processQueues(session.getDocument());
+        }, Registry.intValue("highlighting.delay.invalid.psi.info.kill.ms"), TimeUnit.MILLISECONDS);
       }
 
       try {
@@ -1163,303 +1152,22 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
    * For these infos the associated PSI element is assumed to be this {@code FAKE_ELEMENT}
    */
   @ApiStatus.Internal
-  public static final PsiElement FAKE_ELEMENT = createFakePsiElement("inspectionFinished");
-
-  static @NotNull PsiElement createFakePsiElement(@NotNull String debugString) {
-    return new PsiElement() {
-      @Override
-      public @NotNull Project getProject() {
-        throw createException();
-      }
-
-      @Override
-      public @NotNull Language getLanguage() {
-        throw createException();
-      }
-
-      @Override
-      public PsiManager getManager() {
-        throw createException();
-      }
-
-      @Override
-      public PsiElement @NotNull [] getChildren() {
-        return EMPTY_ARRAY;
-      }
-
-      @Override
-      public PsiElement getParent() {
-        return null;
-      }
-
-      @Override
-      public @Nullable PsiElement getFirstChild() {
-        return null;
-      }
-
-      @Override
-      public @Nullable PsiElement getLastChild() {
-        return null;
-      }
-
-      @Override
-      public @Nullable PsiElement getNextSibling() {
-        return null;
-      }
-
-      @Override
-      public @Nullable PsiElement getPrevSibling() {
-        return null;
-      }
-
-      @Override
-      public PsiFile getContainingFile() {
-        return null;
-      }
-
-      @Override
-      public TextRange getTextRange() {
-        return TextRange.EMPTY_RANGE;
-      }
-
-      @Override
-      public int getStartOffsetInParent() {
-        return -1;
-      }
-
-      @Override
-      public int getTextLength() {
-        return 0;
-      }
-
-      @Override
-      public PsiElement findElementAt(int offset) {
-        return null;
-      }
-
-      @Override
-      public @Nullable PsiReference findReferenceAt(int offset) {
-        return null;
-      }
-
-      @Override
-      public int getTextOffset() {
-        return 0;
-      }
-
-      @Override
-      public String getText() {
-        return "";
-      }
-
-      @Override
-      public char @NotNull [] textToCharArray() {
-        return ArrayUtil.EMPTY_CHAR_ARRAY;
-      }
-
-      @Override
-      public PsiElement getNavigationElement() {
-        return null;
-      }
-
-      @Override
-      public PsiElement getOriginalElement() {
-        return null;
-      }
-
-      @Override
-      public boolean textMatches(@NotNull CharSequence text) {
-        return false;
-      }
-
-      @Override
-      public boolean textMatches(@NotNull PsiElement element) {
-        return false;
-      }
-
-      @Override
-      public boolean textContains(char c) {
-        return false;
-      }
-
-      @Override
-      public void accept(@NotNull PsiElementVisitor visitor) {
-
-      }
-
-      @Override
-      public void acceptChildren(@NotNull PsiElementVisitor visitor) {
-
-      }
-
-      @Override
-      public PsiElement copy() {
-        return null;
-      }
-
-      @Override
-      public PsiElement add(@NotNull PsiElement element) {
-        throw createException();
-      }
-
-      @Override
-      public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) {
-        throw createException();
-      }
-
-      @Override
-      public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) {
-        throw createException();
-      }
-
-      @Override
-      public void checkAdd(@NotNull PsiElement element) {
-        throw createException();
-      }
-
-      @Override
-      public PsiElement addRange(PsiElement first, PsiElement last) {
-        throw createException();
-      }
-
-      @Override
-      public PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor) {
-        throw createException();
-      }
-
-      @Override
-      public PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor) {
-        throw createException();
-      }
-
-      @Override
-      public void delete() {
-        throw createException();
-      }
-
-      @Override
-      public void checkDelete() {
-        throw createException();
-      }
-
-      @Override
-      public void deleteChildRange(PsiElement first, PsiElement last) {
-        throw createException();
-      }
-
-      @Override
-      public PsiElement replace(@NotNull PsiElement newElement) {
-        throw createException();
-      }
-
-      @Override
-      public boolean isValid() {
-        return true;
-      }
-
-      @Override
-      public boolean isWritable() {
-        return false;
-      }
-
-      PsiInvalidElementAccessException createException() {
-        return new PsiInvalidElementAccessException(this, toString(), null);
-      }
-
-      @Override
-      public @Nullable PsiReference getReference() {
-        return null;
-      }
-
-      @Override
-      public PsiReference @NotNull [] getReferences() {
-        return PsiReference.EMPTY_ARRAY;
-      }
-
-      @Override
-      public <T> T getCopyableUserData(@NotNull Key<T> key) {
-        throw createException();
-      }
-
-      @Override
-      public <T> void putCopyableUserData(@NotNull Key<T> key, T value) {
-        throw createException();
-      }
-
-      @Override
-      public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                         @NotNull ResolveState state,
-                                         PsiElement lastParent,
-                                         @NotNull PsiElement place) {
-        return false;
-      }
-
-      @Override
-      public PsiElement getContext() {
-        return null;
-      }
-
-      @Override
-      public boolean isPhysical() {
-        return true;
-      }
-
-      @Override
-      public @NotNull GlobalSearchScope getResolveScope() {
-        throw createException();
-      }
-
-      @Override
-      public @NotNull SearchScope getUseScope() {
-        throw createException();
-      }
-
-      @Override
-      public ASTNode getNode() {
-        throw createException();
-      }
-
-      @Override
-      public <T> T getUserData(@NotNull Key<T> key) {
-        throw createException();
-      }
-
-      @Override
-      public <T> void putUserData(@NotNull Key<T> key, T value) {
-        throw createException();
-      }
-
-      @Override
-      public Icon getIcon(int flags) {
-        throw createException();
-      }
-
-      @Override
-      public boolean isEquivalentTo(final PsiElement another) {
-        return this == another;
-      }
-
-      @Override
-      public String toString() {
-        return "FAKE_PSI_ELEMENT: "+debugString;
-      }
-    };
-  }
+  public static final PsiElement FAKE_ELEMENT = HighlightFakePsiElement.create("inspectionFinished");
 
   /**
    * for each info in `newInfos` retrieve the RH from recycler (and then invalidElementRecycler if not found) or create new RH
    * could be reentrant, be careful to avoid leaking/blinking RHs
    */
-  private static @NotNull @Unmodifiable List<? extends HighlightInfo> assignRangeHighlighters(@NotNull PsiElement visitedPsiElement,
-                                                                                              @NotNull List<? extends HighlightInfo> oldInfos,
-                                                                                              @NotNull List<? extends HighlightInfo> newInfos,
-                                                                                              @NotNull Object toolId,
-                                                                                              @NotNull HighlightingSession session,
-                                                                                              @NotNull PsiFile psiFile,
-                                                                                              @NotNull Document hostDocument,
-                                                                                              @NotNull ManagedHighlighterRecycler invalidElementRecycler,
-                                                                                              @NotNull ManagedHighlighterRecycler recycler,
-                                                                                              @NotNull Map<Object, ToolHighlights> data) {
+  private @NotNull @Unmodifiable List<? extends HighlightInfo> assignRangeHighlighters(@NotNull PsiElement visitedPsiElement,
+                                                                                       @NotNull List<? extends HighlightInfo> oldInfos,
+                                                                                       @NotNull List<? extends HighlightInfo> newInfos,
+                                                                                       @NotNull Object toolId,
+                                                                                       @NotNull HighlightingSession session,
+                                                                                       @NotNull PsiFile psiFile,
+                                                                                       @NotNull Document hostDocument,
+                                                                                       @NotNull ManagedHighlighterRecycler invalidElementRecycler,
+                                                                                       @NotNull ManagedHighlighterRecycler recycler,
+                                                                                       @NotNull Map<Object, ToolHighlights> data) {
     MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(hostDocument, session.getProject(), true);
 
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(session.getProject());
@@ -1486,56 +1194,57 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       int infoStartOffset = TextRangeScalarUtil.startOffset(finalInfoRange);
       int infoEndOffset = TextRangeScalarUtil.endOffset(finalInfoRange);
 
-      InvalidPsi recycled = recycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer, newInfo.getDescription());
-      String from;
-      if (recycled == null) {
-        recycled = invalidElementRecycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer, newInfo.getDescription());
-        from = "invalidElementRecycler";
-      }
-      else {
-        from = "recycler";
-      }
-      if (recycled != null) {
-        if (LOG.isTraceEnabled()) {
-          LOG.trace("assignRangeHighlighters: pickedup " + recycled + " from " + from+ " "+session.getProgressIndicator());
+      synchronized (newInfo) {
+        InvalidPsi recycled = recycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer, newInfo.getDescription());
+        String from;
+        if (recycled == null) {
+          recycled = invalidElementRecycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer, newInfo.getDescription());
+          from = "invalidElementRecycler";
         }
-        toRemove.add(recycled);
-      }
-      List<Object> existingInfos = List.of();
-      if (recycled == null && LOG.isTraceEnabled()) {
-        List<RangeHighlighterEx> dups = new ArrayList<>();
-        markup.processRangeHighlightersOverlappingWith(newInfo.getStartOffset(), newInfo.getEndOffset(), new CommonProcessors.CollectProcessor<>(dups));
-        String description = newInfo.getDescription();
-        TextAttributesKey infoTextAttributesKey = newInfo.forcedTextAttributesKey == null ? newInfo.type.getAttributesKey() : newInfo.forcedTextAttributesKey;
-        dups.removeIf(r-> {
-          HighlightInfo hi;
-          return !r.getTextRange().equalsToRange(infoStartOffset, infoEndOffset) ||
-                 !Objects.equals(r.getTextAttributesKey(), infoTextAttributesKey) ||
-                 (hi=HighlightInfo.fromRangeHighlighter(r)) == null ||
-                 !Objects.equals(hi.getDescription(), description)
-            ;
-        });
-
-        existingInfos =
-          ContainerUtil.map(dups, dup -> {
-            HighlightInfo info = HighlightInfo.fromRangeHighlighter(dup);
-            return info == null ? "no HI" : info.getHighlighter() != dup ? "inconsistent HI" : "duplicate: "+dup+":"+findInData(info, psiFile);
+        else {
+          from = "recycler";
+        }
+        if (recycled != null) {
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("assignRangeHighlighters: pickedup " + recycled + " from " + from + " " + session.getProgressIndicator());
+          }
+          toRemove.add(recycled);
+        }
+        List<Object> existingInfos = List.of();
+        if (recycled == null && LOG.isTraceEnabled()) {
+          List<RangeHighlighterEx> dups = new ArrayList<>();
+          markup.processRangeHighlightersOverlappingWith(newInfo.getStartOffset(), newInfo.getEndOffset(), new CommonProcessors.CollectProcessor<>(dups));
+          String description = newInfo.getDescription();
+          TextAttributesKey infoTextAttributesKey = newInfo.forcedTextAttributesKey == null ? newInfo.type.getAttributesKey() : newInfo.forcedTextAttributesKey;
+          dups.removeIf(r -> {
+            HighlightInfo hi;
+            return !r.getTextRange().equalsToRange(infoStartOffset, infoEndOffset) ||
+                   !Objects.equals(r.getTextAttributesKey(), infoTextAttributesKey) ||
+                   (hi = HighlightInfo.fromRangeHighlighter(r)) == null ||
+                   !Objects.equals(hi.getDescription(), description)
+              ;
           });
-      }
-      RangeHighlighterEx newHighlighter = changeRangeHighlighterAttributes(session, psiFile, markup, newInfo, range2markerCache, finalInfoRange, recycled, isFileLevel, infoStartOffset, infoEndOffset, layer, severityRegistrar);
-      if (recycled != null) {
-        recycled.info().invalidate();
-      }
-      else if (LOG.isTraceEnabled() && !existingInfos.isEmpty()) {
-        LOG.trace("assignRangeHighlighters duplicates: " + newInfo +
-                  "\ndups(" + existingInfos.size() + "): " + existingInfos +
-                  "\nnew: " + newHighlighter +
-                  "\nrecycler: " + recycler + ":" + recycler.forAllInGarbageBin() +
-                  "\ninvalidRecycler:" + invalidElementRecycler + ":" + invalidElementRecycler.forAllInGarbageBin() +
-                  "\nold infos(" + oldInfos.size() + "): " + oldInfos +
-                  "\nvisitedPsiElement:" + debugPsiInfo(visitedPsiElement) +
-                  "\n" + session.getProgressIndicator()
-                  );
+
+          existingInfos = ContainerUtil.map(dups, dup -> {
+            HighlightInfo info = HighlightInfo.fromRangeHighlighter(dup);
+            return info == null ? "no HI" : info.getHighlighter() != dup ? "inconsistent HI" : "duplicate: " + dup + ":" + findInData(info, psiFile);
+          });
+        }
+        RangeHighlighterEx newHighlighter = changeRangeHighlighterAttributes(session, psiFile, markup, newInfo, range2markerCache, finalInfoRange, recycled, isFileLevel, infoStartOffset, infoEndOffset, layer, severityRegistrar);
+        if (recycled != null) {
+          recycled.info().invalidate();
+        }
+        else if (LOG.isTraceEnabled() && !existingInfos.isEmpty()) {
+          LOG.trace("assignRangeHighlighters duplicates: " + newInfo +
+                    "\ndups(" + existingInfos.size() + "): " + existingInfos +
+                    "\nnew: " + newHighlighter +
+                    "\nrecycler: " + recycler + ":" + recycler.forAllInGarbageBin() +
+                    "\ninvalidRecycler:" + invalidElementRecycler + ":" + invalidElementRecycler.forAllInGarbageBin() +
+                    "\nold infos(" + oldInfos.size() + "): " + oldInfos +
+                    "\nvisitedPsiElement:" + debugPsiInfo(visitedPsiElement) +
+                    "\n" + session.getProgressIndicator()
+          );
+        }
       }
     }
     removeFromDataAtomically(data, toRemove, session);
@@ -1557,18 +1266,18 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     return sorted;
   }
 
-  private static @NotNull RangeHighlighterEx changeRangeHighlighterAttributes(@NotNull HighlightingSession session,
-                                                                              @NotNull PsiFile psiFile,
-                                                                              @NotNull MarkupModelEx markup,
-                                                                              @NotNull HighlightInfo newInfo,
-                                                                              @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
-                                                                              long finalInfoRange,
-                                                                              @Nullable InvalidPsi recycled,
-                                                                              boolean isFileLevel,
-                                                                              int infoStartOffset,
-                                                                              int infoEndOffset,
-                                                                              int newLayer,
-                                                                              @NotNull SeverityRegistrar severityRegistrar) {
+  private @NotNull RangeHighlighterEx changeRangeHighlighterAttributes(@NotNull HighlightingSession session,
+                                                                       @NotNull PsiFile psiFile,
+                                                                       @NotNull MarkupModelEx markup,
+                                                                       @NotNull HighlightInfo newInfo,
+                                                                       @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
+                                                                       long finalInfoRange,
+                                                                       @Nullable InvalidPsi recycled,
+                                                                       boolean isFileLevel,
+                                                                       int infoStartOffset,
+                                                                       int infoEndOffset,
+                                                                       int newLayer,
+                                                                       @NotNull SeverityRegistrar severityRegistrar) {
     CodeInsightContext context = session.getCodeInsightContext();
     TextAttributes infoAttributes = newInfo.getTextAttributes(psiFile, session.getColorsScheme());
     com.intellij.util.Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter ->
@@ -1617,12 +1326,12 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     return highlighter;
   }
 
-  public static @NotNull RangeHighlighterEx createOrReuseFakeFileLevelHighlighter(int group,
-                                                                                  @NotNull HighlightInfo info,
-                                                                                  @Nullable RangeHighlighterEx toReuse,
-                                                                                  @NotNull MarkupModelEx markupModel,
-                                                                                  @NotNull Project project,
-                                                                                  @Nullable CodeInsightContext context) {
+  public synchronized @NotNull RangeHighlighterEx createOrReuseFakeFileLevelHighlighter(int group,
+                                                                                        @NotNull HighlightInfo info,
+                                                                                        @Nullable RangeHighlighterEx toReuse,
+                                                                                        @NotNull MarkupModelEx markupModel,
+                                                                                        @NotNull Project project,
+                                                                                        @Nullable CodeInsightContext context) {
     Document document = markupModel.getDocument();
     RangeHighlighterEx highlighter;
     if (toReuse != null && toReuse.isValid()) {

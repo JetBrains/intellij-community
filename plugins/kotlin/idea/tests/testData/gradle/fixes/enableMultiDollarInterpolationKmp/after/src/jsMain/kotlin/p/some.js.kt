@@ -1,5 +1,5 @@
 // "Configure arguments for the feature: multi dollar interpolation" "true"
-// K2_ERROR: The feature "multi dollar interpolation" is only available since language version 2.2
+// K2_ERROR: UNSUPPORTED_FEATURE
 package p
 
 fun test() {

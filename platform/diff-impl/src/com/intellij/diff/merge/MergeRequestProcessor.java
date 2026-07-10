@@ -7,6 +7,7 @@ import com.intellij.diff.DiffNotificationIdsHolder;
 import com.intellij.diff.actions.impl.DiffNextDifferenceAction;
 import com.intellij.diff.actions.impl.DiffPreviousDifferenceAction;
 import com.intellij.diff.impl.ui.DiffHeaderToolbarPanel;
+import com.intellij.diff.impl.ui.DiffHeaderToolbarUtil;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeys;
@@ -26,10 +27,8 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -126,10 +125,15 @@ public abstract class MergeRequestProcessor implements Disposable {
 
     myPanel = JBUI.Panels.simplePanel(myMainPanel);
 
-    DiffHeaderToolbarPanel topPanel = new DiffHeaderToolbarPanel(new BorderLayout());
-    topPanel.add(myToolbarPanel, BorderLayout.WEST);
-    topPanel.add(myRightToolbarPanel, BorderLayout.EAST);
-    topPanel.add(myNotificationPanel, BorderLayout.SOUTH);
+
+    DiffHeaderToolbarPanel headerPanel = new DiffHeaderToolbarPanel(new BorderLayout());
+    var headerLayoutPanel = DiffHeaderToolbarUtil.createLayoutPanel(myToolbarPanel, myToolbarStatusPanel, myRightToolbarPanel);
+    headerPanel.add(headerLayoutPanel, BorderLayout.CENTER);
+
+    var topPanel = JBUI.Panels.simplePanel()
+      .addToTop(headerPanel)
+      .addToBottom(myNotificationPanel)
+      .andTransparent();
 
     myMainPanel.add(topPanel, BorderLayout.NORTH);
     myMainPanel.add(myContentPanel, BorderLayout.CENTER);
@@ -299,6 +303,7 @@ public abstract class MergeRequestProcessor implements Disposable {
                               @Nullable List<? extends AnAction> rightViewerActions) {
     ActionGroup group = collectToolbarActions(viewerActions);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, group, true);
+    toolbar.getComponent().setOpaque(false);
     toolbar.setShowSeparatorTitles(true);
 
     toolbar.setTargetComponent(myContentPanel.getTargetComponent());
@@ -307,28 +312,11 @@ public abstract class MergeRequestProcessor implements Disposable {
     recursiveRegisterShortcutSet(group, myMainPanel, null);
 
     DefaultActionGroup rightGroup = new DefaultActionGroup();
-    rightGroup.add(new StatusPanelAction(myToolbarStatusPanel));
     DiffUtil.addActionBlock(rightGroup, rightViewerActions, false);
     ActionToolbar rightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_RIGHT_TOOLBAR, rightGroup, true);
     rightToolbar.setTargetComponent(myContentPanel.getTargetComponent());
+    rightToolbar.getComponent().setOpaque(false);
     myRightToolbarPanel.setContent(rightToolbar.getComponent());
-  }
-
-  private static final class StatusPanelAction extends DumbAwareAction implements CustomComponentAction {
-    private final JComponent myStatusPanel;
-
-    StatusPanelAction(@NotNull JComponent statusPanel) {
-      myStatusPanel = statusPanel;
-    }
-
-    @Override
-    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      return myStatusPanel;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-    }
   }
 
   private @NotNull MergeTool getFittedTool(@NotNull MergeRequest request) {

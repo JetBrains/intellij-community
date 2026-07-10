@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -98,7 +99,7 @@ public abstract class PySkeletonGenerator {
 
   protected final @NotNull Sdk mySdk;
   protected final @Nullable String myCurrentFolder;
-  protected final @NotNull String mySkeletonsPath;
+  protected final @NotNull Path mySkeletonsPath;
 
   /**
    * @param skeletonPath  path where skeletons should be generated
@@ -106,8 +107,8 @@ public abstract class PySkeletonGenerator {
    * @param currentFolder current folder (some flavors may search for binary files there) or null if unknown
    */
   // TODO get rid of skeletonPath and currentFolder parameters and configure generator explicitly with builder
-  public PySkeletonGenerator(@NotNull String skeletonPath, final @NotNull Sdk pySdk, final @Nullable String currentFolder) {
-    mySkeletonsPath = StringUtil.trimTrailing(skeletonPath, '\\');
+  public PySkeletonGenerator(@NotNull Path skeletonPath, final @NotNull Sdk pySdk, final @Nullable String currentFolder) {
+    mySkeletonsPath = skeletonPath;
     mySdk = pySdk;
     myCurrentFolder = currentFolder;
   }
@@ -252,7 +253,7 @@ public abstract class PySkeletonGenerator {
     return new File(name).exists();
   }
 
-  public String getSkeletonsPath() {
+  final public @NotNull Path getSkeletonsPath() {
     return mySkeletonsPath;
   }
 
@@ -276,14 +277,8 @@ public abstract class PySkeletonGenerator {
     return sb.toString();
   }
 
-  public boolean deleteOrLog(@NotNull File item) {
-    boolean deleted = item.delete();
-    if (!deleted) LOG.warn("Failed to delete skeleton file " + item.getAbsolutePath());
-    return deleted;
-  }
-
   public void refreshGeneratedSkeletons() {
-    VirtualFile skeletonsVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(getSkeletonsPath());
+    VirtualFile skeletonsVFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(getSkeletonsPath());
     assert skeletonsVFile != null;
     skeletonsVFile.refresh(false, true);
   }

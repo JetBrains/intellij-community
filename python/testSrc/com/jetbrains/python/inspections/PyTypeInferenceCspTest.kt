@@ -3,9 +3,14 @@ package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.idea.TestFor
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyInspectionTestCase
 import com.jetbrains.python.fixtures.fixme
+import org.junit.ComparisonFailure
 
+@Subsystems.Inspections
+@Layers.Functional
 class PyTypeInferenceCspTest : PyInspectionTestCase() {
 
   override fun getInspectionClass(): Class<out PyInspection?> {
@@ -20,7 +25,7 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
     super.doTestByText(text.trimIndent())
   }
 
-  fun `test Constraint solver simple 1`() {
+  fun `test Simple union via arguments`() {
     doTestByText("""
       from typing import assert_type
   
@@ -28,7 +33,7 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
         return None
   
       r1 = bar(1, "s")
-      assert_type(r1, int|str)
+      assert_type(r1, int | str)
       """)
   }
 
@@ -86,7 +91,7 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
 
   fun `test Unconstrained TV with default 2`() {
     doTestByText("""
-      from typing import assert_type
+      from typing import assert_type, Literal
   
       def f[T=str](p: int | list[T]) -> T: ...
   
@@ -108,7 +113,7 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
   }
 
   fun `test Attrs type per default`() {
-    fixme<AssertionError>("PY-88142", "Expected type 'list[Any]', got 'list[_T]' instead") {
+    fixme<AssertionError>("PY-88142", "Expected type 'list[Any]', got 'list' instead") {
       runWithAdditionalClassEntryInSdkRoots("packages") {
         doTestByText("""
         from typing import Any, assert_type
@@ -151,28 +156,14 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
   }
 
   fun `test Bound from return to argument`() {
-    fixme<AssertionError>("PY-88142", "Expected type 'str', got 'U' instead") {
-      doTestByText("""
-      from typing import Callable, assert_type
-
-      def fooFun[U](f: Callable[[U], None]) -> U:
-        return None
-  
-      r0 : str = fooFun(lambda p: assert_type(p, str)) # currently p is U
-      """)
-    }
-  }
-
-  fun `test Simple union via arguments`() {
     doTestByText("""
-      from typing import assert_type
+    from typing import Callable, assert_type, Any
 
-      def bar[U](a: U, b: U) -> U:
-        return None
-  
-      r1 = bar(1, "s")
-      assert_type(r1, int | str)
-      """)
+    def fooFun[U](f: Callable[[U], Any]) -> U:
+      return None
+
+    r0 : str = fooFun(lambda p: assert_type(p, str)) # currently p is U
+    """)
   }
 
   fun `test Match union bound 0`() {
@@ -205,14 +196,14 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
 
   fun `test Match union bound 2`() {
     doTestByText("""
-      from typing import Any, assert_type, Callable
+      from typing import Any, assert_type, Callable, Literal
   
       def f2[T: int | Callable[[str], int]](arg: T) -> T:
         pass
   
       my_lambda = lambda s,/: 42
       r = f2(my_lambda)
-      assert_type(r, Callable[[Any], int]) # subtype allowed
+      assert_type(r, Callable[[Any], Literal[42]]) # subtype allowed
       """)
   }
 
@@ -265,10 +256,10 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
           self.first = first
           self.second = second
   
-      def merge[U](pair: Pair[U, U]) -> U:
+      def merge[M](pair: Pair[M, M]) -> M:
         return None
   
-      def pipe[U](arg: U) -> U:
+      def pipe[P](arg: P) -> P:
         return None
   
       r4a = merge(pipe(Pair(B(), A()))) # note: same result without call to 'pipe'
@@ -328,7 +319,7 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
 
   fun `test Deeply nested generics`() {
     doTestByText("""
-      from typing import assert_type
+      from typing import assert_type, Literal
   
       def f[T](x: list[list[list[T]]]) -> T:
           ...
@@ -427,13 +418,17 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
   fun `test Handle raw generic type`() {
     doTestByText("""
       class A: ...
+      class B(A): ...
       class Box[E:A]:
           def __init__(self, e: E): ...
       
       def foo[U:Box](u:U) -> U:
           pass
       
-      foo(Box(<warning descr="Expected type 'E ≤: A', got 'int' instead">1</warning>))
+      foo(Box(A()))
+      foo(Box())
+      b: Box[A] = Box()
+      b: Box[B] = Box()
       """)
   }
 
@@ -453,12 +448,14 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
   @TestFor(issues = ["PY-87890"])
   fun `test Nested csp with type parameter bound`() {
     doTestByText("""
+      from typing import Literal
+      
       from typing import Any, Callable, assert_type
       
       def f[F: Callable[..., Any]]() -> Callable[[F], F]:
           return lambda x: x
       
-      assert_type(f()(lambda x: 1)(1), int)
+      assert_type(f()(lambda x: 1)(1), Literal[1])
       """)
   }
 
@@ -485,16 +482,14 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
   }
 
   fun `test Nested csp with type parameter constraint`() {
-    fixme<AssertionError>("Support for combined CSPs necessary", "Expected type 'int', got 'str | int' instead") {
-      doTestByText("""
-        from typing import Callable, assert_type, Any
-        
-        def f[T : (str, int)]() -> Callable[[T], T]: ...
-        
-        assert_type(f()(2), int)
-        assert_type(f()("s"), str)
-        """)
-    }
+    doTestByText("""
+      from typing import Callable, assert_type, Any
+      
+      def f[T : (str, int)]() -> Callable[[T], T]: ...
+      
+      assert_type(f()(2), int)
+      assert_type(f()("s"), str)
+      """)
   }
 
   fun `test Keep unconstrained type parameters for type return`() {
@@ -544,13 +539,15 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
 
   @TestFor(issues = ["PY-88071"])
   fun `test Default type from outer call`() {
-    doTestByText("""
+    fixme("Transform to PyCodeInsightTestCase", ComparisonFailure::class.java, "Expected type 'Unknown', got 'S' instead") {
+      doTestByText("""
       from typing import assert_type
       def g1[S]() -> S: ...
       def g2[T=str](t: T) -> T: ...
       rg2 = g2(g1())
-      assert_type(rg2, str)
+      assert_type(rg2, "S")
       """)
+    }
   }
 
   @TestFor(issues = ["PY-88071"])
@@ -566,15 +563,13 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
 
   @TestFor(issues = ["PY-88071"])
   fun `test Default type from both calls explicit Any`() {
-    fixme<AssertionError>("PY-88142", "Expected type 'Any', got 'str' instead") {
-      doTestByText("""
-        from typing import assert_type, Any
-        def f1[S=Any]() -> S: ...
-        def f2[T=str](t: T) -> T: ...
-        rf2 = f2(f1())
-        assert_type(rf2, Any)
-        """)
-    }
+    doTestByText("""
+      from typing import assert_type, Any
+      def f1[S=Any]() -> S: ...
+      def f2[T=str](t: T) -> T: ...
+      rf2 = f2(f1())
+      assert_type(rf2, Any)
+      """)
   }
 
   @TestFor(issues = ["PY-88089"])
@@ -598,9 +593,9 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
   }
 
   @TestFor(issues = ["PY-89047"])
-  fun `test Empty list literal does not collapse generic unification to Any`() {
+  fun `test Empty list literal should not collapse generic unification to Any`() {
     doTestByText("""
-      from typing import assert_type
+      from typing import assert_type, Literal
 
       def foo[T](_0: list[T], _1: list[T]) -> T:
           raise NotImplementedError
@@ -608,5 +603,83 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
       assert_type(foo([1], []), int)
       assert_type(foo([], [1]), int)
       """)
+  }
+
+  @TestFor(issues = ["PY-90270"])
+  fun `test Contravariant type argument unifies to the common subtype`() {
+    doTestByText("""
+      from typing import assert_type
+
+      class Sink[T]:
+          def put(self, t: T) -> None: ...
+
+      def f[U](a: Sink[U], b: Sink[U]) -> U: ...
+
+      assert_type(f(Sink[object](), Sink[int]()), int)
+      """)
+  }
+
+  @TestFor(issues = ["PY-89862"])
+  fun `test Type inference of list literal respects expected type 1`() {
+    doTestByText("""
+      data: list[int | None] = [None] * 42 # expect no error: Expected type 'list[int | None]', got 'list[None]' instead
+      """)
+  }
+
+  @TestFor(issues = ["PY-90086"])
+  fun `test Type inference of list literal respects expected type 2`() {
+    doTestByText("""
+      def foo(lst: list[list[int | str]]) -> None: ...
+      foo([[1], ["a"]]) # expect no error
+      """)
+  }
+
+  @TestFor(issues = ["PY-90097"])
+  fun `test Cannot assign list comprehension with enum member to a variable expecting a list of this enum`() {
+    doTestByText("""
+      from enum import Enum
+      
+      class Tile(Enum):
+          EMPTY = 0
+          WALL = 1
+      
+      foo: list[list[Tile]] = [[Tile.EMPTY for _ in range(5)] for _ in range(5)] # expect no error
+      bar: list[Tile] = [Tile.EMPTY for _ in range(5)] # expect no error
+      """)
+  }
+
+  @TestFor(issues = ["PY-90463"])
+  fun `test Widen list literal 'abc' when expected`() {
+    doTestByText("""
+      def f(x: list[str] | int): ...
+      f(["abc"]) # expect no error
+      """)
+  }
+
+  @TestFor(issues = ["PY-90472"])
+  fun `test Nested list-literal type is too harshly resolved to a nested list of literal element types`() {
+    doTestByText("""
+      def foo(param: list[list[int]]) -> None: ...
+      foo([[0, 2, 5], [0, 1, 2], [1, 2, 1], [3, 0, 3]]) # expect no error
+      """)
+  }
+
+  @TestFor(issues = ["PY-88624"])
+  fun testOverloadedInitSelfTypeOverridesDefaultTypeParameter() {
+    doTestByText("""
+                   from typing import reveal_type, assert_type, overload
+                   
+                   class Class[T=list[int] | None]:
+                       @overload
+                       def __init__(self: Class[None]) -> None: ...
+                   
+                       @overload
+                       def __init__(self, x: T) -> None: ...
+                   
+                       def __init__(self, *args, **kwargs) -> None: ...
+                   
+                   assert_type(Class(), Class[None])
+                   assert_type(Class(1), Class[int])
+                   """.trimIndent())
   }
 }

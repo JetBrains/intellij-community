@@ -1,8 +1,7 @@
 // "Add context parameter to function" "false"
-// COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
-
-// K2_ERROR: No context argument for 'i: Int' found.
-// K2_AFTER_ERROR: No context argument for 'i: Int' found.
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// K2_AFTER_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: NO_CONTEXT_ARGUMENT
 context(i: Int) fun bar() {}
 
 abstract class Base {
@@ -15,4 +14,4 @@ class Derived : Base() {
     }
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddContextParameterFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddContextParameterFix$ForEnclosingFunction

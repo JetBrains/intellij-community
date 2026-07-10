@@ -367,7 +367,8 @@ public class NullGraphics2D extends Graphics2D {
 
   @Override
   public void translate(double tx, double ty) {
-    throw new UnsupportedOperationException();
+    myResult += (int)tx;
+    myResult += (int)ty;
   }
 
   @Override

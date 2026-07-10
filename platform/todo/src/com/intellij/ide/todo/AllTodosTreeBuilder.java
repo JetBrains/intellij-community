@@ -2,6 +2,7 @@
 
 package com.intellij.ide.todo;
 
+import com.intellij.ide.todo.model.TodoScope;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +15,11 @@ public class AllTodosTreeBuilder extends TodoTreeBuilder {
   public AllTodosTreeBuilder(@NotNull JTree tree,
                              @NotNull Project project) {
     super(tree, project);
+  }
+
+  @Override
+  public @NotNull TodoScope getScope() {
+    return TodoScope.Project.INSTANCE;
   }
 
   @Override

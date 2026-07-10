@@ -16,7 +16,8 @@ import com.jetbrains.python.TraceContext
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.moduleIfExists
-import com.jetbrains.python.util.ShowingMessageErrorSync
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.withProject
 import kotlinx.coroutines.supervisorScope
 import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
@@ -54,7 +55,7 @@ internal class PythonAddLocalInterpreterDialog(private val dialogPresenter: Pyth
   }
 
   override fun createCenterPanel(): JComponent {
-    val errorSink = ShowingMessageErrorSync.withProject(dialogPresenter.moduleOrProject.project)
+    val errorSink = ErrorSink().withProject(dialogPresenter.moduleOrProject.project)
 
     val rootPanel = panel {
       model = PythonLocalAddInterpreterModel(ProjectPathFlows.create(basePath), EelFileSystem(eelApi = localEel))

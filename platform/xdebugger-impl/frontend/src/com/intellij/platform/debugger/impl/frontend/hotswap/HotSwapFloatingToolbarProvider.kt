@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
@@ -29,19 +30,19 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.debugger.impl.rpc.HotSwapSource
 import com.intellij.platform.debugger.impl.rpc.HotSwapVisibleStatus
 import com.intellij.platform.debugger.impl.rpc.XDebugHotSwapCurrentSessionStatus
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.PopupHandler
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerBundle
+import com.intellij.xdebugger.hotswap.HotSwapSource
 import com.intellij.xdebugger.impl.hotswap.HotSwapUiExtension
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Insets
@@ -62,13 +63,6 @@ private val addText: Boolean by lazy {
   HotSwapUiExtension.computeSafeIfAvailable { it.shouldAddText } != false
 }
 
-@Suppress("DialogTitleCapitalization")
-private fun createHelpTooltip(): HelpTooltip =
-  HotSwapUiExtension.computeSafeIfAvailable { it.createTooltip() }
-  ?: HelpTooltip()
-    .setTitle(XDebuggerBundle.message("xdebugger.hotswap.tooltip.apply"))
-    .setDescription(XDebuggerBundle.message("xdebugger.hotswap.tooltip.description"))
-
 private fun showFloatingToolbar(project: Project): Boolean = HotSwapUiExtension.computeSafeIfAvailable { it.showFloatingToolbar(project) } != false
 
 private fun collectPopupMenuActions(): DefaultActionGroup? = HotSwapUiExtension.computeSafeIfAvailable { it.popupMenuActions() }
@@ -78,6 +72,7 @@ internal class HotSwapModifiedFilesAction : AnAction(), DumbAware {
     val project = e.project ?: return
     val status = getCurrentStatus(project) ?: return
     if (!status.hasChanges) return
+    // The user invokes this action explicitly, without an IDE-side HotSwap suggestion, so it only performs HotSwap.
     FrontendHotSwapManager.getInstance(project).performHotSwap(status.sessionId, HotSwapSource.RELOAD_MODIFIED_ACTION)
   }
 
@@ -97,17 +92,19 @@ internal class HotSwapModifiedFilesAction : AnAction(), DumbAware {
 
 private fun getCurrentStatus(project: Project) = FrontendHotSwapManager.getInstance(project).currentStatus
 
-internal enum class HotSwapButtonStatus {
-  READY, IN_PROGRESS, SUCCESS
-}
-
 internal class HotSwapWithRebuildAction : AnAction(), CustomComponentAction, DumbAware {
-  var status = HotSwapButtonStatus.READY
+  var status: HotSwapVisibleStatus = HotSwapVisibleStatus.NoChanges
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val status = getCurrentStatus(project) ?: return
-    FrontendHotSwapManager.getInstance(project).performHotSwap(status.sessionId, HotSwapSource.RELOAD_MODIFIED_BUTTON)
+    if (!status.hasChanges) return
+    if (status.status is HotSwapVisibleStatus.ChangesNotHotSwappable) {
+      FrontendHotSwapManager.getInstance(project).performRestart(status.sessionId, HotSwapSource.RELOAD_MODIFIED_BUTTON)
+    }
+    else {
+      FrontendHotSwapManager.getInstance(project).performHotSwap(status.sessionId, HotSwapSource.RELOAD_MODIFIED_BUTTON)
+    }
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
@@ -131,15 +128,14 @@ internal class HotSwapWithRebuildAction : AnAction(), CustomComponentAction, Dum
 private class HotSwapToolbarComponent(action: AnAction, presentation: Presentation, place: String)
   : JPanel(BorderLayout(0, 0)) {
 
-  private val tooltip = createHelpTooltip()
-  val button = object : ActionButtonWithText(action, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+  private val tooltip = HelpTooltip()
+  private val button = object : ActionButtonWithText(action, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
     override fun getMargins(): Insets = JBUI.insets(4, 6)
     override fun iconTextSpace(): Int = JBUI.scale(4)
   }.apply {
     setHorizontalTextPosition(SwingConstants.LEADING)
     tooltip.installOn(this)
     installPopupMenu()
-    accessibleContext.accessibleName = HotSwapUiExtension.computeSafeIfAvailable { it.hotSwapButtonAccessibleName }
   }
 
   init {
@@ -149,20 +145,30 @@ private class HotSwapToolbarComponent(action: AnAction, presentation: Presentati
     border = JBUI.Borders.emptyLeft(JBUI.scale(2))
   }
 
-  fun update(status: HotSwapButtonStatus, presentation: Presentation) {
-    presentation.isEnabled = status == HotSwapButtonStatus.READY
+  fun update(status: HotSwapVisibleStatus, presentation: Presentation) {
+    val changesNotHotSwappable = status is HotSwapVisibleStatus.ChangesNotHotSwappable
+    val disableHotSwapButton = changesNotHotSwappable && Registry.`is`("debugger.hotswap.disable.button.for.incompatible.changes")
+    presentation.isEnabled = status.hasChanges && !disableHotSwapButton
     val icon = when (status) {
-      HotSwapButtonStatus.READY -> hotSwapIcon
-      HotSwapButtonStatus.IN_PROGRESS -> AnimatedIcon.Default.INSTANCE
-      HotSwapButtonStatus.SUCCESS -> AllIcons.Status.Success
+      HotSwapVisibleStatus.ChangesReady -> hotSwapIcon
+      HotSwapVisibleStatus.InProgress -> AnimatedIcon.Default.INSTANCE
+      HotSwapVisibleStatus.Success -> AllIcons.Status.Success
+      is HotSwapVisibleStatus.ChangesNotHotSwappable -> if (disableHotSwapButton) AllIcons.General.BalloonWarning else AllIcons.Actions.RestartDebugger
+      else -> null
     }
-    presentation.icon = icon
-    presentation.disabledIcon = icon
+    if (icon != null) {
+      presentation.icon = icon
+      presentation.disabledIcon = icon
+    }
     if (addText) {
       @Suppress("DialogTitleCapitalization")
       presentation.text = XDebuggerBundle.message("xdebugger.hotswap.code.changed")
     }
-    tooltip.setShortcut(ActionManager.getInstance().getKeyboardShortcut("XDebugger.Hotswap.Modified.Files"))
+    val shortcut = ActionManager.getInstance().getKeyboardShortcut("XDebugger.Hotswap.Modified.Files")
+      .takeIf { !changesNotHotSwappable || disableHotSwapButton }
+    tooltip.setShortcut(shortcut)
+    HotSwapUiExtension.computeSafeIfAvailable { it.configureTooltip(tooltip, status) }
+    button.accessibleContext.accessibleName = HotSwapUiExtension.computeSafeIfAvailable { it.hotSwapButtonAccessibleName(status) }
   }
 
 }
@@ -214,7 +220,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
     group
   }
 
-  override fun isApplicable(dataContext: DataContext): Boolean =
+  override suspend fun isApplicableAsync(dataContext: DataContext): Boolean =
     isInsideMainEditor(dataContext)
     && dataContext.getData(CommonDataKeys.EDITOR)?.editorKind == EditorKind.MAIN_EDITOR
 
@@ -226,70 +232,57 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
       component.accessibleContext.accessibleName = HotSwapUiExtension.computeSafeIfAvailable { it.toolbarAccessibleName }
     }
     val manager = FrontendHotSwapManager.getInstance(project)
-    val job = manager.coroutineScope.launch {
-      manager.currentStatusFlow.collectLatest { status ->
-        onStatusChanged(component, status?.status, editorTag, project)
+    val job = manager.coroutineScope.launch(Dispatchers.EDT) {
+      manager.currentStatusFlow.collectLatest { state ->
+        val status = state?.status ?: HotSwapVisibleStatus.Hidden
+        onStatusChanged(component, status, editorTag, project)
       }
     }
     Disposer.register(parentDisposable, Disposable {
-      if (logger.isDebugEnabled) {
-        logger.debug("Floating toolbar disposed ($editorTag)")
-      }
+      logger.debug { "Floating toolbar disposed ($editorTag)" }
       job.cancel("disposed")
     })
   }
 
-  private suspend fun onStatusChanged(component: FloatingToolbarComponent, status: HotSwapVisibleStatus?, editorTag: String?, project: Project) =
-    withContext(Dispatchers.EDT) {
-      fun updateActions() {
-        if (component is ActionToolbarImpl) {
-          component.updateActionsAsync()
-        }
-      }
+  private fun onStatusChanged(
+    component: FloatingToolbarComponent,
+    status: HotSwapVisibleStatus,
+    editorTag: String?,
+    project: Project,
+  ) {
+    fun updateActions() = (component as? ActionToolbarImpl)?.updateActionsAsync()
 
-      if (!showFloatingToolbar(project)) {
-        if (logger.isDebugEnabled) {
-          logger.debug("Hide button because it is disabled ($editorTag)")
-        }
+    EDT.assertIsEdt()
+
+    if (!showFloatingToolbar(project)) {
+      logger.debug { "Hide button because it is disabled ($editorTag)" }
+      component.scheduleHide()
+      return
+    }
+
+    logger.debug { "Button status changed: $status ($editorTag)" }
+    HotSwapUiExtension.computeSafeIfAvailable { it.announceHotSwapStatus(project, status) }
+    hotSwapAction.status = status
+    when (status) {
+      HotSwapVisibleStatus.InProgress, HotSwapVisibleStatus.Success -> {
+        updateActions()
+      }
+      HotSwapVisibleStatus.NoChanges -> {
         component.scheduleHide()
-        return@withContext
       }
-
-      if (logger.isDebugEnabled) {
-        logger.debug("Button status changed: $status ($editorTag)")
+      HotSwapVisibleStatus.ChangesReady, is HotSwapVisibleStatus.ChangesNotHotSwappable -> {
+        updateActions()
+        component.scheduleShow()
       }
-      if (status != null) {
-        HotSwapUiExtension.computeSafeIfAvailable { it.announceHotSwapStatus(project, status) }
-      }
-      when (status) {
-        HotSwapVisibleStatus.IN_PROGRESS -> {
-          hotSwapAction.status = HotSwapButtonStatus.IN_PROGRESS
-          updateActions()
-        }
-        HotSwapVisibleStatus.SUCCESS -> {
-          hotSwapAction.status = HotSwapButtonStatus.SUCCESS
-          updateActions()
-        }
-        HotSwapVisibleStatus.NO_CHANGES -> {
-          component.scheduleHide()
-        }
-        HotSwapVisibleStatus.CHANGES_READY -> {
-          hotSwapAction.status = HotSwapButtonStatus.READY
-          updateActions()
-          component.scheduleShow()
-        }
-        HotSwapVisibleStatus.HIDDEN, null -> {
-          component.hideImmediately()
-        }
-
+      HotSwapVisibleStatus.Hidden -> {
+        component.hideImmediately()
       }
     }
+  }
 
   override fun onHiddenByEsc(dataContext: DataContext) {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
-    if (logger.isDebugEnabled) {
-      logger.debug("Button is hidden by Esc button: ${dataContext.editorTag}")
-    }
+    logger.debug { "Button is hidden by Esc button: ${dataContext.editorTag}" }
     FrontendHotSwapManager.getInstance(project).notifyHidden()
   }
 }
@@ -297,9 +290,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
 internal class HideAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    if (logger.isDebugEnabled) {
-      logger.debug("Button is hidden by user: ${e.dataContext.editorTag}")
-    }
+    logger.debug { "Button is hidden by user: ${e.dataContext.editorTag}" }
     FrontendHotSwapManager.getInstance(project).notifyHidden()
   }
 
@@ -313,4 +304,6 @@ internal class HideAction : AnAction() {
 
 private val DataContext.editorTag: String? get() = getData(PlatformCoreDataKeys.FILE_EDITOR)?.file?.path
 
-private val XDebugHotSwapCurrentSessionStatus.hasChanges get() = status == HotSwapVisibleStatus.CHANGES_READY
+private val XDebugHotSwapCurrentSessionStatus.hasChanges get() = status.hasChanges
+private val HotSwapVisibleStatus.hasChanges get() =
+  this == HotSwapVisibleStatus.ChangesReady || this is HotSwapVisibleStatus.ChangesNotHotSwappable

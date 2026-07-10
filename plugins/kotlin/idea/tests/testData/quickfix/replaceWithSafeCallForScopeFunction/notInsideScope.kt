@@ -5,8 +5,8 @@
 // ACTION: Surround with null check
 // ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type String?
 // WITH_STDLIB
-// K2_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'String?'.
-// K2_AFTER_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'String?'.
+// K2_AFTER_ERROR: UNSAFE_CALL
+// K2_ERROR: UNSAFE_CALL
 fun foo(a: String?) {
     a<caret>.length
 }

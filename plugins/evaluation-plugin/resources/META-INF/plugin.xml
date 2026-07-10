@@ -40,6 +40,10 @@
     <module name="intellij.evaluationPlugin.ijnext"/>
   </content>
 
+  <content>
+    <module name="intellij.libraries.clikt" loading="embedded"/>
+  </content>
+
   <dependencies>
     <module name="intellij.libraries.ktor.client"/>
     <module name="intellij.libraries.kotlinx.io"/>

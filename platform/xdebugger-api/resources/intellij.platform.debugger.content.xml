@@ -22,8 +22,6 @@
 
     <extensionPoint qualifiedName="com.intellij.xdebugger.customXDescriptorSerializerProvider"
                     interface="com.intellij.xdebugger.frame.CustomXDescriptorSerializerProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.xdebugger.splitDebuggerModeEnabler" interface="com.intellij.xdebugger.XDebuggerSplitModeEnabler"
-                    dynamic="false"/>
     <extensionPoint qualifiedName="com.intellij.xdebugger.xTextValueModificationPreparatorProvider" interface="com.intellij.xdebugger.frame.XValueTextModificationPreparatorProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.xdebugger.breakpointBehaviorPolicy" interface="com.intellij.xdebugger.XBreakpointBehaviorPolicy"

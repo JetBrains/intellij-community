@@ -1,22 +1,24 @@
+from _hashlib import HASH
 from _typeshed import ReadableBuffer
 from collections.abc import Callable
-from hashlib import _Hash
+from typing import ClassVar, Final
 
 from paramiko.message import Message
 from paramiko.transport import Transport
 
-c_MSG_KEXDH_GEX_REQUEST_OLD: bytes
-c_MSG_KEXDH_GEX_GROUP: bytes
-c_MSG_KEXDH_GEX_INIT: bytes
-c_MSG_KEXDH_GEX_REPLY: bytes
-c_MSG_KEXDH_GEX_REQUEST: bytes
+c_MSG_KEXDH_GEX_REQUEST_OLD: Final[bytes]
+c_MSG_KEXDH_GEX_GROUP: Final[bytes]
+c_MSG_KEXDH_GEX_INIT: Final[bytes]
+c_MSG_KEXDH_GEX_REPLY: Final[bytes]
+c_MSG_KEXDH_GEX_REQUEST: Final[bytes]
 
-class KexGex:
-    name: str
-    min_bits: int
-    max_bits: int
-    preferred_bits: int
-    hash_algo: Callable[[ReadableBuffer], _Hash]
+class KexGexSHA256:
+    name: ClassVar[str]
+    min_bits: ClassVar[int]
+    max_bits: ClassVar[int]
+    preferred_bits: ClassVar[int]
+    hash_algo: ClassVar[Callable[[ReadableBuffer], HASH]]
+
     transport: Transport
     p: int | None
     q: int | None
@@ -25,10 +27,7 @@ class KexGex:
     e: int | None
     f: int | None
     old_style: bool
+
     def __init__(self, transport: Transport) -> None: ...
     def start_kex(self, _test_old_style: bool = False) -> None: ...
     def parse_next(self, ptype: int, m: Message) -> None: ...
-
-class KexGexSHA256(KexGex):
-    name: str
-    hash_algo: Callable[[ReadableBuffer], _Hash]

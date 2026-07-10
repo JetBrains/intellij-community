@@ -225,8 +225,13 @@ public class BuildContextImpl implements BuildContext {
 
     String jvmTarget = CLFlags.JVM_TARGET.getOptionalScalarValue(flags);
     if (jvmTarget != null) {
+      String platformVersion = "8".equals(jvmTarget)? "1.8" : jvmTarget;
+      // generate compatible bytecode
       options.add("-jvm-target");
-      options.add("8".equals(jvmTarget)? "1.8" : jvmTarget);
+      options.add(platformVersion);
+      // limit the API of the JDK in the classpath to the specified Java version
+      options.add("-Xjdk-release");
+      options.add(platformVersion);
     }
 
     StringBuilder optIns = new StringBuilder();
@@ -544,6 +549,9 @@ public class BuildContextImpl implements BuildContext {
       }
       if (msg.getKind() == Message.Kind.ERROR) {
         myMessageSink.append("Error: ");
+      }
+      else if (msg.getKind() == Message.Kind.WARNING) {
+        myMessageSink.append("Warning: ");
       }
       myMessageSink.append(msg.getText()).append("\n");
     }

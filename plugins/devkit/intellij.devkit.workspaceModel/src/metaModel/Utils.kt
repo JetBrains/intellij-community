@@ -2,7 +2,9 @@
 package com.intellij.devkit.workspaceModel.metaModel
 
 import com.intellij.psi.PsiElement
+import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 
 interface ObjMetaElementWithPsi {
   val sourcePsi: PsiElement?
@@ -17,3 +19,7 @@ fun unsupportedType(type: String?): ValueType<*> {
 }
 
 class MetaProblem(val message: String, val psiToHighlight: PsiElement?)
+
+internal data class CompiledObjModuleAndK2Module(val compiledObjModule: CompiledObjModule, val kotlinModule: KaModule)
+
+internal infix fun CompiledObjModule.and(kaModule: KaModule) = CompiledObjModuleAndK2Module(this, kaModule)

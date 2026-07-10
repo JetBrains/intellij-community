@@ -1,7 +1,7 @@
 // "Replace 'emptyList()' with 'mutableListOf()'" "true"
 // PRIORITY: HIGH
-// K2_ERROR: Argument type mismatch: actual type is 'List<uninferred T (of fun <T> emptyList)>', but 'MutableList<Int>?' was expected.
-// K2_ERROR: Cannot infer type for type parameter 'T'. Specify it explicitly.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
 
 fun foo(list: MutableList<Int>?) {}
 

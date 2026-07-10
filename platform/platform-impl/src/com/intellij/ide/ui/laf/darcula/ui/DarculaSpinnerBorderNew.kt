@@ -6,7 +6,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.ui.ErrorBorderCapable
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Insets
@@ -19,7 +18,7 @@ import javax.swing.plaf.UIResource
  * Spinner border for new UI themes
  */
 // todo rename, make public API
-@ApiStatus.Internal
+@Suppress("unused") // used from border in .theme.json
 internal class DarculaSpinnerBorderNew : Border, UIResource, ErrorBorderCapable {
 
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {

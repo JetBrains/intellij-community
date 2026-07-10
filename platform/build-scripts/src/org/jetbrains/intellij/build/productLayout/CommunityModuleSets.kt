@@ -122,8 +122,6 @@ object CommunityModuleSets {
     // TODO: may be debugger shouldn't be essential? E.g. gateway doesn't need it.
     moduleSet(debugger())
 
-    moduleSet(problemsView())
-
     // The loading="embedded" attribute is required here because the intellij.platform.find module (which is loaded
     // in embedded mode) has a compile dependency on intellij.platform.scopes. Without marking scopes as embedded,
     // this would cause NoClassDefFoundError at runtime when classes from find try to use classes from scopes.
@@ -142,6 +140,7 @@ object CommunityModuleSets {
     module("intellij.platform.pluginManager.shared")
     module("intellij.platform.pluginManager.backend")
     module("intellij.platform.pluginManager.frontend")
+    module("intellij.platform.ide.updateChecker.backend")
 
     module("intellij.platform.execution.impl.frontend")
     module("intellij.platform.execution.impl.backend")
@@ -176,35 +175,15 @@ object CommunityModuleSets {
     embeddedModule("intellij.platform.debugger.impl")
   }
 
-  /**
-   * Provides the platform for Problems View ToolWindow.
-   */
-  fun problemsView(): ModuleSet = moduleSet("problemsView", includeDependencies = true) {
-    module("intellij.platform.problemsView.frontend")
-    module("intellij.platform.problemsView.backend")
-    module("intellij.platform.problemsView.shared")
-  }
-
   // endregion
 
   // region Feature Module Sets
 
   /**
-   * VCS (Version Control System) modules including shared and frontend parts.
+   * VCS (Version Control System) shared anchor modules.
+   * Implementation, log, DVCS, and sqlite content is bundled via intellij.platform.vcs.plugin.
    */
   fun vcs(): ModuleSet = moduleSet("vcs") {
-    module("intellij.platform.vcs.impl")
-    module("intellij.platform.vcs.impl.exec")
-    module("intellij.platform.vcs.impl.debugger")
-    module("intellij.platform.vcs.impl.lang")
-    module("intellij.platform.vcs.impl.lang.actions")
-    module("intellij.platform.vcs.log")
-    module("intellij.platform.vcs.log.impl")
-    module("intellij.platform.sqlite")
-    module("intellij.platform.vcs.log.graph")
-    module("intellij.platform.vcs.log.graph.impl")
-    module("intellij.platform.vcs.dvcs")
-    module("intellij.platform.vcs.dvcs.impl")
     embeddedModule("intellij.platform.vcs")
 
     moduleSet(vcsShared())
@@ -221,16 +200,26 @@ object CommunityModuleSets {
   }
 
   /**
+   * Language Server Protocol (LSP) support modules.
+   */
+  fun lsp(): ModuleSet = moduleSet("lsp") {
+    moduleSet(CoreModuleSets.librariesLsp4j())
+    embeddedModule("intellij.platform.lsp")
+    embeddedModule("intellij.platform.lsp.impl")
+    module("intellij.platform.lsp.impl.structureView")
+  }
+
+  /**
    * XML support modules.
    */
   fun xml(): ModuleSet = moduleSet("xml", alias = "com.intellij.modules.xml") {
-    embeddedModule("intellij.xml.dom")
-    embeddedModule("intellij.xml.dom.impl")
+    module("intellij.xml.dom")
+    module("intellij.xml.dom.impl")
     module("intellij.xml.structureView")
     module("intellij.xml.structureView.impl")
     embeddedModule("intellij.xml.psi")
     embeddedModule("intellij.xml.psi.impl")
-    embeddedModule("intellij.xml.analysis")
+    module("intellij.xml.analysis")
     module("intellij.xml.emmet")
     module("intellij.xml.emmet.backend")
     module("intellij.xml.emmet.frontend")
@@ -238,8 +227,8 @@ object CommunityModuleSets {
     embeddedModule("intellij.xml.parser")
     embeddedModule("intellij.xml.syntax")
     module("intellij.relaxng")
-    embeddedModule("intellij.xml.impl")
-    embeddedModule("intellij.xml.analysis.impl")
+    module("intellij.xml.impl")
+    module("intellij.xml.analysis.impl")
     // embedded because intellij.xml.dom.impl which depends on it, is also embedded
     embeddedModule("intellij.libraries.cglib")
     embeddedModule("intellij.libraries.xerces")
@@ -251,11 +240,11 @@ object CommunityModuleSets {
    * XML support modules without Structure View UI.
    */
   fun xmlWithoutStructureView(): ModuleSet = moduleSet("xml.without.structureView", alias = "com.intellij.modules.xml") {
-    embeddedModule("intellij.xml.dom")
-    embeddedModule("intellij.xml.dom.impl")
+    module("intellij.xml.dom")
+    module("intellij.xml.dom.impl")
     embeddedModule("intellij.xml.psi")
     embeddedModule("intellij.xml.psi.impl")
-    embeddedModule("intellij.xml.analysis")
+    module("intellij.xml.analysis")
     module("intellij.xml.emmet")
     module("intellij.xml.emmet.backend")
     module("intellij.xml.emmet.frontend")
@@ -263,8 +252,8 @@ object CommunityModuleSets {
     embeddedModule("intellij.xml.parser")
     embeddedModule("intellij.xml.syntax")
     module("intellij.relaxng")
-    embeddedModule("intellij.xml.impl")
-    embeddedModule("intellij.xml.analysis.impl")
+    module("intellij.xml.impl")
+    module("intellij.xml.analysis.impl")
     // embedded because intellij.xml.dom.impl which depends on it, is also embedded
     embeddedModule("intellij.libraries.cglib")
     embeddedModule("intellij.libraries.xerces")
@@ -316,7 +305,7 @@ object CommunityModuleSets {
    * These are commonly needed by test plugins and are duplicated across products.
    */
   fun platformTestFrameworksCore(): ModuleSet = moduleSet("platform.testFrameworks.core") {
-    module("intellij.platform.testExtensions")
+    module("intellij.platform.testExtensions", allowedMissingPluginIds = listOf("org.jetbrains.ls.plugin.java"))
     module("intellij.platform.testFramework", allowedMissingPluginIds = listOf("com.intellij.java", "com.intellij.platform.images"))
     module("intellij.platform.testFramework.common")
     module("intellij.platform.testFramework.core")
@@ -373,10 +362,6 @@ object CommunityModuleSets {
     module("intellij.platform.collaborationTools")
     module("intellij.platform.collaborationTools.auth")
     module("intellij.platform.collaborationTools.auth.base")
-    module("intellij.platform.tasks")
-    module("intellij.platform.tasks.impl")
-    module("intellij.platform.tasks.impl.bookmarks")
-    module("intellij.platform.tasks.impl.debugger")
     module("intellij.platform.scriptDebugger.ui")
     module("intellij.platform.scriptDebugger.backend")
     module("intellij.platform.scriptDebugger.protocolReaderRuntime")
@@ -389,6 +374,7 @@ object CommunityModuleSets {
     module("intellij.platform.inspect")
     module("intellij.settingsSync.core")
     module("intellij.spellchecker")
+    module("intellij.spellchecker.vcs")
     module("intellij.spellchecker.xml")
     module("intellij.platform.buildView")
     module("intellij.platform.buildView.backend")
@@ -397,7 +383,7 @@ object CommunityModuleSets {
     module("intellij.platform.ide.impl.wsl")
     module("intellij.platform.diagnostic.telemetry.agent.extension")
     // todo: move to essential modules when not embedded
-    embeddedModule("intellij.platform.polySymbols.backend")
+    module("intellij.platform.polySymbols.backend")
     embeddedModule("intellij.regexp")
     module("intellij.platform.langInjection")
     module("intellij.platform.langInjection.backend")
@@ -405,7 +391,9 @@ object CommunityModuleSets {
     module("intellij.libraries.grpc.netty.shaded")
     module("intellij.libraries.jspecify")
 
-    moduleSet(vcs())
+    embeddedModule("intellij.platform.vcs")
+    moduleSet(vcsShared())
+    moduleSet(lsp())
     moduleSet(xml())
     moduleSet(duplicates())
     embeddedModule("intellij.libraries.batik")

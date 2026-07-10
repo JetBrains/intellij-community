@@ -84,7 +84,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
       }
     }
     else {
-      if (!ignoreMethodsOfDeprecated) {
+      if (!ignoreMethodsOfDeprecated && !overridesMethodInNonDeprecatedClass(element, elementToHighlight)) {
         PsiClass containingClass = element instanceof PsiMember ? ((PsiMember)element).getContainingClass() : null;
         if (containingClass != null) {
           checkDeprecated(containingClass, elementToHighlight, rangeInElement, ignoreInsideDeprecated, ignoreImportStatements,
@@ -119,6 +119,25 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
 
   private static boolean isElementInsideImportStatement(@NotNull PsiElement elementToHighlight) {
     return PsiTreeUtil.getParentOfType(elementToHighlight, PsiImportStatement.class) != null;
+  }
+
+  /**
+   * A method that overrides or implements a method declared in a non-deprecated class is reachable through a
+   * non-deprecated API contract. In that case a usage must not be reported merely because the resolved declaration
+   * happens to live in a deprecated class (e.g. {@code c.foo()} where {@code foo} is declared in a non-deprecated
+   * interface, but the nearest override lives in a deprecated subclass).
+   */
+  private static boolean overridesMethodInNonDeprecatedClass(@NotNull PsiModifierListOwner element, @NotNull PsiElement context) {
+    if (!(element instanceof PsiMethod method)) return false;
+    for (PsiMethod superMethod : method.findSuperMethods()) {
+      PsiClass superClass = superMethod.getContainingClass();
+      if (superClass != null &&
+          !JavaDeprecationUtils.isDeprecated(superClass, context) &&
+          !JavaDeprecationUtils.isDeprecated(superMethod, context)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static boolean isElementInsideDeprecated(@NotNull PsiElement element) {

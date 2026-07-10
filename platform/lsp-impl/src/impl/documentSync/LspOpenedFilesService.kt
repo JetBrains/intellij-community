@@ -12,9 +12,8 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClientDescriptor
-import com.intellij.platform.lsp.api.LspClientProvider
+import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.LspServerState
-import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -43,8 +42,7 @@ internal class LspOpenedFilesService(private val project: Project) {
    */
   fun processOpenedFiles(files: Collection<VirtualFile>) {
     if (!TrustedProjects.isProjectTrusted(project)) return
-    @Suppress("DEPRECATION")
-    if (!LspClientProvider.EP_NAME.hasAnyExtensions() && !LspServerSupportProvider.EP_NAME.hasAnyExtensions()) return
+    if (!LspIntegrationProvider.hasAnyExtensions()) return
 
     val added = files.filter { it.isInLocalFileSystem }.let { openedFilesToHandle.addAll(it) }
     if (added) scheduleOpenedFilesProcessing()
@@ -54,10 +52,10 @@ internal class LspOpenedFilesService(private val project: Project) {
     class OpenedFilesData {
       val handledFiles: MutableSet<VirtualFile> = HashSet()
       val clientsToSendDidOpen: MultiMap<LspClientImpl, VirtualFile> = MultiMap()
-      val newClientsToStart: MutableCollection<Pair<Class<out LspClientProvider>, LspClientDescriptor>> = mutableListOf()
+      val newClientsToStart: MutableCollection<Pair<Class<out LspIntegrationProvider>, LspClientDescriptor>> = mutableListOf()
     }
 
-    val lspServerManager = LspClientManagerImpl.getInstanceImpl(project)
+    val manager = LspClientManagerImpl.getInstanceImpl(project)
 
     ReadAction.nonBlocking<OpenedFilesData> {
       val data = OpenedFilesData()
@@ -65,9 +63,9 @@ internal class LspOpenedFilesService(private val project: Project) {
         data.handledFiles.addAll(openedFilesToHandle)
       }
 
-      for (provider in LspClientProvider.getAllExtensions()) {
-        val providerClass: Class<out LspClientProvider> = provider.javaClass
-        val clientsForProvider = lspServerManager.getClients(providerClass)
+      for (provider in LspIntegrationProvider.getAllExtensions()) {
+        val providerClass: Class<out LspIntegrationProvider> = provider.javaClass
+        val clientsForProvider = manager.getClients(providerClass)
         var fileWithinServerRootsAndSupported = false
 
         for (openedFile in data.handledFiles) {
@@ -95,7 +93,7 @@ internal class LspOpenedFilesService(private val project: Project) {
       data
     }
       .coalesceBy(openFilesCoalesceObject)
-      .expireWith(lspServerManager)
+      .expireWith(manager)
       .finishOnUiThread(ModalityState.nonModal()) { data: OpenedFilesData ->
         openedFilesToHandle.removeAll(data.handledFiles)
         if (!data.clientsToSendDidOpen.isEmpty) {
@@ -108,7 +106,7 @@ internal class LspOpenedFilesService(private val project: Project) {
           }
         }
         data.newClientsToStart.forEach { (providerClass, descriptor) ->
-          lspServerManager.ensureClientStarted(providerClass, descriptor)
+          manager.ensureClientStarted(providerClass, descriptor)
         }
       }
       .submit(AppExecutorUtil.getAppExecutorService())
@@ -119,8 +117,8 @@ internal class LspOpenedFilesService(private val project: Project) {
    * The work is coalesced across calls, so it's cheap to invoke after any event that might have made some files irrelevant.
    */
   fun scheduleClosingFilesThatAreNotOfInterest() {
-    val lspServerManager = LspClientManagerImpl.getInstanceImpl(project)
-    val runningClients = lspServerManager.getAllRunningClients()
+    val lspClientManager = LspClientManagerImpl.getInstanceImpl(project)
+    val runningClients = lspClientManager.getRunningClients()
     if (runningClients.isEmpty()) return
 
     ReadAction
@@ -134,12 +132,12 @@ internal class LspOpenedFilesService(private val project: Project) {
         }
         clientToFilesToClose
       }
-      .expireWith(lspServerManager)
+      .expireWith(lspClientManager)
       .coalesceBy(closeFilesCoalesceObject)
-      .finishOnUiThread(ModalityState.nonModal()) { serverToFilesToClose: MultiMap<LspClientImpl, VirtualFile> ->
-        if (!serverToFilesToClose.isEmpty) {
+      .finishOnUiThread(ModalityState.nonModal()) { clientToFilesToClose: MultiMap<LspClientImpl, VirtualFile> ->
+        if (!clientToFilesToClose.isEmpty) {
           WriteAction.run<RuntimeException> {
-            serverToFilesToClose.entrySet().forEach { (client, files) ->
+            clientToFilesToClose.entrySet().forEach { (client, files) ->
               files.forEach { client.documentSyncManager.close(it) }
             }
           }

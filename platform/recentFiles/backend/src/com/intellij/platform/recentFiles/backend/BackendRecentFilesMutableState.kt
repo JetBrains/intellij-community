@@ -7,10 +7,6 @@ import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.RecentFilesMutableState
 
 internal class BackendRecentFilesMutableState(project: Project) : RecentFilesMutableState<VirtualFile>(project) {
-  override fun checkValidity(model: VirtualFile): Boolean {
-    return model.isValid
-  }
-
   fun getFilesByKind(filesKind: RecentFileKind): List<VirtualFile> {
     return chooseStateToWriteTo(filesKind).value.entries
   }

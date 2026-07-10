@@ -56,15 +56,17 @@ kotlin {
     implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.json.jvm231489733.get().let { "${it.group}:kotlinx-serialization-json:${it.version}" }) {
       isTransitive = false
     }
-    implementation(jps.org.slf4j.slf4j.api2013636515.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      isTransitive = false
-      exclude(group = "org.slf4j", module = "slf4j-jdk14")
-    }
     implementation(jps.io.github.pdvrieze.xmlutil.serialization.jvm796850685.get().let { "${it.group}:serialization:${it.version}" }) {
       isTransitive = false
     }
     implementation(jps.io.github.pdvrieze.xmlutil.core514653626.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
+    }
+  }
+  sourceSets.jvmMain.dependencies {
+    implementation(jps.org.slf4j.slf4j.api2013636515.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      isTransitive = false
+      exclude(group = "org.slf4j", module = "slf4j-jdk14")
     }
   }
   // KOTLIN__MARKER_END

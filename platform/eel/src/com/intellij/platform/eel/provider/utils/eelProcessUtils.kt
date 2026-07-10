@@ -13,6 +13,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayOutputStream
+import kotlin.coroutines.CoroutineContext
 
 /**
  * To simplify [EelProcessExecutionResult] delegation
@@ -81,8 +82,8 @@ internal val unlimitedDispatcher = Dispatchers.IO.limitedParallelism(parallelism
 
 // TODO: Move com.intellij.util.io.ProcessKt.computeDetached to intellij.platform.util.coroutines module, then remove this duplicate
 @DelicateCoroutinesApi
-internal suspend fun <T> computeDetached(action: suspend CoroutineScope.() -> T): T {
-  val deferred = GlobalScope.async(unlimitedDispatcher, block = action)
+internal suspend fun <T> computeDetached(dispatcher: CoroutineContext = unlimitedDispatcher, action: suspend CoroutineScope.() -> T): T {
+  val deferred = GlobalScope.async(dispatcher, block = action)
   try {
     return deferred.await()
   }

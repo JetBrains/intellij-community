@@ -1,7 +1,7 @@
 // "Add 'val' to parameter 'x'" "true"
 // WITH_STDLIB
 // COMPILER_ARGUMENTS: -XXLanguage:+GenericInlineClassParameter
-// K2_ERROR: Value class primary constructor must only have final read-only ('val') property parameters.
+// K2_ERROR: VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER
 
 @JvmInline
 value class Foo<T>(<caret>x: T)

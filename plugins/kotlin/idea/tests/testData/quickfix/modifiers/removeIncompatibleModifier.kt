@@ -1,6 +1,6 @@
 // "Remove 'public' modifier" "true"
-// K2_ERROR: Modifier 'private' is incompatible with 'public'.
-// K2_ERROR: Modifier 'public' is incompatible with 'private'.
+// K2_ERROR: INCOMPATIBLE_MODIFIERS
+// K2_ERROR: INCOMPATIBLE_MODIFIERS
 class Foo {
     public<caret> private fun bar() { }
 }

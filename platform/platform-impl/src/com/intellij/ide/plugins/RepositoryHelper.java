@@ -32,6 +32,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
@@ -105,7 +106,7 @@ public final class RepositoryHelper {
    * deprecated, use {@link #loadPluginModels}
    */
   @Deprecated(forRemoval = true)
-  public static @NotNull List<PluginNode> loadPlugins(
+  public static @NotNull @Unmodifiable List<PluginNode> loadPlugins(
     @Nullable String repositoryUrl,
     @Nullable BuildNumber build,
     @Nullable ProgressIndicator indicator
@@ -116,7 +117,7 @@ public final class RepositoryHelper {
 
   @Deprecated(forRemoval = true)
   @ApiStatus.Internal
-  public static @NotNull List<PluginNode> loadPlugins(
+  public static @NotNull @Unmodifiable List<PluginNode> loadPlugins(
     @Nullable String repositoryUrl,
     @Nullable BuildNumber build,
     @Nullable ProgressIndicator indicator,
@@ -242,7 +243,7 @@ public final class RepositoryHelper {
   @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   @SuppressWarnings("DeprecatedIsStillUsed")
-  public static @NotNull Collection<PluginNode> mergePluginsFromRepositories(
+  public static @NotNull @Unmodifiable Collection<PluginNode> mergePluginsFromRepositories(
     @NotNull List<PluginNode> marketplacePlugins,
     @NotNull List<PluginNode> customPlugins,
     boolean addMissing) {
@@ -311,7 +312,7 @@ public final class RepositoryHelper {
   /**
    * Looks for the given plugins in the Marketplace and custom repositories. Only compatible plugins are returned.
    */
-  public static @NotNull Collection<PluginNode> loadPlugins(@NotNull Set<PluginId> pluginIds) {
+  public static @NotNull @Unmodifiable Collection<PluginNode> loadPlugins(@NotNull Set<PluginId> pluginIds) {
     @SuppressWarnings("deprecation") var mpPlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginIds);
     var customPlugins = loadPluginsFromCustomRepositories(null).stream().filter(p -> pluginIds.contains(p.getPluginId())).toList();
     return mergePluginsFromRepositories(mpPlugins, customPlugins, true);

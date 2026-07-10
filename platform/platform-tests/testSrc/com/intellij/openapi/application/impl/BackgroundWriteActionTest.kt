@@ -15,6 +15,8 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readAndBackgroundWriteAction
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.rw.PlatformReadWriteActionSupport
 import com.intellij.openapi.application.useBackgroundWriteAction
 import com.intellij.openapi.application.useTrueSuspensionForWriteAction
@@ -951,6 +953,45 @@ class BackgroundWriteActionTest {
       }
     }
 
+  }
+
+  @Test
+  fun `newly added write action listeners are still invoked for pending background write action`(): Unit = concurrencyTest {
+    launch {
+      runReadActionBlocking {
+        checkpoint(1)
+        checkpoint(7)
+      }
+    }
+    launch {
+      checkpoint(2)
+      runWriteAction {
+        checkpoint(10)
+      }
+    }
+    checkpoint(3)
+    delay(100.milliseconds)
+    checkpoint(4)
+    application.threadingSupport!!.addWriteActionListener(object : WriteActionListener {
+      override fun beforeWriteActionStart(action: Class<*>) {
+        checkpoint(5)
+      }
+
+      override fun writeActionStarted(action: Class<*>) {
+        checkpoint(9)
+      }
+
+      override fun writeActionFinished(action: Class<*>) {
+        checkpoint(11)
+      }
+
+      override fun afterWriteActionFinished(action: Class<*>) {
+        checkpoint(12)
+      }
+    })
+    checkpoint(6)
+    checkpoint(8)
+    checkpoint(13)
   }
 
 }

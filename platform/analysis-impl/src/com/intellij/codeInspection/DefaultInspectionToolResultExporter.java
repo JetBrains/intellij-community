@@ -218,8 +218,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
   private void exportResult(@NotNull RefEntity refEntity, @NotNull CommonProblemDescriptor descriptor, @NotNull Element element) {
     PsiElement psiElement = descriptor instanceof ProblemDescriptor problemDescriptor ? problemDescriptor.getPsiElement() : null;
-    InspectionToolWrapper<?,?> toolWrapper =
-      myToolWrapper.getTool() instanceof AggregateResultsInspection ? getToolWrapperFromDescriptor(descriptor) : myToolWrapper;
+    InspectionToolWrapper<?,?> toolWrapper = getToolWrapper(descriptor);
     try {
       @NonNls Element problemClassElement = new Element(INSPECTION_RESULTS_PROBLEM_CLASS_ELEMENT);
       problemClassElement.setAttribute(INSPECTION_RESULTS_ID_ATTRIBUTE, toolWrapper.getShortName());
@@ -301,6 +300,10 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       }
       LOG.error(message, e);
     }
+  }
+
+  protected @NotNull InspectionToolWrapper<?, ?> getToolWrapper(@NotNull CommonProblemDescriptor descriptor) {
+    return myToolWrapper.getTool() instanceof AggregateResultsInspection ? getToolWrapperFromDescriptor(descriptor) : myToolWrapper;
   }
 
   private @NotNull InspectionToolWrapper<?, ?> getToolWrapperFromDescriptor(@NotNull CommonProblemDescriptor commonDescriptor) {

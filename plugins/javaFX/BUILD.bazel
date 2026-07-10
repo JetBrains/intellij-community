@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "javaFX-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":javaFX-tests_test_lib"],
+)
+### skip generation section `test intellij.javaFX.tests`
+
 ### auto-generated section `build intellij.javaFX` start
 
 jvm_library(
@@ -337,6 +345,8 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/util/concurrency",
         "//platform/util/concurrency:concurrency_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.javaFX.tests` end
@@ -349,11 +359,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.javaFX.tests` end
-
-### auto-generated section `test intellij.javaFX.tests` start
-
-jps_test(
-    name = "javaFX-tests_test",
-    runtime_deps = [":javaFX-tests_test_lib"],
-)
-### auto-generated section `test intellij.javaFX.tests` end

@@ -8,6 +8,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Objects;
@@ -28,8 +29,8 @@ public class ExitFinallyTransfer implements DfaControlTransferValue.TransferTarg
   }
 
   @Override
-  public @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
-                                                     @NotNull DataFlowInterpreter interpreter) {
+  public @NotNull @Unmodifiable List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
+                                                                   @NotNull DataFlowInterpreter interpreter) {
     return ((DfaControlTransferValue)state.pop()).dispatch(state, interpreter);
   }
 

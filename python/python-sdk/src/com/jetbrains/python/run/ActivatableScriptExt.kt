@@ -30,7 +30,7 @@ private val virtualEnvVars = listOf(
  * Filter envs that are set up by the activate script, adding other variables from the different shell can break the actual shell.
  */
 @ApiStatus.Internal
-fun Activatable.Script.readPythonEnvironment(): Map<String, String> {
+internal fun Activatable.Script.readPythonEnvironment(): Map<String, String> {
   val command = if (scriptPath.getEelDescriptor().osFamily == EelOsFamily.Windows) {
     ShellEnvironmentReader.winShellCommand(scriptPath, args)
   }

@@ -1598,6 +1598,9 @@ val servicePreloadingAllowListForNonCorePlugin: Set<String> = java.util.Set.of(
   "com.intellij.clouds.docker.gateway.host.DockerDevcontainerHostInitializer",
   "com.intellij.ui.jcef.JBCefStartup",
 
+  // VCS
+  "com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl",
+
   // Remote Development
   "com.intellij.cwm.plugin.driver.RemoteDriverHostService",
   "com.intellij.cwm.plugin.driver.RobotHostServiceImpl",
@@ -1614,7 +1617,6 @@ val servicePreloadingAllowListForNonCorePlugin: Set<String> = java.util.Set.of(
   "com.jetbrains.rdserver.daemon.BackendHighlighterRegistrationsHost",
   "com.jetbrains.rdserver.daemon.inlays.BackendCodeVisionHost.Settings",
   $$"com.jetbrains.rdserver.daemon.inlays.BackendCodeVisionHost$Settings",
-  "com.jetbrains.rdserver.debugger.BackendBreakpointHost",
   "com.jetbrains.rdserver.debugger.BackendConsoleInfoHost",
   "com.jetbrains.rdserver.debugger.BackendDebuggerHost",
   "com.jetbrains.rdserver.execution.BackendExternalSystemHost",

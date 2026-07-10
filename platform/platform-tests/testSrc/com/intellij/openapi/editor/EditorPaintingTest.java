@@ -235,6 +235,22 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     }
   }
 
+  public void testNewSelectionStaysMergedAfterInlayShift() throws Exception {
+    var state = setNewSelectionEnabled(true);
+    try {
+      initText("aaaa\naaaa\naaaa\naaaa\naaaa\naaaa\naaaa\naaaa\naaaa\naaaa");
+      setNewSelectionEnabled(true);
+
+      executeAction(IdeActions.ACTION_SELECT_ALL);
+      paintEditor(false, null, null);
+
+      addBlockInlay(getEditor().getDocument().getLineStartOffset(4), true, 0, 5);
+      checkResult();
+    } finally {
+      restoreSelectionState(state);
+    }
+  }
+
   private void runTestMarginIsShownOverSelectionInBlockInlayRange() throws Exception {
     initText("  \n ");
     addBlockInlay(0);

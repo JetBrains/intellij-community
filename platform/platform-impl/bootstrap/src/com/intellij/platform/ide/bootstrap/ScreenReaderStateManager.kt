@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
+import com.intellij.accessibility.LinuxAccessibilitySupport
 import com.intellij.ide.GeneralSettings
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
@@ -18,6 +19,7 @@ internal class ScreenReaderStateManager(coroutineScope: CoroutineScope) {
       apply(generalSettings)
       generalSettings.propertyChangedFlow.collect {
         if (it == GeneralSettings.PropertyNames.supportScreenReaders) {
+          LinuxAccessibilitySupport.syncAtkWrapperVmOption(generalSettings.isSupportScreenReaders)
           apply(generalSettings)
         }
       }

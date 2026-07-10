@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source;
 
@@ -52,7 +52,17 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
 
   @Override
   public VirtualFile getVirtualFile() {
-    return getViewProvider().isEventSystemEnabled() ? getViewProvider().getVirtualFile() : null;
+    return getViewProvider().getVirtualFile();
+  }
+
+  @Override
+  public boolean isDirectory() {
+    return false;
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    visitor.visitFile(this);
   }
 
   @Override
@@ -63,7 +73,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   @Override
   public boolean isValid() {
     if (myInvalidated) return false;
-    if (!getViewProvider().isPhysical() || myExplicitlySetAsValid) return true; // "dummy" file
+    if (!getViewProvider().correspondsToRealFile() || myExplicitlySetAsValid) return true; // "dummy" file
     return getViewProvider().getVirtualFile().isValid();
   }
 
@@ -98,7 +108,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
 
     copyCopyableDataTo(clone);
 
-    if (getViewProvider().isEventSystemEnabled()) {
+    if (getViewProvider().supportsSendingPsiEvents()) {
       clone.myOriginalFile = this;
     }
     else if (myOriginalFile != null) {
@@ -121,7 +131,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
 
   @Override
   public void checkSetName(String name) throws IncorrectOperationException {
-    if (!getViewProvider().isEventSystemEnabled()) return;
+    if (!getViewProvider().supportsSendingPsiEvents()) return;
     PsiFileImplUtil.checkSetName(this, name);
   }
 
@@ -153,7 +163,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
 
   @Override
   public void checkDelete() throws IncorrectOperationException {
-    if (!getViewProvider().isEventSystemEnabled()) {
+    if (!getViewProvider().supportsSendingPsiEvents()) {
       throw new IncorrectOperationException();
     }
     CheckUtil.checkWritable(this);
@@ -175,7 +185,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
 
   @Override
   public boolean isPhysical() {
-    return getViewProvider().isEventSystemEnabled();
+    return getViewProvider().supportsSendingPsiEvents();
   }
 
   @Override

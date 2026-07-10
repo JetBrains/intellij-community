@@ -43,7 +43,6 @@ import com.intellij.platform.debugger.impl.rpc.XNoBreakpointPossibleResponse
 import com.intellij.platform.debugger.impl.rpc.XRemoveBreakpointResponse
 import com.intellij.platform.debugger.impl.rpc.XToggleLineBreakpointResponse
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProject
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -53,7 +52,9 @@ import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XBreakpointType
+import com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
+import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.breakpoints.InlineBreakpointsVariantsManager
 import com.intellij.xdebugger.impl.breakpoints.InlineVariantWithMatchingBreakpoint
@@ -77,6 +78,7 @@ import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.concurrency.await
@@ -88,7 +90,8 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
   private val requestCounter = AtomicInteger()
 
   override suspend fun getBreakpointTypeList(project: ProjectId): XBreakpointTypeList {
-    val project = project.findProject()
+    val project = project.findProjectOrNull()
+                  ?: return XBreakpointTypeList(emptyList(), emptyFlow<List<XBreakpointTypeDto>>().toRpc())
     val initialTypes = getCurrentBreakpointTypeDtos(project)
     val typesFlow = channelFlow {
       val channelCs = this@channelFlow
@@ -129,15 +132,14 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
       }
     }
     catch (@Suppress("IncorrectCancellationExceptionHandling") e: CancellationException) {
-      @Suppress("IncorrectCancellationExceptionHandling")
       LOG.info("Request getBreakpointsInfo was cancelled: $e")
       return null
     }
   }
 
   override suspend fun addBreakpointThroughLux(projectId: ProjectId, typeId: XBreakpointTypeId): TimeoutSafeResult<XBreakpointDto?> {
-    val project = projectId.findProjectOrNull() ?: return CompletableDeferred<XBreakpointDto?>(value = null)
-    val type = XBreakpointUtil.findType(typeId.id) ?: return CompletableDeferred<XBreakpointDto?>(value = null)
+    val project = projectId.findProjectOrNull() ?: return CompletableDeferred(value = null)
+    val type = XBreakpointUtil.findType(typeId.id) ?: return CompletableDeferred(value = null)
     return project.service<BackendXBreakpointTypeApiProjectCoroutineScope>().cs.async(Dispatchers.EDT) {
       val requestId = requestCounter.getAndIncrement()
       val rawBreakpoint = type.addBreakpoint(project, null)
@@ -168,19 +170,19 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
       return XNoBreakpointPossibleResponse
     }
 
-    val singleVariant = variants.singleOrNull()
-    if (singleVariant != null) {
-      val variantText = readAction { singleVariant.text }
-      LOG.debug { "[$requestId] Single variant found: $variantText" }
-
-      if (request.hasBreakpoints) {
-        LOG.debug { "[$requestId] Breakpoint exists, returning XRemoveBreakpointResponse" }
-        return XRemoveBreakpointResponse
+    if (request.placement == XLineBreakpointVerticalPlacement.INTER_LINE) {
+      val fullLineVariant = readAction { variants.firstOrNull { !it.isMultiVariant && it.highlightRange == null } }
+      if (fullLineVariant == null) {
+        LOG.debug { "[$requestId] No full-line variant found for inter-line breakpoint, returning XNoBreakpointPossibleResponse" }
+        return XNoBreakpointPossibleResponse
       }
 
-      val breakpoint = createBreakpointByVariant(project, singleVariant, position, request)
-      LOG.debug { "[$requestId] Created breakpoint: $breakpoint, returning XLineBreakpointInstalledResponse" }
-      return XLineBreakpointInstalledResponse(breakpoint.breakpointId)
+      return toggleSingleVariantBreakpoint(fullLineVariant, requestId, request, project, position)
+    }
+
+    val singleVariant = variants.singleOrNull()
+    if (singleVariant != null) {
+      return toggleSingleVariantBreakpoint(singleVariant, requestId, request, project, position)
     }
 
     LOG.debug { "[$requestId] Multiple variants found (${variants.size}), creating selection dialog" }
@@ -216,6 +218,26 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     return XLineBreakpointMultipleVariantResponse(variantDtos, selectionCallback)
   }
 
+  private suspend fun toggleSingleVariantBreakpoint(
+    singleVariant: XLineBreakpointType<XBreakpointProperties<*>>.XLineBreakpointVariant,
+    requestId: Int,
+    request: XLineBreakpointInstallationRequest,
+    project: Project,
+    position: XSourcePosition,
+  ): XToggleLineBreakpointResponse {
+    val variantText = readAction { singleVariant.text }
+    LOG.debug { "[$requestId] Single variant found: $variantText" }
+
+    if (request.hasBreakpoints) {
+      LOG.debug { "[$requestId] Breakpoint exists, returning XRemoveBreakpointResponse" }
+      return XRemoveBreakpointResponse
+    }
+
+    val breakpoint = createBreakpointByVariant(project, singleVariant, position, request)
+    LOG.debug { "[$requestId] Created breakpoint: $breakpoint, returning XLineBreakpointInstalledResponse" }
+    return XLineBreakpointInstalledResponse(breakpoint.breakpointId)
+  }
+
   private suspend fun createBreakpointByVariant(
     project: Project,
     variant: XLineBreakpointType<XBreakpointProperties<*>>.XLineBreakpointVariant,
@@ -225,14 +247,19 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     val breakpointManager = getBreakpointManager(project)
     val placement = request.placement
     val line = readAction { position.line }
-    val breakpoint = XDebuggerUtilImpl.addLineBreakpoint(breakpointManager, variant, position.file, line, request.isTemporary, placement)
-    if (request.isLogging) {
-      breakpoint.setSuspendPolicy(SuspendPolicy.NONE)
-      if (request.logExpression != null) {
-        breakpoint.isLogMessage = true
-        breakpoint.setLogExpression(request.logExpression)
+    val additionalInfoBuilder = XLineBreakpointAdditionalInfo.Builder().apply {
+      setVerticalPlacement(placement)
+      if (request.isLogging) {
+        setSuspendPolicy(SuspendPolicy.NONE)
+        setLogExpressionIfEnabled(request.logExpression)
       }
+      setTemporary(request.isTemporary)
     }
+    val breakpoint = XDebuggerUtilImpl.addLineBreakpoint(breakpointManager,
+                                                         variant,
+                                                         position.file,
+                                                         line,
+                                                         additionalInfoBuilder.build())
     return breakpoint as XBreakpointBase<*, *, *>
   }
 
@@ -261,7 +288,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
   }
 
   override suspend fun computeInlineBreakpointVariants(projectId: ProjectId, fileId: VirtualFileId, lines: Set<Int>, documentPatchVersion: DocumentPatchVersion?): List<InlineBreakpointVariantsOnLine>? {
-    val project = projectId.findProject()
+    val project = projectId.findProjectOrNull() ?: return emptyList()
     val file = fileId.virtualFile() ?: return emptyList()
     val document = readAction { file.findDocument() } ?: return emptyList()
     if (!document.awaitIsInSyncAndCommitted(project, documentPatchVersion)) return null
@@ -272,7 +299,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
   }
 
   override suspend fun createVariantBreakpoint(projectId: ProjectId, fileId: VirtualFileId, line: Int, variantId: XInlineBreakpointVariantId) {
-    val project = projectId.findProject()
+    val project = projectId.findProjectOrNull() ?: return
     val file = fileId.virtualFile() ?: return
     val variant = variantId.findValue() ?: return
     val breakpointManager = getBreakpointManager(project)

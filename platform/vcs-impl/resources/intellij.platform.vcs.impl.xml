@@ -7,6 +7,7 @@
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.vcs.shared"/>
     <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.gson"/>
     <module name="intellij.libraries.guava"/>
@@ -27,10 +28,12 @@
     <module name="intellij.platform.credentialStore"/>
     <module name="intellij.platform.diagnostic.telemetry"/>
     <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.diff.impl"/>
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.concurrency"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.plugins"/>
     <module name="intellij.platform.ide.impl"/>

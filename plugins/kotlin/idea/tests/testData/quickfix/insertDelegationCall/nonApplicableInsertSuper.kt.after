@@ -1,7 +1,7 @@
 // "Insert 'super()' call" "true"
 // ERROR: No value passed for parameter 'x'
-// K2_ERROR: Explicit 'this' or 'super' call is required. There is no constructor in the superclass that can be called without arguments.
-// K2_AFTER_ERROR: No value passed for parameter 'x'.
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: EXPLICIT_DELEGATION_CALL_REQUIRED
 
 open class B(val x: Int)
 

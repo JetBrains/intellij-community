@@ -29,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
+import java.nio.file.Path;
+
 import static com.intellij.python.venv.VenvKt.createVenvAdditionalData;
 import static com.jetbrains.python.sdk.ModuleExKt.setPythonSdk;
 
@@ -130,7 +132,7 @@ public final class PySdkTools {
     commitChangesObeyWriteAction(modificator);
 
     PySkeletonRefresher
-      .refreshSkeletonsOfSdk(project, skeletonsPath, sdk);
+      .refreshSkeletonsOfSdk(project, Path.of(skeletonsPath), sdk);
   }
 
   /**

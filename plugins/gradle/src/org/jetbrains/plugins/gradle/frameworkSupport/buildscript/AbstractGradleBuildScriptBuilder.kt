@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil
+import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isKotlinNamedAccessorsForCollectionsSupported
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.gradle.util.GradleVersion
@@ -68,7 +69,14 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
             else -> call("tasks.named", argument(name), argument(code(type)), argument(block))
           }
           GradleDsl.KOTLIN -> when (name in PREDEFINED_TASKS) {
-            true -> call("tasks.$name", argument(block))
+            true -> {
+              if (isKotlinNamedAccessorsForCollectionsSupported(gradleVersion)) {
+                call("tasks.$name", argument(block))
+              }
+              else {
+                call("tasks.named<$type>", argument(name), argument(block))
+              }
+            }
             else -> call("tasks.named<$type>", argument(name), argument(block))
           }
         }

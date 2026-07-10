@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
@@ -17,6 +17,7 @@ import com.intellij.find.findUsages.JavaVariableFindUsagesOptions;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiClass;
@@ -37,6 +38,7 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
@@ -75,7 +77,7 @@ public final class UnusedSymbolUtil {
   }
 
   public static boolean isImplicitRead(@NotNull Project project, @NotNull PsiVariable element) {
-    for(ImplicitUsageProvider provider: ImplicitUsageProvider.EP_NAME.getExtensionList()) {
+    for (ImplicitUsageProvider provider: ImplicitUsageProvider.EP_NAME.getExtensionList()) {
       ProgressManager.checkCanceled();
       if (provider.isImplicitRead(element)) {
         return true;
@@ -89,7 +91,7 @@ public final class UnusedSymbolUtil {
   }
 
   public static boolean isImplicitWrite(@NotNull Project project, @NotNull PsiVariable element) {
-    for(ImplicitUsageProvider provider: ImplicitUsageProvider.EP_NAME.getExtensionList()) {
+    for (ImplicitUsageProvider provider: ImplicitUsageProvider.EP_NAME.getExtensionList()) {
       ProgressManager.checkCanceled();
       if (provider.isImplicitWrite(element)) {
         return true;
@@ -100,23 +102,17 @@ public final class UnusedSymbolUtil {
 
   public static @NotNull HighlightInfo.Builder createUnusedSymbolInfoBuilder(@NotNull PsiElement element,
                                                                              @NotNull @NlsContexts.DetailedDescription String message,
-                                                                             final @NotNull HighlightInfoType highlightInfoType,
+                                                                             @NotNull HighlightInfoType highlightInfoType,
                                                                              @Nullable String shortName) {
-    String tooltip;
-    if (shortName != null) {
-      tooltip = DaemonTooltipsUtil.getWrappedTooltip(message, shortName, true);
-    }
-    else {
-      tooltip = XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
-    }
+    String tooltip = shortName != null
+                     ? DaemonTooltipsUtil.getWrappedTooltip(message, shortName, true)
+                     : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
 
     HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element)
-      .description(message).escapedToolTip(tooltip).group(
-      GeneralHighlightingPass.POST_UPDATE_ALL);
+      .description(message).escapedToolTip(tooltip).group(GeneralHighlightingPass.POST_UPDATE_ALL);
 
     for (UnusedDeclarationFixProvider provider : UnusedDeclarationFixProvider.EP_NAME.getExtensionList()) {
-      IntentionAction[] fixes = provider.getQuickFixes(element);
-      for (IntentionAction fix : fixes) {
+      for (IntentionAction fix : provider.getQuickFixes(element)) {
         info.registerFix(fix, null, null, null, null);
       }
     }
@@ -127,13 +123,9 @@ public final class UnusedSymbolUtil {
                                     @NotNull PsiFile containingFile,
                                     @NotNull PsiField field,
                                     @NotNull GlobalUsageHelper helper) {
-    if (helper.isLocallyUsed(field)) {
-      return true;
-    }
-    if (field instanceof PsiEnumConstant enumConstant && isEnumMethodUsed(project, containingFile, enumConstant, helper)) {
-      return true;
-    }
-    return !weAreSureThereAreNoUsages(project, containingFile, field, helper);
+    return helper.isLocallyUsed(field) 
+           || field instanceof PsiEnumConstant enumConstant && isEnumMethodUsed(project, containingFile, enumConstant, helper)
+           || !weAreSureThereAreNoUsages(project, containingFile, field, helper);
   }
 
   public static boolean isMethodUsed(@NotNull Project project,
@@ -152,9 +144,8 @@ public final class UnusedSymbolUtil {
       // consider value() method with array return type used, when the containing @interface is used
       return true;
     }
-    boolean isPrivate = method.hasModifierProperty(PsiModifier.PRIVATE);
     if (JavaHighlightUtil.isSerializationRelatedMethod(method, containingClass)) return true;
-    if (isPrivate) {
+    if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
       if (isIntentionalPrivateConstructor(method, containingClass)) {
         return true;
       }
@@ -167,8 +158,7 @@ public final class UnusedSymbolUtil {
     }
     else {
       //class maybe used in some weird way, e.g. from XML, therefore the only constructor is used too
-      if (isTheOnlyConstructor(method, containingClass) &&
-          isClassUsed(project, containingFile, containingClass, helper)) {
+      if (isTheOnlyConstructor(method, containingClass) && isClassUsed(project, containingFile, containingClass, helper)) {
         return true;
       }
       if (isImplicitUsage(project, method)) return true;
@@ -182,12 +172,12 @@ public final class UnusedSymbolUtil {
   }
 
   private static boolean isTheOnlyConstructor(@NotNull PsiMethod method, @Nullable PsiClass containingClass) {
-    return method.isConstructor() && containingClass != null && containingClass.getConstructors().length == 1;
+    return containingClass != null && method.isConstructor() && containingClass.getConstructors().length == 1;
   }
 
   private static boolean weAreSureThereAreNoUsages(@NotNull Project project,
                                                    @NotNull PsiFile containingFile,
-                                                   final @NotNull PsiMember member,
+                                                   @NotNull PsiMember member,
                                                    @NotNull GlobalUsageHelper helper) {
     log("* " + member.getName() + ": call wearesure");
     if (!helper.shouldCheckUsages(member)) {
@@ -197,7 +187,7 @@ public final class UnusedSymbolUtil {
 
     final PsiFile ignoreFile = helper.isCurrentFileAlreadyChecked() ? containingFile : null;
 
-    boolean sure = processUsages(project, containingFile, member, ignoreFile, info -> {
+    boolean sure = processUsages(project, containingFile, getUseScope(member, helper), member, ignoreFile, info -> {
       PsiFile psiFile = info.getFile();
       if (psiFile == ignoreFile || psiFile == null) {
         return true; // ignore usages in containingFile because isLocallyUsed() method would have caught that
@@ -205,11 +195,10 @@ public final class UnusedSymbolUtil {
       int offset = info.getNavigationOffset();
       if (offset == -1) return true;
       PsiElement element = psiFile.findElementAt(offset);
-      boolean inComment = element instanceof PsiComment;
-      log("*     "+member.getName()+": usage :"+element);
-      return inComment; // ignore comments
+      log("*     " + member.getName() + ": usage :" + element);
+      return element instanceof PsiComment; // ignore comments
     });
-    log("*     "+member.getName()+": result:"+sure);
+    log("*     " + member.getName() + ": result:" + sure);
     return sure;
   }
 
@@ -218,13 +207,23 @@ public final class UnusedSymbolUtil {
   }
 
   public static @NotNull SearchScope getUseScope(@NotNull PsiMember member) {
+    return getUseScope(member, null);
+  }
+
+  private static @NotNull SearchScope getUseScope(@NotNull PsiMember member, GlobalUsageHelper helper) {
     Project project = member.getProject();
     SearchScope useScope = PsiSearchHelper.getInstance(project).getUseScope(member);
-    // some classes may have references from within XML outside dependent modules, e.g. our actions
-    if (useScope instanceof GlobalSearchScope globalUseScope && member instanceof PsiClass) {
-      GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
-      GlobalSearchScope xmlFilesScope = GlobalSearchScope.getScopeRestrictedByFileTypes(projectScope, XmlFileType.INSTANCE);
-      useScope = globalUseScope.uniteWith(xmlFilesScope);
+    if (useScope instanceof GlobalSearchScope globalUseScope) {
+      if (member instanceof PsiClass) {
+        // some classes may have references from within XML outside dependent modules, e.g. our actions
+        GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
+        GlobalSearchScope xmlFilesScope = GlobalSearchScope.getScopeRestrictedByFileTypes(projectScope, XmlFileType.INSTANCE);
+        useScope = globalUseScope.uniteWith(xmlFilesScope);
+      }
+      if (helper != null && helper.ignoreTestUsages()
+          && !TestSourcesFilter.isTestSources(member.getContainingFile().getVirtualFile(), project)) {
+        useScope = useScope.intersectWith(GlobalSearchScope.notScope(GlobalSearchScopesCore.projectTestScope(project)));
+      }
     }
     return useScope;
   }
@@ -240,7 +239,7 @@ public final class UnusedSymbolUtil {
 
   public static boolean processUsages(@NotNull Project project,
                                       @NotNull PsiFile containingFile,
-                                      final @NotNull SearchScope useScope,
+                                      @NotNull SearchScope useScope,
                                       @NotNull PsiMember member,
                                       @Nullable PsiFile ignoreFile,
                                       @NotNull Processor<? super UsageInfo> usageInfoProcessor) {
@@ -250,9 +249,8 @@ public final class UnusedSymbolUtil {
       return false;
     }
     PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(project);
-    if (useScope instanceof GlobalSearchScope) {
-
-      PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, ignoreFile);
+    if (useScope instanceof GlobalSearchScope scope) {
+      PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(name, scope, ignoreFile);
       if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES
           // try to search for private and package-private members unconditionally - they are unlikely to have millions of usages
           && (member.hasModifierProperty(PsiModifier.PUBLIC) || member.hasModifierProperty(PsiModifier.PROTECTED))) {
@@ -269,14 +267,10 @@ public final class UnusedSymbolUtil {
 
       if (member instanceof PsiMethod && member.hasModifierProperty(PsiModifier.PUBLIC)) {
         String propertyName = PropertyUtilBase.getPropertyName(member);
-        if (propertyName != null) {
-          SearchScope fileScope = containingFile.getUseScope();
-          if (fileScope instanceof GlobalSearchScope &&
-              searchHelper.isCheapEnoughToSearch(propertyName, (GlobalSearchScope)fileScope, ignoreFile) ==
-              PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
-            log("* "+member.getName()+" too many prop usages; false");
-            return false;
-          }
+        if (propertyName != null && containingFile.getUseScope() instanceof GlobalSearchScope s &&
+            searchHelper.isCheapEnoughToSearch(propertyName, s, ignoreFile) == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
+          log("* " + member.getName() + " too many prop usages; false");
+          return false;
         }
       }
     }
@@ -313,9 +307,9 @@ public final class UnusedSymbolUtil {
                                           @NotNull PsiEnumConstant enumConstant,
                                           @NotNull GlobalUsageHelper helper) {
     final PsiClass containingClass = enumConstant.getContainingClass();
-    if (!(containingClass instanceof PsiClassImpl)) return true;
-    final PsiMethod valuesMethod = ((PsiClassImpl)containingClass).getValuesMethod();
-    final PsiMethod valueOfMethod = ((PsiClassImpl)containingClass).getValueOfMethod();
+    if (!(containingClass instanceof PsiClassImpl aClass)) return true;
+    final PsiMethod valuesMethod = aClass.getValuesMethod();
+    final PsiMethod valueOfMethod = aClass.getValueOfMethod();
     return valuesMethod == null || isMethodUsed(project, containingFile, valuesMethod, helper) ||
            valueOfMethod == null || isMethodUsed(project, containingFile, valueOfMethod, helper);
   }
@@ -324,8 +318,8 @@ public final class UnusedSymbolUtil {
     if (member instanceof PsiClass) return false;
     if (!(containingFile instanceof PsiJavaFile)) return true;  // Groovy field can be referenced from Java by getter
     if (member instanceof PsiField) return false;  //Java field cannot be referenced by anything but its name
-    if (member instanceof PsiMethod) {
-      if (PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)member)) return true;  //Java accessors can be referenced by field name from Groovy
+    if (member instanceof PsiMethod method) {
+      if (PropertyUtilBase.isSimplePropertyAccessor(method)) return true;  //Java accessors can be referenced by field name from Groovy
       for (ImplicitUsageProvider provider : ImplicitUsageProvider.EP_NAME.getExtensionList()) {
         ProgressManager.checkCanceled();
         if (provider.isReferencedByAlternativeNames(member)) return true;
@@ -360,8 +354,6 @@ public final class UnusedSymbolUtil {
   }
 
   private static boolean isIntentionalPrivateConstructor(@NotNull PsiMethod method, PsiClass containingClass) {
-    return method.isConstructor() &&
-           containingClass != null &&
-           containingClass.getConstructors().length == 1;
+    return method.isConstructor() && containingClass != null && containingClass.getConstructors().length == 1;
   }
 }

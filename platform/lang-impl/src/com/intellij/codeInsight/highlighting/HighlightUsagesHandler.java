@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -122,6 +121,7 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
     for (HighlightUsagesHandlerFactory factory : HighlightUsagesHandlerFactory.EP_NAME.getExtensionList()) {
       if (!dumbService.isUsableInCurrentContext(factory)) continue;
       try {
+        //noinspection unchecked
         HighlightUsagesHandlerBase<T> handler = factory.createHighlightUsagesHandler(editor, psiFile, visibleRange);
         if (handler != null && dumbService.isUsableInCurrentContext(handler)) {
           return handler;
@@ -290,31 +290,14 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
                                      @NotNull Editor editor,
                                      @NotNull TextAttributesKey attributesKey,
                                      boolean clearHighlights,
-                                     @NotNull List<? extends TextRange> textRanges) {
-    highlightRanges(highlightManager, editor, null, attributesKey, clearHighlights, textRanges);
-  }
-
-  private static void highlightRanges(@NotNull HighlightManager highlightManager,
-                                     @NotNull Editor editor,
-                                     @Nullable TextAttributes attributes,
-                                     @Nullable TextAttributesKey attributesKey,
-                                     boolean clearHighlights,
-                                     @NotNull List<? extends TextRange> textRanges) {
-    assert attributes != null || attributesKey != null : "Both attributes and attributesKey are null";
-
+                                     @NotNull List<? extends @NotNull TextRange> textRanges) {
     if (clearHighlights) {
-      clearHighlights(editor, highlightManager, textRanges, attributes, attributesKey);
+      clearHighlights(editor, highlightManager, textRanges, attributesKey);
       return;
     }
-    ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
+    List<RangeHighlighter> highlighters = new ArrayList<>();
     for (TextRange range : textRanges) {
-      if (attributes != null) {
-        //noinspection deprecation
-        highlightManager.addRangeHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes, false, highlighters);
-        continue;
-      }
       highlightManager.addRangeHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributesKey, false, highlighters);
-
     }
     for (RangeHighlighter highlighter : highlighters) {
       String tooltip = getLineTextErrorStripeTooltip(editor.getDocument(), highlighter.getStartOffset(), true);
@@ -337,11 +320,8 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
 
   private static void clearHighlights(@NotNull Editor editor,
                                       @NotNull HighlightManager highlightManager,
-                                      @NotNull @Unmodifiable List<? extends TextRange> rangesToHighlight,
-                                      @Nullable TextAttributes attributes,
+                                      @NotNull @Unmodifiable List<? extends @NotNull TextRange> rangesToHighlight,
                                       @Nullable TextAttributesKey attributesKey) {
-    assert attributes != null || attributesKey != null : "Both attributes and attributesKey are null";
-
     editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     RangeHighlighter[] highlighters = ((HighlightManagerImpl)highlightManager).getHighlighters(editor);
     Arrays.sort(highlighters, Comparator.comparingInt(RangeMarker::getStartOffset));
@@ -355,7 +335,7 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
       if (refRange.equals(highlighterRange) &&
           highlighter.getLayer() == HighlighterLayer.SELECTION - 1 &&
           (Objects.equals(attributesKey, highlighter.getTextAttributesKey()) ||
-           Objects.equals(attributes, highlighter.getTextAttributes(editor.getColorsScheme())))) {
+           Objects.equals(null, highlighter.getTextAttributes(editor.getColorsScheme())))) {
         highlightManager.removeSegmentHighlighter(editor, highlighter);
         i++;
       }

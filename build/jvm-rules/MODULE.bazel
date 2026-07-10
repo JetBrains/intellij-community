@@ -5,7 +5,7 @@ module(
 
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "bazel_worker_api", version = "0.0.10")
-bazel_dep(name = "llvm", version = "0.8.1")
+bazel_dep(name = "llvm", version = "0.8.9")
 bazel_dep(name = "rules_apple", version = "4.3.3")  # added explicitly to fix `No 'swiftc' executable found in $PATH` error
 bazel_dep(name = "rules_java", version = "9.6.1")
 bazel_dep(name = "rules_jvm_external", version = "6.10")
@@ -37,9 +37,9 @@ single_version_override(
 bazel_dep(name = "rules_kotlin", version = "2.2.2")
 archive_override(
     module_name = "rules_kotlin",
-    sha256 = "5c9b4664b3f926624a405f1d39ce74bcfc0a46b319df4f20d2ee63bdfed9c43e",
-    strip_prefix = "rules_kotlin-ffbc4307c3a55f61e05c12481b6dcb929d6e2b1f",
-    url = "https://github.com/JetBrains/rules_kotlin/archive/ffbc4307c3a55f61e05c12481b6dcb929d6e2b1f.zip",
+    sha256 = "cd26fd62ec0d026ad4d143dedfef3e6ca858a2d0be483f57109897b27069b2c3",
+    strip_prefix = "rules_kotlin-4db4cd06b0ca11742f7dccec5e19fd642c5c2cb1",
+    url = "https://github.com/JetBrains/rules_kotlin/archive/4db4cd06b0ca11742f7dccec5e19fd642c5c2cb1.zip",
 )
 
 bazel_dep(name = "rules_pkg", version = "1.2.0")
@@ -82,6 +82,11 @@ single_version_override(
 )
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
+# Loading-phase compilation-backend switch (JPS vs rules_kotlin/BTA); see backend_config.bzl.
+backend_config_repo = use_repo_rule("//:backend_config.bzl", "backend_config_repo")
+
+backend_config_repo(name = "ij_backend_config")
 
 # Parsed by `BazelProjectStructureTest` (to assert alignment with `.idea/kotlinc.xml`) and by
 # `com.intellij.monorepo.devkit.bazel.ComposeCompilerPluginProjectPathMacroContributor` (to resolve the

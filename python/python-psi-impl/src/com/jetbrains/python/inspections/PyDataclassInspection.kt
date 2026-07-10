@@ -22,6 +22,7 @@ import com.jetbrains.python.codeInsight.resolveDataclassFieldParameters
 import com.jetbrains.python.codeInsight.resolvesToOmittedDefault
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
+import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyCallExpression
@@ -41,7 +42,6 @@ import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyStructuralType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
@@ -184,7 +184,7 @@ class PyDataclassInspection : PyInspection() {
         if (leftClass == rightClass) {
           if (leftOrder == ClassOrder.DC_UNORDERED && rightOrder != ClassOrder.MANUALLY) {
             registerProblem(node.psiOperator,
-                            PyPsiBundle.message("INSP.dataclasses.operator.not.supported.between.instances.of.class", leftOperator, leftClass.name),
+                            PyPsiBundle.problemMessage("INSP.dataclasses.operator.not.supported.between.instances.of.class", leftOperator, CodifiedParam.ofReference(leftClass)),
                             ProblemHighlightType.GENERIC_ERROR)
           }
         }
@@ -198,7 +198,7 @@ class PyDataclassInspection : PyInspection() {
                 rightClass.isSubclass(leftClass, myTypeEvalContext)) return // attrs allows to compare ancestor and its subclass
 
             registerProblem(node.psiOperator,
-                            PyPsiBundle.message("INSP.dataclasses.operator.not.supported.between.instances.of.classes", leftOperator, leftClass.name, rightClass.name),
+                            PyPsiBundle.problemMessage("INSP.dataclasses.operator.not.supported.between.instances.of.classes", leftOperator, CodifiedParam.ofReference(leftClass), CodifiedParam.ofReference(rightClass)),
                             ProblemHighlightType.GENERIC_ERROR)
           }
         }
@@ -245,7 +245,7 @@ class PyDataclassInspection : PyInspection() {
             .all { it is PyTargetExpression && getInitVarType(it) != null }
         ) {
           registerProblem(node.lastChild,
-                          PyPsiBundle.message("INSP.dataclasses.object.could.have.no.attribute.because.it.declared.as.init.only", cls.name, node.name),
+                          PyPsiBundle.problemMessage("INSP.dataclasses.object.could.have.no.attribute.because.it.declared.as.init.only", CodifiedParam.ofReference(cls), node.name),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
         }
       }
@@ -261,7 +261,7 @@ class PyDataclassInspection : PyInspection() {
         || expression.isFrozenDataclassField(allClasses)
       ) {
         registerProblem(expression,
-                        PyPsiBundle.message("INSP.dataclasses.object.attribute.read.only", cls.name, expression.name),
+                        PyPsiBundle.problemMessage("INSP.dataclasses.object.attribute.read.only", CodifiedParam.ofReference(cls), expression.name),
                         ProblemHighlightType.GENERIC_ERROR)
       }
     }
@@ -325,7 +325,7 @@ class PyDataclassInspection : PyInspection() {
       cls.methods.forEach {
         when (it.name) {
           PyNames.INIT -> initMethodExists = true
-          "__repr__" -> reprMethodExists = true
+          PyNames.DUNDER_REPR -> reprMethodExists = true
           "__eq__" -> eqMethodExists = true
           in ORDER_OPERATORS -> orderMethodsExist = true
           "__setattr__", "__delattr__" -> mutatingMethodsExist = true
@@ -343,7 +343,7 @@ class PyDataclassInspection : PyInspection() {
       }
 
       if (dataclassParameters.repr && reprMethodExists) {
-        useless.add(Triple(dataclassParameters.reprArgument, "repr", "__repr__"))
+        useless.add(Triple(dataclassParameters.reprArgument, "repr", PyNames.DUNDER_REPR))
       }
 
       if (dataclassParameters.eq && eqMethodExists) {
@@ -352,7 +352,7 @@ class PyDataclassInspection : PyInspection() {
 
       useless.forEach {
         registerProblem(it.first,
-                        PyPsiBundle.message("INSP.dataclasses.argument.ignored.if.class.already.defines.method", it.second, it.third),
+                        PyPsiBundle.problemMessage("INSP.dataclasses.argument.ignored.if.class.already.defines.method", it.second, it.third),
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
       }
 
@@ -371,6 +371,15 @@ class PyDataclassInspection : PyInspection() {
       if (dataclassParameters.unsafeHash && hashMethodExists) {
         registerProblem(dataclassParameters.unsafeHashArgument,
                         PyPsiBundle.message("INSP.dataclasses.unsafe.hash.attribute.should.be.false.if.class.defines.hash"),
+                        ProblemHighlightType.GENERIC_ERROR)
+      }
+
+      if (dataclassParameters.validateByAlias == false && dataclassParameters.validateByName == false) {
+        registerProblem(dataclassParameters.validateByAliasArgument,
+                        PyPsiBundle.problemMessage("INSP.pydantic.validate.by.alias.and.name.false"),
+                        ProblemHighlightType.GENERIC_ERROR)
+        registerProblem(dataclassParameters.validateByNameArgument,
+                        PyPsiBundle.problemMessage("INSP.pydantic.validate.by.alias.and.name.false"),
                         ProblemHighlightType.GENERIC_ERROR)
       }
 
@@ -400,8 +409,8 @@ class PyDataclassInspection : PyInspection() {
       cls.methods.forEach {
         when (it.name) {
           PyNames.INIT -> initMethod = it
-          "__repr__" -> reprMethod = it
-          "__str__" -> strMethod = it
+          PyNames.DUNDER_REPR -> reprMethod = it
+          PyNames.DUNDER_STR -> strMethod = it
           "__eq__",
           in ORDER_OPERATORS,
             -> cmpMethods.add(it)
@@ -442,7 +451,7 @@ class PyDataclassInspection : PyInspection() {
       problems.forEach {
         it.first?.apply {
           registerProblem(nameIdentifier,
-                          PyPsiBundle.message("INSP.dataclasses.method.is.ignored.if.class.already.defines.parameter", name, it.second),
+                          PyPsiBundle.problemMessage("INSP.dataclasses.method.is.ignored.if.class.already.defines.parameter", name, it.second),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
         }
       }
@@ -460,8 +469,7 @@ class PyDataclassInspection : PyInspection() {
       val value = field.findAssignedValue()
 
       if (value is PyCallExpression) {
-        val fieldWithDefaultFactory = value
-          .multiResolveCallee(resolveContext)
+        val fieldWithDefaultFactory = value.multiResolveCallee(resolveContext)
           .filter { it.callable?.qualifiedName == Dataclasses.DATACLASSES_FIELD }
           .any {
             PyCallExpressionHelper.mapArguments(value, it, myTypeEvalContext).mappedParameters.values.any { p ->
@@ -479,7 +487,7 @@ class PyDataclassInspection : PyInspection() {
       // was in the RHS directly. dataclasses.Field itself is not considered a forbidden mutable default.
       if (PyUtil.isForbiddenMutableDefault(value, myTypeEvalContext)) {
         registerProblem(value,
-                        PyPsiBundle.message("INSP.dataclasses.mutable.attribute.default.not.allowed.use.default.factory", value?.text),
+                        PyPsiBundle.problemMessage("INSP.dataclasses.mutable.attribute.default.not.allowed.use.default.factory", value?.text),
                         ProblemHighlightType.GENERIC_ERROR)
       }
     }
@@ -505,7 +513,7 @@ class PyDataclassInspection : PyInspection() {
                 val fieldParams = resolveDataclassFieldParameters(cls, dataclassParameters, attribute, myTypeEvalContext)
                 if (fieldParams != null && (fieldParams.hasDefault || fieldParams.hasDefaultFactory)) {
                   registerProblem(method.nameIdentifier,
-                                  PyPsiBundle.message("INSP.dataclasses.attribute.default.set.using.method", "${attribute.calleeName}()"),
+                                  PyPsiBundle.problemMessage("INSP.dataclasses.attribute.default.set.using.method", "${attribute.calleeName}()"),
                                   ProblemHighlightType.GENERIC_ERROR)
                 }
               }
@@ -521,7 +529,7 @@ class PyDataclassInspection : PyInspection() {
           .drop(1)
           .forEach {
             registerProblem(it.nameIdentifier,
-                            PyPsiBundle.message("INSP.dataclasses.attribute.default.set.using.method", first.name),
+                            PyPsiBundle.problemMessage("INSP.dataclasses.attribute.default.set.using.method", first.name),
                             ProblemHighlightType.GENERIC_ERROR)
           }
       }
@@ -547,7 +555,7 @@ class PyDataclassInspection : PyInspection() {
 
                 val actualParameters = method.parameterList
                 if (actualParameters.parameters.size != expectedParameters) {
-                  val message = PyPsiBundle.message("INSP.dataclasses.method.should.take.only.n.parameter", method.name, expectedParameters)
+                  val message = PyPsiBundle.problemMessage("INSP.dataclasses.method.should.take.only.n.parameter", method.name, expectedParameters)
 
                   registerProblem(actualParameters, message, ProblemHighlightType.GENERIC_ERROR)
                 }
@@ -569,7 +577,7 @@ class PyDataclassInspection : PyInspection() {
           if (element is PyTargetExpression
               && element.annotation == null
               && resolveDataclassFieldParameters(cls, dataclassParameters, element, myTypeEvalContext) != null) {
-            registerProblem(element, PyPsiBundle.message("INSP.dataclasses.attribute.lacks.type.annotation", element.name),
+            registerProblem(element, PyPsiBundle.problemMessage("INSP.dataclasses.attribute.lacks.type.annotation", element.name),
                             ProblemHighlightType.GENERIC_ERROR)
           }
 
@@ -613,7 +621,7 @@ class PyDataclassInspection : PyInspection() {
       val innerInitVarType = getInitVarType(field) ?: return null
       if (postInit == null) {
         registerProblem(field,
-                        PyPsiBundle.message("INSP.dataclasses.attribute.useless.until.post.init.declared", field.name),
+                        PyPsiBundle.problemMessage("INSP.dataclasses.attribute.useless.until.post.init.declared", field.name),
                         ProblemHighlightType.LIKE_UNUSED_SYMBOL)
       }
       return InitVarField(innerInitVarType)
@@ -720,10 +728,10 @@ class PyDataclassInspection : PyInspection() {
       val allowSubclass = calleeQName != Dataclasses.DATACLASSES_ASDICT
       if (!isExpectedDataclass(type, PyDataclassParameters.PredefinedType.STD, allowDefinition, true, allowSubclass)) {
         val message = if (allowDefinition) {
-          PyPsiBundle.message("INSP.dataclasses.method.should.be.called.on.dataclass.instances.or.types", calleeQName)
+          PyPsiBundle.problemMessage("INSP.dataclasses.method.should.be.called.on.dataclass.instances.or.types", calleeQName)
         }
         else {
-          PyPsiBundle.message("INSP.dataclasses.method.should.be.called.on.dataclass.instances", calleeQName)
+          PyPsiBundle.problemMessage("INSP.dataclasses.method.should.be.called.on.dataclass.instances", calleeQName)
         }
 
         registerProblem(argument, message)
@@ -738,10 +746,10 @@ class PyDataclassInspection : PyInspection() {
       val type = myTypeEvalContext.getType(argument)
       if (!isExpectedDataclass(type, PyDataclassParameters.PredefinedType.ATTRS, !instance, instance, true)) {
         val message = if (instance) {
-          PyPsiBundle.message("INSP.dataclasses.method.should.be.called.on.attrs.instances", calleeQName)
+          PyPsiBundle.problemMessage("INSP.dataclasses.method.should.be.called.on.attrs.instances", calleeQName)
         }
         else {
-          PyPsiBundle.message("INSP.dataclasses.method.should.be.called.on.attrs.types", calleeQName)
+          PyPsiBundle.problemMessage("INSP.dataclasses.method.should.be.called.on.attrs.types", calleeQName)
         }
 
         registerProblem(argument, message)
@@ -750,8 +758,8 @@ class PyDataclassInspection : PyInspection() {
 
     private fun getInitVarType(field: PyTargetExpression): PyType? {
       val fieldType = myTypeEvalContext.getType(field)
-      if (fieldType is PyCollectionType && fieldType.classQName == Dataclasses.DATACLASSES_INITVAR) {
-        return fieldType.elementTypes.singleOrNull()
+      if (fieldType is PyClassType && fieldType.isParameterized && fieldType.classQName == Dataclasses.DATACLASSES_INITVAR) {
+        return fieldType.typeArguments.singleOrNull()
       }
       return null
     }

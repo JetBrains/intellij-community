@@ -16,12 +16,12 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:junit4",
+        "@lib//:libraries-junit4-_j_unit4",
         "//libraries/hamcrest",
     ],
     runtime_deps = [
         # do not sort,
-        "@lib//:junit4",
+        "@lib//:libraries-junit4-_j_unit4",
         "//libraries/hamcrest",
     ],
 )
@@ -38,7 +38,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:junit4",
+        "@lib//:libraries-junit4-_j_unit4",
         "//libraries/hamcrest",
         "//libraries/hamcrest:hamcrest_test_lib",
     ],

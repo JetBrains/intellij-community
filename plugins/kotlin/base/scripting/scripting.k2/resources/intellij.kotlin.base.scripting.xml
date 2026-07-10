@@ -21,6 +21,14 @@
                      level="WARNING"
                      bundle="messages.KotlinBaseScriptingBundle" key="inspection.script.definition.not.registered.name"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.core.script.k2.inspections.MainKtsAnnotationUsageInPlainKtsInspection"
+                     language="kotlin"
+                     groupPath="Kotlin"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     bundle="messages.KotlinBaseScriptingBundle" key="inspection.main.kts.annotation.in.plain.script.name"/>
+
     <notificationGroup id="KotlinScriptNotificationGroup"
                        displayType="BALLOON"
                        bundle="messages.KotlinBaseScriptingBundle"
@@ -29,6 +37,15 @@
     <problemHighlightFilter implementation="org.jetbrains.kotlin.idea.core.script.k2.highlighting.ScriptProblemHighlightFilter"/>
 
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptHighlightingVisitor"/>
+
+    <completion.contributor language="kotlin"
+                            id="KotlinImportedScriptCompletionContributor"
+                            order="first, before KotlinCompletionContributor"
+                            implementationClass="org.jetbrains.kotlin.idea.core.script.k2.codeInsight.KotlinImportedScriptCompletionContributor"/>
+    <completion.confidence language="kotlin"
+                           id="KotlinImportedScriptCompletionConfidence"
+                           order="first, before kotlinSkipAutopopupInStrings"
+                           implementationClass="org.jetbrains.kotlin.idea.core.script.k2.codeInsight.KotlinImportedScriptCompletionConfidence"/>
     <psi.clsCustomNavigationPolicy
             implementation="org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
 
@@ -84,6 +101,11 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <scriptDefinitionsSource
+            implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.MainKtsScriptDefinitionSource"/>
+
+    <scriptAfterRunCallbackProvider
+            implementation="org.jetbrains.kotlin.idea.core.script.k2.MainKtsAfterRunCallbackProvider"/>
 
     <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.dependencies.ModuleScriptAdditionalIdeaDependenciesProvider"/>
 
@@ -102,7 +124,7 @@
   <actions resource-bundle="messages.KotlinBaseScriptingBundle">
     <group id="KotlinScripts.ReloadConfigurationActionGroup"/>
     <action id="ReloadScriptConfiguration"
-            class="org.jetbrains.kotlin.idea.core.script.k2.ReloadScriptConfiguration"
+            class="org.jetbrains.kotlin.idea.core.script.k2.ReloadScriptConfigurationAction"
             icon="org.jetbrains.kotlin.idea.KotlinIcons.LOAD_SCRIPT_CONFIGURATION">
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift R"/>
       <add-to-group group-id="RunContextGroup"/>

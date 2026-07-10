@@ -47,21 +47,20 @@ class KotlinSuggestedRefactoringExecution(
             }
 
             val valueParameters = (descriptorWithNewSignature as? KaFunctionSymbol)?.valueParameters
-            val contextParameters = declaration.modifierList?.contextParameterList?.contextParameters?.map { it.symbol }
-            require(((valueParameters?.size ?:0) + (contextParameters?.size ?: 0)) == newSignature.parameters.size) {
+            val contextParameters = declaration.contextParameters.map { it.symbol }
+            require(((valueParameters?.size ?:0) + contextParameters.size) == newSignature.parameters.size) {
                 "Number of parameters of newSignature is ${newSignature.parameters.size} and of the descriptor is ${valueParameters?.size ?: 0}"
             }
 
-            val parameterTypeInfos = if (valueParameters != null || contextParameters != null)
-                (contextParameters.orEmpty() + valueParameters.orEmpty()).zip(newSignature.parameters)
-                    .map { (parameterDescriptor, parameterData) ->
-                        val type = parameterDescriptor.returnType
-                        if (type !is KaErrorType) {
-                            KotlinTypeInfo(type, declaration)
-                        } else {
-                            KotlinTypeInfo(text = parameterData.type, declaration)
-                        }
-                    } else emptyList()
+            val parameterTypeInfos = (contextParameters + valueParameters.orEmpty()).zip(newSignature.parameters)
+                .map { (parameterDescriptor, parameterData) ->
+                    val type = parameterDescriptor.returnType
+                    if (type !is KaErrorType) {
+                        KotlinTypeInfo(type, declaration)
+                    } else {
+                        KotlinTypeInfo(text = parameterData.type, declaration)
+                    }
+                }
 
             PrepareChangeSignatureResult(returnTypeInfo, parameterTypeInfos, contextParameters?.size ?: 0)
         }

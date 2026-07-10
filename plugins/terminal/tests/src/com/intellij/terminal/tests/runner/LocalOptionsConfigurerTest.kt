@@ -7,9 +7,9 @@ import com.intellij.idea.TestFor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.impl.wsl.WslConstants
+import com.intellij.testFramework.common.withEnvVars
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.utils.io.deleteRecursively
-import com.intellij.util.EnvironmentUtil
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
@@ -118,17 +118,18 @@ internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
 
     val probeName = "TERMINAL_MINIMAL_ENV_PROBE_${System.nanoTime()}"
     assertThat(System.getenv()).doesNotContainKey(probeName)
-    setEnvironmentMapForTest(EnvironmentUtil.getEnvironmentMap() + (probeName to "DEFAULT_ENV_VALUE"))
+    withEnvVars(probeName to "DEFAULT_ENV_VALUE") {
 
-    val actual = LocalOptionsConfigurer.configureStartupOptions(
-      ShellStartupOptions.Builder()
-        .shellCommand(listOf("some-shell"))
-        .processType(TerminalProcessType.SHELL)
-        .build(),
-      project
-    )
+      val actual = LocalOptionsConfigurer.configureStartupOptions(
+        ShellStartupOptions.Builder()
+          .shellCommand(listOf("some-shell"))
+          .processType(TerminalProcessType.SHELL)
+          .build(),
+        project
+      )
 
-    assertThat(actual.envVariables).doesNotContainKey(probeName)
+      assertThat(actual.envVariables).doesNotContainKey(probeName)
+    }
   }
 
   fun testNonShellTerminalProcessTypeUsesEnvironmentMap() {
@@ -137,17 +138,17 @@ internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
     val probeName = "TERMINAL_DEFAULT_ENV_PROBE_${System.nanoTime()}"
     val probeValue = "DEFAULT_ENV_VALUE"
     assertThat(System.getenv()).doesNotContainKey(probeName)
-    setEnvironmentMapForTest(EnvironmentUtil.getEnvironmentMap() + (probeName to probeValue))
+    withEnvVars(probeName to probeValue) {
+      val actual = LocalOptionsConfigurer.configureStartupOptions(
+        ShellStartupOptions.Builder()
+          .shellCommand(listOf("non-shell"))
+          .processType(TerminalProcessType.NON_SHELL)
+          .build(),
+        project
+      )
 
-    val actual = LocalOptionsConfigurer.configureStartupOptions(
-      ShellStartupOptions.Builder()
-        .shellCommand(listOf("non-shell"))
-        .processType(TerminalProcessType.NON_SHELL)
-        .build(),
-      project
-    )
-
-    assertEquals(probeValue, actual.envVariables[probeName])
+      assertEquals(probeValue, actual.envVariables[probeName])
+    }
   }
 
   fun testEnvVariableIsAddedToResultingEnv() {
@@ -169,18 +170,19 @@ internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
 
     val probeName = "TERMINAL_ENV_OVERRIDE_PROBE_${System.nanoTime()}"
     assertThat(System.getenv()).doesNotContainKey(probeName)
-    setEnvironmentMapForTest(EnvironmentUtil.getEnvironmentMap() + (probeName to "BASE_VALUE"))
+    withEnvVars(probeName to "BASE_VALUE") {
 
-    val actual = LocalOptionsConfigurer.configureStartupOptions(
-      ShellStartupOptions.Builder()
-        .shellCommand(listOf("non-shell"))
-        .processType(TerminalProcessType.NON_SHELL)
-        .envVariables(mapOf(probeName to "OVERRIDE_VALUE"))
-        .build(),
-      project
-    )
+      val actual = LocalOptionsConfigurer.configureStartupOptions(
+        ShellStartupOptions.Builder()
+          .shellCommand(listOf("non-shell"))
+          .processType(TerminalProcessType.NON_SHELL)
+          .envVariables(mapOf(probeName to "OVERRIDE_VALUE"))
+          .build(),
+        project
+      )
 
-    assertThat(actual.envVariables).containsEntry(probeName, "OVERRIDE_VALUE")
+      assertThat(actual.envVariables).containsEntry(probeName, "OVERRIDE_VALUE")
+    }
   }
 
   fun testPlatformEnvVariablesCannotBeOverridden() {
@@ -361,11 +363,4 @@ internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
     }
   }
 
-  private fun setEnvironmentMapForTest(environmentMap: Map<String, String>) {
-    val previous = EnvironmentUtil.getEnvironmentMap()
-    EnvironmentUtil.setEnvironmentLoader { environmentMap }
-    Disposer.register(testRootDisposable) {
-      EnvironmentUtil.setEnvironmentLoader { previous }
-    }
-  }
 }

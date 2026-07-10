@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.remotedev
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
@@ -188,18 +189,29 @@ internal object SplitModeDependencyQuickFixes {
 
     override fun startInWriteAction(): Boolean = IntentionPreviewUtils.isIntentionPreviewActive()
 
+    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+      if (previewDescriptor.psiElement.containingFile !is XmlFile) {
+        return IntentionPreviewInfo.EMPTY
+      }
+      return super.generatePreview(project, previewDescriptor)
+    }
+
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val ideaPlugin = findQuickFixTargetDescriptor(descriptor) ?: return
       val module = findTargetModule(descriptor)
       val xmlFile = ideaPlugin.xmlElement?.containingFile ?: return
-      if (!IntentionPreviewUtils.prepareElementForWrite(xmlFile)) return
 
       if (IntentionPreviewUtils.isIntentionPreviewActive()) {
-        applyDependencyFixInPreview(ideaPlugin, module, desiredModuleKind)
+        if (IntentionPreviewUtils.isPreviewElement(xmlFile)) {
+          applyDependencyFixInPreview(ideaPlugin, module, desiredModuleKind)
+        }
         return
       }
 
-      val commandName: @NlsContexts.Command String = message("inspection.remote.dev.make.only.kind.dependencies.fix.progress.title", desiredModuleKind.id)
+      if (!IntentionPreviewUtils.prepareElementForWrite(xmlFile)) return
+
+      val commandName: @NlsContexts.Command String =
+        message("inspection.remote.dev.make.only.kind.dependencies.fix.progress.title", desiredModuleKind.id)
 
       runWithModalProgressBlocking(project, commandName) {
         applyDependencyFix(project, ideaPlugin, module, desiredModuleKind, commandName)
@@ -223,18 +235,29 @@ internal object SplitModeDependencyQuickFixes {
 
     override fun startInWriteAction(): Boolean = IntentionPreviewUtils.isIntentionPreviewActive()
 
+    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+      if (previewDescriptor.psiElement.containingFile !is XmlFile) {
+        return IntentionPreviewInfo.EMPTY
+      }
+      return super.generatePreview(project, previewDescriptor)
+    }
+
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val ideaPlugin = findQuickFixTargetDescriptor(descriptor) ?: return
       val module = findTargetModule(descriptor)
       val xmlFile = ideaPlugin.xmlElement?.containingFile ?: return
-      if (!IntentionPreviewUtils.prepareElementForWrite(xmlFile)) return
 
       if (IntentionPreviewUtils.isIntentionPreviewActive()) {
-        applyDependencyFixInPreview(ideaPlugin, module, desiredModuleKind)
+        if (IntentionPreviewUtils.isPreviewElement(xmlFile)) {
+          applyDependencyFixInPreview(ideaPlugin, module, desiredModuleKind)
+        }
         return
       }
 
-      val commandName: @NlsContexts.Command String = message("inspection.remote.dev.make.only.kind.dependencies.fix.progress.title", desiredModuleKind.id)
+      if (!IntentionPreviewUtils.prepareElementForWrite(xmlFile)) return
+
+      val commandName: @NlsContexts.Command String =
+        message("inspection.remote.dev.make.only.kind.dependencies.fix.progress.title", desiredModuleKind.id)
 
       runWithModalProgressBlocking(project, commandName) {
         applyDependencyFix(project, ideaPlugin, module, desiredModuleKind, commandName)

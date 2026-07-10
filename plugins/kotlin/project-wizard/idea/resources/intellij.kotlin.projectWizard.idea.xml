@@ -1,9 +1,11 @@
-<idea-plugin visibility="internal" package="org.jetbrains.kotlin.tools.projectWizard">
+<idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.gradle"/>
     <module name="intellij.java.ui"/>
     <module name="intellij.kotlin.base.externalSystem"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.kotlin.projectWizard.core"/>
   </dependencies>
   <!-- endregion -->
 
@@ -16,34 +18,15 @@
             qualifiedName="com.intellij.newProjectWizard.kotlin.buildSystem"
             interface="org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard" dynamic="true"/>
 
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.idea.projectTemplatesProvider"
-            interface="org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.ProjectTemplatesProvider" dynamic="true"/>
 
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.idea.androidSdkProvider"
-            interface="org.jetbrains.kotlin.tools.projectWizard.plugins.AndroidSdkProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceImplementation="org.jetbrains.kotlin.tools.projectWizard.compatibility.DependencyVersionStore"/>
-    <applicationService serviceImplementation="org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersionStore"/>
-    <applicationService serviceImplementation="org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompatibilityStore"/>
-    <applicationService serviceImplementation="org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinLibrariesCompatibilityStore"/>
-    <applicationService serviceImplementation="org.jetbrains.kotlin.tools.projectWizard.compatibility.GradleToPluginsCompatibilityStore"/>
     <newProjectWizard.languageGenerator implementation="org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard"/>
 
     <newProjectWizard.kotlin.buildSystem implementation="org.jetbrains.kotlin.tools.projectWizard.IntelliJKotlinNewProjectWizard"/>
-    <applicationSettings service="org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersionStore"/>
-    <applicationSettings service="org.jetbrains.kotlin.tools.projectWizard.compatibility.DependencyVersionStore"/>
-    <applicationSettings service="org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinLibrariesCompatibilityStore"/>
-    <applicationSettings service="org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompatibilityStore"/>
-    <applicationSettings service="org.jetbrains.kotlin.tools.projectWizard.compatibility.GradleToPluginsCompatibilityStore"/>
   </extensions>
 
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <libraryVersionProvider implementation="org.jetbrains.kotlin.tools.projectWizard.compatibility.DefaultKotlinLibraryVersionProvider"/>
-  </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
     <ideaWizardService implementation="org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaFileFormattingService"/>

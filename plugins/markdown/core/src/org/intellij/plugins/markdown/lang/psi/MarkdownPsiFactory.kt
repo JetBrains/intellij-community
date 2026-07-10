@@ -59,7 +59,7 @@ object MarkdownPsiFactory {
         elementType in MarkdownTokenTypeSets.HEADER_CONTENT -> MarkdownHeaderContent(node)
         MarkdownTokenTypeSets.HEADERS.contains(elementType) -> MarkdownHeader(node)
         MarkdownTokenTypeSets.LISTS.contains(elementType) -> MarkdownList(node)
-        else -> ASTWrapperPsiElement(node)
+        else -> MarkdownPsiElementProvider.createElement(node) ?: ASTWrapperPsiElement(node)
       }
     }
   }

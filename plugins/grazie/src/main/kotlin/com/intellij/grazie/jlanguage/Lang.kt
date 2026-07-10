@@ -74,12 +74,17 @@ enum class Lang(val displayName: String, val className: String, val iso: Languag
   val hunspellRemote: HunspellDescriptor?
     get() = HunspellDescriptor.entries.find { it.iso == iso }
 
-  val dictionary: HunspellDictionary? by lazy {
-    if (isEnglish()) return@lazy GrazieSpellCheckerEngine.enDictionary
-    if (hunspellRemote == null) return@lazy null
+  @Volatile
+  private var _dictionary: HunspellDictionary? = null
+  val dictionary: HunspellDictionary?
+    get() = _dictionary ?: loadDictionary()?.also { _dictionary = it }
 
-    val dicPath = dynamicFolder.resolve(hunspellRemote!!.file).toString()
-    if (this == SWISS_GERMAN) createSwissDictionary(dicPath) else HunspellDictionary(dicPath, language = iso)
+  private fun loadDictionary(): HunspellDictionary? {
+    if (isEnglish()) return GrazieSpellCheckerEngine.enDictionary
+    val descriptor = hunspellRemote ?: return null
+    val dicPath = dynamicFolder.resolve(descriptor.file).toString()
+    if (!HunspellDictionary.isHunspell(dicPath)) return null
+    return if (this == SWISS_GERMAN) createSwissDictionary(dicPath) else HunspellDictionary(dicPath, language = iso)
   }
 
   val withVariant: LanguageWithVariant?
@@ -103,6 +108,7 @@ enum class Lang(val displayName: String, val className: String, val iso: Languag
       return displayName
     }
 
+  @Volatile
   private var _jLanguage: Language? = null
   val jLanguage: Language?
     get() = _jLanguage ?: GrazieDynamic.loadLang(this)?.also {

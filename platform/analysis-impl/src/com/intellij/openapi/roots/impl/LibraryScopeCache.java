@@ -41,6 +41,7 @@ import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -338,7 +339,7 @@ public final class LibraryScopeCache {
     }
   }
 
-  private static Set<Module> findModulesWithLibraryId(LibraryId libraryId, ImmutableEntityStorage currentSnapshot, ModuleDependenciesGraph exportedDependentsGraph) {
+  private static @Unmodifiable Set<Module> findModulesWithLibraryId(LibraryId libraryId, ImmutableEntityStorage currentSnapshot, ModuleDependenciesGraph exportedDependentsGraph) {
     Set<ModuleEntity> modulesWithLibrary = new HashSet<>();
     var ownerModules = SequencesKt.toList(currentSnapshot.referrers(libraryId, ModuleEntity.class));
 

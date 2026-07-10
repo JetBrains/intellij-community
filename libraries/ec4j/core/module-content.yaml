@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.ec4j.core.jar
+  modules:
+  - name: intellij.libraries.ec4j.core
+    libraries:
+      ec4j-core:
+      - name: $MAVEN_REPOSITORY$/org/ec4j/core/ec4j-core/0/ec4j-core-0.jar

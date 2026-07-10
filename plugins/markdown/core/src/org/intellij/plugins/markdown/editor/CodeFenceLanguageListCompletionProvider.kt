@@ -7,14 +7,11 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.lang.Language
-import com.intellij.lang.LanguageUtil
 import com.intellij.psi.PsiElement
 import com.intellij.ui.DeferredIconImpl
 import com.intellij.util.ProcessingContext
-import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageAliases.findMainAlias
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
@@ -32,14 +29,6 @@ class CodeFenceLanguageListCompletionProvider: CompletionProvider<CompletionPara
         }
         result.addElement(element)
       }
-    }
-    for (language in LanguageUtil.getInjectableLanguages()) {
-      val alias = findMainAlias(language.id)
-      val lookupElement = LookupElementBuilder.create(alias)
-        .withIcon(createLanguageIcon(language))
-        .withTypeText(language.displayName, true)
-        .withInsertHandler(MyInsertHandler(parameters))
-      result.addElement(lookupElement)
     }
   }
 

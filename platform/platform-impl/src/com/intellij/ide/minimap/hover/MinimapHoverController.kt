@@ -6,10 +6,20 @@ import com.intellij.ide.minimap.interaction.MinimapInteractionPolicy
 import com.intellij.ide.minimap.scene.MinimapSnapshot
 import com.intellij.ide.minimap.settings.MinimapSettings
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import java.awt.Graphics2D
 import java.awt.Point
 import kotlin.time.Duration
@@ -29,6 +39,7 @@ class MinimapHoverController(
   private var delayNextHover = true
   private var dragging = false
   private var hoverEnabled = true
+  private var hoverComputationJob: Job? = null
 
   private val hoverStateMachine = MinimapHoverStateMachine(scope, panel) { target ->
     presenter.setTarget(target)
@@ -37,12 +48,14 @@ class MinimapHoverController(
   }
 
   override fun dispose() {
+    cancelHoverComputation()
     presenter.hide()
     lastSnapshot = null
     lastMousePoint = null
     scope.cancel()
   }
 
+  @RequiresEdt
   fun onSnapshot(snapshot: MinimapSnapshot) {
     hoverEnabled = settings.state.showHover && hoverPolicy.isHoverEnabled(panel.editor, snapshot)
     if (!hoverEnabled) {
@@ -64,21 +77,26 @@ class MinimapHoverController(
     }
   }
 
+  @RequiresEdt
   fun paint(graphics: Graphics2D) {
     if (!hoverEnabled) return
     presenter.paint(graphics)
   }
 
+  @RequiresEdt
   fun hideBalloon() {
+    cancelHoverComputation()
     hoverStateMachine.updateTarget(null)
     hoverStateMachine.syncActiveTarget(null)
     presenter.hide()
   }
 
+  @RequiresEdt
   fun onMouseEntered() {
     delayNextHover = true
   }
 
+  @RequiresEdt
   fun onMouseExited() {
     if (dragging) {
       lastMousePoint = null
@@ -88,6 +106,7 @@ class MinimapHoverController(
     updateHover(null)
   }
 
+  @RequiresEdt
   fun onScroll(point: Point?) {
     point?.let {
       lastMousePoint = Point(it)
@@ -99,17 +118,21 @@ class MinimapHoverController(
     updateActiveTargetForPoint(snapshot, lastPoint)
   }
 
+  @RequiresEdt
   fun startDragging() {
     dragging = true
   }
 
+  @RequiresEdt
   fun stopDragging(point: Point?) {
     dragging = false
     updateHover(point)
   }
 
+  @RequiresEdt
   fun updateHover(point: Point?) {
     if (point == null) {
+      cancelHoverComputation()
       lastMousePoint = null
       delayNextHover = true
       hoverStateMachine.updateTarget(null)
@@ -132,43 +155,61 @@ class MinimapHoverController(
 
   private fun updateTargetForPoint(snapshot: MinimapSnapshot, point: Point, delay: Duration?) {
     if (!isDocumentCommitted() || snapshot.structureEntries.isEmpty()) {
+      cancelHoverComputation()
       hoverStateMachine.updateTarget(null)
       return
     }
 
-    val target = computeHoverTarget(snapshot, point) ?: run {
-      hoverStateMachine.updateTarget(null)
-      return
-    }
-
-    if (delay == null) {
-      hoverStateMachine.updateTarget(target)
-    }
-    else {
-      hoverStateMachine.updateTarget(target, delay)
+    computeHoverTargetAsync(snapshot, point) { target ->
+      if (target == null) {
+        hoverStateMachine.updateTarget(null)
+      }
+      else if (delay == null) {
+        hoverStateMachine.updateTarget(target)
+      }
+      else {
+        hoverStateMachine.updateTarget(target, delay)
+      }
     }
   }
 
-  private fun computeHoverTarget(snapshot: MinimapSnapshot, point: Point): MinimapHoverTarget? {
-    val hit = hitChecker.hitCheck(snapshot, point) ?: return null
-    val text = hit.text ?: return null
+  @RequiresEdt
+  private fun computeHoverTargetAsync(snapshot: MinimapSnapshot, point: Point, onResult: (MinimapHoverTarget?) -> Unit) {
+    hoverComputationJob?.cancel()
+    hoverComputationJob = scope.launch(Dispatchers.EDT + ModalityState.stateForComponent(panel).asContextElement()) {
+      // readAction dispatches its body to a background thread, so getPresentation runs off the EDT;
+      // the coroutine then resumes on the EDT to apply the result.
+      val target = readAction {
+        if (panel.editor.isDisposed) null else computeHoverTarget(snapshot, point)
+      }
+      if (panel.editor.isDisposed || lastSnapshot !== snapshot || lastMousePoint != point || !isDocumentCommitted()) return@launch
+      onResult(target)
+    }
+  }
 
-    return MinimapHoverTarget(hit.entry, hit.rect, text, hit.icon, hit.declarationWidth)
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  private fun computeHoverTarget(snapshot: MinimapSnapshot, point: Point): MinimapHoverTarget? {
+    val hit = hitChecker.resolveHit(snapshot, point) ?: return null
+    return MinimapHoverTarget(hit.entry, hit.rect, hit.text, hit.icon, hit.declarationWidth)
+  }
+
+  private fun cancelHoverComputation() {
+    hoverComputationJob?.cancel()
+    hoverComputationJob = null
   }
 
   private fun updateActiveTargetForPoint(snapshot: MinimapSnapshot, point: Point) {
-    val active = hoverStateMachine.activeTarget() ?: return
-    val target = computeHoverTarget(snapshot, point) ?: run {
-      hoverStateMachine.updateTarget(null)
-      return
-    }
+    if (hoverStateMachine.activeTarget() == null) return
+    computeHoverTargetAsync(snapshot, point) { target ->
+      val active = hoverStateMachine.activeTarget() ?: return@computeHoverTargetAsync
+      if (target == null || !target.entry.isSameEntry(active.entry)) {
+        hoverStateMachine.updateTarget(null)
+        return@computeHoverTargetAsync
+      }
 
-    if (!target.entry.isSameEntry(active.entry)) {
-      hoverStateMachine.updateTarget(null)
-      return
+      hoverStateMachine.syncActiveTarget(target)
     }
-
-    hoverStateMachine.syncActiveTarget(target)
   }
 
   private fun updateActiveTargetForSnapshot(snapshot: MinimapSnapshot) {

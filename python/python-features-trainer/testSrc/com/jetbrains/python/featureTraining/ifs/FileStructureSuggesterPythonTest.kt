@@ -1,6 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.featureTraining.ifs
 
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import training.featuresSuggester.FeatureSuggesterTestUtils.focusEditor
 import training.featuresSuggester.FeatureSuggesterTestUtils.logicalPositionToOffset
 import training.featuresSuggester.FeatureSuggesterTestUtils.performFindInFileAction
@@ -8,6 +12,9 @@ import training.featuresSuggester.FeatureSuggesterTestUtils.testInvokeLater
 import training.featuresSuggester.FileStructureSuggesterTest
 import training.featuresSuggester.NoSuggestion
 
+@Subsystems.IDE
+@Components.FeatureTrainer
+@Layers.Functional
 class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
   override val testingCodeFileName = "PythonCodeExample.py"
 

@@ -15,7 +15,7 @@
  */
 package com.intellij.uiDesigner.core;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -23,11 +23,14 @@ import javax.swing.JTextField;
 import java.awt.Dimension;
 import java.awt.Insets;
 
-public final class Layout7Test extends TestCase{
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public final class Layout7Test {
   /**
    * label | text field
    *    scroll pane
    */
+  @Test
   public void test1() {
     final GridLayoutManager layoutManager = new GridLayoutManager(2,2, new Insets(0,0,0,0), 0, 0);
     final JPanel panel = new JPanel(layoutManager);

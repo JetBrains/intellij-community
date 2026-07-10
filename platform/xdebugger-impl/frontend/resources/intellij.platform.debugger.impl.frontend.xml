@@ -44,9 +44,12 @@
       <add-to-group group-id="DebugReloadGroup" anchor="first"/>
       <add-to-group group-id="EditorPopupMenuDebugHotSwap" anchor="first"/>
     </action>
-    <action id="XDebugger.Split.Enable" class="com.intellij.platform.debugger.impl.frontend.EnabledSplitDebuggerAction" internal="true"/>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="false"
+                 description="Disable the HotSwap floating toolbar button when the changed sources are not compatible with HotSwap. Alternatively suggest restart."
+                 key="debugger.hotswap.disable.button.for.incompatible.changes"/>
+
     <editorFloatingToolbarProvider implementation="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapFloatingToolbarProvider"/>
     <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerInitializationProjectActivity"/>
     <xdebugger.managerProxy implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebugManagerProxy" order="first"/>
@@ -55,6 +58,5 @@
     <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.frame.FrameNotificationRemoteTopicListener"/>
     <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.frame.ShowSessionTabRemoteTopicListener"/>
 
-    <notificationGroup id="Split debugger internal" displayType="STICKY_BALLOON" hideFromSettings="true"/>
   </extensions>
 </idea-plugin>

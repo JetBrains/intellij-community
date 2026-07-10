@@ -9,6 +9,7 @@ import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaClassReferenceListElementType;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
+import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassReferenceListStubImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class JavaClassReferenceListStubFactory implements LightStubElementFactory<PsiClassReferenceListStubImpl, PsiReferenceList> {
+public class JavaClassReferenceListStubFactory implements LightStubElementFactory<PsiClassReferenceListStub, PsiReferenceList> {
   @Override
   public @NotNull PsiClassReferenceListStubImpl createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     JavaClassReferenceListElementType type = (JavaClassReferenceListElementType)node.getTokenType();
@@ -28,7 +29,7 @@ public class JavaClassReferenceListStubFactory implements LightStubElementFactor
   }
 
   @Override
-  public PsiReferenceList createPsi(@NotNull PsiClassReferenceListStubImpl stub) {
+  public PsiReferenceList createPsi(@NotNull PsiClassReferenceListStub stub) {
     return JavaStubElementType.getFileStub(stub).getPsiFactory().createClassReferenceList(stub);
   }
 

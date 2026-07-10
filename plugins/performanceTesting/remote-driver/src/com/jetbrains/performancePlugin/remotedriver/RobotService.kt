@@ -3,7 +3,7 @@ package com.jetbrains.performancePlugin.remotedriver
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
-import com.jetbrains.performancePlugin.remotedriver.robot.SmoothRobot
+import com.jetbrains.performancePlugin.remotedriver.robot.IdeRobot
 import com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelCreator
 import com.jetbrains.performancePlugin.remotedriver.xpath.convertToHtml
 import org.jetbrains.annotations.ApiStatus
@@ -14,7 +14,7 @@ import java.nio.file.Paths
 @ApiStatus.Internal
 class RobotService : Disposable {
   @Suppress("MemberVisibilityCanBePrivate")
-  val robot: SmoothRobot = SmoothRobot()
+  val robot: IdeRobot = IdeRobot.create()
 
   fun saveHierarchy(folderPath: String, fileName: String = "ui.html") {
     val html = XpathDataModelCreator().create(null).convertToHtml()

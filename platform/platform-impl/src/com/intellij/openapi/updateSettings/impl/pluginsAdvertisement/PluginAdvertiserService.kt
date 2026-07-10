@@ -17,6 +17,7 @@ import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.advertiser.PluginFeatureMap
 import com.intellij.ide.plugins.isBrokenPlugin
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.plugins.newui.PluginDependencyModel
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUiModelBuilderFactory
 import com.intellij.ide.ui.PluginBooleanOptionDescriptor
@@ -365,16 +366,15 @@ open class PluginAdvertiserServiceImpl(
     }
 
     val builder = builderFactory.createBuilder(descriptor.pluginId)
-    .setName(descriptor.name)
-    .setSize("0")
-    .setDescription(descriptor.description)
-    .setChangeNotes(descriptor.changeNotes)
-    .setVersion(descriptor.version)
-    .setVendor(descriptor.vendor)
-    .setVendorDetails(descriptor.organization)
-    .setIsConverted(true)
-
-    descriptor.dependencies.forEach { builder.addDependency(it.pluginId.idString, it.isOptional) }
+      .setName(descriptor.name)
+      .setSize("0")
+      .setDescription(descriptor.description)
+      .setChangeNotes(descriptor.changeNotes)
+      .setVersion(descriptor.version)
+      .setVendor(descriptor.vendor)
+      .setVendorDetails(descriptor.organization)
+      .setIsConverted(true)
+      .setDependencies(descriptor.dependencies.map { PluginDependencyModel(it.pluginId, it.isOptional) })
     return builder.build()
   }
 

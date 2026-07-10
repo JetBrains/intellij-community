@@ -37,7 +37,8 @@ public final class DelegatedInspectionToolPresentation extends DefaultInspection
     }
 
     if (myToolWrapper instanceof LocalInspectionToolWrapper) {
-      exportResults(descriptors, refElement, (element, problem) -> myDelegate.consume(element, problem, myToolWrapper),
+      exportResults(descriptors, refElement, (element, problem) ->
+                      myDelegate.consume(element, problem, getToolWrapper(problem)),
                     Predicates.alwaysFalse());
     } else {
       myProblemElements.put(refElement, descriptors);

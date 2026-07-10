@@ -1,7 +1,7 @@
 // "Create object 'RED'" "false"
 // ERROR: Unresolved reference: RED
-// K2_ERROR: Unresolved reference 'RED'.
-// K2_AFTER_ERROR: Unresolved reference 'RED'.
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 enum class SampleEnum {}
 
 fun usage() {

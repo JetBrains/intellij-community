@@ -1,6 +1,7 @@
 <idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.gson"/>
     <module name="intellij.libraries.guava"/>
@@ -16,6 +17,7 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.diagnostic.telemetry"/>
     <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.diff.impl"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
@@ -29,35 +31,37 @@
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.diff"/>
     <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.vcs.log.graph"/>
     <module name="intellij.platform.vcs.log.graph.impl"/>
   </dependencies>
   <!-- endregion -->
 
   <extensionPoints>
-    <extensionPoint name="logProvider" interface="com.intellij.vcs.log.VcsLogProvider" area="IDEA_PROJECT" dynamic="true"/>
-    <extensionPoint name="logHighlighterFactory" interface="com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory" dynamic="true"/>
-    <extensionPoint name="customVcsLogUiFactoryProvider" interface="com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider"
+    <extensionPoint qualifiedName="com.intellij.logProvider" interface="com.intellij.vcs.log.VcsLogProvider" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.logHighlighterFactory" interface="com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.customVcsLogUiFactoryProvider" interface="com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider"
                     area="IDEA_PROJECT" dynamic="true"/>
-    <extensionPoint name="vcsLogCustomColumn"
+    <extensionPoint qualifiedName="com.intellij.vcsLogCustomColumn"
                     interface="com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn"
                     dynamic="true"/>
-    <extensionPoint name="vcsLogCommitStatusProvider"
+    <extensionPoint qualifiedName="com.intellij.vcsLogCommitStatusProvider"
                     interface="com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusProvider"
                     dynamic="true"/>
-    <extensionPoint name="vcsLogFileHistoryHandler"
+    <extensionPoint qualifiedName="com.intellij.vcsLogFileHistoryHandler"
                     interface="com.intellij.vcs.log.VcsLogFileHistoryHandler"
                     area="IDEA_PROJECT"
                     dynamic="true"/>
-    <extensionPoint name="fileHistoryPerformanceListener"
+    <extensionPoint qualifiedName="com.intellij.fileHistoryPerformanceListener"
                     interface="com.intellij.vcs.log.history.FileHistoryPerformanceListener"
                     dynamic="true"/>
-    <extensionPoint name="vcsLogChangesTreeBuilder"
+    <extensionPoint qualifiedName="com.intellij.vcsLogChangesTreeBuilder"
                     interface="com.intellij.vcs.log.ui.frame.VcsLogChangesTreeModifier"
                     dynamic="true"/>
-    <extensionPoint name="vcsLogRefreshActionListener"
+    <extensionPoint qualifiedName="com.intellij.vcsLogRefreshActionListener"
                     interface="com.intellij.vcs.log.ui.actions.VcsLogRefreshActionListener"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.vcs.log.bookmarkSupport"

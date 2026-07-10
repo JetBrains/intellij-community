@@ -1,69 +1,205 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.ui.settings
 
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
-import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.DialogPanel
-import com.intellij.platform.eel.EelDescriptor
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.eel.EelExecApi
-import com.intellij.platform.eel.EelExecPosixApi
+import com.intellij.platform.eel.EelExecApi.Pty
+import com.intellij.platform.eel.EelProcess
+import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.LoginShellSpawner
 import com.intellij.platform.eel.channels.EelDelicateApi
+import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.isPosix
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getEelMachine
 import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.eel.spawnLoginShell
 import com.intellij.platform.ijent.community.ui.actions.IjentImplBundle
 import com.intellij.platform.ijent.community.ui.actions.dashboard.EnvironmentVariablesDashboard
+import com.intellij.platform.ijent.community.ui.actions.dashboard.EnvironmentVariablesDashboard.FetchEnvVarsMode
+import com.intellij.platform.ijent.community.ui.actions.dashboard.TerminalDashboard
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.launchOnShow
+import com.jediterm.core.util.TermSize
+import com.pty4j.PtyProcess
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.swing.JComponent
+import javax.swing.JLabel
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
-internal class IjentDashboardConfigurable(val eelDescriptor: EelDescriptor) : SearchableConfigurable, Configurable.NoScroll {
+
+internal class IjentDashboardConfigurable(val project: Project) : SearchableConfigurable, Configurable.NoScroll {
   override fun getId(): String = "ijent.settings.dashboard"
   override fun getDisplayName(): String = IjentImplBundle.message("configurable.ijent.dashboard.display.name")
 
-  val modeProperty = AtomicProperty(AdvancedSettings.getEnum("container.environments.env.var.shell.mode", LoginShellEnvVarModeProviderImpl.EnvVarShellMode::class.java))
+  val eelMachine = project.getEelMachine()
+
+  val modeProperty = AtomicProperty(LoginShellEnvVarModeSettings.getInstance().get(eelMachine).envVarShellMode)
 
   override fun createComponent(): JComponent {
-    val envVarsTab: DialogPanel = panel {
+    val eelDescriptor = project.getEelDescriptor()
+    val terminalPlaceholder = com.intellij.ui.components.panels.Wrapper().apply {
+      border = com.intellij.ui.IdeBorderFactory.createBorder(com.intellij.ui.SideBorder.ALL)
+    }
+
+    val envVarsFlow = MutableSharedFlow<FetchEnvVarsMode>(
+      replay = 1,
+      onBufferOverflow = BufferOverflow.SUSPEND
+    )
+    val modeChosenFlow = MutableSharedFlow<LoginShellEnvVarModeProviderImpl.EnvVarShellMode>(
+      replay = 1,
+      onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+
+    val root = panel {
       if (eelDescriptor.osFamily.isPosix) {
         row(IjentImplBundle.message("advanced.setting.container.environments.env.var.shell.mode")) {
-          LoginShellEnvVarModeProviderImpl.EnvVarShellMode.entries
           val modeCombo = ComboBox(LoginShellEnvVarModeProviderImpl.EnvVarShellMode.entries.toTypedArray())
           cell(modeCombo).bindItem(modeProperty)
         }
       }
-      val dashboard = EnvironmentVariablesDashboard(modeProperty.toFlow().map { choice ->
-        @OptIn(EelDelicateApi::class)
-        val mode = when (choice) {
-          LoginShellEnvVarModeProviderImpl.EnvVarShellMode.LOGIN_INTERACTIVE -> EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE
-          LoginShellEnvVarModeProviderImpl.EnvVarShellMode.LOGIN_NON_INTERACTIVE -> EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE
+      row {
+        button(IdeBundle.message("action.refresh")) {
+          modeChosenFlow.tryEmit(modeProperty.get())
         }
-        EnvironmentVariablesDashboard.FetchEnvVarsMode {
-          // TODO it's not what we have in fetchEnvironmentVariables
-          val options = object : EelExecPosixApi.PosixEnvironmentVariablesOptions {
-            override val mode = mode
-            override val onlyActual = true
-          }
-          eelDescriptor.toEelApi().exec.environmentVariables(options).await()
-        }
-      })
-      row { cell(dashboard.component).resizableColumn().align(Align.FILL) }.resizableRow()
+      }
+      val envDashboard = EnvironmentVariablesDashboard(envVarsFlow)
+      val splitter = com.intellij.ui.OnePixelSplitter(true, "IjentDashboardConfigurable.Terminal.Proportion", 0.75f).apply {
+        firstComponent = envDashboard.component
+        secondComponent = terminalPlaceholder
+      }
+      row { cell(splitter).resizableColumn().align(Align.FILL) }.resizableRow()
+
     }
-    return envVarsTab
+
+    root.launchOnShow("ijent dashboard login-shell") {
+      launch {
+        modeProperty.toFlow().collectLatest {
+          modeChosenFlow.emit(it)
+        }
+      }
+      modeChosenFlow.collectLatest { choice ->
+        coroutineScope {
+          launch {
+            val variablesDeferred = eelDescriptor.toEelApi().exec.environmentVariables().mode(choice.toFetchEnvVarsMode()).eelIt()
+            envVarsFlow.emit(FetchEnvVarsMode {
+              variablesDeferred.await()
+            })
+            var updatedVars: Map<String, String>? = null
+            while (true) {
+              delay(30.milliseconds)
+              val newUpdatedVars = withTimeoutOrNull(30.milliseconds) {
+                eelDescriptor.toEelApi().exec.environmentVariables().mode(choice.toFetchEnvVarsMode()).eelIt().await()
+              }
+              if (newUpdatedVars != null) {
+                val prevUpdatedVars = updatedVars ?: run {
+                  if (variablesDeferred.deferred.isCompleted) variablesDeferred.await() else null
+                }
+                if (prevUpdatedVars != newUpdatedVars) {
+                  envVarsFlow.emit(FetchEnvVarsMode { newUpdatedVars })
+                  updatedVars = newUpdatedVars
+                }
+              }
+            }
+          }
+          val sessionDisposable = Disposer.newDisposable("IjentDashboard terminal session")
+          var process: EelProcess? = null
+          try {
+            if (choice == LoginShellEnvVarModeProviderImpl.EnvVarShellMode.LOGIN_INTERACTIVE_SHELL) {
+              withContext(Dispatchers.EDT) {
+                terminalPlaceholder.setContent(JLabel(IdeBundle.message("progress.text.loading")).apply { border = JBUI.Borders.empty(8) })
+              }
+              val terminalDashboard = TerminalDashboard(project, sessionDisposable)
+              val eelApi = eelDescriptor.toEelApi()
+              val execApi = eelApi.exec
+              if (execApi is LoginShellSpawner) {
+                val initialSize = TermSize(80, 5)
+                val handle = execApi.spawnLoginShell()
+                  .pty(Pty(initialSize.columns, initialSize.rows, true))
+                  .workingDirectory(eelApi.userInfo.home)
+                  .eelIt()
+                val ptyProcess = handle.process.convertToJavaProcess() as PtyProcess
+                process = handle.process
+                val widget = terminalDashboard.createWidget(ptyProcess, initialSize)
+                withContext(Dispatchers.EDT) {
+                  terminalPlaceholder.setContent(widget.component)
+                }
+              }
+              else {
+                withContext(Dispatchers.EDT) {
+                  terminalPlaceholder.setContent(null)
+                }
+              }
+            }
+            else {
+              withContext(Dispatchers.EDT) {
+                terminalPlaceholder.setContent(null)
+              }
+            }
+            awaitCancellation()
+          }
+          catch (e: ExecuteProcessException) {
+            logger<IjentDashboardConfigurable>().info(e)
+            withContext(Dispatchers.EDT) {
+              @Suppress("HardCodedStringLiteral")
+              terminalPlaceholder.setContent(JLabel(e.toString()))
+            }
+          }
+          finally {
+            withContext(NonCancellable) {
+              process?.kill()
+              withTimeoutOrNull(1.seconds) {
+                process?.exitCode?.await()
+              }
+              Disposer.dispose(sessionDisposable)
+            }
+          }
+        }
+      }
+    }
+
+    return root
+  }
+
+  @OptIn(EelDelicateApi::class)
+  private fun LoginShellEnvVarModeProviderImpl.EnvVarShellMode.toFetchEnvVarsMode(): EelExecApi.EnvironmentVariablesOptions.Mode {
+    return when (this) {
+      LoginShellEnvVarModeProviderImpl.EnvVarShellMode.LOGIN_INTERACTIVE -> EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE
+      LoginShellEnvVarModeProviderImpl.EnvVarShellMode.LOGIN_NON_INTERACTIVE -> EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE
+      LoginShellEnvVarModeProviderImpl.EnvVarShellMode.LOGIN_INTERACTIVE_SHELL -> EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE_VIA_SHELL
+    }
   }
 
   override fun isModified(): Boolean {
-    return modeProperty.get() != AdvancedSettings.getEnum("container.environments.env.var.shell.mode", LoginShellEnvVarModeProviderImpl.EnvVarShellMode::class.java)
+    return modeProperty.get() != LoginShellEnvVarModeSettings.getInstance().get(eelMachine).envVarShellMode
   }
   override fun apply() {
-    AdvancedSettings.setEnum("container.environments.env.var.shell.mode", modeProperty.get())
+    LoginShellEnvVarModeSettings.getInstance().get(eelMachine).envVarShellMode = modeProperty.get()
   }
 }
 

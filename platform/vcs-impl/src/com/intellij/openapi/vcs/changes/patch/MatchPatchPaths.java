@@ -7,7 +7,6 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -20,8 +19,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -188,8 +188,8 @@ public final class MatchPatchPaths {
   private @Unmodifiable Collection<VirtualFile> findFilesFromIndex(final @NotNull PatchBaseDirectoryDetector directoryDetector,
                                                                    final @NotNull String fileName) {
     Collection<VirtualFile> files = ReadAction.computeBlocking(() -> directoryDetector.findFiles(fileName));
-    final File shelfResourcesDirectory = ShelveChangesManager.getInstance(myProject).getShelfResourcesDirectory();
-    return ContainerUtil.filter(files, file -> !FileUtil.isAncestor(shelfResourcesDirectory, VfsUtilCore.virtualToIoFile(file), false));
+    final Path shelfResourcesDirectory = ShelveChangesManager.getInstance(myProject).getShelfResourcesDirectory();
+    return ContainerUtil.filter(files, file -> !Paths.get(file.getPath()).startsWith(shelfResourcesDirectory));
   }
 
   private static void putSelected(@NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress<?>> result,

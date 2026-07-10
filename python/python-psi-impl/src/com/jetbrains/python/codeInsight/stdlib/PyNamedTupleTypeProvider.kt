@@ -30,6 +30,7 @@ import com.jetbrains.python.psi.impl.StubAwareComputation
 import com.jetbrains.python.psi.impl.stubs.PyNamedTupleStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.stubs.PyNamedTupleStub
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableType
@@ -37,6 +38,7 @@ import com.jetbrains.python.psi.types.PyCallableTypeImpl
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyNamedTupleType
+import com.jetbrains.python.psi.types.PyOverloadType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeMember
 import com.jetbrains.python.psi.types.PyTypeProviderBase
@@ -53,6 +55,7 @@ private typealias ImmutableNTFields = Map<String, PyNamedTupleType.FieldTypeAndD
 class PyNamedTupleTypeProvider : PyTypeProviderBase() {
 
   override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
+    val anchor = anchor?.let(PyCallExpressionNavigator::getPyCallExpressionByCallee)
     val type = when (referenceTarget) {
       is PyFunction if anchor is PyCallExpression -> getNamedTupleFunctionType(referenceTarget, context, anchor)
       is PyTargetExpression -> getNamedTupleTypeForTarget(referenceTarget, context)
@@ -123,14 +126,14 @@ private fun getFieldTypeForTypingNTFunctionInheritor(referenceExpression: PyRefe
   val qualifierType = referenceExpression.qualifier?.let { context.getType(it) } as? PyWithAncestors
   if (qualifierType == null || qualifierType is PyNamedTupleType) return null
 
-  return PyUnionType.union(
-    qualifierType
-      .getAncestorTypes(context)
-      .filterIsInstance<PyNamedTupleType>()
-      .mapNotNull { it.fields[referenceExpression.name] }
-      .map { it.type }
-      .toList()
-  )
+  val fieldTypes = qualifierType
+    .getAncestorTypes(context)
+    .filterIsInstance<PyNamedTupleType>()
+    .mapNotNull { it.fields[referenceExpression.name] }
+    .map { it.type }
+    .toList()
+  if (fieldTypes.isEmpty()) return null
+  return PyUnionType.union(fieldTypes)
 }
 
 private fun getNamedTupleReplaceType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyCallableType? {
@@ -171,24 +174,33 @@ private fun getCallableType(
 }
 
 private fun getNamedTupleFunctionType(function: PyFunction, context: TypeEvalContext, call: PyCallExpression): PyType? {
-  if (ArrayUtil.contains(function.qualifiedName, PyNames.COLLECTIONS_NAMEDTUPLE_PY2, PyNames.COLLECTIONS_NAMEDTUPLE_PY3) ||
-      PyTypingTypeProvider.NAMEDTUPLE == PyUtil.turnConstructorIntoClass(function)?.qualifiedName) {
-    return if (context.maySwitchToAST(call)) {
-      val functionType = context.getType(function) as? PyCallableType ?: return null
-      val returnType = getNamedTupleTypeFromStub(call, PyNamedTupleStubImpl.create(call), context) ?: return null
+  val isCollectionsNamedTuple = ArrayUtil.contains(function.qualifiedName, PyNames.COLLECTIONS_NAMEDTUPLE_PY2, PyNames.COLLECTIONS_NAMEDTUPLE_PY3)
+  val isTypingNamedTupleInit = !isCollectionsNamedTuple &&
+                               PyTypingTypeProvider.NAMEDTUPLE == PyUtil.turnConstructorIntoClass(function)?.qualifiedName
+  if (!isCollectionsNamedTuple && !isTypingNamedTupleInit) return null
+  if (!context.maySwitchToAST(call)) return null
 
-      PyCallableTypeImpl(
-        functionType.getParameters(context),
-        returnType,
-        functionType.callable,
-        functionType.modifier,
-        functionType.implicitOffset
-      )
-    }
-    else null
+  val returnType = getNamedTupleTypeFromStub(call, PyNamedTupleStubImpl.create(call), context) ?: return null
+
+  // `typing.NamedTuple.__init__` is overloaded; build a signature per overload and keep them as a single `PyOverloadType`
+  // (matching any signature is enough), rather than a union of signatures, which would force every signature to match the call.
+  val constructors = if (isTypingNamedTupleInit) function.containingClass?.multiFindInitOrNew(false, context)?.takeIf { it.isNotEmpty() }
+                     else null
+  val signatures = (constructors ?: listOf(function)).mapSmartNotNull { constructor ->
+    val constructorType = context.getType(constructor) as? PyCallableType ?: return@mapSmartNotNull null
+    val parameters = constructorType.getParameters(context)
+    PyCallableTypeImpl(
+      if (isTypingNamedTupleInit) parameters?.drop(1) else parameters,
+      returnType,
+      constructorType.callable,
+      constructorType.modifier
+    )
   }
-
-  return null
+  return when (signatures.size) {
+    0 -> null
+    1 -> signatures.single()
+    else -> PyOverloadType(signatures, null)
+  }
 }
 
 private fun getNamedTupleTypeForTarget(target: PyTargetExpression, context: TypeEvalContext): PyNamedTupleType? {
@@ -201,9 +213,7 @@ private fun getNamedTupleTypeForTarget(target: PyTargetExpression, context: Type
 
 private fun getNamedTupleTypeForClass(cls: PyClass, context: TypeEvalContext, call: PyCallExpression): PyType? {
   return getNamedTupleTypeForClass(cls, context)
-         ?: PyUnionType.union(
-           cls.multiFindInitOrNew(false, context).mapSmartNotNull { getNamedTupleFunctionType(it, context, call) }
-         )
+         ?: cls.multiFindInitOrNew(false, context).firstOrNull()?.let { getNamedTupleFunctionType(it, context, call) }
 }
 
 internal fun getNamedTupleTypeForClass(cls: PyClass, context: TypeEvalContext): PyNamedTupleType? {
@@ -273,7 +283,7 @@ private fun createUntypedNamedTupleReplaceType(
   }
   parameters.add(PyCallableParameterImpl.keywordOnlySeparatorNonPsi())
 
-  fields.keys.mapTo(parameters) { PyCallableParameterImpl.nonPsi(it, null, PyNames.ELLIPSIS) }
+  fields.keys.mapTo(parameters) { PyCallableParameterImpl.nonPsi(it, PyAnyType.unknown, PyNames.ELLIPSIS) }
 
   return if (resultType is PyNamedTupleType && anchor is PyCallExpression) {
     val newFields = mutableMapOf<String?, PyType?>()
@@ -324,7 +334,7 @@ private fun parseNamedTupleFields(
 ): NTFields {
   return fields.entries.associateTo(NTFields()) { (name, typeAndDefault) ->
     val type = typeAndDefault.type()
-    val pyType = type?.let { Ref.deref(PyTypingTypeProvider.getStringBasedType(type, anchor, context)) }
+    val pyType = type?.let { Ref.deref(PyTypingTypeProvider.getStringBasedType(type, anchor, context)) } ?: PyAnyType.unknown
     val defaultValue = if (typeAndDefault.hasDefault()) PyElementGenerator.getInstance(anchor.project).createEllipsis() else null
     name to PyNamedTupleType.FieldTypeAndDefaultValue(pyType, defaultValue)
   }

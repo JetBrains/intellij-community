@@ -12,35 +12,63 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @ApiStatus.Internal
 public class CloseAllEditorsAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) {
+      return;
+    }
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
       project, () -> {
+        FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
         EditorWindow window = e.getData(EditorWindow.DATA_KEY);
         if (window != null){
-          for (VirtualFile file : window.getFileList()) {
-            window.closeFile(file);
-          }
+          fileEditorManager.closeFilesWithChecks(getFilesToClose(window));
           return;
         }
-        FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
         VirtualFile selectedFile = fileEditorManager.getSelectedFiles()[0];
-        for (VirtualFile openFile : fileEditorManager.getSiblings(selectedFile)) {
-          fileEditorManager.closeFile(openFile);
+        List<Pair<EditorComposite, EditorWindow>> filesToClose = new ArrayList<>();
+        for (EditorWindow editorWindow : fileEditorManager.getWindows()) {
+          filesToClose.addAll(getFilesToClose(editorWindow, fileEditorManager.getSiblings(selectedFile)));
         }
+        fileEditorManager.closeFilesWithChecks(filesToClose);
       }, IdeBundle.message("command.close.all.editors"), null
     );
+  }
+
+  private static @NotNull List<Pair<EditorComposite, EditorWindow>> getFilesToClose(
+    @NotNull EditorWindow window
+  ) {
+    return getFilesToClose(window, window.getFileList());
+  }
+
+  private static @NotNull List<Pair<EditorComposite, EditorWindow>> getFilesToClose(
+    @NotNull EditorWindow window,
+    @NotNull Iterable<? extends VirtualFile> files
+  ) {
+    List<Pair<EditorComposite, EditorWindow>> result = new ArrayList<>();
+    for (VirtualFile file : files) {
+      EditorComposite composite = window.getComposite(file);
+      if (composite != null) {
+        result.add(new Pair<>(composite, window));
+      }
+    }
+    return result;
   }
 
   @Override

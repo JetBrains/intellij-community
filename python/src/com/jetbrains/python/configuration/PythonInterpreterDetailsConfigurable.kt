@@ -14,10 +14,12 @@ import javax.swing.JPanel
 /**
  * Delegates configuration to the underlying configurable that depends on Python interpreter type.
  */
-class PythonInterpreterDetailsConfigurable(project: Project,
-                                           module: Module?,
-                                           val sdk: Sdk,
-                                           parentConfigurable: Configurable) : NamedConfigurable<Sdk>() {
+internal class PythonInterpreterDetailsConfigurable(
+  project: Project,
+  module: Module?,
+  val sdk: Sdk,
+  parentConfigurable: Configurable,
+) : NamedConfigurable<Sdk>() {
 
   private val underlyingConfigurable: Configurable = createPythonInterpreterConfigurable(project, module, sdk, parentConfigurable)
 

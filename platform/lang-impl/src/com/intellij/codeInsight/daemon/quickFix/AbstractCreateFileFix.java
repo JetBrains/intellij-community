@@ -51,7 +51,6 @@ import static com.intellij.openapi.util.text.HtmlChunk.text;
 import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR;
 import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR_CHAR;
 
-@ApiStatus.Internal
 public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
   private static final int REFRESH_INTERVAL = 1000;

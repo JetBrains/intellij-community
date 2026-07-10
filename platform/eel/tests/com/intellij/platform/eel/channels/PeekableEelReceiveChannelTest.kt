@@ -4,13 +4,17 @@
 package com.intellij.platform.eel.channels
 
 import com.intellij.platform.eel.ReadResult
+import com.intellij.platform.eel.provider.utils.EelPipe
 import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
+import kotlin.time.Duration.Companion.milliseconds
 
 @Suppress("checkedExceptions")
 class PeekableEelReceiveChannelTest {
@@ -65,5 +69,29 @@ class PeekableEelReceiveChannelTest {
     channel.readLine(StandardCharsets.UTF_8) shouldBe ""
     channel.readLine(StandardCharsets.UTF_8) shouldBe "world"
     channel.readLine(StandardCharsets.UTF_8) shouldBe null
+  }
+
+  @Test
+  fun `test readUntil`() = runBlocking {
+    val pipe = EelPipe(prefersDirectBuffers = false)
+    launch {
+      pipe.sink.send(ByteBuffer.wrap(byteArrayOf(1, 2)))
+      delay(50.milliseconds)
+      pipe.sink.send(ByteBuffer.wrap(byteArrayOf(3, 4)))
+      pipe.sink.send(ByteBuffer.wrap(byteArrayOf(5, 6, 7)))
+    }
+
+    val result = StringBuilder()
+    val channel = pipe.source.peekable()
+    channel.readUntil(6.toByte()) { buffer, last ->
+      val data = ByteArray(buffer.remaining()) { buffer.get(it) }.joinToString { it.toUByte().toString() }
+      result.append("$data $last\n")
+    }
+    result.toString() shouldBe """
+      1, 2 false
+      3, 4 false
+      5 true
+      
+    """.trimIndent()
   }
 }

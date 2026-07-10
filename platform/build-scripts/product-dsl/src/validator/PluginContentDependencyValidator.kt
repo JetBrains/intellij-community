@@ -15,6 +15,7 @@ import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
 import org.jetbrains.intellij.build.productLayout.dependency.ModuleDescriptorCache
 import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
+import org.jetbrains.intellij.build.productLayout.discovery.TEST_PRODUCT_CLASS_NAME
 import org.jetbrains.intellij.build.productLayout.discovery.findProductPropertiesSourceFile
 import org.jetbrains.intellij.build.productLayout.model.ModuleSourceInfo
 import org.jetbrains.intellij.build.productLayout.model.error.PluginDependencyError
@@ -452,7 +453,7 @@ private fun buildProductSourceFiles(
   for (product in products) {
     val props = product.properties
     val sourceFile = if (props == null) {
-      "test-product"
+      TEST_PRODUCT_CLASS_NAME
     }
     else {
       try {
@@ -497,7 +498,7 @@ private fun buildAllowedMissingDependencyPatches(
     if (missingModulesForProduct.isEmpty()) continue
 
     val sourceFile = productSourceFiles.get(productName) ?: continue
-    if (sourceFile == "test-product") continue
+    if (sourceFile == TEST_PRODUCT_CLASS_NAME) continue
 
     val patch = when {
       isTestPlugin && isDslDefined -> buildTestPluginContentPatch(

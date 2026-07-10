@@ -67,6 +67,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.initialConfigImport" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.pluginSystem.parser.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.ide.startup.importSettings" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.ide.startup.importSettings" />
 </module>

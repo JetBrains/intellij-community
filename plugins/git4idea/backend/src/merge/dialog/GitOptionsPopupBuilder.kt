@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.merge.dialog
 
 import com.intellij.openapi.project.Project
@@ -67,7 +67,9 @@ internal class GitOptionsPopupBuilder<T>(
 
     override fun isSelectable(value: T?) = optionEnabledPredicate(value!!)
 
-    override fun onChosen(selectedValue: T?, finalChoice: Boolean) = doFinalStep(Runnable { selectedValue?.let(selectHandler) })
+    override fun onChosen(selectedValue: T?, finalChoice: Boolean) = doFinalStep(Runnable {
+      selectedValue?.takeIf(optionEnabledPredicate)?.let(selectHandler)
+    })
 
     override fun getSeparatorAbove(value: T): ListSeparator? = if (hasSeparatorAbovePredicate(value)) ListSeparator() else null
   }

@@ -13,13 +13,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.project.stateStore
 import com.intellij.util.application
 import com.intellij.util.io.createDirectories
-import git4idea.commit.signing.GpgAgentConfig.Companion.PINENTRY_PROGRAM
-import git4idea.commit.signing.GpgAgentConfig.Companion.readConfig
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_HOME_DIR
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.PINENTRY_LAUNCHER_FILE_NAME
 import git4idea.config.GitExecutable
@@ -34,7 +31,10 @@ import java.io.BufferedWriter
 import java.io.OutputStreamWriter
 import java.net.BindException
 import java.nio.charset.StandardCharsets
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.readLines
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 import kotlin.random.Random
 
 class PinentryExecutionTest : GitSingleRepoTest() {
@@ -47,7 +47,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     git("config user.signingkey 0A46826A!")
     GitProjectConfigurationCache.getInstance(project).clearCache()
     val enabled = GpgAgentConfigurator.isEnabled(project, GitExecutableManager.getInstance().getExecutable(project))
-    assumeTrue("GpgAgentConfigurator should be enabled", enabled);
+    assumeTrue("GpgAgentConfigurator should be enabled", enabled)
   }
 
   fun `test pinentry communication without gpg agent configuration`() {
@@ -61,7 +61,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
   fun `test pinentry communication with existing gpg agent configuration`() {
     val pathLocator = createPathLocator()
     val paths = pathLocator.resolvePaths()!!
-    FileUtil.writeToFile(paths.gpgAgentConf.toFile(), "${GpgAgentConfig.PINENTRY_PROGRAM} /usr/local/bin/pinentry")
+    paths.gpgAgentConf.writeText("${GpgAgentConfig.PINENTRY_PROGRAM} /usr/local/bin/pinentry")
     configureGpgAgent(paths)
     val generatedConfig = paths.gpgAgentConf.readLines()
     assertTrue(generatedConfig.size == 3)
@@ -78,7 +78,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     val maxCacheTtlConfig = "${GpgAgentConfig.MAX_CACHE_TTL} ${GpgAgentConfig.MAX_CACHE_TTL_CONF_VALUE}"
     val pinentryConfig = "${GpgAgentConfig.PINENTRY_PROGRAM} ${paths.gpgPinentryAppLauncherConfigPath}"
 
-    FileUtil.writeToFile(paths.gpgAgentConf.toFile(), "$allowLoopbackPinentryConfig\n$defaultCacheTtlConfig\n$maxCacheTtlConfig")
+    paths.gpgAgentConf.writeText("$allowLoopbackPinentryConfig\n$defaultCacheTtlConfig\n$maxCacheTtlConfig")
     configureGpgAgent(paths)
     val generatedConfig = paths.gpgAgentConf.readLines()
 
@@ -90,16 +90,17 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     val paths = pathLocator.resolvePaths()!!
 
     configureGpgAgent(paths)
-    var scriptContent = FileUtil.loadFile(paths.gpgPinentryAppLauncher.toFile())
+    var scriptContent = paths.gpgPinentryAppLauncher.readText()
     assertScriptContentStructure(scriptContent)
 
-    FileUtil.delete(paths.gpgPinentryAppLauncher.toFile())
-    FileUtil.delete(paths.gpgAgentConf.toFile())
-    FileUtil.delete(paths.gpgAgentConfBackup.toFile())
+    paths.gpgPinentryAppLauncher.deleteIfExists()
+    paths.gpgPinentryAppLauncher.deleteIfExists()
+    paths.gpgAgentConf.deleteIfExists()
+    paths.gpgAgentConfBackup.deleteIfExists()
 
-    FileUtil.writeToFile(paths.gpgAgentConf.toFile(), "${GpgAgentConfig.PINENTRY_PROGRAM} /usr/local/bin/pinentry")
+    paths.gpgAgentConf.writeText("${GpgAgentConfig.PINENTRY_PROGRAM} /usr/local/bin/pinentry")
     configureGpgAgent(paths)
-    scriptContent = FileUtil.loadFile(paths.gpgPinentryAppLauncher.toFile())
+    scriptContent = paths.gpgPinentryAppLauncher.readText()
     assertScriptContentStructure(scriptContent)
   }
 
@@ -114,9 +115,9 @@ class PinentryExecutionTest : GitSingleRepoTest() {
   }
 
   fun `test pinentry shouldn't be configured twice`() {
-    assertTrue(GpgAgentConfigurator.getInstance(project).canBeConfigured(project))
+    assertTrue(GpgAgentConfigurator.getInstance(project).canBeConfigured())
     configureGpgAgent(createPathLocator().resolvePaths()!!)
-    assertFalse(GpgAgentConfigurator.getInstance(project).canBeConfigured(project))
+    assertFalse(GpgAgentConfigurator.getInstance(project).canBeConfigured())
   }
 
   fun `test pinentry fallbak preserved after update`() {
@@ -124,11 +125,11 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     val paths = pathLocator.resolvePaths()!!
 
     val pinetryFallback = "/non-existing-path/with space/pinentry"
-    GpgAgentConfig(paths.gpgAgentConf, mapOf(PINENTRY_PROGRAM to pinetryFallback)).writeToFile()
+    GpgAgentConfig(paths.gpgAgentConf, mapOf(GpgAgentConfig.PINENTRY_PROGRAM to pinetryFallback)).writeToFile()
     configureGpgAgent(paths, pinetryFallback)
 
     assertPinentryFallback(paths, pinetryFallback)
-    FileUtil.writeToFile(paths.gpgPinentryAppLauncher.toFile(), "irrelevant content")
+    paths.gpgPinentryAppLauncher.writeText("irrelevant content")
     runBlocking {
       GpgAgentConfigurator.getInstance(project).updateExistingPinentryLauncher()
     }
@@ -136,12 +137,12 @@ class PinentryExecutionTest : GitSingleRepoTest() {
   }
 
   private fun assertPinentryFallback(paths: GpgAgentPaths, pinetryFallback: String) {
-    val scriptContent = FileUtil.loadFile(paths.gpgPinentryAppLauncher.toFile())
+    val scriptContent = paths.gpgPinentryAppLauncher.readText()
     assertThat(scriptContent, CoreMatchers.containsString("""exec ${CommandLineUtil.posixQuote(pinetryFallback)} "$@""""))
   }
 
   private fun configureGpgAgent(gpgAgentPaths: GpgAgentPaths, pinetryFallback: String = "pinentry") {
-    val config = readConfig(gpgAgentPaths.gpgAgentConf)
+    val config = GpgAgentConfig.readConfig(gpgAgentPaths.gpgAgentConf)
     runBlocking {
       GpgAgentConfigurator.getInstance(project).doConfigure(
         GitExecutableManager.getInstance().getExecutable(project),
@@ -194,7 +195,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
       .withEnvironment(PinentryService.PINENTRY_USER_DATA_ENV, pinentryData.toEnv())
 
     val process = object : CapturingProcessHandler.Silent(cmd) {
-      override fun createProcessAdapter(processOutput: ProcessOutput): CapturingProcessAdapter? {
+      override fun createProcessAdapter(processOutput: ProcessOutput): CapturingProcessAdapter {
         return object : CapturingProcessAdapter(processOutput) {
           val writer = BufferedWriter(OutputStreamWriter(process.outputStream, StandardCharsets.UTF_8))
           override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
@@ -240,7 +241,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
 
 internal class GpgAgentPathsLocatorTestFactory: GpgAgentPathsLocatorFactory {
   override fun createPathLocator(project: Project, executor: GitExecutable): GpgAgentPathsLocator = object : GpgAgentPathsLocator {
-    override fun resolvePaths(): GpgAgentPaths? {
+    override fun resolvePaths(): GpgAgentPaths {
       val gpgAgentHome = project.stateStore.projectBasePath.resolve(GPG_HOME_DIR).createDirectories()
       val gpgPinentryAppLauncher = gpgAgentHome.resolve(PINENTRY_LAUNCHER_FILE_NAME)
       return GpgAgentPaths.create(gpgAgentHome, gpgPinentryAppLauncher.toAbsolutePath().toString())

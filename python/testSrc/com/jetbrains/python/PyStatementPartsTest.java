@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.PyElsePart;
@@ -37,6 +40,8 @@ import java.util.Map;
 /**
  * Tests statement parts.
  */
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyStatementPartsTest extends LightMarkedTestCase {
 
   @Override

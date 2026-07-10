@@ -40,7 +40,6 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.platform.execution.dashboard.splitApi.NavigateToServiceEvent;
 import com.intellij.platform.execution.dashboard.splitApi.RunDashboardConfigurationDto;
@@ -678,11 +677,11 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
             mainService.setDescriptorId(descriptorId);
             return mainService;
           }
-          int idx = services.indexOf(oldService);
-          AdditionalRunDashboardService replacement =
-            new AdditionalRunDashboardService(settings, descriptorId, services.getFirst().getScope());
-          services.set(idx, replacement);
-          return replacement;
+          if (oldService instanceof AdditionalRunDashboardService additionalService) {
+            // rebind in place to keep the service id (and so the tree node identity) stable
+            additionalService.setDescriptorId(descriptorId);
+            return additionalService;
+          }
         }
       }
 
@@ -1107,7 +1106,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
   static final class AdditionalRunDashboardService implements RunDashboardService {
     private final RunnerAndConfigurationSettings mySettings;
-    private final RunContentDescriptorId myDescriptorId;
+    private RunContentDescriptorId myDescriptorId;
     private final RunDashboardServiceId myId;
 
     AdditionalRunDashboardService(@NotNull RunnerAndConfigurationSettings settings,
@@ -1138,6 +1137,10 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       return myDescriptorId;
     }
 
+    void setDescriptorId(@NotNull RunContentDescriptorId descriptorId) {
+      myDescriptorId = descriptorId;
+    }
+
     @Override
     public @Nullable RunContentDescriptor getDescriptor() {
       return getDescriptorById(myDescriptorId, mySettings.getConfiguration().getProject());
@@ -1155,13 +1158,13 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       if (o == null || getClass() != o.getClass()) return false;
 
       AdditionalRunDashboardService service = (AdditionalRunDashboardService)o;
-      return mySettings.equals(service.mySettings) && Comparing.equal(myDescriptorId, service.myDescriptorId);
+      return mySettings.equals(service.mySettings) && myId.equals(service.myId);
     }
 
     @Override
     public int hashCode() {
       int result = mySettings.hashCode();
-      result = 31 * result + myDescriptorId.hashCode();
+      result = 31 * result + myId.hashCode();
       return result;
     }
   }

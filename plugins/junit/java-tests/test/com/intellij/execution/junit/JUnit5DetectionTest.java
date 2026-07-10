@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -79,5 +79,42 @@ public class JUnit5DetectionTest extends LightJavaCodeInsightFixtureTestCase {
       PsiMethod method = aClass.getMethods()[0];
       assertTrue(framework.isTestMethod(method));
     });
+  }
+
+  public void testAbstractClassWithMetaAnnotatedExtendWith() {
+    myFixture.addClass("""
+      import org.junit.jupiter.api.extension.Extension;
+
+      public class MyExtension implements Extension {}
+      """);
+    myFixture.addClass("""
+      import java.lang.annotation.ElementType;
+      import java.lang.annotation.Retention;
+      import java.lang.annotation.RetentionPolicy;
+      import java.lang.annotation.Target;
+      import org.junit.jupiter.api.extension.ExtendWith;
+
+      @Target(ElementType.TYPE)
+      @Retention(RetentionPolicy.RUNTIME)
+      @ExtendWith(MyExtension.class)
+      public @interface MyAppTest {}
+      """);
+    myFixture.addClass("""
+      import org.junit.jupiter.api.Test;
+      
+      public class MyTest extends AbstractBaseTest {
+        @Test
+        publc void test() {}
+      }
+      """);
+    PsiFile file = myFixture.configureByText("AbstractBaseTest.java", """
+      @MyAppTest
+      public abstract class AbstractBaseTest {
+      }
+      """);
+    PsiClass aClass = ((PsiClassOwner)file).getClasses()[0];
+    assertTrue("Abstract class with @ExtendWith supplied via a composed (meta) annotation " +
+               "should be recognized as a JUnit 5 test class",
+               JUnitUtil.isJUnit5TestClass(aClass, false));
   }
 }

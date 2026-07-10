@@ -556,7 +556,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return getProjectsTree().findAggregator(mavenProject);
   }
 
-  public @Nullable MavenProject findRootProject(@NotNull MavenProject mavenProject) {
+  public @NotNull MavenProject findRootProject(@NotNull MavenProject mavenProject) {
     return getProjectsTree().findRootProject(mavenProject);
   }
 

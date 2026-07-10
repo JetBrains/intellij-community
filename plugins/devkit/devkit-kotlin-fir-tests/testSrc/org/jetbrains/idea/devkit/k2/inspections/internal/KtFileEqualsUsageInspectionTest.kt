@@ -83,7 +83,7 @@ class KtFileEqualsUsageInspectionTest : FileEqualsUsageInspectionTestBase() {
         fun method() {
            @Suppress("UNUSED_VARIABLE") val file1: File? = File("any")
            @Suppress("UNUSED_VARIABLE") val file2: File? = File("any")
-           @Suppress(<warning descr="[ERROR_SUPPRESSION] Suppression of error 'UNSAFE_OPERATOR_CALL' might compile and work, but the compiler behavior is UNSPECIFIED and WILL NOT BE PRESERVED. Please report your use case to the Kotlin issue tracker instead: https://kotl.in/issue">"UNSAFE_OPERATOR_CALL"</warning>) ($leftOperandText $expectedOperatorExpression $rightOperandText)
+           @Suppress(<warning descr="[ERROR_SUPPRESSION]">"UNSAFE_OPERATOR_CALL"</warning>) ($leftOperandText $expectedOperatorExpression $rightOperandText)
         }
       }""")
     myFixture.testHighlighting()

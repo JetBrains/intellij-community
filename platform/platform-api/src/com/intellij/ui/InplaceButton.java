@@ -204,7 +204,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
     if (!isEnabled()) {
       myInactive.paintIcon(this, g, 0, 0);
     }
-    else if ((myBehavior.isHovered() && myHoveringEnabled) || hasFocus()) {
+    else if (shouldPaintHover()) {
       paintHover(g);
       myHovered.paintIcon(this, g, 0, 0);
     }
@@ -213,6 +213,10 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
     }
 
     g.translate(0, 0);
+  }
+
+  protected boolean shouldPaintHover() {
+    return (myBehavior.isHovered() && myHoveringEnabled) || hasFocus();
   }
 
   protected void paintHover(Graphics g) {

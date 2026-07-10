@@ -1,7 +1,7 @@
 import test.List;
 
-public class beforeC<caret>onflictModuleImportDemandOverModule {
-    public static void main(String[] args) {
+public class beforeConflictModuleImportDemandOverModule {
+    public static void m<caret>ain(String[] args) {
         List a = null;
     }
 }

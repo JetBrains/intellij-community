@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="eclipse.lsp4j.debug" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.eclipse.lsp4j:org.eclipse.lsp4j.debug:0.24.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/eclipse/lsp4j/org.eclipse.lsp4j.debug/0.24.0/org.eclipse.lsp4j.debug-0.24.0.jar">
+              <sha256sum>df9927dd2d5d4279ffd7096bca2efe9dc914ba0439bbe835e32ec332b8f21793</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <ANNOTATIONS>
+          <root url="file://$MODULE_DIR$/../../../lib/annotations/eclipse_lsp4j_debug" />
+        </ANNOTATIONS>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/lsp4j/org.eclipse.lsp4j.debug/0.24.0/org.eclipse.lsp4j.debug-0.24.0.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/lsp4j/org.eclipse.lsp4j.debug/0.24.0/org.eclipse.lsp4j.debug-0.24.0-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/lsp4j/org.eclipse.lsp4j.debug/0.24.0/org.eclipse.lsp4j.debug-0.24.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

@@ -50,7 +50,7 @@ jvm_library(
         "@lib//:kotlinc-kotlin-compiler-common-provided",
         "//platform/editor-ui-api:editor-ui",
         "//plugins/kotlin/base/code-insight",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
         "//platform/platform-impl:ide-impl",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
         "//plugins/kotlin/code-insight/api",
@@ -69,6 +69,7 @@ jvm_library(
         "//plugins/kotlin/frontend-independent",
         "//plugins/kotlin/code-insight/fixes-k2:kotlin-codeInsight-fixes",
         "//plugins/kotlin/references",
+        "//plugins/kotlin/base/psi",
     ],
 )
 
@@ -103,7 +104,7 @@ jvm_library(
         "@lib//:kotlinc-kotlin-compiler-common-provided",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//plugins/kotlin/base/code-insight:code-insight_test_lib",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
         "//plugins/kotlin/code-insight/api:api_test_lib",
@@ -124,6 +125,7 @@ jvm_library(
         "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
         "//plugins/kotlin/code-insight/fixes-k2:kotlin-codeInsight-fixes_test_lib",
         "//plugins/kotlin/references:references_test_lib",
+        "//plugins/kotlin/base/psi:psi_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.devkit` end

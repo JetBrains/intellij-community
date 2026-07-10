@@ -18,7 +18,6 @@ import com.intellij.ide.plugins.newui.PluginDetailsPageComponent;
 import com.intellij.ide.plugins.newui.PluginModelFacade;
 import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.ide.plugins.newui.PluginUiModelAdapter;
-import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.ide.plugins.newui.PluginsGroup;
 import com.intellij.ide.plugins.newui.PluginsGroupComponent;
 import com.intellij.ide.plugins.newui.UiPluginManager;
@@ -117,10 +116,6 @@ public class PluginUpdateDialog extends DialogWrapper {
     };
 
     myPluginModel.setTopController(Configurable.TopComponentController.EMPTY);
-    myPluginModel.setPluginUpdatesService(new PluginUpdatesService() {
-      @Override
-      public void finishUpdate() { }
-    });
 
     //noinspection unchecked
     myDetailsPage = new PluginDetailsPageComponent(new PluginModelFacade(myPluginModel),
@@ -177,33 +172,22 @@ public class PluginUpdateDialog extends DialogWrapper {
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
   }
 
-  public static boolean showDialogAndUpdate(@NotNull Collection<PluginDownloader> downloaders, @NotNull PluginUpdateDialog dialog) {
+  public static boolean showDialogAndUpdateDownloaders(@NotNull Collection<PluginDownloader> downloaders, @NotNull PluginUpdateDialog dialog) {
     if (dialog.showAndGet()) {
-      List<PluginUiModel> selectedPlugins = dialog.getSelectedPluginModels();
-      List<PluginDownloader> selectedDownloaders = findDownloadersForPlugins(downloaders, selectedPlugins);
+      Set<PluginId> selectedPlugins = ContainerUtil.map2Set(dialog.getSelectedPluginModels(), PluginUiModel::getPluginId);
+      List<PluginDownloader> selectedDownloaders = ContainerUtil.filter(downloaders, downloader -> selectedPlugins.contains(downloader.getId()));
       runUpdateAll(selectedDownloaders, dialog.getContentPanel(), dialog.myFinishCallback, null);
       return true;
     }
     return false;
   }
 
-  public static List<PluginDownloader> getSelectedDownloaders(@NotNull Collection<PluginDownloader> downloaders,
-                                                              @NotNull PluginUpdateDialog dialog) {
-    return findDownloadersForPlugins(downloaders, dialog.getSelectedPluginModels());
-  }
-
-  private static @NotNull List<PluginDownloader> findDownloadersForPlugins(@NotNull Collection<PluginDownloader> downloaders,
-                                                                           @NotNull List<PluginUiModel> selectedPlugins) {
-    List<PluginDownloader> selectedDownloaders = new ArrayList<>();
-    Set<PluginId> selectedPluginIds = ContainerUtil.map2Set(selectedPlugins, PluginUiModel::getPluginId);
-
-    for (PluginDownloader downloader : downloaders) {
-      if (selectedPluginIds.contains(downloader.getDescriptor().getPluginId())) {
-        selectedDownloaders.add(downloader);
-      }
+  public static boolean showDialogAndUpdate(@NotNull PluginUpdateDialog dialog) {
+    if (dialog.showAndGet()) {
+      PluginUpdateHandler.installUpdatesInBackground(dialog.getSelectedPluginModels(), dialog.getContentPanel(), dialog.myFinishCallback, null);
+      return true;
     }
-
-    return selectedDownloaders;
+    return false;
   }
 
   protected void doIgnoreUpdateAction(ActionEvent e) {

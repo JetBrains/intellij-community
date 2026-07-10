@@ -7,6 +7,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.PolymorphicKind
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -17,10 +18,13 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.jvm.JvmInline
 
@@ -290,7 +294,7 @@ value class DocumentSelector(val filters: List<DocumentFilter>) {
     constructor(vararg filters: DocumentFilter) : this(filters.toList())
 }
 
-@Serializable
+@Serializable(with = TextEditSerializer::class)
 data class TextEdit(
     /**
      * The range of the text document to be manipulated. To insert
@@ -302,7 +306,13 @@ data class TextEdit(
      * The string to be inserted. For delete operations use an
      * empty string.
      */
-    val newText: String,
+    val newText: String = "",
+
+    /**
+     * The snippet text (if SnippetTextEdit is supported).
+     * If it's present, the newText field must be ignored.
+     */
+    val snippet: String? = null,
 
     /**
      * The actual annotation identifier.
@@ -340,7 +350,7 @@ data class ChangeAnnotation(
     val description: String? = null,
 )
 
-@Serializable
+@Serializable(with = TextDocumentEditSerializer::class)
 data class TextDocumentEdit(
     /**
      * The text document to change.
@@ -690,6 +700,13 @@ data class WorkspaceEditClientCapabilities(
      * @since 3.16.0
      */
     val changeAnnotationSupport: ChangeAnnotationSupport? = null,
+
+    /**
+     * Whether the client supports snippets as text edits.
+     *
+     * @since 3.18.0
+     */
+    val snippetEditSupport: Boolean? = null,
 )
 
 @Serializable
@@ -977,5 +994,79 @@ object FileChangeSerializer : KSerializer<FileChange> {
       null -> json.decodeFromJsonElement<TextDocumentEdit>(TextDocumentEdit.serializer(), jsonElement)
       else -> throw SerializationException("Unknown FileChange kind: $kind")
     }
+  }
+}
+
+@Serializer(forClass = TextEdit::class)
+object TextEditSerializer : KSerializer<TextEdit> {
+  override fun serialize(encoder: Encoder, value: TextEdit) {
+    require(encoder is JsonEncoder) { "TextEdit can only be serialized to JSON" }
+    val json = encoder.json
+
+    val jsonObject = buildJsonObject {
+      put("range", json.encodeToJsonElement(Range.serializer(), value.range))
+      if (value.snippet != null) {
+        put("snippet", buildJsonObject {
+          put("kind", JsonPrimitive("snippet"))
+          put("value", JsonPrimitive(value.snippet))
+        })
+      }
+      else {
+        put("newText", JsonPrimitive(value.newText))
+      }
+      if (value.annotationId != null) {
+        put("annotationId", json.encodeToJsonElement(ChangeAnnotationIdentifier.serializer(), value.annotationId))
+      }
+    }
+
+    encoder.encodeJsonElement(jsonObject)
+  }
+
+  override fun deserialize(decoder: Decoder): TextEdit {
+    require(decoder is JsonDecoder) { "TextEdit can only be deserialized from JSON" }
+    val json = decoder.json
+    val jsonObject = decoder.decodeJsonElement().jsonObject
+
+    val range = json.decodeFromJsonElement(Range.serializer(), jsonObject.getValue("range"))
+    val snippet = jsonObject["snippet"]?.jsonObject?.get("value")?.jsonPrimitive?.content
+    val newText = if (snippet != null) "" else jsonObject["newText"]?.jsonPrimitive?.content ?: ""
+    val annotationId = jsonObject["annotationId"]?.let {
+      json.decodeFromJsonElement(ChangeAnnotationIdentifier.serializer(), it)
+    }
+
+    return TextEdit(range = range, newText = newText, snippet = snippet, annotationId = annotationId)
+  }
+}
+
+@Serializer(forClass = TextDocumentEdit::class)
+object TextDocumentEditSerializer : KSerializer<TextDocumentEdit> {
+  override fun serialize(encoder: Encoder, value: TextDocumentEdit) {
+    require(encoder is JsonEncoder) { "TextDocumentEdit can only be serialized to JSON" }
+    val json = encoder.json
+
+    // `textDocument` is an OptionalVersionedTextDocumentIdentifier: its `version` (integer | null) must be
+    // present. The shared Json uses explicitNulls = false, which would otherwise drop a null version and
+    // produce a `textDocument` that LSP clients (e.g. VS Code) reject as an unknown workspace edit change.
+    val textDocument = json.encodeToJsonElement(TextDocumentIdentifier.serializer(), value.textDocument).jsonObject
+    val textDocumentWithVersion = JsonObject(
+      textDocument + ("version" to (value.textDocument.version?.let { JsonPrimitive(it) } ?: JsonNull))
+    )
+
+    val jsonObject = buildJsonObject {
+      put("textDocument", textDocumentWithVersion)
+      put("edits", json.encodeToJsonElement(ListSerializer(TextEdit.serializer()), value.edits))
+    }
+
+    encoder.encodeJsonElement(jsonObject)
+  }
+
+  override fun deserialize(decoder: Decoder): TextDocumentEdit {
+    require(decoder is JsonDecoder) { "TextDocumentEdit can only be deserialized from JSON" }
+    val json = decoder.json
+    val jsonObject = decoder.decodeJsonElement().jsonObject
+
+    val textDocument = json.decodeFromJsonElement(TextDocumentIdentifier.serializer(), jsonObject.getValue("textDocument"))
+    val edits = json.decodeFromJsonElement(ListSerializer(TextEdit.serializer()), jsonObject.getValue("edits"))
+    return TextDocumentEdit(textDocument = textDocument, edits = edits)
   }
 }

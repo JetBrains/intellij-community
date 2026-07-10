@@ -187,8 +187,8 @@ supported:
   uploads to PyPI. This should only be used in special cases, e.g. when the stubs
   break the upload.
 * `partial-stub` (optional): This field marks the type stub package as
-  [partial](https://peps.python.org/pep-0561/#partial-stub-packages). This is for
-  3rd-party stubs that don't cover the entirety of the package's public API.
+  [partial](https://typing.python.org/en/latest/spec/distributing.html#partial-stub-packages).
+  This is for 3rd-party stubs that don't cover the entirety of the package's public API.
 * `requires-python` (optional): The minimum version of Python required to install
   the type stub package. It must be in the form `>=3.*`. If omitted, the oldest
   Python version supported by typeshed is used.
@@ -441,7 +441,7 @@ these steps:
 
 1. Open an issue explaining why the stubs should be removed.
 2. A maintainer will add the
-   ["stubs: removal" label](https://github.com/python/typeshed/labels/%22stubs%3A%20removal%22).
+   ["stubs: removal" label](https://github.com/python/typeshed/labels/stubs%3A%20removal).
 3. Open a PR that sets the `no-longer-updated` field in the `METADATA.toml`
    file to `true`.
 4. When a new version of the package was automatically uploaded to PyPI (which
@@ -452,7 +452,7 @@ for any stub obsoletions or removals.
 
 ### Marking PRs as "deferred"
 
-We sometimes use the ["status: deferred" label](https://github.com/python/typeshed/labels/%22status%3A%20deferred%22)
+We sometimes use the ["status: deferred" label](https://github.com/python/typeshed/labels/status%3A%20deferred)
 to mark PRs and issues that we'd like to accept, but that are blocked by some
 external factor. Blockers can include:
 

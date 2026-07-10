@@ -142,6 +142,9 @@ public abstract class AutomaticRenamer {
     if (oldClassName.equals(name)) {
       return newClassName;
     }
+    if (name.endsWith(newClassName)) {
+      return name;
+    }
     String canonicalName = nameToCanonicalName(name, element);
     final String newCanonicalName = suggester.suggestName(canonicalName);
     if (newCanonicalName.isEmpty()) {

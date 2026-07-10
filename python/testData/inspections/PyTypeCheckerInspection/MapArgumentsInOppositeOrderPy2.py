@@ -1,1 +1,1 @@
-map<warning descr="No overload of 'map' matches the arguments. Argument types: (str, (c: Any) -> int). Expected one of: (__func: None, __iter1: Iterable[_T1]), (__func: (_T1) -> _S, __iter1: Iterable[_T1])">('foo', lambda c: 42)</warning>
+map<warning descr="No overload of 'map' matches the arguments. Argument types: (str, (c: Unknown) -> Literal[42]). Expected one of: (__func: None, __iter1: Iterable[_T1]), (__func: (_T1) -> _S, __iter1: Iterable[_T1])">('foo', lambda c: 42)</warning>

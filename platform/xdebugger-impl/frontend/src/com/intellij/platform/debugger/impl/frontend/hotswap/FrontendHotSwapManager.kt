@@ -6,15 +6,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.durableWithStateReset
 import com.intellij.platform.debugger.impl.frontend.util.SequentialRpcRequestsExecutor
-import com.intellij.platform.debugger.impl.rpc.HotSwapSource
 import com.intellij.platform.debugger.impl.rpc.HotSwapVisibleStatus
 import com.intellij.platform.debugger.impl.rpc.XDebugHotSwapCurrentSessionStatus
 import com.intellij.platform.debugger.impl.rpc.XDebugHotSwapSessionId
 import com.intellij.platform.debugger.impl.rpc.XDebuggerHotSwapApi
 import com.intellij.platform.project.projectId
+import com.intellij.xdebugger.hotswap.HotSwapSource
 import com.intellij.xdebugger.impl.hotswap.NOTIFICATION_TIME_SECONDS
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,29 +21,29 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @Service(Service.Level.PROJECT)
 internal class FrontendHotSwapManager(private val project: Project, val coroutineScope: CoroutineScope) {
   private val sequentialExecutor = SequentialRpcRequestsExecutor.create(coroutineScope)
-  private val frontendStatusFlow = MutableStateFlow(null as XDebugHotSwapCurrentSessionStatus?).also { flow ->
+  val currentStatusFlow: StateFlow<XDebugHotSwapCurrentSessionStatus?>
+    field = MutableStateFlow(null)
+
+  init {
     coroutineScope.launch {
       durableWithStateReset(block = {
         val statusFlow = XDebuggerHotSwapApi.getInstance().currentSessionStatus(project.projectId())
         statusFlow.collectLatest { state ->
-          flow.value = state
+          currentStatusFlow.value = state
           // clear success status after delay
-          if (state?.status == HotSwapVisibleStatus.SUCCESS) {
+          if (state?.status == HotSwapVisibleStatus.Success) {
             delay(NOTIFICATION_TIME_SECONDS.seconds)
-            flow.compareAndSet(state, state.copy(status = HotSwapVisibleStatus.NO_CHANGES))
+            currentStatusFlow.compareAndSet(state, state.copy(status = HotSwapVisibleStatus.NoChanges))
           }
         }
-      }, stateReset = { flow.value = null })
+      }, stateReset = { currentStatusFlow.value = null })
     }
   }
 
-  val currentStatusFlow: StateFlow<XDebugHotSwapCurrentSessionStatus?> get() = frontendStatusFlow
-
-  val currentStatus: XDebugHotSwapCurrentSessionStatus? get() = frontendStatusFlow.value
+  val currentStatus: XDebugHotSwapCurrentSessionStatus? get() = currentStatusFlow.value
 
   fun performHotSwap(sessionId: XDebugHotSwapSessionId, source: HotSwapSource) {
     sequentialExecutor.execute {
@@ -52,9 +51,15 @@ internal class FrontendHotSwapManager(private val project: Project, val coroutin
     }
   }
 
+  fun performRestart(sessionId: XDebugHotSwapSessionId, source: HotSwapSource) {
+    sequentialExecutor.execute {
+      XDebuggerHotSwapApi.getInstance().restart(sessionId, source)
+    }
+  }
+
   fun notifyHidden() {
     // Hide locally
-    frontendStatusFlow.value = null
+    currentStatusFlow.value = null
     sequentialExecutor.execute {
       XDebuggerHotSwapApi.getInstance().hide(project.projectId())
     }

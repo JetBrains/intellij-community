@@ -63,6 +63,11 @@ common:windows --disk_cache=~/AppData/Local/Temp/JetBrains/monorepo-bazel-cache
 common --@rules_jvm//:default-javac-opts=@community//:default-javac-opts
 common --@rules_jvm//:default-kotlinc-opts=@community//:k25
 
+# rules_jvm / rules_kotlin compilation backend switch (see rules_jvm backend_config.bzl). Default = JPS / rules_jvm.
+# Use --config=bta to compile with the rules_kotlin (BTA) backend instead.
+common:jps --repo_env=IJ_JVM_USE_RULES_KOTLIN_BACKEND=0
+common:bta --repo_env=IJ_JVM_USE_RULES_KOTLIN_BACKEND=1
+
 # configure resources
 common --local_resources=memory=HOST_RAM*.77 --local_resources=cpu=HOST_CPUS*2
 common --jobs=HOST_CPUS*2 --worker_max_multiplex_instances=JvmCompile=HOST_CPUS*2
@@ -108,6 +113,10 @@ build:windows --@rules_kotlin//kotlin/settings:jvm_emit_jdeps=False
 
 # Prune transitive deps to match jvm_library behavior and avoid classpath conflicts
 common --@rules_kotlin//kotlin/settings:experimental_prune_transitive_deps=True
+
+# Force ijar ABIs instead of turbine source-level header jars, effective when compiling with upstream rules_kotlin
+# Turbine omits synthetic bridge methods, while ijar (of the full javac output) keeps the bridges
+build --nojava_header_compilation
 
 # https://bazel.build/docs/bazel-and-java#config-build-tools-java
 # A second pair of JDK and JVM used to build and execute tools, which are used in the build process, but are not in the build results.
@@ -191,6 +200,10 @@ test --test_timeout=60,300,900,14400
 # A workaround for https://github.com/bazelbuild/rules_kotlin/issues/1352
 common --repo_env=ANDROID_HOME=
 
+# Forward NETRC so both Bazel's downloader and Coursier (maven_install use_credentials_from_home_netrc_file)
+# can authenticate to packages.jetbrains.team, e.g. on CI where NETRC points to a file outside $HOME.
+common --repo_env=NETRC
+
 # Use prebuilt protoc instead of building from source, https://protobuf.dev/news/2026-01-16/
 common --incompatible_enable_proto_toolchain_resolution
 common --@protobuf//bazel/toolchains:prefer_prebuilt_protoc=true
@@ -198,13 +211,24 @@ common --@protobuf//bazel/toolchains:prefer_prebuilt_protoc=true
 # need to use Python from rules_python in rules_pkg in pkg_zip target
 common --@rules_python//python/config_settings:bootstrap_impl=script
 
-# Retry downloads up to 5 times
+# Retry downloads up to 5 times.
+# Please note that this is not applicable to Coursier which requires its own configuration.
 common --experimental_repository_downloader_retries=5
+
+# rules_jvm_external 6.10 bundles Coursier v2.1.24, which does NOT retry HTTP 5xx (only SSL/AccessDenied),
+# so transient 502s from Space Packages during the resolve fail immediately. Pin a newer Coursier that
+# retries 5xx (Coursier PR #3515, first in v2.1.25-M20); combined with the per-install
+# additional_coursier_options=["--retry-count","5"] this retries 502s. Requires the rules_jvm_external
+# coursier-optional-file-field patch (newer Coursier omits the "file" key for pom-only entries).
+common --repo_env=COURSIER_URL=https://github.com/coursier/coursier/releases/download/v2.1.25-M26/coursier.jar
+common --repo_env=COURSIER_SHA256=97647d0378b877db2552a29caec075de1bae86375f0343ba82cf52d69193eb5e
+
+# Coursier's default retry backoff is 10ms x 2^n over 5 attempts (~150ms total) - far too short to outlast a
+# transient Space Packages 502. Stretch the initial delay (via a JVM system property forwarded through COURSIER_OPTS).
+# Keep this to a single -D: bazelrc splits the flag value on spaces, so multiple -D tokens would not parse.
+common --repo_env=COURSIER_OPTS=-Dcoursier.exception-retry-backoff-initial-delay=5s
 
 # Scale HTTP timeouts by 2x
 common --http_timeout_scaling=2.0
-
-# Prevents `ld.lld: error: unable to find library -lgcc_s` in `//fleet/native/filewatcher_jni:filewatcher_jni_aarch64-unknown-linux-gnu`
-common --@llvm//config:experimental_stub_libgcc_s
 
 common --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1

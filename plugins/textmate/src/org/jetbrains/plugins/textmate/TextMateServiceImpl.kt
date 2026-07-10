@@ -253,7 +253,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
     return null
   }
 
-  private fun ensureInitialized() {
+  override fun ensureInitialized() {
     if (!isInitialized) {
       registrationLock.lockMaybeCancellable()
       try {

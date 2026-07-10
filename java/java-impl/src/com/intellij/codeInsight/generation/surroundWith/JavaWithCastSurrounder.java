@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -58,7 +58,13 @@ public class JavaWithCastSurrounder extends JavaExpressionModCommandSurrounder {
 
     RangeMarker rangeMarker = expr.getUserData(ElementToWorkOn.TEXT_RANGE);
     TextRange range = rangeMarker == null ? expr.getTextRange() : rangeMarker.getTextRange();
-    PsiFile file = updater.getWritable(context.file()); // cannot use expr.getContainingFile(), as expr could be detached (e.g., part of polyadic)
+    PsiFile file;
+    if (updater.getOriginalFile(updater.getPsiFile()) == context.file()) {
+      file = updater.getPsiFile(); //sometimes PsiFile can already contain some changes
+    }
+    else {
+      file = updater.getWritable(context.file()); // cannot use expr.getContainingFile(), as expr could be detached (e.g., part of polyadic)
+    }
     Document document = file.getFileDocument();
     document.replaceString(range.getStartOffset(), range.getEndOffset(), "((x)" + exprText + ")");
     PsiDocumentManager.getInstance(project).commitDocument(document);

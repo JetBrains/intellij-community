@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("DocRendererAppearanceSettings")
 @file:ApiStatus.Internal
 
@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.options.FontSize
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.RightGap
@@ -38,7 +37,7 @@ internal class DocRendererAppearanceSettingsAction : DumbAwareAction(CodeInsight
     val fontRange = FontSize.entries
     val currentFont = getDocumentationFontSize()
 
-    var slider: JSlider? = null
+    lateinit var slider: JSlider
     var maxWidthField: JBTextField? = null
 
     val panel = panel {
@@ -53,7 +52,7 @@ internal class DocRendererAppearanceSettingsAction : DumbAwareAction(CodeInsight
             .component
         }
         row(CodeInsightBundle.message("javadoc.settings.max.width")) {
-          maxWidthField = intTextField(IntRange(MIN_WIDTH, Int.MAX_VALUE))
+          maxWidthField = intTextField(MIN_WIDTH..Int.MAX_VALUE)
             .text(getMaxWidth().toString())
             .onChanged {
               setMaxWidth(it.text.toIntOrNull() ?: 0)
@@ -61,12 +60,12 @@ internal class DocRendererAppearanceSettingsAction : DumbAwareAction(CodeInsight
             }
             .gap(RightGap.SMALL)
             .component
-          @NlsSafe val pixelUnit = "px"
-          label(pixelUnit)
+          @Suppress("DialogTitleCapitalization")
+          label(CodeInsightBundle.message("javadoc.settings.pixel.unit"))
         }
         row {
           link(CodeInsightBundle.message("javadoc.settings.reset")) {
-            slider?.value = fontRange.indexOf(getDefaultFontSize()).coerceAtLeast(0)
+            slider.value = fontRange.indexOf(getDefaultFontSize()).coerceAtLeast(0)
             maxWidthField?.text = DEFAULT_MAX_WIDTH.toString()
           }
         }

@@ -85,6 +85,7 @@ jvm_library(
         "//plugins/git4idea:vcs-git",
         "//platform/lvcs-impl",
         "//fleet/rhizomedb",
+        "//platform/vcs/plugin",
     ],
 )
 
@@ -130,6 +131,7 @@ jvm_library(
         "//platform/platform-impl/recentProjects:recentProjects_test_lib",
         "//platform/platform-impl/eel:ide-impl-wsl_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/vcs/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
@@ -173,7 +175,8 @@ jvm_library(
         "//platform/vcs-impl/shared:shared_test_lib",
         "//platform/lang-api:lang",
         "//platform/lang-api:lang_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/lvcs-api:lvcs",
         "//platform/lvcs-api:lvcs_test_lib",
         "//platform/testFramework",
@@ -317,6 +320,10 @@ jvm_library(
         "//platform/vcs-log/impl:vcs-log-impl-tests_test_lib",
         "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests",
         "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.vcs.git.backend.tests` end

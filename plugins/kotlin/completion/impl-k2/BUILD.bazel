@@ -34,6 +34,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "@lib//:jetbrains-annotations",
+        "//plugins/kotlin/references",
         "@lib//:kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-compiler-fir",
         "@lib//:kotlinc-analysis-api",
@@ -82,6 +83,8 @@ jvm_library(
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
         "//platform/projectModel-api:projectModel",
         "//plugins/kotlin/project-configuration",
+        "//platform/refactoring",
+        "//plugins/kotlin/base/indices",
     ],
 )
 
@@ -98,6 +101,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-completion-impl",
+        "//plugins/kotlin/references:references_test_lib",
         "//java/java-indexing-api:indexing_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
@@ -140,6 +144,8 @@ jvm_library(
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//plugins/kotlin/project-configuration:project-configuration_test_lib",
+        "//platform/refactoring:refactoring_test_lib",
+        "//plugins/kotlin/base/indices:indices_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.completion.impl` end

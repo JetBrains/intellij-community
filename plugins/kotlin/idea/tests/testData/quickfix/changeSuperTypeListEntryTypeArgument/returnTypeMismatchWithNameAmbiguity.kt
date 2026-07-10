@@ -1,5 +1,5 @@
 // "Change type argument to String" "true"
-// K2_ERROR: Return type of 'fun foo(): String' is not a subtype of the return type of the overridden member 'fun foo(): Int' defined in 'Outer.FooImpl'.
+// K2_ERROR: RETURN_TYPE_MISMATCH_ON_OVERRIDE
 
 interface Foo<T> { fun foo(): T}
 

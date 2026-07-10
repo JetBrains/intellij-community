@@ -130,8 +130,7 @@ internal inline fun <reified T> ReflectionReceiver.callReflective(
     }
 
     runCatching {
-        @Suppress("Since15")
-        method.trySetAccessible()
+        method.isAccessible = true
     }
 
     val returnValue = try {

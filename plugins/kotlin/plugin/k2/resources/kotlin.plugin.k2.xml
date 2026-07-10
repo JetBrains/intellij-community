@@ -42,6 +42,16 @@
     <xi:fallback/>
   </xi:include>
 
+  <extensionPoints>
+    <!--
+      Core project configuration is also packaged into Kotlin Language Server, where VCS UI is intentionally absent.
+      This EP lets the full Kotlin plugin contribute the VCS-backed "view applied changes" dialog from a separate content module.
+    -->
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.configuratorChangesViewer"
+                    interface="org.jetbrains.kotlin.idea.configuration.KotlinConfiguratorChangesViewer"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <bundledFirCompilerPluginProvider
             implementation="org.jetbrains.kotlin.idea.fir.extensions.MainByRegistrarContentBundledFirCompilerPluginProvider"
@@ -67,11 +77,8 @@
     <resolveScopeEnlarger implementation="org.jetbrains.kotlin.idea.base.analysis.builtins.KotlinBuiltInsResolveScopeEnlarger" />
 
 
-    <lang.parserDefinition language="kotlin" implementationClass="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IDEKotlinK2KotlinParserDefinition"/>
-
     <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.fir.extensions.KtCompilerPluginsProviderIdeImpl"/>
-    <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.compiler.KotlinCompilableFileTypesProvider" />
     <!-- fir-specific -->
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider"
                         serviceImplementation="org.jetbrains.kotlin.idea.fir.plugin.K2KotlinPluginModeProvider"/>
@@ -160,9 +167,6 @@
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.KotlinLibraryToSourceAnalysisStateComponent"/>
 
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.util.FirPluginOracleService"
-                    serviceImplementation="org.jetbrains.kotlin.idea.util.FirPluginOracleServiceFirImpl"/>
-
     <!--suppress LightServiceMigrationXML -->
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService"/>
 
@@ -176,10 +180,12 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.compiler.configuration.KotlinBuildProcessParametersProvider"/>
 
-    <configurationType implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationType"/>
-    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer" id="kotlinMain"/>
+    <localInspection language="kotlin" implementationClass="org.jetbrains.kotlin.idea.configuration.inspections.KaptKotlinCompilerPluginInspection"
+                     shortName="KaptKotlinCompilerPlugin"
+                     key="kapt.kotlin.compiler.plugin.inspection.problem.display.name"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
+                     level="WARNING" enabledByDefault="true" bundle="messages.KotlinProjectConfigurationBundle"/>
   </extensions>
 
   <content namespace="jetbrains">
@@ -188,6 +194,11 @@
     <module name="intellij.kotlin.analysis.platform"/>
     <module name="intellij.kotlin.codeInsight.base"/>
     <module name="intellij.kotlin.projectStructure"/>
+    <!--
+      Contains the VCS-backed diff browser for automatic project-configuration changes.
+      Keep it out of the Language Server plugin content: LS needs the configurator, not the VCS Changes UI implementation.
+    -->
+    <module name="intellij.kotlin.projectConfiguration.vcs"/>
     <module name="intellij.kotlin.scripting"/>
 
     <module name="intellij.kotlin.copyright"/>
@@ -216,6 +227,8 @@
     <module name="intellij.kotlin.onboarding.gradle"/>
     <module name="intellij.kotlin.onboarding.maven"/>
 
+    <module name="intellij.kotlin.projectWizard.cli"/>
+    <module name="intellij.kotlin.projectWizard.core"/>
     <module name="intellij.kotlin.projectWizard.idea"/>
     <module name="intellij.kotlin.projectWizard.gradle"/>
     <module name="intellij.kotlin.projectWizard.maven"/>

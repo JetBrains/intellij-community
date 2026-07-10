@@ -58,8 +58,6 @@ class PyVarianceInspection : PyInspection() {
     override fun visitPyAssignmentStatement(node: PyAssignmentStatement) {
       super.visitPyAssignmentStatement(node)
       val typeVarCall = node.assignedValue as? PyCallExpression ?: return
-      val callee = PyCallExpressionHelper.resolveCalleeClass(typeVarCall) ?: return
-      if (PyTypingTypeProvider.TYPE_VAR != callee.qualifiedName) return
       val typeVarType = PyTypingTypeProvider.getType(typeVarCall, context)?.get() as? PyTypeVarType ?: return
       if (typeVarType.constraints.size < 2) return
       if (typeVarType.constraints.size > 7) return // escape hatch wrt. performance

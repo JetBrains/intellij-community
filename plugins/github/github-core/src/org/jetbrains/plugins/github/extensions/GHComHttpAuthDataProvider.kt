@@ -14,6 +14,7 @@ import git4idea.remote.GitHttpAuthDataProvider
 import git4idea.remote.hosting.GitHostingUrlUtil.matchHost
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GithubServerPath.DEFAULT_SERVER
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.GHLoginSource
@@ -39,6 +40,9 @@ internal class GHComHttpAuthDataProvider : GitHttpAuthDataProvider {
       getAuthDataOrCancel(project, url, null)
     }
   }
+  override fun getPresentableErrorMessage(errorOutput: List<String>): @Nls String? =
+    GHGitErrorMessagesUtils.oauthRestrictionMessage(errorOutput)
+
 }
 
 private suspend fun getAuthDataOrCancel(project: Project, url: String, login: String?): AuthData {

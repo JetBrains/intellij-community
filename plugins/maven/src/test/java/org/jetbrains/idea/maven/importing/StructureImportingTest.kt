@@ -1,50 +1,52 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertContentRoots
+import com.intellij.maven.testFramework.fixtures.assertExcludes
+import com.intellij.maven.testFramework.fixtures.assertMavenizedModule
+import com.intellij.maven.testFramework.fixtures.assertModuleLibDeps
+import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.assertNotMavenizedModule
+import com.intellij.maven.testFramework.fixtures.assertSources
+import com.intellij.maven.testFramework.fixtures.assumeMaven3
+import com.intellij.maven.testFramework.fixtures.assumeMaven4
+import com.intellij.maven.testFramework.fixtures.assumeModel_4_0_0
+import com.intellij.maven.testFramework.fixtures.assumeVersionMoreThan
+import com.intellij.maven.testFramework.fixtures.createModule
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.createProjectSubDirs
+import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.getModule
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.importProjectWithProfiles
+import com.intellij.maven.testFramework.fixtures.importProjectsWithProfiles
+import com.intellij.maven.testFramework.fixtures.isMaven4
+import com.intellij.maven.testFramework.fixtures.mavenGeneralSettings
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.mn
+import com.intellij.maven.testFramework.fixtures.projectPath
+import com.intellij.maven.testFramework.fixtures.projectRoot
+import com.intellij.maven.testFramework.fixtures.projectsTree
+import com.intellij.maven.testFramework.fixtures.refreshFiles
+import com.intellij.maven.testFramework.fixtures.updateAllProjects
+import com.intellij.maven.testFramework.fixtures.updateProjectPom
+import com.intellij.maven.testFramework.fixtures.updateSettingsXml
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource.FileInDirectory
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.PsiTestUtil.addContentRoot
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
-import org.jetbrains.idea.maven.fixtures.assertContentRoots
-import org.jetbrains.idea.maven.fixtures.assertExcludes
-import org.jetbrains.idea.maven.fixtures.assertMavenizedModule
-import org.jetbrains.idea.maven.fixtures.assertModuleLibDeps
-import org.jetbrains.idea.maven.fixtures.assertModules
-import org.jetbrains.idea.maven.fixtures.assertNotMavenizedModule
-import org.jetbrains.idea.maven.fixtures.assertSources
-import org.jetbrains.idea.maven.fixtures.assumeMaven3
-import org.jetbrains.idea.maven.fixtures.assumeMaven4
-import org.jetbrains.idea.maven.fixtures.assumeModel_4_0_0
-import org.jetbrains.idea.maven.fixtures.assumeVersionMoreThan
-import org.jetbrains.idea.maven.fixtures.createModule
-import org.jetbrains.idea.maven.fixtures.createModulePom
-import org.jetbrains.idea.maven.fixtures.createProjectPom
-import org.jetbrains.idea.maven.fixtures.createProjectSubDirs
-import org.jetbrains.idea.maven.fixtures.createProjectSubFile
 import org.jetbrains.idea.maven.fixtures.executeGoal
-import org.jetbrains.idea.maven.fixtures.getModule
 import org.jetbrains.idea.maven.fixtures.hasMavenInstallation
-import org.jetbrains.idea.maven.fixtures.importProjectAsync
-import org.jetbrains.idea.maven.fixtures.importProjectWithProfiles
-import org.jetbrains.idea.maven.fixtures.importProjectsWithProfiles
-import org.jetbrains.idea.maven.fixtures.isMaven4
-import org.jetbrains.idea.maven.fixtures.mavenGeneralSettings
-import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
-import org.jetbrains.idea.maven.fixtures.mn
-import org.jetbrains.idea.maven.fixtures.projectPath
-import org.jetbrains.idea.maven.fixtures.projectsTree
-import org.jetbrains.idea.maven.fixtures.refreshFiles
 import org.jetbrains.idea.maven.fixtures.runWithoutStaticSync
 import org.jetbrains.idea.maven.fixtures.setupJdkForModule
-import org.jetbrains.idea.maven.fixtures.updateAllProjects
-import org.jetbrains.idea.maven.fixtures.updateProjectPom
-import org.jetbrains.idea.maven.fixtures.updateSettingsXml
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -213,9 +215,9 @@ class StructureImportingTest(mavenVersion: String, modelVersion: String) {
   fun testImportWithAlreadyExistingModuleWithDifferentNameButSameContentRoot() = runBlocking {
     val userModuleWithConflictingRoot = maven.createModule("userModuleWithConflictingRoot")
     PsiTestUtil.removeAllRoots(userModuleWithConflictingRoot, null)
-    PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, maven.projectRoot)
+    addContentRoot(userModuleWithConflictingRoot, maven.projectRoot)
     val anotherContentRoot = maven.createProjectSubFile("m1/user-content")
-    PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, anotherContentRoot)
+    addContentRoot(userModuleWithConflictingRoot, anotherContentRoot)
     maven.assertContentRoots(userModuleWithConflictingRoot.getName(), maven.projectPath.toString(), anotherContentRoot.getPath())
 
     maven.createProjectPom("""
@@ -234,7 +236,7 @@ class StructureImportingTest(mavenVersion: String, modelVersion: String) {
   fun testImportWithAlreadyExistingModuleWithPartiallySameContentRoots() = runBlocking {
     val userModuleWithConflictingRoot = maven.createModule("userModuleWithConflictingRoot")
     PsiTestUtil.removeAllRoots(userModuleWithConflictingRoot, null)
-    PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, maven.projectRoot)
+    addContentRoot(userModuleWithConflictingRoot, maven.projectRoot)
     maven.assertContentRoots(userModuleWithConflictingRoot.getName(), maven.projectPath.toString())
 
     val userModuleWithUniqueRoot = maven.createModule("userModuleWithUniqueRoot")

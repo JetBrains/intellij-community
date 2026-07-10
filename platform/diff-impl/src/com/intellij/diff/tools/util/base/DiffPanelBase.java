@@ -5,10 +5,7 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.IslandsState;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.components.panels.Wrapper;
@@ -50,15 +47,7 @@ public abstract class DiffPanelBase extends JPanel implements UiCompatibleDataPr
 
     myCardLayout = new CardLayout();
     myContentPanel = new JPanel(myCardLayout);
-    myContentPanel.setBackground(JBColor.lazy(() -> {
-      if (IslandsState.Companion.isEnabled()) {
-        EditorColorsManager manager = EditorColorsManager.getInstance();
-        return manager.getGlobalScheme().getDefaultBackground();
-      }
-      else {
-        return UIUtil.getPanelBackground();
-      }
-    }));
+    myContentPanel.setBackground(DiffUtil.getDiffContentBackground());
 
     myNotificationsPanel = new Wrapper();
     myNorthPanel = new Wrapper();

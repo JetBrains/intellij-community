@@ -4,10 +4,8 @@ package com.intellij.openapi.command.impl
 import com.intellij.ide.impl.UndoRemoteBehaviorService
 import com.intellij.openapi.command.impl.cmd.CmdEvent
 import com.intellij.openapi.components.serviceOrNull
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus.Internal
-
 
 /**
  * Advanced listener of [UndoManagerImpl].
@@ -28,12 +26,10 @@ interface UndoSpy {
   companion object {
     @JvmStatic
     fun getInstance(): UndoSpy? {
-      return ProgressManager.getInstance().computeInNonCancelableSection<UndoSpy?, Exception> {
-        if (UndoRemoteBehaviorService.isSpeculativeUndoEnabled()) {
-          application.serviceOrNull<UndoSpy>()
-        } else {
-          null
-        }
+      return if (UndoRemoteBehaviorService.isSpeculativeUndoEnabled()) {
+        application.serviceOrNull<UndoSpy>()
+      } else {
+        null
       }
     }
 

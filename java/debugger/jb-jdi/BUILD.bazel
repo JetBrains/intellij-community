@@ -1,0 +1,42 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.java.debugger.libraries.jb.jdi` start
+
+jvm_library(
+    name = "java-debugger-libraries-jb-jdi",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.debugger.libraries.jb.jdi",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:java-debugger-libraries-jb-jdi-jb-jdi"],
+    runtime_deps = ["@lib//:java-debugger-libraries-jb-jdi-jb-jdi"],
+)
+
+jvm_library(
+    name = "java-debugger-libraries-jb-jdi_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.debugger.libraries.jb.jdi",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:java-debugger-libraries-jb-jdi-jb-jdi"],
+    runtime_deps = [":java-debugger-libraries-jb-jdi"],
+)
+### auto-generated section `build intellij.java.debugger.libraries.jb.jdi` end
+
+### auto-generated section `iml intellij.java.debugger.libraries.jb.jdi` start
+exports_files(
+    [
+        "intellij.java.debugger.libraries.jb.jdi.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.debugger.libraries.jb.jdi` end

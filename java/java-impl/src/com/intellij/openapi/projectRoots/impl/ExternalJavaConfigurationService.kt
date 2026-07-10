@@ -42,7 +42,7 @@ private val LOG = logger<ExternalJavaConfigurationService>()
  * @see ExternalJavaConfigurationProvider
  */
 @Service(Service.Level.PROJECT)
-public class ExternalJavaConfigurationService(public val project: Project, private val scope: CoroutineScope) : Disposable {
+public class ExternalJavaConfigurationService(public val project: Project, internal val scope: CoroutineScope) : Disposable {
 
   internal sealed class JavaConfigurationStatus {
     object Unknown : JavaConfigurationStatus()
@@ -53,16 +53,16 @@ public class ExternalJavaConfigurationService(public val project: Project, priva
 
   internal val statuses = HashMap<Path, JavaConfigurationStatus>().withDefault { JavaConfigurationStatus.Unknown }
 
-  public sealed class JdkCandidate<T> {
-    public data class Jdk<T>(val releaseData: T, val jdk: Sdk, val project: Boolean) : JdkCandidate<T>()
-    public data class Path<T>(val releaseData: T, val path: String) : JdkCandidate<T>()
+  public sealed class JdkCandidate<T: JdkReleaseData> {
+    public data class Jdk<T: JdkReleaseData>(val releaseData: T, val jdk: Sdk, val project: Boolean) : JdkCandidate<T>()
+    public data class Path<T: JdkReleaseData>(val releaseData: T, val path: String) : JdkCandidate<T>()
   }
 
   /**
    * Searches for a matching JDK candidate if a Java configuration is defined in the config file.
    * If [configureJdk] is true, the project JDK will be updated if a candidate is found.
    */
-  public fun <T> updateFromConfig(configProvider: ExternalJavaConfigurationProvider<T>, configureJdk: Boolean = false) {
+  public fun <T: JdkReleaseData> updateFromConfig(configProvider: ExternalJavaConfigurationProvider<T>, configureJdk: Boolean = false) {
     scope.launch {
       val releaseData: T = getReleaseData(configProvider) ?: return@launch
       val configPath = configProvider.getConfigurationFilePath(project)
@@ -74,7 +74,7 @@ public class ExternalJavaConfigurationService(public val project: Project, priva
    * Variant of [updateFromConfig] that uses an already-resolved [VirtualFile] to read the configuration.
    * This makes it possible to use the configuration file if it is not at the expected location.
    */
-  public fun <T> updateFromConfig(configProvider: ExternalJavaConfigurationProvider<T>, virtualFile: VirtualFile, configureJdk: Boolean = false) {
+  public fun <T: JdkReleaseData> updateFromConfig(configProvider: ExternalJavaConfigurationProvider<T>, virtualFile: VirtualFile, configureJdk: Boolean = false) {
     scope.launch {
       val text = readAction {
         FileDocumentManager.getInstance().getDocument(virtualFile)?.text
@@ -86,7 +86,7 @@ public class ExternalJavaConfigurationService(public val project: Project, priva
     }
   }
 
-  private fun <T> resolveAndSetStatus(
+  private fun <T: JdkReleaseData> resolveAndSetStatus(
     releaseData: T,
     configPath: Path,
     configProvider: ExternalJavaConfigurationProvider<T>,
@@ -119,7 +119,7 @@ public class ExternalJavaConfigurationService(public val project: Project, priva
   /**
    * @return a JDK candidate based on the configuration file.
    */
-  public suspend fun <T> getReleaseData(configProvider: ExternalJavaConfigurationProvider<T>): T? {
+  public suspend fun <T: JdkReleaseData> getReleaseData(configProvider: ExternalJavaConfigurationProvider<T>): T? {
     val text = readAction {
       val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(configProvider.getConfigurationFilePath(project).toAbsolutePath())
       virtualFile?.let { FileDocumentManager.getInstance().getDocument(it)?.text }
@@ -131,37 +131,56 @@ public class ExternalJavaConfigurationService(public val project: Project, priva
   /**
    * @return a matching JDK candidate for the release data among registered and detected JDKs.
    */
-  public fun <T> findCandidate(releaseData: T, configProvider: ExternalJavaConfigurationProvider<T>): JdkCandidate<T>? {
+  public fun <T: JdkReleaseData> findCandidate(releaseData: T, configProvider: ExternalJavaConfigurationProvider<T>): JdkCandidate<T>? {
     val configFile = configProvider.getConfigurationFilePath(project)
     val eelMachine = project.getEelMachine()
+    val candidates = mutableListOf<JdkCandidate<T>>()
 
     // Match against the project SDK
     val projectSdk = ProjectRootManager.getInstance(project).projectSdk
-    if (projectSdk != null && configProvider.matchAgainstSdk(releaseData, projectSdk)) {
-      return JdkCandidate.Jdk(releaseData, projectSdk, true)
-    } else {
-      LOG.info("[${configFile.fileName}] $releaseData - Project JDK doesn't match (${projectSdk?.versionString})")
+    if (projectSdk != null) {
+      val candidate = JdkCandidate.Jdk(releaseData, projectSdk, true)
+      when (releaseData.matchAgainstSdk(projectSdk)) {
+        ReleaseDataMatching.EXACT_MATCH -> return candidate
+        ReleaseDataMatching.FEATURE_MATCH -> candidates.add(candidate)
+        ReleaseDataMatching.NO_MATCH -> LOG.info("[${configFile.fileName}] $releaseData - Project JDK doesn't match (${projectSdk.versionString})")
+      }
     }
 
     // Match against the project JDK table
     val jdks = ProjectJdkTable.getInstance(project).allJdks
     for (jdk in jdks) {
       if (!ProjectSdksModel.sdkMatchesEel(eelMachine, jdk)) continue
-      if (configProvider.matchAgainstSdk(releaseData, jdk)) {
-        LOG.info("[$configFile.fileName] $releaseData - Candidate found: ${jdk.versionString}")
-        return JdkCandidate.Jdk(releaseData, jdk, false)
+      val candidate = JdkCandidate.Jdk(releaseData, jdk, false)
+      when (releaseData.matchAgainstSdk(jdk)) {
+        ReleaseDataMatching.EXACT_MATCH -> return proceedWithMatch(candidate, match = ReleaseDataMatching.EXACT_MATCH, configFile)
+        ReleaseDataMatching.FEATURE_MATCH -> candidates.add(candidate)
+        ReleaseDataMatching.NO_MATCH -> Unit
       }
     }
 
     // Match against JdkFinder
     JdkFinder.getInstance().suggestHomePaths(project).forEach { path ->
-      if (configProvider.matchAgainstPath(releaseData, path) && ProjectSdksModel.sdkMatchesEel(eelMachine, path)) {
-        LOG.info("[$configFile.fileName] $releaseData - Candidate found to register")
-        return JdkCandidate.Path(releaseData, path)
+      if (ProjectSdksModel.sdkMatchesEel(eelMachine, path)) {
+        val candidate = JdkCandidate.Path(releaseData, path)
+        when (releaseData.matchAgainstPath(path)) {
+          ReleaseDataMatching.EXACT_MATCH -> return proceedWithMatch(candidate, match = ReleaseDataMatching.EXACT_MATCH, configFile)
+          ReleaseDataMatching.FEATURE_MATCH -> candidates.add(candidate)
+          ReleaseDataMatching.NO_MATCH -> Unit
+        }
       }
     }
 
-    return null
+    return candidates.firstOrNull()?.let { proceedWithMatch(it, match = ReleaseDataMatching.FEATURE_MATCH, configFile) }
+  }
+
+  private fun <T : JdkReleaseData> proceedWithMatch(candidate: JdkCandidate<T>, match: ReleaseDataMatching, configFile: Path): JdkCandidate<T> {
+    when (match) {
+      ReleaseDataMatching.EXACT_MATCH -> LOG.info("[$configFile.fileName] $candidate - Exact match found")
+      ReleaseDataMatching.FEATURE_MATCH -> LOG.info("[$configFile.fileName] $candidate - Match found for the feature version")
+      ReleaseDataMatching.NO_MATCH -> Unit
+    }
+    return candidate
   }
 
   private fun <T> configure(jdk: Sdk, filePath: Path, candidate: T) {
@@ -206,7 +225,7 @@ public class ExternalJavaConfigurationService(public val project: Project, priva
 
   }
 
-  public fun <T> addTerminationCallback(session: TerminalWidget, configProvider: ExternalJavaConfigurationProvider<T>) {
+  public fun <T: JdkReleaseData> addTerminationCallback(session: TerminalWidget, configProvider: ExternalJavaConfigurationProvider<T>) {
     session.addTerminationCallback({ updateFromConfig(configProvider) }, scope.asDisposable())
   }
 }

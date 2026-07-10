@@ -4,6 +4,7 @@ package com.jetbrains.python.inspections
 import com.google.common.collect.ImmutableMap
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.psi.PsiElement
@@ -17,12 +18,15 @@ import com.jetbrains.python.PyStringFormatParser.NewStyleSubstitutionChunk
 import com.jetbrains.python.PyStringFormatParser.PercentSubstitutionChunk
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference
 import com.jetbrains.python.documentation.PythonDocumentationProvider
+import com.jetbrains.python.inspections.quickfix.PyAddDunderMethodQuickFix
+import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage
 import com.jetbrains.python.inspections.quickfix.PyAddSpecifierToFormatQuickFix
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyComprehensionElement
 import com.jetbrains.python.psi.PyConditionalExpression
 import com.jetbrains.python.psi.PyDictLiteralExpression
@@ -37,15 +41,22 @@ import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PySequenceExpression
 import com.jetbrains.python.psi.PySliceItem
+import com.jetbrains.python.psi.PyStringDunderUtil.KNOWN_COMPLEX_TYPES
+import com.jetbrains.python.psi.PyStringDunderUtil.KNOWN_DECIMAL_TYPES
+import com.jetbrains.python.psi.PyStringDunderUtil.KNOWN_FORMAT_MINI_LANGUAGE_TYPES
+import com.jetbrains.python.psi.PyStringDunderUtil.KNOWN_INT_TYPES
+import com.jetbrains.python.psi.PyStringDunderUtil.isAllowedFormatOverride
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
-import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.getInstance
+import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyABCUtil
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker.match
@@ -53,7 +64,9 @@ import com.jetbrains.python.psi.types.PyTypeParser
 import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isNoneType
+import com.jetbrains.python.pyi.PyiUtil
 import java.math.BigInteger
 import java.util.function.ToIntFunction
 import java.util.stream.Collectors
@@ -83,7 +96,7 @@ class PyStringFormatInspection : PyInspection() {
           PyBinaryExpression::class.java,
           PyConditionalExpression::class.java
         )
-        val builtinCache = getInstance(problemTarget)
+        val builtinCache = PyBuiltinCache.getInstance(problemTarget)
         val resolveContext = PyResolveContext.defaultContext(myTypeEvalContext)
 
         val s = myFormatSpec["1"]
@@ -92,8 +105,8 @@ class PyStringFormatInspection : PyInspection() {
         ) {
           val sliceItem = rightExpression.indexExpression as PySliceItem
           val type = myTypeEvalContext.getType(rightExpression.operand) ?: return null
-          val stringType = getInstance(rightExpression).getStringType(LanguageLevel.forElement(rightExpression))
-          val listType: PyType? = getInstance(rightExpression).listType
+          val stringType = PyBuiltinCache.getInstance(rightExpression).getStringType(LanguageLevel.forElement(rightExpression))
+          val listType: PyType? = PyBuiltinCache.getInstance(rightExpression).listType
 
           if (match(listType, type, myTypeEvalContext)
               || match(stringType, type, myTypeEvalContext)
@@ -184,10 +197,7 @@ class PyStringFormatInspection : PyInspection() {
             return expressions.size
           }
           else {
-            val tupleType = myTypeEvalContext.getType(rightExpression) as PyTupleType?
-            if (tupleType == null) {
-              return null
-            }
+            val tupleType = myTypeEvalContext.getType(rightExpression) as? PyTupleType ?: return null
             matchEntireTupleTypes(problemTarget, tupleType)
             return tupleType.elementCount
           }
@@ -209,9 +219,9 @@ class PyStringFormatInspection : PyInspection() {
 
       fun matchEntireTupleTypes(rightExpression: PsiElement, rightExpressionType: PyTupleType?) {
         val expectedElementTypes = myFormatSpec.values.map { name ->
-          val builtinCache = getInstance(rightExpression)
+          val builtinCache = PyBuiltinCache.getInstance(rightExpression)
           val expected = PyTypeParser.getTypeByName(rightExpression, name, myTypeEvalContext)
-          if (expected === builtinCache.strType) null
+          if (expected === builtinCache.strType) PyAnyType.unknown
           else expected
         }
         val expectedTupleType = PyTupleType.create(rightExpression, expectedElementTypes)
@@ -274,7 +284,7 @@ class PyStringFormatInspection : PyInspection() {
           if (!myUsedMappingKeys[key]!!) {
             unresolved++
             if (unresolved > referenceKeyNumber) {
-              registerProblem(problemTarget, PyPsiBundle.message("INSP.str.format.key.has.no.argument", key))
+              registerProblem(problemTarget, PyPsiBundle.problemMessage("INSP.str.format.key.has.no.argument", key))
               break
             }
           }
@@ -302,6 +312,11 @@ class PyStringFormatInspection : PyInspection() {
       }
 
       fun registerProblem(problemTarget: PsiElement, @InspectionMessage message: @InspectionMessage String) {
+        isProblem = true
+        myVisitor.registerProblem(problemTarget, message)
+      }
+
+      fun registerProblem(problemTarget: PsiElement, message: ProblemMessage) {
         isProblem = true
         myVisitor.registerProblem(problemTarget, message)
       }
@@ -467,7 +482,7 @@ class PyStringFormatInspection : PyInspection() {
         }
 
         private fun isBytesLiteral(expr: PyStringLiteralExpression, context: TypeEvalContext): Boolean {
-          val builtinCache = getInstance(expr)
+          val builtinCache = PyBuiltinCache.getInstance(expr)
           val bytesType = builtinCache.getBytesType(LanguageLevel.forElement(expr))
           val actualType = context.getType(expr)
           return bytesType != null && actualType != null && match(bytesType, actualType, context)
@@ -528,12 +543,13 @@ class PyStringFormatInspection : PyInspection() {
 
         // inspect options available only for numeric types
         if (chunk.hasSignOption() || chunk.useAlternateForm() || chunk.hasZeroPadding() || chunk.hasThousandsSeparator()) {
-          specifyTypes(supportedTypes, NUMERIC_BUILTIN_TYPES)
+          // TODO: not using "KNOWN_COMPLEX_TYPES" because some of those won't be available at runtime and -> Any, need to check QName
+          specifyTypes(supportedTypes, setOf("complex"))
           hasTypeOptions = true
         }
 
         if (chunk.precision != null) {
-          // TODO: actually availableTypes doesn't reject int, because int is compatible with float and complex
+          // TODO: actually availableTypes doesn't reject int, because int is compatible with float and complex, need to check QName
           specifyTypes(supportedTypes, setOf(PyNames.TYPE_STR, PyNames.TYPE_FLOAT, PyNames.TYPE_COMPLEX))
           hasTypeOptions = true
         }
@@ -543,7 +559,7 @@ class PyStringFormatInspection : PyInspection() {
           NEW_STYLE_FORMAT_CONVERSIONS[conversionType]?.let {
             specifyTypes(supportedTypes, it)
             hasTypeOptions = true
-          } ?: registerProblem(myProblemTarget, PyPsiBundle.message("INSP.unsupported.format.character", conversionType))
+          } ?: registerProblem(myProblemTarget, PyPsiBundle.problemMessage("INSP.unsupported.format.character", conversionType))
         }
 
         if (supportedTypes.isNotEmpty()) {
@@ -563,8 +579,8 @@ class PyStringFormatInspection : PyInspection() {
           if (chunkMapping != null) {
             registerProblem(
               myProblemTarget,
-              if (hasElementIndex) PyPsiBundle.message("INSP.too.few.args.for.fmt.string")
-              else PyPsiBundle.message(
+              if (hasElementIndex) PyPsiBundle.problemMessage("INSP.too.few.args.for.fmt.string")
+              else PyPsiBundle.problemMessage(
                 "INSP.str.format.key.has.no.argument",
                 chunkMapping
               )
@@ -584,6 +600,11 @@ class PyStringFormatInspection : PyInspection() {
         myVisitor.registerProblem(problemTarget, message)
       }
 
+      fun registerProblem(problemTarget: PsiElement, message: ProblemMessage) {
+        isProblem = true
+        myVisitor.registerProblem(problemTarget, message)
+      }
+
       fun checkTypesCompatibleForCheckedTypesOnly(
         anchor: PyElement,
         target: PsiElement,
@@ -594,7 +615,7 @@ class PyStringFormatInspection : PyInspection() {
         val actual = PyUnionType.toNonWeakType(myTypeEvalContext.getType(typedElement)) ?: return
         val expected = PyTypeParser.getTypeByName(anchor, type) ?: return
         if (
-          actual.asUnionSequence().all { it != null && it.name in CHECKED_TYPES }
+          actual.asUnionSequence().all { (it as? PyClassType)?.classQName in KNOWN_FORMAT_MINI_LANGUAGE_TYPES }
           && !match(expected, actual, myTypeEvalContext)
         ) {
           registerProblem(typedElement, PyPsiBundle.message("INSP.str.format.unexpected.argument.type", actual.name))
@@ -643,6 +664,32 @@ class PyStringFormatInspection : PyInspection() {
 
       val formatSpecText = formatPart.text
       if (formatSpecText.isEmpty()) return
+      val actualType = expression.getType(myTypeEvalContext)
+
+      if (node.typeConversion == null) {
+        val hasObjectFormat = actualType.asUnionSequence().firstOrNull {
+          if (it.isAnyOrUnknown || it.hasWellKnownFormatMethod(expression, myTypeEvalContext)) false
+          else (it as? PyClassType)?.pyClass?.let { pyClass ->
+            // Type stubs (.pyi) frequently omit __str__, __repr__, and __format__ even when the runtime
+            // .py module defines them, so fall back to the implementation class to avoid false positives.
+            val implementation = PyiUtil.getOriginalElementOrLeaveAsIs(pyClass, PyClass::class.java)
+            val implementationMethod = implementation.findMethodInImplementations(PyNames.DUNDER_FORMAT, myTypeEvalContext)
+                                       ?: return@firstOrNull true
+            implementationMethod.qualifiedName == "${PyNames.FQN.OBJECT}.${PyNames.DUNDER_FORMAT}"
+          } ?: true
+        }
+        if (hasObjectFormat != null) {
+          if (hasObjectFormat is PyClassType) {
+            registerProblem(formatPart, PyPsiBundle.problemMessage("INSP.str.format.default.object.format", PyInspectionMessages.CodifiedParam.ofType(actualType, formatPart, myTypeEvalContext)),
+                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                            PyAddDunderMethodQuickFix(hasObjectFormat.pyClass, PyNames.DUNDER_FORMAT))
+          }
+          else registerProblem(formatPart, PyPsiBundle.problemMessage("INSP.str.format.default.object.format", PyInspectionMessages.CodifiedParam.ofType(actualType, formatPart, myTypeEvalContext)))
+          return
+        }
+      }
+
+      if (!actualType.asUnionSequence().any { it.hasWellKnownFormatMethod(expression, myTypeEvalContext) }) return
 
       val inspection = NewStyleInspection(formatPart, this, myTypeEvalContext)
       inspection.inspect()
@@ -657,13 +704,13 @@ class PyStringFormatInspection : PyInspection() {
       val expectedTypeNames = NEW_STYLE_FORMAT_CONVERSIONS[typeChar]
       if (expectedTypeNames != null) {
         checkFStringComponentType(node, expression, formatPart, typeChar, trimmedSpec.length - 1,
-                                  expectedTypeNames, allowedFormatOverrideQNames(typeChar))
+                                  allowedFormatOverrideQNames(typeChar))
         return
       }
 
       if (typeChar !in VALID_NON_TYPE_FORMAT_SPEC_ENDINGS) {
         val typeCharElement = formatPart.findElementAt(trimmedSpec.length - 1) ?: formatPart
-        registerProblem(typeCharElement, PyPsiBundle.message("INSP.str.format.invalid.format.spec", typeChar))
+        registerProblem(typeCharElement, PyPsiBundle.problemMessage("INSP.str.format.invalid.format.spec", typeChar))
         return
       }
 
@@ -671,13 +718,12 @@ class PyStringFormatInspection : PyInspection() {
       // for numeric values only (sign, alternate form, zero padding, thousands separator).
       val (optionChar, optionOffset) = firstNumericOnlyOption(trimmedSpec) ?: return
       checkFStringComponentType(node, expression, formatPart, optionChar, optionOffset,
-                                NUMERIC_BUILTIN_TYPES, NUMERIC_TYPES)
+                                KNOWN_COMPLEX_TYPES)
     }
 
     /**
      * Reports [expression] when its type is incompatible with a format component, mirroring the logic used for both
-     * presentation type chars and numeric-only options. [expectedTypeNames] are the builtin types the component
-     * accepts (resolved via [PyTypeParser]); [allowedQNames] are the fully qualified names of types whose
+     * presentation type chars and numeric-only options. [allowedQNames] are the fully qualified names of types whose
      * `__format__` override is trusted to accept the component (e.g. `decimal.Decimal`, numpy scalars).
      * The problem is highlighted at [reportOffset] within the format part and names [reportChar].
      */
@@ -687,11 +733,8 @@ class PyStringFormatInspection : PyInspection() {
       formatPart: PyFStringFragmentFormatPart,
       reportChar: Char,
       reportOffset: Int,
-      expectedTypeNames: Set<String>,
       allowedQNames: Set<String>,
     ) {
-      val expected = PyTypeParser.getTypeByName(expression, expectedTypeNames.joinToString(" or "), myTypeEvalContext) ?: return
-
       val actual = if (node.typeConversion != null) {
         PyTypeParser.getTypeByName(expression, PyNames.TYPE_STR, myTypeEvalContext)
       }
@@ -705,22 +748,21 @@ class PyStringFormatInspection : PyInspection() {
           member != null
           && (member.hasWellKnownFormatMethod(expression, myTypeEvalContext)
               || member.isNoneType)
-          && !match(expected, member, myTypeEvalContext)
-          && !member.isAllowedFormatOverride(allowedQNames)
+          && !member.isAllowedFormatOverride(allowedQNames, myTypeEvalContext)
         }
         .toList()
       if (incompatibleTypes.isEmpty()) return
 
       val reportElement = formatPart.findElementAt(reportOffset) ?: formatPart
       val incompatibleTypeName =
-        incompatibleTypes.joinToString(" | ") { PythonDocumentationProvider.getTypeName(it, myTypeEvalContext) }
-      registerProblem(reportElement, PyPsiBundle.message("INSP.str.format.code.not.supported", reportChar, incompatibleTypeName))
+        incompatibleTypes.joinToString(" | ") { PythonDocumentationProvider.getTypeName(PyLiteralType.upcastLiteralToClass(it), myTypeEvalContext) }
+      registerProblem(reportElement, PyPsiBundle.problemMessage("INSP.str.format.code.not.supported", reportChar, incompatibleTypeName))
     }
 
     /**
      * Returns true when this type's formatting is one we model and can validate format codes against. That is the
      * case when it is a type we explicitly know (a builtin such as `str`/`int`/`float`/`complex`, or a known numeric
-     * library type listed in [CHECKED_TYPES] such as `decimal.Decimal`, `fractions.Fraction`, numpy scalars), or when
+     * library type listed in [KNOWN_FORMAT_MINI_LANGUAGE_TYPES] such as `decimal.Decimal`, `fractions.Fraction`, numpy scalars), or when
      * it is a subclass that inherits `__format__` from one of those well-known classes (e.g. `class MyInt(int)`).
      *
      * It returns false for a type that supplies its own `__format__` not backed by a well-known class (a user class,
@@ -728,18 +770,17 @@ class PyStringFormatInspection : PyInspection() {
      * so we trust it. It also returns false for a type that merely inherits `object.__format__`, which accepts only an
      * empty spec — a separate concern from format-code mismatches.
      */
-    private fun PyType.hasWellKnownFormatMethod(location: PyExpression, context: TypeEvalContext): Boolean {
+    private fun PyType?.hasWellKnownFormatMethod(location: PyExpression, context: TypeEvalContext): Boolean {
+      if (this == null) return false
       if (this !is PyClassType) return false
-      // Types we explicitly model, regardless of whether the available stubs spell out their `__format__`
-      // (e.g. typeshed's `fractions.Fraction` inherits it rather than declaring its own).
-      if (pyClass.qualifiedName in CHECKED_TYPES) return true
+      if (pyClass.qualifiedName in KNOWN_FORMAT_MINI_LANGUAGE_TYPES) return true
       val resolveContext = PyResolveContext.defaultContext(context)
-      val results = this.resolveMember("__format__", location, AccessDirection.READ, resolveContext)
+      val results = this.resolveMember(PyNames.DUNDER_FORMAT, location, AccessDirection.READ, resolveContext)
                     ?: return false
       return results
         .mapNotNull { it.element as? PyFunction }
         .mapNotNull { it.containingClass?.qualifiedName }
-        .any { it in CHECKED_TYPES }
+        .any { it in KNOWN_FORMAT_MINI_LANGUAGE_TYPES }
     }
 
     companion object {
@@ -748,9 +789,9 @@ class PyStringFormatInspection : PyInspection() {
         resolveContext: PyResolveContext,
         evalContext: TypeEvalContext,
       ): Int {
-        val statistics = callExpression.multiResolveCalleeFunction(resolveContext)
+        val statistics = callExpression.multiResolveCallee(resolveContext)
           .stream()
-          .map { it.getCallType(evalContext, callExpression) }
+          .map { callableType -> callableType.getCallType(evalContext, callExpression) }
           .collect(
             Collectors.summarizingInt(
               ToIntFunction { callType ->
@@ -788,7 +829,7 @@ class PyStringFormatInspection : PyInspection() {
       }
 
       private fun PyClassType.countElements(evalContext: TypeEvalContext) = when {
-        !pyClass.isSubclass(PyNames.TUPLE, evalContext) -> 1
+        !pyClass.isSubclass(PyNames.FQN.TUPLE, evalContext) -> 1
         this is PyTupleType -> elementCount
         else -> -1
       }
@@ -798,26 +839,6 @@ class PyStringFormatInspection : PyInspection() {
 
 private val VALID_NON_TYPE_FORMAT_SPEC_ENDINGS = ('0'..'9').toSet() +
                                                  setOf('<', '>', '^', '=', '+', '-', ' ', '_', ',', '#', 'z')
-
-private val INT_TYPES = setOf(
-  PyNames.TYPE_INT,
-  "numpy.int8", "numpy.int16", "numpy.int32", "numpy.int64",
-)
-
-private val FLOAT_INT_TYPES = INT_TYPES + setOf(
-  PyNames.TYPE_LONG, PyNames.TYPE_FLOAT,
-  "decimal.Decimal", "fractions.Fraction",
-  "numpy.float16", "numpy.float32", "numpy.float64",
-)
-
-private val NUMERIC_TYPES = FLOAT_INT_TYPES + setOf(
-  PyNames.TYPE_COMPLEX, "numpy.complex64", "numpy.complex128",
-)
-
-// Builtin numeric type names that [PyTypeParser.getTypeByName] can resolve. Used by the `str.format()` path,
-// which turns the supported types into a type string and resolves it; the qualified names in [NUMERIC_TYPES]
-// (numpy/decimal/fractions) are not resolvable that way and must not leak into it.
-private val NUMERIC_BUILTIN_TYPES = setOf(PyNames.TYPE_INT, PyNames.TYPE_LONG, PyNames.TYPE_FLOAT, PyNames.TYPE_COMPLEX)
 
 private val NEW_STYLE_FORMAT_CONVERSIONS = mapOf(
   's' to setOf("str"),
@@ -837,23 +858,17 @@ private val NEW_STYLE_FORMAT_CONVERSIONS = mapOf(
   '%' to setOf("int", "float"),
 )
 
-private val CHECKED_TYPES = NUMERIC_TYPES + setOf(PyNames.TYPE_STR)
 
 /**
  * Fully qualified names of types whose `__format__` override is trusted to accept the given presentation [typeChar],
  * even though the type is not one of the resolvable builtins (e.g. `decimal.Decimal`, `fractions.Fraction`, numpy scalars).
  */
 private fun allowedFormatOverrideQNames(typeChar: Char): Set<String> = when (typeChar) {
-  'b', 'c', 'd', 'o', 'x', 'X' -> INT_TYPES
-  'e', 'E', 'f', 'F', 'g', 'G', 'n' -> NUMERIC_TYPES
-  '%' -> FLOAT_INT_TYPES
-  's' -> setOf(PyNames.TYPE_STR)
+  'b', 'c', 'd', 'o', 'x', 'X' -> KNOWN_INT_TYPES
+  'e', 'E', 'f', 'F', 'g', 'G', 'n' -> KNOWN_COMPLEX_TYPES
+  '%' -> KNOWN_DECIMAL_TYPES
+  's' -> setOf(PyNames.FQN.STR)
   else -> emptySet()
-}
-
-private fun PyType.isAllowedFormatOverride(allowedQNames: Set<String>): Boolean {
-  val qName = (this as? PyClassType)?.pyClass?.qualifiedName ?: return false
-  return qName in allowedQNames
 }
 
 private const val NEW_STYLE_ALIGN_SYMBOLS = "<>=^"

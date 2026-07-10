@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.k2.refactoring.rename" visibility="internal">
+<idea-plugin visibility="internal">
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.psi"/>

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.rpc.util.toRpc
@@ -61,6 +61,8 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState 
   return withContext(Dispatchers.Default) {
     val manager = XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl
     val completedRequestId = manager.requestCounter.getRequestId(breakpoint.breakpointId)
+    // TODO[IJPL-219504]: There are plenty of read action where heavy computations may occur,
+    //  consider making this state as small as possible and request the required fields lazily on the frontend side
     XBreakpointDtoState(
       displayText = XBreakpointUtil.getShortText(breakpoint),
       sourcePosition = sourcePosition?.toRpc(),

@@ -4,6 +4,7 @@ package com.intellij.gradle.toolingExtension.tests.modelBuilder
 import com.intellij.testFramework.common.mock.notImplemented
 import org.gradle.api.Project
 import org.jetbrains.plugins.gradle.tooling.DefaultMessageBuilder
+import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.MessageBuilder
 import org.junit.jupiter.api.Assertions
 import java.io.File
@@ -22,6 +23,12 @@ abstract class MessageBuilderTestCase {
     messageBuilder.configure()
     val message = messageBuilder.build()
     Assertions.assertEquals(expectedText, message.text)
+  }
+
+  protected fun buildMessage(configure: MessageBuilder.() -> Unit): Message {
+    val messageBuilder = DefaultMessageBuilder()
+    messageBuilder.configure()
+    return messageBuilder.build()
   }
 
   protected fun createProject(projectName: String, parent: Project?): Project {
@@ -44,7 +51,9 @@ abstract class MessageBuilderTestCase {
       else -> "project '$projectPath'"
     }
 
-    override fun getBuildFile(): File = File("build.gradle")
+    override fun getProjectDir(): File = File("project")
+
+    override fun getBuildFile(): File = File(getProjectDir(), "build.gradle")
 
     override fun getParent(): Project? = parent
 

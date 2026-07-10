@@ -8,8 +8,8 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5" exported="" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5.params" exported="" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
@@ -21,7 +21,7 @@
     <orderEntry type="library" scope="TEST" name="okhttp" level="project" />
     <orderEntry type="module" module-name="intellij.idea.community.customization" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.junit4" exported="" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" scope="TEST" />

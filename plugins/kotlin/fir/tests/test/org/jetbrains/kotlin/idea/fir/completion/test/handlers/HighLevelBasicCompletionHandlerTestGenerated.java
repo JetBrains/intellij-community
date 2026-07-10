@@ -2029,6 +2029,26 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             runTest("../../completion/testData/handlers/AddNameToExistingArgument.kt");
         }
 
+        @TestMetadata("AnonymousObjectAliasedImportedJavaType.kt")
+        public void testAnonymousObjectAliasedImportedJavaType() throws Exception {
+            runTest("../../completion/testData/handlers/AnonymousObjectAliasedImportedJavaType.kt");
+        }
+
+        @TestMetadata("AnonymousObjectImportedJavaType.kt")
+        public void testAnonymousObjectImportedJavaType() throws Exception {
+            runTest("../../completion/testData/handlers/AnonymousObjectImportedJavaType.kt");
+        }
+
+        @TestMetadata("AnonymousObjectNonImportedJavaType.kt")
+        public void testAnonymousObjectNonImportedJavaType() throws Exception {
+            runTest("../../completion/testData/handlers/AnonymousObjectNonImportedJavaType.kt");
+        }
+
+        @TestMetadata("AnonymousObjectStarImportedJavaType.kt")
+        public void testAnonymousObjectStarImportedJavaType() throws Exception {
+            runTest("../../completion/testData/handlers/AnonymousObjectStarImportedJavaType.kt");
+        }
+
         @TestMetadata("BasicCompletionWorksAfterLastAllowedArgument.kt")
         public void testBasicCompletionWorksAfterLastAllowedArgument() throws Exception {
             runTest("../../completion/testData/handlers/BasicCompletionWorksAfterLastAllowedArgument.kt");
@@ -2077,6 +2097,16 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
         @TestMetadata("ClassFromClassObjectInPackage.kt")
         public void testClassFromClassObjectInPackage() throws Exception {
             runTest("../../completion/testData/handlers/ClassFromClassObjectInPackage.kt");
+        }
+
+        @TestMetadata("ConstructorJavaType.kt")
+        public void testConstructorJavaType() throws Exception {
+            runTest("../../completion/testData/handlers/ConstructorJavaType.kt");
+        }
+
+        @TestMetadata("ConstructorNonJavaType.kt")
+        public void testConstructorNonJavaType() throws Exception {
+            runTest("../../completion/testData/handlers/ConstructorNonJavaType.kt");
         }
 
         @TestMetadata("DoNotInsertDefaultJsImports.kt")
@@ -2277,6 +2307,16 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
         @TestMetadata("PropertiesGetter.kt")
         public void testPropertiesGetter() throws Exception {
             runTest("../../completion/testData/handlers/PropertiesGetter.kt");
+        }
+
+        @TestMetadata("SAMImportedJavaType.kt")
+        public void testSAMImportedJavaType() throws Exception {
+            runTest("../../completion/testData/handlers/SAMImportedJavaType.kt");
+        }
+
+        @TestMetadata("SAMNonImportedJavaType.kt")
+        public void testSAMNonImportedJavaType() throws Exception {
+            runTest("../../completion/testData/handlers/SAMNonImportedJavaType.kt");
         }
 
         @TestMetadata("SingleBrackets.kt")

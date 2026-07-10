@@ -21,8 +21,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
-        "//plugins/kotlin/base/scripting/scripting.shared",
         "//plugins/repository-search/completion",
         "//platform/core-api:core",
         "//platform/core-impl",
@@ -53,6 +51,7 @@ jvm_library(
         "@lib//:kotlinc-kotlin-scripting-jvm",
         "@lib//:kotlinc-kotlin-scripting-compiler-impl",
         "//libraries/kotlinx/coroutines/core",
+        "//platform/util:util-ui",
     ],
 )
 
@@ -68,8 +67,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":scripting.main.kts",
-        "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
-        "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
         "//plugins/repository-search/completion:completion_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",
@@ -93,6 +90,7 @@ jvm_library(
         "//java/java-psi-api:psi_test_lib",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/util:util-ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.scripting.main.kts` end
@@ -202,6 +200,8 @@ jvm_library(
         "@lib//:kotlinc-kotlin-scripting-jvm",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.scripting.main.kts.tests` end

@@ -18,6 +18,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//plugins/grazie",
@@ -46,6 +47,7 @@ jvm_library(
         "//python:python-community-impl_test_lib",
         "//platform/util:util_test_lib",
         "//platform/core-impl:core-impl_test_lib",
+        "//platform/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.grazie` end

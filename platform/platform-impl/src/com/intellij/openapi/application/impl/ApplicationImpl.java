@@ -120,6 +120,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -172,7 +173,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     @Override
     public void fastPathAcquisitionFailed() {
       // Impatient reader not in non-cancellable session will not wait
-      if (myImpatientReader.get() && !Cancellation.isInNonCancelableSection()) {
+      if (isInImpatientReader() && !Cancellation.isInNonCancelableSection()) {
         throw ApplicationUtil.CannotRunReadActionException.create();
       }
     }
@@ -193,7 +194,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   private final ReadActionCacheImpl myReadActionCacheImpl = new ReadActionCacheImpl();
 
-  private final ThreadLocal<Boolean> myImpatientReader = ThreadLocal.withInitial(() -> false);
+  // number of nested executeByImpatientReader() calls in this thread
+  private final ThreadLocal<AtomicInteger> myInImpatientReader = new ThreadLocal<>();
 
   private final long myStartTime = System.currentTimeMillis();
   private boolean mySaveAllowed;
@@ -298,18 +300,24 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       return;
     }
 
-    myImpatientReader.set(true);
+    AtomicInteger requests = myInImpatientReader.get();
+    if (requests == null) {
+      requests = new AtomicInteger();
+      myInImpatientReader.set(requests);
+    }
+    requests.incrementAndGet();
     try {
       runnable.run();
     }
     finally {
-      myImpatientReader.set(false);
+      requests.decrementAndGet();
     }
   }
 
   @Override
   public boolean isInImpatientReader() {
-    return myImpatientReader.get();
+    AtomicInteger requests = myInImpatientReader.get();
+    return requests != null && requests.get() > 0;
   }
 
   @VisibleForTesting
@@ -1484,6 +1492,11 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   @Override
   public <T> T withLocksProhibited(@NotNull String advice, @NotNull Supplier<T> action) {
     return getThreadingSupport().withLocksProhibited(advice, () -> action.get());
+  }
+
+  @Override
+  public <T> T withLocksSoftlyProhibited(@NotNull String advice, @NotNull Supplier<T> action) {
+    return getThreadingSupport().withLocksSoftlyProhibited(advice, () -> action.get());
   }
 
   @Override

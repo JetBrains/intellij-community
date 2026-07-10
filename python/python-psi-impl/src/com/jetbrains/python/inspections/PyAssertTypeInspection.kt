@@ -14,7 +14,10 @@ import com.jetbrains.python.psi.types.PyCallableType
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyNumericTowerUtil
 import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
+import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isAnyOrUnknown
 
 class PyAssertTypeInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -29,7 +32,7 @@ class PyAssertTypeInspection : PyInspection() {
           val arguments = callExpression.getArguments()
           if (arguments.size == 2) {
             val actualType = myTypeEvalContext.getType(arguments[0]).let { PyNumericTowerUtil.enrich(it) }
-            val expectedType = Ref.deref(PyTypingTypeProvider.getType(arguments[1], myTypeEvalContext))
+            val expectedType = PyTypingTypeProvider.getType(arguments[1], myTypeEvalContext).derefOrUnknown()
             if (!isSame(actualType, expectedType, myTypeEvalContext)) {
               val expectedName = PythonDocumentationProvider.getVerboseTypeName(expectedType, myTypeEvalContext)
               val actualName = PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)
@@ -44,6 +47,9 @@ class PyAssertTypeInspection : PyInspection() {
 }
 
 private fun isSame(type1: PyType?, type2: PyType?, context: TypeEvalContext): Boolean {
+  val type1AllAny = type1.asUnionSequence().all { it.isAnyOrUnknown }
+  val type2AllAny = type2.asUnionSequence().all { it.isAnyOrUnknown }
+  if (type1AllAny || type2AllAny) return type1AllAny && type2AllAny
   if (type1 is PyCallableType && (type1 !is PyClassLikeType) &&
       type2 is PyCallableType && (type2 !is PyClassLikeType)) {
     val returnType1 = type1.getReturnType(context)

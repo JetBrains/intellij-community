@@ -1,5 +1,8 @@
 <!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="public">
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
 
   <!--todo move to modules?-->
   <xi:include href="/META-INF/RegistryKeys.xml"/>
@@ -221,6 +224,7 @@
     <codeInsight.codeVisionProvider implementation="com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationCodeVision"/>
     <config.codeVisionGroupSettingProvider implementation="com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationGroupSettingProvider"/>
     <openapi.projectRoots.externalJavaConfigurationMissingAction implementation="com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationCopyCommandAction"/>
+    <openapi.projectRoots.externalJavaConfigurationMissingAction implementation="com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationJdkDownloaderAction"/>
     <openapi.projectRoots.externalJavaConfigurationMissingAction implementation="com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationRefreshAction"/>
     <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationActivity"/>
 
@@ -262,12 +266,6 @@
       overrides="true"/>
     <statistics.projectUsagesCollector implementation="com.intellij.compiler.CompilerSettingsCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.pom.java.JavaLanguageVersionsCollector"/>
-
-    <changesGroupingPolicy key="module" id="module" weight="20"
-                           implementationClass="com.intellij.openapi.vcs.changes.ui.ModuleChangesGroupingPolicy$Factory"/>
-    <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
-                    serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsPathPresenter"
-                    overrides="true"/>
 
     <projectService serviceImplementation="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration"/>
     <projectService serviceImplementation="com.intellij.compiler.impl.rmiCompiler.RmicConfiguration"/>
@@ -373,7 +371,6 @@
 
     <postStartupActivity implementation="com.intellij.openapi.projectRoots.JavaVersionChecker"/>
 
-    <checkinHandlerFactory implementation="com.intellij.compiler.impl.vcs.UnloadedModulesCompilationCheckinHandler$Factory"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ModifiableModelsProvider"
                         serviceImplementation="com.intellij.openapi.roots.IdeaModifiableModelsProvider"
@@ -518,7 +515,6 @@
     <problemFileHighlightFilter implementation="com.intellij.codeInsight.problems.DefaultProblemFileHighlightFilter"/>
     <macro implementation="com.intellij.ide.macro.OutputPathMacro"/>
 
-    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService"
                     serviceImplementation="com.intellij.openapi.roots.ui.configuration.IdeaProjectSettingsService"
                     overrides="true"/>
@@ -674,6 +670,7 @@
     <defaultLiveTemplates file="liveTemplates/Java"/>
     <defaultLiveTemplates file="liveTemplates/JavaImplicitClass"/>
     <defaultLiveTemplates file="liveTemplates/JavaNormalClassesWithInstanceMain"/>
+    <defaultLiveTemplates file="liveTemplates/JavaPreviousPreview"/>
     <treeStructureProvider id="ClassesTreeStructureProvider" implementation="com.intellij.ide.projectView.impl.ClassesTreeStructureProvider"
                            order="last, after NestingTreeStructureProvider"/>
     <importFilteringRule implementation="com.intellij.usages.impl.rules.ImportFilteringRule"/>
@@ -826,6 +823,8 @@
                          implementation="com.intellij.codeInsight.template.JavaCodeContextType$JavaStructuredConcurrencyConstructors" />
     <liveTemplateContext contextId="JAVA_STATEMENT_WITH_STRUCTURED_CONCURRENCY_STATIC_FACTORY_METHODS" baseContextId="JAVA_CODE"
                          implementation="com.intellij.codeInsight.template.JavaCodeContextType$JavaStructuredConcurrencyStaticFactoryMethods" />
+    <liveTemplateContext contextId="JAVA_STATEMENT_WITH_STRUCTURED_CONCURRENCY_STATIC_FACTORY_METHODS_WITH_EXECUTION_EXCEPTION" baseContextId="JAVA_CODE"
+                         implementation="com.intellij.codeInsight.template.JavaCodeContextType$JavaStructuredConcurrencyStaticFactoryMethodsWithExecExceptionType" />
     <liveTemplateContext contextId="JAVA_COMMENT" baseContextId="JAVA_CODE"
                          implementation="com.intellij.codeInsight.template.JavaCommentContextType"/>
     <liveTemplateContext contextId="JAVA_STRING" baseContextId="JAVA_CODE"
@@ -871,7 +870,6 @@
     <preFormatProcessor implementation="com.intellij.psi.impl.source.codeStyle.FormatCommentsProcessor"/>
     <elementSignatureProvider implementation="com.intellij.codeInsight.folding.impl.JavaElementSignatureProvider"/>
     <smartPointer.anchorProvider implementation="com.intellij.psi.impl.smartPointers.JavaAnchorProvider"/>
-    <vcsSelectionProvider implementation="com.intellij.vcsUtil.JavaVcsSelectionProvider"/>
     <uiDataRule implementation="com.intellij.analysis.AnalysisScopeRule"/>
 
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.VarargsSelectioner"/>
@@ -1040,12 +1038,21 @@
                              implementationClass="com.intellij.codeInsight.generation.surroundWith.JavaStatementsSurroundDescriptor"/>
     <lang.surroundDescriptor language="JAVA"
                              implementationClass="com.intellij.codeInsight.intention.impl.SurroundAutoCloseableAction$Template"/>
-    <lang.surroundDescriptor language="JAVA"
-                             implementationClass="com.intellij.codeInsight.generation.surroundWith.JavaCommentsSurroundDescriptor"/>
     <lang.psiElementExternalizer language="JAVA" implementationClass="com.intellij.lang.java.JavaPsiElementExternalizer"/>
     <lang.importOptimizer language="JAVA" implementationClass="com.intellij.lang.java.JavaImportOptimizer"/>
     <lang.documentationFixer language="JAVA" implementationClass="com.intellij.codeInsight.documentation.JavaDocCommentFixer"/>
+
     <lang.documentationProvider language="JAVA" implementationClass="com.intellij.lang.java.JavaDocumentationProvider"/>
+
+    <platform.backend.documentation.psiTargetProvider id="JavaPsiDocumentationTargetProvider"
+                                                      implementation="com.intellij.lang.java.JavaPsiDocumentationTargetProvider" />
+    <platform.backend.documentation.inlineDocumentationProvider id="JavaInlineDocumentationProvider"
+                                                                implementation="com.intellij.lang.java.JavaInlineDocumentationProvider" />
+    <platform.backend.documentation.linkHandler id="JavaDocumentationLinkHandler"
+                                                implementation="com.intellij.lang.java.JavaDocumentationLinkHandler" />
+    <lang.documentationStubProvider implementation="com.intellij.lang.java.JavadocStubProvider"/>
+
+
     <lang.formatting.extractor language="JAVA" implementationClass="com.intellij.psi.codeStyle.extractor.differ.JavaExtractor"/>
     <encapsulateFields.Helper implementationClass="com.intellij.refactoring.encapsulateFields.JavaEncapsulateFieldHelper" language="JAVA"/>
     <lang.refactoringSupport.classMembersRefactoringSupport language="JAVA"
@@ -1144,6 +1151,7 @@
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaGoToImplementationCommandCompletionProvider" />
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaGoToSuperMethodCommandCompletionProvider"/>
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaChangeSignatureCompletionCommandProvider" />
+    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaVarargsCompletionCommandProvider" order="first"/>
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaCreateFromUsagesCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaExtractConstantCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaExtractFieldCompletionCommandProvider" order="last"/>
@@ -1227,8 +1235,6 @@
 
     <java.externalAnnotation.locationProvider
       implementation="com.intellij.codeInsight.externalAnnotation.location.JBBundledAnnotationsProvider"/>
-    <vcs.codeVisionLanguageContext language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaVcsCodeVisionContext"/>
-    <codeInsight.codeVisionSettingsPreviewLanguage modelId="vcs.code.vision" language="JAVA"/>
     <codeInsight.codeVisionProvider implementation="com.intellij.codeInsight.daemon.impl.JavaReferencesCodeVisionProvider"/>
     <codeInsight.codeVisionSettingsPreviewLanguage modelId="references" language="JAVA"/>
     <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.impl.JavaInheritorsCodeVisionProvider"/>

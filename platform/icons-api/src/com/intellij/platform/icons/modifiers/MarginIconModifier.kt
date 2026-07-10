@@ -4,7 +4,12 @@ package com.intellij.platform.icons.modifiers
 import com.intellij.platform.icons.IconManager
 import com.intellij.platform.icons.design.IconUnit
 
-fun IconModifier.margin(left: IconUnit, top: IconUnit, right: IconUnit, bottom: IconUnit): IconModifier =
+fun IconModifier.margin(
+  left: IconUnit = IconUnit.Zero,
+  top: IconUnit = IconUnit.Zero,
+  right: IconUnit = IconUnit.Zero,
+  bottom: IconUnit = IconUnit.Zero,
+): IconModifier =
     this then IconManager.modifiers().margin(left, top, right, bottom)
 
 fun IconModifier.margin(all: IconUnit): IconModifier = margin(all, all, all, all)

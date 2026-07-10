@@ -2,6 +2,7 @@
 // Apache 2.0 license.
 package org.jetbrains.jewel.markdown.rendering
 
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -10,6 +11,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.text.buildAnnotatedString
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.testing.MarkdownTestTheme
 import org.jetbrains.jewel.markdown.testing.createMarkdownTestStyling
@@ -135,5 +137,12 @@ public class DefaultMarkdownBlockRendererTest {
             waitForIdle()
             assertEquals("second:https://example.com", clickedUrl)
         }
+    }
+
+    @Test
+    public fun `appendInlineContent uses expected annotation tag`() {
+        val annotated = buildAnnotatedString { appendInlineContent("testId") }
+        val annotations = annotated.getStringAnnotations(COMPOSE_INLINE_CONTENT_ANNOTATION_TAG, 0, annotated.length)
+        assertEquals(1, annotations.size)
     }
 }

@@ -12,6 +12,8 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.icons.design.IconDesigner
+import com.intellij.platform.icons.scale.IconScale
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.components.*
 import com.intellij.ui.components.fields.ExpandableTextField
@@ -283,6 +285,12 @@ interface Row {
   fun <T> dropDownLink(item: T, items: List<T>): Cell<DropDownLink<T>>
 
   fun icon(icon: Icon): Cell<JLabel>
+
+  @ApiStatus.Internal
+  fun icon(icon: com.intellij.platform.icons.Icon, scale: IconScale = IconScale.Default): Cell<JLabel>
+
+  @ApiStatus.Internal
+  fun icon(scale: IconScale = IconScale.Default, designer: IconDesigner.() -> Unit): Cell<JLabel>
 
   /**
    * Use [Cell.contextHelp] to add context help for a specific component. The [Cell.contextHelp] method provides

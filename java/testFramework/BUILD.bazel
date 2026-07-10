@@ -1,7 +1,28 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+jps_test(
+    name = "testFramework-tests_test",
+    timeout = "moderate",
+    env = {
+        "JB_TEST_JUNIT5_FILTERS": "include-classname=com\\.intellij\\.refactoring\\.suggested\\..*",
+    },
+    tags = ["community-aggregator"],
+    runtime_deps = [":testFramework-tests_test_lib"],
+)
+### skip generation section `test intellij.java.testFramework.tests`
 
 ### auto-generated section `build intellij.java.testFramework` start
+
+jvm_provided_library(
+    name = "libraries_junit5_provided",
+    lib = "//libraries/junit5",
+)
+
+jvm_provided_library(
+    name = "libraries_junit5-params_provided",
+    lib = "//libraries/junit5-params",
+)
 
 jvm_library(
     name = "testFramework",
@@ -95,6 +116,9 @@ jvm_library(
         "//java/testFramework/backend",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
+        "//java/java-indexing-api:indexing",
+        ":libraries_junit5_provided",
+        ":libraries_junit5-params_provided",
     ],
 )
 
@@ -187,6 +211,11 @@ jvm_library(
         "//java/testFramework/backend:backend_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
+        "//java/java-indexing-api:indexing_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.testFramework` end
@@ -291,10 +320,18 @@ jvm_library(
         "//platform/refactoring:refactoring_test_lib",
         "//platform/structure-view-impl:structureView",
         "//platform/structure-view-impl:structureView_test_lib",
+        "//platform/structure-view-impl/plugin",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//platform/todo/plugin",
+        "//platform/todo/plugin:plugin_test_lib",
         "//platform/util",
         "//platform/util:util_test_lib",
+        "//aether-dependency-resolver/plugin",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//libraries/misc/plugin",
+        "//libraries/misc/plugin:plugin_test_lib",
         "//platform/util/jdom",
         "//platform/util/jdom:jdom_test_lib",
         "//platform/lang-api:lang",
@@ -391,11 +428,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.testFramework.tests` end
-
-### auto-generated section `test intellij.java.testFramework.tests` start
-
-jps_test(
-    name = "testFramework-tests_test",
-    runtime_deps = [":testFramework-tests_test_lib"],
-)
-### auto-generated section `test intellij.java.testFramework.tests` end

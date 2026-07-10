@@ -57,11 +57,11 @@ internal class MissingFrontendOrBackendRuntimeDependencyInspection : DevKitPlugi
               requiredModuleKind,
             )
           )
-          val suppressionFix = SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project).createSuppressionFixIfApplicable(
+          val suppressionFixes = SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project).createCommonSuppressionQuickFixes(
             reportedXmlElement,
             MISSING_RUNTIME_DEPENDENCY_SHORT_NAME,
           )
-          val fixes = if (suppressionFix != null) regularFixes + suppressionFix else regularFixes
+          val fixes = regularFixes + suppressionFixes
           holder.createProblem(
             reportedElement,
             message(

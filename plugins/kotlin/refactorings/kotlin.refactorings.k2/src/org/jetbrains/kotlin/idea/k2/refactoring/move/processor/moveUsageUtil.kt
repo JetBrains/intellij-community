@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRena
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo.Companion.internalUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo.Companion.markInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.OuterInstanceReferenceUsageInfo
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -267,6 +268,7 @@ private fun KaSymbol.isStrictAncestorOf(other: KaSymbol): Boolean {
     return false
 }
 
+@OptIn(KaExperimentalApi::class)
 private fun traverseOuterInstanceReferences(
     member: KtNamedDeclaration,
     body: (OuterInstanceReferenceUsageInfo) -> Unit
@@ -281,10 +283,10 @@ private fun traverseOuterInstanceReferences(
             private fun getOuterInstanceReference(element: PsiElement): OuterInstanceReferenceUsageInfo? {
                 return when (element) {
                     is KtThisExpression -> {
-                        val symbol = element.expressionType?.symbol ?: return null
-                        val symbolPsi = symbol.psi
+                        val referencedSymbol = element.resolveSymbol() ?: return null
+                        val symbolPsi = referencedSymbol.psi
                         val isIndirect = when {
-                            symbol == outerClassSymbol -> false
+                            referencedSymbol == outerClassSymbol -> false
                             symbolPsi != null && outerClassPsi != null && symbolPsi.isAncestor(outerClassPsi) -> true
                             else -> return null
                         }

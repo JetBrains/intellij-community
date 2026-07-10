@@ -5,14 +5,13 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KaParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
@@ -30,8 +29,13 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameRefere
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
 internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContributor<KotlinExpressionNameReferencePositionContext>(
     positionContextClass = KotlinExpressionNameReferencePositionContext::class,
@@ -64,11 +68,17 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
         analyzeCopy(callElement, resolutionMode = KaDanglingFileResolutionMode.PREFER_SELF) {
             val candidates = collectCallCandidates(callElement)
                 .mapNotNull { it.candidate as? KaFunctionCall<*> }
-                .filter { it.partiallyAppliedSymbol.symbol.hasStableParameterNames }
+                .filter { it.symbol.hasStableParameterNames }
+                .filter {
+                    val constructorPsi = it.symbol.psi as? KtPrimaryConstructor ?: return@filter true
+                    if (!constructorPsi.isPrivate()) return@filter true
+                    val constructorClass = constructorPsi.containingClass() ?: return@filter false
+                    constructorClass.isParentClassForELement(callElement)
+                }
 
             val namedArgumentInfos = buildList {
                 val (candidatesWithTypeMismatches, candidatesWithNoTypeMismatches) = candidates.partition {
-                    CallParameterInfoProvider.hasTypeMismatchBeforeCurrent(callElement, it.argumentMapping, currentArgumentIndex)
+                    CallParameterInfoProvider.hasTypeMismatchBeforeCurrent(callElement, it.valueArgumentMapping, currentArgumentIndex)
                 }
 
                 val argumentsBeforeCurrent = valueArgumentList.arguments.take(currentArgumentIndex)
@@ -83,29 +93,29 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
             val potentiallyRelevantLocalVariables by lazy(LazyThreadSafetyMode.NONE) {
                 val scopeContext = context.completionContext.originalFile.scopeContext(callElement)
                 val namesAtCurrentIndex = namedArgumentInfos
-                    .filter { namedArgument -> namedArgument.indexedTypes.any { it.index == currentArgumentIndex } }
+                    .filter { namedArgument -> namedArgument.missingParameters.any { it.isFirstUnpassedParameter } }
                     .mapTo(mutableSetOf()) { it.name }
-                getLocalVariablesForNames(namesAtCurrentIndex, scopeContext)
+                getNonImportedAvailableVariables(namesAtCurrentIndex, scopeContext)
             }
 
             buildList {
-                for ((name, indexedTypes) in namedArgumentInfos) {
+                for ((name, missingParameters) in namedArgumentInfos) {
                     with(KotlinFirLookupElementFactory) {
                         if (completionType != CompletionType.SMART) {
                             // For smart completion, we do not want to show incomplete named argument items
-                            add(createNamedArgumentLookupElement(name, indexedTypes))
+                            add(createNamedArgumentLookupElement(name, missingParameters))
                         }
 
                         // suggest default values only for types from parameters with matching positions to not clutter completion
-                        val typesAtCurrentPosition = indexedTypes.filter { it.index == currentArgumentIndex }
+                        val typesAtCurrentPosition = missingParameters.filter { it.isFirstUnpassedParameter }
 
-                        val booleanPosition = typesAtCurrentPosition.firstOrNull { it.value.isBooleanType }
+                        val booleanPosition = typesAtCurrentPosition.firstOrNull { it.type.isBooleanType }
                         if (booleanPosition != null) {
                             add(createNamedArgumentWithValueLookupElement(name, KtTokens.TRUE_KEYWORD.value, booleanPosition.index))
                             add(createNamedArgumentWithValueLookupElement(name, KtTokens.FALSE_KEYWORD.value, booleanPosition.index))
                         }
 
-                        val nullablePosition = typesAtCurrentPosition.firstOrNull { it.value.isMarkedNullable }
+                        val nullablePosition = typesAtCurrentPosition.firstOrNull { it.type.isMarkedNullable }
                         if (nullablePosition != null) {
                             add(createNamedArgumentWithValueLookupElement(name, KtTokens.NULL_KEYWORD.value, nullablePosition.index))
                         }
@@ -115,7 +125,7 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
                         if (singleTypeAtPosition != null) {
                             // Try and find a _local_ variable with the same name and matching type to prefill it
                             val variableTypeWithSameName = potentiallyRelevantLocalVariables[name]?.returnType
-                            if (variableTypeWithSameName?.isPossiblySubTypeOf(singleTypeAtPosition.value) == true) {
+                            if (variableTypeWithSameName?.isPossiblySubTypeOf(singleTypeAtPosition.type) == true) {
                                 add(createNamedArgumentWithValueLookupElement(name, name.asString(), singleTypeAtPosition.index))
                             }
                         }
@@ -126,12 +136,25 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
             .forEach { addElement(it) }
     }
 
-    /**
-     * @property indexedTypes types of all parameter candidates that match [name] with indexes of their positions in signatures
-     */
-    private data class NamedArgumentInfo(
+    private fun KtClass.isParentClassForELement(expression: KtElement): Boolean {
+        val parentClass: KtClass? = expression.findParentOfType<KtClass>()
+        when (parentClass) {
+            null -> return false
+            this -> return true
+            else -> return isParentClassForELement(parentClass)
+        }
+    }
+
+    internal data class NamedParameterInfo(
         val name: Name,
-        val indexedTypes: List<IndexedValue<KaType>>
+        val missingParameters: List<MissingParameterInfo>
+    )
+
+    internal data class MissingParameterInfo(
+        val name: Name,
+        val type: KaType,
+        val isFirstUnpassedParameter: Boolean,
+        val index: Int,
     )
 
     context(_: KaSession)
@@ -139,16 +162,16 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
         callElement: KtCallElement,
         argumentsBeforeCurrent: List<KtValueArgument>,
         candidates: List<KaFunctionCall<*>>,
-    ): List<NamedArgumentInfo> {
-        val nameToTypes = mutableMapOf<Name, MutableSet<IndexedValue<KaType>>>()
+    ): List<NamedParameterInfo> {
+        val nameToParameterInfo = mutableMapOf<Name, MutableSet<MissingParameterInfo>>()
 
         candidates.flatMap {
             collectNotUsedIndexedParameterCandidates(callElement, it, argumentsBeforeCurrent)
-        }.forEach { (index, parameter) ->
-            nameToTypes.getOrPut(parameter.name) { HashSet() }.add(IndexedValue(index, parameter.symbol.returnType))
+        }.forEach { parameterInfo ->
+            nameToParameterInfo.getOrPut(parameterInfo.name) { HashSet() }.add(parameterInfo)
         }
-        return nameToTypes.map { (name, types) ->
-            NamedArgumentInfo(name, types.toList())
+        return nameToParameterInfo.map { (name, types) ->
+            NamedParameterInfo(name, types.toList())
         }
     }
 
@@ -158,7 +181,7 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
         callElement: KtCallElement,
         candidate: KaFunctionCall<*>,
         argumentsBeforeCurrent: List<KtValueArgument>,
-    ): Sequence<IndexedValue<KaVariableSignature<KaParameterSymbol>>> {
+    ): Sequence<MissingParameterInfo> {
         val signature = candidate.signature
         val valueArgumentMapping = candidate.valueArgumentMapping
 
@@ -189,11 +212,21 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
             signature.valueParameters
         }
 
-        return parametersToConsider
+        val unpassedParametersWithIndex = parametersToConsider
             .asSequence()
             .withIndex()
             .filterNot { (_, parameter) ->
                 parameter in alreadyPassedParameters
+            }
+
+        val firstUnpassedIndex = unpassedParametersWithIndex.firstOrNull()?.index
+        return unpassedParametersWithIndex.map { (index, parameter) ->
+                MissingParameterInfo(
+                    name = parameter.name,
+                    type = parameter.returnType,
+                    isFirstUnpassedParameter = index == firstUnpassedIndex,
+                    index = index
+                )
             }
     }
 }

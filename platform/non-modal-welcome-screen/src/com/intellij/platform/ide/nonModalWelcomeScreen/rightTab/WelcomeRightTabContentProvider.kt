@@ -30,6 +30,13 @@ interface WelcomeRightTabContentProvider {
   val fileTypeIcon: Icon
   val title: Supplier<@Nls String>
   val secondaryTitle: Supplier<@Nls String>
+  
+  /**
+   * Optional product icon to display above the title (48x48).
+   * Use Valkyrie IDEA plugin to generate the ImageVector from SVG.
+   * Return null if no icon should be displayed.
+   */
+  val productIcon: ImageVector? get() = null
 
   val isDisableOptionVisible: Boolean
   val isStartupSwitchPanelOptionVisible: Boolean

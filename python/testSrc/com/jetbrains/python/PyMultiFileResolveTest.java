@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.google.common.collect.Lists;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -52,6 +55,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   private static void checkInitPyDir(PsiElement elt, String dirname) {

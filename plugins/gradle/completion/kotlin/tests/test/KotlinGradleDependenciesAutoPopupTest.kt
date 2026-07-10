@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.completion.kotlin
+package com.intellij.gradle.completion.kotlin.tests.integration
 
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.openapi.Disposable
@@ -117,16 +117,33 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testAutoPopupOnQuoteInDependencyGAV(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun testNoAutoPopupUntilThreeCharsInDependencyGAV(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", """
       dependencies {
           implementation(<caret>)
       }
     """.trimIndent())
     codeInsightFixture.configureFromExistingVirtualFile(file)
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of dependency's GAV argument" }
+    autoPopupTester.typeFast("\"my")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed in the dependency GAV (IDEA-390474)" }
+    autoPopupTester.typeFast("G")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters are typed in the dependency GAV" }
     assertEquals("myGroup:myArtifact:1.0", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNoAutoPopupUntilThreeCharsInTopLevelDependency(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    val file = writeTextAndCommit("build.gradle.kts", """
+      dependencies {
+          <caret>
+      }
+    """.trimIndent())
+    codeInsightFixture.configureFromExistingVirtualFile(file)
+    autoPopupTester.typeFast("my")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed for a top-level dependency (IDEA-390474)" }
+    autoPopupTester.typeFast("G")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters for a top-level dependency" }
   }
 
   @ParameterizedTest

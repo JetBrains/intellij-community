@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.util.JDOMUtil;
@@ -23,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   @Override
@@ -715,7 +720,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
                            self.one = lambda x: True
                           \s
                        def some_method(self):
-                           self.one.<warning descr="Cannot find reference 'abc' in '(x: Any) -> bool'">abc</warning>""");
+                           self.one.<warning descr="Cannot find reference 'abc' in '(x: Unknown) -> bool'">abc</warning>""");
   }
 
   public void testNamedTupleFunction() {

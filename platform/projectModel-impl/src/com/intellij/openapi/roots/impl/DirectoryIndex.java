@@ -11,6 +11,7 @@ import com.intellij.util.Query;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Set;
@@ -37,10 +38,10 @@ public abstract class DirectoryIndex {
     return EmptyQuery.getEmptyQuery();
   }
 
-  public abstract @NotNull List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir);
+  public abstract @NotNull @Unmodifiable List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir);
 
   /**
    * @return names of unloaded modules which directly or transitively via exported dependencies depend on the specified module
    */
-  public abstract @NotNull Set<String> getDependentUnloadedModules(@NotNull Module module);
+  public abstract @NotNull @Unmodifiable Set<String> getDependentUnloadedModules(@NotNull Module module);
 }

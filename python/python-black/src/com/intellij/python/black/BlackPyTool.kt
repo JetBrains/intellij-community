@@ -7,20 +7,28 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.python.pytools.PyTool
+import com.intellij.python.pytools.PyToolsState
+import com.intellij.python.pytools.icons.PythonPyToolsIcons
 import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
+import com.intellij.python.pytools.configuration.ConfigurablePyTool
 import com.intellij.python.black.PyBlackBundle.message
 import com.intellij.python.black.configuration.BlackFormatterConfigurable
 import com.intellij.python.black.configuration.BlackFormatterConfiguration
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
+import javax.swing.Icon
 import kotlin.io.path.Path
 
+/**
+ * [Black](https://black.readthedocs.io/) — the uncompromising Python code formatter maintained under
+ * the PSF. It reformats source into a single, consistent style, leaving little to configure.
+ */
 @ApiStatus.Internal
-class BlackPyTool : PyTool {
+class BlackPyTool : PyTool, ConfigurablePyTool {
   override val presentableName: String = "Black"
   override val description: String get() = message("black.tool.description")
   override val packageName: PyPackageName = PyPackageName.from("black")
+  override val icon: Icon get() = PythonPyToolsIcons.Logo
 
   /**
    * `--line-ranges` (fragment formatting) requires Black 23.11.0; older versions cannot honour
@@ -28,23 +36,24 @@ class BlackPyTool : PyTool {
    */
   override val minimumSupportedVersion: Version = Version(23, 11, 0)
 
-  override fun legacyEnabled(project: Project): Boolean {
-    return Registry.`is`("black.formatter.support.enabled")
-           && BlackFormatterConfiguration.getBlackConfiguration(project).enabledOnReformat
+  @Suppress("DEPRECATION")
+  override fun migrateLegacyState(project: Project): PyToolsState.ToolEntry {
+    val cfg = BlackFormatterConfiguration.getBlackConfiguration(project)
+    val entry = PyToolsState.ToolEntry(
+      enabled = Registry.`is`("black.formatter.support.enabled") && cfg.enabledOnReformat,
+      discoveryMode = when (cfg.executionMode) {
+        BlackFormatterConfiguration.ExecutionMode.BINARY -> ExecutableDiscoveryMode.PATH
+        BlackFormatterConfiguration.ExecutionMode.PACKAGE -> ExecutableDiscoveryMode.INTERPRETER
+      },
+      customToolBinaryPath = cfg.pathToExecutable?.takeIf { it.isNotBlank() }?.let { Path(it) },
+    )
+    cfg.enabledOnReformat = false
+    cfg.executionMode = BlackFormatterConfiguration.ExecutionMode.PACKAGE
+    cfg.pathToExecutable = null
+    return entry
   }
 
-  override fun legacyDiscoveryMode(project: Project): ExecutableDiscoveryMode =
-    when (BlackFormatterConfiguration.getBlackConfiguration(project).executionMode) {
-      BlackFormatterConfiguration.ExecutionMode.BINARY -> ExecutableDiscoveryMode.PATH
-      BlackFormatterConfiguration.ExecutionMode.PACKAGE -> ExecutableDiscoveryMode.INTERPRETER
-    }
-
-  override fun legacyCustomPath(project: Project): Path? =
-    BlackFormatterConfiguration.getBlackConfiguration(project).pathToExecutable
-      ?.takeIf { it.isNotBlank() }
-      ?.let { Path(it) }
-
-  override val detailConfigurable: (Project) -> UnnamedConfigurable = ::BlackFormatterConfigurable
+  override fun createConfigurable(project: Project): UnnamedConfigurable = BlackFormatterConfigurable(project)
 
   override fun summaryFor(project: Project): String {
     val cfg = BlackFormatterConfiguration.getBlackConfiguration(project)

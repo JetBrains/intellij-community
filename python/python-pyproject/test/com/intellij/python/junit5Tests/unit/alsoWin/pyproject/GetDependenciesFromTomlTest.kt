@@ -1,10 +1,10 @@
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject
 
 import com.intellij.python.pyproject.PyProjectToml
-import com.intellij.python.pyproject.model.internal.pyProjectToml.TomlDependencySpecification
 import com.intellij.python.pyproject.model.internal.pyProjectToml.getDependenciesFromToml
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
+import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
 import com.intellij.testFramework.common.timeoutRunBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -30,7 +30,7 @@ internal class GetDependenciesFromTomlTest {
       name = "main"
       version = "1.0"
       dependencies = ["lib @ $libUri"]
-    """.trimIndent())
+    """.trimIndent())!!
 
     val mainName = ProjectName("main")
     val libName = ProjectName("lib")
@@ -58,7 +58,7 @@ internal class GetDependenciesFromTomlTest {
       [dependency-groups]
       dev = ["lib @ $libUri"]
       test = ["test-lib @ $testLibUri"]
-    """.trimIndent())
+    """.trimIndent())!!
 
     val mainName = ProjectName("main")
     val libName = ProjectName("lib")
@@ -83,7 +83,7 @@ internal class GetDependenciesFromTomlTest {
       
       [tool.poetry.dependencies]
       lib = {path = "../lib"}
-    """.trimIndent())
+    """.trimIndent())!!
 
     val mainName = ProjectName("main")
     val libName = ProjectName("lib")
@@ -109,7 +109,7 @@ internal class GetDependenciesFromTomlTest {
       
       [tool.uv]
       dev-dependencies = ["lib @ $libUri"]
-    """.trimIndent())
+    """.trimIndent())!!
 
     val mainName = ProjectName("main")
     val libName = ProjectName("lib")
@@ -134,7 +134,7 @@ internal class GetDependenciesFromTomlTest {
       
       [tool.poetry.group.test.dependencies]
       lib = {path = "../lib"}
-    """.trimIndent())
+    """.trimIndent())!!
 
     val mainName = ProjectName("main")
     val libName = ProjectName("lib")
@@ -159,7 +159,7 @@ internal class GetDependenciesFromTomlTest {
       
       [dependency-groups]
       dev = ["black>=23"]
-    """.trimIndent())
+    """.trimIndent())!!
 
     val mainName = ProjectName("main")
     val entries = mapOf(mainName to TestProject(toml, mainDir))
@@ -176,7 +176,7 @@ internal class GetDependenciesFromTomlTest {
       [project]
       name = "main"
       version = "1.0"
-    """.trimIndent())
+    """.trimIndent())!!
 
     val mainName = ProjectName("main")
     val entries = mapOf(mainName to TestProject(toml, mainDir))
@@ -210,7 +210,7 @@ internal class GetDependenciesFromTomlTest {
       
       [tool.poetry.dependencies]
       tool-lib = {path = "../tool-lib"}
-    """.trimIndent())
+    """.trimIndent())!!
 
     val mainName = ProjectName("main")
     val pep621Name = ProjectName("pep621-lib")

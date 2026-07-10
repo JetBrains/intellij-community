@@ -117,6 +117,7 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -148,18 +149,19 @@ public final class DaemonListeners implements Disposable {
   private List<Editor> myActiveEditors = Collections.emptyList();
   private final AtomicLong myFoldingStateChanged = new AtomicLong();
   // some expensive flags, e.g. isMarkedExcluded and isCodeFragment are computed in BGT
-  private final Alarm myRecomputeFlagsInBGT = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+  private final Alarm myRecomputeFlagsInBGT;
 
-  DaemonListeners(@NotNull Project project, @NotNull DaemonCodeAnalyzerImpl daemonCodeAnalyzer) {
+  DaemonListeners(@NotNull Project project, @NotNull DaemonCodeAnalyzerImpl daemonCodeAnalyzer, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
+    myRecomputeFlagsInBGT = new Alarm(coroutineScope, Alarm.ThreadToUse.POOLED_THREAD);
 
     if (project.isDefault()) {
       myPsiChangeHandler = null;
       return;
     }
 
-    SimpleMessageBusConnection connection = myProject.getMessageBus().simpleConnect();
+    SimpleMessageBusConnection connection = myProject.getMessageBus().connect(coroutineScope);
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
@@ -327,7 +329,7 @@ public final class DaemonListeners implements Disposable {
       }
     });
     Predicate<Document> isDocumentWorthBothering = document -> worthBothering(document, project);
-    myPsiChangeHandler = new PsiChangeHandler(myProject, daemonCodeAnalyzer.getFileStatusMap(), this, isDocumentWorthBothering);
+    myPsiChangeHandler = new PsiChangeHandler(myProject, daemonCodeAnalyzer.getFileStatusMap(), this, coroutineScope, isDocumentWorthBothering);
 
     connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override

@@ -250,7 +250,9 @@ def get_python_helper_lib_filename():
         else:
             suffix = suffix_32
 
-        if IS_WINDOWS or IS_MAC:  # just the extension changes
+        if IS_WINDOWS:  # just the extension changes
+            prefix = "attach_"
+        elif IS_MAC:
             prefix = "attach"
             suffix = ""
         elif IS_LINUX:  #

@@ -87,7 +87,9 @@ internal object SplitModeDescriptorDependencyAnalyzer {
     val descriptorLocation = getDescriptorLocation(ideaPlugin)
     val accumulator = DependencyFactsAccumulator(descriptorLocation)
     val directDependencies = collectDirectDependencies(ideaPlugin).toList()
-    for ((dependencyName, dependencyDescriptors) in directDependencies) {
+    for (dependency in directDependencies) {
+      val dependencyName = dependency.name
+      val dependencyDescriptors = dependency.resolveDescriptors()
       var hasPredefinedDependencyFacts = false
       for (dependencyDescriptor in dependencyDescriptors) {
         val predefinedDependencyFacts = getPredefinedDependencyFacts(dependencyDescriptor) ?: continue
@@ -118,7 +120,9 @@ internal object SplitModeDescriptorDependencyAnalyzer {
       return accumulator.toDependencyFacts()
     }
 
-    for ((dependencyName, dependencyDescriptors) in directDependencies) {
+    for (dependency in directDependencies) {
+      val dependencyName = dependency.name
+      val dependencyDescriptors = dependency.resolveDescriptors()
       for (dependencyDescriptor in dependencyDescriptors) {
         val dependencyFacts = getOrComputeOwnDescriptorDependencyFacts(dependencyDescriptor, analysisStates)
         accumulator.recordTransitiveDependencies(dependencyName, dependencyFacts)
@@ -162,7 +166,9 @@ internal object SplitModeDescriptorDependencyAnalyzer {
           continue
         }
         val dependencyName = dependency.rawText ?: dependency.stringValue ?: continue
-        yield(DirectDependency(dependencyName, resolvePluginDependencyDescriptors(ideaPlugin, dependencyName)))
+        yield(DirectDependency(dependencyName) {
+          resolvePluginDependencyDescriptors(ideaPlugin, dependencyName)
+        })
       }
 
       val pluginDependencies = ideaPlugin.dependencies
@@ -172,12 +178,16 @@ internal object SplitModeDescriptorDependencyAnalyzer {
 
       for (moduleDescriptor in pluginDependencies.moduleEntry) {
         val dependencyName = moduleDescriptor.name.stringValue ?: continue
-        yield(DirectDependency(dependencyName, listOfNotNull(moduleDescriptor.name.value)))
+        yield(DirectDependency(dependencyName) {
+          listOfNotNull(moduleDescriptor.name.value)
+        })
       }
 
       for (pluginDescriptor in pluginDependencies.plugin) {
         val dependencyName = pluginDescriptor.id.stringValue ?: continue
-        yield(DirectDependency(dependencyName, resolvePluginDependencyDescriptors(ideaPlugin, dependencyName)))
+        yield(DirectDependency(dependencyName) {
+          resolvePluginDependencyDescriptors(ideaPlugin, dependencyName)
+        })
       }
     }
       .distinctBy { it.name }
@@ -378,10 +388,14 @@ private class DependencyFactsAccumulator(
   }
 }
 
-private data class DirectDependency(
+private class DirectDependency(
   val name: String,
-  val descriptors: List<IdeaPlugin>,
-)
+  descriptorResolver: () -> List<IdeaPlugin>,
+) {
+  private val descriptors by lazy(LazyThreadSafetyMode.NONE) { descriptorResolver() }
+
+  fun resolveDescriptors(): List<IdeaPlugin> = descriptors
+}
 
 private data class ContentModuleDependency(
   val moduleName: String,

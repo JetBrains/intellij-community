@@ -19,8 +19,11 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.AuthData;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Provides authentication information to the {@link git4idea.commands.GitHttpAuthenticator} on attempt to connect an HTTP remote.
@@ -51,4 +54,12 @@ public interface GitHttpAuthDataProvider {
    * such provider can be interrogated by GitHttpAuthenticator with {@link com.intellij.externalProcessAuthHelper.AuthenticationMode#SILENT} mode
    */
   default boolean isSilent() {return false;}
+
+  /**
+   * Returns a presentable error message for an authentication failure handled by this provider.
+   *
+   * @param errorOutput raw error output of the Git operation
+   * @return a provider-specific authentication failure message, or {@code null}
+   */
+  default @Nullable @Nls String getPresentableErrorMessage(@NotNull List<String> errorOutput) { return null; }
 }

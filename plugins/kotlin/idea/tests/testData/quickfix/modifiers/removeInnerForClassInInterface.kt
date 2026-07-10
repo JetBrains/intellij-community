@@ -1,5 +1,5 @@
 // "Remove 'inner' modifier" "true"
-// K2_ERROR: Modifier 'inner' is not applicable inside 'interface'.
+// K2_ERROR: WRONG_MODIFIER_CONTAINING_DECLARATION
 interface A {
     inne<caret>r class B
 }

@@ -15,8 +15,13 @@
  */
 package com.jetbrains.python.inspections
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.jetbrains.python.fixtures.PyInspectionTestCase
 
+@Subsystems.Inspections
+@Layers.Functional
 class PyTypeAliasRedeclarationInspectionTest : PyInspectionTestCase() {
   // PY-76851
   fun testTypeAliasRedeclaration() {

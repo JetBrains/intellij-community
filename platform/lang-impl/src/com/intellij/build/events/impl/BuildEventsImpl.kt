@@ -60,6 +60,7 @@ internal class BuildEventsImpl : BuildEvents {
     kind: MessageEvent.Kind,
   ) = MessageEventBuilderImpl(message, kind)
 
+  @Deprecated("Use [BuildEvents.message] instead.", replaceWith = ReplaceWith("message(message, kind).withFilePosition(filePosition)"))
   override fun fileMessage(
     message: @Message String,
     kind: MessageEvent.Kind,

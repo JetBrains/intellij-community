@@ -1,0 +1,8 @@
+<product-modules>
+  <include>
+    <from-module>intellij.idea.frontend.split</from-module>
+  </include>
+  <bundled-plugins>
+    <module>intellij.lsp.ui</module>
+  </bundled-plugins>
+</product-modules>

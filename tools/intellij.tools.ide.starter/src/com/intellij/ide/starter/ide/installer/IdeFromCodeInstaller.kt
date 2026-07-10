@@ -34,16 +34,22 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.appendLines
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
+import kotlin.io.path.pathString
 
 class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : IdeInstaller {
   private val projectRoot by lazy { Path.of(PathManager.getHomePath(false)) }
+
+  private data class InstallationCacheKey(
+    val ideInfo: IdeInfo,
+    val useDockerContainer: Boolean,
+  )
 
   private fun getClassPath(ideInfo: IdeInfo, installationDirectory: Path): List<String> {
     val coreClassPathFile = installationDirectory.resolve("core-classpath.txt")
 
     return if (ideInfo.platformPrefix == PlatformUtils.JETBRAINS_CLIENT_PREFIX) {
       val moduleRepository = RuntimeModuleRepository.create(installationDirectory.resolve("modules").resolve("module-descriptors.jar"))
-      moduleRepository.getModule(RuntimeModuleId.legacyJpsModule("intellij.platform.runtime.loader")).moduleClasspath.map { it.toString() }
+      moduleRepository.computeModuleClasspath(RuntimeModuleId.legacyJpsModule("intellij.platform.runtime.loader")).map { it.pathString }
     }
     else {
       Files.readAllLines(coreClassPathFile)
@@ -196,12 +202,12 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
   }
 
   companion object {
-    private val cachedInstallationDirectories = mutableMapOf<IdeInfo, Path>()
+    private val cachedInstallationDirectories = mutableMapOf<InstallationCacheKey, Path>()
 
     // usually is only needed to save agent's space
     @OptIn(ExperimentalPathApi::class)
     fun cleanUpCachedInstallationDirectories(filter: (IdeInfo) -> Boolean = { true }) {
-      cachedInstallationDirectories.filter { filter(it.key) }.forEach {
+      cachedInstallationDirectories.filter { filter(it.key.ideInfo) }.forEach {
         logOutput("Cleaning up cached installation directory: ${it.value}")
         it.value.deleteRecursively()
         cachedInstallationDirectories.remove(it.key)
@@ -216,8 +222,9 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
 
     val ideWithProvidedAdditionalModules =
       ideInfo.copy(additionalModules = ideInfo.additionalModules + AdditionalModulesForDevBuildServer.getAdditionalModules(ideInfo))
+    val installationCacheKey = InstallationCacheKey(ideWithProvidedAdditionalModules, ConfigurationStorage.useDockerContainer())
 
-    val existingInstallationPath = cachedInstallationDirectories[ideWithProvidedAdditionalModules]
+    val existingInstallationPath = cachedInstallationDirectories[installationCacheKey]
     val hasCachedInstallation =
       useInstallationCache && existingInstallationPath != null && existingInstallationPath.exists() && !ConfigurationStorage.isScramblingEnabled()
     val isFingerprintDebugRequested = System.getProperty(FINGERPRINT_DEBUG_PROPERTY).toBoolean()
@@ -238,7 +245,7 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
         }
         logOutput("startDevBuild IDE: $ideWithProvidedAdditionalModules")
         DevBuildServerRunner.instance.startDevBuild(ideWithProvidedAdditionalModules).also {
-          cachedInstallationDirectories[ideWithProvidedAdditionalModules] = it
+          cachedInstallationDirectories[installationCacheKey] = it
         }
       }
     val suffix = if (ConfigurationStorage.useDockerContainer()) "-DOCKER" else ""

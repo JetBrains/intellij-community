@@ -6,8 +6,8 @@
 // ACTION: Make 'PrivateType' public
 // ACTION: Move to class body
 // ERROR: 'public' function exposes its 'private-in-file' parameter type PrivateType
-// K2_ERROR: 'public' function exposes its 'private-in-file' parameter type 'PrivateType'.
-// K2_AFTER_ERROR: 'public' function exposes its 'private-in-file' parameter type 'PrivateType'.
+// K2_AFTER_ERROR: EXPOSED_PARAMETER_TYPE
+// K2_ERROR: EXPOSED_PARAMETER_TYPE
 
 
 private class PrivateType

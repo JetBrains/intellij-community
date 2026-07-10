@@ -69,6 +69,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
+import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH;
 import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_METHOD_ORDERER;
 import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_METHOD_ORDERER_DEFAULT;
 
@@ -380,7 +381,7 @@ public final class JUnitUtil {
     if (!PsiClassUtil.isRunnableClass(psiClass, false, checkAbstract)) return false;
 
     return CachedValuesManager.getCachedValue(psiClass, () -> {
-      if (AnnotationUtil.isAnnotated(psiClass, "org.junit.jupiter.api.extension.ExtendWith", 0)) {
+      if (MetaAnnotationUtil.isMetaAnnotated(psiClass, Collections.singleton(ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH))) {
         return CachedValueProvider.Result.create(true, PsiModificationTracker.MODIFICATION_COUNT);
       }
       for (final PsiMethod method : psiClass.getAllMethods()) {
@@ -414,7 +415,7 @@ public final class JUnitUtil {
 
   private static boolean hasInheritedTest(@Nullable PsiClass psiClass, @NotNull PsiMethod method) {
     if (psiClass == null) return false;
-    return ClassInheritorsSearch.search(psiClass)
+    return ClassInheritorsSearch.search(psiClass, GlobalSearchScope.projectScope(psiClass.getProject()), true)
       .filtering(subClass -> !subClass.hasModifierProperty(PsiModifier.ABSTRACT))
       .mapping(subClass -> subClass.findMethodBySignature(method, false))
       .filtering(override -> override != null && !override.hasModifierProperty(PsiModifier.ABSTRACT))

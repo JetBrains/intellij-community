@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.eventBuilders
 
+import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEventsNls.Hint
 import com.intellij.build.events.BuildIssueEvent
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -22,6 +23,9 @@ interface BuildIssueEventBuilder {
 
   @CheckReturnValue
   fun withHint(hint: @Hint String?): BuildIssueEventBuilder
+
+  @CheckReturnValue
+  fun withFilePosition(filePosition: FilePosition?): BuildIssueEventBuilder
 
   fun build(): BuildIssueEvent
 }

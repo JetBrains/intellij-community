@@ -7,6 +7,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -27,6 +28,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAnyOrUnknown;
 import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 
@@ -40,6 +42,7 @@ public class PyUnionType implements PyCompositeType {
   private final @NotNull LinkedHashSet<@Nullable PyType> myMembers;
 
   PyUnionType(@NotNull LinkedHashSet<@Nullable PyType> members) {
+    members.forEach(PyAnyType::validate);
     myMembers = new LinkedHashSet<>(members);
   }
 
@@ -51,7 +54,7 @@ public class PyUnionType implements PyCompositeType {
     SmartList<RatedResolveResult> ret = new SmartList<>();
     boolean allNulls = true;
     for (PyType member : myMembers) {
-      if (member != null) {
+      if (!isUnknown(member)) {
         List<? extends RatedResolveResult> result = member.resolveMember(name, location, direction, resolveContext);
         if (result != null) {
           allNulls = false;
@@ -76,8 +79,8 @@ public class PyUnionType implements PyCompositeType {
   @Override
   public String getName() {
     return myMembers.stream()
-      .sorted(Comparator.comparing(t -> t == null ? "Any" : t.getName(), Comparator.nullsFirst(Comparator.naturalOrder())))
-      .map(t -> t == null ? "Any" : t.getName())
+      .sorted(Comparator.comparing(t -> t == null ? PyNames.ANY_TYPE : t.getName(), Comparator.nullsFirst(Comparator.naturalOrder())))
+      .map(t -> t == null ? PyNames.ANY_TYPE : t.getName())
       .collect(Collectors.joining(" | "));
   }
 
@@ -108,7 +111,7 @@ public class PyUnionType implements PyCompositeType {
   /**
    * Constructs a union of the given types.
    * <p>
-   * If the resulting union would be empty, returns {@code null} (representing Any type).
+   * If the resulting union would be empty, returns {@code PyAnyType.getUnknown()}.
    * Consider using {@link #unionOrNever} instead, which falls back to {@link PyNeverType#NEVER}.
    *
    * @param members a collection of types to union
@@ -181,7 +184,7 @@ public class PyUnionType implements PyCompositeType {
   public static @Nullable PyType toNonWeakType(@Nullable PyType type) {
     if (isStrictSemanticsEnabled()) {
       if (type instanceof PyUnsafeUnionType unsafeUnionType) {
-        return PyUnsafeUnionType.unsafeUnion(ContainerUtil.skipNulls(unsafeUnionType.getMembers()));
+        return PyUnsafeUnionType.unsafeUnion(ContainerUtil.filter(unsafeUnionType.getMembers(), it -> !isUnknown(it)));
       }
     }
     else if (type instanceof PyUnionType unionType) {
@@ -240,9 +243,9 @@ public class PyUnionType implements PyCompositeType {
    */
   public @Nullable PyType excludeNull() {
     if (!isStrictSemanticsEnabled()) {
-      return !isWeak() ? this : union(ContainerUtil.skipNulls(getMembers()));
+      return !isWeak() ? this : union(ContainerUtil.filter(getMembers(), it -> !isUnknown(it)));
     }
-    return union(ContainerUtil.skipNulls(getMembers()));
+    return union(ContainerUtil.filter(getMembers(), it -> !isUnknown(it)));
   }
 
   @Override

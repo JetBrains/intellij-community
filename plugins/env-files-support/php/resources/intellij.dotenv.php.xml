@@ -1,11 +1,11 @@
 <idea-plugin package="ru.adelf.idea.dotenv.php">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.jetbrains.php"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="ru.adelf.idea.dotenv"/>
     <module name="intellij.php.frontback.impl"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="PHP" implementationClass="ru.adelf.idea.dotenv.php.PhpEnvCompletionContributor"/>
     <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.php.PhpEnvCompletionContributor"/>

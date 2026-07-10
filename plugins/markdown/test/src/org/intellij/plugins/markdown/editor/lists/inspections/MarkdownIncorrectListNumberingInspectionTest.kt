@@ -1,5 +1,6 @@
 package org.intellij.plugins.markdown.editor.lists.inspections
 
+import com.intellij.markdown.backend.inspections.IncorrectListNumberingInspection
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.junit.Test
@@ -19,6 +20,9 @@ class MarkdownIncorrectListNumberingInspectionTest: LightPlatformCodeInsightFixt
 
   @Test
   fun `test problem registered in deep sublists`() = doTest()
+
+  @Test
+  fun `test no warning for list item with code block`() = doTest()
 
   private fun doTest() {
     val name = getTestName(true)

@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.io.FileUtil
@@ -138,6 +139,7 @@ fun CodeInsightTestFixture.checkLookupItems(
   fileName: String = InjectedLanguageManager.getInstance(project).getTopLevelFile(file).virtualFile.nameWithoutExtension,
   expectedDataLocation: String = "",
   expectedItemsLocation: String = expectedDataLocation,
+  expectedItemsFileNameInfixProvider: (prefix: String, suffix: String) -> String = { _,_ -> "" },
   lookupItemFilter: (item: LookupElementInfo) -> Boolean = { true },
 ) {
   val hasDir = expectedItemsLocation.isNotEmpty()
@@ -160,11 +162,13 @@ fun CodeInsightTestFixture.checkLookupItems(
       val doc = targets.firstOrNull()?.let { computeDocumentationBlocking(it.createPointer()) }?.html?.trim()
 
       val sanitizedLookupString = lookupString.replace(Regex("[*\"?<>/\\[\\]:;|,#]"), "_")
-      checkDocumentation(doc ?: "<no documentation>", "$fileSuffix#$sanitizedLookupString", expectedDataLocation)
+      val fullPrefix = "$expectedDataLocation${InjectedLanguageManager.getInstance(project).getTopLevelFile(file).virtualFile.nameWithoutExtension}$fileSuffix#$sanitizedLookupString"
+      checkDocumentation(doc ?: "<no documentation>", "$fileSuffix#$sanitizedLookupString${expectedItemsFileNameInfixProvider(fullPrefix, ".html")}", expectedDataLocation)
     }
   }
 
   noAutoComplete {
+    val prefix = expectedItemsLocation + (if (hasDir) "/items" else "$fileName.items")
     if (locations.isEmpty() && namedLocations.isEmpty()) {
       completeBasic()
       checkListByFile(
@@ -177,7 +181,7 @@ fun CodeInsightTestFixture.checkLookupItems(
           renderDisplayEffects = renderDisplayEffects,
           lookupFilter = lookupItemFilter,
         ),
-        expectedFile = expectedItemsLocation + (if (hasDir) "/items" else "$fileName.items") + ".txt",
+        expectedFile = "${prefix}${expectedItemsFileNameInfixProvider(prefix, ".txt")}.txt",
         containsCheck = containsCheck,
       )
       checkLookupDocumentation()
@@ -200,7 +204,7 @@ fun CodeInsightTestFixture.checkLookupItems(
                 renderDisplayEffects = renderDisplayEffects,
                 lookupFilter = lookupItemFilter,
               ),
-              expectedFile = expectedItemsLocation + (if (hasDir) "/items" else "$fileName.items") + ".$index.txt",
+              expectedFile = "${prefix}${expectedItemsFileNameInfixProvider(prefix, ".$index.txt")}.$index.txt",
               containsCheck = containsCheck
             )
           }
@@ -316,11 +320,11 @@ private fun CodeInsightTestFixture.checkDocumentation(
 private fun CodeInsightTestFixture.renderDocAtCaret(): String? {
   val targets = PlatformTestUtil.callOnBgtSynchronously(
     {
-      ProgressManager.getInstance().runProcess(Computable {
-        runReadAction {
+      runBlockingMaybeCancellable {
+        readAction {
           IdeDocumentationTargetProvider.getInstance(project).documentationTargets(editor, file, caretOffset)
         }
-      }, EmptyProgressIndicator())
+      }
     }, 10)!!
 
   return targets.mapNotNull { computeDocumentationBlocking(it.createPointer()) }.render()
@@ -367,14 +371,15 @@ fun CodeInsightTestFixture.renderLookupItems(
   lookupElements?.asSequence()
     ?.map {
       val presentation = TestLookupElementPresentation.renderReal(it)
+      val prioritizedLookupElement = it.`as`(PrioritizedLookupElement::class.java)
       LookupElementInfo(
         lookupElement = it,
         lookupString = it.lookupString,
         displayText = presentation.itemText,
         tailText = presentation.tailText,
         typeText = presentation.typeText,
-        priority = (it as? PrioritizedLookupElement<*>)?.priority ?: 0.0,
-        proximity = (it as? PrioritizedLookupElement<*>)?.explicitProximity,
+        priority = prioritizedLookupElement?.priority ?: 0.0,
+        proximity = prioritizedLookupElement?.explicitProximity,
         isStrikeout = presentation.isStrikeout,
         isItemTextBold = presentation.isItemTextBold,
         isItemTextItalic = presentation.isItemTextItalic,

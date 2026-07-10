@@ -31,7 +31,6 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
-import com.intellij.ui.jcef.JBCefPsiNavigationUtils
 import java.io.File
 import org.jetbrains.jewel.markdown.rendering.ImageSourceResolver
 import kotlinx.coroutines.FlowPreview
@@ -44,6 +43,7 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownUpdateHandler
 import org.intellij.plugins.markdown.ui.preview.MarkdownUpdateHandler.PreviewRequest
 import org.intellij.plugins.markdown.ui.preview.PreviewStyleScheme
 import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener
+import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownSourceLinkNavigator
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.bridge.JewelComposePanel
 import org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory
@@ -202,8 +202,7 @@ internal class MarkdownComposePanel(
         selectable = true,
         onUrlClick = { url ->
           if (!Registry.`is`("markdown.open.link.in.external.browser")) return@Markdown
-          if (JBCefPsiNavigationUtils.navigateTo(url)) return@Markdown
-
+          if (MarkdownSourceLinkNavigator.navigate(project, url, virtualFile)) return@Markdown
           if (Registry.`is`("markdown.open.link.fallback"))
             MarkdownLinkOpener.getInstance().openLink(project, url)
           else

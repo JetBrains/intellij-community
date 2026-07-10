@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.j2k.PostProcessingTarget.PieceOfCodePostProcessingTa
 import org.jetbrains.kotlin.psi.KtFile
 
 object J2KPostProcessingRunner {
-    fun run(
+    suspend fun run(
         postProcessor: PostProcessor,
         kotlinFile: KtFile,
         converterContext: ConverterContext? = null,
@@ -21,9 +21,7 @@ object J2KPostProcessingRunner {
             if (range != null) PieceOfCodePostProcessingTarget(kotlinFile, range.toRangeMarker(kotlinFile))
             else MultipleFilesPostProcessingTarget(listOf(kotlinFile))
 
-        runBlockingCancellable {
-            postProcessor.doAdditionalProcessing(target, converterContext)
-        }
+        postProcessor.doAdditionalProcessing(target, converterContext)
     }
 }
 

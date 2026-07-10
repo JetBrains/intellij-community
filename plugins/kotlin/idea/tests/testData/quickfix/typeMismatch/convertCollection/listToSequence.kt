@@ -1,6 +1,6 @@
 // "Convert expression to 'Sequence' by inserting '.asSequence()'" "true"
 // WITH_STDLIB
-// K2_ERROR: Argument type mismatch: actual type is 'List<String>', but 'Sequence<String>' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 fun foo(a: List<String>) {
     bar(a<caret>)

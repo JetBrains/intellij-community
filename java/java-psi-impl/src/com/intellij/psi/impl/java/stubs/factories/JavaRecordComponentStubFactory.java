@@ -8,6 +8,7 @@ import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
+import com.intellij.psi.impl.java.stubs.PsiRecordComponentStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiRecordComponentStubImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
@@ -16,7 +17,7 @@ import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaRecordComponentStubFactory implements LightStubElementFactory<PsiRecordComponentStubImpl, PsiRecordComponent> {
+public class JavaRecordComponentStubFactory implements LightStubElementFactory<PsiRecordComponentStub, PsiRecordComponent> {
   @Override
   public @NotNull PsiRecordComponentStubImpl createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     TypeInfo typeInfo = TypeInfo.create(tree, node, parentStub);
@@ -29,7 +30,7 @@ public class JavaRecordComponentStubFactory implements LightStubElementFactory<P
   }
 
   @Override
-  public PsiRecordComponent createPsi(@NotNull PsiRecordComponentStubImpl stub) {
+  public PsiRecordComponent createPsi(@NotNull PsiRecordComponentStub stub) {
     return JavaStubElementType.getFileStub(stub).getPsiFactory().createRecordComponent(stub);
   }
   

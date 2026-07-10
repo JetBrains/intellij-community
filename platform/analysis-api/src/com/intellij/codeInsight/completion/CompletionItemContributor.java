@@ -32,7 +32,7 @@ final class CompletionItemContributor extends CompletionContributor implements R
     ModCompletionItemProvider.CompletionContext context = new ModCompletionItemProvider.CompletionContext(
       parameters.getProcess(),
       parameters.getOriginalFile(), parameters.getOffset(), parameters.getOriginalPosition(), parameters.getPosition(), 
-      result.getPrefixMatcher(), parameters.getInvocationCount(), parameters.getCompletionType());
+      result.getPrefixMatcher(), parameters.getInvocationCount(), parameters.getCompletionType(), parameters);
     ModCompletionResult consumer = new ModCompletionResult() {
       @Nullable CompletionResultSet myResultSet = null;
 

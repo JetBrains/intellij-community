@@ -34,10 +34,10 @@ export const requestContext = new AsyncLocalStorage<RequestContext>()
 export interface UpstreamConnectionOptions {
   transport: McpStreamTransport
   projectPath: string
-  defaultProjectPathKey: 'project_path' | 'projectPath'
+  defaultProjectPathKey: 'project_path' | 'projectPath' | 'rootFolder'
   connectTimeoutMs: number
   /**
-   * When true, `project_path` / `projectPath` is injected into every upstream tool call —
+   * When true, `project_path` / `projectPath` / `rootFolder` is injected into every upstream tool call —
    * including container-scoped tools that carry their own `sessionId` — so the IDE MCP
    * server's project dispatcher can bind the request to a specific open project. Used
    * in container mode where `.container-sessions.jsonl` is the source of truth.
@@ -69,7 +69,7 @@ export class UpstreamConnection {
   readonly client: Client
   private readonly _transport: McpStreamTransport
   private _projectPathManager: ReturnType<typeof createProjectPathManager>
-  private readonly _defaultProjectPathKey: 'project_path' | 'projectPath'
+  private readonly _defaultProjectPathKey: 'project_path' | 'projectPath' | 'rootFolder'
   private _forceInjectProjectPath: boolean
   private readonly _connectTimeoutMs: number
   private readonly _toolCallTimeoutMs: number
@@ -132,7 +132,7 @@ export class UpstreamConnection {
   }
 
   /**
-   * Re-run the `project_path` / `projectPath` tool-schema scan on the already-known
+   * Re-run the `project_path` / `projectPath` / `rootFolder` tool-schema scan on the already-known
    * tool list. Recreating the project-path manager loses its scan state, which would
    * otherwise force every injection to fall back to `defaultProjectPathKey` even when
    * the upstream IDE has been observed to use the other key on specific tools.

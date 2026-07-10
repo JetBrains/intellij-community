@@ -2,10 +2,6 @@
 @file:Suppress("UsePropertyAccessSyntax")
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.process.ProcessOutput
-import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -83,20 +79,14 @@ class JdkDownloaderTest : BareTestFixtureTestCase() {
                                        size = 604,
                                        sha256 = "1cf15536c1525f413190fd53243f343511a17e6ce7439ccee4dc86f0d34f9e81")
 
-  private val mockWSL = object: OsAbstractionForJdkInstaller.Wsl {
-    override val d: WSLDistribution
-      get() = TODO("Not yet implemented")
-
-    override fun getPath(path: Path): String = path.toString()
-
-    override fun execute(command: List<String>, dir: String, timeout: Int): ProcessOutput {
-      val processHandler = CapturingProcessHandler(GeneralCommandLine(command).withWorkingDirectory(Path.of(dir)));
-      return processHandler.runProcess(timeout)
-    }
-  }
-
-  private val mockWSLInstaller = object: JdkInstallerBase() {
-    override fun wslDistributionFromPath(targetDir: Path) = mockWSL
+  /**
+   * A base installer that does not provide an EEL ([eelFromPath] returns `null`), so extraction goes
+   * through the [com.intellij.util.io.Decompressor] fallback branch of `installJdkImpl` — the path
+   * taken in production by installers whose target is always local (e.g. `RuntimeChooserJbrInstaller`).
+   * The other tests here use [JdkInstaller.getInstance], which always has a (local) EEL and therefore
+   * exercises the [JdkInstallerEel.unpackJdkOnEel] branch instead.
+   */
+  private val decompressorInstaller = object : JdkInstallerBase() {
     override fun defaultInstallDir(osAbstractionForJdkInstaller: OsAbstractionForJdkInstaller?): Path = error("Must not call")
   }
 
@@ -178,16 +168,6 @@ class JdkDownloaderTest : BareTestFixtureTestCase() {
       assertThat(installDir.resolve("TheApp/QPCV/ggg.txt")).isRegularFile()
     }
 
-  @Test fun `test unpacking tar_gz in WSL`() {
-    IoTestUtil.assumeUnix()
-
-    testUnpacking(mockTarGZ.copy(os = "linux"), jdkInstaller = mockWSLInstaller) {
-      assertThat(installDir).isEqualTo(javaHome)
-      assertThat(installDir.resolve("TheApp/FooBar.app/theApp")).isRegularFile()
-      assertThat(installDir.resolve("TheApp/QPCV/ggg.txt")).isRegularFile()
-    }
-  }
-
   @Test fun `test unpacking tar_gz with root`() =
     testUnpacking(mockTarGZ.copy(packageRootPrefix = "TheApp", packageToBinJavaPrefix = "QPCV")) {
       assertThat(javaHome.resolve("ggg.txt")).isRegularFile()
@@ -195,35 +175,12 @@ class JdkDownloaderTest : BareTestFixtureTestCase() {
       assertThat(installDir.resolve("QPCV/ggg.txt")).isRegularFile()
     }
 
-  @Test fun `test unpacking tar_gz with root WSL`() {
-    IoTestUtil.assumeUnix()
-
-    testUnpacking(
-      mockTarGZ.copy(os = "linux", packageRootPrefix = "TheApp", packageToBinJavaPrefix = "QPCV"),
-      jdkInstaller = mockWSLInstaller
-    ) {
-      assertThat(javaHome.resolve("ggg.txt")).isRegularFile()
-      assertThat(installDir.resolve("FooBar.app/theApp")).isRegularFile()
-      assertThat(installDir.resolve("QPCV/ggg.txt")).isRegularFile()
-    }
-  }
-
   @Test fun `test unpacking tar_gz cut dirs`() =
     testUnpacking(mockTarGZ.copy(packageRootPrefix = "TheApp/FooBar.app")) {
       assertThat(installDir).isEqualTo(javaHome)
       assertThat(installDir.resolve("theApp")).isRegularFile()
       assertThat(installDir.resolve("ggg.txt")).doesNotExist()
     }
-
-  @Test fun `test unpacking tar_gz cut dirs WSL`() {
-    IoTestUtil.assumeUnix()
-
-    testUnpacking(mockTarGZ.copy(packageRootPrefix = "TheApp/FooBar.app", os = "linux"), jdkInstaller = mockWSLInstaller) {
-      assertThat(installDir).isEqualTo(javaHome)
-      assertThat(installDir.resolve("theApp")).isRegularFile()
-      assertThat(installDir.resolve("ggg.txt")).doesNotExist()
-    }
-  }
 
   @Test fun `test unpacking tar_gz cut dirs 2`() {
     IoTestUtil.assumeUnix()
@@ -270,17 +227,6 @@ class JdkDownloaderTest : BareTestFixtureTestCase() {
       assertThat(installDir.resolve("folder/file")).isRegularFile()
     }
 
-  @Test fun `test unpacking zip package path WSL`() {
-    IoTestUtil.assumeUnix()
-
-    testUnpacking(mockZip.copy(packageToBinJavaPrefix = "folder", os = "linux"), mockWSLInstaller) {
-      assertThat(javaHome.resolve("readme2")).isDirectory()
-      assertThat(javaHome.resolve("file")).isRegularFile()
-      assertThat(installDir.resolve("folder/readme2")).isDirectory()
-      assertThat(installDir.resolve("folder/file")).isRegularFile()
-    }
-  }
-
   @Test(expected = Exception::class)
   fun `test unpacking zip invalid size`() = testUnpacking(mockZip.copy(archiveSize = 234))
 
@@ -305,15 +251,34 @@ class JdkDownloaderTest : BareTestFixtureTestCase() {
       assertThat(installDir.resolve("folder/file")).doesNotExist()
     }
 
-  @Test(expected = Exception::class)
-  fun `test unpacking zip and prefix WSL`() {
-    IoTestUtil.assumeWslPresence()
-
-    testUnpacking(mockZip.copy(os = "linux", packageRootPrefix = "folder/file"), mockWSLInstaller) {
-      assertThat(installDir.resolve("readme2")).doesNotExist()
-      assertThat(installDir.resolve("folder/file")).doesNotExist()
+  @Test fun `test unpacking tar_gz via Decompressor`() =
+    testUnpacking(mockTarGZ, jdkInstaller = decompressorInstaller) {
+      assertThat(installDir).isEqualTo(javaHome)
+      assertThat(installDir.resolve("TheApp/FooBar.app/theApp")).isRegularFile()
+      assertThat(installDir.resolve("TheApp/QPCV/ggg.txt")).isRegularFile()
     }
-  }
+
+  @Test fun `test unpacking tar_gz with root via Decompressor`() =
+    testUnpacking(mockTarGZ.copy(packageRootPrefix = "TheApp", packageToBinJavaPrefix = "QPCV"), jdkInstaller = decompressorInstaller) {
+      assertThat(javaHome.resolve("ggg.txt")).isRegularFile()
+      assertThat(installDir.resolve("FooBar.app/theApp")).isRegularFile()
+      assertThat(installDir.resolve("QPCV/ggg.txt")).isRegularFile()
+    }
+
+  @Test fun `test unpacking tar_gz cut dirs via Decompressor`() =
+    testUnpacking(mockTarGZ.copy(packageRootPrefix = "TheApp/FooBar.app"), jdkInstaller = decompressorInstaller) {
+      assertThat(installDir).isEqualTo(javaHome)
+      assertThat(installDir.resolve("theApp")).isRegularFile()
+      assertThat(installDir.resolve("ggg.txt")).doesNotExist()
+    }
+
+  @Test fun `test unpacking zip package path via Decompressor`() =
+    testUnpacking(mockZip.copy(packageToBinJavaPrefix = "folder"), jdkInstaller = decompressorInstaller) {
+      assertThat(javaHome.resolve("readme2")).isDirectory()
+      assertThat(javaHome.resolve("file")).isRegularFile()
+      assertThat(installDir.resolve("folder/readme2")).isDirectory()
+      assertThat(installDir.resolve("folder/file")).isRegularFile()
+    }
 
   private fun testUnpacking(item: JdkItem,
                             jdkInstaller: JdkInstallerBase = JdkInstaller.getInstance(),

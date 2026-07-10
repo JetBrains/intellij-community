@@ -12,12 +12,13 @@ import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollect
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.plugins.newui.MultiSelectionEventHandler
 import com.intellij.ide.plugins.newui.MyPluginModel
+import com.intellij.ide.plugins.newui.PluginUpdatesService
 import com.intellij.ide.plugins.newui.PluginDetailsPageComponent
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginLogo
 import com.intellij.ide.plugins.newui.PluginModelFacade
 import com.intellij.ide.plugins.newui.PluginUiModel
-import com.intellij.ide.plugins.newui.PluginUpdatesService
+import com.intellij.ide.plugins.newui.PluginUpdateSubscription
 import com.intellij.ide.plugins.newui.PluginsGroup
 import com.intellij.ide.plugins.newui.PluginsGroupComponent
 import com.intellij.ide.plugins.newui.PluginsGroupComponentWithProgress
@@ -62,7 +63,6 @@ import javax.swing.JLabel
 @ApiStatus.Internal
 class InstalledPluginsTab @RequiresEdt constructor(
   private val pluginModelFacade: PluginModelFacade,
-  private val pluginUpdatesService: PluginUpdatesService,
   private val coroutineScope: CoroutineScope,
   private val searchInMarketplaceTabHandler: Consumer<String>?,
   searchTextFieldQueryDebouncePeriodMs: Long = 100,
@@ -90,6 +90,8 @@ class InstalledPluginsTab @RequiresEdt constructor(
 
   private val eventHandler = MultiSelectionEventHandler()
   private val installedPanel = createInstalledPanel(eventHandler)
+
+  private var pluginUpdateSubscription: PluginUpdateSubscription? = null
 
   init {
     updateAllLink.isVisible = false
@@ -290,9 +292,8 @@ class InstalledPluginsTab @RequiresEdt constructor(
         }
       }
 
-      pluginUpdatesService.calculateUpdates { updates ->
-        val updateModels = updates?.filter { plugin -> pluginModelFacade.isEnabled(plugin) }
-                           ?: emptyList()
+      pluginUpdateSubscription = PluginUpdatesService.getInstance().subscribe { updates ->
+        val updateModels = updates.all.filter{ plugin -> pluginModelFacade.isEnabled(plugin) }
         setUpdateDescriptors(installedPanel, updateModels)
         setUpdateDescriptors(searchPanel.panel, updateModels)
         applyBundledUpdates(updateModels)
@@ -303,6 +304,11 @@ class InstalledPluginsTab @RequiresEdt constructor(
     finally {
       installedPanel.hideLoadingIcon()
     }
+  }
+
+  override fun dispose() {
+    pluginUpdateSubscription?.cancel()
+    super.dispose()
   }
 
   private fun onUpdateAllClick() {
@@ -586,7 +592,6 @@ class InstalledPluginsTab @RequiresEdt constructor(
     bundledUpdateCounter.isVisible = visible
   }
 
-  @ApiStatus.Internal
   internal inner class InstalledSearchOptionAction(private val myOption: InstalledSearchOption)
     : ToggleAction(myOption.myPresentableNameSupplier), DumbAware {
     var myIsSelected: Boolean = false

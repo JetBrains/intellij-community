@@ -265,6 +265,10 @@ internal fun processModuleRoot(fileSet: WorkspaceFileSetWithCustomData<*>, proje
 }
 
 internal fun processLibraryEntity(entity: LibraryEntity, fileSet: WorkspaceFileSet): Pair<LibraryOrigin, IndexableFilesIterator> {
+  return processLibrary(entity.name, fileSet)
+}
+
+internal fun processLibrary(libraryName: String, fileSet: WorkspaceFileSet): Pair<LibraryOrigin, IndexableFilesIterator> {
   val sourceRoot = fileSet.kind == WorkspaceFileKind.EXTERNAL_SOURCE
   val origin = if (sourceRoot) {
     LibraryOriginImpl(emptyList(), listOf(fileSet.root))
@@ -272,7 +276,7 @@ internal fun processLibraryEntity(entity: LibraryEntity, fileSet: WorkspaceFileS
   else {
     LibraryOriginImpl(listOf(fileSet.root), emptyList())
   }
-  val iterator = GenericDependencyIterator.forLibraryEntity(origin, entity.name, fileSet.root, sourceRoot)
+  val iterator = GenericDependencyIterator.forLibraryEntity(origin, libraryName, fileSet.root, sourceRoot)
   return origin to iterator
 }
 

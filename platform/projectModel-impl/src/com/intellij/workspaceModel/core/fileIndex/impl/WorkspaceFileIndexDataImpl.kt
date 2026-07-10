@@ -33,6 +33,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.CollectionQuery
 import com.intellij.util.Query
+import com.intellij.util.SmartList
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.CollectionFactory
@@ -50,7 +51,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetExclusionCondition
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import java.util.concurrent.ConcurrentHashMap
 
 @Suppress("DuplicatedCode")
 internal suspend fun initWorkspaceFileIndexData(
@@ -58,7 +59,7 @@ internal suspend fun initWorkspaceFileIndexData(
   contributorList: List<WorkspaceFileIndexContributor<*>>,
 ): WorkspaceFileIndexDataImpl {
   @Suppress("SSBasedInspection")
-  val fileSets = Object2ObjectOpenHashMap<VirtualFile, StoredFileSetCollection>()
+  val fileSets = ConcurrentHashMap<VirtualFile, StoredFileSetCollection>()
   val fileSetsByPackagePrefix = PackagePrefixStorage()
 
   @Suppress("UnsafeOpenServiceCast")
@@ -118,7 +119,7 @@ internal fun blockingInitWorkspaceFileIndexData(
   contributorList: List<WorkspaceFileIndexContributor<*>>,
 ): WorkspaceFileIndexDataImpl {
   @Suppress("SSBasedInspection")
-  val fileSets = Object2ObjectOpenHashMap<VirtualFile, StoredFileSetCollection>()
+  val fileSets = ConcurrentHashMap<VirtualFile, StoredFileSetCollection>()
   val fileSetsByPackagePrefix = PackagePrefixStorage()
 
   @Suppress("UnsafeOpenServiceCast")
@@ -214,7 +215,7 @@ internal class WorkspaceFileIndexDataImpl(
             if (storedKindMask == StoredFileSetKindMask.ACCEPTED_FILE_SET) {
               return@addMeasuredTime storedFileSets as WorkspaceFileInternalInfo
             }
-            val acceptedFileSets = ArrayList<WorkspaceFileSetImpl>()
+            val acceptedFileSets = SmartList<WorkspaceFileSetImpl>()
             //copy a mutable variable used from lambda to a 'val' to ensure that kotlinc won't wrap it into IntRef
             val currentKindMask = acceptedKindsMask
             //this should be a rare case, so it's ok to use less optimal code here and check 'isUnloaded' again
@@ -246,7 +247,6 @@ internal class WorkspaceFileIndexDataImpl(
     if (hasDirtyEntities && ApplicationManager.getApplication().isWriteAccessAllowed) {
       updateDirtyEntities()
     }
-    ThreadingAssertions.assertReadAccess()
     nonIncrementalContributors.updateIfNeeded(fileSets, fileSetsByPackagePrefix, nonExistingFilesRegistry)
   }
 
@@ -449,7 +449,7 @@ internal class WorkspaceFileIndexDataImpl(
     resetFileCache()
     val registeredFileSets = storeRegistrar.registeredFileSets
     val removedFileSets = removeRegistrar.removedFileSets
-    deduplicateFileSetsAndPublishChangeEvent(registeredFileSets, removedFileSets, event.storageAfter)
+    deduplicateFileSetsAndPublishChangeEvent(registeredFileSets, removedFileSets)
   }
 
   /**
@@ -463,7 +463,6 @@ internal class WorkspaceFileIndexDataImpl(
   private fun deduplicateFileSetsAndPublishChangeEvent(
     registeredFileSets: MutableSet<StoredFileSet>,
     removedFileSets: MutableSet<StoredFileSet>,
-    storageAfter: ImmutableEntityStorage,
   ) {
     val iterator = registeredFileSets.iterator()
     while (iterator.hasNext()) {
@@ -477,7 +476,7 @@ internal class WorkspaceFileIndexDataImpl(
     val registeredFileSets = registeredFileSets.filterIsInstance<WorkspaceFileSet>()
 
     if (registeredFileSets.isNotEmpty() || removedExclusions.isNotEmpty()) {
-      val changeLog = WorkspaceFileIndexChangedEvent(registeredFileSets, removedExclusions, storageAfter)
+      val changeLog = WorkspaceFileIndexChangedEvent(registeredFileSets, removedExclusions)
       project.messageBus.syncPublisher(WorkspaceFileIndexListener.TOPIC).workspaceFileIndexChanged(changeLog)
     }
   }
@@ -512,7 +511,7 @@ internal class WorkspaceFileIndexDataImpl(
 
     removedFileSets.addAll(removeRegistrar.removedFileSets)
     WorkspaceFileIndexDataMetrics.updateDirtyEntitiesTimeNanosec.addElapsedTime(start)
-    deduplicateFileSetsAndPublishChangeEvent(storeRegistrar.registeredFileSets, removedFileSets, storage)
+    deduplicateFileSetsAndPublishChangeEvent(storeRegistrar.registeredFileSets, removedFileSets)
   }
 
   override fun resetFileCache() {

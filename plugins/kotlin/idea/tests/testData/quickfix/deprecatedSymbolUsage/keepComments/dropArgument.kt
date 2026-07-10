@@ -1,5 +1,5 @@
 // "Replace with 'newFun()'" "true"
-// K2_ERROR: Unresolved reference 'O'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 @Deprecated("", ReplaceWith("newFun()"))
 fun oldFun(p: Int) {

@@ -24,7 +24,8 @@ class GitConfig private constructor(
   private val remotes: List<Remote>,
   private val urlSubstitutions: List<UrlSubstitution>,
   private val trackedInfos: List<BranchConfig>,
-  private val core: Core,
+  val core: Core,
+  val objectFormat: GitObjectFormat,
 ) {
   /**
    * Returns Git remotes defined in `.git/config`.
@@ -87,13 +88,6 @@ class GitConfig private constructor(
       convertBranchConfig(config, localBranches, remoteBranches)
     }.toSet()
 
-  /**
-   * Return core info
-   */
-  fun parseCore(): Core {
-    return core
-  }
-
   private data class Remote(
     val name: String,
     val fetchSpecs: List<String>,
@@ -128,6 +122,7 @@ class GitConfig private constructor(
     private const val URL_SECTION = "url"
     private const val BRANCH_INFO_SECTION = "branch"
     private const val CORE_SECTION = "core"
+    private const val EXTENSIONS_SECTION = "extensions"
 
     /**
      * Creates an instance of GitConfig by reading information from the specified `.git/config` file.
@@ -141,7 +136,7 @@ class GitConfig private constructor(
         GitConfigUtil.getValues(project, root, null)
       }
       catch (_: VcsException) {
-        return GitConfig(listOf(), listOf(), listOf(), Core(null))
+        return GitConfig(listOf(), listOf(), listOf(), Core(null), GitObjectFormat.SHA1)
       }
 
       val remotes = mutableListOf<Remote>()
@@ -159,7 +154,8 @@ class GitConfig private constructor(
         }
       }
 
-      return GitConfig(remotes, urls, trackedInfos, core)
+      val objectFormat = GitObjectFormat.parse(configurations["$EXTENSIONS_SECTION.objectformat"]?.lastOrNull())
+      return GitConfig(remotes, urls, trackedInfos, core, objectFormat)
     }
 
     private fun parseSectionNameAndVariable(key: String): Pair<String, String>? {

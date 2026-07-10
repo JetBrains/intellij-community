@@ -210,7 +210,8 @@ class DependsSubDescriptor(
 
   @Deprecated("use main descriptor")
   override fun getPluginPath(): Path = parent.pluginPath
-  @Deprecated("use main descriptor") override val useIdeaClassLoader: Boolean get() = parent.useIdeaClassLoader
+  @Deprecated("use main descriptor")
+  override val useIdeaClassLoader: Boolean get() = parent.useIdeaClassLoader
 
   @Deprecated("use main descriptor")
   override fun allowBundledUpdate(): Boolean = parent.allowBundledUpdate()
@@ -506,10 +507,37 @@ private fun convertExtensions(rawMap: Map<String, List<ExtensionElement>>): Map<
 }
 
 @get:Internal
-val IdeaPluginDescriptorImpl.shortLogDescription: String get() = when (this) {
-  is PluginMainDescriptor -> "plugin '$name' ($pluginId, $version)"
-  is DependsSubDescriptor -> "<depends> config '${descriptorPath}' of plugin ${pluginId}"
-  is ContentModuleDescriptor -> "module ${moduleId.displayName}"
+val IdeaPluginDescriptorImpl.shortLogDescription: String
+  get() {
+    return when (this) {
+      is PluginMainDescriptor -> "plugin '$name' ($pluginId, $version)"
+      is DependsSubDescriptor -> "<depends> config '${descriptorPath}' of plugin ${pluginId}"
+      is ContentModuleDescriptor -> "module ${moduleId.displayName}"
+    }
+  }
+
+internal fun getPackagePrefixConflictModuleId(descriptor: PluginModuleDescriptor): String {
+  return when (descriptor) {
+    is PluginMainDescriptor -> descriptor.pluginId.idString
+    is ContentModuleDescriptor -> descriptor.moduleId.name
+  }
+}
+
+internal fun getPackagePrefixConflictNamespace(descriptor: PluginModuleDescriptor): String {
+  return when (descriptor) {
+    is PluginMainDescriptor -> descriptor.implicitNamespaceForPluginDescriptorModule ?: "<none>"
+    is ContentModuleDescriptor -> descriptor.moduleId.namespace
+  }
+}
+
+internal fun formatPackagePrefixConflictDetails(descriptor: PluginModuleDescriptor): String {
+  val plugin = descriptor.getMainDescriptor()
+  val descriptorPathDescription = descriptor.getDescriptorPath()?.let { ", descriptor=$it" }.orEmpty()
+  return "plugin '${plugin.name}' (${plugin.pluginId}), " +
+         "module '${getPackagePrefixConflictModuleId(descriptor)}', " +
+         "namespace=${getPackagePrefixConflictNamespace(descriptor)}, " +
+         "packagePrefix=${descriptor.packagePrefix ?: "<none>"}" +
+         descriptorPathDescription
 }
 
 /**

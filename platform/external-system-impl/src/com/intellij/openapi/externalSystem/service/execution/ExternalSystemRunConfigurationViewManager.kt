@@ -2,13 +2,12 @@
 package com.intellij.openapi.externalSystem.service.execution
 
 import com.intellij.build.BuildProgressListener
+import com.intellij.build.BuildProgressListenerRegistrar
 import com.intellij.build.BuildProgressObservable
-import com.intellij.build.BuildViewProblemsService
 import com.intellij.build.ViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.DisposableWrapperList
@@ -21,7 +20,7 @@ class ExternalSystemRunConfigurationViewManager(project: Project) : ViewManager,
   override fun isBuildContentView() = false
 
   init {
-    project.service<BuildViewProblemsService>().listenToBuildView(this)
+    BuildProgressListenerRegistrar.registerBuildProgressListeners(project, this)
   }
 
   override fun addListener(listener: BuildProgressListener, disposable: Disposable) {

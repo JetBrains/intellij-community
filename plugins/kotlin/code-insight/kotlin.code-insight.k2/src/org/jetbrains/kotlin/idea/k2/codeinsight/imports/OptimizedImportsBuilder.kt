@@ -173,7 +173,7 @@ internal class OptimizedImportsBuilder(
             // TODO check if new and old scopes contain different symbols for names set
             fileWithReplacedImports.analyze {
                 for (originalReference in references) {
-                    val alternativeReference = referencesMap.findReferenceInCopy(originalReference)
+                    val alternativeReference = referencesMap.findReferenceInCopy(originalReference) ?: continue
 
                     val originalSymbols = analyze(file) {
                         // We use the original file to analyze the original reference, because if it is a dangling file,

@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "discoverability-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":discoverability-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.discoverability.tests`
+
 ### auto-generated section `build intellij.platform.discoverability` start
 
 jvm_library(
@@ -103,7 +112,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/discoverability",
         "//platform/discoverability:discoverability_test_lib",
         "//platform/core-api:core",
@@ -128,11 +138,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.discoverability.tests` end
-
-### auto-generated section `test intellij.platform.discoverability.tests` start
-
-jps_test(
-    name = "discoverability-tests_test",
-    runtime_deps = [":discoverability-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.discoverability.tests` end

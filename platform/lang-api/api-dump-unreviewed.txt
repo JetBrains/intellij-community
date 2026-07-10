@@ -214,9 +214,10 @@ a:com.intellij.build.issue.ConfigurableBuildIssue
 - f:addQuickFix(com.intellij.build.issue.BuildIssueQuickFix):java.lang.String
 - f:addQuickFixPrompt(java.lang.String):V
 - f:getDescription():java.lang.String
-- getNavigatable(com.intellij.openapi.project.Project):com.intellij.pom.Navigatable
+- f:getNavigatable(com.intellij.openapi.project.Project):com.intellij.pom.Navigatable
 - f:getQuickFixes():java.util.List
 - f:getTitle():java.lang.String
+- f:setNavigatable(kotlin.jvm.functions.Function1):V
 - f:setTitle(java.lang.String):V
 a:com.intellij.build.process.BuildProcessHandler
 - a:getExecutionName():java.lang.String

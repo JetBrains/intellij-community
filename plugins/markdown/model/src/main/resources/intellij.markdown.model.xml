@@ -1,9 +1,12 @@
 <idea-plugin>
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
+    <module name="intellij.platform.backend"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <typedHandler implementation="org.intellij.plugins.markdown.model.HeaderAnchorCompletionPopupTypedHandler"/>
+    <completion.contributor language="Markdown"
+                            implementationClass="org.intellij.plugins.markdown.model.psi.labels.MarkdownLinkLabelCompletionContributor"/>
     <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
               implementationClass="org.intellij.plugins.markdown.model.psi.MarkdownSymbolUsageSearcher"/>
 

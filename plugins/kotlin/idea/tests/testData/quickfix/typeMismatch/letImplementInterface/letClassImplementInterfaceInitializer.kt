@@ -1,6 +1,6 @@
 // "Let 'B' implement interface 'A'" "true"
 // WITH_STDLIB
-// K2_ERROR: Initializer type mismatch: expected 'A', actual 'B'.
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
 package let.implement
 
 fun bar() {

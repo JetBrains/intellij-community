@@ -10,6 +10,8 @@ import com.intellij.tools.apiDump.dumpApiAndGroupByClasses
 import com.intellij.util.diff.Diff
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.jupiter.api.DynamicTest
@@ -21,10 +23,23 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
-fun performApiCheckTest(cs: CoroutineScope, wantedModules: List<JpsModule>): List<DynamicTest> = buildList {
-  val modules = wantedModules.prepareModuleList()
+sealed interface ModulesToCheck {
+  val project: JpsProject
 
-  val exposedThirdPartyApiFilter: FileApiClassFilter = globalExposedThirdPartyClasses(modules)
+  data class AllModules(override val project: JpsProject) : ModulesToCheck
+  data class SelectedModules(override val project: JpsProject, val modules: List<JpsModule>) : ModulesToCheck
+}
+
+fun performApiCheckTest(cs: CoroutineScope, modulesToCheck: ModulesToCheck): List<DynamicTest> = buildList {
+  val unsortedModuleList = when (modulesToCheck) {
+    is ModulesToCheck.AllModules -> modulesToCheck.project.modules
+    is ModulesToCheck.SelectedModules ->
+      JpsJavaExtensionService.getInstance().enumerateDependencies(modulesToCheck.modules)
+        .productionOnly().compileOnly().recursively().modules.toList()
+  }
+  val modules = unsortedModuleList.prepareModuleList()
+
+  val exposedThirdPartyApiFilter: FileApiClassFilter = globalExposedThirdPartyClasses(modulesToCheck.project)
   val projectApi = ProjectApi(cs)
   for (module in modules) {
     val contentRootPath = module.firstContentRoot() ?: continue
@@ -74,7 +89,9 @@ fun performApiCheckTest(cs: CoroutineScope, wantedModules: List<JpsModule>): Lis
   this += DynamicTest.dynamicTest(exposedThirdPartyApiFileName) {
     assertAll(
       {
-        exposedThirdPartyApiFilter.checkAllEntriesAreUsed()
+        if (modulesToCheck is ModulesToCheck.AllModules) {
+          exposedThirdPartyApiFilter.checkAllEntriesAreUsed()
+        }
       },
       {
         exposedThirdPartyApiFilter.checkEntriesSortedAndUnique()
@@ -87,9 +104,9 @@ private fun JpsModule.getTestName(): String =
   // without this, TC treats the part after the last dot as a test name
   name.replace(".", "-")
 
-internal fun globalExposedThirdPartyClasses(modules: List<JpsModule>): FileApiClassFilter =
-  modules
-    .first { it.name == "intellij.platform.testFramework.monorepo" }
+internal fun globalExposedThirdPartyClasses(project: JpsProject): FileApiClassFilter =
+  project
+    .findModuleByName("intellij.platform.testFramework.monorepo")!!
     .contentRootsList.urls
     .firstNotNullOf { Path.of(JpsPathUtil.urlToPath(it), exposedThirdPartyApiFileName) }
     .apiClassFilter()!!

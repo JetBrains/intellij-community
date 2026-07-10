@@ -1,5 +1,6 @@
 // "Replace with 'newFun(p, p)'" "true"
 // WITH_STDLIB
+// K2_AFTER_ERROR: CANNOT_INFER_PARAMETER_TYPE
 
 import java.util.*
 

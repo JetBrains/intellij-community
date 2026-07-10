@@ -31,8 +31,12 @@ internal class RuntimePluginHeaderData(
   val visibilityOfModules: Map<RuntimeModuleId, RuntimeModuleVisibility>,
   val includedElementToId: Map<JpsNamedElement, RuntimeModuleId>,
   val moduleIdToJpsElement: Map<RuntimeModuleId, JpsNamedElement>,
+  /** Mapping from a library to the list of content modules that include it in their JARs */
+  val projectLibrariesToIncludingContentModules: MultiMap<JpsLibrary, RuntimeModuleId>,
   /** Mapping from ID of a module to the list of paths from its classpath (relative to the root of the installation directory) */
   val classpathEntries: MultiMap<RuntimeModuleId, String>,
+  /** Mapping from ID of an included module to the list of its dependencies on plugin descriptor modules (via `<dependencies><plugin>` tag) */
+  val dependenciesOnPluginDescriptorModules: LinkedHashMap<RuntimeModuleId, List<RuntimeModuleId>>,
 ) {
   override fun toString(): String {
     return "RuntimePluginHeaderData{pluginId=${header.pluginId}, pluginDescriptorModuleId=${header.pluginDescriptorModuleId}}"
@@ -100,8 +104,10 @@ private fun generateRuntimePluginHeader(
   val moduleIdToJpsElement = HashMap<RuntimeModuleId, JpsNamedElement>()
   val classpathEntries = MultiMap.createOrderedSet<RuntimeModuleId, String>()
   val moduleLibraryPaths = MultiMap.createOrderedSet<String, String>()
+  val projectLibrariesToIncludingContentModules = MultiMap.createOrderedSet<JpsLibrary, RuntimeModuleId>()
   distributionEntries.forEach { entry ->
     val pathRelativeToDistributionDir = repositoryPathRelativizer(entry.path)?.invariantSeparatorsPathString
+    val outputPathRelativeToPluginLibDir = entry.relativeOutputFile ?: ""
     val includedModule =
       when (entry) {
         is ModuleOutputEntry -> {
@@ -111,7 +117,7 @@ private fun generateRuntimePluginHeader(
           val requiredIfAvailableId = contentModuleData?.requiredIfAvailable
           val jpsModuleName = moduleName.removeSuffix("._test") //todo remove this after IJPL-242652 is fixed
           val jpsModule = project.findModuleByName(jpsModuleName) ?: error("Cannot find module by name: $jpsModuleName")
-          val moduleId = createIdForModule(jpsModule, pluginDescriptorData, elementsIncludedInMultiplePlugins, existingIdsToReuse)
+          val moduleId = createIdForModule(jpsModule, contentModuleData, pluginDescriptorData, elementsIncludedInMultiplePlugins, existingIdsToReuse)
           if (moduleId !in moduleIdToJpsElement) {
             moduleIdToJpsElement[moduleId] = jpsModule
             visibilityOfModules[moduleId] = contentModuleData?.visibility ?: RuntimeModuleVisibility.PUBLIC
@@ -129,18 +135,27 @@ private fun generateRuntimePluginHeader(
         is ProjectLibraryEntry -> {
           val libraryName = entry.data.libraryName
           val jpsLibrary = project.libraryCollection.findLibrary(libraryName) ?: error("Cannot find library by name: $libraryName")
-          val moduleId = createIdForJpsLibrary(jpsLibrary, pluginDescriptorData.pluginId, elementsIncludedInMultiplePlugins)
-          if (pathRelativeToDistributionDir != null) {
-            classpathEntries.putValue(moduleId, pathRelativeToDistributionDir)
-          }
-          if (moduleId !in moduleIdToJpsElement) {
-            moduleIdToJpsElement[moduleId] = jpsLibrary
-            includedElementToId[jpsLibrary] = moduleId
-            IncludedRuntimeModuleImpl(moduleId, RuntimeModuleLoadingRule.EMBEDDED, null)
+          val containingContentModule =
+            if (outputPathRelativeToPluginLibDir.startsWith("modules/")) pluginDescriptorData.contentModules[outputPathRelativeToPluginLibDir.removePrefix("modules/").removeSuffix(".jar")]
+            else null
+          if (containingContentModule != null) {
+            projectLibrariesToIncludingContentModules.putValue(jpsLibrary, RuntimeModuleId.contentModule(containingContentModule.name, containingContentModule.namespace))
+            null
           }
           else {
-            //if a library consists of several files, there will be multiple entries, so we need to register it only once
-            null
+            val moduleId = createIdForJpsLibrary(jpsLibrary, pluginDescriptorData.pluginId, elementsIncludedInMultiplePlugins)
+            if (pathRelativeToDistributionDir != null) {
+              classpathEntries.putValue(moduleId, pathRelativeToDistributionDir)
+            }
+            if (moduleId !in moduleIdToJpsElement) {
+              moduleIdToJpsElement[moduleId] = jpsLibrary
+              includedElementToId[jpsLibrary] = moduleId
+              IncludedRuntimeModuleImpl(moduleId, RuntimeModuleLoadingRule.EMBEDDED, null)
+            }
+            else {
+              //if a library consists of several files, there will be multiple entries, so we need to register it only once
+              null
+            }
           }
         }
         is ModuleLibraryFileEntry -> {
@@ -154,7 +169,6 @@ private fun generateRuntimePluginHeader(
         is CustomAssetEntry -> null
       }
     if (includedModule != null) {
-      val outputPathRelativeToPluginLibDir = entry.relativeOutputFile ?: ""
       if (shouldIncludeInPluginHeader(includedModule.moduleId, outputPathRelativeToPluginLibDir)) {
         includedModules.add(includedModule)
       }
@@ -172,9 +186,27 @@ private fun generateRuntimePluginHeader(
   }
 
   val pluginDescriptorModule = project.findModuleByName(pluginDescriptorData.pluginDescriptorJpsModuleName) ?: error("Cannot find module ${pluginDescriptorData.pluginDescriptorJpsModuleName}")
-  val pluginDescriptorModuleId = createIdForModule(pluginDescriptorModule, pluginDescriptorData, elementsIncludedInMultiplePlugins, existingIdsToReuse)
+  val pluginDescriptorModuleId = createIdForModule(
+    pluginDescriptorModule,
+    pluginDescriptorData.contentModules[pluginDescriptorModule.name],
+    pluginDescriptorData,
+    elementsIncludedInMultiplePlugins,
+    existingIdsToReuse
+  )
   val header = RuntimePluginHeaderImpl(pluginDescriptorData.pluginId, pluginDescriptorModuleId, includedModules)
-  return RuntimePluginHeaderData(header, additionalModules, visibilityOfModules, includedElementToId, moduleIdToJpsElement, classpathEntries)
+  val dependenciesOnPluginDescriptorModules = LinkedHashMap<RuntimeModuleId, List<RuntimeModuleId>>()
+  if (pluginDescriptorData.pluginDescriptorDependenciesOnPluginDescriptorModules.isNotEmpty()) {
+    dependenciesOnPluginDescriptorModules[pluginDescriptorModuleId] = pluginDescriptorData.pluginDescriptorDependenciesOnPluginDescriptorModules
+  }
+  for (includedModule in header.includedModules) {
+    val dependencies = pluginDescriptorData.contentModules[includedModule.moduleId.name]?.dependenciesOnPluginDescriptorModules
+    if (!dependencies.isNullOrEmpty()) {
+      val existing = dependenciesOnPluginDescriptorModules[includedModule.moduleId]
+      dependenciesOnPluginDescriptorModules[includedModule.moduleId] = if (existing == null) dependencies else existing + dependencies
+    }
+  }
+  return RuntimePluginHeaderData(header, additionalModules, visibilityOfModules, includedElementToId, moduleIdToJpsElement, projectLibrariesToIncludingContentModules, classpathEntries,
+                                 dependenciesOnPluginDescriptorModules)
 }
 
 /**
@@ -191,6 +223,7 @@ private fun shouldIncludeInPluginHeader(moduleId: RuntimeModuleId, outputPathRel
 
 private fun createIdForModule(
   module: JpsModule,
+  contentModuleData: ContentModuleRegistrationDataForHeader?,
   pluginDescriptorData: PluginDescriptorDataForHeader,
   elementsIncludedInMultiplePlugins: Set<JpsNamedElement>,
   existingIdsToReuse: Map<JpsNamedElement, RuntimeModuleId>
@@ -198,7 +231,6 @@ private fun createIdForModule(
   val idToReuse = existingIdsToReuse[module]
   if (idToReuse != null) return idToReuse
 
-  val contentModuleData = pluginDescriptorData.contentModules[module.name]
   if (contentModuleData != null) {
     return RuntimeModuleId.contentModule(contentModuleData.name, contentModuleData.namespace)
   }

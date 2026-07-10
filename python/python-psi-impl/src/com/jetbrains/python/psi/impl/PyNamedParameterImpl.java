@@ -78,6 +78,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 
 public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub> implements PyNamedParameter, ContributedReferenceHost {
@@ -260,7 +261,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           }
         }
         // Guess the type under an assumed type to prevent recursion
-        final PyType assumedResult = context.assumeType(this, null, ctx -> {
+        final PyType assumedResult = context.assumeType(this, PyAnyType.getUnknown(), ctx -> {
           // Guess the type from file-local calls
           if (ctx.allowCallContext(this)) {
             final List<PyType> types = new ArrayList<>();
@@ -276,7 +277,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
                   .map(Map.Entry::getKey)
                   .nonNull()
                   .map(ctx::getType)
-                  .nonNull()
+                  .filter(it -> !isUnknown(it))
                   .forEach(types::add);
                 return true;
               }
@@ -292,7 +293,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
               return typeFromUsages;
             }
           }
-          return null;
+          return PyAnyType.getUnknown();
         });
         if (assumedResult != null) {
           return assumedResult;

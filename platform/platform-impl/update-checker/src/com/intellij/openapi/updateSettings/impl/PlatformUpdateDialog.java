@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -267,8 +268,8 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
         @Override
         public void actionPerformed(ActionEvent e) {
           close(OK_EXIT_CODE);
-          var downloaders = myUpdatesForPlugins != null ? myUpdatesForPlugins : Set.<PluginDownloader>of();
-          PluginModelAsyncOperationsExecutor.INSTANCE.findPlugins(downloaders, plugins -> {
+          var pluginIdsToUpdate = ContainerUtil.map2Set((myUpdatesForPlugins != null ? myUpdatesForPlugins : List.of()), PluginDownloader::getId);
+          PluginModelAsyncOperationsExecutor.INSTANCE.findPlugins(pluginIdsToUpdate, plugins -> {
             downloadPatchAndRestart(plugins);
             return Unit.INSTANCE;
           });
@@ -305,11 +306,12 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
   private void downloadPatchAndRestart(Map<PluginId, PluginUiModel> installedPlugins) {
     Collection<PluginDownloader> selectedPluginsToUpdate = new ArrayList<>();
     if (myUpdatesForPlugins != null && !installedPlugins.isEmpty()) {
-      var dialog = new PluginUpdateDialog(myProject, ContainerUtil.map(myUpdatesForPlugins, it -> it.getUiModel()), null, installedPlugins);
+      var dialog = new PluginUpdateDialog(myProject, new ArrayList<>(ContainerUtil.map(myUpdatesForPlugins, PluginDownloader::getUiModel)), null, installedPlugins);
       if (!dialog.showAndGet()) {
         return;  // update cancelled
       }
-      selectedPluginsToUpdate.addAll(PluginUpdateDialog.getSelectedDownloaders(myUpdatesForPlugins, dialog));
+      Set<PluginId> selectedPlugins = ContainerUtil.map2Set(dialog.getSelectedPluginModels(), PluginUiModel::getPluginId);
+      selectedPluginsToUpdate.addAll(ContainerUtil.filter(myUpdatesForPlugins, it -> selectedPlugins.contains(it.getId())));
     }
 
     //noinspection UsagesOfObsoleteApi
@@ -373,7 +375,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
     IdeUpdateUsageTriggerCollector.UPDATE_STARTED.log();
     PropertiesComponent.getInstance().setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, ApplicationInfo.getInstance().getBuild().asString());
     Restarter.setRestarterEnv(Map.of(ConfigImportHelper.IMPORT_FROM_ENV_VAR, PathManager.getConfigDir().toString()));
-    var app = (ApplicationEx)ApplicationManager.getApplication();
+    var app = ApplicationManagerEx.getApplicationEx();
     app.invokeLater(() -> app.restart(ApplicationEx.EXIT_CONFIRMED | ApplicationEx.SAVE, command));
   }
 

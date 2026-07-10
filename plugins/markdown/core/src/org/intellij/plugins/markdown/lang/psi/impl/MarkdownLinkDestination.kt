@@ -26,7 +26,7 @@ class MarkdownLinkDestination(node: ASTNode): ASTWrapperPsiElement(node), PsiExt
     }
   }
 
-  override fun getReferences(): Array<PsiReference?> {
+  override fun getReferences(): Array<PsiReference> {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this)
   }
 

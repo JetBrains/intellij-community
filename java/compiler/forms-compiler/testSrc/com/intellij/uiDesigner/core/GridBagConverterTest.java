@@ -3,7 +3,7 @@ package com.intellij.uiDesigner.core;
 
 import com.intellij.uiDesigner.compiler.GridBagConverter;
 import com.intellij.util.CurrentJavaVersion;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -16,12 +16,15 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Rectangle;
 
-public class GridBagConverterTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class GridBagConverterTest {
   /**
    * button 1
    * <empty>
    * button 2
    */
+  @Test
   public void testLayout2() {
     final GridBagLayout layoutManager = new GridBagLayout();
     final JPanel panel = new JPanel(layoutManager);
@@ -61,6 +64,7 @@ public class GridBagConverterTest extends TestCase {
     assertEquals(50, button2.getHeight());
   }
 
+  @Test
   public void testLayout2ByConstraints() {
     final GridBagLayout layoutManager = new GridBagLayout();
     final JPanel panel = new JPanel(layoutManager);
@@ -96,6 +100,7 @@ public class GridBagConverterTest extends TestCase {
     assertEquals(50, button2.getHeight());
   }
 
+  @Test
   public void testLayout3() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
@@ -116,6 +121,7 @@ public class GridBagConverterTest extends TestCase {
     assertEquals(120, preferredSize.height);
   }
 
+  @Test
   public void testLayout4() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
@@ -180,6 +186,7 @@ public class GridBagConverterTest extends TestCase {
   }
   */
 
+  @Test
   public void testLayout7() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
@@ -214,6 +221,7 @@ public class GridBagConverterTest extends TestCase {
     assertEquals(453, field.getWidth());
   }
 
+  @Test
   public void testLayout8() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
@@ -283,6 +291,7 @@ public class GridBagConverterTest extends TestCase {
     assertEquals(100, label2.getWidth());
   }
 
+  @Test
   public void testPrefSize1() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
@@ -357,6 +366,7 @@ public class GridBagConverterTest extends TestCase {
    * button(can grow) | text field (want grow)
    *   text field (want grow, span 2)
    */
+  @Test
   public void testSpans1() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
@@ -395,6 +405,7 @@ public class GridBagConverterTest extends TestCase {
    * button(can grow) | text field (can grow)
    *   text field (want grow, span 2)
    */
+  @Test
   public void testSpans2() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
@@ -432,6 +443,7 @@ public class GridBagConverterTest extends TestCase {
   /**
    * button(can grow) | text field (want grow, span 2)
    */
+  @Test
   public void testSpans3() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
@@ -464,6 +476,7 @@ public class GridBagConverterTest extends TestCase {
    * button (can grow, span 2 )       | text field 1 (span 1)
    * text field 2 (want grow, span 2) | empty
    */
+  @Test
   public void testSpans4() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
@@ -503,6 +516,7 @@ public class GridBagConverterTest extends TestCase {
    * label   |    label
    * text area (span 2)
    */
+  @Test
   public void testTextAreas1() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
@@ -546,6 +560,7 @@ public class GridBagConverterTest extends TestCase {
    *
    * important: hspan should be greater than 0
    */
+  @Test
   public void testTextAreas2() {
     final JPanel panel = new JPanel(/*new GridLayoutManager(2,2, new Insets(0,0,0,0), 11, 0)*/ new GridBagLayout());
 
@@ -571,6 +586,7 @@ public class GridBagConverterTest extends TestCase {
     assertEquals(100, panel.getPreferredSize().width);
   }
 
+  @Test
   public void testGaps1() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
@@ -595,6 +611,7 @@ public class GridBagConverterTest extends TestCase {
   /**
    * field (span 2) | field (span 1)
    */
+  @Test
   public void testGaps2() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
@@ -627,6 +644,7 @@ public class GridBagConverterTest extends TestCase {
    * btn1   |    btn2  | btn4
    *  btn3 (span 2)    |
    */
+  @Test
   public void testGaps3() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
@@ -666,6 +684,7 @@ public class GridBagConverterTest extends TestCase {
    * btn1   |    btn2  | btn4
    *  btn3 (span 2)    |
    */
+  @Test
   public void testGaps3a() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
@@ -705,6 +724,7 @@ public class GridBagConverterTest extends TestCase {
    * btn1   |    btn2
    *  btn3 (span 2)
    */
+  @Test
   public void testGaps3b() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
@@ -741,6 +761,7 @@ public class GridBagConverterTest extends TestCase {
    * ----
    * btn2
    */
+  @Test
   public void testGaps4() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
@@ -767,6 +788,7 @@ public class GridBagConverterTest extends TestCase {
 
   // skipped GapsTest.test5 because its only difference from test4 is spacer usage
 
+  @Test
   public void testGaps6() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
@@ -791,6 +813,7 @@ public class GridBagConverterTest extends TestCase {
     panel.doLayout(); // should not crash
   }
 
+  @Test
   public void testEqualSizeCells1() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
@@ -841,6 +864,7 @@ public class GridBagConverterTest extends TestCase {
     assertEquals(328, field3.getWidth(), 1.0);
   }
 
+  @Test
   public void testEqualSizeCells2() {
     final JPanel panel = new JPanel(new GridBagLayout());
 

@@ -129,8 +129,7 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
     }
 
     if (needsInlayHintRefresh) {
-      // Also calls `DaemonCodeAnalyzer.restart` internally
-      LspFeaturesRefreshing.refreshInlayHints(project)
+      lspClient.refreshInlayHints()
     }
 
     if (needsCodeLensesRefresh) {
@@ -146,8 +145,8 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
       }
     }
 
-    // Only restart daemon explicitly if neither inlay hints nor folding update was triggered (both already restart it)
-    if (needsDaemonRestart && !needsInlayHintRefresh && !needsFoldingUpdate) {
+    // Folding update already restarts the daemon internally, so only restart explicitly when it wasn't triggered.
+    if (needsDaemonRestart && !needsFoldingUpdate) {
       DaemonCodeAnalyzer.getInstance(project).restart("LspClientManagerImpl.registerCapabilities")
     }
   }
@@ -298,7 +297,9 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
   }
 
   override fun refreshInlayHints(): CompletableFuture<Void> {
-    LspFeaturesRefreshing.refreshInlayHints(project)
+    if (!project.isDisposed) {
+      lspClient.refreshInlayHints()
+    }
     return completedFuture(null)
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.impl.cmd.CmdEvent;
 import com.intellij.openapi.command.impl.cmd.CmdMeta;
@@ -14,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
-import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ExternalChangeActionUtil;
@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
-
 
 final class CommandBuilder {
 
@@ -69,13 +68,14 @@ final class CommandBuilder {
 
   void commandStarted(@NotNull CmdEvent cmdStartEvent, @NotNull CurrentEditorProvider editorProvider) {
     assertOutsideCommand(cmdStartEvent);
-    if (LOG.isTraceEnabled() || ApplicationManager.getApplication().isUnitTestMode()) {
+    boolean isInTestMode = ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest();
+    if (LOG.isTraceEnabled() || isInTestMode) {
       this.tracedStartCommand = new Throwable();
     }
     this.cmdEvent = cmdStartEvent;
     this.editorProvider = editorProvider;
     this.editorStateBefore = currentEditorState();
-    this.originalDocument = this.cmdEvent.recordOriginalDocument() ? originalDocument() : null;
+    this.originalDocument = originalDocument();
     this.isInsideCommand = true;
     UndoSpy undoSpy = UndoSpy.getInstance();
     if (undoSpy != null && cmdStartEvent.meta() instanceof MutableCmdMeta mutableMeta) {
@@ -199,13 +199,11 @@ final class CommandBuilder {
   }
 
   private @Nullable DocumentReference originalDocument() {
-    if (undoProject != null && undoProject == cmdEvent.project()) {
-      if (editorProvider instanceof ForeignEditorProvider) {
-        return null;
-      }
-      return Cancellation.computeInNonCancelableSection( // fixes flaky `CompletionRestartTest`
-        () -> UndoDocumentUtil.getDocReference(undoProject, editorProvider)
-      );
+    if (cmdEvent.recordOriginalDocument() &&
+        undoProject != null &&
+        undoProject == cmdEvent.project() &&
+        !(editorProvider instanceof ForeignEditorProvider)) {
+      return UndoDocumentUtil.getDocReference(undoProject, editorProvider);
     }
     return null;
   }

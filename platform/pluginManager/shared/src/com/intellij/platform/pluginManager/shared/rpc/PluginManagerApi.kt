@@ -17,7 +17,6 @@ import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
-import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @Rpc
@@ -27,7 +26,6 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun getPluginById(pluginId: PluginId): PluginDto?
   suspend fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginDto>
   suspend fun getInstalledPlugins(): List<PluginDto>
-  suspend fun getUpdates(): List<PluginDto>
   suspend fun findPlugin(pluginId: PluginId): PluginDto?
   suspend fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String?): PluginDto?
   suspend fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String?): List<IdeCompatibleUpdate>
@@ -54,11 +52,6 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun getPluginsRequiresUltimateMap(pluginIds: List<PluginId>): Map<PluginId, Boolean>
   suspend fun filterPluginsRequiresUltimateButItsDisabled(pluginIds: List<PluginId>): List<PluginId>
   suspend fun findPluginNames(pluginIds: List<PluginId>): List<String>
-  suspend fun isNeedUpdate(pluginId: PluginId): Boolean
-  suspend fun subscribeToPluginUpdates(sessionId: String): Flow<List<PluginDto>>
-  suspend fun recalculatePluginUpdates(sessionId: String)
-  suspend fun disposeUpdaterService(sessionId: String)
-  suspend fun notifyUpdateFinished(sessionId: String)
   suspend fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState
   suspend fun getPluginInstallationStates(): Map<PluginId, PluginInstallationState>
   suspend fun checkPluginCanBeDownloaded(plugin: PluginDto): Boolean

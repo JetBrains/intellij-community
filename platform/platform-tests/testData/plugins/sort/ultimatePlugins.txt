@@ -24,7 +24,6 @@
 + -org-jetbrains-plugins-yaml-
 + -com-intellij-kubernetes-
 + -org-jetbrains-plugins-ruby-
-+ -org-jetbrains-plugins-ruby-chef-
 + -Refactor-X-
 + -HtmlTools-
 + -com-intellij-jsp-

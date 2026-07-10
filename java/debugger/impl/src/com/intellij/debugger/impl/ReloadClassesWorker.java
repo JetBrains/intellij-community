@@ -59,7 +59,7 @@ class ReloadClassesWorker {
     String message;
     String reason = e.getLocalizedMessage();
     HotSwapFailureReason failureReason = getFailureReason(e);
-    HotSwapStatistics.logFailureReason(myProgress.getProject(), failureReason);
+    HotSwapStatistics.logFailureReason(myProgress.getProject(), failureReason, myProgress.getHotSwapSource());
     if (e instanceof UnsupportedOperationException) {
       message = JavaDebuggerBundle.message("error.operation.not.supported.by.vm", reason);
     }

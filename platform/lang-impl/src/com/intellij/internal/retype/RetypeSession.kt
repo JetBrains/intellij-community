@@ -148,6 +148,8 @@ class RetypeSession(
   private val oldAddUnambiguous = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
   private val oldOptimize = CodeInsightWorkspaceSettings.getInstance(project).isOptimizeImportsOnTheFly
   var startNextCallback: (() -> Unit)? = null
+  val typedChars: Int get() = log.typedChars
+  val completedChars: Int get() = log.completedChars
   private val disposeLock = Any()
   private var typedRightBefore = false
 

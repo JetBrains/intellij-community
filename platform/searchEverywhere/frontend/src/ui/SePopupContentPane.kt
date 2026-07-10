@@ -107,9 +107,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -288,7 +293,7 @@ class SePopupContentPane(
 
     launch {
       vm.tabsModelFlow.map {
-        SePopupHeaderPane.Configuration(it.sortedTabVms.map { tabVm -> SePopupHeaderPane.Tab(tabVm) }, it.selectedTabIndexFlow)
+        SePopupHeaderPane.Configuration(it.sortedTabVms.map { tabVm -> SePopupHeaderPane.Tab(tabVm) }, it.selectedTabIdFlow)
       }.collectLatest {
         tabConfigurationState.value = it
       }
@@ -343,7 +348,7 @@ class SePopupContentPane(
             }
           }
 
-          throttledResultEventFlow.onCompletion {
+          throttledResultEventFlow.coalesceWhileAvailable(FIRST_COALESCING_BATCH_SIZE, MAX_COALESCING_BATCH_SIZE).onCompletion {
             withContext(Dispatchers.EDT) {
               SeLog.log(SeLog.THROTTLING) { "Throttled flow completed" }
               isSearchCompleted.store(true)
@@ -381,13 +386,24 @@ class SePopupContentPane(
               updateViewMode()
               autoSelectIndex(searchContext.searchPattern, true)
             }
-          }.collect { event ->
+          }.collect { events ->
             withContext(Dispatchers.EDT) {
               hintHelper.setSearchInProgress(false)
               val wasFrozen = resultListModel.freezer.isEnabled
 
-              resultList.withProgrammaticSelectionChange { resultListModel.addFromThrottledEvent(searchContext, event) }
-              if (event.hasResultsUpdates()) {
+              if (events.size > 1) {
+                SeLog.log(SeLog.THROTTLING) { "Coalesced ${events.size} events" }
+              }
+
+              var hasResultsUpdates = false
+              resultList.withProgrammaticSelectionChange {
+                for (event in events) {
+                  resultListModel.addFromThrottledEvent(searchContext, event)
+                  if (event.hasResultsUpdates()) hasResultsUpdates = true
+                }
+              }
+
+              if (hasResultsUpdates) {
                 SeMlService.getInstanceIfEnabled()?.notifySearchResultsUpdated()
               }
               semanticWarning.value = resultListModel.isValidAndHasOnlySemantic
@@ -425,8 +441,7 @@ class SePopupContentPane(
               hintHelper.setRightExtensions(rightActions)
             }
           }
-        }
-        withContext(Dispatchers.EDT) {
+
           updateExtendedInfoContainer()
         }
       }
@@ -624,6 +639,8 @@ class SePopupContentPane(
   @RequiresEdt
   private suspend fun elementsSelected(indexes: IntArray, modifiers: Int) {
     ThreadingAssertions.assertEventDispatchThread()
+    if (indexes.isEmpty() || indexes.max() >= resultListModel.size) return
+
     var nonItemDataCount = 0
 
     // Calculate items with indexes considering some non-item rows on top (for example, notification row).
@@ -1205,8 +1222,46 @@ class SePopupContentPane(
   companion object {
     const val DEFAULT_FROZEN_VISIBLE_PART: Double = 1.1
     const val DEFAULT_FREEZING_DELAY_MS: Long = 800
+    private const val FIRST_COALESCING_BATCH_SIZE: Int = 10
+    private const val MAX_COALESCING_BATCH_SIZE: Int = 20
   }
 }
+
+/**
+ * Coalesces upstream items that are already available into a single list.
+ *
+ * The downstream collector switches to the EDT and runs a full UI update per emission, so handling results one by one
+ * (as the non-throttled path produces them) pays one EDT context switch and one list/view refresh per item. By draining
+ * everything currently buffered into a single batch, a slow collector processes N ready items in one EDT hop instead of N.
+ */
+private fun <T> Flow<T>.coalesceWhileAvailable(fastFirstBatchSize: Int, maxBatchSize: Int): Flow<List<T>> = channelFlow {
+  val buffer = Channel<T>(maxBatchSize, onBufferOverflow = BufferOverflow.SUSPEND)
+  launch {
+    try {
+      collect { buffer.send(it) }
+    }
+    finally {
+      buffer.close()
+    }
+  }
+
+  var sentCount = 0
+
+  while (true) {
+    val first = buffer.receiveCatching().getOrNull() ?: break
+    val batch = ArrayList<T>()
+    batch.add(first)
+    var potentialSentCount = sentCount + batch.size
+
+    while (batch.size < maxBatchSize && potentialSentCount != 1 && potentialSentCount != fastFirstBatchSize) {
+      batch.add(buffer.tryReceive().getOrNull() ?: break)
+      potentialSentCount = sentCount + batch.size
+    }
+
+    sentCount += batch.size
+    send(batch)
+  }
+}.buffer(1, onBufferOverflow = BufferOverflow.SUSPEND)
 
 private fun ThrottledItems<SeResultEvent>.hasResultsUpdates(): Boolean =
   when (this) {

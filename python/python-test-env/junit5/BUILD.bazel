@@ -1,5 +1,17 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "junit5_test",
+    timeout = "moderate",
+    data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
+    jvm_flags = ["-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY],
+    tags = ["community-aggregator"],
+    runtime_deps = [":junit5_test_lib"],
+)
+
+### skip generation section `test intellij.python.test.env.junit5`
 
 ### auto-generated section `build intellij.python.test.env.junit5` start
 
@@ -23,6 +35,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/execution",
         "//libraries/junit5",
+        "//python/python-pytools:pytools",
     ],
 )
 
@@ -101,6 +114,16 @@ jvm_library(
         "//platform/testFramework/common:common_test_lib",
         "//python/services/system-python",
         "//python/services/system-python:system-python_test_lib",
+        "//python/python-pytools:pytools",
+        "//python/python-pytools:pytools_test_lib",
+        "//libraries/misc/plugin",
+        "//libraries/misc/plugin:plugin_test_lib",
+        "//plugins/jcef/plugin",
+        "//plugins/jcef/plugin:plugin_test_lib",
+        "//platform/testRunner/plugin",
+        "//platform/testRunner/plugin:plugin_test_lib",
+        "//platform/structure-view-impl/plugin",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.test.env.junit5` end
@@ -113,11 +136,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.python.test.env.junit5` end
-
-### auto-generated section `test intellij.python.test.env.junit5` start
-
-jps_test(
-    name = "junit5_test",
-    runtime_deps = [":junit5_test_lib"],
-)
-### auto-generated section `test intellij.python.test.env.junit5` end

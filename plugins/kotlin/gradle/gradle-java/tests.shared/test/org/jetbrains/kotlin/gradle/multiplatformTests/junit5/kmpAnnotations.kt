@@ -14,4 +14,5 @@ annotation class KmpParametrizedClass
 
 @TestApplication
 @ExtendWith(KotlinSdkExtension::class)
+@ExtendWith(AndroidSdkExtension::class)
 annotation class K2TestApplication

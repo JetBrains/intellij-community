@@ -41,6 +41,7 @@ import com.jetbrains.python.psi.stubs.PyDataclassStub
 import com.jetbrains.python.psi.stubs.PyDataclassTransformDecoratorStub
 import com.jetbrains.python.psi.stubs.PydanticConfigFlags
 import com.jetbrains.python.psi.stubs.PydanticConfigFlagsImpl
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableTypeImpl
@@ -142,6 +143,9 @@ object PyDataclassNames {
       "factory",
       "kw_only",
       "alias",
+
+      // field specifier that is part of Pydantic-only extension
+      Pydantic.VALIDATION_ALIAS
     )
   }
 
@@ -149,14 +153,28 @@ object PyDataclassNames {
     const val BASE_MODEL: String = "pydantic.BaseModel"
     const val BASE_MODEL_MAIN: String = "pydantic.main.BaseModel"
     const val GENERIC_MODEL: String = "pydantic.generics.GenericModel"
+    val BASE_MODEL_QUALIFIED_NAMES: Set<String> = setOf(BASE_MODEL, BASE_MODEL_MAIN, GENERIC_MODEL)
+
     const val MODEL_CONFIG: String = "model_config"
     const val PYDANTIC_CONFIG: String = "__pydantic_config__"
     const val MODEL_METACLASS: String = "pydantic._internal._model_construction.ModelMetaclass"
-    val BASE_MODEL_QUALIFIED_NAMES: Set<String> = setOf(BASE_MODEL, BASE_MODEL_MAIN, GENERIC_MODEL)
+
     const val PYDANTIC_FIELD: String = "pydantic.Field"
     const val PYDANTIC_FIELDS_FIELD: String = "pydantic.fields.Field"
     val PYDANTIC_FIELD_QUALIFIED_NAMES: Set<String> = setOf(PYDANTIC_FIELD, PYDANTIC_FIELDS_FIELD)
+
     const val DATACLASS_DECORATOR: String = "pydantic.dataclasses.dataclass"
+
+    const val ALIAS: String = "alias"
+    const val VALIDATION_ALIAS: String= "validation_alias"
+
+    const val ALIAS_CHOICES: String = "pydantic.AliasChoices"
+    const val ALIASES_ALIAS_CHOICES: String = "pydantic.aliases.AliasChoices"
+    val ALIAS_CHOICES_QUALIFIED_NAMES: Set<String> = setOf(ALIAS_CHOICES, ALIASES_ALIAS_CHOICES)
+
+    const val CONFIG_DICT: String = "pydantic.ConfigDict"
+    const val CONFIG_CONFIG_DICT: String = "pydantic.config.ConfigDict"
+    val CONFIG_DICT_QUALIFIED_NAMES: Set<String> = setOf(CONFIG_DICT, CONFIG_CONFIG_DICT)
 
     val DECORATOR_PARAMETERS: Set<String> = setOf(
       "config"
@@ -250,12 +268,12 @@ private fun decoratorAndTypeAndMarkedCallee(project: Project): List<Triple<Quali
          DECORATOR_AND_TYPE_AND_PARAMETERS.map {
            if (it.second == PyDataclassParameters.PredefinedType.STD) {
              val parameters = mutableListOf(PyCallableParameterImpl.keywordOnlySeparatorNonPsi())
-             parameters.addAll(it.third.map { name -> PyCallableParameterImpl.nonPsi(name, null, PyNames.ELLIPSIS) })
+             parameters.addAll(it.third.map { name -> PyCallableParameterImpl.nonPsi(name, PyAnyType.unknown, PyNames.ELLIPSIS) })
 
              Triple(it.first.qualifiedName, it.second, parameters)
            }
            else {
-             Triple(it.first.qualifiedName, it.second, it.third.map { name -> PyCallableParameterImpl.nonPsi(name, null, PyNames.ELLIPSIS) })
+             Triple(it.first.qualifiedName, it.second, it.third.map { name -> PyCallableParameterImpl.nonPsi(name, PyAnyType.unknown, PyNames.ELLIPSIS) })
            }
          }
 }
@@ -309,8 +327,8 @@ private fun parseDataclassParametersFromAST(cls: PyClass, context: TypeEvalConte
         val decoratorAndTypeAndMarkedCallee = types.firstOrNull { it.first == decoratorQualifiedName } ?: continue
 
         val mapping = PyCallExpressionHelper.mapArguments(
-            decorator,
-            PyCallableTypeImpl(decoratorAndTypeAndMarkedCallee.third, null),
+          decorator,
+          PyCallableTypeImpl(decoratorAndTypeAndMarkedCallee.third, PyAnyType.unknown),
             context ?: TypeEvalContext.codeInsightFallback(cls.project)
         )
 
@@ -846,6 +864,7 @@ data class PyDataclassFieldParameters(
   val initValue: Boolean,
   val kwOnly: Boolean,
   val alias: String?,
+  val validationAliases: List<String> = emptyList(),
 )
 
 fun resolveDataclassFieldParameters(
@@ -869,6 +888,7 @@ fun resolveDataclassFieldParameters(
         initValue = dataclassParams.init,
         kwOnly = dataclassParams.kwOnly,
         alias = null,
+        validationAliases = emptyList(),
       )
     }
   }
@@ -888,6 +908,7 @@ fun resolveDataclassFieldParameters(
         initValue = fieldStub.initValue(),
         kwOnly = fieldStub.kwOnly() ?: false,
         alias = fieldStub.alias,
+        validationAliases = fieldStub.validationAliases(),
       )
     }
   }
@@ -930,6 +951,7 @@ fun resolveDataclassFieldParameters(
     initValue = fieldStub?.initValue() ?: getArgumentDefault("init", resolvedCallable) ?: true,
     kwOnly = fieldStub?.kwOnly() ?: getArgumentDefault("kw_only", resolvedCallable) ?: dataclassParams.kwOnly,
     alias = fieldStub?.alias,
+    validationAliases = fieldStub?.validationAliases() ?: emptyList(),
   )
 }
 
@@ -941,7 +963,7 @@ private fun getArgumentDefault(paramName: String, function: PyFunction): Boolean
   }
 }
 
-private fun isPydanticModel(
+fun isPydanticModel(
   pyClass: PyClass,
   context: TypeEvalContext
 ): Boolean {
@@ -963,7 +985,7 @@ private fun isPydanticModel(
   return metaClassName != null && metaClassName == PyDataclassNames.Pydantic.MODEL_METACLASS
 }
 
-private fun hasPydanticDataclassDecorator(
+internal fun hasPydanticDataclassDecorator(
   pyClass: PyClass,
   context: TypeEvalContext,
 ): Boolean {

@@ -72,7 +72,7 @@ public class ShelveChangesManagerMigrationTest extends HeavyPlatformTestCase {
   private static void checkAndMigrateOldPatchResourcesToNewSchemeStorage(@NotNull ShelveChangesManager shelveChangesManager)
     throws IOException {
     for (ShelvedChangeList list : shelveChangesManager.getAllLists()) {
-      Path newPatchDir = shelveChangesManager.getShelfResourcesDirectory().toPath().resolve(list.getName());
+      Path newPatchDir = shelveChangesManager.getShelfResourcesDirectory().resolve(list.getName());
       ShelvedChangeList migrated = shelveChangesManager.createChangelistCopyWithChanges(list, newPatchDir);
       shelveChangesManager.saveListAsScheme(migrated);
       shelveChangesManager.clearShelvedLists(Collections.singletonList(list), false);

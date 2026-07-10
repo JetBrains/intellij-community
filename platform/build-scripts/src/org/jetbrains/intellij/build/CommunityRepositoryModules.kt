@@ -60,6 +60,9 @@ object CommunityRepositoryModules {
       spec.withResource("lib/libwebp/mac", "lib/libwebp/mac")
       spec.withResource("lib/libwebp/win", "lib/libwebp/win")
     },
+    pluginAuto("intellij.platform.ui.webview") { spec ->
+      spec.withResource("lib/webview-native/win", "lib/webview-native/win")
+    },
     plugin("intellij.laf.win10") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.WINDOWS)
     },
@@ -231,7 +234,9 @@ object CommunityRepositoryModules {
     pluginAuto(listOf("intellij.findUsagesMl")) { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
-    pluginAuto(listOf("intellij.lombok", "intellij.lombok.generated")),
+    pluginAutoWithCustomDirName("intellij.lombok.plugin") { spec ->
+      spec.directoryName = "lombok"
+    },
     pluginAuto(listOf("intellij.performanceTesting.ui")),
     pluginAuto(listOf("intellij.vcs.github")),
     pluginAuto(listOf("intellij.vcs.gitlab")),
@@ -245,6 +250,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.java.jshell.protocol", "jshell-protocol.jar")
       spec.withModuleLibrary("jshell-frontend", "intellij.java.jshell.execution", "jshell-frontend.jar")
     },
+    pluginAuto(listOf("intellij.tipsOfTheDay.plugin")),
     *allJcefPlugins()
   )
 
@@ -395,10 +401,11 @@ object CommunityRepositoryModules {
     addition: ((PluginLayout.PluginLayoutSpec) -> Unit)?,
   ): PluginLayout =
     pluginAutoWithCustomDirName(mainModuleName, "android") { spec ->
-
       if (os != null && arch != null) {
         spec.bundlingRestrictions.supportedOs = persistentListOf(os)
         spec.bundlingRestrictions.supportedArch = persistentListOf(arch)
+
+        patchOsSpecificPluginXml(spec, os, arch)
 
         spec.withCustomVersion { pluginXmlSupplier, ideBuildVersion, _ ->
           // be careful, Marketplace expects linux/macos/windows for os and x86_64/x86/arm64/arm32 for arch

@@ -21,12 +21,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.Component;
 
-@ApiStatus.Internal
 public abstract class TabbedContentAction extends AnAction implements DumbAware {
   protected final ContentManager myManager;
 
+  @ApiStatus.Internal
   protected final ShadowAction myShadow;
 
+  @ApiStatus.Internal
   protected TabbedContentAction(@NotNull ContentManager manager,
                                 @NotNull AnAction shortcutTemplate,
                                 @NotNull @NlsActions.ActionText String text,
@@ -37,12 +38,12 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     myShadow = new ShadowAction(this, shortcutTemplate, manager.getComponent(), new Presentation(text), parentDisposable);
   }
 
+  @ApiStatus.Internal
   protected TabbedContentAction(@NotNull ContentManager manager, @NotNull AnAction template, @NotNull Disposable parentDisposable) {
     myManager = manager;
     myShadow = new ShadowAction(this, template, manager.getComponent(), parentDisposable);
   }
 
-  @ApiStatus.Internal
   public abstract static class ForContent extends TabbedContentAction {
     protected final @NotNull Content myContent;
 

@@ -4,7 +4,9 @@ package com.intellij.java.codeInsight.javadoc
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
 import com.intellij.java.codeInsight.javadoc.JavaDocInfoGeneratorTest.assertEqualsFileText
+import com.intellij.openapi.application.readAction
 import com.intellij.testFramework.RunsInEdt
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4
 import com.intellij.util.ui.UIUtil
 import org.junit.Test
@@ -17,7 +19,9 @@ class JavaCtrlMouseTest : LightJavaCodeInsightFixtureTestCase4(
   private fun doTest() {
     val testName = testName
     fixture.configureByFile("$testName.java")
-    val docInfoString = CtrlMouseHandler.getGoToDeclarationOrUsagesText(fixture.editor)!!
+    val docInfoString = timeoutRunBlocking {
+      readAction { CtrlMouseHandler.getGoToDeclarationOrUsagesText (fixture.editor)!! }
+    }
     assertEqualsFileText("$testDataPath$testName.html", UIUtil.getHtmlBodyWithoutPreWrapper(docInfoString))
   }
 

@@ -1,0 +1,13 @@
+<idea-plugin visibility="internal">
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.python.community.common.toolToIconMapper" dynamic="false"
+                    interface="com.intellij.python.community.common.tools.spi.ToolIdToIconMapper"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.python.community.common.sdk.PythonSdkAvailableTopicListener"/>
+    <registryKey key="python.toolwindows.available.at.startup"
+                 defaultValue="false"
+                 restartRequired="false"
+                 description="Python tool windows are available at startup"/>
+  </extensions>
+</idea-plugin>

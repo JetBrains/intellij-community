@@ -12,7 +12,7 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicInteger
 
-class PyPackagingJcefHtmlPanel(project: Project) : JCEFHtmlPanel(uniqueUrl) {
+internal class PyPackagingJcefHtmlPanel(project: Project) : JCEFHtmlPanel(uniqueUrl) {
   private val loadedStyles: MutableMap<String, String> = mutableMapOf()
   private var myLastHtml: @NlsSafe String? = null
 

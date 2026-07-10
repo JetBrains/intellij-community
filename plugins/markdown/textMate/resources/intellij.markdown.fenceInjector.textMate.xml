@@ -9,6 +9,7 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="org.intellij.markdown">
-    <fenceLanguageProvider implementation="com.intellij.markdown.fenceInjector.textMate.TextMateFallbackLanguageProvider" order="last"/>
+    <fenceLanguageProvider id="textmate" implementation="com.intellij.markdown.fenceInjector.textMate.TextMateFallbackLanguageProvider"
+                           order="last, after default"/>
   </extensions>
 </idea-plugin>

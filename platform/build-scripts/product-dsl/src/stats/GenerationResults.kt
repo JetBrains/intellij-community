@@ -19,8 +19,6 @@ enum class SuppressionType {
   PLUGIN_XML_MODULE,
   /** plugins[].suppressPlugins - plugin deps in plugin.xml */
   PLUGIN_XML_PLUGIN,
-  /** contentModules[].suppressLibraries - library to module replacements in IML */
-  LIBRARY_REPLACEMENT,
   /** contentModules[].suppressTestLibraryScope - test library scope changes in IML */
   TEST_LIBRARY_SCOPE,
 }

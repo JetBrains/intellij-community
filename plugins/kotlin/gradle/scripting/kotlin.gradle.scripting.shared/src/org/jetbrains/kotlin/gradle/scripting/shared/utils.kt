@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.gradle.scripting.shared
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiComment
@@ -12,7 +12,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtScriptInitializer
@@ -27,12 +26,11 @@ fun getGradleScriptInputsStamp(
     project: Project,
     file: VirtualFile,
     givenKtFile: KtFile? = null,
-    givenTimeStamp: Long = file.modificationStamp
 ): GradleKotlinScriptConfigurationInputs? {
     if (!isGradleKotlinScript(file)) return null
 
-    return runReadAction {
-        val ktFile = givenKtFile ?: PsiManager.getInstance(project).findFile(file) as? KtFile ?: return@runReadAction null
+    return runReadActionBlocking {
+        val ktFile = givenKtFile ?: PsiManager.getInstance(project).findFile(file) as? KtFile ?: return@runReadActionBlocking null
 
         val result = StringBuilder()
         ktFile.script?.blockExpression
@@ -58,8 +56,7 @@ fun getGradleScriptInputsStamp(
                 }
             }
 
-        val buildRoot = GradleBuildRootsLocator.getInstance(project).findScriptBuildRoot(file)?.nearest
-        GradleKotlinScriptConfigurationInputs(result.toString(), givenTimeStamp, buildRoot?.externalProjectPath)
+        GradleKotlinScriptConfigurationInputs(result.toString())
     }
 }
 

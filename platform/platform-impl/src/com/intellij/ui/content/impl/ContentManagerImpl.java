@@ -252,14 +252,20 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     ActionCallback result = new ActionCallback();
     doRemoveContent(content, dispose).doWhenDone(() -> {
       if (requestFocus) {
-        Content current = getSelectedContent();
-        if (current == null) {
-          ToolWindowManager.getInstance(myProject).activateEditorComponent();
-          result.setDone();
-        }
-        else {
-          setSelectedContent(current, true, true, !forcedFocus).notify(result);
-        }
+        // The invokeLater call plays 2 roles:
+        // 1. doWhenFocusSettlesDown alternative, but one that actually works most of the time;
+        // 2. separates the underlying Window.toFront call into a separate EDT event,
+        // as that call can be a nightmare involving WAs (IJPL-246659).
+        SwingUtilities.invokeLater(() -> {
+          Content current = getSelectedContent();
+          if (current == null) {
+            ToolWindowManager.getInstance(myProject).activateEditorComponent();
+            result.setDone();
+          }
+          else {
+            setSelectedContent(current, true, true, !forcedFocus).notify(result);
+          }
+        });
       }
       else {
         result.setDone();

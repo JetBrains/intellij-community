@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -12,28 +11,20 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.reference.SoftReference;
-import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.BorderFactory;
 import javax.swing.JComponent;
-import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.SwingUtilities;
-import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -42,127 +33,81 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.Point;
 import java.awt.Window;
 import java.awt.image.BufferedImage;
-import java.lang.ref.WeakReference;
 
 public final class EditorFragmentComponent extends JPanel {
   private static final Logger LOG = Logger.getInstance(EditorFragmentComponent.class);
-  private static final Key<WeakReference<LightweightHint>> CURRENT_HINT = Key.create("EditorFragmentComponent.currentHint");
-  private static final int LINE_BORDER_THICKNESS = 1;
-  private static final int EMPTY_BORDER_THICKNESS = 2;
+
   private final EditorEx myEditor;
   private final int myStartLine;
   private final int myEndLine;
   private final boolean myShowFolding;
   private final boolean myShowGutter;
+  private @Nullable EditorFragmentComponent.ImageComponent myImageComponent;
 
-  private EditorFragmentComponent(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
-    editor.setPurePaintingMode(true);
-    try {
-      doInit(editor, startLine, endLine, showFolding, showGutter);
-    }
-    finally {
-      editor.setPurePaintingMode(false);
-    }
+  public static @Nullable LightweightHint showEditorFragmentHint(
+    Editor editor,
+    TextRange range,
+    boolean showFolding,
+    boolean hideByAnyKey
+  ) {
+    return EditorFragmentHint.show(editor, range, showFolding, hideByAnyKey);
+  }
+
+  public static EditorFragmentComponent createEditorFragmentComponent(
+    Editor editor,
+    int startLine,
+    int endLine,
+    boolean showFolding,
+    boolean showGutter
+  ) {
+    return createEditorFragmentComponent(
+      editor,
+      startLine,
+      endLine,
+      showFolding,
+      showGutter,
+      /* useCaretRowBackground */ true
+    );
+  }
+
+  public static @NotNull Color getBackgroundColor(@NotNull Editor editor) {
+    return getBackgroundColor(editor, true);
+  }
+
+  public static @NotNull Color getBackgroundColor(@NotNull Editor editor, boolean useCaretRowBackground) {
+    return getBackgroundColor0(editor, useCaretRowBackground);
+  }
+
+  public static @NotNull CompoundBorder createEditorFragmentBorder(@NotNull Editor editor) {
+    return EditorFragmentHint.createBorder(editor);
+  }
+
+  public static int getAvailableVisualLinesAboveEditor(@NotNull Editor editor) {
+    return getAvailableVisualLinesAboveEditor0(editor);
+  }
+
+  private EditorFragmentComponent(
+    @NotNull EditorEx editor,
+    int startLine,
+    int endLine,
+    boolean showFolding,
+    boolean showGutter,
+    @NotNull ImageComponent component,
+    Color backColor
+  ) {
     myEditor = editor;
     myStartLine = startLine;
     myEndLine = endLine;
     myShowFolding = showFolding;
     myShowGutter = showGutter;
-  }
-
-  private void doInit(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
-    FoldingModelEx foldingModel = editor.getFoldingModel();
-    boolean isFoldingEnabled = foldingModel.isFoldingEnabled();
-    if (!showFolding) {
-      foldingModel.setFoldingEnabled(false);
-    }
-    int textImageWidth;
-    int markersImageWidth;
-    int textImageHeight;
-    BufferedImage textImage;
-    BufferedImage markersImage;
-    JComponent rowHeader;
-    try {
-      Document doc = editor.getDocument();
-      int endOffset = endLine < doc.getLineCount() ? doc.getLineEndOffset(Math.max(0, endLine - 1)) : doc.getTextLength();
-      int widthAdjustment = EditorUtil.getSpaceWidth(Font.PLAIN, editor);
-      textImageWidth = Math.min(
-        editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset) + widthAdjustment,
-        getWidthLimit(editor)
-      );
-
-      int startVisualLine = editor.logicalToVisualPosition(new LogicalPosition(startLine, 0)).line;
-      int endVisualLine = editor.logicalToVisualPosition(new LogicalPosition(Math.max(endLine, startLine + 1), 0)).line;
-      int y1 = editor.visualLineToY(startVisualLine);
-      // as endLine is exclusive (not shown), we should also exclude block inlays associated with it
-      int y2 = editor.visualLineToY(endVisualLine) - EditorUtil.getInlaysHeight(editor, endVisualLine, true);
-      textImageHeight = y2 <= y1 ? editor.getLineHeight() : y2 - y1;
-      LOG.assertTrue(textImageHeight > 0,
-                     "Height: " + textImageHeight + "; startLine:" + startLine + "; endLine:" + endLine + "; y1:" + y1 + "; y2:" + y2);
-
-      textImage = UIUtil.createImage(editor.getContentComponent(), textImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
-      Graphics textGraphics = textImage.getGraphics();
-      EditorUIUtil.setupAntialiasing(textGraphics);
-
-      if (showGutter) {
-        rowHeader = editor.getGutterComponentEx();
-        markersImageWidth = Math.max(1, rowHeader.getWidth());
-
-        markersImage = UIUtil.createImage(editor.getComponent(), markersImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
-        Graphics markerGraphics = markersImage.getGraphics();
-        EditorUIUtil.setupAntialiasing(markerGraphics);
-
-        markerGraphics.translate(0, -y1);
-        markerGraphics.setClip(0, y1, rowHeader.getWidth(), textImageHeight);
-        markerGraphics.setColor(getBackgroundColor(editor));
-        markerGraphics.fillRect(0, y1, rowHeader.getWidth(), textImageHeight);
-        rowHeader.paint(markerGraphics);
-      }
-      else {
-        markersImageWidth = 0;
-        rowHeader = null;
-        markersImage = null;
-      }
-
-      textGraphics.translate(0, -y1);
-      textGraphics.setClip(0, y1, textImageWidth, textImageHeight);
-      boolean wasVisible = editor.setCaretVisible(false);
-      editor.getContentComponent().paint(textGraphics);
-      if (wasVisible) {
-        editor.setCaretVisible(true);
-      }
-    }
-    finally {
-      if (!showFolding) {
-        foldingModel.setFoldingEnabled(isFoldingEnabled);
-      }
-    }
-
-    JComponent component = new JComponent() {
-      @Override
-      public Dimension getPreferredSize() {
-        return new Dimension(textImageWidth + markersImageWidth, textImageHeight);
-      }
-
-      @Override
-      protected void paintComponent(Graphics graphics) {
-        if (markersImage != null) {
-          StartupUiUtil.drawImage(graphics, markersImage, 0, 0, null);
-          StartupUiUtil.drawImage(graphics, textImage, rowHeader.getWidth(), 0, null);
-        }
-        else {
-          StartupUiUtil.drawImage(graphics, textImage, 0, 0, null);
-        }
-      }
-    };
+    myImageComponent = component;
 
     setLayout(new BorderLayout());
     add(component);
-
     setBorder(createEditorFragmentBorder(editor));
+    setBackground(backColor);
   }
 
   @ApiStatus.Internal
@@ -190,6 +135,128 @@ public final class EditorFragmentComponent extends JPanel {
     return myShowGutter;
   }
 
+  void releaseImages() {
+    ImageComponent imageComponent = myImageComponent;
+    if (imageComponent == null) {
+      return;
+    }
+    myImageComponent = null;
+    imageComponent.releaseImages();
+    remove(imageComponent);
+    revalidate();
+    repaint();
+  }
+
+  static @NotNull EditorFragmentComponent createEditorFragmentComponent(
+    Editor editor,
+    int startLine,
+    int endLine,
+    boolean showFolding,
+    boolean showGutter,
+    boolean useCaretRowBackground
+  ) {
+    EditorEx editorEx = (EditorEx) editor;
+    Color old = editorEx.getBackgroundColor();
+    Color backColor = getBackgroundColor(editor, useCaretRowBackground);
+    ImageComponent image;
+    editorEx.setBackgroundColor(backColor);
+    editorEx.setPurePaintingMode(true);
+    try {
+      image = createImageComponent(editorEx, startLine, endLine, showFolding, showGutter);
+    } finally {
+      editorEx.setPurePaintingMode(false);
+      editorEx.setBackgroundColor(old);
+    }
+    return new EditorFragmentComponent(editorEx, startLine, endLine, showFolding, showGutter, image, backColor);
+  }
+
+  private static @NotNull ImageComponent createImageComponent(
+    @NotNull EditorEx editor,
+    int startLine,
+    int endLine,
+    boolean showFolding,
+    boolean showGutter
+  ) {
+    FoldingModelEx foldingModel = editor.getFoldingModel();
+    boolean isFoldingEnabled = foldingModel.isFoldingEnabled();
+    if (!showFolding) {
+      foldingModel.setFoldingEnabled(false);
+    }
+    try {
+      return createImageComponent(editor, startLine, endLine, showGutter);
+    } finally {
+      if (!showFolding) {
+        foldingModel.setFoldingEnabled(isFoldingEnabled);
+      }
+    }
+  }
+
+  private static @NotNull ImageComponent createImageComponent(
+    @NotNull EditorEx editor,
+    int startLine,
+    int endLine,
+    boolean showGutter
+  ) {
+    Document doc = editor.getDocument();
+    int endOffset = endLine < doc.getLineCount()
+                    ? doc.getLineEndOffset(Math.max(0, endLine - 1))
+                    : doc.getTextLength();
+    int widthAdjustment = EditorUtil.getSpaceWidth(Font.PLAIN, editor);
+    int textImageWidth = Math.min(
+      editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset) + widthAdjustment,
+      getWidthLimit(editor)
+    );
+    int startVisualLine = editor.logicalToVisualPosition(new LogicalPosition(startLine, 0)).line;
+    int endVisualLine = editor.logicalToVisualPosition(new LogicalPosition(Math.max(endLine, startLine + 1), 0)).line;
+    int y1 = editor.visualLineToY(startVisualLine);
+    // as endLine is exclusive (not shown), we should also exclude block inlays associated with it
+    int y2 = editor.visualLineToY(endVisualLine) - EditorUtil.getInlaysHeight(editor, endVisualLine, true);
+    int textImageHeight = y2 <= y1 ? editor.getLineHeight() : Math.min(y2 - y1, getHeightLimit(editor));
+    LOG.assertTrue(
+      textImageHeight > 0,
+      "Height: " + textImageHeight + "; startLine:" + startLine + "; endLine:" + endLine + "; y1:" + y1 + "; y2:" + y2
+    );
+    BufferedImage textImage = UIUtil.createImage(editor.getContentComponent(), textImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
+    Graphics textGraphics = textImage.getGraphics();
+    EditorUIUtil.setupAntialiasing(textGraphics);
+    BufferedImage markersImage;
+    int markersImageWidth;
+    if (showGutter) {
+      JComponent rowHeader = editor.getGutterComponentEx();
+      markersImageWidth = Math.max(1, rowHeader.getWidth());
+      markersImage = UIUtil.createImage(editor.getComponent(), markersImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
+      Graphics markerGraphics = markersImage.getGraphics();
+      EditorUIUtil.setupAntialiasing(markerGraphics);
+      markerGraphics.translate(0, -y1);
+      //noinspection GraphicsSetClipInspection
+      markerGraphics.setClip(0, y1, rowHeader.getWidth(), textImageHeight);
+      markerGraphics.setColor(getBackgroundColor(editor));
+      markerGraphics.fillRect(0, y1, rowHeader.getWidth(), textImageHeight);
+      rowHeader.paint(markerGraphics);
+    } else {
+      markersImageWidth = 0;
+      markersImage = null;
+    }
+    textGraphics.translate(0, -y1);
+    //noinspection GraphicsSetClipInspection
+    textGraphics.setClip(0, y1, textImageWidth, textImageHeight);
+    boolean wasVisible = editor.setCaretVisible(false);
+    try {
+      editor.getContentComponent().paint(textGraphics);
+    } finally {
+      if (wasVisible) {
+        editor.setCaretVisible(true);
+      }
+    }
+    return new ImageComponent(
+      textImage,
+      markersImage,
+      markersImageWidth,
+      textImageWidth + markersImageWidth,
+      textImageHeight
+    );
+  }
+
   private static int getWidthLimit(@NotNull Editor editor) {
     Component component = editor.getComponent();
     int screenWidth = ScreenUtil.getScreenRectangle(component).width;
@@ -198,129 +265,28 @@ public final class EditorFragmentComponent extends JPanel {
     return window == null ? Integer.MAX_VALUE : window.getWidth();
   }
 
-  /**
-   * @param y {@code y} coordinate in layered pane coordinate system.
-   */
-  static @Nullable LightweightHint showEditorFragmentHintAt(Editor editor,
-                                                  TextRange range,
-                                                  int y,
-                                                  boolean showUpward,
-                                                  boolean showFolding,
-                                                  boolean hideByAnyKey,
-                                                  boolean useCaretRowBackground) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return null;
-    Document document = editor.getDocument();
-
-    int startOffset = range.getStartOffset();
-    int startLine = document.getLineNumber(startOffset);
-    CharSequence text = document.getCharsSequence();
-    // There is a possible case that we have a situation like below:
-    //    line 1
-    //    line 2 <fragment start>
-    //    line 3<fragment end>
-    // We don't want to include 'line 2' to the target fragment then.
-    boolean incrementLine = false;
-    for (int offset = startOffset, max = Math.min(range.getEndOffset(), text.length()); offset < max; offset++) {
-      char c = text.charAt(offset);
-      incrementLine = StringUtil.isWhiteSpace(c);
-      if (!incrementLine || c == '\n') {
-        break;
-      }
-    }
-    if (incrementLine) {
-      startLine++;
-    }
-
-    int endLine = document.getLineNumber(range.getEndOffset()) + 1;
-
-    if (startLine >= endLine) return null;
-
-    EditorFragmentComponent fragmentComponent = createEditorFragmentComponent(editor, startLine, endLine, showFolding, true,
-                                                                              useCaretRowBackground);
-
-    if (showUpward) {
-      y -= fragmentComponent.getPreferredSize().height;
-      y  = Math.max(0,y);
-    }
-
-    final JComponent c = editor.getComponent();
-    int x = SwingUtilities.convertPoint(c, new Point(JBUIScale.scale(-3), 0), UIUtil.getRootPane(c)).x; //IDEA-68016
-
-    LightweightHint currentHint = SoftReference.dereference(editor.getUserData(CURRENT_HINT));
-    if (currentHint != null) currentHint.hide();
-
-    Point p = new Point(x, y);
-    LightweightHint hint = new MyComponentHint(fragmentComponent);
-    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, (hideByAnyKey ? HintManager.HIDE_BY_ANY_KEY : 0) |
-                                                                      HintManager.HIDE_BY_SCROLLING |
-                                                                      HintManager.HIDE_BY_TEXT_CHANGE |
-                                                                      HintManager.HIDE_BY_MOUSEOVER,
-                                                     0, false, new HintHint(editor, p));
-    editor.putUserData(CURRENT_HINT, new WeakReference<>(hint));
-    return hint;
+  private static int getHeightLimit(@NotNull Editor editor) {
+    Component component = editor.getComponent();
+    int screenHeight = ScreenUtil.getScreenRectangle(component).height;
+    if (screenHeight > 0) return screenHeight;
+    Window window = SwingUtilities.getWindowAncestor(component);
+    if (window != null && window.getHeight() > 0) return window.getHeight();
+    int componentHeight = component.getHeight();
+    return componentHeight > 0 ? componentHeight : Integer.MAX_VALUE;
   }
 
-  public static EditorFragmentComponent createEditorFragmentComponent(Editor editor,
-                                                                      int startLine,
-                                                                      int endLine,
-                                                                      boolean showFolding, boolean showGutter) {
-    return createEditorFragmentComponent(editor, startLine, endLine, showFolding, showGutter, true);
-  }
-
-  private static EditorFragmentComponent createEditorFragmentComponent(Editor editor,
-                                                                       int startLine,
-                                                                       int endLine,
-                                                                       boolean showFolding, boolean showGutter,
-                                                                       boolean useCaretRowBackground) {
-    final EditorEx editorEx = (EditorEx)editor;
-    final Color old = editorEx.getBackgroundColor();
-    Color backColor = getBackgroundColor(editor, useCaretRowBackground);
-    editorEx.setBackgroundColor(backColor);
-    try {
-      EditorFragmentComponent fragmentComponent = new EditorFragmentComponent(editorEx, startLine, endLine, showFolding, showGutter);
-      fragmentComponent.setBackground(backColor);
-      return fragmentComponent;
-    }
-    finally {
-      editorEx.setBackgroundColor(old);
-    }
-  }
-
-  public static @Nullable LightweightHint showEditorFragmentHint(Editor editor, TextRange range, boolean showFolding, boolean hideByAnyKey){
-    if (!(editor instanceof EditorEx)) return null;
-    JRootPane rootPane = editor.getComponent().getRootPane();
-    if (rootPane == null) return null;
-    JLayeredPane layeredPane = rootPane.getLayeredPane();
-    int lineHeight = editor.getLineHeight();
-    int overhang = editor.getScrollingModel().getVisibleArea().y -
-            editor.logicalPositionToXY(editor.offsetToLogicalPosition(range.getEndOffset())).y;
-    int yRelative = overhang > 0 && overhang < lineHeight ?
-                    lineHeight - overhang + JBUIScale.scale(LINE_BORDER_THICKNESS + EMPTY_BORDER_THICKNESS) : 0;
-    Point point = SwingUtilities.convertPoint(((EditorEx)editor).getScrollPane().getViewport(), -2, yRelative, layeredPane);
-    return showEditorFragmentHintAt(editor, range, point.y, true, showFolding, hideByAnyKey, false);
-  }
-
-  public static @NotNull Color getBackgroundColor(@NotNull Editor editor){
-    return getBackgroundColor(editor, true);
-  }
-
-  public static @NotNull Color getBackgroundColor(@NotNull Editor editor, boolean useCaretRowBackground){
+  private static @NotNull Color getBackgroundColor0(@NotNull Editor editor, boolean useCaretRowBackground) {
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     Color color = colorsScheme.getColor(EditorColors.CARET_ROW_COLOR);
-    if (!useCaretRowBackground || color == null){
-      color = editor instanceof EditorEx ? ((EditorEx)editor).getBackgroundColor() : colorsScheme.getDefaultBackground();
+    if (!useCaretRowBackground || color == null) {
+      color = editor instanceof EditorEx editorEx
+              ? editorEx.getBackgroundColor()
+              : colorsScheme.getDefaultBackground();
     }
     return color;
   }
 
-  public static @NotNull CompoundBorder createEditorFragmentBorder(@NotNull Editor editor) {
-    Color borderColor = editor.getColorsScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
-    Border outsideBorder = JBUI.Borders.customLine(borderColor, LINE_BORDER_THICKNESS);
-    Border insideBorder = JBUI.Borders.empty(EMPTY_BORDER_THICKNESS);
-    return BorderFactory.createCompoundBorder(outsideBorder, insideBorder);
-  }
-
-  public static int getAvailableVisualLinesAboveEditor(@NotNull Editor editor) {
+  private static int getAvailableVisualLinesAboveEditor0(@NotNull Editor editor) {
     int availableVisualLines = 2;
     JComponent editorComponent = editor.getComponent();
     Container editorComponentParent = editorComponent.getParent();
@@ -338,19 +304,64 @@ public final class EditorFragmentComponent extends JPanel {
     return availableVisualLines;
   }
 
-  private static final class MyComponentHint extends LightweightHint {
-    MyComponentHint(JComponent component) {
-      super(component);
-      setForceLightweightPopup(true);
+  @ApiStatus.Internal
+  @TestOnly
+  public static @NotNull LightweightHint createEditorFragmentHintForTest(@NotNull EditorFragmentComponent fragmentComponent) {
+    return new EditorFragmentHint(fragmentComponent);
+  }
+
+  private static final class ImageComponent extends JComponent {
+    private @Nullable BufferedImage myTextImage;
+    private @Nullable BufferedImage myMarkersImage;
+    private final int myMarkersImageWidth;
+    private final int myPreferredWidth;
+    private final int myPreferredHeight;
+
+    ImageComponent(
+      @NotNull BufferedImage textImage,
+      @Nullable BufferedImage markersImage,
+      int markersImageWidth,
+      int preferredWidth,
+      int preferredHeight
+    ) {
+      myTextImage = textImage;
+      myMarkersImage = markersImage;
+      myMarkersImageWidth = markersImageWidth;
+      myPreferredWidth = preferredWidth;
+      myPreferredHeight = preferredHeight;
     }
 
     @Override
-    public void hide() {
-      // needed for Alt-Q multiple times
-      // Q: not good?
-      SwingUtilities.invokeLater(
-        () -> super.hide()
-      );
+    public Dimension getPreferredSize() {
+      return new Dimension(myPreferredWidth, myPreferredHeight);
+    }
+
+    @Override
+    protected void paintComponent(Graphics graphics) {
+      BufferedImage textImage = myTextImage;
+      if (textImage == null) {
+        return;
+      }
+      BufferedImage markersImage = myMarkersImage;
+      if (markersImage != null) {
+        StartupUiUtil.drawImage(graphics, markersImage, 0, 0, null);
+        StartupUiUtil.drawImage(graphics, textImage, myMarkersImageWidth, 0, null);
+      } else {
+        StartupUiUtil.drawImage(graphics, textImage, 0, 0, null);
+      }
+    }
+
+    void releaseImages() {
+      BufferedImage textImage = myTextImage;
+      if (textImage != null) {
+        textImage.flush();
+        myTextImage = null;
+      }
+      BufferedImage markersImage = myMarkersImage;
+      if (markersImage != null) {
+        markersImage.flush();
+        myMarkersImage = null;
+      }
     }
   }
 }

@@ -1,6 +1,6 @@
 // "Make 'x' 'final'" "true"
 // COMPILER_ARGUMENTS: -XXLanguage:+ProhibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor -XXLanguage:+ProhibitOpenValDeferredInitialization
-// K2_ERROR: Property must be initialized, be final, or be abstract.
+// K2_ERROR: MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT
 open class Foo {
     constructor()
 

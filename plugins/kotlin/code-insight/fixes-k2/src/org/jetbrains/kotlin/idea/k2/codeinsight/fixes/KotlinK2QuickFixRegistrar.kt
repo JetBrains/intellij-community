@@ -180,7 +180,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(NoReturnInFunctionWithBlockBodyFixFactory.addReturnToLastExpression)
         registerFactory(InlineClassDeprecatedFixFactory.replaceWithValue)
         registerFactory(MisplacedTypeParameterConstraintsFixFactory.moveConstraintToWhereClause)
-        registerFactory(AbstractFunctionWithBodyFixFactory.removeFunctionBody)
+        registerFactory(RemoveFunctionBodyFixFactory.removeFunctionBody)
+        registerFactory(RemoveFunctionBodyFixFactory.removeExpectedFunctionBody)
         registerFactory(SenselessNullInWhenFixFactory.removeCondition)
         registerFactory(SubclassCantCallCompanionProtectedNonStaticFixFactory.addJvmStaticAnnotation)
         registerFactory(AnonymousFunctionWithNameFixFactories.removeNameFromFunctionExpressionFixFactory)
@@ -457,6 +458,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AnnotationUsedAsAnnotationArgumentFixFactories.removeAtFromAnnotationArgumentFixFactory)
 
         registerFactory(NoReturnValueFactory.noReturnValue)
+        registerFactory(NoReturnValueFactory.noReturnValueCoercion)
     }
 
     private val whenStatements = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -466,6 +468,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(CommaInWhenConditionWithoutArgumentFixFactories.replaceCommaWithOrFixFactory)
         registerPsiQuickFixes(KaFirDiagnostic.SenselessNullInWhen::class, RemoveWhenBranchFix)
         registerPsiQuickFixes(KaFirDiagnostic.RedundantElseInWhen::class, RemoveWhenBranchFix)
+        registerPsiQuickFixes(KaFirDiagnostic.DuplicateBranchConditionInWhen::class, RemoveWhenBranchFix)
     }
 
     private val typeMismatch = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -591,6 +594,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ChangeVisibilityFixFactories.explicitFieldVisibilityMustBeLessPermissive)
     }
 
+    private val destructuringDeclarations = KtQuickFixesListBuilder.registerPsiQuickFix  {
+        registerFactory(DestructuringFormFactory.convertToFullFormOnShortFormNameMismatch)
+    }
+
     private val other = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerPsiQuickFixes(
             KaFirDiagnostic.InapplicableTargetOnPropertyWarning::class,
@@ -714,6 +721,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     private val contextParameters = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerFactory(NoContextParameterFixFactory.noContextArgument)
         registerFactory(SpecifyRemainingArgumentsByNameFixFactory.noContextArgument)
+        registerFactory(CreateContextParameterFromNamedArgumentFixFactory.namedParameterNotFound)
+        registerFactory(AddExplicitContextArgumentFixFactory.overloadResolutionAmbiguity)
     }
 
     override val list: KotlinQuickFixesList = KotlinQuickFixesList.createCombined(
@@ -740,6 +749,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         surroundWithNullCheck,
         vararg,
         visibility,
+        destructuringDeclarations,
         other,
         optIn,
         multiplatform,

@@ -1154,7 +1154,6 @@ f:com.intellij.vcs.log.util.VcsLogUiUtil
 - s:shortenTextToFit(java.lang.String,java.awt.FontMetrics,I,I,java.lang.String):java.lang.String
 - s:showTooltip(javax.swing.JComponent,java.awt.Point,com.intellij.openapi.ui.popup.Balloon$Position,java.lang.String):V
 f:com.intellij.vcs.log.util.VcsLogUtil
-- sf:FULL_HASH_LENGTH:I
 - sf:HASH_PREFIX_REGEX:java.util.regex.Pattern
 - sf:HASH_REGEX:java.util.regex.Pattern
 - sf:HEAD:java.lang.String
@@ -1192,7 +1191,6 @@ f:com.intellij.vcs.log.util.VcsLogUtil
 - s:groupRefsByRoot(java.util.Collection):java.util.Map
 - s:invokeOnceOnDataChange(com.intellij.vcs.log.VcsLogUi,java.lang.Runnable):V
 - s:invokeOnceOnDataChange(com.intellij.vcs.log.VcsLogUi,java.lang.Runnable,com.intellij.openapi.util.Condition):V
-- s:isFullHash(java.lang.String):Z
 - s:isMoreRequested(com.intellij.vcs.log.visible.VisiblePack):java.lang.Boolean
 - s:isProjectLog(com.intellij.openapi.project.Project,java.util.Map):Z
 - s:isProjectLogForVcs(com.intellij.openapi.project.Project,java.util.Collection,com.intellij.openapi.vcs.AbstractVcs):Z

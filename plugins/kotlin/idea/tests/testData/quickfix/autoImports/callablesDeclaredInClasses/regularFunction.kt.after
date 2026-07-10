@@ -1,5 +1,5 @@
 // "Import function 'RegObject.regularFun'" "true"
-// K2_ERROR: Unresolved reference 'regularFun'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 package p
 
 import p.RegObject.regularFun

@@ -1,5 +1,5 @@
 // "Create parameter 'foo'" "true"
-// K2_ERROR: Unresolved reference 'foo'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 fun forDefaultValue(a: Int, p: String = fo<caret>o) {}
 

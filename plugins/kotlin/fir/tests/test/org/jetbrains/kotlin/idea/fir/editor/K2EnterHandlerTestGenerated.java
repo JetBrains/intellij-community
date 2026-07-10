@@ -1976,6 +1976,11 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
                 runTest("../../idea/tests/testData/editor/enterHandler/ConsecutiveCallsInSafeCallsEnd.after.kt");
             }
 
+            @TestMetadata("ConstructorParameterListWithoutLineBreakBeforeClosingBracket.after.kt")
+            public void testConstructorParameterListWithoutLineBreakBeforeClosingBracket() throws Exception {
+                runTest("../../idea/tests/testData/editor/enterHandler/ConstructorParameterListWithoutLineBreakBeforeClosingBracket.after.kt");
+            }
+
             @TestMetadata("EnterInFunctionWithExpressionBody.after.kt")
             public void testEnterInFunctionWithExpressionBody() throws Exception {
                 runTest("../../idea/tests/testData/editor/enterHandler/EnterInFunctionWithExpressionBody.after.kt");
@@ -2184,6 +2189,11 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
             @TestMetadata("NotFirstParameter.after.kt")
             public void testNotFirstParameter() throws Exception {
                 runTest("../../idea/tests/testData/editor/enterHandler/NotFirstParameter.after.kt");
+            }
+
+            @TestMetadata("ParameterListAfterTrailingComma.after.kt")
+            public void testParameterListAfterTrailingComma() throws Exception {
+                runTest("../../idea/tests/testData/editor/enterHandler/ParameterListAfterTrailingComma.after.kt");
             }
 
             @TestMetadata("ReindentOnUnmatchedBrace.after.kt")
@@ -2761,6 +2771,11 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
             @TestMetadata("ConsecutiveCallsInSaeCallsMiddle.after.inv.kt")
             public void testConsecutiveCallsInSaeCallsMiddle() throws Exception {
                 runTest("../../idea/tests/testData/editor/enterHandler/ConsecutiveCallsInSaeCallsMiddle.after.inv.kt");
+            }
+
+            @TestMetadata("ConstructorParameterListWithoutLineBreakBeforeClosingBracket.after.inv.kt")
+            public void testConstructorParameterListWithoutLineBreakBeforeClosingBracket() throws Exception {
+                runTest("../../idea/tests/testData/editor/enterHandler/ConstructorParameterListWithoutLineBreakBeforeClosingBracket.after.inv.kt");
             }
 
             @TestMetadata("HigherOrderFunction2.after.inv.kt")

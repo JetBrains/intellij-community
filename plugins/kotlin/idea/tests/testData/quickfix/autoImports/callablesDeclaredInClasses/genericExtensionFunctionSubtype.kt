@@ -1,5 +1,5 @@
 // "Import extension function 'bar'" "true"
-// K2_ERROR: Unresolved reference 'bar'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 package p
 
 open class A

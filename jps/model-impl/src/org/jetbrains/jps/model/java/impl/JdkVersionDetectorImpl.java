@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -198,7 +198,9 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
     if (implementor.startsWith("International Business")) return Variant.Semeru;
     if (implementor.startsWith("JetBrains")) return Variant.JBR;
     if (implementor.startsWith("Microsoft")) return Variant.Microsoft;
+    if (implementor.startsWith("ojdkbuild")) return Variant.Ojdkbuild;
     if (implementor.startsWith("Oracle")) return Variant.Oracle;
+    if (implementor.startsWith("Red Hat")) return Variant.RedHat;
     if (implementor.startsWith("SAP")) return Variant.SapMachine;
     if (implementor.startsWith("Tencent")) return Variant.Kona;
     return null;

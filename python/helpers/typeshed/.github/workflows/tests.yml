@@ -26,15 +26,16 @@ jobs:
     name: Check typeshed structure
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-      - uses: astral-sh/setup-uv@v7
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v8.2.0
         with:
           version-file: "requirements-tests.txt"
-      - run: uv pip install -r requirements-tests.txt --system
-      - run: python ./tests/check_typeshed_structure.py
+      - run: |
+          uv run \
+          --python=3.13 \
+          --no-project \
+          --with-requirements=requirements-tests.txt \
+          ./tests/check_typeshed_structure.py
 
   mypy:
     name: "mypy: Check stubs"
@@ -45,12 +46,12 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@v8.2.0
         with:
           version-file: "requirements-tests.txt"
       - run: uv pip install -r requirements-tests.txt --system
@@ -68,15 +69,18 @@ jobs:
     name: "mypy: Run test cases"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.14"
-      - uses: astral-sh/setup-uv@v7
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v8.2.0
         with:
           version-file: "requirements-tests.txt"
-      - run: uv pip install -r requirements-tests.txt --system
-      - run: python ./tests/regr_test.py --all --verbosity QUIET
+      - run: |
+          uv run \
+          --python=3.14 \
+          --no-project \
+          --with-requirements=requirements-tests.txt \
+          ./tests/regr_test.py \
+          --all \
+          --verbosity=QUIET
 
   pyright:
     name: "pyright: Run test cases"
@@ -89,11 +93,11 @@ jobs:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@v8.2.0
         with:
           version-file: "requirements-tests.txt"
       - name: Install typeshed test-suite requirements
@@ -148,23 +152,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout typeshed
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: typeshed
       - name: Checkout stub_uploader
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: typeshed-internal/stub_uploader
           path: stub_uploader
-      - uses: actions/setup-python@v6
-        with:
-          # Keep in sync with stub_uploader's check_scripts.yml workflow.
-          python-version: "3.13"
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@v8.2.0
         with:
           version-file: "typeshed/requirements-tests.txt"
       - name: Run tests
         run: |
           cd stub_uploader
-          uv pip install -r requirements.txt --system
-          python -m pytest tests
+          uv run --python=3.13 --no-project --with-requirements=requirements.txt -m pytest tests

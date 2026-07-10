@@ -1,56 +1,95 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.lib.impl
 
-import com.intellij.debugger.streams.core.lib.impl.DistinctOperation
-import com.intellij.debugger.streams.core.lib.impl.FilterOperation
-import com.intellij.debugger.streams.core.lib.impl.FlatMappingOperation
-import com.intellij.debugger.streams.core.lib.impl.LibrarySupportBase
-import com.intellij.debugger.streams.core.lib.impl.MappingOperation
-import com.intellij.debugger.streams.core.lib.impl.SortedOperation
-import com.intellij.debugger.streams.core.lib.impl.ToCollectionOperation
-import com.intellij.debugger.streams.core.trace.impl.handler.unified.DistinctTraceHandler
 import com.intellij.debugger.streams.core.trace.impl.interpret.AllMatchTraceInterpreter
 import com.intellij.debugger.streams.core.trace.impl.interpret.AnyMatchTraceInterpreter
 import com.intellij.debugger.streams.core.trace.impl.interpret.NoneMatchTraceInterpreter
+import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
+import com.intellij.debugger.streams.core.wrapper.StreamChain
+import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
+import com.intellij.debugger.streams.trace.breakpoint.BreakpointPositionResolver
+import com.intellij.debugger.streams.trace.breakpoint.JavaBreakpointPositionResolver
+import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedDistinctOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedFilterOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedFlatMappingOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedMappingOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedMatchingOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedOptionalResultOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedParallelOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedSortedOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedToCollectionOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.IntermediateCallHandler
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.PeekCallHandler
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.PeekTerminalCallHandler
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.SourceCallHandler
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.StreamPreparer
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.TerminalCallHandler
+import com.sun.jdi.ObjectReference
 
 /**
  * @author Vitaliy.Bibaev
  */
-class StandardLibrarySupport
-  : LibrarySupportBase() {
-
+class StandardLibrarySupport : JvmLibrarySupportBase() {
   init {
-    addIntermediateOperationsSupport(FilterOperation("filter"),
-                                     FilterOperation("limit"),
-                                     FilterOperation("skip"),
-                                     FilterOperation("peek"),
-                                     FilterOperation("onClose"),
-                                     MappingOperation("map"),
-                                     MappingOperation("mapToInt"),
-                                     MappingOperation("mapToLong"),
-                                     MappingOperation("mapToDouble"),
-                                     MappingOperation("mapToObj"),
-                                     MappingOperation("boxed"),
-                                     FlatMappingOperation("flatMap"),
-                                     FlatMappingOperation("flatMapToInt"),
-                                     FlatMappingOperation("flatMapToLong"),
-                                     FlatMappingOperation("flatMapToDouble"),
-                                     DistinctOperation("distinct", { num, call, dsl -> DistinctTraceHandler(num, call, dsl) }),
-                                     SortedOperation("sorted"),
-                                     ParallelOperation("parallel"))
+    addIntermediateOperationsSupport(BreakpointBasedFilterOperation("filter"),
+                                     BreakpointBasedFilterOperation("limit"),
+                                     BreakpointBasedFilterOperation("skip"),
+                                     BreakpointBasedFilterOperation("peek"),
+                                     BreakpointBasedFilterOperation("onClose"),
+                                     BreakpointBasedFilterOperation("takeWhile"),
+                                     BreakpointBasedFilterOperation("dropWhile"),
+                                     BreakpointBasedMappingOperation("map"),
+                                     BreakpointBasedMappingOperation("mapToInt"),
+                                     BreakpointBasedMappingOperation("mapToLong"),
+                                     BreakpointBasedMappingOperation("mapToDouble"),
+                                     BreakpointBasedMappingOperation("mapToObj"),
+                                     BreakpointBasedMappingOperation("boxed"),
+                                     BreakpointBasedFlatMappingOperation("flatMap"),
+                                     BreakpointBasedFlatMappingOperation("flatMapToInt"),
+                                     BreakpointBasedFlatMappingOperation("flatMapToLong"),
+                                     BreakpointBasedFlatMappingOperation("flatMapToDouble"),
+                                     BreakpointBasedDistinctOperation("distinct"),
+                                     BreakpointBasedSortedOperation("sorted"),
+                                     BreakpointBasedParallelOperation("parallel"))
 
-    addTerminationOperationsSupport(MatchingOperation("anyMatch",
-                                                      AnyMatchTraceInterpreter()),
-                                    MatchingOperation("allMatch",
-                                                      AllMatchTraceInterpreter()),
-                                    MatchingOperation("noneMatch",
-                                                      NoneMatchTraceInterpreter()),
-                                    OptionalResultOperation("min"),
-                                    OptionalResultOperation("max"),
-                                    OptionalResultOperation("findAny"),
-                                    OptionalResultOperation("findFirst"),
-                                    ToCollectionOperation("toArray"),
-                                    ToCollectionOperation("toList"),
-                                    ToCollectionOperation("collect"))
+    addTerminationOperationsSupport(BreakpointBasedMatchingOperation("anyMatch",
+                                                                    AnyMatchTraceInterpreter()),
+                                    BreakpointBasedMatchingOperation("allMatch",
+                                                                    AllMatchTraceInterpreter()),
+                                    BreakpointBasedMatchingOperation("noneMatch",
+                                                                    NoneMatchTraceInterpreter()),
+                                    BreakpointBasedOptionalResultOperation("min"),
+                                    BreakpointBasedOptionalResultOperation("max"),
+                                    BreakpointBasedOptionalResultOperation("findAny"),
+                                    BreakpointBasedOptionalResultOperation("findFirst"),
+                                    BreakpointBasedToCollectionOperation("toArray"),
+                                    BreakpointBasedToCollectionOperation("toList"),
+                                    BreakpointBasedToCollectionOperation("collect"))
+  }
+
+  override val breakpointResolverFactory: BreakpointPositionResolver = JavaBreakpointPositionResolver()
+
+  override fun canHandleChain(chain: StreamChain): Boolean = true
+
+  override fun getSourceRuntimeHandler(objectStorage: ObjectStorage, time: ObjectReference): SourceCallHandler = StreamPreparer(objectStorage, time)
+
+  override fun getIntermediateRuntimeHandler(
+    objectStorage: ObjectStorage,
+    callOrder: Int,
+    call: IntermediateStreamCall,
+    time: ObjectReference
+  ): IntermediateCallHandler {
+    return super.getIntermediateRuntimeHandler(objectStorage, callOrder, call, time)
+           ?: PeekCallHandler(objectStorage, call.getTypeBefore(), call.getTypeAfter(), time)
+  }
+
+  override fun getTerminalRuntimeHandler(
+    call: TerminatorStreamCall,
+    objectStorage: ObjectStorage,
+    time: ObjectReference
+  ): TerminalCallHandler {
+    return super.getTerminalRuntimeHandler(call, objectStorage, time)
+           ?: PeekTerminalCallHandler(objectStorage, call.getTypeBefore(), null, time)
   }
 }

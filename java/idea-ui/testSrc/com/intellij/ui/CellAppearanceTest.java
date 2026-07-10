@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.CellAppearanceEx;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.roots.ui.util.SimpleTextCellAppearance;
 import com.intellij.openapi.roots.ui.util.ValidFileCellAppearance;
@@ -34,8 +35,13 @@ public class CellAppearanceTest extends JavaModuleTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    myService = null;
-    super.tearDown();
+    try {
+      myService = null;
+      ProjectStructureConfigurable.getInstance(myProject).getContext().getModulesConfigurator().disposeUIResources();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testGeneralOrderEntry() {

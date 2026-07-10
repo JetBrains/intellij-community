@@ -15,5 +15,5 @@ internal class IjentDashboardConfigurableProvider(private val project: Project) 
     }
   }
 
-  override fun createConfigurable(): Configurable = IjentDashboardConfigurable(project.getEelDescriptor())
+  override fun createConfigurable(): Configurable = IjentDashboardConfigurable(project)
 }

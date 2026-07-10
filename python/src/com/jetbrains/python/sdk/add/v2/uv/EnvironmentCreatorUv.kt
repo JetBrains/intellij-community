@@ -11,6 +11,9 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
+import com.intellij.python.uv.backend.UvPyTool
+import com.intellij.python.uv.backend.setUvExecutableLocal
+import com.intellij.python.pytools.PyTool
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
@@ -18,7 +21,6 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.ui.AsyncProcessIcon
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
 import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
@@ -36,10 +38,10 @@ import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
 import com.jetbrains.python.sdk.add.v2.validatablePathField
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
-import com.jetbrains.python.sdk.uv.impl.setUvExecutableLocal
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
 import com.jetbrains.python.statistics.InterpreterType
-import com.jetbrains.python.util.ShowingMessageErrorSync
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.withProject
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import io.github.z4kn4fein.semver.Version
 import kotlinx.coroutines.CoroutineScope
@@ -62,7 +64,7 @@ import kotlin.io.path.readText
  *               UV-specific selector if a .venv directory already exists.
  */
 internal fun PythonMutableTargetAddInterpreterModel<PathHolder.Eel>.uvCreator(module: Module?): EnvironmentCreatorUv<PathHolder.Eel> {
-  val errorSink = module?.project?.let { ShowingMessageErrorSync.withProject(it) } ?: ShowingMessageErrorSync
+  val errorSink = module?.project?.let { ErrorSink().withProject(it) } ?: ErrorSink()
   return EnvironmentCreatorUv(this, module, errorSink)
 }
 
@@ -70,8 +72,9 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
   model: PythonMutableTargetAddInterpreterModel<P>,
   private val module: Module?,
   errorSink: ErrorSink,
-) : CustomNewEnvironmentCreator<P>("uv", model, errorSink) {
+) : CustomNewEnvironmentCreator<P>(model, errorSink) {
   override val interpreterType: InterpreterType = InterpreterType.UV
+  override val pyTool: PyTool = UvPyTool.getInstance()
   override val toolValidator: ToolValidator<P> = model.uvViewModel.toolValidator
   private val executableFlow = MutableStateFlow(model.uvViewModel.uvExecutable.get())
   private val pythonVersion: ObservableMutableProperty<Version?> = propertyGraph.property(null)
@@ -175,7 +178,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
 
           val pythonVersions = withContext(Dispatchers.IO) {
             val versionRequest = if (pyProjectTomlPath.exists()) {
-              PyProjectToml.parse(pyProjectTomlPath.readText()).project?.requiresPython
+              PyProjectToml.parse(pyProjectTomlPath.readText())?.project?.requiresPython
             }
             else {
               null

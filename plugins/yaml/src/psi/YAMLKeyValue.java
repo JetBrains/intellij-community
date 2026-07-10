@@ -33,5 +33,20 @@ public interface YAMLKeyValue extends YAMLPsiElement, ContributedReferenceHost, 
   @Nullable
   YAMLMapping getParentMapping();
 
+  /**
+   * Checks whether this entry uses the explicit key notation, that is, the key is introduced by the
+   * {@code ?} ("question mark") mapping-key indicator:
+   * <pre>{@code
+   * ? - complex
+   *   - key
+   * : value
+   * }</pre>
+   * Ordinary entries written as {@code key: value} (an implicit key) return {@code false}.
+   *
+   * @return {@code true} if this key-value pair begins with the {@code ?} explicit key indicator
+   */
+  @Contract(pure = true)
+  boolean isExplicitKey();
+
   void setValue(@NotNull YAMLValue value);
 }

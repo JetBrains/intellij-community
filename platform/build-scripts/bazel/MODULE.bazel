@@ -8,9 +8,9 @@ bazel_dep(name = "rules_java", version = "9.6.1")
 bazel_dep(name = "rules_kotlin", version = "2.2.2")
 archive_override(
     module_name = "rules_kotlin",
-    sha256 = "5c9b4664b3f926624a405f1d39ce74bcfc0a46b319df4f20d2ee63bdfed9c43e",
-    strip_prefix = "rules_kotlin-ffbc4307c3a55f61e05c12481b6dcb929d6e2b1f",
-    url = "https://github.com/JetBrains/rules_kotlin/archive/ffbc4307c3a55f61e05c12481b6dcb929d6e2b1f.zip",
+    sha256 = "cd26fd62ec0d026ad4d143dedfef3e6ca858a2d0be483f57109897b27069b2c3",
+    strip_prefix = "rules_kotlin-4db4cd06b0ca11742f7dccec5e19fd642c5c2cb1",
+    url = "https://github.com/JetBrains/rules_kotlin/archive/4db4cd06b0ca11742f7dccec5e19fd642c5c2cb1.zip",
 )
 
 bazel_dep(name = "rules_jvm_external", version = "6.10")

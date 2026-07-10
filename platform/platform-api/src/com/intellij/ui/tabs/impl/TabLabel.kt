@@ -228,6 +228,9 @@ open class TabLabel @Internal constructor(
   private val isSelected: Boolean
     get() = tabs.selectedLabel === this
 
+  @Internal
+  open val showSingleSelection: Boolean = false
+
   // we don't want the focus unless we are the selected tab
   override fun isFocusable(): Boolean = tabs.selectedLabel === this && super.isFocusable()
 
@@ -265,6 +268,15 @@ open class TabLabel @Internal constructor(
             super.paintIcon(g, icon, offset)
           }
         }
+      }
+
+      override fun getAccessibleContext(): AccessibleContext {
+        if (accessibleContext == null) {
+          accessibleContext = object : AccessibleSimpleColoredComponent() {
+            override fun getAccessibleName(): String? = accessibleNameWithoutIconTooltip
+          }
+        }
+        return accessibleContext
       }
     }
     label.isOpaque = false

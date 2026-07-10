@@ -50,6 +50,9 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
     if (tryOpenInEditorDeprecated(project, uri)) {
       return
     }
+    if (isLocalFilePathLink(link)) {
+      return
+    }
     coroutineScope.launch {
       openExternalLink(project, uri)
     }
@@ -59,13 +62,11 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
     coroutineScope.launch {
       val data = MarkdownLinkOpenerRemoteApi.Companion.getInstance().fetchLinkNavigationData(link, containingFile?.rpcId())
       val uri = createUri(data.uri) ?: return@launch
-      if (!BrowserUtil.isAbsoluteURL(link) && data.virtualFileId == null) {
-        val project = currentProject ?: data.projectId?.findProject() ?: return@launch
-        val name = link.substringBefore('#').substringAfterLast('/')
-        withContext(Dispatchers.EDT) { showUnresolvedFileNotification(project, name) }
-        return@launch
-      }
       if (uri.scheme != "file") {
+        // An unresolved local file path must not fall through to the external browser.
+        if (isLocalFilePathLink(link)) {
+          return@launch
+        }
         openExternalLink(currentProject, uri)
         return@launch
       }
@@ -269,6 +270,17 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
       }
     }
 
+    /**
+     * True when [link] is written as an explicit local filesystem path (absolute or relative),
+     * which a real web URL never is. Used to avoid opening unresolved local paths in the browser.
+     */
+    private fun isLocalFilePathLink(link: String): Boolean {
+      return link.startsWith("/") ||
+             link.startsWith("./") ||
+             link.startsWith("../") ||
+             link.startsWith("~/")
+    }
+
     private fun isLocalHost(hostName: String?): Boolean {
       return hostName == null ||
              hostName.startsWith("127.") ||
@@ -284,11 +296,6 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
 
     private fun showCannotNavigateNotification(project: Project, anchor: String, point: RelativePoint) {
       showWarningBalloon(project, MarkdownBundle.message("markdown.navigate.to.header.no.headers", anchor), point)
-    }
-
-    private fun showUnresolvedFileNotification(project: Project, fileName: String) {
-      val point = obtainHeadersPopupPosition(project) ?: return
-      showWarningBalloon(project, MarkdownBundle.message("markdown.cannot.resolve.file.error.message", fileName), point)
     }
 
     private fun showWarningBalloon(project: Project, message: String, point: RelativePoint) {

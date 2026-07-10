@@ -54,6 +54,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
 import org.jetbrains.jps.backwardRefs.NameEnumerator;
@@ -587,7 +588,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
 
   protected void openReaderIfNeeded() {
     // do not run read action inside myOpenCloseLock
-    List<Module> compiledModules = ReadAction.nonBlocking(() -> {
+    @Unmodifiable List<Module> compiledModules = ReadAction.nonBlocking(() -> {
       ModuleManager moduleManager = ModuleManager.getInstance(project);
       return ContainerUtil.mapNotNull(myDirtyScopeHolder.getCompilationAffectedModules(), moduleManager::findModuleByName);
     }).expireWith(this).executeSynchronously();

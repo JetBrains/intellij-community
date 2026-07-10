@@ -1,5 +1,5 @@
 // "Create class 'Foo'" "true"
-// K2_ERROR: Unresolved reference 'Foo' on receiver of type 'A<T (of class A<T>)>'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 class A<T>(val n: T) {
     inner class B<U>(val m: U) {

@@ -3,6 +3,7 @@ package fleet.rpc.server
 
 import fleet.reporting.shared.tracing.spannedScope
 import fleet.rpc.EndpointKind
+import fleet.rpc.core.ProtocolVersion
 import fleet.rpc.core.Transport
 import fleet.rpc.core.TransportMessage
 import fleet.util.UID
@@ -18,9 +19,10 @@ interface RequestDispatcher {
   suspend fun handleConnection(
     route: UID,
     endpoint: EndpointKind,
-    presentableName: String? = null,
+    protocolVersion: ProtocolVersion,
     send: SendChannel<TransportMessage>,
     receive: ReceiveChannel<TransportMessage>,
+    presentableName: String? = null,
   )
 }
 
@@ -34,12 +36,15 @@ suspend fun RequestDispatcher.serveRpc(
     val (dispatcherSend, executorReceive) = channels<TransportMessage>(Channel.BUFFERED)
     val (executorSend, dispatcherReceive) = channels<TransportMessage>(Channel.BUFFERED)
     launch {
-      dispatcher.handleConnection(route = route,
-                                  endpoint = EndpointKind.Provider,
-                                  send = dispatcherSend,
-                                  receive = dispatcherReceive)
+      dispatcher.handleConnection(
+        route = route,
+        endpoint = EndpointKind.Provider,
+        protocolVersion = ProtocolVersion.current,
+        send = dispatcherSend,
+        receive = dispatcherReceive,
+      )
     }
-    withContext(coroutineNameAppended("Serving RPC as provider ${route}")) {
+    withContext(coroutineNameAppended("Serving RPC as provider $route")) {
       RpcExecutor.serve(
         services = services,
         transport = Transport(executorSend, executorReceive),

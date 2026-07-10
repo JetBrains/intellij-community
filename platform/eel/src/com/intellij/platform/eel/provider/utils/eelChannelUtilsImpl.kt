@@ -12,26 +12,29 @@ import com.intellij.platform.eel.channels.EelSendChannelException
 import com.intellij.platform.eel.channels.sendWholeBuffer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.Flushable
 import java.io.IOException
 import java.io.InputStream
+import java.io.InterruptedIOException
 import java.io.OutputStream
 import java.net.Socket
 import java.nio.ByteBuffer
 import java.nio.channels.AsynchronousSocketChannel
 import java.nio.channels.DatagramChannel
 import java.nio.channels.FileChannel
+import java.nio.channels.InterruptibleChannel
 import java.nio.channels.Pipe
 import java.nio.channels.ReadableByteChannel
 import java.nio.channels.SelectableChannel
@@ -44,7 +47,11 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.coroutines.CoroutineContext
 
-internal class NioReadToEelAdapter(private val readableByteChannel: ReadableByteChannel, private val availableDelegate: () -> Int) : EelReceiveChannel {
+internal class NioReadToEelAdapter(
+  private val readableByteChannel: ReadableByteChannel,
+  private val dispatcher: CoroutineContext = unlimitedDispatcher,
+  private val availableDelegate: () -> Int,
+) : EelReceiveChannel {
   private val selector: Selector?
 
   init {
@@ -55,16 +62,18 @@ internal class NioReadToEelAdapter(private val readableByteChannel: ReadableByte
     }
   }
 
-  @OptIn(DelicateCoroutinesApi::class)
   override suspend fun receive(dst: ByteBuffer): ReadResult {
     if (!dst.hasRemaining()) return ReadResult.NOT_EOF
-    return withContext(unlimitedDispatcher) {
+    return withContext(dispatcher) {
       var read = 0
       try {
         if (selector != null && readableByteChannel is SelectableChannel) {
           do {
             while (selector.select(100) == 0) {  // I choose 100 ms at random.
               ensureActive()
+              if (!readableByteChannel.isOpen) {
+                throw EelReceiveChannelException(this@NioReadToEelAdapter, "The channel is closed")
+              }
             }
             selector.selectedKeys().clear()
             read = readableByteChannel.read(dst)
@@ -72,8 +81,20 @@ internal class NioReadToEelAdapter(private val readableByteChannel: ReadableByte
           while (read == 0)
         }
         else {
-          read = computeDetached {
-            readableByteChannel.read(dst)
+          read = computeMaybeDetached(readableByteChannel is InterruptibleChannel, dispatcher) {
+            try {
+              runInterruptible {
+                readableByteChannel.read(dst)
+              }
+            }
+            catch (e: java.nio.channels.ClosedByInterruptException) {
+              currentCoroutineContext().ensureActive()
+              throw EelReceiveChannelException(this@NioReadToEelAdapter, e)
+            }
+            catch (e: java.nio.channels.AsynchronousCloseException) {
+              currentCoroutineContext().ensureActive()
+              throw EelReceiveChannelException(this@NioReadToEelAdapter, e)
+            }
           }
         }
       }
@@ -87,7 +108,7 @@ internal class NioReadToEelAdapter(private val readableByteChannel: ReadableByte
   override fun available(): Int = availableDelegate()
 
   override suspend fun closeForReceive() {
-    withContext(Dispatchers.IO + NonCancellable) {
+    withContext(dispatcher + NonCancellable) {
       selector?.let(selectorPool::returnBack)
       // Hello Java!
       if (readableByteChannel is SocketChannel) {
@@ -109,6 +130,7 @@ internal class NioReadToEelAdapter(private val readableByteChannel: ReadableByte
 
 internal class NioWriteToEelAdapter(
   private val writableByteChannel: WritableByteChannel,
+  private val dispatcher: CoroutineContext = unlimitedDispatcher,
   private val flushable: Flushable? = null,
 ) : EelSendChannel {
   private val selector: Selector?
@@ -125,11 +147,10 @@ internal class NioWriteToEelAdapter(
 
   override val isClosed: Boolean get() = !writableByteChannel.isOpen
 
-  @OptIn(DelicateCoroutinesApi::class)
   @EelSendApi
   override suspend fun send(src: ByteBuffer) {
     if (!src.hasRemaining()) return
-    withContext(Dispatchers.IO) {
+    withContext(dispatcher) {
       try {
         if (selector != null && writableByteChannel is SelectableChannel) {
           do {
@@ -141,11 +162,27 @@ internal class NioWriteToEelAdapter(
           while (writableByteChannel.write(src) == 0)
         }
         else {
-          computeDetached {
-            writableByteChannel.write(src)
+          computeMaybeDetached(writableByteChannel is InterruptibleChannel, dispatcher) {
+            try {
+              runInterruptible {
+                writableByteChannel.write(src)
+              }
+            }
+            catch (e: java.nio.channels.ClosedByInterruptException) {
+              currentCoroutineContext().ensureActive()
+              throw EelSendChannelException(this@NioWriteToEelAdapter, e)
+            }
+            catch (e: java.nio.channels.AsynchronousCloseException) {
+              currentCoroutineContext().ensureActive()
+              throw EelSendChannelException(this@NioWriteToEelAdapter, e)
+            }
           }
         }
-        flushable?.flush()
+        if (flushable != null) {
+          computeDetached {
+            flushable.flush()
+          }
+        }
       }
       catch (err: IOException) {
         throw EelSendChannelException(this@NioWriteToEelAdapter, err)
@@ -154,7 +191,7 @@ internal class NioWriteToEelAdapter(
   }
 
   override suspend fun close(err: Throwable?) {
-    withContext(Dispatchers.IO + NonCancellable) {
+    withContext(dispatcher + NonCancellable) {
       selector?.let(selectorPool::returnBack)
       try {
         flushable?.flush()
@@ -193,7 +230,8 @@ internal class InputStreamAdapterImpl(
       return -1
     }
     else {
-      return oneByte.flip().get().toInt()
+      oneByte.flip()
+      return oneByte.get().toInt()
     }
   }
 
@@ -226,8 +264,14 @@ internal class InputStreamAdapterImpl(
         receiveChannel.receiveAvailable(dst)
       }
       else {
-        runBlocking(blockingContext) {
-          receiveChannel.receive(dst)
+        try {
+          runBlocking(blockingContext) {
+            receiveChannel.receive(dst)
+          }
+        } catch (e: InterruptedException) {
+          throw InterruptedIOException().apply {
+            addSuppressed(e)
+          }
         }
       }
       when (r) {
@@ -251,7 +295,9 @@ internal class OutputStreamAdapterImpl(
 ) : OutputStream() {
   private val oneByte = ByteBuffer.allocate(1)
   override fun write(b: Int) {
-    oneByte.clear().put(b.toByte()).flip()
+    oneByte.clear()
+    oneByte.put(b.toByte())
+    oneByte.flip()
     write(oneByte)
   }
 
@@ -291,7 +337,8 @@ internal fun CoroutineScope.consumeReceiveChannelAsKotlinImpl(receiveChannel: Ee
           }
           ReadResult.NOT_EOF -> {
             // Direct buffers are likely to get lost from the pool and collected by GC, but it just brings a tiny performance penalty.
-            channel.send(buffer.flip())
+            buffer.flip()
+            channel.send(buffer)
           }
         }
       }
@@ -325,7 +372,8 @@ internal fun EelReceiveChannel.linesImpl(charset: Charset): Flow<String> = flow 
       emitBuffer()
       return@flow
     }
-    val b = tmpBuffer.flip().get().toInt()
+    tmpBuffer.flip()
+    val b = tmpBuffer.get().toInt()
     result.write(b)
     if (b == 10) {
       emitBuffer()
@@ -349,4 +397,24 @@ private fun selectorForNioChannel(channel: java.nio.channels.Channel): Selector?
     returnsNotNull() implies (channel is SelectableChannel)
   }
   return if (channel is SelectableChannel) selectorPool.borrow() else null
+}
+
+@OptIn(DelicateCoroutinesApi::class)
+private suspend fun <T> computeMaybeDetached(undispatched: Boolean, dispatcher: CoroutineContext, action: suspend () -> T): T {
+  return if (undispatched) {
+    calledDirectly(action)
+  }
+  else {
+    computeDetached(dispatcher) { calledFromComputeDetached(action) }
+  }
+}
+
+/** This thin wrapper exists only to explain data flow in stacktraces better. */
+private suspend fun <T> calledFromComputeDetached(action: suspend () -> T): T {
+  return action()
+}
+
+/** This thin wrapper exists only to explain data flow in stacktraces better. */
+private suspend fun <T> calledDirectly(action: suspend () -> T): T {
+  return action()
 }

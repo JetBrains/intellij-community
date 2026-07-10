@@ -40,7 +40,7 @@ public @NonNls class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
   public static final RoundedIntEventField BRANCHES_COUNT = EventFields.RoundedInt("branches_count");
   public static final RoundedIntEventField TAGS_COUNT = EventFields.RoundedInt("tags_count");
 
-  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.data", 6);
+  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.data", 7);
   private static final EventId DATA_INITIALIZED = GROUP.registerEvent("dataInitialized");
   private static final EventId1<Integer> COMMIT_COUNT_EVENT = GROUP.registerEvent("commit.count", COMMIT_COUNT);
   private static final EventId1<Integer> BRANCHES_COUNT_EVENT = GROUP.registerEvent("branches.count", BRANCHES_COUNT);

@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.Property;
 import com.jetbrains.python.psi.PyCallable;
@@ -23,6 +26,8 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.toolbox.Maybe;
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyDecoratedPropertyTest extends PyTestCase {
   protected PyClass myClass;
 

@@ -30,7 +30,7 @@ class ShelfProjectConfigurable(val project: Project) : BoundSearchableConfigurab
     return panel {
       row {
         checkBox(VcsBundle.message("shelve.remove.successfully.applied.files.checkbox"))
-          .bindSelected(shelveManager::isRemoveFilesFromShelf, shelveManager::setRemoveFilesFromShelf)
+          .bindSelected({ shelveManager.isRemoveFilesFromShelf }, { shelveManager.isRemoveFilesFromShelf = it })
           .applyToComponent { mnemonic = KeyEvent.VK_R }
       }
       row {

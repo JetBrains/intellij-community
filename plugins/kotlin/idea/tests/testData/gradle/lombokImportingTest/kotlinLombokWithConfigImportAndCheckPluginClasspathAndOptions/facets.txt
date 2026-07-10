@@ -1,0 +1,15 @@
+MODULES
+project
+
+project.main
+    kotlin-lombok-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+    plugin:org.jetbrains.kotlin.lombok:config={{PROJECT_DIR}}/lombok.config
+
+project.test
+    kotlin-lombok-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+    plugin:org.jetbrains.kotlin.lombok:config={{PROJECT_DIR}}/lombok.config
+
+
+Test configuration:
+- showing only following facet fields: compilerArguments
+- showing only following compiler arguments: pluginClasspaths, pluginOptions

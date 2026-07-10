@@ -22,7 +22,7 @@ public class AddAssertNonNullFromTestFrameworksFixTest extends LightQuickFixPara
 
       com.intellij.testFramework.fixtures.MavenDependencyUtil.addFromMaven(model, "junit:junit:3.8.2");
 
-      IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit4");
+      IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4");
       PsiTestUtil.addLibrary(model, "JUnit4", "", ArrayUtil.toStringArray(junit4Library.getClassesPaths()));
 
       IntelliJProjectConfiguration.LibraryRoots junit5Library = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit5", "JUnit5");

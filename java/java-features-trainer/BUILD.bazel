@@ -197,6 +197,8 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//plugins/ide-features-trainer:featuresTrainer-tests",
         "//plugins/ide-features-trainer:featuresTrainer-tests_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.featuresTrainer.tests` end

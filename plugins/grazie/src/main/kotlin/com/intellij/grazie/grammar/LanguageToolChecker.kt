@@ -90,6 +90,7 @@ open class LanguageToolChecker : ExternalTextChecker() {
       .map { Problem(it, lang, extracted, this is TestChecker) }
       .filterNot { isGitCherryPickedFrom(it.match, extracted) }
       .filterNot { isKnownLTBug(it.match, extracted) }
+      .filterNot { isWordSplitOnCallTarget(it.match, extracted) }
       .filterNot {
         val range = when {
           it.fitsGroup(RuleGroup.CASING) -> includeSentenceBounds(extracted, it.patternRange)
@@ -296,6 +297,16 @@ private val RuleMatch.messageSanitized
       .replace("<suggestion>", replacement)
       .replace("</suggestion>", replacement)
   }
+
+private fun isWordSplitOnCallTarget(match: RuleMatch, text: TextContent): Boolean {
+  val token = text.subSequence(match.fromPos, match.toPos).toString()
+  val replacements = match.suggestedReplacements
+  return replacements.isNotEmpty() &&
+         replacements.all { it.filterNot(Char::isWhitespace) == token } &&
+         callArgumentListPattern.matchAt(text, match.toPos) != null
+}
+
+private val callArgumentListPattern = Regex("""\(\s*(\w+\s*(,\s*\w+\s*)*)?\)""")
 
 private fun isPartOfQuotedLiteralText(match: RuleMatch, text: TextContent): Boolean {
   return quotedLiteralPattern.findAll(text.toString())

@@ -2,6 +2,7 @@ package org.jetbrains.intellij.build.mps
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationTasks
@@ -12,6 +13,7 @@ import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.createBuildTasks
 import org.jetbrains.intellij.build.fus.FeatureUsageStatisticsProperties
 import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.buildJar
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -39,6 +41,8 @@ class MPSBuilder {
             options.targetOs = OsFamily.ALL
             options.buildStepsToSkip += listOf(BuildOptions.MAC_SIGN_STEP, BuildOptions.MAC_NOTARIZE_STEP,
                 BuildOptions.WIN_SIGN_STEP)
+            // needed to package JPS tests
+            options.useTestCompilationOutput = true
 
             val fusp = FeatureUsageStatisticsProperties("FUS", "https://resources.jetbrains.com/storage/fus/config/v4/FUS/")
             val buildTools = ProprietaryBuildTools(ProprietaryBuildTools.DUMMY.signTool,
@@ -68,6 +72,20 @@ class MPSBuilder {
 
                 val jpsArtifactDir = "${buildContext.paths.distAllDir}/lib/jps"
                 val jpsArtifactPath = Path.of(jpsArtifactDir)
+
+                withContext(Dispatchers.IO) {
+                    buildJar(
+                      targetFile = jpsArtifactPath.resolve("jps-build-test.jar"),
+                      moduleNames = listOf(
+                        "intellij.platform.jps.build.tests",
+                        "intellij.platform.jps.model.tests",
+                        "intellij.platform.jps.model.serialization.tests"
+                      ),
+                      context = buildContext,
+                      forTests = true
+                    )
+                  }
+
                 buildContext.notifyArtifactBuilt(jpsArtifactPath)
             }
         }

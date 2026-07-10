@@ -100,8 +100,6 @@ class WriteAheadLogOverCircularBuffer(
 
         //check consistency: pathId could be resolved:
         pathById(record.pathId)
-
-        false /* do not consume the record! */
       }
 
       //apply records that were not applied at the end of previous session (if any):
@@ -126,7 +124,7 @@ class WriteAheadLogOverCircularBuffer(
   override fun hasUnfinished(): Boolean = circularBytesBuffer.hasUnprocessedRecords()
 
   override fun flush(): Int {
-    val flushedEntries = circularBytesBuffer.read { entryDataBuffer ->
+    val flushedEntries = circularBytesBuffer.readConsuming { entryDataBuffer ->
       val record = readRecord(entryDataBuffer)
       val path = pathById(record.pathId)
       //RC: we don't need synchronization here as long, as circularBytesBuffer guarantees an entry could be 'consumed'
@@ -245,8 +243,12 @@ class WriteAheadLogOverCircularBuffer(
 
   /** drain only records for a given pathId */
   private fun flush(pathId: Int): Int {
+    if (!hasUnfinished(pathId)) {
+      return 0
+    }
+
     val path = pathById(pathId)
-    val flushedEntries = circularBytesBuffer.read { entryDataBuffer ->
+    val flushedEntries = circularBytesBuffer.readConsuming { entryDataBuffer ->
       val record = readRecord(entryDataBuffer)
       if (pathId == record.pathId) {
         channelWriter.write(path, record.offsetInFile, record.data)
@@ -344,23 +346,20 @@ class WriteAheadLogOverCircularBuffer(
       if (record.pathId == pathId) {
         maxOffset = maxOf(maxOffset, record.offsetInFile + record.data.remaining())
       }
-      false //do not consume
     }
     return maxOffset
   }
 
   private fun applyUnfinished(pathId: Int, offsetInFile: Long, length: Int, targetBuffer: ByteBuffer, offsetInBuffer: Int) {
-    synchronized(pendingRecordsLock) {
-      if (!pendingRecordsByPathId.containsKey(pathId)) {
-        return@synchronized
-      }
-      circularBytesBuffer.read { entryData ->
-        val record = readRecord(entryData)
-        if (record.pathId == pathId) {
-          val bytesCopied = applyToBuffer(record, offsetInFile, length, targetBuffer, offsetInBuffer)
-          bytesCopiedByApplyUnfinished.addAndGet(bytesCopied.toLong())
-        }
-        false //do not consume
+    if (!hasUnfinished(pathId)) {
+      return
+    }
+
+    circularBytesBuffer.read { entryData ->
+      val record = readRecord(entryData)
+      if (record.pathId == pathId) {
+        val bytesCopied = applyToBuffer(record, offsetInFile, length, targetBuffer, offsetInBuffer)
+        bytesCopiedByApplyUnfinished.addAndGet(bytesCopied.toLong())
       }
     }
   }
@@ -390,13 +389,12 @@ class WriteAheadLogOverCircularBuffer(
      * @return # of bytes copied
      */
     private fun applyToBuffer(record: Record, offsetInFile: Long, length: Int, targetBuffer: ByteBuffer, offsetInBuffer: Int): Int {
-      val targetRangeStart = offsetInFile
       val targetRangeEnd = offsetInFile + length
 
       val recordRangeStart = record.offsetInFile
       val recordRangeEnd = record.offsetInFile + record.data.remaining()
 
-      val overlapStart = maxOf(targetRangeStart, recordRangeStart)
+      val overlapStart = maxOf(offsetInFile, recordRangeStart)
       val overlapEnd = minOf(targetRangeEnd, recordRangeEnd)
       val bytesOverlapped = (overlapEnd - overlapStart).toInt()
       if (bytesOverlapped <= 0) {
@@ -404,7 +402,7 @@ class WriteAheadLogOverCircularBuffer(
       }
 
       targetBuffer.put(
-        offsetInBuffer + (overlapStart - targetRangeStart).toInt(),
+        offsetInBuffer + (overlapStart - offsetInFile).toInt(),
         record.data,
         (overlapStart - recordRangeStart).toInt(),
         bytesOverlapped

@@ -48,7 +48,6 @@ import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyCollectionType;
 import com.jetbrains.python.psi.types.PyIntersectionType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParameterType;
@@ -68,6 +67,7 @@ import java.util.TreeSet;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAnyOrUnknown;
 
 /**
  * @author Mikhail Golubev
@@ -347,7 +347,7 @@ public final class PyTypeHintGenerationUtil {
   }
 
   public static void checkPep484Compatibility(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    if (type == null ||
+    if (isAnyOrUnknown(type) ||
         isNoneType(type) ||
         // Will be rendered as just Any
         type instanceof PyUnsafeUnionType ||
@@ -360,13 +360,10 @@ public final class PyTypeHintGenerationUtil {
         checkPep484Compatibility(memberType, context);
       }
     }
-    else if (type instanceof PyCollectionType) {
-      for (PyType typeParam : ((PyCollectionType)type).getElementTypes()) {
+    else if (type instanceof PyClassType pyClassType) {
+      for (PyType typeParam : pyClassType.getTypeArguments()) {
         checkPep484Compatibility(typeParam, context);
       }
-    }
-    else if (type instanceof PyClassType) {
-      // In this order since PyCollectionTypeImpl implements PyClassType
     }
     else if (type instanceof PyCallableType callableType) {
       for (PyCallableParameter parameter : ContainerUtil.notNullize(callableType.getParameters(context))) {

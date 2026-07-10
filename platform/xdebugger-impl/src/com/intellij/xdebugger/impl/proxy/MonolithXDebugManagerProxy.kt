@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.proxy
 
 import com.intellij.frontend.FrontendApplicationInfo
@@ -40,7 +40,7 @@ internal class MonolithXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override fun isEnabled(): Boolean {
-    return !SplitDebuggerMode.isSplitDebugger() || FrontendApplicationInfo.getFrontendType() is FrontendType.Monolith
+    return FrontendApplicationInfo.getFrontendType() is FrontendType.Monolith
   }
 
   override suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
@@ -89,7 +89,7 @@ internal class MonolithXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override fun getDebuggerExecutionPointManager(project: Project): XDebuggerExecutionPointManagerImpl? {
-    if (AppMode.isRemoteDevHost() && SplitDebuggerMode.isSplitDebugger()) {
+    if (AppMode.isRemoteDevHost()) {
       return null
     }
     return XDebuggerExecutionPointManagerImpl.getInstance(project)

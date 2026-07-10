@@ -7,15 +7,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.MessageReporter;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 
-import java.util.IdentityHashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @ApiStatus.Internal
 public final class DefaultModelBuilderContext implements ModelBuilderContext {
 
   private final Gradle myGradle;
   private final MessageReporter myMessageReporter = new DefaultMessageReporter();
-  private final Map<DataProvider<?>, Object> myMap = new IdentityHashMap<>();
+  private final ConcurrentMap<DataProvider<?>, Object> myMap = new ConcurrentHashMap<>();
 
   public DefaultModelBuilderContext(Gradle gradle) {
     myGradle = gradle;
@@ -33,22 +33,7 @@ public final class DefaultModelBuilderContext implements ModelBuilderContext {
 
   @Override
   public @NotNull <T> T getData(@NotNull DataProvider<T> provider) {
-    Object data = myMap.get(provider);
-    if (data == null) {
-      synchronized (myMap) {
-        Object secondAttempt = myMap.get(provider);
-        if (secondAttempt != null) {
-          //noinspection unchecked
-          return (T)secondAttempt;
-        }
-        T value = provider.create(this);
-        myMap.put(provider, value);
-        return value;
-      }
-    }
-    else {
-      //noinspection unchecked
-      return (T)data;
-    }
+    //noinspection unchecked
+    return (T) myMap.computeIfAbsent(provider, p -> p.create(this));
   }
 }

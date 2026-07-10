@@ -104,4 +104,13 @@ class IncorrectPceHandlingTests {
     }
   }
 
+  // IJPL-248976
+  fun testExceptionRethrownInParensNotFlagged() {
+    try {
+      // anything
+    } catch (e: ProcessCanceledException) {
+      throw (e)
+    }
+  }
+
 }

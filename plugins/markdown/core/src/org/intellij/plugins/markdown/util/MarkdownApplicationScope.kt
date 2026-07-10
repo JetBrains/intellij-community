@@ -6,7 +6,7 @@ import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 
 @Service(Service.Level.APP)
-internal class MarkdownApplicationScope(private val coroutineScope: CoroutineScope) {
+class MarkdownApplicationScope(private val coroutineScope: CoroutineScope) {
   companion object {
     fun createChildScope(): CoroutineScope {
       return scope().childScope()

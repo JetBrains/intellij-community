@@ -298,6 +298,7 @@ public class MarkdownDocumentationCommentsMigration {
   ///
   /// This method will remain in place until finalizers have been removed from
   /// most existing code.
+  @Deprecated
   @Override
   protected void finalize() throws Throwable {
     super.finalize();

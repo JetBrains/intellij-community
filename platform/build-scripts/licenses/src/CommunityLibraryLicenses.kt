@@ -281,10 +281,6 @@ object CommunityLibraryLicenses {
       )
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
-    LibraryLicense("Compose Multiplatform Compiler", libraryName = "jetbrains.compose.compiler.hosted", url = "https://github.com/JetBrains/compose-multiplatform")
-      .apache("https://github.com/JetBrains/compose-multiplatform/blob/master/LICENSE.txt")
-      .suppliedByOrganizations(Suppliers.JETBRAINS),
-
     LibraryLicense("Compose Runtime", libraryName = "androidx.compose.runtime.desktop", url = "https://source.android.com/")
       .apache("https://cs.android.com/androidx/platform/frameworks/support/+/androidx-main:LICENSE.txt")
       .suppliedByOrganizations(Suppliers.GOOGLE),
@@ -325,7 +321,7 @@ object CommunityLibraryLicenses {
       .suppliedByOrganizations("SmartBear Software"),
 
     LibraryLicense("dbus-java", libraryName = "dbus-java", url = "https://github.com/hypfvieh/dbus-java")
-      .lgpl2("https://github.com/hypfvieh/dbus-java/blob/dbus-java-3.0/LICENSE")
+      .mit("https://github.com/hypfvieh/dbus-java/blob/dbus-java-parent-4.2.1/LICENSE")
       .suppliedByPersons("David M. <hypfvieh@googlemail.com>"),
 
     LibraryLicense("debugpy", version = LibraryLicense.CUSTOM_REVISION, attachedTo="intellij.python", url = "https://github.com/microsoft/debugpy")
@@ -686,11 +682,11 @@ object CommunityLibraryLicenses {
       ),
 
     LibraryLicense(libraryName = "jediterm-core", url = "https://github.com/JetBrains/jediterm")
-      .lgpl3("https://github.com/JetBrains/jediterm/blob/master/LICENSE-LGPLv3.txt")
+      .apache("https://github.com/JetBrains/jediterm/blob/master/LICENSE-APACHE-2.0.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
     LibraryLicense(libraryName = "jediterm-ui", url = "https://github.com/JetBrains/jediterm")
-      .lgpl3("https://github.com/JetBrains/jediterm/blob/master/LICENSE-LGPLv3.txt")
+      .apache("https://github.com/JetBrains/jediterm/blob/master/LICENSE-APACHE-2.0.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
     LibraryLicense("JetBrains Annotations", libraryName = "jetbrains-annotations", url = "https://github.com/JetBrains/java-annotations")
@@ -1140,6 +1136,34 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "opentest4j", url = "https://github.com/ota4j-team/opentest4j")
       .apache("https://github.com/ota4j-team/opentest4j/blob/master/LICENSE"),
 
+    LibraryLicense("org.eclipse.lsp4j.debug:0.14.0", libraryName = "eclipse.lsp4j.debug", url = "https://github.com/eclipse/lsp4j")
+      .eplV2("https://github.com/eclipse-lsp4j/lsp4j/blob/main/LICENSE")
+      .suppliedByPersons(
+        "Sven Efftinge", "Christian Dietrich", "Dennis Hübner", "Anton Kosyakov", "Miro Spönemann", "Jonah Graham",
+        "Akos Kitta", "Yaohai Zheng"
+      ),
+
+    LibraryLicense("org.eclipse.lsp4j.jsonrpc.debug:0.14.0", libraryName = "eclipse.lsp4j.jsonrpc.debug", url = "https://github.com/eclipse/lsp4j")
+      .eplV2("https://github.com/eclipse-lsp4j/lsp4j/blob/main/LICENSE")
+      .suppliedByPersons(
+        "Sven Efftinge", "Christian Dietrich", "Dennis Hübner", "Anton Kosyakov", "Miro Spönemann", "Jonah Graham",
+        "Akos Kitta", "Yaohai Zheng"
+      ),
+
+    LibraryLicense("org.eclipse.lsp4j.jsonrpc:0.14.0", libraryName = "eclipse.lsp4j.jsonrpc", url = "https://github.com/eclipse/lsp4j")
+      .eplV2("https://github.com/eclipse-lsp4j/lsp4j/blob/main/LICENSE")
+      .suppliedByPersons(
+        "Sven Efftinge", "Christian Dietrich", "Dennis Hübner", "Anton Kosyakov", "Miro Spönemann", "Jonah Graham",
+        "Akos Kitta", "Yaohai Zheng"
+      ),
+
+    LibraryLicense("org.eclipse.lsp4j:0.14.0", libraryName = "eclipse.lsp4j", url = "https://github.com/eclipse/lsp4j")
+      .eplV2("https://github.com/eclipse-lsp4j/lsp4j/blob/main/LICENSE")
+      .suppliedByPersons(
+        "Sven Efftinge", "Christian Dietrich", "Dennis Hübner", "Anton Kosyakov", "Miro Spönemann", "Jonah Graham",
+        "Akos Kitta", "Yaohai Zheng"
+      ),
+
     LibraryLicense("org.eclipse.xtext.xbase", libraryName = "xtext-xbase", url = "https://github.com/eclipse/xtext-lib")
       .eplV2("https://github.com/eclipse/xtext-lib/blob/master/LICENSE")
       .suppliedByPersons(
@@ -1469,6 +1493,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("completion-ranking-typescript-exp"),
     jetbrainsLibrary("debugger-agent"),
     jetbrainsLibrary("debugger-memory-agent"),
+    jetbrainsLibrary("diogen-analysis"),
     jetbrainsLibrary("download-pgp-verifier"),
     jetbrainsLibrary("file-prediction-model"),
     jetbrainsLibrary("find-action-model"),
@@ -1483,6 +1508,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("jetbrains.compose.components.ui.tooling.preview.desktop"),
     jetbrainsLibrary("jetbrains.compose.hot.reload.devtools.api"),
     jetbrainsLibrary("jetbrains.compose.hot.reload.gradle.idea"),
+    jetbrainsLibrary("jetbrains.fus.reporting.api.jvm"),
     jetbrainsLibrary("jetbrains.intellij.deps.rwmutex.idea"),
     jetbrainsLibrary("jetbrains.kotlin.jps.plugin.classpath"),
     jetbrainsLibrary("jetbrains.ml.models.jetenry.inline.prompt.detection.model"),
@@ -1500,7 +1526,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlin-tooling-core"),
     jetbrainsLibrary("kotlinc.allopen-compiler-plugin"),
     jetbrainsLibrary("kotlinc.analysis-api"),
-    jetbrainsLibrary("kotlinc.analysis-api-fe10"),
     jetbrainsLibrary("kotlinc.analysis-api-impl-base"),
     jetbrainsLibrary("kotlinc.analysis-api-k2"),
     jetbrainsLibrary("kotlinc.analysis-api-platform-interface"),

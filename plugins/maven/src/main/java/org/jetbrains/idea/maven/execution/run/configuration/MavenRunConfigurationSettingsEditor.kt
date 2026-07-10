@@ -116,7 +116,7 @@ class MavenRunConfigurationSettingsEditor(
     addProfilesFragment(workingDirectoryField)
     addMavenOptionsGroupFragment()
     addJavaOptionsGroupFragment()
-    add(LogsGroupFragment())
+    add(createLogGroupFragment())
   }
 
   private val MavenRunConfiguration.generalSettingsOrDefault: MavenGeneralSettings

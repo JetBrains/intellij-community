@@ -1,0 +1,637 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+import { dirname, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
+import { startWebViewMockPreview, type WebViewMockPreviewServer } from "@jetbrains/intellij-webview-testkit"
+
+type Locator = {
+  boundingBox(): Promise<BoundingBox | null>
+  click(): Promise<void>
+  dispatchEvent(type: string, eventInit?: Record<string, unknown>): Promise<void>
+  first(): Locator
+  scrollIntoViewIfNeeded(): Promise<void>
+}
+
+type BoundingBox = {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+type Mouse = {
+  down(): Promise<void>
+  move(x: number, y: number): Promise<void>
+  up(): Promise<void>
+}
+
+type Route = {
+  fulfill(options: { body: string; contentType: string; status?: number }): Promise<void>
+}
+
+type ConsoleMessage = {
+  type(): string
+  text(): string
+}
+
+type Page = {
+  addInitScript(pageFunction: () => void): Promise<void>
+  goto(url: string): Promise<void>
+  getByRole(role: string, options?: { name?: string | RegExp; exact?: boolean }): Locator
+  locator(selector: string): Locator
+  route(url: string | RegExp, handler: (route: Route) => Promise<void> | void): Promise<void>
+  evaluate<Result>(pageFunction: () => Result | Promise<Result>): Promise<Result>
+  evaluate<Result, Arg>(pageFunction: (arg: Arg) => Result | Promise<Result>, arg: Arg): Promise<Result>
+  on(event: "console", handler: (message: ConsoleMessage) => void): void
+  on(event: "pageerror", handler: (error: Error) => void): void
+  waitForFunction(pageFunction: () => boolean): Promise<unknown>
+  waitForSelector(selector: string): Promise<unknown>
+  mouse: Mouse
+}
+
+type TestApi = {
+  (title: string, handler: (fixtures: { page: Page }) => Promise<void> | void): void
+  beforeAll(handler: () => Promise<void> | void): void
+  afterAll(handler: () => Promise<void> | void): void
+}
+
+type ExpectApi = {
+  (actual: Locator): { toBeVisible(): Promise<void> }
+  (actual: boolean): { toBe(expected: boolean): void }
+}
+
+type PlaywrightTestModule = {
+  expect: ExpectApi
+  test: TestApi
+}
+
+const playwrightTestPackage: string = "@playwright/test"
+const { expect, test } = await import(playwrightTestPackage) as unknown as PlaywrightTestModule
+
+const testDir = dirname(fileURLToPath(import.meta.url))
+const webviewSrcDir = resolve(testDir, "../..")
+const mockMarkdownPreviewImageSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="960" height="480" viewBox="0 0 960 480"><rect width="960" height="480" fill="#f7f8fa"/><rect x="72" y="72" width="816" height="336" rx="24" fill="#ffffff" stroke="#3871e1" stroke-width="12"/><path d="M144 384l168-168 120 120 96-96 288 228H144z" fill="#6db083"/><circle cx="690" cy="174" r="72" fill="#f4b400"/></svg>`
+
+let preview: WebViewMockPreviewServer | undefined
+
+test.beforeAll(async () => {
+  preview = await startWebViewMockPreview({
+    webviewSrcDir,
+    viewId: "markdown-preview",
+    mock: resolve(webviewSrcDir, "views/markdown-preview/src/markdownPreviewMock.ts"),
+  })
+})
+
+test.afterAll(async () => {
+  await preview?.close()
+})
+
+test("renders frontmatter as an article header with collapsed metadata", async ({ page }) => {
+  if (!preview) {
+    throw new Error("Markdown preview mock preview server was not started")
+  }
+  await page.goto(preview.url)
+  await page.waitForSelector(".frontmatterBlock")
+
+  const frontmatterState = await page.evaluate(() => {
+    const content = document.querySelector(".markdownPreviewContent")
+    const block = document.querySelector(".frontmatterBlock")
+    const details = block?.querySelector<HTMLDetailsElement>(".frontmatterMetadata")
+    const metadataLabels = Array.from(block?.querySelectorAll(".frontmatterMetadata dt") ?? [])
+      .map(element => element.textContent ?? "")
+    const metadataValues = Array.from(block?.querySelectorAll(".frontmatterMetadata dd") ?? [])
+      .map(element => element.textContent ?? "")
+    return {
+      isFirstBlock: content?.firstElementChild === block,
+      hasPre: block?.querySelector("pre") != null,
+      hasTitle: block?.querySelector(".frontmatterTitle") != null,
+      summary: details?.querySelector("summary")?.textContent ?? "",
+      hasDetails: details != null,
+      detailsOpen: details?.open ?? true,
+      metadataLabels,
+      metadataValues,
+    }
+  })
+
+  expect(frontmatterState.isFirstBlock).toBe(true)
+  expect(frontmatterState.hasPre).toBe(false)
+  expect(frontmatterState.hasTitle).toBe(false)
+  expect(frontmatterState.summary === "Frontmatter metadata").toBe(true)
+  expect(frontmatterState.hasDetails).toBe(true)
+  expect(frontmatterState.detailsOpen).toBe(false)
+  expect(frontmatterState.metadataLabels.includes("project")).toBe(true)
+  expect(frontmatterState.metadataLabels.includes("languages")).toBe(true)
+  expect(frontmatterState.metadataLabels.includes("framework")).toBe(true)
+  expect(frontmatterState.metadataLabels.includes("build-system")).toBe(true)
+  expect(frontmatterState.metadataLabels.includes("repository")).toBe(true)
+  expect(frontmatterState.metadataValues.includes("IntelliJ IDEA Platform")).toBe(true)
+  expect(frontmatterState.metadataValues.includes("Kotlin, Java")).toBe(true)
+  expect(frontmatterState.metadataValues.includes("IntelliJ Platform SDK")).toBe(true)
+  expect(frontmatterState.metadataValues.includes("Bazel")).toBe(true)
+  expect(frontmatterState.metadataValues.includes("monorepo")).toBe(true)
+})
+
+test("navigates fragment links inside the preview without opening host link", async ({ page }) => {
+  if (!preview) {
+    throw new Error("Markdown preview mock preview server was not started")
+  }
+  await page.goto(preview.url)
+  await page.waitForSelector(".markdownPreviewContent")
+  const targetId = await page.evaluate(() => {
+    const target = Array.from(document.querySelectorAll<HTMLHeadingElement>("h1, h2, h3, h4, h5, h6"))
+      .find(heading => heading.textContent?.includes("Локальная навигация раздела"))
+    return target?.id ?? ""
+  })
+  expect(targetId.length > 0).toBe(true)
+
+  const initialOpenLinkCalls = await openLinkCallCount(page)
+  const initialScrollY = await page.evaluate(() => window.scrollY)
+  await page.getByRole("link", { name: "Local anchor link" }).click()
+  await page.waitForFunction(() => {
+    const target = Array.from(document.querySelectorAll<HTMLHeadingElement>("h1, h2, h3, h4, h5, h6"))
+      .find(heading => heading.textContent?.includes("Локальная навигация раздела"))
+    if (!target) return false
+    const box = target.getBoundingClientRect()
+    return window.scrollY > 0 && box.bottom > 0 && box.top < window.innerHeight
+  })
+
+  const finalScrollY = await page.evaluate(() => window.scrollY)
+  expect(finalScrollY > initialScrollY).toBe(true)
+  expect(await openLinkCallCount(page) === initialOpenLinkCalls).toBe(true)
+})
+
+test("changes preview font size from floating settings", async ({ page }) => {
+  if (!preview) {
+    throw new Error("Markdown preview mock preview server was not started")
+  }
+  await page.goto(preview.url)
+  await page.waitForSelector(".markdownFloatingRail")
+
+  await expect(page.getByRole("button", { name: "Show font size settings" })).toBeVisible()
+  await page.getByRole("button", { name: "Show font size settings" }).click()
+  await expect(page.getByRole("button", { name: "Increase font size" })).toBeVisible()
+  expect(await fontSettingsIconsLoaded(page)).toBe(true)
+
+  const initialCalls = await setFontSizeCallCount(page)
+  await page.getByRole("button", { name: "Increase font size" }).click()
+  await page.waitForFunction(() => getComputedStyle(document.querySelector(".markdownPreview")!).fontSize === "14px")
+  expect(await setFontSizeCallCount(page) === initialCalls + 1).toBe(true)
+
+  await page.getByRole("button", { name: "Decrease font size" }).click()
+  await page.waitForFunction(() => getComputedStyle(document.querySelector(".markdownPreview")!).fontSize === "13px")
+
+  await page.evaluate(() => {
+    const slider = document.querySelector<HTMLInputElement>("#markdown-font-size-slider")
+    if (!slider) throw new Error("Missing font size slider")
+    const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set
+    valueSetter?.call(slider, "7")
+    slider.dispatchEvent(new Event("input", { bubbles: true }))
+    slider.dispatchEvent(new Event("change", { bubbles: true }))
+  })
+  await page.waitForFunction(() => getComputedStyle(document.querySelector(".markdownPreview")!).fontSize === "16px")
+
+  await page.getByRole("button", { name: "Reset font size" }).click()
+  await page.waitForFunction(() => getComputedStyle(document.querySelector(".markdownPreview")!).fontSize === "13px")
+
+  const callsAfterUserChanges = await setFontSizeCallCount(page)
+  await page.getByRole("button", { name: "Toggle theme" }).click()
+  await waitForLateMockUpdates(page)
+  expect(await setFontSizeCallCount(page) === callsAfterUserChanges).toBe(true)
+})
+
+test("keeps font settings available without table of contents", async ({ page }) => {
+  if (!preview) {
+    throw new Error("Markdown preview mock preview server was not started")
+  }
+  await page.goto(preview.url)
+  await page.getByRole("button", { name: "Short markdown" }).click()
+  await page.waitForFunction(() => document.querySelector(".markdownPreview h1")?.textContent === "Short Markdown")
+
+  const railState = await page.evaluate(() => ({
+    tableOfContentsButtons: document.querySelectorAll('[aria-label="Show table of contents"]').length,
+    fontSettingsButtons: document.querySelectorAll('[aria-label="Show font size settings"]').length,
+  }))
+
+  expect(railState.tableOfContentsButtons === 0).toBe(true)
+  expect(railState.fontSettingsButtons === 1).toBe(true)
+})
+
+test("keeps markdown content selectable while preview chrome uses the default guard", async ({ page }) => {
+  if (!preview) {
+    throw new Error("Markdown preview mock preview server was not started")
+  }
+  await page.goto(preview.url)
+  await page.waitForSelector(".markdownPreviewContent")
+
+  const selectionState = await page.evaluate(() => {
+    const body = document.body
+    const content = document.querySelector<HTMLElement>(".markdownPreviewContent")
+    const heading = document.querySelector<HTMLElement>(".markdownPreview h1")
+    const railButton = document.querySelector<HTMLElement>(".markdownFloatingRailButton")
+    return {
+      guardStyleCount: document.querySelectorAll("style[data-wvi-default-text-selection-guard]").length,
+      bodyGuarded: getComputedStyle(body).userSelect === "none",
+      contentSelectable: content != null && getComputedStyle(content).userSelect === "text",
+      headingSelectable: heading != null && getComputedStyle(heading).userSelect === "text",
+      railButtonGuarded: railButton != null && getComputedStyle(railButton).userSelect === "none",
+    }
+  })
+
+  expect(selectionState.guardStyleCount === 1).toBe(true)
+  expect(selectionState.bodyGuarded).toBe(true)
+  expect(selectionState.contentSelectable).toBe(true)
+  expect(selectionState.headingSelectable).toBe(true)
+  expect(selectionState.railButtonGuarded).toBe(true)
+})
+
+test("zooms, pans, and exposes native resize for Mermaid diagrams", async ({ page }) => {
+  if (!preview) {
+    throw new Error("Markdown preview mock preview server was not started")
+  }
+  await page.goto(preview.url)
+  await page.waitForSelector(".mermaidBlock svg")
+
+  await expect(page.getByRole("button", { name: "Zoom in diagram" })).toBeVisible()
+  expect(await mermaidToolbarIconsLoaded(page)).toBe(true)
+  expect(await mermaidToolbarButtonsUseDefaultCursor(page)).toBe(true)
+  expect(await mermaidHasNoRunGutter(page)).toBe(true)
+  const resizeEnabled = await page.evaluate(() => {
+    const block = document.querySelector(".mermaidBlock.isInteractive")
+    return block != null && getComputedStyle(block).resize === "vertical"
+  })
+  expect(resizeEnabled).toBe(true)
+  expect(await mermaidSvgFillsViewport(page)).toBe(true)
+  expect(await mermaidViewportUsesMoveCursor(page)).toBe(true)
+
+  await page.getByRole("button", { name: "Zoom in diagram" }).click()
+  await page.waitForFunction(() => {
+    const transform = document.querySelector(".mermaidPanZoom")?.getAttribute("transform") ?? ""
+    return transform.includes("scale(") && !transform.endsWith("scale(1)")
+  })
+
+  await page.getByRole("button", { name: "Reset diagram zoom" }).click()
+  await page.waitForFunction(() => (document.querySelector(".mermaidPanZoom")?.getAttribute("transform") ?? "") === "translate(0,0) scale(1)")
+  expect(await mermaidViewBoxContainsContent(page)).toBe(true)
+
+  const transformBeforeWheel = await mermaidTransform(page)
+  await page.locator(".mermaidViewport svg").dispatchEvent("wheel", { deltaY: -120, clientX: 80, clientY: 80, bubbles: true, cancelable: true })
+  expect((await mermaidTransform(page)) === transformBeforeWheel).toBe(true)
+
+  const transformBeforeDrag = await mermaidTransform(page)
+  await dragLocatorCenter(page, page.locator(".mermaidViewport svg"), 40, 28, "Markdown Mermaid SVG does not have a rendered bounding box")
+  await page.waitForFunction(() => {
+    const transform = document.querySelector(".mermaidPanZoom")?.getAttribute("transform") ?? ""
+    return transform.includes("translate(") && !transform.startsWith("translate(0,0)")
+  })
+  expect((await mermaidTransform(page)) !== transformBeforeDrag).toBe(true)
+})
+
+test("zooms standalone image blocks without changing inline or linked images", async ({ page }) => {
+  if (!preview) {
+    throw new Error("Markdown preview mock preview server was not started")
+  }
+  await page.route(/.*\/__markdown-preview-resource\/.*/, route => route.fulfill({ contentType: "image/svg+xml", body: mockMarkdownPreviewImageSvg }))
+  await page.goto(preview.url)
+  await page.waitForSelector(".markdownImageBlock img")
+  await page.waitForFunction(() => (document.querySelector<HTMLElement>(".markdownImage")?.style.transform ?? "") === "translate(0px, 0px) scale(1)")
+  await page.waitForFunction(() => document.querySelector<HTMLImageElement>(".markdownImageViewport img")?.naturalWidth === 960)
+
+  await expect(page.getByRole("button", { name: "Zoom in image" })).toBeVisible()
+  expect(await markdownImageToolbarIconsLoaded(page)).toBe(true)
+  const imageState = await page.evaluate(() => {
+    const block = document.querySelector(".markdownImageBlock.isInteractive")
+    const inlineImage = document.querySelector('img[alt="Inline preview"]')
+    const linkedImage = document.querySelector('a img[alt="Linked preview"]')
+    return {
+      resizeEnabled: block != null && getComputedStyle(block).resize === "vertical",
+      inlineHasZoomBlock: inlineImage?.closest(".markdownImageBlock") != null,
+      linkedHasZoomBlock: linkedImage?.closest(".markdownImageBlock") != null,
+      imageToolbarCount: document.querySelectorAll('[aria-label="Image zoom controls"]').length,
+    }
+  })
+  expect(imageState.resizeEnabled).toBe(true)
+  expect(imageState.inlineHasZoomBlock).toBe(false)
+  expect(imageState.linkedHasZoomBlock).toBe(false)
+  expect(imageState.imageToolbarCount === 1).toBe(true)
+  await page.waitForFunction(() => {
+    const block = document.querySelector(".markdownImageBlock")
+    const image = document.querySelector<HTMLImageElement>(".markdownImageViewport img")
+    if (!block || !image || image.naturalWidth <= 0 || image.naturalHeight <= 0) return false
+    const box = block.getBoundingClientRect()
+    const expectedHeight = box.width * image.naturalHeight / image.naturalWidth
+    return Math.abs(box.height - expectedHeight) <= 1
+  })
+  expect(await markdownImageFillsViewport(page)).toBe(true)
+
+  await page.getByRole("button", { name: "Zoom in image" }).click()
+  await page.waitForFunction(() => {
+    const transform = document.querySelector<HTMLElement>(".markdownImage")?.style.transform ?? ""
+    return transform.includes("scale(") && !transform.endsWith("scale(1)")
+  })
+
+  await page.getByRole("button", { name: "Reset image zoom" }).click()
+  await page.waitForFunction(() => (document.querySelector<HTMLElement>(".markdownImage")?.style.transform ?? "") === "translate(0px, 0px) scale(1)")
+
+  const transformBeforeWheel = await markdownImageTransform(page)
+  await page.locator(".markdownImageViewport img").dispatchEvent("wheel", { deltaY: -120, clientX: 80, clientY: 80, bubbles: true, cancelable: true })
+  expect((await markdownImageTransform(page)) === transformBeforeWheel).toBe(true)
+
+  const transformBeforeDrag = await markdownImageTransform(page)
+  await dragLocatorCenter(page, page.locator(".markdownImageViewport img"), 40, 28, "Markdown image does not have a rendered bounding box")
+  await page.waitForFunction(() => {
+    const transform = document.querySelector<HTMLElement>(".markdownImage")?.style.transform ?? ""
+    return transform.includes("translate(") && !transform.startsWith("translate(0px, 0px)")
+  })
+  expect((await markdownImageTransform(page)) !== transformBeforeDrag).toBe(true)
+})
+
+test("renders only host-resolved code paths as navigation buttons", async ({ page }) => {
+  if (!preview) {
+    throw new Error("Markdown preview mock preview server was not started")
+  }
+  await page.goto(preview.url)
+  await page.waitForSelector(".markdownPathLink")
+
+  const pathLinkState = await page.evaluate(() => {
+    const labels = Array.from(document.querySelectorAll<HTMLButtonElement>(".markdownPathLink"))
+      .map(button => button.textContent ?? "")
+    const mermaidBlock = document.querySelector(".mermaidBlock")
+    return {
+      labels,
+      hasMissingPathButton: labels.includes("missing/Nope.kt"),
+      hasMermaidPathButton: mermaidBlock?.querySelector(".markdownPathLink") != null,
+    }
+  })
+
+  expect(pathLinkState.labels.includes("docs/guide.md:12")).toBe(true)
+  expect(pathLinkState.labels.includes("src/Main.kt")).toBe(true)
+  expect(pathLinkState.labels.includes("src\\WindowsPath.kt")).toBe(true)
+  expect(pathLinkState.labels.includes("index.html")).toBe(true)
+  expect(pathLinkState.labels.includes("index.h")).toBe(false)
+  expect(pathLinkState.labels.includes("my_django_app/")).toBe(true)
+  expect(pathLinkState.labels.includes("_app/")).toBe(false)
+  expect(pathLinkState.labels.includes("style.css")).toBe(true)
+  expect(pathLinkState.labels.includes("requirements.txt")).toBe(true)
+  expect(pathLinkState.hasMissingPathButton).toBe(false)
+  expect(pathLinkState.hasMermaidPathButton).toBe(false)
+
+  await page.getByRole("button", { name: "docs/guide.md:12", exact: true }).click()
+  await page.waitForFunction(() => document.querySelector("#mock-run-log")?.textContent?.includes("navigatePathLink") ?? false)
+  const navigation = await page.evaluate(() => JSON.parse(document.querySelector("#mock-run-log")?.textContent ?? "{}") as {
+    rawPath?: string
+    clientX?: number
+    clientY?: number
+  })
+
+  expect(navigation.rawPath === "docs/guide.md:12").toBe(true)
+  expect(Number.isFinite(navigation.clientX) && Number.isFinite(navigation.clientY)).toBe(true)
+})
+
+test("defers markdown enhancements until idle without shifting code fences", async ({ page }) => {
+  if (!preview) {
+    throw new Error("Markdown preview mock preview server was not started")
+  }
+  await installControlledIdleCallbacks(page)
+  await page.goto(preview.url)
+  await page.waitForSelector(".markdownPreview h1")
+  await page.waitForSelector(".codeFenceWithCommands pre")
+
+  const firstCodeFence = page.locator(".codeFenceWithCommands pre").first()
+  const codeFenceBoxBefore = await firstCodeFence.boundingBox()
+  expect(await methodCallCount(page, "markdown.preview/resolvePathLinks") === 0).toBe(true)
+  expect(await methodCallCount(page, "markdown.preview/resolveRunCommands") === 0).toBe(true)
+  expect(await hasMarkdownPathLinks(page)).toBe(false)
+  expect(await hasMarkdownRunButtons(page)).toBe(false)
+
+  await flushIdleCallbacks(page)
+  await page.waitForSelector(".markdownPathLink")
+  await page.waitForSelector(".markdownRunButton")
+
+  const codeFenceBoxAfter = await firstCodeFence.boundingBox()
+  expect(await methodCallCount(page, "markdown.preview/resolvePathLinks") > 0).toBe(true)
+  expect(await methodCallCount(page, "markdown.preview/resolveRunCommands") > 0).toBe(true)
+  expect(codeFenceBoxBefore != null && codeFenceBoxAfter != null).toBe(true)
+  expect(Math.abs((codeFenceBoxBefore?.x ?? 0) - (codeFenceBoxAfter?.x ?? 0)) <= 1).toBe(true)
+  expect(Math.abs((codeFenceBoxBefore?.width ?? 0) - (codeFenceBoxAfter?.width ?? 0)) <= 1).toBe(true)
+})
+
+test("does not load KaTeX for ordinary dollar signs", async ({ page }) => {
+  if (!preview) {
+    throw new Error("Markdown preview mock preview server was not started")
+  }
+  await installControlledIdleCallbacks(page)
+  await page.goto(preview.url)
+  await page.getByRole("button", { name: "Dollar markdown" }).click()
+  await page.waitForFunction(() => document.querySelector(".markdownPreview h1")?.textContent === "Dollar Markdown")
+
+  await flushIdleCallbacks(page)
+  await waitForLateMockUpdates(page)
+
+  expect(await hasKatex(page)).toBe(false)
+})
+
+test("updates after KaTeX rendering without React DOM commit errors", async ({ page }) => {
+  if (!preview) {
+    throw new Error("Markdown preview mock preview server was not started")
+  }
+  const errors: string[] = []
+  page.on("pageerror", error => errors.push(error.message))
+  page.on("console", message => {
+    if (message.type() === "error") {
+      errors.push(message.text())
+    }
+  })
+
+  await page.goto(preview.url)
+  await page.waitForSelector(".katex")
+  await page.waitForSelector(".markdownPathLink")
+  await page.getByRole("button", { name: "Toggle theme" }).click()
+  await page.waitForFunction(() => document.querySelector(".katex") != null && document.querySelector(".markdownPathLink") != null)
+
+  expect(errors.length === 0).toBe(true)
+})
+
+function mermaidTransform(page: Page): Promise<string> {
+  return page.evaluate(() => document.querySelector(".mermaidPanZoom")?.getAttribute("transform") ?? "")
+}
+
+async function dragLocatorCenter(page: Page, locator: Locator, deltaX: number, deltaY: number, missingBoxMessage: string): Promise<void> {
+  await locator.scrollIntoViewIfNeeded()
+  const box = await locator.boundingBox()
+  if (!box) throw new Error(missingBoxMessage)
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(box.x + box.width / 2 + deltaX, box.y + box.height / 2 + deltaY)
+  await page.mouse.up()
+}
+
+function markdownImageTransform(page: Page): Promise<string> {
+  return page.evaluate(() => document.querySelector<HTMLElement>(".markdownImage")?.style.transform ?? "")
+}
+
+function mermaidSvgFillsViewport(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const viewport = document.querySelector(".mermaidViewport")
+    const svg = document.querySelector(".mermaidViewport svg")
+    if (!viewport || !svg) return false
+    return Math.abs(svg.getBoundingClientRect().width - viewport.getBoundingClientRect().width) <= 1
+  })
+}
+
+function mermaidViewportUsesMoveCursor(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const viewport = document.querySelector(".mermaidViewport")
+    return viewport != null && getComputedStyle(viewport).cursor === "move"
+  })
+}
+
+function mermaidToolbarIconsLoaded(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const icons = Array.from(document.querySelectorAll<HTMLImageElement>(".mermaidToolbar img"))
+    return icons.length === 3 && icons.every(icon => icon.complete && icon.naturalWidth > 0 && icon.naturalHeight > 0)
+  })
+}
+
+function mermaidToolbarButtonsUseDefaultCursor(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>(".mermaidToolbarButton"))
+    return buttons.length === 3 && buttons.every(button => getComputedStyle(button).cursor === "default")
+  })
+}
+
+function markdownImageToolbarIconsLoaded(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const icons = Array.from(document.querySelectorAll<HTMLImageElement>(".markdownImageToolbar img"))
+    return icons.length === 3 && icons.every(icon => icon.complete && icon.naturalWidth > 0 && icon.naturalHeight > 0)
+  })
+}
+
+function fontSettingsIconsLoaded(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const icons = Array.from(document.querySelectorAll<HTMLImageElement>(".markdownFontSizeButton img, .markdownFloatingRailButton img"))
+    return icons.length >= 4 && icons.every(icon => icon.complete && icon.naturalWidth > 0 && icon.naturalHeight > 0)
+  })
+}
+
+function setFontSizeCallCount(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    const mock = (window as Window & {
+      __WVI_MOCK__?: { calls: { byMethod(method: string): readonly unknown[] } }
+    }).__WVI_MOCK__
+    return mock?.calls.byMethod("markdown.preview/setFontSize").length ?? 0
+  })
+}
+
+function openLinkCallCount(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    const mock = (window as Window & {
+      __WVI_MOCK__?: { calls: { byMethod(method: string): readonly unknown[] } }
+    }).__WVI_MOCK__
+    return mock?.calls.byMethod("markdown.preview/openLink").length ?? 0
+  })
+}
+
+function methodCallCount(page: Page, method: string): Promise<number> {
+  return page.evaluate((methodName) => {
+    const mock = (window as Window & {
+      __WVI_MOCK__?: { calls: { byMethod(method: string): readonly unknown[] } }
+    }).__WVI_MOCK__
+    return mock?.calls.byMethod(methodName).length ?? 0
+  }, method)
+}
+
+function waitForLateMockUpdates(page: Page): Promise<unknown> {
+  return page.evaluate(() => new Promise(resolve => setTimeout(resolve, 120)))
+}
+
+async function installControlledIdleCallbacks(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    type TestIdleDeadline = {
+      didTimeout: boolean
+      timeRemaining(): number
+    }
+    type TestIdleCallback = (deadline: TestIdleDeadline) => void
+    type TestIdleWindow = Window & {
+      requestIdleCallback?: (callback: TestIdleCallback) => number
+      cancelIdleCallback?: (handle: number) => void
+      __markdownPreviewIdleCallbacks?: Map<number, TestIdleCallback>
+      __markdownPreviewNextIdleCallbackId?: number
+      __flushMarkdownPreviewIdleCallbacks?: () => void
+    }
+
+    const idleWindow = window as TestIdleWindow
+    const callbacks = new Map<number, TestIdleCallback>()
+    idleWindow.__markdownPreviewIdleCallbacks = callbacks
+    idleWindow.__markdownPreviewNextIdleCallbackId = 1
+    idleWindow.requestIdleCallback = (callback): number => {
+      const id = idleWindow.__markdownPreviewNextIdleCallbackId ?? 1
+      idleWindow.__markdownPreviewNextIdleCallbackId = id + 1
+      callbacks.set(id, callback)
+      return id
+    }
+    idleWindow.cancelIdleCallback = (handle: number): void => {
+      callbacks.delete(handle)
+    }
+    idleWindow.__flushMarkdownPreviewIdleCallbacks = (): void => {
+      const pendingCallbacks = Array.from(callbacks.values())
+      callbacks.clear()
+      for (const callback of pendingCallbacks) {
+        callback({
+          didTimeout: false,
+          timeRemaining: () => 50,
+        })
+      }
+    }
+  })
+}
+
+async function flushIdleCallbacks(page: Page): Promise<void> {
+  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => resolve())))
+  await page.evaluate(() => (window as Window & { __flushMarkdownPreviewIdleCallbacks?: () => void }).__flushMarkdownPreviewIdleCallbacks?.())
+}
+
+function hasMarkdownPathLinks(page: Page): Promise<boolean> {
+  return page.evaluate(() => document.querySelector(".markdownPathLink") != null)
+}
+
+function hasMarkdownRunButtons(page: Page): Promise<boolean> {
+  return page.evaluate(() => document.querySelector(".markdownRunButton") != null)
+}
+
+function hasKatex(page: Page): Promise<boolean> {
+  return page.evaluate(() => document.querySelector(".katex") != null)
+}
+
+function markdownImageFillsViewport(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const viewport = document.querySelector(".markdownImageViewport")
+    const image = document.querySelector(".markdownImageViewport img")
+    if (!viewport || !image) return false
+    const viewportBox = viewport.getBoundingClientRect()
+    const imageBox = image.getBoundingClientRect()
+    return Math.abs(imageBox.width - viewportBox.width) <= 1 && Math.abs(imageBox.height - viewportBox.height) <= 1
+  })
+}
+
+function mermaidHasNoRunGutter(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const block = document.querySelector(".mermaidBlock")
+    const hasMermaidRunButton = Array.from(document.querySelectorAll<HTMLButtonElement>(".markdownRunButton"))
+      .some(button => button.title.toLowerCase().includes("mermaid"))
+    return block != null && block.closest("pre") == null && block.closest(".codeFenceWithCommands") == null && !hasMermaidRunButton
+  })
+}
+
+function mermaidViewBoxContainsContent(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const svg = document.querySelector<SVGSVGElement>(".mermaidViewport svg")
+    const content = document.querySelector<SVGGraphicsElement>(".mermaidPanZoom")
+    if (!svg || !content) return false
+    const viewBox = svg.viewBox.baseVal
+    const box = content.getBBox()
+    return viewBox.x <= box.x
+      && viewBox.y <= box.y
+      && viewBox.x + viewBox.width >= box.x + box.width
+      && viewBox.y + viewBox.height >= box.y + box.height
+  })
+}

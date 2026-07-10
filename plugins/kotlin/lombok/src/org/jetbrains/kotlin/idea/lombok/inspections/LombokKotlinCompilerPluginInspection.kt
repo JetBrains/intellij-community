@@ -5,7 +5,7 @@ import com.intellij.java.library.JavaLibraryUtil
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.idea.configuration.inspections.AbstractKotlinCompilerPluginInspection
 import org.jetbrains.kotlin.idea.lombok.LombokKotlinBundle
-import org.jetbrains.kotlin.lombok.k2.FirLombokJavaRegistrar
+import org.jetbrains.kotlin.lombok.FirLombokCommonRegistrar
 import org.jetbrains.kotlin.psi.KtFile
 
 class LombokKotlinCompilerPluginInspection : AbstractKotlinCompilerPluginInspection("lombok") {
@@ -22,7 +22,7 @@ class LombokKotlinCompilerPluginInspection : AbstractKotlinCompilerPluginInspect
     ): Boolean =
         JavaLibraryUtil.hasLibraryClass(module, LOMBOK_FQN)
                 && compilerPluginProjectConfigurators(module).isNotEmpty()
-                && !ktFile.hasCompilerPluginExtension { it is FirLombokJavaRegistrar }
+                && !ktFile.hasCompilerPluginExtension { it is FirLombokCommonRegistrar }
 
     override fun isCompilerPluginRequired(file: KtFile): Boolean = true
 }

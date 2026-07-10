@@ -133,7 +133,7 @@ private class PluginSetConstraintsResolver(
     for ((moduleId, envConfig) in initContext.environmentConfiguredModules) {
       val module = pluginSet.resolveContentModuleId(moduleId) ?: run {
         if (envConfig.unavailabilityReason == null) {
-          PluginManagerCore.logger.warn("Environment-configured module is not found: ${moduleId.displayName}") // TODO ideally this should be an exception
+          PluginManagerCore.logger.info("Environment-configured module is not found: ${moduleId.displayName}") // TODO ideally this should be an exception
         }
         continue
       }
@@ -217,7 +217,7 @@ private class PluginSetConstraintsResolver(
       }
       else if (tryAddDependency(target)) {
         if (target is ContentModuleDescriptor && dependencyRef is DependencyRef.ContentModule) {
-          val visibilityViolation = PluginSetBuilder.checkVisibilityAndReturnErrorMessage(
+          val visibilityViolation = ModuleVisibility.checkVisibilityAndReturnErrorMessage(
             candidate as? ContentModuleDescriptor ?: candidate.getMainDescriptor(),
             target
           )
@@ -353,7 +353,7 @@ private class PluginSetConstraintsResolver(
     // preserves all keys for 'unknown descriptor' check
     val exclusions = candidates.mapValuesTo(HashMap(candidates.size)) { (it.value as? Excluded)?.reason }
     val resolvedPluginSet = ResolvedPluginSetImpl(
-      originalPluginSet = pluginSet,
+      candidateSet = pluginSet,
       initContext = initContext,
       sortedResolvedDescriptors = LinkedHashSet(sortedCandidates),
       runtimeModuleGroupGraph = runtimeModuleGroupGraph,
@@ -506,12 +506,6 @@ private class PluginSetConstraintsResolver(
 
   /** finds a representative module for the runtime module group current [candidate] belongs to */
   private tailrec fun getRuntimeModuleGroupRepresentative(candidate: IdeaPluginDescriptorImpl): PluginModuleDescriptor {
-    if (candidate is PluginModuleDescriptor) {
-      val customized = initContext.provideCustomRuntimeModuleGroupAffiliation(candidate, pluginSet)
-      if (customized != null) {
-        return getRuntimeModuleGroupRepresentative(customized)
-      }
-    }
     return when (candidate) {
       is PluginMainDescriptor -> candidate
       is ContentModuleDescriptor -> {
@@ -579,7 +573,7 @@ private class PluginSetConstraintsResolver(
 
   private class ResolvedPluginSetImpl(
     /** May contain unresolved plugins */
-    override val originalPluginSet: UnambiguousPluginSet,
+    override val candidateSet: UnambiguousPluginSet,
     override val initContext: PluginInitializationContext,
     override val sortedResolvedDescriptors: Set<IdeaPluginDescriptorImpl>,
     override val runtimeModuleGroupGraph: RuntimeModuleGroupGraph,

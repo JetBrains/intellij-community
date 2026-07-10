@@ -5,7 +5,6 @@ import com.intellij.testFramework.rules.TempDirectory
 import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
 import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
@@ -59,18 +58,29 @@ class BtaCriUtilsTest {
     }
 
     @Test
-    fun `test Maven CRI path found when artifacts exist`() {
+    fun `test Maven CRI paths include all compilation directories`() {
         val modulePath = createModulePath()
-        val expectedCriPath = (modulePath / "target" / "kotlin-ic" / "compile" / CriToolchain.DATA_PATH).createDirectories()
+        val expectedCriRoots = listOf(
+            createMavenCriRoot(modulePath, "compile"),
+            createMavenCriRoot(modulePath, "test"),
+        )
 
-        assertEquals(expectedCriPath.toString(), getMavenCriPath(modulePath)?.toString())
+        assertEquals(expectedCriRoots.map { it.toString() }.sorted(), getMavenCriPaths(modulePath).map { it.toString() }.sorted())
     }
 
     @Test
-    fun `test Maven CRI path returns null when target directory does not exist`() {
+    fun `test Maven CRI paths return empty when target directory does not exist`() {
         val modulePath = createModulePath()
 
-        assertNull(getMavenCriPath(modulePath))
+        assertEquals(emptyList<String>(), getMavenCriPaths(modulePath).map { it.toString() })
+    }
+
+    @Test
+    fun `test Maven CRI paths return empty when target directory is empty`() {
+        val modulePath = createModulePath()
+        (modulePath / "target" / "kotlin-ic").createDirectories()
+
+        assertEquals(emptyList<String>(), getMavenCriPaths(modulePath).map { it.toString() })
     }
 
     private fun createModulePath(): Path = tempDir.newDirectoryPath("module")
@@ -80,4 +90,7 @@ class BtaCriUtilsTest {
 
     private fun createGradleKotlinPath(modulePath: Path, vararg relativeSegments: String): Path =
         relativeSegments.fold(modulePath / "build" / "kotlin") { path, segment -> path / segment }.createDirectories()
+
+    private fun createMavenCriRoot(modulePath: Path, goalName: String): Path =
+        (modulePath / "target" / "kotlin-ic" / goalName / CriToolchain.DATA_PATH).createDirectories()
 }

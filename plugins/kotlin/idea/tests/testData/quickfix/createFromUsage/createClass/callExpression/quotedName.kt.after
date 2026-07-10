@@ -1,5 +1,5 @@
 // "Create class 'A!u00A0'" "true"
-// K2_ERROR: Unresolved reference 'A!u00A0'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 fun test() {
     val t = `A!u00A0`(1)
 }

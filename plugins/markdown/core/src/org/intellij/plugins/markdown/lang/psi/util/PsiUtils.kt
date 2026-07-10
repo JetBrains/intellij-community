@@ -8,12 +8,15 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parents
 import com.intellij.psi.util.siblings
+import org.jetbrains.annotations.ApiStatus
 
-internal fun PsiElement.hasType(type: IElementType): Boolean {
+@ApiStatus.Internal
+fun PsiElement.hasType(type: IElementType): Boolean {
   return PsiUtilCore.getElementType(this) == type
 }
 
-internal fun PsiElement.hasType(type: TokenSet): Boolean {
+@ApiStatus.Internal
+fun PsiElement.hasType(type: TokenSet): Boolean {
   return PsiUtilCore.getElementType(this) in type
 }
 
@@ -37,10 +40,10 @@ internal fun PsiElement.childrenOfType(type: TokenSet): Sequence<PsiElement> {
   return children().filter { it.elementType in type }
 }
 
-internal fun PsiElement.parentOfType(withSelf: Boolean = false, type: IElementType): PsiElement? {
+internal fun PsiElement.parentOfType(type: IElementType, withSelf: Boolean = false): PsiElement? {
   return parents(withSelf).find { it.hasType(type) }
 }
 
-internal fun PsiElement.parentOfType(withSelf: Boolean = false, type: TokenSet): PsiElement? {
+internal fun PsiElement.parentOfType(type: TokenSet, withSelf: Boolean = false): PsiElement? {
   return parents(withSelf).find { it.hasType(type) }
 }

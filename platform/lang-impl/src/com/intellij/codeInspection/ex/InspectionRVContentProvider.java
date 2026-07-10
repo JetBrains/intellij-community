@@ -82,7 +82,7 @@ public abstract class InspectionRVContentProvider {
     }
 
     protected @Nullable String getModuleName() {
-      final RefModule refModule = myEntity instanceof RefElement
+      RefModule refModule = myEntity instanceof RefElement
                                   ? ((RefElement)myEntity).getModule()
                                   : myEntity instanceof RefModule ? (RefModule)myEntity : null;
       return refModule != null ? refModule.getName() : null;
@@ -104,7 +104,7 @@ public abstract class InspectionRVContentProvider {
 
     private @Nullable RefEntityContainer<Descriptor> getOwner() {
       if (myEntity == null) return null;
-      final RefEntity entity = myEntity.getOwner();
+      RefEntity entity = myEntity.getOwner();
       return entity instanceof RefElement && !(entity instanceof RefDirectory)
              ? new RefEntityContainer<>(entity, myDescriptors)
              : null;
@@ -118,7 +118,7 @@ public abstract class InspectionRVContentProvider {
   }
 
   public boolean hasQuickFixes(@NotNull AnActionEvent e) {
-    final Object[] selection = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
+    Object[] selection = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
     if (selection == null) return false;
     for (Object selectedNode : selection) {
       if (!TreeUtil.treeNodeTraverser((TreeNode)selectedNode)
@@ -127,8 +127,8 @@ public abstract class InspectionRVContentProvider {
         if (!((InspectionTreeNode) node).isValid()) return true;
         if (node instanceof ProblemDescriptionNode problemDescriptionNode) {
           if (!problemDescriptionNode.isQuickFixAppliedFromView()) {
-            final CommonProblemDescriptor descriptor = problemDescriptionNode.getDescriptor();
-            final QuickFix<?>[] fixes = descriptor != null ? descriptor.getFixes() : null;
+            CommonProblemDescriptor descriptor = problemDescriptionNode.getDescriptor();
+            QuickFix<?>[] fixes = descriptor != null ? descriptor.getFixes() : null;
             return fixes == null || fixes.length == 0;
           }
         }
@@ -167,7 +167,7 @@ public abstract class InspectionRVContentProvider {
           fixAndOccurrences = new FixAndOccurrences(localQuickFixWrapper);
           result.put(familyName, fixAndOccurrences);
         } else {
-          final QuickFixAction quickFixAction = fixAndOccurrences.fix;
+          QuickFixAction quickFixAction = fixAndOccurrences.fix;
           if (quickFixAction instanceof LocalQuickFixesWrapper) {
             ((LocalQuickFixesWrapper)quickFixAction).addFixAction(fix, presentation.getToolWrapper());
           } else {
@@ -237,7 +237,7 @@ public abstract class InspectionRVContentProvider {
   public abstract void appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
                                              @NotNull InspectionToolWrapper wrapper,
                                              @NotNull InspectionTreeNode parentNode,
-                                             final boolean showStructure,
+                                             boolean showStructure,
                                              boolean groupBySeverity,
                                              @NotNull Map<String, Set<RefEntity>> contents,
                                              @NotNull Function<? super RefEntity, CommonProblemDescriptor[]> problems);
@@ -256,7 +256,7 @@ public abstract class InspectionRVContentProvider {
                                @NotNull InspectionToolWrapper toolWrapper,
                                @NotNull Function<? super T, ? extends RefEntityContainer<?>> computeContainer,
                                boolean showStructure,
-                               final InspectionTreeNode parent,
+                               InspectionTreeNode parent,
                                InspectionTreeModel model) {
     MultiMap<String, RefEntityContainer> evaluatedDescriptors = MultiMap.create();
     for (Map.Entry<String, Set<T>> entry : packageContents.entrySet()) {
@@ -313,7 +313,7 @@ public abstract class InspectionRVContentProvider {
             if (familyName.equals(fix.getFamilyName())) {
               // Fixes of different classes with the same family name are joined in LocalQuickFixesWrapper
               isFound = true;
-              final QuickFixAction quickFixAction = result.get(fix.getFamilyName());
+              QuickFixAction quickFixAction = result.get(fix.getFamilyName());
               if (quickFixAction instanceof LocalQuickFixesWrapper) {
                 ((LocalQuickFixesWrapper)quickFixAction).addFixAction(fix, presentation.getToolWrapper());
               } else {
@@ -327,9 +327,9 @@ public abstract class InspectionRVContentProvider {
                 catch (AbstractMethodError e) {
                   fixActionText = LangBundle.message("action.name.not.available.text");
                 }
-                final var commonWrapper = new LocalQuickFixesWrapper(fixActionText,
-                                                                     List.of(((LocalQuickFixWrapper)quickFixAction).getFix(), fix),
-                                                                     presentation.getToolWrapper());
+                LocalQuickFixesWrapper commonWrapper = new LocalQuickFixesWrapper(fixActionText,
+                                                                                        List.of(((LocalQuickFixWrapper)quickFixAction).getFix(), fix),
+                                                                                        presentation.getToolWrapper());
                 result.put(fix.getFamilyName(), commonWrapper);
               }
               break;

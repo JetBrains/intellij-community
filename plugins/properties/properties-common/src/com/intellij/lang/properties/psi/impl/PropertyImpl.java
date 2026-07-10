@@ -14,6 +14,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -410,7 +411,11 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
 
       @Override
       public String getLocationString() {
-        return UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(getProject(), getPropertiesFile().getVirtualFile());
+        PropertiesFile propertiesFile = getPropertiesFile();
+        VirtualFile virtualFile = propertiesFile.getVirtualFile();
+        if (virtualFile == null) return propertiesFile.getName();
+
+        return UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(getProject(), virtualFile);
       }
 
       @Override

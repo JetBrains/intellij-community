@@ -1,8 +1,8 @@
 // "Create Label 'outer'@" "false"
 // ERROR: 'break' and 'continue' are only allowed inside a loop
-// K2_ERROR: Label does not denote a reachable loop.
-// K2_AFTER_ERROR: Label does not denote a reachable loop.
 // WITH_STDLIB
+// K2_AFTER_ERROR: NOT_A_LOOP_LABEL
+// K2_ERROR: NOT_A_LOOP_LABEL
 fun test() {
     val lists = listOf(null, listOf(1))
 

@@ -2,6 +2,14 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
+jps_test(
+    name = "repository-search-completion-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":repository-search-completion-tests_test_lib"],
+)
+### skip generation section `test intellij.repository.search.completion.tests`
+
 ### auto-generated section `build intellij.repository.search.completion` start
 
 jvm_library(
@@ -138,6 +146,14 @@ jvm_library(
         "//plugins/repository-search:repository-search_test_lib",
         "//libraries/assertj-core",
         "//libraries/assertj-core:assertj-core_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/lang-impl",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/util/text-matching",
+        "//platform/util/text-matching:text-matching_test_lib",
     ],
 )
 ### auto-generated section `build intellij.repository.search.completion.tests` end
@@ -150,11 +166,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.repository.search.completion.tests` end
-
-### auto-generated section `test intellij.repository.search.completion.tests` start
-
-jps_test(
-    name = "repository-search-completion-tests_test",
-    runtime_deps = [":repository-search-completion-tests_test_lib"],
-)
-### auto-generated section `test intellij.repository.search.completion.tests` end

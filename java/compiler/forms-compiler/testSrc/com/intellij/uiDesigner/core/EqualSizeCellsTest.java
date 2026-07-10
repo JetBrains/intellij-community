@@ -15,17 +15,20 @@
  */
 package com.intellij.uiDesigner.core;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import java.awt.Dimension;
 import java.awt.Insets;
 
-public final class EqualSizeCellsTest extends TestCase{
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public final class EqualSizeCellsTest {
   /**
    * field1 | field2 | field3
    */ 
+  @Test
   public void test1() {
     final GridLayoutManager layout = new GridLayoutManager(1,3, new Insets(0,0,0,0), 7, 0);
 
@@ -87,6 +90,7 @@ public final class EqualSizeCellsTest extends TestCase{
    * ------
    * field3
    */
+  @Test
   public void test2() {
     final GridLayoutManager layout = new GridLayoutManager(3,1, new Insets(0,0,0,0), 0, 7);
 

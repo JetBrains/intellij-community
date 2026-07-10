@@ -227,6 +227,8 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
   }
 
   override suspend fun processUnfinishedFreeze(consumer: suspend (Path, Int) -> Unit) {
+    LOG.debug("Looking for unfinished freeze dumps in $logDir")
+
     val files = try {
       withContext(Dispatchers.IO) {
         Files.newDirectoryStream(logDir) { it.fileName.toString().startsWith(THREAD_DUMPS_PREFIX) }.use { it.sorted() }
@@ -769,7 +771,7 @@ private suspend fun reportCrashesIfAny() {
       val event = LogMessage(JBRCrash(), message, attachments)
       event.appInfo = Files.readString(appInfoFile)
 
-      IdeaFreezeReporter.report(event)
+      reportToIndicator(event)
       LifecycleUsageTriggerCollector.onCrashDetected()
     }
   }

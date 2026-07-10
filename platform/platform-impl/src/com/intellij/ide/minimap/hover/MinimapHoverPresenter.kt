@@ -7,8 +7,10 @@ import com.intellij.ide.minimap.geometry.MinimapLineGeometryUtil
 import com.intellij.ide.minimap.render.MinimapRenderContext
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.ui.JBColor
+import com.intellij.util.ui.JBUI
 import java.awt.Color
 import java.awt.Graphics2D
+import java.awt.Rectangle
 import kotlin.math.roundToInt
 
 class MinimapHoverPresenter(private val panel: MinimapPanel) {
@@ -40,7 +42,17 @@ class MinimapHoverPresenter(private val panel: MinimapPanel) {
     val context = lastContext ?: return
 
     val lineHeight = computeLineHeight(context)
-    hoverPainter.paint(graphics, target.rect, target.declarationWidth, lineHeight, hoverColor())
+    val leftInset = hoverFrameLeftInset()
+    if (leftInset == 0) {
+      hoverPainter.paint(graphics, target.rect, target.declarationWidth, lineHeight, hoverColor())
+    }
+    else {
+      val rect = Rectangle(target.rect)
+      rect.x += leftInset
+      rect.width = (rect.width - leftInset).coerceAtLeast(1)
+      val declarationWidth = (target.declarationWidth - leftInset).coerceAtLeast(1)
+      hoverPainter.paint(graphics, rect, declarationWidth, lineHeight, hoverColor())
+    }
   }
 
   fun hide() {
@@ -61,5 +73,9 @@ class MinimapHoverPresenter(private val panel: MinimapPanel) {
     val scheme = panel.editor.colorsScheme
     return scheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR)?.foregroundColor
            ?: JBColor.BLUE
+  }
+
+  private fun hoverFrameLeftInset(): Int {
+    return if (panel.settings.state.rightAligned) JBUI.scale(1) else 0
   }
 }

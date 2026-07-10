@@ -71,7 +71,7 @@ public final class PyDescriptorTypeUtil {
         }
         else {
           instanceArgumentType = classType;
-          instanceTypeArgument = noneType;
+          instanceTypeArgument = classType.toClass();
         }
         List<PyType> argumentTypes = List.of(instanceArgumentType, instanceTypeArgument);
         PyType type = PySyntheticCallHelper.getCallTypeByFunctionName(PyNames.DUNDER_GET, receiverType, argumentTypes, context);
@@ -86,7 +86,7 @@ public final class PyDescriptorTypeUtil {
                                                                     @NotNull TypeEvalContext context) {
     PyExpression qualifier = expression.getQualifier();
     PyType objectArgumentType = PyBuiltinCache.getInstance(expression).getNoneType();
-    PyType valueArgumentType = null; // We don't use the actual type of value here as we want to match the overload by object type only
+    PyType valueArgumentType = PyAnyType.getUnknown(); // We don't use the actual type of value here as we want to match the overload by object type only
 
     if (qualifier != null && attributeType instanceof PyCallableType) {
       PyType qualifierType = context.getType(qualifier);

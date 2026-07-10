@@ -4,8 +4,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.command.executeCommand
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
@@ -75,13 +74,13 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
   override fun setSelected(event: AnActionEvent, state: Boolean) {
     val editor = MarkdownActionUtil.findMarkdownEditor(event) ?: return
     val file = event.getData(CommonDataKeys.PSI_FILE) ?: return
-    runWriteAction {
-      executeCommand(file.project, templatePresentation.text) {
+    WriteCommandAction.writeCommandAction(file.project, file)
+      .withName(templatePresentation.text)
+      .run<RuntimeException> {
         editor.caretModel.runForEachCaret(reverseOrder = true) { caret ->
           processCaret(file, editor, caret, state)
         }
       }
-    }
   }
 
   private fun processCaret(file: PsiFile, editor: Editor, caret: Caret, state: Boolean) {

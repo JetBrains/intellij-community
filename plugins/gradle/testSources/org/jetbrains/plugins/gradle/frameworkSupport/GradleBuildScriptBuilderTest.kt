@@ -395,7 +395,7 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
             testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junit5")
         }
         
-        tasks.test {
+        tasks.named<Test>("test") {
             useJUnitPlatform()
         }
       """.trimIndent()),
@@ -538,15 +538,26 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
 
     @Test
     fun `test predefined task configuration`() {
-      assertBuildScript("""
+      assertBuildScript(
+        GradleVersion.version("4.6") to ("""
         |test {
         |    myConfiguration()
         |}
-      """.trimMargin(), """
+      """.trimMargin() to """
+        |tasks.named<Test>("test") {
+        |    myConfiguration()
+        |}
+      """.trimMargin()),
+        GradleVersion.version("5.0") to ("""
+        |test {
+        |    myConfiguration()
+        |}
+      """.trimMargin() to """
         |tasks.test {
         |    myConfiguration()
         |}
-      """.trimMargin()) {
+      """.trimMargin())
+      ) {
         configureTask("test", "Test") {
           call("myConfiguration")
         }

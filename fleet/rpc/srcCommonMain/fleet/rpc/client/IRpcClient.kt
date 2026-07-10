@@ -12,6 +12,7 @@ import fleet.rpc.core.PrefetchStrategy
 import fleet.util.UID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
@@ -20,18 +21,21 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import kotlin.concurrent.Volatile
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.coroutineContext
 
 @ApiStatus.Internal
-data class Call(val route: UID,
-                val service: InstanceId,
-                val signature: RpcSignature,
-                val arguments: List<Any?>) {
-  fun display(): String = "route=$route, $service/${signature.methodName}(${signature.parameters.map { it.parameterName }.joinToString(", ")})"
+data class Call(
+  val route: UID,
+  val service: InstanceId,
+  val signature: RpcSignature,
+  val arguments: List<Any?>
+) {
+  fun display(): String = "route=$route, $service/${signature.methodName}(${signature.parameters.joinToString(", ") { it.parameterName }})"
 }
 
-internal data class RpcStrategyContextElement(val awaitConnection: Boolean = true,
-                                              val prefetchStrategy: PrefetchStrategy = PrefetchStrategy.Default) : CoroutineContext.Element {
+internal data class RpcStrategyContextElement(
+  val awaitConnection: Boolean = true,
+  val prefetchStrategy: PrefetchStrategy = PrefetchStrategy.Default
+) : CoroutineContext.Element {
   companion object : CoroutineContext.Key<RpcStrategyContextElement>
 
   override val key: CoroutineContext.Key<*> get() = RpcStrategyContextElement
@@ -39,7 +43,7 @@ internal data class RpcStrategyContextElement(val awaitConnection: Boolean = tru
 
 @ApiStatus.Internal
 suspend fun <T> withoutAwaitingForReconnect(body: suspend CoroutineScope.() -> T): T {
-  val strategy = coroutineContext[RpcStrategyContextElement]?.copy(awaitConnection = false)
+  val strategy = currentCoroutineContext()[RpcStrategyContextElement]?.copy(awaitConnection = false)
                  ?: RpcStrategyContextElement(awaitConnection = false)
   return withContext(strategy) {
     body()
@@ -48,7 +52,7 @@ suspend fun <T> withoutAwaitingForReconnect(body: suspend CoroutineScope.() -> T
 
 @ApiStatus.Internal
 suspend fun <T> withPrefetchStrategy(prefetchStrategy: PrefetchStrategy, body: suspend CoroutineScope.() -> T): T {
-  val strategy = coroutineContext[RpcStrategyContextElement]?.copy(prefetchStrategy = prefetchStrategy)
+  val strategy = currentCoroutineContext()[RpcStrategyContextElement]?.copy(prefetchStrategy = prefetchStrategy)
                  ?: RpcStrategyContextElement(prefetchStrategy = prefetchStrategy)
   return withContext(strategy) {
     body()
@@ -74,10 +78,12 @@ fun IRpcClient.asHandlerFactory(): InvocationHandlerFactory<ProxyClosure> =
   object : InvocationHandlerFactory<ProxyClosure> {
     override fun handler(arg: ProxyClosure): SuspendInvocationHandler {
       return object : SuspendInvocationHandler {
-        override suspend fun call(remoteApiDescriptor: RemoteApiDescriptor<*>,
-                                  method: String,
-                                  args: List<Any?>,
-                                  publish: (SuspendInvocationHandler.CallResult) -> Unit) {
+        override suspend fun call(
+          remoteApiDescriptor: RemoteApiDescriptor<*>,
+          method: String,
+          args: List<Any?>,
+          publish: (SuspendInvocationHandler.CallResult) -> Unit
+        ) {
           call(
             Call(
               route = arg.route,
@@ -103,7 +109,7 @@ internal fun reconnectingRpcClient(attempts: StateFlow<ConnectionStatus<IRpcClie
     override suspend fun call(call: Call, publish: (SuspendInvocationHandler.CallResult) -> Unit) {
       withTimeoutOrNull(RPC_TIMEOUT) {
         mayHaveCalls = true
-        val awaitConnection = coroutineContext[RpcStrategyContextElement]?.awaitConnection ?: true
+        val awaitConnection = currentCoroutineContext()[RpcStrategyContextElement]?.awaitConnection ?: true
         val client = if (awaitConnection) {
           attempts.mapNotNull { (it as? ConnectionStatus.Connected)?.value }.first { it != disconnectedClient }
         }
@@ -123,7 +129,7 @@ internal fun reconnectingRpcClient(attempts: StateFlow<ConnectionStatus<IRpcClie
           throw x
         }
         Unit
-      } ?: throw RpcTimeoutException("Client did not connect after ${RPC_TIMEOUT}", null)
+      } ?: throw RpcTimeoutException("Client did not connect after $RPC_TIMEOUT", null)
     }
   }
 }

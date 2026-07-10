@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.uast.tests`
+
 ### auto-generated section `build intellij.platform.uast.tests` start
 
 jvm_library(
@@ -21,7 +30,7 @@ jvm_library(
         # do not sort,
         "//uast/uast-common:uast",
         "@lib//:kotlin-stdlib",
-        "@lib//:junit4",
+        "//libraries/junit4",
         "//platform/core-impl",
         "//uast/uast-java-ide:java-uast-ide",
         "//java/java-runtime:rt",
@@ -74,7 +83,8 @@ jvm_library(
         "//uast/uast-common:uast",
         "//uast/uast-common:uast_test_lib",
         "@lib//:kotlin-stdlib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
         "//uast/uast-java-ide:java-uast-ide",
@@ -111,11 +121,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.uast.tests` end
-
-### auto-generated section `test intellij.platform.uast.tests` start
-
-jps_test(
-    name = "tests_test",
-    runtime_deps = [":tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.uast.tests` end

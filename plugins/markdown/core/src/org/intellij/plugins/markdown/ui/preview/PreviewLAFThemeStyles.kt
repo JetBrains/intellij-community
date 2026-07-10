@@ -2,15 +2,16 @@
 package org.intellij.plugins.markdown.ui.preview
 
 import com.intellij.openapi.components.service
-import com.intellij.ui.jcef.JBCefScrollbarsHelper
 import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
 import java.awt.Color
 
-internal object PreviewLAFThemeStyles {
+object PreviewLAFThemeStyles {
   @Suppress("ConstPropertyName", "CssInvalidHtmlTagReference")
   object Variables {
-    const val FontSize = "--default-font-size"
+    const val FontSize: String = "--default-font-size"
   }
+
+  val fontSizeOptions: List<Int> = listOf(8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72)
 
   val defaultFontSize: Int
     get() = service<MarkdownPreviewSettings>().state.fontSize
@@ -29,7 +30,7 @@ internal object PreviewLAFThemeStyles {
 
     val backgroundColor = scheme.backgroundColor.webRgba()
     // language=CSS
-    return """
+    val baseStyles = """
     :root {
       ${Variables.FontSize}: ${scheme.fontSize}px;
     }
@@ -75,9 +76,23 @@ internal object PreviewLAFThemeStyles {
       background-color: ${scheme.fenceBackgroundColor.webRgba(scheme.fenceBackgroundColor.alpha / 255.0)};
     }
     
-    ${JBCefScrollbarsHelper.buildScrollbarsStyle()}
-    
     """.trimIndent()
+
+    val alertStyles = scheme.alertColors.entries.joinToString(separator = "\n\n") { (type, color) ->
+      val rgba = color.webRgba()
+      // language=CSS
+      """
+      blockquote.markdown-alert-$type {
+        border-left-color: $rgba;
+      }
+
+      blockquote.markdown-alert-$type .markdown-alert-title {
+        color: $rgba;
+      }
+      """.trimIndent()
+    }
+
+    return baseStyles + "\n\n" + alertStyles
   }
 
   private fun Color.webRgba(alpha: Double = this.alpha.toDouble()): String {

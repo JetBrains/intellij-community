@@ -29,6 +29,7 @@ jvm_library(
         "//platform/usageView",
         "//fleet/rpc",
         "//fleet/openmap",
+        "//platform/ide-core",
     ],
 )
 
@@ -60,6 +61,7 @@ jvm_library(
         "//platform/usageView:usageView_test_lib",
         "//fleet/rpc:rpc_test_lib",
         "//fleet/openmap:openmap_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.rpc` end

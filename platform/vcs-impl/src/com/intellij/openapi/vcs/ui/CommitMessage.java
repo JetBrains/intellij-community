@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRendererContributor;
@@ -20,6 +21,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.markup.AnalyzerStatus;
@@ -129,6 +132,7 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
     myMessagePlaceholder = messagePlaceholder;
     myEditorField = createCommitMessageEditor(project, runInspections);
     myEditorField.getDocument().putUserData(DATA_KEY, this);
+    restartHighlightingOnEdit(project, myEditorField.getDocument());
     myEditorField.setPlaceholder(myMessagePlaceholder);
     myEditorField.setShowPlaceholderWhenFocused(true);
     myEditorField.getAccessibleContext().setAccessibleName(VcsBundle.message("commit.message.editor.accessible.name"));
@@ -180,6 +184,20 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
       Editor editor = myEditorField.getEditor();
       if (editor instanceof EditorEx) RightMarginCustomization.customize(project, (EditorEx)editor);
     });
+  }
+
+  // Plain-text commit editor: the daemon's typing optimization skips re-highlighting on in-line edits, so annotator
+  // checks (which can't opt into runForWholeFile like inspections) go stale. Force a full pass per edit. See IJPL-245329.
+  private void restartHighlightingOnEdit(@NotNull Project project, @NotNull Document document) {
+    document.addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(@NotNull DocumentEvent event) {
+        PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+        if (psiFile != null) {
+          DaemonCodeAnalyzer.getInstance(project).restart(psiFile, this);
+        }
+      }
+    }, this);
   }
 
   @Override

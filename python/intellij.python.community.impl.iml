@@ -193,7 +193,7 @@
     <orderEntry type="module" module-name="intellij.python.sdkConfigurator.common" />
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry.common" />
     <orderEntry type="module" module-name="intellij.python.uv.common" />
-    <orderEntry type="module" module-name="intellij.python.common" />
+    <orderEntry type="module" module-name="intellij.python.community.common" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" />
     <orderEntry type="module" module-name="intellij.python.processOutput.common" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.rpc" />
@@ -208,5 +208,6 @@
     <orderEntry type="module" module-name="intellij.python.uv.backend" />
     <orderEntry type="module" module-name="intellij.platform.testIntegration" />
     <orderEntry type="module" module-name="intellij.platform.testIntegration.ui" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.poetry.backend" />
   </component>
 </module>

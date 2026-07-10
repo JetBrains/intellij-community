@@ -54,6 +54,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.notebooks.jupyter.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.notebooks.visualization" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.notebooks.visualization" />
 </module>

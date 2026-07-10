@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nls
 interface StreamTracer {
   sealed class Result {
     data class Evaluated(val result: TracingResult, val evaluationContext: GenericEvaluationContext) : Result()
-    data class EvaluationFailed(val traceExpression: String, val message: @Nls String) : Result()
+    data class EvaluationFailed(val traceExpression: String, val message: @Nls String, val cause: Throwable? = null) : Result()
     data class CompilationFailed(val traceExpression: String, val message: @Nls String) : Result()
     object Unknown : Result()
   }

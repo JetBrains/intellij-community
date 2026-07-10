@@ -339,10 +339,14 @@ index 16f29de..6226427 100644
  def _stable_artifact(artifact):
      parsed = json.decode(artifact)
  
-@@ -421,16 +408,13 @@ def get_netrc_lines_from_entries(netrc_entries):
+@@ -421,16 +408,17 @@ def get_netrc_lines_from_entries(netrc_entries):
      return netrc_lines
  
  def get_home_netrc_contents(repository_ctx):
++    netrc_env = repository_ctx.os.environ.get("NETRC")
++    if netrc_env and _path_exists(repository_ctx, netrc_env):
++        return repository_ctx.read(netrc_env)
++
 -    if repository_ctx.os.name.startswith("windows"):
 -        home_dir = repository_ctx.os.environ.get("USERPROFILE", "")
 -    else:

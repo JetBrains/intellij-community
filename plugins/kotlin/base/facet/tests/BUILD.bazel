@@ -122,6 +122,8 @@ jvm_library(
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//plugins/kotlin/project-configuration",
         "//plugins/kotlin/project-configuration:project-configuration_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.facet.tests` end

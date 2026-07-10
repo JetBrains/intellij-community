@@ -120,6 +120,51 @@ def _convert_rules_to_exclude_filters(rules, on_error):
     return exclude_filters
 
 
+def _parse_break_on_system_exit(args):
+    """Parse the ``breakOnSystemExit`` launch/attach argument.
+
+    :returns:
+        ``(codes_set, ranges_list)`` when the setting is present and valid,
+        or ``None`` when it is absent or completely invalid.
+    """
+    break_on_system_exit = args.get("breakOnSystemExit", None)
+    if break_on_system_exit is None:
+        return None
+
+    if not isinstance(break_on_system_exit, (list, tuple)):
+        pydev_log.info("Expected breakOnSystemExit to be a list. Received: %s" % (break_on_system_exit,))
+        return None
+
+    codes = set()
+    ranges = []
+    for item in break_on_system_exit:
+        if item is None:
+            codes.add(None)
+        elif isinstance(item, int):
+            codes.add(item)
+        elif isinstance(item, dict):
+            range_from = item.get("from", 0)
+            range_to = item.get("to", 0)
+            if not isinstance(range_from, int) or not isinstance(range_to, int):
+                pydev_log.info(
+                    "Expected 'from' and 'to' in breakOnSystemExit range to be integers. "
+                    "Received: from=%s, to=%s" % (range_from, range_to)
+                )
+                continue
+            if range_from > range_to:
+                pydev_log.info(
+                    "breakOnSystemExit range has 'from' > 'to' (matches nothing): "
+                    "from=%s, to=%s" % (range_from, range_to)
+                )
+            ranges.append((range_from, range_to))
+        else:
+            pydev_log.info(
+                "Unexpected item type in breakOnSystemExit (expected int, None, or dict): %s" % (item,)
+            )
+
+    return (codes, ranges)
+
+
 class IDMap(object):
     def __init__(self):
         self._value_to_key = {}
@@ -350,6 +395,10 @@ class PyDevJsonCommandProcessor(object):
         stepping_resumes_all_threads = args.get("steppingResumesAllThreads", True)
         self.api.set_stepping_resumes_all_threads(py_db, stepping_resumes_all_threads)
 
+        stop_all_threads_on_suspend = args.get("stopAllThreadsOnSuspend")
+        if stop_all_threads_on_suspend is not None:
+            py_db.multi_threads_single_notification = stop_all_threads_on_suspend
+
         terminate_child_processes = args.get("terminateChildProcesses", True)
         self.api.set_terminate_child_processes(py_db, terminate_child_processes)
 
@@ -430,7 +479,11 @@ class PyDevJsonCommandProcessor(object):
 
         self.api.set_show_return_values(py_db, self._options.show_return_value)
 
-        if not self._options.break_system_exit_zero:
+        parsed = _parse_break_on_system_exit(args)
+        if parsed is not None:
+            codes, ranges = parsed
+            self.api.set_break_on_system_exit(py_db, codes, ranges)
+        elif not self._options.break_system_exit_zero:
             ignore_system_exit_codes = [0, None]
             if self._options.django_debug or self._options.flask_debug:
                 ignore_system_exit_codes += [3]
@@ -556,6 +609,16 @@ class PyDevJsonCommandProcessor(object):
         """
         arguments = request.arguments  # : :type arguments: ContinueArguments
         thread_id = arguments.threadId
+
+        # Per the DAP spec, the continue request resumes execution of all threads
+        # unless singleThread is explicitly true (and the capability
+        # supportsSingleThreadExecutionRequests is advertised). Only use the
+        # specific threadId when singleThread is set; otherwise resume all.
+        # Use getattr with a default of False since most DAP clients omit this
+        # optional field entirely.
+        single_thread = getattr(arguments, "singleThread", False)
+        if not single_thread or py_db.multi_threads_single_notification:
+            thread_id = "*"
 
         def on_resumed():
             body = {"allThreadsContinued": thread_id == "*"}
@@ -869,7 +932,7 @@ class PyDevJsonCommandProcessor(object):
                 if py_db.get_use_libraries_filter():
                     error_msg += (
                         '\nNote: may be excluded because of "justMyCode" option (default == true).'
-                        'Try setting "justMyCode": false in the debug configuration (e.g., launch.json).\n'
+                        'Try setting "justMyCode": false in the debug configuration.\n'
                     )
 
             elif error_code == self.api.ADD_BREAKPOINT_LAZY_VALIDATION:
@@ -903,7 +966,29 @@ class PyDevJsonCommandProcessor(object):
         expression = None
         notify_on_first_raise_only = False
 
-        ignore_libraries = 1 if py_db.get_use_libraries_filter() else 0
+        # JetBrains extension: per-breakpoint "Ignore library files" toggle (PY-35844).
+        # IntelliJ encodes the flag as a `:ignoreLibraries` suffix on a filter id
+        # (e.g. "raised:ignoreLibraries"), since the standard DAP
+        # `setExceptionBreakpoints` request has no field for it.
+        _IGNORE_LIBS_SUFFIX = ":ignoreLibraries"
+
+        def _strip_pydev_suffix(filter_id):
+            if filter_id and filter_id.endswith(_IGNORE_LIBS_SUFFIX):
+                return filter_id[: -len(_IGNORE_LIBS_SUFFIX)], True
+            return filter_id, False
+
+        session_ignore_libraries = 1 if py_db.get_use_libraries_filter() else 0
+        ignore_libraries = session_ignore_libraries
+        if filters:
+            stripped = []
+            any_ignore = False
+            for f in filters:
+                base, has_flag = _strip_pydev_suffix(f)
+                stripped.append(base)
+                any_ignore = any_ignore or has_flag
+            filters = stripped
+            if any_ignore:
+                ignore_libraries = 1
 
         if exception_options:
             break_raised = False
@@ -993,6 +1078,16 @@ class PyDevJsonCommandProcessor(object):
         set_breakpoints_response = pydevd_base_schema.build_response(request)
         return NetCommand(CMD_RETURN, 0, set_breakpoints_response, is_json=True)
 
+    def _update_exception_breakpoints_ignore_libraries(self, py_db):
+        ignore_libraries = 1 if py_db.get_use_libraries_filter() else 0
+        for exception_breakpoints in (
+            py_db.break_on_uncaught_exceptions,
+            py_db.break_on_caught_exceptions,
+            py_db.break_on_user_uncaught_exceptions,
+        ):
+            for exception_breakpoint in exception_breakpoints.values():
+                exception_breakpoint.ignore_libraries = ignore_libraries
+
     def on_stacktrace_request(self, py_db, request):
         """
         :param StackTraceRequest request:
@@ -1047,10 +1142,17 @@ class PyDevJsonCommandProcessor(object):
         frame_id = request.arguments.frameId
 
         variables_reference = frame_id
-        scopes = [
-            Scope("Locals", ScopeRequest(int(variables_reference), "locals"), False, presentationHint="locals"),
-            Scope("Globals", ScopeRequest(int(variables_reference), "globals"), False),
-        ]
+        try:
+            scopes = [
+                Scope("Locals", ScopeRequest(int(variables_reference), "locals"), False, presentationHint="locals"),
+                Scope("Globals", ScopeRequest(int(variables_reference), "globals"), False),
+            ]
+        except (ValueError, TypeError):
+            pydev_log.info("Failed to create scopes for frame id: %s", frame_id)
+            scopes = []
+        except Exception:
+            pydev_log.exception("Failed to create scopes for frame id: %s", frame_id)
+            scopes = []
         body = ScopesResponseBody(scopes)
         scopes_response = pydevd_base_schema.build_response(request, kwargs={"body": body})
         return NetCommand(CMD_RETURN, 0, scopes_response, is_json=True)
@@ -1264,8 +1366,11 @@ class PyDevJsonCommandProcessor(object):
         if args.multiThreadsSingleNotification is not None:
             py_db.multi_threads_single_notification = args.multiThreadsSingleNotification
 
+        if args.justMyCode is not None:
+            self.api.set_use_libraries_filter(py_db, args.justMyCode)
+            self._update_exception_breakpoints_ignore_libraries(py_db)
+
         # TODO: Support other common settings. Note that not all of these might be relevant to python.
-        # JustMyCodeStepping: 0 or 1
         # AllowOutOfProcessSymbols: 0 or 1
         # DisableJITOptimization: 0 or 1
         # InterpreterOptions: 0 or 1

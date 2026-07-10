@@ -1,12 +1,11 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="org.intellij.plugins.markdown"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.markdown"/>
     <module name="intellij.notebooks.jupyter.core"/>
     <module name="intellij.notebooks.ui"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.editor.notebookEditorAppearanceProvider"

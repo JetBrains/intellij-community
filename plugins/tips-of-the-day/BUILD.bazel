@@ -1,0 +1,111 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.tips` start
+
+jvm_library(
+    name = "tips",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.tips",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:tips-tips-idea-ce",
+        "@lib//:tips-tips-idea",
+        "@lib//:tips-tips-goland",
+        "@lib//:tips-tips-clion",
+        "@lib//:tips-tips-appcode",
+        "@lib//:tips-tips-phpstorm",
+        "@lib//:tips-tips-webstorm",
+        "@lib//:tips-tips-datagrip",
+        "@lib//:tips-tips-database-plugin",
+        "@lib//:tips-tips-big-data-tools",
+        "@lib//:tips-tips-rubymine",
+        "@lib//:tips-tips-pycharm-community",
+        "@lib//:tips-tips-pycharm-pro",
+    ],
+    deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-impl:ide-impl",
+        "//platform/util-ex",
+        "//platform/projectModel-api:projectModel",
+        "//platform/statistics",
+        "//platform/analysis-impl",
+        "//platform/core-ui",
+        "//platform/util:util-ui",
+        "//libraries/jsoup",
+        "//libraries/fastutil",
+        "//libraries/jackson/jackson",
+        "//libraries/jackson/databind",
+        "//platform/ide-core-impl",
+        "//platform/ide-core",
+        "//platform/progress/shared:ide-progress",
+        "//platform/core-impl",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//platform/feedback",
+        "//platform/util/concurrency",
+    ],
+)
+
+jvm_library(
+    name = "tips_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.tips",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":tips",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//libraries/jsoup:jsoup_test_lib",
+        "//libraries/fastutil:fastutil_test_lib",
+        "//libraries/jackson/jackson:jackson_test_lib",
+        "//libraries/jackson/databind:databind_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/progress/shared:ide-progress_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//platform/feedback:feedback_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+    ],
+)
+### auto-generated section `build intellij.tips` end
+
+### auto-generated section `iml intellij.tips` start
+exports_files(
+    [
+        "intellij.tips.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.tips` end

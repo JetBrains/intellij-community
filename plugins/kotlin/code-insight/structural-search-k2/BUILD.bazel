@@ -32,6 +32,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/references",
         "@lib//:kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-analysis-api",
         "//libraries/guava",
@@ -69,6 +70,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-codeInsight-structuralSearch",
+        "//plugins/kotlin/references:references_test_lib",
         "//libraries/guava:guava_test_lib",
         "//platform/duplicates-analysis:duplicates-analysis_test_lib",
         "//platform/analysis-api:analysis_test_lib",

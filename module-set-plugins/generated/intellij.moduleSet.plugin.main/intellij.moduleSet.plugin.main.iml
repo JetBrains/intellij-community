@@ -3,6 +3,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.plugin" scope="RUNTIME" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.grid" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.grid.core.impl" scope="RUNTIME" />
@@ -11,13 +12,13 @@
     <orderEntry type="module" module-name="intellij.grid.impl.ide" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.grid.types" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.grid.core.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.recentFiles.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.serviceView.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.structuralSearch.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.todo.plugin" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.vcs.frontend.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.clouds" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.dashboard" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.dashboard.backend" scope="RUNTIME" />
@@ -39,6 +40,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.lang.todo" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.navbar.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.bookmarks.plugin" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.problemView.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.tasks.plugin" scope="RUNTIME" />
   </component>
 </module>

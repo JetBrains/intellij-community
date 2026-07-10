@@ -28,6 +28,7 @@ jvm_library(
         "//platform/ide-core-impl",
         "//platform/ide-core",
         "//libraries/kotlin/reflect",
+        "//plugins/kotlin/references",
         "@lib//:kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-jps-common",
         "@lib//:kotlinc-analysis-api",
@@ -66,7 +67,7 @@ jvm_library(
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/project-structure",
         "//plugins/kotlin/project-configuration",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
         "//plugins/kotlin/base/compiler-configuration",
     ],
 )
@@ -90,6 +91,7 @@ jvm_library(
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//libraries/kotlin/reflect:reflect_test_lib",
+        "//plugins/kotlin/references:references_test_lib",
         "//libraries/guava:guava_test_lib",
         "//platform/indexing-api:indexing_test_lib",
         "//jps/model-api:model_test_lib",
@@ -124,7 +126,7 @@ jvm_library(
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//plugins/kotlin/base/project-structure:project-structure_test_lib",
         "//plugins/kotlin/project-configuration:project-configuration_test_lib",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",
         "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
     ],
 )

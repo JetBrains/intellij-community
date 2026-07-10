@@ -15,8 +15,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * GHP, which throws as soon as it found an error in the file
- * used by Wolf to find any diagnostic in the file, and stop
+ * GHP, which throws as soon as it found an error in the file.
+ * It's used by Wolf to find any diagnostic in the file, and stop as soon as possible.
  */
 @ApiStatus.Internal
 final class NauseousGeneralHighlightingPass extends GeneralHighlightingPass {

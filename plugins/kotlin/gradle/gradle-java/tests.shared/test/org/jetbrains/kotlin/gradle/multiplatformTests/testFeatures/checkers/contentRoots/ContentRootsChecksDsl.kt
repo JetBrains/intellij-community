@@ -13,6 +13,10 @@ interface ContentRootsChecksDsl {
         get() = config.hideResourceRoots
         set(value) { config.hideResourceRoots = value }
 
+    var TestConfigurationDslScope.hideGeneratedRoots: Boolean
+        get() = config.hideGeneratedRoots
+        set(value) { config.hideGeneratedRoots = value }
+
     // Add more if necessary, see `PrinterRootType`
 }
 

@@ -73,6 +73,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.compose" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.preferences" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration.vcs" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerReferenceIndex" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.jvm" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.scripting" scope="RUNTIME" />
@@ -100,7 +101,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.refactorings.rename" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.refactorings" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.refactorings.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings.base" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.searching" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.searching.base" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support.bundled" scope="RUNTIME" />

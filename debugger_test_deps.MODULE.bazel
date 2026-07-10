@@ -3,6 +3,6 @@ http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_
 http_file(
     name = "debugger_test_deps_debugger_agent",
     downloaded_file_path = "debugger-agent.jar",
-    sha256 = "c9c6cc7db33c4599bbbb9fd77dd5df4254d0bf3a2f5fb114d495c3f011fc3229",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.187/debugger-agent-1.187.jar",
+    sha256 = "37f0ebd285fad3e02b9f3000cf7088c96b3141121dadd6a205c78307f48073ca",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.191/debugger-agent-1.191.jar",
 )

@@ -37,6 +37,7 @@ import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
+import com.intellij.facet.FacetRootsProvider;
 import com.intellij.find.FindManager;
 import com.intellij.find.actions.SearchTarget2UsageTarget;
 import com.intellij.find.findUsages.FindUsagesHandler;
@@ -1145,7 +1146,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public @NotNull Collection<UsageInfo> testFindUsages(String @NotNull ... fileNames) {
+  public @NotNull @Unmodifiable Collection<UsageInfo> testFindUsages(String @NotNull ... fileNames) {
     assertInitialized();
     if (fileNames.length > 0) {
       configureByFiles(fileNames);
@@ -1535,6 +1536,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
       ModuleRootManager.getInstance(module).orderEntries().getAllLibrariesAndSdkClassesRoots(); // instantiate all VFPs
+      // Facets may create virtual file pointers lazily on first root access (e.g. WebRoot/ConfigFile pointers).
+      // Materialize them now so they belong to the tracker baseline instead of being reported as leaks: facets of
+      // a reused light project are not disposed per-test (see LightPlatformTestCase project reuse).
+      for (Facet<?> facet : FacetManager.getInstance(module).getAllFacets()) {
+        if (facet instanceof FacetRootsProvider) {
+          ((FacetRootsProvider)facet).getFacetRoots();
+        }
+      }
     }
     if (shouldTrackVirtualFilePointers()) {
       myVirtualFilePointerTracker = new VirtualFilePointerTracker();

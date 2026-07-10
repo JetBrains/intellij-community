@@ -359,6 +359,11 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
     doTest();
   }
 
+  // PEP 798: unpacking (* and **) in comprehensions and generator expressions
+  public void testUnpackingInComprehensions() {
+    doTest();
+  }
+
   public void testAlignInGenerators() {  // PY-8822
     doTest();
   }

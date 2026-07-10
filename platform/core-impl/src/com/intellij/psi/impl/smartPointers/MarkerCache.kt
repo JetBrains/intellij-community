@@ -272,7 +272,8 @@ internal class MarkerCache(
         true,
         event.initialStartOffset,
         event.initialOldLength,
-        event.moveOffset
+        event.moveOffset,
+        event.document.textLength,
       )
     }
 
@@ -286,7 +287,8 @@ internal class MarkerCache(
         event.isWholeTextReplaced,
         event.initialStartOffset,
         event.initialOldLength,
-        event.moveOffset
+        event.moveOffset,
+        frozen.textLength,
       )
     }
   }

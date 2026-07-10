@@ -2,8 +2,11 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>
-    <module name="intellij.searchEverywhereMl.ranking.ext"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.vcs.log.impl"/>
     <module name="intellij.searchEverywhereMl.ranking.core"/>
+    <module name="intellij.searchEverywhereMl.ranking.ext"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.searchEverywhereMl">

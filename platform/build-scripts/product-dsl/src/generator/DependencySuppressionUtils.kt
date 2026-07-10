@@ -7,6 +7,14 @@ import com.intellij.platform.pluginGraph.PluginId
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionType
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
 
+/**
+ * Descriptor modules ending with `.tests` preserve already written dependencies.
+ * They are different from `*._test` test descriptor modules, whose dependencies are generated from TEST-scope JPS deps.
+ */
+internal fun isPreservedTestsDescriptorModule(moduleName: ContentModuleName): Boolean {
+  return moduleName.value.endsWith(".tests")
+}
+
 internal fun collectModuleDepsWithSuppressions(
   contentModuleName: ContentModuleName,
   dependencies: Iterable<ContentModuleName>,

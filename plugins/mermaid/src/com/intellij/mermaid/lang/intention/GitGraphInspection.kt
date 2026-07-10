@@ -266,7 +266,7 @@ class GitGraphInspection : LocalInspectionTool() {
           result.add(
             manager.createProblemDescriptor(
               cherryPickStatement,
-              MermaidBundle.message("git.graph.inspection.source.commit.is.already.on.current.branch"),
+              MermaidBundle.message("git.graph.inspection.source.commit.is.already.in.current.branch"),
               isOnTheFly,
               emptyArray(),
               ProblemHighlightType.ERROR

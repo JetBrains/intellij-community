@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.CommonBundle;
@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.RMTreeReference;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
@@ -93,6 +94,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.Action;
 import javax.swing.JComponent;
@@ -162,7 +164,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        DocumentImpl.processQueue();
+        RMTreeReference.processQueue();
       }
     });
   }
@@ -387,11 +389,14 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
   private void doSaveDocument(@NotNull Document document, boolean isExplicit) throws IOException, SaveVetoException {
     VirtualFile file = getFile(document);
-    if (LOG.isTraceEnabled()) LOG.trace("saving: " + file);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("saving: " + file);
+    }
 
-    if (file == null ||
-        !isTrackable(file) ||
-        file.isValid() && !isFileModified(file)) {
+    if (file == null || !isTrackable(file) || file.isValid() && !isFileModified(file)) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("doSaveDocument: removing from unsaved without saving: file:"+file+"; isTrackable:"+(file==null?"-":isTrackable(file))+"; isValid:"+(file==null?"-":file.isValid())+"; isFileModified:"+(file==null?"-":isFileModified(file)));
+      }
       removeFromUnsaved(document);
       return;
     }
@@ -418,13 +423,17 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
   private boolean maySaveDocument(@NotNull VirtualFile file, @NotNull Document document, boolean isExplicit) {
     if (myConflictResolver.hasConflict(file)) {
-      if (LOG.isTraceEnabled()) LOG.trace("maySaveDocument: save for " + file + " is vetoed by conflict resolver");
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("maySaveDocument: save for " + file + " is vetoed by conflict resolver");
+      }
       return false;
     }
 
     for (FileDocumentSynchronizationVetoer vetoer : FileDocumentSynchronizationVetoer.EP_NAME.getExtensionList()) {
       if (!vetoer.maySaveDocument(document, isExplicit)) {
-        if (LOG.isTraceEnabled()) LOG.trace("maySaveDocument: save for " + file + " is vetoed by " + vetoer);
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("maySaveDocument: save for " + file + " is vetoed by " + vetoer);
+        }
         return false;
       }
     }
@@ -466,8 +475,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     }
 
     PomModelImpl.guardPsiModificationsIn(() -> {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListenerBackgroundable.TOPIC)
-        .beforeDocumentSaving(document);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListenerBackgroundable.TOPIC).beforeDocumentSaving(document);
       LOG.assertTrue(file.isValid());
 
       String text = document.getText();
@@ -510,8 +518,10 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     LOG.assertTrue(!myUnsavedDocuments.contains(document));
   }
 
-  private static boolean isSaveNeeded(@NotNull Document document, @NotNull VirtualFile file) throws IOException {
-    if (document.getUserData(FORCE_SAVE_DOCUMENT_KEY)== Boolean.TRUE) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static boolean isSaveNeeded(@NotNull Document document, @NotNull VirtualFile file) throws IOException {
+    if (document.getUserData(FORCE_SAVE_DOCUMENT_KEY) == Boolean.TRUE) {
       return true;
     }
 
@@ -735,7 +745,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     private void prepareForRangeMarkerUpdate(@NotNull Map<? super VirtualFile, ? super Document> strongRefsToDocuments,
                                              @NotNull VirtualFile virtualFile) {
       Document document = myFileDocumentManager.getCachedDocument(virtualFile);
-      if (document == null && DocumentImpl.areRangeMarkersRetainedFor(virtualFile)) {
+      if (document == null && RMTreeReference.areRangeMarkersRetainedFor(virtualFile)) {
         // re-create document with the old contents prior to this event
         // then contentChanged() will diff the document with the new contents and update the markers
         document = myFileDocumentManager.getDocument(virtualFile);
@@ -918,8 +928,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       bridge.myTrailingSpacesStripper.documentDeleted(doc);
       unbindFileFromDocument(virtualFile, doc);
       if (doc instanceof DocumentImpl docImpl) {
-        docImpl.incrementModificationSequence(); // make clients listening for the document change notice this event
-        docImpl.setModificationStamp(LocalTimeCounter.currentTime());
+        docImpl.setModificationStamp(LocalTimeCounter.currentTime(), true); // make clients listening for the document change notice this event
       }
     }
   }

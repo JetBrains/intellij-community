@@ -24,8 +24,10 @@ data class FixedWidthSoftWrapBuilder(
     foldsMeasurer: (Fold) -> Float,
     lastLine: Boolean,
     targetWidth: Float,
+    scale: Float,
   ): List<LineData> {
     val lines = ArrayList<LineData>()
+    val scaledCharWidth = charWidth * scale
     val inlayWidths = getLineInlays(inlays, buildRange, lastLine, foldRanges.asSequence())
       .map { inlay ->
         inlay.inlayOffset to inlayMeasurer(inlay.data)
@@ -38,7 +40,7 @@ data class FixedWidthSoftWrapBuilder(
     var lineOffset = buildRange.start
     val visualIndent = text.subSequence(buildRange.start.toInt(), buildRange.end.toInt())
       .takeWhile { it == ' ' || it == '\t' }
-      .sumOf { charGeomLength(it).toDouble() * charWidth }.toFloat().takeIf { it < width } ?: 0F
+      .sumOf { charGeomLength(it).toDouble() * scaledCharWidth }.toFloat().takeIf { it < width } ?: 0F
     var offset = buildRange.start
     var lastBreakOpportunity = -1L
     var breakWidth = 0F
@@ -64,7 +66,7 @@ data class FixedWidthSoftWrapBuilder(
         lineWidth += inlayWidths[inlayIndex].second
         inlayIndex++
       }
-      val charSize = charGeomLength(codepoint) * charWidth
+      val charSize = charGeomLength(codepoint) * scaledCharWidth
       if (lineWidth + charSize >= targetWidth) {
         val (breakPoint, appliedBreakWidth) = when {
           lineWidth + charSize - targetWidth > targetWidth - lineWidth -> offset to breakWidth

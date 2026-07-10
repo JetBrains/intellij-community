@@ -63,6 +63,7 @@ internal suspend fun buildPluginsForDevMode(
 ): PluginsLayoutResult {
   val plugins = devModePluginCandidates(request, context)
   val descriptors = buildPluginDescriptorsForDevMode(
+    os = request.os,
     plugins = plugins,
     context = context,
     runDir = runDir,
@@ -89,6 +90,7 @@ internal suspend fun layoutAllPluginsForDevMode(
 ): List<PluginBuildDescriptor> {
   val plugins = devModePluginCandidates(request, context)
   return buildPluginDescriptorsForDevMode(
+    os = request.os,
     plugins = plugins,
     context = context,
     runDir = runDir,
@@ -100,6 +102,7 @@ internal suspend fun layoutAllPluginsForDevMode(
 }
 
 private suspend fun buildPluginDescriptorsForDevMode(
+  os: OsFamily,
   plugins: List<PluginLayout>,
   context: BuildContext,
   runDir: Path,
@@ -116,7 +119,7 @@ private suspend fun buildPluginDescriptorsForDevMode(
   val platform = platformLayout.await()
   val spanName = if (layoutOnly) "lay out plugins" else "build plugins"
   return spanBuilder(spanName).setAttribute(AttributeKey.longKey("count"), plugins.size.toLong()).use {
-    val targetPlatform = SupportedDistribution(os = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch, libcImpl = LibcImpl.current(OsFamily.currentOs))
+    val targetPlatform = SupportedDistribution(os = os, arch = JvmArchitecture.currentJvmArch, libcImpl = LibcImpl.current(os))
     buildPlugins(
       plugins = plugins,
       os = null,
@@ -165,10 +168,10 @@ internal suspend fun scrambleAlreadyLaidOutPluginsForDevMode(
 private fun devModePluginCandidates(request: BuildRequest, context: BuildContext): List<PluginLayout> {
   val bundledMainModuleNames = getBundledMainModuleNames(context, request.additionalModules)
   return getPluginLayoutsByJpsModuleNames(bundledMainModuleNames, context.productProperties.productLayout)
-    .filter { isPluginApplicable(bundledMainModuleNames = bundledMainModuleNames, plugin = it, context = context) }
+    .filter { isPluginApplicable(bundledMainModuleNames = bundledMainModuleNames, plugin = it, os = request.os, context = context) }
 }
 
-private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: PluginLayout, context: BuildContext): Boolean {
+private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: PluginLayout, os: OsFamily, context: BuildContext): Boolean {
   if (!bundledMainModuleNames.contains(plugin.mainModule)) {
     return false
   }
@@ -177,7 +180,7 @@ private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: Plug
     return true
   }
 
-  return satisfiesBundlingRequirements(plugin = plugin, osFamily = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch, context = context) ||
+  return satisfiesBundlingRequirements(plugin = plugin, osFamily = os, arch = JvmArchitecture.currentJvmArch, context = context) ||
          satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = JvmArchitecture.currentJvmArch, context = context)
 }
 

@@ -8,6 +8,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.JreHiDpiUtil
+import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
@@ -30,6 +31,7 @@ import java.awt.Graphics2D
 import java.awt.GraphicsConfiguration
 import java.awt.Image
 import java.awt.Shape
+import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
 import java.net.URL
@@ -83,7 +85,6 @@ open class CachedImageIcon private constructor(
 ) : CopyableIcon, ScalableIcon, DarkIconProvider, IconPathProvider, IconWithToolTip, IconWithShape {
   private var pathTransformModCount = -1
   private var loaderModCount = -1
-  private var shape: Shape? = null
 
   override val originalPath: String?
     get() = originalLoader.path
@@ -226,17 +227,7 @@ open class CachedImageIcon private constructor(
   }
 
   override fun getShape(): Shape? {
-    var result = this.shape
-    if (result != null) return result
-    val svg = loader.loadSvgDocument(getLoadIconParameters(getEffectiveAttributes()), getEffectiveScaleContext())
-    if (svg == null) return null
-    result = computeShape(svg)
-    this.shape = result
-    return result
-  }
-
-  private fun getEffectiveScaleContext(): ScaleContext {
-    return scaleContext ?: ScaleContext.create(ScaleType.SYS_SCALE.of(JBUIScale.sysScale()))
+    return (resolveActualIcon() as? IconWithShape)?.getShape()
   }
 
   override fun toString(): String {
@@ -309,7 +300,6 @@ open class CachedImageIcon private constructor(
     )
     result.pathTransformModCount = pathTransformModCount
     result.loaderModCount = loaderModCount
-    result.shape = shape
     return result
   }
 
@@ -378,7 +368,7 @@ open class CachedImageIcon private constructor(
       this.loader.url
     }
 
-  internal fun loadImage(scaleContext: ScaleContext, attributes: IconAttributes): Image? {
+  internal fun loadImage(scaleContext: ScaleContext, attributes: IconAttributes): ImageWithShape<Image>? {
     val start = StartUpMeasurer.getCurrentTimeIfEnabled()
     val loader = loader
     if (loader is EmptyImageDataLoader) return null
@@ -388,7 +378,9 @@ open class CachedImageIcon private constructor(
     if (start != -1L) {
       IconLoadMeasurer.findIconLoad.end(start)
     }
-    return image
+    if (image == null) return null
+    // The shape is in the user-space, so SYS_SCALE isn't used here, only the user scale and the object scale.
+    return ImageWithShape(image.image, image.shape?.scale(scaleContext.getScale(DerivedScaleType.EFF_USR_SCALE).toFloat()))
   }
 
   private fun getLoadIconParameters(attributes: IconAttributes): LoadIconParameters =
@@ -417,10 +409,12 @@ open class CachedImageIcon private constructor(
     }
   }
 
-  fun encodeToByteArray(): ByteArray {
+  fun encodeToByteArray(): ByteArray? {
     var descriptor = originalLoader.serializeToByteArray()
     if (descriptor == null) {
-      descriptor = UrlDataLoaderDescriptor(url!!.toExternalForm())
+      // The loader has neither a serializable descriptor nor a URL (e.g. a synthetic icon or a detached class loader),
+      // so there is nothing to persist.
+      descriptor = UrlDataLoaderDescriptor((url ?: return null).toExternalForm())
     }
     return ProtoBuf.encodeToByteArray(descriptor)
   }
@@ -533,4 +527,10 @@ private fun computeGraphicsScale(g: Graphics, gc: GraphicsConfiguration?): Doubl
   val graphicsScale = getTransformScaleX(transform) / defaultScale
   if (abs(graphicsScale - 1.0) < 0.001) return null
   return graphicsScale
+}
+
+private fun Shape.scale(scale: Float): Shape {
+  val transform = AffineTransform()
+  transform.scale(scale.toDouble(), scale.toDouble())
+  return transform.createTransformedShape(this)
 }

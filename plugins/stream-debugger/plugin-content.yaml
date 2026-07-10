@@ -1,6 +1,9 @@
 - name: lib/debugger-streams-plugin.jar
   modules:
   - name: intellij.debugger.streams.plugin
+- name: lib/intellij.debugger.streams.java.rt.jar
+  contentModules:
+  - name: intellij.debugger.streams.java.rt
 - name: lib/modules/intellij.debugger.streams.backend.jar
   contentModules:
   - name: intellij.debugger.streams.backend

@@ -1,5 +1,5 @@
-// K2_ERROR: This annotation is not applicable to target 'typealias'. Applicable targets: class, annotation class, property, field, local variable, value parameter, constructor, function, getter, setter, backing field
 // K2_AFTER_ERROR:
+// K2_ERROR: WRONG_ANNOTATION_TARGET
 @RequiresOptIn
 annotation class ReqOptinAnnotation
 

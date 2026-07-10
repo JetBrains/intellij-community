@@ -26,6 +26,8 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.BaseProjectDirectories
+import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -46,7 +48,8 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.cancellation.CancellationException
 
-internal class CommandRunnerExtension(
+@ApiStatus.Internal
+class CommandRunnerExtension(
   val panel: MarkdownHtmlPanel,
   private val provider: Provider
 ): MarkdownBrowserPreviewExtension {
@@ -100,7 +103,6 @@ internal class CommandRunnerExtension(
       private val icons = setOf(RUN_LINE_ICON, RUN_BLOCK_ICON)
     }
   }
-
 
   fun processCodeLine(rawCodeLine: String, insideFence: Boolean): String {
     processLine(rawCodeLine, !insideFence)?.let { hash ->
@@ -171,14 +173,18 @@ internal class CommandRunnerExtension(
 
   private fun createRunLineHandler() = object : BrowserPipe.Handler {
     override fun processMessageReceived(data: String): Boolean {
-      val executorId = data.substringBefore(":")
-      val cmdHash: String = data.substringAfter(":")
+      val parts = data.split(":")
+      val executorId = parts[0]
+      val cmdHash: String = parts.getOrElse(1) { "" }
+      val needsConfirmation = parts.getOrNull(2) == NEEDS_CONFIRMATION
       val command = hash2Cmd[cmdHash]
       if (command == null) {
         LOG.error("Command index not found. Please attach .md file to error report.")
         return true
       }
-      executeLineCommand(command, executorId)
+      runWithConfirmationIfNeeded(needsConfirmation, command) {
+        executeLineCommand(command, executorId)
+      }
       return false
     }
   }
@@ -199,12 +205,36 @@ internal class CommandRunnerExtension(
     val virtualFile = panel.virtualFile
     if (project != null && virtualFile != null) {
       TrustedProjectUtil.executeIfTrusted(project) {
-        RUNNER_EXECUTED.log(project,  RunnerPlace.PREVIEW, RunnerType.BLOCK, runner.javaClass)
+        RUNNER_EXECUTED.log(project, RunnerPlace.PREVIEW, RunnerType.BLOCK, runner.javaClass)
         invokeLater {
           runner.run(command, project, getMarkdownCommandWorkingDirectory(project, virtualFile), executor)
         }
       }
     }
+  }
+
+  private fun runWithConfirmationIfNeeded(needsConfirmation: Boolean, command: String, runAction: () -> Unit) {
+    if (needsConfirmation) confirmThenRun(command, runAction) else runAction()
+  }
+
+  private fun confirmThenRun(command: String, runAction: () -> Unit) {
+    ApplicationManager.getApplication().invokeLater {
+      if (confirmPreviewCommandExecution(command)) {
+        runAction()
+      }
+    }
+  }
+
+  private fun confirmPreviewCommandExecution(command: String): Boolean {
+    return MessageDialogBuilder
+      .yesNo(
+        MarkdownBundle.message("markdown.runner.preview.confirm.title"),
+        MarkdownBundle.message("markdown.runner.preview.confirm.message", command.trim())
+      )
+      .icon(Messages.getWarningIcon())
+      .yesText(MarkdownBundle.message("markdown.runner.preview.confirm.run"))
+      .noText(Messages.getCancelButton())
+      .ask(panel.project)
   }
 
   private fun createRunBlockHandler() = object : BrowserPipe.Handler{
@@ -219,14 +249,21 @@ internal class CommandRunnerExtension(
         return true
       }
       val trimmedCmd = trimPrompt(command)
+      val needsConfirmation = args.getOrNull(5) == NEEDS_CONFIRMATION
+      if (needsConfirmation) {
+        confirmThenRun(trimmedCmd) {
+          executeBlock(trimmedCmd, executorId)
+        }
+        return false
+      }
       if (firstLineCommand == null) {
         ApplicationManager.getApplication().invokeLater {
           executeBlock(trimmedCmd, executorId)
         }
         return false
       }
-      val x = args[3].toInt()
-      val y = args[4].toInt()
+      val x = args[3].toDoubleOrNull()?.toInt() ?: 0
+      val y = args[4].toDoubleOrNull()?.toInt() ?: 0
 
       val actionManager = ActionManager.getInstance()
       val actionGroup = DefaultActionGroup()
@@ -263,7 +300,6 @@ internal class CommandRunnerExtension(
     provider.extensions.remove(panel.virtualFile)
   }
 
-
   class Provider: MarkdownBrowserPreviewExtension.Provider {
     val extensions = ConcurrentHashMap<VirtualFile, CommandRunnerExtension>()
 
@@ -281,6 +317,7 @@ internal class CommandRunnerExtension(
     private const val RUN_BLOCK_EVENT = "runBlock"
     private const val RUN_LINE_ICON = "commandRunner/run.png"
     private const val RUN_BLOCK_ICON = "commandRunner/runrun.png"
+    private const val NEEDS_CONFIRMATION = "1"
 
     const val extensionId = "MarkdownCommandRunnerExtension"
 
@@ -293,6 +330,7 @@ internal class CommandRunnerExtension(
       return provider?.extensions?.get(file)
     }
 
+    @ApiStatus.Internal
     fun matches(project: Project, workingDirectory: String?, localSession: Boolean,
                 command: String,
                 allowRunConfigurations: Boolean = false): Boolean {
@@ -307,6 +345,7 @@ internal class CommandRunnerExtension(
       }
     }
 
+    @ApiStatus.Internal
     fun execute(
       project: Project,
       workingDirectory: String?,
@@ -355,7 +394,8 @@ internal class CommandRunnerExtension(
 
     private val LOG = logger<CommandRunnerExtension>()
 
-    internal fun trimPrompt(cmd: String): String {
+    @ApiStatus.Internal
+    fun trimPrompt(cmd: String): String {
       return cmd.lines()
         .filter { line -> line.isNotEmpty() }
         .joinToString("\n") { line ->

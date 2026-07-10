@@ -1,5 +1,5 @@
 // "Opt in for 'B' on containing class 'C'" "true"
-// K2_ERROR: Base declaration of supertype 'I' needs opt-in. The declaration override must be annotated with '@B' or '@OptIn(B::class)'
+// K2_ERROR: OPT_IN_OVERRIDE_ERROR
 @RequiresOptIn
 annotation class A
 

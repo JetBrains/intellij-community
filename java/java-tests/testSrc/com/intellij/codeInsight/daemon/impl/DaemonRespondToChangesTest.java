@@ -1896,10 +1896,10 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
 
     PsiFile originalPsiFile = getPsiManager().findFile(getTempDir().createVirtualFile("X.txt", ""));
     assertNotNull(originalPsiFile);
-    assertTrue(originalPsiFile.getViewProvider().isEventSystemEnabled());
+    assertTrue(originalPsiFile.getViewProvider().supportsSendingPsiEvents());
 
     PsiFile copyPsiFile = (PsiFile)originalPsiFile.copy();
-    assertFalse(copyPsiFile.getViewProvider().isEventSystemEnabled());
+    assertFalse(copyPsiFile.getViewProvider().supportsSendingPsiEvents());
 
     Document documentCopy = copyPsiFile.getViewProvider().getDocument();
     assertNotNull(documentCopy);

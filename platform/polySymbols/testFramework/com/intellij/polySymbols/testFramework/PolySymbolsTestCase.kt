@@ -16,6 +16,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.RootsChangeRescanningInfo
@@ -55,6 +56,7 @@ import java.nio.file.Path
 import java.util.TreeMap
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
+import kotlin.io.path.readText
 import kotlin.time.Duration.Companion.minutes
 
 abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePlatform) : HybridTestCase(mode) {
@@ -72,8 +74,17 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
   protected open val defaultDirName: String
     get() = testName
 
+  protected open fun getDefaultConfigureFileName(extension: String): String =
+    "$testName.$extension"
+
   protected open fun getGoldFileName(forcedGoldFileName: String?, testFileExt: String): String =
     forcedGoldFileName ?: "${testName}_after.$testFileExt"
+
+  protected open fun getCodeCompletionExpectedItemsFileNameInfix(prefix: String, suffix: String): String =
+    ""
+
+  protected open fun getCodeCompletionExpectedItemsLocation(dir: Boolean, dirName: String): String =
+    getExpectedDataLocation(dir, dirName)
 
   open val testName: String get() = getTestName(true)
 
@@ -104,9 +115,6 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
   protected open val directoriesCompareFileFilter: VirtualFileFilter
     get() = { true }
 
-  protected open fun getExpectedItemsLocation(dir: Boolean): String =
-    getExpectedDataLocation(dir)
-
   protected fun withTempCodeStyleSettings(test: CodeInsightTestFixture.(settings: CodeStyleSettings) -> Unit) {
     myFixture.testWithTempCodeStyleSettings { t: CodeStyleSettings ->
       myFixture.test(t)
@@ -124,7 +132,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
     dirName: String = defaultDirName,
     extension: String = defaultExtension,
     configureFile: Boolean = true,
-    configureFileName: String = "$testName.$extension",
+    configureFileName: String = getDefaultConfigureFileName(extension),
     configurators: List<PolySymbolsTestConfigurator> = emptyList(),
     additionalFiles: List<String> = emptyList(),
     checkResult: Boolean = false,
@@ -263,7 +271,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
     dirName: String = defaultDirName,
     extension: String = defaultExtension,
     configureFile: Boolean = true,
-    configureFileName: String = "$testName.$extension",
+    configureFileName: String = getDefaultConfigureFileName(extension),
     configurators: List<PolySymbolsTestConfigurator> = emptyList(),
     additionalFiles: List<String> = emptyList(),
     checkResult: Boolean = true,
@@ -343,7 +351,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
                 assertLookupShown()
                 tester.joinCompletion()
 
-                val expectedFile = getExpectedItemsLocation(dir) +
+                val expectedFile = getCodeCompletionExpectedItemsLocation(dir, dirName) +
                                    (if (dir) "/items" else "$testName.items") +
                                    ".${++checkLookupCount}.txt"
 
@@ -403,6 +411,27 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
                 }
               }
 
+              override fun checkHighlighting(
+                expectedDataFile: String,
+                checkWarnings: Boolean,
+                checkInfos: Boolean,
+                checkWeakWarnings: Boolean,
+                ignoreExtraHighlighting: Boolean,
+              ) {
+                val filePath = testDataPath + (if (dir) "/$dirName/" else "/") + expectedDataFile
+                val text = Path.of(filePath).readText()
+                val document = DocumentImpl(text)
+                val data = ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting)
+                data.init()
+                try {
+                  (myFixture as CodeInsightTestFixtureImpl).collectAndCheckHighlighting(data)
+                }
+                catch (e: FileComparisonFailedError) {
+                  throw FileComparisonFailedError(e.message, e.expectedStringPresentation, e.actualStringPresentation,
+                                                  filePath, null)
+                }
+              }
+
             }.test()
           }
         }
@@ -426,15 +455,15 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
     }
   }
 
-  private fun getExpectedDataLocation(dir: Boolean): String =
-    if (dir) defaultDirName else ""
+  private fun getExpectedDataLocation(dir: Boolean, dirName: String): String =
+    if (dir) dirName else ""
 
   protected fun doLookupTest(
     fileContents: String? = null,
     dir: Boolean = dirModeByDefault,
     dirName: String = defaultDirName,
     extension: String = defaultExtension,
-    configureFileName: String = "$testName.$extension",
+    configureFileName: String = getDefaultConfigureFileName(extension),
     caretPosSignature: String? = null,
     configurators: List<PolySymbolsTestConfigurator> = emptyList(),
     additionalFiles: List<String> = emptyList(),
@@ -478,8 +507,9 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
         containsCheck = containsCheck,
         locations = locations,
         namedLocations = namedLocations,
-        expectedDataLocation = getExpectedDataLocation(dir),
-        expectedItemsLocation = getExpectedItemsLocation(dir),
+        expectedDataLocation = getExpectedDataLocation(dir, dirName),
+        expectedItemsLocation = getCodeCompletionExpectedItemsLocation(dir, dirName),
+        expectedItemsFileNameInfixProvider = ::getCodeCompletionExpectedItemsFileNameInfix,
         lookupItemFilter = lookupItemFilter,
       )
       if (typeToFinishLookup != null) {
@@ -495,7 +525,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
     dir: Boolean = dirModeByDefault,
     dirName: String = defaultDirName,
     extension: String = defaultExtension,
-    configureFileName: String = "$testName.$extension",
+    configureFileName: String = getDefaultConfigureFileName(extension),
     goldFileName: String? = null,
     useProjectCodeStyle: Boolean = false,
     configurators: List<PolySymbolsTestConfigurator> = emptyList(),
@@ -522,7 +552,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
 
   protected fun doFoldingTest(
     extension: String = defaultExtension,
-    configureFileName: String = "$testName.$extension",
+    configureFileName: String = getDefaultConfigureFileName(extension),
     configurators: List<PolySymbolsTestConfigurator> = emptyList(),
   ) {
     doConfiguredTest(extension = extension, checkResult = false, configureFile = false, configurators = configurators) {
@@ -534,7 +564,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
     dir: Boolean = dirModeByDefault,
     dirName: String = defaultDirName,
     extension: String = defaultExtension,
-    configureFileName: String = "$testName.$extension",
+    configureFileName: String = getDefaultConfigureFileName(extension),
     configurators: List<PolySymbolsTestConfigurator> = emptyList(),
     additionalFiles: List<String> = emptyList(),
     inspections: Collection<Class<out LocalInspectionTool>> = emptyList(),
@@ -591,7 +621,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
     dir: Boolean = dirModeByDefault,
     dirName: String = defaultDirName,
     extension: String = defaultExtension,
-    configureFileName: String = "$testName.$extension",
+    configureFileName: String = getDefaultConfigureFileName(extension),
     caretPosSignature: String? = null,
     configurators: List<PolySymbolsTestConfigurator> = emptyList(),
     additionalFiles: List<String> = emptyList(),
@@ -625,7 +655,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
     dir: Boolean = dirModeByDefault,
     dirName: String = defaultDirName,
     extension: String = defaultExtension,
-    configureFileName: String = "$testName.$extension",
+    configureFileName: String = getDefaultConfigureFileName(extension),
     configurators: List<PolySymbolsTestConfigurator> = emptyList(),
     additionalFiles: List<String> = emptyList(),
   ) {
@@ -649,7 +679,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
     dir: Boolean = dirModeByDefault,
     dirName: String = defaultDirName,
     extension: String = defaultExtension,
-    configureFileName: String = "$testName.$extension",
+    configureFileName: String = getDefaultConfigureFileName(extension),
     configurators: List<PolySymbolsTestConfigurator> = emptyList(),
     additionalFiles: List<String> = emptyList(),
   ) {
@@ -673,7 +703,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
     dir: Boolean = true,
     dirName: String = defaultDirName,
     extension: String = defaultExtension,
-    configureFileName: String = "$testName.$extension",
+    configureFileName: String = getDefaultConfigureFileName(extension),
     caretPosSignature: String? = null,
     configurators: List<PolySymbolsTestConfigurator> = emptyList(),
     additionalFiles: List<String> = emptyList(),
@@ -696,7 +726,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
     scope: SearchScope? = null,
     dirName: String = defaultDirName,
     extension: String = defaultExtension,
-    fileName: String = "$testName.$extension",
+    fileName: String = getDefaultConfigureFileName(extension),
     configurators: List<PolySymbolsTestConfigurator> = emptyList(),
     expectedFileName: String = "${defaultDirName}/usages.txt",
   ) {
@@ -710,7 +740,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
     dir: Boolean = dirModeByDefault,
     dirName: String = defaultDirName,
     extension: String = defaultExtension,
-    configureFileName: String = "$testName.$extension",
+    configureFileName: String = getDefaultConfigureFileName(extension),
     caretPosSignature: String? = null,
     configurators: List<PolySymbolsTestConfigurator> = emptyList(),
     additionalFiles: List<String> = emptyList(),
@@ -756,7 +786,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
         }
         PsiDocumentManager.getInstance(project).commitAllDocuments()
       }
-      checkResultByFile("$testName.$extension")
+      checkResultByFile(getDefaultConfigureFileName(extension))
     }
   }
 
@@ -768,7 +798,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
     dir: Boolean = true,
     dirName: String = defaultDirName,
     extension: String = defaultExtension,
-    configureFileName: String = "$testName.$extension",
+    configureFileName: String = getDefaultConfigureFileName(extension),
     configurators: List<PolySymbolsTestConfigurator> = emptyList(),
     additionalFiles: List<String> = emptyList(),
     useProjectCodeStyle: Boolean = false,
@@ -908,6 +938,14 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
      * ignoring any FileComparisonFailedError.
      */
     fun performHighlighting()
+
+    fun checkHighlighting(
+      expectedDataFile: String,
+      checkWarnings: Boolean = true,
+      checkInfos: Boolean = false,
+      checkWeakWarnings: Boolean = true,
+      ignoreExtraHighlighting: Boolean = false,
+    )
 
     val editor: Editor
   }

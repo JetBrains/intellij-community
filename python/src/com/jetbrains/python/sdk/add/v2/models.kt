@@ -10,9 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pytools.Version
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
@@ -43,7 +41,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
-interface PythonToolViewModel {
+internal interface PythonToolViewModel {
   fun initialize(scope: CoroutineScope)
 }
 
@@ -164,13 +162,6 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
     return PyResult.success(interpreter)
   }
 
-
-  @RequiresEdt
-  internal fun addInstalledInterpreter(homePath: P, pythonInfo: PythonInfo): DetectedSelectableInterpreter<P> {
-    val installedInterpreter = DetectedSelectableInterpreter(homePath, pythonInfo, true)
-    detectedInterpretersUnfiltered.value = (detectedInterpretersUnfiltered.value ?: emptyList()) + installedInterpreter
-    return installedInterpreter
-  }
 }
 
 abstract class PythonMutableTargetAddInterpreterModel<P : PathHolder>(projectPathFlows: ProjectPathFlows, fileSystem: FileSystem<P>) :

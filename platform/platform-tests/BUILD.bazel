@@ -41,6 +41,7 @@ jvm_library(
         "//platform/util/storages",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/eel-impl",
+        "//plugins/jcef/plugin",
     ],
 )
 
@@ -84,6 +85,7 @@ jvm_library(
         "//platform/platform-impl/ui-inspector:ide-ui-inspector_test_lib",
         "//platform/platform-impl/internal:internal_test_lib",
         "//platform/platform-impl/ui:ui_test_lib",
+        "//plugins/jcef/plugin:plugin_test_lib",
         "//platform/platform-impl/bootstrap/eel:eel_test_lib",
         "//platform/platform-impl/update-checker:update-checker_test_lib",
         "//platform/platform-impl/eel:ide-impl-wsl_test_lib",
@@ -124,7 +126,8 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "@lib//:jmock",
         "//platform/observable",
         "//platform/projectModel-api:projectModel",
@@ -347,6 +350,7 @@ jvm_library(
         "//platform/platform-impl/update-checker",
         "@lib//:com-jetbrains-fus-reporting-fus-api",
         "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+        "@lib//:jetbrains-fus-reporting-api-jvm",
         "//platform/platform-impl/eel:ide-impl-wsl",
         "//platform/progress/shared:ide-progress",
         "//platform/syntax/syntax-psi-tests:psi-tests",
@@ -366,7 +370,8 @@ jvm_library(
         "//platform/execution",
         "//platform/execution:execution_test_lib",
         "@lib//:jet_check",
-        "@lib//:jediterm-core",
+        "//libraries/jediterm-core",
+        "//libraries/jediterm-core:jediterm-core_test_lib",
         "@lib//:jetbrains-kotlinx-lincheck-jvm",
         "//images:images-tests",
         "//images:images-tests_test_lib",
@@ -382,6 +387,8 @@ jvm_library(
         "//platform/workspace/storage/testEntities:testEntities_test_lib",
         "//platform/eel-impl-base",
         "//platform/eel-impl-base:eel-impl-base_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.tests` end

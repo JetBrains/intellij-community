@@ -5,13 +5,33 @@ import com.intellij.driver.sdk.ui.remote.Robot
 import com.intellij.openapi.diagnostic.logger
 import java.awt.event.KeyEvent
 
-class RemoteKeyboard(private val robot: Robot) {
+class RemoteKeyboard(private val robot: Robot, isRemoteMac: () -> Boolean) {
   companion object {
     private val LOG
       get() = logger<RemoteKeyboard>()
+
+    /**
+     * To keep references up to date:
+     * [com.intellij.driver.sdk.invokeAction]
+     * [com.intellij.driver.sdk.invokeActionByShortcut]
+     * Please update the message in RequiresOptIn if references change.
+     */
+    @RequiresOptIn(
+      level = RequiresOptIn.Level.WARNING,
+      message = "Prefer not to use hard-coded shortcuts, as it can cause test instability.\n" +
+                "If you need to invoke an action as part of test setup, use `com.intellij.driver.sdk.invokeAction`.\n" +
+                "If you want to verify that an action can be invoked via a shortcut, use `com.intellij.driver.sdk.invokeActionByShortcut`.\n" +
+                "If you need to verify that a specific shortcut works, it is better to add a separate check for it.\n" +
+                "If you have considered all of the above, add `@Suppress(\"OPT_IN_USAGE\")` to the statement."
+    )
+    @Retention(AnnotationRetention.BINARY)
+    @Target(AnnotationTarget.FUNCTION)
+    private annotation class DirectHotKeyUsage
   }
 
-  fun key(key: Int) = step("Press key $key") { robot.pressAndReleaseKey(key) }
+  val defaultModifierKey: Int by lazy { if (isRemoteMac()) KeyEvent.VK_META else KeyEvent.VK_CONTROL }
+
+  fun key(key: Int): Unit = step("Press key $key") { robot.pressAndReleaseKey(key) }
 
   fun enter() {
     step("Press enter") {
@@ -67,7 +87,18 @@ class RemoteKeyboard(private val robot: Robot) {
     }
   }
 
+  @DirectHotKeyUsage
+  fun hotKeyWithDefaultModifierKey(vararg keyCodes: Int) {
+    hotKey(defaultModifierKey, *keyCodes)
+  }
+
+  @DirectHotKeyUsage
   fun hotKey(vararg keyCodes: Int) {
+    if (keyCodes.size == 1) {
+      key(keyCodes.single())
+      return
+    }
+
     step("Press hotkeys ${keyCodes.joinToString(",") { "'$it'" }}.") {
       val lastKey = keyCodes.last()
       val others = keyCodes.dropLast(1)
@@ -75,7 +106,7 @@ class RemoteKeyboard(private val robot: Robot) {
         robot.pressKey(it)
         Thread.sleep(100)
       }
-      robot.pressAndReleaseKey(lastKey)
+      key(lastKey)
 
       others.reversed().forEach {
         robot.releaseKey(it)

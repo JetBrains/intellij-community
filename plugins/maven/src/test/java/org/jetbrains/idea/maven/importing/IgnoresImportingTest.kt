@@ -15,25 +15,20 @@
  */
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import kotlinx.coroutines.runBlocking
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.importProjectsAsync
+import com.intellij.maven.testFramework.fixtures.initProjectsManager
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.setIgnoredFilesPathForNextImport
+import com.intellij.maven.testFramework.fixtures.updateAllProjects
 import com.intellij.testFramework.junit5.TestApplication
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
-import org.jetbrains.idea.maven.fixtures.assertModules
-import org.jetbrains.idea.maven.fixtures.createModulePom
-import org.jetbrains.idea.maven.fixtures.importProjectsAsync
-import org.jetbrains.idea.maven.fixtures.initProjectsManager
-import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
-import org.jetbrains.idea.maven.fixtures.setIgnoredFilesPathForNextImport
-import org.jetbrains.idea.maven.fixtures.updateAllProjects
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.assertFalse
+import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
-import org.junit.jupiter.api.BeforeEach
 
 @TestApplication
 @ParameterizedClass

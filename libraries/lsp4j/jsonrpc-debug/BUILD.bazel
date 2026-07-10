@@ -1,0 +1,43 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.eclipse.lsp4j.jsonrpc.debug` start
+
+jvm_library(
+    name = "libraries-eclipse-lsp4j-jsonrpc-debug",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.eclipse.lsp4j.jsonrpc.debug",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-eclipse-lsp4j-jsonrpc-debug-eclipse-lsp4j-jsonrpc-debug"],
+    runtime_deps = ["@lib//:libraries-eclipse-lsp4j-jsonrpc-debug-eclipse-lsp4j-jsonrpc-debug"],
+)
+
+jvm_library(
+    name = "libraries-eclipse-lsp4j-jsonrpc-debug_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.eclipse.lsp4j.jsonrpc.debug",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-eclipse-lsp4j-jsonrpc-debug-eclipse-lsp4j-jsonrpc-debug"],
+    runtime_deps = [":libraries-eclipse-lsp4j-jsonrpc-debug"],
+)
+### auto-generated section `build intellij.libraries.eclipse.lsp4j.jsonrpc.debug` end
+
+### auto-generated section `iml intellij.libraries.eclipse.lsp4j.jsonrpc.debug` start
+exports_files(
+    [
+        "intellij.libraries.eclipse.lsp4j.jsonrpc.debug.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.eclipse.lsp4j.jsonrpc.debug` end

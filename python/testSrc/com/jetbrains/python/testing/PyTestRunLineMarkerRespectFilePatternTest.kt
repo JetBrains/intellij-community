@@ -1,11 +1,17 @@
 package com.jetbrains.python.testing
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Components
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.execution.lineMarker.RunLineMarkerContributor.Info
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.jetbrains.python.fixtures.PyTestCase
 
+@Subsystems.TestRunner
+@Components.Pytest
+@Layers.Functional
 class PyTestRunLineMarkerRespectFilePatternTest : PyTestCase() {
   companion object {
     private const val TESTS_DIR = "/pyTestLineMarker/"

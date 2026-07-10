@@ -106,6 +106,7 @@ public final class JUnit5BazelRunner {
   private static final BucketsPostDiscoveryFilter bucketingPostDiscoveryFilter = new BucketsPostDiscoveryFilter();
   private static final PostDiscoveryFilter performancePostDiscoveryFilter = new JUnit5TeamCityRunner.PerformancePostDiscoveryFilter();
   private static final PostDiscoveryFilter ignorePostDiscoveryFilter = new JUnit5TeamCityRunner.IgnorePostDiscoveryFilter();
+  private static final PostDiscoveryFilter headlessPostDiscoveryFilter = new JUnit5TeamCityRunner.HeadlessPostDiscoveryFilter();
   private static final PostDiscoveryFilter shardFilter = ShardFilter.create();
 
   private static LauncherDiscoveryRequest getDiscoveryRequest() throws Throwable {
@@ -410,6 +411,7 @@ public final class JUnit5BazelRunner {
     }
     filters.add(bucketingPostDiscoveryFilter);
     filters.add(performancePostDiscoveryFilter);
+    filters.add(headlessPostDiscoveryFilter);
     if (shardFilter != null) {
       filters.add(shardFilter);
     }

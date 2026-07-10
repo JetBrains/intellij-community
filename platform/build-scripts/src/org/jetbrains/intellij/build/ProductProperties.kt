@@ -4,7 +4,10 @@ package org.jetbrains.intellij.build
 import com.intellij.platform.buildData.productInfo.CustomCommandLaunchData
 import com.intellij.platform.buildData.productInfo.CustomProperty
 import com.intellij.platform.buildScripts.licenses.CommunityLibraryLicenses
+import com.intellij.platform.buildScripts.licenses.LibraryLicense
+import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials
 import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.util.text.SemVer
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
@@ -12,8 +15,6 @@ import com.jetbrains.plugin.structure.base.problems.InvalidPluginIDProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.intellij.platform.buildScripts.licenses.LibraryLicense
-import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
@@ -500,6 +501,11 @@ abstract class ProductProperties {
   open fun applicationInfoOverride(project: JpsProject): ApplicationInfoOverrides? = null
 
   /**
+   * Extra application info XML substitutions (besides basic BUILD, etc.)
+   */
+  var appInfoXmlReplacements: Map<String, String>? = null
+
+  /**
    * For a standalone frontend distribution, specifies the platform prefix of its base IDE. In other cases returns `null`.
    */
   @get:ApiStatus.Internal
@@ -556,9 +562,54 @@ abstract class ProductProperties {
       else if (!PLUGIN_ID_REGEX.matches(id)) {
         add(InvalidPluginIDProblem(id))
       }
+
+      if (result.plugin.pluginVersion != null) {
+        val (os, arch) = SemVer.parseFromText(result.plugin.pluginVersion)!!.preRelease
+                           ?.let(OS_ARCH_SUFFIX::matchEntire)
+                           ?.groupValues?.let { it[1] to it[2] }
+                         ?: (null to null)
+
+        if (os != null) {
+          val osModule = when (os) {
+            "linux" -> "com.intellij.modules.os.linux"
+            "mac", "macos" -> "com.intellij.modules.os.mac"
+            "windows" -> "com.intellij.modules.os.windows"
+            else -> error("Unsupported os classifier: $os")
+          }
+          if (result.plugin.pluginMainModuleDependencies.none { it.pluginId == osModule }) {
+            add(
+              MissingDependencyError(
+                "${result.plugin.pluginId}:${result.plugin.pluginVersion} " +
+                "contains OS classifier but missing non-optional dependency on a OS module '${osModule}'"
+              )
+            )
+          }
+        }
+        if (arch != null) {
+          val archModule = when (arch) {
+            "arm64" -> "com.intellij.modules.arch.arm64"
+            "x86_64" -> "com.intellij.modules.arch.x86_64"
+            else -> error("Unsupported arch classifier: $arch")
+          }
+          if (result.plugin.pluginMainModuleDependencies.none { it.pluginId == archModule }) {
+            add(
+              MissingDependencyError(
+                "${result.plugin.pluginId}:${result.plugin.pluginVersion} " +
+                "contains Arch classifier but missing non-optional dependency on a Arch module '${archModule}'"
+              )
+            )
+          }
+        }
+      }
     }
     is PluginCreationFail -> result.errorsAndWarnings
   }
+}
+
+private val OS_ARCH_SUFFIX = Regex("^(windows|linux|macos|mac)-(x86_64|arm64)$")
+
+private class MissingDependencyError(override val message: String) : PluginProblem() {
+  override val level = Level.ERROR
 }
 
 /**

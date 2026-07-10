@@ -1,0 +1,13 @@
+// EXPECTED_TEXT: class CustomerResponse
+
+// FILE: activateServerViaDB.main.kts
+@file:Import("badAPIClient.main.kts")
+
+val customerCode: Int = create<caret>Customer("user@test.com").intValue()
+
+// FILE: badAPIClient.main.kts
+class CustomerResponse {
+    fun intValue(): Int = 0
+}
+
+fun createCustomer(orgEmail: String): CustomerResponse = CustomerResponse()

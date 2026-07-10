@@ -121,6 +121,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.plugin.updater" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.preferences" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration.vcs" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.maven" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.gradle" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.highlighting" exported="" />
@@ -158,7 +159,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.searching" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.searching.base" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.refactorings" exported="" />
-    <orderEntry type="module" module-name="kotlin.refactorings.common" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings.base" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.performanceExtendedPlugin" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support.bundled" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.onboarding" exported="" />

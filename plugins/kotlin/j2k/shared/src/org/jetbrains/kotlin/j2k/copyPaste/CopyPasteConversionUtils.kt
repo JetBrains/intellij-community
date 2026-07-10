@@ -2,11 +2,10 @@
 package org.jetbrains.kotlin.j2k.copyPaste
 
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -16,8 +15,6 @@ import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.J2KPostProcessingRunner
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_OLD
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.j2k.ParseContext
 import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -40,10 +37,9 @@ data class ConversionResult(
 
 fun ElementAndTextList.convertCodeToKotlin(
     project: Project,
-    targetFile: KtFile,
-    j2kKind: J2kConverterExtension.Kind
+    targetFile: KtFile
 ): ConversionResult {
-    val converter = J2kConverterExtension.extension(j2kKind).createJavaToKotlinConverter(
+    val converter = J2kConverterExtension.extension().createJavaToKotlinConverter(
         project,
         targetFile.module,
         ConverterSettings.defaultSettings,
@@ -51,18 +47,16 @@ fun ElementAndTextList.convertCodeToKotlin(
     )
 
     val inputElements = this.toList().filterIsInstance<PsiElement>()
-    val (results, _, converterContext) = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        ThrowableComputable {
+    val (results, _, converterContext) = runWithModalProgressBlocking(
+        project,
+        KotlinNJ2KBundle.message("copy.text.convert.java.to.kotlin.title")
+    ) {
             // A non-blocking read action is essential here 
             // to be able to show a modal progress window right away
             ReadAction.nonBlocking(Callable {
                 converter.elementsToKotlin(inputElements)
             }).executeSynchronously()
-        },
-        KotlinNJ2KBundle.message("copy.text.convert.java.to.kotlin.title"),
-        true,
-        project
-    )
+    }
     val importsToAdd = mutableSetOf<FqName>()
     val convertedCodeBuilder = StringBuilder()
     val originalCodeBuilder = StringBuilder()
@@ -143,27 +137,14 @@ fun ElementAndTextList.lineCount(): Int {
     return elements.sumOf { StringUtil.getLineBreakCount(it.text) }
 }
 
-fun getJ2kKind(): J2kConverterExtension.Kind = K2
-
 fun runPostProcessing(
     project: Project,
     file: KtFile,
     bounds: TextRange?,
-    converterContext: ConverterContext?,
-    j2kKind: J2kConverterExtension.Kind
+    converterContext: ConverterContext?
 ) {
-    val postProcessor = J2kConverterExtension.extension(j2kKind).createPostProcessor()
-    if (j2kKind != K1_OLD) {
-        val runnable = {
-            J2KPostProcessingRunner.run(postProcessor, file, converterContext, bounds)
-        }
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            runnable,
-            KotlinNJ2KBundle.message("copy.text.convert.java.to.kotlin.title"),
-            /* canBeCanceled = */ true,
-            project
-        )
-    } else {
+    val postProcessor = J2kConverterExtension.extension().createPostProcessor()
+    runWithModalProgressBlocking(project, KotlinNJ2KBundle.message("copy.text.convert.java.to.kotlin.title")) {
         J2KPostProcessingRunner.run(postProcessor, file, converterContext, bounds)
     }
 }

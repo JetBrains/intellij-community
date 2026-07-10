@@ -4,7 +4,7 @@
 // ACTION: Convert to with
 // ACTION: Remove braces from 'if' statement
 // ACTION: Replace 'if' expression with safe access expression
-// K2_ERROR: Smart cast to 'Foo' is impossible, because 'a' is a property that has an open or custom getter.
+// K2_ERROR: SMARTCAST_IMPOSSIBLE
 
 interface Foo {
     fun bar()

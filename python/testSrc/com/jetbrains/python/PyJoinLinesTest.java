@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -23,6 +26,8 @@ import com.jetbrains.python.fixtures.PyTestCase;
 /**
  * Tests the "Join lines" handler.
  */
+@Subsystems.Editing
+@Layers.Functional
 public class PyJoinLinesTest extends PyTestCase {
   private void doTest() {
     myFixture.configureByFile("joinLines/" + getTestName(false) + ".py");

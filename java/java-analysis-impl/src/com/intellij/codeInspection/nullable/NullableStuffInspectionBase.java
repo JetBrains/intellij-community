@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -156,6 +156,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLABILITY_ANNOTATION_ON_LOCALS = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE = false;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = false;
+  @SuppressWarnings("WeakerAccess") public boolean REPORT_UNSPECIFIED_BOUND_CONFLICTS = false;
   /**
    * @deprecated the field remains to minimize changes to users' inspection profiles.
    */
@@ -186,6 +187,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           "REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER".equals(name) && "true".equals(value) ||
           "REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS".equals(name) && "false".equals(value) ||
           "REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE".equals(name) && "false".equals(value) ||
+          "REPORT_UNSPECIFIED_BOUND_CONFLICTS".equals(name) && "false".equals(value) ||
           "REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER".equals(name) && "true".equals(value)) {
         node.removeContent(child);
       }
@@ -620,12 +622,19 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         PsiSubstitutor substitutor = result.getSubstitutor();
         PsiParameter[] parameters = method.getParameterList().getParameters();
         PsiExpression[] arguments = argList.getExpressions();
+        boolean hasExplicitTypeArguments = false;
+        if (callExpression instanceof PsiMethodCallExpression methodCall) {
+          PsiReferenceParameterList typeArgList = methodCall.getMethodExpression().getParameterList();
+          hasExplicitTypeArguments = typeArgList != null && typeArgList.getTypeArguments().length > 0;
+        }
+        boolean useDeclaredType = !hasExplicitTypeArguments && method.getTypeParameters().length > 0;
         for (int i = 0; i < arguments.length; i++) {
           PsiExpression argument = arguments[i];
           if (i < parameters.length &&
               (i < parameters.length - 1 || !MethodCallInstruction.isVarArgCall(method, substitutor, arguments, parameters))) {
             PsiType expectedType = substitutor.substitute(parameters[i].getType());
-            checkNestedGenericClasses(holder, argument, expectedType, argument.getType(),
+            PsiType declaredExpectedType = useDeclaredType ? parameters[i].getType() : null;
+            checkNestedGenericClasses(holder, argument, expectedType, declaredExpectedType, argument.getType(),
                                       ConflictNestedTypeProblem.ASSIGNMENT_NESTED_TYPE_PROBLEM);
           }
         }
@@ -638,10 +647,21 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                          @Nullable PsiType expectedType,
                                          @Nullable PsiType actualType,
                                          @NotNull ConflictNestedTypeProblem problem) {
+    return checkNestedGenericClasses(holder, errorElement, expectedType, null, actualType, problem);
+  }
+
+  private boolean checkNestedGenericClasses(@NotNull ProblemsHolder holder,
+                                            @NotNull PsiElement errorElement,
+                                            @Nullable PsiType expectedType,
+                                            @Nullable PsiType declaredExpectedType, @Nullable PsiType actualType,
+                                            @NotNull ConflictNestedTypeProblem problem) {
     if (expectedType == null || actualType == null) return false;
     JavaTypeNullabilityUtil.NullabilityConflictContext
-      context = JavaTypeNullabilityUtil.getNullabilityConflictInAssignment(expectedType, actualType,
-                                                                           REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS);
+      context = JavaTypeNullabilityUtil.getNullabilityConflictInAssignment(expectedType, declaredExpectedType, actualType,
+                                                                           new JavaTypeNullabilityUtil.NullabilityConflictOptions(
+                                                                             REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS,
+                                                                             REPORT_UNSPECIFIED_BOUND_CONFLICTS)
+                                                                           );
     JavaTypeNullabilityUtil.NullabilityConflict conflict = context.nullabilityConflict();
     String messageKey = switch (conflict) {
       case UNKNOWN -> null;

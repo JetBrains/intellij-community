@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -62,15 +62,15 @@ public class IntroduceVariablePostfixTemplate extends PostfixTemplateWithExpress
     return (ActionContext actionContext, PostfixTemplateProvider provider, TextRange keyRange) -> {
       Project project = actionContext.project();
       List<PsiElement> expressions = PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(() -> {
-      PsiFile copyFile = (PsiFile)actionContext.file().copy();
-      Document copyDocument = copyFile.getFileDocument();
-      int startOffset = PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset());
-      copyDocument.deleteString(startOffset, keyRange.getEndOffset());
-      PsiDocumentManager.getInstance(project).commitDocument(copyDocument);
-      provider.prepareCopyForModCommand(copyFile, startOffset);
-      PsiDocumentManager.getInstance(project).commitDocument(copyDocument);
-      PsiElement context = CustomTemplateCallback.getContext(copyFile, PostfixLiveTemplate.positiveOffset(startOffset));
-      return MY_SELECTOR.getExpressions(context, copyFile.getFileDocument(), startOffset);
+        PsiFile copyFile = (PsiFile)actionContext.file().copy();
+        Document copyDocument = copyFile.getFileDocument();
+        int startOffset = PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset());
+        copyDocument.deleteString(startOffset, keyRange.getEndOffset());
+        PsiDocumentManager.getInstance(project).commitDocument(copyDocument);
+        provider.prepareCopyForModCommand(copyFile, startOffset);
+        PsiDocumentManager.getInstance(project).commitDocument(copyDocument);
+        PsiElement context = CustomTemplateCallback.getContext(copyFile, PostfixLiveTemplate.positiveOffset(startOffset));
+        return MY_SELECTOR.getExpressions(context, copyFile.getFileDocument(), startOffset);
       });
       if (expressions.isEmpty()) return ModCommand.nop();
 
@@ -89,7 +89,8 @@ public class IntroduceVariablePostfixTemplate extends PostfixTemplateWithExpress
 
           @Override
           public @NotNull ModCommand perform(@NotNull ActionContext ctx) {
-            return buildCommandWithOccurrenceChoice(ctx, new TextRange(keyRange.getStartOffset(), keyRange.getStartOffset()), expr, provider, false);
+            return buildCommandWithOccurrenceChoice(ctx, new TextRange(keyRange.getStartOffset(), keyRange.getStartOffset()), expr,
+                                                    provider, false);
           }
 
           @Override
@@ -130,29 +131,20 @@ public class IntroduceVariablePostfixTemplate extends PostfixTemplateWithExpress
                                                             @NotNull PsiElement virtualExpr,
                                                             boolean replaceAll,
                                                             @NotNull PostfixTemplateProvider provider) {
-    TextRange newSelection = new TextRange(keyRange.getStartOffset(), keyRange.getStartOffset());
-    ActionContext updatedContext = ctx.withSelection(newSelection).withOffset(keyRange.getStartOffset());
-    ModCommand command = ModCommand.psiUpdate(updatedContext,
-                                              document -> {
-                                                document.deleteString(ctx.selection().getStartOffset(), ctx.selection().getEndOffset());
-                                              },
-                                              updater -> {
-                                                updater.getDocument()
-                                                  .deleteString(PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()), ctx.selection().getStartOffset());
-                                                PsiDocumentManager.getInstance(ctx.project()).commitDocument(updater.getDocument());
-                                                provider.prepareCopyForModCommand(updater.getPsiFile(), PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()));
-                                                PsiElement expression =
-                                                  PsiTreeUtil.findSameElementInCopy(virtualExpr, updater.getPsiFile());
-                                                expression = ElementToWorkOn.getWritable(expression, updater);
-                                                PsiVariable variable = JavaIntroduceVariableService.getInstance()
-                                                  .introduceVariable((PsiExpression)expression, replaceAll);
-                                                if (variable != null) {
-                                                  updater.rename(variable, new VariableNameGenerator(variable, VariableKind.LOCAL_VARIABLE)
-                                                    .byExpression(variable.getInitializer())
-                                                    .byType(variable.getType())
-                                                    .generateAll(true));
-                                                }
-                                              });
+    ModCommand command = PostfixModExpander.psiUpdateRemovingTemplateKey(ctx, keyRange, updater -> {
+      provider.prepareCopyForModCommand(updater.getPsiFile(), PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()));
+      PsiElement expression =
+        PsiTreeUtil.findSameElementInCopy(virtualExpr, updater.getPsiFile());
+      expression = ElementToWorkOn.getWritable(expression, updater);
+      PsiVariable variable = JavaIntroduceVariableService.getInstance()
+        .introduceVariable((PsiExpression)expression, replaceAll);
+      if (variable != null) {
+        updater.rename(variable, new VariableNameGenerator(variable, VariableKind.LOCAL_VARIABLE)
+          .byExpression(variable.getInitializer())
+          .byType(variable.getType())
+          .generateAll(true));
+      }
+    });
     return command;
   }
 

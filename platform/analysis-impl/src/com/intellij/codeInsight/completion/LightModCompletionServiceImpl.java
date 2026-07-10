@@ -40,11 +40,22 @@ import java.util.Set;
 public final class LightModCompletionServiceImpl {
   public static void getItems(PsiFile file, int caretOffset, int invocationCount, CompletionType type,
                               ModCompletionResult sink) {
-    CharSequence sequence = file.getFileDocument().getCharsSequence();
-    int start = findStart(caretOffset, sequence);
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
+      int start = computePrefixStart(file, caretOffset);
       getItems(file, start, caretOffset, invocationCount, type, sink);
     });
+  }
+
+  public static int computePrefixStart(PsiFile file, int caretOffset) {
+    int start = findStart(caretOffset, file.getFileDocument().getCharsSequence());
+    PsiElement original = file.findElementAt(start);
+    if (original != null) {
+      String prefix = CompletionUtil.findReferencePrefix(original, start);
+      if (prefix != null) {
+        start -= prefix.length();
+      }
+    }
+    return start;
   }
 
   private static int findStart(int caretOffset, CharSequence sequence) {
@@ -73,7 +84,7 @@ public final class LightModCompletionServiceImpl {
     String prefix = file.getFileDocument().getText(TextRange.create(startOffset, caretOffset));
     var matcher = new CamelHumpMatcher(prefix);
     ModCompletionItemProvider.CompletionContext context = new ModCompletionItemProvider.CompletionContext(
-      () -> false, file, caretOffset, original, element, matcher, invocationCount, type);
+      () -> false, file, caretOffset, original, element, matcher, invocationCount, type, null);
     ProcessingContext processingContext = createContext(matcher);
     Map<CompletionSorterImpl, Classifier<LookupElement>> sortMap = new LinkedHashMap<>();
     Map<CompletionSorterImpl, Set<LookupElement>> allItems = new LinkedHashMap<>();

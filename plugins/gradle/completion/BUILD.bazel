@@ -2,6 +2,15 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
+jps_test(
+    name = "completion-tests_test",
+    timeout = "moderate",
+    sandbox = True,
+    tags = ["community-aggregator"],
+    runtime_deps = [":completion-tests_test_lib"],
+)
+### skip generation section `test intellij.gradle.completion.tests`
+
 ### auto-generated section `build intellij.gradle.completion` start
 
 create_kotlinc_options(
@@ -205,6 +214,10 @@ jvm_library(
         "//platform/util/text-matching:text-matching_test_lib",
         "//plugins/repository-search/completion",
         "//plugins/repository-search/completion:completion_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.completion.tests` end
@@ -217,11 +230,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.gradle.completion.tests` end
-
-### auto-generated section `test intellij.gradle.completion.tests` start
-
-jps_test(
-    name = "completion-tests_test",
-    runtime_deps = [":completion-tests_test_lib"],
-)
-### auto-generated section `test intellij.gradle.completion.tests` end

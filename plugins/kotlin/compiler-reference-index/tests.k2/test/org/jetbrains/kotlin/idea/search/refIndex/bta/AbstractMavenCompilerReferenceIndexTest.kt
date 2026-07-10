@@ -1,7 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.search.refIndex.bta
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.fixtures.MavenImportingTestFixture
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.testRootDisposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -11,13 +14,19 @@ import com.intellij.testFramework.useProjectAsync
 import com.intellij.util.SystemProperties
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService
+import org.junit.jupiter.api.BeforeEach
 import kotlin.time.Duration.Companion.minutes
 
-abstract class AbstractMavenCompilerReferenceIndexTest : MavenMultiVersionImportingTestCase() {
+abstract class AbstractMavenCompilerReferenceIndexTest(mavenVersion: String, modelVersion: String) {
 
-    override fun setUp() {
-        super.setUp()
-        Registry.get(BTA_CRI_REGISTRY_KEY).setValue(true, testRootDisposable)
+    protected val maven: MavenImportingTestFixture by mavenImportingFixture(mavenVersion = mavenVersion, modelVersion = modelVersion)
+
+    protected val project: Project
+        get() = maven.project
+
+    @BeforeEach
+    fun setUpBase() {
+        Registry.get(BTA_CRI_REGISTRY_KEY).setValue(true, maven.testRootDisposable)
     }
 
     protected fun mavenProjectWithCriValue(value: String = "true"): String =
@@ -47,9 +56,9 @@ abstract class AbstractMavenCompilerReferenceIndexTest : MavenMultiVersionImport
         projectPomContent: String,
         action: suspend (Project) -> Unit,
     ) {
-        Registry.get("ide.activity.tracking.enable.debug").setValue(true, testRootDisposable)
-        WorkspaceModelCacheImpl.forceEnableCaching(testRootDisposable)
-        val projectPom = createModulePom(relativePath, projectPomContent)
+        Registry.get("ide.activity.tracking.enable.debug").setValue(true, maven.testRootDisposable)
+        WorkspaceModelCacheImpl.forceEnableCaching(maven.testRootDisposable)
+        val projectPom = maven.createModulePom(relativePath, projectPomContent)
 
         openProjectAsync(projectPom).useProjectAsync(save = true) { importedProject ->
             TestObservation.awaitConfiguration(importedProject, 5.minutes)

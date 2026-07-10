@@ -29,13 +29,14 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.black" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.junit5Tests.framework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.pyproject" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.pytools" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.pytools.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.test.env.junit5" scope="TEST" />
   </component>

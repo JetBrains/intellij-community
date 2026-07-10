@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.lang.documentation.CompositeDocumentationProvider
 import com.intellij.psi.PsiElement
@@ -52,6 +55,8 @@ fun doTestDocumentationUrl(text: String,
   TestCase.assertEquals(expectedUrl, getDocUrl(element!!, originalElement!!))
 }
 
+@Subsystems.QuickDocumentation
+@Layers.Functional
 abstract class PyExternalDocTest : PyTestCase() {
 
 

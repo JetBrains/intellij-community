@@ -1,0 +1,1 @@
+Indirect outer instances won't be extracted: v

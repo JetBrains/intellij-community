@@ -18,7 +18,9 @@
 - com.intellij.openapi.externalSystem.model.ExternalSystemException
 - com.intellij.build.issue.BuildIssueProvider
 - <init>(com.intellij.build.issue.BuildIssue):V
+- <init>(java.util.List):V
 - getBuildIssue():com.intellij.build.issue.BuildIssue
+- getBuildIssues():java.util.List
 *a:com.intellij.openapi.externalSystem.service.execution.AbstractOutputMessageDispatcher
 - com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcher
 - *sf:Companion:com.intellij.openapi.externalSystem.service.execution.AbstractOutputMessageDispatcher$Companion

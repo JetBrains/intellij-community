@@ -339,7 +339,9 @@ e:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:Kona:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:Liberica:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:Microsoft:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
+- sf:Ojdkbuild:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:Oracle:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
+- sf:RedHat:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:SapMachine:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:Semeru:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:Temurin:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
@@ -503,6 +505,8 @@ e:org.jetbrains.jps.model.java.LanguageLevel
 - sf:JDK_25_PREVIEW:org.jetbrains.jps.model.java.LanguageLevel
 - sf:JDK_26:org.jetbrains.jps.model.java.LanguageLevel
 - sf:JDK_26_PREVIEW:org.jetbrains.jps.model.java.LanguageLevel
+- sf:JDK_27:org.jetbrains.jps.model.java.LanguageLevel
+- sf:JDK_27_PREVIEW:org.jetbrains.jps.model.java.LanguageLevel
 - sf:JDK_X:org.jetbrains.jps.model.java.LanguageLevel
 - feature():I
 - isPreview():Z

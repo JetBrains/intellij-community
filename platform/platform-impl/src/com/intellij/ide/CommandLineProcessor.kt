@@ -33,6 +33,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
@@ -100,7 +101,7 @@ object CommandLineProcessor {
       }
     }
 
-    return doOpenFile(ioFile = file, line = -1, column = -1, tempProject = false, shouldWait = shouldWait)
+    return doOpenFile(file, line = -1, column = -1, tempProject = false, shouldWait)
   }
 
   private suspend fun doOpenFile(ioFile: Path, line: Int, column: Int, tempProject: Boolean, shouldWait: Boolean): CommandLineProcessorResult {
@@ -119,7 +120,7 @@ object CommandLineProcessor {
         if (lightEditProject != null) {
           FUSProjectHotStartUpMeasurer.lightEditProjectFound()
           val future = if (shouldWait) CommandLineWaitingManager.getInstance().addHookForPath(ioFile).asDeferred() else OK_FUTURE
-          return CommandLineProcessorResult(project = lightEditProject, future = future)
+          return CommandLineProcessorResult(lightEditProject, future)
         }
       }
       return createError(IdeBundle.message("dialog.message.can.not.open.file", ioFile.toString()))
@@ -130,20 +131,18 @@ object CommandLineProcessor {
         this.line = line
         this.column = column
       }) ?: return createError(IdeBundle.message("dialog.message.no.project.found.to.open.file.in"))
-      return CommandLineProcessorResult(
-        project = project,
-        future = if (shouldWait) CommandLineWaitingManager.getInstance().addHookForFile(file).asDeferred() else OK_FUTURE,
-      )
+      val future = if (shouldWait) CommandLineWaitingManager.getInstance().addHookForFile(file).asDeferred() else OK_FUTURE
+      return CommandLineProcessorResult(project, future)
     }
 
     NonProjectFileWritingAccessProvider.allowWriting(listOf(file))
-    val project: Project?
-    if (LightEditUtil.isForceOpenInLightEditMode()) {
-      project = LightEditService.getInstance().openFile(file)
+    val project = if (LightEditUtil.isForceOpenInLightEditMode()) {
+      val project = LightEditService.getInstance().openFile(file)
       LightEditFeatureUsagesUtil.logFileOpen(project, file, OpenPlace.CommandLine)
+      project
     }
     else {
-      project = findBestProject(file, projects)
+      val project = findBestProject(file, projects)
       val navigatable = if (line > 0) {
         OpenFileDescriptor(project, file, line - 1, column.coerceAtLeast(0))
       }
@@ -154,8 +153,10 @@ object CommandLineProcessor {
       (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT) {
         navigatable.navigate(true)
       }
+      project
     }
-    return CommandLineProcessorResult(project, if (shouldWait) CommandLineWaitingManager.getInstance().addHookForFile(file).asDeferred() else OK_FUTURE)
+    val future = if (shouldWait) CommandLineWaitingManager.getInstance().addHookForFile(file).asDeferred() else OK_FUTURE
+    return CommandLineProcessorResult(project, future)
   }
 
   private fun findBestProject(file: VirtualFile, projects: List<Project>): Project {
@@ -172,7 +173,7 @@ object CommandLineProcessor {
   @ApiStatus.Internal
   suspend fun processProtocolCommand(rawUri: @NlsSafe String): CliResult {
     LOG.info("external URI request:\n$rawUri")
-    check(!ApplicationManager.getApplication().isHeadlessEnvironment) { "cannot process URI requests in headless state" }
+    check(!ApplicationManager.getApplication().isHeadlessEnvironment) { "cannot process URI requests in a headless state" }
     val internal = rawUri.startsWith(SCHEME_INTERNAL)
     val uri = if (internal) rawUri.substring(SCHEME_INTERNAL.length) else rawUri
     val separatorStart = uri.indexOf(URLUtil.SCHEME_SEPARATOR)
@@ -191,9 +192,9 @@ object CommandLineProcessor {
       CliResult(0, IdeBundle.message("ide.protocol.exception", e.javaClass.simpleName, e.message))
     }
 
-    if (cliResult.message != null) {
+    cliResult.message?.let { message ->
       val title = IdeBundle.message("ide.protocol.cannot.title")
-      Notification("System Messages", title, cliResult.message!!, NotificationType.WARNING)
+      Notification("System Messages", title, Strings.escapeXmlEntities(message), NotificationType.WARNING)
         .addAction(ShowLogAction.notificationAction())
         .notify(null)
     }
@@ -384,10 +385,10 @@ object CommandLineProcessor {
               withContext(FUSProjectHotStartUpMeasurer.getContextElementWithEmptyProjectElementToPass()) {
                 LightEditService.getInstance().showEditorWindow()
               }
-              CommandLineProcessorResult(project = LightEditService.getInstance().project, future = OK_FUTURE)
+              CommandLineProcessorResult(LightEditService.getInstance().project, OK_FUTURE)
             }
             else {
-              CommandLineProcessorResult(project = null, future = OK_FUTURE)
+              CommandLineProcessorResult(project = null, OK_FUTURE)
             }
           }
         }

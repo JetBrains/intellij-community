@@ -25,7 +25,6 @@ import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.AppUIUtilKt;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ExceptionUtil;
@@ -128,7 +127,7 @@ public final class CreateDesktopEntryAction extends DumbAwareAction implements A
     var binDir = PathManager.getBinDir();
     assert Files.isDirectory(binDir) : "Invalid bin directory: '" + binDir + "'";
 
-    var iconPath = AppUIUtilKt.findAppIcon();
+    var iconPath = AppUIUtil.findAppIcon();
     if (iconPath == null) throw new RuntimeException(ApplicationBundle.message("desktop.entry.icon.missing", binDir));
 
     var starter = Restarter.getIdeStarter();

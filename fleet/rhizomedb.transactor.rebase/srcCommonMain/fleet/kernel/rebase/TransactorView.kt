@@ -39,12 +39,10 @@ import fleet.fastutil.ints.contains
 import fleet.fastutil.ints.retainAll
 import fleet.kernel.DbSource
 import fleet.reporting.shared.tracing.spannedScope
-import fleet.util.async.view
 import fleet.openmap.MutableOpenMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.serializer
@@ -322,8 +320,14 @@ suspend fun <T> withTransactorView(
     val transactorView = object : fleet.kernel.Transactor {
       override val middleware: fleet.kernel.TransactorMiddleware = kernel.middleware + myMiddleware
 
-      override val dbState: StateFlow<DB> =
-        kernel.dbState.view { db -> db.subDB(hiddenPart, kernelViewEntity) }
+      override val dbSource: DbSource = object : DbSource {
+        override val flow: Flow<DB>
+          get() = kernel.dbSource.flow.map { db -> db.subDB(hiddenPart, kernelViewEntity) }
+        override val latest: DB
+          get() = kernel.dbSource.latest.subDB(hiddenPart, kernelViewEntity)
+        override val debugName: String
+          get() = "kernelView ${kernel.dbSource.debugName}"
+      }
 
       override fun changeAsync(f: ChangeScope.() -> Unit): Deferred<Change> =
         kernel.changeAsync(wrapChange(f))
@@ -345,11 +349,6 @@ suspend fun <T> withTransactorView(
 
       override val meta: MutableOpenMap<fleet.kernel.Transactor> = MutableOpenMap.empty()
     }
-    withContext(transactorView + fleet.kernel.DbSource.ContextElement(
-      fleet.kernel.FlowDbSource(
-        transactorView.dbState,
-        debugName = "kernelView $transactorView"
-      )
-    )) { body(transactorView) }
+    withContext(transactorView + fleet.kernel.DbSource.ContextElement(transactorView.dbSource)) { body(transactorView) }
   }
 

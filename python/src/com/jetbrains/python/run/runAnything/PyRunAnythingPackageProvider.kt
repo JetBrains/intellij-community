@@ -46,7 +46,7 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
       if (isInstall) {
         val packageRepository = getPackageRepository(dataContext) ?: return emptySequence()
         val searchResult = packageRepository.search(commandLine.toComplete)
-        return searchResult.firstPageOrEmpty()
+        return searchResult.firstPageOrEmpty().getOr { return emptySequence() }.asSequence()
       }
       return packageManager.listInstalledPackagesSnapshot().map { it.name }.filter { it.startsWith(commandLine.toComplete) }.asSequence()
     }

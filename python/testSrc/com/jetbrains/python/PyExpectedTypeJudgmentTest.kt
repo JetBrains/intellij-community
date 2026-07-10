@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.intellij.idea.TestFor
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.StackOverflowPreventedException
@@ -16,6 +19,8 @@ import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 
 
+@Subsystems.CodeInsight
+@Layers.Functional
 class PyExpectedTypeJudgmentTest : PyTestCase() {
 
   private fun doTest(expression: String, expectedType: String, text: String) {
@@ -145,7 +150,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testExpressionInsideLambdaAsUntypedArgument() {
-    doTest("expr", "Any", """
+    doTest("expr", "Unknown", """
       def f(fn):
           ...
       f(lambda expr: 2)
@@ -153,7 +158,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testExpressionInsideLambdaBodyAsUntypedArgument() {
-    doTest("\"hello\"", "Any", """
+    doTest("\"hello\"", "Unknown", """
       def f(fn):
           ...
       f(lambda x = 2: (x := "hello"))
@@ -161,9 +166,9 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testExpressionInsideLambdaBodyAsAnyTypedArgument() {
-    doTest("\"hello\"", "Any", """
+    doTest("\"hello\"", "Unknown", """
       from typing import Callable
-      
+
       def f(fn: Callable[[Any], Any]):
           ...
       f(lambda x = 2: (x := "hello"))
@@ -183,7 +188,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   fun testExpressionInsideLambdaBodyAsIntTypedReturn() {
     doTest("\"hello\"", "int", """
       from typing import Callable
-      
+
       def f(fn: Callable[[Any], int]):
           ...
       f(lambda x: (x := "hello"))
@@ -262,59 +267,55 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testExpressionInsideLambdaOfGenericFunction() {
-    fixme<StackOverflowPreventedException>("PY-85922", "") {
-      doTest("expr", "int", """
+    doTest("expr", "int", """
       from collections.abc import Callable, Iterable
       
       def f[T](x: Iterable[T], y: Callable[[T], object]): ...
       
       f([1], lambda expr: ...)
-    """)
-    }
+      """)
   }
 
+  @TestFor(issues = ["PY-85922"])
   fun testExpressionInsideGenericClassAsReturnValue1() {
-    fixme<StackOverflowPreventedException>("PY-85922", "") {
-      doTest("expr", "int", """
-        from typing import Callable
-        
-        class A[T]:
-            def f(self, fn: Callable[[T], str]) -> float:
-        
-        A[int]().f(lambda expr: "s")
-        """)
-    }
+    doTest("expr", "int", """
+      from typing import Callable
+      
+      class A[T]:
+          def f(self, fn: Callable[[T], str]) -> float:
+      
+      A[int]().f(lambda expr: "s")
+      """)
   }
 
+  @TestFor(issues = ["PY-85922"])
   fun testExpressionInsideGenericClassAsReturnValue2() {
-    fixme<StackOverflowPreventedException>("PY-85922", "") {
-      doTest("expr", "int", """
-        from typing import Callable
-        
-        class A[T]:
-            def f(self, fn: Callable[[str], T]) -> float:
-        
-        A[int]().f(lambda x: expr)
-        """)
-    }
+    doTest("expr", "int", """
+      from typing import Callable
+      
+      class A[T]:
+          def f(self, fn: Callable[[str], T]) -> float:
+      
+      A[int]().f(lambda x: expr)
+      """)
   }
 
   fun testTupleAsReturnValueNoTypeHint() {
-    doTest("(expr, \"spam\")", "Any", """
+    doTest("(expr, \"spam\")", "Unknown", """
       def f(xs):
           return (expr, "spam")
       """)
   }
 
   fun testExpressionInsideTupleAsReturnValueNoTypeHint() {
-    doTest("expr", "Any", """
+    doTest("expr", "Unknown", """
       def f(xs):
           return (expr, "spam")
       """)
   }
 
   fun testTupleAsAssignmentValue() {
-    doTest("(42, (expr, \"spam\"))", "tuple[Any, tuple[str, Any]]", """
+    doTest("(42, (expr, \"spam\"))", "tuple[Unknown, tuple[str, Unknown]]", """
       x2: str
       x1, (x2, x3) = (42, (expr, "spam"))
       """)
@@ -328,19 +329,19 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testTupleAsAssignmentValueNoTypeHint() {
-    doTest("(42, (expr, \"spam\"))", "tuple[Any, tuple[Any, Any]]", """
+    doTest("(42, (expr, \"spam\"))", "tuple[Unknown, tuple[Unknown, Unknown]]", """
       x1, (x2, x3) = (42, (expr, "spam"))
       """)
   }
 
   fun testExprAsAssignmentValueNoTypeHint() {
-    doTest("expr", "Iterable[Any]", """
+    doTest("expr", "Iterable[Unknown]", """
       x1, (x2, x3) = expr
       """)
   }
 
   fun testExpressionInsideTupleAsAssignmentValueNoTypeHint() {
-    doTest("expr", "Any", """
+    doTest("expr", "Unknown", """
       x1, (x2, x3) = (42, (expr, "spam"))
       """)
   }
@@ -362,7 +363,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testExpressionInsideTupleAsAssignmentValueToListNoTypeHint() {
-    doTest("expr", "Any", """
+    doTest("expr", "Unknown", """
       x1, [x2, x3] = (42, (expr, "spam"))
       """)
   }
@@ -400,7 +401,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testExpressionAsTupleElementToUnwrap2OutOfBounds() {
-    doTest("expr", "Any", """
+    doTest("expr", "Unknown", """
       x: int
       xs: tuple[int, str]
       x, *xs = 1, 2, "3", expr
@@ -489,7 +490,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testArgumentForArgsOfUnpackedTuple2() {
-    doTest("expr", "Any", """
+    doTest("expr", "Unknown", """
       def f(*args: *tuple[int]):
           pass
 
@@ -745,7 +746,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testDoubleStarExpressionOwnTypeShouldBeAny() {
-    doTest("**xs", "Any", """
+    doTest("**xs", "Unknown", """
       ys: dict[str, int] = {**xs}
       """)
   }
@@ -917,7 +918,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
       """)
 
     // also: Requires constructing an anonymous TypedDict with `extra_items=int`
-    fixme<ComparisonFailure>("PY-85421 Requires constructing an anonymous TypedDict with `extra_items=int`", "Any") {
+    fixme<ComparisonFailure>("PY-85421 Requires constructing an anonymous TypedDict with `extra_items=int`", "Unknown") {
       doTest("expr", "int", """
       def f(a: str, **kwargs: int):
           pass
@@ -1050,7 +1051,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testReturnOfOverloadedFunctions() {
-    fixme<ComparisonFailure>("Depends on correct function overload matching", "Any") {
+    fixme<ComparisonFailure>("Depends on correct function overload matching", "Unknown") {
       doTest("expr", "int", """
       from typing import overload
       
@@ -1110,6 +1111,418 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
           return true, x
       """)
   }
+
+  fun testComparisonExpectedType_LessThan_LeftOperand() {
+    doTest("expr", "_Supports__lt__ | Any", """
+      if expr < other:
+          pass
+      """)
+  }
+
+  fun testComparisonExpectedType_LessThan_RightOperand() {
+    doTest("expr", "_Supports__gt__ | Any", """
+      if other < expr:
+          pass
+      """)
+  }
+
+  fun testComparisonExpectedType_GreaterThan_LeftOperand() {
+    doTest("expr", "_Supports__gt__ | Any", """
+      if expr > other:
+          pass
+      """)
+  }
+
+  fun testComparisonExpectedType_GreaterThan_RightOperand() {
+    doTest("expr", "_Supports__lt__ | Any", """
+      if other > expr:
+          pass
+      """)
+  }
+
+  fun testComparisonExpectedType_LessThanOrEqual_LeftOperand() {
+    doTest("expr", "_Supports__le__ | Any", """
+      if expr <= other:
+          pass
+      """)
+  }
+
+  fun testComparisonExpectedType_LessThanOrEqual_RightOperand() {
+    doTest("expr", "_Supports__ge__ | Any", """
+      if other <= expr:
+          pass
+      """)
+  }
+
+  fun testComparisonExpectedType_GreaterThanOrEqual_LeftOperand() {
+    doTest("expr", "_Supports__ge__ | Any", """
+      if expr >= other:
+          pass
+      """)
+  }
+
+  fun testComparisonExpectedType_GreaterThanOrEqual_RightOperand() {
+    doTest("expr", "_Supports__le__ | Any", """
+      if other >= expr:
+          pass
+      """)
+  }
+
+  fun testComparisonExpectedType_Equality_LeftOperand() {
+    doTest("expr", "_Supports__eq__ | Any", """
+      if expr == other:
+          pass
+      """)
+  }
+
+  fun testComparisonExpectedType_Equality_RightOperand() {
+    doTest("expr", "_Supports__eq__ | Any", """
+      if other == expr:
+          pass
+      """)
+  }
+
+  fun testComparisonExpectedType_Inequality_LeftOperand() {
+    doTest("expr", "_Supports__ne__ | Any", """
+      if expr != other:
+          pass
+      """)
+  }
+
+  fun testComparisonExpectedType_Inequality_RightOperand() {
+    doTest("expr", "_Supports__ne__ | Any", """
+      if other != expr:
+          pass
+      """)
+  }
+
+  fun testComparisonExpectedType_Membership_LeftOperandIsUnconstrained() {
+    doTest("expr", "Unknown", """
+      if expr in container:
+          pass
+      """)
+  }
+
+  fun testComparisonExpectedType_Membership_RightOperand() {
+    doTest("expr", "_Supports__contains__", """
+      if item in expr:
+          pass
+      """)
+  }
+
+  fun testComparisonExpectedType_NotIn_LeftOperandIsUnconstrained() {
+    doTest("expr", "Unknown", """
+      if expr not in container:
+          pass
+      """)
+  }
+
+  fun testComparisonExpectedType_NotIn_RightOperand() {
+    doTest("expr", "_Supports__contains__", """
+      if item not in expr:
+          pass
+      """)
+  }
+
+  fun testComparisonExpectedType_Is_LeftOperandIsUnconstrained() {
+    doTest("expr", "Unknown", """
+      if expr is other:
+          pass
+      """)
+  }
+
+  fun testComparisonExpectedType_Is_RightOperandIsUnconstrained() {
+    doTest("expr", "Unknown", """
+      if other is expr:
+          pass
+      """)
+  }
+
+  fun testComparisonExpectedType_IsNot_LeftOperandIsUnconstrained() {
+    doTest("expr", "Unknown", """
+      if expr is not other:
+          pass
+      """)
+  }
+
+  fun testComparisonExpectedType_IsNot_RightOperandIsUnconstrained() {
+    doTest("expr", "Unknown", """
+      if other is not expr:
+          pass
+      """)
+  }
+
+  fun testBinaryExpressionExpectedType_MultiplyListByInt_ListOperand() {
+    doTest("xs *", "_Supports__mul__ | Any", """
+      xs: list[int]
+      ys: list[int] = xs * factor
+      """)
+  }
+
+  fun testBinaryExpressionExpectedType_MultiplyListByInt_RightOperand() {
+    doTest("factor", "_Supports__index__", """
+      xs: list[int]
+      ys: list[int] = xs * factor
+      """)
+  }
+
+  fun testBinaryExpressionExpectedType_MultiplyIntByList_LeftOperand() {
+    doTest("factor", "_Supports__index__", """
+      xs: list[int]
+      ys: list[int] = factor * xs
+      """)
+  }
+
+  fun testBinaryExpressionExpectedType_NumericAdditionRespectsExpectedResultType() {
+    doTest("expr", "_Supports__add__ | Any", """
+      x: float = expr + 1
+      """)
+  }
+
+  fun testBinaryLiteralCombination_IntPlusInt_LeftOperand() {
+    doTest("expr", "_Supports__add__ | Any", """
+      x: int = expr + 1
+      """)
+  }
+
+  fun testBinaryLiteralCombination_IntPlusInt_RightOperand() {
+    doTest("expr", "_Supports__radd__ | Any", """
+      x: int = 1 + expr
+      """)
+  }
+
+  fun testBinaryLiteralCombination_StrPlusStr_LeftOperand() {
+    doTest("expr", "_Supports__add__ | Any", """
+      x: str = expr + "s"
+      """)
+  }
+
+  fun testBinaryLiteralCombination_StrPlusStr_RightOperand() {
+    doTest("expr", "_Supports__radd__ | Any", """
+      x: str = "s" + expr
+      """)
+  }
+
+  fun testBinaryLiteralCombination_ListPlusList_LeftOperand() {
+    doTest("expr", "_Supports__add__ | Any", """
+      x: list[int] = expr + [1]
+      """)
+  }
+
+  fun testBinaryLiteralCombination_ListPlusList_RightOperand() {
+    doTest("expr", "_Supports__radd__ | Any", """
+      x: list[int] = [1] + expr
+      """)
+  }
+
+  fun testBinaryLiteralCombination_IntMultInt_LeftOperand() {
+    doTest("expr", "_Supports__mul__ | Any", """
+      x: int = expr * 2
+      """)
+  }
+
+  fun testBinaryLiteralCombination_IntMultInt_RightOperand() {
+    doTest("expr", "_Supports__rmul__ | Any", """
+      x: int = 2 * expr
+      """)
+  }
+
+  fun testBinaryLiteralCombination_ListMultInt_LeftOperand() {
+    doTest("expr", "_Supports__mul__ | Any", """
+      x: list[int] = expr * 2
+      """)
+  }
+
+  fun testBinaryLiteralCombination_ListMultInt_RightOperand() {
+    doTest("expr", "_Supports__rmul__ | Any", """
+      x: list[int] = 2 * expr
+      """)
+  }
+
+  fun testBinaryLiteralCombination_ListMultList_ListLiteralOperand() {
+    doTest("[1]", "_Supports__rmul__ | Any", """
+      x: list[int] = expr * [1]
+      """)
+  }
+
+  fun testBinaryLiteralCombination_ListMultList_LeftOperand() {
+    doTest("expr", "_Supports__index__", """
+      x: list[int] = expr * [1]
+      """)
+  }
+
+  fun testBinaryLiteralCombination_ListMultList_RightOperand() {
+    doTest("expr", "_Supports__index__", """
+      x: list[int] = [1] * expr
+      """)
+  }
+
+  fun testBinaryLiteralCombination_SetOrSet_SetLiteralOperand() {
+    doTest("{1}", "_Supports__ror__ | Any", """
+      x: set[int] = expr | {1}
+      """)
+  }
+
+  fun testBinaryLiteralCombination_SetOrSet_LeftOperand() {
+    doTest("expr", "_Supports__or__ | Any", """
+      x: set[int] = expr | {1}
+      """)
+  }
+
+  fun testBinaryLiteralCombination_SetOrSet_RightOperand() {
+    doTest("expr", "_Supports__ror__ | Any", """
+      x: set[int] = {1} | expr
+      """)
+  }
+
+  fun testArgumentIsListOfLists_CompleteLiteral() {
+    doTest("[[1], [\"a\"]]", "list[list[int | str]]", """
+      def foo(lst: list[list[int | str]]) -> None: ...
+      foo([[1], ["a"]])
+      """)
+  }
+
+  fun testArgumentIsListOfLists_NestedLiteral1() {
+    doTest("[1]", "list[int | str]", """
+      def foo(lst: list[list[int | str]]) -> None: ...
+      foo([[1], ["a"]])
+      """)
+  }
+
+  fun testArgumentIsListOfLists_NestedLiteral2() {
+    doTest("[\"a\"]", "list[int | str]", """
+      def foo(lst: list[list[int | str]]) -> None: ...
+      foo([[1], ["a"]])
+      """)
+  }
+
+  @TestFor(issues = ["PY-90097"])
+  fun testListComprehensionWithEnums1() {
+    doTest(".EMPTY", "Tile", """
+      from enum import Enum
+      class Tile(Enum):
+          EMPTY = 0
+          WALL = 1
+      bar: list[Tile] = [Tile.EMPTY for _ in range(5)]
+      """)
+  }
+
+  @TestFor(issues = ["PY-90097"])
+  fun testListComprehensionWithEnums2() {
+    doTest("[Tile.EMPTY for _ in range(5)]", "list[Tile]", """
+      from enum import Enum
+      class Tile(Enum):
+          EMPTY = 0
+          WALL = 1
+      foo: list[list[Tile]] = [[Tile.EMPTY for _ in range(5)] for _ in range(5)]
+      """)
+  }
+
+  fun testResultExprInListComprehensionAsArgument() = doTest("idx", "int", """
+    def foo(xs: list[int]): ...
+    foo([idx for idx in range(5)])
+    """.trimIndent()
+  )
+
+  fun testResultExprInNestedListComprehensionAsArgument() = doTest("idx", "int", """
+    def foo(xs: list[list[int]]): ...
+    foo([[idx for idx in range(5)] for _ in range(5)])
+    """.trimIndent()
+  )
+
+  fun testInnerListComprehensionInNestedListComprehensionAsArgument() = doTest(
+    "[idx for idx in range(5)]",
+    "list[int]",
+    """
+    def foo(xs: list[list[int]]): ...
+    foo([[idx for idx in range(5)] for _ in range(5)])
+    """.trimIndent()
+  )
+
+  fun testResultExprInListComprehensionAssignedToTypedTarget() = doTest("idx", "int", """
+    xs: list[int] = [idx for idx in range(5)]
+    """.trimIndent()
+  )
+
+  fun testResultExprInListComprehensionAsReturn() = doTest("idx", "int", """
+    def foo() -> list[int]:
+        return [idx for idx in range(5)]
+    """.trimIndent()
+  )
+
+  fun testResultExprInSetComprehensionAsArgument() = doTest("idx", "int", """
+    def foo(xs: set[int]): ...
+    foo({idx for idx in range(5)})
+    """.trimIndent()
+  )
+
+  fun testResultExprInSetComprehensionAssignedToTypedTarget() = doTest("idx", "int", """
+    xs: set[int] = {idx for idx in range(5)}
+    """.trimIndent()
+  )
+
+  fun testKeyInDictComprehensionAsArgument() {
+    doTest("idx", "int", """
+      def foo(d: dict[int, str]): ...
+      foo({idx: str(idx) for idx in range(5)})
+      """.trimIndent()
+    )
+  }
+
+  fun testValueInDictComprehensionAsArgument() {
+    doTest("(i)", "str", """
+      def foo(d: dict[int, str]): ...
+      foo({i: str(i) for i in range(5)})
+      """.trimIndent()
+    )
+  }
+
+  fun testKeyInDictComprehensionAssignedToTypedTarget() = doTest("idx", "int", """
+    d: dict[int, str] = {idx: str(idx) for idx in range(5)}
+    """.trimIndent()
+  )
+
+  fun testResultExprInGeneratorExpressionAsIterableArgument() = doTest("idx", "int", """
+    from typing import Iterable
+    def foo(xs: Iterable[int]): ...
+    foo(idx for idx in range(5))
+    """.trimIndent()
+  )
+
+  fun testResultExprInGeneratorExpressionPassedToListLiteral() = doTest("idx", "int", """
+    xs: list[int] = [idx for idx in range(5)]
+    """.trimIndent()
+  )
+
+  fun testResultExprInGeneratorExpressionPassedToListConstructor() = doTest("idx", "int", """
+    xs: list[int] = list(idx for idx in range(5))
+    """.trimIndent()
+  )
+
+  fun testResultExprInGeneratorExpressionAsReturn() = doTest("idx", "int", """
+    from typing import Iterator
+    def foo() -> Iterator[int]:
+        return (idx for idx in range(5))
+    """.trimIndent()
+  )
+
+  fun testResultExprInAsyncListComprehensionAsArgument() = doTest("idx", "int", """
+    from typing import Callable
+    async def asyncgen():
+        yield 10
+    async def run(foo: Callable[[list[int]], None]):
+        foo([idx async for idx in asyncgen()])
+    """.trimIndent()
+  )
+
+  fun testResultExprInAsyncGeneratorExpressionAsArgument() = doTest("idx", "int", """
+    from typing import AsyncIterable, Callable
+    async def asyncgen():
+        yield 10
+    async def run(foo: Callable[[AsyncIterable[int]], None]):
+        foo(idx async for idx in asyncgen())
+    """.trimIndent()
+  )
 
   // Note: The return type of yield is not subject to the [PyExpectedTypeJudgement] computation.
   @Suppress("unused")

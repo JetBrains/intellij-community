@@ -12,7 +12,9 @@ import com.intellij.openapi.util.registry.Registry
 
 private const val REMOTE_DEV_RUN_ENV = "REMOTE_DEV_RUN"
 private const val JUNIT_RUNNER_USE_INSTALLER_ENV = "JUNIT_RUNNER_USE_INSTALLER"
-internal const val IDE_STARTER_MODULE_PREFIX = "intellij.tools.ide.starter"
+
+internal const val IDE_STARTER_MODULE = "intellij.tools.ide.starter"
+internal const val RDCT_TEST_FRAMEWORK_MODULE = "intellij.rdct.testFramework"
 internal const val IDE_STARTER_RUN_MODES_ENABLED_KEY = "devkit.ide.starter.run.modes.enabled"
 
 internal fun isIdeStarterRunModesEnabled(): Boolean {
@@ -21,9 +23,30 @@ internal fun isIdeStarterRunModesEnabled(): Boolean {
 
 internal fun isIdeStarterModule(module: Module): Boolean {
   if (!isIdeStarterRunModesEnabled()) return false
-  return ModuleRootManager.getInstance(module).dependencies.any { dep ->
-    dep.name.startsWith(IDE_STARTER_MODULE_PREFIX)
+  val dependencyNames = collectDependencyModuleNames(module)
+  if (RDCT_TEST_FRAMEWORK_MODULE in dependencyNames) return false
+  return IDE_STARTER_MODULE in dependencyNames
+}
+
+/**
+ * Collects the names of [module] and all of its module dependencies, transitively.
+ */
+private fun collectDependencyModuleNames(module: Module): Set<String> {
+  val names = HashSet<String>()
+  val visited = HashSet<Module>()
+  val queue = ArrayDeque<Module>()
+  queue.add(module)
+  visited.add(module)
+  while (queue.isNotEmpty()) {
+    val current = queue.removeFirst()
+    names.add(current.name)
+    for (dependency in ModuleRootManager.getInstance(current).dependencies) {
+      if (visited.add(dependency)) {
+        queue.add(dependency)
+      }
+    }
   }
+  return names
 }
 
 internal class IdeStarterRunConfigurationExtension : RunConfigurationExtension() {

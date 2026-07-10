@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.CountComponent;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
+import com.intellij.ide.plugins.newui.PluginUpdateSubscription;
 import com.intellij.ide.plugins.newui.TabbedPaneHeaderComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
@@ -31,7 +32,7 @@ public final class PluginsTabFactory implements WelcomeTabFactory {
   }
 
   private static final class MyDefaultWelcomeScreenTab extends TabbedWelcomeScreen.DefaultWelcomeScreenTab {
-    private final PluginUpdatesService myService;
+    private final PluginUpdateSubscription myPluginUpdateSubscription;
     private final CountComponent myCountLabel = new CountComponent();
     private JComponent myParent;
     private final Disposable parentDisposable;
@@ -44,9 +45,9 @@ public final class PluginsTabFactory implements WelcomeTabFactory {
       myKeyComponent.add(myCountLabel, BorderLayout.EAST);
       myCountLabel.setVisible(false);
 
-      myService = PluginUpdatesService.connectWithUpdates(results -> {
-        int countValue = results.getPluginUpdates().getAll().size();
-        @NlsSafe String text = countValue <= 0 ? null : Integer.toString(countValue);
+      myPluginUpdateSubscription = PluginUpdatesService.getInstance().subscribe(results -> {
+        int countValue = results.getEnabledUpdates().size();
+        @NlsSafe String text = countValue == 0 ? null : Integer.toString(countValue);
         myCountLabel.setText(text);
         myCountLabel.setVisible(text != null);
         if (myParent != null) {
@@ -61,8 +62,8 @@ public final class PluginsTabFactory implements WelcomeTabFactory {
         parent.addAncestorListener(new AncestorListenerAdapter() {
           @Override
           public void ancestorRemoved(AncestorEvent event) {
-            if (myService != null) {
-              myService.dispose();
+            if (myPluginUpdateSubscription != null) {
+              myPluginUpdateSubscription.cancel();
             }
           }
         });

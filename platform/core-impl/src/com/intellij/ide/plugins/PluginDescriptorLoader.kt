@@ -48,6 +48,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.net.URL
 import java.nio.file.Files
+import java.nio.file.InvalidPathException
 import java.nio.file.NoSuchFileException
 import java.nio.file.NotDirectoryException
 import java.nio.file.Path
@@ -602,7 +603,7 @@ internal fun CoroutineScope.loadPluginDescriptorsForPathBasedLoader(
   bundledPluginDir: Path?,
 ): Deferred<List<DiscoveredPluginsList>> {
   val platformPrefix = PlatformUtils.getPlatformPrefix()
-  val jarFileForModule: (PluginModuleId, Path) -> Path? = { moduleId, moduleDir -> moduleDir.resolve("${moduleId.name}.jar") }
+  val jarFileForModule = createPathBasedProductModuleJarResolver(mainClassLoader)
 
   if (isUnitTestMode && !isInDevServerMode) {
     return loadPluginDescriptorsInDeprecatedUnitTestMode(
@@ -681,6 +682,48 @@ internal fun CoroutineScope.loadPluginDescriptorsForPathBasedLoader(
       )
     }
   }
+}
+
+private fun createPathBasedProductModuleJarResolver(mainClassLoader: ClassLoader): (PluginModuleId, Path) -> Path? {
+  if (PlatformUtils.isGateway()) {
+    val gatewayModuleJars = collectGatewayProductContentModuleJars()
+    return { moduleId, moduleDir ->
+      gatewayModuleJars[moduleId.name]
+      ?: moduleDir.resolve("${moduleId.name}.jar")
+    }
+  }
+  else {
+    return { moduleId, moduleDir -> moduleDir.resolve("${moduleId.name}.jar") }
+  }
+}
+
+/**
+ * 'isDeprecatedLoader' does not handle the case when the 'Core' plugin references a module that is located outside the 'lib' directory.
+ * These modules are located in the 'plugins/gateway-plugin/lib' directory and need to be specified explicitly.
+ *
+ * If not used, the default of 'Core' plugin will be used, that may cause the same class being loaded twice.
+ */
+private fun collectGatewayProductContentModuleJars(): Map<String, Path> {
+  val path = System.getProperty("standalone.gateway.modules.classpath") ?: return emptyMap()
+  try {
+    val modulesFolder = Paths.get(path)
+    val modules = Files.newDirectoryStream(modulesFolder).use { stream ->
+      stream.filterTo(ArrayList()) {
+        it.fileName.toString().endsWith(".jar", ignoreCase = true)
+      }
+    }
+    return modules.associateBy {
+      val fileName = it.fileName.toString()
+      fileName.substring(0, fileName.length - ".jar".length)
+    }
+  }
+  catch (e: IOException) {
+    LOG.warn("Cannot load ${path}", e)
+  }
+  catch (e: InvalidPathException) {
+    LOG.warn("Cannot load ${path}", e)
+  }
+  return emptyMap()
 }
 
 private fun CoroutineScope.loadFromPluginClasspathDescriptor(
@@ -1024,12 +1067,10 @@ private fun loadProductModule(
   xIncludeLoader: XIncludeLoader,
   containerDescriptor: PluginMainDescriptor,
 ): Boolean {
-  val moduleId = module.moduleId
   val moduleRaw: PluginDescriptorBuilder = if (jarFile == null) {
     // do not log - the severity of the error is determined by the loadingStrategy, the default strategy does not return null at all
     PluginDescriptorBuilder.builder().apply {
       visibility = ModuleVisibilityValue.PUBLIC
-      `package` = "unresolved.${moduleId.name}"
     }
   }
   else {

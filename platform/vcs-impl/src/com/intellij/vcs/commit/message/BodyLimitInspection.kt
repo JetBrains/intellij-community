@@ -21,7 +21,7 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.util.DocumentUtil
 import org.jetbrains.annotations.Nls
 
-class BodyLimitInspection : BaseCommitMessageInspection() {
+internal class BodyLimitInspection : BaseCommitMessageInspection() {
   @JvmField
   var RIGHT_MARGIN: Int = 72
 

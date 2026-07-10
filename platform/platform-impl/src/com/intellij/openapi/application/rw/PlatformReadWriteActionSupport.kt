@@ -76,7 +76,7 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
     return InternalReadAction(constraints, undispatched, blocking, action).runReadAction()
   }
 
-  override fun <X, E : Throwable> computeCancellable(action: ThrowableComputable<X, E>): X {
+  override fun <X, E : Throwable> computeCancellableUnsafe(action: ThrowableComputable<X, E>): X {
     return cancellableReadAction {
       action.compute()
     }

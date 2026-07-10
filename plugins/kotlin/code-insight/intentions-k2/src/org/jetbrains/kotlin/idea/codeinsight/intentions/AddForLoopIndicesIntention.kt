@@ -11,6 +11,10 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.config.LanguageFeature.DeprecateNameMismatchInShortDestructuringWithParentheses
+import org.jetbrains.kotlin.config.LanguageFeature.EnableNameBasedDestructuringShortForm
+import org.jetbrains.kotlin.config.LanguageFeature.NameBasedDestructuring
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.relativeTo
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -92,10 +96,12 @@ class AddForLoopIndicesIntention :
         val newLoopRange = createWithIndexExpression(loopRange, psiFactory, true)
         loopRange.replace(newLoopRange)
 
+        val parameterExpression = parameterExpression(loopParameter, element)
+
         // Create a destructuring declaration for (index, item)
         var multiParameter = (psiFactory.createExpressionByPattern(
-            "for((index, $0) in x){}", 
-            loopParameter.text
+            "for((index, $0) in x){}",
+            parameterExpression
         ) as KtForExpression).destructuringDeclaration ?: return
 
         multiParameter = loopParameter.replaced(multiParameter)
@@ -121,6 +127,23 @@ class AddForLoopIndicesIntention :
             else -> templateBuilder.finishAt(body.startOffset)
         }
 
+    }
+
+    private fun parameterExpression(loopParameter: KtParameter, element: KtForExpression): String {
+        val parameterName = loopParameter.text
+        val languageVersionSettings = element.languageVersionSettings
+        val useFullForm =
+            languageVersionSettings.supportsFeature(NameBasedDestructuring) &&
+                    languageVersionSettings.supportsFeature(DeprecateNameMismatchInShortDestructuringWithParentheses) &&
+                    languageVersionSettings.supportsFeature(EnableNameBasedDestructuringShortForm)
+
+        // see IndexedValue
+        val expression = if (useFullForm && parameterName != "value") {
+            "$parameterName = value"
+        } else {
+            parameterName
+        }
+        return expression
     }
 
 

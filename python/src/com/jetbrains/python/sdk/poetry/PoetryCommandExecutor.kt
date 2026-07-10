@@ -31,7 +31,7 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.toEelFileSystem
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.impl.PySdkBundle
-import com.jetbrains.python.sdk.pyRichSdkAsync
+import com.jetbrains.python.sdk.pythonInterpreterAsync
 import com.jetbrains.python.sdk.runTool
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import io.github.z4kn4fein.semver.Version
@@ -104,7 +104,7 @@ internal suspend fun getPoetryExecutable(eel: EelApi = localEel): Path? =
 internal suspend fun runPoetryWithSdk(sdk: Sdk, vararg args: String): PyResult<String> {
   val projectPath = sdk.associatedModulePath?.let { Path.of(it) }
                     ?: return PyResult.localizedError(poetryNotFoundException) // Choose a correct sdk
-  val pythonHomePath = sdk.pyRichSdkAsync().pythonHomePath
+  val pythonHomePath = sdk.pythonInterpreterAsync().pythonHomePath
                        ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", sdk.name))
   val env = buildMap {
     put("POETRY_VIRTUALENVS_IN_PROJECT", "false")

@@ -39,6 +39,7 @@ import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache
 import com.jetbrains.python.psi.resolve.fromSdk
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyClassTypeImpl
@@ -74,18 +75,19 @@ class PyBuiltinCache private constructor(
    * @param name to look for
    * @return found element, or null.
    */
-  @Suppress("KotlinUnreachableCode")
-  fun getByName(name: @NonNls String?): PsiElement? =
-    builtinsFile?.getElementNamed(name)?.let { return it }
-    ?: myExceptionsFile?.file?.getElementNamed(name)
-
+  fun getByName(name: @NonNls String?): PsiElement? {
+    // Accept both the short name ("int") and the canonical builtin qualified name ("builtins.int")
+    val shortName = PyNames.FQN.unqualifyBuiltinName(name)
+    return builtinsFile?.getElementNamed(shortName)?.let { return it }
+           ?: myExceptionsFile?.file?.getElementNamed(shortName)
+  }
 
   fun getClass(name: @NonNls String): PyClass? {
-    return builtinsFile?.findTopLevelClass(name)
+    return builtinsFile?.findTopLevelClass(PyNames.FQN.unqualifyBuiltinName(name) ?: name)
   }
 
   fun getObjectType(name: @NonNls String): PyClassType? {
-    return myBuiltinsFile?.getClassType(name)
+    return myBuiltinsFile?.getClassType(PyNames.FQN.unqualifyBuiltinName(name) ?: name)
   }
 
   val objectType: PyClassType?
@@ -156,7 +158,7 @@ class PyBuiltinCache private constructor(
       unicode = if (definition) unicode.toClass() else unicode.toInstance()
     }
 
-    return PyUnionType.union(str, unicode)
+    return PyUnionType.union(str, unicode ?: PyAnyType.unknown)
   }
 
   val boolType: PyClassType?

@@ -2,6 +2,7 @@
 
 package com.intellij.mcpserver
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
@@ -14,11 +15,8 @@ import org.junit.jupiter.api.BeforeEach
 import java.nio.file.Path
 
 abstract class GeneralMcpToolsetTestBase : McpToolsetTestBase() {
-  companion object {
-    private const val TEST_PROJECT_RESOURCE_PATH = "community/plugins/mcp-server/tests/testResources/mcpToolsetProject"
-  }
-
-  override fun projectTestData(): Path? = Path.of(TEST_PROJECT_RESOURCE_PATH)
+  override fun projectTestData(): Path = Path.of(PathManager.getCommunityHomePath(),
+                                                 "plugins/mcp-server/tests/testResources/mcpToolsetProject")
 
   protected open fun sourceRootRelativePath(): Path = Path.of("src")
 

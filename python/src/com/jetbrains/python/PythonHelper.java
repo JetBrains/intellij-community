@@ -23,7 +23,6 @@ import static com.intellij.python.community.helpersLocator.PythonHelpersLocator.
 import static com.intellij.python.community.helpersLocator.PythonHelpersLocator.findPathInHelpersPossibleNull;
 import static com.intellij.python.community.helpersLocator.PythonHelpersLocator.findPathStringInHelpers;
 import static com.intellij.python.community.helpersLocator.PythonHelpersLocator.getCommunityHelpersRoot;
-import static com.intellij.python.venv.VenvKt.LEGACY_VIRTUALENV_ZIPAPP_NAME;
 import static com.intellij.python.venv.VenvKt.VIRTUALENV_ZIPAPP_NAME;
 import static com.jetbrains.python.packaging.pip.PipPackageManagerEngine.PACKAGING_TOOL_NAME;
 
@@ -34,7 +33,6 @@ public enum PythonHelper implements HelperPackage {
   // Packaging tools
   PACKAGING_TOOL(PACKAGING_TOOL_NAME),
   VIRTUALENV_ZIPAPP(VIRTUALENV_ZIPAPP_NAME),
-  LEGACY_VIRTUALENV_ZIPAPP(LEGACY_VIRTUALENV_ZIPAPP_NAME), // virtualenv used to create virtual environments for python 2.7, 3.6, 3.7
 
   COVERAGEPY_OLD("coveragepy_old", ""),
   COVERAGEPY_NEW("coveragepy_new", ""),

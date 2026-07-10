@@ -116,6 +116,29 @@ describe('ij MCP proxy project_path injection', {timeout: SUITE_TIMEOUT_MS}, () 
     }
   })
 
+  it('injects rootFolder for Rider EAP tools', async () => {
+    const customTools = [
+      buildUpstreamTool(
+        'get_project_status',
+        {
+          rootFolder: {type: 'string'},
+          message: {type: 'string'}
+        },
+        ['rootFolder']
+      )
+    ]
+
+    await withProxy({tools: customTools}, async ({fakeServer, proxyClient, testDir}) => {
+      await proxyClient.send('tools/list')
+      const callPromise = fakeServer.waitForToolCall()
+      await proxyClient.send('tools/call', {name: 'get_project_status', arguments: {message: 'x'}})
+      const call = await withTimeout(callPromise, TOOL_CALL_TIMEOUT_MS, 'tools/call')
+
+      deepStrictEqual(call.args.message, 'x')
+      strictEqual(realpathSync(call.args.rootFolder), realpathSync(testDir))
+    })
+  })
+
   it('uses JETBRAINS_MCP_PROJECT_PATH when provided as file URI', async () => {
     const overrideDir = mkdtempSync(join(tmpdir(), 'ij mcp proxy override-'))
     const overrideUri = pathToFileURL(overrideDir).toString()

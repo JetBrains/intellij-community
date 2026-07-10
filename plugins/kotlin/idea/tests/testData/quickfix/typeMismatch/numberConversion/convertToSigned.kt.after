@@ -1,6 +1,6 @@
 // "Convert expression to 'Int'" "true"
 // WITH_STDLIB
-// K2_ERROR: Argument type mismatch: actual type is 'UInt', but 'Int' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 fun foo(param: Int) {}
 
 fun test(expr: UInt) {

@@ -2,12 +2,74 @@
 package com.jetbrains.python
 
 import com.intellij.openapi.util.NlsSafe
+import com.jetbrains.python.PyNames.TYPE_STRING_TYPES
 import com.jetbrains.python.psi.LanguageLevel
 import org.jetbrains.annotations.NonNls
 import java.util.regex.Pattern
 
 @NonNls
 object PyNames {
+  /**
+   * Fully-qualified names of well-known Python symbols.
+   *
+   * Builtins are qualified as `builtins.<name>` to match `QualifiedNameFinder.getQualifiedName`,
+   * which qualifies every builtin (including Python 2 `__builtin__` members) under `builtins`.
+   */
+  @NonNls
+  object FQN {
+    const val INT: String = "builtins.int"
+    const val BOOL: String = "builtins.bool"
+    const val LONG: String = "builtins.long"
+    const val FLOAT: String = "builtins.float"
+    const val COMPLEX: String = "builtins.complex"
+    /** `unicode` string type (Python 2). See [TYPE_STRING_TYPES]. */
+    const val UNICODE: String = "builtins.unicode"
+    /** `str` type. See [TYPE_STRING_TYPES]. */
+    const val STR: String = "builtins.str"
+    const val BYTES: String = "builtins.bytes"
+    const val BYTEARRAY: String = "builtins.bytearray"
+    const val TYPE: String = "builtins.type"
+    const val OBJECT: String = "builtins.object"
+    const val TUPLE: String = "builtins.tuple"
+    const val LIST: String = "builtins.list"
+    const val SET: String = "builtins.set"
+    const val SLICE: String = "builtins.slice"
+    const val DICT: String = "builtins.dict"
+    const val DATE: String = "datetime.date"
+    const val DATETIME: String = "datetime.datetime"
+    const val TIME: String = "datetime.time"
+    const val ENUM: String = "enum.Enum"
+    const val ENUM_META: String = "enum.EnumMeta"
+    const val ENUM_FLAG: String = "enum.Flag"
+    const val ENUM_AUTO: String = "enum.auto"
+    const val ENUM_MEMBER: String = "enum.member"
+    const val ENUM_NONMEMBER: String = "enum.nonmember"
+    const val NONE_TYPE: String = "_typeshed.NoneType"
+    val NONES: List<String> = listOf("_typeshed.NoneType", NONE_TYPE)
+    const val FUNCTION_TYPE: String = "types.FunctionType"
+    const val COROUTINE_TYPE: String = "types.CoroutineType"
+    const val METHOD_TYPE: String = "types.UnboundMethodType"
+    const val TEMPLATELIB_TEMPLATE: String = "string.templatelib.Template"
+    const val ABC_META: String = "abc.ABCMeta"
+    const val ABC: String = "abc.ABC"
+    const val NAMEDTUPLE: String = "collections.namedtuple"
+    const val COLLECTIONS_NAMEDTUPLE_PY2: String = NAMEDTUPLE
+    const val COLLECTIONS_NAMEDTUPLE_PY3: String = "collections.__init__.namedtuple"
+
+    /**
+     * If [qualifiedName] is the qualified name of a symbol defined in the builtins module
+     * (for example `builtins.int`), returns its unqualified short name (`int`).
+     * Otherwise returns [qualifiedName] unchanged (`null` in, `null` out).
+     *
+     * `QualifiedNameFinder.getQualifiedName` qualifies every builtin as `builtins.<name>` — Python 2 builtins, whose
+     * runtime module is `__builtin__`, are normalized to `builtins` too — so a single prefix is enough here.
+     * Use it to compare a possibly-builtin qualified name against a short builtin name such as [PyNames.TUPLE] or [PyNames.OBJECT].
+     */
+    @JvmStatic
+    fun unqualifyBuiltinName(qualifiedName: String?): String? =
+      qualifiedName?.removePrefix("builtins.")
+  }
+
   const val SITE_PACKAGES: String = "site-packages"
   const val DIST_PACKAGES: String = "dist-packages"
 
@@ -28,7 +90,7 @@ object PyNames {
   const val TYPE_COMPLEX: String = "complex"
 
   /**
-   * unicode string type (see [.TYPE_STRING_TYPES]
+   * unicode string type (see [TYPE_STRING_TYPES]
    */
   const val TYPE_UNICODE: String = "unicode"
 
@@ -46,31 +108,42 @@ object PyNames {
   /**
    * date type
    */
+  @Deprecated("use PyNames.FQN.DATE", replaceWith = ReplaceWith("PyNames.FQN.DATE"))
   const val TYPE_DATE: String = "datetime.date"
 
   /**
    * datetime type
    */
+  @Deprecated("use PyNames.FQN.DATETIME", replaceWith = ReplaceWith("PyNames.FQN.DATETIME"))
   const val TYPE_DATE_TIME: String = "datetime.datetime"
 
   /**
    * time type
    */
+  @Deprecated("use PyNames.FQN.TIME", replaceWith = ReplaceWith("PyNames.FQN.TIME"))
   const val TYPE_TIME: String = "datetime.time"
 
   const val TYPE_BYTES: String = "bytes"
 
   const val TYPE_BYTEARRAY: String = "bytearray"
 
+  @Deprecated("use PyNames.FQN.ENUM", replaceWith = ReplaceWith("PyNames.FQN.ENUM"))
   const val TYPE_ENUM: String = "enum.Enum"
+  @Deprecated("use PyNames.FQN.ENUM_META", replaceWith = ReplaceWith("PyNames.FQN.ENUM_META"))
   const val TYPE_ENUM_META: String = "enum.EnumMeta"
+  @Deprecated("use PyNames.FQN.ENUM_FLAG", replaceWith = ReplaceWith("PyNames.FQN.ENUM_FLAG"))
   const val TYPE_ENUM_FLAG: String = "enum.Flag"
+  @Deprecated("use PyNames.FQN.ENUM_AUTO", replaceWith = ReplaceWith("PyNames.FQN.ENUM_AUTO"))
   const val TYPE_ENUM_AUTO: String = "enum.auto"
+  @Deprecated("use PyNames.FQN.ENUM_MEMBER", replaceWith = ReplaceWith("PyNames.FQN.ENUM_MEMBER"))
   const val TYPE_ENUM_MEMBER: String = "enum.member"
+  @Deprecated("use PyNames.FQN.ENUM_NONMEMBER", replaceWith = ReplaceWith("PyNames.FQN.ENUM_NONMEMBER"))
   const val TYPE_ENUM_NONMEMBER: String = "enum.nonmember"
 
+  @Deprecated("use PyNames.FQN.NONE_TYPE", replaceWith = ReplaceWith("PyNames.FQN.NONE_TYPE"))
   const val TYPE_NONE: String = "_typeshed.NoneType"
-  val TYPE_NONE_NAMES: Set<String> = setOf("types.NoneType", TYPE_NONE)
+  @Deprecated("use PyNames.FQN.NONES", replaceWith = ReplaceWith("PyNames.FQN.NONES"))
+  val TYPE_NONE_NAMES: Set<String> = setOf("types.NoneType", FQN.NONE_TYPE)
 
   @JvmField
   val BUILTINS_MODULES: Set<String> = setOf("builtins.py", "__builtin__.py")
@@ -117,8 +190,11 @@ object PyNames {
   const val ELLIPSIS: String = "..."
   const val FUNCTION: String = "function"
 
+  @Deprecated("use PyNames.FQN.FUNCTION_TYPE", replaceWith = ReplaceWith("PyNames.FQN.FUNCTION_TYPE"))
   const val TYPES_FUNCTION_TYPE: String = "types.FunctionType"
+  @Deprecated("use PyNames.FQN.COROUTINE_TYPE", replaceWith = ReplaceWith("PyNames.FQN.COROUTINE_TYPE"))
   const val TYPES_COROUTINE_TYPE: String = "types.CoroutineType"
+  @Deprecated("use PyNames.FQN.UNBOUND_METHOD_TYPE", replaceWith = ReplaceWith("PyNames.FQN.UNBOUND_METHOD_TYPE"))
   const val TYPES_METHOD_TYPE: String = "types.UnboundMethodType"
 
   const val FUTURE_MODULE: String = "__future__"
@@ -141,6 +217,10 @@ object PyNames {
   const val ALL: String = "__all__"
   const val SLOTS: String = "__slots__"
   const val DEBUG: String = "__debug__"
+
+  const val DUNDER_REPR: String = "__repr__"
+  const val DUNDER_STR: String = "__str__"
+  const val DUNDER_FORMAT: String = "__format__"
 
   const val ISINSTANCE: String = "isinstance"
   const val ASSERT_IS_INSTANCE: String = "assertIsInstance"
@@ -243,7 +323,9 @@ object PyNames {
   const val ABSTRACTMETHOD: String = "abstractmethod"
   const val ABSTRACTPROPERTY: String = "abstractproperty"
   const val ABC_META_CLASS: String = "ABCMeta"
+  @Deprecated("Moved to PyNames.FQN", ReplaceWith("PyNames.FQN.ABC"))
   const val ABC: String = "abc.ABC"
+  @Deprecated("Moved to PyNames.FQN", ReplaceWith("PyNames.FQN.ABC_META"))
   const val ABC_META: String = "abc.ABCMeta"
 
   const val TUPLE: String = "tuple"
@@ -334,6 +416,13 @@ object PyNames {
     DELITEM
   )
 
+  /**
+   * Binary operators that are resolved exclusively on the right-hand side operand
+   * and have no left-hand side counterpart or reflected equivalent.
+   */
+  @JvmField
+  val STANDALONE_RIGHT_OPERATORS: Set<String> = setOf(CONTAINS)
+
   private val onlySelfDescr = BuiltinDescription("(self)")
   private fun onlySelfDescr(returnType: String, vararg imports: String) = BuiltinDescription("(self) -> $returnType", *imports)
   private val selfOtherDescr = BuiltinDescription("(self, other)")
@@ -348,7 +437,7 @@ object PyNames {
     //"__all__" to _only_self_descr,
     //"__author__" to _only_self_descr,
     //"__bases__" to _only_self_descr,
-    "__call__" to BuiltinDescription("(self, *args, **kwargs)"),
+    CALL to BuiltinDescription("(self, *args, **kwargs)"),
     "__ceil__" to onlySelfDescr,
     "__class__" to onlySelfDescr,
     "__cmp__" to selfOtherDescr,
@@ -433,7 +522,7 @@ object PyNames {
     "__rdivmod__" to selfOtherDescr,
     "__reduce__" to onlySelfDescr,
     "__reduce_ex__" to BuiltinDescription("(self, protocol)"),
-    "__repr__" to onlySelfDescr,
+    PyNames.DUNDER_REPR to onlySelfDescr,
     "__reversed__" to onlySelfDescr,
     "__rfloordiv__" to selfOtherDescr,
     "__rlshift__" to selfOtherDescr,
@@ -454,7 +543,7 @@ object PyNames {
     SIZEOF to onlySelfDescr,
     //_"__self__" to_only_self_descr),
     //_"__slots__" to_only_self_descr),
-    "__str__" to onlySelfDescr,
+    DUNDER_STR to onlySelfDescr,
     "__sub__" to selfOtherDescr,
     "__truediv__" to selfOtherDescr,
     "__trunc__" to onlySelfDescr,
@@ -472,7 +561,7 @@ object PyNames {
   private val PY3_BUILTIN_METHODS: Map<String, BuiltinDescription> = BuiltinMethods + mapOf(
     "__bool__" to onlySelfDescr,
     BYTES to onlySelfDescr,
-    "__format__" to BuiltinDescription("(self, format_spec: str) -> str"),
+    DUNDER_FORMAT to BuiltinDescription("(self, format_spec: str) -> str"),
     "__instancecheck__" to BuiltinDescription("(self, instance)"),
     PREPARE to BuiltinDescription("(metacls, name: str, bases: tuple[type, ...], **kwargs: object) -> Mapping[str, object]", "collections.abc.Mapping"),
     ROUND to BuiltinDescription("(self, n=None)"),
@@ -726,9 +815,11 @@ object PyNames {
   fun isPrivate(name: @NonNls String): Boolean =
     ProtectionLevel.forName(name) == ProtectionLevel.PRIVATE
 
+  @JvmStatic
   fun isSunder(name: @NonNls String): Boolean =
     name.length > 2 && name.startsWith("_") && name.endsWith("_") && name[1] != '_' && name[name.length - 2] != '_'
 
+  @JvmStatic
   fun isDunder(name: @NonNls String): Boolean =
     name.length > 4 && name.startsWith("__") && name.endsWith("__") && name[2] != '_' && name[name.length - 3] != '_'
 

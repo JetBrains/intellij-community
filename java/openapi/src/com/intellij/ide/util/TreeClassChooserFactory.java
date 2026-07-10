@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -25,6 +25,18 @@ public abstract class TreeClassChooserFactory {
                                                                                GlobalSearchScope scope,
                                                                                final ClassFilter classFilter,
                                                                                @Nullable PsiClass initialClass);
+
+
+  /**
+   * Like {@link #createWithInnerClassesScopeChooser}, but the resulting chooser also returns
+   * implicit (compact) classes declared in compact source files (JEP 512). Such classes are stored
+   * in a separate index ({@link com.intellij.psi.impl.java.stubs.index.JavaImplicitClassIndex}) and
+   * are therefore not surfaced by {@link #createWithInnerClassesScopeChooser}.
+   */
+  public abstract @NotNull TreeClassChooser createWithInnerAndImplicitClassesScopeChooser(@NlsContexts.DialogTitle String title,
+                                                                                          GlobalSearchScope scope,
+                                                                                          final ClassFilter classFilter,
+                                                                                          @Nullable PsiClass initialClass);
 
 
   public abstract @NotNull TreeClassChooser createNoInnerClassesScopeChooser(@NlsContexts.DialogTitle String title,

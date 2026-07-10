@@ -9,6 +9,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -33,7 +34,7 @@ public final class JavaFieldNameIndex extends StringStubIndexExtension<PsiField>
     return getFields(s, project, scope);
   }
 
-  public Collection<PsiField> getFields(final @NotNull String s, final @NotNull Project project, final @NotNull GlobalSearchScope scope) {
+  public @Unmodifiable Collection<PsiField> getFields(final @NotNull String s, final @NotNull Project project, final @NotNull GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), s, project, new JavaSourceFilterScope(scope), PsiField.class);
   }
 }

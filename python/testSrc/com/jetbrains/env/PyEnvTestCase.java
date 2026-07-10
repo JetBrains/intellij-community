@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.python.test.env.common.PredefinedPyEnvironments.Companion;
-import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_2_7;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VANILLA_2_7;
 import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_10;
 import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_11;
 import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_12;
@@ -88,7 +88,7 @@ public abstract class PyEnvTestCase {
    * All predefined environments used by PyEnvTestCase by default
    */
   public static final List<PredefinedPyEnvironments> ALL_ENVIRONMENTS = List.of(
-    VENV_2_7,
+    VANILLA_2_7,
     VENV_3_8_FULL,
     VENV_3_9,
     VENV_3_10,

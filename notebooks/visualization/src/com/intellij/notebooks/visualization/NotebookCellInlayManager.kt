@@ -14,6 +14,7 @@ import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.CellV
 import com.intellij.notebooks.visualization.ui.EditorEmbeddedComponentContainer
 import com.intellij.notebooks.visualization.ui.EditorNotebook
 import com.intellij.notebooks.visualization.ui.JupyterCellSelectionNotifier
+import com.intellij.notebooks.visualization.ui.NotebookVisibleCellsBatchUpdater
 import com.intellij.notebooks.visualization.ui.endInlay.EditorNotebookEndInlay
 import com.intellij.notebooks.visualization.ui.endInlay.EditorNotebookEndInlayProvider
 import com.intellij.notebooks.visualization.ui.notebookViewUpdater
@@ -74,6 +75,19 @@ class NotebookCellInlayManager private constructor(
     editor.notebookViewUpdater.update(force = force, keepScrollingPositon = keepScrollingPosition, block = block)
   }
 
+  fun updateOutputs(pointer: NotebookIntervalPointer): Unit = runInEdt {
+    update { ctx ->
+      val cell = getCell(pointer) ?: return@update
+      cell.outputs.updateOutputs()
+      if (cell.isUnfolded.get()) {
+        createCellViewIfNecessary(cell, ctx)
+      }
+      cell.update(ctx)
+      cell.checkAndRebuildInlays()
+      cell.updateIfInVisibleRect()
+    }
+  }
+
   override fun dispose() {
     views.clear()
     editor.removeUserData(CELL_INLAY_MANAGER_KEY)
@@ -127,7 +141,7 @@ class NotebookCellInlayManager private constructor(
   suspend fun initialize() {
     editor.putUserData(CELL_INLAY_MANAGER_KEY, this)
 
-    val connection = ApplicationManager.getApplication().messageBus.connect(editor.disposable)
+    val connection = ApplicationManager.getApplication().messageBus.connect(this)
     connection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
       updateAll()
     })
@@ -199,7 +213,18 @@ class NotebookCellInlayManager private constructor(
 
   private fun updateCellVisibility(cell: EditorCell, visible: Boolean) = update { ctx ->
     if (visible) {
+      val viewCreated = views[cell] == null
       createCellViewIfNecessary(cell, ctx)
+      // A cell becomes visible again after its enclosing markdown section is expanded (PY-89751).
+      // createCellView only sets up folding for the freshly recreated view, so its outputs and inlays stay
+      // uninitialized until an unrelated event (such as a scroll) triggers NotebookVisibleCellsBatchUpdater.
+      // Refresh the view right away when the cell is inside the viewport so the expanded section renders
+      // immediately; cells outside the viewport keep being initialized lazily (KTNB-812).
+      if (viewCreated && initialized.get() && NotebookVisibleCellsBatchUpdater.get(editor)?.isCellVisible(cell) == true) {
+        cell.update(ctx)
+        cell.checkAndRebuildInlays()
+        cell.updateIfInVisibleRect()
+      }
     }
     else {
       disposeCellView(cell)

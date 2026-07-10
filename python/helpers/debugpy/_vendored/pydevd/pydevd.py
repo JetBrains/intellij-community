@@ -93,6 +93,7 @@ from _pydevd_bundle.pydevd_constants import (
     PYDEVD_IPYTHON_COMPATIBLE_DEBUGGING,
     PYDEVD_IPYTHON_CONTEXT,
     PYDEVD_USE_SYS_MONITORING,
+    IS_PY314_OR_GREATER,
 )
 from _pydevd_bundle.pydevd_defaults import PydevdCustomization  # Note: import alias used on pydev_monkey.
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
@@ -152,7 +153,7 @@ from _pydevd_bundle.pydevd_suspended_frames import SuspendedFramesManager
 from socket import SHUT_RDWR
 from _pydevd_bundle.pydevd_api import PyDevdAPI
 from _pydevd_bundle.pydevd_timeout import TimeoutTracker
-from _pydevd_bundle.pydevd_thread_lifecycle import suspend_all_threads, mark_thread_suspended
+from _pydevd_bundle.pydevd_thread_lifecycle import suspend_all_threads, mark_thread_suspended, suspend_threads_lock
 
 if PYDEVD_USE_SYS_MONITORING:
     from _pydevd_sys_monitoring import pydevd_sys_monitoring
@@ -173,7 +174,7 @@ if SUPPORT_GEVENT:
 if USE_CUSTOM_SYS_CURRENT_FRAMES_MAP:
     from _pydevd_bundle.pydevd_constants import constructed_tid_to_last_frame
 
-__version_info__ = (3, 2, 3)
+__version_info__ = (3, 4, 1)
 __version_info_str__ = []
 for v in __version_info__:
     __version_info_str__.append(str(v))
@@ -773,6 +774,7 @@ class PyDB(object):
         self._exclude_by_filter_cache = {}
         self._apply_filter_cache = {}
         self._ignore_system_exit_codes = set()
+        self._break_on_system_exit = None  # None = default behavior, tuple = (codes_set, ranges_list)
 
         # DAP related
         self._dap_messages_listeners = []
@@ -925,11 +927,45 @@ class PyDB(object):
         assert isinstance(ignore_system_exit_codes, (list, tuple, set))
         self._ignore_system_exit_codes = set(ignore_system_exit_codes)
 
+    def set_break_on_system_exit(self, codes, ranges):
+        """Set explicit list of SystemExit codes to break on.
+
+        :param set codes:
+            Set of specific exit codes (ints, None) to break on.
+        :param list ranges:
+            List of (from_code, to_code) tuples (inclusive) to break on.
+        """
+        self._break_on_system_exit = (codes, ranges)
+        self._ignore_system_exit_codes = set()  # Clear legacy state to prevent conflicts
+
     def ignore_system_exit_code(self, system_exit_exc):
-        if hasattr(system_exit_exc, "code"):
-            return system_exit_exc.code in self._ignore_system_exit_codes
-        else:
-            return system_exit_exc in self._ignore_system_exit_codes
+        """Determine whether to ignore (not break on) a SystemExit exception.
+
+        Returns True to ignore (skip the break), False to break.
+
+        When ``_break_on_system_exit`` is set, the semantics are inverted:
+        the configuration specifies which codes TO BREAK ON, and this method
+        returns False (don't ignore) if the code matches.  Non-int, non-None
+        codes (e.g. strings passed to ``sys.exit("error")``) are treated as
+        "always break" to avoid silently suppressing unexpected exits.
+        """
+        code = system_exit_exc.code if hasattr(system_exit_exc, "code") else system_exit_exc
+
+        if self._break_on_system_exit is not None:
+            codes_set, ranges_list = self._break_on_system_exit
+            if code in codes_set:
+                return False
+            if isinstance(code, int):
+                for range_from, range_to in ranges_list:
+                    if range_from <= code <= range_to:
+                        return False
+                return True
+            if code is None:
+                return True
+            # Non-int, non-None codes (e.g. strings): always break.
+            return False
+
+        return code in self._ignore_system_exit_codes
 
     def block_until_configuration_done(self, cancel=None):
         if cancel is None:
@@ -1290,6 +1326,16 @@ class PyDB(object):
             # pydevd files are never considered to be in the project scope.
             file_type = self.get_file_type(frame, abs_real_path_and_basename)
             if file_type == self.PYDEV_FILE:
+                cache[cache_key] = False
+
+            elif IS_PY314_OR_GREATER and frame.f_code.co_name == "__annotate__":
+                # Special handling for __annotate__ functions (PEP 649 in Python 3.14+).
+                # These are compiler-generated functions that can raise NotImplementedError
+                # when called with unsupported format arguments by inspect.call_annotate_function.
+                # They should be treated as library code to avoid false positives in exception handling.
+                # Note: PEP 649 reserves the __annotate__ name for compiler-generated functions,
+                # so user-defined functions with this name are discouraged and will also be treated
+                # as library code to maintain consistency with the language design.
                 cache[cache_key] = False
 
             elif absolute_filename == "<string>":
@@ -1956,7 +2002,16 @@ class PyDB(object):
         if is_pause:
             self._threads_suspended_single_notification.on_pause()
 
-        info = mark_thread_suspended(thread, stop_reason, original_step_cmd=original_step_cmd)
+        with suspend_threads_lock:
+            info = mark_thread_suspended(thread, stop_reason, original_step_cmd=original_step_cmd)
+            if not suspend_other_threads and self.multi_threads_single_notification:
+                # In the mode which gives a single notification when all threads are
+                # stopped, stop all threads whenever a set_suspend is issued.
+                suspend_other_threads = True
+
+            if suspend_other_threads:
+                # Suspend all except the current one (which we're currently suspending already).
+                suspend_all_threads(self, except_thread=thread)
 
         if (suspend_requested or is_pause) and PYDEVD_USE_SYS_MONITORING:
             pydevd_sys_monitoring.update_monitor_events(suspend_requested=True)
@@ -1977,15 +2032,6 @@ class PyDB(object):
             conditional_breakpoint_exception_tuple = info.conditional_breakpoint_exception
             info.conditional_breakpoint_exception = None
             self._send_breakpoint_condition_exception(thread, conditional_breakpoint_exception_tuple)
-
-        if not suspend_other_threads and self.multi_threads_single_notification:
-            # In the mode which gives a single notification when all threads are
-            # stopped, stop all threads whenever a set_suspend is issued.
-            suspend_other_threads = True
-
-        if suspend_other_threads:
-            # Suspend all except the current one (which we're currently suspending already).
-            suspend_all_threads(self, except_thread=thread)
 
         if PYDEVD_USE_SYS_MONITORING:
             pydevd_sys_monitoring.restart_events()

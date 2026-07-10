@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -9,6 +9,7 @@ import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.Commenter;
+import com.intellij.lang.DocumentationStubProviderKt;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.LanguageDocumentation;
@@ -586,7 +587,7 @@ public class EnterHandler extends BaseEnterHandler {
 
       PsiComment comment = PsiTreeUtil.getNonStrictParentOfType(myPsiFile.findElementAt(myOffset), PsiComment.class);
 
-      comment = createJavaDocStub(settings, comment, getProject());
+      comment = createDocStub(settings, comment, getProject());
       if (comment == null) {
         return null;
       }
@@ -622,44 +623,56 @@ public class EnterHandler extends BaseEnterHandler {
       commentMarker.dispose();
     }
 
-    private @Nullable PsiComment createJavaDocStub(final CodeInsightSettings settings,
-                                                   final PsiComment comment,
-                                                   final Project project) {
-      if (settings.JAVADOC_STUB_ON_ENTER) {
-        final DocumentationProvider langDocumentationProvider =
-          LanguageDocumentation.INSTANCE.forLanguage(comment.getParent().getLanguage());
+    private @Nullable PsiComment createDocStub(final @NotNull CodeInsightSettings settings,
+                                               final @Nullable PsiComment comment,
+                                               final @NotNull Project project) {
+      if (!settings.JAVADOC_STUB_ON_ENTER || comment == null) {
+        return comment;
+      }
 
-        final @Nullable CodeDocumentationProvider docProvider;
-        if (langDocumentationProvider instanceof CompositeDocumentationProvider) {
-          docProvider = ((CompositeDocumentationProvider)langDocumentationProvider).getFirstCodeDocumentationProvider();
-        } else {
-          docProvider = langDocumentationProvider instanceof CodeDocumentationProvider ?
-                                                          (CodeDocumentationProvider)langDocumentationProvider : null;
-        }
+      int newOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
+      newOffset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), newOffset, LINE_SEPARATOR);
 
-        if (docProvider != null) {
-          if (docProvider.findExistingDocComment(comment) != comment) return comment;
-
-          int newOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
-          newOffset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), newOffset, LINE_SEPARATOR);
-          if (docProvider.insertDocumentationContentStub(comment, myDocument, newOffset)) {
-            myOffset = newOffset;
-          }
-          else {
-            String docStub = DumbService.getInstance(project)
-              .computeWithAlternativeResolveEnabled(() -> docProvider.generateDocumentationContentStub(comment));
-
-            if (docStub != null && !docStub.isEmpty()) {
-              myOffset = newOffset;
-              myDocument.insertString(myOffset, docStub);
-            }
-          }
-        }
-
+      PsiElement anchor = DocumentationStubProviderKt.findDocumentedElement(comment);
+      if (anchor != null && DocumentationStubProviderKt.insertStub(anchor, myDocument, newOffset)) {
+        myOffset = newOffset;
         PsiDocumentManager.getInstance(project).commitAllDocuments();
         return PsiTreeUtil.getNonStrictParentOfType(myPsiFile.findElementAt(myOffset), PsiComment.class);
       }
-      return comment;
+
+      return createDocStubLegacy(comment, project, newOffset);
+    }
+
+    private @Nullable PsiComment createDocStubLegacy(@NotNull PsiComment comment, @NotNull Project project, int newOffset) {
+      final DocumentationProvider langDocumentationProvider =
+        LanguageDocumentation.INSTANCE.forLanguage(comment.getParent().getLanguage());
+
+      final @Nullable CodeDocumentationProvider docProvider;
+      if (langDocumentationProvider instanceof CompositeDocumentationProvider) {
+        docProvider = ((CompositeDocumentationProvider)langDocumentationProvider).getFirstCodeDocumentationProvider();
+      } else {
+        docProvider = langDocumentationProvider instanceof CodeDocumentationProvider ?
+                                                        (CodeDocumentationProvider)langDocumentationProvider : null;
+      }
+
+      if (docProvider != null) {
+        if (docProvider.findExistingDocComment(comment) != comment) return comment;
+        if (docProvider.insertDocumentationContentStub(comment, myDocument, newOffset)) {
+          myOffset = newOffset;
+        }
+        else {
+          String docStub = DumbService.getInstance(project)
+            .computeWithAlternativeResolveEnabled(() -> docProvider.generateDocumentationContentStub(comment));
+
+          if (docStub != null && !docStub.isEmpty()) {
+            myOffset = newOffset;
+            myDocument.insertString(myOffset, docStub);
+          }
+        }
+      }
+
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+      return PsiTreeUtil.getNonStrictParentOfType(myPsiFile.findElementAt(myOffset), PsiComment.class);
     }
 
     private Project getProject() {

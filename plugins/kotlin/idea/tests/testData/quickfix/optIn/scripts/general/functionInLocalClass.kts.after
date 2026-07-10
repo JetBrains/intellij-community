@@ -11,7 +11,7 @@
 // ACTION: Opt in for 'MyExperimentalAPI' on containing class 'Outer'
 // ACTION: Propagate 'MyExperimentalAPI' opt-in requirement to 'outer'
 // RUNTIME_WITH_SCRIPT_RUNTIME
-// K2_ERROR: Base declaration of supertype 'Base' needs opt-in. The declaration override must be annotated with '@MyExperimentalAPI' or '@OptIn(MyExperimentalAPI::class)'
+// K2_ERROR: OPT_IN_OVERRIDE_ERROR
 
 @RequiresOptIn
 @Target(AnnotationTarget.FUNCTION)

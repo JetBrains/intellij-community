@@ -8,7 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.execService.ZeroCodeStdoutParserTransformer
 import com.intellij.python.community.impl.pipenv.pipenvPath
 import com.jetbrains.python.PyBundle

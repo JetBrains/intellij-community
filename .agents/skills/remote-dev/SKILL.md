@@ -43,6 +43,15 @@ Detailed documentation in [docs/IntelliJ-Platform/4_man/Remote-Development/](../
 
 
 ### Creating Remote Development Modules
+
+After creating any new remote-dev `.iml`, register it with the project-file helper instead of editing `modules.xml` by hand:
+
+```bash
+bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof
+```
+
+The helper updates `.idea/modules.xml`, also updates `community/.idea/modules.xml` for community modules, and uses the canonical order by `.iml` basename.
+
 #### Module Types and Naming Conventions
 
 - **Standard Module**: `intellij.<pluginGroup>.<frameworkName>`
@@ -148,12 +157,12 @@ The following patterns are essential when implementing reactive UI components fo
      // Static properties
      val displayText: String,
      val iconId: IconId,
-     val sourcePosition: XSourcePositionDto?,
-     
+      val sourcePosition: XSourcePositionDto?,
+
      // Initial values for immediate use
      val initialEnabled: Boolean,
-     val initialSuspendPolicy: SuspendPolicy,
-     
+      val initialSuspendPolicy: SuspendPolicy,
+
      // Reactive flow fields
      val enabledState: RpcFlow<Boolean>,
      val suspendPolicyState: RpcFlow<SuspendPolicy>,
@@ -169,8 +178,8 @@ The following patterns are essential when implementing reactive UI components fo
    ) {
      // Convert RpcFlow to StateFlow with initial values
      val enabled: StateFlow<Boolean> = dto.enabledState.toFlow()
-       .stateIn(cs, SharingStarted.Eagerly, dto.initialEnabled)
-       
+        .stateIn(cs, SharingStarted.Eagerly, dto.initialEnabled)
+
      // Access current value from StateFlow
      fun isEnabled(): Boolean = enabled.value
    }

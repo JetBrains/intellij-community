@@ -5,6 +5,8 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.xdebugger.hotswap.HotSwapSource
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -17,6 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 interface XDebuggerHotSwapApi : RemoteApi<Unit> {
   suspend fun currentSessionStatus(projectId: ProjectId): Flow<XDebugHotSwapCurrentSessionStatus?>
   suspend fun performHotSwap(sessionId: XDebugHotSwapSessionId, source: HotSwapSource)
+  suspend fun restart(sessionId: XDebugHotSwapSessionId, source: HotSwapSource)
   suspend fun hide(projectId: ProjectId)
 
   companion object {
@@ -36,17 +39,23 @@ data class XDebugHotSwapSessionId(override val uid: UID) : Id
 data class XDebugHotSwapCurrentSessionStatus(val sessionId: XDebugHotSwapSessionId, val status: HotSwapVisibleStatus)
 
 @ApiStatus.Internal
-enum class HotSwapVisibleStatus {
-  NO_CHANGES, CHANGES_READY, IN_PROGRESS, SUCCESS, HIDDEN
-}
-
-@ApiStatus.Internal
 @Serializable
-enum class HotSwapSource {
-  RELOAD_FILE,
-  RELOAD_ALL,
-  ON_REBUILD_AUTO,
-  ON_REBUILD_ASK,
-  RELOAD_MODIFIED_ACTION,
-  RELOAD_MODIFIED_BUTTON,
+sealed interface HotSwapVisibleStatus {
+  @Serializable
+  object NoChanges : HotSwapVisibleStatus
+
+  @Serializable
+  object ChangesReady : HotSwapVisibleStatus
+
+  @Serializable
+  data class ChangesNotHotSwappable(val reason: @NlsSafe String) : HotSwapVisibleStatus
+
+  @Serializable
+  object InProgress : HotSwapVisibleStatus
+
+  @Serializable
+  object Success : HotSwapVisibleStatus
+
+  @Serializable
+  object Hidden : HotSwapVisibleStatus
 }

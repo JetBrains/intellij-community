@@ -28,7 +28,7 @@ public final class AppInspectionProfilesVisibleTreeState implements PersistentSt
   }
 
   @Override
-  public void loadState(final @NotNull VisibleTreeStateComponent state) {
+  public void loadState(@NotNull VisibleTreeStateComponent state) {
     myComponent.copyFrom(state);
   }
 

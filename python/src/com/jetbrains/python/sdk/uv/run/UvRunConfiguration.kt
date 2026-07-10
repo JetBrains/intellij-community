@@ -87,6 +87,10 @@ class UvRunConfiguration(
   override fun shouldDebugJustMyCode(): Boolean {
     return options.debugJustMyCode
   }
+
+  override fun setDebugJustMyCode(debugJustMyCode: Boolean) {
+    options.debugJustMyCode = debugJustMyCode
+  }
 }
 
 @ApiStatus.Internal

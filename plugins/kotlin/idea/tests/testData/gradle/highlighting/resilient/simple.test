@@ -26,7 +26,7 @@ include("module1")
 }
 
 <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>dependencies<!> {
-    <!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference 'implementation'.'")!>implementation<!>(<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>project<!>(":module1"))
+    <!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE]'")!>implementation<!>(<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>project<!>(":module1"))
 }
 
 // FILE: settings.gradle.kts

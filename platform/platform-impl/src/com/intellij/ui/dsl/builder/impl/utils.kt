@@ -25,10 +25,8 @@ import com.intellij.ui.dsl.builder.VerticalComponentGap
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
-import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.GridLayoutComponentProperty
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
-import com.intellij.ui.dsl.gridLayout.toUnscaled
 import com.intellij.ui.dsl.gridLayout.toUnscaledGaps
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
@@ -80,7 +78,6 @@ enum class DslComponentPropertyInternal {
    *
    * Value: Int
    */
-  @ApiStatus.Experimental
   @Deprecated("Not needed anymore, because IJPL-62164 has been implemented")
   @ApiStatus.ScheduledForRemoval
   PREFERRED_COLUMNS_LABEL_WORD_WRAP
@@ -119,16 +116,10 @@ val JComponent.interactiveComponent: JComponent
     return interactiveComponent ?: this
   }
 
-@get:ApiStatus.Internal
-@Deprecated("Quick workaround. Don't use this method, get rid of <html> instead")
-val String?.trimHtml: String?
-  get() = this?.removeSurrounding("<html>", "</html>")
-
 internal fun prepareVisualPaddings(component: JComponent): UnscaledGaps {
   var customVisualPaddings: UnscaledGaps? =
     when (val value = component.getClientProperty(DslComponentProperty.VISUAL_PADDINGS)) {
       null -> null
-      is Gaps -> value.toUnscaled()
       is UnscaledGaps -> value
       else -> throw UiDslException("Invalid VISUAL_PADDINGS")
     }

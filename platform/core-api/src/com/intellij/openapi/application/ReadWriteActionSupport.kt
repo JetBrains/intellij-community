@@ -19,7 +19,7 @@ interface ReadWriteActionSupport {
     action: () -> X,
   ): X
 
-  fun <X, E : Throwable> computeCancellable(action: ThrowableComputable<X, E>): X
+  fun <X, E : Throwable> computeCancellableUnsafe(action: ThrowableComputable<X, E>): X
 
   suspend fun <X> executeReadAndWriteAction(
     constraints: Array<out ReadConstraint>,

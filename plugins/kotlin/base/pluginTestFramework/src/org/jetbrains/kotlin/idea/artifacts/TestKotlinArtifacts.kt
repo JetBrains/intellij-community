@@ -19,8 +19,10 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.extractFile
 import org.jetbrains.jps.model.serialization.JpsMavenSettings
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.TargetSupportException
+import org.jetbrains.tools.model.updater.BazelKotlinDependencyFacade
 import org.jetbrains.tools.model.updater.KotlinTestsDependenciesUtil
 import java.net.URI
 import java.nio.file.Files
@@ -96,11 +98,15 @@ object TestKotlinArtifacts {
         listOf(getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-jps-plugin-classpath.jar"))
     }
 
-    private fun findDownloadFile(label: BazelLabel): KotlinTestsDependenciesUtil.DownloadFile {
+    private val kotlinDependencyFacade by lazy {
+        BazelKotlinDependencyFacade(communityRoot.communityRoot)
+    }
+
+    private fun findDownloadFile(label: BazelLabel): BazelKotlinDependencyFacade.Dependency {
         if (label.repo != KOTLIN_DEPS_REPO) {
             error("Only $KOTLIN_DEPS_REPO repo is supported, but got '${label.repo}' from: ${label.asLabel}")
         }
-        return KotlinTestsDependenciesUtil.kotlinTestDependenciesHttpFiles.find { it.fileName == label.target }
+        return kotlinDependencyFacade.dependencies.find { it.name == label.target }
             ?: error("Unable to find URL for '${label.asLabel}'")
     }
 
@@ -362,14 +368,18 @@ object TestKotlinArtifacts {
     @JvmStatic
     val kotlinStdlibNative: Path by lazy { getNativeLib(library = "klib/common/stdlib") }
 
-    @JvmStatic
-    val jpsPluginTestDataDir: Path by lazy {
-        val artifact = getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-jps-plugin-testdata-for-ide.jar")
+    private val jpsPluginSnapshotTestDataDir: Path by lazy { extractJpsTestData("kotlin-jps-plugin-snapshot-testdata-for-ide.jar") }
+    private val jpsPluginStableTestDataDir: Path by lazy { extractJpsTestData("kotlin-jps-plugin-stable-testdata-for-ide.jar") }
+
+    private fun extractJpsTestData(artifactFileName: String): Path {
+        val artifact = getKotlinDepsByLabel("@kotlin_test_deps//:$artifactFileName")
         val targetDir = Path.of(PathManager.getCommunityHomePath()).resolve("out").resolve("kotlinc-jps-testdata")
+
         runBlocking {
             extractFile(artifact, targetDir, communityRoot)
         }
-        return@lazy targetDir
+
+        return targetDir
     }
 
     @JvmStatic
@@ -377,7 +387,10 @@ object TestKotlinArtifacts {
 
     @JvmStatic
     fun jpsPluginTestData(jpsTestDataPath: String): Path {
-        return jpsPluginTestDataDir.resolve(jpsTestDataPath)
+        // 'kotlin-dist-for-ide' has the same version as the JPS plugin
+        val isSnapshot = KotlinPluginLayout.ideCompilerVersion == KotlinPluginLayout.standaloneCompilerVersion
+        val basePath = if (isSnapshot) jpsPluginSnapshotTestDataDir else jpsPluginStableTestDataDir
+        return basePath.resolve(jpsTestDataPath)
     }
 
     @Throws(TargetSupportException::class)

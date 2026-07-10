@@ -22,6 +22,7 @@ import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.installSuvorovProgress
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
@@ -97,6 +98,16 @@ class PlatformUtilitiesTest {
         assertThat(application.isWriteIntentLockAcquired).isFalse()
         assertThat(TransactionGuard.getInstance().isWritingAllowed).isTrue()
       }, ModalityState.nonModal())
+  }
+
+  @Test
+  fun `invokeAndWaitIfNeeded rethrows PCE from runnable`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    assertThrows<ProcessCanceledException> {
+      invokeAndWaitIfNeeded {
+        assertThat(EDT.isCurrentThreadEdt()).isTrue
+        throw ProcessCanceledException()
+      }
+    }
   }
 
   @Test

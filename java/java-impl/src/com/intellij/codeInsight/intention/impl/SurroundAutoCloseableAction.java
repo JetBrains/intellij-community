@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -34,8 +34,10 @@ import com.intellij.psi.PsiResourceVariable;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -46,6 +48,7 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -216,7 +219,11 @@ public final class SurroundAutoCloseableAction extends PsiUpdateModCommandAction
           PsiElementFactory factory = JavaPsiFacade.getElementFactory(declaration.getProject());
 
           String name = var.getName();
-          PsiDeclarationStatement declarationStatement = factory.createVariableDeclarationStatement(name, var.getType(), null);
+          PsiType type = var.getType();
+          if (PsiTypes.nullType().equals(type)) {
+            type = TypeUtils.getObjectType(var);
+          }
+          PsiDeclarationStatement declarationStatement = factory.createVariableDeclarationStatement(name, type, null);
           PsiUtil.setModifierProperty((PsiLocalVariable)declarationStatement.getDeclaredElements()[0], PsiModifier.FINAL, var.hasModifierProperty(PsiModifier.FINAL));
           toFormat.add(parent.addBefore(declarationStatement, declaration));
 
@@ -259,6 +266,7 @@ public final class SurroundAutoCloseableAction extends PsiUpdateModCommandAction
     PsiTryStatement tryStatement = (PsiTryStatement)commentTracker.replaceAndRestoreComments(statement, text);
 
     tryStatement = (PsiTryStatement)CodeStyleManager.getInstance(project).reformat(tryStatement);
+    tryStatement = (PsiTryStatement)JavaCodeStyleManager.getInstance(project).shortenClassReferences(tryStatement);
 
     tryStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(tryStatement);
 

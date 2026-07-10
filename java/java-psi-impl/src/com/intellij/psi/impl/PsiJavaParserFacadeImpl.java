@@ -9,6 +9,7 @@ import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiAnnotation;
@@ -53,6 +54,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -172,9 +174,12 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   @Override
   public @NotNull PsiDocComment createDocCommentFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException {
     String trimmed = text.trim();
-    //can be markdown
+    //can be Markdown
     if (!trimmed.endsWith("\n") && !trimmed.endsWith("*/")) {
-      trimmed += "\n";
+      trimmed = StringUtil.trimLeading(text);
+      if (!trimmed.endsWith("\n")) {
+        trimmed += "\n";
+      }
     }
     PsiMethod method = createMethodFromText(trimmed + "void m();", context);
     PsiDocComment comment = method.getDocComment();

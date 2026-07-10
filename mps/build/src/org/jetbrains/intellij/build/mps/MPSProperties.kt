@@ -115,9 +115,7 @@ class MPSProperties : JetBrainsProductProperties() {
 
             layout.withModule("intellij.java.rt", "idea_rt.jar")
             layout.withProjectLibrary("Eclipse", LibraryPackMode.MERGED)
-            layout.withProjectLibrary("JUnit4", LibraryPackMode.STANDALONE_MERGED)
             layout.withProjectLibrary("http-client", LibraryPackMode.MERGED)
-            layout.withModuleLibrary("hamcrest", "intellij.libraries.hamcrest", "hamcrest.jar")
             layout.withoutProjectLibrary("Ant")
             layout.withoutProjectLibrary("Gradle")
             layout.withProjectLibrary("maven-resolver-provider", LibraryPackMode.STANDALONE_MERGED)
@@ -192,7 +190,6 @@ class MPSProperties : JetBrainsProductProperties() {
         moduleSet(CommunityModuleSets.ideCommon())
 
         module("intellij.platform.whatsNew")
-        module("intellij.platform.tips")
         module("intellij.ide.startup.importSettings")
 
         module("intellij.platform.customization.min")

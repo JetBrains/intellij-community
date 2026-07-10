@@ -46,7 +46,7 @@ class TerminationTree(
         if (node is XValueContainerNode<*>) {
           val container = (node as XValueContainerNode<*>).valueContainer
           if (myBuilder.isSupported(container)) {
-            launcher.launchDebuggerCommand {
+            launcher.executeDebuggerCommand {
               val key = myBuilder.getKey(container, NULL_MARKER)
               withContext(Dispatchers.EDT) {
                 val elements = key2TraceElements[key]

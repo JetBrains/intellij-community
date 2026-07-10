@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.ClientFileEditorManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.text.FileEditorDropHandler
 import com.intellij.openapi.keymap.Keymap
@@ -110,6 +111,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -123,14 +125,15 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
 import java.awt.AWTEvent
-import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
 import java.awt.Container
@@ -159,6 +162,7 @@ import javax.swing.SwingUtilities
 import javax.swing.TransferHandler
 import javax.swing.UIManager
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration
 
 private val OPEN_FILES_ACTIVITY = Key.create<Activity>("open.files.activity")
 private val LOG = logger<EditorsSplitters>()
@@ -169,7 +173,7 @@ private const val IDE_FINGERPRINT: @NonNls String = "ideFingerprint"
 open class EditorsSplitters internal constructor(
   @Internal val manager: FileEditorManagerImpl,
   @Internal @JvmField val coroutineScope: CoroutineScope,
-) : JPanel(BorderLayout()), UISettingsListener {
+) : JPanel(EditorsSplittersLayout()), UISettingsListener {
   companion object {
     const val SPLITTER_KEY: @NonNls String = "EditorsSplitters"
 
@@ -212,9 +216,19 @@ open class EditorsSplitters internal constructor(
   private var previousFocusGainedTime: Long = 0L
 
   private val windows = CopyOnWriteArraySet<EditorWindow>()
+  private val emptyStateComponentController = EditorEmptyStateComponentController(
+    splitters = this,
+    coroutineScope = coroutineScope,
+    showEmptyState = ::shouldShowRichEmptyState,
+  )
 
   // temporarily used during initialization of non-main editor splitters
   private val state = AtomicReference<EditorSplitterState?>()
+
+  private var emptyStatePresentationReady: Boolean = true
+
+  private val splittersLayout: EditorsSplittersLayout
+    get() = layout as EditorsSplittersLayout
 
   @JvmField
   internal var insideChange: Int = 0
@@ -229,6 +243,34 @@ open class EditorsSplitters internal constructor(
     get() = currentCompositeFlow.value?.file
 
   private fun showEmptyText(): Boolean = (currentWindow?.files() ?: emptySequence()).none()
+
+  private fun shouldShowRichEmptyState(): Boolean = showEmptyText() && emptyStatePresentationReady
+
+  private fun shouldDelayEmptyStatePresentation(state: EditorSplitterState): Boolean = state.hasFileEntries && shouldReopenEditorsOnStartup()
+
+  @Internal
+  fun isEmptyTextPaintingAllowed(): Boolean = shouldShowRichEmptyState() && emptyStateComponentController.isLegacyEmptyTextPaintingAllowed()
+
+  @TestOnly
+  internal fun isEmptyStateComponentCreationPending(): Boolean = emptyStateComponentController.isCreationPending()
+
+  internal fun suppressRichEmptyStateComponents() {
+    emptyStateComponentController.suppressRichComponents()
+  }
+
+  internal fun enableRichEmptyStateComponents() {
+    emptyStateComponentController.enableRichComponents()
+  }
+
+  @TestOnly
+  internal fun setEmptyStateComponentCreationDelayForTests(delay: Duration) {
+    emptyStateComponentController.setCreationDelayForTests(delay)
+  }
+
+  @TestOnly
+  internal fun setEmptyStateComponentCreationGateForTests(gate: (suspend () -> Unit)?) {
+    emptyStateComponentController.setCreationGateForTests(gate)
+  }
 
   internal val openFileList: List<VirtualFile>
     get() {
@@ -275,6 +317,12 @@ open class EditorsSplitters internal constructor(
           repaint()
         }
       })
+    EditorEmptyStateComponentProvider.EP_NAME.addChangeListener(coroutineScope) {
+      rebuildEmptyStateComponent()
+    }
+    EditorEmptyTextProvider.EP_NAME.addChangeListener(coroutineScope) {
+      rebuildEmptyStateComponent()
+    }
     enableEditorActivationOnEscape()
 
     coroutineScope.launch(CoroutineName("EditorSplitters file icon update")) {
@@ -316,6 +364,8 @@ open class EditorsSplitters internal constructor(
           updateFrameTitle()
         }
     }
+
+    updateEmptyStateComponent()
   }
 
   fun clear() {
@@ -325,8 +375,10 @@ open class EditorsSplitters internal constructor(
       window.dispose()
     }
 
-    removeAll()
+    disposeEmptyStateComponents()
+    clearEditorComponent()
     setCurrentWindow(window = null)
+    updateEmptyStateComponent()
     // revalidate doesn't repaint correctly after "Close All"
     repaint()
   }
@@ -342,26 +394,30 @@ open class EditorsSplitters internal constructor(
 
   internal var borderPainter: BorderPainter = DefaultBorderPainter()
 
+  @Internal
   override fun paintChildren(g: Graphics) {
+    borderPainter.paintBeforeChildren(this, g)
     super.paintChildren(g)
     borderPainter.paintAfterChildren(this, g)
   }
 
+  @Internal
   override fun isPaintingOrigin(): Boolean {
     return borderPainter.isPaintingOrigin(this)
   }
 
+  @Internal
+  override fun isOptimizedDrawingEnabled(): Boolean {
+    return splittersLayout.emptyStateOverlay == null && super.isOptimizedDrawingEnabled()
+  }
+
+  @Internal
   fun writeExternal(element: Element) {
     writeExternal(element = element, delayedStates = emptyMap())
   }
 
   internal fun writeExternal(element: Element, delayedStates: Map<EditorComposite, FileEntry>) {
-    val componentCount = componentCount
-    if (componentCount == 0) {
-      return
-    }
-
-    val component = getComponent(0)
+    val component = editorRootComponent() ?: return
     try {
       element.addContent(writePanel(component, delayedStates))
     }
@@ -372,56 +428,93 @@ open class EditorsSplitters internal constructor(
 
   @Internal
   suspend fun restoreEditors(state: EditorSplitterState, requestFocus: Boolean = true) {
+    val delayEmptyStatePresentation = shouldDelayEmptyStatePresentation(state)
     withContext(Dispatchers.EDT) {
-      removeAll()
+      if (delayEmptyStatePresentation) {
+        emptyStatePresentationReady = false
+      }
+      disposeEmptyStateComponents()
+      clearEditorComponent()
     }
 
-    if (PlatformUtils.isJetBrainsClient() && !shouldReopenEditorsOnJetBrainsClient()) {
-      // Don't restore editors from local files on JetBrains Client, editors are opened from the backend
-      return
-    }
+    try {
+      if (!shouldReopenEditorsOnStartup()) {
+        // Don't restore editors from local files on JetBrains Client, editors are opened from the backend
+        return
+      }
 
-    UiBuilder(this, isLazyComposite = false).process(state = state, requestFocus = requestFocus) {
-      add(it, BorderLayout.CENTER)
-      InternalUICustomization.getInstance()?.installEditorBackground(it)
-    }
-    withContext(Dispatchers.EDT) {
-      validate()
+      UiBuilder(this, isLazyComposite = false).process(state = state, requestFocus = requestFocus) {
+        addEditorComponent(it)
+        InternalUICustomization.getInstance()?.installEditorBackground(it)
+      }
+      withContext(Dispatchers.EDT) {
+        validate()
 
-      for (window in windows) {
-        // clear empty splitters
-        if (window.tabCount == 0) {
-          window.removeFromSplitter()
-          window.logEmptyStateIfMainSplitter(cause = EmptyStateCause.CONTEXT_RESTORED)
+        for (window in windows) {
+          // clear empty splitters
+          if (window.tabCount == 0) {
+            window.removeFromSplitter()
+            window.logEmptyStateIfMainSplitter(cause = EmptyStateCause.CONTEXT_RESTORED)
+          }
+          else {
+            window.tabbedPane.editorTabs.revalidateAndRepaint()
+          }
         }
-        else {
-          window.tabbedPane.editorTabs.revalidateAndRepaint()
+      }
+    }
+    finally {
+      withContext(NonCancellable + Dispatchers.EDT) {
+        emptyStatePresentationReady = true
+        if (coroutineScope.isActive) {
+          updateEmptyStateComponent()
         }
       }
     }
   }
 
   internal suspend fun createEditors(state: EditorSplitterState) {
-    manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
-    if (PlatformUtils.isJetBrainsClient() && !shouldReopenEditorsOnJetBrainsClient()) {
-      // Don't reopen editors from local files on JetBrains Client, it is done from the backend
-      return
+    if (shouldDelayEmptyStatePresentation(state)) {
+      withContext(Dispatchers.EDT) {
+        emptyStatePresentationReady = false
+        updateEmptyStateComponent()
+      }
     }
+    manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
+    try {
+      if (!shouldReopenEditorsOnStartup()) {
+        // Don't reopen editors from local files on JetBrains Client, it is done from the backend
+        return
+      }
 
-    UiBuilder(splitters = this, isLazyComposite = System.getProperty("idea.delayed.editor.composite", "true").toBoolean())
-      .process(
-        state = state,
-        requestFocus = true,
-        addChild = {
-          add(it, BorderLayout.CENTER)
-          InternalUICustomization.getInstance()?.installEditorBackground(it)
-        },
-      )
+      UiBuilder(splitters = this, isLazyComposite = System.getProperty("idea.delayed.editor.composite", "true").toBoolean())
+        .process(
+          state = state,
+          requestFocus = true,
+          addChild = {
+            addEditorComponent(it)
+            InternalUICustomization.getInstance()?.installEditorBackground(it)
+          },
+        )
+    }
+    finally {
+      withContext(NonCancellable + Dispatchers.EDT) {
+        emptyStatePresentationReady = true
+        if (coroutineScope.isActive) {
+          updateEmptyStateComponent()
+        }
+      }
+    }
   }
 
-  private fun shouldReopenEditorsOnJetBrainsClient(): Boolean {
-    val frontendType = FrontendApplicationInfo.getFrontendType()
-    return frontendType is FrontendType.Remote && frontendType.isController() && Registry.`is`("editor.rd.reopen.editors.on.frontend")
+  private fun shouldReopenEditorsOnStartup(): Boolean {
+    if (FileEditorManagerKeys.DO_NOT_REOPEN_FILES.isIn(manager.project)) {
+      return false
+    }
+    if (PlatformUtils.isJetBrainsClient()) {
+      val frontendType = FrontendApplicationInfo.getFrontendType()
+      return frontendType is FrontendType.Remote && frontendType.isController() && Registry.`is`("editor.rd.reopen.editors.on.frontend")
+    }
+    return true
   }
 
   fun addSelectedEditorsTo(result: MutableCollection<FileEditor>) {
@@ -449,7 +542,8 @@ open class EditorsSplitters internal constructor(
     for (window in windows) {
       window.dispose()
     }
-    removeAll()
+    disposeEmptyStateComponents()
+    clearEditorComponent()
     // revalidate doesn't repaint correctly after "Close All"
     if (repaint) {
       repaint()
@@ -464,6 +558,7 @@ open class EditorsSplitters internal constructor(
     if (oldWindow != null) {
       _currentWindowFlow.compareAndSet(oldWindow, null)
     }
+    updateEmptyStateComponent()
   }
 
   internal fun setCurrentWindow(window: EditorWindow?) {
@@ -475,12 +570,29 @@ open class EditorsSplitters internal constructor(
 
   fun openFilesAsync(requestFocus: Boolean): Job {
     return coroutineScope.launch {
-      restoreEditors(state = state.getAndSet(null) ?: return@launch, requestFocus = requestFocus)
+      val stateToRestore = state.getAndSet(null)
+      try {
+        if (stateToRestore != null) {
+          restoreEditors(state = stateToRestore, requestFocus = requestFocus)
+        }
+      }
+      finally {
+        withContext(NonCancellable + Dispatchers.EDT) {
+          if (coroutineScope.isActive) {
+            enableRichEmptyStateComponents()
+          }
+        }
+      }
     }
   }
 
   internal fun readExternal(element: Element) {
-    state.set(EditorSplitterState(element))
+    val state = EditorSplitterState(element)
+    if (shouldDelayEmptyStatePresentation(state)) {
+      emptyStatePresentationReady = false
+      suppressRichEmptyStateComponents()
+    }
+    this.state.set(state)
   }
 
   fun getSelectedEditors(): Array<FileEditor> {
@@ -612,14 +724,20 @@ open class EditorsSplitters internal constructor(
   }
 
   internal val splitCount: Int
-    get() = if (componentCount > 0) getSplitCount(getComponent(0) as JComponent) else 0
+    get() = editorRootComponent()?.let(::getSplitCount) ?: 0
 
   internal open val isSingletonEditorInWindow: Boolean
     get() = false
 
-  internal open fun afterFileClosed(file: VirtualFile) {}
+  internal open fun afterFileClosed(file: VirtualFile) {
+    cancelEmptyStateComponentCreation()
+    updateEmptyStateComponent()
+  }
 
-  open fun afterFileOpen(file: VirtualFile) {}
+  open fun afterFileOpen(file: VirtualFile) {
+    cancelEmptyStateComponentCreation()
+    updateEmptyStateComponent()
+  }
 
   fun getTabsAt(point: RelativePoint): JBTabs? {
     val thisPoint = point.getPoint(this)
@@ -702,6 +820,7 @@ open class EditorsSplitters internal constructor(
         }
       }
     }
+    updateEmptyStateComponent()
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
@@ -744,7 +863,7 @@ open class EditorsSplitters internal constructor(
   internal fun createCurrentWindow() {
     LOG.assertTrue(currentWindow == null)
     val window = EditorWindow(owner = this, coroutineScope.childScope("EditorWindow"))
-    add(window.component, BorderLayout.CENTER)
+    addEditorComponent(window.component)
     windows.add(window)
     setCurrentWindow(window)
   }
@@ -771,11 +890,15 @@ open class EditorsSplitters internal constructor(
 
   internal fun addWindow(window: EditorWindow) {
     windows.add(window)
+    cancelEmptyStateComponentCreation()
+    updateEmptyStateComponent()
   }
 
   internal fun removeWindow(window: EditorWindow) {
     windows.remove(window)
     _currentWindowFlow.compareAndSet(window, null)
+    cancelEmptyStateComponentCreation()
+    updateEmptyStateComponent()
   }
 
   internal fun containsWindow(window: EditorWindow): Boolean = windows.contains(window)
@@ -807,11 +930,53 @@ open class EditorsSplitters internal constructor(
     }
 
     // get root component and traverse splitters tree
-    if (componentCount != 0) {
-      collectWindow(getComponent(0) as JComponent)
+    val component = editorRootComponent()
+    if (component != null) {
+      collectWindow(component)
     }
     LOG.assertTrue(result.size == windows.size)
     return result
+  }
+
+  internal fun addEditorComponent(component: JComponent) {
+    disposeEmptyStateComponents()
+    clearEditorComponent()
+    add(component, EDITOR_ROOT_COMPONENT_CONSTRAINT)
+  }
+
+  internal fun clearEditorComponent() {
+    val editorRoot = splittersLayout.editorRootComponent ?: return
+    remove(editorRoot)
+  }
+
+  internal fun installEmptyStateOverlay(component: JComponent) {
+    splittersLayout.emptyStateOverlay?.let { remove(it) }
+    add(component, EMPTY_STATE_COMPONENT_CONSTRAINT, 0)
+  }
+
+  internal fun uninstallEmptyStateOverlay(component: JComponent) {
+    remove(component)
+  }
+
+  @Internal
+  fun updateEmptyStateComponent() {
+    emptyStateComponentController.update()
+  }
+
+  private fun rebuildEmptyStateComponent() {
+    emptyStateComponentController.rebuild()
+  }
+
+  private fun cancelEmptyStateComponentCreation() {
+    emptyStateComponentController.cancelCreation()
+  }
+
+  private fun disposeEmptyStateComponents() {
+    emptyStateComponentController.disposeComponents()
+  }
+
+  private fun editorRootComponent(): JComponent? {
+    return splittersLayout.editorRootComponent
   }
 
   open val isFloating: Boolean
@@ -1006,6 +1171,9 @@ class EditorSplitterState(element: Element) {
   @JvmField
   internal val leaf: EditorSplitterStateLeaf?
 
+  @JvmField
+  internal val hasFileEntries: Boolean
+
   init {
     val splitterElement = element.getChild("splitter")
     val first = splitterElement?.getChild("split-first")
@@ -1033,6 +1201,8 @@ class EditorSplitterState(element: Element) {
       )
       leaf = null
     }
+    hasFileEntries = leaf?.files?.isNotEmpty() ?: (splitters?.firstSplitter?.hasFileEntries == true ||
+                                                    splitters?.secondSplitter?.hasFileEntries == true)
   }
 }
 

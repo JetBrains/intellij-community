@@ -4,11 +4,13 @@ package com.intellij.ide.minimap.thumb
 import com.intellij.ide.minimap.geometry.MinimapGeometryData
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.AlphaComposite
 import java.awt.Graphics2D
 import kotlin.math.roundToInt
 
-internal object MinimapThumb {
+@ApiStatus.Internal
+object MinimapThumb {
   fun computeHeight(visibleHeight: Int, contentHeight: Int, minimapHeight: Int): Int {
     if (minimapHeight <= 0) return 0
 

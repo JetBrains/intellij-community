@@ -231,7 +231,6 @@ fleet/build/http
 fleet/build/kernel.plugins.processor
 fleet/build/platform
 fleet/build/s3
-fleet/build/scrambling
 fleet/build/sign
 fleet/bundles
 fleet/codecache
@@ -280,6 +279,7 @@ idea/customization/min
 images
 images/intellij.platform.images.copyright
 images/intellij.platform.images.xdebugger
+images/jcef
 java/codeserver/core
 java/codeserver/highlighting
 java/compiler
@@ -293,6 +293,7 @@ java/debugger/backend
 java/debugger/debugger-agent
 java/debugger/frontend
 java/debugger/impl
+java/debugger/jb-jdi
 java/debugger/memory-agent
 java/debugger/openapi
 java/debugger/shared
@@ -393,6 +394,8 @@ libraries/byte-buddy/agent
 libraries/caffeine
 libraries/classgraph
 libraries/cli-parser
+libraries/clikt
+libraries/cloud-config-client
 libraries/coil
 libraries/commons/cli
 libraries/commons/codec
@@ -407,6 +410,7 @@ libraries/compose-foundation-desktop-junit
 libraries/compose-runtime-desktop
 libraries/dokka
 libraries/download-pgp-verifier
+libraries/ec4j/core
 libraries/fastutil
 libraries/groovy
 libraries/groovy/ant
@@ -459,9 +463,12 @@ libraries/jediterm-ui
 libraries/jettison
 libraries/jgoodies/common
 libraries/jgoodies/forms
+libraries/jline
+libraries/joni
 libraries/jsch-agent-proxy
 libraries/jsonpath
 libraries/jsoup
+libraries/jsp
 libraries/jspecify
 libraries/jsvg
 libraries/junit4
@@ -500,6 +507,10 @@ libraries/ktor/io
 libraries/ktor/network-tls
 libraries/ktor/server-cio
 libraries/ktor/utils
+libraries/lsp4j
+libraries/lsp4j/debug
+libraries/lsp4j/jsonrpc
+libraries/lsp4j/jsonrpc-debug
 libraries/lucene.common
 libraries/lz4
 libraries/markdown
@@ -536,6 +547,7 @@ libraries/rd/swing
 libraries/rd/text
 libraries/rhino
 libraries/semver
+libraries/semver4j
 libraries/skiko
 libraries/snakeyaml
 libraries/snakeyaml-engine
@@ -787,6 +799,7 @@ platform/platform-impl/rpc
 platform/platform-impl/ui
 platform/platform-impl/ui-inspector
 platform/platform-impl/update-checker
+platform/platform-impl/update-checker/backend
 platform/platform-resources
 platform/platform-resources-en
 platform/platform-tests
@@ -805,8 +818,13 @@ platform/polySymbols
 platform/polySymbols/backend
 platform/pratt
 platform/problemsView/backend
+platform/problemsView/buildView
+platform/problemsView/collector
+platform/problemsView/core
 platform/problemsView/frontend
+platform/problemsView/plugin
 platform/problemsView/shared
+platform/problemsView/ui
 platform/progress/backend
 platform/progress/shared
 platform/project-frame
@@ -819,6 +837,7 @@ platform/recentFiles/backend
 platform/recentFiles/frontend
 platform/recentFiles/plugin
 platform/recentFiles/shared
+platform/recentFiles/tests
 platform/refactoring
 platform/remote-core
 platform/remote-driver/client
@@ -881,6 +900,7 @@ platform/syntax/syntax-tree
 platform/syntax/syntax-util
 platform/tasks-platform-api
 platform/tasks-platform-impl
+platform/tasks-platform-impl/plugin
 platform/tasks-platform-impl/tasks.impl.bookmarks
 platform/tasks-platform-impl/tasks.impl.debugger
 platform/testFramework
@@ -904,7 +924,6 @@ platform/testIntegration-ui
 platform/testRunner
 platform/testRunner/plugin
 platform/threadDumpParser
-platform/tips-of-the-day
 platform/todo
 platform/todo/backend
 platform/todo/plugin
@@ -946,7 +965,6 @@ platform/vcs-impl/frontend
 platform/vcs-impl/lang
 platform/vcs-impl/lang/actions
 platform/vcs-impl/lang/todo
-platform/vcs-impl/plugin
 platform/vcs-impl/shared
 platform/vcs-log/api
 platform/vcs-log/graph
@@ -954,6 +972,7 @@ platform/vcs-log/graph-api
 platform/vcs-log/impl
 platform/vcs-log/impl/bookmarks
 platform/vcs-tests
+platform/vcs/plugin
 platform/warmup
 platform/warmup/performanceTesting
 platform/welcome-screen
@@ -978,35 +997,6 @@ plugins/ByteCodeViewer
 plugins/IntelliLang
 plugins/IntelliLang/backend
 plugins/IntelliLang/tests
-plugins/agent-workbench/ai-review
-plugins/agent-workbench/chat
-plugins/agent-workbench/claude/common
-plugins/agent-workbench/claude/sessions
-plugins/agent-workbench/codex/common
-plugins/agent-workbench/codex/ide
-plugins/agent-workbench/codex/sessions
-plugins/agent-workbench/common
-plugins/agent-workbench/filewatch
-plugins/agent-workbench/json
-plugins/agent-workbench/junie/common
-plugins/agent-workbench/junie/sessions
-plugins/agent-workbench/pi/sessions
-plugins/agent-workbench/pi/sessions-filewatch
-plugins/agent-workbench/plugin
-plugins/agent-workbench/prompt/context
-plugins/agent-workbench/prompt/core
-plugins/agent-workbench/prompt/testrunner
-plugins/agent-workbench/prompt/ui
-plugins/agent-workbench/prompt/vcs
-plugins/agent-workbench/prompt/vcs-ui
-plugins/agent-workbench/sessions
-plugins/agent-workbench/sessions-actions
-plugins/agent-workbench/sessions-core
-plugins/agent-workbench/sessions-jbcentral
-plugins/agent-workbench/sessions-launch-config/backend
-plugins/agent-workbench/sessions-toolwindow
-plugins/agent-workbench/terminal/sessions
-plugins/agent-workbench/vcs-merge
 plugins/ant
 plugins/ant/jps-plugin
 plugins/built-in-help
@@ -1046,6 +1036,7 @@ plugins/cucumber-jvm-formatter5
 plugins/dev
 plugins/dev/intellij.dev
 plugins/dev/intellij.dev.codeInsight
+plugins/dev/intellij.dev.leakDetection
 plugins/dev/intellij.dev.psiViewer
 plugins/dev/intellij.groovy.dev
 plugins/dev/intellij.java.dev
@@ -1061,6 +1052,7 @@ plugins/devkit/devkit-tests
 plugins/devkit/intellij.devkit.compose
 plugins/devkit/intellij.devkit.debugger
 plugins/devkit/intellij.devkit.gradle
+plugins/devkit/intellij.devkit.gradle.tooling
 plugins/devkit/intellij.devkit.i18n
 plugins/devkit/intellij.devkit.intelliLang
 plugins/devkit/intellij.devkit.mcp
@@ -1123,6 +1115,7 @@ plugins/gradle-maven
 plugins/gradle/completion
 plugins/gradle/completion/kotlin
 plugins/gradle/completion/kotlin/tests
+plugins/gradle/completion/kotlin/tests.benchmark
 plugins/gradle/completion/toml
 plugins/gradle/gradle-declarative-sync
 plugins/gradle/gradle-dependency-updater
@@ -1135,6 +1128,7 @@ plugins/gradle/java/groovy/toml
 plugins/gradle/java/performance
 plugins/gradle/java/plugin
 plugins/gradle/java/properties
+plugins/gradle/java/tests.benchmark
 plugins/gradle/java/toml
 plugins/gradle/java/toml/tests
 plugins/gradle/jps-plugin
@@ -1144,6 +1138,8 @@ plugins/gradle/native/tooling
 plugins/gradle/plugin
 plugins/gradle/properties
 plugins/gradle/settings
+plugins/gradle/tests.benchmark
+plugins/gradle/tests.benchmark.main
 plugins/gradle/tooling-extension-api
 plugins/gradle/tooling-extension-impl
 plugins/gradle/tooling-proxy
@@ -1176,6 +1172,7 @@ plugins/hg4idea
 plugins/htmltools
 plugins/ide-features-trainer
 plugins/ide-features-trainer/onboarding
+plugins/ide-features-trainer/tips
 plugins/ide-startup/importSettings
 plugins/java-decompiler/engine
 plugins/java-decompiler/plugin
@@ -1202,7 +1199,6 @@ plugins/junit/testFramework
 plugins/junit5_rt
 plugins/junit5_rt_tests
 plugins/junit6_rt
-plugins/junit6_rt_tests
 plugins/junit_rt
 plugins/keymaps/eclipse-keymap
 plugins/keymaps/netbeans5.6-keymap
@@ -1217,10 +1213,8 @@ plugins/keymaps/xcode-keymap
 plugins/kotlin
 plugins/kotlin/all-tests
 plugins/kotlin/all-tests-compose
-plugins/kotlin/all-tests-fir
 plugins/kotlin/base/analysis
 plugins/kotlin/base/analysis-api-platform
-plugins/kotlin/base/analysis-api/analysis-api-k2-tests
 plugins/kotlin/base/analysis-api/analysis-api-utils
 plugins/kotlin/base/code-insight
 plugins/kotlin/base/code-insight/minimal
@@ -1394,6 +1388,7 @@ plugins/kotlin/plugin/common
 plugins/kotlin/plugin/k2
 plugins/kotlin/preferences
 plugins/kotlin/project-configuration
+plugins/kotlin/project-configuration-vcs
 plugins/kotlin/project-wizard/cli
 plugins/kotlin/project-wizard/compose
 plugins/kotlin/project-wizard/core
@@ -1402,7 +1397,6 @@ plugins/kotlin/project-wizard/idea
 plugins/kotlin/project-wizard/maven
 plugins/kotlin/project-wizard/tests
 plugins/kotlin/refactorings/kotlin.refactorings.common
-plugins/kotlin/refactorings/kotlin.refactorings.common.tests
 plugins/kotlin/refactorings/kotlin.refactorings.k2
 plugins/kotlin/refactorings/kotlin.refactorings.tests.k2
 plugins/kotlin/refactorings/rename.k2
@@ -1434,7 +1428,9 @@ plugins/laf/macos
 plugins/laf/win10
 plugins/lombok
 plugins/lombok/generated
+plugins/lombok/plugin
 plugins/lsp.ui
+plugins/lsp.ui/idea.product.modules
 plugins/markdown/compose
 plugins/markdown/core
 plugins/markdown/core/backend
@@ -1445,6 +1441,7 @@ plugins/markdown/frontmatter/toml
 plugins/markdown/frontmatter/yaml
 plugins/markdown/images
 plugins/markdown/java
+plugins/markdown/jcef
 plugins/markdown/model
 plugins/markdown/plugin
 plugins/markdown/spellchecker
@@ -1484,7 +1481,9 @@ plugins/mcp-server/mcpserver.vcs
 plugins/mcp-server/tests
 plugins/mcp-server/tests/plugin
 plugins/mermaid
+plugins/mermaid/json
 plugins/mermaid/markdown
+plugins/mermaid/spellchecker
 plugins/ml-local-models
 plugins/ml-local-models/java
 plugins/performanceTesting/backend
@@ -1493,6 +1492,7 @@ plugins/performanceTesting/core
 plugins/performanceTesting/event-bus
 plugins/performanceTesting/freezes
 plugins/performanceTesting/frontend
+plugins/performanceTesting/problemsView
 plugins/performanceTesting/remote-driver
 plugins/performanceTesting/remote-driver.compose
 plugins/performanceTesting/remote-driver.jcef
@@ -1538,6 +1538,7 @@ plugins/stream-debugger
 plugins/stream-debugger/backend
 plugins/stream-debugger/core
 plugins/stream-debugger/java
+plugins/stream-debugger/rt
 plugins/stream-debugger/shared
 plugins/stream-debugger/testFramework
 plugins/svn4idea
@@ -1557,6 +1558,7 @@ plugins/terminal/frontend
 plugins/terminal/sh
 plugins/terminal/tests
 plugins/testng
+plugins/testng/langInjection
 plugins/testng_rt
 plugins/testng_rt/tests
 plugins/textmate
@@ -1567,6 +1569,8 @@ plugins/textmate/core/tests
 plugins/textmate/joni
 plugins/textmate/plugin
 plugins/textmate/tests
+plugins/tips-of-the-day
+plugins/tips-of-the-day/plugin
 plugins/toml
 plugins/toml/backend
 plugins/toml/core
@@ -1579,6 +1583,13 @@ plugins/ui-designer
 plugins/ui-designer-core
 plugins/ui-designer/jps-plugin
 plugins/ui-designer/jps-plugin/tests
+plugins/ui.webview
+plugins/ui.webview/demo
+plugins/ui.webview/jcef
+plugins/ui.webview/jcef/tests
+plugins/ui.webview/markdown-preview
+plugins/ui.webview/markdown-preview/tests
+plugins/ui.webview/tests
 plugins/webp
 plugins/xpath
 plugins/xpath/xslt-rt
@@ -1592,6 +1603,7 @@ python/build/build-debug-binaries
 python/common
 python/conda
 python/huggingFace
+python/ide/customization.backend
 python/ide/customization.shared
 python/ide/impl
 python/ide/impl/intellij.pycharm.community.ide.impl.promotion
@@ -1602,6 +1614,7 @@ python/intellij.python.community.communityOnly
 python/intellij.python.ml.features
 python/interpreters
 python/junit5Tests-framework
+python/mcp
 python/openapi
 python/pipenv
 python/pluginCore
@@ -1620,6 +1633,8 @@ python/python-external-index
 python/python-features-trainer
 python/python-grazie
 python/python-hatch
+python/python-lsp-core
+python/python-lsp-impl
 python/python-markdown
 python/python-packaging
 python/python-parser
@@ -1631,11 +1646,14 @@ python/python-process-output/frontend
 python/python-psi-api
 python/python-psi-impl
 python/python-pyproject
+python/python-pyrefly
+python/python-pyright
 python/python-pytools
 python/python-pytools-ui
 python/python-pytools/tests
 python/python-requirements
 python/python-restructuredtext
+python/python-ruff
 python/python-sdk
 python/python-sdk-configurator/backend
 python/python-sdk-configurator/common
@@ -1650,6 +1668,8 @@ python/python-test-env/junit4
 python/python-test-env/junit5
 python/python-test-env/plain
 python/python-test-env/uv
+python/python-ty
+python/python-type-engine
 python/python-uv/backend
 python/python-uv/common
 python/python-uv/tests
@@ -1664,15 +1684,16 @@ python/terminal/shared
 python/testFramework
 python/tools
 spellchecker
+spellchecker/vcs
 spellchecker/xml
 tools/apiDump
 tools/apiDump/testData
 tools/intellij.ide.starter.allure.annotations.scanner
 tools/intellij.lambda.sampleTests
 tools/intellij.lambda.sampleTestsWithFixtures
-tools/intellij.lambda.sampleTestsWithFixtures/plugin
+tools/intellij.lambda.sampleTestsWithFixtures/intellij.lambda.sampleTestsWithFixtures.plugin
 tools/intellij.lambda.sampleTestsWithPlugin
-tools/intellij.lambda.sampleTestsWithPlugin/plugin
+tools/intellij.lambda.sampleTestsWithPlugin/intellij.lambda.sampleTestsWithPlugin.plugin
 tools/intellij.lambda.testFramework
 tools/intellij.lambda.testFramework/plugin
 tools/intellij.tools.ide.metrics.benchmark

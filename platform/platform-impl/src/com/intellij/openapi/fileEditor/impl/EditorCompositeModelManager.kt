@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.platform.ide.ideFingerprint
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -178,9 +177,16 @@ internal class EditorCompositeModelManager(
 
   private fun postProcessFileEditorWithProviderList(editorsWithProviders: List<FileEditorWithProvider>) {
     for (editorWithProvider in editorsWithProviders) {
-      val editor = editorWithProvider.fileEditor
-      editor.addPropertyChangeListener(editorPropertyChangeListener)
-      editor.putUserData(FileEditorManagerKeys.DUMB_AWARE, DumbService.isDumbAware(editorWithProvider.provider))
+      postProcessFileEditorWithProvider(editorWithProvider, editorPropertyChangeListener)
     }
   }
+}
+
+internal fun postProcessFileEditorWithProvider(
+  editorWithProvider: FileEditorWithProvider,
+  editorPropertyChangeListener: PropertyChangeListener,
+) {
+  val editor = editorWithProvider.fileEditor
+  editor.addPropertyChangeListener(editorPropertyChangeListener)
+  editor.putUserData(FileEditorManagerKeys.DUMB_AWARE, DumbService.isDumbAware(editorWithProvider.provider))
 }

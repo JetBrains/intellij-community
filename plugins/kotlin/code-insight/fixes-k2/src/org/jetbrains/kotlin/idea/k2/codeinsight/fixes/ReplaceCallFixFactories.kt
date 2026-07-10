@@ -7,7 +7,9 @@ import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.resolution.KaApplicableCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
@@ -16,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.RemoveRedundantCallsOfConversionMethodsFix
@@ -28,6 +31,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -37,6 +41,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -138,8 +143,26 @@ object ReplaceCallFixFactories {
     private fun KaSession.shouldHaveNotNullType(expression: KtExpression): Boolean {
         // This function is used to determine if we may need to add an elvis operator after the safe call. For example, to replace
         // `s.length` in `val x: Int = s.length` with a safe call, it should be replaced with `s.length ?: <caret>`.
+        val nullableExpressionType = expression.expressionType?.withNullability(isMarkedNullable = true)
+        if (nullableExpressionType != null && nullableTypeIsAcceptableForValueArgument(expression, nullableExpressionType)) return false
+
         val expectedType = expression.expectedType ?: return false
-        return !expectedType.isMarkedNullable && !expectedType.isUnitType
+        return nullableExpressionType?.isSubtypeOf(expectedType) != true && !expectedType.isMarkedNullable && !expectedType.isUnitType
+    }
+
+    private fun KaSession.nullableTypeIsAcceptableForValueArgument(expression: KtExpression, nullableExpressionType: KaType): Boolean {
+        val argument = expression.getStrictParentOfType<KtValueArgument>() ?: return false
+        val argumentExpression = argument.getArgumentExpression() ?: return false
+        if (argumentExpression.unwrapParenthesesLabelsAndAnnotations() != expression) return false
+
+        val callElement = argument.parent?.parent as? KtCallElement ?: return false
+        return collectCallCandidates(callElement).any { candidateInfo ->
+            if (candidateInfo !is KaApplicableCallCandidateInfo) return@any false
+            val functionCall = candidateInfo.candidate as? KaFunctionCall<*> ?: return@any false
+            val parameterType = (functionCall.valueArgumentMapping[argumentExpression] ?: functionCall.valueArgumentMapping[expression])?.returnType
+                ?: return@any false
+            nullableExpressionType.isSubtypeOf(parameterType)
+        }
     }
 
     context(_: KaSession)

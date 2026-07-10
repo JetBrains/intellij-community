@@ -55,6 +55,7 @@ class NotificationTest : LightPlatformTestCase() {
   fun testNotificationLocationConfiguration() {
     val configuration = NotificationsConfigurationImpl()
     assertEquals(NotificationLocation.getDefaultLocation(), configuration.notificationLocation)
+    assertNull(configuration.state!!.getAttributeValue("notificationLocation"))
 
     for (location in NotificationLocation.entries) {
       configuration.notificationLocation = location

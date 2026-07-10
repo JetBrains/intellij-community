@@ -47,7 +47,6 @@ public class SuiteReporter extends AbstractTestReporter {
     state.onSuiteStarted(id());
     if (isSkipped()) return Collections.emptyList();
 
-    state.resetFinishCount();
     String start = asString(TEST_SUITE_STARTED, attributes(ReportedField.ID, ReportedField.NAME, ReportedField.NODE_ID,
                                                            ReportedField.PARENT_NODE_ID, ReportedField.HINT, ReportedField.METAINFO));
     return Collections.singletonList(start);
@@ -87,7 +86,7 @@ public class SuiteReporter extends AbstractTestReporter {
       }
     }
 
-    if (!descendants.isEmpty() && state.finishCount() == 0) {
+    if (!descendants.isEmpty() && !state.hasFinished(descendants)) {
       String reason = (throwable != null) ? throwable.getMessage() : null;
       for (TestIdentifier child : descendants) {
         AbstractTestReporter reporter = TeamCityTestReporter.get(child, state);
@@ -95,8 +94,8 @@ public class SuiteReporter extends AbstractTestReporter {
           Throwable childEx = (status == TestExecutionResult.Status.ABORTED) ? throwable : null;
           out.addAll(((TestReporter)reporter).ignore(childEx, reason));
         }
+        state.markFinished(child.getUniqueId());
       }
-      state.resetFinishCount();
     }
 
     if (!isSkipped()) {
@@ -147,7 +146,6 @@ public class SuiteReporter extends AbstractTestReporter {
         out.addAll(reporter.start());
         out.addAll(reporter.skip(reason));
       }
-      state.resetFinishCount();
     }
 
     if (!isSkipped()) {

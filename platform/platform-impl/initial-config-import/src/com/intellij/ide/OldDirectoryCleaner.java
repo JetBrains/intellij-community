@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.ide.actions.ShowLogAction;
@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.Formats;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
@@ -52,7 +53,11 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
@@ -65,7 +70,7 @@ import static com.intellij.internal.statistic.eventLog.events.EventFields.Long;
 import static com.intellij.notification.NotificationAction.createSimpleExpiring;
 
 @ApiStatus.Internal
-@SuppressWarnings("NonConstantLogger")
+@SuppressWarnings({"NonConstantLogger", "UseOptimizedEelFunctions", "SplitModeApiUsage"})
 public final class OldDirectoryCleaner {
   @ApiStatus.Internal
   public static final class Stats extends CounterUsagesCollector {
@@ -281,6 +286,7 @@ public final class OldDirectoryCleaner {
   }
 
   private static final class MenuDialog extends DialogWrapper {
+    private final DateTimeFormatter myFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM);
     private final MenuTableModel myModel;
 
     MenuDialog(Project project, List<DirectoryGroup> groups) {
@@ -313,12 +319,12 @@ public final class OldDirectoryCleaner {
           if (row >= 0) {
             var group = myModel.myGroups.get(row);
             if (col == 1) {
-              @NlsSafe var paths = group.directories.stream().map(Path::toString).collect(Collectors.joining("<br>", "<html>", "</html>"));
-              label.setToolTipText(paths);
+              @NlsSafe var paths = group.directories.stream().map(Path::toString).collect(Collectors.joining("\n"));
+              HelpTooltipKt.setToolTipText(label, HtmlChunk.text(paths));
             }
             else if (col == 2) {
-              @NlsSafe var isoDate = FileTime.fromMillis(group.lastUpdated).toString();
-              label.setToolTipText(isoDate);
+              @NlsSafe var localDate = myFormatter.format(LocalDateTime.ofInstant(Instant.ofEpochMilli(group.lastUpdated), ZoneId.systemDefault()));
+              HelpTooltipKt.setToolTipText(label, HtmlChunk.text(localDate));
             }
           }
           return label;
@@ -330,7 +336,7 @@ public final class OldDirectoryCleaner {
       table.getColumnModel().getColumn(2).setCellRenderer(renderer);
       table.getColumnModel().getColumn(3).setHeaderRenderer(renderer);
       table.getColumnModel().getColumn(3).setCellRenderer(renderer);
-      myModel.addTableModelListener(e -> updateOkButton());
+      myModel.addTableModelListener(_ -> updateOkButton());
       var panel = new JPanel(new BorderLayout(0, JBUI.scale(5)));
       panel.add(new JBLabel(message("old.dirs.dialog.text")), BorderLayout.NORTH);
       var tableScroll = new JBScrollPane(table);

@@ -7,7 +7,7 @@
 // ACTION: Opt in for 'A' on statement
 // ACTION: Propagate 'A' opt-in requirement to 'root'
 // RUNTIME_WITH_SCRIPT_RUNTIME
-// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@A' or '@OptIn(A::class)'
+// K2_ERROR: OPT_IN_USAGE_ERROR
 @RequiresOptIn
 annotation class A
 

@@ -30,11 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SeparatorWithText;
-import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -46,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JCheckBox;
@@ -59,9 +54,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.Insets;
 import java.awt.Point;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -70,7 +63,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -81,119 +73,52 @@ import java.util.function.Supplier;
 public final class GutterIconsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   public static final @NonNls String ID = "editor.preferences.gutterIcons";
 
-  private final JPanel myPanel;
+  private final GutterIconsConfigurableUI ui;
   private final CheckBoxList<GutterIconDescriptor> myList;
-  private final JBCheckBox myShowGutterIconsJBCheckBox;
 
   public GutterIconsConfigurable() {
-    {
-      myList = new CheckBoxList<>() {
-        @Override
-        protected JComponent adjustRendering(JComponent rootComponent, JCheckBox checkBox, int index, boolean selected, boolean hasFocus) {
-          JPanel panel = new JPanel(new BorderLayout());
-          panel.setBorder(BorderFactory.createEmptyBorder());
-          GutterIconDescriptor descriptor = myList.getItemAt(index);
-          Icon icon = descriptor == null ? null : descriptor.getIcon();
-          JLabel label = new JLabel(icon == null ? EmptyIcon.ICON_16 : icon);
-          label.setOpaque(true);
-          label.setPreferredSize(new Dimension(25, -1));
-          label.setHorizontalAlignment(SwingConstants.CENTER);
-          panel.add(label, BorderLayout.WEST);
-          panel.add(checkBox, BorderLayout.CENTER);
-          panel.setBackground(getBackground(false));
-          label.setBackground(getBackground(selected));
-          if (!checkBox.isOpaque()) {
-            checkBox.setOpaque(true);
-          }
-          checkBox.setBorder(null);
+    myList = new CheckBoxList<>() {
+      @Override
+      protected JComponent adjustRendering(JComponent rootComponent, JCheckBox checkBox, int index, boolean selected, boolean hasFocus) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder());
+        GutterIconDescriptor descriptor = myList.getItemAt(index);
+        Icon icon = descriptor == null ? null : descriptor.getIcon();
+        JLabel label = new JLabel(icon == null ? EmptyIcon.ICON_16 : icon);
+        label.setOpaque(true);
+        label.setPreferredSize(new Dimension(25, -1));
+        label.setHorizontalAlignment(SwingConstants.CENTER);
+        panel.add(label, BorderLayout.WEST);
+        panel.add(checkBox, BorderLayout.CENTER);
+        panel.setBackground(getBackground(false));
+        label.setBackground(getBackground(selected));
+        if (!checkBox.isOpaque()) {
+          checkBox.setOpaque(true);
+        }
+        checkBox.setBorder(null);
 
-          PluginDescriptor pluginDescriptor = myFirstDescriptors.get(descriptor);
-          if (pluginDescriptor != null) {
-            SeparatorWithText separator = new SeparatorWithText();
-            String name = getPluginDisplayName(pluginDescriptor);
-            separator.setCaption(name);
-            panel.add(separator, BorderLayout.NORTH);
-          }
-
-          return panel;
+        PluginDescriptor pluginDescriptor = myFirstDescriptors.get(descriptor);
+        if (pluginDescriptor != null) {
+          SeparatorWithText separator = new SeparatorWithText();
+          String name = getPluginDisplayName(pluginDescriptor);
+          separator.setCaption(name);
+          panel.add(separator, BorderLayout.NORTH);
         }
 
-        @Override
-        protected @Nullable Point findPointRelativeToCheckBox(int x, int y, @NotNull JCheckBox checkBox, int index) {
-          return super.findPointRelativeToCheckBoxWithAdjustedRendering(x, y, checkBox, index);
-        }
-      };
-      myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-      myList.setBorder(BorderFactory.createEmptyBorder());
-      ListSpeedSearch.installOn(myList, JCheckBox::getText);
-    }
-    {
-      // GUI initializer generated by IntelliJ IDEA GUI Designer
-      // >>> IMPORTANT!! <<<
-      // DO NOT EDIT OR ADD ANY CODE HERE!
-      myPanel = new JPanel();
-      myPanel.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
-      final JBScrollPane jBScrollPane1 = new JBScrollPane();
-      myPanel.add(jBScrollPane1, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
-                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
-                                                     null, null, 0, false));
-      jBScrollPane1.setViewportView(myList);
-      myShowGutterIconsJBCheckBox = new JBCheckBox();
-      this.$$$loadButtonText$$$(myShowGutterIconsJBCheckBox,
-                                this.$$$getMessageFromBundle$$$("messages/ApplicationBundle", "checkbox.show.gutter.icons"));
-      myPanel.add(myShowGutterIconsJBCheckBox,
-                  new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
-                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-    }
-  }
-
-  private static Method $$$cachedGetBundleMethod$$$ = null;
-
-  /** @noinspection ALL */
-  private String $$$getMessageFromBundle$$$(String path, String key) {
-    ResourceBundle bundle;
-    try {
-      Class<?> thisClass = this.getClass();
-      if ($$$cachedGetBundleMethod$$$ == null) {
-        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
-        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+        return panel;
       }
-      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
-    }
-    catch (Exception e) {
-      bundle = ResourceBundle.getBundle(path);
-    }
-    return bundle.getString(key);
-  }
 
-  /** @noinspection ALL */
-  private void $$$loadButtonText$$$(AbstractButton component, String text) {
-    StringBuffer result = new StringBuffer();
-    boolean haveMnemonic = false;
-    char mnemonic = '\0';
-    int mnemonicIndex = -1;
-    for (int i = 0; i < text.length(); i++) {
-      if (text.charAt(i) == '&') {
-        i++;
-        if (i == text.length()) break;
-        if (!haveMnemonic && text.charAt(i) != '&') {
-          haveMnemonic = true;
-          mnemonic = text.charAt(i);
-          mnemonicIndex = result.length();
-        }
+      @Override
+      protected @Nullable Point findPointRelativeToCheckBox(int x, int y, @NotNull JCheckBox checkBox, int index) {
+        return super.findPointRelativeToCheckBoxWithAdjustedRendering(x, y, checkBox, index);
       }
-      result.append(text.charAt(i));
-    }
-    component.setText(result.toString());
-    if (haveMnemonic) {
-      component.setMnemonic(mnemonic);
-      component.setDisplayedMnemonicIndex(mnemonicIndex);
-    }
-  }
+    };
+    myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+    myList.setBorder(BorderFactory.createEmptyBorder());
+    ListSpeedSearch.installOn(myList, JCheckBox::getText);
 
-  /** @noinspection ALL */
-  public JComponent $$$getRootComponent$$$() { return myPanel; }
+    ui = new GutterIconsConfigurableUI(myList);
+  }
 
   private final List<GutterIconDescriptor> myDescriptors = new ArrayList<>();
   private final Map<GutterIconDescriptor, PluginDescriptor> myFirstDescriptors = new HashMap<>();
@@ -204,12 +129,12 @@ public final class GutterIconsConfigurable implements SearchableConfigurable, Co
   }
 
   @Override
-  public @Nullable String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return "reference.settings.editor.gutter.icons";
   }
 
   @Override
-  public @Nullable JComponent createComponent() {
+  public @NotNull JComponent createComponent() {
     LanguageExtensionPoint<LineMarkerProvider>[] extensions = LineMarkerProviders.EP_NAME.getExtensions();
     NullableFunction<LanguageExtensionPoint<LineMarkerProvider>, PluginDescriptor> function =
       point1 -> {
@@ -274,9 +199,9 @@ public final class GutterIconsConfigurable implements SearchableConfigurable, Co
     }
 
     myList.setItems(myDescriptors, GutterIconDescriptor::getName);
-    myShowGutterIconsJBCheckBox.addChangeListener(e -> myList.setEnabled(myShowGutterIconsJBCheckBox.isSelected()));
-    SwingUtilities.updateComponentTreeUI(myPanel); // TODO: create Swing components in this method (see javadoc)
-    return myPanel;
+    ui.showGutterIconsJBCheckBox.addChangeListener(_ -> myList.setEnabled(ui.showGutterIconsJBCheckBox.isSelected()));
+    SwingUtilities.updateComponentTreeUI(ui.panel); // TODO: create Swing components in this method (see javadoc)
+    return ui.panel;
   }
 
   @Override
@@ -286,14 +211,14 @@ public final class GutterIconsConfigurable implements SearchableConfigurable, Co
         return true;
       }
     }
-    return myShowGutterIconsJBCheckBox.isSelected() != EditorSettingsExternalizable.getInstance().areGutterIconsShown();
+    return ui.showGutterIconsJBCheckBox.isSelected() != EditorSettingsExternalizable.getInstance().areGutterIconsShown();
   }
 
   @Override
   public void apply() throws ConfigurationException {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-    if (myShowGutterIconsJBCheckBox.isSelected() != editorSettings.areGutterIconsShown()) {
-      editorSettings.setGutterIconsShown(myShowGutterIconsJBCheckBox.isSelected());
+    if (ui.showGutterIconsJBCheckBox.isSelected() != editorSettings.areGutterIconsShown()) {
+      editorSettings.setGutterIconsShown(ui.showGutterIconsJBCheckBox.isSelected());
       EditorOptionsPanelKt.reinitAllEditors();
     }
     for (GutterIconDescriptor descriptor : myDescriptors) {
@@ -312,14 +237,14 @@ public final class GutterIconsConfigurable implements SearchableConfigurable, Co
       myList.setItemSelected(descriptor, LineMarkerSettings.getSettings().isEnabled(descriptor));
     }
     boolean gutterIconsShown = EditorSettingsExternalizable.getInstance().areGutterIconsShown();
-    myShowGutterIconsJBCheckBox.setSelected(gutterIconsShown);
+    ui.showGutterIconsJBCheckBox.setSelected(gutterIconsShown);
     myList.setEnabled(gutterIconsShown);
   }
 
   @Override
   public void disposeUIResources() {
-    for (ChangeListener listener : myShowGutterIconsJBCheckBox.getChangeListeners()) {
-      myShowGutterIconsJBCheckBox.removeChangeListener(listener);
+    for (ChangeListener listener : ui.showGutterIconsJBCheckBox.getChangeListeners()) {
+      ui.showGutterIconsJBCheckBox.removeChangeListener(listener);
     }
   }
 
@@ -336,7 +261,7 @@ public final class GutterIconsConfigurable implements SearchableConfigurable, Co
   }
 
   @Override
-  public @Nullable Runnable enableSearch(String option) {
+  public @NotNull Runnable enableSearch(String option) {
     return () -> Objects.requireNonNull(SpeedSearchSupply.getSupply(myList, true)).findAndSelectElement(option);
   }
 

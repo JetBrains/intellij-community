@@ -7,8 +7,11 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
+import com.intellij.util.indexing.andIndexable
 import com.intellij.util.indexing.roots.kind.ProjectFileOrDirOrigin
 import com.intellij.util.indexing.roots.origin.ProjectFileOrDirOriginImpl
+import com.intellij.util.indexing.unwrapCacheAvoiding
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -28,8 +31,12 @@ class ProjectIndexableFilesIteratorImpl(private val fileOrDir: VirtualFile) : Pr
   override fun iterateFiles(
     project: Project,
     fileIterator: ContentIterator,
-    fileFilter: VirtualFileFilter
-  ): Boolean = ProjectFileIndex.getInstance(project).iterateContentUnderDirectory(fileOrDir, fileIterator, fileFilter)
+    fileFilter: VirtualFileFilter,
+  ): Boolean {
+    val processor = fileIterator.unwrapCacheAvoiding()
+    val filter = fileFilter.andIndexable(WorkspaceFileIndexEx.getInstance(project))
+    return ProjectFileIndex.getInstance(project).iterateContentUnderDirectory(fileOrDir, processor, filter)
+  }
 
   override fun getRootUrls(project: Project): Set<String> {
     throw UnsupportedOperationException()

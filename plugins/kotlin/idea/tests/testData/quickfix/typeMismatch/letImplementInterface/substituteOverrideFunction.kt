@@ -1,5 +1,5 @@
 // "Let 'A' implement interface 'IB'" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'A', but 'IB' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 interface IA<T> {
     fun foo(t: T)

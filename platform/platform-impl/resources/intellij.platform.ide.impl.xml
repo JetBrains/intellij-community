@@ -61,6 +61,7 @@
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.eel.impl"/>
+    <module name="intellij.platform.eel.nioFs.impl"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.concurrency"/>
@@ -89,8 +90,11 @@
     <extensionPoint qualifiedName="com.intellij.editor.interLineBreakpointConfigurationProvider"
                     interface="com.intellij.openapi.editor.impl.InterLineBreakpointConfigurationProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.editorEmptyTextPromotedActionProvider"
-                    interface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPromotedActionProvider"
+    <extensionPoint qualifiedName="com.intellij.editorEmptyTextProvider"
+                    interface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.editorEmptyStateComponentProvider"
+                    interface="com.intellij.openapi.fileEditor.impl.EditorEmptyStateComponentProvider"
                     dynamic="true"/>
     <extensionPoint name="imageReaderWriterSpi"
                     beanClass="com.intellij.util.imageio.ImageReaderWriterSpiBean"
@@ -147,20 +151,12 @@
     <registryKey
       key="ea.auto.report.forced.tag" defaultValue=""
       description="Additional tag for error reports"/>
-    <registryKey
-      key="ide.linux.ijpl43505"
-      defaultValue="true"
-      description="Enable the fix for IJPL-43505 Window header disappears after opening more than one project"
-      restartRequired="true"
-    />
-    <registryKey
-      key="ide.ui.keymap.ijpl187594"
-      defaultValue="true"
-      description="Enable the fix for IJPL-187594 Keymaps: shortcuts overlap long action names. The Classic UI is not affected"
-    />
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.menu.MainMenuCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.minimap.MinimapUsageCollector"/>
+    <editorEmptyStateComponentProvider implementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextComponentProvider" order="last"/>
+    <editorEmptyTextProvider implementation="com.intellij.openapi.fileEditor.impl.DefaultEditorEmptyTextProvider" order="last"/>
+    <pluginUpdatesProvider implementation="com.intellij.ide.plugins.newui.DefaultPluginUpdatesProvider"/>
     <projectSettings service="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector"/>
     <projectSettings service="com.intellij.ui.RecentsManager"/>
     <projectSettings service="com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration"/>

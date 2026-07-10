@@ -16,6 +16,7 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.cache.PythonPackageCache
+import com.jetbrains.python.packaging.cache.PythonPackageCacheIOError
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
 import com.jetbrains.python.packaging.cache.impl.InMemorySearchPage
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
@@ -51,7 +52,7 @@ class CondaPackageCache : PythonPackageCache {
     return InMemorySearchPage.resultFromMatches(matches, pageSize)
   }
 
-  suspend fun reloadCache(sdk: Sdk, project: Project, force: Boolean = false): Result<Unit, IOException> {
+  suspend fun reloadCache(sdk: Sdk, project: Project, force: Boolean = false): Result<Unit, PythonPackageCacheIOError> {
     lock.withLock {
       if ((cache.isNotEmpty() && !force) || loadInProgress) {
         return Result.Success(Unit)
@@ -62,6 +63,9 @@ class CondaPackageCache : PythonPackageCache {
 
     try {
       refreshAll(sdk, project)
+    }
+    catch (e: IOException) {
+      return Result.Failure(PythonPackageCacheIOError.FailedToFetchPackages(e.toString()))
     }
     finally {
       lock.withLock {

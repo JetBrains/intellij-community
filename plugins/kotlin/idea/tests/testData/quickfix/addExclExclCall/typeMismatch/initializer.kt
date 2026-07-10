@@ -1,5 +1,5 @@
 // "Add non-null asserted (s!!) call" "true"
-// K2_ERROR: Initializer type mismatch: expected 'String', actual 'String?'.
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
 fun test(s: String?) {
     val z: String = <caret>s
 }

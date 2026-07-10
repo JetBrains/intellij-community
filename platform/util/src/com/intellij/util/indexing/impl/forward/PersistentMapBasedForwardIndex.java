@@ -5,7 +5,6 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.io.ByteSequenceDataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.MeasurableIndexStore;
-import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.PersistentMap;
 import com.intellij.util.io.PersistentMapBuilder;
 import com.intellij.util.io.StorageLockContext;
@@ -101,17 +100,11 @@ public final class PersistentMapBasedForwardIndex implements ForwardIndex, Measu
                                                                               boolean useChunks,
                                                                               boolean isReadOnly,
                                                                               @Nullable StorageLockContext storageLockContext) throws IOException {
-    assert PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get() == null || storageLockContext == null;
-    PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(storageLockContext);
-    try {
-      return PersistentMapBuilder
-        .newBuilder(file, EnumeratorIntegerDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE)
-        .hasChunks(useChunks)
-        .withReadonly(isReadOnly)
-        .build();
-    }
-    finally {
-      PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.remove();
-    }
+    return PersistentMapBuilder
+      .newBuilder(file, EnumeratorIntegerDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE)
+      .hasChunks(useChunks)
+      .withReadonly(isReadOnly)
+      .withStorageLockContext(storageLockContext)
+      .build();
   }
 }

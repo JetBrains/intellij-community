@@ -8,6 +8,7 @@ import com.intellij.build.BuildEventDispatcher;
 import com.intellij.build.DefaultBuildDescriptor;
 import com.intellij.build.SyncViewManager;
 import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.Failure;
 import com.intellij.build.events.FinishBuildEvent;
 import com.intellij.build.events.impl.FailureImpl;
 import com.intellij.build.events.impl.FailureResultImpl;
@@ -130,6 +131,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -794,18 +796,9 @@ public final class ExternalSystemUtil {
                       ? findLocalFileByPath(notificationData.getFilePath())
                       : null;
 
-    var buildIssueNavigatable = exception instanceof BuildIssueException
-                                ? ((BuildIssueException)exception).getBuildIssue().getNavigatable(project)
-                                : null;
-    final Navigatable navigatable;
-    if (!isNullOrNonNavigatable(buildIssueNavigatable)) {
-      navigatable = buildIssueNavigatable;
-    }
-    else if (isNullOrNonNavigatable(notificationData.getNavigatable())) {
-      navigatable = virtualFile != null ? new OpenFileDescriptor(project, virtualFile, line, column) : NonNavigatable.INSTANCE;
-    }
-    else {
-      navigatable = notificationData.getNavigatable();
+    Navigatable navigatable = notificationData.getNavigatable();
+    if (isNullOrNonNavigatable(navigatable) && virtualFile != null) {
+      navigatable = new OpenFileDescriptor(project, virtualFile, line, column);
     }
 
     final Notification notification;
@@ -821,15 +814,17 @@ public final class ExternalSystemUtil {
         .setListener(notificationData.getListener());
     }
 
-    final FailureImpl failure;
-    if (exception instanceof BuildIssueException) {
-      var buildIssue = ((BuildIssueException)exception).getBuildIssue();
-      failure = new FailureImpl(buildIssue.getTitle(), notificationData.getMessage(), Collections.emptyList(), exception, notification,
-                                navigatable);
-    } else {
-      failure = new FailureImpl(notificationData.getMessage(), exception, notification, navigatable);
+    var failures = new ArrayList<Failure>();
+    if (exception instanceof BuildIssueException buildIssueException) {
+      for (var buildIssue : buildIssueException.getBuildIssues()) {
+        failures.add(new FailureImpl(buildIssue.getTitle(), buildIssue.getDescription(), Collections.emptyList(), exception, notification,
+                                     buildIssue.getNavigatable(project)));
+      }
     }
-    return new FailureResultImpl(Collections.singletonList(failure));
+    else {
+      failures.add(new FailureImpl(notificationData.getMessage(), exception, notification, navigatable));
+    }
+    return new FailureResultImpl(failures);
   }
 
   private static boolean isNullOrNonNavigatable(@Nullable Navigatable navigatable) {

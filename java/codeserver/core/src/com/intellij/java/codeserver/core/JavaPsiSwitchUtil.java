@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.core;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -26,14 +26,18 @@ import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiPattern;
+import com.intellij.psi.PsiPatternVariable;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiSwitchBlock;
 import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiSwitchStatement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeTestPattern;
 import com.intellij.psi.PsiTypes;
+import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -163,6 +167,38 @@ public final class JavaPsiSwitchUtil {
       return SwitchSpecialValue.UNCONDITIONAL_PATTERN;
     }
     return null;
+  }
+
+  /**
+   * Checks if the given {@code switch} statement contains at least one case labeled
+   * with a representative primitive constant.
+   *
+   * @param statement the {@link PsiSwitchStatement} to be analyzed
+   * @return {@code true} if the switch statement contains a representative primitive constant, {@code false} otherwise
+   */
+  public static boolean containsRepresentativePrimitive(@NotNull PsiSwitchStatement statement) {
+    MultiMap<Object, PsiElement> labels = getValuesAndLabels(statement);
+    for (PsiElement value : labels.values()) {
+      if (value instanceof PsiExpression expression) {
+        Object o = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
+        if (isRepresentativePrimitive(o)) return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Determines if the given object represents a primitive type's special case,
+   * specifically NaN, +0.0, or -0.0 for Float and Double types.
+   *
+   * @param o the object to check, which may be null or an instance of Float or Double
+   * @return true if the object is a Float or Double instance representing a special primitive case,
+   *         otherwise false
+   */
+  public static boolean isRepresentativePrimitive(@Nullable Object o) {
+    if (o instanceof Float f && (f.isNaN() || f.equals(+0.0f) || f.equals(-0.0f))) return true;
+    if (o instanceof Double d && (d.isNaN() || d.equals(+0.0) || d.equals(-0.0))) return true;
+    return false;
   }
 
   /**
@@ -499,6 +535,20 @@ public final class JavaPsiSwitchUtil {
                         recordComponentClass,
                         skipDominatingElements)) {
         return true;
+      }
+    }
+
+    if (PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, deconstructionComponent) &&
+        deconstructionComponent instanceof PsiTypeTestPattern testPattern) {
+      PsiPatternVariable patternVariable = testPattern.getPatternVariable();
+      if (patternVariable != null && patternVariable.getType() instanceof PsiPrimitiveType) {
+        if (!hasDominated(switchBlock,
+                          topLevelDeconstruction,
+                          deconstructionComponent,
+                          recordComponentClass,
+                          skipDominatingElements)) {
+          return true;
+        }
       }
     }
     return false;

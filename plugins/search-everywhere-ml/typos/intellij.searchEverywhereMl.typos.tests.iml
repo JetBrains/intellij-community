@@ -46,6 +46,8 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.typos" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.searchEverywhereMl.typos" />
 </module>

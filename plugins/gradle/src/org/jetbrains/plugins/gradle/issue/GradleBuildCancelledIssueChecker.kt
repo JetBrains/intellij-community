@@ -8,8 +8,7 @@ import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Consumer
 
 /**
@@ -17,13 +16,13 @@ import java.util.function.Consumer
  *
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
+@Internal
 class GradleBuildCancelledIssueChecker : GradleIssueChecker {
 
   override fun check(issueData: GradleIssueData): BuildIssue? {
-    if (issueData.error !is ProcessCanceledException) {
-      val rootCause = getRootCauseAndLocation(issueData.error).first
-      if (!rootCause.toString().contains("Build cancelled.")) return null
+    if (issueData.failure.className != ProcessCanceledException::class.java.name) {
+      val rootCause = issueData.failure.rootCause
+      if (!rootCause.text.contains("Build cancelled.")) return null
     }
 
     val description = "Build cancelled"

@@ -1,5 +1,5 @@
 // "Cast expression 'a' to 'Foo'" "true"
-// K2_ERROR: Smart cast to 'Foo' is impossible, because 'a' is a property that has an open or custom getter.
+// K2_ERROR: SMARTCAST_IMPOSSIBLE
 
 interface Foo {
     operator fun not() : Foo

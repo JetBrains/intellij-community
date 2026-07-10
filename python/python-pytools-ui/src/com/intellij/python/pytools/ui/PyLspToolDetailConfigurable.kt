@@ -2,11 +2,10 @@
 package com.intellij.python.pytools.ui
 
 import com.intellij.openapi.options.BoundConfigurable
-import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.lsp.PyLspToolSettings
+import com.intellij.python.pytools.lsp.PyLspTool
+import com.intellij.python.pytools.lsp.PyLspToolConfiguration
 import com.intellij.python.pytools.statistics.PyToolActionSource
 import com.intellij.python.pytools.statistics.PyToolUsagesCollector
 import com.intellij.ui.dsl.builder.Panel
@@ -14,21 +13,22 @@ import com.intellij.ui.dsl.builder.panel
 
 /**
  * Shared base for every LSP-backed tool's detail configurable. Subclasses supply only the
- * per-project [settings] service, an optional [inlayHintLabel] override (Pyright uses a
- * tool-specific string), and optional tool-specific rows via [extraRows] (Ruff uses this for
+ * concrete [PyLspTool] (whose [PyLspTool.configuration] supplies [settings]), an optional
+ * [inlayHintLabel] override, and optional tool-specific rows via [extraRows] (Ruff uses this for
  * its `formatting` and `sortImports` checkboxes).
  *
  * Logging happens automatically in [apply] via [PyToolUsagesCollector.Helper.logConfigurationChanged],
- * which pulls field values from [PyTool.configurationFusSnapshot]. A new tool that extends this
+ * which pulls field values from the tool's `configurationFusSnapshot`. A new tool that extends this
  * base therefore cannot accidentally skip FUS reporting — there is no per-subclass `apply` to
  * forget.
  */
-abstract class PyLspToolDetailConfigurable(
+abstract class PyLspToolDetailConfigurable<C : PyLspToolConfiguration<C>>(
   protected val project: Project,
-  private val tool: PyTool,
+  private val tool: PyLspTool<C>,
 ) : BoundConfigurable(tool.presentableName) {
 
-  protected abstract val settings: PyLspToolSettings
+  /** This tool's settings, taken straight from [PyLspTool.configuration] (the single source). */
+  protected val settings: C get() = tool.configuration(project)
 
   /** Label used for the inlay-hint row. Override when the tool needs a custom string. */
   protected open val inlayHintLabel: String = PyToolsUiBundle.message("checkbox.inlay.hints")

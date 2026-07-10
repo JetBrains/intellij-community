@@ -17,8 +17,6 @@
     <module name="intellij.libraries.test.discovery"/>
     <module name="intellij.platform.smRunner"/>
     <module name="intellij.platform.testRunner"/>
-    <module name="intellij.platform.vcs.impl"/>
-    <module name="intellij.platform.vcs.impl.lang"/>
   </dependencies>
   <!-- endregion -->
 
@@ -29,6 +27,13 @@
 
     <extensionPoint qualifiedName="com.intellij.threadDumpProvider"
                     interface="com.intellij.execution.impl.ThreadDumpProvider" dynamic="true"/>
+    <!--
+      Affected-test discovery can use VCS changelists and changed ranges in full IDEs. The implementation
+      is registered from intellij.java.vcs so Java execution remains loadable in Language Server products
+      where VCS content modules are intentionally absent.
+    -->
+    <extensionPoint qualifiedName="com.intellij.execution.testDiscoveryVcsHelper"
+                    interface="com.intellij.execution.testDiscovery.TestDiscoveryVcsHelper" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -83,7 +88,6 @@
     <threadDumpProvider implementation="com.intellij.execution.impl.AttachAPIThreadDumpProvider" order="last"/>
     <applicationSettings service="com.intellij.execution.filters.StackTraceFoldingSettings"/>
     <postStartupActivity implementation="com.intellij.execution.testDiscovery.TestDiscoveryIndex$MyPostStartUpActivity"/>
-    <vcs.changeListDecorator implementation="com.intellij.execution.testDiscovery.AffectedTestsInChangeListPainter"/>
     <projectService serviceImplementation="com.intellij.execution.testDiscovery.JavaAutoRunManager"/>
     <runConfigurationExtension implementation="com.intellij.execution.testDiscovery.TestDiscoveryExtension"/>
     <projectSettings service="com.intellij.execution.testDiscovery.JavaAutoRunManager"/>
@@ -107,14 +111,5 @@
       <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Stop"/>
     </action>
 
-    <group id="ChangesViewPopupMenuRunGroup">
-      <reference ref="RunContextPopupGroup"/>
-      <add-to-group group-id="ChangesViewPopupMenu" anchor="before" relative-to-action="ShowDiscoveredTests"/>
-    </group>
-
-    <action class="com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction" id="ShowDiscoveredTests">
-      <add-to-group group-id="RunTestGroup" anchor="last"/>
-      <add-to-group group-id="ChangesViewPopupMenu" anchor="last"/>
-    </action>
   </actions>
 </idea-plugin>

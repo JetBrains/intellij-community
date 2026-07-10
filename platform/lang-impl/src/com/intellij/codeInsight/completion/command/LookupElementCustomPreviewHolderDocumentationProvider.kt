@@ -31,6 +31,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.colors.EditorColors
@@ -444,7 +445,7 @@ fun installLookupIntentionPreviewMachinery(lookup: LookupImpl): Boolean {
     }
 
     fun stopPreview() {
-      previewHandler.close()
+      runReadActionBlocking { previewHandler.close() }
       lookup.removeLookupListener(this)
     }
   }

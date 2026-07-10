@@ -1,5 +1,5 @@
 // "Change type of 'f' to '(Int, Int) -> (String) -> Int'" "true"
-// K2_ERROR: Initializer type mismatch: expected '() -> Long', actual '(Int, Int) -> Long'.
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
 fun foo() {
     val f: () -> Long =<caret> {
         a: Int, b: Int ->

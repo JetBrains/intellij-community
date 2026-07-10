@@ -116,7 +116,7 @@ public class SchedulingWrapper implements ScheduledExecutorService {
   }
 
   @NotNull
-  List<Runnable> doShutdown(boolean cancelBackendTasks) {
+  @Unmodifiable List<Runnable> doShutdown(boolean cancelBackendTasks) {
     if (!shutdown.compareAndSet(false, true)) {
       return Collections.emptyList();
     }

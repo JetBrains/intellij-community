@@ -84,6 +84,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
+import com.intellij.testFramework.common.DumpKt;
 import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.ui.ClientProperty;
@@ -107,6 +108,7 @@ import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import junit.framework.AssertionFailedError;
+import kotlin.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -135,6 +137,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -143,7 +146,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -175,12 +177,27 @@ public final class PlatformTestUtil {
 
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
 
-  private static final List<Runnable> ourProjectCleanups = new CopyOnWriteArrayList<>();
   private static final long MAX_WAIT_TIME = TimeUnit.MINUTES.toMillis(2);
 
   public static @NotNull String getTestName(@NotNull String name, boolean lowercaseFirstLetter) {
     name = StringUtil.trimStart(name, "test");
     return name.isEmpty() ? "" : lowercaseFirstLetter(name, lowercaseFirstLetter);
+  }
+
+  /**
+   * @deprecated use {@link LeakHunter#registerProjectCleanup(Runnable)}
+   */
+  @Deprecated(forRemoval = true)
+  public static void registerProjectCleanup(@NotNull Runnable cleanup) {
+    LeakHunter.registerProjectCleanup(cleanup);
+  }
+
+  /**
+   * @deprecated use {@link LeakHunter#cleanupAllProjects()}
+   */
+  @Deprecated(forRemoval = true)
+  public static void cleanupAllProjects() {
+    LeakHunter.cleanupAllProjects();
   }
 
   public static @NotNull String lowercaseFirstLetter(@NotNull String name, boolean lowercaseFirstLetter) {
@@ -1139,17 +1156,6 @@ public final class PlatformTestUtil {
     throw new AssertionError("given reference should be " + refType + " but " + (reference != null ? reference.getClass() : null) + " was given");
   }
 
-  public static void registerProjectCleanup(@NotNull Runnable cleanup) {
-    ourProjectCleanups.add(cleanup);
-  }
-
-  public static void cleanupAllProjects() {
-    for (var each : ourProjectCleanups) {
-      each.run();
-    }
-    ourProjectCleanups.clear();
-  }
-
   public static <T> void assertComparisonContractNotViolated(
     @NotNull List<? extends T> values,
     @NotNull Comparator<? super T> comparator,
@@ -1400,13 +1406,25 @@ public final class PlatformTestUtil {
     int timeoutInSeconds,
     @Nullable Runnable callback
   ) {
-    var start = System.currentTimeMillis();
+    var start = System.nanoTime();
     while (true) {
       try {
-        if (System.currentTimeMillis() - start > timeoutInSeconds * 1000L) {
+        if (System.nanoTime() - start > Duration.ofSeconds(timeoutInSeconds).toNanos()) {
           if (callback != null) {
             callback.run();
           }
+
+          var dump = ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), true).getRawDump();
+          DumpKt.publishArtifact("waitWithEventsDispatching", "txt", (path) -> {
+            try {
+              Files.writeString(path, dump);
+              return Unit.INSTANCE;
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          });
+
           fail(errorMessageSupplier.get());
         }
         if (condition.getAsBoolean()) {

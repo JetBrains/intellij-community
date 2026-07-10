@@ -99,14 +99,12 @@ import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
-import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static com.jetbrains.python.ast.PyAstFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.ast.PyAstFunction.Modifier.STATICMETHOD;
@@ -240,29 +238,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return PyTypingTypeProvider.removeNarrowedTypeIfNeeded(PyTypingTypeProvider.toAsyncIfNeeded(this, inferredType));
   }
 
-  @Override
-  public @Nullable PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteOwner callSite) {
-    for (PyTypeProvider typeProvider : PyTypeProvider.EP_NAME.getExtensionList()) {
-      final Ref<PyType> typeRef = typeProvider.getCallType(this, callSite, context);
-      if (typeRef != null) {
-        return derefType(typeRef, typeProvider);
-      }
-    }
-
-    final PyExpression receiver = callSite.getReceiver(this);
-    final PyCallExpression.PyArgumentsMapping fullMapping = PyCallExpressionHelper.mapArguments(callSite, this, context);
-    final Map<PyExpression, PyCallableParameter> mappedExplicitParameters = fullMapping.getMappedParameters();
-
-    final Map<PyExpression, PyCallableParameter> allMappedParameters = new LinkedHashMap<>();
-    final PyCallableParameter firstImplicit = getFirstItem(fullMapping.getImplicitParameters());
-    if (receiver != null && firstImplicit != null) {
-      allMappedParameters.put(receiver, firstImplicit);
-    }
-    allMappedParameters.putAll(mappedExplicitParameters);
-
-    return getCallType(receiver, callSite, allMappedParameters, context);
-  }
-
   private static @Nullable PyType derefType(@NotNull Ref<PyType> typeRef, @NotNull PyTypeProvider typeProvider) {
     final PyType type = typeRef.get();
     if (type != null) {
@@ -308,7 +283,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
           }
         }
         final var substitutionsWithUnresolvedReturnGenerics =
-          PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics(getParameters(context), type, substitutions, context);
+          PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics(callableTypeCasted, type, substitutions, context);
         type = PyTypeChecker.substitute(type, substitutionsWithUnresolvedReturnGenerics, context);
       }
       else {
@@ -409,7 +384,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       if (PyUtil.isInitMethod(this)) {
         return PyBuiltinCache.getInstance(this).getNoneType();
       }
-      return null;
+      return PyAnyType.getUnknown();
     }
     return PyUnionType.unionOrNever(types);
   }

@@ -31,6 +31,8 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.concurrent.CancellationException
+import kotlin.reflect.KClass
+import kotlin.text.Charsets.UTF_8
 
 /**
  * Download a default version of feature usage statistics metadata to be bundled with IDE.
@@ -137,7 +139,7 @@ private suspend fun serviceUri(featureUsageStatisticsProperties: FeatureUsageSta
   Span.current().addEvent("parsing", Attributes.of(AttributeKey.stringKey("url"), providerUri))
   val appInfo = context.applicationInfo
   val configurationClient = ConfigurationClientFactory.create(
-    reader = download(providerUri).inputStream().reader(),
+    configurationString = String(download(providerUri), UTF_8),
     productCode = context.applicationInfo.productCode,
     productVersion = "${appInfo.majorVersion}.${appInfo.minorVersion}",
     serializer = FusJacksonSerializer()
@@ -173,17 +175,21 @@ class FusJacksonSerializer: FusJsonSerializer {
       .build()
   }
 
-  override fun toJson(data: Any): String = try {
-    SERIALIZATION_MAPPER
-      .writerWithDefaultPrettyPrinter()
-      .writeValueAsString(data)
+  override fun toJson(data: Any, prettyPrint: Boolean): String = try {
+    val serializer = if (prettyPrint) {
+      SERIALIZATION_MAPPER
+        .writerWithDefaultPrettyPrinter()
+    } else {
+      SERIALIZATION_MAPPER.writer()
+    }
+    serializer.writeValueAsString(data)
   } catch (e: Exception) {
     throw SerializationException(e)
   }
 
-  override fun <T> fromJson(json: String, clazz: Class<T>): T = try {
+  override fun <T : Any> fromJson(json: String, clazz: KClass<T>): T = try {
     DESERIALIZATION_MAPPER
-      .readValue(json, clazz)
+      .readValue(json, clazz.java)
   } catch (e: Exception) {
     throw SerializationException(e)
   }

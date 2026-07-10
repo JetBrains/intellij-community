@@ -11,9 +11,28 @@ target-version = ["py310"]
 skip-magic-trailing-comma = true
 preview = true
 
+# Override `exclude` so that the `stdlib/venv` directory is not excluded
+# if you invoke Black "manually" (not using pre-commit). `venv` is one of
+# the directories that Black excludes by default if `tool.black.exclude`
+# is not set. See https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#exclude
+exclude = '''
+/(
+    \.env|
+    \.venv|
+    env|
+    \.git|
+    \.mypy_cache
+)/
+'''
+
 [tool.ruff]
 line-length = 130
 fix = true
+
+# Override `exclude` so that the `stdlib/venv` directory is not excluded
+# if you invoke Ruff "manually" (not using pre-commit). `venv` is one of
+# the directories that Ruff excludes by default if `tool.ruff.exclude`
+# is not set. See https://docs.astral.sh/ruff/configuration/
 exclude = [
     # virtual environment
     ".env",

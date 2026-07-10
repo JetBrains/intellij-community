@@ -236,13 +236,22 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
     return ReadAction.computeBlocking(() -> {
       PsiElement position = parameters.getPosition();
       Language language = PsiUtilCore.getLanguageAtOffset(position.getContainingFile(), parameters.getOffset());
-      return forLanguageHonorDumbness(language, position.getProject());
+      return forLanguageHonorDumbness(language, position.getProject(), parameters.getEditor());
     });
   }
 
+  /**
+   * @deprecated Use {@link forLanguage(Language, Editor)} direcly
+   */
   @ApiStatus.Internal
+  @Deprecated
   public static @NotNull List<CompletionContributor> forLanguage(@NotNull Language language) {
-    boolean isRDFrontend = NewRdCompletionSupport.isFrontendRdCompletionOn() && PlatformUtils.isJetBrainsClient();
+    return forLanguage(language, null);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull List<CompletionContributor> forLanguage(@NotNull Language language, @Nullable Editor editor) {
+    boolean isRDFrontend = NewRdCompletionSupport.isFrontendRdCompletionOn(editor) && PlatformUtils.isJetBrainsClient();
 
     List<CompletionContributor> contributors;
     if (isRDFrontend) {
@@ -274,8 +283,8 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
   }
 
   @ApiStatus.Internal
-  public static @NotNull List<CompletionContributor> forLanguageHonorDumbness(@NotNull Language language, @NotNull Project project) {
-    List<CompletionContributor> contributors = forLanguage(language);
+  public static @NotNull List<CompletionContributor> forLanguageHonorDumbness(@NotNull Language language, @NotNull Project project, @NotNull Editor editor) {
+    List<CompletionContributor> contributors = forLanguage(language, editor);
     return DumbService.getInstance(project).filterByDumbAwareness(contributors);
   }
 

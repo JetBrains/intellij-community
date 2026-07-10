@@ -1,5 +1,5 @@
 // "Create member function 'A.contains'" "true"
-// K2_ERROR: None of the following candidates is applicable:<br><br>fun <T : Comparable<T>, R : ClosedRange<T>, Iterable<T>> R.contains(element: T?): Boolean:<br>  Candidate 'fun <T : Comparable<T>, R : ClosedRange<T>, Iterable<T>> R.contains(element: T?): Boolean' is inapplicable because of a receiver type mismatch.<br><br>fun <T : Comparable<T>, R : OpenEndRange<T>, Iterable<T>> R.contains(element: T?): Boolean:<br>  Candidate 'fun <T : Comparable<T>, R : OpenEndRange<T>, Iterable<T>> R.contains(element: T?): Boolean' is inapplicable because of a receiver type mismatch.
+// K2_ERROR: NONE_APPLICABLE
 
 class A<T>(val n: T) {
     operator fun contains(t: T): Boolean {

@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -28,11 +29,6 @@ import static git4idea.GitUtil.HEAD;
 import static git4idea.config.UpdateMethod.MERGE;
 import static git4idea.config.UpdateMethod.REBASE;
 
-/**
- * Updates a single repository via merge or rebase.
- * @see GitRebaseUpdater
- * @see GitMergeUpdater
- */
 public abstract class GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitUpdater.class);
 
@@ -64,10 +60,6 @@ public abstract class GitUpdater {
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
   }
 
-  /**
-   * Returns proper updater based on the update policy (merge or rebase) selected by user or stored in his .git/config
-   * @return {@link GitMergeUpdater} or {@link GitRebaseUpdater}.
-   */
   public static @NotNull GitUpdater getUpdater(@NotNull Project project,
                                       @NotNull Git git,
                                       @NotNull GitBranchPair trackedBranches,
@@ -153,17 +145,13 @@ public abstract class GitUpdater {
    * @return true if update is needed, false otherwise.
    */
   public boolean isUpdateNeeded(@NotNull GitBranchPair branchPair) throws VcsException {
-    String remoteBranch = branchPair.getTarget().getName();
-    if (!hasRemoteChanges(remoteBranch)) {
+    if (!hasRemoteChanges(branchPair.getTarget())) {
       LOG.info("isUpdateNeeded: No remote changes, update is not needed");
       return false;
     }
     return true;
   }
 
-  /**
-   * Performs update (via rebase or merge - depending on the implementing classes).
-   */
   protected abstract @NotNull GitUpdateResult doUpdate();
 
   protected void markStart(GitRepository repository) throws VcsException {
@@ -176,11 +164,11 @@ public abstract class GitUpdater {
     new MergeChangeCollector(myProject, repository, myBefore).collect(myUpdatedFiles);
   }
 
-  protected boolean hasRemoteChanges(@NotNull String remoteBranch) throws VcsException {
+  protected boolean hasRemoteChanges(@NotNull GitBranch remoteBranch) throws VcsException {
     GitLineHandler handler = new GitLineHandler(myProject, myRoot, GitCommand.REV_LIST);
     handler.setSilent(true);
     handler.addParameters("-1");
-    handler.addParameters(HEAD + ".." + remoteBranch);
+    handler.addParameters(HEAD + ".." + remoteBranch.getName());
     String output = myGit.runCommand(handler).getOutputOrThrow();
     return !output.isEmpty();
   }

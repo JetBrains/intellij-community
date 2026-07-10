@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.findOrCreateFile
@@ -20,6 +21,7 @@ import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.associatedModuleDir
 import com.jetbrains.python.sdk.associatedModuleNioPath
 import com.jetbrains.python.sdk.baseDir
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.pythonSdk
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.InvalidPathException
@@ -31,16 +33,21 @@ import kotlin.io.path.name
  */
 @ApiStatus.Internal
 object PythonRequirementTxtSdkUtils {
+  /**
+   * Resolves the requirements file explicitly stored for [sdk] ([PythonSdkAdditionalData.requiredTxtPath]).
+   * Returns `null` when no path is stored, or the stored path cannot be resolved to an existing file.
+   * The default when nothing is stored is intentionally left to the caller (it differs per package manager).
+   */
   @JvmStatic
-  fun findRequirementsTxt(sdk: Sdk): VirtualFile? {
-    val data = sdk.sdkAdditionalData as? PythonSdkAdditionalData ?: return null
-    val requirementsPath = data.requiredTxtPath ?: PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT
-    if (requirementsPath.isAbsolute) {
-      return VirtualFileManager.getInstance().findFileByNioPath(requirementsPath)
+  fun resolvePersistedRequirementsFile(sdk: Sdk): VirtualFile? {
+    val storedPath = sdk.pySdkAdditionalData.requiredTxtPath ?: return null
+    if (storedPath.isAbsolute) {
+      return VirtualFileManager.getInstance().findFileByNioPath(storedPath)
     }
 
     val associatedModuleFile = sdk.associatedModuleDir ?: return null
-    return associatedModuleFile.findFileByRelativePath(requirementsPath.toString())
+    // findFileByRelativePath expects '/' separators; a path persisted on Windows uses '\', so normalize it (PY-83135).
+    return associatedModuleFile.findFileByRelativePath(FileUtil.toSystemIndependentName(storedPath.toString()))
   }
 
   @JvmStatic
@@ -84,8 +91,7 @@ object PythonRequirementTxtSdkUtils {
 
 
   fun migrateRequirementsTxtPathFromModuleToSdk(project: Project, sdk: Sdk) {
-    val sdkAdditionalData = sdk.sdkAdditionalData as? PythonSdkAdditionalData ?: return
-    val newPath = sdkAdditionalData.requiredTxtPath
+    val newPath = sdk.pySdkAdditionalData.requiredTxtPath
     if (newPath != null)
       return
 

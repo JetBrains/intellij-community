@@ -11,7 +11,7 @@ import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil.b
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeQodanaInspectionScopeLimiter
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindResolver
-import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindResolver.doesApiKindMatchExpectedModuleKind
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindResolver.isApiUsageAllowed
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 
 internal class SplitModeXmlApiUsageInspection : DevKitPluginXmlInspectionBase() {
@@ -19,7 +19,8 @@ internal class SplitModeXmlApiUsageInspection : DevKitPluginXmlInspectionBase() 
   override fun isAllowed(holder: DomElementAnnotationHolder): Boolean {
     return super.isAllowed(holder)
            && SplitModeInspectionUtil.isAllowedForSplitModeInspection(holder.fileElement.file)
-           && SplitModeQodanaInspectionScopeLimiter.getInstance(holder.fileElement.file.project).shouldInspectFileInQodanaMode(holder.fileElement.file)
+           && SplitModeQodanaInspectionScopeLimiter.getInstance(holder.fileElement.file.project)
+             .shouldInspectFileInQodanaMode(holder.fileElement.file)
   }
 
   override fun checkDomElement(element: DomElement, holder: DomElementAnnotationHolder, helper: DomHighlightingHelper) {
@@ -30,25 +31,27 @@ internal class SplitModeXmlApiUsageInspection : DevKitPluginXmlInspectionBase() 
     val module = element.module ?: return
     val currentXmlFile = holder.fileElement.file
     val restrictionsService = SplitModeApiRestrictionsService.getInstance(currentXmlFile.project)
-    val expectedModuleKind = restrictionsService.getExtensionPointKind(extensionPointName) ?: return
+    val apiRestriction = restrictionsService.getExtensionPointRestriction(extensionPointName) ?: return
+    val expectedModuleKind = apiRestriction.targetModuleKind
     val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module, currentXmlFile)
     if (SplitModeInspectionUtil.shouldReportSinglePluginLevelErrorInsteadOfManyNestedErrors(currentXmlFile, moduleAnalysis)) return
     val actualModuleKind = moduleAnalysis.resolvedModuleKind
 
-    if (doesApiKindMatchExpectedModuleKind(actualModuleKind, expectedModuleKind)) return
+    if (isApiUsageAllowed(moduleAnalysis, apiRestriction)) return
 
     val currentlyOpenedDescriptor = DescriptorUtil.getIdeaPlugin(holder.fileElement.file)
     val hint = restrictionsService.getExtensionPointHint(extensionPointName)
     val xmlElement = element.xmlElement ?: return
-    if (SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project).isExcluded(xmlElement, SPLIT_MODE_XML_API_USAGE_SHORT_NAME)) {
+    if (SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project)
+        .isExcluded(xmlElement, SPLIT_MODE_XML_API_USAGE_SHORT_NAME)) {
       return
     }
     val regularFixes = SplitModeDependencyQuickFixes.createMismatchFixes(module, currentlyOpenedDescriptor, expectedModuleKind)
-    val suppressionFix = SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project).createSuppressionFixIfApplicable(
+    val suppressionFixes = SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project).createCommonSuppressionQuickFixes(
       xmlElement,
       SPLIT_MODE_XML_API_USAGE_SHORT_NAME,
     )
-    val fixes = if (suppressionFix != null) regularFixes + suppressionFix else regularFixes
+    val fixes = regularFixes + suppressionFixes
     holder.createProblem(
       element,
       buildModuleKindMismatchMessage(extensionPointName, expectedModuleKind, actualModuleKind, hint),

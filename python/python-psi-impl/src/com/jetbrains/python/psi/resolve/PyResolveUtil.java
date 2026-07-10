@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.resolve;
 import com.google.common.collect.Iterables;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -36,9 +37,11 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.Property;
 import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyCallExpression;
@@ -70,14 +73,19 @@ import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
+import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyModuleType;
+import com.jetbrains.python.psi.types.PyOverloadType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeMember;
+import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -293,14 +301,31 @@ public final class PyResolveUtil {
   public static @NotNull List<PsiElement> resolveQualifiedNameInScope(@NotNull QualifiedName qualifiedName,
                                                                       @NotNull ScopeOwner scopeOwner,
                                                                       @NotNull TypeEvalContext context) {
-    return PyUtil.getParameterizedCachedValue(scopeOwner, Pair.create(qualifiedName, context), (param) -> {
-      return doResolveQualifiedNameInScope(param.getFirst(), scopeOwner, param.getSecond());
+    final List<RatedResolveResult> results = PyUtil.getParameterizedCachedValue(
+      scopeOwner, Pair.create(qualifiedName, context),
+      param -> doResolveQualifiedNameInScope(param.getFirst(), scopeOwner, param.getSecond(), false)
+    );
+    return ContainerUtil.mapNotNull(results, RatedResolveResult::getElement);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull List<RatedResolveResult> resolveQualifiedNameInScopeNew(@NotNull QualifiedName qualifiedName,
+                                                                                 @NotNull ScopeOwner scopeOwner,
+                                                                                 @NotNull TypeEvalContext context) {
+    return PyUtil.getParameterizedCachedValue(scopeOwner, Pair.create(qualifiedName, context), param -> {
+      return doResolveQualifiedNameInScope(param.getFirst(), scopeOwner, param.getSecond(), true);
     });
   }
 
-  private static @NotNull List<PsiElement> doResolveQualifiedNameInScope(@NotNull QualifiedName qualifiedName,
-                                                                         @NotNull ScopeOwner scopeOwner,
-                                                                         @NotNull TypeEvalContext context) {
+  /**
+   * If {@param inferType} is `true`, infers the type of {@param qualifiedName} (this includes method binding and
+   * {@code @overload} processing) and returns that type wrapped in {@link PyTypeMember}.
+   * Otherwise, just returns the resolved PSI elements wrapped in {@link RatedResolveResult}.
+   */
+  private static @NotNull List<RatedResolveResult> doResolveQualifiedNameInScope(@NotNull QualifiedName qualifiedName,
+                                                                                 @NotNull ScopeOwner scopeOwner,
+                                                                                 @NotNull TypeEvalContext context,
+                                                                                 boolean inferType) {
     final String firstName = qualifiedName.getFirstComponent();
     if (firstName == null || !(scopeOwner instanceof PyTypedElement)) return Collections.emptyList();
 
@@ -329,29 +354,88 @@ public final class PyResolveUtil {
       unqualifiedResults.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, builtin));
     }
 
+    if (inferType) {
+      unqualifiedResults = getTypeOfMember(unqualifiedResults, context);
+    }
+
     final List<String> remainingNames = qualifiedName.removeHead(1).getComponents();
     final List<RatedResolveResult> result = StreamEx.of(remainingNames).foldLeft(StreamEx.of(unqualifiedResults), (prev, name) ->
-        prev
-          .map(RatedResolveResult::getElement)
-          .flatMap(element -> {
-            List<? extends RatedResolveResult> results = null;
-            if (element instanceof PyTypedElement typedElement) {
-              PyType type = context.getType(typedElement);
-              if (type != null) {
-                // An instance type has access to instance attributes defined in __init__, a class type does not.
-                final PyType instanceType = type instanceof PyClassLikeType ? ((PyClassLikeType)type).toInstance() : type;
-                results = instanceType instanceof PyModuleType moduleType
-                          ? moduleType.resolveModuleMember(name, scopeOwner, AccessDirection.READ, resolveContext)
-                          : instanceType.resolveMember(name, null, AccessDirection.READ, resolveContext);
-              }
+        prev.flatMap(r -> {
+          List<? extends RatedResolveResult> results = null;
+          @Nullable Ref<PyType> typeRef = null;
+          if (r instanceof PyTypeMember typeMember) {
+            typeRef = Ref.create(typeMember.getType());
+          }
+          else if (r.getElement() instanceof PyTypedElement element) {
+            typeRef = Ref.create(context.getType(element));
+          }
+          if (typeRef != null) {
+            PyType type = typeRef.get();
+            if (type != null) {
+            // An instance type has access to instance attributes defined in __init__, a class type does not.
+            final PyType instanceType = type instanceof PyClassLikeType ? ((PyClassLikeType)type).toInstance() : type;
+            results = inferType
+                      ? findMember(instanceType, name, scopeOwner, resolveContext)
+                      : resolveMember(instanceType, name, scopeOwner, resolveContext);
             }
-            else if (element instanceof PsiDirectory dir) {
-              results = PyModuleType.resolveMemberInPackageOrModule(null, dir, name, scopeOwner, resolveContext);
-            }
-            return results != null ? StreamEx.of(results) : StreamEx.<RatedResolveResult>empty();
-          }))
+          }
+          else if (r.getElement() instanceof PsiDirectory dir) {
+            results = PyModuleType.resolveMemberInPackageOrModule(null, dir, name, scopeOwner, resolveContext);
+          }
+          return results != null ? StreamEx.of(results) : StreamEx.<RatedResolveResult>empty();
+        })
+      )
       .toList();
-    return PyUtil.filterTopPriorityElements(result);
+    return PyUtil.filterTopPriorityResults(result);
+  }
+
+  private static @Nullable List<? extends RatedResolveResult> resolveMember(@NotNull PyType type,
+                                                                            @NotNull String name,
+                                                                            @Nullable PsiElement scopeOwner,
+                                                                            @NotNull PyResolveContext resolveContext) {
+    if (type instanceof PyModuleType moduleType) {
+      return moduleType.resolveModuleMember(name, scopeOwner, AccessDirection.READ, resolveContext);
+    }
+    return type.resolveMember(name, null, AccessDirection.READ, resolveContext);
+  }
+
+  private static @Nullable List<? extends RatedResolveResult> findMember(@NotNull PyType type,
+                                                                         @NotNull String name,
+                                                                         @Nullable PsiElement scopeOwner,
+                                                                         @NotNull PyResolveContext resolveContext) {
+    TypeEvalContext context = resolveContext.getTypeEvalContext();
+    if (type instanceof PyClassType classType) {
+      Property property = classType.getPyClass().findProperty(name, true, context);
+      if (property != null) {
+        PyType propertyType = property.getType(null, context);
+        return List.of(new PyTypeMember(property, propertyType));
+      }
+
+      var resolveResults = resolveMember(classType, name, scopeOwner, resolveContext.withoutProperties());
+      if (resolveResults != null) {
+        PyType memberType = PyTypeUtil.getTypeOfBoundMember(classType, resolveResults, context);
+        RatedResolveResult resolveResult = ContainerUtil.getLastItem(resolveResults);
+        PsiElement element = resolveResult != null ? resolveResult.getElement() : null;
+        boolean isClassVar = element instanceof PyTargetExpression target && PyTypingTypeProvider.isClassVar(target, context);
+        return List.of(new PyTypeMember(element, memberType, isClassVar));
+      }
+
+      return Collections.emptyList();
+    }
+    if (type instanceof PyModuleType) {
+      var resolveResults = resolveMember(type, name, scopeOwner, resolveContext);
+      return resolveResults != null ? getTypeOfMember(resolveResults, context) : resolveResults;
+    }
+    return resolveMember(type, name, scopeOwner, resolveContext);
+  }
+
+  private static @NotNull List<RatedResolveResult> getTypeOfMember(@NotNull List<? extends RatedResolveResult> resolveResults,
+                                                                   @NotNull TypeEvalContext context) {
+    if (resolveResults.isEmpty()) return Collections.emptyList();
+    PyType memberType = PyTypeUtil.getTypeOfMember(resolveResults, context);
+    RatedResolveResult resolveResult = ContainerUtil.getLastItem(resolveResults);
+    PsiElement element = resolveResult != null ? resolveResult.getElement() : null;
+    return List.of(new PyTypeMember(element, memberType));
   }
 
   private static @NotNull List<? extends RatedResolveResult> resolveShortNameInSingleScope(@NotNull ScopeOwner scopeOwner,
@@ -580,17 +664,19 @@ public final class PyResolveUtil {
 
     final var context = resolveContext.getTypeEvalContext();
     final var call = context.maySwitchToAST(element) ? PyCallExpressionNavigator.getPyCallExpressionByCallee(element) : null;
-    if (call != null && element instanceof PyTypedElement) {
-      final var type = PyUtil.as(context.getType((PyTypedElement)element), PyClassType.class);
-
-      if (type != null && type.isDefinition() && type.getDeclarationElement() instanceof PyClass cls) {
-        final var constructor = ContainerUtil.find(
-          PyUtil.filterTopPriorityElements(PyCallExpressionHelper.resolveImplicitlyInvokedMethods(type, call, resolveContext)),
-          it -> it instanceof PyPossibleClassMember possibleClassMember && possibleClassMember.getContainingClass() == cls
-        );
-
-        if (constructor != null) {
-          return List.of(constructor);
+    if (call != null && element instanceof PyTypedElement typedElement &&
+        context.getType(typedElement) instanceof PyClassType type) {
+      if (type.isDefinition() && type.getDeclarationElement() instanceof PyClass cls) {
+        PyType constructorType = PyCallExpressionHelper.createCallableFromClass(type, resolveContext);
+        if (constructorType instanceof PyOverloadType overloadType) {
+          PyType implType = Ref.deref(overloadType.getImpl());
+          constructorType = implType != null ? implType : ContainerUtil.getFirstItem(overloadType.getItems());
+        }
+        if (!(constructorType instanceof PyClassLikeType) && constructorType instanceof PyCallableType callableType) {
+          PsiElement constructor = callableType.getCallable();
+          if (constructor instanceof PyPossibleClassMember possibleClassMember && possibleClassMember.getContainingClass() == cls) {
+            return List.of(constructor);
+          }
         }
       }
     }

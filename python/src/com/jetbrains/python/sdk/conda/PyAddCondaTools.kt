@@ -32,9 +32,8 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
-import com.jetbrains.python.sdk.pyRichSdk
+import com.jetbrains.python.sdk.pythonInterpreter
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
@@ -67,10 +66,6 @@ internal val condaSupportedLanguages: List<LanguageLevel>
     .asReversed()
     .filter { it < LanguageLevel.PYTHON314 }
 
-val condaLatestSupportedLanguage: LanguageLevel
-  @ApiStatus.Internal get() =
-    condaSupportedLanguages.maxWith(LanguageLevel.VERSION_COMPARATOR)
-
 
 @Deprecated("Use `createCondaSdkFromExistingEnvironment` instead")
 suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(
@@ -83,7 +78,7 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(
 /**
  * See `com.jetbrains.env.python.conda.PyCondaSdkTest`
  */
-suspend fun PyCondaCommand.createCondaSdkFromExistingEnvironment(
+internal suspend fun PyCondaCommand.createCondaSdkFromExistingEnvironment(
   condaIdentity: PyCondaEnvIdentity,
   existingSdks: List<Sdk>,
 ): PyResult<Sdk> {
@@ -106,7 +101,7 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnvironment(
   val name = SdkConfigurationUtil.createUniqueSdkName(sdkType.suggestSdkName(null, interpreterPath), existingSdks)
   val sdk = creationRequest.createSdk( name).getOr { return it }
 
-  sdk.pyRichSdk()
+  sdk.pythonInterpreter()
   if (targetConfig == null) {
     saveLocalPythonCondaPath(Path.of(fullCondaPathOnTarget))
   }
@@ -135,7 +130,7 @@ private suspend fun getCondaPythonBinaryPath(
 /**
  * See `com.jetbrains.env.python.conda.PyCondaSdkTest`
  */
-suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(
+internal suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(
   newCondaEnvInfo: NewCondaEnvRequest,
   existingSdks: List<Sdk>,
 ): PyResult<Sdk> {
@@ -160,7 +155,7 @@ private fun NewCondaEnvRequest.toIdentity(): PyCondaEnvIdentity =
 /**
  * Detects conda binary in PATH and then well-known locations on the local machine.
  */
-suspend fun findCondaLocal(filter: (PathHolder.Eel) -> Boolean = { true }): PathHolder.Eel? = findConda(EelFileSystem(localEel), filter)
+internal suspend fun findCondaLocal(filter: (PathHolder.Eel) -> Boolean = { true }): PathHolder.Eel? = findConda(EelFileSystem(localEel), filter)
 
 /**
  * Detects conda binary in PATH and then well-known locations on the provided FileSystem

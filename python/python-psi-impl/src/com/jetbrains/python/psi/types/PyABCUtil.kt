@@ -134,12 +134,12 @@ object PyABCUtil {
     return when (type) {
       is PyUnionType -> {
         if (!PyUnionType.isStrictSemanticsEnabled()) {
-          type.toStream().nonNull().anyMatch { isSubtype(it!!, superClassName, context) }
+          type.toStream().filter { !it.isAnyOrUnknown }.anyMatch { isSubtype(it!!, superClassName, context) }
         }
-        else type.toStream().nonNull().allMatch { isSubtype(it!!, superClassName, context) }
+        else type.toStream().filter { !it.isAnyOrUnknown }.allMatch { isSubtype(it!!, superClassName, context) }
       }
-      is PyUnsafeUnionType -> type.toStream().nonNull().anyMatch { isSubtype(it!!, superClassName, context) }
-      is PyIntersectionType -> type.toStream().nonNull().anyMatch { isSubtype(it!!, superClassName, context) }
+      is PyUnsafeUnionType -> type.toStream().filter { !it.isAnyOrUnknown }.anyMatch { isSubtype(it!!, superClassName, context) }
+      is PyIntersectionType -> type.toStream().filter { !it.isAnyOrUnknown }.anyMatch { isSubtype(it!!, superClassName, context) }
       else -> false
     }
   }

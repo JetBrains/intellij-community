@@ -12,9 +12,6 @@ import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ex.isIndexingActivitiesSuppressedSync
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.jps.entities.SdkEntity
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.SmartList
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
@@ -24,7 +21,7 @@ import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder
-import com.intellij.util.indexing.roots.processLibraryEntity
+import com.intellij.util.indexing.roots.processLibrary
 import com.intellij.util.indexing.roots.processModuleRoot
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexChangedEvent
@@ -32,8 +29,11 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexListener
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
+import com.intellij.workspaceModel.core.fileIndex.impl.LibraryFileSetData
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
+import com.intellij.workspaceModel.core.fileIndex.impl.SdkFileSetData
 import com.intellij.workspaceModel.core.fileIndex.impl.getEntityPointer
+import com.intellij.workspaceModel.ide.getPresentableLibraryName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -85,7 +85,6 @@ class ProjectEntityIndexingService(
 
       val event = WorkspaceFileIndexChangedEvent(
         registeredFileSets = registeredIndexableFileSets,
-        storageAfter = event.storageAfter,
         removedExclusions = event.removedExclusions,
       )
       val parameters = computeScanningParametersFromWFIEvent(event)
@@ -106,8 +105,8 @@ class ProjectEntityIndexingService(
     val wfi = WorkspaceFileIndex.getInstance(project)
 
     val removedExclusions = event.removedExclusions.mapNotNull { wfi.findFileSet(it, true, true, false, true, true, false, true); }
-    generateIteratorsFromWFIChangedEvent(event.registeredFileSets, event.storageAfter, iterators)
-    generateIteratorsFromWFIChangedEvent(removedExclusions, event.storageAfter, iterators)
+    generateIteratorsFromWFIChangedEvent(event.registeredFileSets, iterators)
+    generateIteratorsFromWFIChangedEvent(removedExclusions, iterators)
 
     return if (iterators.isEmpty()) {
       CancelledScanning
@@ -119,7 +118,6 @@ class ProjectEntityIndexingService(
 
   private fun generateIteratorsFromWFIChangedEvent(
     fileSets: Collection<WorkspaceFileSet>,
-    storage: EntityStorage,
     iterators: MutableList<IndexableFilesIterator>,
   ) {
     val libraryOrigins = HashSet<LibraryOrigin>()
@@ -138,19 +136,18 @@ class ProjectEntityIndexingService(
         iterators.add(GenericDependencyIterator.forContentRoot(entityPointer, fileSet.recursive, root))
       }
       else {
-        // here we always use WFI
-        val entity = entityPointer.resolve(storage) ?: continue
-        if (entity is LibraryEntity) {
-          val (origin, iterator) = processLibraryEntity(entity, fileSet)
+        if (customData is LibraryFileSetData) {
+          val libraryName = getPresentableLibraryName(customData.libraryId, root.url)
+          val (origin, iterator) = processLibrary(libraryName, fileSet)
           if (libraryOrigins.add(origin)) {
             iterators.add(iterator)
           }
         }
-        else if (entity is SdkEntity) {
+        else if (customData is SdkFileSetData) {
           iterators.add(GenericDependencyIterator.forSdkEntity(
-            sdkName = entity.name,
-            sdkType = SdkType.findByName(entity.type),
-            sdkHome = entity.homePath?.url,
+            sdkName = customData.sdkId.name,
+            sdkType = SdkType.findByName(customData.sdkId.type),
+            sdkHome = null,
             root = fileSet.root
           ))
         }

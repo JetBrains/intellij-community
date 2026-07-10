@@ -68,13 +68,13 @@ abstract class Range1() {
 }
 
 fun test(notRange1: NotRange1, notRange2: NotRange2, notRange3: NotRange3, notRange4: NotRange4, notRange5: NotRange5, notRange6: NotRange6, notRange7: NotRange7, range0: Range0, range1: Range1) {
-  for (i in <error descr="[ITERATOR_MISSING] ">notRange1</error>);
-  for (i in <error descr="[HAS_NEXT_MISSING] "><error descr="[NEXT_MISSING] ">notRange2</error></error>);
-  for (i in <error descr="[NEXT_MISSING] ">notRange3</error>);
-  for (i in <error descr="[HAS_NEXT_MISSING] ">notRange4</error>);
-  <error descr="[CONDITION_TYPE_MISMATCH] Condition type mismatch: inferred type is kotlin/Int but Boolean was expected">for (i in notRange5)</error>;
+  for (i in <error descr="[ITERATOR_MISSING]">notRange1</error>);
+  for (i in <error descr="[HAS_NEXT_MISSING]"><error descr="[NEXT_MISSING]">notRange2</error></error>);
+  for (i in <error descr="[NEXT_MISSING]">notRange3</error>);
+  for (i in <error descr="[HAS_NEXT_MISSING]">notRange4</error>);
+  <error descr="[CONDITION_TYPE_MISMATCH]">for (i in notRange5)</error>;
   for (i in notRange6);
-  <error descr="[CONDITION_TYPE_MISMATCH] Condition type mismatch: inferred type is kotlin/Int but Boolean was expected">for (i in notRange7)</error>;
+  <error descr="[CONDITION_TYPE_MISMATCH]">for (i in notRange7)</error>;
   for (i in range0);
   for (i in range1);
 

@@ -4,11 +4,11 @@ pub mod utils;
 
 #[cfg(test)]
 mod tests {
-    use std::{env, fs};
-    use std::collections::{HashMap, HashSet};
-    use std::path::{PathBuf, MAIN_SEPARATOR};
-    use xplat_launcher::{get_caches_home, jvm_property};
     use crate::utils::*;
+    use std::collections::{HashMap, HashSet};
+    use std::path::{MAIN_SEPARATOR, PathBuf};
+    use std::{env, fs};
+    use xplat_launcher::{get_caches_home, jvm_property};
 
     #[test]
     fn correct_launcher_startup_test() {
@@ -396,19 +396,68 @@ mod tests {
     #[test]
     #[cfg(target_os = "macos")]
     fn macos_adjusting_current_dir() {
+        use std::ffi::{OsStr, OsString};
+
         let test = prepare_test_env(LauncherLocation::Standard);
 
-        let app_bundle_path_str = test.dist_root.parent().unwrap().to_str().unwrap();
-        let debug_mode_var = xplat_launcher::DEBUG_MODE_ENV_VAR.to_string() + "=1";
-        let stdout_path = test.project_dir.join("_stdout.txt");
-        let stdout_path_str = stdout_path.to_str().unwrap();
-        let args = vec!["-Wna", app_bundle_path_str, "--env", &debug_mode_var, "--stdout", stdout_path_str, "--args", "print-cwd"];
+        let app_bundle_path = test.dist_root.parent().unwrap();
+        let debug_mode_var = OsString::from(xplat_launcher::DEBUG_MODE_ENV_VAR.to_string() + "=1");
+        let stdout_file = test.project_dir.join("_stdout.txt");
+        let stderr_file = test.project_dir.join("_stderr.txt");
+        let args = vec![
+            OsStr::new("-Wna"), app_bundle_path.as_os_str(),
+            OsStr::new("--stdout"), stdout_file.as_os_str(), OsStr::new("--stderr"), stderr_file.as_os_str(),
+            OsStr::new("--env"), &debug_mode_var, OsStr::new("--args"), OsStr::new("print-cwd")
+        ];
         let open_res = std::process::Command::new("/usr/bin/open").args(&args)
-            .output().unwrap_or_else(|_| panic!("Failed: 'open {:?}'", args));
+            .output().unwrap_or_else(|e| panic!("Failed: 'open {:?}': {:?}", args, e));
         assert!(open_res.status.success(), "Failed: 'open {:?}':\n{:?}", args, open_res);
+        let stderr = fs::read_to_string(&stderr_file).unwrap_or_default();
+        assert!(stderr.is_empty(), "Failed: 'open {:?}':\nstderr:\n{:?}", args, stderr);
 
-        let stdout = fs::read_to_string(&stdout_path).unwrap_or_else(|_| panic!("Cannot read: {:?}", stdout_path));
+        let stdout = fs::read_to_string(&stdout_file).unwrap_or_else(|_| panic!("Cannot read: {:?}", stdout_file));
         let expected = format!("CWD={}", env::current_dir().unwrap().display());
+        assert!(stdout.contains(&expected), "'{}' is not in the output:\n{}", expected, stdout);
+    }
+
+    #[test]
+    #[cfg(target_os = "macos")]
+    fn macos_adjusting_non_ascii_current_dir() {
+        use std::ffi::OsString;
+        use std::fs::OpenOptions;
+        use std::io::Write;
+        use std::os::unix::ffi::OsStrExt;
+
+        let test = prepare_test_env(LauncherLocation::Standard);
+        let non_ascii_dir = test.project_dir.join("한글_öß_фыр");
+        fs::create_dir_all(&non_ascii_dir).unwrap();
+
+        let app_bundle_path = test.dist_root.parent().unwrap();
+        let stdout_file = test.project_dir.join("_stdout.txt");
+        let stderr_file = test.project_dir.join("_stderr.txt");
+        let mut script = OsString::new();
+        script.push("/usr/bin/open -Wna ");
+        script.push(app_bundle_path);
+        script.push(" --stdout ");
+        script.push(&stdout_file);
+        script.push(" --stderr ");
+        script.push(&stderr_file);
+        script.push(" --env ");
+        script.push(xplat_launcher::DEBUG_MODE_ENV_VAR);
+        script.push("=1");
+        script.push(" --args print-cwd\n");
+        let script_file = test.project_dir.join("_test.sh");
+        OpenOptions::new().write(true).create_new(true)
+            .open(&script_file).unwrap_or_else(|_| panic!("Cannot create {:?}", &script_file))
+            .write_all(script.as_bytes()).unwrap_or_else(|_| panic!("Cannot write {:?}", &script_file));
+        let open_res = std::process::Command::new("/bin/sh").args([script_file]).current_dir(&non_ascii_dir)
+            .output().unwrap_or_else(|e| panic!("Failed: 'open': {:?}", e));
+        assert!(open_res.status.success(), "Failed: 'open':\n{:?}", open_res);
+        let stderr = fs::read_to_string(&stderr_file).unwrap_or_default();
+        assert!(stderr.is_empty(), "Failed: 'open':\nstderr:\n{:?}", stderr);
+
+        let stdout = fs::read_to_string(&stdout_file).unwrap_or_else(|_| panic!("Cannot read: {:?}", stdout_file));
+        let expected = format!("CWD={}", non_ascii_dir.display());
         assert!(stdout.contains(&expected), "'{}' is not in the output:\n{}", expected, stdout);
     }
 

@@ -535,6 +535,9 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListComponentFactory
 - f:createIn(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel,com.intellij.collaboration.ui.codereview.CodeReviewProgressTreeModel,java.lang.String):com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
 - f:getSELECTED_CHANGES():com.intellij.openapi.actionSystem.DataKey
+*f:com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListDataKeys
+- sf:INSTANCE:com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListDataKeys
+- f:getSELECTED_CHANGES():com.intellij.openapi.actionSystem.DataKey
 *f:com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 - f:createIn(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModel,com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory$Config,com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$IconConfig):javax.swing.JComponent

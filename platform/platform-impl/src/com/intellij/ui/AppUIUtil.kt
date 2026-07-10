@@ -1,5 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+@file:OptIn(LowLevelLocalMachineAccess::class)
+
 package com.intellij.ui
 
 import com.intellij.diagnostic.ExceptionAutoReportUtil
@@ -44,11 +46,12 @@ import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.ResourceUtil
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.io.URLUtil
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import sun.awt.AWTAccessor
 import java.awt.Color
 import java.awt.Component
@@ -65,165 +68,119 @@ import java.awt.image.BufferedImage
 import java.lang.reflect.InvocationTargetException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
 import javax.swing.Action
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.border.Border
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.extension
 import kotlin.math.roundToInt
-import java.lang.Boolean.getBoolean as getBooleanSystemProperty
 
 private const val VENDOR_PREFIX = "jetbrains-"
-private var appIcons: MutableList<Image?>? = null
-
-@Volatile
-private var isMacDocIconSet = false
+private const val MAC_DOCK_ICON_BORDER = 25
+private var appIcons: List<Image>? = null
+private val isMacDocIconSet = AtomicBoolean(false)
 
 private val LOG: Logger
   get() = logger<AppUIUtil>()
 
-fun updateAppWindowIcon(window: Window) {
-  if (isWindowIconAlreadyExternallySet()) {
-    return
-  }
-
-  var images = appIcons
-  if (images == null) {
-    images = ArrayList(3)
-    val appInfo = ApplicationInfoImpl.getShadowInstance()
-    val scaleContext = ScaleContext.create(window)
-    if (OS.CURRENT == OS.Linux) {
-      loadAppIconImage(appInfo.applicationSvgIconUrl, scaleContext, size = 128)?.let {
-        images.add(it)
-      }
-    }
-    loadAppIconImage(appInfo.applicationSvgIconUrl, scaleContext, size = 32)?.let {
-      images.add(it)
-    }
-    if (OS.CURRENT == OS.Windows) {
-      loadAppIconImage(appInfo.smallApplicationSvgIconUrl, scaleContext, size = 16)?.let {
-        images.add(it)
-      }
-    }
-    for (i in images.indices) {
-      val image = images[i]
-      if (image is JBHiDPIScaledImage) {
-        images[i] = image.delegate
-      }
-    }
-
-    appIcons = images
-  }
-
-  if (!images.isEmpty()) {
-    if (OS.CURRENT != OS.macOS) {
-      window.iconImages = images
-    }
-    else if (!isMacDocIconSet) {
-      MacAppIcon.setDockIcon(ImageUtil.toBufferedImage(images.first()!!))
-      isMacDocIconSet = true
-    }
-  }
-}
-
-/** Returns a HiDPI-aware image. */
-private fun loadAppIconImage(svgPath: String, scaleContext: ScaleContext, size: Int): Image? {
-  val pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
-  val sysScale = scaleContext.getScale(ScaleType.SYS_SCALE).toFloat()
-  val userScale = scaleContext.getScale(ScaleType.USR_SCALE).toFloat()
-  val userSize = (size * userScale).roundToInt()
-  val svgData = findAppIconSvgData(path = svgPath, pixScale = pixScale)
-  if (svgData == null) {
-    LOG.warn("Cannot load SVG application icon from $svgPath")
-    return null
-  }
-  return loadWithSizes(sizes = listOf(userSize), data = svgData, scale = sysScale).first()
-}
-
-private fun findAppIconSvgData(path: String, pixScale: Float): ByteArray? {
-  val loadingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
-  // app icon doesn't support `dark` concept, and moreover, it cannot depend on a current LaF
-  val descriptors = createImageDescriptorList(path = path, isDark = false, isStroke = false, pixScale = pixScale)
-  val rawPathWithoutExt = path.substring(if (path.startsWith('/')) 1 else 0, path.lastIndexOf('.'))
-  for (descriptor in descriptors) {
-    val transformedPath = descriptor.pathTransform(rawPathWithoutExt, "svg")
-    val resourceLoadStart = StartUpMeasurer.getCurrentTimeIfEnabled()
-    val data = ResourceUtil.getResourceAsBytes(transformedPath, AppUIUtil::class.java.classLoader, true) ?: continue
-    if (resourceLoadStart != -1L) {
-      IconLoadMeasurer.loadFromResources.end(resourceLoadStart)
-    }
-    if (loadingStart != -1L) {
-      IconLoadMeasurer.addLoading(isSvg = descriptor.isSvg, start = loadingStart)
-    }
-    return data
-  }
-  return null
-}
-
-// todo[tav] JBR supports loading icon resource (id=2000) from the exe launcher, remove when OpenJDK supports it as well
-fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int = 16): Icon =
-  loadSmallApplicationIcon(scaleContext, size, requestReleaseIcon = !ApplicationInfoImpl.getShadowInstance().isEAP)
-
-fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, requestReleaseIcon: Boolean): Icon {
-  val appInfo = ApplicationInfoImpl.getShadowInstance()
-  val upscale = size * scaleContext.getScale(DerivedScaleType.PIX_SCALE) >= 20
-  val svgUrl = if (appInfo is ApplicationInfoImpl) {
-    // This is the way to load the release icon in EAP. Needed for some actions.
-    if (upscale) appInfo.getApplicationSvgIconUrl(!requestReleaseIcon) else appInfo.getSmallApplicationSvgIconUrl(!requestReleaseIcon)
-  }
-  else {
-    if (upscale) appInfo.applicationSvgIconUrl else appInfo.smallApplicationSvgIconUrl
-  }
-  val iconImage = loadAppIconImage(svgUrl, scaleContext, size)
-  if (iconImage == null) {
-    LOG.error("Can't load '${svgUrl}'")
-    return EmptyIcon.create(size)
-  }
-  return JBImageIcon(iconImage)
-}
-
-fun findAppIcon(): String? {
-  val svgFile = Files.list(Path.of(PathManager.getBinPath())).use { stream ->
-    stream.filter { it.extension == "svg" }.findFirst().orElse(null)
-  }
-  if (svgFile != null) return svgFile.toString()
-  val url = ApplicationInfo::class.java.getResource(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl)
-  return if (url != null && URLUtil.FILE_PROTOCOL == url.protocol) URLUtil.urlToFile(url).absolutePath else null
-}
-
-fun isWindowIconAlreadyExternallySet(): Boolean {
-  if (getBooleanSystemProperty("intellij.platform.force.update.app.window.icon")) {
-    return false
-  }
-  return when (OS.CURRENT) {
-    OS.Windows -> getBooleanSystemProperty("ide.native.launcher") && SystemInfo.isJetBrainsJvm
-    // to prevent mess with java dukes when running from source
-    OS.macOS -> isMacDocIconSet || !PluginManagerCore.isRunningFromSources()
-    else -> false
-  }
-}
-
-private fun removeTraceLocalConsents(localConsents: MutableList<Consent>) {
-  localConsents.removeIf { localConsent ->
-    LocalConsentOptions.condTraceDataCollectionNonComLocalConsent().test(localConsent) ||
-    LocalConsentOptions.condTraceDataCollectionComLocalConsent().test(localConsent)
-  }
-}
-
-private fun removeTraceConsents(consents: MutableList<Consent>) { // IJPL-208500, IJPL-212133
-  consents.removeIf { consent ->
-    ConsentOptions.condTraceDataCollectionConsent().test(consent) ||
-    ConsentOptions.condTraceDataCollectionComConsent().test(consent) ||
-    ConsentOptions.condTraceDataCollectionNonComConsent().test(consent)
-  }
-}
-
 object AppUIUtil {
   @JvmStatic
-  fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? =
-    loadAppIconImage(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl, ctx, size)
-      ?.let { JBImageIcon(it) }
+  fun updateAppWindowIcon(window: Window) {
+    if (isWindowIconAlreadyExternallySet()) {
+      return
+    }
+
+    if (appIcons == null) {
+      val images = ArrayList<Image>(3)
+      val appInfo = ApplicationInfoImpl.getShadowInstance()
+      val scaleContext = ScaleContext.create(window)
+      if (OS.CURRENT != OS.Windows) {
+        loadAppIconImage(appInfo.applicationSvgIconUrl, scaleContext, size = 128)?.let {
+          images.add(it)
+        }
+      }
+      if (OS.CURRENT != OS.macOS) {
+        loadAppIconImage(appInfo.applicationSvgIconUrl, scaleContext, size = 32)?.let {
+          images.add(it)
+        }
+      }
+      if (OS.CURRENT == OS.Windows) {
+        loadAppIconImage(appInfo.smallApplicationSvgIconUrl, scaleContext, size = 16)?.let {
+          images.add(it)
+        }
+      }
+      for (i in images.indices) {
+        val image = images[i]
+        if (image is JBHiDPIScaledImage) {
+          when (val delegate = image.delegate) {
+            null -> images.removeAt(i)
+            else -> images[i] = delegate
+          }
+        }
+      }
+      appIcons = images.toList()
+    }
+
+    appIcons?.takeIf { it.isNotEmpty() }?.let { images ->
+      if (OS.CURRENT != OS.macOS) {
+        window.iconImages = images
+      }
+      else if (!isMacDocIconSet.getAndSet(true)) {
+        MacAppIcon.setDockIcon(addTransparentBorder(images.first()))
+      }
+    }
+  }
+
+  @Internal
+  @JvmStatic
+  fun isWindowIconAlreadyExternallySet(): Boolean {
+    return !System.getProperty("intellij.platform.force.update.app.window.icon").toBoolean() && when (OS.CURRENT) {
+      OS.Windows -> System.getProperty("ide.native.launcher").toBoolean() && SystemInfo.isJetBrainsJvm
+      OS.macOS -> isMacDocIconSet.get() || !(AppMode.isRunningFromDevBuild() || PluginManagerCore.isRunningFromSources())
+      else -> false
+    }
+  }
+
+  @JvmStatic
+  fun findAppIcon(): String? {
+    val svgFile = Files.list(PathManager.getBinDir()).use { stream ->
+      stream.filter { it.extension == "svg" }.findFirst().orElse(null)
+    }
+    if (svgFile != null) return svgFile.toString()
+    val url = ApplicationInfo::class.java.getResource(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl)
+    return if (url?.protocol == URLUtil.FILE_PROTOCOL) Path.of(url.toURI().schemeSpecificPart).absolutePathString() else null
+  }
+
+  @JvmStatic
+  fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? {
+    return loadAppIconImage(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl, ctx, size)?.let { JBImageIcon(it) }
+  }
+
+  @JvmStatic
+  fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int): Icon =
+    loadSmallApplicationIcon(scaleContext, size, requestReleaseIcon = !ApplicationInfoImpl.getShadowInstance().isEAP)
+
+  @Internal
+  @JvmStatic
+  fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, requestReleaseIcon: Boolean): Icon {
+    val appInfo = ApplicationInfoImpl.getShadowInstance()
+    val upscale = size * scaleContext.getScale(DerivedScaleType.PIX_SCALE) >= 20
+    val svgUrl = if (appInfo is ApplicationInfoImpl) {
+      if (upscale) appInfo.getApplicationSvgIconUrl(!requestReleaseIcon) else appInfo.getSmallApplicationSvgIconUrl(!requestReleaseIcon)
+    }
+    else {
+      if (upscale) appInfo.applicationSvgIconUrl else appInfo.smallApplicationSvgIconUrl
+    }
+    val iconImage = loadAppIconImage(svgUrl, scaleContext, size)
+    if (iconImage == null) {
+      LOG.error("Can't load '${svgUrl}'")
+      return EmptyIcon.create(size)
+    }
+    return JBImageIcon(iconImage)
+  }
 
   @JvmStatic
   fun invokeLaterIfProjectAlive(project: Project, runnable: Runnable) {
@@ -278,7 +235,7 @@ object AppUIUtil {
     if (!second) {
       return false
     }
-    else if (EventQueue.isDispatchThread()) {
+    else if (@Suppress("SwingIsEventDispatchThread") EventQueue.isDispatchThread()) {
       return confirmConsentOptions(first)
     }
     else {
@@ -373,8 +330,8 @@ object AppUIUtil {
     if (options.isEAP) {
       val statConsent = options.defaultUsageStatsConsent
       val errorAutoReportConsent = when {
-          ExceptionAutoReportUtil.isConsentAllowedToBeVisible -> options.defaultErrorAutoReportConsent
-          else -> null
+        ExceptionAutoReportUtil.isConsentAllowedToBeVisible -> options.defaultErrorAutoReportConsent
+        else -> null
       }
       if (statConsent != null || errorAutoReportConsent != null) {
         // init stats consent and automatic error report consent for EAP from the dedicated location
@@ -387,18 +344,29 @@ object AppUIUtil {
     }
     removeTraceConsents(result)
     if (!options.isEAP || !Registry.`is`("llm.llmc.data.collection.enabled", true)) {
-      result.removeIf(ConsentOptions.condAiDataCollectionConsent()) // IJPL-195651 and IJPL-210395; AI data collection (LLMC) consent should not be present on UI while it's staying a default consent as a part of migration from LLMC to TRACE consent
+      // IJPL-195651 and IJPL-210395; AI data collection (LLMC) consent should not be present on UI
+      // while it's staying a default consent as a part of migration from LLMC to TRACE consent
+      result.removeIf(ConsentOptions.condAiDataCollectionConsent())
     }
     return result
   }
 
+  private fun removeTraceConsents(consents: MutableList<Consent>) { // IJPL-208500, IJPL-212133
+    consents.removeIf { consent ->
+      ConsentOptions.condTraceDataCollectionConsent().test(consent) ||
+      ConsentOptions.condTraceDataCollectionComConsent().test(consent) ||
+      ConsentOptions.condTraceDataCollectionNonComConsent().test(consent)
+    }
+  }
+
   @JvmStatic
-  @ApiStatus.Internal
+  @Internal
   fun loadLocalConsentsAsConsentsForEditing(): List<Consent> {
     val localConsents = LocalConsentOptions.getLocalConsents().first.toMutableList()
     if (TraceConsentManager.getInstance()?.canDisplayTraceConsent() != true) {
       removeTraceLocalConsents(localConsents)
-    } else {
+    }
+    else {
       val licenseTypeFlag = LicensingFacade.getInstance()?.metadata?.getOrNull(10)
       when (licenseTypeFlag) {
         'F' -> localConsents.removeIf(LocalConsentOptions.condTraceDataCollectionComLocalConsent())
@@ -407,6 +375,13 @@ object AppUIUtil {
       }
     }
     return localConsents
+  }
+
+  private fun removeTraceLocalConsents(localConsents: MutableList<Consent>) {
+    localConsents.removeIf { localConsent ->
+      LocalConsentOptions.condTraceDataCollectionNonComLocalConsent().test(localConsent) ||
+      LocalConsentOptions.condTraceDataCollectionComLocalConsent().test(localConsent)
+    }
   }
 
   @JvmStatic
@@ -441,8 +416,7 @@ object AppUIUtil {
     }
   }
 
-  @JvmStatic
-  @ApiStatus.Internal
+  @Internal
   fun saveConsentsAsLocalConsents(consents: List<Consent>) {
     LocalConsentOptions.setLocalConsents(consents)
   }
@@ -456,7 +430,7 @@ object AppUIUtil {
    * The calculation in that case may involve device-dependent metrics (such as font metrics)
    * and thus should refer to a particular device in multi-monitor env.
    *
-   * Note that if after calling this method the component is added to another hierarchy bound to a different device,
+   * Note that if after calling this method, the component is added to another hierarchy bound to a different device,
    * AWT will throw `IllegalArgumentException`.
    * To avoid that, the device should be reset by calling `targetToDevice(comp, null)`.
    *
@@ -474,14 +448,6 @@ object AppUIUtil {
 
   @JvmStatic
   fun isInFullScreen(window: Window?): Boolean = window is IdeFrame && (window as IdeFrame).isInFullScreen
-
-  private fun adjustFractionalMetrics(defaultValue: Any): Any {
-    if (OS.CURRENT != OS.macOS || GraphicsEnvironment.isHeadless() || AppMode.isRemoteDevHost()) {
-      return defaultValue
-    }
-    val gc = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.defaultConfiguration
-    return if (sysScale(gc) == 1.0f) RenderingHints.VALUE_FRACTIONALMETRICS_OFF else defaultValue
-  }
 
   fun getAdjustedFractionalMetricsValue(): Any = adjustFractionalMetrics(UISettings.getPreferredFractionalMetricsValue())
 
@@ -530,55 +496,110 @@ object AppUIUtil {
       }
     }
   }
+}
 
-  @Suppress("DuplicatedCode")
-  private fun createGradientTexture(
-    graphics: Graphics,
-    colorStart: Color,
-    colorEnd: Color,
-    width: Int,
-    height: Int,
-    xStart: Int = 0,
-    yStart: Int = 0,
-    pixelsFunction: (
-      image: BufferedImage,
-      colorStart16: Color16,
-      delta16: Color16,
-      pixels: Array<Array<Color16>>,
-    ) -> Unit,
-  ): TexturePaint {
-    val image = ImageUtil.createImage(graphics, width, height, BufferedImage.TYPE_INT_ARGB)
+private fun adjustFractionalMetrics(defaultValue: Any): Any {
+  if (OS.CURRENT != OS.macOS || GraphicsEnvironment.isHeadless() || AppMode.isRemoteDevHost()) {
+    return defaultValue
+  }
+  val gc = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.defaultConfiguration
+  return if (sysScale(gc) == 1.0f) RenderingHints.VALUE_FRACTIONALMETRICS_OFF else defaultValue
+}
 
-    val pixels: Array<Array<Color16>> = Array(image.height) { Array(image.width) { Color16.TRANSPARENT } }
+@Suppress("DuplicatedCode")
+private fun createGradientTexture(
+  graphics: Graphics,
+  colorStart: Color,
+  colorEnd: Color,
+  width: Int,
+  height: Int,
+  xStart: Int = 0,
+  yStart: Int = 0,
+  pixelsFunction: (image: BufferedImage, colorStart16: Color16, delta16: Color16, pixels: Array<Array<Color16>>) -> Unit,
+): TexturePaint {
+  val image = ImageUtil.createImage(graphics, width, height, BufferedImage.TYPE_INT_ARGB)
 
-    val colorStart16 = colorStart.toColor16()
-    val colorEnd16 = colorEnd.toColor16()
-    val delta16 = colorEnd16 - colorStart16
-    pixelsFunction(image, colorStart16, delta16, pixels)
+  val pixels: Array<Array<Color16>> = Array(image.height) { Array(image.width) { Color16.TRANSPARENT } }
 
-    val coefficients = doubleArrayOf(7.0 / 16, 3.0 / 16, 5.0 / 16, 1.0 / 16)
-    for (y in 0 until image.height) {
-      for (x in 0 until image.width) {
-        val oldColor: Color16 = pixels[y][x]
-        val newColor: Color = oldColor.toColor8()
-        image.setRGB(x, y, newColor.rgb)
+  val colorStart16 = colorStart.toColor16()
+  val colorEnd16 = colorEnd.toColor16()
+  val delta16 = colorEnd16 - colorStart16
+  pixelsFunction(image, colorStart16, delta16, pixels)
 
-        val error: Color16 = oldColor - newColor.toColor16()
-        if (x + 1 < image.width) {
-          pixels[y][x + 1] = pixels[y][x + 1] + error * coefficients[0]
-        }
-        if (x - 1 >= 0 && y + 1 < image.height) {
-          pixels[y + 1][x - 1] = pixels[y + 1][x - 1] + error * coefficients[1]
-        }
-        if (y + 1 < image.height) {
-          pixels[y + 1][x] = pixels[y + 1][x] + error * coefficients[2]
-        }
-        if (x + 1 < image.width && y + 1 < image.height) {
-          pixels[y + 1][x + 1] = pixels[y + 1][x + 1] + error * coefficients[3]
-        }
+  val coefficients = doubleArrayOf(7.0 / 16, 3.0 / 16, 5.0 / 16, 1.0 / 16)
+  for (y in 0 until image.height) {
+    for (x in 0 until image.width) {
+      val oldColor: Color16 = pixels[y][x]
+      val newColor: Color = oldColor.toColor8()
+      image.setRGB(x, y, newColor.rgb)
+
+      val error: Color16 = oldColor - newColor.toColor16()
+      if (x + 1 < image.width) {
+        pixels[y][x + 1] = pixels[y][x + 1] + error * coefficients[0]
+      }
+      if (x - 1 >= 0 && y + 1 < image.height) {
+        pixels[y + 1][x - 1] = pixels[y + 1][x - 1] + error * coefficients[1]
+      }
+      if (y + 1 < image.height) {
+        pixels[y + 1][x] = pixels[y + 1][x] + error * coefficients[2]
+      }
+      if (x + 1 < image.width && y + 1 < image.height) {
+        pixels[y + 1][x + 1] = pixels[y + 1][x + 1] + error * coefficients[3]
       }
     }
-
-    return TexturePaint(image, Rectangle(xStart, yStart, width, height))
   }
+
+  return TexturePaint(image, Rectangle(xStart, yStart, width, height))
+}
+
+// returns a HiDPI-aware image
+private fun loadAppIconImage(svgPath: String, scaleContext: ScaleContext, size: Int): Image? {
+  val pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
+  val svgData = findAppIconSvgData(svgPath, pixScale)
+  if (svgData == null) {
+    LOG.warn("Cannot load SVG application icon from $svgPath")
+    return null
+  }
+  val sysScale = scaleContext.getScale(ScaleType.SYS_SCALE).toFloat()
+  val userScale = scaleContext.getScale(ScaleType.USR_SCALE).toFloat()
+  val userSize = (size * userScale).roundToInt()
+  return loadWithSizes(listOf(userSize), svgData, sysScale).first()
+}
+
+private fun findAppIconSvgData(path: String, pixScale: Float): ByteArray? {
+  val loadingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
+  // app icon doesn't support `dark` concept, and moreover, it cannot depend on a current LaF
+  val descriptors = createImageDescriptorList(path, isDark = false, isStroke = false, pixScale)
+  val rawPathWithoutExt = path.substring(if (path.startsWith('/')) 1 else 0, path.lastIndexOf('.'))
+  for (descriptor in descriptors) {
+    val transformedPath = descriptor.pathTransform(rawPathWithoutExt, "svg")
+    val resourceLoadStart = StartUpMeasurer.getCurrentTimeIfEnabled()
+    val data = ResourceUtil.getResourceAsBytes(transformedPath, AppUIUtil::class.java.classLoader, true) ?: continue
+    if (resourceLoadStart != -1L) {
+      IconLoadMeasurer.loadFromResources.end(resourceLoadStart)
+    }
+    if (loadingStart != -1L) {
+      IconLoadMeasurer.addLoading(descriptor.isSvg, loadingStart)
+    }
+    return data
+  }
+  return null
+}
+
+private fun addTransparentBorder(img: Image): BufferedImage {
+  val border = MAC_DOCK_ICON_BORDER
+  val width = img.getWidth(null)
+  val height = img.getHeight(null)
+  val result = @Suppress("UndesirableClassUsage") BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+  val g = result.createGraphics()
+  try {
+    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+    g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+    g.drawImage(img, border, border, width - 2 * border, height - 2 * border, null)
+  }
+  finally {
+    g.dispose()
+  }
+  return result
 }

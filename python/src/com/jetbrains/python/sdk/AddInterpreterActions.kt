@@ -43,7 +43,7 @@ import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterDialog
 import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterPresenter
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.target.PythonLanguageRuntimeType
-import com.jetbrains.python.util.ShowingMessageErrorSync
+import com.jetbrains.python.errorProcessing.ErrorSink
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -62,20 +62,19 @@ abstract class DialogAction(
   dynamicText: Supplier<@NlsActions.ActionText String>,
   val icon: Icon,
   val target: @Nls String,
+  private val project: Project,
 ) : AnAction(dynamicText, icon) {
   abstract fun createDialog(): DialogWrapper?
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val project = e.project ?: return
     if (e.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT) == true) {
       e.presentation.isEnabled = !project.isSdkConfigurationInProgress.value
     }
   }
 
   final override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
     if (e.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT) == true && project.isSdkConfigurationInProgress.value) return
     FileDocumentManager.getInstance().saveAllDocuments()
     createDialog()?.show()
@@ -118,10 +117,11 @@ internal class AddLocalInterpreterAction(
   dynamicText = PyBundle.messagePointer("python.sdk.action.add.local.interpreter.text"),
   icon = AllIcons.Nodes.HomeFolder,
   target = PyBundle.message("sdk.create.targets.local"),
+  project = moduleOrProject.project,
 ), DumbAware {
   override fun createDialog(): PythonAddLocalInterpreterDialog {
     val dialogPresenter = PythonAddLocalInterpreterPresenter(
-      moduleOrProject, errorSink = ShowingMessageErrorSync, bestGuessCreateSdkInfo = bestGuessCreateSdkInfo
+      moduleOrProject, errorSink = ErrorSink(), bestGuessCreateSdkInfo = bestGuessCreateSdkInfo
     ).apply {
       // Model provides flow, but we need to call Consumer
       sdkCreatedFlow.oneShotConsumer(onSdkCreated)
@@ -138,6 +138,7 @@ internal class AddInterpreterOnTargetAction(
   dynamicText = PyBundle.messagePointer("python.sdk.action.add.interpreter.based.on.target.text", targetType.displayName),
   icon = targetType.icon,
   target = targetType.displayName,
+  project = project,
 ), DumbAware {
   override fun createDialog(): TargetEnvironmentWizard? {
     val wizard = TargetEnvironmentWizard.createWizard(project, targetType, PythonLanguageRuntimeType.Helper.getInstance())

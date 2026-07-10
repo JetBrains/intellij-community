@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.diagnostic.Dumpable;
@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.CaretImpl;
 import com.intellij.openapi.editor.impl.CaretModelImpl;
+import com.intellij.openapi.editor.ex.ElfCandidate;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FoldingModelInternal;
@@ -51,6 +52,7 @@ import java.util.stream.Stream;
 /**
  * Calculates width (in pixels) of editor contents.
  */
+@ElfCandidate
 final class EditorSizeManager implements PrioritizedDocumentListener, Disposable, FoldingListener, InlayModel.Listener, Dumpable {
   private static final Logger LOG = Logger.getInstance(EditorSizeManager.class);
 
@@ -96,8 +98,6 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
   private boolean myWidestBlockInlayValid;
   private Inlay<?> myWidestBlockInlay;
 
-  private long myDocumentStamp = Long.MIN_VALUE;
-
   private final SoftWrapParsingListener mySoftWrapParsingListener = new SoftWrapParsingListener() {
     @Override
     public void onRegionReparseEnd(@NotNull IncrementalCacheUpdateEvent event) {
@@ -133,7 +133,6 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
 
   @Override
   public void beforeDocumentChange(@NotNull DocumentEvent event) {
-    assert !myView.isAd();
     assertValidState(); // should be called at the start, as it can initiate soft wrap calculations
     myAfterLineEndInlayUpdated = false;
     myDuringDocumentUpdate = true;
@@ -149,7 +148,6 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
 
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
-    assert !myView.isAd();
     myDuringDocumentUpdate = false;
     if (myDocument.isInBulkUpdate()) return;
     doInvalidateRange(myDocumentChangeStartOffset, myDocumentChangeEndOffset);
@@ -164,7 +162,6 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
   public void onFoldRegionStateChange(@NotNull FoldRegion region) {
     if (myDocument.isInBulkUpdate()) return;
     if (region.isValid()) {
-      resetIfOutdated(true);
       myFoldingChangeStartOffset = Math.min(myFoldingChangeStartOffset, region.getStartOffset());
       myFoldingChangeEndOffset = Math.max(myFoldingChangeEndOffset, region.getEndOffset());
     }
@@ -173,7 +170,6 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
   @Override
   public void beforeFoldRegionDisposed(@NotNull FoldRegion region) {
     if (!myDuringDocumentUpdate || myDocument.isInBulkUpdate() || !(region instanceof CustomFoldRegion)) return;
-    resetIfOutdated(true);
     myDocumentChangeStartOffset = Math.min(myDocumentChangeStartOffset, region.getStartOffset());
     myDocumentChangeEndOffset = Math.max(myDocumentChangeEndOffset, region.getEndOffset());
   }
@@ -181,7 +177,6 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
   @Override
   public void onCustomFoldRegionPropertiesChange(@NotNull CustomFoldRegion region, int flags) {
     if ((flags & ChangeFlags.WIDTH_CHANGED) == 0 || myDocument.isInBulkUpdate() || checkDirty()) return;
-    resetIfOutdated(true);
     int startOffset = region.getStartOffset();
     if (myFoldingModel.getCollapsedRegionAtOffset(startOffset) != region) return;
     int visualLine = myView.offsetToVisualLine(startOffset, false);
@@ -192,7 +187,6 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
   @Override
   public void onFoldProcessingEnd() {
     if (myDocument.isInBulkUpdate()) return;
-    resetIfOutdated(true);
     if (myFoldingChangeStartOffset <= myFoldingChangeEndOffset) {
       doInvalidateRange(myFoldingChangeStartOffset, myFoldingChangeEndOffset);
     }
@@ -267,7 +261,6 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
   }
 
   private void onLineInlayUpdate(@NotNull Inlay<?> inlay) {
-    resetIfOutdated(true);
     if (myDuringDocumentUpdate) {
       if (inlay.getPlacement() == Inlay.Placement.AFTER_LINE_END) {
         myAfterLineEndInlayUpdated = true;
@@ -283,7 +276,6 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
 
   private void onSoftWrapRecalculationEnd(IncrementalCacheUpdateEvent event) {
     if (myDocument.isInBulkUpdate()) return;
-    resetIfOutdated(true);
     boolean invalidate = true;
     if (myFoldingModel.isInBatchFoldingOperation()) {
       myFoldingChangeStartOffset = Math.min(myFoldingChangeStartOffset, event.getStartOffset());
@@ -302,8 +294,6 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
 
   @NotNull
   Dimension getPreferredSize() {
-    resetIfOutdated(false);
-
     Insets insets = myView.getInsets();
     int widthWithoutCaret = getTextPreferredWidth() + insets.left;
     int width = widthWithoutCaret;
@@ -328,8 +318,6 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
   // This method is currently used only with "idea.true.smooth.scrolling" experimental option.
   // We may unite the code with the getPreferredSize() method.
   int getPreferredWidth(int beginLine, int endLine) {
-    resetIfOutdated(false);
-
     Insets insets = myView.getInsets();
     int widthWithoutCaret = getTextPreferredWidthWithoutCaret(beginLine, endLine) + insets.left;
     int width = widthWithoutCaret;
@@ -350,8 +338,6 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
 
 
   int getPreferredHeight() {
-    resetIfOutdated(false);
-
     int lineHeight = myView.getLineHeight();
     if (myEditor.isOneLineMode()) return lineHeight;
 
@@ -389,7 +375,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
       assert !myInlayModel.isInBatchMode();
       var grid = myEditor.getCharacterGrid();
       var columns = grid == null ? 0 : grid.getColumns();
-      if (columns > 0) {
+      if (columns > 0 && mySoftWrapModel.isSoftWrappingEnabled()) {
         myWidthInPixels = (int)Math.ceil(columns * grid.getCharWidth());
         myWidthDefiningLineNumber = 0; // not used anyway
       }
@@ -468,8 +454,6 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
 
   int getVisualLineWidth(VisualLinesIterator visualLinesIterator, boolean allowQuickCalculation) {
     assert !visualLinesIterator.atEnd();
-    resetIfOutdated(false);
-
     int visualLine = visualLinesIterator.getVisualLine();
     boolean useCache = shouldUseLineWidthCache();
     int cached = useCache ? myLineWidths.getInt(visualLine) : UNKNOWN_WIDTH;
@@ -619,13 +603,8 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
   void textLayoutPerformed(int startOffset, int endOffset) {
     assert 0 <= startOffset && startOffset < endOffset && endOffset <= myDocument.getTextLength()
       : "startOffset=" + startOffset + ", endOffset=" + endOffset;
-    resetIfOutdated(false);
-
     if (myDocument.isInBulkUpdate() || myInlayModel.isInBatchMode()) return;
     if (myFoldingModel.isInBatchFoldingOperation()) {
-      if (myView.isAd()) {
-        throw new UnsupportedOperationException();
-      }
       myDeferredRanges.add(new TextRange(startOffset, endOffset));
     }
     else {
@@ -730,13 +709,6 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
 
   private boolean isIteratingOverCarets() {
     return (myCaretModel instanceof CaretModelImpl impl) && impl.isIteratingOverCarets();
-  }
-
-  private void resetIfOutdated(boolean force) {
-    if (myView.isAd() && (force || myDocumentStamp != myDocument.getModificationStamp())) {
-      reset();
-      myDocumentStamp = myDocument.getModificationStamp();
-    }
   }
 
   @TestOnly

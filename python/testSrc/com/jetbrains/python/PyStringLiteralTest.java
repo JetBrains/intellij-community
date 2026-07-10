@@ -1,6 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Components;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.LiteralTextEscaper;
@@ -18,6 +22,9 @@ import java.util.Arrays;
 import java.util.List;
 
 
+@Subsystems.CodeInsight
+@Components.Parsing
+@Layers.Functional
 public class PyStringLiteralTest extends PyTestCase {
   public void testEscaperDecode() {
     final PyStringLiteralExpression expr = createLiteralFromText("'\\nfoo'");

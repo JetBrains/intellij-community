@@ -1,1 +1,1 @@
-<error descr="[RETURN_NOT_ALLOWED] 'return' is prohibited here.">return</error> a
+<error descr="[RETURN_NOT_ALLOWED]">return</error> a

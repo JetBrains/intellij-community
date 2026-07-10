@@ -11,7 +11,7 @@ import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.poetry.getPoetryExecutable
 import kotlinx.coroutines.CoroutineScope
 
-class PoetryViewModel<P : PathHolder>(
+internal class PoetryViewModel<P : PathHolder>(
   fileSystem: FileSystem<P>,
   propertyGraph: PropertyGraph,
 ) : PythonToolViewModel {

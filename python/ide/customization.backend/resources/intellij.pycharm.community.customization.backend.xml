@@ -1,0 +1,20 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <!-- ProjectFromVersionControl uses GetFromVersionControlAction from the VCS implementation module.
+         Keep this dependency in the backend customization content module: the shared customization plugin
+         is also included in JetBrains Client layouts where backend-only VCS modules are unavailable. -->
+    <module name="intellij.platform.vcs.impl"/>
+  </dependencies>
+
+  <actions resource-bundle="messages.ActionsBundle">
+    <!-- The product customization owns the action id, text overrides, and placement.
+         The action implementation itself belongs to VCS, so it must be registered only from a
+         descriptor whose classloader can see intellij.platform.vcs.impl. -->
+    <action id="ProjectFromVersionControl" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVersionControlAction">
+      <override-text place="ProjectWidgetPopup"/>
+      <add-to-group group-id="PlatformOpenProjectGroup" relative-to-action="NewProjectOrModuleGroup" anchor="after"/>
+      <add-to-group group-id="ProjectWidget.Actions" anchor="after" relative-to-action="OpenFile"/>
+    </action>
+  </actions>
+</idea-plugin>

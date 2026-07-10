@@ -1,7 +1,7 @@
 // ERROR: 'test2' overrides nothing
 // ERROR: Too many arguments for public open fun test2(): Unit defined in Bar
-// K2_ERROR: 'test2' overrides nothing. Potential signatures for overriding:<br>fun test2(): Unit
-// K2_ERROR: Too many arguments for 'fun test2(): Unit'.
+// K2_ERROR: NOTHING_TO_OVERRIDE
+// K2_ERROR: TOO_MANY_ARGUMENTS
 
 interface Foo {
     fun test(arg: Int)

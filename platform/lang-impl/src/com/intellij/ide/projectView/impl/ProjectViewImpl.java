@@ -110,8 +110,11 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.progress.CancellationUtil;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import kotlin.concurrent.LocksKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.CalledInAny;
@@ -141,6 +144,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -158,10 +162,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   public static final @NonNls String ANDROID_VIEW_ID = "AndroidView";
 
   private final CopyPasteDelegator copyPasteDelegator;
-  // all these booleans must be accessed only in synchronized code
-  private boolean isInitialized;
-  private boolean isExtensionsLoading = false;
-  private boolean isExtensionsLoaded = false;
+
+  private final ReentrantLock lock = new ReentrantLock();
+  // all these booleans must be accessed only in synchronized code (or DCL)
+  private volatile boolean isInitialized;
+  private volatile boolean isExtensionsLoading = false;
+  private volatile boolean isExtensionsLoaded = false;
+
   private final @NotNull Project project;
 
   private boolean firstShow = true;
@@ -781,15 +788,47 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
+  private void withLock(@NotNull Runnable code) {
+    if (EDT.isCurrentThreadEdt()) { // UI code is assumed to be non-cancellable
+      lock.lock();
+    }
+    else {
+      // Locking in a cancellable RA can cause deadlock if the EDT holds the lock while trying to start a WA.
+      // For this case, we allow cancellation here.
+      // For non-cancellable BGT contexts it's the responsibility of the caller to ensure there won't be any deadlocks.
+      // Generally, BGT access to the PV is undesirable except for read-only access from RAs.
+      CancellationUtil.lockMaybeCancellable(lock);
+    }
+    try {
+      code.run();
+    }
+    finally {
+      lock.unlock();
+    }
+  }
+
+  private void checkLock() {
+    if (!lock.isHeldByCurrentThread()) {
+      throw new IllegalStateException("Locking is broken in ProjectViewImpl: the lock must be held at this point");
+    }
+  }
+
   @Override
   @CalledInAny
-  public synchronized void addProjectPane(final @NotNull AbstractProjectViewPane pane) {
+  public void addProjectPane(final @NotNull AbstractProjectViewPane pane) {
     addProjectPane(pane, false);
   }
 
   @ApiStatus.Internal
   @CalledInAny
-  public synchronized void addProjectPane(final @NotNull AbstractProjectViewPane pane, boolean restoreState) {
+  public void addProjectPane(final @NotNull AbstractProjectViewPane pane, boolean restoreState) {
+    withLock(() -> {
+      doAddProjectPane(pane, restoreState);
+    });
+  }
+
+  private void doAddProjectPane(final @NotNull AbstractProjectViewPane pane, boolean restoreState) {
+    checkLock();
     if (idToPane.containsKey(pane.getId())) {
       LOG.error("Pane with ID=" + pane.getId() + " already exists. Please remove it first with removeProjectPane(pane).");
       removeProjectPane(idToPane.get(pane.getId()));
@@ -813,16 +852,23 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
     if (isInitialized) {
       if (ApplicationManager.getApplication().isDispatchThread()) {
-        doAddUninitializedPanes();
+        addUninitializedPanesImpl();
       } else {
-        ApplicationManager.getApplication().invokeLater(this::doAddUninitializedPanes);
+        ApplicationManager.getApplication().invokeLater(this::addUninitializedPanesImpl);
       }
     }
   }
 
   @Override
-  public synchronized void removeProjectPane(@NotNull AbstractProjectViewPane pane) {
+  public void removeProjectPane(@NotNull AbstractProjectViewPane pane) {
+    withLock(() -> {
+      doRemoveProjectPane(pane);
+    });
+  }
+
+  private void doRemoveProjectPane(@NotNull AbstractProjectViewPane pane) {
     ThreadingAssertions.assertEventDispatchThread();
+    checkLock();
     //assume we are completely initialized here
     @NotNull String idToRemove = pane.getId();
 
@@ -845,7 +891,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     viewSelectionChanged();
   }
 
-  private synchronized void doAddUninitializedPanes() {
+  private void addUninitializedPanesImpl() {
+    withLock(() -> {
+      doAddUninitializedPanesImpl();
+    });
+  }
+
+  private void doAddUninitializedPanesImpl() {
+    checkLock();
     for (AbstractProjectViewPane pane : uninitializedPanes) {
       doAddPane(pane);
     }
@@ -1056,15 +1109,22 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   // public for tests
-  public synchronized void setupImpl(@NotNull ToolWindow toolWindow) {
+  public void setupImpl(@NotNull ToolWindow toolWindow) {
     setupImpl(toolWindow, true);
   }
 
   // public for tests
-  public synchronized void setupImpl(@NotNull ToolWindow toolWindow, boolean loadPaneExtensions) {
+  public void setupImpl(@NotNull ToolWindow toolWindow, boolean loadPaneExtensions) {
     ThreadingAssertions.assertEventDispatchThread();
     if (isInitialized) return;
+    withLock(() -> {
+      doSetupImpl(toolWindow, loadPaneExtensions);
+    });
+  }
 
+  private void doSetupImpl(@NotNull ToolWindow toolWindow, boolean loadPaneExtensions) {
+    checkLock();
+    if (isInitialized) return; // DCL
     MessageBusConnection connection = project.getMessageBus().connect();
     var loadStatisticsReporter = new ProjectViewInitReporter(connection);
     connection.subscribe(ProjectViewListener.TOPIC, loadStatisticsReporter);
@@ -1088,7 +1148,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       ensurePanesLoaded();
     }
     isInitialized = true;
-    doAddUninitializedPanes();
+    addUninitializedPanesImpl();
 
     getContentManager().addContentManagerListener(new ContentManagerListener() {
       @Override
@@ -1144,9 +1204,17 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  private synchronized void reloadPanes() {
+  private void reloadPanes() {
     if (project.isDisposed() || !isExtensionsLoaded) return; // panes will be loaded later
 
+    withLock(() -> {
+      doReloadPanes();
+    });
+  }
+
+  private void doReloadPanes() {
+    checkLock();
+    if (project.isDisposed() || !isExtensionsLoaded) return;
     Map<String, AbstractProjectViewPane> newPanes = loadPanes();
     Map<AbstractProjectViewPane, Boolean> oldPanes = new IdentityHashMap<>();
     uninitializedPanes.forEach(pane -> oldPanes.put(pane, pane == newPanes.get(pane.getId())));
@@ -1164,12 +1232,22 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  private synchronized void ensurePanesLoaded() {
+  private void ensurePanesLoaded() {
     // one boolean is about avoiding recursion, the other actually checks if the job was already done
     if (project.isDisposed() || isExtensionsLoading || isExtensionsLoaded) {
       return;
     }
 
+    withLock(() -> {
+      doEnsurePanesLoaded();
+    });
+  }
+
+  private void doEnsurePanesLoaded() {
+    checkLock();
+    if (project.isDisposed() || isExtensionsLoading || isExtensionsLoaded) { // DCL
+      return;
+    }
     isExtensionsLoading = true;
     try {
       for (AbstractProjectViewPane pane : loadPanes().values()) {
@@ -1188,7 +1266,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  private synchronized @NotNull Map<String, AbstractProjectViewPane> loadPanes() {
+  private @NotNull Map<String, AbstractProjectViewPane> loadPanes() {
     Map<String, AbstractProjectViewPane> map = new LinkedHashMap<>();
     List<AbstractProjectViewPane> toSort = new ArrayList<>(AbstractProjectViewPane.EP.getExtensions(project));
     toSort.sort(PANE_WEIGHT_COMPARATOR);
@@ -1206,6 +1284,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private void applyUninitializedPaneState(AbstractProjectViewPane pane) {
+    checkLock();
     Element element = myUninitializedPaneState.remove(pane.getId());
     if (element != null) {
       applyPaneState(pane, element);
@@ -1542,7 +1621,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     Element panesElement = parentNode.getChild(ELEMENT_PANES);
     if (panesElement != null) {
-      readPaneState(panesElement);
+      withLock(() -> {
+        readPaneState(panesElement);
+      });
     }
   }
 
@@ -1556,7 +1637,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return ProjectViewPane.ID;
   }
 
-  private synchronized void readPaneState(@NotNull Element panesElement) {
+  private void readPaneState(@NotNull Element panesElement) {
+    checkLock();
     List<Element> paneElements = panesElement.getChildren(ELEMENT_PANE);
     for (Element paneElement : paneElements) {
       String paneId = paneElement.getAttributeValue(ATTRIBUTE_ID);
@@ -1574,7 +1656,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  private static synchronized void applyPaneState(@NotNull AbstractProjectViewPane pane, @NotNull Element element) {
+  private static void applyPaneState(@NotNull AbstractProjectViewPane pane, @NotNull Element element) {
     try {
       pane.readExternal(element);
     }

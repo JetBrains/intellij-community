@@ -24,14 +24,11 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiRecordComponent;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiLiteralUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -69,14 +66,7 @@ public final class EditRangeIntention implements ModCommandAction {
 
   @Contract("null -> null")
   private static LongRangeSet rangeFromType(PsiModifierListOwner owner) {
-    PsiType type = switch (owner) {
-      case PsiMethod method -> method.getReturnType();
-      case PsiField field -> field.getType();
-      case PsiParameter param -> param.getType();
-      case PsiRecordComponent comp -> comp.getType();
-      case null, default -> null;
-    };
-    return JvmPsiRangeSetUtil.typeRange(type);
+    return JvmPsiRangeSetUtil.typeRange(PsiUtil.getTypeByPsiElement(owner));
   }
 
   @Override

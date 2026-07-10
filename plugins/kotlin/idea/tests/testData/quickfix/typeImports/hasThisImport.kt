@@ -1,5 +1,5 @@
 // "Remove initializer from property" "true"
-// K2_ERROR: Property initializers in interfaces are prohibited.
+// K2_ERROR: PROPERTY_INITIALIZER_IN_INTERFACE
 package a
 
 public fun <T> emptyList(): List<T> = null!!

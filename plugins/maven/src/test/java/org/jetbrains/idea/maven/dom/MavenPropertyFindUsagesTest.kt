@@ -1,24 +1,24 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom
 
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertContain
+import com.intellij.maven.testFramework.fixtures.createProjectSubDir
+import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.envVar
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
+import com.intellij.maven.testFramework.fixtures.updateAllProjects
+import com.intellij.maven.testFramework.fixtures.updateProjectPom
 import com.intellij.openapi.application.readAction
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.fixtures.HighlightPointer
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
-import org.jetbrains.idea.maven.fixtures.assertContain
 import org.jetbrains.idea.maven.fixtures.assertHighlighted
 import org.jetbrains.idea.maven.fixtures.assertSearchResults
 import org.jetbrains.idea.maven.fixtures.assertSearchResultsInclude
-import org.jetbrains.idea.maven.fixtures.createProjectSubDir
-import org.jetbrains.idea.maven.fixtures.createProjectSubFile
-import org.jetbrains.idea.maven.fixtures.envVar
 import org.jetbrains.idea.maven.fixtures.findTag
-import org.jetbrains.idea.maven.fixtures.importProjectAsync
-import org.jetbrains.idea.maven.fixtures.mavenDomFixture
 import org.jetbrains.idea.maven.fixtures.search
-import org.jetbrains.idea.maven.fixtures.updateAllProjects
-import org.jetbrains.idea.maven.fixtures.updateProjectPom
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass

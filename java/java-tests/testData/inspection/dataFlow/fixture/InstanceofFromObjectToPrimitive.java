@@ -1,5 +1,7 @@
 package dfa;
 
+import org.jetbrains.annotations.NotNull;
+
 public class InstanceofFromObjectToPrimitive {
     public static void main(String[] args) {
         testSimple(0);
@@ -23,7 +25,7 @@ public class InstanceofFromObjectToPrimitive {
     }
 
     private static void testObjectRecord() {
-        ObjectRecord o = new ObjectRecord(1);
+        ObjectRecord o = createObjectRecord();
         if (o instanceof ObjectRecord(int a)) {
             System.out.println("int");
         }
@@ -44,8 +46,12 @@ public class InstanceofFromObjectToPrimitive {
         }
     }
 
-    private static void testNumberRecord() {
-        NumberRecord o = new NumberRecord(1);
+  private static @NotNull ObjectRecord createObjectRecord() {
+    return new ObjectRecord(1);
+  }
+
+  private static void testNumberRecord() {
+        NumberRecord o = createNumberRecord();
         if (o instanceof NumberRecord(int a)) {
             System.out.println("int");
         }
@@ -66,8 +72,12 @@ public class InstanceofFromObjectToPrimitive {
         }
     }
 
-    private static void testIntegerRecord() {
-        IntegerRecord o = new IntegerRecord(1);
+  private static @NotNull NumberRecord createNumberRecord() {
+    return new NumberRecord(1);
+  }
+
+  private static void testIntegerRecord() {
+        IntegerRecord o = createIntegerRecord();
         if (o instanceof IntegerRecord(int a)) {
             System.out.println("int");
         }
@@ -82,8 +92,12 @@ public class InstanceofFromObjectToPrimitive {
         }
     }
 
-    private static void testLongRecord() {
-        LongRecord o = new LongRecord(1L);
+  private static @NotNull IntegerRecord createIntegerRecord() {
+    return new IntegerRecord(1);
+  }
+
+  private static void testLongRecord() {
+        LongRecord o = createLongRecord();
         if (o instanceof LongRecord(long a)) {
             System.out.println("long");
         }
@@ -95,8 +109,12 @@ public class InstanceofFromObjectToPrimitive {
         }
     }
 
-    private static void testLongRecordNotNull() {
-        LongRecord o = new LongRecord(1L);
+  private static @NotNull LongRecord createLongRecord() {
+    return new LongRecord(1L);
+  }
+
+  private static void testLongRecordNotNull() {
+        LongRecord o = createLongRecord();
         if (o.o() == null) {
             return;
         }
@@ -112,7 +130,7 @@ public class InstanceofFromObjectToPrimitive {
     }
 
     private static void testDirectFieldAccess() {
-        LongRecord o = new LongRecord(1L);
+        LongRecord o = createLongRecord();
         if (o.o == null) {
             return;
         }
@@ -122,7 +140,7 @@ public class InstanceofFromObjectToPrimitive {
     }
 
     private static void testIntegerRecordNotNull() {
-        IntegerRecord o = new IntegerRecord(1);
+        IntegerRecord o = createIntegerRecord();
         if (o.o() == null) {
             return;
         }

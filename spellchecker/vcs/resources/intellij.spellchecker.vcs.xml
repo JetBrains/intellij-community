@@ -1,0 +1,20 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.spellchecker"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!--
+      Commit message detection uses VCS implementation APIs. Keeping this provider in an optional content module
+      preserves the `commit` statistics domain in full IDEs without forcing Language Server products to bundle VCS.
+    -->
+    <spellchecker.domainProvider implementation="com.intellij.spellchecker.vcs.VcsSpellcheckerDomainProvider"/>
+  </extensions>
+</idea-plugin>

@@ -3,13 +3,10 @@
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="com.intellij.modules.vcs"/>
     <plugin id="com.intellij.modules.xdebugger"/>
     <plugin id="com.intellij.modules.xml"/>
     <plugin id="com.intellij.modules.java-capable"/>
-    <module name="intellij.platform.vcs.impl.lang"/>
     <module name="intellij.spellchecker"/>
-    <module name="intellij.regexp"/>
     <module name="intellij.java.typeMigration"/>
     <module name="intellij.java.manifest"/>
     <module name="intellij.java.frontback.impl"/>

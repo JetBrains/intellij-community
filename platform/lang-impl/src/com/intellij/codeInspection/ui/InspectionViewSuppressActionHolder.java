@@ -36,7 +36,7 @@ public final class InspectionViewSuppressActionHolder {
     ContextDescriptor descriptor = ContextDescriptor.from(context);
     if (descriptor == null) return SuppressIntentionAction.EMPTY_ARRAY;
     return mySuppressActions.get(wrapper.getShortName()).computeIfAbsent(descriptor, _ -> {
-      final InspectionProfileEntry tool = wrapper.getTool();
+      InspectionProfileEntry tool = wrapper.getTool();
       SuppressIntentionAction[] actions;
       if (tool instanceof CustomSuppressableInspectionTool) {
         actions = ((CustomSuppressableInspectionTool)tool).getSuppressActions(null);

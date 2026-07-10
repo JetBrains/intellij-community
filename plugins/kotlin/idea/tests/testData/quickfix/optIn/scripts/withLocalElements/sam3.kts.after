@@ -8,7 +8,7 @@
 // ACTION: Opt in for 'MyOptIn' on 'SamI'
 // ACTION: Opt in for 'MyOptIn' on 'SamI2'
 // ACTION: Opt in for 'MyOptIn' on statement
-// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@MyOptIn' or '@OptIn(MyOptIn::class)'
+// K2_ERROR: OPT_IN_USAGE_ERROR
 
 @RequiresOptIn
 annotation class MyOptIn

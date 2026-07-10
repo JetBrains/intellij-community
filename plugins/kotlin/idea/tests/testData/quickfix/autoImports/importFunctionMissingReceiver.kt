@@ -1,5 +1,6 @@
 // "Import" "false"
-// K2_ERROR: Unresolved reference 'foo'.
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 // ACTION: Convert to run
 // ACTION: Convert to with
@@ -7,7 +8,6 @@
 // ACTION: Create member function 'A.Companion.foo'
 // ACTION: Rename reference
 // ERROR: Unresolved reference: foo
-// K2_AFTER_ERROR: Unresolved reference 'foo'.
 
 package import_intention
 

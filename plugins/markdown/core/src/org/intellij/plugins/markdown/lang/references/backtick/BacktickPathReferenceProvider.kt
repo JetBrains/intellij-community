@@ -14,13 +14,15 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan
 import org.intellij.plugins.markdown.lang.references.ReferenceUtil.isRelativePathLike
+import org.jetbrains.annotations.ApiStatus
 
-internal object BacktickPathReferenceProvider {
+@ApiStatus.Internal
+object BacktickPathReferenceProvider {
   private const val CLAUDE_SKILL_DIR = $$"${CLAUDE_SKILL_DIR}"
   private const val SKILL_MD = "SKILL.md"
 
   fun getReferences(codeSpan: MarkdownCodeSpan, contentRange: TextRange, content: String): Array<PsiReference> {
-    val pathReference = parsePathReference(contentRange.substring(codeSpan.text)) ?: return PsiReference.EMPTY_ARRAY
+    val pathReference = parsePathReference(content) ?: return PsiReference.EMPTY_ARRAY
     val contexts = pathReference.getContexts(codeSpan)
     if (contexts.isEmpty()) return PsiReference.EMPTY_ARRAY
 

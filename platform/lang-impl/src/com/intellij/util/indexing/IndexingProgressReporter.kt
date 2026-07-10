@@ -131,7 +131,6 @@ internal class IndexingProgressReporter {
     fun onPausedStateChanged(action: Consumer<Boolean>)
   }
 
-  @Internal
   internal class CheckPauseOnlyProgressIndicatorImpl(private val taskScope: CoroutineScope,
                                                      private val pauseReason: StateFlow<PersistentList<@ProgressText String>>
   ) : CheckPauseOnlyProgressIndicator {

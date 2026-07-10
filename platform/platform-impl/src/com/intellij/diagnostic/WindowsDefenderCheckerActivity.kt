@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.diagnostic.WindowsDefenderChecker.ProjectStatus
@@ -19,10 +19,12 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.isWindows
-import com.intellij.platform.eel.provider.utils.JEelUtils
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.io.computeDetached
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import java.nio.file.Path
@@ -64,6 +66,10 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
           .notify(project)
       }
     }
+
+    @OptIn(LowLevelLocalMachineAccess::class)
+    fun isLocalWindowsPath(path: Path): Boolean =
+      OS.CURRENT == OS.Windows && path.asEelPath().descriptor.osFamily.isWindows
   }
 
   init {
@@ -107,13 +113,15 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
       return
     }
 
-    val projectDir = project.guessProjectDir()?.let { it.fileSystem.getNioPath(it) }
-    if (isOnWindows(projectDir) == false) {
-      return
-    }
-    if (projectDir != null && checker.isUntrustworthyLocation(projectDir)) {
-      LOG.info("untrustworthy location: ${projectDir}")
-      return
+    project.guessProjectDir()?.let { it.fileSystem.getNioPath(it) }?.let { projectDir ->
+      if (!isLocalWindowsPath(projectDir)) {
+        LOG.info("not a local Windows path: ${projectDir}")
+        return
+      }
+      if (checker.isUntrustworthyLocation(projectDir)) {
+        LOG.info("untrustworthy location: ${projectDir}")
+        return
+      }
     }
 
     val paths = checker.filterDevDrivePaths(checker.getPathsToExclude(project))
@@ -137,9 +145,6 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
       .apply { collapseDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST }
       .notify(project)
   }
-
-  private fun isOnWindows(projectDir: Path?): Boolean? =
-    projectDir?.let{JEelUtils.toEelPath(it)?.descriptor?.osFamily?.isWindows}
 
   private fun updateDefenderConfig(checker: WindowsDefenderChecker, project: Project, paths: List<Path>) {
     runAndNotify(project) { checker.excludeProjectPaths(project, paths) }

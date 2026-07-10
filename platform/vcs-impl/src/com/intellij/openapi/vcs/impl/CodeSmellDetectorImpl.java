@@ -11,15 +11,14 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.CodeSmellDetector;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -40,14 +39,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemsViewImplementationChooserKt.isSplitProblemsViewKeyEnabled;
 import static com.intellij.openapi.vcs.impl.BackendCodeSmellsUtilsKt.showCodeSmellErrorsInFrontend;
 import static com.intellij.platform.vcs.impl.shared.CodeSmellToolWindowUtilKt.showCodeSmellsPanelInToolWindow;
 
 @ApiStatus.Internal
 public class CodeSmellDetectorImpl extends CodeSmellDetector {
-  private static final Key<Boolean> CODE_SMELL_DETECTOR_KEY = new Key<Boolean>("CODE_SMELL_DETECTOR_KEY");
-
   /**
    * Highlighting entries are also generated for tests failures (e.g., for JUnit line with failed 'assert...' can be highlighted).
    * However, it makes no sense to prevent commit for these kinds of warnings.
@@ -60,7 +56,6 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
   );
 
   private final Project myProject;
-  private static final Logger LOG = Logger.getInstance(CodeSmellDetectorImpl.class);
 
   public CodeSmellDetectorImpl(final Project project) {
     myProject = project;
@@ -161,5 +156,9 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
       return "[" + id + "] " + description;
     }
     return description;
+  }
+
+  private static boolean isSplitProblemsViewKeyEnabled() {
+    return Registry.is("problems.view.split.enabled", false);
   }
 }

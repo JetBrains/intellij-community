@@ -8,6 +8,7 @@
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.core"/>
     <module name="intellij.platform.vcs.log.graph"/>
   </dependencies>
   <!-- endregion -->

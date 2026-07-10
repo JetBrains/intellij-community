@@ -21,7 +21,7 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.EditorLockFreeTyping;
+import com.intellij.openapi.editor.elf.ElfFeatureFlag;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -503,7 +503,7 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
       try {
         isInContext = contextType.isInContext(templateActionContext);
       } catch (RuntimeException e) {
-        if (!EditorLockFreeTyping.isEnabled()) {
+        if (!ElfFeatureFlag.isEnabled()) {
           // TODO: PolyContextDiscoveryKt.forPsiLocation asserts for RA
           throw e;
         }

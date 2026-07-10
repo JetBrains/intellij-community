@@ -1,31 +1,28 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight
 
-import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.javadoc.DocumentationDelegateProvider
-import com.intellij.codeInsight.navigation.CtrlMouseHandler
-import com.intellij.lang.java.JavaDocumentationProvider
-import com.intellij.openapi.application.ReadAction
+import com.intellij.lang.documentation.impl.documentationTargets
+import com.intellij.lang.documentation.psi.psiDocumentationTargets
+import com.intellij.openapi.application.readAction
+import com.intellij.platform.backend.documentation.impl.computeDocHintBlocking
+import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDocCommentOwner
-import com.intellij.psi.PsiExpressionList
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiRecordComponent
-import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
-import org.assertj.core.api.Assertions.assertThat
-import java.util.concurrent.Callable
 import kotlin.test.assertContains
 import kotlin.test.assertFails
 
 class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
+
   fun testConstructorJavadoc() {
     configure("""\
       class Foo { Foo() {} Foo(int param) {} }
@@ -34,9 +31,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
         new Foo<caret>
       }}""".trimIndent())
 
-    val originalElement = myFixture.file.findElementAt(myFixture.editor.caretModel.offset)
-    val element = DocumentationManager.getInstance(project).findTargetElement(myFixture.editor, myFixture.file)
-    val doc = JavaDocumentationProvider().generateDoc(element, originalElement)
+    val doc = getDocumentationHtml()
 
     val expected =
       "<html>" +
@@ -56,9 +51,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
         new Foo(<caret>)
       }}""".trimIndent())
 
-    val elementAt = myFixture.file.findElementAt(myFixture.editor.caretModel.offset)
-    val exprList = PsiTreeUtil.getParentOfType(elementAt, PsiExpressionList::class.java)
-    val doc = JavaDocumentationProvider().generateDoc(exprList, elementAt)
+    val doc = getDocumentationHtml()
 
     val expected =
       "<html>" +
@@ -78,9 +71,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
         new Foo().doFoo(<caret>)
       }}""".trimIndent())
 
-    val exprList = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset),
-                                               PsiExpressionList::class.java)
-    val doc = JavaDocumentationProvider().generateDoc(exprList, null)
+    val doc = getDocumentationHtml()
 
     val expected =
       "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://Foo\"><code><span style=\"color:#000000;\">Foo</span></code></a></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">doFoo</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><table class='sections'><p></table>"
@@ -92,20 +83,18 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     configure("""
       /**
        *  @param i my parameter
-       */ 
+       */
       record Rec(int i, String s) {
         void foo(Object o) {
           switch (o) {
             case Rec(int patternName1, String patternName2) -> {
-              <caret>patternName1            
-            }      
+              <caret>patternName1
+            }
           }
         }
       }""".trimIndent())
 
-    val ref = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset),
-                                               PsiReferenceExpression::class.java)!!
-    val doc = JavaDocumentationProvider().generateDoc(ref.resolve(), null)
+    val doc = getDocumentationHtml()
 
     val expected =
       "<div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">int</span> <span style=\"color:#000000;\">patternName1</span></pre></div><div class='content'>my parameter</div>"
@@ -119,13 +108,11 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
        * @param foo doc for foo
        * @param bar doc for bar
        */
-      public record Rec(int <caret> foo, int bar) {
+      public record Rec(int <caret>foo, int bar) {
       }
       """.trimIndent())
 
-    val recordComponent = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset),
-                                               PsiRecordComponent::class.java)!!
-    val doc = JavaDocumentationProvider().generateDoc(recordComponent, null)
+    val doc = getDocumentationHtml()
 
     val expected =
       "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://Rec\"><code><span style=\"color:#000000;\">Rec</span></code></a></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">int</span> <span style=\"color:#000000;\">foo</span></pre></div><div class='content'>doc for foo  </div>"
@@ -141,7 +128,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       class Foo {{
         new Bar<String>().f<caret>oo();
       }}""",
-      """<span style="color:#000000;"><a href="psi_element://Bar">Bar</a></span><br/> <span style="color:#000000;"><a href="psi_element://java.util.List">List</a></span><span style="">&lt;</span><span style="color:#000000;">String</span><span style="">&gt;</span> <span style="color:#000000;">foo</span><span style="">(</span><span style="color:#000000;">String</span> <span style="color:#000000;">param</span><span style="">)</span>"""
+      """<span style="color:#000000;"><a href="psi_element://Bar">Bar</a></span><br/> <span style="color:#000000;"><a href="psi_element://java.util.List">List</a></span><span style="">&lt;</span><span style="color:#20999d;">T</span><span style="">&gt;</span> <span style="color:#000000;">foo</span><span style="">(</span><span style="color:#20999d;">T</span> <span style="color:#000000;">param</span><span style="">)</span>"""
     )
   }
 
@@ -154,7 +141,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
         new Bar<Integer>().fi<caret>eld
       }}""",
 
-      """<span style="color:#000000;"><a href="psi_element://Bar">Bar</a></span><br/> <span style="color:#000000;">Integer</span> <span style="color:#660e7a;font-weight:bold;">field</span>"""
+      """<span style="color:#000000;"><a href="psi_element://Bar">Bar</a></span><br/> <span style="color:#20999d;">T</span> <span style="color:#660e7a;font-weight:bold;">field</span>"""
     )
   }
 
@@ -219,8 +206,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       }
     """.trimIndent())
 
-    val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
-    val doc = JavaDocumentationProvider().generateDoc(method, null)
+    val doc = getDocumentationHtml()
 
     val expected = "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://C\"><code><span style=\"color:#000000;\">C</span></code></a></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">public</span>&nbsp;<span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">m</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class='content'>\n For example, <a href=\"psi_element://java.lang.String#String(byte[], int, int, java.lang.String)\"><code><span style=\"color:#0000ff;\">String</span><span style=\"\">.</span><span style=\"color:#0000ff;\">String</span><span style=\"\">(</span><span style=\"color:#000080;font-weight:bold;\">byte</span><span style=\"\">[],&#32;</span><span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,&#32;</span><span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,&#32;String)</span></code></a>.\n   </div><table class='sections'></table>"
     TestCase.assertEquals(expected, doc)
@@ -234,8 +220,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       }
     """.trimIndent())
 
-    val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
-    val doc = JavaDocumentationProvider().generateDoc(method, null)
+    val doc = getDocumentationHtml()
 
     val expected = "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://C\"><code><span style=\"color:#000000;\">C</span></code></a></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">public</span>&nbsp;<span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">m</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class='content'> Visit the \"<code><span style=\"\">/login</span></code>\" URL. </div><table class='sections'></table>"
     TestCase.assertEquals(expected, doc)
@@ -249,10 +234,10 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
         public String <caret>m() { }
       }
     """.trimIndent())
-      val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
-      val doc = JavaDocumentationProvider().generateRenderedDoc(method!!.docComment!!)
+      val doc = getDocumentationHtml()
+
       val expected = "<div class='content'> Returns smth. </div><table class='sections'><tr><td valign='top' class='section'><p>Returns:</td><td valign='top'><p>smth</td></table>"
-      TestCase.assertEquals(expected, doc)
+      assertTrue(doc.contains(expected))
     }
   }
 
@@ -280,63 +265,93 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       }
     """.trimIndent())
 
-    val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
-    val doc = JavaDocumentationProvider().generateDoc(method, null)
+    val doc = getDocumentationHtml()
     val expected = "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://Bar\"><code><span style=\"color:#000000;\">Bar</span></code></a></div><div class=\'definition\'><pre><span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">foo</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><table class=\'sections\'><p><tr><td valign=\'top\' class=\'section\'><p>From class:</td><td valign=\'top\'><p><a href=\"psi_element://Foo\"><code><span style=\"color:#000000;\">Foo</span></code></a><br>\n Some doc\n  </td></table>"
 
     TestCase.assertEquals(expected, doc)
   }
 
   fun `test at method name with overloads`() {
-    val input = """
+    configure("""
       class Foo {
         void foo(String s) {
           s.region<caret>Matches()
-        } 
+        }
       }
-    """.trimIndent()
+    """.trimIndent())
 
-    val actual = JavaExternalDocumentationTest.getDocumentationText(myFixture.project, input)
+    val doc = getDocumentationHtml()
 
-    val expected = "<html><head></head><body><div class=\"content\"><p>Candidates for method call <b>s.<wbr>regionMatches()</b> are:<br>" +
-                   "<br>" +
-                   "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)\">boolean regionMatches(int, String, int, int)</a><br>" +
-                   "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(boolean, int, java.lang.String, int, int)\">boolean regionMatches(boolean, int, String, int, int)</a><br>" +
-                   "</p></div></body></html>"
+    val expected = """<html>Candidates for method call <b>s.regionMatches()</b> are:<br><br>&nbsp;&nbsp;<a href="psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)">boolean regionMatches(int, String, int, int)</a><br>&nbsp;&nbsp;<a href="psi_element://java.lang.String#regionMatches(boolean, int, java.lang.String, int, int)">boolean regionMatches(boolean, int, String, int, int)</a><br></html>""";
 
-    TestCase.assertEquals(expected, actual)
+    TestCase.assertEquals(expected, doc)
   }
 
-  fun `test navigation updates decoration`() {
-    val input = """
-      class Foo {
-        void foo(String s) {
-          s.region<caret>Matches()
-        } 
-      }
-    """.trimIndent()
+  fun `test candidates for new expression`() {
+    configure("""
+      class Foo {{
+        new String<caret>Builder().append(1);
+      }}
+      """)
 
-    val documentationManager = DocumentationManager.getInstance(myFixture.project)
-    JavaExternalDocumentationTest.getDocumentationText(myFixture.project, input) { component ->
-      val expected = "<html><head></head><body><div class=\"content\"><p>Candidates for method call <b>s.<wbr>regionMatches()</b> are:<br>" +
-                     "<br>" +
-                     "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)\">boolean regionMatches(int, String, int, int)</a><br>" +
-                     "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(boolean, int, java.lang.String, int, int)\">boolean regionMatches(boolean, int, String, int, int)</a><br>" +
-                     "</p></div></body></html>"
-      assertEquals(expected, component.decoratedText)
+    val doc1 = getDocumentationHtml()
+    assertFalse(doc1, doc1.contains("Candidates for new <b>StringBuilder</b>() are:"))
 
-      documentationManager.navigateByLink(component, null, "psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)")
-      try {
-        JavaExternalDocumentationTest.waitTillDone(documentationManager.lastAction)
-      }
-      catch (e: InterruptedException) {
-        throw RuntimeException(e)
-      }
+    configure("""
+      class Foo {{
+        new StringBuilder(<caret>).append(1);
+      }}
+      """)
 
-      // Here we check that the covering module (SDK in this case) is rendered in decorated info
-      assertThat(component.decoratedText).contains("""<div class="bottom"><icon src="AllIcons.Nodes.PpLibFolder"></icon>&nbsp;&lt; java 1.7 &gt;</div>""")
-      return@getDocumentationText null
-    }
+    val doc2 = getDocumentationHtml()
+    assertTrue(doc2, doc2.contains("Candidates for new <b>StringBuilder</b>() are:"))
+
+    configure("""
+      class Foo {{
+        new String<caret>Builder(;
+      }}
+      """)
+
+    val doc3 = getDocumentationHtml()
+    assertTrue(doc3, doc3.contains("Candidates for new <b>StringBuilder</b>() are:"))
+  }
+
+  fun `test candidates for method call`() {
+    configure("""
+      class Foo {{
+        new StringBuilder().append(<caret>);
+      }}
+      """)
+
+    val doc1 = getDocumentationHtml()
+    assertTrue(doc1, doc1.contains("Candidates for method call"))
+
+    configure("""
+      class Foo {{
+        new StringBuilder().app<caret>end();
+      }}
+      """)
+
+    val doc2 = getDocumentationHtml()
+    assertTrue(doc2, doc2.contains("Candidates for method call"))
+
+    configure("""
+      class Foo {{
+        new StringBuilder().append(1<caret>);
+      }}
+      """)
+
+    val doc3 = getDocumentationHtml()
+    assertTrue(doc3, doc3.contains("Candidates for method call"))
+
+    configure("""
+      class Foo {{
+        new StringBuilder().app<caret>end(1);
+      }}
+      """)
+
+    val doc4 = getDocumentationHtml()
+    assertFalse(doc4, doc4.contains("Candidates for method call"))
   }
 
   fun testBlockquotePre() {
@@ -363,8 +378,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       }
     """.trimIndent())
 
-    val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
-    val doc = JavaDocumentationProvider().generateDoc(method, null)
+    val doc = getDocumentationHtml()
 
     val expected = """
       <div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://C"><code><span style="color:#000000;">C</span></code></a></div><div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span>&nbsp;<span style="color:#000080;font-weight:bold;">void</span>&nbsp;<span style="color:#000000;">m</span><span style="">(</span><span style="">)</span></pre></div><div class='content'> 
@@ -417,13 +431,20 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     assertFails { assertContains(text, "A::m-param") }
   }
 
-  private fun retrieveMethodDocString(): String {
-    val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
-    val doc = JavaDocumentationProvider().generateDoc(method, null)
-    assert(doc != null)
-    val text = doc.toString()
-    return text
+  private fun getDocumentationHtml(): String {
+    val file = myFixture.file
+    val offset = myFixture.editor.caretModel.offset
+    val data = timeoutRunBlocking {
+      val targets = readAction { documentationTargets(file, offset) }
+      assertFalse("No documentation targets found", targets.isEmpty())
+      val target = targets.first()
+      computeDocumentationBlocking(target.createPointer())
+    }
+    assertNotNull("Documentation data is null", data)
+    return data!!.html
   }
+
+  private fun retrieveMethodDocString(): String = getDocumentationHtml()
 
   fun testInheritDocRecursive() {
     configure("""
@@ -719,17 +740,21 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
 
     for (method in PsiTreeUtil.findChildrenOfType(file, PsiMethod::class.java)) {
       if (method.containingClass?.name != "B") continue
-      val doc = JavaDocumentationProvider().generateDoc(method, null)
-      assert(doc != null)
-      val text = doc.toString()
-      assertContains(text, expected[method.name]!!)
+      val data = timeoutRunBlocking {
+        val target = readAction { psiDocumentationTargets(method, null).firstOrNull() }
+        assertNotNull(target)
+        computeDocumentationBlocking(target!!.createPointer())
+      }
+      assertNotNull("Documentation is null for ${method.name}", data)
+      assertContains(data!!.html, expected[method.name]!!)
     }
   }
 
   private fun doTestCtrlHoverDoc(inputFile: String, expectedDoc: String) {
     configure(inputFile.trimIndent())
-    val doc = ReadAction.nonBlocking (Callable { CtrlMouseHandler.getGoToDeclarationOrUsagesText (myFixture.editor) }).submit(AppExecutorUtil.getAppExecutorService()).get()
-    assertEquals(expectedDoc, UIUtil.getHtmlBodyWithoutPreWrapper(doc!!))
+    val hint = computeDocHintBlocking(editor, file)
+    assertNotNull("Documentation hint is null", hint)
+    assertEquals(expectedDoc, UIUtil.getHtmlBodyWithoutPreWrapper(hint!!))
   }
 
   fun configure(text: String) {

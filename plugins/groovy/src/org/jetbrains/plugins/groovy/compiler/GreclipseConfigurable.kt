@@ -24,7 +24,7 @@ class GreclipseConfigurable(val settings: GreclipseSettings) : Configurable {
   val panel: DialogPanel = panel {
     group(GroovyBundle.message("configurable.greclipse.border.title")) {
       row(GroovyBundle.message("configurable.greclipse.path.label")) {
-        textFieldWithBrowseButton(createSingleLocalFileDescriptor().withTitle(message("configurable.greclipse.path.chooser.description")))
+        textFieldWithBrowseButton(createSingleLocalFileDescriptor().withTitle(message("configurable.greclipse.path.chooser.description")).withEnvironmentRestricted(true))
           .align(AlignX.FILL)
           .bindText(settings::greclipsePath)
       }

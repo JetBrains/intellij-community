@@ -1,5 +1,5 @@
 // "Create class 'Foo'" "true"
-// K2_ERROR: Unresolved reference 'Foo'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 fun test() {
     <caret>Foo(2, "2")

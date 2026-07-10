@@ -74,10 +74,43 @@ public abstract class PopupHandler extends MouseAdapter {
     installPopupMenu(component, groupId, place);
   }
 
-  public static @NotNull PopupHandler installPopupMenu(@NotNull JComponent component,
-                                                       @NotNull String groupId,
-                                                       @NotNull String place) {
-    return installPopupMenu(component, place, null, null, am -> {
+  /**
+   * Installs the popup menu on the given component.
+   * 
+   * @param component the component to install the menu on
+   * @param groupId the action group ID used to populate the menu
+   * @param place the action place that will be used to update and perform actions
+   * @return the installed popup handler
+   */
+  public static @NotNull PopupHandler installPopupMenu(
+    @NotNull JComponent component,
+    @NotNull String groupId,
+    @NotNull String place
+  ) {
+    return installPopupMenu(component, component, groupId, place);
+  }
+
+  /**
+   * Installs the popup menu on the given component.
+   * <p>
+   *   This overload allows to install the menu on one component, but use another one as the target component for the actions.
+   *   It can be useful, for example, if one component should handle right clicks, but the actions should be performed on another component nearby.
+   *   Or, for example, if the component handling right clicks can change its visibility while the menu is being shown.
+   *   Then it would stop working if the same component is the target component, so using a target component with permanent visibility can help.
+   * </p>
+   *
+   * @param component the component to install the menu on
+   * @param groupId the action group ID used to populate the menu
+   * @param place the action place that will be used to update and perform actions
+   * @return the installed popup handler
+   */
+  public static @NotNull PopupHandler installPopupMenu(
+    @NotNull JComponent component,
+    @NotNull JComponent targetComponent,
+    @NotNull String groupId,
+    @NotNull String place
+  ) {
+    return installPopupMenu(component, targetComponent, place, null, null, am -> {
       AnAction action = am.getAction(groupId);
       if (action instanceof ActionGroup) {
         return (ActionGroup)action;
@@ -117,11 +150,24 @@ public abstract class PopupHandler extends MouseAdapter {
     return installPopupMenu(component, place, actionManager, null, _ -> group);
   }
 
-  private static @NotNull PopupHandler installPopupMenu(@NotNull JComponent component,
-                                                        @NotNull String place,
-                                                        @Nullable ActionManager actionManager,
-                                                        @Nullable PopupMenuListener menuListener,
-                                                        @NotNull Function<? super ActionManager, ? extends ActionGroup> group) {
+  private static @NotNull PopupHandler installPopupMenu(
+    @NotNull JComponent component,
+    @NotNull String place,
+    @Nullable ActionManager actionManager,
+    @Nullable PopupMenuListener menuListener,
+    @NotNull Function<? super ActionManager, ? extends ActionGroup> group
+  ) {
+    return installPopupMenu(component, component, place, actionManager, menuListener, group);
+  }
+
+  private static @NotNull PopupHandler installPopupMenu(
+    @NotNull JComponent component,
+    @NotNull JComponent targetComponent,
+    @NotNull String place,
+    @Nullable ActionManager actionManager,
+    @Nullable PopupMenuListener menuListener,
+    @NotNull Function<? super ActionManager, ? extends ActionGroup> group
+  ) {
     if (ApplicationManager.getApplication() == null) {
       return EMPTY_HANDLER;
     }
@@ -133,7 +179,7 @@ public abstract class PopupHandler extends MouseAdapter {
         ActionGroup actionGroup = group.apply(manager);
         if (actionGroup == null) return;
         ActionPopupMenu popupMenu = manager.createActionPopupMenu(place, actionGroup);
-        popupMenu.setTargetComponent(component);
+        popupMenu.setTargetComponent(targetComponent);
         JPopupMenu menu = popupMenu.getComponent();
         if (menuListener != null) {
           menu.addPopupMenuListener(menuListener);

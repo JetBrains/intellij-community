@@ -58,13 +58,23 @@ class SingleRootInjectedFileViewProvider extends SingleRootFileViewProvider impl
   }
 
   @Override
-  public boolean isEventSystemEnabled() {
-    return isEventSystemEnabledImpl();
+  public final boolean isEventSystemEnabled() {
+    return supportsSendingPsiEvents();
   }
 
   @Override
-  public boolean isPhysical() {
-    return myOverrideIsPhysical && isPhysicalImpl();
+  public boolean supportsSendingPsiEvents() {
+    return supportsSendingPsiEventsImpl();
+  }
+
+  @Override
+  public final boolean isPhysical() {
+    return correspondsToRealFile();
+  }
+
+  @Override
+  public boolean correspondsToRealFile() {
+    return myOverrideIsPhysical && correspondsToRealFileImpl();
   }
 
   @Override
@@ -74,7 +84,7 @@ class SingleRootInjectedFileViewProvider extends SingleRootFileViewProvider impl
 
   @Override
   public @NonNls String toString() {
-    return "Single root injected file '"+getVirtualFile().getName()+"' " + (isValid() ? "" : " invalid") + (isPhysical() ? "" : " nonphysical");
+    return "Single root injected file '"+getVirtualFile().getName()+"' " + (isValid() ? "" : " invalid") + (correspondsToRealFile() ? "" : " nonphysical");
   }
 
   public void doNotInterruptMeWhileImPatchingLeaves(@NotNull Runnable runnable) {

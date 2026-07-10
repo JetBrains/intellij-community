@@ -1,6 +1,6 @@
 class Foo:
     def __init__(self):
-        self.s = ""
+        self.l = ""
         self.str = ""
 
     def bar(self):

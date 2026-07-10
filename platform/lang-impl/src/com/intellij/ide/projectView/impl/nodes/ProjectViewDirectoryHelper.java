@@ -75,6 +75,10 @@ public class ProjectViewDirectoryHelper {
   }
 
   public @Nullable String getLocationString(@NotNull PsiDirectory psiDirectory, boolean includeUrl, boolean includeRootType) {
+    return getLocationString(psiDirectory, includeUrl, includeRootType, true);
+  }
+
+  public @Nullable String getLocationString(@NotNull PsiDirectory psiDirectory, boolean includeUrl, boolean includeRootType, boolean includeModuleAdditionalInfo) {
     StringBuilder result = new StringBuilder();
 
     final VirtualFile directory = psiDirectory.getVirtualFile();
@@ -353,7 +357,7 @@ public class ProjectViewDirectoryHelper {
                                            boolean withSubDirectories,
                                            @Nullable PsiFileSystemItemFilter filter) {
     for (PsiElement child : children) {
-      LOG.assertTrue(child.isValid());
+      assertChildIsValid(psiDir, child, viewSettings);
 
       if (!(child instanceof PsiFileSystemItem)) {
         LOG.error("Either PsiFile or PsiDirectory expected as a child of " + child.getParent() + ", but was " + child);
@@ -387,6 +391,41 @@ public class ProjectViewDirectoryHelper {
         }
       }
     }
+  }
+
+  private void assertChildIsValid(@NotNull PsiDirectory psiDir, @NotNull PsiElement child, @NotNull ViewSettings viewSettings) {
+    if (!child.isValid()) {
+      reportInvalidChild(psiDir, child, viewSettings);
+    }
+  }
+
+  private void reportInvalidChild(@NotNull PsiDirectory psiDir, @NotNull PsiElement child, @NotNull ViewSettings viewSettings) {
+    if(child.isValid()) return;
+
+    LOG.error("Invalid PSI child in Project View directory children: " +
+              ", child: " + child +
+              " {child.class: " + child.getClass().getName() + "}, " +
+              ", child.virtualFile: " + getVirtualFileInfo(child) +
+              ", parent: " + psiDir +
+              ", parent.valid: " + psiDir.isValid() +
+              ", parent.virtualFile: " + getVirtualFileInfo(psiDir.getVirtualFile()) +
+              ", parent.shouldBeShown: " + shouldBeShown(psiDir.getVirtualFile(), viewSettings) +
+              ", settings: " + getSettingsInfo(viewSettings)
+    );
+  }
+
+  private static @NotNull String getVirtualFileInfo(@NotNull PsiElement element) {
+    return element instanceof PsiFileSystemItem item ? getVirtualFileInfo(item.getVirtualFile()) : "n/a";
+  }
+
+  private static @NotNull String getVirtualFileInfo(@Nullable VirtualFile file) {
+    return file == null ? "null" : file + " (valid=" + file.isValid() + ", directory=" + file.isDirectory() + ")";
+  }
+
+  private static @NotNull String getSettingsInfo(@NotNull ViewSettings settings) {
+    return "flattenPackages=" + settings.isFlattenPackages() +
+           ", hideEmptyMiddlePackages=" + settings.isHideEmptyMiddlePackages() +
+           ", showExcludedFiles=" + shouldShowExcludedFiles(settings);
   }
 
   // used only in flatten packages mode

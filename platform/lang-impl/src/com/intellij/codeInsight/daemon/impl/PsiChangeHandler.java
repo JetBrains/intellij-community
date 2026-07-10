@@ -42,6 +42,7 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -67,18 +68,19 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
   PsiChangeHandler(@NotNull Project project,
                    @NotNull FileStatusMap fileStatusMap,
                    @NotNull Disposable parentDisposable,
+                   @NotNull CoroutineScope coroutineScope,
                    @NotNull Predicate<? super Document> isDocumentWorthBothering) {
     myProject = project;
     myFileStatusMap = fileStatusMap;
     myIsDocumentWorthBothering = isDocumentWorthBothering;
-    DocumentAfterCommitListener.listen(project, parentDisposable, document -> updateChangesForDocumentOnCommit(document));
+    myUpdateFileStatusAlarm = new Alarm(coroutineScope, Alarm.ThreadToUse.POOLED_THREAD);
+    DocumentAfterCommitListener.listen(project, parentDisposable, coroutineScope, document -> updateChangesForDocumentOnCommit(document));
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(ProjectDisposeAwareDocumentListener.create(project, new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent event) {
         myFileStatusMap.addDocumentCompositeDirtyRange(event);
       }
     }), parentDisposable);
-    myUpdateFileStatusAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
     PsiManager.getInstance(project).addPsiTreeChangeListener(this, parentDisposable);
   }
 
@@ -297,7 +299,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
       return false;
     }
 
-    if (!psiFile.getViewProvider().isPhysical()) {
+    if (!psiFile.getViewProvider().correspondsToRealFile()) {
       return myFileStatusMap.markWholeFileScopeDirty(document, "Non-physical file update: " + psiFile);
     }
 

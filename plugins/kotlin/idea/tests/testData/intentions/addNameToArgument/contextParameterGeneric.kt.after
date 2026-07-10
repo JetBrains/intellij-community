@@ -3,10 +3,10 @@
 // INTENTION_TEXT: "Add 'x =' to argument"
 // AFTER-WARNING: Parameter 'x' is never used
 // AFTER-WARNING: Parameter 'a' is never used
+// K2_ERROR: ARGUMENT_PASSED_TWICE
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: NO_CONTEXT_ARGUMENT
 
-// K2_ERROR: Argument already passed for this parameter.
-// K2_ERROR: Argument type mismatch: actual type is 'List<String>', but 'String' was expected.
-// K2_ERROR: No context argument for 'x: List<String>' found.
 
 context(x: List<String>)
 fun foo(a: String): String = a

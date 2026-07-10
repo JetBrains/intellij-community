@@ -98,10 +98,14 @@ import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.Maybe;
+import kotlin.jvm.functions.Function1;
+import kotlin.jvm.functions.Function2;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -650,14 +654,15 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return ContainerUtil.toArray(result, factory);
   }
 
-  private static class NameFinder<T extends PyElement> implements Processor<T> {
+  @ApiStatus.Internal
+  public static class NameFinder<T extends PyElement> implements Processor<T> {
     private final @NotNull TypeEvalContext myContext;
     private T myResult;
     private final String[] myNames;
     private int myLastResultIndex = -1;
     private PyClass myLastVisitedClass = null;
 
-    NameFinder(@NotNull TypeEvalContext context, String... names) {
+    public NameFinder(@NotNull TypeEvalContext context, String... names) {
       myContext = context;
       myNames = names;
       myResult = null;
@@ -736,6 +741,14 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     if (name == null) return null;
     NameFinder<PyFunction> proc = new NameFinder<>(notNullizeContext(context), name);
     visitMethods(proc, inherited, context);
+    return proc.getResult();
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public PyFunction findMethodInImplementations(final String name, @Nullable TypeEvalContext context) {
+    var proc = new NameFinder<PyFunction>(notNullizeContext(context), name);
+    visitImplementationMethods(this, proc, context);
     return proc.getResult();
   }
 
@@ -1118,6 +1131,17 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return true;
   }
 
+  private static boolean visitImplementationMethods(PyClass self, Processor<? super PyFunction> proc, @Nullable TypeEvalContext context) {
+    if (!ContainerUtil.process(self.getMethods(), proc)) return false;
+    for (PyClass ancestor : self.getAncestorClasses(context)) {
+      var implementation = PyiUtil.getOriginalElementOrLeaveAsIs(ancestor, PyClass.class);
+      if (!visitImplementationMethods(implementation, proc, context)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public boolean visitNestedClasses(Processor<? super PyClass> processor, boolean inherited) {
     PyClass[] nestedClasses = getNestedClasses();
     if (!ContainerUtil.process(nestedClasses, processor)) return false;
@@ -1327,6 +1351,14 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         }
 
         @Override
+        public void visitPyTypeDeclarationStatement(@NotNull PyTypeDeclarationStatement node) {
+          final PyExpression target = node.getTarget();
+          if (target instanceof PyTargetExpression) {
+            result.add((PyTargetExpression)target);
+          }
+        }
+
+        @Override
         public void visitPyWithStatement(@NotNull PyWithStatement node) {
           StreamEx
             .of(node.getWithItems())
@@ -1523,7 +1555,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return PyUtil.getParameterizedCachedValue(this, context, this::doGetSuperClassTypes);
   }
 
-  private @NotNull List<PyClassLikeType> doGetSuperClassTypes(@NotNull TypeEvalContext context) {
+  private @NotNull List<@Nullable PyClassLikeType> doGetSuperClassTypes(@NotNull TypeEvalContext context) {
     final List<PyClassLikeType> result = new ArrayList<>();
 
     // In some cases stub may not provide all information, so we use stubs only if AST access is disabled
@@ -1545,7 +1577,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return result;
   }
 
-  private void fillSuperClassesSwitchingToAst(@NotNull TypeEvalContext context, List<PyClassLikeType> result) {
+  private void fillSuperClassesSwitchingToAst(@NotNull TypeEvalContext context, List<@Nullable PyClassLikeType> result) {
     for (PyExpression expression : getUnfoldedSuperClassExpressions(this)) {
       final PyType type = context.getType(expression);
       PyClassLikeType classLikeType = null;

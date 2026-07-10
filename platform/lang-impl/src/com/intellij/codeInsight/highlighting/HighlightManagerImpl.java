@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -78,8 +79,7 @@ public final class HighlightManagerImpl extends HighlightManager {
 
   public @NotNull RangeHighlighter @NotNull [] getHighlighters(@NotNull Editor editor) {
     Set<RangeHighlighter> highlighters = getEditorHighlighters(editor, false);
-    if (highlighters == null) return RangeHighlighter.EMPTY_ARRAY;
-    return highlighters.toArray(RangeHighlighter.EMPTY_ARRAY);
+    return highlighters == null ? RangeHighlighter.EMPTY_ARRAY : highlighters.toArray(RangeHighlighter.EMPTY_ARRAY);
   }
 
   @Override
@@ -163,7 +163,7 @@ public final class HighlightManagerImpl extends HighlightManager {
                                              int end,
                                              @Nullable TextAttributes forcedAttributes,
                                              @Nullable TextAttributesKey attributesKey,
-                                             int flags,
+                                             @HideFlags int flags,
                                              @Nullable Collection<? super RangeHighlighter> outHighlighters,
                                              @Nullable Color scrollMarkColor) {
     MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
@@ -265,22 +265,12 @@ public final class HighlightManagerImpl extends HighlightManager {
                                       @NotNull TextAttributesKey attributesKey,
                                       boolean hideByTextChange,
                                       @Nullable Collection<? super RangeHighlighter> outHighlighters) {
-    addOccurrenceHighlights(editor, elements, null, attributesKey, hideByTextChange, outHighlighters);
-  }
-
-  private void addOccurrenceHighlights(@NotNull Editor editor,
-                                      PsiElement @NotNull [] elements,
-                                      @Nullable TextAttributes attributes,
-                                      @Nullable TextAttributesKey attributesKey,
-                                      boolean hideByTextChange,
-                                      @Nullable Collection<? super RangeHighlighter> outHighlighters) {
     if (elements.length == 0 || editor instanceof ImaginaryEditor) return;
     int flags = HIDE_BY_ESCAPE;
     if (hideByTextChange) {
       flags |= HIDE_BY_TEXT_CHANGE;
     }
 
-    Color scrollMarkColor = getScrollMarkColor(attributes, editor.getColorsScheme());
     editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
 
     for (PsiElement element : elements) {
@@ -289,7 +279,7 @@ public final class HighlightManagerImpl extends HighlightManager {
       addOccurrenceHighlight(editor,
                              trimOffsetToDocumentSize(editor, range.getStartOffset()),
                              trimOffsetToDocumentSize(editor, range.getEndOffset()),
-                             attributes, attributesKey, flags, outHighlighters, scrollMarkColor);
+                             null, attributesKey, flags, outHighlighters, null);
     }
   }
 
@@ -369,9 +359,10 @@ public final class HighlightManagerImpl extends HighlightManager {
     }
 
     private void requestHideHighlights(@NotNull DataContext dataContext) {
-      final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-      if (editor == null) return;
-      hideHighlights(editor, HIDE_BY_ANY_KEY);
+      Editor editor = ReadAction.computeBlocking(() -> CommonDataKeys.EDITOR.getData(dataContext));
+      if (editor != null) {
+        hideHighlights(editor, HIDE_BY_ANY_KEY);
+      }
     }
   }
 }

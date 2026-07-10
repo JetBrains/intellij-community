@@ -155,16 +155,6 @@ private val KNOWN_KOTLIN_PLUGIN_IDS = Java11Shim.INSTANCE.copyOf(listOf(
   "org.jetbrains.kotlin.native.appcode"
 ))
 
-fun isKotlinPlugin(pluginId: String): Boolean = pluginId in KNOWN_KOTLIN_PLUGIN_IDS
-
-private val K2_ALLOWED_PLUGIN_IDS = Java11Shim.INSTANCE.copyOf(KNOWN_KOTLIN_PLUGIN_IDS + listOf(
-  "org.jetbrains.android",
-  "androidx.compose.plugins.idea",
-  "com.jetbrains.kmm",
-  "com.jetbrains.kotlin.ocswift",
-  "com.jetbrains.rider.android"
-))
-
 private fun readRootElementChild(
   consumer: PluginDescriptorFromXmlStreamConsumer,
   reader: XMLStreamReader2,
@@ -842,22 +832,14 @@ private fun readInclude(
       PluginXmlConst.INCLUDE_HREF_ATTR -> path = getNullifiedAttributeValue(reader, i)
       PluginXmlConst.INCLUDE_XPOINTER_ATTR -> pointer = reader.getAttributeValue(i)?.takeIf { !it.isEmpty() && it != allowedPointer }
       PluginXmlConst.INCLUDE_INCLUDE_IF_ATTR -> {
-        LOG.warn("includeIf attribute support is deprecated and is planned for removal in 26.3 version IJPL-215563 (plugin id=${builder.id}, location=${reader.location})")
-        checkConditionalIncludeIsSupported("includeIf", builder)
-        val value = reader.getAttributeValue(i)?.let { System.getProperty(it) }
-        if (value != "true") {
-          reader.skipElement()
-          return
-        }
+        LOG.warn("includeIf attribute support is disabled and has no effect anymore IJPL-215563 (plugin id=${builder.id}, location=${reader.location})")
+        reader.skipElement()
+        return
       }
       PluginXmlConst.INCLUDE_INCLUDE_UNLESS_ATTR -> {
-        LOG.warn("includeUnless attribute support is deprecated and is planned for removal in 26.3 version IJPL-215563 (plugin id=${builder.id}, location=${reader.location})")
-        checkConditionalIncludeIsSupported("includeUnless", builder)
-        val value = reader.getAttributeValue(i)?.let { System.getProperty(it) }
-        if (value == "true") {
-          reader.skipElement()
-          return
-        }
+        LOG.warn("includeUnless attribute support is disabled and has no effect anymore IJPL-215563 (plugin id=${builder.id}, location=${reader.location})")
+        reader.skipElement()
+        return
       }
       else -> throw RuntimeException("Unknown attribute ${reader.getAttributeLocalName(i)} (${reader.location})")
     }
@@ -913,12 +895,6 @@ private fun readInclude(
   }
 }
 
-private fun checkConditionalIncludeIsSupported(attribute: String, builder: PluginDescriptorBuilder) {
-  if (builder.id !in K2_ALLOWED_PLUGIN_IDS) {
-    throw IllegalArgumentException("$attribute of 'include' is not supported")
-  }
-}
-
 private var dateTimeFormatter: DateTimeFormatter? = null
 
 private object PluginParser
@@ -933,7 +909,6 @@ private fun parseReleaseDate(dateString: String): LocalDate? {
 
   var formatter = dateTimeFormatter
   if (formatter == null) {
-    @Suppress("SpellCheckingInspection")
     formatter = DateTimeFormatter.ofPattern("yyyyMMdd", Locale.US)!!
     dateTimeFormatter = formatter
   }
@@ -957,10 +932,8 @@ private fun readListeners(reader: XMLStreamReader2, containerDescriptor: ScopedE
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
         PluginXmlConst.LISTENER_OS_ATTR -> os = readOSValue(reader.getAttributeValue(i))
-        PluginXmlConst.LISTENER_CLASS_ATTR -> listenerClassName = getNullifiedAttributeValue(
-          reader, i)
-        PluginXmlConst.LISTENER_TOPIC_ATTR -> topicClassName = getNullifiedAttributeValue(
-          reader, i)
+        PluginXmlConst.LISTENER_CLASS_ATTR -> listenerClassName = getNullifiedAttributeValue(reader, i)
+        PluginXmlConst.LISTENER_TOPIC_ATTR -> topicClassName = getNullifiedAttributeValue(reader, i)
         PluginXmlConst.LISTENER_ACTIVE_IN_TEST_MODE_ATTR -> activeInTestMode = reader.getAttributeAsBoolean(i)
         PluginXmlConst.LISTENER_ACTIVE_IN_HEADLESS_MODE_ATTR -> activeInHeadlessMode = reader.getAttributeAsBoolean(i)
       }

@@ -74,8 +74,8 @@ internal class LspDocumentListener : DocumentListener {
         if (data.clientsToSendDidOpen.isEmpty()) return@finishOnUiThread
 
         WriteAction.run<RuntimeException> {
-          data.clientsToSendDidOpen.forEach { serverAndFile: Pair<LspClientImpl, VirtualFile> ->
-            serverAndFile.first.documentSyncManager.open(serverAndFile.second)
+          data.clientsToSendDidOpen.forEach { clientAndFile: Pair<LspClientImpl, VirtualFile> ->
+            clientAndFile.first.documentSyncManager.open(clientAndFile.second)
           }
         }
       }

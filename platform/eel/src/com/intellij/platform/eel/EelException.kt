@@ -4,6 +4,12 @@ package com.intellij.platform.eel
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
+/**
+ * An [IOException] that carries a typed [EelError].
+ *
+ * It bridges EEL's [EelResult]-style errors into the exception world and itself implements [EelError] (delegating to [error]), so it
+ * can be used wherever an [EelError] is expected.
+ */
 @ApiStatus.NonExtendable
 @ApiStatus.Experimental
 abstract class EelException(open val error: EelError) : IOException(error.toString()), EelError by error {
@@ -11,6 +17,7 @@ abstract class EelException(open val error: EelError) : IOException(error.toStri
     initCause(cause)
   }
 
+  /** An [EelException] with no specific error ([EelError.Unknown]). */
   @ApiStatus.Experimental
   class Unknown : EelException {
     constructor() : super(EelError.Unknown)

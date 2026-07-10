@@ -11,16 +11,20 @@
     <module name="intellij.java.execution"/>
     <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.impl"/>
-    <module name="intellij.java.xml.dom.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
     <module name="intellij.java.ui"/>
+    <module name="intellij.java.xml.dom.impl"/>
     <module name="intellij.platform.buildScripts.downloader"/>
     <module name="intellij.platform.testRunner"/>
     <module name="intellij.properties.backend"/>
     <module name="intellij.properties.backend.psi"/>
     <module name="intellij.properties.psi"/>
     <module name="intellij.spellchecker"/>
+    <module name="intellij.xml.analysis"/>
+    <module name="intellij.xml.dom"/>
+    <module name="intellij.xml.dom.impl"/>
+    <module name="intellij.xml.impl"/>
   </dependencies>
   <!-- endregion -->
 
@@ -507,7 +511,6 @@
 
     <dependencyCollector kind="java" implementation="org.jetbrains.idea.maven.project.MavenDependencyCollector"/>
     <dependencyCollector kind="maven-packaging" implementation="org.jetbrains.idea.maven.project.MavenPackagingDependencyCollector"/>
-    <dependencyCollector kind="maven-version-support" implementation="org.jetbrains.idea.maven.maven2.Maven2VersionDependencyCollector"/>
 
     <newProjectWizard.java.buildSystem implementation="org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizard"/>
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.idea.maven.MavenCommandLineInspectionProjectConfigurator"/>

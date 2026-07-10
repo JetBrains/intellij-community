@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.execution.util.EnvVariablesTable;
@@ -42,14 +42,13 @@ public class EnvironmentUtilTest {
   }
 
   @Test void testPath() {
-    var escaped = File.pathSeparator.equals(";") ? "\\;" : File.pathSeparator;
-    var list = substitute("PATH=/foo/bar" + escaped + "$PATH$", "PATH=/hey");
-    assertEquals("/foo/bar" + File.pathSeparator + "/hey", list.get(0));
+    var list = substitute("PATH=\"/foo/bar" + File.pathSeparator + "$PATH$\"", "PATH=/hey");
+    assertEquals("/foo/bar" + File.pathSeparator + "/hey", list.getFirst());
   }
 
   @Test void testParentFoo() {
     var list = substitute("BAR=$FOO$", "FOO=/hey");
-    assertEquals("/hey", list.get(0));
+    assertEquals("/hey", list.getFirst());
   }
 
   @Test void testFooBar() {
@@ -69,7 +68,7 @@ public class EnvironmentUtilTest {
   public void testWindowsCaseInsensitive() {
     assumeWindows();
 
-    List<String> list = substitute("FIRST=$foo$;SECOND=$FOO$;THIRD=$fOo$", "FOo=/hey");
+    var list = substitute("FIRST=$foo$;SECOND=$FOO$;THIRD=$fOo$", "FOo=/hey");
     assertEquals("/hey", list.get(0));
     assertEquals("/hey", list.get(1));
     assertEquals("/hey", list.get(2));

@@ -23,14 +23,14 @@ internal class CommandCompletionContributor : CompletionContributor(), DumbAware
       val commandCompletionService = parameters.position.project.service<CommandCompletionService>()
       val factory = commandCompletionService.getFactory(parameters.originalFile.language) ?: return false
 
-      val commandType = findCommandCompletionType(
+      findCommandCompletionType(
         factory = factory,
         isNonWritten = !parameters.originalFile.isWritable,
         offset = parameters.editor.caretModel.offset,
         editor = parameters.editor
       ) ?: return false
 
-      return !(commandType is InvocationCommandType.FullSuffix && factory.supportFiltersWithDoublePrefix())
+      return true
     }
     catch (e: Throwable) {
       rethrowControlFlowException(e)

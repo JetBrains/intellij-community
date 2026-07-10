@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import org.eclipse.lsp4j.DidCloseTextDocumentParams
 import org.eclipse.lsp4j.TextDocumentSyncKind
 import java.util.Collections
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Sends document lifecycle notifications (didOpen, didChange, didSave, didClose) and tracks which files are open on the server.
@@ -33,6 +34,7 @@ import java.util.Collections
 internal class LspDocumentSyncManager(private val client: LspClientImpl) {
 
   private val openedFiles: MutableSet<VirtualFile> = Collections.synchronizedSet(HashSet())
+  private val disposed = AtomicBoolean(false)
 
   val openedFileCount: Int get() = openedFiles.size
 
@@ -43,14 +45,20 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
 
   fun forEachOpenedFile(action: (VirtualFile) -> Unit) = openedFiles.forEach(action)
 
-  fun clearOpenedFiles() {
+  fun dispose() {
     openedFiles.clear()
+    disposed.set(true)
   }
 
   @RequiresWriteLock
   fun open(file: VirtualFile) {
     if (client.state != LspServerState.Running) {
-      client.logError("Server is not in the Running state. Ignoring open($file)")
+      // Error should not be logged if the sync manager is disposed of, as the server state
+      // and thus sync manager state might have changed just after entering `open` method
+      // and caller is not able to sync on the server state
+      if (!disposed.get()) {
+        client.logError("Server is not in the Running state. Ignoring open($file)")
+      }
       return
     }
 
@@ -74,7 +82,12 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
   @RequiresWriteLock
   fun close(file: VirtualFile) {
     if (!openedFiles.remove(file)) {
-      client.logError("close() cannot be called for files that haven't been opened. Ignoring: $file")
+      // Error should not be logged if the sync manager is disposed of, as the server state
+      // and thus sync manager state might have changed just after entering `open` method
+      // and caller is not able to sync on the server state
+      if (!disposed.get()) {
+        client.logError("close() cannot be called for files that haven't been opened. Ignoring: $file")
+      }
       return
     }
 
@@ -148,7 +161,7 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
     val didSaveOptions = client.getDidSaveOptions(file) ?: return
     val manager = LspClientManagerImpl.getInstanceImpl(client.project)
     manager.cs.launch {
-      // Using `readAction` guarantees that the write action in which `beforeDocumentSaving()` was called has finished,
+      // Using `readAction` guarantees that the write action in which calling `beforeDocumentSaving()` was called has finished,
       // so the file has been physically saved, therefore it's now good time to send `textDocument/didSave`
       readAction {
         client.documentMapping.getAdapterForFile(file).sendDidSave(client, file, document, didSaveOptions.includeText == true)

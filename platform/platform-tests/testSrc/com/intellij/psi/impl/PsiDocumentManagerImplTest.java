@@ -231,7 +231,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   private static void changeDocument(Document document, PsiDocumentManagerImpl manager) {
-    DocumentEventImpl event = new DocumentEventImpl(document, 0, "", "", document.getModificationStamp(), false, 0, 0, 0);
+    DocumentEventImpl event = new DocumentEventImpl(document, 0, "", "", document.getModificationStamp(), false, 0, 0, 0, document.getTextLength());
     manager.beforeDocumentChange(event);
     manager.documentChanged(event);
   }
@@ -730,12 +730,12 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
 
     PsiFile original = getPsiManager().findFile(getVirtualFile(createTempFile("X.txt", "")));
     assertNotNull(original);
-    assertTrue(original.getViewProvider().isEventSystemEnabled());
+    assertTrue(original.getViewProvider().supportsSendingPsiEvents());
 
     long modCount = getPsiManager().getModificationTracker().getModificationCount();
 
     PsiFile copy = (PsiFile)original.copy();
-    assertFalse(copy.getViewProvider().isEventSystemEnabled());
+    assertFalse(copy.getViewProvider().supportsSendingPsiEvents());
 
     Document document = copy.getViewProvider().getDocument();
     assertNotNull(document);

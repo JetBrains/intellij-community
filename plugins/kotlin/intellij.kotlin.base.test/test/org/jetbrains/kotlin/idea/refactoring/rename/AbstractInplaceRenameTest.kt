@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.refactoring.rename.handlers.RenameKotlinImplici
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.createTextEditorBasedDataContext
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
@@ -37,65 +38,68 @@ abstract class AbstractInplaceRenameTest : KotlinLightCodeInsightFixtureTestCase
             IgnoreTests.DIRECTIVES.IGNORE_K2,
             directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
         ) {
-            doTestWithoutIgnoreDirective(unused)
+            doTestWithoutIgnoreDirective()
         }
     }
 
-    protected fun doTestWithoutIgnoreDirective(unused: String) {
+    private fun doTestWithoutIgnoreDirective() {
         val fileName = fileName()
-        val file = myFixture.configureByFile(fileName)
-        val newName = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// NEW_NAME: ")
-        val dataContext = createTextEditorBasedDataContext(project, editor, editor.caretModel.currentCaret)
-        val renameDirective =
-            InTextDirectivesUtils.findStringWithPrefixes(file.text, "// RENAME: ") ?: error("`RENAME` handler is not specified")
+        val fileText = dataFile(fileName).readText()
+        withCustomCompilerOptions(fileText, project, module) {
+            val file = myFixture.configureByFile(fileName)
+            val newName = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// NEW_NAME: ")
+            val dataContext = createTextEditorBasedDataContext(project, editor, editor.caretModel.currentCaret)
+            val renameDirective =
+                InTextDirectivesUtils.findStringWithPrefixes(file.text, "// RENAME: ") ?: error("`RENAME` handler is not specified")
 
-        val handler = when (renameDirective) {
-            "member" -> KotlinMemberInplaceRenameHandler()
-            "variable" -> KotlinVariableInplaceRenameHandler()
-            "lambdaParameter" -> {
-                doImplicitLambdaParameterTest(file, RenameKotlinImplicitLambdaParameter(), dataContext, newName)
-                return
+            val handler = when (renameDirective) {
+                "member" -> KotlinMemberInplaceRenameHandler()
+                "variable" -> KotlinVariableInplaceRenameHandler()
+                "lambdaParameter" -> {
+                    doImplicitLambdaParameterTest(file, RenameKotlinImplicitLambdaParameter(), dataContext, newName)
+                    return@withCustomCompilerOptions
+                }
+
+                else -> error("unknown rename handler $renameDirective")
             }
 
-            else -> error("unknown rename handler $renameDirective")
-        }
+            val element = TargetElementUtil.findTargetElement(
+                editor,
+                TargetElementUtil.ELEMENT_NAME_ACCEPTED or TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
+            ) ?: file.findElementForRename<KtNameReferenceExpression>(editor.caretModel.offset)
 
-        val element = TargetElementUtil.findTargetElement(
-            editor,
-            TargetElementUtil.ELEMENT_NAME_ACCEPTED or TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
-        ) ?: file.findElementForRename<KtNameReferenceExpression>(editor.caretModel.offset)
+            assertNotNull(element)
 
-        assertNotNull(element)
-
-        if (newName == null) {
-            assertFalse("In-place rename is allowed for $element", handler.isRenaming(dataContext))
-        } else {
-            try {
-                assertTrue("In-place rename not allowed for $element", handler.isRenaming(dataContext))
-                var throwable: Throwable? = null
-                CommandProcessor.getInstance().executeCommand(project, {
-                    try {
-                        CodeInsightTestUtil.doInlineRename(handler, newName, editor, element)
-                    } catch (t: Throwable) {
-                        throwable = t
+            if (newName == null) {
+                assertFalse("In-place rename is allowed for $element", handler.isRenaming(dataContext))
+            } else {
+                try {
+                    assertTrue("In-place rename not allowed for $element", handler.isRenaming(dataContext))
+                    var throwable: Throwable? = null
+                    CommandProcessor.getInstance().executeCommand(project, {
+                        try {
+                            CodeInsightTestUtil.doInlineRename(handler, newName, editor, element)
+                        } catch (t: Throwable) {
+                            throwable = t
+                        }
+                    }, null, null)
+                    if (throwable != null) {
+                        throw throwable!!
                     }
-                }, null, null)
-                if (throwable != null) {
-                    throw throwable!!
-                }
 
-                val nameSuffix = getAfterFileNameSuffix()
-                var afterFile = dataFile("$fileName${nameSuffix ?: ""}.after")
-                if (nameSuffix != null && !afterFile.exists()) {
-                    afterFile = dataFile("$fileName.after")
+                    val nameSuffix = getAfterFileNameSuffix()
+                    var afterFile = dataFile("$fileName${nameSuffix ?: ""}.after")
+                    if (nameSuffix != null && !afterFile.exists()) {
+                        afterFile = dataFile("$fileName.after")
+                    }
+                    myFixture.checkResultByFile(afterFile)
+                } catch (e: BaseRefactoringProcessor.ConflictsInTestsException) {
+                    val expectedMessage = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// SHOULD_FAIL_WITH: ")
+                    TestCase.assertEquals(expectedMessage, e.messages.joinToString())
+                } catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
+                    val expectedMessage = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// SHOULD_FAIL_WITH: ")
+                    TestCase.assertEquals(expectedMessage, e.message?.replace("\n", " "))
                 }
-                myFixture.checkResultByFile(afterFile)
-            } catch (e: BaseRefactoringProcessor.ConflictsInTestsException) {
-                val expectedMessage = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// SHOULD_FAIL_WITH: ")
-                TestCase.assertEquals(expectedMessage, e.messages.joinToString())
-            } catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
-                val expectedMessage = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// SHOULD_FAIL_WITH: ")
-                TestCase.assertEquals(expectedMessage, e.message?.replace("\n", " "))
             }
         }
     }

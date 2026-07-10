@@ -106,6 +106,29 @@ class RuntimeModuleRepositoryGeneratorTest {
   }
 
   @Test
+  fun `plugin with project-level library in a content module`() {
+    addModule("foo.plugin")
+    val fooCore = addModule("foo.core")
+    val lib = project.libraryCollection.addLibrary("lib", JpsJavaLibraryType.INSTANCE)
+    fooCore.dependenciesList.addLibraryDependency(lib)
+    lib.addRoot(getUrl("project/lib"), JpsOrderRootType.COMPILED)
+    val plugin = createHeader("foo.plugin", "foo.core")
+    val distributionEntries = listOf(
+      moduleOutput("foo.plugin"),
+      moduleOutput("foo.core", relativeOutput = "modules/foo.core.jar"),
+      projectLibraryEntry("lib", tempDirectory.rootPath.resolve("lib/modules/foo.core.jar"), "modules/foo.core.jar"),
+    )
+    generateAndCheck(plugin, distributionEntries) {
+      descriptor(legacyJpsModule("foo.plugin"),listOf("../lib/foo.plugin.jar"), emptyList())
+      descriptor(contentModule("foo.core"),listOf("../lib/modules/foo.core.jar"), emptyList())
+      pluginHeader("com.foo.plugin", legacyJpsModule("foo.plugin"),
+                   includedJpsModule("foo.plugin"),
+                   includedContentModule("foo.core"),
+      )
+    }
+  }
+
+  @Test
   fun `two plugins include same project-level library`() {
     val foo = addModule("foo")
     val bar = addModule("bar")
@@ -135,6 +158,41 @@ class RuntimeModuleRepositoryGeneratorTest {
       descriptor(legacyJpsModule("bar"),listOf("../plugins/bar/lib/bar.jar"), listOf(libIdInBar))
       descriptor(libIdInBar,listOf("../plugins/bar/lib/lib.jar"), emptyList())
       pluginHeader("com.bar", legacyJpsModule("bar"), includedJpsModule("bar"), includedEmbeddedModule(libIdInBar))
+    }
+  }
+
+  @Test
+  fun `dependencies on plugin aliases`() {
+    addModule("foo.plugin")
+    addModule("foo.core")
+    val barAlias = RuntimeModuleId.pluginDescriptorModule("com.intellij.modules.bar")
+    val bazAlias = RuntimeModuleId.pluginDescriptorModule("com.intellij.modules.baz")
+    val plugin = PluginDescriptorDataForHeader(
+      pluginId = "com.foo.plugin",
+      pluginDescriptorJpsModuleName = "foo.plugin",
+      additionalFrontendOnlyPlugin = false,
+      contentModules = mapOf("foo.core" to
+        ContentModuleRegistrationDataForHeader(
+          "foo.core",
+          namespace = DEFAULT_NAMESPACE,
+          RuntimeModuleLoadingRule.OPTIONAL,
+          requiredIfAvailable = null,
+          visibility = RuntimeModuleVisibility.PUBLIC,
+          dependenciesOnPluginDescriptorModules = listOf(barAlias),
+        )
+      ),
+      pluginDescriptorDependenciesOnPluginDescriptorModules = listOf(bazAlias),
+    )
+    val distributionEntries = listOf(
+      moduleOutput("foo.plugin"),
+      moduleOutput("foo.core"),
+    )
+    generateAndCheck(plugin, distributionEntries) {
+      descriptor(legacyJpsModule("foo.plugin"), listOf("../lib/foo.plugin.jar"), dependencies = listOf(bazAlias))
+      descriptor(contentModule("foo.core"), listOf("../lib/foo.core.jar"), dependencies = listOf(barAlias))
+      pluginHeader("com.foo.plugin", legacyJpsModule("foo.plugin"),
+                   includedJpsModule("foo.plugin"), includedContentModule("foo.core")
+      )
     }
   }
 
@@ -174,9 +232,11 @@ class RuntimeModuleRepositoryGeneratorTest {
           namespace = DEFAULT_NAMESPACE,
           RuntimeModuleLoadingRule.OPTIONAL,
           requiredIfAvailable = null,
-          visibility = RuntimeModuleVisibility.PUBLIC
+          visibility = RuntimeModuleVisibility.PUBLIC,
+          dependenciesOnPluginDescriptorModules = emptyList(),
         )
-      }
+      },
+      pluginDescriptorDependenciesOnPluginDescriptorModules = emptyList(),
     )
   }
 

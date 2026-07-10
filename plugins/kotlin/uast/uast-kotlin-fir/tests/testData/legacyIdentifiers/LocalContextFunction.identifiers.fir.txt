@@ -1,0 +1,10 @@
+C1 -> UClass (name = C1)
+C2 -> UClass (name = C2)
+C3 -> UClass (name = C3)
+outer -> UMethod (name = outer)
+    c1 -> [!] UnknownKotlinExpression (VALUE_PARAMETER)
+    C1 -> USimpleNameReferenceExpression (identifier = C1)
+    C2 -> USimpleNameReferenceExpression (identifier = C2)
+    local -> ULambdaExpression
+    c3 -> UParameter (name = c3)
+    C3 -> USimpleNameReferenceExpression (identifier = C3)

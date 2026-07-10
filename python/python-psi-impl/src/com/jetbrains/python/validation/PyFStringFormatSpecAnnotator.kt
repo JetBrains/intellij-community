@@ -4,22 +4,24 @@ package com.jetbrains.python.validation
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.highlighting.PyHighlighter
 import com.jetbrains.python.psi.PyElementVisitor
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFStringFragment
+import com.jetbrains.python.psi.PyStringDunderUtil.KNOWN_FORMAT_MINI_LANGUAGE_TYPES
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**
  * Annotator for f-string format specifications (PY-88215).
- * 
+ *
  * Highlights format spec components based on the type of the formatted expression:
  * - Numeric types (int, float): dots, numbers, format type chars (b,d,e,f,g,o,x,%)
  * - String types: alignment chars, numbers, format type char (s)
- * 
+ *
  * Examples:
  * - f"{f:.2f}" where f: float - highlights . 2 f
  * - f"{s:>10s}" where s: str - highlights > 1 0 s
@@ -63,13 +65,17 @@ private class PyFStringFormatSpecVisitor(private val holder: PyAnnotationHolder)
     val context = TypeEvalContext.codeAnalysis(project, containingFile)
     val type = context.getType(this) ?: return ExpressionType.UNKNOWN
 
-    val memberNames = type.asUnionSequence().map { (it as? PyClassType)?.classQName }
+    val memberNames =
+      type.asUnionSequence().flatMapTo(mutableSetOf()) { component ->
+        if (component !is PyClassType || component.isDefinition) emptySet()
+        else component.getSuperClassTypes(context).map { it?.classQName } + component.classQName
+      }
+
     return when {
-      memberNames.any { it in NUMERIC_OR_STR_TYPE_NAMES } -> ExpressionType.STRING_OR_NUMERIC
+      memberNames.any { it in KNOWN_FORMAT_MINI_LANGUAGE_TYPES } -> ExpressionType.STRING_OR_NUMERIC
       memberNames.any { it in DATETIME_TYPE_NAMES } -> ExpressionType.DATETIME
       else -> ExpressionType.UNKNOWN
     }
-
   }
 
   private fun highlightFormatSpec(
@@ -228,16 +234,8 @@ private class PyFStringFormatSpecVisitor(private val holder: PyAnnotationHolder)
   }
 
   companion object {
-    private val NUMERIC_OR_STR_TYPE_NAMES = setOf(
-      "str", "int", "float", "complex",
-      "decimal.Decimal", "fractions.Fraction",
-      "numpy.int8", "numpy.int16", "numpy.int32", "numpy.int64",
-      "numpy.float16", "numpy.float32", "numpy.float64",
-      "numpy.complex64", "numpy.complex128"
-    )
-
     private val DATETIME_TYPE_NAMES = setOf(
-      "datetime.datetime", "datetime.date", "datetime.time"
+      PyNames.FQN.DATETIME, PyNames.FQN.DATE, PyNames.FQN.TIME
     )
 
     private val NUMERIC_FORMAT_TYPES = setOf(

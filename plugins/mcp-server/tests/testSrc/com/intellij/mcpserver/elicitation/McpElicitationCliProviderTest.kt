@@ -63,7 +63,7 @@ class McpElicitationCliProviderTest : McpToolsetTestBase() {
   suspend fun request_elicitation() {
     confirmationResult.complete(
       elicitationProvider()?.requestElicitation<ConfirmInput> {
-        message = "Confirm?"
+        message { text("Confirm request?") }
         booleanField("confirm") { required = true }
       }
     )
@@ -143,10 +143,10 @@ class McpElicitationCliProviderTest : McpToolsetTestBase() {
   suspend fun request_complex_elicitation() {
     complexResult.complete(
       elicitationProvider()?.requestElicitation<ComplexInput> {
-        message = "All field kinds"
+        message { text("All field kinds") }
         stringField("text") {
-          title = "Text"
-          description = "Free text"
+          title = "Some title"
+          description = "Some free text"
           required = true
           minLength = 1
           maxLength = 20

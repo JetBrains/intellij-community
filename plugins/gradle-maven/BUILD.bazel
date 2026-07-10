@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "gradle-java-maven-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":gradle-java-maven-tests_test_lib"],
+)
+### skip generation section `test intellij.gradle.java.maven.tests`
+
 ### auto-generated section `build intellij.gradle.java.maven` start
 
 jvm_library(
@@ -122,12 +130,48 @@ jvm_library(
     ],
     deps = [
         # do not sort,
+        "//plugins/gradle",
+        "//plugins/gradle:gradle_test_lib",
+        "//plugins/gradle/tooling-extension-api:toolingExtension",
+        "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
+        "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+        "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
+        "//plugins/gradle/tooling-proxy",
+        "//plugins/gradle/tooling-proxy:tooling-proxy_test_lib",
+        "//plugins/gradle/properties",
+        "//plugins/gradle/properties:properties_test_lib",
+        "//plugins/gradle/settings",
+        "//plugins/gradle/settings:settings_test_lib",
         "//plugins/gradle/java",
         "//plugins/gradle/java:java_test_lib",
+        "//plugins/gradle/plugin",
+        "//plugins/gradle/plugin:plugin_test_lib",
+        "//plugins/gradle/java/plugin",
+        "//plugins/gradle/java/plugin:plugin_test_lib",
         "//plugins/maven",
         "//plugins/maven:maven_test_lib",
         "//plugins/groovy",
         "//plugins/groovy:groovy_test_lib",
+        "//plugins/groovy-scripting",
+        "//plugins/groovy-scripting:groovy-scripting_test_lib",
+        "//java/compiler/impl",
+        "//java/compiler/impl:impl_test_lib",
+        "//java/execution/openapi:java-execution",
+        "//java/execution/openapi:java-execution_test_lib",
+        "//java/execution/impl",
+        "//java/execution/impl:impl_test_lib",
+        "//java/java-impl:impl",
+        "//java/java-impl:impl_test_lib",
+        "//java/java-indexing-api:indexing",
+        "//java/java-indexing-api:indexing_test_lib",
+        "//java/idea-ui:ui",
+        "//java/idea-ui:ui_test_lib",
+        "//java/unscramble",
+        "//java/unscramble:unscramble_test_lib",
+        "//aether-dependency-resolver/plugin",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
+        "//libraries/misc/plugin",
+        "//libraries/misc/plugin:plugin_test_lib",
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/analysis-api:analysis",
@@ -139,12 +183,40 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/platform-impl:ide-impl",
+        "//jps/jps-builders:build",
+        "//jps/jps-builders:build_test_lib",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/lang-api:lang",
         "//platform/lang-api:lang_test_lib",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/smRunner",
+        "//platform/smRunner:smRunner_test_lib",
+        "//platform/structure-view-impl/plugin",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//platform/testRunner",
+        "//platform/testRunner:testRunner_test_lib",
+        "//platform/testRunner/plugin",
+        "//platform/testRunner/plugin:plugin_test_lib",
+        "//platform/todo/plugin",
+        "//platform/todo/plugin:plugin_test_lib",
+        "//platform/vcs/plugin",
+        "//platform/vcs/plugin:plugin_test_lib",
+        "//platform/structuralsearch:structuralSearch",
+        "//platform/structuralsearch:structuralSearch_test_lib",
+        "//platform/structuralsearch/plugin",
+        "//platform/structuralsearch/plugin:plugin_test_lib",
+        "//plugins/properties/properties-common:properties",
+        "//plugins/properties/properties-common:properties_test_lib",
+        "//plugins/properties:properties-backend",
+        "//plugins/properties:properties-backend_test_lib",
+        "//plugins/properties/properties-psi-impl:backend-psi",
+        "//plugins/properties/properties-psi-impl:backend-psi_test_lib",
+        "//plugins/properties/copyright",
+        "//plugins/properties/copyright:copyright_test_lib",
+        "//plugins/properties/properties-psi-api:psi",
+        "//plugins/properties/properties-psi-api:psi_test_lib",
         "//plugins/repository-search/common",
         "//plugins/repository-search/common:common_test_lib",
         "//platform/testFramework",
@@ -153,6 +225,8 @@ jvm_library(
         "//plugins/gradle/java/groovy:groovy_test_lib",
         "//platform/util/concurrency",
         "//platform/util/concurrency:concurrency_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.java.maven.tests` end
@@ -165,11 +239,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.gradle.java.maven.tests` end
-
-### auto-generated section `test intellij.gradle.java.maven.tests` start
-
-jps_test(
-    name = "gradle-java-maven-tests_test",
-    runtime_deps = [":gradle-java-maven-tests_test_lib"],
-)
-### auto-generated section `test intellij.gradle.java.maven.tests` end

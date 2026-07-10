@@ -60,9 +60,19 @@ fun <T> invokeAndWaitIfNeeded(modalityState: ModalityState? = null, runnable: ()
   }
   else {
     var resultRef: T? = null
-    app.invokeAndWait({ resultRef = runnable() }, modalityState ?: ModalityState.defaultModalityState())
-    @Suppress("UNCHECKED_CAST")
-    return resultRef as T
+    var exception: Throwable? = null
+    app.invokeAndWait({ try {
+        resultRef = runnable()
+      } catch (e: Throwable) {
+        exception = e
+      }
+    }, modalityState ?: ModalityState.defaultModalityState())
+    if (exception != null) {
+      throw exception
+    } else {
+      @Suppress("UNCHECKED_CAST")
+      return resultRef as T
+    }
   }
 }
 

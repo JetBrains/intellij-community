@@ -2,7 +2,6 @@ package fleet.codepoints
 
 import fleet.util.multiplatform.Actual
 
-@Actual internal fun codepointsToStringWasmJs(vararg codepoints: Int): String = MultiplatformCodepoints.codepointsToString(*codepoints)
 @Actual internal fun codepointOfWasmJs(highSurrogate: Char, lowSurrogate: Char): Codepoint = MultiplatformCodepoints.codepointOf(highSurrogate, lowSurrogate)
 @Actual internal fun highSurrogateWasmJs(codepoint: Int): Char = MultiplatformCodepoints.highSurrogate(codepoint)
 @Actual internal fun lowSurrogateWasmJs(codepoint: Int): Char = MultiplatformCodepoints.lowSurrogate(codepoint)

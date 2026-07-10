@@ -1,7 +1,7 @@
 <idea-plugin>
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="intellij.python.common"/>
+    <module name="intellij.python.community.common"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
@@ -17,12 +17,13 @@
     <evoTreeElementProvider id="HatchEvoProvider"
                             order="after CondaEvoProvider"
                             implementation="com.intellij.python.hatch.sdk.evolution.HatchSelectSdkProvider"/>
-  </extensions>
-  <extensions defaultExtensionNs="com.intellij.python.pyproject.model">
-    <tool implementation="com.intellij.python.hatch.impl.HatchTool"/>
+
+    <pySdkProvider implementation="com.intellij.python.hatch.impl.sdk.HatchSdkProvider"/>
+    <pythonFlavorProvider implementation="com.intellij.python.hatch.impl.sdk.HatchSdkFlavorProvider"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
-    <python.common.toolToIconMapper implementation="com.intellij.python.hatch.impl.HatchIdMapper"/>
+    <python.pytools.pyTool implementation="com.intellij.python.hatch.HatchPyTool"/>
+    <python.community.common.toolToIconMapper implementation="com.intellij.python.hatch.impl.HatchIdMapper"/>
     <python.processOutput.common.processOutputIconMapping implementation="com.intellij.python.hatch.impl.HatchIconMapping"/>
   </extensions>
 </idea-plugin>

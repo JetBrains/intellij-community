@@ -53,18 +53,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
     return "UsageGrouping.Scope";
   }
 
-  private static final UsageScopeGroup TEST = new UsageScopeGroup(0) {
-    @Override
-    public Icon getIcon() {
-      return AllIcons.Nodes.TestSourceFolder;
-    }
-
-    @Override
-    public @NotNull String getPresentableGroupText() {
-      return UsageViewBundle.message("list.item.test");
-    }
-  };
-  private static final UsageScopeGroup PRODUCTION = new UsageScopeGroup(1) {
+  private static final UsageScopeGroup PRODUCTION = new UsageScopeGroup(0) {
     @Override
     public Icon getIcon() {
       return PlatformIcons.SOURCE_FOLDERS_ICON;
@@ -73,6 +62,17 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
     @Override
     public @NotNull String getPresentableGroupText() {
       return UsageViewBundle.message("list.item.production");
+    }
+  };
+  private static final UsageScopeGroup TEST = new UsageScopeGroup(1) {
+    @Override
+    public Icon getIcon() {
+      return AllIcons.Nodes.TestSourceFolder;
+    }
+
+    @Override
+    public @NotNull String getPresentableGroupText() {
+      return UsageViewBundle.message("list.item.test");
     }
   };
   private static final UsageScopeGroup LIBRARY = new UsageScopeGroup(2) {
@@ -95,7 +95,11 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
 
     @Override
     public int compareTo(@NotNull UsageGroup usageGroup) {
-      return getPresentableGroupText().compareTo(usageGroup.getPresentableGroupText());
+      if (!(usageGroup instanceof UsageScopeGroup scopeGroup)) {
+        return -1;
+      }
+
+      return myCode - scopeGroup.myCode;
     }
 
     @Override

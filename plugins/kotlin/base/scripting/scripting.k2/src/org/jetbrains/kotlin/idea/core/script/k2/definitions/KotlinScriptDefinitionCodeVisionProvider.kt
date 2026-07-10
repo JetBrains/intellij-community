@@ -11,9 +11,9 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.core.script.k2.kotlinScriptDefinitionInlayHint
 import org.jetbrains.kotlin.idea.core.script.k2.settings.KotlinScriptingSettingsConfigurable
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
+import org.jetbrains.kotlin.idea.core.script.shared.definition.kotlinScriptDefinitionInlayHint
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import kotlin.script.experimental.api.ScriptCompilationConfiguration

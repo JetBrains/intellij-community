@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.j2k.k2">
+<idea-plugin>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <j2kConverterExtension implementation="org.jetbrains.kotlin.j2k.k2.K2J2KConverterExtension"/>

@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.CustomWrapModel;
 import com.intellij.openapi.editor.InlayModel;
 import com.intellij.openapi.editor.SoftWrap;
+import com.intellij.openapi.editor.ex.ElfCandidate;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
@@ -28,6 +29,7 @@ import java.util.List;
 // ExperimentalSoftWrapModelImpl adds support for custom soft wraps.
 //@ApiStatus.Internal
 @ApiStatus.NonExtendable
+@ElfCandidate
 abstract public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   implements SoftWrapModelEx, PrioritizedDocumentListener, FoldingListener,
              PropertyChangeListener, Dumpable, Disposable, CustomWrapModel.Listener

@@ -4,4 +4,3 @@ public class X {
     DateTimeFormatter.ofPattern(<spot>"yyyy/MMMM/dd HH:mm:ss"</spot>);
 
 }
-¡

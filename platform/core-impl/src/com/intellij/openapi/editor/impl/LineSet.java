@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.LineIterator;
@@ -23,7 +23,15 @@ import java.util.Arrays;
  * Data structure specialized for working with document text lines, i.e. stores information about line mapping to document
  * offsets and provides convenient ways to work with that information like retrieving target line by document offset etc.
  * <p/>
- * Immutable.
+ * <b>Immutable and safe for racy publication.</b> All fields ({@link #myStarts}, {@link #myFlags}, {@link #myLength})
+ * are {@code final} and the backing arrays are never mutated after construction — every "mutator"
+ * ({@link #update}, {@link #clearModificationFlags}, {@link #setModified}) returns a fresh {@code LineSet}.
+ * Thanks to the final-field semantics (JLS 17.5), a fully constructed instance can be handed to another thread
+ * through a data race and still be observed consistently.
+ * <p/>
+ * {@link DocumentSnapshotImpl} depends on this: it caches a {@code LineSet} in a non-volatile field and reads it
+ * from arbitrary threads without synchronization. Do not break the invariant — never add a non-final field and
+ * never mutate {@code myStarts}/{@code myFlags} in place.
  */
 @ApiStatus.Internal
 public final class LineSet {
@@ -83,7 +91,7 @@ public final class LineSet {
                      ? updateInsideOneLine(findLineIndex(start), replacement.length() - (end - start))
                      : genericUpdate(start, end, replacement);
 
-    return wholeTextReplaced ? result.clearModificationFlags() : result;
+    return wholeTextReplaced ? result.clearModificationFlags(0, Integer.MAX_VALUE) : result;
   }
 
   private static boolean hasChar(CharSequence s, int index, char c) {
@@ -227,12 +235,25 @@ public final class LineSet {
     return new LineSet(myStarts, flags, myLength);
   }
 
+  /**
+   * @param endLine is exclusive, {@code Integer.MAX_VALUE} means the last line
+   */
   @NotNull
   LineSet clearModificationFlags(int startLine, int endLine) {
     if (startLine > endLine) {
       throw new IllegalArgumentException("endLine < startLine: " + endLine + " < " + startLine + "; lineCount: " + getLineCount());
     }
+    int lineCount = getLineCount();
+    if (lineCount == 0 && startLine == 0) {
+      if (endLine == 0 || endLine == Integer.MAX_VALUE) {
+        // 0 and MAX_VALUE are special values, allow them bypassing checkLineIndex
+        return this;
+      }
+    }
     checkLineIndex(startLine);
+    if (endLine == Integer.MAX_VALUE) {
+      endLine = lineCount;
+    }
     checkLineIndex(endLine - 1);
 
     if (isLastEmptyLine(endLine - 1)) endLine--;
@@ -243,11 +264,6 @@ public final class LineSet {
       flags[i] &= ~MODIFIED_MASK;
     }
     return new LineSet(myStarts, flags, myLength);
-  }
-
-  @NotNull
-  LineSet clearModificationFlags() {
-    return getLineCount() == 0 ? this : clearModificationFlags(0, getLineCount());
   }
 
   @VisibleForTesting
@@ -261,6 +277,7 @@ public final class LineSet {
   }
 
   public int getLineCount() {
+    // TODO: constant per instance; precompute into a final field if profiling shows this hot path matters
     return myStarts.length + (isLastEmptyLine(myStarts.length) ? 1 : 0);
   }
 

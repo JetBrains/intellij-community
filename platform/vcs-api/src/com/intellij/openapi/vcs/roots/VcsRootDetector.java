@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -23,17 +24,18 @@ public interface VcsRootDetector {
    * Detect vcs roots for whole project
    */
   @NotNull
-  Collection<VcsRoot> detect();
+  @Unmodifiable Collection<VcsRoot> detect();
 
   /**
    * Detect vcs roots for startDir
    */
   @NotNull
-  Collection<VcsRoot> detect(@Nullable VirtualFile startDir);
+  @Unmodifiable Collection<VcsRoot> detect(@Nullable VirtualFile startDir);
 
   /**
    * Returns the cached result of the previous call to {@link #detect()} if there was any, otherwise calls it and waits for the completion.
    */
   @NotNull
+  @Unmodifiable
   Collection<VcsRoot> getOrDetect();
 }

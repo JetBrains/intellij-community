@@ -1,5 +1,5 @@
 // "Remove argument" "true"
-// K2_ERROR: Too many arguments for 'constructor(s: String, i: Int): Bar'.
+// K2_ERROR: TOO_MANY_ARGUMENTS
 class Bar(s: String, i: Int) {
     fun foo(s: String) {
 

@@ -13,6 +13,7 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.ListCellRenderer;
 import java.awt.event.InputEvent;
@@ -96,7 +97,7 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
    * {@link SearchEverywhereCommandInfo} doesn't contain any behavior details. All commands should be processed in
    * {@link SearchEverywhereContributor#fetchElements(String, ProgressIndicator, Processor)} method.</p>
    */
-  default @NotNull List<SearchEverywhereCommandInfo> getSupportedCommands() {
+  default @NotNull @Unmodifiable List<SearchEverywhereCommandInfo> getSupportedCommands() {
     return Collections.emptyList();
   }
 
@@ -213,7 +214,7 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
    * Override this method to provide type-safe data for search results.
    * If the returned list is empty, the calculation is delegated to the legacy {@link #getDataForItem(Object, String)}.
    */
-  default @NotNull List<@NotNull BiConsumer<@NotNull Item, @NotNull DataSink>> getDataProviders() {
+  default @NotNull @Unmodifiable List<@NotNull BiConsumer<@NotNull Item, @NotNull DataSink>> getDataProviders() {
     return Collections.emptyList();
   }
 

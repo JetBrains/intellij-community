@@ -218,6 +218,21 @@ class NestedLocksThreadingSupport : ThreadingSupport {
 
   private val readActionListeners: CopyOnWriteArrayList<ReadActionListener> = CopyOnWriteArrayList()
   private val myWriteActionListeners: CopyOnWriteArrayList<WriteActionListener> = CopyOnWriteArrayList()
+
+  /**
+   * This field serves to solve the problem of write action listeners that get registered while a write action is pending.
+   * Consider the following case:
+   * 1. Write action captures listeners
+   * 2. Write action becomes pending
+   * 3. Write action listeners invoke beforeWriteActionStarted
+   * 4. New write action listener arrives
+   * 5. Some activity that needs to be canceled on write action starts running
+   * 6. The activity does not end, despite that write action is technically pending.
+   *
+   * It is possible to solve these problems on the client side by checking `isWriteActionPending`, but we argue that these fixes are needed for all clients,
+   * hence we provide them in the platform.
+   */
+  private val newlyArrivedWriteActionListeners: AtomicReference<List<WriteActionListener>> = AtomicReference(emptyList())
   private val myWriteIntentActionListeners: CopyOnWriteArrayList<WriteIntentReadActionListener> = CopyOnWriteArrayList()
   private var myLockAcquisitionListener: LockAcquisitionListener<*>? = null
   private val myWriteLockReacquisitionListener: CopyOnWriteArrayList<WriteLockReacquisitionListener<*>> = CopyOnWriteArrayList()
@@ -251,7 +266,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   private val myNoWriteActionCounter = ThreadLocal.withInitial { 0 }
 
   private val myReadActionsInThread = ThreadLocal.withInitial { 0 }
-  private val myLockingProhibited: ThreadLocal<String?> = ThreadLocal.withInitial { null }
+  private val myLockingProhibited: ThreadLocal<LockingProhibition?> = ThreadLocal.withInitial { null }
 
   // todo: reimplement with listeners in IJPL-177760
   private val myTopmostReadAction = ThreadLocal.withInitial { false }
@@ -824,9 +839,13 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   private fun handleLockAccess(culprit: String) {
-    val lockProhibition = myLockingProhibited.get()
-    if (lockProhibition != null) {
-      val exception = ThreadingSupport.LockAccessDisallowed("Attempt to take $culprit was prevented\n${lockProhibition}")
+    val lockProhibition = myLockingProhibited.get() ?: return
+    val action = if (lockProhibition.reportOnly) "reported" else "prevented"
+    val exception = ThreadingSupport.LockAccessDisallowed("Attempt to take $culprit was $action\n${lockProhibition.advice}")
+    if (lockProhibition.reportOnly) {
+      logger.error(exception)
+    }
+    else {
       throw exception
     }
   }
@@ -929,7 +948,17 @@ class NestedLocksThreadingSupport : ThreadingSupport {
 
   @ApiStatus.Internal
   override fun addWriteActionListener(listener: WriteActionListener) {
+    // todo: sort out the listener and require read access here.
+    //   we need to have a specific interface for listeners that run `beforeWriteActionStarted`, to avoid race conditions
+    //   in such listeners, it is natural to require read access
+    //ThreadingAssertions.assertReadAccess()
     myWriteActionListeners.add(listener)
+    if (isWriteActionPending()) {
+      newlyArrivedWriteActionListeners.updateAndGet { existingList ->
+        existingList + listener
+      }
+      listener.beforeWriteActionStart(Any::class.java)
+    }
   }
 
   @ApiStatus.Internal
@@ -945,6 +974,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
 
   @ApiStatus.Internal
   override fun removeWriteActionListener(listener: WriteActionListener) {
+    //ThreadingAssertions.assertReadAccess()
     check(myWriteActionListeners.remove(listener)) {
       "WriteActionListener $listener is not registered"
     }
@@ -1019,7 +1049,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       drainWriteActionFollowups()
       writeIntentInitResult.release()
       if (myWriteActionsStack.isEmpty()) {
-        fireAfterWriteActionFinished(writeIntentInitResult.listeners, clazz)
+        fireAfterWriteActionFinished(writeIntentInitResult, clazz)
       }
     }
   }
@@ -1033,7 +1063,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     }
     finally {
       if (myWriteActionsStack.isEmpty()) {
-        fireAfterWriteActionFinished(writeIntentInitResult.listeners, clazz)
+        fireAfterWriteActionFinished(writeIntentInitResult, clazz)
       }
     }
   }
@@ -1098,14 +1128,14 @@ class NestedLocksThreadingSupport : ThreadingSupport {
 
     val clazz = getComputationClassForListener(computation)
     val frozenListeners = prepareWriteIntentForWriteLockAcquisition(computationState, clazz)
+    val writeIntentInitResult = PreparatoryWriteIntent(actualPermit, false, computationState, frozenListeners.toMutableList())
     try {
-      val writeIntentInitResult = PreparatoryWriteIntent(actualPermit, false, computationState, frozenListeners)
       return proceedWithSuspendWriteLockAcquisitionFromWriteIntent(computationState, writeIntentInitResult, clazz, computation)
     }
     finally {
       cleanup()
       if (myWriteActionsStack.isEmpty()) {
-        fireAfterWriteActionFinished(frozenListeners, clazz)
+        fireAfterWriteActionFinished(writeIntentInitResult, clazz)
       }
     }
   }
@@ -1118,7 +1148,13 @@ class NestedLocksThreadingSupport : ThreadingSupport {
    * This is needed for code that temporarily releases the write lock.
    * Since we still want to preserve the atomicity of write action, we pre-acquire the write-intent lock before write.
    */
-  private data class PreparatoryWriteIntent(val permit: Permit, val needRelease: Boolean, val state: ComputationState, val listeners: List<WriteActionListener>) {
+  private data class PreparatoryWriteIntent(
+    val permit: Permit,
+    val needRelease: Boolean,
+    val state: ComputationState,
+    val listeners: List<WriteActionListener>,
+    val newlyArrivedListeners: AtomicReference<List<WriteActionListener>> = AtomicReference(listOf()),
+    ) {
     fun release() {
       if (!(needRelease && permit is WriteIntentPermit)) {
         return
@@ -1135,7 +1171,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       when (permit) {
         null -> {
           val writeIntent = computationState.acquireWriteIntentPermitSuspending()
-          return PreparatoryWriteIntent(writeIntent, true, computationState, frozenListeners)
+          return PreparatoryWriteIntent(writeIntent, true, computationState, frozenListeners, )
         }
         else -> return gatherPreparatoryData(permit, computationState, frozenListeners)
       }
@@ -1156,7 +1192,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       when (permit) {
         null -> {
           val writeIntent = computationState.acquireWriteIntentPermit()
-          return PreparatoryWriteIntent(writeIntent, true, computationState, frozenListeners)
+          return PreparatoryWriteIntent(writeIntent, true, computationState, frozenListeners.toMutableList())
         }
         else -> return gatherPreparatoryData(permit, computationState, frozenListeners)
       }
@@ -1221,8 +1257,23 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     catch (e: Throwable) {
       endPendingWriteAction(state)
       throw e
+    } finally {
+      attachNewlyArrivedListeners(preparatoryWriteIntent)
     }
-    return WriteLockInitResult(shouldRelease, preparatoryWriteIntent.listeners, state, clazz, exposedData, this)
+    val newlyArrivedListeners = preparatoryWriteIntent.newlyArrivedListeners.get()
+    // avoid allocation of a new array list
+    val actualSetOfListeners = if (newlyArrivedListeners.isEmpty()) preparatoryWriteIntent.listeners else preparatoryWriteIntent.listeners + newlyArrivedListeners
+    return WriteLockInitResult(shouldRelease, actualSetOfListeners, state, clazz, exposedData, this)
+  }
+
+  private fun attachNewlyArrivedListeners(preparatoryWriteIntent: PreparatoryWriteIntent) {
+    val list = newlyArrivedWriteActionListeners.getAndSet(emptyList()) - preparatoryWriteIntent.listeners.toSet()
+    if (list.isNotEmpty()) {
+      val existingList = preparatoryWriteIntent.newlyArrivedListeners.getAndSet(list)
+      require(existingList.isEmpty()) {
+        "Newly arrived listeners should not be installed before"
+      }
+    }
   }
 
   private suspend fun prepareWriteFromWriteIntentSuspending(state: ComputationState, preparatoryWriteIntent: PreparatoryWriteIntent, clazz: Class<*>): WriteLockInitResult {
@@ -1241,8 +1292,10 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     catch (e: Throwable) {
       endPendingWriteAction(state)
       throw e
+    } finally {
+      attachNewlyArrivedListeners(preparatoryWriteIntent)
     }
-    return WriteLockInitResult(shouldRelease, preparatoryWriteIntent.listeners, state, clazz, exposedData, this)
+    return WriteLockInitResult(shouldRelease, preparatoryWriteIntent.listeners + preparatoryWriteIntent.newlyArrivedListeners.get(), state, clazz, exposedData, this)
   }
 
   private fun startPendingWriteAction(state: ComputationState) {
@@ -1276,6 +1329,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     // we use AccessToken here to remove some service stacktraces
     // DO NOT suspend inside the token application, as it touches some sensitive thread locals
     fun applyThreadLocalActions(): AccessToken {
+      // here write lock is already acquired; we do have read access
       if (exposedData != null) {
         support.hack_setPublishedPermitData(exposedData)
         support.thisLevelPermit.set(exposedData.finalWritePermit)
@@ -1349,6 +1403,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
             val castedListener: WriteLockReacquisitionListener<Any> = listener as WriteLockReacquisitionListener<Any>
             castedListener.afterWriteLockReacquired(data)
           }
+          Thread.sleep(1000)
           hack_setThisLevelPermit(newWritePermit)
           val newWritePermits = Array(exposedPermitData.writeIntentStack.size) {
             runSuspendMaybeConsuming(false) {
@@ -1426,8 +1481,16 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   override fun <T> withLocksProhibited(advice: String, action: () -> T): T {
+    return withLockProhibition(LockingProhibition(advice, reportOnly = false), action)
+  }
+
+  override fun <T> withLocksSoftlyProhibited(advice: String, action: () -> T): T {
+    return withLockProhibition(LockingProhibition(advice, reportOnly = true), action)
+  }
+
+  private fun <T> withLockProhibition(lockingProhibition: LockingProhibition, action: () -> T): T {
     val currentValue = myLockingProhibited.get()
-    myLockingProhibited.set(advice)
+    myLockingProhibited.set(lockingProhibition)
     try {
       return action()
     }
@@ -1437,7 +1500,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   override fun getLockingProhibitedAdvice(): String? {
-    return myLockingProhibited.get()
+    return myLockingProhibited.get()?.advice
   }
 
 
@@ -1506,8 +1569,11 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     }
   }
 
-  private fun fireAfterWriteActionFinished(listeners: List<WriteActionListener>, clazz: Class<*>) {
-    listeners.traverseBackwards {
+  private fun fireAfterWriteActionFinished(writeIntentInitResult: PreparatoryWriteIntent, clazz: Class<*>) {
+    writeIntentInitResult.newlyArrivedListeners.get().traverseBackwards {
+      it.afterWriteActionFinished(clazz)
+    }
+    writeIntentInitResult.listeners.traverseBackwards {
       it.afterWriteActionFinished(clazz)
     }
   }
@@ -1667,6 +1733,9 @@ class NestedLocksThreadingSupport : ThreadingSupport {
         hack_setThisLevelPermit(permit.writePermit)
         val currentWriteThreadAcquired = myWriteAcquired
         myWriteAcquired = Thread.currentThread()
+        if (!isWriteAccessAllowed()) {
+          logger.error("Unexpected write state: write access is now allowed. Current thread with WA: $myWriteAcquired. This thread: ${Thread.currentThread()}")
+        }
         try {
           action.run()
         }
@@ -1760,6 +1829,8 @@ private class RunSuspend<T>(val job: Job?, val interceptor: PermitWaitingInterce
 
 private val logger = Logger.getInstance(NestedLocksThreadingSupport::class.java)
 
+private data class LockingProhibition(val advice: String, val reportOnly: Boolean)
+
 @OptIn(ExperimentalCoroutinesApi::class)
 private fun <T> Deferred<T>.getOrThrow(): T {
   getCompletionExceptionOrNull()?.let { throw it }
@@ -1769,4 +1840,3 @@ private fun <T> Deferred<T>.getOrThrow(): T {
 private data class PermitWaitingInterceptor(
   val consumer: (Deferred<*>) -> Unit,
 )
-

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.parser;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -55,6 +55,34 @@ public class YAMLParserTest extends ParsingTestCase {
                      Atlanta Braves ]
                  : [ 2001-07-02, 2001-08-12,
                      2001-08-14 ]""");
+  }
+
+  public void testFlowSequenceAsImplicitKey() throws Throwable {
+    doCodeTest("[a, b]: value");
+  }
+
+  public void testFlowSequenceAsExplicitKeyInline() throws Throwable {
+    doCodeTest("? [a, b]: value");
+  }
+
+  public void testFlowSequenceKeyMissingClosingBracket() throws Throwable {
+    doCodeTest("[a, b: value");
+  }
+
+  public void testFlowSequenceKeyMissingColon() throws Throwable {
+    doCodeTest("[a, b] value");
+  }
+
+  public void testFlowSequenceKeyMissingValue() throws Throwable {
+    doCodeTest("[a, b]:");
+  }
+
+  public void testFlowSequenceKeyEmpty() throws Throwable {
+    doCodeTest("[]: value");
+  }
+
+  public void testFlowSequenceKeyMissingOpeningBracket() throws Throwable {
+    doCodeTest("a, b]: value");
   }
 
   public void testMap_map() throws Throwable {

@@ -4,8 +4,8 @@
 // ACTION: Implement members
 // ACTION: Rename file to Some.kt
 // ERROR: Object 'Some' is not abstract and does not implement abstract member public abstract fun foo(): Unit defined in T
-// K2_ERROR: Object 'Some' is not abstract and does not implement abstract member:<br>fun foo(): Unit
-// K2_AFTER_ERROR: Object 'Some' is not abstract and does not implement abstract member:<br>fun foo(): Unit
+// K2_AFTER_ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED
+// K2_ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED
 interface T {
     fun foo()
 }

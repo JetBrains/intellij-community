@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.formatting;
 
@@ -444,9 +444,7 @@ public final class WhiteSpace {
    * will be used for tab representation if there are non-white space symbols before it (IJ editor may use different number of columns
    * for single tabulation symbol representation).
    * <p/>
-   * Hence, we can ask current white space object to avoid using tabulation symbols for alignment.
-   * Tab usage is not necessarily suppressed entirely: if this whitespace starts a new line, tabs may still be
-   * used for indentation while alignment remains spaces.
+   * Some languages may apply this option to disable the usage of tabulation during alignment. See {@link AlignmentWhitespacePolicy}.
    *
    * @param skip   indicates if tabulation symbols usage should be suppressed for alignment
    */

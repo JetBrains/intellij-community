@@ -1,7 +1,7 @@
 // IS_APPLICABLE: false
 // ERROR: Unresolved reference: s
-// K2_ERROR: Cannot infer type for type parameter 'T'. Specify it explicitly.
-// K2_ERROR: Unresolved reference 's'.
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_ERROR: UNRESOLVED_REFERENCE
 fun foo() {
     val x = bar<<caret>_>(s) // s not definded, can't be inferred
 }

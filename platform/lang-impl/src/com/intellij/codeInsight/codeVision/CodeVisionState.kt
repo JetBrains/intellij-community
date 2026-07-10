@@ -8,5 +8,12 @@ sealed class CodeVisionState(val isReady: Boolean, val result: List<Pair<TextRan
     val READY_EMPTY: Ready = Ready(emptyList())
   }
   class Ready(lenses: List<Pair<TextRange, CodeVisionEntry>>) : CodeVisionState(true, lenses)
+
+  /** If a [CodeVisionProvider.computeCodeVision] returns [NotReady],
+   *  it is expected that an appropriate call to [CodeVisionHost.invalidateProvider] is eventually made when necessary data becomes ready
+   *  to signalize to the platform that [CodeVisionProvider.computeCodeVision] should be attempted again.
+   *
+   *  Otherwise, it is not guaranteed that [CodeVisionProvider.computeCodeVision] will be called again,
+   *  and particular code vision may be stuck indefinitely. */
   object NotReady : CodeVisionState(false, emptyList())
 }

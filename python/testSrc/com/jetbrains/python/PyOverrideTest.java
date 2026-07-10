@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -21,6 +24,8 @@ import java.util.Collections;
 import java.util.List;
 
 
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyOverrideTest extends PyTestCase {
 
   private void doTest() {

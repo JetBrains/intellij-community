@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.core.fileIndex
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 import java.util.EventListener
@@ -10,12 +9,9 @@ import java.util.EventListener
 /**
  * Defines a listener for changes that occur in the [WorkspaceFileIndex].
  *
- * It sends two sets of [WorkspaceFileSet], deleted and added.
- * It also sends two [EntityStorage] before and after the changes.
- * This is necessary because it is expected to resolve [com.intellij.platform.workspace.storage.EntityPointer] of the deleted [WorkspaceFileSet]
- * in storageBefore and [com.intellij.platform.workspace.storage.EntityPointer] of the registered [WorkspaceFileSet] in storageAfter.
- * However, note that [WorkspaceFileIndex] itself is not versioned, so it is not guaranteed that the deleted or added [WorkspaceFileSet] will
- * be present in [WorkspaceFileIndex].
+ * The event reports the [WorkspaceFileSet]s registered by the change together with the [VirtualFile]s whose exclusions were removed.
+ * Note that [WorkspaceFileIndex] itself is not versioned, so it is not guaranteed that a registered [WorkspaceFileSet] will
+ * still be present in [WorkspaceFileIndex] by the time the event is processed.
  *
  * The listener is called inside Write Action, but processing this event in Write Action may lead to unexpected results.
  */
@@ -34,5 +30,4 @@ interface WorkspaceFileIndexListener : EventListener {
 class WorkspaceFileIndexChangedEvent(
   val registeredFileSets: Collection<WorkspaceFileSet>,
   val removedExclusions: Collection<VirtualFile>,
-  val storageAfter: EntityStorage,
 )

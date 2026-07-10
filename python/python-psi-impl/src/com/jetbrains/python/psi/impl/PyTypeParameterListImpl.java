@@ -17,7 +17,7 @@ public class PyTypeParameterListImpl extends PyBaseElementImpl<PyTypeParameterLi
   }
 
   public PyTypeParameterListImpl(PyTypeParameterListStub stub) {
-    this(stub, PyStubElementTypes.PARAMETER_LIST);
+    this(stub, PyStubElementTypes.TYPE_PARAMETER_LIST);
   }
 
   public PyTypeParameterListImpl(PyTypeParameterListStub stub, IStubElementType nodeType) {

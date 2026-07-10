@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.concurrency.ThreadContext;
@@ -39,8 +39,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
@@ -52,7 +52,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.platform.ide.bootstrap.SplashManagerKt;
 import com.intellij.platform.locking.impl.IntelliJLockingUtil;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.AppUIUtilKt;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DisposableWindow;
 import com.intellij.ui.ScreenUtil;
@@ -81,8 +81,6 @@ import kotlin.Pair;
 import kotlin.Unit;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlin.jvm.functions.Function0;
-import kotlinx.coroutines.EventLoop;
-import kotlinx.coroutines.ThreadLocalEventLoop;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -308,8 +306,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   @Override
+  @SuppressWarnings("SwingIsEventDispatchThread")
   protected void dispose() {
-    LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
+    LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from the event dispatch thread only");
     for (Runnable runnable : myDisposeActions) {
       runnable.run();
     }
@@ -388,7 +387,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   @Override
   public void setAppIcons() {
-    AppUIUtilKt.updateAppWindowIcon(getWindow());
+    AppUIUtil.updateAppWindowIcon(getWindow());
   }
 
   @Override
@@ -466,8 +465,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   @Override
+  @SuppressWarnings("SwingIsEventDispatchThread")
   public CompletableFuture<?> show() {
-    LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
+    LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from the event dispatch thread only");
 
     AnCancelAction anCancelAction = new AnCancelAction();
     JRootPane rootPane = getRootPane();
@@ -510,7 +510,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     // ProgressWindow starts a modality state itself
     @SuppressWarnings("deprecation") boolean changeModalityState = appStarted && myDialog.isModal() && !isProgressDialog();
-    Project project = myProject;
 
     Consumer<Runnable> lockContextWrapper;
     Function0<Unit> lockCleanup;
@@ -615,14 +614,15 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   @RequiresEdt
+  @SuppressWarnings({"KotlinInternalInJava", "UnnecessaryFullyQualifiedName"})
   private static AccessToken resetCoroutinesEventLoop() {
-    EventLoop currentEventLoop = ThreadLocalEventLoop.INSTANCE.currentOrNull$kotlinx_coroutines_core();
-    ThreadLocalEventLoop.INSTANCE.resetEventLoop$kotlinx_coroutines_core();
+    kotlinx.coroutines.EventLoop currentEventLoop = kotlinx.coroutines.ThreadLocalEventLoop.INSTANCE.currentOrNull$kotlinx_coroutines_core();
+    kotlinx.coroutines.ThreadLocalEventLoop.INSTANCE.resetEventLoop$kotlinx_coroutines_core();
     return new AccessToken() {
       @Override
       public void finish() {
         if (currentEventLoop != null) {
-          ThreadLocalEventLoop.INSTANCE.resetEventLoop$kotlinx_coroutines_core();
+          kotlinx.coroutines.ThreadLocalEventLoop.INSTANCE.resetEventLoop$kotlinx_coroutines_core();
         }
       }
     };
@@ -1050,7 +1050,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         size.width = Math.max(size.width, tableSize.width);
         size.height = Math.max(size.height, tableSize.height + size.height - table.getParent().getHeight());
       }
-      size.width = Math.min(1000, Math.max(600, size.width));
+      size.width = Math.clamp(size.width, 600, 1000);
       size.height = Math.min(800, size.height);
       return size;
     }
@@ -1268,7 +1268,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         setGlassPane(new IdeGlassPaneImpl(this));
         myGlassPaneIsSet = true;
         putClientProperty("DIALOG_ROOT_PANE", true);
-        setBorder(JBUI.CurrentTheme.Window.getBorder(isUndecorated()));
+        setBorder(JBUI.CurrentTheme.Window.getDialogBorder(isUndecorated()));
       }
 
       @Override
@@ -1384,5 +1384,4 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   public void setAutoRequestFocus(boolean b) {
     UIUtil.setAutoRequestFocus((JDialog)myDialog, b);
   }
-  
 }

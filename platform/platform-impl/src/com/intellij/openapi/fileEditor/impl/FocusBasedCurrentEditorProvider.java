@@ -1,10 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -16,9 +12,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.function.Supplier;
 
-
 public final class FocusBasedCurrentEditorProvider implements CurrentEditorProvider {
-
   private static final Logger LOG = Logger.getInstance(FocusBasedCurrentEditorProvider.class);
 
   @Override
@@ -29,23 +23,11 @@ public final class FocusBasedCurrentEditorProvider implements CurrentEditorProvi
   @ApiStatus.Internal
   public static @Nullable FileEditor getCurrentEditorEx() {
     try {
-      return getCurrentEditorEx0();
+      return FocusedFileEditor.getFocusedFileEditor(null);
     } catch (Throwable ex) {
       LOG.error("Failed to retrieve focused editor", ex);
       return null;
     }
-  }
-
-  private static @Nullable FileEditor getCurrentEditorEx0() {
-    DataManager dataManager = DataManager.getInstanceIfCreated();
-    if (dataManager != null) {
-      return getFocusedEditor(dataManager.getDataContext());
-    }
-    return null;
-  }
-
-  private static @Nullable FileEditor getFocusedEditor(@NotNull DataContext dataContext) {
-    return PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext);
   }
 
   /**
@@ -63,11 +45,8 @@ public final class FocusBasedCurrentEditorProvider implements CurrentEditorProvi
     @Override
     public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
       Editor editor = focusedEditor.get();
-      if (editor != null) {
-        DataContext dataContext = Utils.createAsyncDataContext(editor.getContentComponent());
-        return getFocusedEditor(dataContext);
-      }
-      return null;
+      var component = editor == null ? null : editor.getContentComponent();
+      return FocusedFileEditor.getFocusedFileEditor(component);
     }
   }
 }

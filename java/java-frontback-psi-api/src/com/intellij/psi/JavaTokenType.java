@@ -1,16 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.tree.java.IKeywordElementType;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @see com.intellij.java.syntax.element.JavaSyntaxTokenType
  */
-@SuppressWarnings("SpellCheckingInspection")
 public interface JavaTokenType extends TokenType {
   IElementType IDENTIFIER = new IJavaElementType("IDENTIFIER");
   IElementType C_STYLE_COMMENT = new IJavaElementType("C_STYLE_COMMENT");
@@ -160,158 +157,4 @@ public interface JavaTokenType extends TokenType {
   IElementType NON_SEALED_KEYWORD = new IKeywordElementType("NON_SEALED");
   IElementType PERMITS_KEYWORD = new IJavaElementType("PERMITS");
   IElementType WHEN_KEYWORD = new IJavaElementType("WHEN_KEYWORD");
-
-  /**
-   * @deprecated use {@link com.intellij.java.syntax.element.JavaSyntaxTokenType#JAVA_TOKEN_TYPE_SET}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  TokenSet JAVA_TOKEN_TYPE_SET = TokenSet.create(IDENTIFIER,
-                                                 C_STYLE_COMMENT,
-                                                 END_OF_LINE_COMMENT,
-
-                                                 INTEGER_LITERAL,
-                                                 LONG_LITERAL,
-                                                 FLOAT_LITERAL,
-                                                 DOUBLE_LITERAL,
-                                                 CHARACTER_LITERAL,
-                                                 STRING_LITERAL,
-                                                 TEXT_BLOCK_LITERAL,
-
-                                                 STRING_TEMPLATE_BEGIN,
-                                                 STRING_TEMPLATE_MID,
-                                                 STRING_TEMPLATE_END,
-                                                 TEXT_BLOCK_TEMPLATE_BEGIN,
-                                                 TEXT_BLOCK_TEMPLATE_MID,
-                                                 TEXT_BLOCK_TEMPLATE_END,
-
-                                                 TRUE_KEYWORD,
-                                                 FALSE_KEYWORD,
-                                                 NULL_KEYWORD,
-
-                                                 ABSTRACT_KEYWORD,
-                                                 ASSERT_KEYWORD,
-                                                 BOOLEAN_KEYWORD,
-                                                 BREAK_KEYWORD,
-                                                 BYTE_KEYWORD,
-                                                 CASE_KEYWORD,
-                                                 CATCH_KEYWORD,
-                                                 CHAR_KEYWORD,
-                                                 CLASS_KEYWORD,
-                                                 CONST_KEYWORD,
-                                                 CONTINUE_KEYWORD,
-                                                 DEFAULT_KEYWORD,
-                                                 DO_KEYWORD,
-                                                 DOUBLE_KEYWORD,
-                                                 ELSE_KEYWORD,
-                                                 ENUM_KEYWORD,
-                                                 EXTENDS_KEYWORD,
-                                                 FINAL_KEYWORD,
-                                                 FINALLY_KEYWORD,
-                                                 FLOAT_KEYWORD,
-                                                 FOR_KEYWORD,
-                                                 GOTO_KEYWORD,
-                                                 IF_KEYWORD,
-                                                 IMPLEMENTS_KEYWORD,
-                                                 IMPORT_KEYWORD,
-                                                 INSTANCEOF_KEYWORD,
-                                                 INT_KEYWORD,
-                                                 INTERFACE_KEYWORD,
-                                                 LONG_KEYWORD,
-                                                 NATIVE_KEYWORD,
-                                                 NEW_KEYWORD,
-                                                 PACKAGE_KEYWORD,
-                                                 PRIVATE_KEYWORD,
-                                                 PUBLIC_KEYWORD,
-                                                 SHORT_KEYWORD,
-                                                 SUPER_KEYWORD,
-                                                 SWITCH_KEYWORD,
-                                                 SYNCHRONIZED_KEYWORD,
-                                                 THIS_KEYWORD,
-                                                 THROW_KEYWORD,
-                                                 PROTECTED_KEYWORD,
-                                                 TRANSIENT_KEYWORD,
-                                                 RETURN_KEYWORD,
-                                                 VOID_KEYWORD,
-                                                 STATIC_KEYWORD,
-                                                 STRICTFP_KEYWORD,
-                                                 WHILE_KEYWORD,
-                                                 TRY_KEYWORD,
-                                                 VOLATILE_KEYWORD,
-                                                 THROWS_KEYWORD,
-
-                                                 LPARENTH,
-                                                 RPARENTH,
-                                                 LBRACE,
-                                                 RBRACE,
-                                                 LBRACKET,
-                                                 RBRACKET,
-                                                 SEMICOLON,
-                                                 COMMA,
-                                                 DOT,
-                                                 ELLIPSIS,
-                                                 AT,
-
-                                                 EQ,
-                                                 GT,
-                                                 LT,
-                                                 EXCL,
-                                                 TILDE,
-                                                 QUEST,
-                                                 COLON,
-                                                 PLUS,
-                                                 MINUS,
-                                                 ASTERISK,
-                                                 DIV,
-                                                 AND,
-                                                 OR,
-                                                 XOR,
-                                                 PERC,
-
-                                                 EQEQ,
-                                                 LE,
-                                                 GE,
-                                                 NE,
-                                                 ANDAND,
-                                                 OROR,
-                                                 PLUSPLUS,
-                                                 MINUSMINUS,
-                                                 LTLT,
-                                                 GTGT,
-                                                 GTGTGT,
-                                                 PLUSEQ,
-                                                 MINUSEQ,
-                                                 ASTERISKEQ,
-                                                 DIVEQ,
-                                                 ANDEQ,
-                                                 OREQ,
-                                                 XOREQ,
-                                                 PERCEQ,
-                                                 LTLTEQ,
-                                                 GTGTEQ,
-                                                 GTGTGTEQ,
-
-                                                 DOUBLE_COLON,
-                                                 ARROW,
-
-                                                 OPEN_KEYWORD,
-                                                 MODULE_KEYWORD,
-                                                 REQUIRES_KEYWORD,
-                                                 EXPORTS_KEYWORD,
-                                                 OPENS_KEYWORD,
-                                                 USES_KEYWORD,
-                                                 PROVIDES_KEYWORD,
-                                                 TRANSITIVE_KEYWORD,
-                                                 TO_KEYWORD,
-                                                 WITH_KEYWORD,
-
-                                                 VAR_KEYWORD,
-                                                 YIELD_KEYWORD,
-                                                 RECORD_KEYWORD,
-
-                                                 VALUE_KEYWORD,
-                                                 SEALED_KEYWORD,
-                                                 NON_SEALED_KEYWORD,
-                                                 PERMITS_KEYWORD,
-                                                 WHEN_KEYWORD);
 }

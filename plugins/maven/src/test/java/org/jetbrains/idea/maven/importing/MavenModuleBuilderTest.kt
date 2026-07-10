@@ -1,7 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.assertSources
+import com.intellij.maven.testFramework.fixtures.assertTestSources
+import com.intellij.maven.testFramework.fixtures.assumeMaven3
+import com.intellij.maven.testFramework.fixtures.getModule
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.moduleTag
+import com.intellij.maven.testFramework.fixtures.modulesTag
+import com.intellij.maven.testFramework.fixtures.projectPath
+import com.intellij.maven.testFramework.fixtures.projectRoot
+import com.intellij.maven.testFramework.fixtures.updateAllProjects
+import com.intellij.maven.testFramework.fixtures.waitForImportWithinTimeout
 import com.intellij.maven.testFramework.utils.MavenProjectJDKTestFixture
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
@@ -15,40 +28,26 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.EdtTestUtil
+import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
-import org.jetbrains.idea.maven.fixtures.assertModules
-import org.jetbrains.idea.maven.fixtures.assertSources
-import org.jetbrains.idea.maven.fixtures.assertTestSources
-import org.jetbrains.idea.maven.fixtures.assumeMaven3
-import org.jetbrains.idea.maven.fixtures.getModule
-import org.jetbrains.idea.maven.fixtures.importProjectAsync
-import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
-import org.jetbrains.idea.maven.fixtures.moduleTag
-import org.jetbrains.idea.maven.fixtures.modulesTag
-import org.jetbrains.idea.maven.fixtures.projectPath
-import org.jetbrains.idea.maven.fixtures.updateAllProjects
-import org.jetbrains.idea.maven.fixtures.waitForImportWithinTimeout
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenJavaModuleBuilder
-import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
-import org.junit.jupiter.api.Assertions.assertSame
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.AfterEach
 
 
 @TestApplication

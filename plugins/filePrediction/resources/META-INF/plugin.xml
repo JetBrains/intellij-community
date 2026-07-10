@@ -8,6 +8,8 @@
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.ml.impl"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.log.impl"/>
     <module name="intellij.vcs.git.backend"/>
     <!-- endregion -->
   </dependencies>

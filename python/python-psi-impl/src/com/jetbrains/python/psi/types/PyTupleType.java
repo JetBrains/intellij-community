@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Objects;
 
 
+@SuppressWarnings("deprecation")
 public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
 
   private final PyUnpackedTupleType myUnpackedTupleType;
@@ -77,7 +78,7 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
       return getIteratedItemType();
     }
     List<PyType> elementTypes = myUnpackedTupleType.getElementTypes();
-    return index >= 0 && index < elementTypes.size() ? elementTypes.get(index) : null;
+    return index >= 0 && index < elementTypes.size() ? elementTypes.get(index) : PyAnyType.getUnknown();
   }
 
   public int getElementCount() {
@@ -103,7 +104,7 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
   }
 
   @Override
-  public @NotNull List<PyType> getElementTypes() {
+  public @NotNull List<PyType> getTypeArguments() {
     return myUnpackedTupleType.getElementTypes();
   }
 

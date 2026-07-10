@@ -553,7 +553,7 @@ class NetCommandFactoryJson(NetCommandFactory):
         if py_db.get_use_libraries_filter():
             msg += (
                 '\nNote: may have been skipped because of "justMyCode" option (default == true). '
-                'Try setting "justMyCode": false in the debug configuration (e.g., launch.json).\n'
+                'Try setting "justMyCode": false in the debug configuration.\n'
             )
         return self.make_warning_message(msg)
 

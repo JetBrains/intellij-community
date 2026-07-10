@@ -4,8 +4,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.command.executeCommand
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -84,25 +83,25 @@ abstract class SetHeaderLevelImpl(
     val caret = event.getData(CommonDataKeys.CARET) ?: return
     val element = findParent(file, editor.document, caret.selectionStart, caret.selectionEnd)
     if (element == null) {
-      tryToCreateHeaderFromRawLine(editor, caret)
+      tryToCreateHeaderFromRawLine(file, editor, caret)
       return
     }
     val header = PsiTreeUtil.getParentOfType(element, MarkdownHeader::class.java, false)
     val project = file.project
-    runWriteAction {
-      executeCommand(project) {
+    WriteCommandAction.writeCommandAction(project, file)
+      .withName(templatePresentation.text)
+      .run<RuntimeException> {
         when {
           header != null -> handleExistingHeader(header, editor)
           level != 0 -> element.replace(MarkdownPsiElementFactory.createHeader(project, level, element.text))
         }
       }
-    }
   }
 
   /**
    * Simply adds `#` at the line start. If there are no empty lines around new header, new lines will be added them.
    */
-  private fun tryToCreateHeaderFromRawLine(editor: Editor, caret: Caret) {
+  private fun tryToCreateHeaderFromRawLine(file: PsiFile, editor: Editor, caret: Caret) {
     val document = editor.document
     val selectionStart = caret.selectionStart
     val selectionEnd = caret.selectionEnd
@@ -111,8 +110,9 @@ abstract class SetHeaderLevelImpl(
       return
     }
     val lineStartOffset = document.getLineStartOffset(line)
-    runWriteAction {
-      executeCommand(editor.project) {
+    WriteCommandAction.writeCommandAction(file.project, file)
+      .withName(templatePresentation.text)
+      .run<RuntimeException> {
         val nextLine = line + 1
         if (nextLine < document.lineCount && !DocumentUtil.isLineEmpty(document, nextLine)) {
           val lineEndOffset = document.getLineEndOffset(line)
@@ -124,7 +124,6 @@ abstract class SetHeaderLevelImpl(
           document.insertString(lineStartOffset, "\n")
         }
       }
-    }
   }
 
   private fun handleExistingHeader(header: MarkdownHeader, editor: Editor) {

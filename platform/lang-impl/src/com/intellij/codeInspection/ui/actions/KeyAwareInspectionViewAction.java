@@ -56,11 +56,11 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
 
     @Override
     protected boolean isEnabled(@NotNull InspectionResultsView view, AnActionEvent e) {
-      final InspectionToolWrapper<?, ?> wrapper = getToolWrapper(e);
+      InspectionToolWrapper<?, ?> wrapper = getToolWrapper(e);
       if (wrapper == null) {
         return false;
       }
-      final HighlightDisplayKey key = HighlightDisplayKey.find(wrapper.getShortName());
+      HighlightDisplayKey key = HighlightDisplayKey.find(wrapper.getShortName());
       if (key == null) {
         return false;
       }
@@ -76,8 +76,8 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
         view.getCurrentProfile().modifyProfile(it -> it.setToolEnabled(shortName, false));
       }
       else {
-        final RefEntity[] selectedElements = view.getTree().getSelectedElements();
-        final Set<PsiElement> files = new HashSet<>();
+        RefEntity[] selectedElements = view.getTree().getSelectedElements();
+        Set<PsiElement> files = new HashSet<>();
         for (RefEntity selectedElement : selectedElements) {
           if (selectedElement instanceof RefElement) {
             files.add(((RefElement)selectedElement).getPsiElement());
@@ -114,8 +114,8 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
       Set<PsiFile> files = new HashSet<>();
       for (RefEntity entity : Objects.requireNonNull(view).getTree().getSelectedElements()) {
         if (entity instanceof RefElement && entity.isValid()) {
-          final PsiElement element = ((RefElement)entity).getPsiElement();
-          final PsiFile file = element.getContainingFile();
+          PsiElement element = ((RefElement)entity).getPsiElement();
+          PsiFile file = element.getContainingFile();
           files.add(file);
         }
       }
@@ -123,7 +123,7 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
       boolean useModule = true;
       Module module = null;
       for (PsiFile file : files) {
-        final Module currentFileModule = ModuleUtilCore.findModuleForPsiElement(file);
+        Module currentFileModule = ModuleUtilCore.findModuleForPsiElement(file);
         if (currentFileModule != null) {
           if (module == null) {
             module = currentFileModule;
@@ -139,15 +139,15 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
         }
       }
 
-      final PsiElement context;
-      final AnalysisScope scope;
+      PsiElement context;
+      AnalysisScope scope;
       switch (files.size()) {
         case 0 -> {
           context = null;
           scope = view.getScope();
         }
         case 1 -> {
-          final PsiFile theFile = ContainerUtil.getFirstItem(files);
+          PsiFile theFile = ContainerUtil.getFirstItem(files);
           LOG.assertTrue(theFile != null);
           context = theFile;
           scope = new AnalysisScope(theFile);

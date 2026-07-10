@@ -134,6 +134,10 @@ jvm_library(
         "//platform/analysis-api:analysis_test_lib",
         "//platform/code-style-api:codeStyle",
         "//platform/code-style-api:codeStyle_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.debugger.streams.tests` end

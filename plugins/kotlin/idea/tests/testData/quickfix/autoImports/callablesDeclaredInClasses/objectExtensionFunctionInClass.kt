@@ -1,5 +1,5 @@
 // "Import extension function 'Obj.foo'" "true"
-// K2_ERROR: Unresolved reference 'foo'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 package p
 
 object Obj

@@ -59,8 +59,53 @@ public interface JBAccountInfoService {
     return CompletableFuture.supplyAsync(() -> getIdToken(), AppExecutorUtil.getAppExecutorService());
   }
 
+  /**
+   * Returns the current user's JBA access token, or {@code null} if it cannot be obtained,
+   * whether because the user is not logged in or because the request failed.
+   * <p>
+   * Delegates to {@link #getGlobalAccessToken(String)} with the {@link #JBA_AUDIENCE} audience,
+   * collapsing both {@link AccessTokenResult.RequestFailed} and {@link AuthRequired} results
+   * into {@code null}. The call may involve network I/O.
+   * The future may also be cancelled in case of remote dev
+   * when the controlling client handling the request is disconnected.
+   *
+   * @deprecated Use {@link #getGlobalAccessToken(String)} with {@link #JBA_AUDIENCE} instead
+   * to distinguish the failure reason.
+   */
+  @Deprecated // kept because of external usages
   default @NotNull Future<String> getAccessToken() {
-    return CompletableFuture.completedFuture(null);
+    return getGlobalAccessToken(JBA_AUDIENCE)
+      .thenApply(result -> {
+        return result instanceof AccessTokenResult.AccessToken(String accessToken) ? accessToken : null;
+      });
+  }
+
+  default @NotNull CompletableFuture<@NotNull AccessTokenResult> getGlobalAccessToken(@NotNull String audience) {
+    return getGlobalAccessToken(audience, false);
+  }
+
+  /**
+   * Issues (or returns a cached) global access token for the given {@code audience}.
+   * <p>
+   * When {@code forceTokenReissue} is {@code true}, the cached token (if any) is bypassed: a new access token is
+   * requested from the server and the freshly issued value replaces the cached one.
+   */
+  default @NotNull CompletableFuture<@NotNull AccessTokenResult> getGlobalAccessToken(@NotNull String audience, boolean forceTokenReissue) {
+    throw new UnsupportedOperationException();
+  }
+
+  default @NotNull CompletableFuture<@NotNull AccessTokenResult> getOrgAccessToken(@NotNull String audience, @NotNull String workspaceId) {
+    return getOrgAccessToken(audience, workspaceId, false);
+  }
+
+  /**
+   * Issues (or returns a cached) organization access token for the given {@code audience} and {@code workspaceId}.
+   * <p>
+   * When {@code forceTokenReissue} is {@code true}, the cached token (if any) is bypassed: a new access token is
+   * requested from the server and the freshly issued value replaces the cached one.
+   */
+  default @NotNull CompletableFuture<@NotNull AccessTokenResult> getOrgAccessToken(@NotNull String audience, @NotNull String workspaceId, boolean forceTokenReissue) {
+    throw new UnsupportedOperationException();
   }
 
   /**
@@ -241,6 +286,13 @@ public interface JBAccountInfoService {
     record LogoutFailed(@NlsSafe @NotNull String errorMessage) implements LogoutResult { }
   }
 
+  sealed interface AccessTokenResult permits AccessTokenResult.AccessToken,
+                                             AccessTokenResult.RequestFailed,
+                                             AuthRequired {
+    record RequestFailed(@Nullable Integer httpStatusCode, @NlsSafe @NotNull String message) implements AccessTokenResult { }
+    record AccessToken(@NotNull String accessToken) implements AccessTokenResult { }
+  }
+
   record JbaLicense(
     @NlsSafe @NotNull String licenseId,
     @NotNull String jbaUserId,
@@ -273,6 +325,8 @@ public interface JBAccountInfoService {
     CLASSROOM,
   }
 
+  String JBA_AUDIENCE = "jba";
+
   sealed interface LicenseListResult permits LicenseListResult.LicenseList,
                                              LicenseListResult.RequestFailed,
                                              LicenseListResult.RequestDeclined,
@@ -293,7 +347,7 @@ public interface JBAccountInfoService {
    * Returned in cases the method returning it is called while unauthenticated,
    * or when the current auth credentials have expired and need to be revalidated by {@link #startLoginSession signing in} again.
    */
-  enum AuthRequired implements LicenseListResult, AgreementAcceptanceResult {
+  enum AuthRequired implements LicenseListResult, AgreementAcceptanceResult, AccessTokenResult {
     INSTANCE;
 
     @Override

@@ -328,7 +328,13 @@ public class ExpressionParsing extends Parsing {
         expr.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
         return;
       }
-      parseDictLiteralContentTail(expr);
+      if (atForOrAsyncFor()) {
+        // PEP 798: dict comprehension with double-star unpacking, e.g. {**d for d in dicts}
+        parseComprehension(expr, PyTokenTypes.RBRACE, PyElementTypes.DICT_COMP_EXPRESSION);
+      }
+      else {
+        parseDictLiteralContentTail(expr);
+      }
       return;
     }
 
@@ -582,12 +588,19 @@ public class ExpressionParsing extends Parsing {
         }
       }
       if (myBuilder.getTokenType() == PyTokenTypes.MULT || myBuilder.getTokenType() == PyTokenTypes.EXP) {
+        final boolean singleStar = myBuilder.getTokenType() == PyTokenTypes.MULT;
         final SyntaxTreeBuilder.Marker starArgMarker = myBuilder.mark();
         myBuilder.advanceLexer();
         if (!parseSingleExpression(false)) {
           myBuilder.error(message("PARSE.expected.expression"));
         }
-        starArgMarker.done(PyElementTypes.STAR_ARGUMENT_EXPRESSION);
+        if (singleStar && argNumber == 1 && genexpr != null && atForOrAsyncFor()) {
+          // PEP 798: a generator expression with star unpacking passed as the sole argument, e.g. foo(*x for x in y)
+          starArgMarker.done(PyElementTypes.STAR_EXPRESSION);
+        }
+        else {
+          starArgMarker.done(PyElementTypes.STAR_ARGUMENT_EXPRESSION);
+        }
       }
       else {
         if (isIdentifier(myBuilder)) {

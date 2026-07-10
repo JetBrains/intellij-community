@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.service.fus.collectors
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 
@@ -20,8 +19,10 @@ object UsageCollectors {
   @JvmField
   val COUNTER_EP_NAME: ExtensionPointName<CounterUsageCollectorEP> = ExtensionPointName("com.intellij.statistics.counterUsagesCollector")
 
-  internal fun getApplicationCollectors(invoker: UsagesCollectorConsumer,
-                                        allowedOnStartupOnly: Boolean): Collection<ApplicationUsagesCollector> {
+  internal fun getApplicationCollectors(
+    invoker: UsagesCollectorConsumer,
+    allowedOnStartupOnly: Boolean,
+  ): Collection<ApplicationUsagesCollector> {
     if (isCalledFromPlugin(invoker)) {
       return emptyList()
     }
@@ -32,15 +33,13 @@ object UsageCollectors {
 
     return APPLICATION_EP_NAME.extensionList.asSequence()
       .filter { it.allowOnStartup == true }
-      .map { it.collector as ApplicationUsagesCollector }
-      .filter { isValidCollector(it) }
+      .mapNotNull { it.getCollectorIfApplicable() as ApplicationUsagesCollector? }
       .toList()
   }
 
   private fun getAllApplicationCollectors(): Collection<ApplicationUsagesCollector> {
     return APPLICATION_EP_NAME.extensionList.asSequence()
-      .map { it.collector as ApplicationUsagesCollector }
-      .filter { isValidCollector(it) }
+      .mapNotNull { it.getCollectorIfApplicable() as ApplicationUsagesCollector? }
       .toList()
   }
 
@@ -50,20 +49,11 @@ object UsageCollectors {
     }
 
     return PROJECT_EP_NAME.extensionList.asSequence()
-      .map { it.collector as ProjectUsagesCollector }
-      .filter { isValidCollector(it) }
+      .mapNotNull { it.getCollectorIfApplicable() as ProjectUsagesCollector? }
       .toList()
   }
 
-  private fun isValidCollector(item: FeatureUsagesCollector): Boolean {
-    val valid = item.isValid
-    if (!valid) {
-      Logger.getInstance(UsageCollectors::class.java).info("$item is !valid -> skipped from extension points list")
-    }
-    return valid
-  }
-
   private fun isCalledFromPlugin(invoker: UsagesCollectorConsumer): Boolean {
-    return invoker.javaClass.getClassLoader() is PluginAwareClassLoader
+    return invoker.javaClass.classLoader is PluginAwareClassLoader
   }
 }

@@ -3,24 +3,32 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.impl.DebuggerContextImpl
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.sun.jdi.ClassType
 import com.sun.jdi.Value
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.eval4j.jdi.asValue
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
+import org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework.Companion.asKtClassOrObject
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.resolve.jvm.JvmClassName
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 @ApiStatus.Internal
@@ -50,13 +58,10 @@ abstract class KotlinK2RuntimeTypeEvaluator(
     }
 
     private fun findTypeByAsmType(asmType: AsmType, project: Project, scope: GlobalSearchScope): KaTypePointer<KaType>? {
-        val jvmName = JvmClassName.byInternalName(asmType.internalName).fqNameForClassNameWithoutDollars
-        val psiClass = runReadAction {
-            DebuggerUtils.findClass(jvmName.asString(), project, scope, true)
-        } ?: return null
-        return runDumbAnalyze(expression, fallback = null) {
-            val runtimeType = (psiClass.asKtClassOrObject()?.namedClassSymbol ?: psiClass.namedClassSymbol)?.defaultType
-            runtimeType?.createPointer()
+        val psiClass = findPsiClassByType(asmType, project, scope) ?: return null
+        val useSiteModule = getKaModule(psiClass, project)
+        return runDumbAnalyze(useSiteModule, fallback = null) {
+            getKaType(psiClass)?.createPointer()
         }
     }
 
@@ -65,16 +70,13 @@ abstract class KotlinK2RuntimeTypeEvaluator(
         project: Project,
         scope: GlobalSearchScope,
     ): KaTypePointer<KaType>? {
-        val psiClasses = runReadAction {
-            asmTypes.mapNotNull { asm ->
-                val jvmName = JvmClassName.byInternalName(asm.internalName).fqNameForClassNameWithoutDollars
-                DebuggerUtils.findClass(jvmName.asString(), project, scope, true)
-            }
-        }
+        val psiClasses = asmTypes.mapNotNull { findPsiClassByType(it, project, scope) }
         if (psiClasses.isEmpty()) return null
-        return runDumbAnalyze(expression, fallback = null) {
+        val useSiteModule = psiClasses.firstNotNullOfOrNull { getKaModule(it, project) }
+        if (useSiteModule == null) return null
+        return runDumbAnalyze(useSiteModule, fallback = null) {
             val kaConjuncts = psiClasses.mapNotNull {
-                (it.asKtClassOrObject()?.namedClassSymbol ?: it.namedClassSymbol)?.defaultType
+                getKaType(it)
             }
             when (kaConjuncts.size) {
                 0 -> null
@@ -83,4 +85,36 @@ abstract class KotlinK2RuntimeTypeEvaluator(
             }
         }
     }
+
+    context(session: KaSession)
+    private fun getKaType(psiClass: PsiElement): KaType? {
+        with(session) {
+            val classSymbol = psiClass.asKtClassOrObject()?.namedClassSymbol ?: (psiClass as? PsiClass)?.namedClassSymbol
+            return classSymbol?.defaultType
+        }
+    }
+
+    private fun getKaModule(psiElement: PsiElement, project: Project): KaModule =
+        ReadAction.nonBlocking<KaModule> {
+            psiElement.getKaModule(project, useSiteModule = null)
+        }.executeSynchronously()
+
+    /**
+     * Resolve a local class by matching its compiled class name against
+     * the class declarations in the evaluated expression's file.
+     */
+    private fun findLocalClassByName(className: String): KtClassOrObject? {
+        val contextFile = (expression.containingFile as? KtCodeFragment)?.context?.containingFile as? KtFile ?: return null
+        val classNameProvider = ClassNameProvider(ClassNameProvider.Configuration.DEFAULT)
+        return contextFile.collectDescendantsOfType<KtClassOrObject> { it.name != null }
+            .firstOrNull { className in classNameProvider.getCandidatesForElement(it) }
+    }
+
+    private fun findPsiClassByType(asmType: AsmType, project: Project, scope: GlobalSearchScope): PsiElement? =
+        ReadAction.nonBlocking<PsiElement?> {
+            val className = asmType.internalName.replace('/', '.')
+            DebuggerUtils.findClass(className, project, scope, true)
+                ?: findLocalClassByName(className)
+                ?: return@nonBlocking null
+        }.executeSynchronously()
 }

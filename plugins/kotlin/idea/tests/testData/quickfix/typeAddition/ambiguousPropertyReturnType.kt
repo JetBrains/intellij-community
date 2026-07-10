@@ -1,5 +1,5 @@
 // "Specify type explicitly" "true"
-// K2_ERROR: Right-hand side has an anonymous type. Specify the type explicitly.
+// K2_ERROR: AMBIGUOUS_ANONYMOUS_TYPE_INFERRED
 package a
 
 interface A {}

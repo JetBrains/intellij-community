@@ -203,8 +203,8 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
     myAdvertiserChanges.offer(() -> this.lookup.getAdvertiser().clearAdvertisements());
 
-    myArranger = GroupedCompletionContributor.isGroupEnabledInApp() ? new GroupCompletionLookupArrangerImpl(this)
-                                                                    : new CompletionLookupArrangerImpl(this);
+    myArranger = GroupedCompletionContributor.isGroupEnabled(myEditor) ? new GroupCompletionLookupArrangerImpl(this)
+                                                                       : new CompletionLookupArrangerImpl(this);
     this.lookup.setArranger(myArranger);
 
     this.lookup.addLookupListener(myLookupListener);
@@ -287,7 +287,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       for (CompletionContributor contributor :
-        CompletionContributor.forLanguageHonorDumbness(initContext.getPositionLanguage(), initContext.getProject())) {
+        CompletionContributor.forLanguageHonorDumbness(initContext.getPositionLanguage(), initContext.getProject(), initContext.getEditor())) {
         ProgressManager.checkCanceled();
         contributor.duringCompletion(initContext);
       }

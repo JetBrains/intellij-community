@@ -16,7 +16,6 @@
     <module name="intellij.java.syntax"/>
     <module name="intellij.libraries.maven.resolver.provider"/>
     <module name="intellij.platform.jps.build"/>
-    <module name="intellij.platform.vcs.impl"/>
   </dependencies>
   <!-- endregion -->
 

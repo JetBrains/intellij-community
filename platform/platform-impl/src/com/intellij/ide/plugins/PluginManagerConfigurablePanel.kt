@@ -10,12 +10,13 @@ import com.intellij.ide.plugins.certificates.PluginCertificateManager
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.plugins.newui.MyPluginModel
+import com.intellij.ide.plugins.newui.PluginUpdatesService
 import com.intellij.ide.plugins.newui.PluginManagerCustomizer
 import com.intellij.ide.plugins.newui.PluginModelAsyncOperationsExecutor
 import com.intellij.ide.plugins.newui.PluginModelFacade
 import com.intellij.ide.plugins.newui.PluginPriceService
 import com.intellij.ide.plugins.newui.PluginUiModel
-import com.intellij.ide.plugins.newui.PluginUpdatesService
+import com.intellij.ide.plugins.newui.PluginUpdateSubscription
 import com.intellij.ide.plugins.newui.PluginsGroup
 import com.intellij.ide.plugins.newui.PluginsGroupComponent
 import com.intellij.ide.plugins.newui.PluginsTab
@@ -38,6 +39,7 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ModalityState.any
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
@@ -99,7 +101,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
   private val coroutineScope: CoroutineScope
 
   private val pluginModelFacade: PluginModelFacade
-  private val pluginUpdatesService: PluginUpdatesService
+  private val updateSubscription: PluginUpdateSubscription
   private val pluginManagerCustomizer: PluginManagerCustomizer? = PluginManagerCustomizer.getInstance()
 
   private val tabHeaderComponent: TabbedPaneHeaderComponent
@@ -129,12 +131,6 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
     pluginModelFacade.getModel().coroutineScope = childScope
     coroutineScope = childScope
 
-    pluginUpdatesService =
-      UiPluginManager.getInstance().subscribeToUpdatesCount(pluginModelFacade.getModel().sessionId) { updatesCount ->
-        coroutineScope.launch(Dispatchers.EDT + any().asContextElement()) { onPluginUpdatesRecalculation(updatesCount) }
-      }
-    pluginModelFacade.getModel().pluginUpdatesService = pluginUpdatesService
-
     CustomPluginRepositoryService.getInstance().clearCache()
 
     marketplaceTab = createMarketplaceTab()
@@ -161,6 +157,11 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
     if (pluginManagerCustomizer != null) {
       pluginManagerCustomizer.initCustomizer(cardPanel)
     }
+
+    updateSubscription =
+      UiPluginManager.getInstance().subscribeToPluginUpdatesFiltered(pluginModelFacade.getModel().sessionId) { pluginUpdates ->
+        coroutineScope.launch(Dispatchers.UI + any().asContextElement()) { onPluginUpdatesRecalculation(pluginUpdates) }
+      }
   }
 
   @RequiresEdt
@@ -283,31 +284,38 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
   private fun resetPanels() {
     CustomPluginRepositoryService.getInstance().clearCache()
     marketplaceTab.resetCache()
-    pluginUpdatesService.recalculateUpdates()
+    PluginUpdatesService.getInstance().recalculateUpdates()
     marketplaceTab.onPanelReset(tabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB)
   }
 
-  private fun onPluginUpdatesRecalculation(updatesCount: Int?) {
-    val count = updatesCount ?: 0
-    val text = Integer.toString(count)
-
-    val tooltip = PluginUpdatesService.getUpdatesTooltip()
+  private fun onPluginUpdatesRecalculation(pluginUpdates: List<PluginUiModel>) {
+    val text = Integer.toString(pluginUpdates.size)
+    val tooltip = getUpdatesTooltip(pluginUpdates)
     tabHeaderComponent.setTabTooltip(INSTALLED_TAB, tooltip)
 
-    installedTab.onPluginUpdatesRecalculation(updatesCount, tooltip)
+    installedTab.onPluginUpdatesRecalculation(pluginUpdates.size, tooltip)
 
     installedTabHeaderUpdatesCountIcon.setText(text)
     tabHeaderComponent.update()
   }
 
+  @Nls
+  fun getUpdatesTooltip(pluginUpdates: List<PluginUiModel>): @Nls String? {
+    if (pluginUpdates.isEmpty()) {
+      return null
+    }
+    return IdeBundle.message("updates.plugin.ready.tooltip",
+                             StringUtil.join(pluginUpdates.map { it.name }, ", "),
+                             pluginUpdates.size)
+  }
+
   private fun createMarketplaceTab(): MarketplacePluginsTab {
-    return MarketplacePluginsTab(pluginModelFacade, coroutineScope, pluginManagerCustomizer, pluginUpdatesService)
+    return MarketplacePluginsTab(pluginModelFacade, coroutineScope, pluginManagerCustomizer)
   }
 
   private fun createInstalledTab(): InstalledPluginsTab {
     val installedPluginsTab = InstalledPluginsTab(
       pluginModelFacade,
-      pluginUpdatesService,
       coroutineScope,
       { _ -> tabHeaderComponent.setSelectionWithEvents(MARKETPLACE_TAB) },
     )
@@ -355,7 +363,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
 
     installedTab.getInstalledSearchPanel().dispose()
 
-    pluginUpdatesService.dispose()
+    updateSubscription.cancel()
     PluginPriceService.cancel()
 
     pluginsState.runShutdownCallback()

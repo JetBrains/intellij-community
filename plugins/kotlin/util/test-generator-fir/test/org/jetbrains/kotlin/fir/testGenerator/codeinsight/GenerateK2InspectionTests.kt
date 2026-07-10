@@ -190,6 +190,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/scriptExecutable", pattern = Patterns.KTS)
             model("${idea}/inspectionsLocal/replaceAddAllWithMapTo")
             model("${idea}/inspectionsLocal/unnecessaryOptInAnnotation")
+            model("${idea}/inspectionsLocal/duplicateArgumentsInSetOfAndMapOfFunctions")
 
             // There is no `RemoveExplicitTypeArgumentsIntention` in K2 because `RemoveExplicitTypeArgumentsInspection` is available
             // and the inspection can have the "No highlighting (fix available)" severity.
@@ -216,6 +217,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             val pattern = Patterns.forRegex("^(inspections\\.test)$")
             model("${idea}/inspections/enumValuesSoftDeprecateInJava", pattern = pattern)
             model("${idea}/inspections/enumValuesSoftDeprecateInKotlin", pattern = pattern)
+            model("${idea}/inspections/escapedCapturedVariable", pattern = pattern)
             model("${idea}/inspections/redundantIf", pattern = pattern)
             model("${idea}/inspections/equalsAndHashCode", pattern = pattern)
             model("${idea}/inspections/protectedInFinal", pattern = pattern)

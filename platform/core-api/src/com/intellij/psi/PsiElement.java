@@ -564,10 +564,10 @@ public interface PsiElement extends UserDataHolder, Iconable {
   /**
    * Checks if an actual source or class file corresponds to the element.
    * <p>
-   * If a PSI element is physical, it was produced by a {@link FileViewProvider} whose {@link FileViewProvider#isEventSystemEnabled} returns true. 
+   * If a PSI element is physical, it was produced by a {@link FileViewProvider} whose {@link FileViewProvider#supportsSendingPsiEvents()} returns true.
    * <p>
    * Non-physical elements include, for example, PSI elements created for the watch expressions in the debugger.
-   * Non-physical elements do not generate {@link FileViewProvider#isEventSystemEnabled tree change events}.
+   * Non-physical elements do not generate {@link FileViewProvider#supportsSendingPsiEvents() tree change events}.
    * Also, {@link PsiDocumentManager#getDocument(PsiFile)} returns null for non-physical elements.
    * <p>
    * Not to be confused with {@link FileViewProvider#isPhysical()}.

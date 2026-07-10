@@ -8,6 +8,9 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.indexing.IdFilter
 import com.intellij.util.indexing.IdFilter.FilterScopeType
 import com.intellij.util.io.EnumeratorStringDescriptor
+import com.intellij.util.io.ResizeableMappedFile
+import com.intellij.util.io.StorageLockContext
+import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile
 import junit.framework.TestCase
 import org.junit.ClassRule
 import org.junit.Rule
@@ -178,9 +181,33 @@ class KeyHashLogTest {
     }
   }
 
+  @Test
+  fun testVfsAwareStoragePropagatesStorageLockContextToKeyHashMapping() {
+    val dir = temporaryDirectory.createDir()
+    val storageLockContext = StorageLockContext(false)
+    val enumeratorStringDescriptor = EnumeratorStringDescriptor.INSTANCE
+
+    VfsAwareMapIndexStorage(
+      dir.resolve("index"),
+      enumeratorStringDescriptor,
+      enumeratorStringDescriptor,
+      16,
+      false,
+      true,
+      false,
+      storageLockContext,
+    ).use { storage ->
+      val keyHashLog = storage.getFieldValue<KeyHashLog<String>>("myKeyHashToVirtualFileMapping")
+      val mapping = keyHashLog.getFieldValue<AppendableStorageBackedByResizableMappedFile<IntArray>>("myKeyHashToVirtualFileMapping")
+      val mappedFile = mapping.getFieldValue<ResizeableMappedFile>("storage")
+
+      TestCase.assertSame(storageLockContext, mappedFile.storageLockContext)
+    }
+  }
+
   private val project = ProjectManager.getInstance().defaultProject
 
-  private fun Set<Int>.toFilter(type: FilterScopeType = FilterScopeType.PROJECT) : IdFilter = object : IdFilter() {
+  private fun Set<Int>.toFilter(type: FilterScopeType = FilterScopeType.PROJECT): IdFilter = object : IdFilter() {
     override fun containsFileId(id: Int): Boolean {
       return contains(id)
     }
@@ -192,5 +219,19 @@ class KeyHashLogTest {
 
   private fun Set<String>.toHashes(): Set<Int> {
     return map { it.hashCode() }.toSet()
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun <T> Any.getFieldValue(fieldName: String): T {
+    var currentClass: Class<*>? = javaClass
+    while (currentClass != null) {
+      try {
+        return currentClass.getDeclaredField(fieldName).also { it.isAccessible = true }.get(this) as T
+      }
+      catch (_: NoSuchFieldException) {
+        currentClass = currentClass.superclass
+      }
+    }
+    throw NoSuchFieldException(fieldName)
   }
 }

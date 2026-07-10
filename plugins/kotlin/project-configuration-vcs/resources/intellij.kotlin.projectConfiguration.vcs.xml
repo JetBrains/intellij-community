@@ -1,0 +1,17 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <!--
+      Automatic Kotlin configuration can show a VCS-style diff of files it changed.
+      The Language Server reuses the core project-configuration module, but it does not ship VCS UI/implementation modules.
+      Keeping the diff browser here preserves the full IDE action while allowing LS products to package the configurator without VCS.
+    -->
+    <configuratorChangesViewer implementation="org.jetbrains.kotlin.idea.configuration.ui.changes.KotlinConfiguratorChangesViewerImpl"/>
+  </extensions>
+</idea-plugin>

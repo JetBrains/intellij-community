@@ -34,7 +34,6 @@ import com.intellij.ui.UIBundle
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
-@ApiStatus.Internal
 internal class XNextToolbarToolWindowsGroup : ActionGroup(), DumbAware {
   private val cache = mutableMapOf<String, AnAction>()
 

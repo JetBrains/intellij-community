@@ -7,11 +7,14 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelPathBoundDescriptor
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
+import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.utils.WindowsPathUtils
+import com.intellij.platform.eel.provider.utils.impl.localToIjent
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.logging.Logger
 
 private val LOG = Logger.getLogger("com.intellij.platform.eel.provider.EelNioBridge")
@@ -42,7 +45,7 @@ fun EelPath.asNioPath(): @MultiRoutingFileSystemPath Path {
 @ApiStatus.Experimental
 fun EelPath.asNioPathOrNull(): @MultiRoutingFileSystemPath Path? {
   if (descriptor === LocalEelDescriptor) {
-    return Path.of(toString())
+    return Paths.get(toString())
   }
 
   // Comparing strings because `Path.of("\\wsl.localhost\distro\").equals(Path.of("\\wsl$\distro\")) == true`
@@ -83,14 +86,19 @@ fun EelPath.asNioPathOrNull(): @MultiRoutingFileSystemPath Path? {
 @Throws(EelPathException::class)
 @ApiStatus.Experimental
 fun Path.asEelPath(): EelPath {
+  @OptIn(EelDelicateApi::class)
   return asEelPath(getEelDescriptor())
 }
 
 /**
+ * **Do not use this function** ! Use [asEelPath] instead.
+ * This function will be dropped soon.
+ *
  * [descriptor] should be exactly `this.getEelDescriptor()`. This method exists only to avoid calling `getEelDescriptor()` twice.
  */
 @Throws(EelPathException::class)
-@ApiStatus.Experimental
+@ApiStatus.Internal
+@EelDelicateApi
 fun Path.asEelPath(descriptor: EelDescriptor): EelPath {
   if (descriptor is LocalEelDescriptor) {
     return EelPath.parse(toString(), descriptor)
@@ -115,6 +123,7 @@ fun Path.asEelPath(descriptor: EelDescriptor): EelPath {
     }
   }
   return rest.fold(EelPath.parse(eelRoot, descriptor)) { path, part ->
-    part.toString().takeIf { it.isNotEmpty() }?.let { path.getChild(it) } ?: path
+    @OptIn(EelDelicateApi::class)
+    localToIjent(part.toString()).takeIf { it.isNotEmpty() }?.let { path.getChild(it) } ?: path
   }
 }

@@ -8,14 +8,14 @@ import com.intellij.ide.minimap.layers.MinimapLayerId
 import com.intellij.ide.minimap.layers.MinimapLayerIds
 import com.intellij.ide.minimap.layers.MinimapLayerRenderState
 import com.intellij.ide.minimap.settings.MinimapSettings
-import com.intellij.openapi.ui.OnePixelDivider
+import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import java.awt.Graphics2D
 
 internal class EditorSeparatorLayerFactory : MinimapLayerFactory {
   override val id: MinimapLayerId = MinimapLayerIds.EDITOR_SEPARATOR
   override val order: Int = 100
-  private val leftBorder = JBUI.Borders.customLineLeft(OnePixelDivider.BACKGROUND)
+  private val leftBorder = JBUI.Borders.customLineLeft(JBColor.namedColor("EditorPane.splitBorder", JBColor.border()))
 
   override fun createLayer(panel: MinimapPanel): MinimapLayer {
     return object : MinimapLayer {
@@ -24,7 +24,7 @@ internal class EditorSeparatorLayerFactory : MinimapLayerFactory {
 
       override fun isApplicable(state: MinimapLayerRenderState): Boolean {
         val minimapState = MinimapSettings.getInstance().state
-        return minimapState.rightAligned && minimapState.insideScrollbar
+        return minimapState.rightAligned
       }
 
       override fun paint(graphics: Graphics2D, state: MinimapLayerRenderState) {

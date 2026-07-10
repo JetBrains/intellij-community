@@ -132,10 +132,10 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon New = load("actions/new.svg", 418266197, 2);
     /** 16x16 */ public static final @NotNull Icon NewFolder = load("expui/actions/newFolder.svg", "actions/newFolder.svg", 1755918051, 2);
     /** 16x16 */ public static final @NotNull Icon NextOccurence = load("expui/general/down.svg", "actions/nextOccurence.svg", -462515105, 2);
-    /** 16x16 */ public static final @NotNull Icon NotificationsBottomLeft = load("expui/actions/notificationsBottomLeft.svg", -1052087752, 2);
-    /** 16x16 */ public static final @NotNull Icon NotificationsBottomRight = load("expui/actions/notificationsBottomRight.svg", 1048166259, 2);
-    /** 16x16 */ public static final @NotNull Icon NotificationsTopLeft = load("expui/actions/notificationsTopLeft.svg", -1157652718, 2);
-    /** 16x16 */ public static final @NotNull Icon NotificationsTopRight = load("expui/actions/notificationsTopRight.svg", -1312429455, 2);
+    /** 16x16 */ public static final @NotNull Icon NotificationsBottomLeft = load("expui/actions/notificationsBottomLeft.svg", -301692782, 2);
+    /** 16x16 */ public static final @NotNull Icon NotificationsBottomRight = load("expui/actions/notificationsBottomRight.svg", -98211619, 2);
+    /** 16x16 */ public static final @NotNull Icon NotificationsTopLeft = load("expui/actions/notificationsTopLeft.svg", 1954674145, 2);
+    /** 16x16 */ public static final @NotNull Icon NotificationsTopRight = load("expui/actions/notificationsTopRight.svg", 612075600, 2);
     /** 16x16 */ public static final @NotNull Icon OfflineMode = load("expui/build/toggleOfflineMode.svg", "actions/offlineMode.svg", 1767884287, 2);
     /** 16x16 */ public static final @NotNull Icon OpenNewTab = load("expui/general/openNewTab.svg", "actions/openNewTab.svg", 1663264499, 2);
     /** 16x16 */ public static final @NotNull Icon Pause = load("expui/run/pause.svg", "actions/pause.svg", -1885569410, 2);
@@ -363,6 +363,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Frame = load("expui/debugger/frame.svg", "debugger/frame.svg", -388104166, 2);
     /** 16x16 */ public static final @NotNull Icon Freeze = load("expui/debugger/freeze.svg", "debugger/freeze.svg", 754396711, 2);
     /** 16x16 */ public static final @NotNull Icon FreezeAll = load("expui/debugger/freezeAll.svg", "debugger/freezeAll.svg", 1588999303, 2);
+    /** 16x16 */ public static final @NotNull Icon InspectionSeverity = load("expui/debugger/inspectionSeverity.svg", -492644959, 0);
     /** 16x16 */ public static final @NotNull Icon KillProcess = load("expui/run/killProcess.svg", "debugger/killProcess.svg", 1100470732, 2);
     /** 12x12 */ public static final @NotNull Icon LambdaBreakpoint = load("expui/breakpoints/breakpointLambda.svg", "debugger/LambdaBreakpoint.svg", -2130747183, 2);
     /** 12x12 */ public static final @NotNull Icon MultipleBreakpoints = load("expui/breakpoints/multipleBreakpoints.svg", "debugger/MultipleBreakpoints.svg", -1140485658, 2);
@@ -915,6 +916,78 @@ public class AllIcons {
   public static final class MeetNewUi {
     /** 16x16 */ public static final @NotNull Icon DarkTheme = load("expui/meetNewUi/darkTheme.svg", -1512620599, 2);
     /** 16x16 */ public static final @NotNull Icon LightTheme = load("expui/meetNewUi/lightTheme.svg", -1581474989, 2);
+  }
+
+  public static final class Modifiers {
+    /** 16x16 */ public static final @NotNull Icon Arrow = load("modifiers/arrow.svg", -1724660572, 34);
+    /** 16x16 */ public static final @NotNull Icon Arrowright = load("modifiers/arrowright.svg", 1517062810, 34);
+    /** 16x16 */ public static final @NotNull Icon Asterisk = load("modifiers/asterisk.svg", -972653781, 34);
+    /** 16x16 */ public static final @NotNull Icon Bean = load("modifiers/bean.svg", -1719259569, 34);
+    /** 16x16 */ public static final @NotNull Icon Bench = load("modifiers/bench.svg", -1341459629, 34);
+    /** 16x16 */ public static final @NotNull Icon Blocked = load("modifiers/blocked.svg", 706889420, 34);
+    /** 16x16 */ public static final @NotNull Icon Braces = load("modifiers/braces.svg", -1863491651, 34);
+    /** 16x16 */ public static final @NotNull Icon Build = load("modifiers/build.svg", 1245494508, 34);
+    /** 16x16 */ public static final @NotNull Icon Chat = load("modifiers/chat.svg", 75011180, 34);
+    /** 16x16 */ public static final @NotNull Icon Check = load("modifiers/check.svg", 963292917, 34);
+    /** 16x16 */ public static final @NotNull Icon Client = load("modifiers/client.svg", -1117023012, 34);
+    /** 16x16 */ public static final @NotNull Icon Clock = load("modifiers/clock.svg", 1201729479, 34);
+    /** 16x16 */ public static final @NotNull Icon Cloud = load("modifiers/cloud.svg", -17944503, 34);
+    /** 16x16 */ public static final @NotNull Icon Code = load("modifiers/code.svg", -193169841, 34);
+    /** 16x16 */ public static final @NotNull Icon Config = load("modifiers/config.svg", -1593301622, 34);
+    /** 16x16 */ public static final @NotNull Icon Console = load("modifiers/console.svg", -1096370104, 34);
+    /** 16x16 */ public static final @NotNull Icon Contexts = load("modifiers/contexts.svg", 568487556, 34);
+    /** 16x16 */ public static final @NotNull Icon Cross = load("modifiers/cross.svg", 944546133, 34);
+    /** 16x16 */ public static final @NotNull Icon Cup = load("modifiers/cup.svg", 1125393820, 34);
+    /** 16x16 */ public static final @NotNull Icon Data = load("modifiers/data.svg", -884960446, 34);
+    /** 16x16 */ public static final @NotNull Icon DB = load("modifiers/db.svg", 2023225943, 34);
+    /** 16x16 */ public static final @NotNull Icon Debug = load("modifiers/debug.svg", 2113623696, 34);
+    /** 16x16 */ public static final @NotNull Icon Dot = load("modifiers/dot.svg", -1033360599, 34);
+    /** 16x16 */ public static final @NotNull Icon Down = load("modifiers/down.svg", 1707522811, 34);
+    /** 16x16 */ public static final @NotNull Icon Edit = load("modifiers/edit.svg", -1378626795, 34);
+    /** 16x16 */ public static final @NotNull Icon Embeddable = load("modifiers/embeddable.svg", -1244912393, 34);
+    /** 16x16 */ public static final @NotNull Icon Factory = load("modifiers/factory.svg", 517951646, 34);
+    /** 16x16 */ public static final @NotNull Icon Failed = load("modifiers/failed.svg", 373110829, 34);
+    /** 16x16 */ public static final @NotNull Icon Flow = load("modifiers/flow.svg", -2022555303, 34);
+    /** 16x16 */ public static final @NotNull Icon Gear = load("modifiers/gear.svg", 808585032, 34);
+    /** 16x16 */ public static final @NotNull Icon Generated = load("modifiers/generated.svg", -515277938, 34);
+    /** 16x16 */ public static final @NotNull Icon Git = load("modifiers/git.svg", -394470606, 34);
+    /** 16x16 */ public static final @NotNull Icon Github = load("modifiers/github.svg", -478324603, 34);
+    /** 16x16 */ public static final @NotNull Icon GoTo = load("modifiers/goTo.svg", -1684157657, 34);
+    /** 16x16 */ public static final @NotNull Icon Group = load("modifiers/group.svg", 461382813, 34);
+    /** 16x16 */ public static final @NotNull Icon Inside = load("modifiers/inside.svg", 1974590400, 34);
+    /** 16x16 */ public static final @NotNull Icon Items = load("modifiers/items.svg", -1722544712, 34);
+    /** 16x16 */ public static final @NotNull Icon Jetbrains = load("modifiers/jetbrains.svg", -15644252, 34);
+    /** 16x16 */ public static final @NotNull Icon JS = load("modifiers/js.svg", -312414672, 34);
+    /** 16x16 */ public static final @NotNull Icon Key = load("modifiers/key.svg", -284959742, 34);
+    /** 16x16 */ public static final @NotNull Icon Kotlin = load("modifiers/kotlin.svg", -2106770311, 34);
+    /** 16x16 */ public static final @NotNull Icon Library = load("modifiers/library.svg", -1714302109, 34);
+    /** 16x16 */ public static final @NotNull Icon List = load("modifiers/list.svg", 1570716992, 34);
+    /** 16x16 */ public static final @NotNull Icon Locked = load("modifiers/locked.svg", -1124175291, 34);
+    /** 16x16 */ public static final @NotNull Icon Memory = load("modifiers/memory.svg", -221040715, 34);
+    /** 16x16 */ public static final @NotNull Icon Module = load("modifiers/module.svg", 791794700, 34);
+    /** 16x16 */ public static final @NotNull Icon Package = load("modifiers/package.svg", 592713707, 34);
+    /** 16x16 */ public static final @NotNull Icon Plug = load("modifiers/plug.svg", -469723751, 34);
+    /** 16x16 */ public static final @NotNull Icon Plus = load("modifiers/plus.svg", 1360689053, 34);
+    /** 16x16 */ public static final @NotNull Icon Record = load("modifiers/record.svg", -1846949740, 34);
+    /** 16x16 */ public static final @NotNull Icon Ref = load("modifiers/ref.svg", 1747340569, 34);
+    /** 16x16 */ public static final @NotNull Icon Refresh = load("modifiers/refresh.svg", 464557069, 34);
+    /** 16x16 */ public static final @NotNull Icon Replay = load("modifiers/replay.svg", 606866311, 34);
+    /** 16x16 */ public static final @NotNull Icon Resources = load("modifiers/resources.svg", 348207701, 34);
+    /** 16x16 */ public static final @NotNull Icon Run = load("modifiers/run.svg", -1547979066, 34);
+    /** 16x16 */ public static final @NotNull Icon Save = load("modifiers/save.svg", -636937452, 34);
+    /** 16x16 */ public static final @NotNull Icon Schema = load("modifiers/schema.svg", -1974476204, 34);
+    /** 16x16 */ public static final @NotNull Icon Search = load("modifiers/search.svg", -1691997692, 34);
+    /** 16x16 */ public static final @NotNull Icon Share = load("modifiers/share.svg", -1853138124, 34);
+    /** 16x16 */ public static final @NotNull Icon Snapshot = load("modifiers/snapshot.svg", 767587477, 34);
+    /** 16x16 */ public static final @NotNull Icon Spring = load("modifiers/spring.svg", 102173213, 34);
+    /** 16x16 */ public static final @NotNull Icon Star = load("modifiers/star.svg", 933992292, 34);
+    /** 16x16 */ public static final @NotNull Icon Stop = load("modifiers/stop.svg", 182908412, 34);
+    /** 16x16 */ public static final @NotNull Icon Suspend = load("modifiers/suspend.svg", -830217374, 34);
+    /** 16x16 */ public static final @NotNull Icon Table = load("modifiers/table.svg", 638951623, 34);
+    /** 16x16 */ public static final @NotNull Icon Test = load("modifiers/test.svg", -1796711325, 34);
+    /** 16x16 */ public static final @NotNull Icon Watch = load("modifiers/watch.svg", 254111690, 34);
+    /** 16x16 */ public static final @NotNull Icon Web = load("modifiers/web.svg", 1807824157, 34);
+    /** 16x16 */ public static final @NotNull Icon Zip = load("modifiers/zip.svg", 1450552458, 34);
   }
 
   public static final class Modules {

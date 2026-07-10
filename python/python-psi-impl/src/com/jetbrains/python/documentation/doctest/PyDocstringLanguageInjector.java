@@ -31,6 +31,7 @@ import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,6 +65,7 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
       final int maxPosition = text.length();
 
       final List<TextRange> codeBlockRanges = collectCodeBlockRanges(strings, maxPosition, closingQuote);
+      codeBlockRanges.addAll(collectMarkdownCodeBlockRanges(text, quotes));
       injectDoctestBlocks(strings, maxPosition, closingQuote, codeBlockRanges, injectionPlacesRegistrar);
       injectCodeBlocks(codeBlockRanges, injectionPlacesRegistrar);
     }
@@ -85,13 +87,13 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
       if (!trimmedString.startsWith(">>>") && !trimmedString.startsWith("...") && gotExample && start < end) {
         gotExample = false;
         if (!endsWithSlash) {
-          injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
+          injectionPlacesRegistrar.addPlace(PyDoctestLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
         }
       }
 
       if (endsWithSlash && !trimmedString.endsWith("\\")) {
         endsWithSlash = false;
-        injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(),
+        injectionPlacesRegistrar.addPlace(PyDoctestLanguageDialect.getInstance(),
                                           TextRange.create(start, getEndOffset(currentPosition, string, maxPosition, closingQuote)), null,
                                           null);
       }
@@ -125,7 +127,7 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
       currentPosition += string.length();
     }
     if (gotExample && start < end) {
-      injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
+      injectionPlacesRegistrar.addPlace(PyDoctestLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
     }
   }
 
@@ -158,6 +160,26 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
         }
       }
       currentPosition += line.length();
+    }
+    return ranges;
+  }
+
+  /**
+   * Collects the content ranges of Markdown fenced code blocks (e.g. {@code ```py ... ```}) whose info string
+   * denotes Python, using the platform Markdown parser, so the fenced code can be injected and highlighted as
+   * Python (PY-84818). Ranges are relative to the host {@code text}.
+   */
+  private static @NotNull List<@NotNull TextRange> collectMarkdownCodeBlockRanges(@NotNull String text, @Nullable Pair<@NotNull String, @NotNull String> quotes) {
+    final int contentStart = quotes != null ? quotes.first.length() : 0;
+    final int contentEnd = quotes != null ? text.length() - quotes.second.length() : text.length();
+    if (contentStart >= contentEnd) {
+      return new ArrayList<>();
+    }
+    final String content = text.substring(contentStart, contentEnd);
+
+    final List<TextRange> ranges = new ArrayList<>();
+    for (TextRange range : PyDocstringMarkdownFences.pythonFenceContentRanges(content, SPHINX_PYTHON_ALIASES)) {
+      ranges.add(range.shiftRight(contentStart));
     }
     return ranges;
   }

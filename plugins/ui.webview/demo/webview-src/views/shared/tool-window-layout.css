@@ -1,0 +1,26 @@
+/* Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. */
+
+.webviewDemoHorizontalScrollRoot {
+  overflow: auto;
+}
+
+.webviewDemoFixedCanvasRoot {
+  min-width: var(--webview-demo-fixed-canvas-width, 960px);
+}
+
+.webviewDemoFixedCanvas {
+  min-width: var(--webview-demo-fixed-canvas-width, 960px);
+  width: max(100%, var(--webview-demo-fixed-canvas-width, 960px));
+}
+
+.webviewDemoNoWrapControls {
+  flex-wrap: nowrap;
+}
+
+.webviewDemoNoWrapControls > * {
+  flex-shrink: 0;
+}
+
+.webviewDemoNoWrapText {
+  white-space: nowrap;
+}

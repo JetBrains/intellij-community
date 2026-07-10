@@ -7,5 +7,5 @@ class ContentRootsChecksConfiguration {
 
     // always hidden for now
     val hideAndroidSpecificRoots: Boolean = true
-    val hideGeneratedRoots: Boolean = true
+    var hideGeneratedRoots: Boolean = true
 }

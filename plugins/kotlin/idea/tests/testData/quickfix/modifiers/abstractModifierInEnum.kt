@@ -1,5 +1,5 @@
 // "Make 'A' not abstract" "true"
-// K2_ERROR: Modifier 'abstract' is not applicable to 'enum class'.
+// K2_ERROR: WRONG_MODIFIER_TARGET
 <caret>abstract enum class A() {
 }
 

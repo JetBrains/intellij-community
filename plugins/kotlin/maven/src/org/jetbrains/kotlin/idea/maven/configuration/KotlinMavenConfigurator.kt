@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.WritingAccessProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.xml.XmlFile
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
@@ -287,6 +288,10 @@ abstract class KotlinMavenConfigurator protected constructor(
         configurePlugin(pom, plugin, module, version)
 
         CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement<PsiFile>(file)
+        val codeStyleManager = CodeStyleManager.getInstance(project)
+        file.rootTag?.let {
+            codeStyleManager.reformat(it, true)
+        }
 
         return true
     }

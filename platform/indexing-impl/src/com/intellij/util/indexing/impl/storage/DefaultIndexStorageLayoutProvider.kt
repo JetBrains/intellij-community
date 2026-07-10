@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.storage
 
-import com.intellij.concurrency.virtualThreads.IntelliJVirtualThreads
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ThrowableNotNullFunction
@@ -33,7 +32,6 @@ import com.intellij.util.io.ChannelsAccessor.FileChannelOpener
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.OpenChannelsCache
 import com.intellij.util.io.PageCacheUtils
-import com.intellij.util.io.PagedFileStorage
 import com.intellij.util.io.StorageLockContext
 import com.intellij.util.io.writeaheadlog.ByteArrayQueueWriteAheadLog
 import com.intellij.util.io.writeaheadlog.FileChannelWithWAL
@@ -197,25 +195,16 @@ private fun <K, V> createDefaultFactories(
   val storageFactory = ThrowableNotNullFunction<Int, VfsAwareIndexStorage<K, V>, IOException> { shardNo ->
     val shardStorageFile = IndexInfrastructure.getStorageFile(extension.name, shardNo)
     val storageLockContext = storageLockContexts[shardNo]
-    object : VfsAwareMapIndexStorage<K, V>(
+    VfsAwareMapIndexStorage(
       shardStorageFile,
       extension.keyDescriptor,
       extension.valueExternalizer,
       extension.cacheSize,
       extension.keyIsUniqueForIndexedFile(),
       extension.traceKeyHashToVirtualFileMapping(),
-      extension.enableWal()
-    ) {
-      override fun initMapAndCache() {
-        PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(storageLockContext)
-        try {
-          super.initMapAndCache()
-        }
-        finally {
-          PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.remove()
-        }
-      }
-    }
+      extension.enableWal(),
+      storageLockContext
+    )
   }
   val forwardFactory = ThrowableNotNullFunction<Int, ForwardIndex, IOException> { shardNo ->
     val shardStorageFile = IndexInfrastructure.getInputIndexStorageFile(extension.name, shardNo)
@@ -309,13 +298,14 @@ private fun setupInMemoryWAL(): WriteAheadLog {
 private fun setupPersistentWAL(directory: Path): WriteAheadLog? {
   return PersistentWriteAheadLogFactory.setup(
     directory = directory,
-    flusherThreadFactory = IntelliJVirtualThreads.ofVirtual().name("WriteAheadLogFlusher").factory(),
+    //platform thread is used only for better observability in traces
+    // maybe replace with IntelliJVirtualThreads.ofVirtual() as soon as all the debugging is finished?
+    flusherThreadFactory = Thread.ofPlatform().name("WriteAheadLogFlusher").factory(),
     toFileWriter = VIA_CHANNELS_CACHE_FILE_WRITER,
     invalidateCaches = { FileBasedIndex.getInstance().invalidateCaches() },
   )
 }
 
-@VisibleForTesting
 @Internal
 fun newStorageLockContext(): StorageLockContext {
   if (WRITE_AHEAD_LOG != null) {
@@ -336,24 +326,14 @@ private fun <K, V> createIndexStorage(
   storageLockContext: StorageLockContext,
 ): VfsAwareIndexStorage<K, V> {
   val storageFile = IndexInfrastructure.getStorageFile(extension.name)
-  return object : VfsAwareMapIndexStorage<K, V>(
+  return VfsAwareMapIndexStorage(
     storageFile,
     extension.keyDescriptor,
     extension.valueExternalizer,
     extension.cacheSize,
     extension.keyIsUniqueForIndexedFile(),
     extension.traceKeyHashToVirtualFileMapping(),
-    extension.enableWal()
-  ) {
-    override fun initMapAndCache() {
-      assert(PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get() == null)
-      PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(storageLockContext)
-      try {
-        super.initMapAndCache()
-      }
-      finally {
-        PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.remove()
-      }
-    }
-  }
+    extension.enableWal(),
+    storageLockContext
+  )
 }

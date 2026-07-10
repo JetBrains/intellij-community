@@ -1,0 +1,24 @@
+- name: lib/modules/intellij.platform.problemView.backend.jar
+  contentModules:
+  - name: intellij.platform.problemView.backend
+- name: lib/modules/intellij.platform.problemView.buildView.jar
+  contentModules:
+  - name: intellij.platform.problemView.buildView
+- name: lib/modules/intellij.platform.problemView.collector.jar
+  contentModules:
+  - name: intellij.platform.problemView.collector
+- name: lib/modules/intellij.platform.problemView.core.jar
+  contentModules:
+  - name: intellij.platform.problemView.core
+- name: lib/modules/intellij.platform.problemView.frontend.jar
+  contentModules:
+  - name: intellij.platform.problemView.frontend
+- name: lib/modules/intellij.platform.problemView.shared.jar
+  contentModules:
+  - name: intellij.platform.problemView.shared
+- name: lib/modules/intellij.platform.problemView.ui.jar
+  contentModules:
+  - name: intellij.platform.problemView.ui
+- name: lib/platform-problemView-plugin.jar
+  modules:
+  - name: intellij.platform.problemView.plugin

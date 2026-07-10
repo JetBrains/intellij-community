@@ -1,14 +1,26 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.remotedev.analysis
 
+import com.intellij.lang.xml.XMLLanguage
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.roots.ProjectRootModificationTracker
+import com.intellij.openapi.util.Key
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.xml.XmlFile
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil.findDependingContentModuleEntriesInFile
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.DescriptorUtil
+
+private val MODULE_ID_ANALYSIS_KEY =
+  Key.create<CachedValue<ModuleAnalysis>>("SplitModeModuleKindResolver.moduleIdAnalysis")
+
+private val MODULE_DESCRIPTOR_ANALYSIS_KEY =
+  Key.create<CachedValue<ModuleAnalysis>>("SplitModeModuleKindResolver.moduleDescriptorAnalysis")
 
 internal object SplitModeModuleKindResolver {
   private val LOG = logger<SplitModeModuleKindResolver>()
@@ -20,7 +32,34 @@ internal object SplitModeModuleKindResolver {
     return expectedKind.accepts(actualApiUsageModuleKind.kind)
   }
 
+  fun isApiUsageAllowed(
+    actualModuleAnalysis: ModuleAnalysis,
+    apiRestriction: SplitModeApiRestrictionsService.ApiRestrictionMatch,
+  ): Boolean {
+    val actualModuleKind = actualModuleAnalysis.resolvedModuleKind
+    return doesApiKindMatchExpectedModuleKind(actualModuleKind, apiRestriction.targetModuleKind)
+           || actualModuleKind.kind == SplitModeApiRestrictionsService.ModuleKind.BACKEND
+           && actualModuleAnalysis.apiUsagePolicy == ApiUsagePolicy.BACKEND_WITH_NON_UI_API_PERMIT
+           && apiRestriction.restrictionKind == SplitModeApiRestrictionsService.ApiRestrictionKind.GENERIC_PLATFORM_API
+  }
+
   fun getOrComputeModuleAnalysis(module: Module, descriptorFile: XmlFile? = null): ModuleAnalysis {
+    val xmlDescriptor = descriptorFile ?: PluginModuleType.getContentModuleDescriptorXml(module) ?: PluginModuleType.getPluginXml(module)
+    if (xmlDescriptor == null) {
+      return ModuleAnalysis(ResolvedModuleKind(SplitModeApiRestrictionsService.ModuleKind.SHARED, ""))
+    }
+
+    val cacheKey = if (descriptorFile == null) MODULE_ID_ANALYSIS_KEY else MODULE_DESCRIPTOR_ANALYSIS_KEY
+    return CachedValuesManager.getManager(module.project).getCachedValue(xmlDescriptor, cacheKey, {
+      CachedValueProvider.Result.create(
+        computeModuleAnalysis(module, descriptorFile),
+        ProjectRootModificationTracker.getInstance(module.project),
+        xmlDescriptor.manager.modificationTracker.forLanguage(XMLLanguage.INSTANCE),
+      )
+    }, false)
+  }
+
+  private fun computeModuleAnalysis(module: Module, descriptorFile: XmlFile? = null): ModuleAnalysis {
     val xmlDescriptor = descriptorFile ?: PluginModuleType.getContentModuleDescriptorXml(module) ?: PluginModuleType.getPluginXml(module)
     if (xmlDescriptor == null) {
       return ModuleAnalysis(ResolvedModuleKind(SplitModeApiRestrictionsService.ModuleKind.SHARED, ""))
@@ -30,7 +69,10 @@ internal object SplitModeModuleKindResolver {
     val predefinedModuleKind =
       SplitModeApiRestrictionsService.getInstance(module.project).getPredefinedModuleKind(module, xmlDescriptor, parsedXmlDescriptor)
     if (predefinedModuleKind != null) {
-      return ModuleAnalysis(ResolvedModuleKind(predefinedModuleKind.moduleKind, predefinedModuleKind.reasoning))
+      return ModuleAnalysis(
+        resolvedModuleKind = ResolvedModuleKind(predefinedModuleKind.moduleKind, predefinedModuleKind.reasoning),
+        apiUsagePolicy = predefinedModuleKind.apiUsagePolicy,
+      )
     }
     if (parsedXmlDescriptor == null) {
       return ModuleAnalysis(ResolvedModuleKind(SplitModeApiRestrictionsService.ModuleKind.SHARED, ""))

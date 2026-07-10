@@ -8,14 +8,13 @@
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="intellij.libraries.jcef"/>
     <module name="intellij.platform.structureView"/>
-    <module name="intellij.platform.ui.jcef"/>
     <!-- endregion -->
   </dependencies>
 
   <content namespace="jetbrains">
     <module name="intellij.markdown" loading="embedded"/>
+    <module name="intellij.markdown.jcef" loading="optional"/>
     <module name="intellij.markdown.fenceInjection"/>
     <module name="intellij.markdown.frontmatter"/>
     <module name="intellij.markdown.frontmatter.yaml"/>
@@ -84,6 +83,9 @@
     <extensionPoint qualifiedName="org.intellij.markdown.actionPromoterExtension"
                     interface="org.intellij.plugins.markdown.ui.actions.MarkdownActionPromoterExtension"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.markdownElementFactory"
+                    interface="org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -99,33 +101,6 @@
                                implementationClass="org.intellij.plugins.markdown.editor.tables.ui.MarkdownTableInlayProvider"
                                id="MarkdownTableInlayProvider"/>
     <editorFactoryListener implementation="org.intellij.plugins.markdown.editor.tables.ui.MarkdownInlayUpdateOnSoftWrapListener"/>
-
-    <localInspection language="Markdown"
-                     shortName="MarkdownIncorrectTableFormatting"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.incorrect.table.formatting.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     level="WEAK WARNING"
-                     implementationClass="org.intellij.plugins.markdown.editor.tables.inspections.MarkdownIncorrectTableFormattingInspection"/>
-
-    <localInspection language="Markdown"
-                     shortName="MarkdownNoTableBorders"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.no.table.borders.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     implementationClass="org.intellij.plugins.markdown.editor.tables.inspections.MarkdownNoTableBordersInspection"/>
-
-    <localInspection language="Markdown"
-                     shortName="MarkdownTablePipeInCodeSpan"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.table.pipe.in.code.span.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     implementationClass="org.intellij.plugins.markdown.editor.tables.inspections.MarkdownTablePipeInCodeSpanInspection"/>
 
     <intentionAction>
       <language>Markdown</language>
@@ -230,8 +205,6 @@
     <codeFoldingOptionsProvider instance="org.intellij.plugins.markdown.settings.MarkdownCodeFoldingOptionsProvider" id="Markdown" order="after Android,after C++,after General,after Go,after Handlebars,after JAVA,after JavaScript,after JPAQL,after JSON,after Kubernetes,after LinkerScript,after ObjectiveC"/>
 
     <applicationService serviceImplementation="org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFenceHtmlCache"/>
-    <applicationService serviceImplementation="org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportSettings"/>
-
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownCodeFoldingSettings" />
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings" />
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings" />
@@ -247,15 +220,6 @@
     <stripTrailingSpacesFilterFactory implementation="org.intellij.plugins.markdown.editor.MarkdownStripTrailingSpacesFilterFactory"/>
     <httpRequestHandler implementation="org.intellij.plugins.markdown.ui.preview.PreviewStaticServer"/>
 
-    <localInspection language="Markdown"
-                     shortName="MarkdownUnresolvedFileReference"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.unresolved.file.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     implementationClass="org.intellij.plugins.markdown.lang.references.paths.MarkdownUnresolvedFileReferenceInspection"/>
-
     <lang.foldingBuilder language="Markdown" implementationClass="org.intellij.plugins.markdown.folding.MarkdownFoldingBuilder"/>
 
     <stubIndex implementation="org.intellij.plugins.markdown.lang.index.HeaderTextIndex"/>
@@ -264,21 +228,17 @@
 
     <pathReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.RelativeFileWithoutExtensionReferenceProvider"/>
     <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.LineNumberPathReferenceProvider"/>
-    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.paths.github.GithubWikiLocalReferenceContributor"/>
 
     <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownAutoLink"
                              implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownAutoLink$Manipulator"/>
     <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan"
                              implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan$Manipulator"/>
-    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.test.TestPsiReferenceContributor"/>
-    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.AutoLinkWebReferenceContributor"/>
-    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.backtick.BacktickReferenceContributor"/>
     <referencesSearch implementation="org.intellij.plugins.markdown.lang.references.backtick.BacktickReferenceSearcher"/>
     <useScopeEnlarger implementation="org.intellij.plugins.markdown.lang.references.backtick.MarkdownReferenceUseScopeEnlarger"/>
     <usageViewElementsListener implementation="org.intellij.plugins.markdown.lang.references.backtick.BacktickUsageViewElementsListener"/>
 
     <todoIndexer filetype="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownTodoIndexer"/>
-    <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder"/>
+    <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder" order="last"/>
     <copyPastePreProcessor implementation="org.intellij.plugins.markdown.editor.MarkdownLinkPastePreProcessor"/>
     <enterHandlerDelegate id="MarkdownEnterHandler"
                           implementation="org.intellij.plugins.markdown.editor.MarkdownEnterHandler"/>
@@ -302,14 +262,6 @@
                          implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemTabHandler"/>
     <editorActionHandler action="EditorUnindentSelection"
                          implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemUnindentHandler"/>
-
-    <localInspection language="Markdown"
-                     shortName="MarkdownIncorrectlyNumberedListItem"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.incorrectly.numbered.list.item.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     implementationClass="org.intellij.plugins.markdown.editor.lists.inspections.IncorrectListNumberingInspection"/>
 
     <actionPromoter implementation="org.intellij.plugins.markdown.ui.actions.MarkdownActionPromoter"/>
     <customizableActionGroupProvider implementation="org.intellij.plugins.markdown.ui.floating.FloatingToolbarCustomizableGroupProvider"/>
@@ -340,22 +292,6 @@
       <bundleName>messages.MarkdownBundle</bundleName>
       <categoryKey>markdown.intention.category</categoryKey>
     </intentionAction>
-
-    <localInspection language="Markdown"
-                     shortName="MarkdownOutdatedTableOfContents"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.outdated.table.of.contents.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     implementationClass="org.intellij.plugins.markdown.editor.toc.OutdatedTableOfContentsInspection"/>
-
-    <localInspection language="Markdown"
-                     shortName="MarkdownLinkDestinationWithSpaces"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.link.destination.with.spaces.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     implementationClass="org.intellij.plugins.markdown.lang.references.paths.MarkdownLinkDestinationWithSpacesInspection"/>
 
     <notificationGroup id="Markdown" displayType="BALLOON" bundle="messages.MarkdownBundle" key="notification.group.markdown"/>
 
@@ -414,7 +350,6 @@
 
     <statistics.counterUsagesCollector implementationClass="org.intellij.plugins.markdown.MarkdownUsageCollector"/>
     <applicationSettings service="org.intellij.plugins.markdown.settings.MarkdownCodeFoldingSettings"/>
-    <applicationSettings service="org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportSettings"/>
     <projectSettings service="org.intellij.plugins.markdown.settings.DocumentLinksSafeState"/>
     <projectSettings service="org.intellij.plugins.markdown.settings.pandoc.PandocSettings"/>
   </extensions>
@@ -432,9 +367,8 @@
   </projectListeners>
 
   <extensions defaultExtensionNs="org.intellij.markdown">
-    <html.panel.provider implementation="org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider"/>
-
     <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceLanguageProvider"/>
+    <fenceLanguageProvider id="default" implementation="org.intellij.plugins.markdown.injection.DefaultCodeFenceLanguageProvider" order="last"/>
     <!--suppress PluginXmlValidity -->
     <fenceGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeGeneratingProvider"/>
 
@@ -443,8 +377,8 @@
                              implementation="org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter"/>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.BaseStylesExtension$Provider"/>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.InlineStylesExtension$Provider"/>
+    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.MarkdownAlertIconsExtension$Provider"/>
 
-    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.ProcessLinksExtension$Provider"/>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension$Provider"/>
 
     <fenceLanguageProvider id="DefaultMermaidCodeFenceLanguageProvider"
@@ -455,8 +389,6 @@
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.MathExtension$Provider"/>
 
     <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvider"/>
-    <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownPdfExportProvider"/>
-    <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportProvider"/>
     <markdownCompatibilityChecker implementation="org.intellij.plugins.markdown.lang.DefaultMarkdownCompatibilityChecker"/>
   </extensions>
 

@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus
  * Data context for operation execution markup.
  * It allows to forward data through execution events.
  */
+@ApiStatus.Internal
 @ApiStatus.NonExtendable
 interface OperationExecutionContext {
 

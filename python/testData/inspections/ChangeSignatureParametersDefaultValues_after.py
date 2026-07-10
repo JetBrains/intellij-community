@@ -1,4 +1,4 @@
-def func(i, foo='spam'):
+def func(l, foo='spam'):
     pass
 
 

@@ -6,6 +6,7 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.codeInsight.fixes"/>
     <module name="intellij.kotlin.codeInsight.shared"/>
+    <module name="intellij.xml.analysis"/>
     <module name="intellij.xml.dom"/>
     <module name="intellij.xml.psi"/>
   </dependencies>
@@ -124,6 +125,14 @@
                      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtPolySymbolPropertyTypeInspection"
                      key="inspection.polySymbol.property.type.mismatch.display.name"/>
 
+    <localInspection language="kotlin" shortName="KotlinApplicableInspectionBaseSimpleCallExpression"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupBundle="messages.DevKitBundle"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KotlinApplicableInspectionBaseSimpleCallExpressionInspection"
+                     key="inspection.kotlin.applicable.inspection.base.simple.call.expression.display.name"/>
+
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteUseScopeEnlarger"/>
     <methodReferencesSearch implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteMethodReferenceSearcher"/>
     <overridingMethodsSearch implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteMethodImplementationSearcher"/>
@@ -171,7 +180,7 @@
       language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtUElementAsPsiCheckProvider"/>
     <staticInitializationInExtensionsVisitorProvider language="kotlin"
-      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtStaticInitializationInExtensionsVisitorProvider"/>
+                                                     implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtStaticInitializationInExtensionsVisitorProvider"/>
     <methodNameProvider
       language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtMethodNameProvider"/>

@@ -42,6 +42,21 @@ public abstract class K2CustomConditionPostfixTemplateTestGenerated extends Abst
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/customConditions/fqnCondition")
     public static class FqnCondition extends AbstractK2CustomConditionPostfixTemplateTest {
+        @TestMetadata("exceptionAlias.kt")
+        public void testExceptionAlias() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("exceptionAliasSubtype.kt")
+        public void testExceptionAliasSubtype() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("exceptionJavaFqn.kt")
+        public void testExceptionJavaFqn() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("match.kt")
         public void testMatch() throws Exception {
             performTest();
@@ -59,6 +74,16 @@ public abstract class K2CustomConditionPostfixTemplateTestGenerated extends Abst
 
         @TestMetadata("subtypeNonMatch.kt")
         public void testSubtypeNonMatch() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("throwableAlias.kt")
+        public void testThrowableAlias() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("throwableJavaFqn.kt")
+        public void testThrowableJavaFqn() throws Exception {
             performTest();
         }
 

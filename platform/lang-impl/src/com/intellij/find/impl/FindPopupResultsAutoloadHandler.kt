@@ -9,6 +9,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -20,13 +22,14 @@ import com.intellij.reference.SoftReference
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
 import java.util.Vector
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.table.DefaultTableModel
+
+private val LOG = logger<FindPopupResultsAutoloadHandler>()
 
 /**
  * Owns the Find-in-Files results-loading chain: one fresh search plus its autoload-on-scroll
@@ -45,7 +48,6 @@ import javax.swing.table.DefaultTableModel
  * interface — no Swing imports beyond [DefaultTableModel], which is the only Swing surface
  * the executor touches directly.
  */
-@ApiStatus.Internal
 internal class FindPopupResultsAutoloadHandler(private val host: Host) {
 
   /** Session-scoped paging state. */
@@ -93,7 +95,10 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
 
   /** Cancel the in-flight pass, if any. The chain ends; no autoload follow-up. */
   fun cancel() {
-    progress?.takeIf { !it.isCanceled }?.cancel()
+    progress?.takeIf { !it.isCanceled }?.let {
+      LOG.debug { "FiF: cancel() indicator hash=${System.identityHashCode(it)}" }
+      it.cancel()
+    }
   }
 
   /** Extend the current chain with one more paging pass, if conditions allow. */
@@ -211,7 +216,10 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
       findModel.isMultiline = true
     }
 
+    LOG.debug { "FiF: runPass loadMore=$loadMore checkModel=$checkModel queryLen=${findModel.stringToFind.length}" }
+
     if (checkModel && previousModel != null && findModel.noRestartSearchNeeded(previousModel)) {
+      LOG.debug { "FiF: runPass no restart needed (same model), returning" }
       return
     }
 
@@ -246,6 +254,7 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
     }
     progress = progressIndicatorWhenSearchStarted
     val hash = System.identityHashCode(progressIndicatorWhenSearchStarted)
+    LOG.debug { "FiF: runPass progress set hash=$hash loadMore=$loadMore" }
 
     // Use previously shown usage files as hint for faster search and better usage-preview
     // performance if the pattern length increased.
@@ -287,6 +296,11 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(
       object : Task.Backgroundable(project, FindBundle.message("find.usages.progress.title")) {
         override fun run(indicator: ProgressIndicator) {
+          if (isCancelled()) {
+            LOG.debug { "FiF: runPass.run SKIP stale hash=$hash (superseded before background start)" }
+            onStop(hash)
+            return
+          }
           startTime.set(System.currentTimeMillis())
           val timeToFirstResult = AtomicLong(-1)
           val scope = if (FindKey.isEnabled) null
@@ -296,6 +310,7 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
           val processPresentation = FindInProjectUtil.setupProcessPresentation(host.usageViewPresentation)
           val recentItemRef = ThreadLocal<java.lang.ref.Reference<FindPopupItem>>()
 
+          LOG.debug { "FiF: run -> executor.findUsages hash=$hash loadMore=$loadMore" }
           FindAndReplaceExecutor.getInstance().findUsages(
             project,
             progressIndicatorWhenSearchStarted,
@@ -371,6 +386,7 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
               // Use the captured indicator-identity hash, not the mutable field: if `stop()`
               // already ran and zeroed `loadingHash`, the guard in `onStop` would otherwise
               // see `0 != 0` and let `host.onPassStopped` fire a second time.
+              LOG.debug { "FiF: executor.onFinish callback hash=$hash" }
               searchStoppedProcessing(hash)
               if (onFinishCalled.compareAndSet(false, true)) {
                 onFinish(progressIndicatorWhenSearchStarted, resultsCount, maxUsages, loadMore, startTime, modality)
@@ -382,9 +398,9 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
         }
 
         override fun onCancel() {
-          if (host.isShowing &&
-              progressIndicatorWhenSearchStarted === progress &&
-              !progressIndicatorWhenSearchStarted.isCanceled) {
+          val willReschedule = host.isShowing && progressIndicatorWhenSearchStarted === progress
+          LOG.debug { "FiF: onCancel hash=$hash isCurrent=${progressIndicatorWhenSearchStarted === progress} willReschedule=$willReschedule" }
+          if (willReschedule) {
             host.scheduleResultsUpdate()
           }
         }
@@ -394,6 +410,7 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
         }
 
         override fun onFinished() {
+          LOG.debug { "FiF: onFinished hash=$hash findKey=${FindKey.isEnabled}" }
           if (FindKey.isEnabled) return
           if (onFinishCalled.compareAndSet(false, true)) {
             onFinish(progressIndicatorWhenSearchStarted, resultsCount, maxUsages, loadMore, startTime, modality)
@@ -476,6 +493,7 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
   private fun onStart(hash: Int, loadMore: Boolean) {
     // `needReset` is already set by `state.resetForFreshSearch(...)` in `runPass` for the
     // fresh-search path; load-more passes intentionally leave it untouched.
+    LOG.debug { "FiF: onStart loadingHash $loadingHash -> $hash loadMore=$loadMore" }
     loadingHash = hash
     host.onSearchStarted(loadMore)
   }
@@ -486,15 +504,23 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
 
   private fun onStop(hash: Int, @NlsSafe message: String) {
     if (hash != loadingHash) return
+    LOG.debug { "FiF: onStop hash=$hash (== loadingHash); scheduling clear" }
     UIUtil.invokeLaterIfNeeded {
       if (hash != loadingHash) return@invokeLaterIfNeeded
       loadingHash = 0
+      LOG.debug { "FiF: onStop cleared loadingHash (was $hash)" }
       host.onPassStopped(message)
     }
   }
 
   private fun searchStoppedProcessing(hashCode: Int) {
+    // Only the current search may clear leftover results. A superseded search's termination (which
+    // now always fires, even on cancellation, via the executor's finally block) must not wipe the
+    // table of the fresh search that replaced it.
+    val wasCurrentSearch = hashCode == loadingHash
+    LOG.debug { "FiF: searchStoppedProcessing hash=$hashCode wasCurrentSearch=$wasCurrentSearch" }
     onStop(hashCode)
+    if (!wasCurrentSearch) return
     ApplicationManager.getApplication().invokeLater {
       // Nothing is found, let's clear previous results.
       if (state.consumeNeedReset()) {

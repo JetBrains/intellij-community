@@ -1,5 +1,5 @@
 // "Replace 'if' expression with safe access expression" "true"
-// K2_ERROR: Smart cast to 'String' is impossible, because 'x' is a mutable property that could be mutated concurrently.
+// K2_ERROR: SMARTCAST_IMPOSSIBLE
 class Test {
     var x: String? = ""
 

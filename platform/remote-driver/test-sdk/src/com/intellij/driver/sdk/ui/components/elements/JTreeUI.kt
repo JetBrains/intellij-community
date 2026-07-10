@@ -37,8 +37,11 @@ import kotlin.time.Duration.Companion.seconds
 fun Finder.tree(@Language("xpath") xpath: String? = null) =
   x(xpath ?: xQuery { byType(JTree::class.java) }, JTreeUiComponent::class.java)
 
-fun Finder.accessibleTree(locator: QueryBuilder.() -> String = { byType(JTree::class.java) }) =
-  x(xQuery { locator() }, JTreeUiComponent::class.java).apply {
+fun Finder.accessibleTree(locator: QueryBuilder.() -> String = { byType(JTree::class.java) }): JTreeUiComponent =
+  accessibleTree(JTreeUiComponent::class.java, locator)
+
+fun <T : JTreeUiComponent> Finder.accessibleTree(treeType: Class<T>, locator: QueryBuilder.() -> String = { byType(JTree::class.java) }): T =
+  x(xQuery { locator() }, treeType).apply {
     replaceCellRendererReader { driver.new(AccessibleNameCellRendererReader::class, rdTarget = (it as RefWrapper).getRef().rdTarget) }
   }
 

@@ -9,8 +9,9 @@ import com.intellij.psi.PsiJavaFile
 import org.jetbrains.kotlin.psi.KtFile
 
 /**
- * The `org.jetbrains.kotlin.j2kPreprocessorExtension` extension point enables running custom preprocessing steps on Java files before they
- * are converted to Kotlin. At runtime, all registered extensions are collected and executed sequentially in no particular order. To
+ * The `org.jetbrains.kotlin.j2kPreprocessorExtension` extension point enables running custom preprocessing steps on copied in-memory Java
+ * files before they are converted to Kotlin. At runtime, all registered extensions are collected and executed sequentially in no particular
+ * order. To
  * implement your own preprocessor in a separate plugin, extend this interface and register the extension point in your plugin's xml
  * file, e.g.:
  * ```
@@ -29,11 +30,11 @@ import org.jetbrains.kotlin.psi.KtFile
  */
 interface J2kPreprocessorExtension : J2kExtension<PsiJavaFile> {
 
-    /**
-     * Override this method to analyze and edit Java files before conversion. This method is always executed via coroutines on a background
-     * thread, so write actions must be wrapped in [com.intellij.openapi.application.edtWriteAction]. As usual, read actions must be wrapped in
-     * [com.intellij.openapi.application.readAction], and analysis must be done outside write actions.
-     */
+     /**
+      * Override this method to analyze and edit copied non-physical Java PSI before conversion. This method is always executed via coroutines
+      * on a background thread, so write actions must be wrapped in [com.intellij.openapi.application.edtWriteAction]. As usual, read actions
+      * must be wrapped in [com.intellij.openapi.application.readAction], and analysis must be done outside write actions.
+      */
     override suspend fun processFiles(project: Project, files: List<PsiJavaFile>)
 
     companion object {

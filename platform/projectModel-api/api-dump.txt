@@ -1022,6 +1022,7 @@ a:com.intellij.openapi.roots.libraries.PersistentLibraryKind
 - a:createDefaultProperties():com.intellij.openapi.roots.libraries.LibraryProperties
 - getAdditionalRootTypes():com.intellij.openapi.roots.OrderRootType[]
 f:com.intellij.workspaceModel.ide.LibraryEntities
+- sf:getPresentableLibraryName(com.intellij.platform.workspace.jps.entities.LibraryId,java.lang.String):java.lang.String
 - sf:getPresentableName(com.intellij.platform.workspace.jps.entities.LibraryEntity):java.lang.String
 f:com.intellij.workspaceModel.ide.SdkEntities
 com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry

@@ -25,6 +25,12 @@
 - name: lib/intellij.java.debugger.impl.shared.jar
   contentModules:
   - name: intellij.java.debugger.impl.shared
+- name: lib/intellij.java.debugger.libraries.jb.jdi.jar
+  contentModules:
+  - name: intellij.java.debugger.libraries.jb.jdi
+    libraries:
+      jb-jdi:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2/jb-jdi-2.jar
 - name: lib/intellij.java.execution.impl.shared.jar
   contentModules:
   - name: intellij.java.execution.impl.shared
@@ -60,11 +66,6 @@
   - name: intellij.java.plugin
   contentModules:
   - name: intellij.java.bookmarks
-- name: lib/jb-jdi.jar
-  library: jb-jdi
-  files:
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2/jb-jdi-2.jar
-  reason: withProjectLibrary
 - name: lib/jps-javac-extension.jar
   library: jps-javac-extension
   files:

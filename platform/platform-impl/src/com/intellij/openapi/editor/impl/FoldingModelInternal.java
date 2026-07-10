@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 public interface FoldingModelInternal extends FoldingModelEx {
   int getFoldedLinesCountBefore(int offset);
   int getTotalNumberOfFoldedLines();
+  int getLogicalLineForVisualLineWithoutSoftWraps(int visualLine);
   void updateCachedOffsets();
   boolean isInBatchFoldingOperation();
   @NotNull IntPair getCustomRegionsYAdjustment(int offset, int prevFoldRegionIndex);

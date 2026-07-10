@@ -15,37 +15,36 @@
  */
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.maven.testFramework.fixtures.MavenCustomRepositoryHelper
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
+import com.intellij.maven.testFramework.fixtures.downloadArtifacts
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenGeneralSettings
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.projectsTree
+import com.intellij.maven.testFramework.fixtures.updateSettingsXmlFully
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.RunAll.Companion.runAll
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
-import org.jetbrains.idea.maven.fixtures.assertUnorderedElementsAreEqual
 import org.jetbrains.idea.maven.fixtures.createDummyArtifact
-import org.jetbrains.idea.maven.fixtures.downloadArtifacts
-import org.jetbrains.idea.maven.fixtures.importProjectAsync
-import org.jetbrains.idea.maven.fixtures.mavenGeneralSettings
-import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
-import org.jetbrains.idea.maven.fixtures.projectsTree
-import org.jetbrains.idea.maven.fixtures.updateSettingsXmlFully
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
-import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
-import kotlin.io.path.exists
-import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.AfterEach
+import kotlin.io.path.exists
 
 @TestApplication
 @ParameterizedClass

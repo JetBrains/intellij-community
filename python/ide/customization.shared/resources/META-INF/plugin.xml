@@ -13,6 +13,11 @@
     <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen.frontend"/>
+    <!-- Do not add intellij.platform.vcs.plugin as a dependency of this shared wrapper.
+         This plugin is present in JetBrains Client layouts too, while the VCS action implementation
+         is backend-only. The backend content module below registers the product-specific VCS action
+         only when intellij.platform.backend is available. -->
+    <module name="intellij.pycharm.community.customization.backend" required-if-available="intellij.platform.backend"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -30,7 +35,6 @@
                        descriptionKey="settings.jupyter.configurable.description"/>
   </extensions>
 </idea-plugin>
-
 
 
 

@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "images-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":images-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.images.tests`
+
 ### auto-generated section `build intellij.platform.images` start
 
 jvm_library(
@@ -36,13 +45,10 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io",
         "//platform/ide-core",
         "//platform/util/jdom",
-        "//libraries/jcef",
-        "//plugins/jcef/plugin",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
         "//platform/core-impl",
         "//xml/xml-parser:parser",
-        "//platform/ui.jcef",
         "@lib//:kotlin-stdlib",
         "//platform/statistics",
         "//platform/util/coroutines",
@@ -82,13 +88,10 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/util/jdom:jdom_test_lib",
-        "//libraries/jcef:jcef_test_lib",
-        "//plugins/jcef/plugin:plugin_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//xml/xml-parser:parser_test_lib",
-        "//platform/ui.jcef:ui.jcef_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
         "//xml/xml-psi-impl:psi-impl_test_lib",
@@ -176,7 +179,8 @@ jvm_library(
         "//platform/util/jdom:jdom_test_lib",
         "//libraries/jcef",
         "//libraries/jcef:jcef_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json",
@@ -198,6 +202,8 @@ jvm_library(
         "//xml/xml-psi-api:psi_test_lib",
         "//platform/util-ex",
         "//platform/util-ex:util-ex_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.images.tests` end
@@ -210,11 +216,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.images.tests` end
-
-### auto-generated section `test intellij.platform.images.tests` start
-
-jps_test(
-    name = "images-tests_test",
-    runtime_deps = [":images-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.images.tests` end

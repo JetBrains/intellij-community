@@ -28,6 +28,11 @@ public class K2MoveToClassWithConversionTestGenerated extends AbstractK2MoveToCl
         runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/conflicts/contextParamNameClash/contextParamNameClash.test");
     }
 
+    @TestMetadata("conflicts/fromInnerToNestedClass/fromInnerToNestedClass.test")
+    public void testConflicts_fromInnerToNestedClass_FromInnerToNestedClass() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/conflicts/fromInnerToNestedClass/fromInnerToNestedClass.test");
+    }
+
     @TestMetadata("conflicts/targetHasSameSignature/targetHasSameSignature.test")
     public void testConflicts_targetHasSameSignature_TargetHasSameSignature() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/conflicts/targetHasSameSignature/targetHasSameSignature.test");
@@ -73,11 +78,6 @@ public class K2MoveToClassWithConversionTestGenerated extends AbstractK2MoveToCl
         runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/decl/valueParameter/classMember/classMember.test");
     }
 
-    @TestMetadata("decl/valueParameter/interfaceMemberWithBody/interfaceMemberWithBody.test")
-    public void testDecl_valueParameter_interfaceMemberWithBody_InterfaceMemberWithBody() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/decl/valueParameter/interfaceMemberWithBody/interfaceMemberWithBody.test");
-    }
-
     @TestMetadata("decl/valueParameter/topLevelFunction/topLevelFunction.test")
     public void testDecl_valueParameter_topLevelFunction_TopLevelFunction() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/decl/valueParameter/topLevelFunction/topLevelFunction.test");
@@ -86,6 +86,11 @@ public class K2MoveToClassWithConversionTestGenerated extends AbstractK2MoveToCl
     @TestMetadata("useSite/callWithExplicitReceiver/callWithExplicitReceiver.test")
     public void testUseSite_callWithExplicitReceiver_CallWithExplicitReceiver() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/useSite/callWithExplicitReceiver/callWithExplicitReceiver.test");
+    }
+
+    @TestMetadata("useSite/companionCallWithImport/companionCallWithImport.test")
+    public void testUseSite_companionCallWithImport_CompanionCallWithImport() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/useSite/companionCallWithImport/companionCallWithImport.test");
     }
 
     @TestMetadata("useSite/companionCall/companionCall.test")

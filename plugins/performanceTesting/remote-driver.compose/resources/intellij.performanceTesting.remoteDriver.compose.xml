@@ -1,7 +1,10 @@
 <idea-plugin visibility="internal">
   <dependencies>
-    <module name="intellij.platform.compose"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="com.jetbrains.performancePlugin"/>
     <module name="intellij.performanceTesting.remoteDriver"/>
+    <module name="intellij.platform.compose"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.jetbrains.performancePlugin">

@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
+jps_test(
+    name = "images-build-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":images-build-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.images.build.tests`
+
 ### auto-generated section `build intellij.platform.images.build` start
 
 jvm_provided_library(
@@ -71,7 +80,8 @@ jvm_library(
         "//platform/util-class-loader:util-classLoader_test_lib",
         "//jps/model-serialization:model-serialization_test_lib",
         "//platform/build-scripts/downloader:downloader_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//libraries/commons/imaging:imaging_test_lib",
         "//libraries/opentelemetry:opentelemetry_test_lib",
         "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
@@ -159,7 +169,8 @@ jvm_library(
         "//platform/build-scripts/downloader",
         "//platform/build-scripts/downloader:downloader_test_lib",
         "@lib//:kotlin-stdlib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//libraries/opentelemetry",
         "//libraries/opentelemetry:opentelemetry_test_lib",
         "//libraries/opentelemetry-semconv",
@@ -201,11 +212,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.images.build.tests` end
-
-### auto-generated section `test intellij.platform.images.build.tests` start
-
-jps_test(
-    name = "images-build-tests_test",
-    runtime_deps = [":images-build-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.images.build.tests` end

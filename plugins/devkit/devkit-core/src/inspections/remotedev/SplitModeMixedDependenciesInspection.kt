@@ -36,11 +36,11 @@ internal class SplitModeMixedDependenciesInspection : DevKitPluginXmlInspectionB
     val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module, currentXmlFile)
     if (moduleAnalysis.resolvedModuleKind.kind == SplitModeApiRestrictionsService.ModuleKind.MIXED) {
       val regularFixes = SplitModeDependencyQuickFixes.createMixedModuleFixes(module, element)
-      val suppressionFix = SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project).createSuppressionFixIfApplicable(
+      val suppressionFixes = SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project).createCommonSuppressionQuickFixes(
         xmlElement,
         SPLIT_MODE_MIXED_DEPENDENCIES_SHORT_NAME,
       )
-      val quickFixes = if (suppressionFix != null) regularFixes + suppressionFix else regularFixes
+      val quickFixes = regularFixes + suppressionFixes
       val mixedDependenciesMessage = buildMixedModuleDependenciesMessage(moduleAnalysis.resolvedModuleKind.reasoning)
       holder.createProblem(
         element,

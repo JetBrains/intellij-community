@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.parsing
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
@@ -15,6 +17,8 @@ import com.jetbrains.python.fixtures.PyTestCase
  *
  * @see com.jetbrains.python.psi.impl.PyStatementListElementType.isReparseable
  */
+@Subsystems.Parsing
+@Layers.Functional
 class PythonStaleErrorsReparseTest : PyTestCase() {
 
   companion object {

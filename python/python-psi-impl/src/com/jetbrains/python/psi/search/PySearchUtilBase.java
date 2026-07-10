@@ -7,8 +7,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
-import com.jetbrains.python.sdk.PyRichSdkKt;
-import com.jetbrains.python.sdk.PyRichSdkExtKt;
+import com.jetbrains.python.sdk.PythonInterpreterKt;
+import com.jetbrains.python.sdk.PythonInterpreterExtKt;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +64,6 @@ public class PySearchUtilBase {
   }
 
   public static @Nullable VirtualFile findLibDir(@NotNull Sdk sdk) {
-    return PyRichSdkExtKt.stdlibLibDirectory(PyRichSdkKt.pyRichSdk(sdk, false));
+    return PythonInterpreterExtKt.stdlibLibDirectory(PythonInterpreterKt.pythonInterpreter(sdk, false));
   }
 }

@@ -25,9 +25,11 @@ open class GitBranchesTreeSingleRepoModel(
   override fun rebuild(matcher: MinusculeMatcher?) {
     super.rebuild(matcher)
     val recentCheckoutBranches = getRecentBranches()
-    recentCheckoutBranchesTree = LazyRefsSubtreeHolder(recentCheckoutBranches, matcher,
-                                                       ::isPrefixGrouping,
-                                                       refComparatorGetter = ::emptyBranchComparator)
+    recentCheckoutBranchesTree = LazyRefsSubtreeHolder(
+      unsortedRefs = recentCheckoutBranches, matcher = matcher,
+      isDirectoryGrouping = ::isDirectoryGrouping,
+      refComparatorGetter = ::emptyBranchComparator,
+    )
   }
 
   override fun getLocalBranches(): Collection<GitStandardLocalBranch> = repository.state.localBranchesOrCurrent

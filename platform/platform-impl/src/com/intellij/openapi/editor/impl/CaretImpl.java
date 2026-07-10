@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -6,22 +6,23 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.CaretState;
 import com.intellij.openapi.editor.CaretVisualAttributes;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.InlayModel;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SoftWrap;
+import com.intellij.openapi.editor.SoftWrapModel;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -39,15 +40,18 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,13 +64,12 @@ import java.awt.Rectangle;
 @ApiStatus.Internal
 public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private static final Logger LOG = Logger.getInstance(CaretImpl.class);
-  private static final Key<CaretVisualAttributes> VISUAL_ATTRIBUTES_KEY = new Key<>("CaretAttributes");
-  public static final DataKey<Boolean> HONOR_CAMEL_WORDS = DataKey.create("HonorCamelWords");
+  private static final RegistryValue VIM_LIKE_CARET_SELECTION_ENABLED = Registry.get("editor.block.caret.selection.vim-like");
 
   private final EditorImpl myEditor;
   private final DocumentEx myDocument;
-  private final @NotNull CaretModelImpl myCaretModel;
-  private final CaretId myCaretId;
+  private final CaretModelImpl myCaretModel;
+
   private boolean isValid = true;
   private Throwable myDisposalTrace;
 
@@ -76,13 +79,13 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   private volatile PositionMarker myPositionMarker;
   private boolean myLeansTowardsLargerOffsets;
   private int myLogicalColumnAdjustment;
-  int myVisualColumnAdjustment;
+  private int myVisualColumnAdjustment;
   private int myVisualLineStart;
   private int myVisualLineEnd;
+  private CaretVisualAttributes myAttributes;
+
   private boolean mySkipChangeRequests;
-  private int myColumnNumberForCloning = -1;
-  private int myDesiredSelectionStartColumn = -1;
-  private int myDesiredSelectionEndColumn = -1;
+  private int myDocumentUpdateCounter;
 
   /**
    * This field holds initial horizontal caret position during vertical navigation. It's used to determine target position when
@@ -91,33 +94,26 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
    * Negative value means no coordinate should be preserved.
    */
   private int myDesiredX = -1;
+  private int myDesiredSelectionStartColumn = -1;
+  private int myDesiredSelectionEndColumn = -1;
+  private int myColumnNumberForCloning = -1;
 
   private volatile SelectionMarker mySelectionMarker;
-  private volatile VisualPosition myRangeMarkerStartPosition;
-  private volatile VisualPosition myRangeMarkerEndPosition;
-  private volatile boolean myRangeMarkerEndPositionIsLead;
-  private boolean myUnknownDirection;
-
-  private int myDocumentUpdateCounter;
+  private volatile VisualPosition mySelectionStartPosition;
+  private volatile VisualPosition mySelectionEndPosition;
+  private volatile boolean mySelectionEndPositionIsLead;
+  private boolean mySelectionUnknownDirection;
 
   CaretImpl(@NotNull EditorImpl editor, @NotNull CaretModelImpl caretModel) {
     myEditor = editor;
     myDocument = editor.getElfDocument();
     myCaretModel = caretModel;
-    myCaretId = new CaretId();
-
     myLogicalCaret = new LogicalPosition(0, 0);
     myVisibleCaret = new VisualPosition(0, 0);
     myPositionMarker = new PositionMarker(0);
     myVisualLineStart = 0;
-    myVisualLineEnd = (myDocument.getLineCount() > 1)
-                      ? myDocument.getLineStartOffset(1)
-                      : (myDocument.getLineCount() == 0) ? 0 : myDocument.getLineEndOffset(0);
-    myDocumentUpdateCounter = myCaretModel.myDocumentUpdateCounter;
-  }
-
-  public CaretId getCaretId() {
-    return myCaretId;
+    myVisualLineEnd = getInitialVisualLineEnd(myDocument);
+    myDocumentUpdateCounter = myDocument.getModificationSequence();
   }
 
   @Override
@@ -127,7 +123,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   @Override
   public void moveToOffset(final int offset, final boolean locateBeforeSoftWrap) {
-    assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assertNotUpdating();
     if (mySkipChangeRequests) {
       return;
@@ -172,7 +168,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   @Override
   public void moveCaretRelatively(final int _columnShift, final int lineShift, final boolean withSelection, final boolean scrollToCaret) {
-    assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (mySkipChangeRequests) {
       return;
     }
@@ -356,7 +352,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
                                              @NonNls @Nullable StringBuilder debugBuffer,
                                              boolean adjustForInlays,
                                              boolean fireListeners) {
-    assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     checkDisposal();
     updateCachedStateIfNeeded();
     if (debugBuffer != null) {
@@ -559,7 +555,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   }
 
   void doMoveToVisualPosition(@NotNull VisualPosition pos, boolean fireListeners) {
-    assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     checkDisposal();
     assertNotUpdating();
     if (mySkipChangeRequests) {
@@ -637,13 +633,11 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     return doMoveToLogicalPosition(pos, locateBeforeSoftWrap, debugBuffer, adjustForInlays, fireListeners);
   }
 
-  private static void assertIsDispatchThread() {
-    EditorImpl.assertIsDispatchThread();
-  }
-
   private void assertNotUpdating() {
-    LOG.assertTrue(isUpToDate() || !ApplicationManager.getApplication().isDispatchThread(),
-                   "Caret model is in its update process. All requests are illegal at this point.");
+    LOG.assertTrue(
+      isUpToDate() || !EDT.isCurrentThreadEdt(),
+      "Caret model is in its update process. All requests are illegal at this point."
+    );
   }
 
   @Override
@@ -665,7 +659,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   @Override
   public boolean isUpToDate() {
-    return !myCaretModel.myIsInUpdate;
+    return !myCaretModel.isDocumentInUpdate();
   }
 
   @Override
@@ -705,6 +699,21 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   public int getVisualLineEnd() {
     updateCachedStateIfNeeded();
     return myVisualLineEnd;
+  }
+
+  void setVisualColumnAdjustment(int visualColumnAdjustment) {
+    myVisualColumnAdjustment = visualColumnAdjustment;
+  }
+
+  @NotNull CaretState getCaretState() {
+    LogicalPosition caret = getLogicalPosition();
+    Pair<LogicalPosition, LogicalPosition> selection = getSelectionLogicalRange();
+    return new CaretState(
+      caret,
+      myVisualColumnAdjustment,
+      selection.getFirst(),
+      selection.getSecond()
+    );
   }
 
   /**
@@ -832,7 +841,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   @Override
   public @Nullable Caret clone(boolean above) {
-    assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     int lineShift = above ? -1 : 1;
     LogicalPosition oldPosition = getLogicalPosition();
     int newLine = oldPosition.line + lineShift;
@@ -910,160 +919,98 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     }
   }
 
-  /**
-   * @return  information on whether current selection's direction in known
-   * @see #setUnknownDirection(boolean)
-   */
-  boolean isUnknownDirection() {
-    return myUnknownDirection;
-  }
-
-  /**
-   * There is a possible case that we don't know selection's direction. For example, a user might triple-click editor (select the
-   * whole line). We can't say what selection end is a {@link #getLeadSelectionOffset() leading end} then. However, that matters
-   * in a situation when a user clicks before or after that line holding Shift key. It's expected that the selection is expanded
-   * up to that point than.
-   * <p/>
-   * That's why we allow to specify that the direction is unknown and {@link #isUnknownDirection() expose this information}
-   * later.
-   * <p/>
-   * <b>Note:</b> when this method is called with {@code 'true'}, subsequent calls are guaranteed to return {@code true}
-   * until selection is changed. 'Unknown direction' flag is automatically reset then.
-   *
-   */
-  void setUnknownDirection(boolean unknownDirection) {
-    myUnknownDirection = unknownDirection;
-  }
-
   @Override
   public int getSelectionStart() {
     EditorThreading.assertInteractionAllowed();
-    if (hasSelection()) {
-      RangeMarker marker = mySelectionMarker;
-      if (marker != null) {
-        return marker.getStartOffset();
-      }
-    }
-    return getOffset();
-  }
-
-  @Override
-  public @NotNull VisualPosition getSelectionStartPosition() {
-    ThreadingAssertions.assertEventDispatchThread();
-    VisualPosition position;
-    SelectionMarker marker = mySelectionMarker;
-    if (hasSelection()) {
-      position = getRangeMarkerStartPosition();
-      if (position == null) {
-        VisualPosition startPosition = myEditor.offsetToVisualPosition(marker.getStartOffset(), true, false);
-        VisualPosition endPosition = myEditor.offsetToVisualPosition(marker.getEndOffset(), false, true);
-        position = startPosition.after(endPosition) ? endPosition : startPosition;
-      }
-    }
-    else {
-      position = isVirtualSelectionEnabled() ? getVisualPosition() :
-                 myEditor.offsetToVisualPosition(getOffset(), getLogicalPosition().leansForward, false);
-    }
-    if (hasVirtualSelection()) {
-      position = new VisualPosition(position.line, position.column + marker.startVirtualOffset);
-    }
-    return position;
-  }
-
-  LogicalPosition getSelectionStartLogicalPosition() {
-    ThreadingAssertions.assertEventDispatchThread();
-    LogicalPosition position;
-    SelectionMarker marker = mySelectionMarker;
-    if (hasSelection()) {
-      VisualPosition visualPosition = getRangeMarkerStartPosition();
-      position = visualPosition == null ? myEditor.offsetToLogicalPosition(marker.getStartOffset()).leanForward(true)
-                                        : myEditor.visualToLogicalPosition(visualPosition);
-    }
-    else {
-      position = getLogicalPosition();
-    }
-    if (hasVirtualSelection()) {
-      position = new LogicalPosition(position.line, position.column + marker.startVirtualOffset);
-    }
-    return position;
+    return getSelectionOffset(true);
   }
 
   @Override
   public int getSelectionEnd() {
     EditorThreading.assertInteractionAllowed();
-    if (hasSelection()) {
-      RangeMarker marker = mySelectionMarker;
-      if (marker != null) {
-        return marker.getEndOffset();
-      }
-    }
-    return getOffset();
+    return getSelectionOffset(false);
+  }
+
+  @Override
+  public @NotNull VisualPosition getSelectionStartPosition() {
+    ThreadingAssertions.assertEventDispatchThread();
+    return getSelectionVisualPosition(true);
   }
 
   @Override
   public @NotNull VisualPosition getSelectionEndPosition() {
     ThreadingAssertions.assertEventDispatchThread();
-    VisualPosition position;
-    SelectionMarker marker = mySelectionMarker;
-    if (hasSelection()) {
-      position = getRangeMarkerEndPosition();
-      if (position == null) {
-        VisualPosition startPosition = myEditor.offsetToVisualPosition(marker.getStartOffset(), true, false);
-        VisualPosition endPosition = myEditor.offsetToVisualPosition(marker.getEndOffset(), false, true);
-        position = startPosition.after(endPosition) ? startPosition : endPosition;
-      }
-    }
-    else {
-      position = isVirtualSelectionEnabled() ? getVisualPosition() :
-                 myEditor.offsetToVisualPosition(getOffset(), getLogicalPosition().leansForward, false);
-    }
-    if (hasVirtualSelection()) {
-      position = new VisualPosition(position.line, position.column + marker.endVirtualOffset);
-    }
-    return position;
-  }
-
-  LogicalPosition getSelectionEndLogicalPosition() {
-    ThreadingAssertions.assertEventDispatchThread();
-    LogicalPosition position;
-    SelectionMarker marker = mySelectionMarker;
-    if (hasSelection()) {
-      VisualPosition visualPosition = getRangeMarkerEndPosition();
-      position = visualPosition == null ? myEditor.offsetToLogicalPosition(marker.getEndOffset())
-                                        : myEditor.visualToLogicalPosition(visualPosition);
-    }
-    else {
-      position = getLogicalPosition();
-    }
-    if (hasVirtualSelection()) {
-      position = new LogicalPosition(position.line, position.column + marker.endVirtualOffset);
-    }
-    return position;
+    return getSelectionVisualPosition(false);
   }
 
   @Override
   public boolean hasSelection() {
     EditorThreading.assertInteractionAllowed();
-    SelectionMarker marker = mySelectionMarker;
-    return hasSelection(marker);
-  }
-
-  private boolean hasSelection(SelectionMarker marker) {
-    return marker != null && marker.isValid() && (marker.getEndOffset() > marker.getStartOffset()
-                                                  || isVirtualSelectionEnabled() && marker.hasVirtualSelection());
+    SelectionMarker selectionMarker = mySelectionMarker;
+    return selectionMarker != null && selectionMarker.hasSelection();
   }
 
   @Override
   public @NotNull TextRange getSelectionRange() {
     EditorThreading.assertInteractionAllowed();
-    SelectionMarker marker = mySelectionMarker;
-    if (hasSelection(marker)) {
-      return marker.getTextRange();
+    SelectionMarker selectionMarker = mySelectionMarker;
+    if (selectionMarker != null && selectionMarker.hasSelection()) {
+      return selectionMarker.getTextRange();
     }
-    else {
-      int offset = getOffset();
-      return TextRange.create(offset, offset);
+    int offset = getOffset();
+    return TextRange.create(offset, offset);
+  }
+
+  @Override
+  public int getLeadSelectionOffset() {
+    EditorThreading.assertInteractionAllowed();
+    int caretOffset = getOffset();
+    SelectionMarker selectionMarker = mySelectionMarker;
+    if (selectionMarker == null || !selectionMarker.hasSelection()) {
+      return caretOffset;
     }
+    int startOffset = selectionMarker.getStartOffset();
+    int endOffset = selectionMarker.getEndOffset();
+    if (caretOffset == startOffset || caretOffset == endOffset) {
+      return caretOffset == endOffset ? startOffset : endOffset;
+    }
+    // Try to check if current selection is tweaked by fold region.
+    FoldingModelEx foldingModel = myEditor.getFoldingModel();
+    FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(caretOffset);
+    if (foldRegion != null) {
+      if (foldRegion.getStartOffset() == startOffset) {
+        return endOffset;
+      } else if (foldRegion.getEndOffset() == endOffset) {
+        return startOffset;
+      }
+    }
+    return mySelectionEndPositionIsLead ? endOffset : startOffset;
+  }
+
+  @Override
+  public @NotNull VisualPosition getLeadSelectionPosition() {
+    EditorThreading.assertInteractionAllowed();
+    VisualPosition pos = getLeadSelectionPositionOrNull();
+    return pos != null ? pos : getVisualPosition();
+  }
+
+  @Override
+  public @Nullable String getSelectedText() {
+    EditorThreading.assertInteractionAllowed();
+    SelectionMarker selectionMarker = mySelectionMarker;
+    if (selectionMarker == null || !selectionMarker.hasSelection()) {
+      return null;
+    }
+    TextRange selectionRange = selectionMarker.getTextRange();
+    String selectedText = myDocument.getText(selectionRange);
+    if (!selectionMarker.hasVirtualSelection()) {
+      return selectedText;
+    }
+    int padding = selectionMarker.endVirtualOffset - selectionMarker.startVirtualOffset;
+    StringBuilder builder = new StringBuilder(selectedText.length() + padding);
+    builder.append(selectedText);
+    builder.repeat(' ', padding);
+    return builder.toString();
   }
 
   @Override
@@ -1073,76 +1020,84 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   @Override
   public void setSelection(int startOffset, int endOffset, boolean updateSystemSelection) {
-    doSetSelection(myEditor.offsetToVisualPosition(startOffset, true, false), startOffset,
-                   myEditor.offsetToVisualPosition(endOffset, false, true), endOffset,
-                   false, updateSystemSelection, true);
+    doSetSelection(
+      myEditor.offsetToVisualPosition(startOffset, true, false),
+      startOffset,
+      myEditor.offsetToVisualPosition(endOffset, false, true),
+      endOffset,
+      false,
+      updateSystemSelection,
+      true
+    );
   }
 
   @Override
   public void setSelection(int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
-    VisualPosition startPosition;
-    if (hasSelection()) {
-      startPosition = getLeadSelectionPosition();
-    }
-    else {
+    ThreadingAssertions.assertEventDispatchThread();
+    VisualPosition startPosition = getLeadSelectionPositionOrNull();
+    if (startPosition == null) {
       startPosition = myEditor.offsetToVisualPosition(startOffset, true, false);
     }
     setSelection(startPosition, startOffset, endPosition, endOffset);
   }
 
   @Override
-  public void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
+  public void setSelection(
+    @Nullable VisualPosition startPosition,
+    int startOffset,
+    @Nullable VisualPosition endPosition,
+    int endOffset
+  ) {
     setSelection(startPosition, startOffset, endPosition, endOffset, true);
   }
 
   @Override
-  public void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset,
-                           boolean updateSystemSelection) {
-    VisualPosition startPositionToUse = startPosition == null ? myEditor.offsetToVisualPosition(startOffset, true, false) : startPosition;
-    VisualPosition endPositionToUse = endPosition == null ? myEditor.offsetToVisualPosition(endOffset, false, true) : endPosition;
-    doSetSelection(startPositionToUse, startOffset, endPositionToUse, endOffset, true, updateSystemSelection, true);
+  public void setSelection(
+    @Nullable VisualPosition startPosition,
+    int startOffset,
+    @Nullable VisualPosition endPosition,
+    int endOffset,
+    boolean updateSystemSelection
+  ) {
+    VisualPosition start = startPosition != null
+                           ? startPosition
+                           : myEditor.offsetToVisualPosition(startOffset, true, false);
+    VisualPosition end = endPosition != null
+                         ? endPosition
+                         : myEditor.offsetToVisualPosition(endOffset, false, true);
+    doSetSelection(start, startOffset, end, endOffset, true, updateSystemSelection, true);
   }
 
-  void doSetSelection(final @NotNull VisualPosition startPosition,
-                      final int _startOffset,
-                      final @NotNull VisualPosition endPosition,
-                      final int _endOffset,
-                      final boolean visualPositionAware,
-                      final boolean updateSystemSelection,
-                      final boolean fireListeners) {
+  void doSetSelection(
+    @NotNull VisualPosition startPosition,
+    int _startOffset,
+    @NotNull VisualPosition endPosition,
+    int _endOffset,
+    boolean visualPositionAware,
+    boolean updateSystemSelection,
+    boolean fireListeners
+  ) {
     myCaretModel.doWithCaretMerging(() -> {
       int startOffset = DocumentUtil.alignToCodePointBoundary(myDocument, _startOffset);
       int endOffset = DocumentUtil.alignToCodePointBoundary(myDocument, _endOffset);
-      myUnknownDirection = false;
-      ThreadingAssertions.assertEventDispatchThread();
-      int textLength = myDocument.getTextLength();
-      if (startOffset < 0 || startOffset > textLength) {
-        LOG.error("Wrong startOffset: " + startOffset + ", textLength=" + textLength);
-      }
-      if (endOffset < 0 || endOffset > textLength) {
-        LOG.error("Wrong endOffset: " + endOffset + ", textLength=" + textLength);
-      }
-
+      mySelectionUnknownDirection = false;
+      checkRangeBounds(startOffset, endOffset);
       if (!visualPositionAware && startOffset == endOffset) {
         removeSelection();
         return;
       }
-
-  /* Normalize selection */
-      boolean switchedOffsets = false;
-      if (startOffset > endOffset) {
+      boolean switchedOffsets = startOffset > endOffset;
+      if (switchedOffsets) {
+        /* Normalize selection */
         int tmp = startOffset;
         startOffset = endOffset;
         endOffset = tmp;
-        switchedOffsets = true;
       }
-
       FoldingModelEx foldingModel = myEditor.getFoldingModel();
       FoldRegion startFold = foldingModel.getCollapsedRegionAtOffset(startOffset);
       if (startFold != null && startFold.getStartOffset() < startOffset) {
         startOffset = startFold.getStartOffset();
       }
-
       FoldRegion endFold = foldingModel.getCollapsedRegionAtOffset(endOffset);
       if (endFold != null && endFold.getStartOffset() < endOffset) {
         // All visual positions that lay at collapsed fold region placeholder are mapped to the same offset. Hence, there are
@@ -1150,57 +1105,56 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
         // We want to expand selection to the fold region end at the former case and keep selection as-is at the latest one.
         endOffset = endFold.getEndOffset();
       }
-
-      int oldSelectionStart;
-      int oldSelectionEnd;
-
-      if (hasSelection()) {
-        oldSelectionStart = getSelectionStart();
-        oldSelectionEnd = getSelectionEnd();
-        if (oldSelectionStart == startOffset && oldSelectionEnd == endOffset && !visualPositionAware) return;
+      int oldSelectionStart, oldSelectionEnd;
+      SelectionMarker oldSelectionMarker = mySelectionMarker;
+      if (oldSelectionMarker != null && oldSelectionMarker.hasSelection()) {
+        oldSelectionStart = oldSelectionMarker.getStartOffset();
+        oldSelectionEnd = oldSelectionMarker.getEndOffset();
+        if (oldSelectionStart == startOffset &&
+            oldSelectionEnd == endOffset &&
+            !visualPositionAware) {
+          return;
+        }
+      } else {
+        int caretOffset = getOffset();
+        oldSelectionStart = caretOffset;
+        oldSelectionEnd = caretOffset;
       }
-      else {
-        oldSelectionStart = oldSelectionEnd = getOffset();
-      }
-
-      SelectionMarker marker = new SelectionMarker(startOffset, endOffset);
-      if (visualPositionAware) {
+      SelectionMarker newSelectionMarker = new SelectionMarker(startOffset, endOffset);
+      if (!visualPositionAware) {
+        mySelectionEndPositionIsLead = endOffset != getOffset();
+      } else {
         if (endPosition.after(startPosition)) {
-          setRangeMarkerStartPosition(startPosition);
-          setRangeMarkerEndPosition(endPosition);
-          setRangeMarkerEndPositionIsLead(false);
+          mySelectionStartPosition = startPosition;
+          mySelectionEndPosition = endPosition;
+          mySelectionEndPositionIsLead = false;
+        } else {
+          mySelectionStartPosition = endPosition;
+          mySelectionEndPosition = startPosition;
+          mySelectionEndPositionIsLead = true;
         }
-        else {
-          setRangeMarkerStartPosition(endPosition);
-          setRangeMarkerEndPosition(startPosition);
-          setRangeMarkerEndPositionIsLead(true);
-        }
-
         if (isVirtualSelectionEnabled() &&
             myDocument.getLineNumber(startOffset) == myDocument.getLineNumber(endOffset)) {
           int endLineColumn = myEditor.offsetToVisualPosition(endOffset).column;
-          int startDiff =
-            EditorUtil.isAtLineEnd(myEditor, switchedOffsets ? endOffset : startOffset) ? startPosition.column - endLineColumn : 0;
-          int endDiff =
-            EditorUtil.isAtLineEnd(myEditor, switchedOffsets ? startOffset : endOffset) ? endPosition.column - endLineColumn : 0;
-          marker.startVirtualOffset = Math.max(0, Math.min(startDiff, endDiff));
-          marker.endVirtualOffset = Math.max(0, Math.max(startDiff, endDiff));
+          int startDiff = EditorUtil.isAtLineEnd(myEditor, switchedOffsets ? endOffset : startOffset)
+                          ? startPosition.column - endLineColumn
+                          : 0;
+          int endDiff = EditorUtil.isAtLineEnd(myEditor, switchedOffsets ? startOffset : endOffset)
+                        ? endPosition.column - endLineColumn
+                        : 0;
+          //noinspection MathClampMigration
+          newSelectionMarker.startVirtualOffset = Math.max(0, Math.min(startDiff, endDiff));
+          newSelectionMarker.endVirtualOffset = Math.max(0, Math.max(startDiff, endDiff));
         }
       }
-      else {
-        setRangeMarkerEndPositionIsLead(endOffset != getOffset());
+      if (oldSelectionMarker != null) {
+        oldSelectionMarker.dispose();
       }
-      SelectionMarker selectionMarker = mySelectionMarker;
-      if (selectionMarker != null) {
-        selectionMarker.dispose();
-      }
-      mySelectionMarker = marker;
-
+      mySelectionMarker = newSelectionMarker;
       if (fireListeners) {
-        myEditor.getSelectionModel().fireSelectionChanged(new SelectionEvent(myEditor,
-                                                                             oldSelectionStart, oldSelectionEnd, startOffset, endOffset));
+        SelectionEvent event = new SelectionEvent(myEditor, oldSelectionStart, oldSelectionEnd, startOffset, endOffset);
+        myEditor.getSelectionModel().fireSelectionChanged(event);
       }
-
       if (updateSystemSelection) {
         myCaretModel.updateSystemSelection();
       }
@@ -1215,85 +1169,18 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
       return;
     }
     myCaretModel.doWithCaretMerging(() -> {
-      ThreadingAssertions.assertEventDispatchThread();
-      myUnknownDirection = false;
-      RangeMarker marker = mySelectionMarker;
-      if (marker != null && marker.isValid()) {
-        int startOffset = marker.getStartOffset();
-        int endOffset = marker.getEndOffset();
+      mySelectionUnknownDirection = false;
+      RangeMarker selectionMarker = mySelectionMarker;
+      if (selectionMarker != null && selectionMarker.isValid()) {
+        int startOffset = selectionMarker.getStartOffset();
+        int endOffset = selectionMarker.getEndOffset();
         int caretOffset = getOffset();
         mySelectionMarker = null;
-        marker.dispose();
-        myEditor.getSelectionModel().fireSelectionChanged(new SelectionEvent(myEditor, startOffset, endOffset, caretOffset, caretOffset));
+        selectionMarker.dispose();
+        SelectionEvent event = new SelectionEvent(myEditor, startOffset, endOffset, caretOffset, caretOffset);
+        myEditor.getSelectionModel().fireSelectionChanged(event);
       }
     });
-  }
-
-  @Override
-  public int getLeadSelectionOffset() {
-    EditorThreading.assertInteractionAllowed();
-    int caretOffset = getOffset();
-    if (hasSelection()) {
-      RangeMarker marker = mySelectionMarker;
-      if (marker != null && marker.isValid()) {
-        int startOffset = marker.getStartOffset();
-        int endOffset = marker.getEndOffset();
-        if (caretOffset != startOffset && caretOffset != endOffset) {
-          // Try to check if current selection is tweaked by fold region.
-          FoldingModelEx foldingModel = myEditor.getFoldingModel();
-          FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(caretOffset);
-          if (foldRegion != null) {
-            if (foldRegion.getStartOffset() == startOffset) {
-              return endOffset;
-            }
-            else if (foldRegion.getEndOffset() == endOffset) {
-              return startOffset;
-            }
-          }
-          return isRangeMarkerEndPositionIsLead() ? endOffset : startOffset;
-        }
-
-        return caretOffset == endOffset ? startOffset : endOffset;
-      }
-    }
-    return caretOffset;
-  }
-
-  @Override
-  public @NotNull VisualPosition getLeadSelectionPosition() {
-    SelectionMarker marker = mySelectionMarker;
-    VisualPosition caretPosition = getVisualPosition();
-    if (isVirtualSelectionEnabled() && !hasSelection()) {
-      return caretPosition;
-    }
-    if (marker == null || !marker.isValid()) {
-      return caretPosition;
-    }
-
-    if (isRangeMarkerEndPositionIsLead()) {
-      VisualPosition result = getRangeMarkerEndPosition();
-      if (result == null) {
-        return getSelectionEndPosition();
-      }
-      else {
-        if (hasVirtualSelection()) {
-          result = new VisualPosition(result.line, result.column + marker.endVirtualOffset);
-        }
-        return result;
-      }
-    }
-    else {
-      VisualPosition result = getRangeMarkerStartPosition();
-      if (result == null) {
-        return getSelectionStartPosition();
-      }
-      else {
-        if (hasVirtualSelection()) {
-          result = new VisualPosition(result.line, result.column + marker.startVirtualOffset);
-        }
-        return result;
-      }
-    }
   }
 
   @Override
@@ -1303,60 +1190,18 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   }
 
   @Override
-  public void selectWordAtCaret(final boolean honorCamelWordsSettings) {
+  public void selectWordAtCaret(boolean honorCamelWordsSettings) {
     ThreadingAssertions.assertEventDispatchThread();
-
     EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CURRENT_CARET);
     DataContext context = AnActionEvent.getInjectedDataContext(EditorActionHandler.caretDataContext(myEditor.getDataContext(), this));
     DataContext customizedContext = CustomizedDataContext.withSnapshot(
       context,
       sink -> {
-        sink.set(HONOR_CAMEL_WORDS, honorCamelWordsSettings);
+        sink.set(HonorCamelWordsDataContextSerializerKt.getHONOR_CAMEL_WORDS(), honorCamelWordsSettings);
       });
     Caret caret = customizedContext.getData(CommonDataKeys.CARET);
     assert caret != null;
     handler.execute(caret.getEditor(), caret, customizedContext);
-  }
-
-  @Override
-  public @Nullable String getSelectedText() {
-    if (!hasSelection()) {
-      return null;
-    }
-    SelectionMarker selectionMarker = mySelectionMarker;
-    CharSequence text = myDocument.getCharsSequence();
-    int selectionStart = getSelectionStart();
-    int selectionEnd = getSelectionEnd();
-    String selectedText = text.subSequence(selectionStart, selectionEnd).toString();
-    if (isVirtualSelectionEnabled() && selectionMarker.hasVirtualSelection()) {
-      int padding = selectionMarker.endVirtualOffset - selectionMarker.startVirtualOffset;
-      StringBuilder builder = new StringBuilder(selectedText.length() + padding);
-      builder.append(selectedText);
-      builder.repeat(' ', padding);
-      return builder.toString();
-    }
-    else {
-      return selectedText;
-    }
-  }
-
-  private boolean isVirtualSelectionEnabled() {
-    return myEditor.isColumnMode();
-  }
-
-  boolean hasVirtualSelection() {
-    EditorThreading.assertInteractionAllowed();
-    SelectionMarker marker = mySelectionMarker;
-    return marker != null && marker.isValid() && isVirtualSelectionEnabled() && marker.hasVirtualSelection();
-  }
-
-  void resetVirtualSelection() {
-    SelectionMarker marker = mySelectionMarker;
-    if (marker != null) marker.resetVirtualSelection();
-  }
-
-  private int getCurrentX() {
-    return myEditor.visualPositionToXY(myVisibleCaret).x;
   }
 
   @Override
@@ -1366,7 +1211,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   @Override
   public @NonNls String toString() {
-    return "Caret at " + (myDocumentUpdateCounter == myCaretModel.myDocumentUpdateCounter ? myVisibleCaret : getOffset()) +
+    return "Caret at " + (myDocumentUpdateCounter == myDocument.getModificationSequence() ? myVisibleCaret : getOffset()) +
            (mySelectionMarker == null ? "" : ", selection marker: " + mySelectionMarker);
   }
 
@@ -1382,13 +1227,12 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   @Override
   public @NotNull CaretVisualAttributes getVisualAttributes() {
-    CaretVisualAttributes attrs = getUserData(VISUAL_ATTRIBUTES_KEY);
-    return attrs == null ? CaretVisualAttributes.getDefault() : attrs;
+    return ObjectUtils.notNull(myAttributes, CaretVisualAttributes.getDefault());
   }
 
   @Override
   public void setVisualAttributes(@NotNull CaretVisualAttributes attributes) {
-    putUserData(VISUAL_ATTRIBUTES_KEY, attributes == CaretVisualAttributes.getDefault() ? null : attributes);
+    myAttributes = attributes == CaretVisualAttributes.getDefault() ? null : attributes;
     requestRepaint(myVerticalInfo);
   }
 
@@ -1406,93 +1250,241 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
            ", desired selection end column: " + myDesiredSelectionEndColumn +
            ", desired x: " + myDesiredX +
            ", selection marker: " + mySelectionMarker +
-           ", rangeMarker start position: " + myRangeMarkerStartPosition +
-           ", rangeMarker end position: " + myRangeMarkerEndPosition +
-           ", rangeMarker end position is lead: " + myRangeMarkerEndPositionIsLead +
-           ", unknown direction: " + myUnknownDirection +
+           ", rangeMarker start position: " + mySelectionStartPosition +
+           ", rangeMarker end position: " + mySelectionEndPosition +
+           ", rangeMarker end position is lead: " + mySelectionEndPositionIsLead +
+           ", unknown direction: " + mySelectionUnknownDirection +
            ", logical column adjustment: " + myLogicalColumnAdjustment +
            ", visual column adjustment: " + myVisualColumnAdjustment + '}';
-  }
-
-  private @Nullable VisualPosition getRangeMarkerStartPosition() {
-    invalidateRangeMarkerVisualPositions(mySelectionMarker);
-    return myRangeMarkerStartPosition;
-  }
-
-  private void setRangeMarkerStartPosition(@NotNull VisualPosition startPosition) {
-    myRangeMarkerStartPosition = startPosition;
-  }
-
-  private @Nullable VisualPosition getRangeMarkerEndPosition() {
-    invalidateRangeMarkerVisualPositions(mySelectionMarker);
-    return myRangeMarkerEndPosition;
-  }
-
-  private void setRangeMarkerEndPosition(@NotNull VisualPosition endPosition) {
-    myRangeMarkerEndPosition = endPosition;
-  }
-
-  private boolean isRangeMarkerEndPositionIsLead() {
-    return myRangeMarkerEndPositionIsLead;
-  }
-
-  private void setRangeMarkerEndPositionIsLead(boolean endPositionIsLead) {
-    myRangeMarkerEndPositionIsLead = endPositionIsLead;
-  }
-
-  private void invalidateRangeMarkerVisualPositions(RangeMarker marker) {
-    SoftWrapModelImpl model = myEditor.getSoftWrapModel();
-    InlayModelImpl inlayModel = myEditor.getInlayModel();
-    int startOffset = marker.getStartOffset();
-    int endOffset = marker.getEndOffset();
-    if ((myRangeMarkerStartPosition == null ||
-         !myEditor.offsetToVisualPosition(startOffset, true, false).equals(myRangeMarkerStartPosition)) &&
-        model.getSoftWrap(startOffset) == null && !inlayModel.hasInlineElementAt(startOffset) ||
-        (myRangeMarkerEndPosition == null ||
-         !myEditor.offsetToVisualPosition(endOffset, false, true).equals(myRangeMarkerEndPosition))
-        && model.getSoftWrap(endOffset) == null && !inlayModel.hasInlineElementAt(endOffset)) {
-      myRangeMarkerStartPosition = null;
-      myRangeMarkerEndPosition = null;
-    }
-  }
-
-  void resetCachedState() {
-    myDocumentUpdateCounter = -1;
-  }
-
-  void updateCachedStateIfNeeded() {
-    if (!ApplicationManager.getApplication().isDispatchThread()) return;
-    int modelCounter = myCaretModel.myDocumentUpdateCounter;
-    if (myDocumentUpdateCounter != modelCounter) {
-      updateCachedState();
-      myDocumentUpdateCounter = modelCounter;
-    }
-  }
-
-  private void updateCachedState() {
-    LogicalPosition lp = myEditor.offsetToLogicalPosition(getOffset());
-    myLogicalCaret = new LogicalPosition(lp.line, lp.column + myLogicalColumnAdjustment, myLeansTowardsLargerOffsets);
-    VisualPosition visualPosition = myEditor.logicalToVisualPosition(myLogicalCaret);
-    myVisibleCaret = new VisualPosition(visualPosition.line, visualPosition.column + myVisualColumnAdjustment, visualPosition.leansRight);
-    updateVisualLineInfo();
-    myColumnNumberForCloning = -1;
-    myDesiredSelectionStartColumn = myDesiredSelectionEndColumn = -1;
-    myDesiredX = -1;
   }
 
   public boolean isInVirtualSpace() {
     return myLogicalColumnAdjustment > 0;
   }
 
+  /**
+   * @return  information on whether current selection's direction in known
+   * @see #setUnknownDirection(boolean)
+   */
+  boolean isUnknownDirection() {
+    return mySelectionUnknownDirection;
+  }
+
+  /**
+   * There is a possible case that we don't know selection's direction. For example, a user might triple-click editor (select the
+   * whole line). We can't say what selection end is a {@link #getLeadSelectionOffset() leading end} then. However, that matters
+   * in a situation when a user clicks before or after that line holding Shift key. It's expected that the selection is expanded
+   * up to that point than.
+   * <p/>
+   * That's why we allow to specify that the direction is unknown and {@link #isUnknownDirection() expose this information}
+   * later.
+   * <p/>
+   * <b>Note:</b> when this method is called with {@code 'true'}, subsequent calls are guaranteed to return {@code true}
+   * until selection is changed. 'Unknown direction' flag is automatically reset then.
+   *
+   */
+  void setUnknownDirection(boolean unknownDirection) {
+    mySelectionUnknownDirection = unknownDirection;
+  }
+
+  void resetCachedState() {
+    myDocumentUpdateCounter = -1;
+    myVisualColumnAdjustment = 0;
+  }
+
+  void updateCachedStateIfNeeded() {
+    if (EDT.isCurrentThreadEdt()) {
+      int modelCounter = myDocument.getModificationSequence();
+      if (myDocumentUpdateCounter != modelCounter) {
+        updateCachedState();
+        myDocumentUpdateCounter = modelCounter;
+      }
+    }
+  }
+
+  boolean overlaps(@NotNull CaretImpl secondCaret) {
+    if (getVisualPosition().equals(secondCaret.getVisualPosition())) {
+      return true;
+    }
+    int firstStart = getSelectionStart();
+    int secondStart = secondCaret.getSelectionStart();
+    int firstEnd = getSelectionEnd();
+    int secondEnd = secondCaret.getSelectionEnd();
+    return (firstStart < secondStart && firstEnd > secondStart) ||
+           (firstStart > secondStart && firstStart < secondEnd) ||
+           (firstStart == secondStart && secondEnd != secondStart && firstEnd > firstStart) ||
+           ((hasPureVirtualSelection() || secondCaret.hasPureVirtualSelection()) && (firstStart == secondStart || firstEnd == secondEnd));
+  }
+
+  void resetVirtualSelection() {
+    SelectionMarker selectionMarker = mySelectionMarker;
+    if (selectionMarker != null) {
+      selectionMarker.resetVirtualSelection();
+    }
+  }
+
+  private void invalidateRangeMarkerVisualPositions(@NotNull RangeMarker selectionMarker) {
+    VisualPosition startVisual = mySelectionStartPosition;
+    VisualPosition endVisual = mySelectionEndPosition;
+    if (startVisual == null || endVisual == null) {
+      mySelectionStartPosition = null;
+      mySelectionEndPosition = null;
+      return;
+    }
+    SoftWrapModel model = myEditor.getSoftWrapModel();
+    InlayModel inlayModel = myEditor.getInlayModel();
+    int startOffset = selectionMarker.getStartOffset();
+    int endOffset = selectionMarker.getEndOffset();
+    if (!myEditor.offsetToVisualPosition(startOffset, true, false).equals(startVisual) && model.getSoftWrap(startOffset) == null && !inlayModel.hasInlineElementAt(startOffset) ||
+        !myEditor.offsetToVisualPosition(endOffset, false, true).equals(endVisual)     && model.getSoftWrap(endOffset) == null   && !inlayModel.hasInlineElementAt(endOffset)) {
+      mySelectionStartPosition = null;
+      mySelectionEndPosition = null;
+    }
+  }
+
+  private int getCurrentX() {
+    return myEditor.visualPositionToXY(myVisibleCaret).x;
+  }
+
+  private void updateCachedState() {
+    int caretOffset = getOffset();
+    int logicalColumnAdjustment = myLogicalColumnAdjustment;
+    boolean leansTowardsLargerOffsets = myLeansTowardsLargerOffsets;
+    LogicalPosition lp = myEditor.offsetToLogicalPosition(caretOffset);
+    myLogicalCaret = new LogicalPosition(lp.line, lp.column + logicalColumnAdjustment, leansTowardsLargerOffsets);
+    VisualPosition visualPosition = myEditor.logicalToVisualPosition(myLogicalCaret);
+    myVisibleCaret = new VisualPosition(visualPosition.line, visualPosition.column + myVisualColumnAdjustment, visualPosition.leansRight);
+    updateVisualLineInfo();
+    myColumnNumberForCloning = -1;
+    myDesiredSelectionStartColumn = -1;
+    myDesiredSelectionEndColumn = -1;
+    myDesiredX = -1;
+  }
+
   private void checkDisposal() {
-    if (myEditor.isDisposed()) myEditor.throwDisposalError("Editor is already disposed");
-    if (!isValid) throw new IllegalStateException("Caret is invalid", myDisposalTrace);
+    if (myEditor.isDisposed()) {
+      myEditor.throwDisposalError("Editor is already disposed");
+    }
+    if (!isValid) {
+      throw new IllegalStateException("Caret is invalid", myDisposalTrace);
+    }
   }
 
   private void stopKillRings() {
     if (!myEditor.isStickySelection() && !myDocument.isInEventsHandling()) {
       CopyPasteManager.getInstance().stopKillRings(myDocument);
     }
+  }
+
+  private int getSelectionOffset(boolean isStart) {
+    SelectionMarker selectionMarker = mySelectionMarker;
+    if (selectionMarker != null && selectionMarker.hasSelection()) {
+      return isStart
+             ? selectionMarker.getStartOffset()
+             : selectionMarker.getEndOffset();
+    }
+    return getOffset();
+  }
+
+  private @NotNull VisualPosition getSelectionVisualPosition(boolean isStart) {
+    SelectionMarker selectionMarker = mySelectionMarker;
+    if (selectionMarker != null && selectionMarker.hasSelection()) {
+      return getSelectionVisualPosition(selectionMarker, isStart);
+    }
+    return isVirtualSelectionEnabled()
+           ? getVisualPosition()
+           : myEditor.offsetToVisualPosition(getOffset(), getLogicalPosition().leansForward, false);
+  }
+
+  private @Nullable VisualPosition getLeadSelectionPositionOrNull() {
+    SelectionMarker selectionMarker = mySelectionMarker;
+    if (selectionMarker != null && selectionMarker.hasSelection()) {
+      int caretOffset = getOffset();
+      if (!selectionMarker.hasVirtualSelection() &&
+          (caretOffset == selectionMarker.getStartOffset() || caretOffset == selectionMarker.getEndOffset())) {
+        // The caret sits exactly on a selection boundary. By default the lead is the selection's start
+        // position; with a block caret and the vim-like option enabled, fall back to the legacy flag-based
+        // lead so that block-caret mouse-drag selection (see EditorImpl#processMouseDragged) is unchanged.
+        boolean useEndPosition = mySelectionEndPositionIsLead &&
+                                 EditorUtil.isBlockLikeCaret(this) &&
+                                 VIM_LIKE_CARET_SELECTION_ENABLED.asBoolean();
+        return getSelectionVisualPosition(selectionMarker, !useEndPosition);
+      }
+      return getSelectionVisualPosition(selectionMarker, !mySelectionEndPositionIsLead);
+    }
+    return null;
+  }
+
+  private @NotNull VisualPosition getSelectionVisualPosition(@NotNull SelectionMarker selectionMarker, boolean isStart) {
+    invalidateRangeMarkerVisualPositions(selectionMarker);
+    VisualPosition position = isStart ? mySelectionStartPosition : mySelectionEndPosition;
+    if (position == null) {
+      VisualPosition startPosition = myEditor.offsetToVisualPosition(selectionMarker.getStartOffset(), true, false);
+      VisualPosition endPosition = myEditor.offsetToVisualPosition(selectionMarker.getEndOffset(), false, true);
+      if (isStart) {
+        position = startPosition.after(endPosition) ? endPosition : startPosition;
+      } else {
+        position = startPosition.after(endPosition) ? startPosition : endPosition;
+      }
+    }
+    if (!selectionMarker.hasVirtualSelection()) {
+      return position;
+    }
+    int virtualColumn = isStart ? selectionMarker.startVirtualOffset :  selectionMarker.endVirtualOffset;
+    return new VisualPosition(position.line, position.column + virtualColumn);
+  }
+
+  private @NotNull Pair<LogicalPosition, LogicalPosition> getSelectionLogicalRange() {
+    ThreadingAssertions.assertEventDispatchThread();
+    SelectionMarker selectionMarker = mySelectionMarker;
+    if (selectionMarker == null || !selectionMarker.hasSelection()) {
+      LogicalPosition caretPos = getLogicalPosition();
+      return new Pair<>(caretPos, caretPos);
+    }
+    invalidateRangeMarkerVisualPositions(selectionMarker);
+    VisualPosition visualStart = mySelectionStartPosition;
+    VisualPosition visualEnd = mySelectionEndPosition;
+    LogicalPosition startPos = visualStart != null
+               ? myEditor.visualToLogicalPosition(visualStart)
+               : myEditor.offsetToLogicalPosition(selectionMarker.getStartOffset()).leanForward(true);
+    LogicalPosition endPos = visualEnd != null
+             ? myEditor.visualToLogicalPosition(visualEnd)
+             : myEditor.offsetToLogicalPosition(selectionMarker.getEndOffset());
+    if (selectionMarker.hasVirtualSelection()) {
+      startPos = new LogicalPosition(startPos.line, startPos.column + selectionMarker.startVirtualOffset);
+      endPos = new LogicalPosition(endPos.line, endPos.column + selectionMarker.endVirtualOffset);
+    }
+    return new Pair<>(startPos, endPos);
+  }
+
+  private boolean hasPureVirtualSelection() {
+    SelectionMarker selectionMarker = mySelectionMarker;
+    return selectionMarker != null && selectionMarker.hasPureVirtualSelection();
+  }
+
+  private boolean isVirtualSelectionEnabled() {
+    return myEditor.isColumnMode();
+  }
+
+  private void checkRangeBounds(int startOffset, int endOffset) {
+    int textLength = myDocument.getTextLength();
+    if (startOffset < 0 || startOffset > textLength) {
+      LOG.error("Wrong startOffset: " + startOffset + ", textLength=" + textLength);
+    }
+    if (endOffset < 0 || endOffset > textLength) {
+      LOG.error("Wrong endOffset: " + endOffset + ", textLength=" + textLength);
+    }
+  }
+
+  private static int getInitialVisualLineEnd(@NotNull Document document) {
+    int lineCount = document.getLineCount();
+    if (lineCount == 0) {
+      return 0;
+    }
+    if (lineCount == 1) {
+      return document.getLineEndOffset(0);
+    }
+    return document.getLineStartOffset(1);
   }
 
   @TestOnly
@@ -1502,32 +1494,26 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     LOG.assertTrue(!DocumentUtil.isInsideSurrogatePair(myDocument, getSelectionEnd()));
   }
 
-  private record VerticalInfo(
-    int y, // y coordinate of caret
-    int logicalLineY, // y coordinate of caret's logical line start
-    int logicalLineHeight // height of caret's logical line
-                                         // (If there are soft wraps, it's larger than a visual line's height.
-                                         // it's also larger if caret is located at a custom fold region)
-    ) {
-  }
-
   final class PositionMarker extends RangeMarkerImpl {
     private PositionMarker(int offset) {
       super(myDocument, offset, offset, false, true);
-      myCaretModel.myPositionMarkerTree.addInterval(this, offset, offset, false, false, false, 0);
+      //noinspection SuspiciousPackagePrivateAccess
+      myCaretModel.getPositionMarkerTree().addInterval(this, offset, offset, false, false, false, 0);
     }
 
     @Override
     public void dispose() {
       if (isValid()) {
-        myCaretModel.myPositionMarkerTree.removeInterval(this);
+        myCaretModel.getPositionMarkerTree().removeInterval(this);
       }
     }
 
     @Override
     protected void changedUpdateImpl(@NotNull DocumentEvent e) {
       int oldOffset = intervalStart();
+      //noinspection SuspiciousPackagePrivateAccess
       RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
+      //noinspection SuspiciousPackagePrivateAccess
       long newRange = isValid() && node != null ? applyChange(e, node.toScalarRange(), isGreedyToLeft(), isGreedyToRight(), isStickingToRight()) : -1;
 
       if (newRange != -1) {
@@ -1576,17 +1562,19 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
       }
     }
 
-    private static boolean needToShiftWhiteSpaces(final DocumentEvent e) {
-      return e.getOffset() > 0 && Character.isWhitespace(e.getDocument().getImmutableCharSequence().charAt(e.getOffset() - 1)) &&
-             CharArrayUtil.containsOnlyWhiteSpaces(e.getNewFragment()) && !CharArrayUtil.containLineBreaks(e.getNewFragment());
-    }
-
     @Override
     protected void onReTarget(@NotNull DocumentEvent e) {
       int offset = intervalStart();
       if (DocumentUtil.isInsideSurrogatePair(getDocument(), offset)) {
         setRange(TextRangeScalarUtil.toScalarRange(offset - 1, offset - 1));
       }
+    }
+
+    private static boolean needToShiftWhiteSpaces(@NotNull DocumentEvent e) {
+      return e.getOffset() > 0 &&
+             Character.isWhitespace(e.getDocument().getImmutableCharSequence().charAt(e.getOffset() - 1)) &&
+             CharArrayUtil.containsOnlyWhiteSpaces(e.getNewFragment()) &&
+             !CharArrayUtil.containLineBreaks(e.getNewFragment());
     }
   }
 
@@ -1596,24 +1584,38 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     private int startVirtualOffset;
     private int endVirtualOffset;
 
-    private SelectionMarker(int start, int end) {
+    SelectionMarker(int start, int end) {
       super(myDocument, start, end, false, true);
-      myCaretModel.mySelectionMarkerTree.addInterval(this, start, end, false, false, false, 0);
+      //noinspection SuspiciousPackagePrivateAccess
+      myCaretModel.getSelectionMarkerTree().addInterval(this, start, end, false, false, false, 0);
     }
 
-    private void resetVirtualSelection() {
+    boolean hasSelection() {
+      return isValid() &&
+             (getStartOffset() < getEndOffset() || hasVirtualSelection());
+    }
+
+    boolean hasVirtualSelection() {
+      return isValid() &&
+             isVirtualSelectionEnabled() &&
+             startVirtualOffset < endVirtualOffset;
+    }
+
+    boolean hasPureVirtualSelection() {
+      return isValid() &&
+             getStartOffset() == getEndOffset() &&
+             hasVirtualSelection();
+    }
+
+    void resetVirtualSelection() {
       startVirtualOffset = 0;
       endVirtualOffset = 0;
-    }
-
-    private boolean hasVirtualSelection() {
-      return endVirtualOffset > startVirtualOffset;
     }
 
     @Override
     public void dispose() {
       if (isValid()) {
-        myCaretModel.mySelectionMarkerTree.removeInterval(this);
+        myCaretModel.getSelectionMarkerTree().removeInterval(this);
       }
     }
 
@@ -1627,17 +1629,11 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
         Document document = e.getDocument();
         int startAfter = intervalStart();
         int endAfter = intervalEnd();
-        if (!DocumentUtil.isAtLineEnd(endAfter, document) || document.getLineNumber(startAfter) != document.getLineNumber(endAfter)) {
+        if (!DocumentUtil.isAtLineEnd(endAfter, document) ||
+            document.getLineNumber(startAfter) != document.getLineNumber(endAfter)) {
           resetVirtualSelection();
         }
       }
-    }
-
-    private void alignToSurrogatePairBoundaries() {
-      long alignedRange = TextRangeScalarUtil.shift(toScalarRange(),
-      DocumentUtil.isInsideSurrogatePair(getDocument(), getStartOffset()) ? -1 : 0,
-      DocumentUtil.isInsideSurrogatePair(getDocument(), getEndOffset()) ? -1 : 0);
-      setRange(alignedRange);
     }
 
     @Override
@@ -1645,9 +1641,31 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
       alignToSurrogatePairBoundaries();
     }
 
+    private void alignToSurrogatePairBoundaries() {
+      long alignedRange = TextRangeScalarUtil.shift(
+        toScalarRange(),
+        DocumentUtil.isInsideSurrogatePair(getDocument(), getStartOffset()) ? -1 : 0,
+        DocumentUtil.isInsideSurrogatePair(getDocument(), getEndOffset()) ? -1 : 0
+      );
+      setRange(alignedRange);
+    }
+
     @Override
     public String toString() {
-      return super.toString() + (hasVirtualSelection() ? " virtual selection: " + startVirtualOffset + "-" + endVirtualOffset : "");
+      return super.toString() +
+             (endVirtualOffset > startVirtualOffset
+              ? " virtual selection: " + startVirtualOffset + "-" + endVirtualOffset
+              : "");
     }
+  }
+
+  // IDEA-205802 Repaint issues for soft-wrap marks in a diff pane
+  private record VerticalInfo(
+    int y, // y coordinate of caret
+    int logicalLineY, // y coordinate of caret's logical line start
+    int logicalLineHeight // height of caret's logical line
+                          // (If there are soft wraps, it's larger than a visual line's height.
+                          // it's also larger if caret is located at a custom fold region)
+  ) {
   }
 }

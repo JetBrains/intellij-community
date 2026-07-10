@@ -3,6 +3,8 @@ package com.intellij.cce.actions
 
 import com.github.ajalt.clikt.core.BadParameterValue
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.default
@@ -75,7 +77,11 @@ internal class CompletionEvaluationStarter : ModernApplicationStarter() {
     }
   }
 
-  abstract class EvaluationCommand(name: String, help: String) : CliktCommand(name = name, help = help) {
+  abstract class EvaluationCommand(name: String, help: String) : CliktCommand(name = name) {
+
+    private val helpText = help
+
+    override fun help(context: Context): String = helpText
 
     protected val featureName by argument(name = "Feature name").default("rename")
 

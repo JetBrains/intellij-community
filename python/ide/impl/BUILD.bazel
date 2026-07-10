@@ -88,6 +88,7 @@ jvm_library(
         "//platform/util:util-ui",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
+        "//platform/backend/workspace",
     ],
 )
 
@@ -171,6 +172,7 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/backend/workspace:workspace_test_lib",
     ],
 )
 ### auto-generated section `build intellij.pycharm.community.ide.impl` end

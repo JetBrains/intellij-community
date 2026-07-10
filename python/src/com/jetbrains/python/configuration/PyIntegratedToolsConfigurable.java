@@ -46,6 +46,7 @@ import com.jetbrains.python.testing.PyAbstractTestFactory;
 import com.jetbrains.python.testing.settings.PyTestRunConfigurationRenderer;
 import com.jetbrains.python.testing.settings.PyTestRunConfigurationsModel;
 import com.jetbrains.python.ui.PyUiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,11 +71,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
-public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
+@ApiStatus.Internal
+final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
+  private static Method $$$cachedGetBundleMethod$$$ = null;
   private final JPanel myMainPanel;
   private final JComboBox<PyAbstractTestFactory<?>> myTestRunnerComboBox;
   private final JComboBox<DocStringFormat> myDocstringFormatComboBox;
-  private PyTestRunConfigurationsModel myModel;
   private final @Nullable Module myModule;
   private final @NotNull Project myProject;
   private final PyDocumentationSettings myDocumentationSettings;
@@ -89,13 +91,13 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private final JPanel myPackagingPanel;
   private final JPanel myTestsPanel;
   private final @NotNull Collection<@NotNull DialogPanel> myCustomizePanels = PyIntegratedToolsTestPanelCustomizer.Companion.createPanels();
+  private PyTestRunConfigurationsModel myModel;
 
-
-  public PyIntegratedToolsConfigurable() {
+  PyIntegratedToolsConfigurable() {
     this(null, DefaultProjectFactory.getInstance().getDefaultProject());
   }
 
-  public PyIntegratedToolsConfigurable(@NotNull Module module) {
+  PyIntegratedToolsConfigurable(@NotNull Module module) {
     this(module, module.getProject());
   }
 
@@ -107,7 +109,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       // >>> IMPORTANT!! <<<
       // DO NOT EDIT OR ADD ANY CODE HERE!
       myMainPanel = new JPanel();
-      myMainPanel.setLayout(new GridLayoutManager(8, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myMainPanel.setLayout(new GridLayoutManager(8, 1, JBUI.emptyInsets(), -1, -1));
       final Spacer spacer1 = new Spacer();
       myMainPanel.add(spacer1, new GridConstraints(7, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
                                                    GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
@@ -118,7 +120,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
                                                         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
                                                         null, null, 0, false));
       myDocStringsPanel = new JPanel();
-      myDocStringsPanel.setLayout(new GridLayoutManager(3, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myDocStringsPanel.setLayout(new GridLayoutManager(3, 2, JBUI.emptyInsets(), -1, -1));
       myMainPanel.add(myDocStringsPanel, new GridConstraints(2, 0, 2, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
                                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
@@ -148,7 +150,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
                                                                 GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                                 GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
       myRestPanel = new JPanel();
-      myRestPanel.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myRestPanel.setLayout(new GridLayoutManager(2, 2, JBUI.emptyInsets(), -1, -1));
       myMainPanel.add(myRestPanel, new GridConstraints(4, 0, 2, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
@@ -170,7 +172,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
       myPackagingPanel = new JPanel();
-      myPackagingPanel.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myPackagingPanel.setLayout(new GridLayoutManager(1, 2, JBUI.emptyInsets(), -1, -1));
       myMainPanel.add(myPackagingPanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
@@ -222,8 +224,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myPackagingPanel.setBorder(IdeBorderFactory.createTitledBorder(PyBundle.message("integrated.tools.configurable.packaging")));
     myTestsPanel.setBorder(IdeBorderFactory.createTitledBorder(PyBundle.message("integrated.tools.configurable.testing")));
   }
-
-  private static Method $$$cachedGetBundleMethod$$$ = null;
 
   /** @noinspection ALL */
   private String $$$getMessageFromBundle$$$(String path, String key) {
@@ -341,7 +341,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
           var factory = myModel.getSelected();
           if (factory != null && !factory.isFrameworkInstalled(myProject, sdk)) {
             return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", factory.getName()),
-              // isFrameworkInstalled() == false => getPackageSpec() != null
+                                        // isFrameworkInstalled() == false => getPackageSpec() != null
                                         createQuickFix(sdk, facetErrorPanel,
                                                        Objects.requireNonNull(factory.getPackageSpec()).getPackageName()));
           }

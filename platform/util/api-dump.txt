@@ -202,6 +202,10 @@ f:com.intellij.openapi.diagnostic.LoggerKt
 - sf:currentClassLogger():com.intellij.openapi.diagnostic.Logger
 - sf:debug(com.intellij.openapi.diagnostic.Logger,java.lang.Throwable,kotlin.jvm.functions.Function0):V
 - bs:debug$default(com.intellij.openapi.diagnostic.Logger,java.lang.Throwable,kotlin.jvm.functions.Function0,I,java.lang.Object):V
+- sf:errorWithWarnDetails(com.intellij.openapi.diagnostic.Logger,java.lang.String,java.lang.String,java.lang.Throwable):V
+- bs:errorWithWarnDetails$default(com.intellij.openapi.diagnostic.Logger,java.lang.String,java.lang.String,java.lang.Throwable,I,java.lang.Object):V
+- sf:fatalErrorWithWarnDetails(com.intellij.openapi.diagnostic.Logger,java.lang.String,java.lang.String,java.lang.Throwable):java.lang.Void
+- bs:fatalErrorWithWarnDetails$default(com.intellij.openapi.diagnostic.Logger,java.lang.String,java.lang.String,java.lang.Throwable,I,java.lang.Object):java.lang.Void
 - sf:fileLogger():com.intellij.openapi.diagnostic.Logger
 - sf:getOrHandleException(java.lang.Object,kotlin.jvm.functions.Function1):java.lang.Object
 - sf:getOrLogException(java.lang.Object,com.intellij.openapi.diagnostic.Logger):java.lang.Object
@@ -873,8 +877,10 @@ Fc:com.intellij.openapi.util.text.StringUtil
 - s:trimExtensions(java.lang.String):java.lang.String
 - s:trimLeading(java.lang.CharSequence):java.lang.CharSequence
 - s:trimLeading(java.lang.String):java.lang.String
+- s:trimLeadingLines(java.lang.String):java.lang.String
 - s:trimTrailing(java.lang.CharSequence):java.lang.CharSequence
 - s:trimTrailing(java.lang.String):java.lang.String
+- s:trimTrailingLines(java.lang.String):java.lang.String
 - s:unescapeBackSlashes(java.lang.String):java.lang.String
 - s:unescapeStringCharacters(java.lang.String):java.lang.String
 - s:unescapeXml(java.lang.String):java.lang.String
@@ -1033,9 +1039,11 @@ f:com.intellij.util.EnvironmentUtil
 - s:getEnvironmentMap():java.util.Map
 - s:getValue(java.lang.String):java.lang.String
 - s:inlineParentOccurrences(java.util.Map):V
+- s:inlineParentOccurrences(java.util.Map,java.util.Map):V
 - s:isValidName(java.lang.String):Z
 - s:isValidValue(java.lang.String):Z
 - s:parseEnv(java.lang.String[]):java.util.Map
+- s:setLocaleEnv(java.util.Map,java.nio.charset.Charset):java.lang.String
 f:com.intellij.util.EventDispatcher
 - addListener(java.util.EventListener):V
 - s:create(java.lang.Class):com.intellij.util.EventDispatcher
@@ -1695,8 +1703,6 @@ f:com.intellij.util.containers.UtilKt
 - sf:headTailOrNull(java.util.List):kotlin.Pair
 - sf:isEmpty(java.util.stream.Stream):Z
 - sf:isNullOrEmpty(java.util.Collection):Z
-- sf:mapValues(com.intellij.util.containers.MultiMap,kotlin.jvm.functions.Function1):com.intellij.util.containers.MultiMap
-- sf:mapValuesTo(com.intellij.util.containers.MultiMap,com.intellij.util.containers.MultiMap,kotlin.jvm.functions.Function1):com.intellij.util.containers.MultiMap
 - sf:notNullize(java.util.stream.Stream):java.util.stream.Stream
 - sf:nullize(java.util.List):java.util.List
 - sf:orNull(java.util.Optional):java.lang.Object
@@ -2105,6 +2111,7 @@ e:com.intellij.util.system.CpuArch
 - s:values():com.intellij.util.system.CpuArch[]
 e:com.intellij.util.system.OS
 - java.lang.Enum
+- f:getBinaryName(java.lang.String):java.lang.String
 - f:getOsInfo():com.intellij.util.system.OS$OsInfo
 - getPlatform():com.intellij.execution.Platform
 - f:isAtLeast(I,I):Z

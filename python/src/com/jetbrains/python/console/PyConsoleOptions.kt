@@ -13,6 +13,7 @@ import com.intellij.util.PathMappingSettings
 import com.intellij.util.containers.ComparatorUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.Transient
 import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.util.xmlb.annotations.XMap
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService
@@ -124,6 +125,15 @@ class PyConsoleOptions(private val project: Project) : PersistentStateComponent<
     @JvmField
     var mySdkHome: String? = null
 
+    /**
+     * Resolved [Sdk] object, kept only as transient runtime state and shuttled to/from the Console Settings UI
+     * via [apply]/[reset]. It is intentionally **not serialized** ([Transient]):
+     * - the persisted interpreter reference is the path [mySdkHome] (`sdk-home`), from which the SDK is resolved
+     *   at launch time (see `findPythonSdkAndModule`); and
+     * - [Sdk] is an interface, so persisting it made deserialization try to instantiate the interface and fail
+     *   with `NoSuchElementException: List is empty` ([PY-90067](https://youtrack.jetbrains.com/issue/PY-90067)).
+     */
+    @Transient
     @JvmField
     var mySdk: Sdk? = null
 
@@ -229,6 +239,8 @@ class PyConsoleOptions(private val project: Project) : PersistentStateComponent<
     @Attribute("sdk-home")
     override fun getSdkHome(): String? = mySdkHome
 
+    // Not serialized, see [mySdk].
+    @Transient
     override fun getSdk(): Sdk? = mySdk
 
     @Attribute("module-name")

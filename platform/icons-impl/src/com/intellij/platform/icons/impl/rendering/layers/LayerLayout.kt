@@ -135,7 +135,6 @@ open class LayerLayout(
 class Placement(val bounds: Bounds, val scale: Float = 1f)
 
 private fun IconScale?.applyTo(dimensions: CompoundDimensions): CompoundDimensions {
-    // TODO Aspect ratio correction
     return when (this) {
         is FitAreaScale -> {
             CompoundDimensions(width.compoundSize(), height.compoundSize())

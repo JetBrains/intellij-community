@@ -55,6 +55,8 @@ jvm_library(
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-codeInsight-groovy",
         "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-codeInsight-groovy_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.groovy.tests` end

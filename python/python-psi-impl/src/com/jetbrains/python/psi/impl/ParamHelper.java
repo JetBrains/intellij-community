@@ -44,6 +44,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAnyOrUnknown;
+
 /**
  * Parameter-related things that should not belong directly to PyParameter.
  */
@@ -235,8 +237,8 @@ public final class ParamHelper {
     return params.size() == 2 &&
            params.getFirst().isPositionalContainer() &&
            params.getLast().isKeywordContainer() &&
-           params.getFirst().getArgumentType(context) == null &&
-           params.getLast().getArgumentType(context) == null;
+           isAnyOrUnknown(params.getFirst().getArgumentType(context)) &&
+           isAnyOrUnknown(params.getLast().getArgumentType(context));
   }
 
   /**

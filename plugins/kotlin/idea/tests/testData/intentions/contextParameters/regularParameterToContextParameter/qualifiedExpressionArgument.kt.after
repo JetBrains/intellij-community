@@ -5,7 +5,7 @@ fun foo() {
 }
 
 fun bar(a: Any) {
-    with(a.toString()) {
+    context(a.toString()) {
         foo()
     }
 }

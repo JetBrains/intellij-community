@@ -46,6 +46,21 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
             runTest("../../completion/testData/inJava/companionObject/HideSuspendFunction.java");
         }
 
+        @TestMetadata("InheritedDefaultMethod.java")
+        public void testInheritedDefaultMethod() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/InheritedDefaultMethod.java");
+        }
+
+        @TestMetadata("InheritedFromAbstractClass.java")
+        public void testInheritedFromAbstractClass() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/InheritedFromAbstractClass.java");
+        }
+
+        @TestMetadata("InheritedProperty.java")
+        public void testInheritedProperty() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/InheritedProperty.java");
+        }
+
         @TestMetadata("JvmField.java")
         public void testJvmField() throws Exception {
             runTest("../../completion/testData/inJava/companionObject/JvmField.java");
@@ -76,6 +91,11 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
             runTest("../../completion/testData/inJava/companionObject/PrivateOuterClass.java");
         }
 
+        @TestMetadata("PrivateSetter.java")
+        public void testPrivateSetter() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/PrivateSetter.java");
+        }
+
         @TestMetadata("PropertyAccessors.java")
         public void testPropertyAccessors() throws Exception {
             runTest("../../completion/testData/inJava/companionObject/PropertyAccessors.java");
@@ -84,6 +104,11 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
         @TestMetadata("ProtectedMember.java")
         public void testProtectedMember() throws Exception {
             runTest("../../completion/testData/inJava/companionObject/ProtectedMember.java");
+        }
+
+        @TestMetadata("ProtectedSetter.java")
+        public void testProtectedSetter() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/ProtectedSetter.java");
         }
 
         @TestMetadata("SimpleMethod.java")
@@ -142,6 +167,16 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("BooleanIsPropertyGetterPrefix.java")
+        public void testBooleanIsPropertyGetterPrefix() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/BooleanIsPropertyGetterPrefix.java");
+        }
+
+        @TestMetadata("BooleanIsPropertySetterPrefix.java")
+        public void testBooleanIsPropertySetterPrefix() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/BooleanIsPropertySetterPrefix.java");
+        }
+
         @TestMetadata("CrossinlineParameter.java")
         public void testCrossinlineParameter() throws Exception {
             runTest("../../completion/testData/inJava/extensions/CrossinlineParameter.java");
@@ -197,6 +232,46 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
             runTest("../../completion/testData/inJava/extensions/ExtensionProperty.java");
         }
 
+        @TestMetadata("FunctionMismatchGetPrefixAbsent.java")
+        public void testFunctionMismatchGetPrefixAbsent() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/FunctionMismatchGetPrefixAbsent.java");
+        }
+
+        @TestMetadata("FunctionMismatchSetPrefixAbsent.java")
+        public void testFunctionMismatchSetPrefixAbsent() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/FunctionMismatchSetPrefixAbsent.java");
+        }
+
+        @TestMetadata("FunctionNamedGetWithGetPrefix.java")
+        public void testFunctionNamedGetWithGetPrefix() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/FunctionNamedGetWithGetPrefix.java");
+        }
+
+        @TestMetadata("GetterPartialAccessorPrefix.java")
+        public void testGetterPartialAccessorPrefix() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/GetterPartialAccessorPrefix.java");
+        }
+
+        @TestMetadata("GetterPrefixNoUnrelatedMatch.java")
+        public void testGetterPrefixNoUnrelatedMatch() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/GetterPrefixNoUnrelatedMatch.java");
+        }
+
+        @TestMetadata("GetterPrefixValProperty.java")
+        public void testGetterPrefixValProperty() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/GetterPrefixValProperty.java");
+        }
+
+        @TestMetadata("GetterPrefixVarProperty.java")
+        public void testGetterPrefixVarProperty() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/GetterPrefixVarProperty.java");
+        }
+
+        @TestMetadata("GetterShortPrefix.java")
+        public void testGetterShortPrefix() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/GetterShortPrefix.java");
+        }
+
         @TestMetadata("HideSuspendFunction.java")
         public void testHideSuspendFunction() throws Exception {
             runTest("../../completion/testData/inJava/extensions/HideSuspendFunction.java");
@@ -210,6 +285,76 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
         @TestMetadata("JvmName.java")
         public void testJvmName() throws Exception {
             runTest("../../completion/testData/inJava/extensions/JvmName.java");
+        }
+
+        @TestMetadata("JvmNameAlongsidePlainExtension.java")
+        public void testJvmNameAlongsidePlainExtension() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameAlongsidePlainExtension.java");
+        }
+
+        @TestMetadata("JvmNameCamelHumpMatch.java")
+        public void testJvmNameCamelHumpMatch() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameCamelHumpMatch.java");
+        }
+
+        @TestMetadata("JvmNameDuplicateAccessorsDeduped.java")
+        public void testJvmNameDuplicateAccessorsDeduped() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameDuplicateAccessorsDeduped.java");
+        }
+
+        @TestMetadata("JvmNameFunctionRenamed.java")
+        public void testJvmNameFunctionRenamed() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameFunctionRenamed.java");
+        }
+
+        @TestMetadata("JvmNameGetterRenamed.java")
+        public void testJvmNameGetterRenamed() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameGetterRenamed.java");
+        }
+
+        @TestMetadata("JvmNameNestedExtensionHidden.java")
+        public void testJvmNameNestedExtensionHidden() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameNestedExtensionHidden.java");
+        }
+
+        @TestMetadata("JvmNameNoUnrelatedMatch.java")
+        public void testJvmNameNoUnrelatedMatch() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameNoUnrelatedMatch.java");
+        }
+
+        @TestMetadata("JvmNameOnAccessorBlock.java")
+        public void testJvmNameOnAccessorBlock() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameOnAccessorBlock.java");
+        }
+
+        @TestMetadata("JvmNameOriginalNameHidden.java")
+        public void testJvmNameOriginalNameHidden() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameOriginalNameHidden.java");
+        }
+
+        @TestMetadata("JvmNamePrivateHidden.java")
+        public void testJvmNamePrivateHidden() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNamePrivateHidden.java");
+        }
+
+        @TestMetadata("JvmNameRedundantSameName.java")
+        public void testJvmNameRedundantSameName() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameRedundantSameName.java");
+        }
+
+        @TestMetadata("JvmNameSetterRenamed.java")
+        public void testJvmNameSetterRenamed() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameSetterRenamed.java");
+        }
+
+        @TestMetadata("JvmNameSetterRenamedGetterDefault.java")
+        public void testJvmNameSetterRenamedGetterDefault() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameSetterRenamedGetterDefault.java");
+        }
+
+        @TestMetadata("JvmNameSuspendHidden.java")
+        public void testJvmNameSuspendHidden() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmNameSuspendHidden.java");
         }
 
         @TestMetadata("LambdaParameter.java")
@@ -252,9 +397,49 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
             runTest("../../completion/testData/inJava/extensions/OperatorExtension.java");
         }
 
+        @TestMetadata("PreferJava.java")
+        public void testPreferJava() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/PreferJava.java");
+        }
+
+        @TestMetadata("PreferJavaWithPrefix.java")
+        public void testPreferJavaWithPrefix() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/PreferJavaWithPrefix.java");
+        }
+
         @TestMetadata("PrivateExtension.java")
         public void testPrivateExtension() throws Exception {
             runTest("../../completion/testData/inJava/extensions/PrivateExtension.java");
+        }
+
+        @TestMetadata("PrivateSetterGetterStillShown.java")
+        public void testPrivateSetterGetterStillShown() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/PrivateSetterGetterStillShown.java");
+        }
+
+        @TestMetadata("PrivateSetterHidden.java")
+        public void testPrivateSetterHidden() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/PrivateSetterHidden.java");
+        }
+
+        @TestMetadata("SetterPartialAccessorPrefix.java")
+        public void testSetterPartialAccessorPrefix() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/SetterPartialAccessorPrefix.java");
+        }
+
+        @TestMetadata("SetterPrefixNoUnrelatedMatch.java")
+        public void testSetterPrefixNoUnrelatedMatch() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/SetterPrefixNoUnrelatedMatch.java");
+        }
+
+        @TestMetadata("SetterPrefixValAbsent.java")
+        public void testSetterPrefixValAbsent() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/SetterPrefixValAbsent.java");
+        }
+
+        @TestMetadata("SetterPrefixVarProperty.java")
+        public void testSetterPrefixVarProperty() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/SetterPrefixVarProperty.java");
         }
 
         @TestMetadata("SimpleFunction.java")

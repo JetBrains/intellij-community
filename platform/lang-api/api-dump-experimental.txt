@@ -14,6 +14,8 @@
 - getLanguage():com.intellij.lang.Language
 - getLanguageDomainId():java.lang.String
 - getPropertyDescription(java.lang.String):java.lang.String
+*:com.intellij.build.BuildProgressObservable
+- a:addListener(com.intellij.build.BuildProgressListener,com.intellij.openapi.Disposable):V
 *:com.intellij.build.BuildViewSettingsProvider
 - a:isExecutionViewHidden():Z
 *:com.intellij.build.BuildWorkspaceConfiguration
@@ -21,6 +23,7 @@
 - a:isShowFirstErrorInEditor():Z
 *:com.intellij.build.eventBuilders.BuildIssueEventBuilder
 - a:build():com.intellij.build.events.BuildIssueEvent
+- a:withFilePosition(com.intellij.build.FilePosition):com.intellij.build.eventBuilders.BuildIssueEventBuilder
 - a:withHint(java.lang.String):com.intellij.build.eventBuilders.BuildIssueEventBuilder
 - a:withId(java.lang.Object):com.intellij.build.eventBuilders.BuildIssueEventBuilder
 - a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.BuildIssueEventBuilder

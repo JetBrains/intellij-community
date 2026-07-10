@@ -1,4 +1,4 @@
-<idea-plugin visibility="public" package="org.jetbrains.kotlin.idea.completion.impl.k2">
+<idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java.psi"/>
@@ -119,6 +119,7 @@
     <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinExtractParameterCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinExtractMethodCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinInlineMethodCompletionCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinInlinePropertyCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinMoveCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCopyCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinTypeHierarchyCompletionCommandProvider" order="last"/>

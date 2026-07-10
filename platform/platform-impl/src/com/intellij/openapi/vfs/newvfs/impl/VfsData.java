@@ -8,7 +8,6 @@ import com.intellij.openapi.application.WriteActionListener;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
@@ -30,6 +29,7 @@ import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.keyFMap.KeyFMap;
 import io.opentelemetry.api.metrics.BatchCallback;
 import io.opentelemetry.api.metrics.Meter;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -237,6 +237,8 @@ public final class VfsData implements Closeable {
   private void cleanupInvalidatedFileRecords() {
     synchronized (invalidatedQueueLock) {
       if (!fileIdsQueueForCleanup.isEmpty()) {
+        fileIdsQueueForCleanup.addAll(collectUnremovedChildren(fileIdsQueueForCleanup));
+
         fileIdsQueueForCleanup.forEach(fileId -> {
           Segment segment = segmentForFileId(fileId, /*create: */ false);
           if (segment != null) {//could be GCed already
@@ -248,6 +250,72 @@ public final class VfsData implements Closeable {
         fileIdsQueueForCleanup = new IntOpenHashSet();
       }
     }
+  }
+
+
+  /// Normally, children should be removed before directory (see `PersistentFSImpl.invalidateSubtree()` )
+  /// => removed children are added to [fileIdsQueueForCleanup] before removed directory => at this point
+  /// `directoryData.children` must be empty -- and since we're in a WA, no one could load a new child
+  /// until WA ends.
+  /// But there is a couple of methods that could add childId to the .children outside RA:
+  /// 1. [PersistentFSImpl#findChildInfo]: infamous 'local refresh' that violates RA/WA constraint
+  ///    (='while WA is running no one else could modify the Model') and causes quite a lot of headaches
+  ///    because of that -- specifically, it could load a new child in parallel with running WA.
+  /// 2. [VirtualDirectoryImpl#findChildById]: also could add childId to .children without checking the directory
+  ///    is still valid.
+  /// (Maybe there are others, too)
+  /// In both cases (re-)checking `dir.isValid()` under the directoryData lock could harm performance.
+  /// So for now the solution is to re-check for not-yet-removed children here:
+  private @NotNull IntSet collectUnremovedChildren(@NotNull IntSet fileIdsQueueForCleanup) {
+    IntOpenHashSet fileIdsToCheck = new IntOpenHashSet(fileIdsQueueForCleanup);
+    IntOpenHashSet fileIdsAlreadyChecked = new IntOpenHashSet(fileIdsToCheck.size());
+
+    IntSet unremovedChildIds = null;
+    IntOpenHashSet unremovedChildrenInTurn = new IntOpenHashSet(1);
+    while (!fileIdsToCheck.isEmpty()) {
+      unremovedChildrenInTurn.clear();
+      for (IntIterator itr = fileIdsToCheck.intIterator(); itr.hasNext(); ) {
+        int fileId = itr.nextInt();
+        itr.remove();
+
+        if (!fileIdsAlreadyChecked.add(fileId)) {
+          continue;
+        }
+
+        Segment segment = segmentForFileId(fileId, /*create: */ false);
+        if (segment != null) {//could be GCed already
+          Object fileData = segment.fileDataById(fileId);
+          if (fileData instanceof DirectoryData directoryData) {
+            ChildrenIds childrenIds;
+            //noinspection SynchronizationOnLocalVariableOrMethodParameter
+            synchronized (directoryData) {
+              childrenIds = directoryData.children;
+              if (!childrenIds.isInvalidated()) {
+                continue;
+              }
+              directoryData.children = ChildrenIds.INVALIDATED;
+              if (childrenIds.size() == 0) {
+                continue;
+              }
+            }
+
+            IntSet unremovedChildren = childrenIds.toIntSet();
+            unremovedChildrenInTurn.addAll(unremovedChildren);
+          }
+        }
+      }
+
+      if (!unremovedChildrenInTurn.isEmpty()) {
+        if (unremovedChildIds == null) {
+          unremovedChildIds = new IntOpenHashSet(unremovedChildrenInTurn.size());
+        }
+        unremovedChildIds.addAll(unremovedChildrenInTurn);
+        fileIdsToCheck.addAll(unremovedChildrenInTurn);
+      }
+    }
+    return unremovedChildIds == null ?
+           IntSet.of() :
+           unremovedChildIds;
   }
 
   /**
@@ -801,13 +869,20 @@ public final class VfsData implements Closeable {
 
   @ApiStatus.Internal
   public static final class ChildrenIds {
-    public static final ChildrenIds EMPTY = new ChildrenIds(ArrayUtilRt.EMPTY_INT_ARRAY, /*sorted:*/ true, /*allLoaded: */ false);
+    //@formatter:off
+    private static final byte SORTED_BY_NAME_MASK       = 0b0001;
+    private static final byte ALL_CHILDREN_LOADED_MASK  = 0b0010;
+    private static final byte INVALIDATED_MASK          = 0b0100;
+    //@formatter:on
 
-    private static final byte SORTED_BY_NAME_MASK = 0b01;
-    private static final byte ALL_CHILDREN_LOADED_MASK = 0b10;
+    public static final ChildrenIds EMPTY = new ChildrenIds(ArrayUtilRt.EMPTY_INT_ARRAY, /*sorted:*/ true, /*allLoaded: */ false);
+    public static final ChildrenIds INVALIDATED = new ChildrenIds(
+      ArrayUtilRt.EMPTY_INT_ARRAY,
+      SORTED_BY_NAME_MASK | ALL_CHILDREN_LOADED_MASK | INVALIDATED_MASK
+    );
 
     private final int[] ids;
-    /** bitmask: SORTED_BY_NAME_MASK | ALL_CHILDREN_LOADED_MASK */
+    /** bitmask: SORTED_BY_NAME_MASK | ALL_CHILDREN_LOADED_MASK | INVALIDATED_MASK */
     private final int flags;
 
 
@@ -839,6 +914,11 @@ public final class VfsData implements Closeable {
       return (flags & ALL_CHILDREN_LOADED_MASK) != 0;
     }
 
+    /// A deleted directory whose children list must not be repopulated.
+    public boolean isInvalidated() {
+      return (flags & INVALIDATED_MASK) != 0;
+    }
+
     public IntOpenHashSet toIntSet() {
       return new IntOpenHashSet(ids);
     }
@@ -855,6 +935,9 @@ public final class VfsData implements Closeable {
 
 
     public @NotNull ChildrenIds withAllChildrenLoaded(boolean allChildrenLoaded) {
+      if (isInvalidated()) {
+        return this;
+      }
       if (areAllChildrenLoaded() == allChildrenLoaded) {
         return this;
       }
@@ -862,12 +945,18 @@ public final class VfsData implements Closeable {
     }
 
     public @NotNull ChildrenIds withIds(int[] updatedIds) {
+      if (isInvalidated()) {
+        return this;
+      }
       return new ChildrenIds(updatedIds, flags);
     }
 
     /** @return children sorted with the supplied comparator and fileLoader, regardless of current .sortedByName value */
     public ChildrenIds sorted(@NotNull IntFunction<? extends @NotNull VirtualFileSystemEntry> fileLoader,
                               @NotNull Comparator<? super VirtualFileSystemEntry> comparator) {
+      if (isInvalidated()) {
+        return this;
+      }
       //Since fileLoader/comparator is supplied externally, we can't rely on .sortedByName  -- it should be checked
       // by this method's caller, and it's up to the caller to decide to trust it or not
       if (ids.length <= 1) {
@@ -908,6 +997,9 @@ public final class VfsData implements Closeable {
 
 
     public @NotNull ChildrenIds insertAt(int index, int id) {
+      if (isInvalidated()) {
+        return this;
+      }
       int[] updatedIds = ArrayUtil.insert(ids, index, id);
       return withIds(updatedIds);
     }
@@ -918,16 +1010,25 @@ public final class VfsData implements Closeable {
     }
 
     public @NotNull ChildrenIds appendId(int id, boolean stillSorted) {
+      if (isInvalidated()) {
+        return this;
+      }
       int[] updatedIds = ArrayUtil.append(ids, id);
       return new ChildrenIds(updatedIds, stillSorted, areAllChildrenLoaded());
     }
 
     public @NotNull ChildrenIds removeAt(int index) {
+      if (isInvalidated()) {
+        return this;
+      }
       int[] updatedIds = ArrayUtil.remove(ids, index);
       return withIds(updatedIds);
     }
 
     public @NotNull ChildrenIds removeIds(@NotNull IntSet idsToRemove) {
+      if (isInvalidated()) {
+        return this;
+      }
       int[] newIds = new int[ids.length];
       int newIdsCount = 0;
       for (int id : ids) {
@@ -945,6 +1046,9 @@ public final class VfsData implements Closeable {
 
     @Override
     public String toString() {
+      if (isInvalidated()) {
+        return "Children[INVALIDATED]";
+      }
       return "Children[ids: " + Arrays.toString(ids) + ", sortedByName: " + isSorted() + ", allLoaded: " + areAllChildrenLoaded() + "]";
     }
   }

@@ -4,6 +4,7 @@ package com.intellij.testFramework;
 import com.intellij.find.ngrams.TrigramIndex;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,6 +19,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ObjectTree;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
@@ -51,12 +53,14 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 @TestOnly
 public final class LeakHunter {
   private static final Logger LOG = Logger.getInstance(LeakHunter.class);
+  private static final List<Runnable> ourProjectCleanups = new CopyOnWriteArrayList<>();
 
   @TestOnly
   private static @NotNull String getCreationPlace(@NotNull Project project) {
@@ -307,11 +311,33 @@ public final class LeakHunter {
       result += "\nExisting strong reference path to the instance:\n" +backLink.toString().indent(2);
     }
 
+    if (backLink instanceof DebugReflectionUtil.BackLink<?>) {
+      Disposable anchor = findObjectTreeAnchor((DebugReflectionUtil.BackLink<?>)backLink);
+      if (anchor != null) {
+        String path = Disposer.getTree().printParentChainToRoot(anchor);
+        if (path != null) {
+          result += "\n\nThe leaked object is reachable via a Disposable in the Disposer tree." +
+                    "\nPath from that Disposable up to the Disposer ROOT:\n" + path;
+        }
+      }
+    }
+
     String creationPlace = leaked instanceof Project ? getCreationPlace((Project)leaked) : null;
     if (creationPlace != null) {
       result += "\nThe instance was created at: "+creationPlace;
     }
     return result;
+  }
+
+  private static @Nullable Disposable findObjectTreeAnchor(@NotNull DebugReflectionUtil.BackLink<?> start) {
+    ObjectTree tree = Disposer.getTree();
+    for (DebugReflectionUtil.BackLink<?> link = start; link != null; link = link.prev()) {
+      Object value = link.getValue();
+      if (value instanceof Disposable && tree.printParentChainToRoot((Disposable)value) != null) {
+        return (Disposable)value;
+      }
+    }
+    return null;
   }
 
   @TestOnly
@@ -351,5 +377,16 @@ public final class LeakHunter {
   // Here we forcibly flush the batch and avoid a leak of component managers.
   private static void flushTelemetry() {
     TelemetryManager.getInstance().forceFlushMetricsBlocking();
+  }
+
+  public static void registerProjectCleanup(@NotNull Runnable cleanup) {
+    ourProjectCleanups.add(cleanup);
+  }
+
+  public static void cleanupAllProjects() {
+    for (var each : ourProjectCleanups) {
+      each.run();
+    }
+    ourProjectCleanups.clear();
   }
 }

@@ -25,6 +25,7 @@ import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,13 +68,29 @@ public class TestVcsLogProvider implements VcsLogProvider {
   private final @NotNull ReducibleSemaphore myFullLogSemaphore;
   private final @NotNull ReducibleSemaphore myRefreshSemaphore;
   private final @NotNull AtomicInteger myReadFirstBlockCounter = new AtomicInteger();
+  private final @Nullable Integer myFullHashLength;
 
   public TestVcsLogProvider() {
+    this(null);
+  }
+
+  public TestVcsLogProvider(int fullHashLength) {
+    this(Integer.valueOf(fullHashLength));
+  }
+
+  private TestVcsLogProvider(@Nullable Integer fullHashLength) {
+    myFullHashLength = fullHashLength;
     myCommits = new ArrayList<>();
     myRefs = new HashSet<>();
     myRefManager = new MockRefManager();
     myFullLogSemaphore = new ReducibleSemaphore();
     myRefreshSemaphore = new ReducibleSemaphore();
+  }
+
+  @Override
+  public boolean isFullHash(@NotNull VirtualFile root, @NotNull String hash) {
+    return myFullHashLength != null ? hash.length() == myFullHashLength && VcsLogUtil.HASH_REGEX.matcher(hash).matches()
+                                    : VcsLogProvider.super.isFullHash(root, hash);
   }
 
   @Override

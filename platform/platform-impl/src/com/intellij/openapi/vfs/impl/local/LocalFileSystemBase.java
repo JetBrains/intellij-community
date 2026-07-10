@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.SafeWriteRequestor;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.local.windows.WindowsBufferedDirectoryStream;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -38,6 +39,7 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.PlatformNioHelper;
 import com.intellij.util.io.PreemptiveSafeFileOutputStream;
 import com.intellij.util.io.SafeFileOutputStream;
 import com.intellij.util.io.TrashBin;
@@ -61,7 +63,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
@@ -69,7 +70,7 @@ import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 
-/** @deprecated do not use directly, access via {@link LocalFileSystem#getInstance} */
+/** @deprecated do not use directly; access via {@link LocalFileSystem#getInstance} */
 @ApiStatus.Internal
 @Deprecated(forRemoval = true)
 public abstract class LocalFileSystemBase extends LocalFileSystem {
@@ -595,13 +596,15 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   protected @NotNull String extractRootPath(@NotNull String normalizedPath) {
     if (EXTRACT_ROOTS_USING_NIO) {
-      final var normalizedPathRootString = Path.of(normalizedPath).getRoot().toString();
+      var pathObj = NioFiles.toPath(normalizedPath);
+      if (pathObj == null) return "";
+      var normalizedPathRootString = pathObj.getRoot().toString();
 
       for (var root : FileSystems.getDefault().getRootDirectories()) {
         var stringRoot = root.toString();
 
         if (normalizedPathRootString.equals(stringRoot)) {
-          // root path should be short. See com.intellij.openapi.vfs.newvfs.persistent.namecache.SLRUFileNameCache.assertShortFileName
+          // a root path should be short (see `SLRUFileNameCache.assertShortFileName`)
           if (stringRoot.length() > 1 && (stringRoot.endsWith("\\") || stringRoot.endsWith("/"))) {
             stringRoot = stringRoot.substring(0, stringRoot.length() - 1);
           }
@@ -692,7 +695,19 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (file.getParent() == null) {
       return true;  // assume roots always have children
     }
-    try (var stream = Files.newDirectoryStream(Paths.get(file.getPath()))) {
+    var nioPath = Path.of(toIoPath(file));
+    if (PlatformNioHelper.useWindowsBufferedDirectoryStream(nioPath)) {
+      try (var stream = new WindowsBufferedDirectoryStream(nioPath)) {
+        return stream.iterator().hasNext();  // make sure to not load all children
+      }
+      catch (DirectoryIteratorException e) {
+        return false;  // a directory can't be iterated over
+      }
+      catch (InvalidPathException | IOException | SecurityException e) {
+        return true;
+      }
+    }
+    try (var stream = Files.newDirectoryStream(nioPath)) {
       return stream.iterator().hasNext();  // make sure to not load all children
     }
     catch (DirectoryIteratorException e) {

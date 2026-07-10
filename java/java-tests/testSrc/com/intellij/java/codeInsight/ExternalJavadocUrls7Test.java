@@ -15,15 +15,32 @@
  */
 package com.intellij.java.codeInsight;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 public class ExternalJavadocUrls7Test extends ExternalJavadocUrlsTest {
+  private static final String DOC_URL = "https://docs.oracle.com/javase/7/docs/api/";
   private static final ProjectDescriptor DESCRIPTOR = new ProjectDescriptor(LanguageLevel.JDK_1_7) {
+
+    @Override
+    public Sdk getSdk() {
+       Sdk sdk = IdeaTestUtil.getMockJdk17();
+       SdkModificator modificator = sdk.getSdkModificator();
+       modificator.addRoot(DOC_URL, new JavadocOrderRootType());
+       ApplicationManager.getApplication().runWriteAction(() -> modificator.commitChanges());
+
+       return sdk;
+    }
+
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       super.configureModule(module, model, contentEntry);
@@ -39,7 +56,7 @@ public class ExternalJavadocUrls7Test extends ExternalJavadocUrlsTest {
 
   @Override
   public void testTypeParams() {
-    doTest("""
+    doTestMethod("""
              class Test {
                <T> void <caret>sort(T[] a, Comparator<? super T> c) { }
              }
@@ -51,10 +68,19 @@ public class ExternalJavadocUrls7Test extends ExternalJavadocUrlsTest {
 
   @Override
   public void testConstructor() {
-    doTest("""
+    doTestMethod("""
              class Test {
                Test<caret>() { }
              }""",
            "Test()", "<init>()", "Test--");
+  }
+
+  @Override
+  public void testDocumentationPath() {
+    doTestElement("""
+          void function() {
+            Str<caret>ing toto = null;
+          }
+          """, "https://docs.oracle.com/javase/7/docs/api/java/lang/String.html");
   }
 }

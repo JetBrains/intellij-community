@@ -91,7 +91,7 @@ internal fun startProcess(
 internal fun buildStartupEelContext(workingDir: Path, shellCommand: List<String>): TerminalStartupEelContext {
   if (!shouldUseEelApi()) {
     return TerminalStartupEelContext(
-      workingDirectory = workingDir.asEelPath(LocalEelDescriptor),
+      workingDirectory = workingDir.asEelPath(),
       shellCommand = ShellExecCommandImpl(shellCommand),
       platform = localEel.platform,
     )
@@ -103,7 +103,7 @@ internal fun buildStartupEelContext(workingDir: Path, shellCommand: List<String>
     catch (e: Exception) {
       log.warn("Cannot find EelDescriptor", e)
       TerminalStartupEelContext(
-        workingDirectory = workingDir.asEelPath(LocalEelDescriptor),
+        workingDirectory = workingDir.asEelPath(),
         shellCommand = ShellExecCommandImpl(shellCommand),
         platform = localEel.platform,
       )

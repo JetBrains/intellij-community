@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" height="64" width="64">
+  <defs>
+    <radialGradient id="a" fx="50%" fy="50%" gradientTransform="matrix(0 1 -1 0 1 0)">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#156912"/>
+    </radialGradient>
+    <rect id="b" x="0" y="32" width="32" height="32"/>
+  </defs>
+  <g fill="none">
+    <use fill="url(#a)" href="#b"/>
+  </g>
+</svg>

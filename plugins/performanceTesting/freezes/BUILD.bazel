@@ -21,7 +21,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:performance_testing-freezes-com-hankcs-aho-corasick-double-array-trie",
+        "@lib//:diogen-analysis",
         "//platform/platform-frontend:frontend",
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",

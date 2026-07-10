@@ -12,6 +12,7 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.jsp.spi"/>
     <module name="intellij.xml.dom.impl"/>
+    <module name="intellij.xml.impl"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">

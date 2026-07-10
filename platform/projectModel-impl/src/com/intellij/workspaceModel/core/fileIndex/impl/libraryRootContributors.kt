@@ -25,6 +25,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
+import org.jetbrains.annotations.ApiStatus
 
 class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEntity>, PlatformInternalWorkspaceFileIndexContributor {
   override val entityClass: Class<LibraryEntity> get() = LibraryEntity::class.java
@@ -113,7 +114,19 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
   }
 }
 
-internal open class LibraryRootFileSetData(internal val libraryId: LibraryId?): JvmPackageRootDataInternal {
+/**
+ * Marker for file sets that belong to a library.
+ *
+ * Unlike [LibraryRootFileSetData] this interface does NOT extend [JvmPackageRootDataInternal], so implementors
+ * that only need library attribution (e.g. external annotation roots) can be recognized as library file sets
+ * without making the root participate in JVM package resolution.
+ */
+@ApiStatus.Internal
+interface LibraryFileSetData : WorkspaceFileSetData {
+  val libraryId: LibraryId?
+}
+
+internal open class LibraryRootFileSetData(override val libraryId: LibraryId?): JvmPackageRootDataInternal, LibraryFileSetData {
   override val packagePrefix: String = ""
 }
 

@@ -68,7 +68,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtPsiUtil
@@ -239,7 +238,16 @@ class KotlinBuildScriptManipulator(
                 script?.blockExpression?.addDeclarationIfMissing("val $GSK_KOTLIN_VERSION_PROPERTY_NAME: String by extra", true)
                 getApplyBlock()?.createPluginIfMissing(kotlinPluginName)
             }
-            getDependenciesBlock()?.addKotlinTestDependencyIfMissing()
+
+            // Add test dependency - for KMP projects, add to commonTest source set; otherwise to top-level dependencies
+            if (usesNewMultiplatform()) {
+                getKotlinBlock()
+                    ?.getSourceSetsBlock()
+                    ?.addKotlinTestDependencyToCommonTest()
+            } else {
+                getDependenciesBlock()?.addKotlinTestDependencyIfMissing()
+            }
+
             getRepositoriesBlock()?.apply {
                 addRepositoryIfMissing(version)
                 addMavenCentralIfMissing()
@@ -477,6 +485,37 @@ class KotlinBuildScriptManipulator(
             )
         ) as? KtCallExpression
 
+    private fun KtBlockExpression.addKotlinTestDependencyToCommonTest(): KtCallExpression? {
+        val dependencySnippet = getCompileDependencySnippet(
+            groupId = KOTLIN_GROUP_ID,
+            artifactId = TEST_LIB_ID,
+            version = GSK_KOTLIN_VERSION_PROPERTY_NAME,
+            compileScope = IMPLEMENTATION
+        )
+
+        // commonTest { }
+        val existingCommonTestBlock = findBlock("commonTest")
+        if (existingCommonTestBlock != null) {
+            return existingCommonTestBlock.findOrCreateBlock("dependencies")?.addExpressionIfMissing(dependencySnippet) as? KtCallExpression
+        }
+
+        // val commonTest by getting { }
+        val byGettingBlock = findCommonTestByGettingBlock()
+        if (byGettingBlock != null) {
+            return byGettingBlock.findOrCreateBlock("dependencies")?.addExpressionIfMissing(dependencySnippet) as? KtCallExpression
+        }
+
+        // commonTest.dependencies { }
+        val commonTestDependenciesBlock = findCommonTestDependenciesBlock()
+        if (commonTestDependenciesBlock != null) {
+            return commonTestDependenciesBlock.addExpressionIfMissing(dependencySnippet) as? KtCallExpression
+        }
+
+        // Default: create commonTest.dependencies { }
+        val expression = "commonTest.dependencies {\n$dependencySnippet\n}"
+        return addExpressionIfMissing(expression) as? KtCallExpression
+    }
+
     private fun KtFile.containsApplyKotlinPlugin(pluginName: String): Boolean =
         findScriptInitializer("apply")?.getBlock()?.findPlugin(pluginName) != null
 
@@ -605,6 +644,28 @@ class KotlinBuildScriptManipulator(
         }?.getBlock()
     }
 
+    private fun KtBlockExpression.findCommonTestDependenciesBlock(): KtBlockExpression? {
+        return getChildrenOfType<KtDotQualifiedExpression>()
+            .find { dotExpr ->
+                dotExpr.receiverExpression.referencedNameOrNull() == "commonTest" &&
+                        (dotExpr.selectorExpression as? KtCallExpression)?.calleeExpression?.referencedNameOrNull() == "dependencies"
+            }
+            ?.let { (it.selectorExpression as? KtCallExpression)?.getBlock() }
+    }
+
+    private fun KtBlockExpression.findCommonTestByGettingBlock(): KtBlockExpression? {
+        return getChildrenOfType<KtProperty>()
+            .find { property ->
+                property.name == "commonTest" &&
+                        property.delegateExpression?.let { delegate ->
+                            (delegate as? KtCallExpression)?.calleeExpression?.referencedNameOrNull() == "getting"
+                        } == true
+            }
+            ?.let { property ->
+                (property.delegateExpression as? KtCallExpression)?.getBlock()
+            }
+    }
+
     internal fun KtScriptInitializer.getBlock(): KtBlockExpression? =
         PsiTreeUtil.findChildOfType(this, KtCallExpression::class.java)?.getBlock()
 
@@ -657,6 +718,8 @@ class KotlinBuildScriptManipulator(
             if (existingPluginDefinition?.applyExpression != null || existingPluginDefinition?.versionExpression == null) {
                 it.addExpressionIfMissing(pluginExpression(pluginName, addVersion, version, applyFalse))
             }
+            val codeStyleManager = CodeStyleManager.getInstance(project)
+            codeStyleManager.reformat(this, true)
         }
     }
 

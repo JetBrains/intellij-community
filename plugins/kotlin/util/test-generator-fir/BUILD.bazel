@@ -110,8 +110,6 @@ jvm_library(
         "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
         "//plugins/kotlin/gradle/gradle-java/k2:kotlin-gradle-java",
         "//plugins/kotlin/gradle/gradle-java/k2:kotlin-gradle-java_test_lib",
-        "//plugins/kotlin/base/analysis-api/analysis-api-k2-tests:kotlin-base-analysis-analysis-api-k2-tests",
-        "//plugins/kotlin/base/analysis-api/analysis-api-k2-tests:kotlin-base-analysis-analysis-api-k2-tests_test_lib",
         "//plugins/kotlin/jvm-debugger/test/compose/testFramework",
         "//plugins/kotlin/jvm-debugger/test/compose/testFramework:testFramework_test_lib",
         "//plugins/kotlin/injection/k2/tests",
@@ -150,6 +148,8 @@ jvm_library(
         "//plugins/kotlin/jvm/k2:kotlin-jvm_test_lib",
         "//plugins/kotlin/jvm/k2:kotlin-jvm-tests",
         "//plugins/kotlin/jvm/k2:kotlin-jvm-tests_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build kotlin.util.test-generator-fir` end

@@ -9,20 +9,19 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
-import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.ProtectionLevel
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
+import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider.Helper.isTypingTypedDictInheritor
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage
 import com.jetbrains.python.psi.AccessDirection
-import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyAugAssignmentStatement
 import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyCallExpression.PyArgumentsMapping
-import com.jetbrains.python.psi.PyCallSiteExpression
 import com.jetbrains.python.psi.PyCallSiteOwner
 import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyClass
@@ -31,64 +30,63 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyKeywordArgument
-import com.jetbrains.python.psi.PyLambdaExpression
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyParameter
 import com.jetbrains.python.psi.PyParameterList
-import com.jetbrains.python.psi.PyParenthesizedExpression
-import com.jetbrains.python.psi.PyPossibleClassMember
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyReferenceExpression
-import com.jetbrains.python.psi.PyReferenceOwner
 import com.jetbrains.python.psi.PySequenceExpression
 import com.jetbrains.python.psi.PyStarArgument
 import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTupleParameter
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper.mapArguments
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper.mapArguments
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper.flattenToCallables
+import com.jetbrains.python.psi.impl.references.PyOperatorReference
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult
-import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableParameterListType
+import com.jetbrains.python.psi.types.PyCallableParameterListTypeImpl
 import com.jetbrains.python.psi.types.PyCallableType
 import com.jetbrains.python.psi.types.PyCallableTypeImpl
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyClassTypeImpl
+import com.jetbrains.python.psi.types.PyCompositeType
 import com.jetbrains.python.psi.types.PyConcatenateType
 import com.jetbrains.python.psi.types.PyFunctionType
-import com.jetbrains.python.psi.types.PyInstantiableType
+import com.jetbrains.python.psi.types.PyIntersectionType
 import com.jetbrains.python.psi.types.PyModuleType
 import com.jetbrains.python.psi.types.PyNeverType
+import com.jetbrains.python.psi.types.PyOverloadType
 import com.jetbrains.python.psi.types.PyParamSpecType
 import com.jetbrains.python.psi.types.PySelfType
 import com.jetbrains.python.psi.types.PyStructuralType
+import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
-import com.jetbrains.python.psi.types.PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics
-import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory
+import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
 import com.jetbrains.python.psi.types.PyTypeMember
+import com.jetbrains.python.psi.types.PyTypeParameterType
+import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.PyTypeUtil.components
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.PyUnionType
+import com.jetbrains.python.psi.types.PyUnpackedTupleType
 import com.jetbrains.python.psi.types.PyUnsafeUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isAny
+import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isNoneType
 import com.jetbrains.python.psi.types.isUnknown
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.toolbox.Maybe
 import org.jetbrains.annotations.ApiStatus
-import kotlin.math.max
 import kotlin.math.min
 import com.intellij.openapi.util.Pair as JBPair
 
@@ -145,132 +143,122 @@ object PyCallExpressionHelper {
   }
 
   /**
-   * This method should not be called directly,
-   * please obtain its result via [TypeEvalContext.getType] with `call.getCallee()` as an argument.
+   * Resolves the callee to the callable type it may denote, **preserving the composite structure** of the callee type.
+   * Use [multiResolveCallee] (or [PyType.flattenToCallables]) when the flat callable signatures are enough, regardless of that structure.
    */
   @JvmStatic
   fun getCalleeType(expression: PyCallExpression, resolveContext: PyResolveContext): PyType? {
+    return PyUtil.getNullableParameterizedCachedValue(expression, resolveContext) {
+      val types = listOfNotNull(
+        getExplicitCalleeType(expression, it),
+        getImplicitCalleeType(expression, it),
+        getRemoteCalleeType(expression, it),
+      )
+      if (types.isEmpty()) null else PyUnionType.union(types)
+    }
+  }
 
-    val results = PyUtil.filterTopPriorityResults(
-      forEveryScopeTakeOverloadsOtherwiseImplementations(multipleResolveCallee(expression.callee, resolveContext),
-                                                         resolveContext.typeEvalContext) { it.element }
-    )
+  /**
+   * Resolves the callee to its individual callable signatures: an overloaded callable is unfolded into its overloads, a
+   * composite (union/intersection) is expanded into the callables of its members, a plain callable is kept as is, and
+   * anything non-callable is dropped. Unlike [PyTypeUtil.getCallableItems] this preserves a callable [PySelfType] (which
+   * is also a `PyClassLikeType`). Use [getCalleeType] when the union/intersection structure must be preserved.
+   */
+  @JvmStatic
+  fun multiResolveCallee(expression: PyCallExpression, resolveContext: PyResolveContext): List<PyCallableType> {
+    return getCalleeType(expression, resolveContext).flattenToCallables()
+  }
 
-    val callableTypes = mutableListOf<PyType?>()
-    for (resolveResult in results) {
-      val element = resolveResult.element
-      val clarified = clarifyResolveResult(resolveResult, resolveContext)
+  private fun PyType?.flattenToCallables(): List<PyCallableType> {
+    return when (this) {
+      is PyCompositeType -> members.flatMap { it.flattenToCallables() }
+      is PyOverloadType -> items.filterNotNull()
+      is PyCallableType -> listOf(this)
+      else -> emptyList()
+    }
+  }
 
-      val typeFromProviders = if (element != null) {
-        val typeFromProviders =
-          PyReferenceExpressionImpl.getReferenceTypeFromProviders(element, resolveContext.typeEvalContext, expression)
+  private fun multiResolveOperator(expression: PyQualifiedExpression, resolveContext: PyResolveContext): List<PyCallableType> {
+    val context = resolveContext.typeEvalContext
 
-        typeFromProviders?.get()
-      }
-      else {
-        null
-      }
-
-      val result = mutableListOf<PyType?>()
-      if (clarified != null) {
-        typeFromProviders.toStream().forEach {
-          ContainerUtil.addIfNotNull(result, toCallableType(expression, clarified, it, resolveContext.typeEvalContext))
+    return PyOperatorReference(expression, resolveContext)
+      .resolveGroupingByReceiver()
+      .asSequence()
+      .map {
+        val selfType = it.first
+        val resolveResults = it.second
+        if (selfType is PyClassType) {
+          PyTypeUtil.getTypeOfBoundMember(selfType, resolveResults, context)
         }
-
-        if (result.isEmpty()) {
-          val clarifiedResolved = clarified.clarifiedResolved as? PyTypedElement ?: continue
-          val resolvedType = resolveContext.typeEvalContext.getType(clarifiedResolved)
-          resolvedType.toStream().forEach { itemType ->
-            ContainerUtil.addIfNotNull(
-              result,
-              toCallableType(expression, clarified, itemType, resolveContext.typeEvalContext)
+        else {
+          // Workaround for `CythonBuiltinType`. Since it doesn't implement `PyInstantiableType`,
+          // methods cannot be bound to it. Just drop the first function parameter.
+          // See `CythonTypeCheckerInspectionTest.testTypeCheckInCython`
+          val type = PyTypeUtil.getTypeOfMember(resolveResults, context)
+          PyTypeUtil.mapCallableType(type) { subType ->
+            val parameters = subType.getParameters(context) ?: return@mapCallableType subType
+            PyCallableTypeImpl(
+              ParamHelper.dropSelf(parameters),
+              subType.getReturnType(context),
+              subType.callable,
+              subType.modifier
             )
           }
         }
       }
-
-      callableTypes.addAll(result)
-    }
-
-    return PyUnionType.union(callableTypes)
+      .flatMap { PyTypeUtil.getCallableItems(it) }
+      .toList()
   }
 
   /**
-   * It is not the same as [getCalleeType] since
-   * this method returns callable types that would be actually called, the mentioned method returns type of underlying callee.
-   * Compare:
-   * ```
-   * class A:
-   *     pass
-   * a = A()
-   * b = a()  # callee type is A, resolved callee is A.__call__
-   * ```
+   * Resolves the explicitly written callee into a callable type, mirroring the composite structure of its type: a union
+   * stays a union of callables, an intersection stays an intersection of callables, and an overloaded callable is kept as
+   * a single [PyOverloadType] rather than unfolded into its overloads. A non-callable member contributes nothing (it is
+   * reported separately by `PyCallingNonCallableInspection`).
    */
-  @JvmStatic
-  fun multiResolveCallee(expression: PyCallExpression, resolveContext: PyResolveContext): List<PyCallableType> {
-    return PyUtil.getParameterizedCachedValue(expression, resolveContext) {
-      getExplicitResolveResults(expression, it) +
-      getImplicitResolveResults(expression, it) +
-      getRemoteResolveResults(expression, it)
-    }
-  }
-
-  private fun multipleResolveCallee(owner: PyReferenceOwner, resolveContext: PyResolveContext): List<PyCallableType> {
-    val context = resolveContext.typeEvalContext
-
-    val results = forEveryScopeTakeOverloadsOtherwiseImplementations(owner.getReference(resolveContext)
-                                                                       .multiResolve(false)
-                                                                       .toList(), context)
-
-    return results.selectCallableTypes(context)
-  }
-
-  private fun getExplicitResolveResults(expression: PyCallExpression, resolveContext: PyResolveContext): List<PyCallableType> {
-    val callee = expression.callee
-    if (callee == null) return listOf()
+  private fun getExplicitCalleeType(expression: PyCallExpression, resolveContext: PyResolveContext): PyType? {
+    val callee = expression.callee ?: return null
 
     val context = resolveContext.typeEvalContext
     val calleeType = context.getType(callee)
 
     val provided = PyTypeProvider.EP_NAME.extensionList.mapNotNull { it.prepareCalleeTypeForCall(calleeType, expression, context) }
-    if (!provided.isEmpty()) {
-      return provided.mapNotNull { Ref.deref(it) }
+    if (provided.isNotEmpty()) {
+      val callables = provided.mapNotNull { Ref.deref(it) }
+      return if (callables.isEmpty()) null else PyOverloadType(callables, null)
     }
 
-    val result = mutableListOf<PyCallableType>()
-
-    for (type in calleeType.toStream()) {
-      when (type) {
-        // When invoking cls(), turn type[Self] into Self.
-        // Otherwise, we will delegate to __init__() of its scope class and return a concrete type class
-        // as a call result, losing Self.
-        // See e.g. Py3TypeCheckerInspectionTest.testSelfInClassMethods
-        is PySelfType -> {
-          result.add(type)
-        }
-        is PyClassType -> {
-          result.addAll(createCallableFromClass(type, expression, resolveContext))
-        }
-        is PyCallableType -> {
-          result.add(type)
-        }
-      }
-    }
-
-    return result
+    return getExplicitCalleeType(calleeType, resolveContext)
   }
 
-  private fun getImplicitResolveResults(expression: PyCallExpression, resolveContext: PyResolveContext): List<PyCallableType> {
-    if (!resolveContext.allowImplicits()) return listOf()
+  private fun getExplicitCalleeType(type: PyType?, resolveContext: PyResolveContext): PyType? {
+    return when (type) {
+      is PyUnionType -> PyUnionType.union(type.members.mapNotNull { getExplicitCalleeType(it, resolveContext) })
+      is PyUnsafeUnionType -> PyUnsafeUnionType.unsafeUnion(type.members.mapNotNull { getExplicitCalleeType(it, resolveContext) })
+      is PyIntersectionType -> PyIntersectionType.intersection(type.members.mapNotNull { getExplicitCalleeType(it, resolveContext) })
+      // When invoking cls(), turn type[Self] into Self.
+      // Otherwise, we will delegate to __init__() of its scope class and return a concrete type class
+      // as a call result, losing Self.
+      // See e.g. Py3TypeCheckerInspectionTest.testSelfInClassMethods
+      is PySelfType -> type
+      is PyClassType -> createCallableFromClass(type, resolveContext)
+      is PyCallableType -> type
+      is PyOverloadType -> type
+      else -> null
+    }
+  }
+
+  private fun getImplicitCalleeType(expression: PyCallExpression, resolveContext: PyResolveContext): PyType? {
+    if (!resolveContext.allowImplicits()) return null
 
     val callee = expression.callee
     val context = resolveContext.typeEvalContext
     if (callee is PyQualifiedExpression) {
       val referencedName = callee.referencedName
-      if (referencedName == null) return listOf()
+      if (referencedName == null) return null
 
       val qualifier = callee.qualifier
-      if (qualifier == null || !canQualifyAnImplicitName(qualifier)) return listOf()
+      if (qualifier == null || !canQualifyAnImplicitName(qualifier)) return null
 
       val qualifierType = context.getType(qualifier)
       if (PyTypeChecker.isUnknown(qualifierType, context) ||
@@ -279,41 +267,58 @@ object PyCallExpressionHelper {
         val resolveResults = ResolveResultList()
         PyResolveUtil.addImplicitResolveResults(referencedName, resolveResults, callee)
 
-        return forEveryScopeTakeOverloadsOtherwiseImplementations(resolveResults, context).selectCallableTypes(context)
+        val callables = PyUtil.filterTopPriorityElements(forEveryScopeTakeOverloadsOtherwiseImplementations(resolveResults, context) { it.element })
+          .asSequence()
+          .filterIsInstance<PyTypedElement>()
+          .map { context.getType(it) }
+          .flatMap { it.toStream() }
+          .filterIsInstance<PyCallableType>()
+          .toList()
+        return if (callables.isEmpty()) null else PyUnionType.union(callables)
       }
     }
 
-    return listOf()
+    return null
   }
 
-  private fun getRemoteResolveResults(expression: PyCallExpression, resolveContext: PyResolveContext): List<PyCallableType> {
-    if (!resolveContext.allowRemote()) return mutableListOf()
+  private fun getRemoteCalleeType(expression: PyCallExpression, resolveContext: PyResolveContext): PyType? {
+    if (!resolveContext.allowRemote()) return null
     val file = expression.containingFile
-    if (file == null || !PythonRuntimeService.getInstance().isInPydevConsole(file)) return mutableListOf()
-    val calleeType = getCalleeType(expression, resolveContext)
-    return calleeType.components.filterIsInstance<PyCallableType>()
-  }
+    if (file == null || !PythonRuntimeService.getInstance().isInPydevConsole(file)) return null
 
-  private fun List<PsiElement>.selectCallableTypes(context: TypeEvalContext): List<PyCallableType> {
-    return this
-      .filterIsInstance<PyTypedElement>()
-      .map { context.getType(it) }
-      .flatMap { it.toStream() }
-      .filterIsInstance<PyCallableType>()
-  }
-
-  private fun multipleResolveCallee(expression: PyExpression?, resolveContext: PyResolveContext): List<QualifiedRatedResolveResult> {
-    return when (expression) {
-      is PyReferenceExpression -> expression.multiFollowAssignmentsChain(resolveContext)
-      is PyLambdaExpression -> listOf(QualifiedRatedResolveResult(expression,
-                                                                  listOf<PyExpression?>(),
-                                                                  RatedResolveResult.RATE_NORMAL,
-                                                                  false))
-      else -> listOf()
+    val callee = expression.callee ?: return null
+    val context = resolveContext.typeEvalContext
+    if (callee !is PyReferenceExpression) {
+      val callables = context.getType(callee).components.filterIsInstance<PyCallableType>()
+      return if (callables.isEmpty()) null else PyUnionType.union(callables)
     }
+
+    val resolvedCallee = callee.multiFollowAssignmentsChain(resolveContext)
+    val results = PyUtil.filterTopPriorityResults(
+      forEveryScopeTakeOverloadsOtherwiseImplementations(resolvedCallee, context) { it.element }
+    )
+
+    val callableTypes = mutableListOf<PyType?>()
+    for (result in results) {
+      val clarified = clarifyResolveResult(result, context) ?: continue
+      val clarifiedResolved = clarified.clarifiedResolved as? PyTypedElement ?: continue
+
+      result.element
+        ?.let { PyReferenceExpressionImpl.getReferenceTypeFromProviders(it, context, expression) }
+        ?.get()
+        .toStream().filterIsInstance<PyCallableType>()
+        .ifEmpty {
+          context.getType(clarifiedResolved).toStream().filterIsInstance<PyCallableType>()
+        }
+        .forEach {
+          callableTypes.add(adjustCallableType(it, expression, clarified, context))
+        }
+    }
+    val callables = PyUnionType.union(callableTypes).components.filterIsInstance<PyCallableType>()
+    return if (callables.isEmpty()) null else PyUnionType.union(callables)
   }
 
-  private fun clarifyResolveResult(result: QualifiedRatedResolveResult, resolveContext: PyResolveContext): ClarifiedResolveResult? {
+  private fun clarifyResolveResult(result: QualifiedRatedResolveResult, context: TypeEvalContext): ClarifiedResolveResult? {
     val resolved = result.element
 
     if (resolved is PyCallExpression) { // foo = classmethod(foo)
@@ -333,8 +338,6 @@ object PyCallExpressionHelper {
       }
     }
     else if (resolved is PyFunction) {
-      val context = resolveContext.typeEvalContext
-
       val property = resolved.property
       if (property != null && property.getter.valueOrNull() == resolved && isQualifiedByInstance(resolved, result.qualifiers, context)) {
         val type = context.getReturnType(resolved)
@@ -346,16 +349,13 @@ object PyCallExpressionHelper {
     return if (resolved != null) ClarifiedResolveResult(result, resolved, null) else null
   }
 
-  private fun toCallableType(
+  private fun adjustCallableType(
+    callableType: PyCallableType,
     callExpression: PyCallExpression,
     resolveResult: ClarifiedResolveResult,
-    inferredType: PyType?,
     context: TypeEvalContext,
-  ): PyCallableType? {
-    val clarifiedResolved = resolveResult.clarifiedResolved as? PyTypedElement ?: return null
-
-    val callableType = inferredType as? PyCallableType ?: return null
-
+  ): PyCallableType {
+    val clarifiedResolved = resolveResult.clarifiedResolved
     if (clarifiedResolved is PyCallable) {
       val originalModifier = if (clarifiedResolved is PyFunction) clarifiedResolved.modifier else null
       val resolvedModifier = originalModifier ?: resolveResult.wrappedModifier
@@ -370,17 +370,23 @@ object PyCallExpressionHelper {
       val resolvedImplicitOffset =
         getImplicitArgumentCount(clarifiedResolved, resolvedModifier, false, isByInstance, isByClass)
 
-      if (callableType.modifier == resolvedModifier && callableType.implicitOffset == resolvedImplicitOffset) {
+      if (callableType.modifier == resolvedModifier && resolvedImplicitOffset == 0) {
         return callableType
       }
 
+      val parametersType = callableType.getParametersType(context)
+      val newParametersType = if (resolvedImplicitOffset > 0 && parametersType is PyCallableParameterListType)
+        PyCallableParameterListTypeImpl(parametersType.parameters.drop(resolvedImplicitOffset))
+      else
+        parametersType
+
       return PyCallableTypeImpl(
         callableType.getTypeParameters(context),
-        callableType.getParametersType(context),
+        newParametersType,
         callableType.getCallType(context, callExpression),
         clarifiedResolved,
-        resolvedModifier,
-        max(0, resolvedImplicitOffset)) // wrong source can trigger strange behaviour
+        resolvedModifier
+      )
     }
 
     return callableType
@@ -401,9 +407,8 @@ object PyCallExpressionHelper {
     if (isConstructorCall) {
       return getImplicitArgumentCount(function, function.modifier, true, false, false)
     }
-    // TODO (PY-89079): Incorrect offset when the callee is not a reference expression
     if (expression !is PyReferenceExpression) {
-      return 0;
+      return 0
     }
     val followed = expression.followAssignmentsChain(resolveContext)
     val qualifiers = followed.qualifiers
@@ -546,7 +551,7 @@ object PyCallExpressionHelper {
             }
           }
           else {
-            return null
+            return PyAnyType.unknown
           }
         }
       }
@@ -562,7 +567,7 @@ object PyCallExpressionHelper {
   @JvmStatic
   fun getCallType(expression: PySubscriptionExpression, context: TypeEvalContext, @Suppress("unused") key: TypeEvalContext.Key): PyType? {
     val resolveContext = PyResolveContext.defaultContext(context)
-    return getCallType(multipleResolveCallee(expression as PyReferenceOwner, resolveContext), expression, context)
+    return getCallType(multiResolveOperator(expression, resolveContext), expression, context)
   }
 
   private fun getCallType(types: List<PyCallableType>, callSite: PyCallSiteOwner, context: TypeEvalContext): PyType? {
@@ -590,11 +595,8 @@ object PyCallExpressionHelper {
     val rightExpr = expression.rightExpression ?: return null
 
     val resolveContext = PyResolveContext.defaultContext(context)
-    val callableTypes = multipleResolveCallee(expression as PyReferenceOwner, resolveContext)
-    val matchingCallableTypes = callableTypes.filter { callableType ->
-      val callable = callableType.callable
-      callable is PyFunction && matchesByArgumentTypes(callable, expression, context)
-    }
+    val callableTypes = multiResolveOperator(expression, resolveContext)
+    val matchingCallableTypes = callableTypes.filter { matchesByArgumentTypes(it, expression, context) }
 
     val leftType = context.getType(leftExpr)
     val rightType = context.getType(rightExpr)
@@ -632,12 +634,9 @@ object PyCallExpressionHelper {
   @JvmStatic
   fun getCallType(statement: PyAugAssignmentStatement, context: TypeEvalContext, @Suppress("unused") key: TypeEvalContext.Key): PyType? {
     val resolveContext = PyResolveContext.defaultContext(context)
-    val callableTypes = multipleResolveCallee(statement as PyReferenceOwner, resolveContext)
+    val callableTypes = multiResolveOperator(statement, resolveContext)
 
-    val matchingCallableTypes = callableTypes.filter { callableType ->
-      val callable = callableType.callable
-      callable is PyFunction && matchesByArgumentTypes(callable, statement, context)
-    }
+    val matchingCallableTypes = callableTypes.filter { matchesByArgumentTypes(it, statement, context) }
 
     val inplaceOperators = matchingCallableTypes.filter { callableType ->
       val callable = callableType.callable
@@ -687,87 +686,24 @@ object PyCallExpressionHelper {
 
   private fun resolveOverloadsCallType(types: List<PyCallableType>, callSite: PyCallSiteOwner, context: TypeEvalContext): PyType? {
     val arguments = callSite.getArguments(types[0].callable)
-    val matchingOverloads = types.filter { matchesByArgumentTypes(it.callable as PyFunction, callSite, context) }
+    val matchingOverloads = types.filter { matchesByArgumentTypes(it, callSite, context) }
     if (matchingOverloads.isEmpty()) {
       return types
         .map { it.getCallType(context, callSite) }
-        .let { PyUnionType.union(it) }
+        .let { PyUnsafeUnionType.unsafeUnion(it) }
     }
     if (matchingOverloads.size == 1) {
       return matchingOverloads[0].getCallType(context, callSite)
     }
     val someArgumentsHaveUnknownType = arguments.any {
-      context.getType(it).isUnknown
+      context.getType(it).isAnyOrUnknown
     }
     if (someArgumentsHaveUnknownType) {
       return matchingOverloads
         .map { it.getCallType(context, callSite) }
-        .let { PyUnionType.union(it) }
+        .let { PyUnsafeUnionType.unsafeUnion(it) }
     }
     return matchingOverloads.firstOrNull()?.getCallType(context, callSite) ?: PyAnyType.unknown
-  }
-
-  /**
-   * [cls] is a class being constructed
-   * [method] is either the metaclass `__call__` method or the class `__new__`/`__init__` method
-   */
-  private fun getConstructorCallType(
-    cls: PyClassType,
-    methodName: String,
-    method: PyCallableType,
-    callSite: PyCallExpression,
-    context: TypeEvalContext,
-  ): PyType? {
-    if (methodName != PyNames.INIT && methodName != PyNames.NEW) {
-      return method.getCallType(context, callSite)
-    }
-
-    var unknownType = false
-    if (methodName == PyNames.NEW) {
-      val newMethodCallType = method.getCallType(context, callSite)
-      if (!newMethodCallType.isUnknown) {
-        return newMethodCallType
-      }
-      unknownType = true
-    }
-
-    var callType: PyType? = PyAnyType.unknown
-    val callee = callSite.callee
-    val genericType = PyTypeChecker.findGenericDefinitionType(cls.pyClass, context)
-    if (genericType != null) {
-      val arguments = callSite.getArguments().asList()
-      val parameters = method.getParameters(context) ?: emptyList()
-      val self = parameters.firstOrNull()?.takeIf { it.isSimple }
-      val explicitParameters = if (self != null) parameters.subList(1, parameters.size) else parameters
-
-      val mappedArguments = mutableMapOf<PyExpression, PyCallableParameter>()
-      if (callee != null && self != null) {
-        mappedArguments[callee] = self
-      }
-      val mappingResults = analyzeArguments(arguments, explicitParameters, context)
-      mappedArguments.putAll(mappingResults.mappedParameters)
-
-      val substitutions = PyTypeInferenceCspFactory.unifyGenericCall(callSite, callee, method, mappedArguments, context)
-      if (substitutions != null) {
-        val finalSubstitutions = getSubstitutionsWithUnresolvedReturnGenerics(parameters, genericType, substitutions, context)
-        callType = PyTypeChecker.substitute(genericType, finalSubstitutions, context)
-      }
-    }
-
-    if (callType.isUnknown) {
-      if (callee != null) {
-        val calleeType = context.getType(callee)
-        if (calleeType is PyInstantiableType<*>) {
-          callType = calleeType.toInstance()
-        }
-      }
-    }
-
-    if (unknownType) {
-      // Requires weak union. See PyUnresolvedReferencesInspectionTest.testCustomNewReturnInAnotherModule
-      callType = PyUnionType.createWeakType(callType)
-    }
-    return callType
   }
 
   private fun getSuperCallType(expression: PyCallExpression, context: TypeEvalContext): Maybe<PyType?> {
@@ -848,62 +784,31 @@ object PyCallExpressionHelper {
       }
       return PyUnsafeUnionType.unsafeUnion(superTypes)
     }
-    return null
+    return PyAnyType.unknown
   }
 
-  /**
-   * `argument` can be (parenthesized) expression or a value of a [PyKeywordArgument]
-   */
-  @ApiStatus.Internal
-  fun getMappedParameters(expression: PyExpression, resolveContext: PyResolveContext): List<PyCallableParameter>? {
-    var argument = expression
-    while (true) {
-      val newArgument = argument.parent
-      newArgument as? PyParenthesizedExpression ?: break
-      argument = newArgument
-    }
-
-    (argument.parent as? PyKeywordArgument)?.let {
-      assert(it.valueExpression === argument)
-      argument = it
-    }
-
-    var parent = argument.parent
-    if (parent is PyArgumentList) {
-      parent = parent.parent
-    }
-    if (parent !is PyCallSiteExpression) {
-      return null
-    }
-
-    val finalArgument = argument
-    return mapArguments(parent, resolveContext).mapNotNull {
-      it.mappedParameters[finalArgument]
-    }
-  }
-
-  /**
-   * Gets implicit offset from the `callableType`,
-   * should be used with the methods below since they specify correct offset value.
-   *
-   * @see PyCallExpression.multiResolveCalleeFunction
-   */
   @JvmStatic
   fun mapArguments(expression: PyCallSiteOwner, callableType: PyCallableType, context: TypeEvalContext): PyArgumentsMapping {
-    val arguments = expression.getArguments(callableType.callable)
+    return mapArguments(expression, expression.getArguments(callableType.callable), callableType, context)
+  }
+
+  @JvmStatic
+  fun mapArguments(
+    expression: PyCallSiteOwner,
+    arguments: List<PyExpression>,
+    callableType: PyCallableType,
+    context: TypeEvalContext,
+  ): PyArgumentsMapping {
     val parameters = callableType.getParameters(context)
-      ?.let { unpackParametersIfNeeded(it, arguments, context) }
+        ?.let { unpackParametersIfNeeded(it, arguments, context) }
 
     if (parameters == null) return PyArgumentsMapping.empty(expression)
 
-    val safeImplicitOffset = min(callableType.implicitOffset, parameters.size)
-    val explicitParameters = parameters.subList(safeImplicitOffset, parameters.size)
-    val implicitParameters = parameters.subList(0, safeImplicitOffset)
-    val mappingResults = analyzeArguments(arguments, explicitParameters, context)
+    val mappingResults = analyzeArguments(arguments, parameters, context)
 
     return PyArgumentsMapping(expression,
                               callableType,
-                              implicitParameters,
+                              emptyList(),
                               mappingResults.mappedParameters,
                               mappingResults.unmappedParameters,
                               mappingResults.unmappedContainerParameters,
@@ -915,44 +820,47 @@ object PyCallExpressionHelper {
 
   @JvmStatic
   fun mapArguments(expression: PyCallSiteOwner, resolveContext: PyResolveContext): List<PyArgumentsMapping> {
-    val context = resolveContext.typeEvalContext
-    return multiResolveCalleeFunction(expression, resolveContext).map {
-      mapArguments(expression, it, context)
+    val callableTypes = when (expression) {
+      is PyCallExpression -> expression.multiResolveCallee(resolveContext)
+      is PyClass -> expression.resolveInitSubclassCallee(resolveContext)
+      is PyQualifiedExpression -> multiResolveOperator(expression, resolveContext)
+      else -> emptyList()
     }
-  }
-
-  private fun multiResolveCalleeFunction(expression: PyCallSiteOwner, resolveContext: PyResolveContext): List<PyCallableType> {
-    when (expression) {
-      is PyCallExpression -> {
-        return expression.multiResolveCallee(resolveContext)
-      }
-      is PySubscriptionExpression -> {
-        return multipleResolveCallee(expression as PyReferenceOwner, resolveContext)
-      }
-      else -> {
-        val results = mutableListOf<PyCallableType>()
-
-        for (result in PyUtil.multiResolveTopPriority(expression, resolveContext)) {
-          if (result is PyTypedElement) {
-            val resultType = resolveContext.typeEvalContext.getType(result)
-            if (resultType is PyCallableType) {
-              results.add(resultType)
-              continue
-            }
-          }
-          return emptyList()
-        }
-
-        return results
-      }
-    }
+    return callableTypes.map { mapArguments(expression, it, resolveContext.typeEvalContext) }
   }
 
   /**
-   * Tries to infer implicit offset from the `callSite` and `callable`.
+   * Resolves the implicit `__init_subclass__` invoked when [this] is defined.
    *
-   * @see mapArguments
+   * Per PEP 487 the keyword arguments of a class definition (other than `metaclass`) are passed to the
+   * `__init_subclass__` of the *parent* classes, so the class's own definition (which targets *its* subclasses)
+   * is excluded and the lookup walks the ancestors' MRO, stopping at the first defining class.
+   * `object.__init_subclass__`, which accepts no arguments, is the implicit fallback.
+   *
+   * The check is skipped when a custom metaclass is involved, since its `__new__`/`__init__` may legitimately
+   * consume the keyword arguments before they reach `__init_subclass__`.
    */
+  private fun PyClass.resolveInitSubclassCallee(resolveContext: PyResolveContext): List<PyCallableType> {
+    val context = resolveContext.typeEvalContext
+    if (this.hasCustomMetaClass(context)) return emptyList()
+    // TypedDict class-definition keyword arguments (total, closed, ...) are validated by PyTypedDictInspection.
+    if (isTypingTypedDictInheritor(context)) return emptyList()
+
+    for (ancestor in getAncestorTypes(context)) {
+      if (ancestor !is PyClassType) continue
+      val resolved = ancestor.resolveMember(PyNames.INIT_SUBCLASS, null, AccessDirection.READ, resolveContext, false)
+      if (resolved.isNullOrEmpty()) continue
+      return PyTypeUtil.getCallableItems(PyTypeUtil.getTypeOfBoundMember(ancestor, resolved, context)).toList()
+    }
+    return emptyList()
+  }
+
+  private fun PyClass.hasCustomMetaClass(context: TypeEvalContext): Boolean {
+    val classType = context.getType(this) as? PyClassType ?: return false
+    val metaClassType = classType.getMetaClassType(context, true) ?: return false
+    return metaClassType !== PyBuiltinCache.getInstance(this).typeType
+  }
+
   @JvmStatic
   fun mapArguments(expression: PyCallSiteOwner, callable: PyCallable, context: TypeEvalContext): PyArgumentsMapping {
     val callableType = context.getType(callable) as? PyCallableType?
@@ -1007,53 +915,6 @@ object PyCallExpressionHelper {
     return map.values.find { it.isKeywordContainer }
   }
 
-  /**
-   * If [type] is a class definition, synthesizes the class constructor.
-   * If [type] is a class instance, resolves its `__call__` method.
-   * Returns a single function or a list of overloads.
-   */
-  private fun createCallableFromClass(
-    type: PyClassType,
-    call: PyCallExpression,
-    resolveContext: PyResolveContext,
-  ): List<PyCallableType> {
-    val context = resolveContext.typeEvalContext
-    val implicitlyInvokedMethods = resolveImplicitlyInvokedMethods(type, call, resolveContext)
-
-    return forEveryScopeTakeOverloadsOtherwiseImplementations(implicitlyInvokedMethods, context)
-      .mapNotNull { element ->
-        if (element !is PyTypedElement) return@mapNotNull null
-        val methodName = element.name ?: return@mapNotNull null
-        val method = context.getType(element) as? PyCallableType ?: return@mapNotNull null
-
-        val returnType = if (type.isDefinition)
-          getConstructorCallType(type, methodName, method, call, context)
-        else
-          method.getCallType(context, call)
-
-        val firstParam = method.getParameters(context)?.firstOrNull()
-        val implicitOffset = if (firstParam != null && firstParam.isSimple) 1 else 0
-
-        PyCallableTypeImpl(method.getParametersType(context),
-                           returnType,
-                           method.callable,
-                           method.modifier,
-                           implicitOffset)
-      }
-      .toList()
-      .ifEmpty { listOf(type) }
-  }
-
-  @JvmStatic
-  fun resolveImplicitlyInvokedMethods(
-    type: PyClassType,
-    callSite: PyCallSiteExpression?,
-    resolveContext: PyResolveContext,
-  ): List<RatedResolveResult> {
-    return if (type.isDefinition()) resolveConstructors(type, callSite, resolveContext)
-    else type.resolveMember(PyNames.CALL, callSite, AccessDirection.READ, resolveContext) ?: emptyList()
-  }
-
   fun getImplicitlyInvokedMethod(
     type: PyClassType,
     resolveContext: PyResolveContext,
@@ -1062,43 +923,141 @@ object PyCallExpressionHelper {
     else type.findMember(PyNames.CALL, resolveContext)
   }
 
-  private fun resolveConstructors(
-    type: PyClassType,
-    callSite: PyCallSiteExpression?,
+  /**
+   * If [classType] is a class instance, resolves its `__call__` method.
+   * If [classType] is a class definition, synthesizes the class constructor.
+   */
+  @JvmStatic
+  @JvmOverloads
+  fun createCallableFromClass(
+    classType: PyClassType,
     resolveContext: PyResolveContext,
-  ): List<RatedResolveResult> {
-    // https://typing.python.org/en/latest/spec/constructors.html#metaclass-call-method
-    val resolvedMetaClassCall = resolveMetaClassCallMethod(type, callSite, resolveContext)
+    errors: MutableList<ProblemMessage>? = null,
+  ): PyType? {
+    val resolveContext = resolveContext.withoutProperties()
     val context = resolveContext.typeEvalContext
-    val skipNewAndInitEvaluation = resolvedMetaClassCall.any { isReturnTypeIncompatibleWithClass(type, it, callSite, context) }
-    if (skipNewAndInitEvaluation) {
-      return resolvedMetaClassCall
+
+    if (!classType.isDefinition()) {
+      val resolveResults = classType.resolveMember(PyNames.CALL, null, AccessDirection.READ, resolveContext)
+      if (resolveResults.isNullOrEmpty()) return PyAnyType.unknown
+
+      val callType = PyTypeUtil.specializeMemberType(classType, classType, PyTypeUtil.getTypeOfMember(resolveResults, context), context)
+      if (callType is PyClassType) {
+        return createCallableFromClass(callType, resolveContext, errors)
+      }
+
+      val memberOwner = PyTypeUtil.getContainingClass(resolveResults)
+      return PyTypeUtil.bindFunction(classType, callType, memberOwner, context, errors)
     }
 
-    if (!type.pyClass.isNewStyleClass(context)) {
-      return type.resolveMember(PyNames.INIT, callSite, AccessDirection.READ, resolveContext) ?: emptyList()
+    // https://typing.python.org/en/latest/spec/constructors.html
+    // TODO:
+    //  To handle a constructor call, the call of class `__new__`, `__init__`, and metaclass `__call__`
+    //  methods need to be evaluated using the call arguments. However, the calling function
+    //  `getExplicitCalleeType` expects all possible callables regardless of the call site.
+    //  This needs to be reworked, though the current implementation, which relies on raw return types,
+    //  covers most cases.
+
+    val classType = stripDefaultTypeArguments(classType, context)
+    val classTypeParams = classType.typeArguments.filterIsInstance<PyTypeParameterType>()
+
+    val metaClassCall = resolveMetaClassCallMethod(classType, resolveContext)
+    if (metaClassCall != null) {
+      val skipNewAndInitEvaluation = isMethodReturnTypeIncompatibleWithClass(classType, metaClassCall.get(), context)
+      if (skipNewAndInitEvaluation) {
+        val metaClassCallType = metaClassCall.get()
+        val constructorType = PyTypeUtil.mapCallableType(metaClassCallType) {
+          val methodType = PyTypeUtil.bindFunction(it, classType, context)?.boundMethodType ?: return@mapCallableType null
+          createConstructor(classTypeParams, methodType, context)
+        }
+        if (constructorType == null) {
+          errors?.add(PyTypeUtil.methodBindingErrorMessage(classType, metaClassCallType, context))
+          return PyAnyType.unknown
+        }
+        return constructorType
+      }
     }
 
-    // https://typing.python.org/en/latest/spec/constructors.html#new-method
-    val resolvedNew = resolveNewMethod(type, callSite, resolveContext)
-    val skipInitEvaluation = resolvedNew.any { isReturnTypeIncompatibleWithClass(type, it, callSite, context) }
-    if (skipInitEvaluation) {
-      return resolvedNew
+    val objectType = PyBuiltinCache.getInstance(classType.pyClass).objectType
+    val new = if (classType.pyClass.isNewStyleClass(context)) {
+      resolveMemberSkippingClass(classType, PyNames.NEW, objectType, resolveContext)
+    }
+    else null
+
+    val skipInitEvaluation = new != null && isMethodReturnTypeIncompatibleWithClass(classType, new.get(), context)
+    if (!skipInitEvaluation) {
+      val init = resolveMemberSkippingClass(classType, PyNames.INIT, objectType, resolveContext)
+      if (init != null) {
+        // Bind `__init__` to class instance and use its specialized `self` parameter type
+        // as the return type of the synthesized constructor callable.
+        val selfType = classType.toInstance()
+        val initType = init.get()
+        val constructorType = PyTypeUtil.mapCallableType(initType) {
+          val (methodType, firstParamType) = PyTypeUtil.bindFunction(it, selfType, context) ?: return@mapCallableType null
+          createConstructor(classTypeParams, methodType, context, firstParamType)
+        }
+        if (constructorType == null) {
+          errors?.add(PyTypeUtil.methodBindingErrorMessage(selfType, initType, context))
+          return PyAnyType.unknown
+        }
+        return constructorType
+      }
     }
 
-    // The most derived `__init__` (preferred) or `__new__` is returned.
-    // The signature of the returned method is later used to solve generic parameters to infer constructor call type.
-    val mro = sequenceOf(type) + type.getAncestorTypes(context).asSequence().filterNotNull()
-    for (current in mro) {
-      val init = current.resolveMember(PyNames.INIT, callSite, AccessDirection.READ, resolveContext, false)
-      if (!init.isNullOrEmpty()) return init
-
-      val new = current.resolveMember(PyNames.NEW, callSite, AccessDirection.READ, resolveContext, false)
-      if (!new.isNullOrEmpty()) return new
+    if (new != null) {
+      val newType = new.get()
+      val constructorType = PyTypeUtil.mapCallableType(newType) {
+        val methodType = PyTypeUtil.bindFunction(it, classType, context)?.boundMethodType ?: return@mapCallableType null
+        var returnType = methodType.getReturnType(context)
+        // PY-6671
+        if (returnType.isUnknown) {
+          returnType = PyUnionType.createWeakType(classType.toInstance())
+        }
+        createConstructor(classTypeParams, methodType, context, returnType)
+      }
+      if (constructorType == null) {
+        errors?.add(PyTypeUtil.methodBindingErrorMessage(classType, newType, context))
+        return PyAnyType.unknown
+      }
+      return constructorType
     }
 
-    return emptyList()
+    return PyCallableTypeImpl(classTypeParams, PyCallableParameterListTypeImpl(listOf()),
+                              classType.toInstance(), null, null)
   }
+
+  private fun stripDefaultTypeArguments(classType: PyClassType, context: TypeEvalContext): PyClassType {
+    val genericDef = PyTypeChecker.findGenericDefinitionType(classType.pyClass, context) ?: return classType
+    if (!classType.isParameterized) return genericDef.toClass()
+
+    val allSubstitutions = PyTypeChecker.collectTypeSubstitutions(classType, context)
+    val nonDefaultSubstitutions = GenericSubstitutions(
+      allSubstitutions.typeVars.filterNot { (tv, ref) -> isDefault(tv, Ref.deref(ref)) },
+      allSubstitutions.typeVarTuples.filterNot { (tvt, v) -> isDefault(tvt, v) },
+      allSubstitutions.paramSpecs.filterNot { (ps, v) -> isDefault(ps, v) },
+      allSubstitutions.qualifierType,
+    )
+    val result = PyTypeChecker.substitute(genericDef, nonDefaultSubstitutions, context)
+    return if (result is PyClassType) result.toClass() else classType
+  }
+
+  private fun isDefault(tp: PyTypeParameterType, actual: Any?): Boolean {
+    val default = Ref.deref(tp.defaultType)
+    return default != null && default == actual
+  }
+
+  private fun createConstructor(
+    classTypeParams: List<PyTypeParameterType>,
+    callableType: PyCallableType,
+    context: TypeEvalContext,
+    returnType: PyType? = callableType.getReturnType(context),
+  ): PyCallableType = PyCallableTypeImpl(
+    classTypeParams + callableType.getTypeParameters(context).orEmpty(),
+    callableType.getParametersType(context),
+    returnType,
+    callableType.callable,
+    callableType.modifier,
+  )
 
   private fun getConstructorTypes(type: PyClassType, resolveContext: PyResolveContext): List<PyTypeMember> {
     val initFunc = type.findMember(PyNames.INIT, resolveContext)
@@ -1123,54 +1082,47 @@ object PyCallExpressionHelper {
     return false
   }
 
-  private fun resolveMetaClassCallMethod(
-    type: PyClassType,
-    location: PyCallSiteExpression?,
-    resolveContext: PyResolveContext,
-  ): List<RatedResolveResult> {
-    val metaClassType = type.getMetaClassType(resolveContext.typeEvalContext, true) ?: return emptyList()
+  private fun resolveMetaClassCallMethod(type: PyClassType, resolveContext: PyResolveContext): Ref<PyType?>? {
+    val metaClassType = type.getMetaClassType(resolveContext.typeEvalContext, true)
+    if (metaClassType !is PyClassType) return null
+
     val typeType = PyBuiltinCache.getInstance(type.pyClass).typeType
-    if (metaClassType === typeType) return emptyList()
-    return type.resolveMember(PyNames.CALL, location, AccessDirection.READ, resolveContext)
-      .orEmpty()
-      .filterNot { isClassMember(typeType, it.element) }
+    if (metaClassType === typeType) return null
+
+    return resolveMemberSkippingClass(metaClassType, PyNames.CALL, typeType, resolveContext)
   }
 
-  private fun resolveNewMethod(
+  private fun resolveMemberSkippingClass(
     type: PyClassType,
-    location: PyCallSiteExpression?,
+    name: String,
+    skipMembersOf: PyClassType?,
     resolveContext: PyResolveContext,
-  ): List<RatedResolveResult> {
-    val resolved = type.resolveMember(PyNames.NEW, location, AccessDirection.READ, resolveContext) ?: return emptyList()
-    val objectType = PyBuiltinCache.getInstance(type.pyClass).objectType
-    return resolved.filterNot { isClassMember(objectType, it.element) }
+  ): Ref<PyType?>? {
+    val resolveResults = type.resolveMember(name, null, AccessDirection.READ, resolveContext)
+    if (resolveResults.isNullOrEmpty()) return null
+    if (skipMembersOf != null) {
+      val containingClass = PyTypeUtil.getContainingClass(resolveResults)
+      if (containingClass === skipMembersOf.pyClass) {
+        return null
+      }
+    }
+    val context = resolveContext.typeEvalContext
+    val memberType = PyTypeUtil.getTypeOfMember(resolveResults, context)
+    return Ref.create(PyTypeUtil.specializeMemberType(type, type, memberType, context))
   }
 
-  private fun isClassMember(classType: PyClassType?, element: PsiElement?): Boolean {
-    return classType != null && element is PyPossibleClassMember && element.containingClass === classType.pyClass
-  }
-
-  private fun isReturnTypeIncompatibleWithClass(
+  private fun isMethodReturnTypeIncompatibleWithClass(
     classType: PyClassType,
-    resolvedCallable: RatedResolveResult,
-    callSite: PyCallSiteExpression?,
+    methodType: PyType?,
     context: TypeEvalContext,
   ): Boolean {
-    val callable = resolvedCallable.element
-    if (callable !is PyTypedElement) return false
-
-    val callableType = context.getType(callable)
-    if (callableType !is PyCallableType) return false
-
-    if (isReturnTypeAnnotated(callableType, context)) {
-      val callType = if (callSite != null) callableType.getCallType(context, callSite)
-      else callableType.getReturnType(context)
-      val instanceType = classType.toInstance()
-      return callType.toStream().any {
+    val instanceType = classType.toInstance()
+    return PyTypeUtil.getCallableItems(methodType).any { callableType ->
+      isReturnTypeAnnotated(callableType, context) &&
+      callableType.getReturnType(context).toStream().any {
         it.isAny || it is PyNeverType || !PyTypeChecker.match(instanceType, it, context)
       }
     }
-    return false
   }
 
   private fun isLegacyPositionalOnly(parameter: PyCallableParameter): Boolean = !parameter.isSelf && parameter.protectionLevel == ProtectionLevel.PRIVATE
@@ -1185,12 +1137,11 @@ object PyCallExpressionHelper {
     return analyzeArguments(arguments, parameters, context)
   }
 
-  @JvmStatic
-  fun analyzeArguments(
+  private fun analyzeArguments(
     arguments: List<PyExpression>,
     parameters: List<PyCallableParameter>,
-  context: TypeEvalContext,
-): ArgumentMappingResults {
+    context: TypeEvalContext,
+  ): ArgumentMappingResults {
     val hasSlashParameter = parameters.any { it.isPositionOnlySeparator }
     val firstExplicitParam = parameters.dropWhile { it.isSelf }.firstOrNull()
     val oldStylePositionalOnly = firstExplicitParam != null && isLegacyPositionalOnly(firstExplicitParam)
@@ -1205,7 +1156,7 @@ object PyCallExpressionHelper {
     val parametersMappedToVariadicPositionalArguments = mutableListOf<PyCallableParameter?>()
     val tupleMappedParameters = mutableMapOf<PyExpression?, PyCallableParameter?>()
 
-    val positionalResults = filterPositionalAndVariadicArguments(arguments)
+    val positionalResults = filterPositionalAndVariadicArguments(arguments, context)
     val keywordArguments = arguments.filterIsInstanceTo(mutableListOf<PyKeywordArgument>())
     val variadicPositionalArguments = positionalResults.variadicPositionalArguments
     val positionalComponentsOfVariadicArguments = positionalResults.componentsOfVariadicPositionalArguments.toSet()
@@ -1278,9 +1229,15 @@ object PyCallExpressionHelper {
           // expansion. For those, consume from arguments reserved at the `*args` branch above;
           // otherwise (no preceding `*args`) consume from the regular positional pool.
           val source = if (keywordOnlyMode) reservedForPostArgs else allPositionalArguments
-          val positionalArgument = source.removeFirstOrNull()
-          if (positionalArgument != null) {
-            mappedParameters[positionalArgument] = parameter
+          if (source.isNotEmpty()) {
+            val positionalArgument = source.removeFirst()
+            if (positionalArgument != null) {
+              mappedParameters[positionalArgument] = parameter
+            }
+            else {
+              // null = placeholder for a value already supplied by a fixed-length `*tuple` spread; no argument to map here.
+              parametersMappedToVariadicPositionalArguments.add(parameter)
+            }
           }
           else if (!variadicPositionalArguments.isEmpty()) {
             parametersMappedToVariadicPositionalArguments.add(parameter)
@@ -1313,11 +1270,16 @@ object PyCallExpressionHelper {
           variadicKeywordArguments.clear()
         }
         else if (!allPositionalArguments.isEmpty()) {
-          val positionalArgument = allPositionalArguments.removeFirstOrNull()
-          require(positionalArgument != null)
-          mappedParameters[positionalArgument] = parameter
-          if (positionalComponentsOfVariadicArguments.contains(positionalArgument)) {
+          val positionalArgument = allPositionalArguments.removeFirst()
+          if (positionalArgument == null) {
+            // null = placeholder for a value already supplied by a fixed-length `*tuple` spread; no argument to map here.
             parametersMappedToVariadicPositionalArguments.add(parameter)
+          }
+          else {
+            mappedParameters[positionalArgument] = parameter
+            if (positionalComponentsOfVariadicArguments.contains(positionalArgument)) {
+              parametersMappedToVariadicPositionalArguments.add(parameter)
+            }
           }
         }
         else {
@@ -1340,13 +1302,19 @@ object PyCallExpressionHelper {
         }
       }
       else if (psi is PyTupleParameter) {
-        val positionalArgument = allPositionalArguments.removeFirstOrNull()
-        if (positionalArgument != null) {
-          tupleMappedParameters[positionalArgument] = parameter
-          val tupleMappingResults = mapComponentsOfTupleParameter(positionalArgument, psi)
-          mappedParameters.putAll(tupleMappingResults.parameters)
-          unmappedParameters.addAll(tupleMappingResults.unmappedParameters)
-          unmappedArguments.addAll(tupleMappingResults.unmappedArguments)
+        if (allPositionalArguments.isNotEmpty()) {
+          val positionalArgument = allPositionalArguments.removeFirst()
+          if (positionalArgument != null) {
+            tupleMappedParameters[positionalArgument] = parameter
+            val tupleMappingResults = mapComponentsOfTupleParameter(positionalArgument, psi)
+            mappedParameters.putAll(tupleMappingResults.parameters)
+            unmappedParameters.addAll(tupleMappingResults.unmappedParameters)
+            unmappedArguments.addAll(tupleMappingResults.unmappedArguments)
+          }
+          else {
+            // null = placeholder for a value already supplied by a fixed-length `*tuple` spread; no argument to map here.
+            mappedVariadicArgumentsToParameters = true
+          }
         }
         else if (variadicPositionalArguments.isEmpty()) {
           if (!parameter.hasDefaultValue()) {
@@ -1367,7 +1335,8 @@ object PyCallExpressionHelper {
       variadicKeywordArguments.clear()
     }
 
-    unmappedArguments.addAll(allPositionalArguments)
+    // Drop the `*tuple` placeholder slots: they stand for already-supplied values, not surplus arguments.
+    unmappedArguments.addAll(allPositionalArguments.filterNotNull())
     unmappedArguments.addAll(keywordArguments)
     unmappedArguments.addAll(variadicPositionalArguments)
     unmappedArguments.addAll(variadicKeywordArguments)
@@ -1380,10 +1349,6 @@ object PyCallExpressionHelper {
   private fun isParamSpecOrConcatenate(parameter: PyCallableParameter, context: TypeEvalContext): Boolean {
     val type = parameter.getType(context)
     return type is PyParamSpecType || type is PyConcatenateType
-  }
-
-  private fun forEveryScopeTakeOverloadsOtherwiseImplementations(results: List<ResolveResult>, context: TypeEvalContext): List<PsiElement> {
-    return PyUtil.filterTopPriorityElements(forEveryScopeTakeOverloadsOtherwiseImplementations(results, context) { it.element })
   }
 
   private fun <E : ResolveResult> forEveryScopeTakeOverloadsOtherwiseImplementations(
@@ -1441,23 +1406,9 @@ object PyCallExpressionHelper {
       }
   }
 
-  private fun matchesByArgumentTypes(function: PyFunction, callSite: PyCallSiteOwner, context: TypeEvalContext): Boolean {
-    val fullMapping = mapArguments(callSite, function, context)
-    if (!fullMapping.isComplete) return false
-
-    // TODO properly handle bidirectional operator methods, such as __eq__ and __neq__.
-    //  Based only on its name, it's impossible to which operand is the receiver and which one is the argument.
-    val receiver = callSite.getReceiver(function)
-    val mappedExplicitParameters = fullMapping.mappedParameters
-
-    val allMappedParameters = LinkedHashMap<PyExpression, PyCallableParameter>()
-    val firstImplicit = fullMapping.implicitParameters.firstOrNull()
-    if (receiver != null && firstImplicit != null) {
-      allMappedParameters[receiver] = firstImplicit
-    }
-    allMappedParameters.putAll(mappedExplicitParameters)
-
-    return PyTypeChecker.unifyGenericCall(receiver, allMappedParameters, context) != null
+  private fun matchesByArgumentTypes(function: PyCallableType, callSite: PyCallSiteOwner, context: TypeEvalContext): Boolean {
+    val mapping = mapArguments(callSite, function, context)
+    return mapping.isComplete && PyTypeChecker.unifyGenericCall(null, mapping.mappedParameters, context) != null
   }
 
   private fun mapComponentsOfTupleParameter(argument: PyExpression?, parameter: PyTupleParameter): TupleMappingResults {
@@ -1525,20 +1476,19 @@ object PyCallExpressionHelper {
     return result
   }
 
-  private fun filterPositionalAndVariadicArguments(expressions: List<PyExpression>): PositionalArgumentsAnalysisResults {
+  private fun filterPositionalAndVariadicArguments(expressions: List<PyExpression>, context: TypeEvalContext): PositionalArgumentsAnalysisResults {
     val variadicArguments = ArrayList<PyExpression>()
     val allPositionalArguments = ArrayList<PyExpression?>()
     val componentsOfVariadicPositionalArguments = ArrayList<PyExpression?>()
     var seenVariadicPositionalArgument = false
     var seenVariadicKeywordArgument = false
     var seenKeywordArgument = false
-    for (argument in expressions) {
+    for ((index, argument) in expressions.withIndex()) {
       if (argument is PyStarArgument) {
         if (argument.isKeyword) {
           seenVariadicKeywordArgument = true
         }
         else {
-          seenVariadicPositionalArgument = true
           val expr: PsiElement? = PyPsiUtils.flattenParens(PsiTreeUtil.getChildOfType(argument, PyExpression::class.java))
           if (expr is PySequenceExpression) {
             val elements = expr.elements.toList()
@@ -1546,7 +1496,21 @@ object PyCallExpressionHelper {
             componentsOfVariadicPositionalArguments.addAll(elements)
           }
           else {
-            variadicArguments.add(argument)
+            // A fixed-length `*x` spread followed by positional arguments occupies known leading positions: reserve
+            // them with `null` placeholders so the following arguments still map to the correct parameters (PY-40735),
+            // e.g. `"2"` binding to `b` in `baz(*xe, "2")` where `xe: tuple[str]`.
+            val knownLength = (expr as? PyExpression)?.let { knownFixedTupleSpreadLength(it, context) } ?: -1
+            val followedByPositional = (index + 1..expressions.lastIndex).any {
+              val next = expressions[it]
+              next !is PyStarArgument && next !is PyKeywordArgument
+            }
+            if (knownLength >= 0 && followedByPositional) {
+              repeat(knownLength) { allPositionalArguments.add(null) }
+            }
+            else {
+              seenVariadicPositionalArgument = true
+              variadicArguments.add(argument)
+            }
           }
         }
       }
@@ -1561,6 +1525,14 @@ object PyCallExpressionHelper {
       }
     }
     return PositionalArgumentsAnalysisResults(allPositionalArguments, componentsOfVariadicPositionalArguments, variadicArguments)
+  }
+
+  /** Number of values a `*operand` spread contributes for a fixed-length tuple, or `-1` when the length is indeterminate. */
+  private fun knownFixedTupleSpreadLength(operand: PyExpression, context: TypeEvalContext): Int {
+    val type = context.getType(operand)
+    if (type !is PyTupleType || type.isHomogeneous) return -1
+    if (type.elementTypes.any { it is PyUnpackedTupleType }) return -1
+    return type.elementCount
   }
 
   private fun filterVariadicKeywordArguments(expressions: List<PyExpression?>): MutableList<PyExpression> {
@@ -1624,16 +1596,25 @@ object PyCallExpressionHelper {
    * or null if no overload matches or overloads are unavailable in the current context.
    */
   @ApiStatus.Internal
+  @JvmStatic
   fun selectMatchingOverload(
     function: PyFunction,
     callExpression: PyCallExpression,
     context: TypeEvalContext,
   ): PyFunction? {
-    val overloads = PyiUtil.getOverloads(function, context)
+    val overloads = PyiUtil.getOverloads(function, context).toSet()
     if (overloads.isEmpty()) return null
 
-    val arguments = callExpression.getArguments(function)
-    val matchingOverloads = overloads.filter { matchesByArgumentTypes(it, callExpression, context) }
+    val matchingOverloads = callExpression.multiResolveCallee(PyResolveContext.defaultContext(context))
+      .mapNotNull {
+        val callable = it.callable
+        if (callable is PyFunction && callable in overloads && matchesByArgumentTypes(it, callExpression, context)) {
+          callable
+        }
+        else {
+          null
+        }
+    }
 
     if (matchingOverloads.isEmpty()) {
       return null
@@ -1643,7 +1624,7 @@ object PyCallExpressionHelper {
       return matchingOverloads[0]
     }
 
-    val someArgumentsHaveUnknownType = arguments.any { argument ->
+    val someArgumentsHaveUnknownType = callExpression.getArguments(function).any { argument ->
       context.getType(argument) == null
     }
     if (someArgumentsHaveUnknownType) {
@@ -1663,9 +1644,6 @@ object PyCallExpressionHelper {
     }
     return true
   }
-
-  private val PyCallableParameter.isSimple: Boolean get() =
-    !(isPositionalContainer || isPositionOnlySeparator || isKeywordContainer || isKeywordOnlySeparator)
 }
 
 class ArgumentMappingResults internal constructor(

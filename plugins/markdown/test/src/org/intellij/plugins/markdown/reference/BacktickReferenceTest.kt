@@ -10,7 +10,9 @@ import com.intellij.psi.PsiPolyVariantReference
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan
 import org.intellij.plugins.markdown.lang.references.backtick.BacktickReference
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -21,7 +23,7 @@ class BacktickReferenceTest : BasePlatformTestCase() {
   @Test
   fun `test unresolved reference does not yield any errors`() {
     val reference = configureAndGetReferenceAtCaret("There is an `Java<caret>Class` backtick")
-    assertTrue(reference is BacktickReference)
+    assertBacktickReference(reference!!)
     myFixture.checkHighlighting()
   }
 
@@ -36,6 +38,13 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     val javaClass = createJavaClass()
     val reference = configureAndGetReferenceAtCaret("There is an `Java<caret>Class` backtick")
     assertTrue(myFixture.psiManager.areElementsEquivalent(javaClass, reference!!.resolve()))
+  }
+
+  @Test
+  fun `test reference with extension resolves to original element`() {
+    val file = createFile("JavaClass.java", "class JavaClass {}")
+    val reference = configureAndGetReferenceAtCaret("There is an `JavaClass.ja<caret>va` backtick")
+    assertTrue(myFixture.psiManager.areElementsEquivalent(file, reference!!.resolve()))
   }
 
   @Test
@@ -69,18 +78,18 @@ class BacktickReferenceTest : BasePlatformTestCase() {
       """.trimIndent()
     )
     val reference = configureAndGetReferenceAtCaret("some.md", "There is an `sh<caret>ort` backtick")
-    assertTrue(reference is BacktickReference)
-    assertNull(reference!!.resolve())
+    assertBacktickReference(reference!!)
+    assertNull(reference.resolve())
 
     createFile(
       "JavaClass1.java",
       """
         class JavaClass1 {
-           public void longlonglong() {}
+           public void longLongLong() {}
         }
       """.trimIndent()
     )
-    assertResolvesToPsiMethod("some1.md", "There is an `longlo<caret>nglong` backtick")
+    assertResolvesToPsiMethod("some1.md", "There is an `longLong<caret>Long` backtick")
   }
 
   @Test
@@ -89,21 +98,21 @@ class BacktickReferenceTest : BasePlatformTestCase() {
       "JavaClass.java",
       """
         class JavaClass {
-           public void sho_test() {}
+           public void boundary_test() {}
         }
       """.trimIndent()
     )
-    assertResolvesToPsiMethod("some.md", "There is an `sho<caret>_test` backtick")
+    assertResolvesToPsiMethod("some.md", "There is an `boundary<caret>_test` backtick")
 
     createFile(
       "JavaClass1.java",
       """
         class JavaClass1 {
-           public void shoTest() {}
+           public void boundaryTest() {}
         }
       """.trimIndent()
     )
-    assertResolvesToPsiMethod("some1.md", "There is an `sho<caret>Test` backtick")
+    assertResolvesToPsiMethod("some1.md", "There is an `boundary<caret>Test` backtick")
   }
 
   @Test
@@ -217,6 +226,60 @@ class BacktickReferenceTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `test qualified name with trailing hash resolves class`() {
+    val sample = createSampleClass()
+    assertResolvesTo("See `com.example.Samp<caret>le#`", sample)
+  }
+
+  @Test
+  fun `test qualified name with trailing dot resolves class`() {
+    val sample = createSampleClass()
+    assertResolvesTo("See `com.example.Samp<caret>le.`", sample)
+  }
+
+  @Test
+  fun `test member completion after trailing dot suggests all members`() {
+    createSampleClass()
+    myFixture.configureByText("doc.md", "See `com.example.Sample.<caret>`")
+    val items = myFixture.completeBasic()
+    assertNotNull(items)
+    assertContainsElements(items!!.map { it.lookupString }, "doStuff", "varStuff")
+  }
+
+  @Test
+  fun `test member completion after bare class and dot suggests members`() {
+    createFile(
+      "JavaClass1.java",
+      """
+        class JavaClass1 {
+           public void doStuff() {}
+        }
+      """.trimIndent()
+    )
+    myFixture.configureByText("doc.md", "See `JavaClass1.<caret>`")
+    val items = myFixture.completeBasic()
+    assertNotNull(items)
+    assertContainsElements(items!!.map { it.lookupString }, "doStuff")
+  }
+
+  @Test
+  fun `test members are not suggested without a separator`() {
+    createSampleClass()
+    myFixture.configureByText("doc.md", "See `com.example.Sample<caret>` docs")
+    val strings = myFixture.completeBasic()?.map { it.lookupString } ?: emptyList()
+    assertDoesntContain(strings, "doStuff", "varStuff")
+  }
+
+  @Test
+  fun `test class part reference range accounts for multiple backticks`() {
+    createSampleClass()
+    myFixture.configureByText("doc.md", "See ``Sample.doStuff`` docs")
+    val codeSpan = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeSpan::class.java)!!
+    val classPart = codeSpan.references.filterIsInstance<BacktickReference>().minByOrNull { it.rangeInElement.length }!!
+    assertEquals("Sample", classPart.rangeInElement.substring(codeSpan.text))
+  }
+
+  @Test
   fun `test path reference resolves from project root`() {
     val target = createFile("community/module-set-plugins/generated/intellij.moduleSet.plugin.main/README.md").parent!!
     val generated = target.parent!!
@@ -287,7 +350,7 @@ class BacktickReferenceTest : BasePlatformTestCase() {
       "Run `$CLAUDE_SKILL_DIR/scripts/n<caret>`"
     )
 
-    assertInstanceOf(reference, FileReference::class.java)
+    assertFileReference(reference!!)
     myFixture.completeBasic()
     myFixture.checkResult("Run `$CLAUDE_SKILL_DIR/scripts/nb.py`")
   }
@@ -343,20 +406,32 @@ class BacktickReferenceTest : BasePlatformTestCase() {
   }
 
   private fun assertFileReferenceResolves(fileName: String, text: String, target: PsiFileSystemItem) {
-    val reference = configureAndGetReferenceAtCaret(fileName, text)
-    if (reference is PsiMultiReference) {
-      assertTrue(reference.references.any { it is FileReference })
-    } else {
-      assertInstanceOf(reference, FileReference::class.java)
-    }
-    assertTrue(reference!!.isReferenceTo(target))
+    val reference = configureAndGetReferenceAtCaret(fileName, text)!!
+    assertFileReference(reference)
+    assertTrue(reference.isReferenceTo(target))
     assertTrue(myFixture.psiManager.areElementsEquivalent(target, reference.resolve()))
   }
 
   private fun assertResolvesToPsiMethod(fileName: String, text: String) {
     val reference = configureAndGetReferenceAtCaret(fileName, text)
-    assertTrue(reference is BacktickReference)
-    assertTrue(reference!!.resolve() is PsiMethod)
+    assertBacktickReference(reference!!)
+    assertTrue(reference.resolve() is PsiMethod)
+  }
+
+  private fun assertFileReference(reference: PsiReference) {
+    if (reference is PsiMultiReference) {
+      assertTrue(reference.references.any { it is FileReference })
+    } else {
+      assertInstanceOf(reference, FileReference::class.java)
+    }
+  }
+
+  private fun assertBacktickReference(reference: PsiReference) {
+    if (reference is PsiMultiReference) {
+      assertTrue(reference.references.any { it is BacktickReference })
+    } else {
+      assertInstanceOf(reference, BacktickReference::class.java)
+    }
   }
 
   private fun assertResolvesTo(text: String, expected: PsiElement) {

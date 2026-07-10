@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.psi.PsiFile;
 import com.intellij.python.junit5Tests.framework.FolderTest;
 import com.intellij.python.junit5Tests.framework.metaInfo.Repository;
@@ -18,6 +21,8 @@ import com.jetbrains.python.psi.LanguageLevel;
 @PyCodeInsightTestApplication
 @InspectionTest(inspectionClasses = PyLazyImportInspection.class)
 @WithLanguageLevel(level = LanguageLevel.PYTHON315)
+@Subsystems.Inspections
+@Layers.Functional
 public class PyLazyImportInspectionTest {
 
   @FolderTest

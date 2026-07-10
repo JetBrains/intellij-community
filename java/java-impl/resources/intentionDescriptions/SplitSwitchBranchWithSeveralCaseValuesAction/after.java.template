@@ -1,8 +1,7 @@
-switch (n) {
-  case 1:
-    s = "x";
-    break;
-  case 2:
-    s = "x";
-    break;
+String f(int n) {
+  return switch (n) {
+    case 1 -> "x";
+    case 2 -> "x";
+    default -> null;
+  };
 }

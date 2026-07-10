@@ -1,0 +1,49 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.pycharm.community.customization.backend` start
+
+jvm_library(
+    name = "customization.backend",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.pycharm.community.customization.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/backend",
+        "//platform/vcs-impl",
+    ],
+)
+
+jvm_library(
+    name = "customization.backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.pycharm.community.customization.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":customization.backend",
+        "//platform/backend:backend_test_lib",
+        "//platform/vcs-impl:vcs-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.pycharm.community.customization.backend` end
+
+### auto-generated section `iml intellij.pycharm.community.customization.backend` start
+exports_files(
+    [
+        "intellij.pycharm.community.customization.backend.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.pycharm.community.customization.backend` end

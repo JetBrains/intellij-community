@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiParameter;
@@ -100,7 +101,7 @@ public abstract class LombokRedundantModifierInspection extends LombokJavaInspec
           if (!redundantModifiersInfo.shouldCheck(psiModifierListOwner)) {
             continue;
           }
-          for (String modifier : redundantModifiersInfo.getModifiers()) {
+          for (@PsiModifier.ModifierConstant String modifier : redundantModifiersInfo.getModifiers()) {
             if (psiModifierList.hasExplicitModifier(modifier)) {
               final Optional<PsiElement> psiModifier = Arrays.stream(psiModifierList.getChildren())
                 .filter(psiElement -> modifier.equals(psiElement.getText()))

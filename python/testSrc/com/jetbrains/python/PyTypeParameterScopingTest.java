@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -15,7 +18,6 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyCollectionType;
 import com.jetbrains.python.psi.types.PyFunctionType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -29,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.List;
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyTypeParameterScopingTest extends PyTestCase {
 
   public void testFunctionDeclaresOwnTypeVarInAnnotation() {
@@ -557,9 +561,9 @@ public class PyTypeParameterScopingTest extends PyTestCase {
     PyTypedElement typedElement = assertInstanceOf(resolvedElement, PyTypedElement.class);
     PyType type = typeEvalContext.getType(typedElement);
     if (type instanceof PyClassType classType) {
-      PyCollectionType genericClassType = PyTypeChecker.findGenericDefinitionType(classType.getPyClass(), typeEvalContext);
+      PyClassType genericClassType = PyTypeChecker.findGenericDefinitionType(classType.getPyClass(), typeEvalContext);
       assertNotNull(genericClassType);
-      type = genericClassType.getElementTypes().get(0);
+      type = genericClassType.getTypeArguments().get(0);
     }
     else if (type instanceof PyFunctionType functionType) {
       type = functionType.getReturnType(typeEvalContext);

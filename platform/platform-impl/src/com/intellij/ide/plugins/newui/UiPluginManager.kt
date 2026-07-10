@@ -63,10 +63,6 @@ class UiPluginManager {
     return getController().getInstalledPlugins()
   }
 
-  suspend fun getUpdateModels(): List<PluginUiModel> {
-    return getController().getUpdates()
-  }
-
   suspend fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
     return getController().loadPluginDetails(model)
   }
@@ -236,7 +232,7 @@ class UiPluginManager {
 
   @RequiresBackgroundThread(generateAssertion = false)
   fun isNeedUpdate(pluginId: PluginId): Boolean {
-    return runBlockingMaybeCancellable { getController().isNeedUpdate(pluginId) }
+    return runBlockingMaybeCancellable { PluginUpdatesService.getInstance().awaitHasUpdate(pluginId) }
   }
 
   suspend fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {
@@ -250,8 +246,9 @@ class UiPluginManager {
     return DefaultUiPluginManagerController
   }
 
-  fun subscribeToUpdatesCount(sessionId: String, callback: (Int?) -> Unit): PluginUpdatesService {
-    return getController().connectToPluginUpdateService(sessionId, { updatedPlugins -> callback(updatedPlugins?.size ?: 0)})
+  fun subscribeToPluginUpdatesFiltered(sessionId: String, callback: (List<PluginUiModel>) -> Unit): PluginUpdateSubscription {
+    val session = PluginManagerSessionService.getInstance().createSession(sessionId)
+    return PluginUpdatesService.getInstance().subscribe { updatedPlugins -> callback(updatedPlugins.all.filter { session.isPluginEnabled(it.pluginId) }) }
   }
 
   companion object {

@@ -17,6 +17,10 @@
     <module name="intellij.settingsSync.performanceTesting"/>
   </content>
 
+  <content>
+    <module name="intellij.libraries.cloud.config.client" loading="embedded"/>
+  </content>
+
   <extensions defaultExtensionNs="com.intellij">
     <settingsSync.communicatorProvider implementation="com.intellij.settingsSync.jba.JbaCommunicatorProvider"/>
   </extensions>

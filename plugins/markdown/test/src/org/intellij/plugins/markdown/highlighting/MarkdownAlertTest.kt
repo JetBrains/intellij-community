@@ -23,9 +23,9 @@ class MarkdownAlertTest : BasePlatformTestCase() {
   fun testWarningAlertGutterIconPresent() = doGutterIconTest("[!WARNING]", AllIcons.General.BalloonWarning)
   fun testCautionAlertGutterIconPresent() = doGutterIconTest("[!CAUTION]", AllIcons.General.BalloonError)
 
-  fun testAlertRenderedAsBlockquoteInPreview() = doPreviewTest()
-  fun testAlertNotRenderedAsGitHubAlertMarkupInPreview() = doPreviewTest()
-  fun testMultipleAlertsEachRenderedAsBlockquoteInPreview() = doPreviewTest()
+  fun testNoteAlertRenderedInPreview() = doPreviewTest()
+  fun testWarningAlertRenderedInPreview() = doPreviewTest()
+  fun testMultipleAlertsRenderedInPreview() = doPreviewTest()
 
   private fun doPreviewTest() {
     val expectedHtml = myFixture.configureByFile("${getTestName(true)}.html").text
@@ -47,6 +47,6 @@ class MarkdownAlertTest : BasePlatformTestCase() {
     myFixture.configureByText("test.md", "> $title\n> Content")
     myFixture.doHighlighting()
     val markers = DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.editor.document, project)
-    assertNotNull("Expected gutter icon $expectedIcon for $title", markers.firstOrNull { it.icon == expectedIcon })
+    assertEquals("Expected exactly one gutter icon $expectedIcon for $title", 1, markers.count { it.icon == expectedIcon })
   }
 }

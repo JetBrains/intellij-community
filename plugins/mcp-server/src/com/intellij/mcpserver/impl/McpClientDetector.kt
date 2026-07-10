@@ -7,6 +7,8 @@ import com.intellij.mcpserver.clients.impl.ClaudeClient
 import com.intellij.mcpserver.clients.impl.ClaudeCodeClient
 import com.intellij.mcpserver.clients.impl.CodexClient
 import com.intellij.mcpserver.clients.impl.CursorClient
+import com.intellij.mcpserver.clients.impl.GitHubCopilotCliClient
+import com.intellij.mcpserver.clients.impl.GitHubCopilotIdePluginClient
 import com.intellij.mcpserver.clients.impl.JunieClient
 import com.intellij.mcpserver.clients.impl.VSCodeClient
 import com.intellij.mcpserver.clients.impl.WindsurfClient
@@ -23,16 +25,6 @@ import kotlin.io.path.isRegularFile
 import kotlin.io.path.readText
 
 object McpClientDetector {
-  fun detectMcpClients(project: Project): List<McpClient> {
-    val detectedClients = mutableListOf<McpClient>()
-
-    detectedClients.addAll(detectGlobalMcpClients())
-
-    detectedClients.addAll(detectProjectMcpClients(project))
-
-    return detectedClients
-  }
-
   fun detectGlobalMcpClients(): List<McpClient> {
     val globalClients = mutableListOf<McpClient>()
 
@@ -60,6 +52,12 @@ object McpClientDetector {
     runCatching {
       globalClients.addIfNotNull(detectAir())
     }
+    runCatching {
+      globalClients.addIfNotNull(detectGitHubCopilotCli())
+    }
+    runCatching {
+      globalClients.addIfNotNull(detectGitHubCopilotJetBrains())
+    }
 
     return globalClients
   }
@@ -84,6 +82,9 @@ object McpClientDetector {
     }
     runCatching {
       projectClients.addIfNotNull(detectAirInProject(project))
+    }
+    runCatching {
+      projectClients.addIfNotNull(detectGitHubCopilotCliProject(project))
     }
 
     return projectClients
@@ -244,6 +245,44 @@ object McpClientDetector {
     val configPath = Paths.get(projectBasePath, ".air", "mcp.json")
     if (looksLikeMcpJson(configPath)) {
       return AirClient(McpClientInfo.Scope.Project(project), configPath)
+    }
+    return null
+  }
+
+  private fun detectGitHubCopilotCli(): McpClient? {
+    val copilotHome = System.getenv("COPILOT_HOME")
+    val homeDir = if (copilotHome.isNullOrEmpty()) {
+      Paths.get(OSAgnosticPathUtil.expandUserHome("~/.copilot"))
+    }
+    else {
+      Paths.get(copilotHome)
+    }
+    if (!homeDir.exists() || !Files.isDirectory(homeDir)) return null
+
+    return GitHubCopilotCliClient(McpClientInfo.Scope.Global, homeDir.resolve("mcp-config.json"))
+  }
+
+  private fun detectGitHubCopilotCliProject(project: Project): McpClient? {
+    val projectBasePath = project.basePath ?: return null
+    val candidates = listOf(
+      Paths.get(projectBasePath, ".github", "mcp.json"),
+      Paths.get(projectBasePath, "mcp.json"),
+    )
+    val configPath = candidates.firstOrNull { looksLikeMcpJson(it) } ?: return null
+    return GitHubCopilotCliClient(McpClientInfo.Scope.Project(project), configPath)
+  }
+
+  private fun detectGitHubCopilotJetBrains(): McpClient? {
+    val configPath = when {
+      SystemInfo.isMac -> "~/.config/github-copilot/intellij/mcp.json"
+      SystemInfo.isLinux -> "~/.config/github-copilot/intellij/mcp.json"
+      SystemInfo.isWindows -> System.getenv("LOCALAPPDATA")?.let { "$it/github-copilot/intellij/mcp.json" }
+      else -> null
+    }
+    if (configPath == null) return null
+    val path = Paths.get(OSAgnosticPathUtil.expandUserHome(configPath))
+    if (path.parent.exists() && Files.isDirectory(path.parent)) {
+      return GitHubCopilotIdePluginClient(McpClientInfo.Scope.Global, path)
     }
     return null
   }

@@ -20,8 +20,8 @@ internal class ImageDataByUrlLoader internal constructor(
   override val path: String
     get() = url.toString()
 
-  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
-    return loadImage(path = url.toString(),
+  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): ImageWithShape<Image>? {
+    return loadImageWithShape(path = url.toString(),
                      filters = parameters.filters,
                      colorPatcherProvider = parameters.colorPatcher,
                      resourceClass = ownerClass,
@@ -65,8 +65,8 @@ internal class ImageDataByPathResourceLoader(
       return result
     }
 
-  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
-    return loadImage(path = path,
+  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): ImageWithShape<Image>? {
+    return loadImageWithShape(path = path,
                      filters = parameters.filters,
                      colorPatcherProvider = parameters.colorPatcher,
                      resourceClass = ownerClass,
@@ -133,8 +133,8 @@ internal class ImageDataByFilePathLoader(override val path: String) : PatchedIma
   override val url: URL
     get() = URL(path)
 
-  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
-    return loadImage(path = path,
+  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): ImageWithShape<Image>? {
+    return loadImageWithShape(path = path,
                      filters = parameters.filters,
                      colorPatcherProvider = parameters.colorPatcher,
                      resourceClass = null,
@@ -171,9 +171,9 @@ private fun createNewResolverIfNeeded(originalClassLoader: ClassLoader?, origina
 private class FinalImageDataLoader(override val path: String, classLoader: ClassLoader) : PatchedImageDataLoader {
   private val classLoaderRef = WeakReference(classLoader)
 
-  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
+  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): ImageWithShape<Image>? {
     val classLoader = classLoaderRef.get() ?: return null
-    return loadImage(path = path,
+    return loadImageWithShape(path = path,
                      useCache = false,
                      isDark = parameters.isDark,
                      filters = parameters.filters,
@@ -204,7 +204,7 @@ internal object EmptyImageDataLoader : ImageDataLoader {
   override val path: String? get() = null
   override val url: URL? get() = null
 
-  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? = null
+  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): ImageWithShape<Image>? = null
   override fun patch(transform: IconTransform): ImageDataLoader? = null
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean = false
   override fun getCoords(): Pair<String, ClassLoader>? = null

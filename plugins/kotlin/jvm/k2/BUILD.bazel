@@ -72,7 +72,7 @@ jvm_library(
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
         "@lib//:kotlinc-analysis-api",
         "@lib//:kotlinc-kotlin-scripting-jvm",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
         "//plugins/kotlin/base/statistics",
         "//platform/util/progress",
         "//platform/util",
@@ -128,7 +128,7 @@ jvm_library(
         "//plugins/kotlin/base/scripting/scripting.scratch.definition:scripting.scratch.definition_test_lib",
         "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight_test_lib",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",
         "//plugins/kotlin/base/statistics:statistics_test_lib",
         "//platform/util/progress:progress_test_lib",
         "//platform/util:util_test_lib",
@@ -222,6 +222,8 @@ jvm_library(
         "//platform/ide-core",
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.jvm.tests` end

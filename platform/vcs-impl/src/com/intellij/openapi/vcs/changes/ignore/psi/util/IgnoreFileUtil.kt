@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.IgnoredFileDescriptor
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileConstants
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreLanguage
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.psi.PsiManager
 import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.vcsUtil.VcsUtil
@@ -88,10 +89,12 @@ private fun changeIgnoreFile(project: Project,
     CommandProcessor.getInstance().executeCommand(project, {
       runUndoTransparentWriteAction {
         if (project.isDisposed) return@runUndoTransparentWriteAction
+        if (!ignoreFile.isValid) return@runUndoTransparentWriteAction
         if (PsiManager.getInstance(project).findFile(ignoreFile)?.language !is IgnoreLanguage) return@runUndoTransparentWriteAction
         action(ignoredFileContentProvider)
         ignoreFile.save()
       }
+      PersistentFS.getInstance().flushPendingUpdates(ignoreFile)
     }, null, null)
   }
 }

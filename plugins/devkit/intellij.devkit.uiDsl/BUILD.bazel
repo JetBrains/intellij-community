@@ -36,6 +36,7 @@ jvm_library(
         "//java/java-psi-api:psi",
         "@lib//:kotlinc-kotlin-compiler-common-provided",
         "//platform/util:util-ui",
+        "//platform/platform-impl/concurrency",
     ],
 )
 
@@ -66,6 +67,7 @@ jvm_library(
         "//java/java-psi-api:psi_test_lib",
         "@lib//:kotlinc-kotlin-compiler-common-provided",
         "//platform/util:util-ui_test_lib",
+        "//platform/platform-impl/concurrency:concurrency_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.uiDsl` end

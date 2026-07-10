@@ -74,13 +74,19 @@ class FileSet(private val root: Path) {
     val usedIncludePatterns = HashSet<String>()
     val usedExcludePatterns = HashSet<String>()
     val result = ArrayList<Path>()
+
+    // Reuse one Matcher per pattern for the whole (single-threaded) walk instead of allocating
+    // a fresh java.util.regex.Matcher per file per pattern via Regex.matches().
+    val includeMatchers = includePatterns.map { (pattern, regex) -> pattern to regex.toPattern().matcher("") }
+    val excludeMatchers = excludePatterns.map { (pattern, regex) -> pattern to regex.toPattern().matcher("") }
+
     Files.walkFileTree(root, object : SimpleFileVisitor<Path>() {
       override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-        val relative = root.relativize(file)
+        val relativePath = root.relativize(file).invariantSeparatorsPathString
 
         var included = false
-        for ((pattern, pathMatcher) in includePatterns) {
-          if (pathMatcher.matches(relative.invariantSeparatorsPathString)) {
+        for ((pattern, matcher) in includeMatchers) {
+          if (matcher.reset(relativePath).matches()) {
             included = true
             usedIncludePatterns.add(pattern)
           }
@@ -91,8 +97,8 @@ class FileSet(private val root: Path) {
         }
 
         var excluded = false
-        for ((pattern, pathMatcher) in excludePatterns) {
-          if (pathMatcher.matches(relative.invariantSeparatorsPathString)) {
+        for ((pattern, matcher) in excludeMatchers) {
+          if (matcher.reset(relativePath).matches()) {
             excluded = true
             usedExcludePatterns.add(pattern)
           }

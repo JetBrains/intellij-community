@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.impl.run;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
@@ -89,7 +90,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   @Override
-  public void subscribe() {
+  public void subscribe(@NotNull Disposable parentDisposable) {
   }
 
   private void addInterpreterComboBoxActionListener(ActionListener listener) {

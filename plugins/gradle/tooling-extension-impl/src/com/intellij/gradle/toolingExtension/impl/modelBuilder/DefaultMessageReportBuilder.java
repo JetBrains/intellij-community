@@ -21,7 +21,6 @@ public class DefaultMessageReportBuilder implements MessageReportBuilder {
   private @Nullable String myGroup = null;
   private @Nullable Exception myException = null;
   private @Nullable Message.Kind myKind = null;
-  private @Nullable Message.FilePosition myFilePosition = null;
 
   private boolean myInternal = false;
 
@@ -67,14 +66,7 @@ public class DefaultMessageReportBuilder implements MessageReportBuilder {
 
   @Override
   public @NotNull MessageReportBuilder withStackTrace() {
-    myException = new IllegalStateException();
-    return this;
-  }
-
-  @Override
-  public @NotNull MessageReportBuilder withLocation(String filePath, int line, int column) {
-    myFilePosition = new Message.FilePosition(filePath, line, column);
-    return this;
+    return withException(new IllegalStateException());
   }
 
   @Override
@@ -91,7 +83,6 @@ public class DefaultMessageReportBuilder implements MessageReportBuilder {
       .withKind(myKind)
       .withGroup(myGroup)
       .withException(myException)
-      .withLocation(myFilePosition)
       .withProject(project)
       .withInternal(myInternal)
       .build()

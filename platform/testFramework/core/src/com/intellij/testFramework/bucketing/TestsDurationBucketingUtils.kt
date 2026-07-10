@@ -83,27 +83,56 @@ internal object TestsDurationBucketingUtils {
     return filters
   }
 
-  @JvmStatic
-  fun loadSeasonData(season: String?): Map<String, Int>? {
-    if (season == null) return null
-
+  private fun loadSeasonData(season: String, reportFailure: Boolean): Path? {
     val files = if (BazelRunfiles.isRunningFromBazel) {
       val label = BazelLabel.fromString("//:tests/classes-duration")
       BazelRunfiles.getFileByLabelOrNull(label)?.absolute()?.resolve("seasons/$season.csv")?.let { listOf(it) } ?: emptyList()
-    } else {
+    }
+    else {
       getDataDirectories().map { it.resolve("seasons/$season.csv") }.filter { Files.isRegularFile(it) }.distinct().toList()
     }
-
     if (files.isEmpty()) {
-      println(ServiceMessage.asString(ServiceMessageTypes.BUILD_PROBLEM, mapOf("description" to "No CSV file for season '$season' found")))
-      return null
+      val msg = "No CSV file for season '$season' found"
+      if (reportFailure) {
+        println(ServiceMessage.asString(ServiceMessageTypes.BUILD_PROBLEM, mapOf("description" to msg)))
+      }
+      else {
+        println(msg)
+      }
     }
     if (files.size > 1) {
-      println(ServiceMessage.asString(ServiceMessageTypes.BUILD_PROBLEM,
-                                      mapOf("description" to "Multiple files for season '$season' found, will use the first one: ${files.joinToString { it.absolutePathString() }}")))
+      val msg = "Multiple files for season '$season' found, will use the first one: ${files.joinToString { it.absolutePathString() }}"
+      if (reportFailure) {
+        println(ServiceMessage.asString(ServiceMessageTypes.BUILD_PROBLEM, mapOf("description" to msg)))
+      }
+      else {
+        println(msg)
+      }
     }
+    return files.firstOrNull()
+  }
+
+  @JvmStatic
+  fun loadSeasonData(season: String?, fallbackSeason: String?): Map<String, Int>? {
+    if (season == null) {
+      require(fallbackSeason == null) {
+        "No season specified but the fallback season is: $fallbackSeason"
+      }
+      return null
+    }
+    var file = loadSeasonData(season, reportFailure = fallbackSeason == null)
+    if (file != null) {
+      println("Tests duration bucketing with the season: $season")
+    }
+    else if (fallbackSeason != null) {
+      file = loadSeasonData(fallbackSeason, reportFailure = true)
+      if (file != null) {
+        println("Tests duration bucketing with the season fallback: $fallbackSeason")
+      }
+    }
+    if (file == null) return null
     val result = HashMap<String, Int>()
-    loadCSV(files.first(), result)
+    loadCSV(file, result)
     return result
   }
 

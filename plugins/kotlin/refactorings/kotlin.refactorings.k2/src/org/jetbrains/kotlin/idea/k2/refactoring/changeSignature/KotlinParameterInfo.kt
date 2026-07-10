@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
+import org.jetbrains.kotlin.idea.base.psi.setParameterTypeReference
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableParameterInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.setValOrVar
@@ -108,7 +109,7 @@ class KotlinParameterInfo(
      * 0, if refers to function's extension receiver in `this` expression
      * Int.MAX_VALUE, if refers to extension's/dispatch's receiver callable
      */
-    val defaultValueParameterReferences: MutableMap<PsiReference, Int> = mutableMapOf<PsiReference, Int>();
+    val defaultValueParameterReferences: MutableMap<PsiReference, Int> = mutableMapOf()
 
     @OptIn(KaAllowAnalysisOnEdt::class)
     fun collectDefaultValueParameterReferences(callable: KtNamedDeclaration) {
@@ -130,7 +131,7 @@ class KotlinParameterInfo(
             return contextParameters[oldIndex].name ?: name
         }
 
-        if (inheritor is KtFunctionLiteral && inheritor.valueParameters.size == 0 && oldIndex == 0) {
+        if (inheritor is KtFunctionLiteral && inheritor.valueParameters.isEmpty() && oldIndex == 0) {
             //preserve default name
             return "it"
         }

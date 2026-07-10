@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.textarea.TextComponentEditorImpl;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.ui.components.JBTextArea;
 import org.junit.jupiter.api.Assertions;
@@ -171,6 +172,76 @@ public class EditorActionTest extends AbstractEditorTest {
                         blah bl<selection><caret>ah
                         blah blah</selection>
                         blah blah""");
+  }
+
+  public void testLeadSelectionPositionAfterUpWithSelection() {
+    initText("""
+               line1
+               
+               line3<caret>""");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+
+    assertEquals(1, getEditor().getSelectionModel().getLeadSelectionPosition().line);
+    assertEquals(2, getEditor().getSelectionModel().getSelectionEndPosition().line);
+  }
+
+  public void testLeadSelectionPositionAfterUpWithSelectionWithBlockCaret() {
+    Registry.get("editor.block.caret.selection.vim-like").setValue(true, getTestRootDisposable());
+    initText("""
+               line1
+
+               line3<caret>""");
+    getEditor().getSettings().setBlockCursor(true);
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+
+    // Caret ends on the selection start boundary. With a block caret and the vim-like option, the lead
+    // falls back to the anchor (line 2) instead of line 1 (see testLeadSelectionPositionAfterUpWithSelection).
+    assertEquals(2, getEditor().getSelectionModel().getLeadSelectionPosition().line);
+    assertEquals(2, getEditor().getSelectionModel().getSelectionEndPosition().line);
+  }
+
+  public void testLeadSelectionPositionAfterDownWithSelectionWithBlockCaret() {
+    Registry.get("editor.block.caret.selection.vim-like").setValue(true, getTestRootDisposable());
+    initText("""
+               line1<caret>
+
+               line3""");
+    getEditor().getSettings().setBlockCursor(true);
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+
+    // Caret ends on the selection end boundary: the lead stays at the anchor (line 0) for a block caret too.
+    assertEquals(0, getEditor().getSelectionModel().getLeadSelectionPosition().line);
+    assertEquals(0, getEditor().getSelectionModel().getSelectionStartPosition().line);
+  }
+
+  public void testSelectionAfterMovingUpAndDownWithSelection() {
+    initText("""
+               package com.company;
+               
+               public class Valery {
+               
+                   public static void meladze() {<caret>
+               \t//smth
+               
+                       //smth
+               
+                       //smth
+                   }
+               }
+               """);
+
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+    for (int i = 0; i < 6; i++) {
+      executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+    }
+
+    assertEquals("\n\t//smth\n\n        //smth\n\n        //smth", getEditor().getSelectionModel().getSelectedText());
+    int selectedLines = getEditor().getSelectionModel().getSelectionEndPosition().line -
+                        getEditor().getSelectionModel().getLeadSelectionPosition().line + 1;
+    assertEquals("selectionStartPosition=" + getEditor().getSelectionModel().getSelectionStartPosition() +
+                 ", selectionEndPosition=" + getEditor().getSelectionModel().getSelectionEndPosition() +
+                 ", leadSelectionPosition=" + getEditor().getSelectionModel().getLeadSelectionPosition(),
+                 6, selectedLines);
   }
   
   public void testDownWithSelectionOnCaretInsideSelection() {

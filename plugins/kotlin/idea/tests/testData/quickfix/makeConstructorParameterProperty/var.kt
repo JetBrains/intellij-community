@@ -1,5 +1,5 @@
 // "Make constructor parameter a property" "true"
-// K2_ERROR: Unresolved reference 'foo'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 class A(foo: String) {
     fun bar() {

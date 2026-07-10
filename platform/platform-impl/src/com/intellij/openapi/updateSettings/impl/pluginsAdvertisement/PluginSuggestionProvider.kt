@@ -30,7 +30,6 @@ interface PluginSuggestion : Function<FileEditor, EditorNotificationPanel?> {
   val pluginIds: List<String>
 }
 
-@ApiStatus.Internal
 internal class DefaultPluginSuggestion(
   private val project: Project,
   override val pluginIds: List<String>,

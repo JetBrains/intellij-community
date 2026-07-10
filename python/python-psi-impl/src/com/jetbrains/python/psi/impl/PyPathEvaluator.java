@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -127,8 +128,13 @@ public class PyPathEvaluator extends PyEvaluator {
         result = path;
       }
       else {
-        final Path resolvedPath = Paths.get(result).resolve(path);
-        result = toSystemIndependentName(resolvedPath.toString());
+        try {
+          final Path resolvedPath = Paths.get(result).resolve(path);
+          result = toSystemIndependentName(resolvedPath.toString());
+        }
+        catch (InvalidPathException e) {
+          return null;
+        }
       }
     }
     return result;
@@ -141,8 +147,13 @@ public class PyPathEvaluator extends PyEvaluator {
       final Object lhs = evaluate(expression.getLeftExpression());
       final Object rhs = evaluate(expression.getRightExpression());
       if (lhs instanceof String lhsPath && rhs instanceof String rhsPath) {
-        final Path resolvedPath = Paths.get(lhsPath).resolve(rhsPath);
-        return toSystemIndependentName(resolvedPath.toString());
+        try {
+          final Path resolvedPath = Paths.get(lhsPath).resolve(rhsPath);
+          return toSystemIndependentName(resolvedPath.toString());
+        }
+        catch (InvalidPathException e) {
+          return null;
+        }
       }
     }
     return super.evaluateBinary(expression);

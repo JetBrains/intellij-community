@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -57,7 +58,7 @@ public interface CompileScope extends ExportableUserDataHolder {
   /**
    * @return similar to {@link #getAffectedModules}, but is more precise about which kinds of source roots are affected: production and/or tests
    */
-  default Collection<ModuleSourceSet> getAffectedSourceSets() {
+  default @Unmodifiable Collection<ModuleSourceSet> getAffectedSourceSets() {
     List<ModuleSourceSet> sets = new SmartList<>();
     for (Module module : getAffectedModules()) {
       for (ModuleSourceSet.Type setType : ModuleSourceSet.Type.values()) {

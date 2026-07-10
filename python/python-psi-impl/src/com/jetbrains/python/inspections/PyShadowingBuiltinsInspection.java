@@ -162,8 +162,8 @@ public final class PyShadowingBuiltinsInspection extends PyInspection {
         if (builtin != null && !PyUtil.inSameFile(builtin, element)) {
           final PsiElement identifier = element.getNameIdentifier();
           final PsiElement problemElement = identifier != null ? identifier : element;
-          registerProblem(problemElement, PyPsiBundle.message("INSP.shadowing.builtins.shadows.built.in.name", name),
-                          ProblemHighlightType.WEAK_WARNING, null, createQuickFixes(name, problemElement));
+          registerProblem(problemElement, PyPsiBundle.problemMessage("INSP.shadowing.builtins.shadows.built.in.name", name),
+                          ProblemHighlightType.WEAK_WARNING, createQuickFixes(name, problemElement));
         }
       }
     }

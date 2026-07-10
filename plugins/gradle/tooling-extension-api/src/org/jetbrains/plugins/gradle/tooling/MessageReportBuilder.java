@@ -3,9 +3,11 @@ package org.jetbrains.plugins.gradle.tooling;
 
 import org.gradle.api.Project;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.NonExtendable;
 import org.jetbrains.annotations.CheckReturnValue;
 import org.jetbrains.annotations.NotNull;
 
+@NonExtendable
 public interface MessageReportBuilder {
 
   @CheckReturnValue
@@ -28,9 +30,6 @@ public interface MessageReportBuilder {
 
   @CheckReturnValue
   @NotNull MessageReportBuilder withStackTrace();
-
-  @CheckReturnValue
-  @NotNull MessageReportBuilder withLocation(String filePath, int line, int column);
 
   @ApiStatus.Internal
   @CheckReturnValue

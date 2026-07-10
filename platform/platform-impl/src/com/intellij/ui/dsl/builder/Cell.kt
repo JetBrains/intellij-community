@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.validation.DialogValidation
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.UiDslException
-import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -46,10 +45,6 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   override fun resizableColumn(): Cell<T>
 
   override fun gap(rightGap: RightGap): Cell<T>
-
-  @Deprecated("Use customize(UnscaledGaps) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun customize(customGaps: Gaps): Cell<T>
 
   override fun customize(customGaps: UnscaledGaps): Cell<T>
 

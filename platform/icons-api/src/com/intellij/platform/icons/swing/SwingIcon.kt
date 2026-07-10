@@ -27,7 +27,7 @@ fun javax.swing.Icon.toNewIcon(): Icon =
  * Converts specific Icon to swing Icon. Calling this method will perform synchronous image loading. If the Icon is just
  * a wrapped swing icon (and no modifier is set), it will be unpacked and returned directly.
  */
-fun Icon.toSwingIcon(scale: IconScale = factor(1f)): ScalableSwingIcon =
+fun Icon.toSwingIcon(scale: IconScale = IconScale.Default): ScalableSwingIcon =
     IconManager.getInstance().toSwingIcon(this, scale)
 
 /**

@@ -6,7 +6,7 @@ import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.testDiscovery.TestDiscoveryDataSocketListener;
 import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.execution.testDiscovery.TestDiscoveryIndex;
-import com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction;
+import com.intellij.execution.testDiscovery.actions.TestDiscoveryMethodUtil;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.roots.ContentEntry;
@@ -103,7 +103,7 @@ public class TestDiscoveryJUnitIntegrationTest extends AbstractTestFrameworkComp
     PsiMethod method = "<init>".equals(methodName)
                        ? assertOneElement(aClass.getConstructors())
                        : assertOneElement(aClass.findMethodsByName(methodName, false));
-    Couple<String> methodKey = ShowAffectedTestsAction.getMethodKey(method);
+    Couple<String> methodKey = TestDiscoveryMethodUtil.getMethodKey(method);
 
     TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(myProject);
     MultiMap<String, String> rawActualTests1 =

@@ -1,8 +1,8 @@
 // "Create property 'foo'" "true"
 // ERROR: Property must be initialized
-// K2_ERROR: Unresolved reference 'foo'.
-// K2_AFTER_ERROR: None of the following candidates is applicable:<br><br>constructor(pi: Int): CtorChain:<br>  Argument type mismatch: actual type is 'Any', but 'Int' was expected.<br><br>constructor(ps: String): CtorChain:<br>  Argument type mismatch: actual type is 'Any', but 'String' was expected.
-// K2_AFTER_ERROR: Property must be initialized.
+// K2_AFTER_ERROR: MUST_BE_INITIALIZED
+// K2_AFTER_ERROR: NONE_APPLICABLE
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 
 class CtorChain(val pi: Int) {

@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -26,6 +29,8 @@ import java.util.List;
 
 
 @TestDataPath("$CONTENT_ROOT/../testData/completion")
+@Subsystems.CodeCompletion
+@Layers.Functional
 public class Py3CompletionTest extends PyTestCase {
 
   public void testPropertyDecorator() {
@@ -534,6 +539,81 @@ public class Py3CompletionTest extends PyTestCase {
     assertContainsElements(myFixture.getLookupElementStrings(), "city");
   }
 
+  @TestFor(issues = "PY-90108")
+  public void testPydanticModelConfigKeywordCompletion() {
+    runWithAdditionalClassEntryInSdkRoots("../stubs", () -> {
+      final List<String> suggested = doTestByText(
+        """
+          from pydantic import BaseModel
+          
+          class Model(BaseModel, <caret>):
+              pass
+          """);
+      assertNotNull(suggested);
+      assertContainsElements(suggested,
+                             "validate_by_name=",
+                             "validate_by_alias=",
+                             "populate_by_name=",
+                             "frozen=",
+                             "strict="
+      );
+    });
+  }
+
+  @TestFor(issues = "PY-90108")
+  public void testPydanticModelConfigKeywordCompletionExcludesExisting() {
+    runWithAdditionalClassEntryInSdkRoots("../stubs", () -> {
+      final List<String> suggested = doTestByText(
+        """
+          from pydantic import BaseModel
+          
+          class Model(BaseModel, frozen=True, <caret>):
+              pass
+          """);
+      assertNotNull(suggested);
+      assertContainsElements(suggested, "strict=", "populate_by_name=");
+      assertDoesntContain(suggested, "frozen=");
+    });
+  }
+
+  @TestFor(issues = "PY-90108")
+  public void testPydanticModelConfigKeywordCompletionNotSuggestedForPlainClass() {
+    runWithAdditionalClassEntryInSdkRoots("../stubs", () -> {
+      final List<String> suggested = doTestByText(
+        """
+          class Model(object, <caret>):
+              pass
+          """);
+      assertNotNull(suggested);
+      assertDoesntContain(suggested, "frozen=", "strict=", "populate_by_name=");
+    });
+  }
+
+  @TestFor(issues = "PY-90108")
+  public void testPydanticDataclassNoConfigKeywordCompletionInBaseList() {
+    runWithAdditionalClassEntryInSdkRoots("../stubs", () -> {
+      final List<String> suggested = doTestByText(
+        """
+          from pydantic.dataclasses import dataclass
+          
+          class Mixin:
+              pass
+          
+          @dataclass
+          class Model(Mixin, <caret>):
+              pass
+          """);
+      assertNotNull(suggested);
+      assertDoesntContain(suggested,
+                          "validate_by_name=",
+                          "validate_by_alias=",
+                          "populate_by_name=",
+                          "frozen=",
+                          "strict="
+      );
+    });
+  }
+
   // PY-48665
   public void testFStringLikeCompletionNotAvailableInLiteralPatterns() {
     doNegativeTest();
@@ -1002,6 +1082,32 @@ public class Py3CompletionTest extends PyTestCase {
       import mod
 
       mod.Outer.Inner.unique_attribute""");
+  }
+
+  @TestFor(issues = "PY-90275")
+  public void testDunderCallMethod() {
+    doTestByText("""
+      class A:
+          def __call<caret>
+      """);
+    myFixture.checkResult("""
+      class A:
+          def __call__(self, *args, **kwargs):
+      """);
+  }
+
+  @TestFor(issues = "PY-90275")
+  public void testDunderOperatorMethodFromType() {
+    // `__or__` / `__ror__` are declared on `type`, but they are ordinary operator dunders and must still be suggested in
+    // ordinary classes (unlike metaclass-only dunders such as `__prepare__`).
+    doTestByText("""
+      class A:
+          def __or<caret>
+      """);
+    myFixture.checkResult("""
+      class A:
+          def __or__(self, other):
+      """);
   }
 
   // PY-88016

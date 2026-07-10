@@ -7,7 +7,7 @@ import org.jetbrains.tools.model.updater.KotlinTestsDependenciesUtil
 
 class AllTestsGeneratedTest : TestCase() {
     fun testAllTestsIsUpToDate() {
-        KotlinTestsDependenciesUtil.updateChecksum(isUpToDateCheck = true)
+        KotlinTestsDependenciesUtil.updateChecksums(isUpToDateCheck = true)
         generateK2Tests(isUpToDateCheck = true)
     }
 }

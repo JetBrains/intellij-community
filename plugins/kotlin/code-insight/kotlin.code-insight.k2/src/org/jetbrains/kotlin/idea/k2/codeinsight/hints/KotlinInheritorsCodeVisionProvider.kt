@@ -16,8 +16,9 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isInheritable
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
-import org.jetbrains.kotlin.idea.searching.inheritors.findAllInheritors
-import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
+import org.jetbrains.kotlin.idea.searching.inheritors.LimitedCountingProcessor
+import org.jetbrains.kotlin.idea.searching.inheritors.processAllInheritors
+import org.jetbrains.kotlin.idea.searching.inheritors.processAllOverridings
 import org.jetbrains.kotlin.idea.statistics.KotlinCodeVisionUsagesCollector
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -81,14 +82,26 @@ class KotlinInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
 
     private fun getClassInheritors(element: KtClass): Int {
         return CachedValuesManager.getCachedValue(element, CachedValueProvider {
-            val overrides = if (element.isInheritable()) element.findAllInheritors().take(COUNTING_LIMIT + 1).count() else 0
+            val overrides = if (element.isInheritable()) {
+                val countingProcessor = LimitedCountingProcessor(COUNTING_LIMIT + 1)
+                element.processAllInheritors(countingProcessor)
+                countingProcessor.getCount()
+            } else {
+                0
+            }
             CachedValueProvider.Result(overrides, OuterModelsModificationTrackerManager.getTracker(element.project))
         })
     }
 
     private fun getCallableInheritors(element: KtCallableDeclaration): Int {
         return CachedValuesManager.getCachedValue(element, CachedValueProvider {
-            val overrides = if (element.isOverridable()) element.findAllOverridings().take(COUNTING_LIMIT + 1).count() else 0
+            val overrides = if (element.isOverridable()) {
+                val countingProcessor = LimitedCountingProcessor(COUNTING_LIMIT + 1)
+                element.processAllOverridings(countingProcessor)
+                countingProcessor.getCount()
+            } else {
+                0
+            }
             CachedValueProvider.Result(overrides, OuterModelsModificationTrackerManager.getTracker(element.project))
         })
     }

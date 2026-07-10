@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.java.codeInspection;
 
@@ -455,6 +455,12 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
+
+  public void testJSpecifyUnboundedWildcardReturnOverride() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
   
   public void testNullableParameterOverride() {
     doTest();
@@ -581,6 +587,50 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
+  }
+
+  public void testJSpecifySameInstanceGenericSimple() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifySameInstanceGenericOptionOn() {
+    myInspection.REPORT_UNSPECIFIED_BOUND_CONFLICTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    addNullnessUnspecified();
+    doTest();
+  }
+
+  public void testJSpecifySameInstanceGenericOptionOff() {
+    myInspection.REPORT_UNSPECIFIED_BOUND_CONFLICTS = false;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    addNullnessUnspecified();
+    doTest();
+  }
+
+  public void testJSpecifySameInstanceGenericShadow() {
+    myInspection.REPORT_UNSPECIFIED_BOUND_CONFLICTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    addNullnessUnspecified();
+    doTest();
+  }
+
+  public void testJSpecifySameInstanceGenericInheritedBound() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  private void addNullnessUnspecified() {
+    myFixture.addClass("""
+                         package org.jspecify.annotations;
+                         import java.lang.annotation.*;
+                         
+                         @Target(ElementType.TYPE_USE) public @interface NullnessUnspecified { }""");
   }
   
   public void testNoOverrideWarningOnParameterization() {

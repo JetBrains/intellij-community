@@ -24,6 +24,7 @@ import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
+import com.intellij.execution.util.ProgramParametersUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.module.Module
@@ -89,6 +90,7 @@ import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.TestStdErr
 import jetbrains.buildServer.messages.serviceMessages.TestStdOut
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import java.io.File
@@ -350,8 +352,10 @@ data class ConfigurationTarget(
   /**
    * Validates configuration and throws exception if target is invalid
    */
-  fun checkValid() {
-    if (targetType != PyRunTargetVariant.CUSTOM && target.isEmpty()) {
+  @Internal
+  @JvmOverloads
+  fun checkValid(targetRequired: Boolean = true) {
+    if (targetRequired && targetType != PyRunTargetVariant.CUSTOM && target.isEmpty()) {
       throw RuntimeConfigurationWarning(PyBundle.message("python.testing.target.not.provided"))
     }
     if (targetType == PyRunTargetVariant.PYTHON && !isWellFormed()) {
@@ -369,7 +373,7 @@ data class ConfigurationTarget(
     when (targetType) {
       PyRunTargetVariant.CUSTOM -> emptyList()
       PyRunTargetVariant.PYTHON -> getArgumentsForPythonTarget(configuration)
-      PyRunTargetVariant.PATH -> listOf("--path", target.trim())
+      PyRunTargetVariant.PATH -> expandPathTarget(configuration)?.let { listOf("--path", it) } ?: emptyList()
     }
 
   fun generateArgumentsLine(
@@ -379,8 +383,16 @@ data class ConfigurationTarget(
     when (targetType) {
       PyRunTargetVariant.CUSTOM -> emptyList()
       PyRunTargetVariant.PYTHON -> getArgumentsForPythonTarget(configuration).map(::constant)
-      PyRunTargetVariant.PATH -> listOf(constant("--path"), targetPath(Path.of(target.trim())))
+      PyRunTargetVariant.PATH -> expandPathTarget(configuration)?.let { listOf(constant("--path"), targetPath(Path.of(it))) } ?: emptyList()
     }
+
+  /**
+   * Path target as entered by the user may contain path macros (e.g. `$ProjectFileDir$`), so expand them before
+   * passing the path to the test runner (PY-90680).
+   */
+  private fun expandPathTarget(configuration: PyAbstractTestConfiguration): String? =
+    target.trim().takeIf { it.isNotEmpty() }
+      ?.let { ProgramParametersUtil.expandPathAndMacros(it, configuration.module, configuration.project) }
 
   private fun getArgumentsForPythonTarget(configuration: PyAbstractTestConfiguration): List<String> = runReadAction ra@{
     val element = asPsiElement(configuration) ?: throw ExecutionException(PyBundle.message("python.testing.cant.resolve", target))
@@ -530,6 +542,9 @@ abstract class PyAbstractTestConfiguration(
 
   val testFrameworkName: String = testFactory.name
 
+  @get:Internal
+  protected open val isTargetRequired: Boolean = true
+
 
   fun isTestClassRequired(): ThreeState {
     val sdk = sdk ?: return ThreeState.UNSURE
@@ -573,7 +588,7 @@ abstract class PyAbstractTestConfiguration(
 
   override fun checkConfiguration() {
     super.checkConfiguration()
-    target.checkValid()
+    target.checkValid(isTargetRequired)
   }
 
 

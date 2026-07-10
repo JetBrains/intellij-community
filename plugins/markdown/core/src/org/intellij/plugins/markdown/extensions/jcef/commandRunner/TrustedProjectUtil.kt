@@ -5,8 +5,10 @@ import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsDialog
 import com.intellij.openapi.project.Project
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.jetbrains.annotations.ApiStatus
 
-internal object TrustedProjectUtil {
+@ApiStatus.Internal
+object TrustedProjectUtil {
   /**
    * Executes [block] only if [project] is trusted.
    * If it's trusted state is unknown, will show trusted project confirmation dialog and

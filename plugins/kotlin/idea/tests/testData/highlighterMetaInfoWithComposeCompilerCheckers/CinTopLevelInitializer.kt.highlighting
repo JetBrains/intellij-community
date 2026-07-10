@@ -3,4 +3,4 @@
 // ALLOW_ERRORS
 import androidx.compose.runtime.*
 @Composable fun C(): Int { return 123 }
-val ncProp: Int = <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_INVOCATION] @Composable invocations can only happen from the context of a @Composable function'")!>C<!>()
+val ncProp: Int = <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_INVOCATION]'")!>C<!>()

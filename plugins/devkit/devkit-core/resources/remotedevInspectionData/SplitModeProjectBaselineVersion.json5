@@ -1,0 +1,10 @@
+// The file carries the current project baseline version for Split Mode Compatibility safe-push checks.
+// Increase currentProjectBaselineVersion only when incremental Split Mode Compatibility tests incorrectly
+// report pre-existing violations after large refactorings.
+// Changing this value is a legal bypass: the affected safe push may skip the incremental Split Mode
+// Compatibility tests for that run, allowing the refactoring to proceed while the baseline catches up.
+// Do not use it for real new violations. Fix those instead; see Split Mode documentation IJPL-A-632.
+// Contact the RemDev team in #ij-remote-dev if unsure.
+{
+    "currentProjectBaselineVersion": 3
+}

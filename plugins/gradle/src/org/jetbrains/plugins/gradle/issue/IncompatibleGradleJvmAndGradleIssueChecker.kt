@@ -12,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import java.io.File
 import java.util.function.Consumer
@@ -40,7 +39,7 @@ class IncompatibleGradleJvmAndGradleIssueChecker : GradleIssueChecker {
   }
 
   override fun check(issueData: GradleIssueData): BuildIssue? {
-    val rootCause = getRootCauseAndLocation(issueData.error).first
+    val rootCause = issueData.failure.rootCause
     val gradleVersion = getGradleVersion(issueData)
     val javaVersion = getJavaVersion(issueData, gradleVersion)
 
@@ -65,8 +64,9 @@ class IncompatibleGradleJvmAndGradleIssueChecker : GradleIssueChecker {
   }
 
   private fun getGradleVersion(issueData: GradleIssueData): GradleVersion? {
-    if (issueData.buildEnvironment != null) {
-      return GradleVersion.version(issueData.buildEnvironment.gradle.gradleVersion)
+    val buildEnvironment = issueData.buildEnvironment
+    if (buildEnvironment != null) {
+      return GradleVersion.version(buildEnvironment.gradle.gradleVersion)
     }
     return null
   }
@@ -80,37 +80,38 @@ class IncompatibleGradleJvmAndGradleIssueChecker : GradleIssueChecker {
         return JavaVersion.parse(it)
       }
     }
-    if (issueData.buildEnvironment != null) {
-      return ExternalSystemJdkUtil.getJavaVersion(issueData.buildEnvironment.java.javaHome.path)
+    val buildEnvironment = issueData.buildEnvironment
+    if (buildEnvironment != null) {
+      return ExternalSystemJdkUtil.getJavaVersion(buildEnvironment.java.javaHome.path)
     }
     return null
   }
 
-  private fun isUnsupportedClassVersionIssue(rootCause: Throwable): Boolean {
-    return rootCause.javaClass.simpleName == UnsupportedClassVersionError::class.java.simpleName
+  private fun isUnsupportedClassVersionIssue(rootCause: GradleIssueFailure): Boolean {
+    return rootCause.className == UnsupportedClassVersionError::class.java.name
   }
 
-  private fun isUnsupportedJavaRuntimeIssue(rootCause: Throwable): Boolean {
-    return rootCause.javaClass.simpleName == UnsupportedJavaRuntimeException::class.java.simpleName
+  private fun isUnsupportedJavaRuntimeIssue(rootCause: GradleIssueFailure): Boolean {
+    return rootCause.className == UnsupportedJavaRuntimeException::class.java.name
   }
 
   /**
    * Gradle versions less than 4.7 do not support JEP-322 (Java starting with JDK 10-ea build 36),
    * see https://github.com/gradle/gradle/issues/4503
    */
-  private fun isCouldNotDetermineJavaIssue(rootCause: Throwable): Boolean {
-    val rootCauseText = rootCause.toString()
+  private fun isCouldNotDetermineJavaIssue(rootCause: GradleIssueFailure): Boolean {
+    val rootCauseText = rootCause.text
     if (rootCauseText.startsWith(COULD_NOT_DETERMINE_JAVA_USING_EXECUTABLE_PREFIX)) {
       return true
     }
-    if (rootCause.message == COULD_NOT_DETERMINE_JAVA_VERSION_MESSAGE) {
+    if (rootCause.messageOrDescription == COULD_NOT_DETERMINE_JAVA_VERSION_MESSAGE) {
       return true
     }
     return false
   }
 
-  private fun detectJavaVersionIfCouldNotDetermineJavaIssue(rootCause: Throwable): JavaVersion? {
-    val rootCauseText = rootCause.toString()
+  private fun detectJavaVersionIfCouldNotDetermineJavaIssue(rootCause: GradleIssueFailure): JavaVersion? {
+    val rootCauseText = rootCause.text
     val javaExeCandidate = rootCauseText.substringAfter(COULD_NOT_DETERMINE_JAVA_USING_EXECUTABLE_PREFIX).trimEnd('.')
     val javaHome = File(javaExeCandidate).parentFile?.parentFile
     if (javaHome != null && javaHome.isDirectory) {

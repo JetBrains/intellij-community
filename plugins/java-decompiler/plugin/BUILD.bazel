@@ -187,6 +187,8 @@ jvm_library(
         "//platform/structure-view-impl:structureView_test_lib",
         "//java/java-frontback-psi-api:frontback-psi",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.decompiler.tests` end

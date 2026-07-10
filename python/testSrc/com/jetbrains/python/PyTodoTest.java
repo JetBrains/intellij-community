@@ -1,12 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.editor.TodoItemsTestCase;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.psi.search.TodoAttributesUtil;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.testFramework.PlatformTestUtil;
 
+@Subsystems.IDE
+@Layers.Functional
 public class PyTodoTest extends TodoItemsTestCase {
 
   public void testTodo() {

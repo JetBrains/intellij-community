@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.icons.impl.intellij.tests`
+
 ### auto-generated section `build intellij.platform.icons.impl.intellij.tests` start
 
 jvm_library(
@@ -68,6 +77,10 @@ jvm_library(
         "//platform/icons:icons_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.icons.impl.intellij.tests` end
@@ -80,11 +93,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.icons.impl.intellij.tests` end
-
-### auto-generated section `test intellij.platform.icons.impl.intellij.tests` start
-
-jps_test(
-    name = "tests_test",
-    runtime_deps = [":tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.icons.impl.intellij.tests` end

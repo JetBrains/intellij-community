@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -8,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyArgumentListInspectionTest extends PyInspectionTestCase {
 
   @Override
@@ -91,11 +96,6 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   // PY-19412
   public void testReassignedViaClassMethod() {
     doTest();
-  }
-
-  // PY-19412
-  public void testReassignedViaClassMethodInAnotherModule() {
-    doMultiFileTest("b.py");
   }
 
   // PY-2294

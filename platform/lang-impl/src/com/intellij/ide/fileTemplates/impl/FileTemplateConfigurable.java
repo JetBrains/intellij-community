@@ -7,6 +7,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -270,7 +271,7 @@ public final class FileTemplateConfigurable implements Configurable, Configurabl
   }
 
   private @NotNull Document createDocument(@Nullable PsiFile file) {
-    Document document = file != null ? PsiDocumentManager.getInstance(file.getProject()).getDocument(file) : null;
+    Document document = file != null ? ReadAction.computeBlocking(() -> PsiDocumentManager.getInstance(file.getProject()).getDocument(file)) : null;
     return document != null ? document : EditorFactory.getInstance().createDocument(myTemplate == null ? "" : myTemplate.getText());
   }
 
@@ -397,7 +398,7 @@ public final class FileTemplateConfigurable implements Configurable, Configurabl
     final FileType fileType = myVelocityFileType;
     if (fileType == FileTypes.UNKNOWN) return null;
 
-    final PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText(name + ".txt.ft", fileType, text, 0, true);
+    final PsiFile file = ReadAction.computeBlocking(() -> PsiFileFactory.getInstance(myProject).createFileFromText(name + ".txt.ft", fileType, text, 0, true));
     Properties properties = new Properties();
     properties.putAll(FileTemplateManager.getInstance(myProject).getDefaultProperties());
     properties.setProperty(FileTemplate.ATTRIBUTE_NAME, IdeBundle.message("name.variable"));

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.rename.handlers
 
+import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
@@ -38,7 +39,7 @@ class RenameKotlinImplicitLambdaParameter : KotlinVariableInplaceRenameHandler()
             command = { itExpression.createExplicitLambdaParameterByImplicitOne(editor) },
         ) ?: return
 
-        doRename(explicitItParameter, editor, dataContext)
+        doRename(explicitItParameter, editor, DataManager.getInstance().getDataContext(editor.component))
     }
 
     private fun findElementToRename(

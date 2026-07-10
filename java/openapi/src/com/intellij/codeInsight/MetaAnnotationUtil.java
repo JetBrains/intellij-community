@@ -127,9 +127,9 @@ public abstract class MetaAnnotationUtil {
       .toList();
   }
 
-  private static @NotNull Map<Pair<String, Boolean>, Collection<String>> getAllAnnotationClassNamesMap(@NotNull Module module) {
+  private static @NotNull Map<Pair<String, Boolean>, @Unmodifiable Collection<String>> getAllAnnotationClassNamesMap(@NotNull Module module) {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
-      Map<Pair<String, Boolean>, Collection<String>> map = ConcurrentFactoryMap.createMap(key -> {
+      Map<Pair<String, Boolean>, @Unmodifiable Collection<String>> map = ConcurrentFactoryMap.createMap(key -> {
         return toNames(findAnnotationClasses(module, key.getFirst(), key.getSecond()));
       });
 

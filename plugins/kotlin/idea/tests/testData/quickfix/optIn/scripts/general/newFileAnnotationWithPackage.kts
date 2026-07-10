@@ -7,7 +7,7 @@
 // ACTION: Opt in for 'A' on statement
 // ACTION: Propagate 'A' opt-in requirement to 'g'
 // RUNTIME_WITH_SCRIPT_RUNTIME
-// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@p.A' or '@OptIn(p.A::class)'
+// K2_ERROR: OPT_IN_USAGE_ERROR
 package p
 
 @RequiresOptIn

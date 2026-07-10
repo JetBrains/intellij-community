@@ -18,6 +18,7 @@
     <module name="intellij.properties.backend"/>
     <module name="intellij.properties.backend.psi"/>
     <module name="intellij.spellchecker"/>
+    <module name="intellij.xml.analysis"/>
     <module name="intellij.xml.dom.impl"/>
     <module name="intellij.xml.impl"/>
     <module name="intellij.xml.parser"/>
@@ -158,14 +159,20 @@
                  description="Keeps XML split-mode inspections enabled in plugin.xml files that are indirectly frontend-only, backend-only, or mixed."/>
     <registryKey key="devkit.split.mode.report.implicit.module.kind" defaultValue="true"
                  description="Enables reporting errors about modules that effectively work only on frontend or backend, but do not explicitly state that fact via platform dependency"/>
+    <registryKey key="devkit.split.mode.custom.icons" defaultValue="false"
+                 description="Enables deferred accurate split-mode icon resolution for DevKit descriptor and directory icons."/>
+    <registryKey key="devkit.split.mode.inlay.plugin.descriptor.kind" defaultValue="true"
+                 description="Shows inline split-mode compatibility hints for DevKit plugin descriptors."/>
     <registryKey key="devkit.split.mode.run.jps.to.bazel.in.quick.fix" defaultValue="false"
                  description="Automatically run JPS to Bazel conversion after applying a fix that touches runtime/compile dependencies"/>
+    <registryKey key="devkit.split.mode.add.to.exclusions.quick.fix.enabled" defaultValue="false"
+                 description="Enables the DevKit split-mode quick fix that suppresses a single violation through DevKitSplitModeInspectionExclusions.json."/>
 
     <registryKey key="devkit.split.mode.analysis.api.restrictions.source" defaultValue="[bundled*|project|project-or-bundled]"
-                 description="Source of ApiRestrictions.json for DevKit split-mode inspections."
+                 description="Source of ApiRestrictions.json5 for DevKit split-mode inspections."
                  restartRequired="true"/>
     <registryKey key="devkit.split.mode.analysis.predefined.module.kinds.source" defaultValue="[bundled*|project|project-or-bundled]"
-                 description="Source of PredefinedModuleKinds.json for DevKit split-mode inspections."
+                 description="Source of PredefinedModuleKinds.json5 for DevKit split-mode inspections."
                  restartRequired="true"/>
     <registryKey key="devkit.split.mode.qodana.analysis.scope.source" defaultValue="[bundled|project*|project-or-bundled]"
                  description="Source of SplitModeQodanaAnalysisScope.json for DevKit split-mode inspections."
@@ -779,6 +786,15 @@
                                     implementationClass="org.jetbrains.idea.devkit.references.DevKitRelatedPropertiesProvider"/>
     <codeInsight.lineMarkerProvider language="XML"
                                     implementationClass="org.jetbrains.idea.devkit.navigation.DescriptorsIncludingContentModuleLineMarkerProvider"/>
+    <codeInsight.declarativeInlayProvider
+      providerId="devkit.plugin.descriptor.split.mode.kind"
+      bundle="messages.DevKitBundle"
+      nameKey="inlay.split.mode.module.kind.name"
+      descriptionKey="inlay.split.mode.module.kind.description"
+      group="OTHER_GROUP"
+      implementationClass="org.jetbrains.idea.devkit.navigation.DescriptorSplitModeInlayHintsProvider"
+      isEnabledByDefault="true"
+      language="XML"/>
     <psi.referenceContributor
       language="Properties"
       implementation="org.jetbrains.idea.devkit.references.MessageBundleReferenceContributor"/>
@@ -794,7 +810,8 @@
                      shortName="PluginKeysAreProhibitedInPlatformRegistry"
                      implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesInspection"/>
 
-    <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
+    <workspaceModel.customImlComponentNameContributor
+      implementation="org.jetbrains.idea.devkit.build.PluginBuildConfigurationImlComponentNameContributor"/>
     <backgroundPostStartupActivity
       implementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IntelliJSdkExternalAnnotationsUpdateStartupActivity"/>
     <java.externalAnnotation.locationProvider

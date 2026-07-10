@@ -14,7 +14,7 @@ import com.intellij.platform.ide.nonModalWelcomeScreen.backend.WelcomeScreenFeat
 import com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType
 import com.intellij.pycharm.community.ide.impl.miscProject.PyMiscService
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscScriptFileType
-import com.intellij.python.common.welcomeScreen.WelcomeScreenFeatureIds
+import com.intellij.python.community.common.welcomeScreen.WelcomeScreenFeatureIds
 import com.intellij.util.application
 
 internal class PyNewScriptWelcomeScreenFeature : WelcomeScreenFeatureBackend() {

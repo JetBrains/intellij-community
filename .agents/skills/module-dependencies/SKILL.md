@@ -23,6 +23,22 @@ The repository uses a hybrid build system:
 - **Bazel (BUILD files)**: Auto-generated from *.iml files
 - **Generator**: run `build/jpsModelToBazel.cmd` after changing .iml files
 
+## JPS Module Registration Helper
+
+When creating or editing a JPS module `.iml`, use the helper instead of hand-editing project module lists:
+
+```bash
+bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof
+```
+
+The helper:
+- registers the module in `.idea/modules.xml`
+- also registers `community/...` modules in `community/.idea/modules.xml`
+- inserts entries in the canonical order: `.iml` basename without the `.iml` suffix, matching `org.jetbrains.intellij.build.ModulesXml`
+- removes trailing line breaks from the listed `.iml` files when `--fix-iml-eof` is passed
+
+Use `bun build/jps-module.mjs check <path-to-iml> --fix-iml-eof` to verify without writing.
+
 ## Running the IML-to-Bazel Generator
 
 To manually run the converter that generates Bazel BUILD files from .iml files:
@@ -82,11 +98,16 @@ jps_test(
 ... (let generator handle the build section)
 ```
 
+## Content Modules and Wrapper Plugins
+
+Product layouts can include content modules directly. If production runtime already gets a dependency from a content module in the product layout, that content-module dependency can be enough and does not automatically require adding a wrapper plugin dependency to a production `.iml` or plugin descriptor.
+
+Test plugin resolution is different because tests often do not run with the full production product layout or flat classpath. If a test module loads a plugin whose dependencies include content modules owned by a wrapper plugin, add the wrapper plugin as a test/runtime dependency in the test module `.iml` instead of broadening the production module dependency. For example, a test that needs Problems View content modules may need `intellij.platform.problemView.plugin` as a runtime dependency even when the production module only depends on Problems View content modules.
+
 ## Important Notes
 
-⚠️ **DO NOT manually edit .iml files via JetBrains MCP** - The IDE's automatic converter runs concurrently and can interfere with edits.
-
 When you need to fix missing dependencies:
-1. Use the standard `Edit` tool (not `mcp__jetbrains__replace_text_in_file`) for .iml files
-2. The converter will automatically update BUILD.bazel files
-3. Verify compilation with `./bazel-build-all.cmd`
+1. Edit the `.iml` with the repo-approved edit tool.
+2. Run `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof` for every changed module file.
+3. Run `./build/jpsModelToBazel.cmd` so generated `BUILD.bazel` files match the `.iml` source of truth.
+4. Verify compilation or tests for the affected module.

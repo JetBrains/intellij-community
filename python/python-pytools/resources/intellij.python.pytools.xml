@@ -9,6 +9,9 @@
     <extensionPoint qualifiedName="com.intellij.python.pytools.pyTool"
                     interface="com.intellij.python.pytools.PyTool"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.python.pytools.pyToolManagerProvider"
+                    interface="com.intellij.python.pytools.PyToolManagerProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

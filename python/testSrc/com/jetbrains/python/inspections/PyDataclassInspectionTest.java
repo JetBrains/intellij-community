@@ -3,10 +3,15 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.idea.TestFor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   // PY-27398
@@ -452,6 +457,18 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   public void testDataclassMissingHandlingMultifile() {
     doMultiFileTest();
+  }
+
+  @TestFor(issues = "PY-89637")
+  public void testPydanticValidateByAliasAndNameFalseInspection() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTest();
+  }
+
+  @TestFor(issues = "PY-89637")
+  public void testPydanticValidateByAliasAndNameFalseInModelConfigInspection() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTest();
   }
 
   @TestFor(issues="PY-89180")

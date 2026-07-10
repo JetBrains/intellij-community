@@ -206,6 +206,8 @@ jvm_library(
         "//jps/model-api:model_test_lib",
         "//jps/model-impl",
         "//jps/model-impl:model-impl_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.relaxng.tests` end

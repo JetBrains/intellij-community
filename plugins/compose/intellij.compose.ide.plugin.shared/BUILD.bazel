@@ -44,7 +44,8 @@ jvm_library(
         "//platform/util",
         "//platform/util:util-ui",
         "//plugins/kotlin/base/indices",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+        "//plugins/kotlin/references",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
         "@lib//:kotlinc-kotlin-compiler-common-provided",
         "@lib//:kotlinc-analysis-api-provided",
         "//java/java-psi-api:psi",
@@ -52,6 +53,8 @@ jvm_library(
         "//platform/lang-impl",
         "//plugins/kotlin/code-insight/utils",
         "//plugins/kotlin/base/psi",
+        "//plugins/kotlin/base/facet",
+        "//plugins/kotlin/base/util",
     ],
 )
 
@@ -84,7 +87,8 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//platform/util:util-ui_test_lib",
         "//plugins/kotlin/base/indices:indices_test_lib",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
+        "//plugins/kotlin/references:references_test_lib",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",
         "@lib//:kotlinc-kotlin-compiler-common-provided",
         "@lib//:kotlinc-analysis-api-provided",
         "//java/java-psi-api:psi_test_lib",
@@ -92,6 +96,8 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//plugins/kotlin/code-insight/utils:utils_test_lib",
         "//plugins/kotlin/base/psi:psi_test_lib",
+        "//plugins/kotlin/base/facet:facet_test_lib",
+        "//plugins/kotlin/base/util:util_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.shared` end
@@ -191,6 +197,8 @@ jvm_library(
         "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
         "//plugins/kotlin/base/compiler-configuration",
         "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.shared.tests` end

@@ -30,7 +30,7 @@ fun ExtractableCodeDescriptor.findDuplicates(): List<DuplicateInfo<KaType>> {
                     }
 
                     controlFlow?.let {
-                        DuplicateInfo(range, it, parameters.map { param ->
+                        DuplicateInfo(range, it, parameters.filterNot { it.contextParameter }.map { param ->
                             match.substitution.getValue(param.originalDescriptor).text!!
                         })
                     }

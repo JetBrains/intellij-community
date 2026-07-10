@@ -361,13 +361,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
   }
 
   public static boolean isNullabilityAnnotationApplicable(@NotNull PsiModifierListOwner owner) {
-    if (owner instanceof PsiMethod method) {
-      PsiType returnType = method.getReturnType();
-      return returnType != null && !(returnType instanceof PsiPrimitiveType);
-    }
-    else if (owner instanceof PsiVariable var) {
-      return !(var.getType() instanceof PsiPrimitiveType);
-    }
-    return !(owner instanceof PsiClass);
+    PsiType type = PsiUtil.getTypeByPsiElement(owner);
+    return type != null && !(type instanceof PsiPrimitiveType);
   }
 }

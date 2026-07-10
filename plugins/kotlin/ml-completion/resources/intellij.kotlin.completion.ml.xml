@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.mlCompletion">
+<idea-plugin>
   <dependencies>
     <plugin id="com.intellij.completion.ml.ranking"/>
   </dependencies>

@@ -1,6 +1,12 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.python.terminal.shared` start
+
+create_kotlinc_options(
+    name = "custom_shared",
+    x_context_parameters = True,
+)
 
 jvm_library(
     name = "shared",
@@ -12,6 +18,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_shared",
     module_name = "intellij.python.terminal.shared",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -20,12 +27,23 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//platform/kernel/rpc",
+        "//platform/kernel/shared:kernel",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//platform/platform-impl/rpc",
+        "//platform/execution",
+        "//platform/project/shared:project",
+        "//platform/remote-topics/shared:rpc-topics",
+        "//platform/execution-impl",
         "@lib//:kotlin-stdlib",
         "@lib//:jetbrains-annotations",
         "//platform/platform-api:ide",
         "//platform/projectModel-api:projectModel",
         "//platform/core-api:core",
         "//platform/platform-impl:ide-impl",
+        "//plugins/terminal",
+        "//platform/eel-provider",
     ],
 )
 
@@ -36,15 +54,27 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_shared",
     module_name = "intellij.python.terminal.shared",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
         ":shared",
+        "//platform/kernel/rpc:rpc_test_lib",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//platform/project/shared:project_test_lib",
+        "//platform/remote-topics/shared:rpc-topics_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
         "//platform/platform-api:ide_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//plugins/terminal:terminal_test_lib",
+        "//platform/eel-provider:eel-provider_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.terminal.shared` end

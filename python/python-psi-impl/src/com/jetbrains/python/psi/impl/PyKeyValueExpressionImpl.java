@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyKeyValueExpression;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -27,7 +28,7 @@ public class PyKeyValueExpressionImpl extends PyElementImpl implements PyKeyValu
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyType keyType = context.getType(getKey());
     final PyExpression value = getValue();
-    PyType valueType = null;
+    PyType valueType = PyAnyType.getUnknown();
     if (value != null) {
       valueType = context.getType(value);
     }

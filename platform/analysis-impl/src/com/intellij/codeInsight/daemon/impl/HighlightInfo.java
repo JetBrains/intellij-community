@@ -11,6 +11,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.IntentionActionWithOptions;
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.CustomSuppressableInspectionTool;
 import com.intellij.codeInspection.ExternalSourceProblemGroup;
@@ -285,6 +286,7 @@ public class HighlightInfo implements Segment {
       if (future != null && future.isDone()) {
         try {
           List<IntentionActionDescriptor> coll = future.get();
+          //noinspection ConstantValue
           assert coll != null : future +"; "+future.getClass()+"; desc="+desc;
           return List.copyOf(coll);
         }
@@ -520,13 +522,10 @@ public class HighlightInfo implements Segment {
     if (forcedTextAttributes != null) {
       return forcedTextAttributes;
     }
-
-    EditorColorsScheme colorsScheme = getColorsScheme(editorColorsScheme);
-
+    EditorColorsScheme colorsScheme = notNullScheme(editorColorsScheme);
     if (forcedTextAttributesKey != null) {
       return colorsScheme.getAttributes(forcedTextAttributesKey);
     }
-
     return getAttributesByType(element, type, colorsScheme);
   }
 
@@ -544,12 +543,11 @@ public class HighlightInfo implements Segment {
 
   @Nullable
   final Color getErrorStripeMarkColor(@NotNull PsiElement element,
-                                @Nullable("when null, the global scheme will be used") EditorColorsScheme colorsScheme) {
+                                      @Nullable("when null, the global scheme will be used") EditorColorsScheme colorsScheme) {
     if (forcedTextAttributes != null) {
       return forcedTextAttributes.getErrorStripeColor();
     }
-
-    EditorColorsScheme scheme = getColorsScheme(colorsScheme);
+    EditorColorsScheme scheme = notNullScheme(colorsScheme);
     if (forcedTextAttributesKey != null) {
       TextAttributes forcedTextAttributes = scheme.getAttributes(forcedTextAttributesKey);
       if (forcedTextAttributes != null) {
@@ -583,7 +581,7 @@ public class HighlightInfo implements Segment {
     return attributes == null ? null : attributes.getErrorStripeColor();
   }
 
-  private static @NotNull EditorColorsScheme getColorsScheme(@Nullable EditorColorsScheme customScheme) {
+  private static @NotNull EditorColorsScheme notNullScheme(@Nullable EditorColorsScheme customScheme) {
     return customScheme != null ? customScheme : EditorColorsManager.getInstance().getGlobalScheme();
   }
 
@@ -1473,7 +1471,6 @@ public class HighlightInfo implements Segment {
         // recompute only if necessary
         List<IntentionActionDescriptor> result =
           computerToResult.computeIfAbsent(computer, _ -> doComputeLazyQuickFixes(document, project, desc.psiModificationStamp(), computer));
-        assert result != null;
         future = CompletableFuture.completedFuture(result);
         return new LazyFixDescription(desc.fixesComputer(), desc.psiModificationStamp(), future);
       });
@@ -1488,8 +1485,7 @@ public class HighlightInfo implements Segment {
                                                                   @NotNull Consumer<? super QuickFixActionRegistrar> computation) {
     if (project.isDisposed()
         || PsiDocumentManager.getInstance(project).isUncommited(document)
-        || PsiManager.getInstance(project).getModificationTracker().getModificationCount() != oldPsiModificationStamp
-    ) {
+        || PsiManager.getInstance(project).getModificationTracker().getModificationCount() != oldPsiModificationStamp) {
       return List.of();
     }
     assertIntentionActionDescriptorsAreRangeMarkerBased(getIntentionActionDescriptors(offsetStore));
@@ -1514,6 +1510,12 @@ public class HighlightInfo implements Segment {
     };
     computation.accept(registrarDelegate);
     assertIntentionActionDescriptorsAreRangeMarkerBased(getIntentionActionDescriptors(offsetStore));
+    fireQuickFixesAvailable(lazyDescriptors, project, document);
+    if (!lazyDescriptors.isEmpty()) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("computeQuickFixesSynchronously finished: " + lazyDescriptors);
+      }
+    }
     return lazyDescriptors;
   }
 
@@ -1533,12 +1535,12 @@ public class HighlightInfo implements Segment {
     assertIntentionActionDescriptorsAreRangeMarkerBased(getIntentionActionDescriptors(offsetStore));
     ThreadingAssertions.assertBackgroundThread();
     ThreadingAssertions.assertReadAccess();
-    AtomicReference<ProgressIndicator> progressIndicator = new AtomicReference<>(new DaemonProgressIndicator());
+    AtomicReference<ProgressIndicator> progressIndicator = new AtomicReference<>();
     updateOffsetStore(oldStore -> {
-      if (!progressIndicator.get().isCanceled()) {
-        progressIndicator.get().cancel(); // cancel the previous computations started before but not stored in the "future" field because the CAS failed
+      ProgressIndicator oldIndicator = progressIndicator.getAndSet(new DaemonProgressIndicator());
+      if (oldIndicator != null && !oldIndicator.isCanceled()) {
+        oldIndicator.cancel(); // cancel the previous computations started before but not stored in the "future" field because the CAS failed
       }
-      progressIndicator.set(new DaemonProgressIndicator());
       if (oldStore == TOMB) {
         return oldStore;
       }
@@ -1546,13 +1548,23 @@ public class HighlightInfo implements Segment {
         Future<List<IntentionActionDescriptor>> future = description.future();
         if (future == null) {
           Consumer<? super QuickFixActionRegistrar> computer = description.fixesComputer();
-          future = ReadAction.nonBlocking(() -> doComputeLazyQuickFixes(document, project, description.psiModificationStamp(), computer)).wrapProgress(progressIndicator.get()).submit(ForkJoinPool.commonPool());
+          future = ReadAction.nonBlocking(() -> doComputeLazyQuickFixes(document, project, description.psiModificationStamp(), computer))
+            .wrapProgress(progressIndicator.get())
+            .submit(ForkJoinPool.commonPool());
           return new LazyFixDescription(computer, PsiManager.getInstance(project).getModificationTracker().getModificationCount(), future);
         }
         return description;
       });
       return oldStore.withLazyQuickFixes(newLazyFixes);
     });
+  }
+
+  private void fireQuickFixesAvailable(@NotNull List<IntentionActionDescriptor> descriptors,
+                                       @NotNull Project project,
+                                       @NotNull Document document) {
+    if (!descriptors.isEmpty() && !project.isDisposed()) {
+      project.getMessageBus().syncPublisher(LazyQuickFixUpdater.TOPIC).quickFixesAvailable(this, document);
+    }
   }
 
   final void copyComputedLazyFixesTo(@NotNull HighlightInfo newInfo, @NotNull Document document) {

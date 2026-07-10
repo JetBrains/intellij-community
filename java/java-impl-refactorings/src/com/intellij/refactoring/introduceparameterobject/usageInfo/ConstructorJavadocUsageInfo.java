@@ -25,6 +25,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.refactoring.introduceparameterobject.JavaIntroduceParameterObjectClassDescriptor;
 import com.intellij.refactoring.util.FixableUsageInfo;
+import com.intellij.util.CommentUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -73,7 +74,9 @@ public class ConstructorJavadocUsageInfo extends FixableUsageInfo {
       }
 
       if (compatibleParamObjectConstructor != null) {
-        PsiDocComment psiDocComment = JavaPsiFacade.getElementFactory(myMethod.getProject()).createDocCommentFromText("/**\n*/");
+        PsiDocComment psiDocComment =
+          JavaPsiFacade.getElementFactory(myMethod.getProject()).createDocCommentFromText(CommentUtil.convertToDocComment(
+            myMethod.getContainingFile(), ""));
         psiDocComment =
           (PsiDocComment)compatibleParamObjectConstructor.addBefore(psiDocComment, compatibleParamObjectConstructor.getFirstChild());
 

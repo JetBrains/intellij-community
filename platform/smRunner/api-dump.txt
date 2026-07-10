@@ -600,6 +600,7 @@ c:com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 - hasTestSuites():Z
 - p:hideToolbar():V
 - isRunning():Z
+- scrollToRunningTest():V
 - selectAndNotify(com.intellij.execution.testframework.AbstractTestProxy):V
 - setFilter(com.intellij.execution.testframework.Filter):V
 com.intellij.execution.testframework.sm.runner.ui.TestProxyTreeSelectionListener

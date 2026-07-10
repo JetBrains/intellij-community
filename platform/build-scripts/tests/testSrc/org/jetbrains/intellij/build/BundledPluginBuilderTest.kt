@@ -110,6 +110,37 @@ class BundledPluginBuilderTest {
     }
   }
 
+  @Test
+  fun `dev mode plugin applicability uses requested target os`() {
+    val macOnlyPlugin = PluginLayout.pluginAuto(listOf("mac.only.plugin")) {
+      it.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.MACOS)
+    }
+    val applicationInfo = mock(ApplicationInfoProperties::class.java)
+    val context = mock(BuildContext::class.java)
+    `when`(applicationInfo.isEAP).thenReturn(false)
+    `when`(context.options).thenReturn(BuildOptions())
+    `when`(context.applicationInfo).thenReturn(applicationInfo)
+    `when`(context.isNightlyBuild).thenReturn(false)
+
+    assertThat(
+      isPluginApplicable(
+        bundledMainModuleNames = setOf(macOnlyPlugin.mainModule),
+        plugin = macOnlyPlugin,
+        osFamily = OsFamily.MACOS,
+        context = context,
+      )
+    ).isTrue()
+
+    assertThat(
+      isPluginApplicable(
+        bundledMainModuleNames = setOf(macOnlyPlugin.mainModule),
+        plugin = macOnlyPlugin,
+        osFamily = OsFamily.LINUX,
+        context = context,
+      )
+    ).isFalse()
+  }
+
   private fun createMinimalBundledPluginBuildState(): Pair<BuildContext, DistributionBuilderState> {
     val applicationInfo = mock(ApplicationInfoProperties::class.java)
     val context = mock(BuildContext::class.java)
@@ -148,6 +179,15 @@ class BundledPluginBuilderTest {
     }
   }
 
+  private fun isPluginApplicable(
+    bundledMainModuleNames: Set<String>,
+    plugin: PluginLayout,
+    osFamily: OsFamily,
+    context: BuildContext,
+  ): Boolean {
+    return isPluginApplicableMethod.invoke(null, bundledMainModuleNames, plugin, osFamily, context) as Boolean
+  }
+
   private data class OsSpecificTaskDescription(
     val dist: SupportedDistribution,
     val pluginModules: List<String>,
@@ -157,5 +197,16 @@ class BundledPluginBuilderTest {
     private val collectOsSpecificBundledPluginBuildTasksMethod: Method = Class
       .forName("org.jetbrains.intellij.build.impl.plugins.BundledPluginBuilderKt")
       .getDeclaredMethod("collectOsSpecificBundledPluginBuildTasks", List::class.java, Collection::class.java, BuildContext::class.java)
+
+    private val isPluginApplicableMethod: Method = Class
+      .forName("org.jetbrains.intellij.build.dev.PluginBuilderKt")
+      .getDeclaredMethod(
+        "isPluginApplicable",
+        Set::class.java,
+        PluginLayout::class.java,
+        OsFamily::class.java,
+        BuildContext::class.java,
+      )
+      .apply { isAccessible = true }
   }
 }

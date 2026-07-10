@@ -25,13 +25,13 @@ open class OrderBasedOperation(name: String, orderResolver: ValuesOrderResolver)
                               SimplePeekCallTraceInterpreter(),
                               orderResolver)
 
-class FilterOperation(name: String) : OrderBasedOperation(name, FilterResolver())
-class MappingOperation(name: String) : OrderBasedOperation(name, MapResolver())
-class FlatMappingOperation(name: String) : OrderBasedOperation(name, FlatMapResolver())
-class SortedOperation(name: String) : OrderBasedOperation(name, IdentityResolver())
+open class FilterOperation(name: String) : OrderBasedOperation(name, FilterResolver())
+open class MappingOperation(name: String) : OrderBasedOperation(name, MapResolver())
+open class FlatMappingOperation(name: String) : OrderBasedOperation(name, FlatMapResolver())
+open class SortedOperation(name: String) : OrderBasedOperation(name, IdentityResolver())
 
-class DistinctOperation(name: String, handlerFactory: (Int, IntermediateStreamCall, Dsl) -> IntermediateCallHandler)
+open class DistinctOperation(name: String, handlerFactory: (Int, IntermediateStreamCall, Dsl) -> IntermediateCallHandler)
   : IntermediateOperationBase(name, handlerFactory, DistinctCallTraceInterpreter(), DistinctResolver())
 
-class ConcatOperation(name: String, orderResolver: ValuesOrderResolver) : OrderBasedOperation(name, orderResolver)
-class CollapseOperation(name: String) : OrderBasedOperation(name, CollapseResolver())
+open class ConcatOperation(name: String, orderResolver: ValuesOrderResolver) : OrderBasedOperation(name, orderResolver)
+open class CollapseOperation(name: String) : OrderBasedOperation(name, CollapseResolver())

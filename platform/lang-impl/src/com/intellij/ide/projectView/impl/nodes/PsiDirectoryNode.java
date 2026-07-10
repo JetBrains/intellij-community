@@ -154,7 +154,8 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
         boolean shouldShowUrl = getSettings().isShowURL() && (parentValue instanceof Module || parentValue instanceof Project);
         data.setLocationString(ProjectViewDirectoryHelper.getInstance(project).getLocationString(psiDirectory,
                                                                                                  shouldShowUrl,
-                                                                                                 shouldShowSourcesRoot()));
+                                                                                                 shouldShowSourcesRoot(),
+                                                                                                 shouldShowModuleName()));
         setupIcon(data, psiDirectory);
 
         return;

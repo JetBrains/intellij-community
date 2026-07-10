@@ -10,7 +10,8 @@ import org.jetbrains.kotlin.analysis.api.components.isVisibleInClass
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.components.tryResolveCall
-import org.jetbrains.kotlin.analysis.api.components.usesContextSensitiveResolution
+import org.jetbrains.kotlin.analysis.api.expressions.contextSensitiveResolutionStatus
+import org.jetbrains.kotlin.analysis.api.resolution.KaContextSensitiveResolutionStatus
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -34,6 +35,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.isLocal
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.references.KDocReference
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -46,6 +49,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.resolution.KtResolvableCall
@@ -57,8 +61,8 @@ internal class ReferencedSymbol(val reference: KtReference, val symbol: KaSymbol
     }
 
     context(_: KaSession)
-    fun isResolvedWithImport(): Boolean {
-        if (definitelyNotImported) return false
+    fun needsImportsToResolve(): Boolean {
+        if (definitelyDoesNotNeedImport) return false
 
         val isNotAliased = symbol.name in reference.resolvesByNames
 
@@ -68,11 +72,10 @@ internal class ReferencedSymbol(val reference: KtReference, val symbol: KaSymbol
         return canBeResolvedViaImport(reference, symbol)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
-    private val definitelyNotImported: Boolean get() = when {
+    private val definitelyDoesNotNeedImport: Boolean get() = when {
         // context sensitive resolve does not require imports
-        reference.usesContextSensitiveResolution -> true
+        reference.resolvableWithContextSensitiveResolve -> true
 
         symbol.isLocal -> true
 
@@ -103,6 +106,25 @@ internal class ReferencedSymbol(val reference: KtReference, val symbol: KaSymbol
         }
     }
 }
+
+@OptIn(KaExperimentalApi::class)
+context(_: KaSession)
+private val KtReference.resolvableWithContextSensitiveResolve: Boolean
+    get() {
+        val simpleNameExpression = element as? KtSimpleNameExpression ?: return false
+
+        if (!simpleNameExpression.languageVersionSettings.supportsFeature(LanguageFeature.ContextSensitiveResolutionUsingExpectedType)) {
+            return false
+        }
+
+        return when (simpleNameExpression.contextSensitiveResolutionStatus) {
+            is KaContextSensitiveResolutionStatus.Used -> true
+            is KaContextSensitiveResolutionStatus.ImportCanBeRemoved -> true
+
+            else -> false
+        }
+    }
+
 
 /**
  * We want to skipp the calls which require implicit receiver to be dispatched.

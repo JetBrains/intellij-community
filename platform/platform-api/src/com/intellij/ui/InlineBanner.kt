@@ -208,6 +208,9 @@ open class InlineBanner private constructor(
     return this
   }
 
+  @ApiStatus.Internal
+  fun getCloseAction(): Runnable? = myCloseAction
+
   fun setCloseAction(action: Runnable): InlineBanner {
     myCloseAction = action
     return this

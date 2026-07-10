@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -50,6 +50,12 @@ public class NotNullFieldNotInitializedInspectionTest extends LightJavaCodeInsig
   }
   public void testSetupJunit() {
     myFixture.addClass("package junit.framework; public class TestCase {}");
+    doTest();
+  }
+
+  public void testNullableFieldWithBound() {
+    DataFlowInspectionTestCase.setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    DataFlowInspectionTestCase.addJSpecifyNullMarked(myFixture);
     doTest();
   }
 

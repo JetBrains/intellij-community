@@ -7,8 +7,6 @@ import com.jetbrains.fus.reporting.api.IEventGroupsFilterRules
 import com.jetbrains.fus.reporting.api.IGroupValidators
 import com.jetbrains.fus.reporting.api.RecorderDataValidationRule
 import com.jetbrains.fus.reporting.MetadataStorage
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -53,13 +51,13 @@ class CompositeValidationRulesStorage internal constructor(
     return metadataStorage.isUnreachable() && testRulesStorage.isUnreachable()
   }
 
-  override fun update(): Boolean {
+  override suspend fun update(): Boolean {
     return metadataStorage.update() && testRulesStorage.update()
   }
 
-  override suspend fun update(scope: CoroutineScope): Job = metadataStorage.update(scope)
+  override suspend fun scheduleUpdate(): Unit = metadataStorage.scheduleUpdate()
 
-  override fun reload() {
+  override suspend fun reload() {
     metadataStorage.reload()
     testRulesStorage.reload()
   }

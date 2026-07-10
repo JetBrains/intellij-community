@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.annotations.ApiStatus
@@ -10,13 +9,18 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.containingModule
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
+import org.jetbrains.kotlin.analysis.api.components.importableFqName
+import org.jetbrains.kotlin.analysis.api.components.isNullable
+import org.jetbrains.kotlin.analysis.api.components.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.components.type
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtContextParameterList
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtTypeReference
 
 /**
@@ -56,25 +60,20 @@ fun findTargetClassCandidates(declaration: KtCallableDeclaration): List<TargetCl
                 )
             )
         }
-        declaration.contextParametersList().mapNotNullTo(result) { contextParameter ->
-            contextParameter.typeReference?.let { typeReference ->
-                createCandidate(
-                    declaration = declaration,
-                    parameterName = contextParameter.name,
-                    typeReference = typeReference,
-                    kind = TargetClassCandidateKind.CONTEXT_PARAMETER,
-                    displayName = contextParameter.name ?: ANONYMOUS_DISPLAY_NAME,
-                )
-            }
-        }
-        declaration.valueParameters.mapNotNullTo(result) { valueParameter ->
-            valueParameter.typeReference?.let { typeReference ->
-                createCandidate(
-                    declaration = declaration,
-                    parameterName = valueParameter.name,
-                    typeReference = typeReference,
-                    kind = TargetClassCandidateKind.VALUE_PARAMETER,
-                    displayName = valueParameter.name ?: ANONYMOUS_DISPLAY_NAME,
+        for (ktParameter in declaration.contextParameters + declaration.valueParameters) {
+            val kind = if (ktParameter.isContextParameter)
+                TargetClassCandidateKind.CONTEXT_PARAMETER
+            else TargetClassCandidateKind.VALUE_PARAMETER
+
+            ktParameter.typeReference?.let { typeReference ->
+                result.addIfNotNull(
+                    createCandidate(
+                        declaration = declaration,
+                        parameterName = ktParameter.name,
+                        typeReference = typeReference,
+                        kind = kind,
+                        displayName = ktParameter.name ?: SpecialNames.ANONYMOUS_STRING,
+                    )
                 )
             }
         }
@@ -92,7 +91,8 @@ fun findTargetClassCandidates(declaration: KtCallableDeclaration): List<TargetCl
  * * The target class-like should be different from the current containing class of the [declaration].
  */
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.createCandidate(
+context(_: KaSession)
+private fun createCandidate(
     declaration: KtCallableDeclaration,
     parameterName: String?,
     typeReference: KtTypeReference,
@@ -118,15 +118,6 @@ internal fun KaClassifierSymbol.isSuitableTargetClass(): Boolean {
     return this.containingModule is KaSourceModule && this.psi?.containingFile is KtFile
 }
 
-private fun KtCallableDeclaration.contextParametersList(): List<KtParameter> {
-    val modifierList = modifierList ?: return emptyList()
-    val contextParameterList = PsiTreeUtil.getChildOfType(modifierList, KtContextParameterList::class.java)
-        ?: return emptyList()
-    return contextParameterList.contextParameters
-}
-
 @NlsSafe
 private const val EXTENSION_RECEIVER_DISPLAY_NAME: String = "<extension receiver>"
 
-@NlsSafe
-private const val ANONYMOUS_DISPLAY_NAME: String = "<anonymous>"

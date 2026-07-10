@@ -3,6 +3,7 @@ package com.intellij.platform.bazel.runfiles
 
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.io.path.absolute
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
@@ -72,8 +73,8 @@ object BazelRunfiles {
     val (root1, root2) = if (runfilesManifestOnly) {
       val root1key = "community+/${relativePath}"
       val root2key = "_main/${relativePath}"
-      Path.of(runfileManifest.get(root1key)) to
-        Path.of(runfileManifest.get(root2key))
+      Paths.get(runfileManifest.get(root1key)) to
+        Paths.get(runfileManifest.get(root2key))
     } else {
       bazelJavaRunfilesPath.resolve("community+").resolve(relativePath) to
         bazelJavaRunfilesPath.resolve("_main").resolve(relativePath)
@@ -115,7 +116,7 @@ object BazelRunfiles {
   fun resolveRunfilePath(rlocationPath: String): Path {
     return if (runfilesManifestOnly || runfileManifest.exists) {
       // On Windows there could be no runfiles tree, so we need to use manifest only
-      Path.of(runfileManifest.get(rlocationPath))
+      Paths.get(runfileManifest.get(rlocationPath))
     }
     else {
       // Locate file under runfiles tree
@@ -133,7 +134,7 @@ object BazelRunfiles {
     if (value == null) {
       error("Not running under `bazel test` or `bazel run` because $JAVA_RUNFILES_ENV_NAME env is not set.")
     }
-    val path = Path.of(value).absolute()
+    val path = Paths.get(value).absolute()
     if (!path.exists()) {
       error("Bazel test env '$JAVA_RUNFILES_ENV_NAME' points to non-existent directory: $path")
     }
@@ -151,8 +152,8 @@ object BazelRunfiles {
   val bazelTestRepoMapping: Map<String, RepoMappingEntry> by lazy {
     val repoMappingFile = when {
       bazelJavaRunfilesPath.resolve("_repo_mapping").exists() -> bazelJavaRunfilesPath.resolve("_repo_mapping")
-      Path.of(runfileManifest.get("_repo_mapping")).exists() ->
-        Path.of(runfileManifest.get("_repo_mapping"))
+      Paths.get(runfileManifest.get("_repo_mapping")).exists() ->
+        Paths.get(runfileManifest.get("_repo_mapping"))
       else -> error("repo_mapping file not found.")
     }
     repoMappingFile.useLines { lines ->

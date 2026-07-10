@@ -111,7 +111,7 @@ public final class WitherProcessor extends AbstractClassProcessor {
   }
 
   private @NotNull Collection<PsiMethod> createFieldWithers(@NotNull PsiClass psiClass,
-                                                            @NotNull String methodModifier,
+                                                            @PsiModifier.ModifierConstant @NotNull String methodModifier,
                                                             @NotNull AccessorsInfo accessors) {
     Collection<PsiMethod> result = new ArrayList<>();
 

@@ -225,13 +225,21 @@ class StdioTransportHolder(project: Project) : TransportHolder() {
 }
 
 class SseTransportHolder(project: Project) : TransportHolder() {
+  private val httpClient = HttpClient {
+    install(SSE)
+  }
+
   override val transport: AbstractTransport by lazy {
     val addressProvider = McpServerConnectionAddressProvider.getInstanceOrNull() ?: throw AssertionError("No address provider")
     val transportUrl = addressProvider.serverSseUrl
-    SseClientTransport(HttpClient {
-      install(SSE)
-    }, transportUrl) {
+    SseClientTransport(httpClient, transportUrl) {
       project.basePath?.let { header(IJ_MCP_SERVER_PROJECT_PATH, it) }
+    }
+  }
+
+  override fun close() {
+    httpClient.use {
+      super.close()
     }
   }
 
@@ -239,13 +247,21 @@ class SseTransportHolder(project: Project) : TransportHolder() {
 }
 
 class HttpTransportHolder(project: Project) : TransportHolder() {
+  private val httpClient = HttpClient {
+    install(SSE)
+  }
+
   override val transport: AbstractTransport by lazy {
     val addressProvider = McpServerConnectionAddressProvider.getInstanceOrNull() ?: throw AssertionError("No address provider")
     val transportUrl = addressProvider.serverStreamUrl
-    StreamableHttpClientTransport(HttpClient {
-      install(SSE)
-    }, transportUrl) {
+    StreamableHttpClientTransport(httpClient, transportUrl) {
       project.basePath?.let { header(IJ_MCP_SERVER_PROJECT_PATH, it) }
+    }
+  }
+
+  override fun close() {
+    httpClient.use {
+      super.close()
     }
   }
 

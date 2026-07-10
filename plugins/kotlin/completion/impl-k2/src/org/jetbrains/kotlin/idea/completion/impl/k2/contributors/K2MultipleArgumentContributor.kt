@@ -162,7 +162,7 @@ internal class K2MultipleArgumentContributor : K2SimpleCompletionContributor<Kot
         if (signatures.isEmpty()) return
 
         val allNamesToFind = signatures.flatMapTo(mutableSetOf()) { it.missingArguments.keys }
-        val variables = getLocalVariablesForNames(allNamesToFind, context.weighingContext.scopeContext)
+        val variables = getNonImportedAvailableVariables(allNamesToFind, context.weighingContext.scopeContext)
 
         val matchedNames = mutableMapOf<List<Name>, MultiArgumentSignatureData>()
         for (signature in signatures) {
@@ -211,12 +211,12 @@ internal class MultipleArgumentsInsertHandler : SerializableInsertHandler {
 
 
 /**
- * Returns local variables (i.e., from the same file) with the names from [allNamesToFind].
+ * Returns variables with the names from [allNamesToFind] that are available without coming from imports.
  * Note that shadowing is taken into account properly, and only the closest variable that is available is returned
  * for each name.
  */
 context(_: KaSession)
-internal fun getLocalVariablesForNames(allNamesToFind: Set<Name>, scopeContext: KaScopeContext): Map<Name, KaVariableSymbol> {
+internal fun getNonImportedAvailableVariables(allNamesToFind: Set<Name>, scopeContext: KaScopeContext): Map<Name, KaVariableSymbol> {
     // We do not want to consider variables that are imported
     val scopes = scopeContext.scopes.filterNot { it.kind is KaScopeKind.ImportingScope }
 

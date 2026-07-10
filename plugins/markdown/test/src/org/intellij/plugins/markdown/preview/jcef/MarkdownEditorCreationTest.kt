@@ -18,7 +18,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
 import org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider
-import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider
+import com.intellij.markdown.jcef.preview.JCEFHtmlPanelProvider
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import javax.swing.JComponent

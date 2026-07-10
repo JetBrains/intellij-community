@@ -32,15 +32,23 @@ object MonorepoProjectStructure {
 fun JpsModule.hasProductionSources(): Boolean = getSourceRoots(JavaSourceRootType.SOURCE).iterator().hasNext()
 
 /**
- * Calls [processor] for the path containing the production output of [this@processModuleProductionOutput].
+ * Calls [processor] for the path containing the production output of this module.
  * Works both when module output is located in a directory and when it's packed in a JAR.
  */
-fun <T> JpsModule.processProductionOutput(processor: (outputRoot: Path) -> T): T {
+fun <T> JpsModule.processProductionOutput(processor: (outputRoot: Path) -> T): T = processOutput(forTests = false, processor)
+
+/**
+ * Calls [processor] for the path containing the test output of this module.
+ * Works both when module output is located in a directory and when it's packed in a JAR.
+ */
+fun <T> JpsModule.processTestOutput(processor: (outputRoot: Path) -> T): T = processOutput(forTests = true, processor)
+
+private fun <T> JpsModule.processOutput(forTests: Boolean, processor: (outputRoot: Path) -> T): T {
   val archivedCompiledClassesMapping = getArchivedCompiledClassesMapping(project)
-  val outputJarPath = archivedCompiledClassesMapping?.get("production/$name")
+  val outputJarPath = archivedCompiledClassesMapping?.get("${if (forTests) "test" else "production"}/$name")
   if (outputJarPath == null) {
-    val outputDirectoryPath = JpsJavaExtensionService.getInstance().getOutputDirectoryPath(this, false)
-                              ?: error("Output directory is not specified for '$name'")
+    val outputDirectoryPath = JpsJavaExtensionService.getInstance().getOutputDirectoryPath(this, forTests)
+                              ?: error("${if (forTests) "Test output" else "Output"} directory is not specified for '$name'")
     return processor(outputDirectoryPath)
   }
   else {

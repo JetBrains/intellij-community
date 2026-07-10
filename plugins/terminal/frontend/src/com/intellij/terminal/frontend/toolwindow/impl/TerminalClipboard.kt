@@ -1,53 +1,64 @@
 package com.intellij.terminal.frontend.toolwindow.impl
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.fs.createTemporaryFile
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.terminal.frontend.view.TerminalView
-import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModel
 import com.intellij.util.ui.ImageUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import org.jetbrains.plugins.terminal.fus.TerminalCommandUsageStatistics
+import org.jetbrains.plugins.terminal.fus.TerminalInsertedContentSource
+import org.jetbrains.plugins.terminal.fus.TerminalInsertedContentType
 import java.awt.Image
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.io.File
 import java.nio.file.Files
 import javax.imageio.ImageIO
+import kotlin.io.path.isDirectory
 
 internal object TerminalClipboard {
   fun pasteClipboardContent(
+    project: Project,
     view: TerminalView,
-    scrollingModel: TerminalOutputScrollingModel? = null,
     preferSystemSelection: Boolean = false,
   ) {
     val systemContents = CopyPasteManager.getInstance().systemSelectionContents
     val defaultContents = CopyPasteManager.getInstance().contents
 
     view.coroutineScope.launch {
-      val text = sequenceOf(if (preferSystemSelection) systemContents else null, defaultContents)
-                   .firstNotNullOfOrNull { getContentAsText(it, view) } ?: return@launch
+      val result: ContentToTextConversionResult = sequenceOf(if (preferSystemSelection) systemContents else null, defaultContents)
+                   .firstNotNullOfOrNull { getContentAsText(it, view) }
+                   ?.takeIf { it.text.isNotEmpty() }
+                   ?: return@launch
 
-      withContext(Dispatchers.EDT) {
-        view.createSendTextBuilder()
-          .useBracketedPasteMode()
-          .send(text)
+      view.createSendTextBuilder()
+        .useBracketedPasteMode()
+        .send(result.text)
 
-        // Scroll to the cursor if the scrolling model is available in this editor.
-        // It can be absent if it is the alternate buffer editor.
-        scrollingModel?.scrollToCursor(force = true)
+      val commandLine = view.getRunningProcessCommandLine()
+      val processExecutable = commandLine?.let {
+        TerminalCommandUsageStatistics.getLoggableCommandData(commandLine, expandAbsoluteOrRelativePath = true).command
       }
+      ReworkedTerminalUsageCollector.logContentInserted(
+        project = project,
+        contentType = result.contentType,
+        fileSource = TerminalInsertedContentSource.CLIPBOARD,
+        processExecutable = processExecutable,
+      )
     }
   }
 
-  private suspend fun getContentAsText(content: Transferable?, view: TerminalView): String? {
+  private suspend fun getContentAsText(content: Transferable?, view: TerminalView): ContentToTextConversionResult? {
     if (content == null) return null
     val terminalContext = getTerminalContext(view) ?: return null
 
@@ -71,17 +82,27 @@ internal object TerminalClipboard {
   private suspend fun getFilePathsAsText(
     content: Transferable,
     terminalContext: TerminalProcessContext,
-  ): String? = withContext(Dispatchers.IO) {
+  ): ContentToTextConversionResult? = withContext(Dispatchers.IO) {
     val files = content.getTransferData(DataFlavor.javaFileListFlavor) as? List<*> ?: return@withContext null
+    @Suppress("IO_FILE_USAGE")
     val paths = files.filterIsInstance<File>().map { it.toPath() }
+    if (paths.isEmpty()) {
+      return@withContext null
+    }
 
-    TerminalFilePathHandler.getPathAsText(paths, terminalContext)
+    val text = TerminalFilePathHandler.getPathAsText(paths, terminalContext)
+    val contentType = when {
+      paths.size > 1 -> TerminalInsertedContentType.MULTIPLE_ITEMS
+      paths.single().isDirectory() -> TerminalInsertedContentType.DIRECTORY
+      else -> TerminalInsertedContentType.FILE
+    }
+    ContentToTextConversionResult(text, contentType)
   }
 
   private suspend fun extractImageAsTempFilePath(
     content: Transferable,
     eelDescriptor: EelDescriptor,
-  ): String? = withContext(Dispatchers.IO) {
+  ): ContentToTextConversionResult? = withContext(Dispatchers.IO) {
     val image = content.getTransferData(DataFlavor.imageFlavor) as? Image ?: return@withContext null
 
     val eelApi = eelDescriptor.toEelApi()
@@ -99,10 +120,16 @@ internal object TerminalClipboard {
       error("Failed to write clipboard image to temporary file")
     }
 
-    tempFile.toString()
+    ContentToTextConversionResult(tempFile.toString(), TerminalInsertedContentType.CLIPBOARD_IMAGE)
   }
 
-  private suspend fun getStringAsText(content: Transferable): String? = withContext(Dispatchers.IO) {
-    content.getTransferData(DataFlavor.stringFlavor) as? String
+  private suspend fun getStringAsText(content: Transferable): ContentToTextConversionResult? = withContext(Dispatchers.IO) {
+    val text = content.getTransferData(DataFlavor.stringFlavor) as? String ?: return@withContext null
+    ContentToTextConversionResult(text, TerminalInsertedContentType.TEXT)
   }
+
+  private data class ContentToTextConversionResult(
+    val text: String,
+    val contentType: TerminalInsertedContentType,
+  )
 }

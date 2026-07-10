@@ -7,13 +7,11 @@ import org.junit.jupiter.api.Test
 internal class GitTest {
   @Test
   fun shouldDetectExecutable() {
-    val entry = Git.Entry("x", "100755")
-    Assertions.assertTrue(entry.isExecutable)
+    Assertions.assertTrue(Git.isExecutableGitMode("100755", "100755".length))
   }
 
   @Test
   fun shouldDetectNonExecutable() {
-    val entry = Git.Entry("x", "100644")
-    Assertions.assertFalse(entry.isExecutable)
+    Assertions.assertFalse(Git.isExecutableGitMode("100644", "100644".length))
   }
 }

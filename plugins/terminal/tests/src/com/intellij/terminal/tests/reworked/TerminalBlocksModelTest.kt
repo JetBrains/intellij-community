@@ -329,6 +329,40 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `new prompt started before the active block does not create an inverted block`() = runBlocking(Dispatchers.EDT) {
+    val outputModel = TerminalTestUtil.createOutputModel()
+    val blocksModel = createBlocksModel(outputModel)
+
+    // Prepare a finished block [0, 31) and an active block [31, 47).
+    outputModel.update(0, "\n\n\n")
+    blocksModel.startNewBlock(TerminalOffset.ZERO)
+    outputModel.update(0, "myPrompt: \n\n\n")
+    blocksModel.updateCommandStartOffset(TerminalOffset.of(10))
+    outputModel.update(0, "myPrompt: myCommand\n\n\n")
+    blocksModel.updateOutputStartOffset(TerminalOffset.of(20))
+    outputModel.update(1, "someOutput\n\n")
+    blocksModel.startNewBlock(TerminalOffset.of(31))
+    outputModel.update(2, "updatedPrompt: \n")
+
+    assertEquals(2, blocksModel.blocks.size)
+
+    // The shell moves the cursor backwards into the first (finished) block and starts a new prompt there.
+    // Previously this set the active block end offset below its start offset, producing an inverted range (startOffset > endOffset).
+    blocksModel.startNewBlock(TerminalOffset.of(15))
+
+    assertEquals(2, blocksModel.blocks.size)
+
+    // The overwritten block [31, 47) is gone; the first block is trimmed to end at the new prompt offset.
+    val firstBlock = blocksModel.blocks[0] as TerminalCommandBlock
+    assertEquals(TerminalOffset.ZERO, firstBlock.startOffset)
+    assertEquals(TerminalOffset.of(15), firstBlock.endOffset)
+
+    val secondBlock = blocksModel.blocks[1] as TerminalCommandBlock
+    assertEquals(TerminalOffset.of(15), secondBlock.startOffset)
+    assertEquals(TerminalOffset.of(47), secondBlock.endOffset)
+  }
+
+  @Test
   fun `initial block is left if there was some text`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel()
     val blocksModel = createBlocksModel(outputModel)

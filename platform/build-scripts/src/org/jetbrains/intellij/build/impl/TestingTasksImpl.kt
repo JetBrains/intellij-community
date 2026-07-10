@@ -22,6 +22,7 @@ import com.intellij.platform.util.coroutines.filterConcurrent
 import com.intellij.testFramework.SkipInHeadlessEnvironment
 import com.intellij.util.io.awaitExit
 import com.intellij.util.lang.UrlClassLoader
+import com.intellij.util.text.nullize
 import io.opentelemetry.api.trace.Span
 import jetbrains.buildServer.messages.serviceMessages.BlockClosed
 import jetbrains.buildServer.messages.serviceMessages.BlockOpened
@@ -370,6 +371,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     testPatternSystemPropertyKey.let { options.testPatterns?.run { System.setProperty(it, this) } }  // from options, e.g. TestingTasksImpl#runTestsSkippedInHeadlessEnvironment
     testGroupSystemPropertyKey.let { options.testGroups?.run { System.setProperty(it, this) } }  // from options, e.g. RunAnyTestTheSameWayTeamCityDoes#run
     setPropertyFromPass(TestCaseLoader.INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG)
+    setPropertyFromPass(TestCaseLoader.INCLUDE_ALL_UNCONVENTIONALLY_NAMED_TESTS_FLAG)
 
     // configure TestCaseLoader#matchesCurrentBucket with the properties from the test process
     listOf(
@@ -428,6 +430,16 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val testModules = let {
       if (searchForTestsAcrossModuleDependencies && System.getProperty("pass.jar.dependencies.to.tests") == null && options.testSimplePatterns == null) guessTestModulesForGroupsAndPatterns(mainModule, rootExcludeCondition, systemProperties)
       else listOf(mainModule)
+    }.let { modules ->
+      //filter out only for community (ALL_EXCLUDE_DEFINED)
+      if (options.testGroups?.contains(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED) == true) {
+        val (bazelMigratedModules, jpsModules) = modules.partition { COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES.contains(it.name) }
+        if (bazelMigratedModules.isNotEmpty()) {
+          context.messages.info("Skipping tests in ${bazelMigratedModules.size} modules migrated to Bazel: ${bazelMigratedModules.joinToString(", ") { it.name }}")
+        }
+        jpsModules
+      }
+      else modules
     }
 
     context.messages.info("Will run tests from simple patterns, patterns, or groups in ${testModules.size} modules: ${testModules.joinToString(", ") { it.name }}")
@@ -555,6 +567,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     val modulePath: List<String>?
     var testClasspath = buildList {
+      val runContextModule = if (runContextModule.name != "intellij.ml.llm.tests") runContextModule else mainModule  // TODO: switch to test module classpath by default
       addAll(context.getModuleRuntimeClasspath(runContextModule, forTests = true))
 
       //module with "com.intellij.TestCaseLoader" which output should be found in `testClasspath + modulePath`
@@ -1472,3 +1485,159 @@ private suspend fun publishTestDiscovery(messages: BuildMessages, file: String?)
   }
   messages.buildStatus("With Discovery, {build.status.text}")
 }
+
+private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
+  "intellij.maven.server.eventListener.tests",
+  "intellij.agent.workbench.chat.tests",
+  "intellij.ant.tests",
+  "intellij.commander.tests",
+  "intellij.completionMlRanking.tests",
+  "intellij.completionMlRankingModels.tests",
+  "intellij.configurationScript.tests",
+  "intellij.configurationScript.test.java",
+  "intellij.copyright.tests",
+  "intellij.devkit.apiDump.lang.tests",
+  "intellij.devkit.debugger.tests",
+  "intellij.devkit.gradle.tests",
+  "intellij.devkit.i18n.tests",
+  "intellij.devkit.testFramework",
+  "intellij.devkit.workspaceModel.tests",
+  "intellij.eclipse.tests",
+  "intellij.editorconfig.backend.tests",
+  "intellij.evaluationPlugin.languages.java.tests",
+  "intellij.evaluationPlugin.languages.kotlin.tests",
+  "intellij.evaluationPlugin.tests",
+  "intellij.execution.process.mediator.client.tests",
+  "intellij.execution.process.mediator.common.tests",
+  "intellij.featuresTrainer.tests",
+  "intellij.findUsagesMl.tests",
+  "intellij.gradle.completion.tests",
+  "intellij.gradle.java.maven.tests",
+  "intellij.html.tools.tests",
+  "intellij.ide.startup.importSettings.tests",
+  "intellij.idea.community.build.tasks.tests",
+  "intellij.idea.tools.launch.tests",
+  "intellij.java.byteCodeViewer.tests",
+  "intellij.java.guiForms.compiler.tests",
+  "intellij.java.i18n.tests",
+  "intellij.java.jshell.protocol.tests",
+  "intellij.javaFX.tests",
+  "intellij.kotlin.gradle.tooling.impl.tests",
+  "intellij.kotlin.onboarding.tests",
+  "intellij.maven.proofreading.tests",
+  "intellij.maven.testFramework.tests",
+  "intellij.notebooks.visualization.tests",
+  "intellij.java.manifest.tests",
+  "intellij.json.networknt.wrapper.tests",
+  "intellij.jsonpath.tests",
+  "intellij.jvm.analysis.java.tests",
+  "intellij.markdown.tests",
+  "intellij.java.testFramework.tests",
+  "intellij.testng.rt.tests",
+  "intellij.java.typeMigration.tests",
+  "intellij.java.coverage.tests",
+  "intellij.platform.acp.tests",
+  "intellij.platform.backend.observation.tests",
+  "intellij.platform.completion.common.tests",
+  "intellij.platform.compose.tests",
+  "intellij.performanceTesting.tests",
+  "intellij.platform.buildScripts.productDsl.tests",
+  "intellij.platform.buildScripts.usages.tests",
+  "intellij.platform.collaborationTools.tests",
+  "intellij.platform.coverage.tests",
+  "intellij.performanceTesting.ui.tests",
+  "intellij.platform.debugger.impl.frontend.tests",
+  "intellij.platform.debugger.impl.ui.tests",
+  "intellij.platform.diagnostic.freezeAnalyzer.tests",
+  "intellij.platform.diagnostic.telemetry.agent.extension.tests",
+  "intellij.platform.diagnostic.telemetry.rt.tests",
+  "intellij.platform.diff.tests",
+  "intellij.platform.discoverability.tests",
+  "intellij.platform.eel.tests",
+  "intellij.platform.execution.tests",
+  "intellij.platform.experiment.tests",
+  "intellij.platform.externalProcessAuthHelper.tests",
+  "intellij.platform.icons.impl.intellij.tests",
+  "intellij.platform.ide.concurrency.tests",
+  "intellij.platform.ide.nonModalWelcomeScreen.tests",
+  "intellij.platform.ijent.tests",
+  "intellij.platform.images.build.tests",
+  "intellij.platform.images.tests",
+  "intellij.platform.indexing.tests",
+  "intellij.platform.inspect.tests",
+  "intellij.platform.instanceContainer.tests",
+  "intellij.platform.jewel.decoratedWindow.tests",
+  "intellij.platform.jewel.ideLafBridge.tests",
+  "intellij.platform.jewel.markdown.core.tests",
+  "intellij.platform.jewel.markdown.extensions.autolink.tests",
+  "intellij.platform.jewel.markdown.extensions.gfmAlerts.tests",
+  "intellij.platform.jewel.markdown.extensions.gfmTables.tests",
+  "intellij.platform.jewel.markdown.extensions.images.tests",
+  "intellij.platform.objectSerializer.tests",
+  "intellij.python.community.execService.tests",
+  "intellij.python.community.services.internal.impl.tests",
+  "intellij.python.community.services.shared.tests",
+  "intellij.python.processOutput.frontend.tests",
+  "intellij.python.sdk.tests",
+  "intellij.python.test.env.junit5",
+  "intellij.python.pytools.tests",
+  "intellij.regexp.tests",
+  "intellij.remoteDev.util.tests",
+  "intellij.repository.search.completion.tests",
+  "intellij.searchEverywhereLucene.backend.tests",
+  "intellij.searchEverywhereMl.typos.tests",
+  "intellij.statsCollector.tests",
+  "intellij.platform.jewel.ui.tests",
+  "intellij.platform.jps.model.tests",
+  "intellij.platform.markdown.utils.tests",
+  "intellij.platform.ml.impl.tests",
+  "intellij.platform.pluginGraph.tests",
+  "intellij.platform.pluginSystem.parser.impl.tests",
+  "intellij.platform.polySymbols.tests",
+  "intellij.platform.problemView.backend.tests",
+  "intellij.platform.problemView.ui.tests",
+  "intellij.platform.runtime.product.tests",
+  "intellij.platform.runtime.repository.tests",
+  "intellij.platform.searchEverywhere.backend.tests",
+  "intellij.platform.searchEverywhere.frontend.tests",
+  "intellij.platform.serviceContainer.tests",
+  "intellij.platform.settings.local.tests",
+  "intellij.platform.smRunner.tests",
+  "intellij.platform.sqlite.tests",
+  "intellij.platform.statistics.tests",
+  "intellij.platform.structuralSearch.tests",
+  "intellij.platform.syntax.extensions.tests",
+  "intellij.platform.syntax.i18n.tests",
+  "intellij.platform.syntax.psi.tests",
+  "intellij.platform.syntax.tests",
+  "intellij.platform.testFramework.junit5.jimfs.tests",
+  "intellij.platform.testFramework.junit5.projectStructure.tests",
+  "intellij.platform.testFramework.selfContainedProjects.tests",
+  "intellij.platform.testRunner.tests",
+  "intellij.platform.threadDumpParser.tests",
+  "intellij.platform.uast.tests",
+  "intellij.platform.util.coroutines.tests",
+  "intellij.platform.util.progress.tests",
+  "intellij.platform.util.rt.tests",
+  "intellij.platform.util.text.matching.tests",
+  "intellij.platform.vcs.core.tests",
+  "intellij.platform.vcs.dvcs.impl.tests",
+  "intellij.platform.whatsNew.tests",
+  "intellij.testng.tests",
+  "intellij.textmate.core.tests",
+  "intellij.textmate.joni.tests",
+  "intellij.textmate.tests",
+  "intellij.toml.tests",
+  "intellij.tools.cmd.tests",
+  "intellij.tools.ide.metrics.benchmark.tests",
+  "intellij.tools.ide.metrics.collector.tests",
+  "intellij.tools.ide.starter.bus.tests",
+  "intellij.turboComplete.tests",
+  "intellij.vcs.git.featuresTrainer.tests",
+  "intellij.vcs.github.tests",
+  "intellij.vcs.github.tracker.tests",
+  "kotlin.gradle.gradle-java.tests",
+  "intellij.xpath.tests",
+  "intellij.yaml.backend.tests",
+  "intellij.yaml.tests",
+)

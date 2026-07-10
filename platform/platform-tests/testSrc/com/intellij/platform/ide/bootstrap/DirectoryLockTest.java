@@ -299,7 +299,7 @@ public abstract sealed class DirectoryLockTest {
     }
 
     private static Process start(String arg) throws IOException {
-      var javaExe = System.getProperty("java.home") + "/bin/java" + (OS.CURRENT == OS.Windows ? ".exe" : "");
+      var javaExe = Path.of(System.getProperty("java.home"), "bin", OS.CURRENT.getBinaryName("java")).toString();
       var classpath = PathManager.getJarForClass(DummyProcess.class).toString();
       return new ProcessBuilder(javaExe, "-cp", classpath, DummyProcess.class.getName(), arg).start();
     }

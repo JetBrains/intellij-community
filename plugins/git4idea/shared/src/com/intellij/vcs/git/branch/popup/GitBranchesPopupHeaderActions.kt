@@ -2,13 +2,11 @@
 package com.intellij.vcs.git.branch.popup
 
 import com.intellij.dvcs.branch.DvcsSyncSettings
-import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
@@ -68,29 +66,6 @@ internal class GitBranchesTreePopupTrackReposSynchronouslyAction : GitBranchesPo
     changeSetting(e) { settings ->
       settings.syncSetting = if (state) DvcsSyncSettings.Value.SYNC else DvcsSyncSettings.Value.DONT_SYNC
     }
-  }
-}
-
-internal class GitBranchesTreePopupGroupByDirectoryAction :
-  ToggleAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend, DumbAware {
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
-
-  override fun update(e: AnActionEvent) {
-    val enabledAndVisible = e.project != null && e.getData(GitBranchesPopupKeys.POPUP) != null
-    if (enabledAndVisible) {
-      super.update(e)
-    }
-  }
-
-  override fun isSelected(e: AnActionEvent): Boolean =
-    e.getData(GitBranchesPopupKeys.POPUP)?.groupByPrefix ?: false
-
-  override fun setSelected(e: AnActionEvent, state: Boolean) {
-    val project = e.project ?: return
-    val widgetPopup = e.getData(GitBranchesPopupKeys.POPUP) ?: return
-
-    GitVcsSettings.getInstance(project).setBranchGroupingSettings(GroupingKey.GROUPING_BY_DIRECTORY, state)
-    widgetPopup.groupByPrefix = state
   }
 }
 

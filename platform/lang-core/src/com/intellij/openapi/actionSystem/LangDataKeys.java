@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @see PlatformCoreDataKeys
@@ -40,7 +41,7 @@ public class LangDataKeys extends PlatformCoreDataKeys {
   /**
    * Returns {@link IdeView} (one of project, packages, commander or favorites view).
    */
-  public static final DataKey<IdeView> IDE_VIEW = DataKey.create("IDEView");
+  public static final DataKey<IdeView> IDE_VIEW = DataKey.create(Names.IDE_VIEW_KEY_NAME);
 
   /**
    * Allows suppressing "New..." action.
@@ -72,4 +73,9 @@ public class LangDataKeys extends PlatformCoreDataKeys {
   @Deprecated
   public static final DataKey<ExecutionEnvironment> EXECUTION_ENVIRONMENT = ExecutionDataKeys.EXECUTION_ENVIRONMENT;
   public static final DataKey<RunContentDescriptor> RUN_CONTENT_DESCRIPTOR = DataKey.create("RUN_CONTENT_DESCRIPTOR");
+
+  @ApiStatus.Internal
+  public interface Names {
+    String IDE_VIEW_KEY_NAME = "IDEView";
+  }
 }

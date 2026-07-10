@@ -24,6 +24,7 @@
     <module name="intellij.performanceTesting.remoteDriver.compose"/>
     <module name="intellij.performanceTesting.vcs"/>
     <module name="intellij.performanceTesting.frontend"/>
+    <module name="intellij.performanceTesting.problemsView"/>
     <module name="intellij.performanceTesting.backend"/>
     <module name="intellij.performanceTesting.frontend.split"/>
     <module name="intellij.performanceTesting.backend.split"/>

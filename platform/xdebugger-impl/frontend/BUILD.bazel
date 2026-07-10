@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "debugger-impl-frontend-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":debugger-impl-frontend-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.debugger.impl.frontend.tests`
+
 ### auto-generated section `build intellij.platform.debugger.impl.frontend` start
 
 jvm_library(
@@ -53,6 +62,7 @@ jvm_library(
         "//platform/remote-topics/shared:rpc-topics",
         "//platform/core-impl",
         "//fleet/rhizomedb",
+        "//platform/ide-core-impl",
     ],
 )
 
@@ -99,6 +109,7 @@ jvm_library(
         "//platform/remote-topics/shared:rpc-topics_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.debugger.impl.frontend` end
@@ -209,6 +220,10 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//fleet/rhizomedb",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.debugger.impl.frontend.tests` end
@@ -221,11 +236,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.debugger.impl.frontend.tests` end
-
-### auto-generated section `test intellij.platform.debugger.impl.frontend.tests` start
-
-jps_test(
-    name = "debugger-impl-frontend-tests_test",
-    runtime_deps = [":debugger-impl-frontend-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.debugger.impl.frontend.tests` end

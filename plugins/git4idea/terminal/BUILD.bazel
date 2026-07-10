@@ -147,6 +147,8 @@ jvm_library(
         "//libraries/assertj-core:assertj-core_test_lib",
         "//libraries/mockito",
         "//libraries/mockito:mockito_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.vcs.git.terminal.tests` end

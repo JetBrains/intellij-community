@@ -4,6 +4,7 @@ package org.intellij.plugins.markdown.lang.psi.impl;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.model.psi.PsiExternalReferenceHost;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement;
@@ -12,6 +13,11 @@ import org.jetbrains.annotations.NotNull;
 public class MarkdownLinkLabel extends ASTWrapperPsiElement implements MarkdownPsiElement, PsiExternalReferenceHost {
   public MarkdownLinkLabel(@NotNull ASTNode node) {
     super(node);
+  }
+
+  // Returns the label text without the surrounding brackets, e.g. "[foo]" -> "foo"
+  public @NotNull String getLabelText() {
+    return StringUtil.trimEnd(StringUtil.trimStart(getText(), "["), "]").trim();
   }
 
   @Override

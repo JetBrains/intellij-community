@@ -56,10 +56,6 @@ kotlin {
     implementation(jps.io.ktor.ktor.client.logging.jvm1780199912.get().let { "${it.group}:ktor-client-logging:${it.version}" }) {
       isTransitive = false
     }
-    implementation(jps.org.slf4j.slf4j.api2013636515.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      isTransitive = false
-      exclude(group = "org.slf4j", module = "slf4j-jdk14")
-    }
     implementation(jps.io.ktor.ktor.client.mock.jvm121671911.get().let { "${it.group}:ktor-client-mock:${it.version}" }) {
       isTransitive = false
     }
@@ -68,6 +64,12 @@ kotlin {
   }
   sourceSets.commonTest.dependencies {
     implementation(project(":fleet.test.runtime"))
+  }
+  sourceSets.jvmMain.dependencies {
+    implementation(jps.org.slf4j.slf4j.api2013636515.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      isTransitive = false
+      exclude(group = "org.slf4j", module = "slf4j-jdk14")
+    }
   }
   // KOTLIN__MARKER_END
 }

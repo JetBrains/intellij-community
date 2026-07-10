@@ -67,6 +67,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.gradle.java.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/problemsView/collector"],
 )
 
 jvm_library(
@@ -89,6 +90,7 @@ jvm_library(
         # do not sort,
         ":kotlin-gradle-java-tests",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/problemsView/collector:collector_test_lib",
     ],
     deps = [
         # do not sort,
@@ -111,7 +113,8 @@ jvm_library(
         "@lib//:kotlinc-kotlin-compiler-tests",
         "//plugins/kotlin/tests-common:common-tests",
         "//plugins/kotlin/tests-common:common-tests_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//libraries/kotlin/test:libraries-kotlinTest",
         "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//plugins/kotlin/base/plugin",
@@ -201,6 +204,10 @@ jvm_library(
         "//plugins/kotlin/inspections:inspections_test_lib",
         "//plugins/kotlin/gradle/gradle",
         "//plugins/kotlin/gradle/gradle:gradle_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.gradle.java.tests` end

@@ -115,7 +115,7 @@ internal fun suggestNameBasedDestructuringPropertyNames(
         val names = extractDataClassParameters(expressionType)
             ?.takeIf { entriesCount <= it.size }
             ?.take(entriesCount)
-            ?.map { it.name.asString() } ?: return@analyzeInModalWindow null
+            ?.map { it.name } ?: return@analyzeInModalWindow null
         NameBasedDestructuringForm(names, positionalDestructuringType, useFullForm)
     }
 }

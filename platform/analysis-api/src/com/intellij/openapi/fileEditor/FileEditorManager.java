@@ -259,7 +259,7 @@ public abstract class FileEditorManager {
   }
 
   @RequiresEdt
-  public final @NotNull List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
+  public final @NotNull @Unmodifiable List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
     return openFileEditor(descriptor, focusEditor);
   }
 
@@ -299,6 +299,29 @@ public abstract class FileEditorManager {
    * @param file refreshed file
    */
   public void updateFileColor(@NotNull VirtualFile file) { }
+
+  /**
+   * Returns whether any editor tab representing the specified file is pinned.
+   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
+   *
+   * @param file file to check
+   */
+  @ApiStatus.Internal
+  @RequiresEdt
+  public boolean hasPinnedEditorTab(@NotNull VirtualFile file) {
+    return false;
+  }
+
+  /**
+   * Pins or unpins editor tabs representing the specified file.
+   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
+   *
+   * @param file file to update
+   * @param pinned whether the editor tab should be pinned
+   */
+  @ApiStatus.Internal
+  @RequiresEdt
+  public void setPinnedEditorTab(@NotNull VirtualFile file, boolean pinned) { }
 
   /**
    * Returns currently focused editor (if any). It is either {@code null} or the value returned by {@link #getSelectedEditor()}.

@@ -175,6 +175,7 @@ com.intellij.execution.testframework.TestFrameworkRunningModel
 - a:getTreeView():com.intellij.execution.testframework.TestTreeView
 - a:hasTestSuites():Z
 - a:isRunning():Z
+- scrollToRunningTest():V
 - a:selectAndNotify(com.intellij.execution.testframework.AbstractTestProxy):V
 - a:setFilter(com.intellij.execution.testframework.Filter):V
 com.intellij.execution.testframework.TestProxyRoot

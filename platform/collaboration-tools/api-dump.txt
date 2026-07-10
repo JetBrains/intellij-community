@@ -378,17 +378,6 @@ f:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFact
 - hashCode():I
 f:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$IconConfig$Companion
 - f:of(com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil$ComponentType,com.intellij.collaboration.ui.icon.IconsProvider,java.lang.Object):com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$IconConfig
-a:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$ScrollOnChangePolicy
-f:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$ScrollOnChangePolicy$DontScroll
-- com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$ScrollOnChangePolicy
-- sf:INSTANCE:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$ScrollOnChangePolicy$DontScroll
-f:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$ScrollOnChangePolicy$ScrollToComponent
-- com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$ScrollOnChangePolicy
-- <init>(javax.swing.JComponent):V
-- f:getComponent():javax.swing.JComponent
-f:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$ScrollOnChangePolicy$ScrollToField
-- com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$ScrollOnChangePolicy
-- sf:INSTANCE:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$ScrollOnChangePolicy$ScrollToField
 com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewFoldableThreadViewModel
 - a:getCanCreateReplies():kotlinx.coroutines.flow.StateFlow
 - a:getRepliesFolded():kotlinx.coroutines.flow.StateFlow

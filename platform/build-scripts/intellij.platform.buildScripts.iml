@@ -28,7 +28,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.commons.cli" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
     <orderEntry type="module" module-name="intellij.libraries.commons.compress" />
@@ -218,6 +218,7 @@
     <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
     <orderEntry type="library" name="com.jetbrains.fus.reporting.fus-api" level="project" />
     <orderEntry type="library" name="com.jetbrains.fus.reporting.ap.validation.all" level="project" />
+    <orderEntry type="library" name="jetbrains.fus.reporting.api.jvm" level="project" />
     <orderEntry type="module-library">
       <library name="netty" type="repository">
         <properties maven-id="io.netty:netty-all:4.2.15.Final">
@@ -386,10 +387,10 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="jetbrains.intellij.deps.coverage.reporter" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps:intellij-coverage-reporter:1.0.776">
+        <properties maven-id="org.jetbrains.intellij.deps:intellij-coverage-reporter:1.0.777">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-reporter/1.0.776/intellij-coverage-reporter-1.0.776.jar">
-              <sha256sum>9df0cb585bc7f223a9ac9940c01aef08b2a857844709c0057b52abd2b047956d</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-reporter/1.0.777/intellij-coverage-reporter-1.0.777.jar">
+              <sha256sum>dbac92f2dbe507d066a70d703ba15937b344900018e15644edeefe8ca90735a8</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.27/coverage-report-1.0.27.jar">
               <sha256sum>8a29a130ab4fa9a23fd390ff535afb52fb55e5f61448423c16472be88609c03a</sha256sum>
@@ -397,8 +398,8 @@
             <artifact url="file://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.32/freemarker-2.3.32.jar">
               <sha256sum>04d65ec1bde6cea20e3495d5e78ef96ab774d9936434861d3254bd88e7e94f92</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.776/intellij-coverage-agent-1.0.776.jar">
-              <sha256sum>477944945187911ce656c6fa804c9f4c65a90dab7ad6717abae2ce0234b7e527</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.777/intellij-coverage-agent-1.0.777.jar">
+              <sha256sum>b8c4455cda170a2f946dcb755de3e2a76376e52cfb86c898c8de2582aa2bef11</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -406,17 +407,17 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-reporter/1.0.776/intellij-coverage-reporter-1.0.776.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-reporter/1.0.777/intellij-coverage-reporter-1.0.777.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.27/coverage-report-1.0.27.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.32/freemarker-2.3.32.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.776/intellij-coverage-agent-1.0.776.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.777/intellij-coverage-agent-1.0.777.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-reporter/1.0.776/intellij-coverage-reporter-1.0.776-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-reporter/1.0.777/intellij-coverage-reporter-1.0.777-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.27/coverage-report-1.0.27-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.32/freemarker-2.3.32-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.776/intellij-coverage-agent-1.0.776-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.777/intellij-coverage-agent-1.0.777-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

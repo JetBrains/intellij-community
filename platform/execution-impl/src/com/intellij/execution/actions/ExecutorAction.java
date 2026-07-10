@@ -59,6 +59,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.Icon;
@@ -67,6 +68,7 @@ import javax.swing.JList;
 import java.awt.Component;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -232,9 +234,10 @@ public class ExecutorAction extends AnAction implements DumbAware, RequiresPermi
     Project project = Objects.requireNonNull(e.getProject());
 
     VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
-    if (files.length == 1) {
+    VirtualFile[] validFiles = Arrays.stream(files).filter(f -> f.isValid()).toArray(VirtualFile[]::new);
+    if (validFiles.length == 1) {
       // There's only one visible editor, let's use the file from this editor, even if the editor is not in focus.
-      PsiFile psiFile = PsiManager.getInstance(project).findFile(files[0]);
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(validFiles[0]);
       if (psiFile == null) {
         String tooltip = ExecutionBundle.message("run.button.on.toolbar.tooltip.current.file.not.runnable");
         return RunCurrentFileActionStatus.createDisabled(tooltip, myExecutor.getIcon());
@@ -347,7 +350,7 @@ public class ExecutorAction extends AnAction implements DumbAware, RequiresPermi
     return cache.myRunConfigs;
   }
 
-  private @NotNull List<RunnerAndConfigurationSettings> filterConfigsThatHaveRunner(@NotNull List<? extends RunnerAndConfigurationSettings> runConfigs) {
+  private @NotNull @Unmodifiable List<RunnerAndConfigurationSettings> filterConfigsThatHaveRunner(@NotNull List<? extends RunnerAndConfigurationSettings> runConfigs) {
     return ContainerUtil.filter(runConfigs, config -> ProgramRunner.getRunner(myExecutor.getId(), config.getConfiguration()) != null);
   }
 

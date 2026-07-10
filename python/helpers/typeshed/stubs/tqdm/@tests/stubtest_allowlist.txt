@@ -4,3 +4,7 @@ tqdm.__main__
 # TODO: Reenable when tensorflow supports Python 3.13 and is added to the
 # stubtest dependencies in METADATA.toml.
 tqdm.keras
+
+# Fails to import as of v4.68.0 since it attempts to re-export functions that were
+# removed from 'tqdm.utils' (e.g. _screen_shape_linux).
+tqdm._utils

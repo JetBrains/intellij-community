@@ -74,27 +74,22 @@ def find_gui_and_backend():
 
 
 def _get_major_version(module):
-    return int(module.__version__.split('.')[0])
+    return int(module.__version__.split(".")[0])
 
 
 def _get_minor_version(module):
-    return int(module.__version__.split('.')[1])
+    return int(module.__version__.split(".")[1])
 
 
 def is_interactive_backend(backend):
     """Check if backend is interactive"""
     matplotlib = sys.modules["matplotlib"]
     new_api_version = (3, 9)
-    installed_version = (
-        _get_major_version(matplotlib),
-        _get_minor_version(matplotlib)
-    )
+    installed_version = (_get_major_version(matplotlib), _get_minor_version(matplotlib))
 
     if installed_version >= new_api_version:
-        interactive_bk = matplotlib.backends.backend_registry.list_builtin(
-            matplotlib.backends.BackendFilter.INTERACTIVE)
-        non_interactive_bk = matplotlib.backends.backend_registry.list_builtin(
-            matplotlib.backends.BackendFilter.NON_INTERACTIVE)
+        interactive_bk = matplotlib.backends.backend_registry.list_builtin(matplotlib.backends.BackendFilter.INTERACTIVE)
+        non_interactive_bk = matplotlib.backends.backend_registry.list_builtin(matplotlib.backends.BackendFilter.NON_INTERACTIVE)
     else:
         from matplotlib.rcsetup import interactive_bk, non_interactive_bk  # @UnresolvedImport
 

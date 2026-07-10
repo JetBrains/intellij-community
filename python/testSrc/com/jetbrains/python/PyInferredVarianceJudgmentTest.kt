@@ -1,10 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
+import com.intellij.idea.TestFor
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import org.junit.jupiter.api.Test
 
 
+@Subsystems.CodeInsight
+@Layers.Functional
 class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
 
 
@@ -753,6 +759,34 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues=["PY-90269"])
+  fun `Frozen attribute via dataclass_transform frozen_default`() = test("""
+    from typing import dataclass_transform
+    
+    @dataclass_transform(frozen_default=True)
+    def model(cls): ...
+    
+    @model
+    class A[T]:
+    #       └ INFERRED_VARIANCE COVARIANT
+        attr: T  # read-only
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues=["PY-90269"])
+  fun `Mutable attribute via dataclass_transform frozen_default overridden`() = test("""
+    from typing import dataclass_transform, Callable
+    
+    @dataclass_transform(frozen_default=True)
+    def model(frozen: bool = True) -> Callable: ...
+    
+    @model(frozen=False)
+    class A[T]:
+    #       └ INFERRED_VARIANCE INVARIANT
+        attr: T  # mutable
+    """.trimIndent())
+
+  @Test
   fun `Alias to contravariant class`() = test("""
     class A[T]:
         def f(self, t: T): pass
@@ -885,6 +919,16 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     class A[*Ts]:
     #        └ INFERRED_VARIANCE INVARIANT
         def f(self, t: tuple[*Ts]) -> tuple[*Ts]: ...
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-88800"])
+  @Test
+  fun `Contravariant arguments in nested functions`() = test("""
+    class B[T]:
+    #       └ INFERRED_VARIANCE BIVARIANT
+        def f1(self):
+            def f2(a: T): # nested uses of T are ignored by variance inference
+                ...
     """.trimIndent())
 
 }

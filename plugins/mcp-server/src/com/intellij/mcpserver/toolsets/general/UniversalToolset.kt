@@ -12,6 +12,9 @@ import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportProgressScope
@@ -32,6 +35,8 @@ import kotlin.time.TimeSource
 import com.intellij.mcpserver.McpTool as McpToolDef
 
 private const val FLAG_PREFIX = "--"
+
+private val LOG = fileLogger()
 
 class UniversalToolset : McpToolset {
 
@@ -126,13 +131,13 @@ class UniversalToolset : McpToolset {
     val sessionHandler = currentCoroutineContext().mcpCallInfo.sessionHandler
                          ?: mcpFail("Session handler not available")
     val routerToolsProvider = sessionHandler.routerToolsProvider
-                              ?: mcpFail("Router tools provider not available")
     return routerToolsProvider.mcpTools.value
   }
 
   private fun findTool(name: String, all: List<McpToolDef>): McpToolDef {
+    LOG.trace { "Available tools: ${all.map { it.descriptor.name }.sorted().joinToString(", ")}" }
     return all.find { it.descriptor.name == name }
-           ?: mcpFail("Tool '$name' not found. Available tools: ${all.map { it.descriptor.name }.sorted().joinToString(", ")}")
+           ?: mcpFail("Tool '$name' not found")
   }
 
   private fun buildArguments(tool: McpToolDef, rawArgs: List<String>): JsonObject {
@@ -181,7 +186,7 @@ class UniversalToolset : McpToolset {
         }
       }
       "array" -> parseAsStructuredJson(paramName, value, "array") { it is JsonArray }
-      "object" -> parseAsStructuredJson(paramName, value, "object") { it is JsonObject }
+      "object" -> parseAsStructuredJson(paramName, value, "object") { it is JsonObject || it is JsonArray }
       else -> JsonPrimitive(value)
     }
   }

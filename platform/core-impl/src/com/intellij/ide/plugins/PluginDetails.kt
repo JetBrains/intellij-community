@@ -7,6 +7,8 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 /**
  * Exposes information about plugins currently known to the IDE.
@@ -65,7 +67,7 @@ class PluginDetailsService {
    * @see PluginDetails.vendor
    */
   @ApiStatus.Experimental
-  class PluginVendorInfo(
+  class PluginVendorInfo internal constructor(
     val name: @NlsSafe String?,
     val email: String?,
     val url: String?,
@@ -87,26 +89,19 @@ class PluginDetailsService {
   @ApiStatus.Experimental
   sealed interface ModuleDependencyInfo {
     /**
-     * `true` if the depending on plugin can be loaded even when the target module is not available.
-     */
-    val isOptional: Boolean
-
-    /**
      * A dependency on the implicit main module of another plugin, identified by [pluginId].
      */
     @ApiStatus.Experimental
-    class OnPlugin(
+    class OnPlugin internal constructor(
       val pluginId: PluginId,
-      override val isOptional: Boolean,
     ) : ModuleDependencyInfo
 
     /**
      * A dependency on a content module of another plugin, identified by its module [name].
      */
     @ApiStatus.Experimental
-    class OnModule(
+    class OnModule internal constructor(
       val name: String,
-      override val isOptional: Boolean,
     ) : ModuleDependencyInfo
   }
 
@@ -116,7 +111,7 @@ class PluginDetailsService {
    * @see PluginDetails.modules
    */
   @ApiStatus.Experimental
-  class PluginModuleInfo(
+  class PluginModuleInfo internal constructor(
     val name: String,
   ) {
     override fun toString(): String {
@@ -130,7 +125,7 @@ class PluginDetailsService {
    * Use [PluginDetailsService] to obtain instances of this class; do not construct them directly.
    */
   @ApiStatus.Experimental
-  class PluginDetails(
+  class PluginDetails internal constructor(
     val id: PluginId,
     val name: @NlsSafe String,
     val description: @Nls String?,
@@ -138,12 +133,29 @@ class PluginDetailsService {
     val changeNotes: String?,
     val vendor: PluginVendorInfo,
     val modules: Collection<PluginModuleInfo>,
+    /**
+     * All non-optional plugin dependencies, required to load it.
+     */
     val dependencies: Collection<ModuleDependencyInfo>,
     /**
      * `true` if the plugin is part of the IDE installation, either as a bundled plugin
      * or as an update of a bundled plugin.
      */
     val isBuiltIn: Boolean,
+    /**
+     * The release version of a paid or freemium plugin as declared in its `<product-descriptor>`,
+     * or `0` if the plugin does not declare one.
+     */
+    val releaseVersion: Int,
+    /**
+     * The release date of a paid or freemium plugin as declared in its `<product-descriptor>`,
+     * or `null` if the plugin does not declare one.
+     */
+    val releaseDate: LocalDate?,
+    /**
+     * `true` if the plugin can be used without a license (i.e. it is a freemium plugin).
+     */
+    val isLicenseOptional: Boolean,
   ) {
     override fun toString(): String {
       return "PluginDetails(id=$id, name='$name')"
@@ -164,15 +176,17 @@ class PluginDetailsService {
 
     val dependencies = mutableListOf<ModuleDependencyInfo>()
     for (dep in getDependencies()) {
-      dependencies.add(ModuleDependencyInfo.OnPlugin(dep.pluginId, dep.isOptional))
+      if (!dep.isOptional) {
+        dependencies.add(ModuleDependencyInfo.OnPlugin(dep.pluginId))
+      }
     }
 
     if (this is IdeaPluginDescriptorImpl) {
       for (pluginId in moduleDependencies.plugins) {
-        dependencies.add(ModuleDependencyInfo.OnPlugin(pluginId, isOptional = false))
+        dependencies.add(ModuleDependencyInfo.OnPlugin(pluginId))
       }
       for (moduleId in moduleDependencies.modules) {
-        dependencies.add(ModuleDependencyInfo.OnModule(moduleId.name, isOptional = false))
+        dependencies.add(ModuleDependencyInfo.OnModule(moduleId.name))
       }
     }
 
@@ -190,7 +204,10 @@ class PluginDetailsService {
       ),
       modules = modules,
       dependencies = dependencies,
-      isBuiltIn = isBundledOrBundledUpdatedPlugin(this)
+      isBuiltIn = isBundledOrBundledUpdatedPlugin(this),
+      releaseVersion = releaseVersion,
+      releaseDate = releaseDate?.toInstant()?.atZone(ZoneOffset.UTC)?.toLocalDate(),
+      isLicenseOptional = isLicenseOptional,
     )
   }
 }

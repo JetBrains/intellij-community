@@ -40,6 +40,10 @@ internal fun writeGutterIcon(out: DataOutput, icon: Icon?) {
     return
   }
 
+  if (data == null) {
+    out.writeInt(0)
+    return
+  }
   out.writeInt(data.size)
   out.write(data)
 }

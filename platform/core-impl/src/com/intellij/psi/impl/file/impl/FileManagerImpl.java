@@ -11,11 +11,11 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbModeListenerBackgroundable;
 import com.intellij.openapi.project.Project;
@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.AbstractFileViewProvider;
+import com.intellij.psi.FileThreadingContracts;
 import com.intellij.psi.FileTypeFileViewProviders;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.FileViewProviderFactory;
@@ -283,6 +284,7 @@ public final class FileManagerImpl implements FileManagerEx {
 
   @Override
   public void setViewProvider(@NotNull VirtualFile vFile, @Nullable FileViewProvider viewProvider) {
+    FileThreadingContracts.assertWriteAccessForExposedLightFile(vFile);
     // todo IJPL-339 investigate if we need a context here
     if (viewProvider == null) {
       // Let's drop all providers.
@@ -432,7 +434,7 @@ public final class FileManagerImpl implements FileManagerEx {
       FileViewProvider viewProvider = entry.getProvider();
       LOG.assertTrue(vFile.isValid());
       PsiFile psiFile1 = findFile(vFile, context);
-      if (psiFile1 != null && viewProvider.isPhysical()) {
+      if (psiFile1 != null && viewProvider.correspondsToRealFile()) {
         PsiFile psi = viewProvider.getPsi(viewProvider.getBaseLanguage());
         assert psi != null : viewProvider + "; " + viewProvider.getBaseLanguage() + "; " + psiFile1;
         assert psiFile1.getClass().equals(psi.getClass()) : psiFile1 + "; " + psi + "; " + psiFile1.getClass() + "; " + psi.getClass();
@@ -463,21 +465,19 @@ public final class FileManagerImpl implements FileManagerEx {
   }
 
   @Override
-  @RequiresReadLock(generateAssertion = false) // assert for real vFile
+  @RequiresReadLock
   public @Nullable PsiFile findFile(@NotNull VirtualFile vFile) {
-    EditorLockFreeTyping.assertReadAccess(vFile);
     CodeInsightContext context = CodeInsightContexts.anyContext();
     return findFile(vFile, context);
   }
 
   @Override
-  @RequiresReadLock(generateAssertion = false) // assert for real vFile
+  @RequiresReadLock
   public @Nullable PsiFile findFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
-    EditorLockFreeTyping.assertReadAccess(vFile);
     if (vFile.isDirectory()) return null;
 
     if (!vFile.isValid()) {
-      LOG.error(new InvalidVirtualFileAccessException(vFile));
+      LOG.warn(new InvalidVirtualFileAccessException(vFile));
       return null;
     }
 
@@ -486,10 +486,9 @@ public final class FileManagerImpl implements FileManagerEx {
     return viewProvider.getPsi(viewProvider.getBaseLanguage());
   }
 
-  @RequiresReadLock(generateAssertion = false) // assert for real vFile
+  @RequiresReadLock
   @Override
   public @Nullable PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
-    EditorLockFreeTyping.assertReadAccess(vFile);
     return getCachedPsiFile(vFile, CodeInsightContexts.anyContext());
   }
 
@@ -501,7 +500,7 @@ public final class FileManagerImpl implements FileManagerEx {
   }
 
   @Override
-  public @NotNull List<@NotNull PsiFile> getCachedPsiFilesInner(@NotNull VirtualFile vFile) {
+  public @NotNull @Unmodifiable List<@NotNull PsiFile> getCachedPsiFilesInner(@NotNull VirtualFile vFile) {
     List<FileViewProvider> viewProviders = findCachedViewProviders(vFile);
     return ContainerUtil.mapNotNull(viewProviders, p -> ((AbstractFileViewProvider)p).getCachedPsi(p.getBaseLanguage()));
   }
@@ -660,7 +659,8 @@ public final class FileManagerImpl implements FileManagerEx {
 
   @Override
   public void reloadPsiAfterTextChange(@NotNull FileViewProvider viewProvider, @NotNull VirtualFile vFile) {
-    if (!areViewProvidersEquivalent(viewProvider, createFileViewProvider(vFile, false))) {
+    if (BinaryFileTypeDecompilers.getInstance().hasDecompiler(vFile) ||
+        !areViewProvidersEquivalent(viewProvider, createFileViewProvider(vFile, false))) {
       forceReload(vFile);
       return;
     }

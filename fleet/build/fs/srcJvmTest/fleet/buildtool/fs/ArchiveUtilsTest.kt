@@ -13,7 +13,7 @@ import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.FileTime
 import java.nio.file.attribute.PosixFilePermission
 import java.util.zip.ZipEntry
@@ -1359,7 +1359,13 @@ class ArchiveUtilsTest {
   }
 
   private fun getFileFromResources(path: String): Path {
-    return Paths.get(javaClass.classLoader.getResource(path)!!.toURI())
+    val target = tempDir.resolve(path)
+    target.parent?.createDirectories()
+    javaClass.classLoader.getResourceAsStream(path).use { input ->
+      checkNotNull(input) { "Resource not found: $path" }
+      Files.copy(input, target, StandardCopyOption.REPLACE_EXISTING)
+    }
+    return target
   }
 
 

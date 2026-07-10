@@ -22,6 +22,18 @@
 - name: lib/groovy-spock-rt.jar
   modules:
   - name: intellij.groovy.spock.rt
+- name: lib/intellij.libraries.hamcrest.jar
+  contentModules:
+  - name: intellij.libraries.hamcrest
+    libraries:
+      hamcrest:
+      - name: $MAVEN_REPOSITORY$/org/hamcrest/hamcrest/2/hamcrest-2.jar
+- name: lib/intellij.libraries.junit4.jar
+  contentModules:
+  - name: intellij.libraries.junit4
+    libraries:
+      JUnit4:
+      - name: $MAVEN_REPOSITORY$/junit/junit/4/junit-4.jar
 - name: lib/modules/intellij.groovy.ant.jar
   contentModules:
   - name: intellij.groovy.ant

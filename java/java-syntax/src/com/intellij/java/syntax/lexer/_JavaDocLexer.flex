@@ -25,10 +25,15 @@ import kotlin.jvm.JvmStatic
     myJdk1_5Enabled = isJdk1_5Enabled
   }
 
-  /** Should be called right after a reset */
-  public fun setMarkdownMode(isEnabled: Boolean) {
-    myMarkdownMode = isEnabled
-    if (!myMarkdownMode) commentDataWithSpaces = false
+  /** Should be called right after the usual jflex reset function */
+  public fun _reset(isMarkdownModeEnabled: Boolean) {
+    myMarkdownMode = isMarkdownModeEnabled
+    // Reset the internal states of the lexer.
+    // Such behavior relies on the lexer only lexing the entire comment at once
+    mySnippetBracesLevel = 0
+    commentDataWithSpaces = false
+    inValueTag = false
+    genericNestingLevel = 0
   }
 
   public fun checkAhead(c: Char): Boolean {

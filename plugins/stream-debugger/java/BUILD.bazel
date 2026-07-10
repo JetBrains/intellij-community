@@ -40,8 +40,12 @@ jvm_library(
         "//java/java-frontback-psi-api:frontback-psi",
         "//platform/core-ui",
         "//platform/platform-util-io:ide-util-io",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util/jdom",
         "//platform/analysis-api:analysis",
         "//platform/code-style-api:codeStyle",
+        "//java/debugger/shared",
+        "//plugins/stream-debugger/rt",
     ],
 )
 
@@ -90,10 +94,14 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//plugins/stream-debugger/testFramework",
         "//plugins/stream-debugger/testFramework:testFramework_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
         "//platform/util/coroutines",
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
+        "//java/debugger/shared:shared_test_lib",
+        "//plugins/stream-debugger/rt:rt_test_lib",
     ],
 )
 ### auto-generated section `build intellij.debugger.streams.java` end

@@ -1,17 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.lang.LanguageDocumentation;
-import com.intellij.lang.documentation.CodeDocumentationProvider;
-import com.intellij.lang.documentation.CompositeDocumentationProvider;
-import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.DocumentationStubProvider;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -21,6 +17,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.CommentUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -82,25 +79,16 @@ public final class ThrowsRuntimeExceptionInspection extends BaseInspection {
         comment.add(docTag);
       }
       else {
-        final PsiDocComment docComment = factory.createDocCommentFromText("/** */");
-        final PsiComment resultComment = (PsiComment)method.addBefore(docComment, method.getModifierList());
-        final DocumentationProvider documentationProvider = LanguageDocumentation.INSTANCE.forLanguage(method.getLanguage());
-        final CodeDocumentationProvider codeDocumentationProvider;
-        if (documentationProvider instanceof CodeDocumentationProvider) {
-          codeDocumentationProvider = (CodeDocumentationProvider)documentationProvider;
-        }
-        else if (documentationProvider instanceof CompositeDocumentationProvider compositeDocumentationProvider) {
-          codeDocumentationProvider = compositeDocumentationProvider.getFirstCodeDocumentationProvider();
-          if (codeDocumentationProvider == null) {
-            return;
-          }
-        }
-        else {
-          return;
-        }
-        final String commentStub = codeDocumentationProvider.generateDocumentationContentStub(resultComment);
-        final PsiDocComment newComment = factory.createDocCommentFromText("/**\n" + commentStub + "*/");
-        resultComment.replace(newComment);
+        final PsiDocComment docComment = factory.createDocCommentFromText(CommentUtil.convertToDocComment(element.getContainingFile(), " ", false));
+        method.addBefore(docComment, method.getModifierList());
+        final String commentStub = DocumentationStubProvider.EP_NAME.getExtensionList().stream()
+          .map(p -> p.documentationStub(method))
+          .filter(s -> s != null)
+          .findFirst()
+          .orElse(null);
+        if (commentStub == null) return;
+        final PsiDocComment newComment = factory.createDocCommentFromText(CommentUtil.convertToDocComment(element.getContainingFile(), commentStub, false));
+        method.getDocComment().replace(newComment);
       }
       element.delete();
     }

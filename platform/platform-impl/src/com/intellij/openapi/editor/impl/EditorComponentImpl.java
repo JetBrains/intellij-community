@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.CutProvider;
@@ -239,11 +239,21 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     sink.set(CommonDataKeys.EDITOR, editor);
     sink.set(CommonDataKeys.CARET, editor.getCaretModel().getCurrentCaret());
 
-    LogicalPosition location = editor.myLastMousePressedLocation;
-    if (location == null) {
-        location = editor.getCaretModel().getLogicalPosition();
+    LogicalPosition pressedLocation = editor.myLastMousePressedLocation;
+    LogicalPosition location = pressedLocation != null ? pressedLocation : editor.getCaretModel().getLogicalPosition();
+    boolean virtualSpace = EditorCoreUtil.inVirtualSpace(editor, location);
+    // IJPL-52267: log whenever EDITOR_VIRTUAL_SPACE is derived from a retained mouse-press location instead
+    // of the caret. When the press location is virtual but the caret is not, this is precisely the value that
+    // wrongly disables keyboard Go To Declaration / Find Usages — correlate the "press #N" with the
+    // GotoDeclarationAction:trace "reason=virtualSpace" line and the focusLost trace for the same press.
+    if (pressedLocation != null && EditorImpl.MOUSE_PRESS_LOG.isTraceEnabled()) {
+      LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
+      EditorImpl.MOUSE_PRESS_LOG.trace("[press #" + editor.myMousePressSeq + "] EDITOR_VIRTUAL_SPACE served from press location=" +
+                                       pressedLocation + " virtualSpace=" + virtualSpace +
+                                       " caret=" + caret + " caretVirtualSpace=" + EditorCoreUtil.inVirtualSpace(editor, caret) +
+                                       " ageMs=" + (System.nanoTime() - editor.myMousePressTimestampNanos) / 1_000_000);
     }
-    sink.set(CommonDataKeys.EDITOR_VIRTUAL_SPACE, EditorCoreUtil.inVirtualSpace(editor, location));
+    sink.set(CommonDataKeys.EDITOR_VIRTUAL_SPACE, virtualSpace);
   }
 
   @DirtyUI
@@ -341,7 +351,19 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     }
     gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
     AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.FLOOR);
-    editor.paint(gg);
+
+    // Wrap painting into RA to prevent the following error (IJPL-236335):
+    // Painting calls plugin ->
+    // plugin calls read action ->
+    // suvorov interception ->
+    // read action calls write action ->
+    // write action deletes virtual file ->
+    // editor tab is disposed ->
+    // editor is disposed ->
+    // plugin or editor gets disposed exception during painting
+    EditorThreading.read(() -> {
+      editor.paint(gg);
+    });
     if (origTx != null) {
       gg.setTransform(origTx);
     }
@@ -1272,7 +1294,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     @Override
     public String getAccessibleDescription() {
       String description = super.getAccessibleDescription();
-      if (description == null && StringUtil.isEmpty(getText())) {
+      if (description == null && editor.getDocument().getTextLength() == 0) {
         //noinspection HardCodedStringLiteral
         CharSequence emptyText = getEditor().getPlaceholder();
         if (emptyText != null && !emptyText.isEmpty()) {

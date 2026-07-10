@@ -5,7 +5,7 @@ class MyClass {
     context(i: Int)
     fun doSomething(param1: String, param: String, l: () -> Unit = {}) {}
     fun inside(param: String) {
-        with(0) {
+        context(0) {
             doSomething(param, param, {
                 run {
                     val klass: MyClass = this@MyClass

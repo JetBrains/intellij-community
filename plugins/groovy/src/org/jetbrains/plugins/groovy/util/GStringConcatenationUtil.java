@@ -136,7 +136,8 @@ public final class GStringConcatenationUtil {
   }
 
   private static void processDollarSlashyContent(StringBuilder builder, boolean multiline, String text) {
-    GrStringUtil.escapeSymbolsForGString(text, !multiline, false, builder);
+    String unescaped = GrStringUtil.unescapeDollarSlashyString(text);
+    GrStringUtil.escapeSymbolsForGString(unescaped, !multiline, false, builder);
   }
 
   private static void processSlashyContent(StringBuilder builder, boolean multiline, String text) {

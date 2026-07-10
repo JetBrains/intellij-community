@@ -1,5 +1,7 @@
 public final class Foo {
-    public fun Foo() = UastEmptyExpression
+    @org.jetbrains.annotations.NotNull private final var d: int
+    public final fun getD() : int = UastEmptyExpression
+    public fun Foo(@org.jetbrains.annotations.NotNull d: int) = UastEmptyExpression
     public static final class Bar {
         @org.jetbrains.annotations.NotNull private final var a: int
         @org.jetbrains.annotations.NotNull private final var b: int
@@ -15,5 +17,13 @@ public final class Foo {
             }
             public fun Baz() = UastEmptyExpression
         }
+    }
+    public final class Boo {
+        @org.jetbrains.annotations.NotNull private final var c: int
+        public final fun getCPlusD() : int {
+            return c + d
+        }
+        public final fun getC() : int = UastEmptyExpression
+        public fun Boo(@org.jetbrains.annotations.NotNull c: int) = UastEmptyExpression
     }
 }

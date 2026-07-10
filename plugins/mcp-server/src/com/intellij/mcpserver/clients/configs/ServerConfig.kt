@@ -28,6 +28,9 @@ class JunieNetworkConfig(val url: String, val type: String, val headers: Map<Str
 class AirNetworkConfig(val url: String, val type: String, val headers: Map<String, String>? = null) : ServerConfig()
 
 @Serializable
+class GitHubCopilotNetworkConfig(val url: String, val type: String, val headers: Map<String, String>? = null) : ServerConfig()
+
+@Serializable
 class CodexStreamableHttpConfig(val url: String, val headers: Map<String, String>? = null) : ServerConfig()
 
 @Serializable

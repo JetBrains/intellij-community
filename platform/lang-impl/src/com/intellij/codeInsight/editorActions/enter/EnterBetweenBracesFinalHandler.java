@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
  * Please, don't extend the class.
  * Use the {@code EnterBetweenBracesDelegate} language-specific implementation instead.
  */
-@ApiStatus.Internal
 public class EnterBetweenBracesFinalHandler implements EnterHandlerDelegate {
   @Override
   public Result preprocessEnter(final @NotNull PsiFile file,
@@ -133,6 +132,7 @@ public class EnterBetweenBracesFinalHandler implements EnterHandlerDelegate {
            !helper.bracesAreInTheSameElement(psiFile, editor, prevCharOffset, nextCharOffset);
   }
 
+  @ApiStatus.Internal
   protected static @NotNull EnterBetweenBracesDelegate getLanguageImplementation(@Nullable Language language) {
     if (language != null) {
       final EnterBetweenBracesDelegate helper = EnterBetweenBracesDelegate.EP_NAME.forLanguage(language);
@@ -143,8 +143,10 @@ public class EnterBetweenBracesFinalHandler implements EnterHandlerDelegate {
     return ourDefaultBetweenDelegate;
   }
 
+  @ApiStatus.Internal
   protected static EnterBetweenBracesDelegate ourDefaultBetweenDelegate = new EnterBetweenBracesDelegate();
 
+  @ApiStatus.Internal
   protected static boolean isValidOffset(int offset, CharSequence text) {
     return offset >= 0 && offset < text.length();
   }

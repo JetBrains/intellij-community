@@ -2,9 +2,9 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
-import org.jetbrains.idea.maven.fixtures.importProjectAsync
-import org.jetbrains.idea.maven.fixtures.mavenDomFixture
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
 import org.jetbrains.idea.maven.fixtures.resolveReference
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass

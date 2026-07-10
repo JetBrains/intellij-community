@@ -13,11 +13,10 @@ import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.modify
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnCells
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
-import org.intellij.plugins.markdown.lang.isMarkdownType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 
 internal fun reformatTableColumnAfterCharDeletion(char: Char, file: PsiFile, editor: Editor): Boolean {
-  if (!TableUtils.isFormattingOnTypeEnabledForTables(file) || !file.fileType.isMarkdownType()) {
+  if (!TableUtils.isFormattingOnTypeEnabledForTables(file)) {
     return false
   }
   val caretOffset = editor.caretModel.currentCaret.offset

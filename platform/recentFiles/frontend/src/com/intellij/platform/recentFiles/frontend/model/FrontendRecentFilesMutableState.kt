@@ -14,10 +14,6 @@ import com.intellij.util.IconUtil
 import kotlinx.coroutines.flow.MutableStateFlow
 
 internal class FrontendRecentFilesMutableState(project: Project) : RecentFilesMutableState<SwitcherVirtualFile>(project) {
-  override fun checkValidity(model: SwitcherVirtualFile): Boolean {
-    return model.virtualFile?.isValid != false
-  }
-
   fun chooseStateToReadFrom(filesKind: RecentFileKind): MutableStateFlow<RecentFilesState<SwitcherVirtualFile>> {
     return when (filesKind) {
       RecentFileKind.RECENTLY_EDITED -> recentlyEditedFilesState

@@ -13,10 +13,6 @@ sealed class LspInlayHintCustomizer
  * This is the primary integration point for language plugins that want to provide
  * settings and customization for LSP inlay hints. Language plugins should extend
  * this class and override the relevant methods to implement their own settings logic.
- *
- * This approach allows each language to have independent settings without affecting
- * other languages, solving the multi-language settings problem inherent in LSP providers.
- *
  */
 open class LspInlayHintSupport : LspInlayHintCustomizer() {
   /**
@@ -51,7 +47,9 @@ open class LspInlayHintSupport : LspInlayHintCustomizer() {
    * @param inlayHint the LSP InlayHint object containing all hint information
    * @return true if the hint should be processed and displayed, false to filter it out
    */
-  open fun shouldDisplayInlayHint(file: VirtualFile, inlayHint: InlayHint): Boolean = shouldApplyInlayHint(inlayHint)
+  open fun shouldDisplayInlayHint(file: VirtualFile, inlayHint: InlayHint): Boolean =
+    @Suppress("DEPRECATION")
+    shouldApplyInlayHint(inlayHint)
 
   /**
    * Maximum number of characters allowed for a single inlay hint label.

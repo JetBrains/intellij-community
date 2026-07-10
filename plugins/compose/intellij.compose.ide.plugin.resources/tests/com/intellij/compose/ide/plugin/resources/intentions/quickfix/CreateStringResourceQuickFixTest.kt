@@ -121,6 +121,7 @@ internal fun invokeAndAssertQuickFixResult(
 
   val stringsXmlFileBefore = composeResourcesDirVirtualFile
     .findChild(ResourceType.STRING.dirName)
+    ?.findChild(STRINGS_XML_FILENAME)
     ?.let { psiManager.findFile(it) as? XmlFile }
 
   val resourceExistedBefore = stringsXmlFileBefore

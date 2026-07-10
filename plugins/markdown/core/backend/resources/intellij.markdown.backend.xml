@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
     <dependencies>
       <module name="intellij.platform.backend"/>
       <module name="intellij.platform.kernel.backend"/>
@@ -9,6 +9,71 @@
         implementation="com.intellij.markdown.backend.providers.MarkdownLinkOpenerApiProvider"/>
       <platform.rpc.backend.remoteApiProvider
         implementation="com.intellij.markdown.backend.providers.VirtualFileAccessorProvider"/>
+
+      <localInspection language="Markdown"
+                       shortName="MarkdownIncorrectTableFormatting"
+                       bundle="messages.MarkdownBundle"
+                       key="markdown.incorrect.table.formatting.inspection.name"
+                       groupKey="markdown.inspection.group.ruby.name"
+                       enabledByDefault="true"
+                       level="WEAK WARNING"
+                       implementationClass="com.intellij.markdown.backend.inspections.MarkdownIncorrectTableFormattingInspection"/>
+
+      <localInspection language="Markdown"
+                       shortName="MarkdownNoTableBorders"
+                       bundle="messages.MarkdownBundle"
+                       key="markdown.no.table.borders.inspection.name"
+                       groupKey="markdown.inspection.group.ruby.name"
+                       enabledByDefault="true"
+                       level="WARNING"
+                       implementationClass="com.intellij.markdown.backend.inspections.MarkdownNoTableBordersInspection"/>
+
+      <localInspection language="Markdown"
+                       shortName="MarkdownTablePipeInCodeSpan"
+                       bundle="messages.MarkdownBundle"
+                       key="markdown.table.pipe.in.code.span.inspection.name"
+                       groupKey="markdown.inspection.group.ruby.name"
+                       enabledByDefault="true"
+                       level="WARNING"
+                       implementationClass="com.intellij.markdown.backend.inspections.MarkdownTablePipeInCodeSpanInspection"/>
+
+      <localInspection language="Markdown"
+                       shortName="MarkdownUnresolvedFileReference"
+                       bundle="messages.MarkdownBundle"
+                       key="markdown.unresolved.file.inspection.name"
+                       groupKey="markdown.inspection.group.ruby.name"
+                       enabledByDefault="true"
+                       level="WARNING"
+                       implementationClass="com.intellij.markdown.backend.inspections.MarkdownUnresolvedFileReferenceInspection"/>
+
+      <localInspection language="Markdown"
+                       shortName="MarkdownIncorrectlyNumberedListItem"
+                       bundle="messages.MarkdownBundle"
+                       key="markdown.incorrectly.numbered.list.item.inspection.name"
+                       groupKey="markdown.inspection.group.ruby.name"
+                       enabledByDefault="true"
+                       implementationClass="com.intellij.markdown.backend.inspections.IncorrectListNumberingInspection"/>
+
+      <localInspection language="Markdown"
+                       shortName="MarkdownOutdatedTableOfContents"
+                       bundle="messages.MarkdownBundle"
+                       key="markdown.outdated.table.of.contents.inspection.name"
+                       groupKey="markdown.inspection.group.ruby.name"
+                       enabledByDefault="true"
+                       implementationClass="com.intellij.markdown.backend.inspections.OutdatedTableOfContentsInspection"/>
+
+      <localInspection language="Markdown"
+                       shortName="MarkdownLinkDestinationWithSpaces"
+                       bundle="messages.MarkdownBundle"
+                       key="markdown.link.destination.with.spaces.inspection.name"
+                       groupKey="markdown.inspection.group.ruby.name"
+                       enabledByDefault="true"
+                       implementationClass="com.intellij.markdown.backend.inspections.MarkdownLinkDestinationWithSpacesInspection"/>
+
       <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.lang.references.CommonLinkDestinationReferenceContributor"/>
+      <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.link.AutoLinkWebReferenceContributor"/>
+      <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.backtick.BacktickReferenceContributor"/>
+      <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.github.GithubWikiLocalReferenceContributor"/>
+      <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.test.TestPsiReferenceContributor"/>
     </extensions>
 </idea-plugin>

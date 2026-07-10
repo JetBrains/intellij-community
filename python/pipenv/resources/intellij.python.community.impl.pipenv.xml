@@ -2,8 +2,11 @@
   <dependencies>
     <module name="intellij.python.sdk"/>
     <module name="intellij.python.processOutput.common"/>
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.pytools"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
+    <python.pytools.pyTool implementation="com.intellij.python.community.impl.pipenv.PipEnvPyTool"/>
     <python.processOutput.common.processOutputIconMapping implementation="com.intellij.python.community.impl.pipenv.PipenvIconMapping"/>
   </extensions>
 </idea-plugin>

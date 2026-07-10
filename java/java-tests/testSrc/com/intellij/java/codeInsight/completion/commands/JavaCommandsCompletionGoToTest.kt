@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion.commands
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
@@ -80,6 +80,40 @@ class JavaCommandsCompletionGoToTest : LightFixtureCompletionTestCase() {
       interface A{
 
           public void a.<caret>();
+
+          class B implements A{
+
+              @Override
+              public void a() {
+
+              }
+          }
+      }      
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("Go to impl", ignoreCase = true) })
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    myFixture.checkResult("""
+      interface A{
+
+          public void a();
+
+          class B implements A{
+
+              @Override
+              public void a<caret>() {
+
+              }
+          }
+      }      
+      """.trimIndent())
+  }
+
+  fun testCommandsOnlyGoToImplementationAfterSemicolon() {
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      interface A{
+
+          public void a();.<caret>
 
           class B implements A{
 

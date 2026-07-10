@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
@@ -56,6 +57,7 @@ final class TodoHighlightVisitor implements HighlightVisitor {
   private static void highlightTodos(@NotNull PsiFile file,
                                      @NotNull CharSequence text,
                                      @NotNull HighlightInfoHolder holder) {
+    if (InjectedLanguageManager.getInstance(file.getProject()).shouldInspectionsBeLenient(file)) return;
     PsiTodoSearchHelper helper = PsiTodoSearchHelper.getInstance(file.getProject());
     if (helper == null || !shouldHighlightTodos(helper, file)) return;
     TodoItem[] todoItems = helper.findTodoItems(file);

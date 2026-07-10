@@ -1,6 +1,6 @@
 plugins {
-    kotlin("jvm") version "{{kotlin_plugin_version}}"
-    kotlin("plugin.lombok") version "{{kotlin_plugin_version}}"
+    kotlin("jvm") version "{{kgp_version}}"
+    kotlin("plugin.lombok") version "{{kgp_version}}"
 }
 
 kotlinLombok {
@@ -8,5 +8,5 @@ kotlinLombok {
 }
 
 repositories {
-    { { kts_kotlin_plugin_repositories } }
+    {{kts_kotlin_plugin_repositories}}
 }

@@ -35,7 +35,7 @@
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test-assertions-core-jvm" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />
-    <orderEntry type="library" scope="TEST" name="jbr-api" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jbr" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ui" scope="TEST" />

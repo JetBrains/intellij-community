@@ -6,11 +6,10 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.HelpTooltipManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.internal.statistic.eventLog.events.FusInputEvent
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.StatusBarPopupShown
-import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.StatusBarWidgetClicked
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
@@ -138,6 +137,7 @@ import java.awt.Point
 import java.awt.event.ActionEvent
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
+import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
@@ -303,12 +303,10 @@ open class IdeStatusBarImpl @Internal constructor(
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK)
     IdeEventQueue.getInstance().addDispatcher(object : IdeEventQueue.NonLockedEventDispatcher {
       override fun dispatch(e: AWTEvent): Boolean {
-        return if (e is MouseEvent) {
+        if (e is MouseEvent) {
           dispatchMouseEvent(e)
         }
-        else {
-          false
-        }
+        return false
       }
     }, coroutineScope)
 
@@ -531,6 +529,15 @@ open class IdeStatusBarImpl @Internal constructor(
       bean.component.border = if (SystemInfoRt.isMac) JBUI.Borders.empty(2, 0, 2, 4) else JBUI.Borders.empty()
     }
     panel.add(bean.component)
+    // A widget component has its own mouse listeners, so right-clicks on it don't bubble to the status bar's own
+    // `PopupHandler`. Install the same context menu directly on the widget so it still shows on right-click, while
+    // letting the event reach toolkit `AWTEventListener`s (unlike the previous global-dispatcher approach).
+    if (bean.position == Position.RIGHT) {
+      // Note that the target component is different, because otherwise, if we just passed bean.component,
+      // then as soon as we hide this component using this very context menu, then the menu stops working,
+      // because the target component isn't showing anymore.
+      PopupHandler.installPopupMenu(bean.component, panel, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
+    }
     panel.revalidate()
   }
 
@@ -557,6 +564,7 @@ open class IdeStatusBarImpl @Internal constructor(
     val activate = object : AbstractAction() {
       override fun actionPerformed(e: ActionEvent) {
         if (component.isShowing && component.isEnabled) {
+          logWidgetActivated(component, IdeEventQueue.getInstance().trueCurrentEvent as? InputEvent)
           StatusBarUtil.performPrimaryAction(component, activationTarget, onActivate?.let { Runnable {
             it() } })
         }
@@ -725,12 +733,12 @@ open class IdeStatusBarImpl @Internal constructor(
     effectRenderer.paintFocusBorder(g)
   }
 
-  private fun dispatchMouseEvent(e: MouseEvent): Boolean {
-    val rightPanel = rightPanel.takeIf { it.isVisible } ?: return false
-    val component = e.component ?: return false
+  private fun dispatchMouseEvent(e: MouseEvent) {
+    val rightPanel = rightPanel.takeIf { it.isVisible } ?: return
+    val component = e.component ?: return
     if (ComponentUtil.getWindow(this) !== ComponentUtil.getWindow(component)) {
       applyWidgetEffect(null, null)
-      return false
+      return
     }
 
     val point = SwingUtilities.convertPoint(component, e.point, rightPanel)
@@ -741,27 +749,14 @@ open class IdeStatusBarImpl @Internal constructor(
     }
     else if (e.clickCount == 1 && e.id == MouseEvent.MOUSE_PRESSED) {
       applyWidgetEffect(targetWidget, WidgetEffect.PRESSED)
-    }
-
-    if (e.isConsumed || widget == null) {
-      return false
-    }
-
-    if (e.isPopupTrigger && (e.id == MouseEvent.MOUSE_PRESSED || e.id == MouseEvent.MOUSE_RELEASED)) {
-      val project = project
-      if (project != null) {
-        val actionManager = ActionManager.getInstance()
-        val group = actionManager.getAction(StatusBarWidgetsActionGroup.GROUP_ID) as? ActionGroup
-        if (group != null) {
-          val menu = actionManager.createActionPopupMenu(ActionPlaces.STATUS_BAR_PLACE, group)
-          menu.setTargetComponent(this)
-          menu.component.show(rightPanel, point.x, point.y)
-          e.consume()
-          return true
-        }
+      if (targetWidget != null && e.button == MouseEvent.BUTTON1 && !e.isPopupTrigger) {
+        logWidgetActivated(targetWidget, e)
       }
     }
-    return false
+
+    // The right-click context menu is not shown here on purpose: doing so would consume the event before
+    // `super.dispatchEvent` runs, hiding it from toolkit `AWTEventListener`s (e.g. the UI test robot). The menu is shown by a
+    // component-level `PopupHandler` installed on each widget (see `addWidgetToSelf`) and on the status bar itself.
   }
 
   /**
@@ -775,6 +770,13 @@ open class IdeStatusBarImpl @Internal constructor(
       } as? JComponent
     }
     return null
+  }
+
+  private fun logWidgetActivated(component: JComponent, inputEvent: InputEvent?) {
+    val widget = ClientProperty.get(component, WIDGET_ID)?.let { widgetRegistry.getWidget(it) } ?: return
+    // WidgetPresentationWrapper is a single generic wrapper shared by all V2 widgets, so report the concrete factory class
+    val widgetClass = (widget as? WidgetPresentationWrapper)?.factoryClass ?: widget.javaClass
+    UIEventLogger.StatusBarWidgetClicked.log(widgetClass, inputEvent?.let { FusInputEvent(it, ActionPlaces.STATUS_BAR_PLACE) })
   }
 
   override fun getUIClassID(): String = UI_CLASS_ID
@@ -1046,14 +1048,15 @@ private fun configurePresentationComponent(presentation: WidgetPresentation, pan
 
 internal fun wrap(widget: StatusBarWidget): JComponent {
   val result = if (widget is CustomStatusBarWidget) {
-    return wrapCustomStatusBarWidget(widget)
+    wrapCustomStatusBarWidget(widget)
   }
   else {
-    createComponentByWidgetPresentation(widget)
+    createComponentByWidgetPresentation(widget).also {
+      ToolTipManager.sharedInstance().registerComponent(it)
+      it.putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, true)
+    }
   }
-  ToolTipManager.sharedInstance().registerComponent(result)
   ClientProperty.put(result, WIDGET_ID, widget.ID())
-  result.putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, true)
   return result
 }
 
@@ -1162,7 +1165,6 @@ private class MultipleTextValues(private val presentation: MultipleTextValuesPre
 private class StatusBarWidgetClickListener(private val clickConsumer: (MouseEvent) -> Unit) : ClickListener() {
   override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
     if (!e.isPopupTrigger && MouseEvent.BUTTON1 == e.button) {
-      StatusBarWidgetClicked.log(clickConsumer.javaClass)
       WriteIntentReadAction.run {
         clickConsumer(e)
       }

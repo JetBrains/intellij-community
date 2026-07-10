@@ -1,5 +1,10 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <plugin id="com.intellij.jsonpath"/>
     <module name="intellij.editorconfig.backend"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.log.impl"/>
   </dependencies>
+  <!-- endregion -->
 </idea-plugin>

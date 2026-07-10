@@ -9,8 +9,12 @@ import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.DocumentationTargetProvider
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 @JvmOverloads
+@RequiresReadLock
+@RequiresBackgroundThread(generateAssertion = false)
 fun documentationTargets(file: PsiFile, offset: Int, findTargetFromLookup: Boolean = true): List<DocumentationTarget> {
   val targets = SmartList<DocumentationTarget>()
   for (ext in DocumentationTargetProvider.EP_NAME.extensionList) {

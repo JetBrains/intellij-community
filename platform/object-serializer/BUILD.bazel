@@ -1,6 +1,22 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+filegroup(
+    name = "testSnapshots",
+    srcs = glob(["testSnapshots/**"]),
+    visibility = ["//visibility:public"],
+)
+
+jps_test(
+    name = "objectSerializer-tests_test",
+    timeout = "moderate",
+    data = [":testSnapshots"],
+    tags = ["community-aggregator"],
+    runtime_deps = [":objectSerializer-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.objectSerializer.tests`
+
 ### auto-generated section `build intellij.platform.objectSerializer` start
 
 jvm_library(
@@ -162,7 +178,10 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
-        "@lib//:junit4",
+        "//platform/bazel-runfiles",
+        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/testFramework/extensions:testExtensions",
         "//platform/testFramework/extensions:testExtensions_test_lib",
         "//libraries/assertj-core",
@@ -189,11 +208,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.objectSerializer.tests` end
-
-### auto-generated section `test intellij.platform.objectSerializer.tests` start
-
-jps_test(
-    name = "objectSerializer-tests_test",
-    runtime_deps = [":objectSerializer-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.objectSerializer.tests` end

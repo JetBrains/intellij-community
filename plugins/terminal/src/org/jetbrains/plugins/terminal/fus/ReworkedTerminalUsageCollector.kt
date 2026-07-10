@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Version
 import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.agent.TerminalAgent
+import org.jetbrains.plugins.terminal.fus.TerminalCommandUsageStatistics.getKnownCommandValuesListWithoutPaths
 import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics.KNOWN_SHELLS
 import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics.getShellNameForStat
 import kotlin.time.Duration
@@ -26,19 +27,22 @@ private const val GROUP_ID = "terminal"
 object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 16)
+  private val GROUP = EventLogGroup(GROUP_ID, 19)
 
   private val OS_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("os-version", "version")
   private val SHELL_STR_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
   private val EXIT_CODE_FIELD = EventFields.Int("exit_code")
   private val EXECUTION_TIME_FIELD = EventFields.Long("execution_time", "Time in milliseconds")
   private val HYPERLINK_INFO_CLASS = EventFields.Class("hyperlink_info_class")
-  private val TERMINAL_OPENING_WAY = EventFields.Enum<TerminalOpeningWay>("opening_way")
-  private val TABS_COUNT = EventFields.Int("tab_count")
+  private val TERMINAL_TAB_OPENING_WAY = EventFields.Enum<TerminalTabOpeningWay>("opening_way")
+  private val TABS_COUNT = EventFields.Int("tab_count", "Total number of terminal tabs including the newly added one")
   private val FOCUS = StringEventField.ValidatedByCustomValidationRule("counterpart", TerminalFocusRule::class.java)
   private val AGENT_WORKBENCH_PROVIDER_FIELD = EventFields.String("provider", listOf("codex", "claude"))
   private val TERMINAL_AI_AGENT_FIELD = EventFields.Enum<FusTerminalAiAgent>("agent")
   private val IS_INSTALL_FIELD = EventFields.Boolean("is_install")
+  private val PROCESS_EXECUTABLE = EventFields.String("process_executable", getKnownCommandValuesListWithoutPaths())
+  private val INSERTED_CONTENT_TYPE = EventFields.Enum<TerminalInsertedContentType>("content_type")
+  private val INSERTED_CONTENT_SOURCE = EventFields.Enum<TerminalInsertedContentSource>("content_source")
 
   // Latency measurement related fields
   private val DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "duration_ms")
@@ -48,7 +52,11 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val THIRD_LARGEST_DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "third_largest_duration_ms")
   private val TEXT_LENGTH_90_FIELD = EventFields.Int("text_length_90", "90% percentile")
 
-  private val tabOpenedEvent = GROUP.registerEvent("tab.opened", TABS_COUNT)
+  private val tabOpenedEvent = GROUP.registerVarargEvent(
+    "tab.opened",
+    TERMINAL_TAB_OPENING_WAY,
+    TABS_COUNT
+  )
 
   private val focusGainedEvent = GROUP.registerEvent("focus.gained", FOCUS)
 
@@ -69,6 +77,13 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val sessionRestoredEvent = GROUP.registerEvent("session.restored", TABS_COUNT)
 
   private val hyperlinkFollowedEvent = GROUP.registerEvent("hyperlink.followed", HYPERLINK_INFO_CLASS)
+
+  private val contentInsertedEvent = GROUP.registerVarargEvent(
+    "content.inserted",
+    INSERTED_CONTENT_TYPE,
+    INSERTED_CONTENT_SOURCE,
+    PROCESS_EXECUTABLE,
+  )
 
   private val osVersion: String by lazy {
     Version.parseVersion(OS.CURRENT.version())?.toCompactString() ?: "unknown"
@@ -111,17 +126,17 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
 
   private val startupCursorShowingLatency = GROUP.registerVarargEvent(
     "startup.cursor.showing.latency",
-    TERMINAL_OPENING_WAY, DURATION_FIELD,
+    TERMINAL_TAB_OPENING_WAY, DURATION_FIELD,
   )
 
   private val startupShellStartingLatency = GROUP.registerVarargEvent(
     "startup.shell.starting.latency",
-    TERMINAL_OPENING_WAY, DURATION_FIELD,
+    TERMINAL_TAB_OPENING_WAY, DURATION_FIELD,
   )
 
   private val startupFirstOutputLatency = GROUP.registerVarargEvent(
     "startup.first.output.latency",
-    TERMINAL_OPENING_WAY, DURATION_FIELD,
+    TERMINAL_TAB_OPENING_WAY, DURATION_FIELD,
   )
 
   private val tabClosingCheckLatency = GROUP.registerVarargEvent("tab.closing.check.latency", DURATION_FIELD)
@@ -153,8 +168,12 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   )
 
   @JvmStatic
-  fun logTabOpened(project: Project, tabCount: Int) {
-    tabOpenedEvent.log(project, tabCount)
+  fun logTabOpened(project: Project, openingWay: TerminalTabOpeningWay?, tabCount: Int) {
+    val fields = listOfNotNull(
+      if (openingWay != null) TERMINAL_TAB_OPENING_WAY with openingWay else null,
+      TABS_COUNT with tabCount,
+    )
+    tabOpenedEvent.log(project, fields)
   }
 
   @JvmStatic
@@ -264,23 +283,37 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     hyperlinkFollowedEvent.log(javaClass)
   }
 
-  fun logStartupCursorShowingLatency(openingWay: TerminalOpeningWay, duration: Duration) {
+  fun logContentInserted(
+    project: Project,
+    contentType: TerminalInsertedContentType,
+    fileSource: TerminalInsertedContentSource,
+    processExecutable: String?,
+  ) {
+    contentInsertedEvent.log(
+      project,
+      INSERTED_CONTENT_TYPE with contentType,
+      INSERTED_CONTENT_SOURCE with fileSource,
+      PROCESS_EXECUTABLE with processExecutable,
+    )
+  }
+
+  fun logStartupCursorShowingLatency(openingWay: TerminalTabOpeningWay, duration: Duration) {
     startupCursorShowingLatency.log(
-      TERMINAL_OPENING_WAY with openingWay,
+      TERMINAL_TAB_OPENING_WAY with openingWay,
       DURATION_FIELD with duration,
     )
   }
 
-  fun logStartupShellStartingLatency(openingWay: TerminalOpeningWay, duration: Duration) {
+  fun logStartupShellStartingLatency(openingWay: TerminalTabOpeningWay, duration: Duration) {
     startupShellStartingLatency.log(
-      TERMINAL_OPENING_WAY with openingWay,
+      TERMINAL_TAB_OPENING_WAY with openingWay,
       DURATION_FIELD with duration,
     )
   }
 
-  fun logStartupFirstOutputLatency(openingWay: TerminalOpeningWay, duration: Duration) {
+  fun logStartupFirstOutputLatency(openingWay: TerminalTabOpeningWay, duration: Duration) {
     startupFirstOutputLatency.log(
-      TERMINAL_OPENING_WAY with openingWay,
+      TERMINAL_TAB_OPENING_WAY with openingWay,
       DURATION_FIELD with duration,
     )
   }
@@ -308,6 +341,22 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   fun logAgentInstalled(project: Project, agentKey: TerminalAgent.AgentKey) {
     agentInstalledEvent.log(project, agentKey.toFusTerminalAiAgent())
   }
+}
+
+@ApiStatus.Internal
+enum class TerminalInsertedContentType {
+  TEXT,
+  FILE,
+  DIRECTORY,
+  CLIPBOARD_IMAGE,
+  MULTIPLE_ITEMS,
+}
+
+@ApiStatus.Internal
+enum class TerminalInsertedContentSource {
+  IDE,
+  EXTERNAL_APP,
+  CLIPBOARD,
 }
 
 internal enum class FusTerminalAiAgent {

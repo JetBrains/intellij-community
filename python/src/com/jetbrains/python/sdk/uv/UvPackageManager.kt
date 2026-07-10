@@ -7,11 +7,11 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.python.uv.common.UV_TOOL_ID
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.PyProjectTomlFile
 import com.intellij.python.pyproject.model.internal.workspaceBridge.getToolWorkspaceLayout
+import com.intellij.python.uv.common.UV_TOOL_ID
 import com.intellij.util.cancelOnDispose
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
@@ -37,20 +37,21 @@ import com.jetbrains.python.packaging.packageRequirements.WorkspaceMemberPackage
 import com.jetbrains.python.packaging.packageRequirements.collectAllNames
 import com.jetbrains.python.packaging.packageRequirements.extractDeclaredDependencies
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
-import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.requirements.PyDependenciesFile
-import com.jetbrains.python.requirements.RequirementsTxtFile
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 
 @ApiStatus.Internal
-internal class UvPackageManager internal constructor(project: Project, sdk: Sdk, uvExecutionContextDeferred: Deferred<UvExecutionContext<*>>) : PythonPackageManager(project, sdk) {
+internal class UvPackageManager internal constructor(
+  project: Project,
+  sdk: Sdk,
+  uvExecutionContextDeferred: Deferred<UvExecutionContext<*>>,
+) : PythonPackageManager(project, sdk) {
   override val installedPackagesIncludeTransitive: Boolean = true
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
   override val treeProvider = CachedDependencyTreeProvider {
@@ -76,7 +77,11 @@ internal class UvPackageManager internal constructor(project: Project, sdk: Sdk,
     }
   }
 
-  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>, module: Module?): PyResult<Unit> {
+  override suspend fun installPackageCommand(
+    installRequest: PythonPackageInstallRequest,
+    options: List<String>,
+    module: Module?,
+  ): PyResult<Unit> {
     return withUv { uv ->
       if (sdk.uvUsePackageManagement) {
         uv.installPackage(installRequest, emptyList())
@@ -92,8 +97,7 @@ internal class UvPackageManager internal constructor(project: Project, sdk: Sdk,
   }
 
   override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
-    val specsWithoutVersion = specifications.map { it.copy(requirement = pyRequirement(it.name, null)) }
-    val request = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specsWithoutVersion)
+    val request = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specifications.toList())
     val result = installPackageCommand(request, emptyList())
 
     return result
@@ -134,7 +138,7 @@ internal class UvPackageManager internal constructor(project: Project, sdk: Sdk,
   override suspend fun getPackageTree(): PackageStructureNode {
     val allTrees = treeProvider.getDependencyTrees()
     val declaredPackageNames = declaredPackagesFromTrees(allTrees).getOrNull()
-      ?.mapTo(mutableSetOf()) { it.name } ?: emptySet()
+                                 ?.mapTo(mutableSetOf()) { it.name } ?: emptySet()
 
     val workspaceTree = buildWorkspaceStructure(allTrees, declaredPackageNames)
     if (workspaceTree != null) return workspaceTree
@@ -149,7 +153,7 @@ internal class UvPackageManager internal constructor(project: Project, sdk: Sdk,
     declaredPackageNames: Set<String>,
   ): List<PackageTreeNode> {
     val projectRoot = allTrees.firstOrNull()
-      ?: return declaredPackageNames.map { createLeafNode(it) }
+                      ?: return declaredPackageNames.map { createLeafNode(it) }
     val childrenByName = projectRoot.children.associateBy { it.name.name }
     return declaredPackageNames.map { name -> childrenByName[name] ?: createLeafNode(name) }
   }
@@ -239,7 +243,11 @@ internal class UvPackageManager internal constructor(project: Project, sdk: Sdk,
   /**
    * Removes declared dependencies using UV package manager.
    */
-  private suspend fun uninstallDeclaredPackages(uv: UvLowLevel<*>, packages: List<PyPackageName>, workspaceMember: PyWorkspaceMember?): PyResult<Unit> {
+  private suspend fun uninstallDeclaredPackages(
+    uv: UvLowLevel<*>,
+    packages: List<PyPackageName>,
+    workspaceMember: PyWorkspaceMember?,
+  ): PyResult<Unit> {
     return if (packages.isNotEmpty()) {
       uv.removeDependencies(packages.map { it.name }.toTypedArray(), workspaceMember)
     }
@@ -275,7 +283,7 @@ internal class UvPackageManager internal constructor(project: Project, sdk: Sdk,
     }
   }
 
-  override fun updateLockedAction(): suspend () -> PyResult<Unit> = suspend { syncLocked().mapSuccess {  } }
+  override fun updateLockedAction(): suspend () -> PyResult<Unit> = suspend { syncLocked().mapSuccess { } }
 
   private suspend fun resolvePackageName(module: Module): String {
     val pyProjectFile = PyProjectToml.findPyProjectTomlFile(module) ?: return module.name
@@ -304,7 +312,7 @@ internal class UvPackageManager internal constructor(project: Project, sdk: Sdk,
     val request = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(listOf(specification))
 
     withUv { uv ->
-        uv.addDependency(request, emptyList())
+      uv.addDependency(request, emptyList())
     }.getOr { return@withContext false }
 
     return@withContext true

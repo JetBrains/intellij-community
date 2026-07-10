@@ -25,6 +25,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/references",
         "@lib//:kotlinc-kotlin-compiler-common",
         "//platform/analysis-api:analysis",
         "//platform/code-style-api:codeStyle",
@@ -70,6 +71,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-completion-impl-shared",
+        "//plugins/kotlin/references:references_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/core-api:core_test_lib",

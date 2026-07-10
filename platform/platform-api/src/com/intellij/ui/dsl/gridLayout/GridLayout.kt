@@ -127,7 +127,6 @@ class GridLayout : LayoutManager2 {
     return _rootGrid.getConstraints(grid)
   }
 
-  @ApiStatus.Internal
   internal fun getPreferredSizeData(parent: Container): SizeConstrainsData {
     return _rootGrid.getSizeConstrainsData(parent.insets, respectMinimumSize)
   }

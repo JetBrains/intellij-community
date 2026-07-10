@@ -25,13 +25,15 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.messages.MessageBusConnection
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.Result
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.getOrNull
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyPackageService
 import com.jetbrains.python.packaging.PyPackageVersionNormalizer
+import com.jetbrains.python.packaging.cache.PythonPackageSearchPage
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
-import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCacheService
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
@@ -44,12 +46,14 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.findPackageSpecification
 import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
+import com.jetbrains.python.packaging.management.ui.notify
 import com.jetbrains.python.packaging.packageRequirements.FlatPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageCollectionPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageTreeNode
 import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.WorkspaceMemberPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.collectAllNames
+import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepositories
@@ -82,7 +86,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @Service(Service.Level.PROJECT)
-class PyPackagingToolWindowService(val project: Project, val serviceScope: CoroutineScope) : Disposable {
+internal class PyPackagingToolWindowService(val project: Project, val serviceScope: CoroutineScope) : Disposable {
   private var toolWindowPanel: PyPackagingToolWindowPanel? = null
   @Volatile private var installedPackages: List<DisplayablePackage> = emptyList()
   private var searchJob: Job? = null
@@ -206,24 +210,43 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     return result
   }
 
+  fun rerunSearch() {
+    handleSearch(currentQuery)
+  }
+
   fun handleSearch(query: String) {
     currentQuery = query
 
     val context = sdkContext ?: return
     val packageManager = context.manager
-
     val prevSelected = toolWindowPanel?.getSelectedPackage()
-    if (query.isNotEmpty()) {
-      searchJob?.cancel()
-      searchJob = serviceScope.launch {
+
+    searchJob?.cancel()
+    searchJob = serviceScope.launch {
+      if (query.isNotEmpty()) {
         val allMatches = findAllMatchingPackages(query)
-        val packagesFromRepos = packageManager.repositoryManager.searchPackages(query, PACKAGES_LIMIT)
-          .mapNotNull { (repository, result) ->
-            result.pages.firstOrNull()?.let { 
-              processPackagesForRepo(result, 0, query, repository)
+        var shouldRerun = false
+        val packagesFromRepos =
+          packageManager
+            .repositoryManager
+            .searchPackages(query, PACKAGES_LIMIT)
+            .mapNotNull { (repository, result) ->
+              result.pages.firstOrNull()?.let {
+                val result = processPackagesForRepo(result, 0, query, repository).successOrNull
+
+                if (result == null) {
+                  shouldRerun = true
+                }
+
+                result
+              }
             }
-          }
-          .toList()
+            .toList()
+
+        if (shouldRerun) {
+          rerunSearch()
+          return@launch
+        }
 
         if (isActive) {
           withContext(Dispatchers.EDT) {
@@ -232,21 +255,42 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
           }
         }
       }
-    }
-    else {
-      val packagesByRepository = packageManager.repositoryManager.searchPackages("", PACKAGES_LIMIT).map { (repository, result) ->
-        val displayable = if (result.pages.size == 1) {
-          result.pages[0].filterOutInstalled(repository)
-        }
-        else {
-          emptyList()
+      else {
+        var shouldRerun = false
+        val packagesByRepository =
+          packageManager
+            .repositoryManager
+            .searchPackages("", PACKAGES_LIMIT)
+            .mapNotNull { (repository, result) ->
+              val displayable =
+                if (result.pages.size == 1) {
+                  result.pages[0].contents().successOrNull?.asSequence()?.filterOutInstalled(repository)
+                }
+                else {
+                  emptyList()
+                }
+
+              if (displayable == null) {
+                shouldRerun = true
+                return@mapNotNull null
+              }
+
+              PyPackagesViewData(repository, result, 0, displayable)
+            }
+            .toList()
+
+        if (shouldRerun) {
+          rerunSearch()
+          return@launch
         }
 
-        PyPackagesViewData(repository, result, 0, displayable)
-      }.toList()
-
-      toolWindowPanel?.resetSearch(installedPackages, packagesByRepository + invalidRepositories, currentSdk)
-      prevSelected?.name?.let { toolWindowPanel?.selectPackageName(it) }
+        if (isActive) {
+          withContext(Dispatchers.EDT) {
+            toolWindowPanel?.resetSearch(installedPackages, packagesByRepository + invalidRepositories, currentSdk)
+            prevSelected?.name?.let { toolWindowPanel?.selectPackageName(it) }
+          }
+        }
+      }
     }
   }
 
@@ -654,10 +698,11 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     pageIndex: Int,
     query: String,
     repository: PyPackageRepository,
-  ): PyPackagesViewData {
-    val shownPackages = result.pages[pageIndex].filterOutInstalled(repository)
+  ): Result<PyPackagesViewData, PythonPackageSearchPage.DataInvalidatedError> {
+    val contents = result.pages[pageIndex].contents().getOr { return it }
+    val shownPackages = contents.asSequence().filterOutInstalled(repository)
     val exactMatch = shownPackages.indexOfFirst { StringUtil.equalsIgnoreCase(it.name, query) }
-    return PyPackagesViewData(repository, result, pageIndex, shownPackages, exactMatch)
+    return Result.Success(PyPackagesViewData(repository, result, pageIndex, shownPackages, exactMatch))
   }
 
   override fun dispose() {
@@ -704,14 +749,22 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
           .filter { it !in packageService.additionalRepositories }
           .forEach { packageService.addRepository(it) }
 
-        // LAME: pip based repository manager handles all added repositories via cache...
-        service<PythonSimpleRepositoryCacheService>().reloadAll().orThrow()
+        project.service<PipRepositoryManager>()
+          .refreshAddedCaches()
+          .onFailure {
+            it.notify(project)
+          }
+        
         refreshInstalledPackages()
       }
     }
   }
 
-  fun getMoreResultsForPage(repository: PyPackageRepository, result: PythonPackageSearchResult, pageIndex: Int): PyPackagesViewData {
+  fun getMoreResultsForPage(
+    repository: PyPackageRepository,
+    result: PythonPackageSearchResult,
+    pageIndex: Int,
+  ): Result<PyPackagesViewData, PythonPackageSearchPage.DataInvalidatedError> {
     return processPackagesForRepo(
       result,
       pageIndex + 1,

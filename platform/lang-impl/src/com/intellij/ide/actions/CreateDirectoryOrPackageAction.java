@@ -57,6 +57,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.BorderFactory;
@@ -303,7 +304,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
   @TestOnly
   @ApiStatus.Internal
-  public @NotNull List<String> collectSuggestedDirectoriesTestAccessor(@NotNull PsiDirectory directory) {
+  public @NotNull @Unmodifiable List<String> collectSuggestedDirectoriesTestAccessor(@NotNull PsiDirectory directory) {
     return ContainerUtil.map(collectSuggestedDirectories(directory), item -> item.relativePath);
   }
   

@@ -1021,6 +1021,26 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
             runTest("../../completion/testData/basic/common/constructor/PrivateConstructor.kt");
         }
 
+        @TestMetadata("PrivateConstructorForNested.kt")
+        public void testPrivateConstructorForNested() throws Exception {
+            runTest("../../completion/testData/basic/common/constructor/PrivateConstructorForNested.kt");
+        }
+
+        @TestMetadata("PrivateConstructorForNested2.kt")
+        public void testPrivateConstructorForNested2() throws Exception {
+            runTest("../../completion/testData/basic/common/constructor/PrivateConstructorForNested2.kt");
+        }
+
+        @TestMetadata("PrivateConstructorForNested3.kt")
+        public void testPrivateConstructorForNested3() throws Exception {
+            runTest("../../completion/testData/basic/common/constructor/PrivateConstructorForNested3.kt");
+        }
+
+        @TestMetadata("PrivateConstructorForNested4.kt")
+        public void testPrivateConstructorForNested4() throws Exception {
+            runTest("../../completion/testData/basic/common/constructor/PrivateConstructorForNested4.kt");
+        }
+
         @TestMetadata("SingleConstructor.kt")
         public void testSingleConstructor() throws Exception {
             runTest("../../completion/testData/basic/common/constructor/SingleConstructor.kt");
@@ -2267,6 +2287,16 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
             runTest("../../completion/testData/basic/common/namedArguments/ParamsFromSingleUnapplicableOverload.kt");
         }
 
+        @TestMetadata("PrefillExplicitContextArgument.kt")
+        public void testPrefillExplicitContextArgument() throws Exception {
+            runTest("../../completion/testData/basic/common/namedArguments/PrefillExplicitContextArgument.kt");
+        }
+
+        @TestMetadata("PrefillPreferParameterOverContextArgument.kt")
+        public void testPrefillPreferParameterOverContextArgument() throws Exception {
+            runTest("../../completion/testData/basic/common/namedArguments/PrefillPreferParameterOverContextArgument.kt");
+        }
+
         @TestMetadata("PrefillSameNameParameter.kt")
         public void testPrefillSameNameParameter() throws Exception {
             runTest("../../completion/testData/basic/common/namedArguments/PrefillSameNameParameter.kt");
@@ -2282,6 +2312,11 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
             runTest("../../completion/testData/basic/common/namedArguments/PrefillSameNameVariableAlreadyPassed.kt");
         }
 
+        @TestMetadata("PrefillSameNameVariableFromClass.kt")
+        public void testPrefillSameNameVariableFromClass() throws Exception {
+            runTest("../../completion/testData/basic/common/namedArguments/PrefillSameNameVariableFromClass.kt");
+        }
+
         @TestMetadata("PrefillSameNameVariableSmart.kt")
         public void testPrefillSameNameVariableSmart() throws Exception {
             runTest("../../completion/testData/basic/common/namedArguments/PrefillSameNameVariableSmart.kt");
@@ -2295,6 +2330,11 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
         @TestMetadata("PrefillTopLevelValue.kt")
         public void testPrefillTopLevelValue() throws Exception {
             runTest("../../completion/testData/basic/common/namedArguments/PrefillTopLevelValue.kt");
+        }
+
+        @TestMetadata("PrefillWrongOrder.kt")
+        public void testPrefillWrongOrder() throws Exception {
+            runTest("../../completion/testData/basic/common/namedArguments/PrefillWrongOrder.kt");
         }
 
         @TestMetadata("PrivateFunction.kt")

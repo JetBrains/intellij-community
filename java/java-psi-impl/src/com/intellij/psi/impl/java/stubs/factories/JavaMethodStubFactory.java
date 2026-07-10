@@ -8,6 +8,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
+import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiMethodStubImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
@@ -21,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class JavaMethodStubFactory implements LightStubElementFactory<PsiMethodStubImpl, PsiMethod> {
+public class JavaMethodStubFactory implements LightStubElementFactory<PsiMethodStub, PsiMethod> {
   @Override
   public @NotNull PsiMethodStubImpl createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     String name = null;
@@ -75,7 +76,7 @@ public class JavaMethodStubFactory implements LightStubElementFactory<PsiMethodS
   }
 
   @Override
-  public PsiMethod createPsi(@NotNull PsiMethodStubImpl stub) {
+  public PsiMethod createPsi(@NotNull PsiMethodStub stub) {
     return JavaStubElementType.getFileStub(stub).getPsiFactory().createMethod(stub);
   }
   

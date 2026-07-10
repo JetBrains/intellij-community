@@ -30,7 +30,7 @@ public final class InspectionViewNavigationPanel extends JPanel implements Inspe
     myTree = tree;
     setLayout(new BorderLayout());
     setBorder(JBUI.Borders.empty(18, 12, 0, 0));
-    final String titleLabelText = getTitleText(true);
+    String titleLabelText = getTitleText(true);
     add(new JBLabel(titleLabelText), BorderLayout.NORTH);
     myLinks = new JPanel();
     myLinks.setLayout(new BoxLayout(myLinks, BoxLayout.Y_AXIS));
@@ -57,13 +57,13 @@ public final class InspectionViewNavigationPanel extends JPanel implements Inspe
   }
 
   private void resetChildrenNavigation() {
-    final int currentChildrenCount = myNode.getChildCount();
+    int currentChildrenCount = myNode.getChildCount();
     if (myShownChildrenCount != currentChildrenCount) {
       myLinks.removeAll();
       myLinks.add(Box.createVerticalStrut(JBUIScale.scale(10)));
       for (int i = 0; i < currentChildrenCount; i++) {
-        final InspectionTreeNode child = myNode.getChildAt(i);
-        final LinkLabel link = new LinkLabel(child.getPresentableText(), null) {
+        InspectionTreeNode child = myNode.getChildAt(i);
+        LinkLabel link = new LinkLabel(child.getPresentableText(), null) {
           @Override
           public void doClick() {
             myTree.selectNode(child);

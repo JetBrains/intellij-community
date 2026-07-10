@@ -16,6 +16,7 @@ import git4idea.inMemory.GitObjectRepository
 import git4idea.inMemory.MergeConflictException
 import git4idea.inMemory.mergeTrees
 import git4idea.inMemory.objects.GitObject
+import git4idea.inMemory.objects.Oid
 import git4idea.inMemory.rebase.log.GitInMemoryCommitEditingOperation
 import git4idea.inMemory.rebaseCommit
 import git4idea.rebase.GitRebaseEntry
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.reflect.KClass
+import kotlin.to
 
 /**
  * Performs an interactive rebase without modifying the working directory and index.
@@ -46,7 +48,7 @@ internal class GitInMemoryInteractiveRebaseProcess(
       throw VcsException(GitBundle.message("in.memory.rebase.fail.head.move"))
     }
 
-    var baseCommit = baseToHeadCommitsRange.first().parentsOids.singleOrNull()?.let { objectRepo.findCommit(it) }
+    val initialRebaseHead = baseToHeadCommitsRange.first().parentsOids.singleOrNull()?.let { objectRepo.findCommit(it) }
 
     val entriesWithCommits = rebaseData.entries.map { entry ->
       val commit = baseToHeadCommitsRange.find { it.oid.hex() == entry.commit }
@@ -54,30 +56,65 @@ internal class GitInMemoryInteractiveRebaseProcess(
       entry to commit
     }
 
+    var state = RebaseState(initialRebaseHead, emptyList(), emptyList())
     reportSequentialProgress(entriesWithCommits.size) { reporter ->
       entriesWithCommits.forEach { (entry, commitToRebase) ->
-        baseCommit = processEntry(baseCommit, entry, commitToRebase)
+        val processor = actionProcessors[entry.action::class]
+                        ?: throw UnsupportedOperationException("Action ${entry.action} not supported in in-memory rebase")
+        state = processor.process(objectRepo, state, commitToRebase, entry)
         reporter.itemStep()
       }
     }
 
-    if (baseCommit == null) { // all commits are dropped
-      // To have the same behavior as regular interactive rebase action, creates empty commit
-      baseCommit = objectRepo.findCommit(objectRepo.commitTree(objectRepo.emptyTree.oid, listOf(), byteArrayOf()))
-    }
+    val finalRebaseHead = state.head
+                          // To have the same behavior as regular interactive rebase action, creates empty commit
+                          ?: objectRepo.findCommit(objectRepo.commitTree(objectRepo.emptyTree.oid, listOf(), byteArrayOf()))
+    val finalState = state.copy(head = finalRebaseHead).flushRewrittenPending()
 
-    val modifiesTree = baseCommit.treeOid != baseToHeadCommitsRange.last().treeOid
-    return CommitEditingResult(baseCommit.oid, requiresWorkingTreeUpdate = modifiesTree)
+    val modifiesTree = finalRebaseHead.treeOid != baseToHeadCommitsRange.last().treeOid
+    return CommitEditingResult(
+      newHead = finalRebaseHead.oid,
+      requiresWorkingTreeUpdate = modifiesTree,
+      rewrittenList = finalState.rewrittenList,
+    )
   }
 
-  private fun processEntry(
-    baseCommit: GitObject.Commit?,
-    entry: GitRebaseEntry,
-    commitToRebase: GitObject.Commit,
-  ): GitObject.Commit? {
-    val processor = actionProcessors[entry.action::class]
-                    ?: throw UnsupportedOperationException("Action ${entry.action} not supported in memory rebase")
-    return processor.process(objectRepo, baseCommit, commitToRebase, entry)
+
+  /**
+   * @property head Top of the current commit sequence being built (null if a sequence is empty).
+   * @property rewrittenPending A list of commits that have been rewritten
+   * but their image is not yet finalized, i.e., a chain of the most recent consecutive fixups
+   * that wait for a final squashed commit to all point to it
+   * @property rewrittenList A mapping from the original commit
+   * to the corresponding rewritten commit. Serves as input to `post-rewrite` git hook
+   */
+  private data class RebaseState(
+    val head: GitObject.Commit?,
+    val rewrittenPending: List<Oid>,
+    val rewrittenList: List<Pair<Oid, Oid>>,
+  ) {
+    fun flushRewrittenPending(): RebaseState {
+      if (rewrittenPending.isEmpty()) return this
+      val head = checkNotNull(head) { "Non-empty rewrittenPending implies a non-null head" }
+      return copy(
+        rewrittenPending = emptyList(),
+        rewrittenList = rewrittenList + rewrittenPending.filter { it != head.oid }.map { it to head.oid },
+      )
+    }
+  }
+
+  /**
+   * Implementations should cover rebase actions [GitRebaseEntry.Action].
+   * Each call takes a [RebaseState] and should return the next state.
+   * All created objects must be persisted to the repository.
+   */
+  private interface RebaseActionProcessor {
+    fun process(
+      objectRepo: GitObjectRepository,
+      state: RebaseState,
+      commitToRebase: GitObject.Commit,
+      entry: GitRebaseEntry,
+    ): RebaseState
   }
 
   companion object {
@@ -85,71 +122,79 @@ internal class GitInMemoryInteractiveRebaseProcess(
       GitRebaseEntry.Action.PICK::class to PickActionProcessor,
       GitRebaseEntry.Action.REWORD::class to RewordActionProcessor,
       GitRebaseEntry.Action.FIXUP::class to FixupActionProcessor,
-      GitRebaseEntry.Action.DROP::class to DropActionProcessor
+      GitRebaseEntry.Action.DROP::class to DropActionProcessor,
     )
 
     val SUPPORTED_ACTIONS = actionProcessors.keys
 
     private object PickActionProcessor : RebaseActionProcessor {
-      override fun process(objectRepo: GitObjectRepository, baseCommit: GitObject.Commit?, commitToRebase: GitObject.Commit, entry: GitRebaseEntry): GitObject.Commit? {
-        if (commitToRebase.parentsOids.singleOrNull() == baseCommit?.oid) {
-          return commitToRebase
+      override fun process(
+        objectRepo: GitObjectRepository,
+        state: RebaseState,
+        commitToRebase: GitObject.Commit,
+        entry: GitRebaseEntry,
+      ): RebaseState {
+        val flushed = state.flushRewrittenPending()
+
+        val newHead = if (commitToRebase.parentsOids.singleOrNull() == flushed.head?.oid) {
+          commitToRebase
         }
-        val newOid = objectRepo.rebaseCommit(commitToRebase, baseCommit) ?: return baseCommit
-        return objectRepo.findCommit(newOid)
+        else {
+          objectRepo.rebaseCommit(commitToRebase, flushed.head)?.let { objectRepo.findCommit(it) } ?: flushed.head
+        }
+        return flushed.copy(head = newHead, rewrittenPending = listOf(commitToRebase.oid))
       }
     }
 
     private object RewordActionProcessor : RebaseActionProcessor {
-      override fun process(objectRepo: GitObjectRepository, baseCommit: GitObject.Commit?, commitToRebase: GitObject.Commit, entry: GitRebaseEntry): GitObject.Commit? {
+      override fun process(
+        objectRepo: GitObjectRepository,
+        state: RebaseState,
+        commitToRebase: GitObject.Commit,
+        entry: GitRebaseEntry,
+      ): RebaseState {
+        val flushed = state.flushRewrittenPending()
         val newMessage = (entry as GitRebaseRewordEntryWithMessage).newMessage
-        val rewordedCommit = objectRepo.commitTreeWithOverrides(commitToRebase, message = newMessage.toByteArray())
-        val newOid = objectRepo.rebaseCommit(objectRepo.findCommit(rewordedCommit), baseCommit) ?: return baseCommit
-        return objectRepo.findCommit(newOid)
+        val rewordedCommit = objectRepo.findCommit(
+          objectRepo.commitTreeWithOverrides(commitToRebase, message = newMessage.toByteArray())
+        )
+        val newHead = objectRepo.rebaseCommit(rewordedCommit, flushed.head)?.let { objectRepo.findCommit(it) } ?: flushed.head
+        return flushed.copy(head = newHead, rewrittenPending = listOf(commitToRebase.oid))
       }
     }
 
     private object FixupActionProcessor : RebaseActionProcessor {
-      override fun process(objectRepo: GitObjectRepository, baseCommit: GitObject.Commit?, commitToRebase: GitObject.Commit, entry: GitRebaseEntry): GitObject.Commit {
-        checkNotNull(baseCommit) { "Can't apply squash as first commit" }
-        val mergedTree = objectRepo.mergeTrees(commitToRebase, baseCommit)
+      override fun process(
+        objectRepo: GitObjectRepository,
+        state: RebaseState,
+        commitToRebase: GitObject.Commit,
+        entry: GitRebaseEntry,
+      ): RebaseState {
+        val head = checkNotNull(state.head) { "Can't apply fixup as first action" }
+        val mergedTree = objectRepo.mergeTrees(commitToRebase, head)
         objectRepo.persistObject(mergedTree)
 
         val resultCommitOid = if ((entry.action as GitRebaseEntry.Action.FIXUP).overrideMessage) {
-          objectRepo.commitTreeWithOverrides(baseCommit, treeOid = mergedTree.oid, message = commitToRebase.message)
+          objectRepo.commitTreeWithOverrides(head, treeOid = mergedTree.oid, message = commitToRebase.message)
         }
         else {
-          objectRepo.commitTreeWithOverrides(baseCommit, treeOid = mergedTree.oid)
+          objectRepo.commitTreeWithOverrides(head, treeOid = mergedTree.oid)
         }
-        return objectRepo.findCommit(resultCommitOid)
+        return state.copy(
+          head = objectRepo.findCommit(resultCommitOid),
+          rewrittenPending = state.rewrittenPending + commitToRebase.oid,
+        )
       }
     }
 
     private object DropActionProcessor : RebaseActionProcessor {
-      override fun process(objectRepo: GitObjectRepository, baseCommit: GitObject.Commit?, commitToRebase: GitObject.Commit, entry: GitRebaseEntry): GitObject.Commit? {
-        return baseCommit
-      }
+      override fun process(
+        objectRepo: GitObjectRepository,
+        state: RebaseState,
+        commitToRebase: GitObject.Commit,
+        entry: GitRebaseEntry,
+      ): RebaseState = state
     }
-  }
-
-  /**
-   * Implementations should cover rebase actions [GitRebaseEntry.Action]
-   * They should apply the action with respective commit and return the new top of the commit sequence.
-   * All created objects must be persisted to the repository.
-   */
-  private interface RebaseActionProcessor {
-    /**
-     * @param baseCommit Top of the current commit sequence being built (null if a sequence is empty)
-     * @param commitToRebase The commit being processed
-     * @param entry Details for the rebase operation
-     * @return New top commit after processing. It should be persisted to the repository.
-     */
-    fun process(
-      objectRepo: GitObjectRepository,
-      baseCommit: GitObject.Commit?,
-      commitToRebase: GitObject.Commit,
-      entry: GitRebaseEntry,
-    ): GitObject.Commit?
   }
 }
 

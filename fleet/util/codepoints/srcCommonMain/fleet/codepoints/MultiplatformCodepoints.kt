@@ -40,12 +40,6 @@ internal object MultiplatformCodepoints {
     private fun hasLargeUppercaseDelta(props: Int): Boolean =
         (props and CharacterData.HAS_LARGE_UPPERCASE_DELTA_BIT) != 0
 
-  fun codepointsToString(vararg codepoints: Int): String = buildString(capacity = codepoints.size * 2) {
-    for (codePoint in codepoints) {
-      appendCodePoint(Codepoint(codePoint))
-    }
-  }
-
   fun codepointOf(highSurrogate: Char, lowSurrogate: Char): Codepoint =
     Codepoint((highSurrogate.code shl 10) + lowSurrogate.code + SURROGATE_DECODE_OFFSET)
 

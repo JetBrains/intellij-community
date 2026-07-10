@@ -18,12 +18,13 @@
     <module name="intellij.platform.testFramework.common"/>
     <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.python.black"/>
-    <module name="intellij.python.common"/>
     <module name="intellij.python.community"/>
+    <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.impl"/>
     <module name="intellij.python.psi"/>
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pytools"/>
+    <module name="intellij.python.pytools.ui"/>
     <module name="intellij.python.sdk"/>
     <module name="intellij.python.test.env.junit5"/>
   </dependencies>

@@ -60,7 +60,7 @@ class StringAgg(OrderableAggMixin, Aggregate):
         delimiter: Any,
         *,
         distinct: bool = False,
-        filter: Q | None = None,
+        filter: Q | BaseExpression | None = None,
         default: Any | None = None,
         ordering: _OrderByFieldName | Sequence[_OrderByFieldName] = ...,
         order_by: _OrderByFieldName | Sequence[_OrderByFieldName] = ...,

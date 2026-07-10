@@ -63,6 +63,14 @@ class TerminalBlocksModelImpl(
   }
 
   fun startNewBlock(offset: TerminalOffset) {
+    // The new prompt may start before the active block (or even before some already finished blocks)
+    // if the shell moved the cursor backwards (e.g. the screen was redrawn or partially cleared via
+    // cursor movement, a transient prompt was printed, or the output was reflowed on resize).
+    // Remove all blocks that start after the new prompt offset, since they are being overwritten.
+    // This also keeps the remaining active block's start offset <= offset, so the block below can
+    // never end up with an inverted range (startOffset > endOffset).
+    trimBlocksAfter(offset)
+
     val active = activeBlock as TerminalCommandBlockImpl
     if (offset == active.startOffset) {
       blocks.removeLast()

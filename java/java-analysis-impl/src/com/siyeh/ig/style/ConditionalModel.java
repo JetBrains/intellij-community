@@ -97,7 +97,9 @@ public class ConditionalModel {
     final PsiType thenType = thenExpression.getType();
     final PsiType elseType = elseExpression.getType();
     if (thenType == null || elseType == null) return null;
-    if (elseType instanceof PsiPrimitiveType && elseType.equals(PsiPrimitiveType.getUnboxedType(thenType))) return elseType; // jls 15.25
+    // when one branch is a primitive type and the other the boxed variant of that type the return type is the primitive (jls 15.25)
+    if (elseType instanceof PsiPrimitiveType && elseType.equals(PsiPrimitiveType.getUnboxedType(thenType))) return elseType;
+    // when the case is reversed this next if already returns the primitive type so no need for a separate check
     if (thenType.isAssignableFrom(elseType)) return thenType;
     if (elseType.isAssignableFrom(thenType)) return elseType;
     if (!(thenType instanceof PsiClassType) || !(elseType instanceof PsiClassType)) return null;

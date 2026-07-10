@@ -1,11 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.diagnostic.hprof.action.SystemTempFilenameSupplier
+import com.intellij.diagnostic.hprof.analysis.AnalyzeClassloaderReferencesGraph
+import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.analyzeSnapshot
-import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.clearCachesAfterUnload
+import com.intellij.ide.plugins.DynamicPluginsCachesCleanup.clearCachesAfterUnload
 import com.intellij.ide.plugins.PluginUtils.asSanitizedPathElement
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.notification.NotificationType
@@ -15,7 +17,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.util.registry.Registry
@@ -35,7 +40,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import java.nio.channels.FileChannel
 import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
 import java.text.SimpleDateFormat
 import java.util.Date
 import kotlin.time.Duration.Companion.milliseconds
@@ -104,9 +111,19 @@ internal class AwaitClassloaderUnloadAsyncPostReconfiguration : AwaitClassloader
       awaitUnload(classloaders)
     }
     if (!unloaded) {
+      val stillLoadedDescriptors = ArrayList<PluginDescriptor>().apply {
+        for (stillLoaded in classloaders.iterator()) { // WeakList throws on get(index) / size operations, here we make sure it won't throw
+          add(stillLoaded.pluginDescriptor)
+        }
+      }
+      val message = when {
+        stillLoadedDescriptors.size == 1 -> IdeBundle.message("notification.content.plugin.didnt.unload.cleanly", stillLoadedDescriptors[0].name)
+        else -> IdeBundle.message("notification.content.plugins.didnt.unload.cleanly")
+      }
+      LOG.warn("Plugins that were expected to unload but are still referenced:\n${stillLoadedDescriptors.joinToString("\n")}")
       val notification = UpdateCheckerFacade.getInstance().getNotificationGroupForPluginUpdateResults().createNotification(
         IdeBundle.message("notification.on.tool.window.title.restart.advised"),
-        IdeBundle.message("notification.content.plugins.didnt.unload.cleanly"),
+        message,
         NotificationType.WARNING
       )
       notification.addAction(object : AnAction(IdeBundle.message("ide.restart.action")), DumbAware {
@@ -197,7 +214,7 @@ private fun saveMemorySnapshot(pluginId: PluginId) {
     }
   }
 
-  DynamicPluginsLegacyImpl.notify(
+  DynamicPlugins.notify(
     IdeBundle.message("memory.snapshot.captured.text", snapshotPath),
     NotificationType.WARNING,
     object : AnAction(IdeBundle.message("ide.restart.action")), DumbAware {
@@ -210,4 +227,16 @@ private fun saveMemorySnapshot(pluginId: PluginId) {
   )
 
   LOG.info("Plugin $pluginId is not unload-safe because class loader cannot be unloaded. Memory snapshot created at $snapshotPath")
+}
+
+private fun analyzeSnapshot(hprofPath: String, pluginId: PluginId): String {
+  FileChannel.open(Paths.get(hprofPath), StandardOpenOption.READ).use { channel ->
+    val analysis = HProfAnalysis(channel, SystemTempFilenameSupplier()) { analysisContext, listProvider, progressIndicator ->
+      AnalyzeClassloaderReferencesGraph(analysisContext, listProvider, pluginId.idString).analyze(progressIndicator).mainReport.toString()
+    }
+    analysis.onlyStrongReferences = true
+    analysis.includeClassesAsRoots = false
+    analysis.setIncludeMetaInfo(false)
+    return analysis.analyze(ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator())
+  }
 }

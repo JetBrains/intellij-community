@@ -8,10 +8,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.AfterEventShouldBeFiredBeforeOtherListeners
 import com.intellij.openapi.vfs.AsyncFileListener
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
-import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
@@ -38,9 +38,8 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -51,7 +50,6 @@ import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.pathString
 import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
@@ -80,7 +78,8 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
      * If asserting that some file is NOT loaded, it is better to call refresh, and [visitChildrenInVfsRecursively] as usual,
      * to catch, if any listeners have loaded the file into VFS.
      */
-    suspend fun collectFilesLoadedIntoVfsBeforeListenersRuns(directoryToRefresh: VirtualFile, listenerDisposable: Disposable): List<VirtualFile> {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun collectFilesLoadedIntoVfsBeforeListenersRuns(directoryToRefresh: VirtualFile, listenerDisposable: Disposable): List<VirtualFile> {
       val directoryToRefreshPath = directoryToRefresh.toNioPath().invariantSeparatorsPathString
       val listenerResult = CompletableDeferred<Result<List<VirtualFile>>>()
       VirtualFileManager.getInstance().addAsyncFileListenerBackgroundable(
@@ -97,14 +96,13 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
           }
         }, listenerDisposable)
 
-      RefreshQueue.getInstance().refresh(true, listOf(directoryToRefresh))
+      VfsUtil.markDirtyAndRefresh(false, true, false, directoryToRefresh)
 
-      return withTimeout(10.seconds) {
-        listenerResult.await()
-      }.getOrThrow()
+      return listenerResult.getCompleted().getOrThrow()
     }
 
-    private suspend fun collectCreatedDirectoryChildrenBeforeListenersRuns(
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun collectCreatedDirectoryChildrenBeforeListenersRuns(
       directoryToRefresh: VirtualFile,
       createdDirectory: Path,
       listenerDisposable: Disposable,
@@ -128,11 +126,9 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
           }
         }, listenerDisposable)
 
-      RefreshQueue.getInstance().refresh(true, listOf(directoryToRefresh))
+      VfsUtil.markDirtyAndRefresh(false, true, false, directoryToRefresh)
 
-      return withTimeout(10.seconds) {
-        listenerResult.await()
-      }.getOrThrow()
+      return listenerResult.getCompleted().getOrThrow()
     }
   }
 
@@ -153,8 +149,7 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
       Assertions.assertFalse(readAction { WorkspaceFileIndex.getInstance(project).isIndexable(rootVirtualFile) })
 
       rootDir.newDirectoryPath("d1/d2/d3")
-      delay(1.seconds) // wait for fs events to arrive
-      RefreshQueue.getInstance().refresh(true, listOf(rootVirtualFile))
+      VfsUtil.markDirtyAndRefresh(false, true, false, rootVirtualFile)
       val filesInVfs = visitChildrenInVfsRecursively(rootVirtualFile).toList()
       assertThat(filesInVfs.map { it.name }).containsExactlyInAnyOrder(rootVirtualFile.name, ".idea", "d1")
     }
@@ -177,8 +172,7 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
       Assertions.assertTrue(readAction { WorkspaceFileIndex.getInstance(project).isIndexable(rootVirtualFile) })
 
       rootDir.newDirectoryPath("d1/d2/d3")
-      delay(1.seconds) // wait for fs events to arrive
-      RefreshQueue.getInstance().refresh(true, listOf(rootVirtualFile))
+      VfsUtil.markDirtyAndRefresh(false, true, false, rootVirtualFile)
       val filesInVfs = visitChildrenInVfsRecursively(rootVirtualFile).toList()
       assertThat(filesInVfs.map { it.name }).containsExactlyInAnyOrder(rootVirtualFile.name, ".idea", "d1")
     }
@@ -208,7 +202,6 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
       outerFile.writeText("outer")
       val innerFile = rootDir.newFileNio("innerContentRoot/innerFile.txt")
       innerFile.writeText("inner")
-      delay(1.seconds) // wait for fs events to arrive
 
       val filesInVfs = collectFilesLoadedIntoVfsBeforeListenersRuns(rootVirtualFile, disposable)
       assertThat(filesInVfs.map { it.path }).contains(outerFile.invariantSeparatorsPathString, innerFile.invariantSeparatorsPathString)
@@ -240,8 +233,7 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
       }, disposable)
 
       rootDir.newDirectoryPath("d1/excluded/d3")
-      delay(1.seconds) // wait for fs events to arrive
-      RefreshQueue.getInstance().refresh(true, listOf(rootVirtualFile))
+      VfsUtil.markDirtyAndRefresh(false, true, false, rootVirtualFile)
       val filesInVfs = visitChildrenInVfsRecursively(rootVirtualFile).toList()
       assertThat(filesInVfs).noneMatch { it.name == "d3" }
     }
@@ -275,7 +267,6 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
       nestedFile.writeText("class Generated")
       val skippedFile = rootDir.newFileNio("content/build/tmp/marker.txt")
       skippedFile.writeText("marker")
-      delay(1.seconds) // wait for fs events to arrive
 
       val filesLoadedIntoVfs = collectFilesLoadedIntoVfsBeforeListenersRuns(rootVirtualFile, disposable)
       val filesLoadedByPath = filesLoadedIntoVfs.associateBy { it.toNioPath().invariantSeparatorsPathString }
@@ -320,7 +311,6 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
 
       rootDir.newFileNio("content/build/generated/source/kapt/main/Generated.kt").writeText("class Generated")
       rootDir.newFileNio("content/build/tmp/marker.txt").writeText("marker")
-      delay(1.seconds) // wait for fs events to arrive
 
       val scannedChildren = collectCreatedDirectoryChildrenBeforeListenersRuns(rootVirtualFile, scanRoot, disposable)
       val excludedInfo = childInfo(scannedChildren, "build")

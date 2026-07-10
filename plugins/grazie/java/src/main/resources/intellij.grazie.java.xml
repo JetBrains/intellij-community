@@ -4,6 +4,7 @@
     <module name="intellij.java.backend"/>
     <module name="intellij.grazie.core"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.platform.backend"/>
   </dependencies>
   <!-- endregion -->
 

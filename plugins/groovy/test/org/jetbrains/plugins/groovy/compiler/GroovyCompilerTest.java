@@ -999,7 +999,7 @@ public void testMultilineStrings() {
   }
 
   public void testExtendGroovyClassesWithAdditionalDependencies() {
-    PsiTestUtil.addProjectLibrary(getModule(), "junit", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"));
+    PsiTestUtil.addProjectLibrary(getModule(), "junit", IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4").getClassesPaths());
     TestLibrary library = getGroovyLibrary();
     String coordinate = DefaultGroovyMethods.first((DefaultGroovyMethods.asType(library, RepositoryTestLibrary.class)).getCoordinates());
     if (!coordinate.contains(":groovy-all:")){

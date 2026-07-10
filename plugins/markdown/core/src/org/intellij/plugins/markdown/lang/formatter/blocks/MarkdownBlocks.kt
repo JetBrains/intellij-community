@@ -44,6 +44,7 @@ internal object MarkdownBlocks {
       in MarkdownTokenTypeSets.LIST_MARKERS, in MarkdownTokenTypeSets.WHITE_SPACES, MarkdownTokenTypes.BLOCK_QUOTE -> {
         MarkdownRangedFormattingBlock.trimmed(node, settings, spacing, align(node), wrap)
       }
+      MarkdownTokenTypes.TABLE_SEPARATOR -> TableSeparatorFormattingBlock(node, settings, spacing, align(node), wrap)
       MarkdownElementTypes.CODE_SPAN -> MarkdownFormattingBlock(
         node, settings, spacing, align(node),
         wrap ?: Wrap.createWrap(if (shouldWrapCodeSpan(settings)) WrapType.NORMAL else WrapType.NONE, false)

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith
 
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Editor
@@ -182,7 +183,7 @@ abstract class DeprecatedSymbolUsageFixBase(
     }
 
     private fun qualifyReplaceWithFragment(expression: KtReferenceExpression): ReplaceWithData? {
-        if (replaceWith.imports.isNotEmpty()) {
+        if (replaceWith.imports.isNotEmpty() && !IntentionPreviewUtils.isIntentionPreviewActive()) {
             return runWriteAction {
                 val fragment = KtPsiFactory.contextual(expression).createExpressionCodeFragment(replaceWith.pattern, expression)
                 fragment.addImportsFromString(replaceWith.imports.joinToString())

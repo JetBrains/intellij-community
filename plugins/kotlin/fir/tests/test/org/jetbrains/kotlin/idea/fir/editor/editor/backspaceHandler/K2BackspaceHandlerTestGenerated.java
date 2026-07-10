@@ -59,6 +59,71 @@ public abstract class K2BackspaceHandlerTestGenerated extends AbstractK2Backspac
             runTest("../../idea/tests/testData/editor/backspaceHandler/FileStart.kt");
         }
 
+        @TestMetadata("lambdaAsExplicitArgument.kt")
+        public void testLambdaAsExplicitArgument() throws Exception {
+            runTest("../../idea/tests/testData/editor/backspaceHandler/lambdaAsExplicitArgument.kt");
+        }
+
+        @TestMetadata("lambdaDeeplyNestedParenMismatch.kt")
+        public void testLambdaDeeplyNestedParenMismatch() throws Exception {
+            runTest("../../idea/tests/testData/editor/backspaceHandler/lambdaDeeplyNestedParenMismatch.kt");
+        }
+
+        @TestMetadata("lambdaFollowedBySiblingLambda.kt")
+        public void testLambdaFollowedBySiblingLambda() throws Exception {
+            runTest("../../idea/tests/testData/editor/backspaceHandler/lambdaFollowedBySiblingLambda.kt");
+        }
+
+        @TestMetadata("lambdaInline.kt")
+        public void testLambdaInline() throws Exception {
+            runTest("../../idea/tests/testData/editor/backspaceHandler/lambdaInline.kt");
+        }
+
+        @TestMetadata("lambdaInsideUnclosedBlock.kt")
+        public void testLambdaInsideUnclosedBlock() throws Exception {
+            runTest("../../idea/tests/testData/editor/backspaceHandler/lambdaInsideUnclosedBlock.kt");
+        }
+
+        @TestMetadata("lambdaMultiline.kt")
+        public void testLambdaMultiline() throws Exception {
+            runTest("../../idea/tests/testData/editor/backspaceHandler/lambdaMultiline.kt");
+        }
+
+        @TestMetadata("lambdaNestedEmpty.kt")
+        public void testLambdaNestedEmpty() throws Exception {
+            runTest("../../idea/tests/testData/editor/backspaceHandler/lambdaNestedEmpty.kt");
+        }
+
+        @TestMetadata("lambdaNestedEmptyTriple.kt")
+        public void testLambdaNestedEmptyTriple() throws Exception {
+            runTest("../../idea/tests/testData/editor/backspaceHandler/lambdaNestedEmptyTriple.kt");
+        }
+
+        @TestMetadata("lambdaUnclosedAtEndOfFile.kt")
+        public void testLambdaUnclosedAtEndOfFile() throws Exception {
+            runTest("../../idea/tests/testData/editor/backspaceHandler/lambdaUnclosedAtEndOfFile.kt");
+        }
+
+        @TestMetadata("lambdaWithCode.kt")
+        public void testLambdaWithCode() throws Exception {
+            runTest("../../idea/tests/testData/editor/backspaceHandler/lambdaWithCode.kt");
+        }
+
+        @TestMetadata("lambdaWithComment.kt")
+        public void testLambdaWithComment() throws Exception {
+            runTest("../../idea/tests/testData/editor/backspaceHandler/lambdaWithComment.kt");
+        }
+
+        @TestMetadata("lambdaWithOneSpaceBeforeCaret.kt")
+        public void testLambdaWithOneSpaceBeforeCaret() throws Exception {
+            runTest("../../idea/tests/testData/editor/backspaceHandler/lambdaWithOneSpaceBeforeCaret.kt");
+        }
+
+        @TestMetadata("lambdaWithoutCloseBrace.kt")
+        public void testLambdaWithoutCloseBrace() throws Exception {
+            runTest("../../idea/tests/testData/editor/backspaceHandler/lambdaWithoutCloseBrace.kt");
+        }
+
         @TestMetadata("rawStringDelete.kt")
         public void testRawStringDelete() throws Exception {
             runTest("../../idea/tests/testData/editor/backspaceHandler/rawStringDelete.kt");

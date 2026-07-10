@@ -3,7 +3,6 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.java-capable"/>
-    <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.externalSystem"/>
     <module name="intellij.platform.jps.build.javac.rt"/>
     <module name="intellij.java.compiler.instrumentationUtil"/>
@@ -17,7 +16,6 @@
     <module name="intellij.java.syntax"/>
     <module name="intellij.jsp"/>
     <module name="intellij.platform.jps.build"/>
-    <module name="intellij.platform.vcs.impl"/>
   </dependencies>
   <!-- endregion -->
 

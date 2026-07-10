@@ -1,6 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyPsiBundle;
@@ -16,6 +19,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyDunderSlotsInspectionTest extends PyInspectionTestCase {
 
   // PY-12773

@@ -44,9 +44,6 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
 
   private final JPanel myPanel;
   private final JBCheckBox myAddTrailingBlankLineCheckbox;
-  private final JBCheckBox myUseContinuationIndentForParameters;
-  private final JBCheckBox myUseContinuationIndentForArguments;
-  private final JBCheckBox myUseContinuationIndentForCollectionsAndComprehensions;
   private final ComboBox<DictAlignment> myDictAlignmentCombo;
   private final JPanel myPreviewPanel;
   private final JBCheckBox myFormatInjectedFragments;
@@ -92,37 +89,6 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
       panel1.add(myDictAlignmentCombo, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
                                                            GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
                                                            null, null, 0, false));
-      final JPanel panel2 = new JPanel();
-      panel2.setLayout(new GridLayoutManager(3, 2, new Insets(0, 0, 0, 0), -1, -1));
-      panel2.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
-      panel1.add(panel2, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
-                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
-                                             0, false));
-      panel2.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(BorderFactory.createEtchedBorder(),
-                                                                                this.$$$getMessageFromBundle$$$("messages/PySyntaxBundle",
-                                                                                                                "formatter.panel.use.continuation.indent.for.title"),
-                                                                                TitledBorder.DEFAULT_JUSTIFICATION,
-                                                                                TitledBorder.DEFAULT_POSITION, null, null));
-      myUseContinuationIndentForArguments = new JBCheckBox();
-      this.$$$loadButtonText$$$(myUseContinuationIndentForArguments, this.$$$getMessageFromBundle$$$("messages/PySyntaxBundle",
-                                                                                                     "formatter.panel.use.continuation.indent.for.arguments"));
-      panel2.add(myUseContinuationIndentForArguments,
-                 new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
-                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-      myUseContinuationIndentForParameters = new JBCheckBox();
-      this.$$$loadButtonText$$$(myUseContinuationIndentForParameters, this.$$$getMessageFromBundle$$$("messages/PySyntaxBundle",
-                                                                                                      "formatter.panel.use.continuation.indent.for.parameters"));
-      panel2.add(myUseContinuationIndentForParameters,
-                 new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
-                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-      myUseContinuationIndentForCollectionsAndComprehensions = new JBCheckBox();
-      this.$$$loadButtonText$$$(myUseContinuationIndentForCollectionsAndComprehensions,
-                                this.$$$getMessageFromBundle$$$("messages/PySyntaxBundle",
-                                                                "formatter.panel.use.continuation.indent.for.collection.literals"));
-      panel2.add(myUseContinuationIndentForCollectionsAndComprehensions,
-                 new GridConstraints(2, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
-                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
       final JPanel panel3 = new JPanel();
       panel3.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
       panel3.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
@@ -163,20 +129,6 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     PresentableEnumUtil.fill(myDictAlignmentCombo, DictAlignment.class);
 
     myAddTrailingBlankLineCheckbox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        somethingChanged();
-      }
-    });
-
-    myUseContinuationIndentForParameters.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        somethingChanged();
-      }
-    });
-
-    myUseContinuationIndentForArguments.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         somethingChanged();
@@ -324,10 +276,6 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
       }
     }
     myAddTrailingBlankLineCheckbox.setSelected(pySettings.BLANK_LINE_AT_FILE_END);
-    myUseContinuationIndentForParameters.setSelected(pySettings.USE_CONTINUATION_INDENT_FOR_PARAMETERS);
-    myUseContinuationIndentForArguments.setSelected(pySettings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS);
-    myUseContinuationIndentForCollectionsAndComprehensions.setSelected(
-      pySettings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS);
     myFormatInjectedFragments.setSelected(pySettings.FORMAT_INJECTED_FRAGMENTS);
     myAddIndentInsideInjections.setSelected(pySettings.ADD_INDENT_INSIDE_INJECTIONS);
   }
@@ -337,9 +285,6 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     final PyCodeStyleSettings customSettings = getCustomSettings(settings);
     customSettings.DICT_ALIGNMENT = getDictAlignmentAsInt();
     customSettings.BLANK_LINE_AT_FILE_END = ensureTrailingBlankLine();
-    customSettings.USE_CONTINUATION_INDENT_FOR_PARAMETERS = useContinuationIndentForParameters();
-    customSettings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS = useContinuationIndentForArguments();
-    customSettings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = useContinuationIndentForCollectionLiterals();
     customSettings.FORMAT_INJECTED_FRAGMENTS = formatInjectedFragments();
     customSettings.ADD_INDENT_INSIDE_INJECTIONS = addIndentInsideInjections();
   }
@@ -349,9 +294,6 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     final PyCodeStyleSettings customSettings = getCustomSettings(settings);
     return customSettings.DICT_ALIGNMENT != getDictAlignmentAsInt() ||
            customSettings.BLANK_LINE_AT_FILE_END != ensureTrailingBlankLine() ||
-           customSettings.USE_CONTINUATION_INDENT_FOR_PARAMETERS != useContinuationIndentForParameters() ||
-           customSettings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS != useContinuationIndentForArguments() ||
-           customSettings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS != useContinuationIndentForCollectionLiterals() ||
            customSettings.FORMAT_INJECTED_FRAGMENTS != formatInjectedFragments() ||
            customSettings.ADD_INDENT_INSIDE_INJECTIONS != addIndentInsideInjections();
   }
@@ -373,24 +315,12 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     return myAddTrailingBlankLineCheckbox.isSelected();
   }
 
-  private boolean useContinuationIndentForParameters() {
-    return myUseContinuationIndentForParameters.isSelected();
-  }
-
-  private boolean useContinuationIndentForArguments() {
-    return myUseContinuationIndentForArguments.isSelected();
-  }
-
   private boolean formatInjectedFragments() {
     return myFormatInjectedFragments.isSelected();
   }
 
   private boolean addIndentInsideInjections() {
     return myAddIndentInsideInjections.isSelected();
-  }
-
-  protected boolean useContinuationIndentForCollectionLiterals() {
-    return myUseContinuationIndentForCollectionsAndComprehensions.isSelected();
   }
 
   public static final String PREVIEW = """

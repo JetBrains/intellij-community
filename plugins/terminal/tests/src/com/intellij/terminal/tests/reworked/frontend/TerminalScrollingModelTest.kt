@@ -1,15 +1,20 @@
 package com.intellij.terminal.tests.reworked.frontend
 
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.actions.TerminalActionUtil
 import com.intellij.terminal.frontend.view.impl.TerminalEditorFactory
 import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModelImpl
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.update
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.updateCursor
 import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.CoroutineScope
@@ -444,6 +449,100 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
   }
 
 
+  @Test
+  fun `scrolling action stops following the cursor`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val editor = createEditor(rows = 3)
+    // Scrolled 1 line up from the auto-followed position: the new output below must not pull it back down.
+    val expected = TerminalUi.blockTopInset + TerminalUi.blockBottomInset + 2 * editor.lineHeight
+    doTest(editor, expected) {
+      updateText(0, """
+        1
+        2
+        3
+        4
+        5
+        6
+      """.trimIndent())
+      updateCursor(5, 1)
+
+      invokeAction("Terminal.LineUp")
+
+      updateText(6, "7")
+      updateCursor(6, 1)
+    }
+  }
+
+  @Test
+  fun `scrolling action back at the bottom resumes following the cursor`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val editor = createEditor(rows = 3)
+    // Scrolled back down to the exact bottom by the same kind of action, so following resumes for the new output.
+    val expected = TerminalUi.blockTopInset + TerminalUi.blockBottomInset + 4 * editor.lineHeight
+    doTest(editor, expected) {
+      updateText(0, """
+        1
+        2
+        3
+        4
+        5
+        6
+      """.trimIndent())
+      updateCursor(5, 1)
+
+      invokeAction("Terminal.LineUp")
+      invokeAction("Terminal.LineDown")
+
+      updateText(6, "7")
+      updateCursor(6, 1)
+    }
+  }
+
+  @Test
+  fun `viewport change without a user action doesn't stop following the cursor`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val editor = createEditor(rows = 3)
+    val expected = TerminalUi.blockTopInset + TerminalUi.blockBottomInset + 4 * editor.lineHeight
+    doTest(editor, expected) {
+      updateText(0, """
+        1
+        2
+        3
+        4
+        5
+        6
+      """.trimIndent())
+      updateCursor(5, 1)
+
+      scrollWithoutUserAction(TerminalUi.blockTopInset + TerminalUi.blockBottomInset + 2 * editor.lineHeight)
+
+      updateText(6, "7")
+      updateCursor(6, 1)
+    }
+  }
+
+  @Test
+  fun `scrollToCursor with force resumes following the cursor`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val editor = createEditor(rows = 3)
+    // Mirrors what happens when the user types while scrolled up: TerminalKeyEventsHandlerImpl calls
+    // scrollToCursor(force = true) directly, and following must resume for the subsequent output too.
+    val expected = TerminalUi.blockTopInset + TerminalUi.blockBottomInset + 4 * editor.lineHeight
+    doTest(editor, expected) {
+      updateText(0, """
+        1
+        2
+        3
+        4
+        5
+        6
+      """.trimIndent())
+      updateCursor(5, 1)
+
+      invokeAction("Terminal.LineUp")
+      forceScrollToCursor()
+
+      updateText(6, "7")
+      updateCursor(6, 1)
+    }
+  }
+
   private suspend fun CoroutineScope.doTest(
     editor: EditorEx,
     expectedScrollOffset: Int,
@@ -456,7 +555,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
       val sessionModel = createSessionModel(showCursor)
       val scrollingModel = TerminalOutputScrollingModelImpl(editor, outputModel, sessionModel, scrollingModelScope)
 
-      val context = ScrollingModelTestContext(outputModel, scrollingModel)
+      val context = ScrollingModelTestContext(editor, outputModel, scrollingModel)
       context.operations()
 
       val offset = editor.scrollingModel.verticalScrollOffset
@@ -502,6 +601,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
   }
 
   private class ScrollingModelTestContext(
+    private val editor: EditorEx,
     private val outputModel: MutableTerminalOutputModel,
     private val scrollingModel: TerminalOutputScrollingModelImpl,
   ) {
@@ -513,6 +613,21 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     suspend fun updateCursor(absoluteLineIndex: Long, column: Int) {
       outputModel.updateCursor(absoluteLineIndex, column)
       scrollingModel.awaitEventProcessing()
+    }
+
+    fun invokeAction(actionId: String) {
+      val action = ActionManager.getInstance().getAction(actionId)!!
+      val dataContext = SimpleDataContext.getSimpleContext(TerminalActionUtil.EDITOR_KEY, editor, editor.dataContext)
+      val event = TestActionEvent.createTestEvent(action, dataContext)
+      ActionUtil.performAction(action, event)
+    }
+
+    fun scrollWithoutUserAction(offset: Int) {
+      editor.scrollingModel.scrollVertically(offset)
+    }
+
+    fun forceScrollToCursor() {
+      scrollingModel.scrollToCursor(force = true)
     }
   }
 }

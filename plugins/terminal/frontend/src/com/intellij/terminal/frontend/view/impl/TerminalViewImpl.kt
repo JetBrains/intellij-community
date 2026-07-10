@@ -83,7 +83,6 @@ import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputPsiFile
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.block.ui.addToLayer
 import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
-import org.jetbrains.plugins.terminal.block.ui.isTerminalOutputScrollChangingActionInProgress
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalSourceNavigationInfo
@@ -205,8 +204,14 @@ class TerminalViewImpl(
     // Usually, the cursor is painted or output received first in the output editor
     // because it is shown by default on a new session opening.
     // But in the case of session restoration in RemDev, there can be an alternate buffer.
-    val fusCursorPaintingListener = startupFusInfo?.let { TerminalFusCursorPainterListener(it) }
-    val fusFirstOutputListener = startupFusInfo?.let { TerminalFusFirstOutputListener(it) }
+    val fusCursorPaintingListener = if (startupFusInfo?.triggerTime != null) {
+      TerminalFusCursorPainterListener(startupFusInfo.triggerTime!!, startupFusInfo.way)
+    }
+    else null
+    val fusFirstOutputListener = if (startupFusInfo?.triggerTime != null) {
+      TerminalFusFirstOutputListener(startupFusInfo.triggerTime!!, startupFusInfo.way)
+    }
+    else null
 
     alternateBufferEditor = TerminalEditorFactory.createAlternateBufferEditor(
       project,
@@ -575,13 +580,7 @@ class TerminalViewImpl(
     // Document modifications can change the scroll position.
     // Mark them with the corresponding flag to indicate that this change is not caused by the explicit user action.
     model.addListener(parentDisposable, object : TerminalOutputModelListener {
-      override fun beforeContentChanged(model: TerminalOutputModel) {
-        editor.isTerminalOutputScrollChangingActionInProgress = true
-      }
-
       override fun afterContentChanged(event: TerminalContentChangeEvent) {
-        editor.isTerminalOutputScrollChangingActionInProgress = false
-
         // Repaint the whole screen to update all changed highlightings.
         repaintEditorScreen(editor)
 

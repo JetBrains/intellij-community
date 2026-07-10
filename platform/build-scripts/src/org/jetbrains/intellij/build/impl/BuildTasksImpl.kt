@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
 import com.intellij.util.containers.CollectionFactory
@@ -1214,6 +1215,12 @@ internal fun copyDistFiles(newDir: Path, os: OsFamily, arch: JvmArchitecture, li
     Files.createDirectories(targetFile.parent)
     if (item.content is LocalDistFileContent) {
       Files.copy(item.content.file, targetFile, StandardCopyOption.REPLACE_EXISTING)
+      // Files.copy does not preserve attributes, so re-apply the executable bit requested by the DistFile.
+      // The dev build runs binaries straight from this directory, and the Linux/macOS packagers derive the
+      // archive's executable flag from the on-disk POSIX permissions of these files.
+      if (item.content.isExecutable && os != OsFamily.WINDOWS) {
+        NioFiles.setExecutable(targetFile)
+      }
     }
     else {
       Files.write(targetFile, (item.content as InMemoryDistFileContent).data)

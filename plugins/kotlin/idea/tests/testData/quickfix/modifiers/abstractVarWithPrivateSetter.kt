@@ -1,5 +1,5 @@
 // "Remove 'private' modifier" "true"
-// K2_ERROR: Private setters for abstract properties are prohibited.
+// K2_ERROR: PRIVATE_SETTER_FOR_ABSTRACT_PROPERTY
 abstract class My {
     abstract var foo: Int
         <caret>private set

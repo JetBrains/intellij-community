@@ -10,7 +10,7 @@ from typing_extensions import LiteralString, deprecated
 
 _T = TypeVar("_T")
 _LazyImportMode: TypeAlias = Literal["normal", "all", "none"]
-_LazyImportFilter: TypeAlias = Callable[[str, str, tuple[str, ...] | None], bool]
+_LazyImportFilter: TypeAlias = Callable[[str | None, str, tuple[str, ...] | None], bool]
 
 # see https://github.com/python/typeshed/issues/8513#issue-1333671093 for the rationale behind this alias
 _ExitCode: TypeAlias = str | int | None
@@ -53,7 +53,7 @@ maxunicode: int
 meta_path: list[MetaPathFinderProtocol]
 modules: dict[str, ModuleType]
 if sys.version_info >= (3, 15):
-    lazy_modules: dict[str, set[str]]
+    lazy_modules: set[str]
 orig_argv: list[str]
 path: list[str]
 path_hooks: list[Callable[[str], PathEntryFinderProtocol]]

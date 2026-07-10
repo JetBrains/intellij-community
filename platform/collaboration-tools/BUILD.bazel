@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "collaborationTools-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":collaborationTools-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.collaborationTools.tests`
+
 ### auto-generated section `build intellij.platform.collaborationTools` start
 
 jvm_library(
@@ -104,7 +113,8 @@ jvm_library(
         "//platform/diff-api:diff_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
         "//platform/diff-impl:diff-impl_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/credential-store-ui:credentialStore-ui_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
@@ -232,7 +242,8 @@ jvm_library(
         "//libraries/fastutil:fastutil_test_lib",
         "//platform/diff-impl",
         "//platform/diff-impl:diff-impl_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/credential-store-ui:credentialStore-ui",
         "//platform/credential-store-ui:credentialStore-ui_test_lib",
         "//platform/testFramework",
@@ -273,6 +284,8 @@ jvm_library(
         "//libraries/assertj-core:assertj-core_test_lib",
         "//platform/vcs-impl/shared",
         "//platform/vcs-impl/shared:shared_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.collaborationTools.tests` end
@@ -285,11 +298,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.collaborationTools.tests` end
-
-### auto-generated section `test intellij.platform.collaborationTools.tests` start
-
-jps_test(
-    name = "collaborationTools-tests_test",
-    runtime_deps = [":collaborationTools-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.collaborationTools.tests` end

@@ -91,6 +91,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.IntStream;
 
+import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
+
 /**
  * @author Roman.Chernyatchik
  */
@@ -418,7 +420,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       return SourceLineCounterUtil.collectSrcLinesForUntouchedFiles(classData, suite.getProject());
     }
     catch (Exception e) {
-      if (e instanceof ControlFlowException) throw e;
+      rethrowControlFlowException(e);
       LOG.error("Fail to process class from: " + classFile, e);
     }
     finally {

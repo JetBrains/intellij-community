@@ -33,15 +33,15 @@ public abstract class BaseCodeCompletionAction extends DumbAwareAction implement
   }
 
   protected void invokeCompletion(AnActionEvent e, CompletionType type, int time) {
-    if (!isAvailableInCurrentMode()) {
-      return;
-    }
-
-
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     assert editor != null;
     Project project = editor.getProject();
     assert project != null;
+
+    if (!isAvailableInCurrentMode(editor)) {
+      return;
+    }
+
     InputEvent inputEvent = e.getInputEvent();
     CodeCompletionHandlerBase handler = createHandler(type, true, false, true);
     handler.invokeCompletion(project, editor, time, inputEvent != null && inputEvent.getModifiers() != 0);
@@ -61,16 +61,16 @@ public abstract class BaseCodeCompletionAction extends DumbAwareAction implement
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (!isAvailableInCurrentMode()) {
-      e.getPresentation().setEnabled(false);
-      return;
-    }
-
     DataContext dataContext = e.getDataContext();
     e.getPresentation().setEnabled(false);
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return;
+
+    if (!isAvailableInCurrentMode(editor)) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
 
     Project project = editor.getProject();
     PsiFile psiFile = project == null ? null : PsiUtilBase.getPsiFileInEditor(editor, project);
@@ -88,23 +88,17 @@ public abstract class BaseCodeCompletionAction extends DumbAwareAction implement
    * This function is necessary for backward compatibility for completion support in remote-dev.
    * It allows dynamic switching between frontend and backend completion based on the current value of `NewRdCompletionSupport#isFrontendRdCompletionOn()`
    */
-  public static boolean isAvailableInCurrentMode() {
+  public static boolean isAvailableInCurrentMode(Editor editor) {
     if (IdeProductMode.isMonolith()) {
       return true;
     }
 
     if (IdeProductMode.isFrontend()) {
-      return NewRdCompletionSupport.isFrontendRdCompletionOn();
+      return NewRdCompletionSupport.isFrontendRdCompletionOn(editor);
     }
 
     if (IdeProductMode.isBackend()) {
-      // always true:
-      // - if the frontend is able to run completion, then the backend action is not called (because of ActionRemoteBehavior.FrontendOtherwiseBackend),
-      //      so it does not matter what this method returns on backend and true is okay.
-      // - if the frontend is not able to run completion, then backend action is called
-      //      so this method should return true on backend.
-
-      return true;
+      return NewRdCompletionSupport.isBackendCompletionActionAvailableInEditor(editor);
     }
 
     throw new IllegalStateException("Unknown product mode: " + IdeProductMode.getInstance());

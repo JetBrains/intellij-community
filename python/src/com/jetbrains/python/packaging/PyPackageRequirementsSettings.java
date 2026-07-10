@@ -47,7 +47,7 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
     super(new ServiceState(), MODULE_STATE_COMPONENT, ServiceState.class, module);
   }
   /**
-   * @deprecated Use {@link {@link PythonRequirementTxtSdkUtils#findRequirementsTxt(Sdk)}  instead.
+   * @deprecated Use {@link {@link PythonRequirementTxtSdkUtils#resolvePersistedRequirementsFile(Sdk)}  instead.
    */
   @Deprecated(forRemoval = true)
   public final @NotNull String getRequirementsPath() {
@@ -130,7 +130,7 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
 
   public static final class ServiceState {
     /**
-     * @deprecated Use {@link {@link PythonRequirementTxtSdkUtils#findRequirementsTxt(Sdk)}  instead.
+     * @deprecated Use {@link {@link PythonRequirementTxtSdkUtils#resolvePersistedRequirementsFile(Sdk)}  instead.
      */
     @Deprecated(forRemoval = true)
     @OptionTag("requirementsPath") public @NotNull String myRequirementsPath = PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT.toString();

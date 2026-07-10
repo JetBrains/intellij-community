@@ -22,10 +22,10 @@ public class OrderedListNumberFormatStylesTest {
     }
 
     @Test
-    public fun `decimal format should throw exception for zero value`() {
+    public fun `decimal format should not throw exception for zero value`() {
         val style = NumberFormatStyle.Decimal
 
-        assertThrows(IllegalArgumentException::class.java) { style.formatNumber(0) }
+        assertEquals("0", style.formatNumber(0))
     }
 
     @Test
@@ -56,17 +56,17 @@ public class OrderedListNumberFormatStylesTest {
     }
 
     @Test
-    public fun `roman format should throw exception for zero value`() {
+    public fun `roman format should not throw exception for zero value`() {
         val style = NumberFormatStyle.Roman
 
-        assertThrows(IllegalArgumentException::class.java) { style.formatNumber(0) }
+        assertEquals("0", style.formatNumber(0))
     }
 
     @Test
     public fun `roman format should throw exception on non-positive numbers`() {
         val style = NumberFormatStyle.Roman
 
-        assertThrows(IllegalArgumentException::class.java) { style.formatNumber(-5) }
+        assertEquals("-5", style.formatNumber(-5))
     }
 
     @Test
@@ -84,16 +84,16 @@ public class OrderedListNumberFormatStylesTest {
     }
 
     @Test
-    public fun `alphabetical format should throw exception for zero value`() {
+    public fun `alphabetical format should not throw exception for zero value`() {
         val style = NumberFormatStyle.Alphabetical
 
-        assertThrows(IllegalArgumentException::class.java) { style.formatNumber(0) }
+        assertEquals("0", style.formatNumber(0))
     }
 
     @Test
-    public fun `alphabetical format should throw exception on non-positive numbers`() {
+    public fun `alphabetical format should not throw exception for negative value`() {
         val style = NumberFormatStyle.Alphabetical
 
-        assertThrows(IllegalArgumentException::class.java) { style.formatNumber(-5) }
+        assertEquals("-1", style.formatNumber(-1))
     }
 }

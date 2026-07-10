@@ -37,7 +37,22 @@ public final class PyPostfixTemplateProvider implements PostfixTemplateProvider 
     new PyIsNotNonePostfixTemplate(this),
     new PyPrintPostfixTemplate(this),
     new PyMainPostfixTemplate(this),
-    new PyLenPostfixTemplate(this)
+    new PyLenPostfixTemplate(this),
+    new PyIsInstancePostfixTemplate(this),
+    new PyCastPostfixTemplate(this),
+    new PyAwaitPostfixTemplate(this),
+    new PyWithPostfixTemplate(this),
+    new PyStatementKeywordPostfixTemplate("raise", this),
+    new PyStatementKeywordPostfixTemplate("yield", this),
+    new PyCallWrapPostfixTemplate("str", this),
+    new PyCallWrapPostfixTemplate("list", this),
+    new PyCallWrapPostfixTemplate("set", this),
+    new PyCallWrapPostfixTemplate("dict", this),
+    new PyCallWrapPostfixTemplate("tuple", this),
+    new PyComprehensionPostfixTemplate("compl", "[$VAR_EXPR$ for $VAR$ in $EXPR$]$END$", this),
+    new PyComprehensionPostfixTemplate("comps", "{$VAR_EXPR$ for $VAR$ in $EXPR$}$END$", this),
+    new PyComprehensionPostfixTemplate("compg", "($VAR_EXPR$ for $VAR$ in $EXPR$)$END$", this),
+    new PyDictComprehensionPostfixTemplate(this)
   );
 
   @Override

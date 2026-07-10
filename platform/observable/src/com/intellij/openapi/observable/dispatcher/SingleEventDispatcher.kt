@@ -27,7 +27,9 @@ interface SingleEventDispatcher<T> {
    * @param listener is a listener function that will be called [ttl] times.
    * @param parentDisposable is a subscription disposable.
    */
+  @ApiStatus.Internal
   fun whenEventHappened(ttl: Int, parentDisposable: Disposable?, listener: (T) -> Unit)
+  @ApiStatus.Internal
   fun whenEventHappened(ttl: Int, listener: (T) -> Unit): Unit = whenEventHappened(ttl, null, listener)
 
   /**
@@ -36,13 +38,18 @@ interface SingleEventDispatcher<T> {
    * @param listener is a listener function that will be called only once.
    * @param parentDisposable is used for early unsubscription when the listener isn't called.
    */
+  @ApiStatus.Internal
   fun onceWhenEventHappened(parentDisposable: Disposable?, listener: (T) -> Unit)
+  @ApiStatus.Internal
   fun onceWhenEventHappened(listener: (T) -> Unit): Unit = onceWhenEventHappened(null, listener)
 
+  @ApiStatus.Internal
   fun filterEvents(filter: (T) -> Boolean): SingleEventDispatcher<T>
 
+  @ApiStatus.Internal
   fun ignoreParameters(): SingleEventDispatcher0
 
+  @ApiStatus.Internal
   fun <R> mapParameters(map: (T) -> R): SingleEventDispatcher<R>
 
   @ApiStatus.NonExtendable
@@ -59,11 +66,13 @@ interface SingleEventDispatcher<T> {
     }
 
     @JvmStatic
+    @ApiStatus.Internal
     fun create(): SingleEventDispatcher0.Multicaster {
       return AbstractSingleEventDispatcher0.RootDispatcher()
     }
 
     @JvmStatic
+    @ApiStatus.Internal
     fun <T1, T2> create2(): SingleEventDispatcher2.Multicaster<T1, T2> {
       return AbstractSingleEventDispatcher2.RootDispatcher()
     }

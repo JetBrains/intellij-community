@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine
 
 import com.intellij.debugger.actions.JavaReferringObjectsValue
@@ -73,10 +73,9 @@ internal fun getJavaValueXDescriptor(javaValue: JavaValue): CompletableFuture<XD
       valueDescriptor.lastRendererFlow.map { it?.toRpc() }.toRpc(),
       renderersUpdatedFlow.map { fetchApplicableNodeRenderers(javaValue).map { it.toRpc() } }.toRpc()
     )
-    if (!SplitDebuggerMode.isSplitDebugger()) {
-      // for actions to work in monolith
-      FrontendDescriptorStateManager.getInstance(valueDescriptor.project).registerDescriptor(xDescriptor, cs)
-    }
+    // for actions to work in monolith
+    // TODO[IJPL-248436]: should we just remove this code below in comment?
+    // FrontendDescriptorStateManager.getInstance(valueDescriptor.project).registerDescriptor(xDescriptor, cs)
     xDescriptor
   }
 }

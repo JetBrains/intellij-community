@@ -113,7 +113,8 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
             .align(Align.FILL)
 
           val recentProjectsPanel = when {
-            isStationWelcomeScreenPromoEnabled() -> createTwoRowRecentProjectsPanel()
+            isStationWelcomeScreenPromoEnabled() -> createTwoRowRecentProjectsPanel(false)
+            Registry.`is`("jetbrainsd.new.connection.tabs.flow.enabled", false) -> createTwoRowRecentProjectsPanel(true)
             else -> createRecentProjectsPanel()
           }
           val emptyStatePanel = createEmptyStatePanel()
@@ -202,9 +203,9 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
     return recentProjectsPanel
   }
 
-  private fun createTwoRowRecentProjectsPanel(): JComponent {
+  private fun createTwoRowRecentProjectsPanel(disableSearchFieldBorder: Boolean): JComponent {
     val recentProjectTree = createComponent(
-      parentDisposable, ProjectCollectors.all, disableSearchFieldBorder = false
+      parentDisposable, ProjectCollectors.all, disableSearchFieldBorder = disableSearchFieldBorder
     )
     recentProjectTree.selectLastOpenedProject()
     val treeComponent = recentProjectTree.component
@@ -225,6 +226,10 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
         cell(projectSearch)
           .customize(UnscaledGaps(left = 4, right = 4, top = 18, bottom = 4))
           .align(Align.FILL)
+      }
+
+      if (disableSearchFieldBorder) {
+        separator(null)
       }
 
       row {

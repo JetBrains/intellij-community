@@ -46,7 +46,7 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
 
   @Override
   protected String calculatePresentableName() {
-    final RefEntity element = getElement();
+    RefEntity element = getElement();
     if (element == null) {
       return AnalysisBundle.message("inspection.reference.invalid");
     }
@@ -55,7 +55,7 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
 
   @Override
   protected boolean calculateIsValid() {
-    final RefEntity refEntity = getElement();
+    RefEntity refEntity = getElement();
     return refEntity != null && refEntity.isValid();
   }
 
@@ -88,7 +88,7 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
 
   @Override
   public RefEntity getContainingFileLocalEntity() {
-    final RefEntity element = getElement();
+    RefEntity element = getElement();
     return element instanceof RefElement && !(element instanceof RefDirectory)
            ? element
            : super.getContainingFileLocalEntity();
@@ -104,7 +104,7 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
     if (getPresentation().isDummy()) {
       return "";
     }
-    final String customizedText = super.getTailText();
+    String customizedText = super.getTailText();
     if (customizedText != null) {
       return customizedText;
     }

@@ -1,0 +1,23 @@
+<html>
+<body>
+Reports Kotlin inspections that extend <code>KotlinApplicableInspectionBase.Simple&lt;KtCallExpression, ...&gt;</code> without overriding
+<code>getApplicableRanges</code>.
+<h2>Example</h2>
+<p>Before:</p>
+<pre><code lang="kotlin">
+  internal class MyInspection : KotlinApplicableInspectionBase.Simple&lt;KtCallExpression, Unit&gt;() {
+     ...
+  }
+</code></pre>
+<p>After:</p>
+<pre><code lang="kotlin">
+  internal class MyInspection : KotlinApplicableInspectionBase.Simple&lt;KtCallExpression, Unit&gt;() {
+     override fun getApplicableRanges(element: KtCallExpression): List<TextRange> {
+         return ApplicabilityRanges.calleeExpression(element)
+     }
+     ...
+  }
+</code></pre>
+
+</body>
+</html>

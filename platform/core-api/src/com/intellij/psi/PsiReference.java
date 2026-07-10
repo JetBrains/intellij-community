@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -10,11 +10,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A reference to a PSI element. For example, the variable name used in an expression.
+ * A reference to a PSI element. For example, a variable name that is used in an expression.
  * The "Go to Declaration" action can be used to go from a reference to the element it references.
  * <p>
  * Generally returned from {@link PsiElement#getReferences()} and {@link PsiReferenceService#getReferences},
  * but may be contributed to some elements by third party plugins via {@link PsiReferenceContributor}.
+ * <p>
+ * Implement {@link com.intellij.codeInsight.highlighting.HighlightedReference} to highlight it in the editor.
  *
  * @see PsiPolyVariantReference
  * @see PsiElement#getReference()
@@ -93,7 +95,7 @@ public interface PsiReference {
 
   /**
    * Changes the reference so that it starts to point to the specified element. This is called,
-   * for example, by the "Create Class from New" quickfix, to bind the (invalid) reference on
+   * for example, by the "Create Class from New" quickfix to bind the (invalid) reference on
    * which the quickfix was called to the newly created class.
    *
    * @param element the element which should become the target of the reference.

@@ -1,11 +1,16 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInsight.editorActions.EmacsStyleIndentAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
+@Subsystems.Editing
+@Layers.Functional
 public class PyEmacsTabTest extends PyTestCase {
   
   public void testIndentToRightAfterCompositeStatementStart() {

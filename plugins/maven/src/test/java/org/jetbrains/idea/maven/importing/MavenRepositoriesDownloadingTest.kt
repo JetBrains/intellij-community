@@ -1,6 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.maven.testFramework.fixtures.MavenCustomRepositoryHelper
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.createSettingsXml
+import com.intellij.maven.testFramework.fixtures.doImportProjectsAsync
+import com.intellij.maven.testFramework.fixtures.forMaven3
+import com.intellij.maven.testFramework.fixtures.forMaven4
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenGeneralSettings
+import com.intellij.maven.testFramework.fixtures.mavenImporterSettings
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.mavenVersionIsOrMoreThan
+import com.intellij.maven.testFramework.fixtures.projectRoot
+import com.intellij.maven.testFramework.fixtures.removeFromLocalRepository
+import com.intellij.maven.testFramework.fixtures.testRootDisposable
 import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
@@ -8,21 +24,6 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
-import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
-import org.jetbrains.idea.maven.fixtures.createProjectPom
-import org.jetbrains.idea.maven.fixtures.createProjectSubFile
-import org.jetbrains.idea.maven.fixtures.createSettingsXml
-import org.jetbrains.idea.maven.fixtures.doImportProjectsAsync
-import org.jetbrains.idea.maven.fixtures.forMaven3
-import org.jetbrains.idea.maven.fixtures.forMaven4
-import org.jetbrains.idea.maven.fixtures.importProjectAsync
-import org.jetbrains.idea.maven.fixtures.mavenGeneralSettings
-import org.jetbrains.idea.maven.fixtures.mavenImporterSettings
-import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
-import org.jetbrains.idea.maven.fixtures.mavenVersionIsOrMoreThan
-import org.jetbrains.idea.maven.fixtures.removeFromLocalRepository
-import org.jetbrains.idea.maven.fixtures.testRootDisposable
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager
 import org.jetbrains.idea.maven.project.MavenImportListener

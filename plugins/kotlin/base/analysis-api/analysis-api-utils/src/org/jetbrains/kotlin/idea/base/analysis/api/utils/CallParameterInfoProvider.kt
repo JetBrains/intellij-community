@@ -36,8 +36,9 @@ object CallParameterInfoProvider {
         currentArgumentIndex: Int,
         subtypingErrorTypePolicy: KaSubtypingErrorTypePolicy = KaSubtypingErrorTypePolicy.STRICT,
     ): Boolean {
-        val argumentExpressionsBeforeCurrent = getArgumentOrIndexExpressions(sourceElement).take(currentArgumentIndex).filterNotNull()
+        val argumentExpressionsBeforeCurrent = getArgumentOrIndexExpressions(sourceElement).take(currentArgumentIndex)
         for (argumentExpression in argumentExpressionsBeforeCurrent) {
+            if (argumentExpression == null) continue
             val parameterForArgument = argumentMapping[argumentExpression] ?: continue
             val argumentType = argumentExpression.expressionType ?: error("Argument should have a KaType")
             if (!argumentType.isSubtypeOf(parameterForArgument.returnType, subtypingErrorTypePolicy)) {

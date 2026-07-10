@@ -16,6 +16,7 @@ import com.intellij.lang.PerFileMappingsBase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
@@ -222,8 +223,10 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
   private boolean isToBeDeletedOnClose(@NotNull VirtualFile file) {
     RootType rootType = getRootType(file);
     if (rootType == null || rootType.isHidden()) return false;
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-    return document != null && document.getTextLength() < 10240 && StringUtil.isEmptyOrSpaces(document.getText());
+    return ReadAction.compute(() -> {
+      Document document = FileDocumentManager.getInstance().getDocument(file);
+      return document != null && document.getTextLength() < 10240 && StringUtil.isEmptyOrSpaces(document.getText());
+    });
   }
 
   private static void processOpenFiles(@NotNull BiConsumer<? super VirtualFile, ? super FileEditorManager> consumer) {

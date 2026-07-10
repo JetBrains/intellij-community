@@ -110,27 +110,7 @@ public final class LinkedCustomIntObjectHashMap<V> {
     }
 
     Entry<V> e = new Entry<>(key, value);
-    e.hashNext = table[index];
-    table[index] = e;
-    Entry<V> top = this.top;
-    e.next = top;
-    if (top != null) {
-      top.previous = e;
-    }
-    else {
-      back = e;
-    }
-    this.top = e;
-    actualEntriesCount++;
-    if (eldestEntryRemovalPolicy.shouldRemoveEldest(actualEntriesCount, back.key, back.value)) {
-      V removedValue = remove(back.key);
-      if (removedValue == null) {
-        throw new ConcurrentModificationException("LinkedIntHashMap.Entry was not removed. Likely concurrent modification? " + back.key);
-      }
-    }
-    else if (actualEntriesCount >= rehashAfterEntriesCount) {
-      rehash(HashCommon.arraySize(actualEntriesCount + 1, LOAD_FACTOR));
-    }
+    insertEntry(table, index, e);
     return null;
   }
 
@@ -139,6 +119,15 @@ public final class LinkedCustomIntObjectHashMap<V> {
   }
 
   public V remove(int key) {
+    Entry<V> e = removeEntry(key);
+    return e == null ? null : e.value;
+  }
+
+  /**
+   * Removes an entry by the key given and returns the removed entry -- not just the value, as {@link #remove(int)}
+   * Internal method, supposed to be used for optimizations in {@link SLRUIntObjectMap}
+   */
+  Entry<V> removeEntry(int key) {
     Entry<V>[] entries = this.entries;
     int hash = hashKey(key);
     int index = hash & tableSizeMask;
@@ -164,8 +153,15 @@ public final class LinkedCustomIntObjectHashMap<V> {
       }
     }
     unlink(e);
+    e.hashNext = null;
     actualEntriesCount--;
-    return e.value;
+    return e;
+  }
+
+  /** entry.key MUST NOT exist in the map */
+  void putNonExistingEntry(@NotNull Entry<V> entry) {
+    int index = hashKey(entry.key) & tableSizeMask;
+    insertEntry(this.entries, index, entry);
   }
 
   public @NotNull Set<Integer> keySet() {
@@ -220,6 +216,38 @@ public final class LinkedCustomIntObjectHashMap<V> {
     // help GC
     e.previous = null;
     e.next = null;
+  }
+
+  /**
+   * Inserts the newEntry into the table, at index indexInTable.
+   * The newEntry.key MUST NOT be in the map yet -- the method doesn't check that, so incorrect use leads to the corrupted map
+   */
+  private void insertEntry(Entry<V>[] table,
+                           int indexInTable,
+                           @NotNull Entry<V> newEntry) {
+    newEntry.hashNext = table[indexInTable];
+    table[indexInTable] = newEntry;
+    Entry<V> top = this.top;
+    newEntry.next = top;
+    newEntry.previous = null;
+    if (top != null) {
+      top.previous = newEntry;
+    }
+    else {
+      back = newEntry;
+    }
+    this.top = newEntry;
+    actualEntriesCount++;
+
+    if (eldestEntryRemovalPolicy.shouldRemoveEldest(actualEntriesCount, back.key, back.value)) {
+      V removedValue = remove(back.key);
+      if (removedValue == null) {
+        throw new ConcurrentModificationException("LinkedIntHashMap.Entry was not removed. Likely concurrent modification? " + back.key);
+      }
+    }
+    else if (actualEntriesCount >= rehashAfterEntriesCount) {
+      rehash(HashCommon.arraySize(actualEntriesCount + 1, LOAD_FACTOR));
+    }
   }
 
   private void rehash(int newTableSize) {

@@ -42,7 +42,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.uast.UastVisitorAdapter;
 import com.intellij.util.LazyInitializer.LazyValue;
 import org.jdom.Element;
@@ -159,14 +158,14 @@ public final class RefJavaManagerImpl extends RefJavaManager {
 
   private boolean isEntryPoint(RefElement element) {
     UnusedDeclarationInspectionBase tool = getDeadCodeTool(element);
-    return tool != null && tool.isEntryPoint(element) && isTestSource(tool, element);
+    return tool != null && tool.isEntryPoint(element) && !skipEntryPoint(tool, element);
   }
 
-  private static boolean isTestSource(UnusedDeclarationInspectionBase tool, RefElement refElement) {
-    if (tool.isTestEntryPoints()) return true;
+  private static boolean skipEntryPoint(UnusedDeclarationInspectionBase tool, RefElement refElement) {
+    if (tool.isTestEntryPoints()) return false;
     final PsiElement element = refElement.getPsiElement();
-    final VirtualFile file = PsiUtilCore.getVirtualFile(element);
-    return file != null && !ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInTestSourceContent(file);
+    final VirtualFile file = element.getContainingFile().getVirtualFile();
+    return file != null && ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInTestSourceContent(file);
   }
 
   private @Nullable UnusedDeclarationInspectionBase getDeadCodeTool(RefElement element) {

@@ -1,7 +1,6 @@
 package com.intellij.driver.sdk.ui
 
 import com.intellij.driver.model.RemoteMouseButton
-import com.intellij.driver.sdk.jdk.getSystemProperty
 import com.intellij.driver.sdk.ui.components.UiComponent
 import java.awt.Point
 import java.awt.event.KeyEvent
@@ -10,11 +9,12 @@ fun UiRobot.pasteText(text: String) {
   driver.copyToClipboard(text)
 
   keyboard {
-    val keyEvent = if (driver.getSystemProperty("os.name").lowercase().startsWith("mac")) KeyEvent.VK_META else KeyEvent.VK_CONTROL
-    hotKey(keyEvent, KeyEvent.VK_V)
+    hotKeyWithDefaultModifierKey(KeyEvent.VK_V)
   }
 }
 
+@Deprecated("Does not work on Wayland. Use dragAndDrop(UiComponent, Point?, UiComponent, Point?) instead.",
+            ReplaceWith("dragAndDrop(from, fromPoint, to, toPoint)"))
 fun UiRobot.dragAndDrop(start: Point, end: Point) {
   try {
     moveMouse(start)
@@ -29,6 +29,17 @@ fun UiRobot.dragAndDrop(start: Point, end: Point) {
   }
 }
 
+@Deprecated("Does not work on Wayland. Use dragAndDrop(UiComponent, Point?, UiComponent, Point?) instead.",
+            ReplaceWith("dragAndDrop(from, fromPoint, to, toPoint)"))
 fun UiComponent.dragAndDrop(to: Point) {
   driver.ui.dragAndDrop(this.center, to)
+}
+
+fun UiRobot.dragAndDrop(from: UiComponent, fromPoint: Point? = null, to: UiComponent, toPoint: Point? = null) {
+  robot.dragAndDrop(
+    from.component,
+    fromPoint ?: from.component.let { Point(it.width / 2, it.height / 2) },
+    to.component,
+    toPoint ?: to.component.let { Point(it.width / 2, it.height / 2) }
+  )
 }

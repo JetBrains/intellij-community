@@ -19,17 +19,31 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.psi.PsiElement
+import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.ast.PyAstFunction
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.documentation.PythonDocumentationProvider
+import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
+import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage
+import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyPossibleClassMember
 import com.jetbrains.python.psi.PyPsiFacade
+import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil.isObjectClass
 import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
+import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
+import com.jetbrains.python.psi.types.PyTypeChecker.collectTypeSubstitutions
 import com.jetbrains.python.psi.types.PyTypeChecker.convertToType
 import com.jetbrains.python.psi.types.PyTypeChecker.findGenericDefinitionType
+import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
 import com.jetbrains.python.psi.types.PyTypeChecker.match
-import com.jetbrains.python.psi.types.PyTypeUtil.createTupleOfLiteralStringsType
-import com.jetbrains.python.psi.types.PyTypeUtil.extractStringLiteralsFromTupleType
 import com.jetbrains.python.psi.types.PyTypeUtil.widenLiteralAndNumeric
+import com.jetbrains.python.pyi.PyiUtil
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
@@ -63,15 +77,15 @@ object PyTypeUtil {
    * 
    * 
    * This method handles [PyUnionType] by distributing the check across its
-   * members. The types are considered overlapping if the condition holds for any
-   * pair of members.
+   * members. The types are considered subtype-related if the condition holds for
+   * any pair of members.
    */
-  fun PyType?.isOverlappingWith(type2: PyType?, context: TypeEvalContext): Boolean {
+  fun PyType?.isSubtypeRelated(type2: PyType?, context: TypeEvalContext): Boolean {
     if (this is PyUnionType || this is PyUnsafeUnionType) {
-      return this.members.any { it.isOverlappingWith(type2, context) }
+      return this.members.any { it.isSubtypeRelated(type2, context) }
     }
     if (type2 is PyUnionType || type2 is PyUnsafeUnionType) {
-      return type2.members.any { this.isOverlappingWith(it, context) }
+      return type2.members.any { this.isSubtypeRelated(it, context) }
     }
     return match(this, type2, context)
            || match(type2, this, context)
@@ -151,7 +165,7 @@ object PyTypeUtil {
   }
 
   @JvmStatic
-  fun PsiElement.toKeywordContainerType(valueType: PyType?): PyCollectionType? {
+  fun PsiElement.toKeywordContainerType(valueType: PyType?): PyClassType? {
     val builtinCache = PyBuiltinCache.getInstance(this)
 
     return builtinCache.dictType?.pyClass?.let {
@@ -269,7 +283,7 @@ object PyTypeUtil {
   @JvmStatic
   fun toUnion(streamSource: PyType?): Collector<PyType?, *, PyType?> {
     return if (streamSource is PyUnsafeUnionType)
-      toUnion { PyUnsafeUnionType.unsafeUnion() }
+      toUnion { PyUnsafeUnionType.unsafeUnion(it) }
     else toUnion { members ->
       PyUnionType.union(members)
     }
@@ -289,7 +303,7 @@ object PyTypeUtil {
 
   @JvmStatic
   fun PyType?.isDict(): Boolean {
-    return this is PyCollectionType && "dict" == this.name
+    return this is PyClassType && this.isParameterized && "dict" == this.name
   }
 
   @JvmStatic
@@ -380,10 +394,273 @@ object PyTypeUtil {
       .let { PyLiteralType.upcastLiteralToClass(it) }
       .let { PyNumericTowerUtil.enrich(it) }
   }
+
+  @ApiStatus.Internal
+  fun mapCallableType(functionType: PyType?, mapper: (PyCallableType) -> PyCallableType?): PyType? {
+    return when (functionType) {
+      is PyClassLikeType -> functionType
+      is PyCallableType -> mapper(functionType)
+      is PyOverloadType -> functionType.map { if (it == null) null else mapper(it) }
+      else -> functionType
+    }
+  }
+
+  @ApiStatus.Internal
+  @JvmStatic
+  fun getCallableItems(functionType: PyType?): Sequence<PyCallableType> {
+    return when (functionType) {
+      is PyClassLikeType -> emptySequence()
+      is PyCallableType -> sequenceOf(functionType)
+      is PyOverloadType -> functionType.items.filterNotNull().asSequence()
+      else -> emptySequence()
+    }
+  }
+
+  @ApiStatus.Internal
+  @JvmStatic
+  fun isInstanceMember(resolveResults: List<@JvmWildcard RatedResolveResult>, context: TypeEvalContext): Boolean {
+    return resolveResults.any {
+      val element = it.element
+      element is PyTargetExpression &&
+      PyTypingTypeProvider.getAnnotationValue(element, context) != null &&
+      !PyTypingTypeProvider.isClassVar(element, context) &&
+      !(PyTypingTypeProvider.isFinal(element, context) && element.hasAssignedValue())
+    }
+  }
+
+  @ApiStatus.Internal
+  @JvmStatic
+  fun getContainingClass(resolveResults: List<@JvmWildcard RatedResolveResult>): PyClass? {
+    return resolveResults.asReversed()
+      .asSequence()
+      .map { it.element }
+      .filterIsInstance<PyPossibleClassMember>()
+      .firstNotNullOfOrNull { it.containingClass }
+  }
+
+  @ApiStatus.Internal
+  @JvmStatic
+  @JvmOverloads
+  fun getTypeOfBoundMember(
+    classType: PyClassType,
+    memberResolveResults: List<@JvmWildcard RatedResolveResult>,
+    context: TypeEvalContext,
+    errors: MutableList<ProblemMessage>? = null,
+  ): PyType? = getTypeOfBoundMember(classType, classType, memberResolveResults, context, errors)
+
+  @ApiStatus.Internal
+  @JvmStatic
+  @JvmOverloads
+  fun getTypeOfBoundMember(
+    classType: PyClassType,
+    selfType: PyInstantiableType<*>,
+    memberResolveResults: List<@JvmWildcard RatedResolveResult>,
+    context: TypeEvalContext,
+    errors: MutableList<ProblemMessage>? = null,
+  ): PyType? {
+    val memberType = specializeMemberType(classType, selfType, getTypeOfMember(memberResolveResults, context), context)
+    val memberOwner = getContainingClass(memberResolveResults)
+    return bindFunction(selfType, memberType, memberOwner, context, errors)
+  }
+
+  @ApiStatus.Internal
+  @JvmStatic
+  fun getTypeOfMember(
+    memberResolveResults: List<@JvmWildcard RatedResolveResult>,
+    context: TypeEvalContext,
+  ): PyType? {
+    val resolvedElements = memberResolveResults.mapNotNull { it.element as? PyTypedElement }
+    if (resolvedElements.isEmpty()) return PyAnyType.unknown
+
+    // Element with a declared type takes precedence.
+    val elements = resolvedElements
+      .filter {
+        it is PyFunction ||
+        it is PyTargetExpression && (it.annotationValue != null || it.typeCommentAnnotation != null)
+      }
+      .ifEmpty { resolvedElements }
+
+    val last = elements.last()
+    val lastType = context.getType(last)
+    if (lastType !is PyFunctionType) return lastType
+
+    val overloads = mutableListOf<PyCallableType?>()
+    var impl: Ref<PyType?>? = null
+    if (PyiUtil.isOverload(last, context)) {
+      overloads.add(lastType as? PyCallableType)
+    }
+    else {
+      impl = Ref.create(lastType)
+    }
+    for (i in elements.lastIndex - 1 downTo 0) {
+      val el = elements[i]
+      if (!PyiUtil.isOverload(el, context)) break
+      overloads.add(context.getType(el) as? PyCallableType)
+    }
+    if (overloads.isEmpty()) return lastType
+
+    overloads.reverse()
+    return PyOverloadType(overloads, impl)
+  }
+
+  @ApiStatus.Internal
+  @JvmStatic
+  fun specializeMemberType(
+    classType: PyClassType,
+    selfType: PyInstantiableType<*>,
+    memberType: PyType?,
+    context: TypeEvalContext,
+  ): PyType? {
+    return if (memberType.hasGenerics(context)) {
+      val substitutions = collectTypeSubstitutions(classType, context)
+      substitutions.qualifierType = selfType
+      PyTypeChecker.substitute(memberType, substitutions, context)
+    }
+    else memberType
+  }
+
+  /**
+   * If [memberType] is an instance or class method, returns its specialized bound type,
+   * or [PyAnyType.unknown] if binding failed (the type of its first parameter does not match [classType]);
+   * otherwise returns [memberType] as is.
+   */
+  @ApiStatus.Internal
+  @JvmStatic
+  fun bindFunction(
+    classType: PyInstantiableType<*>,
+    memberType: PyType?,
+    memberOwner: PyClass?,
+    context: TypeEvalContext,
+    errors: MutableList<ProblemMessage>?
+  ): PyType? {
+    val signatures = getCallableItems(memberType).toList()
+    if (signatures.isEmpty()) return memberType
+
+    val isStaticMethod = signatures.all { it.modifier == PyAstFunction.Modifier.STATICMETHOD }
+    if (isStaticMethod) return memberType
+
+    val isClassMethod = signatures.all { it.modifier == PyAstFunction.Modifier.CLASSMETHOD }
+
+    var shouldBind = false
+    if (!classType.isDefinition() || isClassMethod) {
+      shouldBind = true
+    }
+    else if (memberOwner != null && classType is PyClassType) {
+      // If a member's owner is not an ancestor of the class,
+      // the member must have come from the metaclass -> bind it to the class.
+      // TODO: This condition should be computed by the calling code when resolving `memberType`
+      shouldBind = !classType.pyClass.isSubclass(memberOwner, context)
+    }
+
+    if (shouldBind) {
+      val selfType = if (isClassMethod) classType.toClass() else classType
+      val boundMethodType = mapCallableType(memberType) { bindFunction(it, selfType, context)?.boundMethodType }
+      if (boundMethodType == null) {
+        errors?.add(methodBindingErrorMessage(selfType, memberType, context))
+        return PyAnyType.unknown
+      }
+      return boundMethodType
+    }
+
+    return memberType
+  }
+
+  @ApiStatus.Internal
+  @JvmStatic
+  fun methodBindingErrorMessage(
+    selfType: PyType,
+    memberType: PyType?,
+    context: TypeEvalContext,
+  ): ProblemMessage {
+    val methodType = if (memberType is PyOverloadType) memberType.items.firstOrNull() else memberType
+    val callable = (methodType as? PyCallableType)?.callable
+    // Any element in a Python file works as the link-resolution scope; the type names link to global declarations.
+    val anchor: PsiElement? = callable ?: (selfType as? PyClassType)?.pyClass
+    val selfTypeParam = selfType.toCodeSpan(anchor, context)
+    val methodTypeParam = methodType.toCodeSpan(anchor, context)
+    val methodName = callable?.name?.let { name ->
+      val containingClass = callable.asMethod()?.containingClass?.name
+      if (containingClass != null) "$containingClass.$name" else name
+    }
+    return if (methodName != null) {
+      PyPsiBundle.problemMessage("INSP.type.checker.invalid.self.argument.to.named.method.with.type",
+                                 selfTypeParam, methodName, methodTypeParam)
+    }
+    else {
+      PyPsiBundle.problemMessage("INSP.type.checker.invalid.self.argument.to.method.with.type", selfTypeParam, methodTypeParam)
+    }
+  }
+
+  /**
+   * Renders [this] as a code span for an inspection message: a [CodifiedParam] with clickable type links when an
+   * [anchor] is available, otherwise the plain type name (the message template still renders it as a code span).
+   */
+  private fun PyType?.toCodeSpan(anchor: PsiElement?, context: TypeEvalContext): Any =
+    if (anchor != null) CodifiedParam.ofType(this, anchor, context)
+    else PythonDocumentationProvider.getTypeName(this, context)
+
+  @ApiStatus.Internal
+  @JvmStatic
+  fun bindFunction(callableType: PyCallableType, selfType: PyType, context: TypeEvalContext): FunctionBindingResult? {
+    if (callableType.getParametersType(context) == null) {
+      // `typing.Callable[..., R]` - treat as `(*args, **kwargs)`.
+      return FunctionBindingResult(callableType, PyAnyType.any)
+    }
+    val firstParam = callableType.getParameters(context)?.firstOrNull()
+    if (firstParam != null && !firstParam.isPositionOnlySeparator && !firstParam.isKeywordOnlySeparator) {
+      val firstParamType = firstParam.getArgumentType(context)
+      val substitutions = GenericSubstitutions()
+      substitutions.qualifierType = selfType
+      if (firstParamType !is PySelfType) {
+        if (!match(firstParamType, selfType, context, substitutions)) {
+          return null
+        }
+      }
+      val specializedCallableType = PyTypeChecker.substitute(callableType, substitutions, context) as PyCallableType
+      val specializedFirstParamType = specializedCallableType.getParameters(context)!!.first().getArgumentType(context)
+      return FunctionBindingResult(specializedCallableType.dropFirstParam(context), specializedFirstParamType)
+    }
+    return null
+  }
+
+  @ApiStatus.Internal
+  data class FunctionBindingResult(val boundMethodType: PyCallableType, val specializedFirstParamType: PyType?)
+
+  private fun PyCallableType.dropFirstParam(context: TypeEvalContext): PyCallableType {
+    if (this is PyFunctionType) {
+      val params = getParameters(context)
+      if (!params.isNullOrEmpty()) {
+        val firstParam = params.first()
+        if (!firstParam.isPositionalContainer && !firstParam.isKeywordContainer) {
+          return PyFunctionTypeImpl(callable, params.drop(1))
+        }
+      }
+      return this
+    }
+    else {
+      val parametersType = getParametersType(context)
+      if (parametersType is PyCallableParameterListType) {
+        val params = parametersType.parameters
+        if (params.isNotEmpty()) {
+          val firstParam = params.first()
+          if (!firstParam.isPositionalContainer && !firstParam.isKeywordContainer) {
+            return PyCallableTypeImpl(getTypeParameters(context),
+                                      PyCallableParameterListTypeImpl(params.drop(1)),
+                                      getReturnType(context),
+                                      callable,
+                                      modifier
+            )
+          }
+        }
+      }
+      return this
+    }
+  }
 }
 
 @OptIn(ExperimentalContracts::class)
 val PyType?.isAnyOrUnknown: Boolean
+  @Contract("null -> true")
   get() {
   contract {
     returns(true) implies (this@isAnyOrUnknown is PyAnyType?)
@@ -395,34 +672,39 @@ val PyType?.isAnyOrUnknown: Boolean
 }
 
 @OptIn(ExperimentalContracts::class)
-val PyType?.isAny: Boolean get() {
-  contract {
-    returns(true) implies (this@isAny is PyAnyType.Any?)
-    returns(false) implies (this@isAny is PyType)
+val PyType?.isAny: Boolean
+  @Contract("null -> true")
+  get() {
+    contract {
+      returns(true) implies (this@isAny is PyAnyType.Any?)
+      returns(false) implies (this@isAny is PyType)
+    }
+    PyAnyType.validate(this)
+    return if (PyAnyType.isEnabled) this is PyAnyType.Any else this == null
   }
-  PyAnyType.validate(this)
-  return if (PyAnyType.isEnabled) this is PyAnyType.Any else this == null
-}
 
 @OptIn(ExperimentalContracts::class)
-val PyType?.isUnknown: Boolean get() {
-  contract {
-    returns(true) implies (this@isUnknown is PyAnyType.Unknown?)
-    returns(false) implies (this@isUnknown is PyType)
-  }
+val PyType?.isUnknown: Boolean
+  @Contract("null -> true")
+  get() {
+    contract {
+      returns(true) implies (this@isUnknown is PyAnyType.Unknown?)
+      returns(false) implies (this@isUnknown is PyType)
+    }
 
-  PyAnyType.validate(this)
-  return if (PyAnyType.isEnabled) this is PyAnyType.Unknown else this == null
-}
+    PyAnyType.validate(this)
+    return if (PyAnyType.isEnabled) this is PyAnyType.Unknown else this == null
+  }
 
 @OptIn(ExperimentalContracts::class)
-val PyType?.isObject: Boolean get() {
-  contract {
-    returns(true) implies (this@isObject is PyClassType)
-  }
+val PyType?.isObject: Boolean
+  get() {
+    contract {
+      returns(true) implies (this@isObject is PyClassType)
+    }
 
-  return this is PyClassType && isObjectClass(this.pyClass)
-}
+    return this is PyClassType && isObjectClass(this.pyClass)
+  }
 
 @ApiStatus.Internal
 fun PyExpression.getLiteralType(context: TypeEvalContext): PyType? =

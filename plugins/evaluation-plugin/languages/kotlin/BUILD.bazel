@@ -1,5 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "evaluationPlugin-languages-kotlin-tests_test",
+    timeout = "moderate",
+    data = all_test_dep_targets,
+    tags = ["community-aggregator"],
+    runtime_deps = [":evaluationPlugin-languages-kotlin-tests_test_lib"],
+)
+### skip generation section `test intellij.evaluationPlugin.languages.kotlin.tests`
 
 ### auto-generated section `build intellij.evaluationPlugin.languages.kotlin` start
 
@@ -154,6 +164,8 @@ jvm_library(
         "//plugins/kotlin/base/testFramework:testFramework_test_lib",
         "//plugins/evaluation-plugin:evaluationPlugin-tests",
         "//plugins/evaluation-plugin:evaluationPlugin-tests_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.evaluationPlugin.languages.kotlin.tests` end
@@ -166,11 +178,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.evaluationPlugin.languages.kotlin.tests` end
-
-### auto-generated section `test intellij.evaluationPlugin.languages.kotlin.tests` start
-
-jps_test(
-    name = "evaluationPlugin-languages-kotlin-tests_test",
-    runtime_deps = [":evaluationPlugin-languages-kotlin-tests_test_lib"],
-)
-### auto-generated section `test intellij.evaluationPlugin.languages.kotlin.tests` end

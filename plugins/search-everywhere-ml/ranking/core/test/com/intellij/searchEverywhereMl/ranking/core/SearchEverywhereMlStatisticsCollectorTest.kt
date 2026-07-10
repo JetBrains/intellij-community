@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.ListEventField
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.internal.statistic.eventLog.events.ObjectListEventField
+import com.intellij.internal.statistic.eventLog.events.JcpDataEventField
 import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.openapi.util.Disposer
 import com.intellij.searchEverywhereMl.MLSE_RECORDER_ID
@@ -303,6 +304,7 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
         is ListEventField<*> -> acc + field
         is ObjectEventField -> acc + field + field.fields.toList().getFieldsRecursively()
         is ObjectListEventField -> acc + field + field.fields.toList().getFieldsRecursively()
+        is JcpDataEventField -> acc + field
       }
     }
   }

@@ -153,6 +153,11 @@ public class FirGotoTypeDeclarationTestGenerated extends AbstractFirGotoTypeDecl
         runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/smartCast.test");
     }
 
+    @TestMetadata("stdlibFunctionCallFromSources.test")
+    public void testStdlibFunctionCallFromSources() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/stdlibFunctionCallFromSources.test");
+    }
+
     @TestMetadata("thisExtensionFunction.test")
     public void testThisExtensionFunction() throws Exception {
         runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/thisExtensionFunction.test");

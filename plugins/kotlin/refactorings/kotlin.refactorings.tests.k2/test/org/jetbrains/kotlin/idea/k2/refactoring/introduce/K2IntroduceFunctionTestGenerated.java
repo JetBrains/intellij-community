@@ -1157,6 +1157,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/extractFunction/duplicates/branchingMatch2.kt");
         }
 
+        @TestMetadata("contextArguments.kt")
+        public void testContextArguments() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/duplicates/contextArguments.kt");
+        }
+
         @TestMetadata("defaultCF.kt")
         public void testDefaultCF() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/duplicates/defaultCF.kt");

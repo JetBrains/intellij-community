@@ -1,0 +1,32 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.lsp.impl"/>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.python.lsp.core"/>
+    <module name="intellij.python.pytools"/>
+    <module name="intellij.python.pytools.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.lsp.integrationProvider implementation="com.intellij.python.pyrefly.lsp.PyreflyLspIntegrationProvider"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.python.pyrefly.PyreflyUsageCollector"/>
+
+    <registryKey key="pyrefly.type.engine" defaultValue="false"
+                 description="Enforce pyrefly type engine"/>
+
+    <registryKey key="pyrefly.type.engine.tsp" defaultValue="false"
+                 description="Use the Type Server Protocol (TSP) instead of LSP for the Pyrefly type engine"
+                 restartRequired="true"/>
+
+    <python.lsp.typeEngineConfigurable implementation="com.intellij.python.pyrefly.PyreflyPyTypeEngineProvider"/>
+    <projectSettings service="com.intellij.python.pyrefly.PyreflyConfiguration"/>
+    <python.pytools.pyTool implementation="com.intellij.python.pyrefly.PyreflyPyTool"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <typeEvalTypeEngineProvider implementation="com.intellij.python.pyrefly.typeEngine.PyreflyLspTypeEngineProvider"/>
+  </extensions>
+</idea-plugin>

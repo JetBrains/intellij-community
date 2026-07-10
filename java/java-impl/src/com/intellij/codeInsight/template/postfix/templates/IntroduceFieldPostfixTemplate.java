@@ -137,31 +137,23 @@ public class IntroduceFieldPostfixTemplate extends PostfixTemplateWithExpression
                                                            @NotNull PsiExpression virtualExpr,
                                                            @NotNull JavaIntroduceFieldService.InitializationPlace place,
                                                            @NotNull PostfixTemplateProvider provider) {
-    TextRange newSelection = new TextRange(keyRange.getStartOffset(), keyRange.getStartOffset());
-    ActionContext updatedContext = ctx.withSelection(newSelection).withOffset(keyRange.getStartOffset());
     JavaIntroduceFieldService introduceFieldService = JavaIntroduceFieldService.getInstance();
     if (introduceFieldService == null) return ModCommand.error(JavaRefactoringBundle.message("selected.expression.cannot.be.extracted"));
-    return ModCommand.psiUpdate(updatedContext,
-                                document -> document.deleteString(ctx.selection().getStartOffset(), ctx.selection().getEndOffset()),
-                                updater -> {
-                                  updater.getDocument()
-                                    .deleteString(PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()),
-                                                  ctx.selection().getStartOffset());
-                                  PsiDocumentManager.getInstance(ctx.project()).commitDocument(updater.getDocument());
-                                  provider.prepareCopyForModCommand(updater.getPsiFile(),
-                                                                    PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()));
-                                  PsiElement expression = PsiTreeUtil.findSameElementInCopy(virtualExpr, updater.getPsiFile());
-                                  expression = ElementToWorkOn.getWritable(expression, updater);
-                                  PsiField field = introduceFieldService
-                                    .introduceField((PsiExpression)expression, place);
-                                  if (field != null) {
-                                    List<String> names = new VariableNameGenerator(field, VariableKind.FIELD)
-                                      .byExpression(field.getInitializer())
-                                      .byType(field.getType())
-                                      .generateAll(true);
-                                    updater.rename(field, names);
-                                  }
-                                });
+    return PostfixModExpander.psiUpdateRemovingTemplateKey(ctx, keyRange, updater -> {
+      provider.prepareCopyForModCommand(updater.getPsiFile(),
+                                        PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()));
+      PsiElement expression = PsiTreeUtil.findSameElementInCopy(virtualExpr, updater.getPsiFile());
+      expression = ElementToWorkOn.getWritable(expression, updater);
+      PsiField field = introduceFieldService
+        .introduceField((PsiExpression)expression, place);
+      if (field != null) {
+        List<String> names = new VariableNameGenerator(field, VariableKind.FIELD)
+          .byExpression(field.getInitializer())
+          .byType(field.getType())
+          .generateAll(true);
+        updater.rename(field, names);
+      }
+    });
   }
 
   @Override

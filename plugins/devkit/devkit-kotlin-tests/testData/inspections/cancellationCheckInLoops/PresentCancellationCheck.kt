@@ -1,7 +1,7 @@
 package inspections.cancellationCheckInLoops
 
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.checkCancelled
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 
@@ -27,11 +27,11 @@ fun main() {
 suspend fun foo() {
   // right cancellation check
   for (i in 1..10) {
-    checkCancelled()
+    checkCanceled()
   }
 
   // wrong cancellation check
-  <warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">for</warning> (i in 1..10) {
+  <warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">for</warning> (i in 1..10) {
     ProgressManager.checkCanceled()
   }
 }

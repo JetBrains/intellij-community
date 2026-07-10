@@ -63,6 +63,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
+
 /**
  * Provides type information extracted from NumPy docstring format.
  *
@@ -362,12 +364,12 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     final PyPsiFacade facade = getPsiFacade(anchor);
     final String realTypeName = getNumpyRealTypeName(typeString);
     PyType type = facade.parseTypeAnnotation(realTypeName, anchor);
-    if (type != null) {
+    if (!isUnknown(type)) {
       return type;
     }
 
     type = facade.parseTypeAnnotation(typeString, anchor);
-    if (type != null) {
+    if (!isUnknown(type)) {
       return type;
     }
     return getNominalType(anchor, typeString);

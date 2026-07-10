@@ -27,7 +27,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="module" module-name="intellij.platform.problemsView.backend" />
+    <orderEntry type="module" module-name="intellij.platform.problemView.backend" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
     <orderEntry type="module" module-name="intellij.java.debugger" />
     <orderEntry type="module" module-name="intellij.java.impl" exported="" />
@@ -73,6 +73,9 @@
     <orderEntry type="module" module-name="intellij.java.testFramework.backend" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
+    <orderEntry type="module" module-name="intellij.java.indexing" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="PROVIDED" />
   </component>
   <component name="copyright">
     <Base>

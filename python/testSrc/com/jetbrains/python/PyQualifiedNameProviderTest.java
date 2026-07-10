@@ -15,14 +15,19 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.idea.TestFor;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.actions.PyQualifiedNameProvider;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.fixtures.PyTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
  */
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyQualifiedNameProviderTest extends PyTestCase {
   public void testTopLevelFunctionReference() {
     doDirectoryTest("a/b/c/module.py", "a.b.c.module.func");
@@ -38,6 +43,20 @@ public class PyQualifiedNameProviderTest extends PyTestCase {
 
   public void testMethodReference() {
     doDirectoryTest("pkg/subpkg/mod.py", "pkg.subpkg.mod.MyClass.method");
+  }
+
+  // builtins must be qualified with the `builtins.` module prefix.
+  @TestFor(issues = "PY-87879")
+  public void testBuiltinClassReference() {
+    myFixture.configureByText("a.py", "x: in<caret>t = 1");
+    final String actualQualifiedName = new PyQualifiedNameProvider().getQualifiedName(myFixture.getElementAtCaret());
+    assertEquals("builtins.int", actualQualifiedName);
+  }
+
+  public void testBuiltinFunctionReference() {
+    myFixture.configureByText("a.py", "le<caret>n([])");
+    final String actualQualifiedName = new PyQualifiedNameProvider().getQualifiedName(myFixture.getElementAtCaret());
+    assertEquals("builtins.len", actualQualifiedName);
   }
 
   private void doDirectoryTest(@NotNull String targetFile, @NotNull String expectedQualifiedName) {

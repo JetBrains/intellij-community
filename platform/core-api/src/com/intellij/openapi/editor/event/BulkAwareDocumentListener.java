@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.event;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.elf.BulkAwareElfDocumentListener;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -10,25 +11,33 @@ import org.jetbrains.annotations.NotNull;
  * <br>
  * If possible, this interface should be used in preference to {@link DocumentListener}, to improve performance.
  */
-public interface BulkAwareDocumentListener extends DocumentListener {
+public interface BulkAwareDocumentListener extends DocumentListener, BulkAwareElfDocumentListener {
+
   @Override
   default void beforeDocumentChange(@NotNull DocumentEvent event) {
-    if (!event.getDocument().isInBulkUpdate()) beforeDocumentChangeNonBulk(event);
+    if (!event.getDocument().isInBulkUpdate()) {
+      beforeDocumentChangeNonBulk(event);
+    }
   }
 
   @Override
   default void documentChanged(@NotNull DocumentEvent event) {
-    if (!event.getDocument().isInBulkUpdate()) documentChangedNonBulk(event);
+    if (!event.getDocument().isInBulkUpdate()) {
+      documentChangedNonBulk(event);
+    }
   }
 
-  default void beforeDocumentChangeNonBulk(@NotNull DocumentEvent event) {}
-  default void documentChangedNonBulk(@NotNull DocumentEvent event) {}
+  default void beforeDocumentChangeNonBulk(@NotNull DocumentEvent event) {
+  }
+
+  default void documentChangedNonBulk(@NotNull DocumentEvent event) {
+  }
 
   /**
    * Simple specialization of {@link BulkAwareDocumentListener} for the case when the listener doesn't need the details of the changes
    * (offsets and changed text), and is fine with receiving only one notification for changes done in bulk mode.
    */
-  interface Simple extends BulkAwareDocumentListener {
+  interface Simple extends BulkAwareDocumentListener, BulkAwareElfDocumentListener.Simple {
     @Override
     default void beforeDocumentChangeNonBulk(@NotNull DocumentEvent event) {
       beforeDocumentChange(event.getDocument());
@@ -49,7 +58,10 @@ public interface BulkAwareDocumentListener extends DocumentListener {
       afterDocumentChange(document);
     }
 
-    default void beforeDocumentChange(@NotNull Document document) {}
-    default void afterDocumentChange(@NotNull Document document) {}
+    default void beforeDocumentChange(@NotNull Document document) {
+    }
+
+    default void afterDocumentChange(@NotNull Document document) {
+    }
   }
 }

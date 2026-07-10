@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -54,6 +54,7 @@ import com.intellij.codeInspection.dataFlow.java.inst.MethodReferenceInstruction
 import com.intellij.codeInspection.dataFlow.java.inst.NotInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.NumericBinaryInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.PrimitiveConversionInstruction;
+import com.intellij.codeInspection.dataFlow.java.inst.SimpleEqWithoutCorrectionInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.StringConcatInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.ThrowInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.TypeCastInstruction;
@@ -370,6 +371,18 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   void addInstruction(Instruction i) {
     myCurrentFlow.addInstruction(i);
+  }
+
+  private static @NotNull Instruction createSwitchLabelMatchInstruction(@Nullable PsiType comparedType, @NotNull PsiExpression label) {
+    JavaSwitchLabelTakenAnchor anchor = new JavaSwitchLabelTakenAnchor(label);
+    if (comparedType != null && isFloatingPoint(comparedType) && comparedType.equals(label.getType())) {
+      return new SimpleEqWithoutCorrectionInstruction(anchor);
+    }
+    return new BooleanBinaryInstruction(RelationType.EQ, true, anchor);
+  }
+
+  private static boolean isFloatingPoint(@Nullable PsiType type) {
+    return PsiTypes.floatType().equals(type) || PsiTypes.doubleType().equals(type);
   }
 
   int getInstructionCount() {
@@ -1235,7 +1248,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                   if (PsiPrimitiveType.getUnboxedType(targetType) == null) {
                     addInstruction(new PushInstruction(expressionValue, null));
                     expr.accept(this);
-                    addInstruction(new BooleanBinaryInstruction(RelationType.EQ, true, new JavaSwitchLabelTakenAnchor(expr)));
+                    addInstruction(createSwitchLabelMatchInstruction(targetType, expr));
                     addInstruction(new ConditionalGotoInstruction(targetOffset, DfTypes.TRUE));
                   }
                   else {
@@ -1246,7 +1259,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                     addInstruction(new PushInstruction(expressionValue, null));
                     generateBoxingUnboxingInstructionFor(selector, PsiPrimitiveType.getUnboxedType(targetType));
                     expr.accept(this);
-                    addInstruction(new BooleanBinaryInstruction(RelationType.EQ, true, new JavaSwitchLabelTakenAnchor(expr)));
+                    addInstruction(createSwitchLabelMatchInstruction(PsiPrimitiveType.getUnboxedType(targetType), expr));
                     DeferredOffset gotoOffset = new DeferredOffset();
                     addInstruction(new GotoInstruction(gotoOffset));
 
@@ -1420,9 +1433,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new PopInstruction());
     addInstruction(new PushValueInstruction(DfTypes.FALSE));
     addInstruction(new GotoInstruction(endPatternOffset));
+    int nextIndex = getInstructionCount();
+    generateBoxingUnboxingInstructionFor(pattern, checkType, patternType, false);
     SimpleAssignmentInstruction assignmentInstr = new SimpleAssignmentInstruction(null, patternDfaVar);
     addInstruction(assignmentInstr);
-    condGotoOffset.setOffset(assignmentInstr.getIndex());
+    condGotoOffset.setOffset(nextIndex);
   }
 
   private void generateInstanceOfInstructions(@NotNull PsiElement context,
@@ -2499,16 +2514,66 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
 
       addConditionalErrorThrow();
-      List<? extends MethodContract> contracts = constructor == null ? Collections.emptyList() :
-                                                 JavaMethodContractUtil.getMethodCallContracts(constructor, null);
-      contracts = DfaUtil.addRangeContracts(constructor, contracts);
-      addInstruction(new MethodCallInstruction(expression, contracts));
-      processFailResult(constructor, contracts, expression);
+      if (isInitializableRecord(constructor, expression)) {
+        initializeRecordConstructor(constructor, expression);
+      }
+      else {
+        List<? extends MethodContract> contracts = constructor == null ? Collections.emptyList() :
+                                                   JavaMethodContractUtil.getMethodCallContracts(constructor, null);
+        contracts = DfaUtil.addRangeContracts(constructor, contracts);
+        addInstruction(new MethodCallInstruction(expression, contracts));
+        processFailResult(constructor, contracts, expression);
+      }
 
       addMethodThrows(constructorOrClass);
     }
 
     finishElement(expression);
+  }
+
+  private static boolean isInitializableRecord(@Nullable PsiMethod constructor,
+                                               @NotNull PsiNewExpression expression) {
+    if (constructor == null ||
+        !JavaPsiRecordUtil.isCanonicalConstructor(constructor) ||
+        JavaPsiRecordUtil.isCompactConstructor(constructor) ||
+        JavaPsiRecordUtil.isExplicitCanonicalConstructor(constructor)) {
+      return false;
+    }
+    PsiClass recordClass = constructor.getContainingClass();
+    if (recordClass == null || !recordClass.isRecord()) return false;
+    PsiRecordComponent[] components = recordClass.getRecordComponents();
+    PsiExpressionList argumentList = expression.getArgumentList();
+    int slotCount = MethodCallUtils.isVarArgCall(expression)
+                    ? constructor.getParameterList().getParametersCount()
+                    : (argumentList == null ? 0 : argumentList.getExpressionCount());
+    if (slotCount == 0) return false;
+    return slotCount == components.length;
+  }
+
+  /**
+   * Creates the instructions modeling an implicit canonical record constructor call. On entry the stack holds
+   * {@code [qualifier, arg0, ..., argN]}; on exit it holds the freshly created record object.
+   */
+  private void initializeRecordConstructor(@NotNull PsiMethod constructor, @NotNull PsiNewExpression expression) {
+    PsiClass recordClass = Objects.requireNonNull(constructor.getContainingClass());
+    DfType baseType = TypeConstraints.exactClass(recordClass).asDfType();
+    PsiRecordComponent[] components = recordClass.getRecordComponents();
+    DfaVariableValue result = myCurrentFlow.createTempVariable(baseType);
+    DfType recordType = baseType.meet(DfTypes.NOT_NULL_OBJECT).meet(DfTypes.LOCAL_OBJECT);
+    addInstruction(new PushValueInstruction(recordType, null));
+    addInstruction(new SimpleAssignmentInstruction(null, result));
+    addInstruction(new PopInstruction());
+    for (int i = components.length - 1; i >= 0; i--) {
+      PsiField field = JavaPsiRecordUtil.getFieldForComponent(components[i]);
+      DfaValue fieldValue = field == null ? null : new PlainDescriptor(field).createValue(myFactory, result);
+      if (fieldValue instanceof DfaVariableValue fieldVar) {
+        addInstruction(new SimpleAssignmentInstruction(null, fieldVar));
+      }
+      addInstruction(new PopInstruction());
+    }
+
+    addInstruction(new PopInstruction()); //qualifier
+    addInstruction(new PushInstruction(result, new JavaExpressionAnchor(expression)));
   }
 
   private void initializeSmallArray(PsiArrayType type, PsiExpression[] dimensions) {

@@ -1,9 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.codeInsight.daemon.impl
 
-import com.intellij.analysis.problemsView.toolWindow.ProblemsView
 import com.intellij.codeInsight.daemon.DaemonBundle
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter
@@ -11,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
 import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager
 import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.codeInsight.multiverse.defaultContext
@@ -55,6 +55,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.SeverityStatusItem
 import com.intellij.openapi.editor.markup.StatusItem
 import com.intellij.openapi.editor.markup.UIController
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
@@ -103,12 +104,12 @@ open class TrafficLightRenderer private constructor(
   @Volatile
   private var highlightingSettingsModificationCount: Long
 
-  constructor(project: Project, document: Document) : this(project, document, null, computeTrafficLightRendererInfo(document, project)
-  )
+  constructor(project: Project, document: Document)
+    : this(project, document, null, computeTrafficLightRendererInfo(document, project))
 
   @ApiStatus.Internal
-  constructor(project: Project, editor: Editor) : this(project, editor.getDocument(), editor, computeTrafficLightRendererInfo(editor.document, project)
-  )
+  constructor(project: Project, editor: Editor)
+    : this(project, editor.getDocument(), editor, computeTrafficLightRendererInfo(editor.document, project))
 
   init {
     // to be able to find PsiFile without "slow op in EDT" exceptions
@@ -156,18 +157,19 @@ open class TrafficLightRenderer private constructor(
   )
 
   @RequiresReadLock
-  private fun  getPsiFile(): PsiFile? {
+  private fun getPsiFile(): PsiFile? {
     val context = getContext()
     return PsiDocumentManager.getInstance(project).getPsiFile(document, context)
   }
 
+  @RequiresReadLock
   private fun getContext(): CodeInsightContext {
     return if (editor != null) {
       EditorContextManager.getEditorContext(editor, project)
     }
     else {
-      // todo IJPL-339 choose proper file here?
-      defaultContext()
+      val file = FileDocumentManager.getInstance().getFile(document) ?: return defaultContext()
+      CodeInsightContextManager.getInstance(project).getPreferredContext(file)
     }
   }
 
@@ -177,6 +179,7 @@ open class TrafficLightRenderer private constructor(
      * `errorCount[index]` equals to a number of highlighters of severity with index `idx` in this markup model.
      * Severity index can be obtained via [SeverityRegistrar.getSeverityIdx].
      */
+    @RequiresReadLock
     get() {
       val severities = severityRegistrar.allSeverities
       val cachedErrors = IntArray(severities.size)
@@ -184,6 +187,18 @@ open class TrafficLightRenderer private constructor(
       for (severity in severities) {
         val severityIndex = severityRegistrar.getSeverityIdx(severity)
         cachedErrors[severityIndex] = errorCount.getErrorCount(severity, context)
+      }
+      return cachedErrors
+    }
+
+  val errorCountsForFus: IntArray
+    @ApiStatus.Internal
+    get() {
+      val severities = severityRegistrar.allSeverities
+      val cachedErrors = IntArray(severities.size)
+      for (severity in severities) {
+        val severityIndex = severityRegistrar.getSeverityIdx(severity)
+        cachedErrors[severityIndex] = errorCount.getErrorCountsForAllContexts(severity)
       }
       return cachedErrors
     }
@@ -583,7 +598,7 @@ open class TrafficLightRenderer private constructor(
       val file = getPsiFile()
       val virtualFile = file?.getVirtualFile()
       val document = file?.getViewProvider()?.getDocument()
-      ProblemsView.toggleCurrentFileProblems(project, virtualFile, document)
+      ProblemsViewBridge.toggleCurrentFileProblemsIfAvailable(project, virtualFile, document)
     }
   }
 

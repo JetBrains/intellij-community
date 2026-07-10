@@ -128,7 +128,7 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
   }
 
   private LombokLightFieldBuilder createLoggerField(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation,
-                                                    @NotNull @PsiModifier.ModifierConstant String loggerVisibility) {
+                                                    @PsiModifier.ModifierConstant @NotNull String loggerVisibility) {
     // called only after validation succeeded
     final Project project = psiClass.getProject();
     final PsiManager manager = psiClass.getContainingFile().getManager();

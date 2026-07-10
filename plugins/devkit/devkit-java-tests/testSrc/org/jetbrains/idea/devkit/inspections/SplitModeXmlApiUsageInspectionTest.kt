@@ -1053,6 +1053,81 @@ No frontend or backend dependencies were found for descriptor 'unique.module.nam
       .setValue(true, testRootDisposable)
   }
 
+  fun testNonUiExtensionsInBackendWithNonUiApiPermitModule() {
+    val pluginXml = addModuleWithXmlDescriptor(
+      moduleName = "intellij.clion.radler.core",
+      descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
+      """
+        <idea-plugin>
+          <extensions defaultExtensionNs="com.intellij">
+            <rdclient.actionCustomization/>
+            <lang.parserDefinition/>
+          </extensions>
+        </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
+
+    myFixture.checkHighlighting()
+  }
+
+  fun testFrontendApiExtensionInOrdinaryBackendModule() {
+    val pluginXml = addModuleWithXmlDescriptor(
+      moduleName = "unique.module.name.64",
+      descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
+      """
+        <idea-plugin>
+          <dependencies>
+            <module name="intellij.platform.backend"/>
+          </dependencies>
+          <extensions defaultExtensionNs="com.intellij">
+            <<warning>rdclient.actionCustomization</warning>/>
+          </extensions>
+        </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
+
+    myFixture.checkHighlighting()
+  }
+
+  fun testUiExtensionInBackendWithNonUiApiPermitModule() {
+    val pluginXml = addModuleWithXmlDescriptor(
+      moduleName = "intellij.clion.radler.core",
+      descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
+      """
+        <idea-plugin>
+          <extensions defaultExtensionNs="com.intellij">
+            <<warning>toolWindow</warning>/>
+          </extensions>
+        </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
+
+    myFixture.checkHighlighting()
+  }
+
+  fun testBackendWithNonUiApiPermitModuleIsBackendDependencyEvidence() {
+    val pluginXml = addModuleWithXmlDescriptor(
+      moduleName = "unique.module.name.65",
+      descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
+      """
+        <idea-plugin>
+          <dependencies>
+            <module name="intellij.clion.radler.core"/>
+          </dependencies>
+          <extensions defaultExtensionNs="com.intellij">
+            <<warning>lang.parserDefinition</warning>/>
+          </extensions>
+        </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
+
+    myFixture.checkHighlighting()
+  }
+
   fun testSharedExtensionInBackendModule() {
     val pluginXml = addModuleWithXmlDescriptor(
       moduleName = "unique.module.name.48",

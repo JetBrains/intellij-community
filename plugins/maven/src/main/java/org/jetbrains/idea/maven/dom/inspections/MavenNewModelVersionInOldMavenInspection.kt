@@ -9,7 +9,7 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.project.Project
-import com.intellij.platform.eel.provider.utils.EelPathUtils
+import com.intellij.platform.eel.provider.utils.EelProjectUtils
 import com.intellij.util.xml.DomFileElement
 import com.intellij.util.xml.highlighting.BasicDomElementsInspection
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
@@ -88,9 +88,9 @@ class UpdateMavenWrapper(@Suppress("ActionIsNotPreviewFriendly") val mavenProjec
   }
 
   private fun createTempProject(project: Project): Path {
-    val tmp = EelPathUtils.createTemporaryDirectory(project,
-                                                    prefix = "mvn-wrapper-update",
-                                                    deleteOnExit = true)
+    val tmp = EelProjectUtils.createTemporaryDirectory(project,
+                                                       prefix = "mvn-wrapper-update",
+                                                       deleteOnExit = true)
     tmp.resolve("pom.xml").writeText(createDummyPomContent())
     return tmp
   }

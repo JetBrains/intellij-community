@@ -470,11 +470,8 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
       int parameterOptions = showParamName ? SHOW_NAME | SHOW_TYPE | SHOW_FQ_CLASS_NAMES : SHOW_TYPE | SHOW_FQ_CLASS_NAMES;
       formatMethod((PsiMethod)owner, PsiSubstitutor.EMPTY, options, parameterOptions, maxParamsToShow, builder);
     }
-    else if (owner instanceof PsiField) {
-      builder.append(' ').append(((PsiField)owner).getName());
-    }
-    else if (owner instanceof PsiRecordComponent) {
-      builder.append(' ').append(((PsiRecordComponent)owner).getName());
+    else if (owner instanceof PsiField || owner instanceof PsiRecordComponent) {
+      builder.append(' ').append(((PsiVariable)owner).getName());
     }
     else if (owner instanceof PsiParameter) {
       PsiElement declarationScope = ((PsiParameter)owner).getDeclarationScope();
@@ -505,7 +502,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
 
   /**
    * @param psiClass class to get the package name from
-   * @return user-friendly additional information about class location. Usually, a package name, 
+   * @return user-friendly additional information about class location. Usually, a package name,
    * but could be also a containing class of a type parameter or something like "local class".
    */
   public static @Nls String getPackageDisplayName(@NotNull PsiClass psiClass) {

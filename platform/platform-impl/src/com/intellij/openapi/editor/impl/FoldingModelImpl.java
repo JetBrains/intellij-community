@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.ElfCandidate;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
@@ -54,6 +55,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 @SuppressWarnings("SuspiciousPackagePrivateAccess")
+@ElfCandidate
 public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   implements FoldingModelEx, FoldingModelInternal, PrioritizedDocumentListener, Dumpable, ModificationTracker {
 
@@ -398,6 +400,17 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       return 0;
     }
     return myFoldTree.getTotalNumberOfFoldedLines();
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public int getLogicalLineForVisualLineWithoutSoftWraps(int visualLine) {
+    if (!myDocumentChangeProcessed && myDocument.isInEventsHandling()) {
+      // There is a possible case that this method is called on document update before fold regions are recalculated.
+      // We return the uncompressed line in such situations then.
+      return visualLine;
+    }
+    return myFoldTree.getLogicalLineForVisualLineWithoutSoftWraps(visualLine);
   }
 
   /**

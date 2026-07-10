@@ -1,8 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.command.undo.GlobalUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -16,6 +22,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.ServiceContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +45,52 @@ public class PlatformUndoTest extends LightPlatformTestCase {
     });
     assertEquals("", d1.getText());
     assertEquals("", d2.getText());
+  }
+
+  public void testDropHistoryDoesNotRequestDocumentReferenceManagerWhileClearingStacks() {
+    Document document = EditorFactory.getInstance().createDocument("");
+    DocumentReference reference = createDocumentReference(document);
+    executeUndoableAction(createUndoableAction(reference));
+    ServiceContainerUtil.replaceService(
+      ApplicationManager.getApplication(),
+      DocumentReferenceManager.class,
+      new DocumentReferenceManager() {
+        @Override
+        public @NotNull DocumentReference create(@NotNull Document document) {
+          throw new AssertionError("DocumentReferenceManager must not be requested while clearing all undo stacks");
+        }
+
+        @Override
+        public @NotNull DocumentReference create(@NotNull VirtualFile file) {
+          throw new AssertionError("DocumentReferenceManager must not be requested while clearing all undo stacks");
+        }
+      },
+      getTestRootDisposable()
+    );
+    getUndoManager().dropHistoryInTests();
+    assertEquals(0, getUndoManager().getStackSize(reference, true));
+  }
+
+  public void testDropHistoryClearsFlushedDocumentStacks() {
+    DocumentReference reference = createDocumentReference(EditorFactory.getInstance().createDocument(""));
+    executeUndoableAction(createUndoableAction(reference));
+    getUndoManager().flushCurrentCommandMerger();
+    assertEquals(1, getUndoManager().getStackSize(reference, true));
+    getUndoManager().dropHistoryInTests();
+    assertEquals(0, getUndoManager().getStackSize(reference, true));
+    assertEquals(0, getUndoManager().getStackSize(reference, false));
+  }
+
+  public void testDropHistoryClearsGlobalUndoAndRedoStacks() {
+    executeUndoableAction(createGlobalUndoableAction());
+    getUndoManager().flushCurrentCommandMerger();
+    assertEquals(1, getUndoManager().getStackSize(null, true));
+    getUndoManager().undo(null);
+    assertEquals(0, getUndoManager().getStackSize(null, true));
+    assertEquals(1, getUndoManager().getStackSize(null, false));
+    getUndoManager().dropHistoryInTests();
+    assertEquals(0, getUndoManager().getStackSize(null, true));
+    assertEquals(0, getUndoManager().getStackSize(null, false));
   }
 
   private void undo() {
@@ -65,6 +118,43 @@ public class PlatformUndoTest extends LightPlatformTestCase {
 
   private UndoManagerImpl getUndoManager() {
     return (UndoManagerImpl)UndoManager.getInstance(getProject());
+  }
+
+  private void executeUndoableAction(BasicUndoableAction action) {
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> getUndoManager().undoableActionPerformed(action), "test", null,
+                                                  UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION);
+  }
+
+  private static BasicUndoableAction createUndoableAction(DocumentReference reference) {
+    return new BasicUndoableAction(reference) {
+      @Override
+      public void undo() {}
+      @Override
+      public void redo() {}
+    };
+  }
+
+  private static GlobalUndoableAction createGlobalUndoableAction() {
+    return new GlobalUndoableAction() {
+      @Override
+      public void undo() {}
+      @Override
+      public void redo() {}
+    };
+  }
+
+  private static DocumentReference createDocumentReference(Document document) {
+    return new DocumentReference() {
+      @Override
+      public @NotNull Document getDocument() {
+        return document;
+      }
+
+      @Override
+      public @Nullable VirtualFile getFile() {
+        return null;
+      }
+    };
   }
 
   private static final class IncorrectFileEditor extends UserDataHolderBase implements DocumentsEditor {

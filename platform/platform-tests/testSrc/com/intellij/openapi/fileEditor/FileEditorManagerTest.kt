@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor
 
+import com.intellij.ide.actions.Switcher
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsState
@@ -33,10 +34,12 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFilePreCloseCheck
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.pom.Navigatable
 import com.intellij.testFramework.DumbModeTestUtils
@@ -249,6 +252,131 @@ class FileEditorManagerTest {
   }
 
   @Test
+  fun testCloseFileWithChecksVetoesSingleClose(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val file = openSourceFile("1.txt")
+    val window = currentWindow()
+    var checkedFile: VirtualFile? = null
+    registerPreCloseCheck(object : VirtualFilePreCloseCheck {
+      override fun canCloseFile(file: VirtualFile): Boolean {
+        checkedFile = file
+        return false
+      }
+    })
+
+    assertThat(manager.closeFileWithChecks(file, window)).isFalse()
+
+    assertThat(checkedFile).isEqualTo(file)
+    assertOpenFiles("1.txt")
+  }
+
+  @Test
+  fun testCloseFilesWithChecksRunsBatchCheckOnceAndCancelsWholeCloseSet(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    openSourceFiles("1.txt", "2.txt")
+    val window = currentWindow()
+    var singleChecks = 0
+    var batchFiles: List<VirtualFile> = emptyList()
+    registerPreCloseCheck(object : VirtualFilePreCloseCheck {
+      override fun canCloseFile(file: VirtualFile): Boolean {
+        singleChecks++
+        return true
+      }
+
+      override fun canCloseFiles(files: Collection<VirtualFile>): Boolean {
+        batchFiles = files.toList()
+        return false
+      }
+    })
+
+    assertThat(manager.closeFilesWithChecks(window.allComposites.map { Pair.create(it, window) })).isFalse()
+
+    assertThat(singleChecks).isZero()
+    assertThat(batchFiles.map { it.name }).containsExactly("1.txt", "2.txt")
+    assertOpenFiles("1.txt", "2.txt")
+  }
+
+  @Test
+  fun testCloseFilesWithChecksClosesWholeSetAfterBatchCheck(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    openSourceFiles("1.txt", "2.txt")
+    val window = currentWindow()
+    var batchChecks = 0
+    registerPreCloseCheck(object : VirtualFilePreCloseCheck {
+      override fun canCloseFile(file: VirtualFile): Boolean = true
+
+      override fun canCloseFiles(files: Collection<VirtualFile>): Boolean {
+        batchChecks++
+        return true
+      }
+    })
+
+    assertThat(manager.closeFilesWithChecks(window.allComposites.map { Pair.create(it, window) })).isTrue()
+
+    assertThat(batchChecks).isEqualTo(1)
+    assertOpenFiles()
+  }
+
+  @Test
+  fun testUncheckedCloseBypassesPreCloseCheck(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val file = openSourceFile("1.txt")
+    val window = currentWindow()
+    var checked = false
+    registerPreCloseCheck(object : VirtualFilePreCloseCheck {
+      override fun canCloseFile(file: VirtualFile): Boolean {
+        checked = true
+        return false
+      }
+    })
+
+    manager.closeFile(file, window)
+
+    assertThat(checked).isFalse()
+    assertOpenFiles()
+  }
+
+  @Test
+  @Suppress("DEPRECATION")
+  fun testSwitcherCloseWithWindowRunsPreCloseCheck(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val file = openSourceFile("1.txt")
+    val window = currentWindow()
+    var checkedFile: VirtualFile? = null
+    registerPreCloseCheck(object : VirtualFilePreCloseCheck {
+      override fun canCloseFile(file: VirtualFile): Boolean {
+        checkedFile = file
+        return false
+      }
+    })
+
+    assertThat(Switcher.SwitcherPanel.closeVirtualFileForTest(project, file, window)).isFalse()
+
+    assertThat(checkedFile).isEqualTo(file)
+    assertOpenFiles("1.txt")
+  }
+
+  @Test
+  @Suppress("DEPRECATION")
+  fun testSwitcherCloseWithoutWindowRunsBatchPreCloseCheck(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val file = openSourceFile("1.txt")
+    var singleChecks = 0
+    var batchFiles: List<VirtualFile> = emptyList()
+    registerPreCloseCheck(object : VirtualFilePreCloseCheck {
+      override fun canCloseFile(file: VirtualFile): Boolean {
+        singleChecks++
+        return true
+      }
+
+      override fun canCloseFiles(files: Collection<VirtualFile>): Boolean {
+        batchFiles = files.toList()
+        return false
+      }
+    })
+
+    assertThat(Switcher.SwitcherPanel.closeVirtualFileForTest(project, file, null)).isFalse()
+
+    assertThat(singleChecks).isZero()
+    assertThat(batchFiles).containsExactly(file)
+    assertOpenFiles("1.txt")
+  }
+
+  @Test
   fun testOpenFileInTablessSplitter(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     val file1 = openSourceFile("1.txt", focusEditor = false)
     val file2 = openSourceFile("2.txt")
@@ -452,6 +580,10 @@ class FileEditorManagerTest {
     Disposer.register(disposable, providerDisposable)
     providerDisposables.add(providerDisposable)
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.point.registerExtension(provider, providerDisposable)
+  }
+
+  private fun registerPreCloseCheck(check: VirtualFilePreCloseCheck) {
+    VirtualFilePreCloseCheck.EP_NAME.point.registerExtension(check, disposable)
   }
 
   private fun getSourceFile(name: String): VirtualFile = getFile("/src/$name")

@@ -86,6 +86,7 @@ import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -115,6 +116,29 @@ public abstract class PyTestCase extends UsefulTestCase {
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
+
+    // Enable Any/Unknown type support by default in all tests; opt out per method or class with @PyAnyTypeDisabled.
+    Registry.get("python.type.any").setValue(!isPyAnyTypeDisabledForCurrentTest());
+  }
+
+  private boolean isPyAnyTypeDisabledForCurrentTest() {
+    for (Class<?> c = getClass(); c != null && PyTestCase.class.isAssignableFrom(c); c = c.getSuperclass()) {
+      if (c.isAnnotationPresent(PyAnyTypeDisabled.class)) {
+        return true;
+      }
+    }
+    String name = getName();
+    if (name != null) {
+      try {
+        Method testMethod = getClass().getMethod(name);
+        if (testMethod.isAnnotationPresent(PyAnyTypeDisabled.class)) {
+          return true;
+        }
+      }
+      catch (NoSuchMethodException ignored) {
+      }
+    }
+    return false;
   }
 
   @Override
@@ -137,6 +161,7 @@ public abstract class PyTestCase extends UsefulTestCase {
       addSuppressedException(e);
     }
     finally {
+      Registry.get("python.type.any").resetToDefault();
       super.tearDown();
     }
   }

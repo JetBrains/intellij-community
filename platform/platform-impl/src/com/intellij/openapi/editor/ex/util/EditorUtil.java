@@ -692,7 +692,7 @@ public final class EditorUtil {
   }
 
   public static int getNotFoldedLineStartOffset(@NotNull Editor editor, int startOffset, boolean stopAtInvisibleFoldRegions) {
-    return EditorThreading.compute(() -> getNotFoldedLineStartOffset(editor.getElfDocument(), editor.getFoldingModel(), startOffset, stopAtInvisibleFoldRegions));
+    return EditorThreading.compute(() -> getNotFoldedLineStartOffset(editor.getDocument(), editor.getFoldingModel(), startOffset, stopAtInvisibleFoldRegions));
   }
 
   @ApiStatus.Internal
@@ -719,7 +719,7 @@ public final class EditorUtil {
   }
 
   public static int getNotFoldedLineEndOffset(@NotNull Editor editor, int startOffset, boolean stopAtInvisibleFoldRegions) {
-    return EditorThreading.compute(() -> getNotFoldedLineEndOffset(editor.getElfDocument(), editor.getFoldingModel(), startOffset, stopAtInvisibleFoldRegions));
+    return EditorThreading.compute(() -> getNotFoldedLineEndOffset(editor.getDocument(), editor.getFoldingModel(), startOffset, stopAtInvisibleFoldRegions));
   }
 
   @ApiStatus.Internal

@@ -9,11 +9,12 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspServer
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.impl.LspDocument
 import com.intellij.platform.lsp.impl.LspDocumentAdapter
 import com.intellij.platform.lsp.impl.LspDocumentPosition
 import com.intellij.platform.lsp.impl.LspDocumentRange
+import com.intellij.platform.lsp.impl.isNotebookSupportedByServer
 import org.eclipse.lsp4j.DidChangeNotebookDocumentParams
 import org.eclipse.lsp4j.DidCloseNotebookDocumentParams
 import org.eclipse.lsp4j.DidOpenNotebookDocumentParams
@@ -23,8 +24,8 @@ import org.eclipse.lsp4j.NotebookCellArrayChange
 import org.eclipse.lsp4j.NotebookCellKind
 import org.eclipse.lsp4j.NotebookDocument
 import org.eclipse.lsp4j.NotebookDocumentChangeEvent
-import org.eclipse.lsp4j.NotebookDocumentChangeEventCells
 import org.eclipse.lsp4j.NotebookDocumentChangeEventCellStructure
+import org.eclipse.lsp4j.NotebookDocumentChangeEventCells
 import org.eclipse.lsp4j.NotebookDocumentIdentifier
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
@@ -47,18 +48,18 @@ internal class TestNotebookDocumentAdapter : LspDocumentAdapter {
     private const val CELL_DELIMITER = "\n---\n"
   }
 
-  override fun acceptsFile(file: VirtualFile, notebookSupported: Boolean): Boolean =
-    notebookSupported && file.extension == "test-notebook"
+  override fun acceptsFile(lspClient: LspClient, file: VirtualFile): Boolean =
+    lspClient.isNotebookSupportedByServer && file.extension == "test-notebook"
 
-  override fun acceptsUrl(url: String, notebookSupported: Boolean): Boolean {
-    if (!notebookSupported) return false
+  override fun acceptsUrl(lspClient: LspClient, url: String): Boolean {
+    if (!lspClient.isNotebookSupportedByServer) return false
     val fragment = URI.create(url).fragment ?: return false
     return fragment.startsWith("cell-")
   }
 
-  override fun toLspDocumentPosition(lspServer: LspServer, file: VirtualFile, document: Document, hostOffset: Int): LspDocumentPosition? {
+  override fun toLspDocumentPosition(lspClient: LspClient, file: VirtualFile, document: Document, hostOffset: Int): LspDocumentPosition? {
     val cells = document.text.split(CELL_DELIMITER)
-    val fileUri = lspServer.descriptor.getFileUri(file)
+    val fileUri = lspClient.descriptor.getFileUri(file)
 
     var currentOffset = 0
     for ((index, cellText) in cells.withIndex()) {
@@ -80,16 +81,16 @@ internal class TestNotebookDocumentAdapter : LspDocumentAdapter {
     return null
   }
 
-  override fun toLspDocumentsInFileSync(lspServer: LspServer, file: VirtualFile): List<LspDocument> =
-    runReadActionBlocking { computeDocuments(lspServer, file) }
+  override fun toLspDocumentsInFileSync(lspClient: LspClient, file: VirtualFile): List<LspDocument> =
+    runReadActionBlocking { computeDocuments(lspClient, file) }
 
-  override suspend fun toLspDocumentsInFile(lspServer: LspServer, file: VirtualFile): List<LspDocument> =
-    readAction { computeDocuments(lspServer, file) }
+  override suspend fun toLspDocumentsInFile(lspClient: LspClient, file: VirtualFile): List<LspDocument> =
+    readAction { computeDocuments(lspClient, file) }
 
-  private fun computeDocuments(lspServer: LspServer, file: VirtualFile): List<LspDocument> {
+  private fun computeDocuments(lspClient: LspClient, file: VirtualFile): List<LspDocument> {
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return emptyList()
     val cells = document.text.split(CELL_DELIMITER)
-    val fileUri = lspServer.descriptor.getFileUri(file)
+    val fileUri = lspClient.descriptor.getFileUri(file)
     val result = mutableListOf<LspDocument>()
     var currentOffset = 0
     for ((index, cellText) in cells.withIndex()) {
@@ -101,18 +102,18 @@ internal class TestNotebookDocumentAdapter : LspDocumentAdapter {
     return result
   }
 
-  override fun toLspDocumentRangeSync(lspServer: LspServer, file: VirtualFile, document: Document, range: Range): List<LspDocumentRange> =
-    computeRanges(lspServer, file, document, range)
+  override fun toLspDocumentRangeSync(lspClient: LspClient, file: VirtualFile, document: Document, range: Range): List<LspDocumentRange> =
+    computeRanges(lspClient, file, document, range)
 
-  override suspend fun toLspDocumentRange(lspServer: LspServer, file: VirtualFile, range: Range): List<LspDocumentRange> =
+  override suspend fun toLspDocumentRange(lspClient: LspClient, file: VirtualFile, range: Range): List<LspDocumentRange> =
     readAction {
       val document = FileDocumentManager.getInstance().getDocument(file) ?: return@readAction emptyList()
-      computeRanges(lspServer, file, document, range)
+      computeRanges(lspClient, file, document, range)
     }
 
-  private fun computeRanges(lspServer: LspServer, file: VirtualFile, document: Document, range: Range): List<LspDocumentRange> {
+  private fun computeRanges(lspClient: LspClient, file: VirtualFile, document: Document, range: Range): List<LspDocumentRange> {
     val cells = document.text.split(CELL_DELIMITER)
-    val fileUri = lspServer.descriptor.getFileUri(file)
+    val fileUri = lspClient.descriptor.getFileUri(file)
 
     val startOffset = computeOffset(document, range.start) ?: return emptyList()
     val endOffset = computeOffset(document, range.end) ?: return emptyList()
@@ -138,9 +139,9 @@ internal class TestNotebookDocumentAdapter : LspDocumentAdapter {
     return result
   }
 
-  override fun sendDidOpen(lspServer: LspServer, file: VirtualFile, document: Document) {
+  override fun sendDidOpen(lspClient: LspClient, file: VirtualFile, document: Document) {
     val cells = document.text.split(CELL_DELIMITER)
-    val fileUri = lspServer.descriptor.getFileUri(file)
+    val fileUri = lspClient.descriptor.getFileUri(file)
     val version = docVersion(document)
     val notebookDoc = NotebookDocument().apply {
       uri = fileUri
@@ -156,39 +157,39 @@ internal class TestNotebookDocumentAdapter : LspDocumentAdapter {
         uri = "$fileUri#cell-$i"; languageId = "plaintext"; this.version = version; this.text = text
       }
     }
-    lspServer.sendNotification { it.notebookDocumentService.didOpen(DidOpenNotebookDocumentParams(notebookDoc, cellDocs)) }
+    lspClient.sendNotification { it.notebookDocumentService.didOpen(DidOpenNotebookDocumentParams(notebookDoc, cellDocs)) }
   }
 
-  override fun sendDidClose(lspServer: LspServer, file: VirtualFile, document: Document) {
+  override fun sendDidClose(lspClient: LspClient, file: VirtualFile, document: Document) {
     val cells = document.text.split(CELL_DELIMITER)
-    val fileUri = lspServer.descriptor.getFileUri(file)
+    val fileUri = lspClient.descriptor.getFileUri(file)
     val cellIds = cells.indices.map { TextDocumentIdentifier("$fileUri#cell-$it") }
-    lspServer.sendNotification {
+    lspClient.sendNotification {
       it.notebookDocumentService.didClose(DidCloseNotebookDocumentParams(NotebookDocumentIdentifier(fileUri), cellIds))
     }
   }
 
-  override fun sendDidChangeFull(lspServer: LspServer, file: VirtualFile, document: Document) =
-    sendChangeNotification(lspServer, file, document)
+  override fun sendDidChangeFull(lspClient: LspClient, file: VirtualFile, document: Document) =
+    sendChangeNotification(lspClient, file, document)
 
-  override fun sendDidChangeIncremental(lspServer: LspServer, file: VirtualFile, event: DocumentEvent) =
-    sendChangeNotification(lspServer, file, event.document)
+  override fun sendDidChangeIncremental(lspClient: LspClient, file: VirtualFile, event: DocumentEvent) =
+    sendChangeNotification(lspClient, file, event.document)
 
-  override fun sendDidSave(lspServer: LspServer, file: VirtualFile, document: Document, includeText: Boolean) {
-    val fileUri = lspServer.descriptor.getFileUri(file)
-    lspServer.sendNotification {
+  override fun sendDidSave(lspClient: LspClient, file: VirtualFile, document: Document, includeText: Boolean) {
+    val fileUri = lspClient.descriptor.getFileUri(file)
+    lspClient.sendNotification {
       it.notebookDocumentService.didSave(DidSaveNotebookDocumentParams(NotebookDocumentIdentifier(fileUri)))
     }
   }
 
-  override fun getLspDocumentByUrl(lspServer: LspServer, targetUri: String): LspDocument? {
+  override fun getLspDocumentByUrl(lspClient: LspClient, targetUri: String): LspDocument? {
     val uri = URI.create(targetUri)
     val fragment = uri.fragment ?: return null
     if (!fragment.startsWith("cell-")) return null
     val cellIndex = fragment.removePrefix("cell-").toIntOrNull() ?: return null
 
     val fileUri = targetUri.substringBefore("#")
-    val file = lspServer.descriptor.findFileByUri(fileUri) ?: return null
+    val file = lspClient.descriptor.findFileByUri(fileUri) ?: return null
 
     @Suppress("DEPRECATION")
     val hostLineOffset = ReadAction.compute<Int?, Throwable> {
@@ -206,9 +207,9 @@ internal class TestNotebookDocumentAdapter : LspDocumentAdapter {
     return TestLspDocument(fileUri, TextDocumentIdentifier(targetUri), hostLineOffset)
   }
 
-  private fun sendChangeNotification(lspServer: LspServer, file: VirtualFile, document: Document) {
+  private fun sendChangeNotification(lspClient: LspClient, file: VirtualFile, document: Document) {
     val cells = document.text.split(CELL_DELIMITER)
-    val fileUri = lspServer.descriptor.getFileUri(file)
+    val fileUri = lspClient.descriptor.getFileUri(file)
     val version = docVersion(document)
     val id = VersionedNotebookDocumentIdentifier().apply { uri = fileUri; this.version = version }
     val cellChanges = NotebookDocumentChangeEventCells().apply {
@@ -231,7 +232,7 @@ internal class TestNotebookDocumentAdapter : LspDocumentAdapter {
       data = null
     }
     val event = NotebookDocumentChangeEvent().apply { metadata = null; this.cells = cellChanges }
-    lspServer.sendNotification { it.notebookDocumentService.didChange(DidChangeNotebookDocumentParams(id, event)) }
+    lspClient.sendNotification { it.notebookDocumentService.didChange(DidChangeNotebookDocumentParams(id, event)) }
   }
 
   private fun docVersion(document: Document): Int =

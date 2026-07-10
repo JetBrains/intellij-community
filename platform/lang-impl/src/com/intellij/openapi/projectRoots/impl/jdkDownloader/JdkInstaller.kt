@@ -27,7 +27,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerEel.unpackJdkOnEel
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerWSL.unpackJdkOnWsl
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.util.registry.Registry
@@ -38,6 +37,7 @@ import com.intellij.platform.eel.EelPosixProcess
 import com.intellij.platform.eel.EelWindowsProcess
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -336,18 +336,6 @@ abstract class JdkInstallerBase {
     }
 
     val eel = eelFromPath(targetDir)?.eel
-    val wslDistribution: OsAbstractionForJdkInstaller.Wsl?
-    if (eel != null) {
-      wslDistribution = null
-    }
-    else {
-      wslDistribution = wslDistributionFromPath(targetDir)
-      if (wslDistribution != null && item.os != "linux") {
-        JdkDownloaderLogger.logFailed(JdkDownloaderLogger.DownloadFailure.WSLIssue)
-        logFailed = true
-        error("Cannot install non-linux JDK into WSL environment to $targetDir from $item")
-      }
-    }
 
     indicator?.text2 = ProjectBundle.message("progress.text2.downloading.jdk")
     // TODO Sanitize `archiveFileName` in a way that it doesn't replace `.` with `_`. `FileUtil.sanitizeFileName` can't be applied here.
@@ -393,12 +381,9 @@ abstract class JdkInstallerBase {
       indicator?.text2 = ProjectBundle.message("progress.text2.unpacking.jdk")
 
       try {
-        if (eel != null) {
+        if (eel != null && eel.descriptor !is LocalEelDescriptor) {
           val targetDirEel = targetDir.asEelPath()
           unpackJdkOnEel(eel, downloadFile, targetDirEel, item.packageRootPrefix)
-        }
-        else if (wslDistribution != null) {
-          unpackJdkOnWsl(wslDistribution, item.packageType, downloadFile, targetDir, item.packageRootPrefix)
         }
         else {
           item.packageType.openDecompressor(downloadFile)

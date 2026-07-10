@@ -8,7 +8,6 @@ import com.amazon.ion.system.IonBinaryWriterBuilder;
 import com.intellij.util.ThrowableConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Supplier;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
 
 public final class ToolingStreamApiUtils {
 

@@ -11,35 +11,30 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 fun iconWithAutoOverlay(mainIcon: Icon, overlayIcon: Icon): Icon {
-  return IconWithAutoOverlay(mainIcon, overlayIcon, (overlayIcon as? IconWithShape)?.getShape())
+  return IconWithAutoOverlay(mainIcon, overlayIcon)
 }
 
 @ApiStatus.Internal
-class IconWithAutoOverlay(mainIcon: Icon, overlayIcon: Icon, private val shape: Shape?) : IconWithOverlay(mainIcon, overlayIcon) {
-  private var cachedShapeScale = 1.0f
-  private var cachedShape: Shape? = shape
-  
+class IconWithAutoOverlay(mainIcon: Icon, overlayIcon: Icon) : IconWithOverlay(mainIcon, overlayIcon) {
+  init {
+    if (overlayIcon !is IconWithShape) {
+      throw IllegalArgumentException("The overlayIcon must be an IconWithShape, but got ${overlayIcon.javaClass}: $overlayIcon")
+    }
+  }
+
   override fun replaceBy(replacer: IconReplacer): LayeredIcon {
-    return IconWithAutoOverlay(replacer.replaceIcon(mainIcon), replacer.replaceIcon(overlayIcon), shape)
+    return IconWithAutoOverlay(replacer.replaceIcon(mainIcon), replacer.replaceIcon(overlayIcon))
   }
 
   override fun copy(): LayeredIcon {
-    return IconWithAutoOverlay(mainIcon, overlayIcon, shape)
+    return IconWithAutoOverlay(mainIcon, overlayIcon)
   }
 
   override fun deepCopy(): LayeredIcon {
-    return IconWithAutoOverlay(IconUtil.copy(mainIcon, null), IconUtil.copy(overlayIcon, null), shape)
+    return IconWithAutoOverlay(IconUtil.copy(mainIcon, null), IconUtil.copy(overlayIcon, null))
   }
 
   override fun getOverlayShape(x: Int, y: Int): Shape? {
-    if (shape == null) return null
-    val effectiveScale = JBUIScale.scale(scale)
-    if (effectiveScale == cachedShapeScale) return cachedShape
-    val transform = AffineTransform()
-    transform.scale(effectiveScale.toDouble(), effectiveScale.toDouble())
-    val result = transform.createTransformedShape(shape)
-    cachedShapeScale = effectiveScale
-    cachedShape = result
-    return result
+    return (overlayIcon as IconWithShape).getShape()
   }
 }

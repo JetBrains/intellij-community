@@ -25,7 +25,7 @@ final class InspectionSearchableOptionContributor extends SearchableOptionContri
                              InspectionToolsConfigurable.getInspectionsDisplayName(), false);
       }
 
-      final String description = toolWrapper.loadDescription();
+      String description = toolWrapper.loadDescription();
       if (description != null) {
         @NonNls String descriptionText = HTML_PATTERN.matcher(description).replaceAll(" ");
         processor.addOptions(descriptionText, toolWrapper.getShortName(), hit, InspectionToolsConfigurable.ID,

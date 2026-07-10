@@ -9,7 +9,7 @@ fun compareObjects(x: Any?, y: Any?) {
     }
     val b = x == null
     if (b) {
-        if (<warning descr="[SENSELESS_COMPARISON] Condition is always 'true'.">x == null</warning>) {}
+        if (<warning descr="[SENSELESS_COMPARISON]">x == null</warning>) {}
     }
     if (x === y) {
         if (<warning descr="Condition 'x === y' is always true">x === y</warning>) {}

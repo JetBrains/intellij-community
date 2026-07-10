@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.parser;
 
 import com.intellij.lang.ASTNode;
@@ -15,6 +15,7 @@ import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLTokenTypes;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 public class YAMLParser implements PsiParser, LightPsiParser, YAMLTokenTypes {
   public static final TokenSet HASH_STOP_TOKENS = TokenSet.create(RBRACE, COMMA);
@@ -215,7 +216,7 @@ public class YAMLParser implements PsiParser, LightPsiParser, YAMLTokenTypes {
       nodeType = parseHash();
     }
     else if (tokenType == LBRACKET) {
-      nodeType = parseArray();
+      nodeType = parseFlowCollectionKeyValue(indent, this::parseArray);
     }
     else if (tokenType == SEQUENCE_MARKER) {
       nodeType = parseSequenceItem(indent);
@@ -265,6 +266,21 @@ public class YAMLParser implements PsiParser, LightPsiParser, YAMLTokenTypes {
       marker.drop();
     }
     return nodeType;
+  }
+
+  private @NotNull IElementType parseFlowCollectionKeyValue(int indent, @NotNull Supplier<IElementType> parseCollection) {
+    PsiBuilder.Marker collectionMarker = mark();
+    IElementType collectionType = parseCollection.get();
+
+    if (getTokenType() == COLON && (myStopTokensStack.isEmpty() || !myStopTokensStack.getFirst().contains(COLON))) {
+      collectionMarker.done(collectionType);
+      eolSeen = false;
+      int indentAddition = getShorthandIndentAddition();
+      return parseSimpleScalarKeyValueFromColon(indent, indentAddition);
+    }
+
+    collectionMarker.drop();
+    return collectionType;
   }
 
   /**

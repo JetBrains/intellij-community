@@ -24,7 +24,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":compiler-plugin",
-        "@lib//:platform-compose-compiler_plugin-jetbrains-compose-compiler-hosted-provided",
+        "@lib//:kotlinc-compose-compiler-plugin-provided",
     ],
 )
 ### auto-generated section `build intellij.platform.compose.compilerPlugin` end

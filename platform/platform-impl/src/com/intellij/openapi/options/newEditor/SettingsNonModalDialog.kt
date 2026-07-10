@@ -7,12 +7,14 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.newui.EventHandler
+import com.intellij.internal.statistic.eventLog.getUiEventLogger
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.help.HelpManager
@@ -24,15 +26,17 @@ import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.VetoableProjectManagerListener
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ExitActionType
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.NonModalWindowWrapper
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.util.ui.DialogUtil
 import com.intellij.util.ui.GridBag
@@ -44,6 +48,7 @@ import java.awt.AWTEvent
 import java.awt.BorderLayout
 import java.awt.EventQueue
 import java.awt.GridBagLayout
+import java.awt.Window
 import java.awt.event.ActionEvent
 import java.awt.event.WindowEvent
 import javax.swing.AbstractAction
@@ -139,10 +144,27 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
       }
       return create(project, groups, configurable, filter).also { ourInstance = it }
     }
+
+    /**
+     * Returns `true` if [window] is the Settings window itself or is owned (directly or
+     * transitively) by the Settings window. Used by [SettingsPasteAction] to enable the
+     * `Settings.Paste` action in sub-dialogs opened from within Settings.
+     */
+    @JvmStatic
+    fun isSettingsWindow(window: Window?): Boolean {
+      val settingsWindow = ourInstance?.takeIf { !it.isDisposed }?.activeWindow ?: return false
+      var w = window
+      while (w != null) {
+        if (w === settingsWindow) return true
+        w = w.owner
+      }
+      return false
+    }
   }
 
   private val editor: SettingsEditor
   private val mainPanel: JPanel
+  private var exitActionType: ExitActionType = ExitActionType.UNDEFINED
 
   // ── Initialization ────────────────────────────────────────────────────────────
 
@@ -178,6 +200,10 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
   override fun getPreferredFocusComponent(): JComponent? =
     editor.getPreferredFocusedComponent() ?: mainPanel
 
+  override fun onShown() {
+    getUiEventLogger().logShowDialog(SettingsNonModalDialog::class.java)
+  }
+
   override fun onWindowDeactivated(): Unit = editor.recordWindowLeaveState()
 
   override fun onWindowActivated(): Unit = editor.resetUnmodifiedOnWindowFocus()
@@ -208,17 +234,34 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
   }
 
   override fun dispose() {
-    if (ourInstance === this) ourInstance = null
+    if (ourInstance === this) {
+      ourInstance = null
+      val exitCode = if (exitActionType == ExitActionType.OK) DialogWrapper.OK_EXIT_CODE else DialogWrapper.CANCEL_EXIT_CODE
+      getUiEventLogger().logCloseDialog(SettingsNonModalDialog::class.java, exitCode, exitActionType)
+    }
     super.dispose()
   }
 
   // ── Lifecycle hooks for subclasses ────────────────────────────────────────────
 
+  /**
+   * Acquires the write-intent read lock and calls [AbstractEditor.apply].
+   *
+   * Non-modal windows are not wrapped by [com.intellij.openapi.application.TransactionGuardImpl]
+   * the way modal dialogs are, so the write-intent lock is not held automatically on the EDT.
+   * Configurables that need a write action would otherwise throw a threading violation.
+   */
+  private fun applyWithWriteIntent(): Boolean = WriteIntentReadAction.compute { editor.apply() }
+
   /** Called after settings are successfully applied and before the window closes. Override to react to apply. */
-  protected open fun afterApply() {}
+  protected open fun afterApply() {
+    exitActionType = ExitActionType.OK
+  }
 
   /** Called when settings are canceled (Cancel button, ESC, or the X button). Override to react to cancel. */
-  protected open fun afterCancel() {}
+  protected open fun afterCancel() {
+    exitActionType = ExitActionType.CANCEL
+  }
 
   // ── Lifecycle subscriptions ───────────────────────────────────────────────────
 
@@ -249,9 +292,10 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
     // lives inside promptUnsavedChangesOrCancel, so both restart and exit are covered.
     ApplicationManagerEx.getApplicationEx().addApplicationListener(object : ApplicationListener {
       override fun canExitApplication(): Boolean {
-        return promptUnsavedChangesOrCancel(ApplicationBundle.message("settings.close.application.unsaved.message"))
+        return promptUnsavedChangesOrCancel(ApplicationBundle.message("settings.close.application.unsaved.message", project.name))
       }
     }, frameDisposable)
+
   }
 
   // ── Unsaved-changes resolution ────────────────────────────────────────────────
@@ -289,17 +333,17 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
       return UnsavedChangesResult.NOT_MODIFIED
     }
 
-    return when (Messages.showYesNoCancelDialog(
-      activeWindow,
-      message,
+    return when (MessageDialogBuilder.yesNoCancel(
       ApplicationBundle.message("settings.switch.project.unsaved.title"),
-      ApplicationBundle.message("settings.switch.project.button.apply"),
-      ApplicationBundle.message("settings.switch.project.button.dont.save"),
-      CommonBundle.getCancelButtonText(),
-      Messages.getWarningIcon(),
-    )) {
+      message,
+    ).yesText(ApplicationBundle.message("settings.switch.project.button.apply"))
+      .noText(ApplicationBundle.message("settings.switch.project.button.dont.save"))
+      .cancelText(CommonBundle.getCancelButtonText())
+      .asWarning()
+      .invocationPlace("Non-modal settings unsaved changes")
+      .show(parentComponent = activeWindow)) {
       Messages.YES -> {
-        if (!editor.apply()) return UnsavedChangesResult.APPLY_FAILED
+        if (!applyWithWriteIntent()) return UnsavedChangesResult.APPLY_FAILED
         SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(null, true))
         UnsavedChangesResult.APPLIED
       }
@@ -390,7 +434,7 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
     val okAction = object : AbstractAction(CommonBundle.getOkButtonText()) {
       override fun actionPerformed(e: ActionEvent) {
         UIUtil.stopFocusedEditing(activeWindow)
-        if (editor.apply()) {
+        if (applyWithWriteIntent()) {
           SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(null, true))
           afterApply()
           close()
@@ -428,7 +472,7 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
           }
         }
         override fun actionPerformed(e: ActionEvent) {
-          rawApplyAction.actionPerformed(e)
+          WriteIntentReadAction.run { rawApplyAction.actionPerformed(e) }
           SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(null, true))
         }
       }

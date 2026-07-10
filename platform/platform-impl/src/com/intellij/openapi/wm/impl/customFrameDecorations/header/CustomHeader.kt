@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.CommonBundle
@@ -13,12 +13,12 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.isCompactHeader
 import com.intellij.openapi.wm.impl.headertoolbar.HeaderClickTransparentListener
+import com.intellij.ui.AppUIUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.UIBundle
-import com.intellij.ui.loadSmallApplicationIcon
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
@@ -147,7 +147,7 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
   }
 
   private val iconProvider = ScaleContextCache {
-    loadSmallApplicationIcon(scaleContext = it)
+    AppUIUtil.loadSmallApplicationIcon(scaleContext = it, size = 16)
   }
 
   @JvmField

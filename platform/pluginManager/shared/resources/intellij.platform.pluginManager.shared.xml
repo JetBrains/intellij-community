@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.platform.pluginManager.shared">
+<idea-plugin package="com.intellij.platform.pluginManager.shared" visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="fleet.rhizomedb"/>

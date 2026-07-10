@@ -8,6 +8,7 @@ import com.intellij.util.Function;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyPsiFacade;
 import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -106,7 +107,7 @@ final class PyCustomMemberProviderImpl extends PyCustomMemberProvider {
         }
         return type;
       }
-      return null;
+      return PyAnyType.getUnknown();
     }
   }
 

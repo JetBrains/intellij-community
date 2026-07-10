@@ -37,7 +37,7 @@ public interface JavaExpressionTypeNullabilityPatcher {
    * @return the patched type, or the originally computed type if no patcher wants to patch this expression
    */
   static @NotNull PsiType patchTypeNullability(@NotNull PsiExpression expression, @NotNull PsiType type) {
-    for (JavaExpressionTypeNullabilityPatcher patcher : EP_NAME.getExtensionList()) {
+    for (JavaExpressionTypeNullabilityPatcher patcher : EP_NAME.getExtensionsIfPointIsRegistered()) {
       PsiType patchedType = patcher.tryPatchType(expression, type);
       if (patchedType != null) {
         return patchedType;

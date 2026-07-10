@@ -6,10 +6,13 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.awt.RelativePoint
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyRequirement
+import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.findPackageSpecification
 import com.jetbrains.python.packaging.pyRequirement
+import com.jetbrains.python.packaging.pyRequirementVersionSpec
+import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
@@ -18,12 +21,12 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * @return List of all installed packages or null if the operation was failed.
  */
-@ApiStatus.Internal
-suspend fun PythonPackageManagerUI.updatePackagesByNamesBackground(
-  packages: List<String>,
+internal suspend fun PythonPackageManagerUI.updatePackagesBackground(
+  packages: List<PythonOutdatedPackage>,
 ): List<PythonPackage>? {
   val specifications = packages.mapNotNull {
-    manager.findPackageSpecification(it)
+    val versionSpec = pyRequirementVersionSpec(PyRequirementRelation.EQ, it.latestVersion)
+    manager.findPackageSpecification(it.name, versionSpec)
   }
   return updatePackagesBackground(specifications)
 }

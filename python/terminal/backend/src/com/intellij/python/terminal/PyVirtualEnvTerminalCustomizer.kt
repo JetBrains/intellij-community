@@ -3,7 +3,6 @@ package com.intellij.python.terminal
 
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -26,7 +25,7 @@ import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.Activatable
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonEnvironment
-import com.jetbrains.python.sdk.pyRichSdk
+import com.jetbrains.python.sdk.pythonInterpreter
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.terminal.Shell
 import org.jetbrains.annotations.ApiStatus
@@ -143,11 +142,6 @@ class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
     }
   }
 
-  override fun getDefaultStartWorkingDirectory(project: Project): Path? {
-    val file = FileEditorManager.getInstance(project).selectedFiles.firstOrNull() ?: return null
-    return pyTerminalDefaultWorkingDirectory(project, file)
-  }
-
   @Deprecated(
     "Use `customizeEnvironment` instead",
     ReplaceWith("customizeEnvironment(project, workingDirectory, command, envs, terminalEelDescriptor)")
@@ -211,7 +205,7 @@ class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
       return
     }
 
-    val pythonEnvironment = sdk.pyRichSdk().environmentResult?.orLogException(logger) ?: run {
+    val pythonEnvironment = sdk.pythonInterpreter().environmentResult?.orLogException(logger) ?: run {
       logger.warn("Cannot detect Python environment for SDK ${sdk.homePath}, skipping activation")
       return
     }

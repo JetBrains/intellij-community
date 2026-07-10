@@ -1,0 +1,1 @@
+Text: ([string: String], context(<highlight>text: String</highlight>, _: Int)), Disabled: false, Strikeout: false, Green: true

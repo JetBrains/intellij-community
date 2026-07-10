@@ -24,7 +24,7 @@ import com.intellij.vcs.log.visible.FilterKind
 import kotlin.time.Duration
 
 internal object VcsLogPerformanceStatisticsCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("vcs.log.performance", 7)
+  private val GROUP = EventLogGroup("vcs.log.performance", 8)
 
   val FILE_HISTORY_COMPUTING = GROUP.registerEvent("file.history.computed",
                                                    VcsLogRepoSizeCollector.VCS_FIELD,

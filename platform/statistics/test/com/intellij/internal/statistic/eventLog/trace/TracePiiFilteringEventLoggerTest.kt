@@ -173,11 +173,34 @@ class TracePiiFilteringEventLoggerTest {
 
     assertEquals(input, filtered)
   }
+
+  @Test
+  fun `filters fields validated by the code rule too`() {
+    val group = EventLogGroup("trace.event.log", 1, "TRACE")
+    group.registerVarargEvent("metadata.load.failed", LlmCodeParametersField("request"))
+    val provider = RecorderOptionProvider(
+      mapOf(TracePiiRegexRedactor.TRACE_PII_REGEXES_JSON_OPTION to """["AKIA[0-9A-Z]{16}"]""")
+    )
+    val filter = TraceLlmPiiDataFilter.createFilter(provider)
+
+    val input = mapOf<String, Any>(
+      "request" to "token AKIA1234567890ABCDEF",
+    )
+
+    val filtered = filter(group, "metadata.load.failed", input)
+
+    assertEquals("token [REDACTED]", filtered["request"])
+  }
 }
 
 private class LlmParametersField(override val name: String) : StringEventField(name) {
   override val validationRule: List<String>
-    get() = listOf("{util#llm_parameters}")
+    get() = listOf("{util#llm_text_parameters}")
+}
+
+private class LlmCodeParametersField(override val name: String) : StringEventField(name) {
+  override val validationRule: List<String>
+    get() = listOf("{util#llm_code_parameters}")
 }
 
 private class CapturingLogger : StatisticsEventLogger {

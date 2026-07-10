@@ -2,40 +2,30 @@
 package com.intellij.ide.todo.rpc
 
 import com.intellij.ide.todo.TodoFilter
+import com.intellij.ide.todo.model.TodoScope
 import com.intellij.ide.vfs.rpcId
-import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.projectId
 import fleet.rpc.client.durable
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.toList
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-fun findAllTodos(
+suspend fun collectWatchedTodoFiles(
   project: Project,
-  file: VirtualFile,
-  filter: TodoFilter?
-): List<TodoResult> = runBlockingCancellable {
+  scope: TodoScope,
+  filter: TodoFilter?,
+  collector: suspend (TodoEvent) -> Unit,
+) {
   durable {
     val projectId: ProjectId = project.projectId()
-    val settings = TodoQuerySettings(file.rpcId(), filter?.let { toConfig(it) })
-    TodoRemoteApi.getInstance().listTodos(projectId, settings).toList()
+    val request = TodoFilesWatchRequest(filter?.toConfig(), scope)
+    TodoRemoteApi.getInstance().watchTodoFiles(projectId, request).collect { event ->
+     collector(event)
+    }
   }
-}
-
-@ApiStatus.Internal
-suspend fun getFilesWithTodos(
-  project: Project,
-  filter: TodoFilter?
-): Flow<VirtualFile> = durable {
-  val projectId: ProjectId = project.projectId()
-  TodoRemoteApi.getInstance().getFilesWithTodos(projectId, filter?.let { toConfig(it) })
-    .mapNotNull { it.virtualFile() }
 }
 
 @ApiStatus.Internal
@@ -46,7 +36,7 @@ fun getTodoCount(
 ): Int = runBlockingCancellable {
   durable {
     val projectId: ProjectId = project.projectId()
-    TodoRemoteApi.getInstance().getTodoCount(projectId, file.rpcId(), filter?.let { toConfig(it) })
+    TodoRemoteApi.getInstance().getTodoCount(projectId, file.rpcId(), filter?.toConfig())
   }
 }
 
@@ -58,12 +48,13 @@ fun fileMatchesFilter(
 ): Boolean = runBlockingCancellable {
   durable {
     val projectId = project.projectId()
-    TodoRemoteApi.getInstance().fileMatchesFilter(projectId, file.rpcId(), filter?.let { toConfig(it) })
+    TodoRemoteApi.getInstance().fileMatchesFilter(projectId, file.rpcId(), filter?.toConfig())
   }
 }
 
 @ApiStatus.Internal
-internal fun toConfig(filter: TodoFilter): TodoFilterConfig {
+private fun TodoFilter.toConfig(): TodoFilterConfig {
+  val filter = this
   val patterns = mutableListOf<TodoPatternConfig>()
   val it = filter.iterator()
   while (it.hasNext()) {

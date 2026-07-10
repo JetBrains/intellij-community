@@ -449,37 +449,20 @@ The dependency generator expects `<idea-plugin>` as the root element. Descriptor
 
 ## Investigation Tools
 
-Use Plugin Model Analyzer MCP to debug dependency issues:
+Use the Plugin Model Analyzer skill to debug dependency issues. It calls the Product DSL analyzer directly through Bazel:
 
-```kotlin
-// Find dependency path between modules
-mcp__PluginModelAnalyzer__find_dependency_path(
-  fromModule = "intellij.platform.vcs.impl",
-  toModule = "intellij.c.core"
-)
-
-// Check which module sets contain a dependency
-mcp__PluginModelAnalyzer__suggest_module_set_for_modules(
-  moduleNames = ["intellij.c.core"]
-)
-
-// Check module reachability within a module set
-mcp__PluginModelAnalyzer__check_module_reachability(
-  moduleName = "intellij.platform.kernel",
-  moduleSetName = "core.platform"
-)
-
-// Get module info including products/sets
-mcp__PluginModelAnalyzer__get_module_info(
-  moduleName = "intellij.fullLine.cpp"
-)
+```bash
+bazel run --ui_event_filters=-info --noshow_progress //platform/buildScripts:plugin-model-tool -- --json='{"filter":"dependencyPath","fromModule":"intellij.platform.vcs.impl","toModule":"intellij.c.core","includeScopes":true}'
+bazel run --ui_event_filters=-info --noshow_progress //platform/buildScripts:plugin-model-tool -- --json='{"filter":"suggestModuleSetsForModules","modules":["intellij.c.core"]}'
+bazel run --ui_event_filters=-info --noshow_progress //platform/buildScripts:plugin-model-tool -- --json='{"filter":"moduleReachability","module":"intellij.platform.kernel","moduleSet":"core.platform"}'
+bazel run --ui_event_filters=-info --noshow_progress //platform/buildScripts:plugin-model-tool -- --json='{"filter":"moduleInfo","module":"intellij.fullLine.cpp"}'
 ```
 
 ---
 
 ## Investigation Strategy
 
-1. **Identify dependency chain**: Use `find_dependency_path` to understand why dep is needed
+1. **Identify dependency chain**: Use the `dependencyPath` JSON filter to understand why dep is needed
 2. **Check if cross-plugin**: Is missing module in non-bundled plugin? Check source module's loading
 3. **Find right fix level**:
    - Missing module set → add nested set

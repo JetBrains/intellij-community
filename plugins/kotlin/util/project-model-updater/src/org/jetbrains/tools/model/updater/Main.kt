@@ -12,8 +12,10 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
     val jpsPluginArtifactsMode: ArtifactMode by MandatoryPreference(ArtifactMode::valueOf)
 
     val kotlincVersion: String by MandatoryPreference
-    val kotlinGradlePluginVersion: String by MandatoryPreference
     val kotlincArtifactsMode: ArtifactMode by MandatoryPreference(ArtifactMode::valueOf)
+
+    val kotlinGradlePluginVersion: String? by OptionalPreference
+    val kotlinNativeVersion: String? by OptionalPreference
 
     /**
      * YouTrack ticket for performing kt-master/master merge
@@ -85,7 +87,14 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
     }
 
     enum class ArtifactMode {
-        MAVEN, BOOTSTRAP
+        /** Main Maven repository with Kotlin artifacts for IntelliJ IDEA. */
+        MAVEN,
+
+        /** Experimental Maven repository with artifacts from Kotlin 'master'. */
+        MAVEN_EXPERIMENTAL,
+
+        /** 'lib/kotlin-snapshot' in Community for 'kt-master' cooperative development mode. */
+        BOOTSTRAP
     }
 
     companion object {

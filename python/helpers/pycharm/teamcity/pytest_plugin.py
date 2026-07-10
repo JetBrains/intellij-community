@@ -21,12 +21,24 @@ import pytest
 
 from teamcity import diff_tools
 from teamcity import is_running_under_teamcity
-from teamcity.common import convert_error_to_string, dump_test_stderr, dump_test_stdout
+from teamcity.common import convert_error_to_string, dump_test_log, dump_test_stderr, dump_test_stdout
 from teamcity.messages import TeamcityServiceMessages
 from teamcity.output import TeamCityMessagesPrinter
 
 diff_tools.patch_unittest_diff()
 _ASSERTION_FAILURE_KEY = '_teamcity_assertion_failure'
+_skip_passed_output_default = None
+_report_logs_as_test_log = False
+
+
+def set_skip_passed_output_default(value):
+    global _skip_passed_output_default
+    _skip_passed_output_default = value
+
+
+def set_report_logs_as_test_log(value):
+    global _report_logs_as_test_log
+    _report_logs_as_test_log = value
 
 
 def pytest_addoption(parser):
@@ -38,11 +50,11 @@ def pytest_addoption(parser):
                      dest="no_teamcity", default=0, help="disable output of JetBrains TeamCity service messages")
     parser.addoption('--jb-swapdiff', action="store_true", dest="swapdiff", default=False, help="Swap actual/expected in diff")
 
-    kwargs = {"help": "skip output of passed tests for JetBrains TeamCity service messages"}
-    kwargs.update({"type": "bool"})
-
-    parser.addini("skippassedoutput", **kwargs)
-    parser.addini("swapdiff", **kwargs)
+    skip_passed_output = {"type": "bool"}
+    if _skip_passed_output_default is not None:
+        skip_passed_output["default"] = _skip_passed_output_default
+    parser.addini("skippassedoutput", help="skip output of passed tests for JetBrains TeamCity service messages", **skip_passed_output)
+    parser.addini("swapdiff", help="Swap actual/expected in diff", type="bool")
 
 
 def get_rootdir(config):
@@ -74,6 +86,7 @@ def pytest_configure(config):
             skip_passed_output,
             bool(config.getini('swapdiff') or config.option.swapdiff),
             get_rootdir(config),
+            _report_logs_as_test_log,
         )
         config.pluginmanager.register(config._teamcityReporting)
 
@@ -94,10 +107,12 @@ def _get_coverage_controller(config):
 
 
 class EchoTeamCityMessages(object):
-    def __init__(self, output_capture_enabled, context_manager, coverage_controller, skip_passed_output, swap_diff, rootdir):
+    def __init__(self, output_capture_enabled, context_manager, coverage_controller, skip_passed_output, swap_diff, rootdir,
+                 report_logs_as_test_log):
         self.coverage_controller = coverage_controller
         self.output_capture_enabled = output_capture_enabled
         self.skip_passed_output = skip_passed_output
+        self.report_logs_as_test_log = report_logs_as_test_log
 
         output_handler = TeamCityMessagesPrinter(context_manager=context_manager)
         self.teamcity = TeamcityServiceMessages(output_handler=output_handler)
@@ -195,6 +210,7 @@ class EchoTeamCityMessages(object):
     def pytest_collection_finish(self, session):
         self.teamcity.testCount(len(session.items))
 
+    @pytest.hookimpl(tryfirst=True)
     def pytest_runtest_logstart(self, nodeid, location):
         # test name fetched from location passed as metainfo to PyCharm
         # it will be used to run specific test
@@ -222,9 +238,12 @@ class EchoTeamCityMessages(object):
 
     def report_has_output(self, report):
         for (secname, data) in report.sections:
-            if report.when in secname and ('stdout' in secname or 'stderr' in secname):
+            if report.when in secname and ('stdout' in secname or 'stderr' in secname or ('log' in secname and self.report_logs_as_test_log)):
                 return True
         return False
+
+    def report_output_separator(self):
+        self.teamcity.output_handler.send_message(self.teamcity.encode("\n"))
 
     def report_test_output(self, report, test_id):
         for (secname, data) in report.sections:
@@ -237,9 +256,20 @@ class EchoTeamCityMessages(object):
                 continue
 
             if 'stdout' in secname:
+                self.report_output_separator()
                 dump_test_stdout(self.teamcity, test_id, test_id, data)
             elif 'stderr' in secname:
+                self.report_output_separator()
                 dump_test_stderr(self.teamcity, test_id, test_id, data)
+            elif 'log' in secname:
+                self.report_test_log(test_id, data)
+
+    def report_test_log(self, test_id, data):
+        if not self.report_logs_as_test_log:
+            return
+
+        self.report_output_separator()
+        dump_test_log(self.teamcity, test_id, test_id, data)
 
     def report_test_finished(self, test_id, duration=None):
         self.teamcity.testFinished(test_id, testDuration=duration, flowId=test_id)
@@ -323,6 +353,7 @@ class EchoTeamCityMessages(object):
     def pytest_assertrepr_compare(self, config, op, left, right):
         setattr(self.current_test_item, _ASSERTION_FAILURE_KEY, (op, left, right))
 
+    @pytest.hookimpl(trylast=True)
     def pytest_runtest_logreport(self, report):
         """
         :type report: _pytest.runner.TestReport

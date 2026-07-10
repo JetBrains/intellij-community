@@ -48,5 +48,6 @@
     <!--  implementation="org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettingsRemoteInfoProvider"/>-->
     <applicationSettings service="org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings"/>
     <applicationSettings service="org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettings"/>
+    <requiredForSmartModeStartupActivity implementation="org.jetbrains.plugins.textmate.TextMateRequiredForSmartModeActivity"/>
   </extensions>
 </idea-plugin>

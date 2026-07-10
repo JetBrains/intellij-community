@@ -1,0 +1,44 @@
+<html>
+<body>
+Reports <code>with</code> function calls whose receiver is used only as a context argument inside the lambda.
+<p>
+    When the receiver passed to <code>with</code> is never accessed as an implicit receiver
+    (for example, via member calls or <code>this</code>) but only propagated as a context argument
+    to functions declaring context parameters, the <code>with</code> call can be replaced with a
+    <code>context</code> call. This makes the intent explicit and better reflects how the value is
+    actually consumed.
+</p>
+<p>
+    The quick-fix replaces the <code>with</code> callee with <code>context</code>.
+</p>
+<p>
+    Example:
+</p>
+<pre><code>
+interface UserService {
+    fun log(message: String)
+}
+
+context(service: UserService)
+fun logStart() {
+    service.log("start")
+}
+
+fun run(service: UserService) {
+    with(service) {
+        logStart()
+    }
+}
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+fun run(service: UserService) {
+    context(service) {
+        logStart()
+    }
+}
+</code></pre>
+<!-- tooltip end -->
+<p>This inspection requires the <code>ContextParameters</code> language feature to be enabled.</p>
+</body>
+</html>

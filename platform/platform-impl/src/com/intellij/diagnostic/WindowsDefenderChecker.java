@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -51,11 +51,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * Sources:
- * <a href="https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/configure-extension-file-exclusions-microsoft-defender-antivirus">Defender Settings</a>,
- * <a href="https://learn.microsoft.com/en-us/powershell/module/defender/">Defender PowerShell Module</a>.
- */
+/// Sources:
+/// [Defender Settings](https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/configure-extension-file-exclusions-microsoft-defender-antivirus),
+/// [Defender PowerShell Module](https://learn.microsoft.com/en-us/powershell/module/defender/).
 @SuppressWarnings("MethodMayBeStatic")
 public class WindowsDefenderChecker {
   private static final Logger LOG = Logger.getInstance(WindowsDefenderChecker.class);
@@ -65,9 +63,7 @@ public class WindowsDefenderChecker {
   private static final int WMIC_COMMAND_TIMEOUT_MS = 10_000, POWERSHELL_COMMAND_TIMEOUT_MS = 60_000;
   private static final ExtensionPointName<Extension> EP_NAME = ExtensionPointName.create("com.intellij.defender.config");
 
-  /**
-   * Use the extension to propose technology-specific paths (e.g., {@code $GRADLE_USER_HOME}) to be added to the Defender's exclusion list.
-   */
+  /// Use the extension to propose technology-specific paths (e.g., `$GRADLE_USER_HOME`) to be added to the Defender's exclusion list.
   public interface Extension {
     @NotNull Collection<Path> getPaths(@Nullable Project project, @Nullable Path projectPath);
   }
@@ -81,10 +77,11 @@ public class WindowsDefenderChecker {
   private final Map<Path, @Nullable ProjectStatus> myProjectPaths = Collections.synchronizedMap(new HashMap<>());
 
   public final boolean isStatusCheckIgnored(@Nullable Project project) {
-    return
+    return (
       !Registry.is("ide.check.windows.defender.rules") ||
       PropertiesComponent.getInstance().isTrueValue(IGNORE_STATUS_CHECK) ||
-      (project != null && PropertiesComponent.getInstance(project).isTrueValue(IGNORE_STATUS_CHECK));
+      (project != null && PropertiesComponent.getInstance(project).isTrueValue(IGNORE_STATUS_CHECK))
+    );
   }
 
   public final void ignoreStatusCheck(@Nullable Project project, boolean ignore) {
@@ -126,11 +123,9 @@ public class WindowsDefenderChecker {
     return projectDir != null && projectDir.isInLocalFileSystem() ? projectDir.toNioPath() : null;
   }
 
-  /**
-   * {@link Boolean#TRUE} means Defender is present, active, and real-time protection check is enabled.
-   * {@link Boolean#FALSE} means something from the above list is not true.
-   * {@code null} means the IDE cannot detect the status.
-   */
+  /// [Boolean#TRUE] means Defender is present, active, and the real-time protection check is enabled.
+  /// [Boolean#FALSE] means something from the above list is not true.
+  /// `null` means the IDE cannot detect the status.
   public final @Nullable Boolean isRealTimeProtectionEnabled() {
     if (!JnaLoader.isLoaded()) {
       LOG.debug("isRealTimeProtectionEnabled: JNA is not loaded");
@@ -182,10 +177,24 @@ public class WindowsDefenderChecker {
   private enum AntivirusProduct {DisplayName, ProductState}
   private enum MpComputerStatus {RealTimeProtectionEnabled}
 
+  /// Returns `true` if the given path should not be put on the Defender's exclusion list
+  /// (either because it may host suspicious files or is too broad).
   public final boolean isUntrustworthyLocation(@NotNull Path path) {
-    var tempVar = System.getenv("TEMP");
-    if (tempVar != null && path.startsWith(Path.of(tempVar))) {
+    if (path.getParent() == null) {
       return true;
+    }
+
+    var homeDir = Path.of(System.getProperty("user.home"));
+    if (homeDir.startsWith(path)) {
+      return true;
+    }
+
+    var tempVar = System.getenv("TEMP");
+    if (tempVar != null) {
+      var tempDir = Path.of(tempVar);
+      if (path.startsWith(tempDir) || tempDir.startsWith(path)) {
+        return true;
+      }
     }
 
     var downloadDir = (Path)null;
@@ -198,7 +207,7 @@ public class WindowsDefenderChecker {
       }
     }
     if (downloadDir == null) {
-      downloadDir = Path.of(System.getProperty("user.home"), "Downloads");
+      downloadDir = homeDir.resolve("Downloads");
     }
     if (path.startsWith(downloadDir)) {
       return true;
@@ -254,7 +263,7 @@ public class WindowsDefenderChecker {
     }
   }
 
-  @SuppressWarnings("SpellCheckingInspection") private static final int FSCTL_QUERY_PERSISTENT_VOLUME_STATE = 0x9023C;
+  private static final int FSCTL_QUERY_PERSISTENT_VOLUME_STATE = 0x9023C;
   private static final int PERSISTENT_VOLUME_STATE_DEV_VOLUME = 0x00002000;
   private static final int PERSISTENT_VOLUME_STATE_TRUSTED_VOLUME = 0x00004000;
 
@@ -323,7 +332,7 @@ public class WindowsDefenderChecker {
     try {
       var script = PathManager.findBinFile(HELPER_SCRIPT_NAME);
       if (script == null) {
-        LOG.info("'" + HELPER_SCRIPT_NAME + "' is missing from '" + PathManager.getBinDir() + "'");
+        LOG.info("'%s' is missing from '%s'".formatted(HELPER_SCRIPT_NAME, PathManager.getBinDir()));
         return false;
       }
 

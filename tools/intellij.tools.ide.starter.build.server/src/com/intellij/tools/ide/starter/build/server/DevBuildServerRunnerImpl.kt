@@ -69,10 +69,11 @@ object DevBuildServerRunnerImpl : DevBuildServerRunner {
         computeWithSpan("building ide $ideInfo") {
           System.setProperty("intellij.build.console.exporter.enabled", false.toString())
           System.setProperty("intellij.build.export.opentelemetry.spans", true.toString())
+          val targetOs = if (ConfigurationStorage.useDockerContainer()) OsFamily.LINUX else OsFamily.currentOs
           buildProductInProcess(
             BuildRequest(
               projectDir = ideaRootPath,
-              os = if (ConfigurationStorage.useDockerContainer()) OsFamily.LINUX else OsFamily.currentOs,
+              os = targetOs,
               platformPrefix = ideInfo.platformPrefix,
               baseIdePlatformPrefixForFrontend = ideInfo.baseIdePlatformPrefixForFrontend,
               additionalModules = ideInfo.additionalModules,
@@ -82,6 +83,7 @@ object DevBuildServerRunnerImpl : DevBuildServerRunner {
               tracer = TestTelemetryService.instance.getTracer(),
               isBootClassPathCorrect = true,
               classesOutputDirectory = GlobalPaths.instance.compiledRootDirectory.resolve("classes"),
+              devRunDirPrefix = if (targetOs != OsFamily.currentOs) "${targetOs.name.lowercase()}-" else "",
             )
           )
         }

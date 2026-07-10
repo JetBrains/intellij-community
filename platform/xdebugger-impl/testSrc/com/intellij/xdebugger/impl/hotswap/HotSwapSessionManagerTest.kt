@@ -43,7 +43,7 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     val disposable2 = Disposer.newDisposable(testRootDisposable)
     manager.createSession(MockHotSwapProvider(), disposable1)
     val channel = addStatusListener(disposable2)
-    assertEquals(HotSwapVisibleStatus.NO_CHANGES, channel.receive())
+    assertEquals(HotSwapVisibleStatus.NoChanges, channel.receive())
     Disposer.dispose(disposable1)
     assertCompletedAndDispose(channel, disposable2)
   }
@@ -56,11 +56,11 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     assertNull(channel.receive())
     val provider = MockHotSwapProvider()
     val hotSwapSession = manager.createSession(provider, disposable1)
-    assertEquals(HotSwapVisibleStatus.NO_CHANGES, channel.receive())
+    assertEquals(HotSwapVisibleStatus.NoChanges, channel.receive())
     assertEmpty(hotSwapSession.getChanges())
 
     provider.collector.addFile(MockVirtualFile("a.txt"))
-    assertEquals(HotSwapVisibleStatus.CHANGES_READY, channel.receive())
+    assertEquals(HotSwapVisibleStatus.ChangesReady, channel.receive())
     assertEquals(1, hotSwapSession.getChanges().size)
 
     provider.collector.addFile(MockVirtualFile("b.txt"))
@@ -68,6 +68,43 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     assertEquals(2, hotSwapSession.getChanges().size)
     Disposer.dispose(disposable1)
     assertCompletedAndDispose(channel, disposable2)
+  }
+
+  fun testOnIncompatibleChanges() = runBlocking {
+    val reason = "Method was added"
+    val manager = HotSwapSessionManager.getInstance(project)
+    val disposable1 = Disposer.newDisposable(testRootDisposable)
+    val disposable2 = Disposer.newDisposable(testRootDisposable)
+    val channel = addStatusListener(disposable2)
+    assertNull(channel.receive())
+    val provider = MockHotSwapProvider()
+    val hotSwapSession = manager.createSession(provider, disposable1)
+    assertEquals(HotSwapVisibleStatus.NoChanges, channel.receive())
+    assertEmpty(hotSwapSession.getChanges())
+
+    provider.collector.addIncompatibleFile(MockVirtualFile("a.txt"), reason)
+
+    assertEquals(HotSwapVisibleStatus.ChangesNotHotSwappable(reason), channel.receive())
+    assertEquals(1, hotSwapSession.getChanges().size)
+
+    provider.collector.cancelChanges()
+    assertEquals(HotSwapVisibleStatus.NoChanges, channel.receive())
+    assertEmpty(hotSwapSession.getChanges())
+    Disposer.dispose(disposable1)
+    assertNull(channel.receive())
+    Disposer.dispose(disposable2)
+  }
+
+  fun testRestart() {
+    val manager = HotSwapSessionManager.getInstance(project)
+    val disposable = Disposer.newDisposable(testRootDisposable)
+    val provider = MockHotSwapProvider()
+    val hotSwapSession = manager.createSession(provider, disposable) as HotSwapSessionImpl<*>
+
+    hotSwapSession.restart()
+
+    assertEquals(1, provider.restartCount)
+    Disposer.dispose(disposable)
   }
 
   fun testHotSwap() = runBlocking {
@@ -78,35 +115,35 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     assertNull(channel.receive())
     val provider = MockHotSwapProvider()
     val hotSwapSession = manager.createSession(provider, disposable1)
-    assertEquals(HotSwapVisibleStatus.NO_CHANGES, channel.receive())
+    assertEquals(HotSwapVisibleStatus.NoChanges, channel.receive())
 
     run {
       provider.collector.addFile(MockVirtualFile("a.txt"))
-      assertEquals(HotSwapVisibleStatus.CHANGES_READY, channel.receive())
+      assertEquals(HotSwapVisibleStatus.ChangesReady, channel.receive())
       val listener = provider.doHotSwap(hotSwapSession)
-      assertEquals(HotSwapVisibleStatus.IN_PROGRESS, channel.receive())
+      assertEquals(HotSwapVisibleStatus.InProgress, channel.receive())
       listener.onFinish()
-      assertEquals(HotSwapVisibleStatus.NO_CHANGES, channel.receive())
+      assertEquals(HotSwapVisibleStatus.NoChanges, channel.receive())
       assertEmpty(hotSwapSession.getChanges())
     }
 
     run {
       provider.collector.addFile(MockVirtualFile("a.txt"))
-      assertEquals(HotSwapVisibleStatus.CHANGES_READY, channel.receive())
+      assertEquals(HotSwapVisibleStatus.ChangesReady, channel.receive())
       val listener = provider.doHotSwap(hotSwapSession)
-      assertEquals(HotSwapVisibleStatus.IN_PROGRESS, channel.receive())
+      assertEquals(HotSwapVisibleStatus.InProgress, channel.receive())
       listener.onSuccessfulReload()
-      assertEquals(HotSwapVisibleStatus.SUCCESS, channel.receive())
+      assertEquals(HotSwapVisibleStatus.Success, channel.receive())
       assertEmpty(hotSwapSession.getChanges())
     }
 
     run {
       provider.collector.addFile(MockVirtualFile("a.txt"))
-      assertEquals(HotSwapVisibleStatus.CHANGES_READY, channel.receive())
+      assertEquals(HotSwapVisibleStatus.ChangesReady, channel.receive())
       val listener = provider.doHotSwap(hotSwapSession)
-      assertEquals(HotSwapVisibleStatus.IN_PROGRESS, channel.receive())
+      assertEquals(HotSwapVisibleStatus.InProgress, channel.receive())
       listener.onCanceled()
-      assertEquals(HotSwapVisibleStatus.CHANGES_READY, channel.receive())
+      assertEquals(HotSwapVisibleStatus.ChangesReady, channel.receive())
       assertEquals(1, hotSwapSession.getChanges().size)
     }
 
@@ -114,9 +151,9 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
       assertEquals(1, hotSwapSession.getChanges().size)
       assertTrue(channel.isEmpty)
       val listener = provider.doHotSwap(hotSwapSession)
-      assertEquals(HotSwapVisibleStatus.IN_PROGRESS, channel.receive())
+      assertEquals(HotSwapVisibleStatus.InProgress, channel.receive())
       listener.onFailure()
-      assertEquals(HotSwapVisibleStatus.NO_CHANGES, channel.receive())
+      assertEquals(HotSwapVisibleStatus.NoChanges, channel.receive())
       assertEquals(1, hotSwapSession.getChanges().size)
     }
     Disposer.dispose(disposable1)
@@ -132,16 +169,16 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
 
     val provider = MockHotSwapProvider()
     val hotSwapSession = manager.createSession(provider, disposable1)
-    assertEquals(HotSwapVisibleStatus.NO_CHANGES, channel.receive())
+    assertEquals(HotSwapVisibleStatus.NoChanges, channel.receive())
 
     provider.collector.addFile(MockVirtualFile("a.txt"))
-    assertEquals(HotSwapVisibleStatus.CHANGES_READY, channel.receive())
+    assertEquals(HotSwapVisibleStatus.ChangesReady, channel.receive())
 
     val listener = hotSwapSession.startHotSwapListening()
-    assertEquals(HotSwapVisibleStatus.IN_PROGRESS, channel.receive())
+    assertEquals(HotSwapVisibleStatus.InProgress, channel.receive())
 
     listener.onCanceled()
-    assertEquals(HotSwapVisibleStatus.CHANGES_READY, channel.receive())
+    assertEquals(HotSwapVisibleStatus.ChangesReady, channel.receive())
 
     listener.onCanceled()
     assertTrue(channel.isEmpty)
@@ -178,10 +215,10 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
         if (status == null) {
           status = channel.receive()
         }
-        if (status == HotSwapVisibleStatus.NO_CHANGES) {
+        if (status == HotSwapVisibleStatus.NoChanges) {
           status = channel.receive()
         }
-        assertEquals(HotSwapVisibleStatus.CHANGES_READY, status)
+        assertEquals(HotSwapVisibleStatus.ChangesReady, status)
         Disposer.dispose(disposable2)
       }
     }
@@ -201,17 +238,17 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     val channel = addSessionAndStatusListener(disposable0)
 
     assertSame(session2, manager.currentSession)
-    assertEquals(session2 to HotSwapVisibleStatus.NO_CHANGES, channel.receive())
+    assertEquals(session2 to HotSwapVisibleStatus.NoChanges, channel.receive())
 
     provider1.collector.addFile(MockVirtualFile("a.txt"))
     assertTrue(channel.isEmpty)
 
     provider2.collector.addFile(MockVirtualFile("a.txt"))
-    assertEquals(session2 to HotSwapVisibleStatus.CHANGES_READY, channel.receive())
+    assertEquals(session2 to HotSwapVisibleStatus.ChangesReady, channel.receive())
 
     Disposer.dispose(disposable2)
     var currentStatus = channel.receive()
-    val expectedNextStatus = session1 to HotSwapVisibleStatus.CHANGES_READY
+    val expectedNextStatus = session1 to HotSwapVisibleStatus.ChangesReady
     // null status might be skipped
     if (currentStatus == null to null) {
       currentStatus = channel.receive()
@@ -238,13 +275,13 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     val channel = addSessionAndStatusListener(disposable0)
 
     assertSame(session2, manager.currentSession)
-    assertEquals(session2 to HotSwapVisibleStatus.NO_CHANGES, channel.receive())
+    assertEquals(session2 to HotSwapVisibleStatus.NoChanges, channel.receive())
 
     provider1.collector.addFile(MockVirtualFile("a.txt"))
     assertTrue(channel.isEmpty)
 
     provider2.collector.addFile(MockVirtualFile("a.txt"))
-    assertEquals(session2 to HotSwapVisibleStatus.CHANGES_READY, channel.receive())
+    assertEquals(session2 to HotSwapVisibleStatus.ChangesReady, channel.receive())
 
     Disposer.dispose(disposable1)
     assertTrue(channel.isEmpty)
@@ -269,25 +306,25 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     val channel = addSessionAndStatusListener(disposable0)
 
     assertSame(session2, manager.currentSession)
-    assertEquals(session2 to HotSwapVisibleStatus.NO_CHANGES, channel.receive())
+    assertEquals(session2 to HotSwapVisibleStatus.NoChanges, channel.receive())
 
     manager.onSessionSelected(session1)
     assertSame(session1, manager.currentSession)
-    assertEquals(session1 to HotSwapVisibleStatus.NO_CHANGES, channel.receive())
+    assertEquals(session1 to HotSwapVisibleStatus.NoChanges, channel.receive())
 
     provider1.collector.addFile(MockVirtualFile("a.txt"))
-    assertEquals(session1 to HotSwapVisibleStatus.CHANGES_READY, channel.receive())
+    assertEquals(session1 to HotSwapVisibleStatus.ChangesReady, channel.receive())
 
     manager.onSessionSelected(session2)
     assertSame(session2, manager.currentSession)
-    assertEquals(session2 to HotSwapVisibleStatus.NO_CHANGES, channel.receive())
+    assertEquals(session2 to HotSwapVisibleStatus.NoChanges, channel.receive())
 
     provider2.collector.addFile(MockVirtualFile("a.txt"))
-    assertEquals(session2 to HotSwapVisibleStatus.CHANGES_READY, channel.receive())
+    assertEquals(session2 to HotSwapVisibleStatus.ChangesReady, channel.receive())
 
     Disposer.dispose(disposable2)
     var currentStatus = channel.receive()
-    val expectedNextStatus = session1 to HotSwapVisibleStatus.CHANGES_READY
+    val expectedNextStatus = session1 to HotSwapVisibleStatus.ChangesReady
     // null status might be skipped
     if (currentStatus == null to null) {
       currentStatus = channel.receive()
@@ -310,7 +347,7 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     val listenerDisposable = Disposer.newDisposable(testRootDisposable)
     val channel = addSessionAndStatusListener(listenerDisposable)
 
-    assertEquals(session to HotSwapVisibleStatus.NO_CHANGES, channel.receive())
+    assertEquals(session to HotSwapVisibleStatus.NoChanges, channel.receive())
     Disposer.dispose(disposable)
 
     assertEquals(null to null, channel.receive())
@@ -328,7 +365,7 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     val channel = addStatusListener(disposable0)
 
     assertSame(session1, manager.currentSession)
-    assertEquals(HotSwapVisibleStatus.NO_CHANGES, channel.receive())
+    assertEquals(HotSwapVisibleStatus.NoChanges, channel.receive())
 
     manager.onSessionSelected(session1)
     assertSame(session1, manager.currentSession)
@@ -358,16 +395,16 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
 
     val listenerDisposable = Disposer.newDisposable(testRootDisposable)
     val channel = addStatusListener(listenerDisposable)
-    assertEquals(HotSwapVisibleStatus.NO_CHANGES, channel.receive())
+    assertEquals(HotSwapVisibleStatus.NoChanges, channel.receive())
 
     provider.collector.addFile(MockVirtualFile("a.txt"))
-    assertEquals(HotSwapVisibleStatus.CHANGES_READY, channel.receive())
+    assertEquals(HotSwapVisibleStatus.ChangesReady, channel.receive())
 
     manager.hide()
-    assertEquals(HotSwapVisibleStatus.HIDDEN, channel.receive())
+    assertEquals(HotSwapVisibleStatus.Hidden, channel.receive())
 
     provider.collector.addFile(MockVirtualFile("a.txt"))
-    assertEquals(HotSwapVisibleStatus.CHANGES_READY, channel.receive())
+    assertEquals(HotSwapVisibleStatus.ChangesReady, channel.receive())
 
     Disposer.dispose(disposable)
 
@@ -419,6 +456,7 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
 
 internal class MockHotSwapProvider : HotSwapProvider<MockVirtualFile> {
   lateinit var collector: MockChangesCollector
+  var restartCount = 0
 
   override fun createChangesCollector(
     session: HotSwapSession<MockVirtualFile>,
@@ -430,6 +468,10 @@ internal class MockHotSwapProvider : HotSwapProvider<MockVirtualFile> {
   override fun performHotSwap(session: HotSwapSession<MockVirtualFile>) {
     error("Not supported")
   }
+
+  override fun restart() {
+    restartCount++
+  }
 }
 
 internal class MockChangesCollector(private val listener: SourceFileChangesListener) : SourceFileChangesCollector<MockVirtualFile> {
@@ -437,6 +479,16 @@ internal class MockChangesCollector(private val listener: SourceFileChangesListe
   fun addFile(file: MockVirtualFile) {
     files.add(file)
     listener.onNewChanges()
+  }
+
+  fun addIncompatibleFile(file: MockVirtualFile, reason: String) {
+    files.add(file)
+    listener.onIncompatibleChanges(reason)
+  }
+
+  fun cancelChanges() {
+    files.clear()
+    listener.onChangesCanceled()
   }
 
   override fun getChanges(): Set<MockVirtualFile> = files

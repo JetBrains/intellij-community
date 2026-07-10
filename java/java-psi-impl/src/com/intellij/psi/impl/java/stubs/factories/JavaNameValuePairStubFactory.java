@@ -7,6 +7,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
+import com.intellij.psi.impl.java.stubs.PsiNameValuePairStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiNameValuePairStubImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class JavaNameValuePairStubFactory implements LightStubElementFactory<PsiNameValuePairStubImpl, PsiNameValuePair> {
+public class JavaNameValuePairStubFactory implements LightStubElementFactory<PsiNameValuePairStub, PsiNameValuePair> {
   @Override
   public @NotNull PsiNameValuePairStubImpl createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     String name = null;
@@ -35,7 +36,7 @@ public class JavaNameValuePairStubFactory implements LightStubElementFactory<Psi
   }
 
   @Override
-  public PsiNameValuePair createPsi(@NotNull PsiNameValuePairStubImpl stub) {
+  public PsiNameValuePair createPsi(@NotNull PsiNameValuePairStub stub) {
     return JavaStubElementType.getFileStub(stub).getPsiFactory().createNameValuePair(stub);
   }
   

@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.noarg-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:noarg-compiler-plugin-for-ide:2.4.20-dev-6475">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:noarg-compiler-plugin-for-ide:2.4.20-dev-9133">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.4.20-dev-6475/noarg-compiler-plugin-for-ide-2.4.20-dev-6475.jar">
-          <sha256sum>915dc16e3cbe5aea388ce7039f0eaa1ebad277b73aa7242bc45c305e839a1978</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.4.20-dev-9133/noarg-compiler-plugin-for-ide-2.4.20-dev-9133.jar">
+          <sha256sum>a71081add4561c6937927f383d0e34e86f025a72e69ae6782307c7e3095f86ba</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.4.20-dev-6475/noarg-compiler-plugin-for-ide-2.4.20-dev-6475.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.4.20-dev-9133/noarg-compiler-plugin-for-ide-2.4.20-dev-9133.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.4.20-dev-6475/noarg-compiler-plugin-for-ide-2.4.20-dev-6475-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.4.20-dev-9133/noarg-compiler-plugin-for-ide-2.4.20-dev-9133-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

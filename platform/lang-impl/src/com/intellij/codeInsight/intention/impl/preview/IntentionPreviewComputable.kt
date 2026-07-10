@@ -139,7 +139,7 @@ class IntentionPreviewComputable(
     }
     Reference.reachabilityFence(settings)
     val manager = PsiDocumentManager.getInstance(project)
-    if (!psiFileCopy.viewProvider.isEventSystemEnabled) {
+    if (!psiFileCopy.viewProvider.supportsSendingPsiEvents()) {
       manager.commitDocument(editorCopy.document)
       manager.doPostponedOperationsAndUnblockDocument(editorCopy.document)
     }

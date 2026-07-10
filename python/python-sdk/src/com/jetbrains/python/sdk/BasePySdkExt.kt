@@ -12,17 +12,12 @@ import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
-@get:Deprecated("Use root manager directly and obey its contract",
-                replaceWith = ReplaceWith(" ModuleRootManager.getInstance(this)"),
-                level = DeprecationLevel.ERROR)
-val Module.rootManager: ModuleRootManager
-  get() = ModuleRootManager.getInstance(this)
-
 /**
  * It could be loosely described as a "root directory" of a module. Something, you usually look for `pyproject.toml` in.
  * `null` means module is broken: i.e. not a Python module (and doesn't have a baseDir) or it was already disposed, or directory
  * was removed. Such modules should be ignored.
  */
+@get:Internal
 val Module.baseDir: VirtualFile?
   get() {
     val entity = findModuleEntity() ?: return null

@@ -63,7 +63,7 @@ public class MarkupModelStressTest extends AbstractEditorTest {
     }
 
     List<RangeHighlighterEx> list2;
-    try (MarkupIterator<RangeHighlighterEx> it2 = new FilteringMarkupIterator<>(markupModel.overlappingIterator(0, Integer.MAX_VALUE),
+    try (MarkupIterator<RangeHighlighterEx> it2 = FilteringMarkupIterator.create(markupModel.overlappingIterator(0, Integer.MAX_VALUE),
                                                                                 h -> h.isRenderedInGutter())) {
       list2 = ContainerUtil.collect(it2);
     }

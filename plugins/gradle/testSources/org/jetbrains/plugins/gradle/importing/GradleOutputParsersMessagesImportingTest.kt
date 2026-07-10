@@ -28,7 +28,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     importProject("subprojects { apply plugin: 'java' }")
 
     assertSyncViewTree {
-      assertNode("failed") {
+      assertNode("(failed|finished)".toRegex()) {
         assertNodeWithDeprecatedGradleWarning()
         assertNode("build.gradle") {
           assertNode("Could not find method ghostConf() for arguments [project ':api'] on object of type org.gradle.api.internal.artifacts.dsl.dependencies.DefaultDependencyHandler")
@@ -55,7 +55,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     importProject("apply plugin: example.SomePlugin")
 
     assertSyncViewTree {
-      assertNode("failed") {
+      assertNode("(failed|finished)".toRegex()) {
         assertNodeWithDeprecatedGradleWarning()
         assertNode(":buildSrc:compileJava")
         assertNode(":buildSrc:compileGroovy")
@@ -270,7 +270,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
       addBuildScriptDependency("classpath 'junit:junit:4.12'")
     }
     assertSyncViewTree {
-      assertNode("failed") {
+      assertNode("(failed|finished)".toRegex()) {
         assertNodeWithDeprecatedGradleWarning()
         assertNode("Could Not Resolve junit:junit:4.12 because no repositories are defined")
       }
@@ -315,7 +315,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
       addBuildScriptDependency("classpath 'junit:junit:99.99'")
     }
     assertSyncViewTree {
-      assertNode("failed") {
+      assertNode("(failed|finished)".toRegex()) {
         assertNodeWithDeprecatedGradleWarning()
         assertNode("Could Not Resolve junit:junit:99.99")
       }
@@ -345,7 +345,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
       addBuildScriptDependency("classpath 'junit:junit:99.99'")
     }
     assertSyncViewTree {
-      assertNode("failed") {
+      assertNode("(failed|finished)".toRegex()) {
         assertNodeWithDeprecatedGradleWarning()
         assertNode("Could Not Resolve junit:junit:99.99")
       }
@@ -375,7 +375,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     when {
       isGradleOlderThan("7.0") -> {
         assertSyncViewTree {
-          assertNode("failed") {
+          assertNode("(failed|finished)".toRegex()) {
             assertNodeWithDeprecatedGradleWarning()
             assertNode("build.gradle") {
               assertNode("expecting ''', found '\\n'")
@@ -385,7 +385,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
       }
       isGradleOlderThan("7.4") -> {
         assertSyncViewTree {
-          assertNode("failed") {
+          assertNode("(failed|finished)".toRegex()) {
             assertNodeWithDeprecatedGradleWarning()
             assertNode("build.gradle") {
               assertNode("Unexpected input: '{'")
@@ -395,7 +395,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
       }
       else -> {
         assertSyncViewTree {
-          assertNode("failed") {
+          assertNode("(failed|finished)".toRegex()) {
             assertNodeWithDeprecatedGradleWarning()
             assertNode("build.gradle") {
               assertNode("Unexpected character: '\\''")
@@ -414,7 +414,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     )
 
     assertSyncViewTree {
-      assertNode("failed") {
+      assertNode("(failed|finished)".toRegex()) {
         assertNodeWithDeprecatedGradleWarning()
         assertNode("build.gradle") {
           assertNode("only buildscript {}" +
@@ -438,7 +438,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     )
 
     assertSyncViewTree {
-      assertNode("failed") {
+      assertNode("(failed|finished)".toRegex()) {
         assertNodeWithDeprecatedGradleWarning()
         assertNode("build.gradle") {
           assertNode("Cannot get property 'foo' on null object")

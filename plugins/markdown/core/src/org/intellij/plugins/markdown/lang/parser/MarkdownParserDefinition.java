@@ -24,12 +24,12 @@ public class MarkdownParserDefinition implements ParserDefinition {
 
   @Override
   public @NotNull Lexer createLexer(Project project) {
-    return new MarkdownToplevelLexer();
+    return new MarkdownToplevelLexer(MarkdownFlavourProvider.findFlavour(project));
   }
 
   @Override
   public @NotNull PsiParser createParser(Project project) {
-    return new MarkdownParserAdapter();
+    return new MarkdownParserAdapter(MarkdownFlavourProvider.findFlavour(project));
   }
 
   @Override

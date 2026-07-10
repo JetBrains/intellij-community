@@ -4,6 +4,7 @@
 package com.jetbrains.python.packaging.repository
 
 import com.intellij.openapi.components.service
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.RequestBuilder
 import com.jetbrains.python.PyBundle
@@ -44,12 +45,15 @@ internal fun PyPackageRepository.checkValid(): Boolean {
 
 @ApiStatus.Experimental
 object PyPiPackageRepository : PyPackageRepository("PyPI", PyPIPackageUtil.PYPI_LIST_URL, null) {
+  @RequiresBackgroundThread
   override fun search(needle: String, pageSize: Int): PythonPackageSearchResult =
     service<PyPiPackageCache>().search(needle, pageSize)
 
+  @RequiresBackgroundThread
   override fun hasPackage(name: String): Boolean =
     name in service<PyPiPackageCache>()
 
+  @RequiresBackgroundThread
   override fun getSize(): Int =
     service<PyPiPackageCache>().size
   

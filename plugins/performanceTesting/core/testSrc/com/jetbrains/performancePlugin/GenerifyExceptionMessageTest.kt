@@ -81,6 +81,25 @@ class GenerifyExceptionMessageTest {
             """.trimIndent(),
         cleanedMessage)
     }
+
+    fun replaceUIDTestTemplate(generifyErrorMessageFunc: (String) -> String) {
+      // fleet.util.UID.random() output: 20 base-32 chars, digits interleaved with letters
+      val exceptionMessage = """
+        No session found for request: RpcCompletionRequestId(id=l8nnaskjn7k16m0qqqpt)
+        No session found for request: RpcCompletionRequestId(id=a1b2c3d4e5f6g7h8i9j0)
+        startupPerformanceTests5482355837770071386
+        """.trimIndent()
+
+      // both distinct UIDs collapse to <UID>; the long non-UID token still becomes <NUM>
+      val cleanedMessage = generifyErrorMessageFunc(exceptionMessage)
+      Assert.assertEquals(
+        """
+            No session found for request: RpcCompletionRequestId(id=<UID>)
+            No session found for request: RpcCompletionRequestId(id=<UID>)
+            startupPerformanceTests<NUM>
+            """.trimIndent(),
+        cleanedMessage)
+    }
   }
 
   @Test
@@ -96,5 +115,10 @@ class GenerifyExceptionMessageTest {
   @Test
   fun replaceHashesTest() {
     replaceHashesTestTemplate(::generifyErrorMessage)
+  }
+
+  @Test
+  fun replaceUIDTest() {
+    replaceUIDTestTemplate(::generifyErrorMessage)
   }
 }

@@ -18,6 +18,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.components.Badge
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Panel
@@ -28,6 +29,7 @@ import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
@@ -65,7 +67,7 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
   ApplicationBundle.message("tab.editor.settings.appearance"),
   "reference.settingsdialog.IDE.editor.appearance",
   "editor.preferences.appearance"
-), Configurable.WithEpDependencies {
+), Configurable.WithEpDependencies, Configurable.NewOptions {
   override fun createPanel(): DialogPanel {
     val model = EditorSettingsExternalizable.getInstance()
     return panel {
@@ -80,6 +82,7 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
       }
       row {
         checkBox(myCbSmoothBlinkCaret)
+        icon(Badge.new)
       }.enabledIf(cbBlinkCaret!!.selected)
       row {
         checkBox(myCbBlockCursor)
@@ -99,6 +102,8 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
             }
           }
         ).bindItem(model::getCaretEasing, model::setCaretEasing)
+          .customize(UnscaledGaps(right = 20))
+        icon(Badge.new)
       }
       row {
         checkBox(myCbHighlightSelectionOccurrences)

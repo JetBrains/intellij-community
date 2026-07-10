@@ -3,6 +3,24 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.lang.properties.IProperty
+import com.intellij.maven.testFramework.fixtures.MavenDomTestFixture.Highlight
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertContain
+import com.intellij.maven.testFramework.fixtures.assertDoNotContain
+import com.intellij.maven.testFramework.fixtures.assumeModel_4_1_0
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProfilesXml
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.envVar
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.importProjectsAsync
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
+import com.intellij.maven.testFramework.fixtures.moveCaretTo
+import com.intellij.maven.testFramework.fixtures.refreshFiles
+import com.intellij.maven.testFramework.fixtures.updateAllProjects
+import com.intellij.maven.testFramework.fixtures.updateModulePom
+import com.intellij.maven.testFramework.fixtures.updateProjectPom
+import com.intellij.maven.testFramework.fixtures.updateSettingsXml
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.psi.PsiManager
@@ -11,32 +29,14 @@ import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference
-import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture.Highlight
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariantsDoNotInclude
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariantsInclude
-import org.jetbrains.idea.maven.fixtures.assertContain
-import org.jetbrains.idea.maven.fixtures.assertDoNotContain
 import org.jetbrains.idea.maven.fixtures.assertResolved
 import org.jetbrains.idea.maven.fixtures.assertUnresolved
-import org.jetbrains.idea.maven.fixtures.assumeModel_4_1_0
 import org.jetbrains.idea.maven.fixtures.checkHighlighting
-import org.jetbrains.idea.maven.fixtures.createModulePom
-import org.jetbrains.idea.maven.fixtures.createProfilesXml
-import org.jetbrains.idea.maven.fixtures.createProjectPom
-import org.jetbrains.idea.maven.fixtures.envVar
 import org.jetbrains.idea.maven.fixtures.findTag
 import org.jetbrains.idea.maven.fixtures.getCompletionVariants
 import org.jetbrains.idea.maven.fixtures.getReferenceAtCaret
-import org.jetbrains.idea.maven.fixtures.importProjectAsync
-import org.jetbrains.idea.maven.fixtures.importProjectsAsync
-import org.jetbrains.idea.maven.fixtures.mavenDomFixture
-import org.jetbrains.idea.maven.fixtures.moveCaretTo
-import org.jetbrains.idea.maven.fixtures.refreshFiles
-import org.jetbrains.idea.maven.fixtures.updateAllProjects
-import org.jetbrains.idea.maven.fixtures.updateModulePom
-import org.jetbrains.idea.maven.fixtures.updateProjectPom
-import org.jetbrains.idea.maven.fixtures.updateSettingsXml
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -1394,6 +1394,28 @@ class MavenPropertyCompletionAndResolutionTest(mavenVersion: String, modelVersio
                                        """.trimIndent())
     val rootDirectory = readAction { PsiManager.getInstance(maven.project).findDirectory(maven.projectPom.getParent()) }
     maven.assertResolved(m1, rootDirectory!!)
+  }
+
+  @Test
+  fun testPropertyCompletionInsideDependencyVersionRef() = runBlocking {
+    // Regression test for IDEA-391236: property completion inside ${} in <version> broken
+    maven.updateProjectPom($$"""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <slf4j.version>2.0.18</slf4j.version>
+                       </properties>
+                       <dependencies>
+                         <dependency>
+                           <groupId>org.slf4j</groupId>
+                           <artifactId>slf4j-api</artifactId>
+                           <version>${<caret>}</version>
+                         </dependency>
+                       </dependencies>
+                       """.trimIndent())
+
+    maven.assertCompletionVariantsInclude(maven.projectPom, "slf4j.version")
   }
 
   private suspend fun readWithProfiles(vararg profiles: String) {

@@ -24,6 +24,8 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.createRepository
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
@@ -110,6 +112,9 @@ class PluginInstallOperation(
 
   val installedDependentPlugins: Set<PluginInstallCallbackData>
     get() = myDependant
+
+  internal val dependentPluginUpdateSourceIds: Map<PluginId, PluginUpdateSourceId>
+    field: MutableMap<PluginId, PluginUpdateSourceId> = HashMap()
 
   val isShownErrors: Boolean
     get() = myShownErrors
@@ -237,21 +242,13 @@ class PluginInstallOperation(
       }
       val allowNoRestart = myAllowInstallWithoutRestart &&
                            runBlockingCancellable {
-                             if (DynamicPluginsSupport.getInstance() != null) {
-                               DynamicPlugins.checkCanReconfigureWithoutRestart(
-                                 addNewCustomPlugins = newPluginVersions,
-                                 forceRemovePlugins = emptyList(),
-                                 extraStateValidator = DynamicPlugins.expectPluginsState(expectToLoad = newPluginVersions.map { it.pluginId }),
-                                 pretendEnabled = emptyList(),
-                                 pretendDisabled = emptyList(),
-                               )
-                             }
-                             else {
-                               DynamicPlugins.allowLoadUnloadWithoutRestart(
-                                 descriptor, null,
-                                 myPendingDynamicPluginInstalls.map { pluginInstall -> pluginInstall.pluginDescriptor },
-                               )
-                             }
+                             DynamicPlugins.checkCanReconfigureWithoutRestart(
+                               addNewCustomPlugins = newPluginVersions,
+                               forceRemovePlugins = emptyList(),
+                               extraStateValidator = DynamicPlugins.expectPluginsState(expectToLoad = newPluginVersions.map { it.pluginId }),
+                               pretendEnabled = emptyList(),
+                               pretendDisabled = emptyList(),
+                             )
                            }
       if (allowNoRestart) {
         myPendingDynamicPluginInstalls.add(PendingDynamicPluginInstall(downloader.getFilePath(), descriptor))
@@ -265,6 +262,7 @@ class PluginInstallOperation(
         }
       }
       myDependant.add(PluginInstallCallbackData(downloader.getFilePath(), descriptor, !allowNoRestart))
+      dependentPluginUpdateSourceIds[downloader.id] = createRepository(downloader.uiModel)
       val node = pluginNode.getDescriptor()
       if (node is PluginNode) {
         node.status = PluginNode.Status.DOWNLOADED

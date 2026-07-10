@@ -6,6 +6,7 @@ import com.intellij.notebooks.ui.visualization.DefaultNotebookEditorAppearanceSi
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearance
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceSizes
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.UIUtil
 import java.awt.Color
@@ -22,6 +23,14 @@ open class DefaultNotebookEditorAppearance(
   override fun codeCellBackgroundColor(): Color {
     return editor.colorsScheme.getColor(NotebookEditorAppearance.CODE_CELL_BACKGROUND)
            ?: editor.colorsScheme.defaultBackground
+  }
+
+  override fun codeCellFoldedTextAttribute(): TextAttributes? {
+    return editor.colorsScheme.getAttributes(NotebookEditorAppearance.CODE_CELL_FOLDED_TEXT_ATTRIBUTES)
+  }
+
+  override fun codeCellSelectionBackgroundColor(): Color? {
+    return editor.colorsScheme.getColor(NotebookEditorAppearance.CODE_CELL_SELECTION_BACKGROUND)
   }
 
   override fun cellStripeSelectedColor(): Color {

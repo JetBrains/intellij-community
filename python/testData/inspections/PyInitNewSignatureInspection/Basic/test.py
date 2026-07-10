@@ -1,15 +1,15 @@
 class B(object):
-  def __init__<warning descr="Signature is not compatible to __new__">(self)</warning>: # error
+  def __init__<warning descr="Signature is not compatible to '__new__'">(self)</warning>: # error
     pass
 
-  def __new__<warning descr="Signature is not compatible to __init__">(cls, x, y)</warning>: # error
+  def __new__<warning descr="Signature is not compatible to '__init__'">(cls, x, y)</warning>: # error
     pass
 
 class A1(B):
     pass
 
 class A2(A1):
-    def __new__<warning descr="Signature is not compatible to __init__">(cls, a)</warning>: # error
+    def __new__<warning descr="Signature is not compatible to '__init__'">(cls, a)</warning>: # error
        pass
 
     

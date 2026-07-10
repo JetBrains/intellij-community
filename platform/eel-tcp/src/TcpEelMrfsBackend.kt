@@ -14,7 +14,6 @@ import java.net.URI
 import java.nio.file.FileStore
 import java.nio.file.FileSystem
 import java.nio.file.FileSystemAlreadyExistsException
-import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 
 
@@ -47,9 +46,6 @@ class TcpEelMrfsBackend(private val scope: CoroutineScope) : MultiRoutingFileSys
 
   private fun createFilesystem(internalName: String, localFS: FileSystem, descriptor: TcpEelDescriptor): FileSystem {
     val localPath = localFS.getPath(descriptor.rootPathString)
-    if (Files.exists(localPath)) {
-      LOG.warn("Cannot create TCP filesystem: local path already exists: $localPath")
-    }
 
     val ijentUri = URI("ijent", "tcp", "/$internalName", null, null)
     val ijentDefaultProvider = IjentNioFileSystemProvider.getInstance()

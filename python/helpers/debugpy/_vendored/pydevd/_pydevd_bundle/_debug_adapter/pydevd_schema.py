@@ -16088,13 +16088,19 @@ class SetDebuggerPropertyArguments(BaseSchema):
                 "boolean"
             ],
             "description": "If false then a notification is generated for each thread event. If True a single event is gnenerated, and all threads follow that behavior."
+        },
+        "justMyCode": {
+            "type": [
+                "boolean"
+            ],
+            "description": "If True, enables just my code stepping (library frames will be skipped). If false, all frames will be shown."
         }
     }
     __refs__ = set()
 
     __slots__ = list(__props__.keys()) + ['kwargs']
 
-    def __init__(self, ideOS=None, dontTraceStartPatterns=None, dontTraceEndPatterns=None, skipSuspendOnBreakpointException=None, skipPrintBreakpointException=None, multiThreadsSingleNotification=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+    def __init__(self, ideOS=None, dontTraceStartPatterns=None, dontTraceEndPatterns=None, skipSuspendOnBreakpointException=None, skipPrintBreakpointException=None, multiThreadsSingleNotification=None, justMyCode=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param ['string'] ideOS: OS where the ide is running. Supported values [Windows, Linux]
         :param ['array'] dontTraceStartPatterns: Patterns to match with the start of the file paths. Matching paths will be added to a list of file where trace is ignored.
@@ -16102,6 +16108,7 @@ class SetDebuggerPropertyArguments(BaseSchema):
         :param ['array'] skipSuspendOnBreakpointException: List of exceptions that should be skipped when doing condition evaluations.
         :param ['array'] skipPrintBreakpointException: List of exceptions that should skip printing to stderr when doing condition evaluations.
         :param ['boolean'] multiThreadsSingleNotification: If false then a notification is generated for each thread event. If true a single event is gnenerated, and all threads follow that behavior.
+        :param ['boolean'] justMyCode: If true, enables just my code stepping (library frames will be skipped). If false, all frames will be shown.
         """
         self.ideOS = ideOS
         self.dontTraceStartPatterns = dontTraceStartPatterns
@@ -16109,6 +16116,7 @@ class SetDebuggerPropertyArguments(BaseSchema):
         self.skipSuspendOnBreakpointException = skipSuspendOnBreakpointException
         self.skipPrintBreakpointException = skipPrintBreakpointException
         self.multiThreadsSingleNotification = multiThreadsSingleNotification
+        self.justMyCode = justMyCode
         self.kwargs = kwargs
 
 
@@ -16119,6 +16127,7 @@ class SetDebuggerPropertyArguments(BaseSchema):
         skipSuspendOnBreakpointException = self.skipSuspendOnBreakpointException
         skipPrintBreakpointException = self.skipPrintBreakpointException
         multiThreadsSingleNotification = self.multiThreadsSingleNotification
+        justMyCode = self.justMyCode
         dct = {
         }
         if ideOS is not None:
@@ -16133,6 +16142,8 @@ class SetDebuggerPropertyArguments(BaseSchema):
             dct['skipPrintBreakpointException'] = skipPrintBreakpointException
         if multiThreadsSingleNotification is not None:
             dct['multiThreadsSingleNotification'] = multiThreadsSingleNotification
+        if justMyCode is not None:
+            dct['justMyCode'] = justMyCode
         dct.update(self.kwargs)
         return dct
 

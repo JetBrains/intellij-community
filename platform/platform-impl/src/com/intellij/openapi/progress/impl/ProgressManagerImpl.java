@@ -41,6 +41,8 @@ import java.awt.KeyboardFocusManager;
 import java.util.List;
 
 public final class ProgressManagerImpl extends CoreProgressManager implements Disposable {
+  private static final boolean JFR_CHECK_CANCELED_EVENTS_ENABLED = Boolean.getBoolean("ide.commit.check.canceled.jfr.event.enabled");
+
   private static final Key<Boolean> SAFE_PROGRESS_INDICATOR = Key.create("SAFE_PROGRESS_INDICATOR");
   private final List<CheckCanceledHook> myHooks = ContainerUtil.createEmptyCOWList();
   private volatile boolean myRunSleepHook; // optimization: to avoid adding/removing mySleepHook to myHooks constantly this flag is used
@@ -154,6 +156,8 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
                                                   boolean hasNoneBehavior,
                                                   boolean hasOnlyHooksBehavior,
                                                   boolean cancelled) {
+    if (!JFR_CHECK_CANCELED_EVENTS_ENABLED) return;
+
     if (!shouldFireCheckCanceledEvent()) {
       return;
     }

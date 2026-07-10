@@ -2,24 +2,20 @@
 package com.intellij.python.pytools
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
 import com.intellij.python.pytools.statistics.PyToolFusSnapshot
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.Nls
+import javax.swing.Icon
 import com.intellij.openapi.util.Version as PlatformVersion
-
-data class InstallInfo(
-  val packageName: PyPackageName,
-  val installHelp: @Nls String? = null,
-)
 
 interface PyTool {
   val presentableName: @NlsSafe String
   val packageName: PyPackageName
-  val aliases: List<PyPackageName> get() = listOf(packageName)
+
+  /** Icon representing the tool (e.g. status-bar widget, advertiser notification, External Tools table). */
+  val icon: Icon
 
   /**
    * One-line user-facing description of the tool (e.g. "Linter and code formatter for Python").
@@ -27,8 +23,6 @@ interface PyTool {
    * localized message from its own resource bundle.
    */
   val description: @Nls String
-
-  val installInfo: InstallInfo get() = InstallInfo(packageName)
 
   /**
    * Provides a unique identifier (python package name) for the feature usage statistics (FUS) system.
@@ -47,21 +41,13 @@ interface PyTool {
    */
   val minimumSupportedVersion: PlatformVersion? get() = null
 
-  /** Pre-migration `enabled` value, used by [PyToolsState] on first read. */
-  fun legacyEnabled(project: Project): Boolean = false
-
-  /** Pre-migration discovery mode, used by [PyToolsState] on first read. */
-  fun legacyDiscoveryMode(project: Project): ExecutableDiscoveryMode = ExecutableDiscoveryMode.INTERPRETER
-
-  /** Pre-migration custom path, used by [PyToolsState] on first read. */
-  fun legacyCustomPath(project: Project): java.nio.file.Path? = null
-
   /**
-   * Factory that builds the per-tool detail UI shown in the Edit dialog of the External Tools
-   * table. `null` (the default) means the tool has no extra options — the table uses this to dim
-   * and disable the gear icon for the row.
+   * One-time migration from this tool's pre-[PyToolsState] configuration. Called once per project by
+   * [PyToolsState] when it has no stored state yet. Implementations read their old settings, **reset those
+   * old settings to their defaults** (so the migration is one-way and re-running it can never resurrect the
+   * old values), and return the equivalent [PyToolsState.ToolEntry] — or `null` if there is nothing to migrate.
    */
-  val detailConfigurable: ((Project) -> UnnamedConfigurable)? get() = null
+  fun migrateLegacyState(project: Project): PyToolsState.ToolEntry? = null
 
   /**
    * Compact, comma-separated summary of currently-activated features for the External Tools table
@@ -93,5 +79,10 @@ interface PyTool {
 
   companion object {
     val EP_NAME: ExtensionPointName<PyTool> = ExtensionPointName.create("com.intellij.python.pytools.pyTool")
+
+    fun findByPackageName(packageName: String): PyTool? {
+      val normalized = PyPackageName.from(packageName).name
+      return EP_NAME.extensionList.firstOrNull { it.packageName.name == normalized }
+    }
   }
 }

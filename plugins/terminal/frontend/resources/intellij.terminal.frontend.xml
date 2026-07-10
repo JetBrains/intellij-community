@@ -11,6 +11,8 @@
                     interface="com.intellij.terminal.frontend.action.TerminalEscapeHandler" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.terminalSettingsProvider" dynamic="true"
                     interface="com.intellij.terminal.frontend.settings.TerminalSettingsProvider"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.portForwardingManager" dynamic="true"
+                    interface="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingManager"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -50,10 +52,6 @@
       serviceInterface="com.intellij.terminal.frontend.session.TerminalActivityTracker"
       serviceImplementation="com.intellij.terminal.frontend.session.TerminalNoOpActivityTracker"
       open="true"/>
-    <applicationService
-      serviceInterface="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingManager"
-      serviceImplementation="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingManagerImpl"
-      open="true"/>
     <projectService
       serviceInterface="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingPersistenceService"
       serviceImplementation="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingNoOpPersistenceService"
@@ -71,10 +69,13 @@
     <platform.rpc.projectRemoteTopicListener
       implementation="com.intellij.terminal.frontend.view.notification.TerminalEnvironmentChangedTopicListener"/>
     <editorAutoClosingHandler implementation="com.intellij.terminal.frontend.editor.TerminalViewEditorAutoClosingHandler"/>
+    <backgroundPostStartupActivity implementation="com.intellij.terminal.frontend.toolwindow.impl.TerminalProcessesClosingNotifierInstaller"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
     <toolWindowInitializer implementation="com.intellij.terminal.frontend.toolwindow.impl.TerminalToolWindowTabsManagerImpl$Initializer"/>
+
+    <portForwardingManager implementation="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingManagerImpl"/>
 
     <escapeHandler implementation="com.intellij.terminal.frontend.action.CancelSelection"/>
     <escapeHandler implementation="com.intellij.terminal.frontend.action.CloseSearch"/>
@@ -99,17 +100,9 @@
       <keyboard-shortcut first-keystroke="shift INSERT" keymap="$default"/>
     </action>
     <action id="Terminal.PasteFromHistory" class="com.intellij.terminal.frontend.action.TerminalPasteFromHistoryAction"
-            icon="AllIcons.Actions.MenuPaste">
-      <keyboard-shortcut first-keystroke="control shift V" keymap="$default"/>
+            icon="AllIcons.Actions.MenuPaste" use-shortcut-of="PasteMultiple">
       <!-- On XWin Ctrl+Shift+V is owned by Terminal.Paste -->
       <keyboard-shortcut first-keystroke="control shift V" keymap="Default for XWin" remove="true"/>
-      <!-- Sublime Text rebinds Ctrl+Shift+V to $Paste -->
-      <keyboard-shortcut first-keystroke="control shift V" keymap="Sublime Text" remove="true"/>
-      <keyboard-shortcut first-keystroke="meta shift V" keymap="Mac OS X" replace-all="true"/>
-      <keyboard-shortcut first-keystroke="meta shift V" keymap="Mac OS X 10.5+" replace-all="true"/>
-      <!-- Sublime Text (Mac OS X) rebinds Cmd+Shift+V to $Paste -->
-      <keyboard-shortcut first-keystroke="meta shift V" keymap="Sublime Text (Mac OS X)" remove="true"/>
-      <keyboard-shortcut first-keystroke="meta shift V" keymap="VSCode OSX" remove="true"/>
     </action>
     <action id="Terminal.PasteSelection" class="com.intellij.terminal.frontend.action.TerminalPasteSelectionAction"
             use-shortcut-of="EditorPasteFromX11">
@@ -200,6 +193,7 @@
             class="com.intellij.terminal.frontend.action.TerminalAgentsChevronSelectorAction"
             icon="AllIcons.Toolbar.Expand"/>
     <action id="Terminal.AiAgents.LaunchSelectedAgent" class="com.intellij.terminal.frontend.action.LaunchSelectedAgentAction"/>
+    <action id="Terminal.AiAgents.LaunchJunieCli" class="com.intellij.terminal.frontend.action.LaunchJunieCliAction"/>
     <action id="Terminal.AiAgents.ResetJunieNewBadgeCounter"
             class="com.intellij.terminal.frontend.action.ResetJunieNewBadgeCounterAction"
             internal="true"/>
@@ -232,4 +226,8 @@
     <listener class="com.intellij.terminal.frontend.toolwindow.impl.ExperimentalTerminalMigrationNotifier"
               topic="com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener"/>
   </projectListeners>
+  <applicationListeners>
+    <listener class="com.intellij.terminal.frontend.toolwindow.impl.TerminalProcessesClosingNotifierInstaller"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
 </idea-plugin>

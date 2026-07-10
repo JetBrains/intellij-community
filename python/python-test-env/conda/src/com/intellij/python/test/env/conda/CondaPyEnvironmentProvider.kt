@@ -5,7 +5,10 @@ import com.intellij.execution.processTools.getResultStdout
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.test.env.core.CacheKey
 import com.intellij.python.test.env.core.PyEnvDownloadCache
 import com.intellij.python.test.env.core.PyEnvironment
@@ -18,6 +21,7 @@ import com.intellij.util.io.awaitExit
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.Result
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
@@ -99,6 +103,11 @@ class CondaPyEnvironmentProvider : PyEnvironmentProvider<CondaPyEnvironmentSpec>
 
     val condaExecutable = downloadAndSetupConda(spec.condaVersion)
     logger.info("Conda executable: $condaExecutable")
+
+    // conda 25+ refuses to create envs from the default Anaconda channels until their ToS is
+    // accepted. The `conda tos` plugin doesn't exist on older conda releases, so we run the
+    // accept commands best-effort and ignore non-zero exit codes.
+    acceptAnacondaToSBestEffort(logger, condaExecutable)
 
     val fullPythonVersion = spec.pythonVersion.toString()
 
@@ -227,7 +236,7 @@ class CondaPyEnvironmentProvider : PyEnvironmentProvider<CondaPyEnvironmentSpec>
 
   private suspend fun installLibraries(envPath: Path, condaExecutable: Path, libraries: List<String>) {
     val logger = thisLogger()
-    
+
     if (libraries.isEmpty()) {
       logger.info("No libraries to install")
       return
@@ -239,8 +248,31 @@ class CondaPyEnvironmentProvider : PyEnvironmentProvider<CondaPyEnvironmentSpec>
     val command = listOf(condaExecutable.pathString) + args
     executeProcess(command, logger, "conda")
   }
-}
 
+  /**
+   * conda 25 introduced a Terms-of-Service gate on the default Anaconda channels
+   * (`https://repo.anaconda.com/pkgs/main` and `.../pkgs/r`). `conda create -p ... python=...`
+   * fails with `CondaToSNonInteractiveError` until those ToS are accepted.
+   *
+   * The `conda tos accept` subcommand is provided by the conda-tos plugin shipped with conda 25;
+   * earlier conda releases do not have it. We run the accept commands best-effort: a non-zero
+   * exit is logged and ignored so that older conda versions (where the plugin is absent or
+   * unnecessary) keep working.
+   */
+  private suspend fun acceptAnacondaToSBestEffort(logger: Logger, condaExecutable: Path) {
+    val channels = listOf("https://repo.anaconda.com/pkgs/main", "https://repo.anaconda.com/pkgs/r")
+    val execService = ExecService()
+    for (channel in channels) {
+      when (val result = execService.execGetStdout(condaExecutable, Args("tos", "accept", "--override-channels", "--channel", channel))) {
+        is Result.Success ->
+          logger.info("conda tos accept for $channel succeeded: ${result.result.trim()}")
+        is Result.Failure ->
+          logger.info("conda tos accept for $channel failed (likely conda < 25 without the tos plugin): ${result.error.message}")
+      }
+    }
+  }
+}
+  
 /**
  * Conda Python environment implementation
  */

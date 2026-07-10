@@ -17,7 +17,21 @@ package org.jetbrains.idea.maven.compiler
 
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
-import com.intellij.maven.testFramework.MavenCompilingTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertDefaultResources
+import com.intellij.maven.testFramework.fixtures.assertDefaultTestResources
+import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.createProjectSubDir
+import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.getModule
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.projectPath
+import com.intellij.maven.testFramework.fixtures.projectRoot
+import com.intellij.maven.testFramework.fixtures.refreshFiles
+import com.intellij.maven.testFramework.fixtures.testRootDisposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
@@ -25,7 +39,17 @@ import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.assertCopied
+import org.jetbrains.idea.maven.fixtures.assertNotCopied
+import org.jetbrains.idea.maven.fixtures.compileFile
+import org.jetbrains.idea.maven.fixtures.compileModules
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -34,33 +58,6 @@ import java.nio.file.attribute.PosixFilePermission
 import kotlin.io.path.isWritable
 import kotlin.io.path.setPosixFilePermissions
 import kotlin.io.path.writeText
-import com.intellij.testFramework.junit5.TestApplication
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
-import org.jetbrains.idea.maven.fixtures.assertCopied
-import org.jetbrains.idea.maven.fixtures.assertDefaultResources
-import org.jetbrains.idea.maven.fixtures.assertDefaultTestResources
-import org.jetbrains.idea.maven.fixtures.assertModules
-import org.jetbrains.idea.maven.fixtures.assertNotCopied
-import org.jetbrains.idea.maven.fixtures.compileFile
-import org.jetbrains.idea.maven.fixtures.compileModules
-import org.jetbrains.idea.maven.fixtures.createModulePom
-import org.jetbrains.idea.maven.fixtures.createProjectPom
-import org.jetbrains.idea.maven.fixtures.createProjectSubDir
-import org.jetbrains.idea.maven.fixtures.createProjectSubFile
-import org.jetbrains.idea.maven.fixtures.getModule
-import org.jetbrains.idea.maven.fixtures.importProjectAsync
-import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
-import org.jetbrains.idea.maven.fixtures.projectPath
-import org.jetbrains.idea.maven.fixtures.refreshFiles
-import org.jetbrains.idea.maven.fixtures.testRootDisposable
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.params.ParameterizedClass
-import org.junit.jupiter.params.provider.ArgumentsSource
 
 @TestApplication
 @ParameterizedClass

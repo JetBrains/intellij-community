@@ -734,6 +734,45 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     assertNoImportsAdded();
   }
 
+  public void testUndoAfterOptimizeImportsOnTheFly() {
+    assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("java.util.Date", GlobalSearchScope.allScope(getProject())));
+    @Language("JAVA") String text = """
+      import java.util.*;
+      
+      final class UndoTestJava {
+          static void main() {
+              <caret>Date d = new Date();// Comment out this line then try undo
+          }
+      }
+      """;
+    configureByText(text);
+    CodeInsightWorkspaceSettings.getInstance(getProject()).setOptimizeImportsOnTheFly(true, getTestRootDisposable());
+    EditorTestUtil.executeAction(getEditor(), IdeActions.ACTION_COMMENT_LINE);
+    List<HighlightInfo> errors = myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
+    waitForAutoOptimizeImports();
+    assertEmpty(errors);
+    assertEquals("""
+                   final class UndoTestJava {
+                       static void main() {
+                   //        Date d = new Date();// Comment out this line then try undo
+                       }
+                   }
+                   """, getFile().getText());
+    EditorTestUtil.executeAction(getEditor(), IdeActions.ACTION_UNDO);
+    errors = myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
+    waitForAutoOptimizeImports();
+    assertEmpty(errors);
+    assertEquals("""
+                   import java.util.*;
+                   
+                   final class UndoTestJava {
+                       static void main() {
+                           Date d = new Date();// Comment out this line then try undo
+                       }
+                   }
+                   """, getFile().getText());
+  }
+
   private void waitForAutoOptimizeImports() {
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     TestDaemonCodeAnalyzerImpl.waitWhilePumping(ApplicationManager.getApplication().executeOnPooledThread(() -> {

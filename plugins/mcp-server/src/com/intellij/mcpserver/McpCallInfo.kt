@@ -4,6 +4,7 @@ import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.McpSessionHandler
 import com.intellij.mcpserver.impl.util.projectPathParameterName
+import com.intellij.mcpserver.util.getPathForMcp
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import kotlinx.serialization.Serializable
@@ -81,7 +82,7 @@ val CoroutineContext.projectOrNull: Project?
 
 fun noSuitableProjectError(messagePrefix: String): McpExpectedError {
   val openProjects = ProjectManager.getInstance().openProjects
-  val projects = OpenProjects(openProjects.mapNotNull { project -> project.basePath?.let { ProjectInfo(project.basePath.toString()) } })
+  val projects = OpenProjects(openProjects.mapNotNull { project -> project.getPathForMcp()?.let { ProjectInfo(it) } })
 
   return McpExpectedError(mcpErrorText = """$messagePrefix
               | You may specify the project path via `$projectPathParameterName` parameter when calling a tool. 

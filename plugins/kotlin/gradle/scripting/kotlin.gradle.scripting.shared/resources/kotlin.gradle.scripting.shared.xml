@@ -19,15 +19,9 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <internalFileTemplate name="Kotlin Script Gradle"/>
-    <projectSettings service="org.jetbrains.kotlin.gradle.scripting.shared.settings.StandaloneScriptsStorage"/>
   </extensions>
 
   <actions resource-bundle="messages.KotlinGradleScriptingBundle">
     <action id="Kotlin.Gradle.ShowDslLogs" class="org.jetbrains.kotlin.gradle.scripting.shared.actions.ShowKotlinGradleDslLogs"/>
-    <action id="LoadKtGradleConfiguration"
-            class="org.jetbrains.kotlin.gradle.scripting.shared.LoadKtGradleConfigurationAction"
-            icon="org.jetbrains.kotlin.idea.KotlinIcons.LOAD_SCRIPT_CONFIGURATION">
-      <add-to-group group-id="ExternalSystem.ProjectRefreshActionGroup" anchor="first"/>
-    </action>
   </actions>
 </idea-plugin>

@@ -24,6 +24,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.ExperimentalUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,12 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
 
   public SearchEverywhereAction() {
     setEnabledInModalContext(false);
+  }
+
+  @Override
+  @ApiStatus.Internal
+  protected boolean requiresProject() {
+    return false;
   }
 
   @Override

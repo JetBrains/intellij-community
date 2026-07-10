@@ -1,7 +1,7 @@
 // PROBLEM: none
 // WITH_STDLIB
 // ERROR: Unresolved reference: KProperty0
-// K2_ERROR: Unresolved reference 'KProperty0'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 val a5<caret> = ""
 

@@ -45,12 +45,11 @@ public final class PostfixTemplateCompletionContributor extends CompletionContri
     if (commandCompletionService == null) return false;
     CommandCompletionFactory factory = commandCompletionService.getFactory(parameters.getOriginalFile().getLanguage());
     if (factory == null) return false;
-    boolean supportFiltersWithDoublePrefix = factory.supportFiltersWithDoublePrefix();
     InvocationCommandType commandType = findCommandCompletionType(factory,
                                                                   !parameters.getOriginalFile().isWritable(),
                                                                   parameters.getEditor().getCaretModel().getOffset(),
                                                                   parameters.getEditor());
-    if (commandType instanceof InvocationCommandType.FullSuffix && supportFiltersWithDoublePrefix) return false;
+    if (commandType == null) return false;
     return true;
   }
 

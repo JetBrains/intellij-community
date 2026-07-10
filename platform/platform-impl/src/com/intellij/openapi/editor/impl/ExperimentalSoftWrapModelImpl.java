@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.ActivityTracker;
@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.CustomWrap;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.editor.Inlay;
@@ -223,7 +222,6 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
       storage.removeAll();
       mySoftWrapNotifier.notifySoftWrapsChanged();
       editor.myView.reinitSettings();
-      if (editor.myAdView != null) editor.myView.reinitSettings();
       if (AsyncEditorLoader.isEditorLoaded(editor)) {
         editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
       }
@@ -242,7 +240,6 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
 
   @Override
   public boolean isSoftWrappingEnabled() {
-    EditorThreading.assertInteractionAllowed();
     return myUseSoftWraps && !editor.isPurePaintingMode();
   }
 

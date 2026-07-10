@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -8,6 +10,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.WindowRoundedCornersManager;
 import com.intellij.util.ui.JBValue;
+import com.intellij.util.ui.StartupUiUtil;
 
 import javax.swing.Icon;
 import javax.swing.JComponent;
@@ -90,7 +93,16 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
   }
 
   public static boolean isRoundBorder() {
-    return WindowRoundedCornersManager.isAvailable();
+    if (WindowRoundedCornersManager.isAvailable()) {
+      if (StartupUiUtil.isWaylandToolkit()) {
+        UIThemeLookAndFeelInfo info = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
+        if (info != null && "JetBrainsHighContrastTheme".equals(info.getId())) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
   public static boolean hideEmptyIcon(Component c) {

@@ -22,6 +22,8 @@ data class McpClientInfo(
     JUNIE("Junie"),
     CODEX("Codex"),
     AIR("Air"),
+    GITHUB_COPILOT_IDE_PLUGIN("GitHub Copilot (IDE Plugin)"),
+    GITHUB_COPILOT_CLI("GitHub Copilot CLI"),
   }
 
   sealed class Scope {

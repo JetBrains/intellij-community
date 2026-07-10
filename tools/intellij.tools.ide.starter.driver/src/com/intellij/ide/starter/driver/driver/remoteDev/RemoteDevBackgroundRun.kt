@@ -60,8 +60,17 @@ class RemoteDevBackgroundRun(
     fun getMaybeInstance(): LuxClientService?
   }
 
+  /**
+   * Needed for compatibility of 262 driver with older version of IDE.
+   * e.g. for update tests.
+   */
+  @Remote("com.jetbrains.thinclient.lux.LuxClientService", plugin = "com.intellij.jetbrains.client.performanceTesting")
+  private interface LuxClientServiceFallback: LuxClientService
+
   fun Driver.awaitLuxInitialized() {
-    waitFor("Lux is initialized", timeout = 30.seconds) { utility(LuxClientService::class).getMaybeInstance() != null }
+    val luxClientServiceUtility = runCatching { utility(LuxClientService::class).also { it.getMaybeInstance() } }
+      .getOrElse { utility(LuxClientServiceFallback::class).also { it.getMaybeInstance() } }
+    waitFor("Lux is initialized", timeout = 30.seconds) { luxClientServiceUtility.getMaybeInstance() != null }
   }
 
   override fun closeIdeAndWait(closeIdeTimeout: Duration, takeScreenshot: Boolean) {

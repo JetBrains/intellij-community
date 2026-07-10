@@ -1,6 +1,6 @@
 // "Add remaining branches" "true"
 // WITH_STDLIB
-// K2_ERROR: 'when' expression must be exhaustive. Add the 'is B' branch or an 'else' branch.
+// K2_ERROR: NO_ELSE_IN_WHEN
 
 sealed class A
 class B : A()

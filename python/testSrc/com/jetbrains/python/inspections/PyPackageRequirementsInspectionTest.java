@@ -1,11 +1,13 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import com.jetbrains.python.packaging.PyPIPackageCache;
 import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.packaging.common.PythonPackage;
 import com.jetbrains.python.packaging.management.RequirementsProviderType;
@@ -19,9 +21,12 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.python.inspections.ModuleAssocToolKt.setAssociationToModuleAsync;
+import static com.jetbrains.python.packaging.management.TestPythonPackageManagerService.replacePyPiPackageCacheService;
 import static com.jetbrains.python.packaging.management.TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance;
 
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
   @NotNull
   @Override
@@ -37,7 +42,9 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
     assertNotNull(sdk);
     setAssociationToModuleAsync(sdk, myFixture.getModule());
 
-    PyPIPackageCache.reload(List.of("opster", "clevercss", "django", "test3", "pyzmq", "markdown", "pytest", "django-simple-captcha"));
+    var cachedPackages = List.of("opster", "clevercss", "django", "test3", "pyzmq", "markdown", "pytest", "django-simple-captcha");
+
+    replacePyPiPackageCacheService(myFixture.getProject(), cachedPackages);
     replacePythonPackageManagerServiceWithTestInstance(myFixture.getProject(), List.of());
   }
 
@@ -151,7 +158,7 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
     myFixture.configureByText("requirements.txt", "pkg[extras]");
 
     final PyPackageRequirementsInspection inspection = new PyPackageRequirementsInspection();
-    inspection.getIgnoredPackages().add("pkg");
+    inspection.ignoredPackages.add("pkg");
 
     myFixture.enableInspections(inspection);
     myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());

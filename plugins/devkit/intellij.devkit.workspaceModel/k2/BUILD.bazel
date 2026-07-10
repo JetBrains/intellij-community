@@ -17,21 +17,16 @@ create_kotlinc_options(
 jvm_library(
     name = "k2",
     srcs = glob(
-        [
-            "src/**/*.kt",
-            "src/**/*.java",
-            "src/**/*.form",
-        ],
+        [],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_k2",
     module_name = "intellij.devkit.workspaceModel.k2",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
+    runtime_deps = [
         # do not sort,
         "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
         "//platform/core-api:core",
@@ -41,8 +36,6 @@ jvm_library(
         "//java/java-indexing-api:indexing",
         "//platform/workspace/storage",
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-analysis-api-provided",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
         "@lib//:workspace-model-codegen",
         "//platform/core-impl",
         "//java/openapi:java",
@@ -128,6 +121,7 @@ jvm_library(
     ),
     module_name = "intellij.devkit.workspaceModel.k2.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/junit5"],
 )
 
 jvm_library(
@@ -150,6 +144,8 @@ jvm_library(
     runtime_deps = [":devkit-workspaceModel-k2-tests"],
     deps = [
         # do not sort,
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
         "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
         "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel_test_lib",
         "//platform/core-api:core",
@@ -192,6 +188,8 @@ jvm_library(
         "//platform/analysis-api:analysis_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.workspaceModel.k2.tests` end

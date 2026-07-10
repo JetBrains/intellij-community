@@ -4,8 +4,8 @@
 // ACTION: Convert to also
 // ACTION: Convert to apply
 // ERROR: Type mismatch: inferred type is String? but Int was expected
-// K2_ERROR: Argument type mismatch: actual type is 'String?', but 'Int' was expected.
-// K2_AFTER_ERROR: Argument type mismatch: actual type is 'String?', but 'Int' was expected.
+// K2_AFTER_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 fun test() {
     val s: String? = ""
     other(<caret>s)

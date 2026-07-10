@@ -16,11 +16,11 @@ import java.util.function.Function;
 /**
  * Checks that incrementally updated editor highlighter produces the same result as it would
  * after full text lexing. This makes sense to test if your language has:
- * <li>
- *   <ul>Complex highlighting lexer, e.g. with some additional non-jflex state inside</ul>
- *   <ul>Complex highlighter. e.g. {@link com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter}</ul>
- *   <ul>Language depending on file content</ul>
- * </li>
+ * <ul>
+ *   <li>Complex highlighting lexer, e.g. with some additional non-jflex state inside</li>
+ *   <li>Complex highlighter. e.g. {@link com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter}</li>
+ *   <li>Language depending on file content</li>
+ * </ul>
  * 
  */
 public class CheckHighlighterConsistency extends ActionOnFile {

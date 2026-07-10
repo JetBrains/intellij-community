@@ -8,8 +8,6 @@ import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.MUTABLE_ANNOTATIONS
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
-import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKFieldDataFromJava
-import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKPhysicalMethodData
 import org.jetbrains.kotlin.nj2k.hasUsages
 import org.jetbrains.kotlin.nj2k.isLocalClass
 import org.jetbrains.kotlin.nj2k.isTopLevel
@@ -76,7 +74,7 @@ class ClassMemberConversion(context: ConverterContext) : RecursiveConversion(con
 
         if (isExternallyAccessible()) {
             val psiMethod = psi<PsiMethod>() ?: return
-            context.externalCodeProcessor.addMember(JKPhysicalMethodData(psiMethod))
+            context.externalCodeProcessor.registerPhysicalMethod(psiMethod)
         }
     }
 
@@ -113,7 +111,7 @@ class ClassMemberConversion(context: ConverterContext) : RecursiveConversion(con
 
         if (isExternallyAccessible()) {
             val psiField = psi<PsiField>() ?: return
-            context.externalCodeProcessor.addMember(JKFieldDataFromJava(psiField))
+            context.externalCodeProcessor.registerField(psiField)
         }
     }
 

@@ -60,6 +60,7 @@ jvm_library(
         "//libraries/commons/lang3",
         "//libraries/commons/io",
         "//libraries/guava",
+        "//libraries/kryo5",
         ":libraries_groovy_provided",
         ":libraries_groovy_ant_provided",
     ],
@@ -98,6 +99,7 @@ jvm_library(
         "//libraries/groovy:groovy_test_lib",
         "//libraries/groovy/ant",
         "//libraries/groovy/ant:ant_test_lib",
+        "//libraries/kryo5:kryo5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.toolingExtension.impl` end
@@ -172,6 +174,8 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
         "//java/openapi:java",
         "//java/openapi:java_test_lib",
         "//libraries/fastutil",
@@ -186,6 +190,12 @@ jvm_library(
         "//platform/util/trove:trove_test_lib",
         "//libraries/commons/lang3",
         "//libraries/commons/lang3:lang3_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.toolingExtension.tests` end

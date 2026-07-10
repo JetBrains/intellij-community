@@ -14,63 +14,71 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import java.awt.Point
 import java.awt.Rectangle
-import javax.swing.Icon
 import kotlin.math.ceil
 
 class MinimapHoverHitCheck(private val editor: Editor) {
   private val structureMarkerPolicy = MinimapInteractionPolicy.forEditor(editor)
 
-  private data class HoverData(
-    val range: TextRange,
-    val text: String?,
-    val icon: Icon?
-  )
-
-  fun hitCheck(snapshot: MinimapSnapshot, point: Point?): MinimapHoverHitCheckResult? {
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  fun resolveHit(snapshot: MinimapSnapshot, point: Point?): MinimapHoverHitCheckResult? {
     if (point == null) return null
     val entries = snapshot.structureEntries
     if (entries.isEmpty()) return null
 
     val context = snapshot.context
-    var bestResult: MinimapHoverHitCheckResult? = null
+    var bestEntry: MinimapRenderEntry? = null
+    var bestRange: TextRange? = null
+    var bestRect: Rectangle? = null
     var bestArea = Long.MAX_VALUE
 
     for (entry in entries) {
-      val data = resolveHoverData(entry) ?: continue
-      val rect = computeHoverRect(data.range, context) ?: continue
+      val range = resolveRange(entry) ?: continue
+      val rect = computeHoverRect(range, context) ?: continue
       if (!rect.contains(point)) continue
 
       val area = rect.width.toLong() * rect.height.toLong()
-
       if (area < bestArea) {
         bestArea = area
-        val declarationWidth = computeDeclarationWidth(data.range.startOffset, context, snapshot.layoutMetrics)
-        bestResult = MinimapHoverHitCheckResult(entry, rect, data.text, data.icon, declarationWidth)
+        bestEntry = entry
+        bestRange = range
+        bestRect = rect
       }
     }
 
-    return bestResult
+    val entry = bestEntry ?: return null
+    val range = bestRange ?: return null
+    val rect = bestRect ?: return null
+
+    val element = entry.element ?: return null
+    val value = element.value ?: return null
+    val presentation = element.presentation
+    val text = getText(presentation, value) ?: return null
+    val icon = presentation.getIcon(false)
+
+    val declarationWidth = computeDeclarationWidth(range.startOffset, context, snapshot.layoutMetrics)
+    return MinimapHoverHitCheckResult(entry, rect, text, icon, declarationWidth)
   }
 
   fun computeHoverRect(entry: MinimapRenderEntry, context: MinimapRenderContext): Rectangle? {
-    val range = resolveRange(entry) ?: return null
+    val range = ReadAction.computeBlocking<TextRange?, RuntimeException> { resolveRange(entry) } ?: return null
     return computeHoverRect(range, context)
   }
 
+  @RequiresReadLock
   private fun resolveRange(entry: MinimapRenderEntry): TextRange? {
     val element = entry.element ?: return null
+    val value = element.value ?: return null
+    if (!structureMarkerPolicy.isRelevantStructureElement(element, value)) return null
 
-    return ReadAction.computeBlocking<TextRange?, RuntimeException> {
-      val value = element.value ?: return@computeBlocking null
-      if (!structureMarkerPolicy.isRelevantStructureElement(element, value)) return@computeBlocking null
-
-      when (value) {
-        is PsiElement -> value.textRange
-        is TextRange -> value
-        else -> null
-      }
+    return when (value) {
+      is PsiElement -> value.textRange
+      is TextRange -> value
+      else -> null
     }
   }
 
@@ -104,29 +112,8 @@ class MinimapHoverHitCheck(private val editor: Editor) {
     return Rectangle(0, y, width, heightPx)
   }
 
-  private fun resolveHoverData(entry: MinimapRenderEntry): HoverData? {
-    val element = entry.element ?: return null
-
-    return ReadAction.computeBlocking<HoverData?, RuntimeException> {
-      val value = element.value ?: return@computeBlocking null
-      if (!structureMarkerPolicy.isRelevantStructureElement(element, value)) return@computeBlocking null
-
-      val range = when (value) {
-        is PsiElement -> value.textRange
-        is TextRange -> value
-        else -> null
-      } ?: return@computeBlocking null
-
-      val presentation = element.presentation
-      val text = getText(presentation, value)
-      val icon = if (text != null) presentation.getIcon(false) else null
-
-      HoverData(range, text, icon)
-    }
-  }
-
   fun computeDeclarationWidth(entry: MinimapRenderEntry, context: MinimapRenderContext, metrics: MinimapLayoutMetrics?): Int {
-    val range = resolveRange(entry) ?: return context.panelWidth
+    val range = ReadAction.computeBlocking<TextRange?, RuntimeException> { resolveRange(entry) } ?: return context.panelWidth
     return computeDeclarationWidth(range.startOffset, context, metrics)
   }
 

@@ -1,9 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyPatternInspectionTest extends PyInspectionTestCase {
 
   public void testNoMatchArgsPositional() {
@@ -55,7 +60,7 @@ def f(p):
   public void testInvalidMatchArgsType() {
     doTestByText("""
 class D:
-    __match_args__ = <warning descr="Expected type 'tuple[str, ...]', got 'int' instead">42</warning>
+    __match_args__ = <warning descr="Expected type 'tuple[str, ...]', got 'Literal[42]' instead">42</warning>
         """);
   }
 
@@ -340,7 +345,7 @@ def f(c):
     doTestByText("""
                    x = 1
                    match 1:
-                       case <warning descr="Class pattern requires a class, but 'x' can be 'int'">x</warning>():
+                       case <warning descr="Class pattern requires a class, but 'x' can be 'Literal[1]'">x</warning>():
                            pass
                    """);
   }

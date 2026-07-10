@@ -13,7 +13,6 @@ import com.intellij.util.indexing.FileContent
 import com.intellij.util.indexing.ID
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.IOUtil
-import org.jetbrains.kotlin.analysis.decompiler.js.KotlinJavaScriptMetaFileType
 import org.jetbrains.kotlin.analysis.decompiler.konan.KlibLoadingMetadataCache
 import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
@@ -77,12 +76,11 @@ class KotlinPartialPackageNamesIndex : FileBasedIndexExtension<FqName, Name?>() 
         DefaultFileTypeSpecificInputFilter(
             JavaClassFileType.INSTANCE,
             KotlinFileType.INSTANCE,
-            KotlinJavaScriptMetaFileType,
             KotlinBuiltInFileType,
             KlibMetaFileType,
         )
 
-    override fun getVersion() = 5
+    override fun getVersion() = 6
 
     override fun traceKeyHashToVirtualFileMapping(): Boolean = true
 
@@ -91,7 +89,6 @@ class KotlinPartialPackageNamesIndex : FileBasedIndexExtension<FqName, Name?>() 
             KotlinFileType.INSTANCE -> this.psiFile.safeAs<KtFile>()?.packageFqName
             JavaClassFileType.INSTANCE -> ClsKotlinBinaryClassCache.getInstance()
                 .getKotlinBinaryClassHeaderData(this.file, this.content)?.packageNameWithFallback
-            KotlinJavaScriptMetaFileType -> this.fqNameFromJsMetadata()
             KotlinBuiltInFileType -> this.classIdFromKotlinMetadata()?.packageFqName
             KlibMetaFileType -> KlibLoadingMetadataCache.getInstance().getCachedPackageFragment(file)
                 ?.getExtension(KlibMetadataProtoBuf.fqName)?.let(::FqName)

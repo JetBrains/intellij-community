@@ -789,10 +789,10 @@ private suspend fun doUpdateAndShowResult(
 
   if (!showResults) {
     if (platformUpdates is PlatformUpdates.Loaded) {
-      UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, notIgnoredDownloaders, incompatiblePluginNames)
+      UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatesForPlugins, incompatiblePluginNames, notIgnoredDownloaders)
     }
     else {
-      UpdateSettingsEntryPointActionProvider.newPluginUpdates(notIgnoredDownloaders, customRepoPlugins)
+      UpdateSettingsEntryPointActionProvider.newPluginUpdates(updatesForPlugins, customRepoPlugins)
     }
     callback?.setDone()
     return null
@@ -814,7 +814,6 @@ private suspend fun doUpdateAndShowResult(
     else {
       showResults(
         project = project,
-        sessionId = updatesModel.sessionId,
         downloaders = notIgnoredDownloaders,
         pluginUpdates = updatesForPlugins,
         customRepoPlugins = customRepoPlugins,
@@ -840,7 +839,6 @@ private fun showErrors(project: Project?, @NlsContexts.DialogMessage message: St
 @RequiresEdt
 private suspend fun showResults(
   project: Project?,
-  sessionId: String,
   downloaders: List<PluginDownloader>,
   pluginUpdates: List<PluginUiModel>,
   customRepoPlugins: Collection<PluginUiModel>,
@@ -863,7 +861,7 @@ private suspend fun showResults(
       if (dialog.showAndGet()) {
         val selectedPlugins = dialog.getSelectedPluginModels()
         service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.IO) {
-          PluginUpdateHandler.getInstance().installUpdates(sessionId, selectedPlugins, dialog.contentPanel, dialog.finishCallback)
+          PluginUpdateHandler.getInstance().installUpdates(selectedPlugins, dialog.contentPanel, dialog.finishCallback)
         }
       }
     }
@@ -872,11 +870,11 @@ private suspend fun showResults(
       showUpdateDialog()
     }
     else {
-      UpdateSettingsEntryPointActionProvider.newPluginUpdates(downloaders, customRepoPlugins)
+      UpdateSettingsEntryPointActionProvider.newPluginUpdates(pluginUpdates, customRepoPlugins)
 
       if (userInitiated) {
         // offer to update only enabled plugins
-        showUpdatePluginsNotification(sessionId, pluginUpdates, project, showUpdateDialog)
+        showUpdatePluginsNotification(pluginUpdates, project, showUpdateDialog)
       }
     }
   }
@@ -917,7 +915,6 @@ private suspend fun showResults(
 }
 
 private fun showUpdatePluginsNotification(
-  sessionId: String,
   updatesForPlugins: List<PluginUiModel>,
   project: Project?,
   showUpdateDialog: () -> Unit,
@@ -941,13 +938,13 @@ private fun showUpdatePluginsNotification(
           updatesForPlugins.forEach {
             PluginUpdateSourceService.getInstance().setPluginUpdateSourceId(it)
           }
-          PluginUpdateHandler.getInstance().installUpdates(sessionId, updatesForPlugins, component, null)
+          PluginUpdateHandler.getInstance().installUpdates(updatesForPlugins, component, null)
         }
       },
       NotificationAction.createSimpleExpiring(IdeBundle.message("updates.plugins.dialog.action"), showUpdateDialog),
       NotificationAction.createSimpleExpiring(IdeBundle.message("updates.ignore.updates.link", updatesForPlugins.size)) {
         coroutineScope.launch {
-          PluginUpdateHandler.getInstance().ignorePluginUpdates(sessionId)
+          PluginUpdateHandler.getInstance().ignorePluginUpdates()
         }
       },
     ),
@@ -982,7 +979,7 @@ private fun showResults(
     showUpdateDialog()
   }
   else {
-    UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatesForPlugins, incompatiblePluginNames)
+    UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatesForPlugins.map { it.uiModel }, incompatiblePluginNames, updatesForPlugins)
 
     if (showNotification) {
       IdeUpdateUsageTriggerCollector.NOTIFICATION_SHOWN.log(project)

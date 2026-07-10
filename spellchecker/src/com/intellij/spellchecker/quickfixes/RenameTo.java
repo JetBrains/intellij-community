@@ -169,14 +169,18 @@ public class RenameTo extends IntentionAndQuickFixAction implements Iconable, Ev
     if (element == null) return null;
 
     TextRange range = getNameRelativeTypoRange(element, rangeRelativeToFile);
-    if (range.getEndOffset() > name.length()) return null;
+    if (range == null || range.getEndOffset() > name.length()) return null;
     return range.substring(name).equals(typo) ? range : null;
   }
 
-  private static @NotNull TextRange getNameRelativeTypoRange(PsiElement element, Segment rangeRelativeToFile) {
+  private static @Nullable TextRange getNameRelativeTypoRange(PsiElement element, Segment rangeRelativeToFile) {
     SpellcheckingStrategy strategy = SpellcheckingStrategy.getSpellcheckingStrategy(element);
     if (strategy == null) return TextRange.create(rangeRelativeToFile).shiftLeft(element.getTextRange().getStartOffset());
     TextRange range = strategy.getRenameIdentifierRange(element);
+
+    // This range can be incorrect in the case of programming language syntax errors.
+    // For example, if someone types something before the `import` statement in Java.
+    if (rangeRelativeToFile.getStartOffset() < element.getTextRange().getStartOffset()) return null;
     return range == null ? TextRange.create(rangeRelativeToFile).shiftLeft(element.getTextRange().getStartOffset())
                          : TextRange.create(rangeRelativeToFile).shiftLeft(range.getStartOffset());
   }

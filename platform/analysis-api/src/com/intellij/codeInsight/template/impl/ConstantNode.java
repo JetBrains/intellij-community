@@ -13,8 +13,10 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
+import java.util.List;
 
 public final class ConstantNode extends Expression {
   private final Result myValue;
@@ -88,6 +90,11 @@ public final class ConstantNode extends Expression {
   @Override
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
     return myLookupElements;
+  }
+
+  @Override
+  public @Unmodifiable @NotNull List<@NotNull String> getStaticLookupStrings() {
+    return ContainerUtil.map(myLookupElements, LookupElement::getLookupString);
   }
 
   @Override

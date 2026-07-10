@@ -15,7 +15,6 @@ import com.intellij.refactoring.changeSignature.CallerUsageInfo
 import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
@@ -36,9 +35,12 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.asJava.toLightMethods
+import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
+import org.jetbrains.kotlin.idea.base.psi.deleteValueArgument
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -63,10 +65,12 @@ import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtOperationExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -111,14 +115,14 @@ internal class KotlinFunctionCallUsage(
                 val map = mutableMapOf<Int, SmartPsiElementPointer<KtExpression>>()
 
                 val oldIdxMap: Map<KaValueParameterSymbol, Int> = partiallyAppliedSymbol.signature.valueParameters.mapIndexed { idx, s -> s.symbol to (idx + receiverOffset) }.toMap()
-                functionCall.argumentMapping.forEach { (expr, variableSymbol) ->
+                functionCall.valueArgumentMapping.forEach { (expr, variableSymbol) ->
                     map[oldIdxMap[variableSymbol.symbol]!!] = expr.createSmartPointer()
                 }
-                for (entry in oldIdxMap.entries) {
-                    if (!map.containsKey(entry.value)) {
-                        entry.key.defaultValue?.let {
+                for ((key, value) in oldIdxMap) {
+                    if (!map.containsKey(value)) {
+                        key.defaultValue?.let {
                             //create copy because the (unused) parameter might be removed during introduce parameter refactoring
-                            map[entry.value] = (it.copy() as KtExpression).createSmartPointer()
+                            map[value] = (it.copy() as KtExpression).createSmartPointer()
                         }
                     }
                 }
@@ -232,6 +236,13 @@ internal class KotlinFunctionCallUsage(
         }
 
         return result
+    }
+
+    internal fun canPreserveExplicitDispatchReceiver(changeInfo: KotlinChangeInfoBase): Boolean {
+        val element = element as? KtCallElement ?: return false
+        val argumentMapping = indexToExpMap ?: return false
+        val fullCallElement = element.getQualifiedExpressionForSelector() ?: element
+        return getExplicitDispatchReceiverToPreserve(changeInfo, fullCallElement, argumentMapping) != null
     }
 
     private fun changeNameIfNeeded(changeInfo: ChangeInfo, element: KtCallElement) {
@@ -373,28 +384,28 @@ internal class KotlinFunctionCallUsage(
                 val name = argInfo.name?.let { Name.identifier(it) }
 
                 if (argInfo.receiverValue != null) {
-                    addArgument(psiFactory.createArgument(psiFactory.createExpression(argInfo.receiverValue), name))
+                    appendValueArgument(psiFactory.createArgument(psiFactory.createExpression(argInfo.receiverValue), name))
                     continue
                 }
 
                 when (val resolvedArgument = argInfo.resolvedArgument) {
                     null -> {
                         val argument = argInfo.getArgumentByDefaultValue(element, allUsages, psiFactory)
-                        addArgument(argument)
+                        appendValueArgument(argument)
                     }
                     // TODO: Support Kotlin varargs
 
                     else -> {
                         val expression = resolvedArgument.element ?: continue
                         if (!expression.isPhysical) {
-                            addArgument(psiFactory.createArgument(expression, name))
+                            appendValueArgument(psiFactory.createArgument(expression, name))
                             continue
                         }
                         var newArgument: KtValueArgument = expression.parent as? KtValueArgument ?: continue
                         if (newArgument.getArgumentName()?.asName != name || newArgument is KtLambdaArgument) {
                             newArgument = psiFactory.createArgument(newArgument.getArgumentExpression(), name)
                         }
-                        addArgument(newArgument)
+                        appendValueArgument(newArgument)
                     }
                 }
             }
@@ -404,10 +415,16 @@ internal class KotlinFunctionCallUsage(
         } else {
             null
         }
+        val dispatchReceiverToPreserve = getExplicitDispatchReceiverToPreserve(changeInfo, fullCallElement, argumentMapping)
+        val receiverToUse = if (dispatchReceiverToPreserve != null) {
+            getLabeledThisReceiverArgument(receiver, element, psiFactory)
+        } else {
+            receiver
+        }
 
         newArgumentList.arguments.singleOrNull()?.let {
             if (it.getArgumentExpression() == null) {
-                newArgumentList.removeArgument(it)
+                newArgumentList.deleteValueArgument(it)
             }
         }
 
@@ -417,7 +434,7 @@ internal class KotlinFunctionCallUsage(
         val lambdaArgumentNotTouched = lastOldArgument is KtLambdaArgument && oldLastResolvedArgument == lastOldArgument
 
         if (lambdaArgumentNotTouched) {
-            newArgumentList.removeArgument(newArgumentList.arguments.last())
+            newArgumentList.deleteValueArgument(newArgumentList.arguments.last())
         } else {
             val lambdaArguments = element.lambdaArguments
             if (lambdaArguments.isNotEmpty()) {
@@ -433,12 +450,16 @@ internal class KotlinFunctionCallUsage(
         var newElement: KtElement = element
         if (newReceiverInfo?.oldIndex != originalReceiverInfo?.oldIndex) {
             val replacingElement: PsiElement = if (newReceiverInfo != null) {
-                psiFactory.createExpressionByPattern("$0.$1", receiver!!, element)
+                psiFactory.createExpressionByPattern("$0.$1", receiverToUse!!, element)
             } else {
                 element.copy()
             }
 
             newElement = fullCallElement.replace(replacingElement) as KtElement
+            if (dispatchReceiverToPreserve != null) {
+                newElement.qualifyNestedThisExpressions()
+                newElement = newElement.replace(psiFactory.createExpression("with(${dispatchReceiverToPreserve.text}) {\n${newElement.text}\n}")) as KtElement
+            }
             if (changeInfo is KotlinChangeInfo) {
                 val declaration = changeInfo.methodDescriptor.method
                 if (declaration is KtCallableDeclaration && !declaration.isTopLevelKtOrJavaMember()) {
@@ -449,11 +470,26 @@ internal class KotlinFunctionCallUsage(
             }
         }
 
-        for (string in contextValues) {
-            val elementToWrap = (newElement.parent as? KtQualifiedExpression)?.takeIf { it.selectorExpression == newElement } ?: newElement
-            elementToWrap.qualifyNestedThisExpressions()
-            newElement = elementToWrap.replace(psiFactory.createExpression("with ($string) {\n${elementToWrap.text}\n}")) as KtElement
+        fun wrapWithContextAndUpdate() {
+            val useContextFunctionForContextValues = newElement.languageVersionSettings.apiVersion >= ApiVersion.KOTLIN_2_2
+
+            fun getElementToWrap(): KtElement = (newElement.parent as? KtQualifiedExpression)?.takeIf { it.selectorExpression == newElement } ?: newElement
+
+            if (contextValues.isNotEmpty() && useContextFunctionForContextValues) {
+                val elementToWrap = getElementToWrap()
+                elementToWrap.qualifyNestedThisExpressions()
+                newElement =
+                    elementToWrap.replace(psiFactory.createExpression("context(${contextValues.joinToString()}) {\n${elementToWrap.text}\n}")) as KtElement
+            } else {
+                for (string in contextValues) {
+                    val elementToWrap = getElementToWrap()
+                    elementToWrap.qualifyNestedThisExpressions()
+                    newElement =
+                        elementToWrap.replace(psiFactory.createExpression("with($string) {\n${elementToWrap.text}\n}")) as KtElement
+                }
+            }
         }
+        wrapWithContextAndUpdate()
 
         val newCallExpression = newElement.safeAs<KtExpression>()?.getPossiblyQualifiedCallExpression()
         if (newCallExpression != null && allowAnalysisFromWriteAction {
@@ -473,13 +509,37 @@ internal class KotlinFunctionCallUsage(
         return newElement
     }
 
+    private fun getLabeledThisReceiverArgument(
+        receiver: PsiElement?,
+        element: KtElement,
+        psiFactory: KtPsiFactory,
+    ): PsiElement? {
+        if (receiver !is KtThisExpression || receiver.labelQualifier != null) return receiver
+        val callableName = element.getStrictParentOfType<KtCallableDeclaration>()?.name ?: return receiver
+        return psiFactory.createExpression("this@$callableName")
+    }
+
+    private fun getExplicitDispatchReceiverToPreserve(
+        changeInfo: KotlinChangeInfoBase,
+        fullCallElement: KtElement,
+        argumentMapping: Map<Int, SmartPsiElementPointer<KtExpression>>,
+    ): KtExpression? {
+        if (changeInfo.oldReceiverInfo != null || changeInfo.receiverParameterInfo == null) return null
+        if (changeInfo.newParameters.any { it != changeInfo.receiverParameterInfo && !it.isContextParameter }) return null
+        if (callee !is KtCallableDeclaration || callee.isTopLevelKtOrJavaMember()) return null
+        if (fullCallElement !is KtQualifiedExpression) return null
+
+        val resolvedReceiver = (fullCallElement as? KtDotQualifiedExpression)?.receiverExpression?.mainReference?.resolve()
+        if (resolvedReceiver is KtObjectDeclaration) return null
+        return argumentMapping[Int.MAX_VALUE]?.element?.takeIf { it.isPhysical }
+    }
+
     private fun changeArgumentNames(changeInfo: KotlinChangeInfoBase, element: KtCallElement) {
         for (argument in element.valueArguments) {
             val argumentName = argument.getArgumentName()
             val argumentNameExpression = argumentName?.referenceExpression ?: continue
             val referencedName = argumentNameExpression.getReferencedName()
-            val oldParameterIndex = changeInfo.getOldParameterIndex(referencedName) ?: continue
-            val parameterInfo = changeInfo.newParameters.find { it.oldIndex == oldParameterIndex } ?: continue
+            val parameterInfo = changeInfo.newParameters.find { it.oldName == referencedName } ?: continue
             val identifier = argumentNameExpression.getIdentifier() ?: continue
             val newName = if (callee is KtCallableDeclaration) parameterInfo.getInheritedName(callee) else parameterInfo.name
             identifier.replace(KtPsiFactory(project).createIdentifier(newName))
@@ -504,18 +564,18 @@ internal class KotlinFunctionCallUsage(
 
 
         fun needSeparateVariable(element: PsiElement): Boolean {
-            return when {
-                element is KtConstantExpression || element is KtThisExpression || element is KtSimpleNameExpression -> false
-                element is KtBinaryExpression && OperatorConventions.ASSIGNMENT_OPERATIONS.contains(element.operationToken) -> true
-                element is KtUnaryExpression && OperatorConventions.INCREMENT_OPERATIONS.contains(element.operationToken) -> true
-                element is KtCallExpression -> element.calleeExpression?.mainReference?.resolve() is KtConstructor<*>
+            return when (element) {
+                is KtConstantExpression, is KtThisExpression, is KtSimpleNameExpression -> false
+                is KtBinaryExpression if OperatorConventions.ASSIGNMENT_OPERATIONS.contains(element.operationToken) -> true
+                is KtUnaryExpression if OperatorConventions.INCREMENT_OPERATIONS.contains(element.operationToken) -> true
+                is KtCallExpression -> element.calleeExpression?.mainReference?.resolve() is KtConstructor<*>
                 else -> element.children.any { needSeparateVariable(it) }
             }
         }
 
         val replacements = ArrayList<Pair<KtExpression, KtExpression>>()
         loop@ for ((ref, paramIdx) in referenceMap.entries) {
-            var addReceiver: Boolean = paramIdx == Int.MAX_VALUE
+            val addReceiver: Boolean = paramIdx == Int.MAX_VALUE
             var argumentExpression = indexToExpMap?.get(paramIdx)?.element ?: continue
 
             if (argumentExpression.isPhysical &&  //don't create variable for default value expression

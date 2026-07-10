@@ -1,6 +1,7 @@
 <idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
@@ -17,6 +18,23 @@
     <module name="intellij.platform.vcs.shared"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint name="checkinHandlerFactory"
+                    interface="com.intellij.openapi.vcs.checkin.CheckinHandlerFactory"
+                    dynamic="true"/>
+    <extensionPoint name="vcsCheckinHandlerFactory"
+                    interface="com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory"
+                    dynamic="true"/>
+    <extensionPoint name="checkoutListener"
+                    interface="com.intellij.openapi.vcs.checkout.CheckoutListener"
+                    dynamic="true"/>
+    <extensionPoint name="vcsAwareCheckoutListener"
+                    interface="com.intellij.openapi.vcs.checkout.VcsAwareCheckoutListener"
+                    dynamic="true"/>
+    <extensionPoint name="checkoutCompletedListener"
+                    interface="com.intellij.openapi.vcs.checkout.CheckoutListener"
+                    dynamic="true"/>
+  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectSettings service="com.intellij.openapi.vcs.VcsSharedProjectSettings"/>
   </extensions>

@@ -5,5 +5,5 @@ import kotlin.test.*
 fun foo() {
     val a = "a"
     val b = "a"
-    assertTrue(<caret>a == b, "message")
+    assert<caret>True(a == b, "message")
 }

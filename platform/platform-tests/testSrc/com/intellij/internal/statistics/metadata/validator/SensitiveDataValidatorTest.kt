@@ -20,8 +20,6 @@ import com.jetbrains.fus.reporting.api.RecorderDataValidationRule
 import com.jetbrains.fus.reporting.api.ValidationResultType
 import com.jetbrains.fus.reporting.api.emptyGroupValidators
 import junit.framework.TestCase
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import org.junit.Assert
 import org.junit.Test
 import java.util.Collections
@@ -579,13 +577,15 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
       override fun getSkipAnonymizationIds(): Set<String> = throw NotImplementedError()
       override fun getSystemDataRulesRevisions(): RecorderDataValidationRule = throw NotImplementedError()
       override fun isUnreachable(): Boolean = true
-      override fun reload() = Unit
-      override fun update(): Boolean = false
-      override suspend fun update(scope: CoroutineScope): Job = throw NotImplementedError()
+      override suspend fun reload() = Unit
+      override suspend fun scheduleUpdate() = Unit
+      override suspend fun update(): Boolean = false
     }
 
     val components = createFusComponents(object : FileStorage {
       override fun exists(path: String): Boolean = false
+      override fun list(path: String): List<String> = emptyList()
+      override fun delete(path: String) = Unit
       override fun openFileHandle(path: String, mode: FileStorageMode): FileHandle = throw NotImplementedError()
       override fun read(path: String): ByteArray = ByteArray(0)
       override fun write(path: String, content: ByteArray) = throw NotImplementedError()

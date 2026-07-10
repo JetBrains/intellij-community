@@ -1,13 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Components;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.lang.LanguageASTFactory;
 import com.intellij.testFramework.ParsingTestCase;
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect;
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationParserDefinition;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
-import com.jetbrains.python.documentation.doctest.PyDocstringTokenSetContributor;
+import com.jetbrains.python.documentation.doctest.PyDoctestTokenSetContributor;
 import com.jetbrains.python.psi.PyEllipsisLiteralExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PythonVisitorFilter;
@@ -21,6 +25,9 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
+@Subsystems.CodeInsight
+@Components.Parsing
+@Layers.Functional
 public class PyFunctionTypeAnnotationParsingTest extends ParsingTestCase {
   public PyFunctionTypeAnnotationParsingTest() {
     super("functionTypeComment/parsing", "functionTypeComment", new PyFunctionTypeAnnotationParserDefinition(), new PythonParserDefinition());
@@ -32,7 +39,7 @@ public class PyFunctionTypeAnnotationParsingTest extends ParsingTestCase {
     getApplication().registerService(PyElementTypesFacade.class, PyElementTypesFacadeImpl.class);
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
-    registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PyDocstringTokenSetContributor());
+    registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PyDoctestTokenSetContributor());
     addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), new PythonASTFactory());
   }
 

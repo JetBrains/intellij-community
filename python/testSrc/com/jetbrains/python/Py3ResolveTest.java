@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -35,6 +38,8 @@ import com.jetbrains.python.pyi.PyiUtil;
 import java.io.IOException;
 
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class Py3ResolveTest extends PyResolveTestCase {
 
   @Override
@@ -45,7 +50,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
   }
 
   public void testObjectMethods() {  // PY-1494
-    assertResolvesTo(PyFunction.class, "__repr__");
+    assertResolvesTo(PyFunction.class, PyNames.DUNDER_REPR);
   }
 
   // PY-5499

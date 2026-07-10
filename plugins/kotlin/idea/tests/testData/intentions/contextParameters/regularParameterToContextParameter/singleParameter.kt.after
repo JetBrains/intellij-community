@@ -1,6 +1,6 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters
-// K2_AFTER_ERROR: Multiple potential context arguments for 'p: String' in scope.
-// K2_AFTER_ERROR: Multiple potential context arguments for 'p: String' in scope.
+// K2_AFTER_ERROR: AMBIGUOUS_CONTEXT_ARGUMENT
+// K2_AFTER_ERROR: AMBIGUOUS_CONTEXT_ARGUMENT
 
 context(p: String)
 fun foo() {
@@ -11,7 +11,7 @@ fun foo() {
 context(c: String)
 fun String.bar() {
     foo()
-    with("baz") {
+    context("baz") {
         foo()
     }
     foo()

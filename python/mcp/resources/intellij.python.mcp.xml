@@ -1,0 +1,16 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <plugin id="com.intellij.mcpServer"/>
+    <module name="intellij.python.community.common"/>
+    <module name="intellij.python.community.impl"/>
+    <module name="intellij.python.community.impl.poetry.backend"/>
+    <module name="intellij.python.hatch"/>
+    <module name="intellij.python.pyproject"/>
+    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.uv.backend"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <mcpServer.mcpToolset implementation="com.intellij.python.mcp.environment.PythonEnvironmentMcpToolset"/>
+  </extensions>
+</idea-plugin>

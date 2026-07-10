@@ -29,11 +29,12 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/references",
         "@lib//:kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-analysis-api",
         "@lib//:kotlinc-analysis-api-impl-base",
         "//libraries/asm",
-        "@lib//:jb-jdi",
+        "//java/debugger/jb-jdi:java-debugger-libraries-jb-jdi",
         "//platform/analysis-api:analysis",
         "//platform/util/concurrency",
         "//platform/core-api:core",
@@ -97,7 +98,9 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":core",
+        "//plugins/kotlin/references:references_test_lib",
         "//libraries/asm:asm_test_lib",
+        "//java/debugger/jb-jdi:java-debugger-libraries-jb-jdi_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/core-api:core_test_lib",

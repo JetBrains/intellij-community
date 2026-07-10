@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":tests_test_lib"],
+)
+### skip generation section `test intellij.textmate.tests`
+
 ### auto-generated section `build intellij.textmate.tests` start
 
 jvm_library(
@@ -70,11 +78,21 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//spellchecker",
         "//spellchecker:spellchecker_test_lib",
+        "//libraries/misc/plugin",
+        "//libraries/misc/plugin:plugin_test_lib",
+        "//libraries/lucene.common",
+        "//libraries/lucene.common:lucene.common_test_lib",
+        "//platform/vcs/plugin",
+        "//platform/vcs/plugin:plugin_test_lib",
+        "//plugins/grazie",
+        "//plugins/grazie:grazie_test_lib",
         "//plugins/grazie/src:core",
         "//plugins/grazie/src:core_test_lib",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/ide-core",
+        "//platform/structure-view-impl/plugin",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
         "//plugins/textmate/plugin",
         "//plugins/textmate/plugin:plugin_test_lib",
         "//plugins/textmate/backend",
@@ -82,6 +100,8 @@ jvm_library(
         "//plugins/textmate/core/tests",
         "//plugins/textmate/core/tests:tests_test_lib",
         "@lib//:kotlin-test-junit5",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.textmate.tests` end
@@ -94,11 +114,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.textmate.tests` end
-
-### auto-generated section `test intellij.textmate.tests` start
-
-jps_test(
-    name = "tests_test",
-    runtime_deps = [":tests_test_lib"],
-)
-### auto-generated section `test intellij.textmate.tests` end

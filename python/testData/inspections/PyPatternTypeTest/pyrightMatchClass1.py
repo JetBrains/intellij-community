@@ -155,15 +155,15 @@ def test_bound_typevar(value_to_match: TFloat) -> TFloat:
 #         case int() as a1:
 #             assert_type(a1, int)
 #             assert_type(value_to_match, int)
-# 
+#
 #         case float() as a2:
 #             assert_type(a2, float)
 #             assert_type(value_to_match, float)
-# 
+#
 #         case str() as a3:
 #             assert_type(a3, str)
 #             assert_type(value_to_match, str)
-# 
+#
 #     return value_to_match
 
 
@@ -266,22 +266,22 @@ def func5(subj: object):
 # # Test the auto-generation of __match_args__ for named tuples.
 # NT1 = NamedTuple("NT1", [("val1", int), ("val2", complex)])
 # NT2 = NamedTuple("NT2", [("val1", int), ("val2", str), ("val3", float)])
-# 
-# 
+#
+#
 # def func6(subj: object):
 #     match subj:
 #         case NT1(a, b):
 #             assert_type(a, int)
 #             assert_type(b, complex)
 #             assert_type(subj, NT1)
-# 
+#
 #         case NT2(a, b, c):
 #             assert_type(a, int)
 #             assert_type(b, str)
 #             assert_type(c, float)
 #             assert_type(subj, NT2)
-# 
-# 
+#
+#
 # def func7(subj: object):
 #     match subj:
 #         case complex(real=a, imag=b):
@@ -289,24 +289,21 @@ def func5(subj: object):
 #             assert_type(b, float)
 
 
-# T2 = TypeVar("T2")
-# 
-# 
-# class Parent(Generic[T]): ...
-# 
-# 
-# class Child1(Parent[T]): ...
-# 
-# 
-# class Child2(Parent[T], Generic[T, T2]): ...
-# 
-# 
+class Parent[T2]: ...
+
+
+class Child1[T](Parent[T]): ...
+
+
+class Child2[T, T2](Parent[T]): ...
+
+
 # def func8(subj: Parent[int]):
 #     match subj:
 #         case Child1() as a1:
 #             assert_type(a1, Child1[int])
 #             assert_type(subj, Child1[int])
-# 
+#
 #         case Child2() as b1:
 #             assert_type(b1, Child2[int, Unknown])
 #             assert_type(subj, Child2[int, Unknown])
@@ -390,15 +387,15 @@ def func12(subj: int, flt_cls: type[float], union_val: float | int):
 #         case tuple((1,)) as a:
 #             assert_type(subj, Never)
 #             assert_type(a, Never)
-# 
+#
 #         case tuple((0, 0)) as b:
 #             assert_type(subj, Never)
 #             assert_type(b, Never)
-# 
+#
 #         case tuple((0,)) as c:
 #             assert_type(subj, tuple[Literal[0]])
 #             assert_type(c, tuple[Literal[0]])
-# 
+#
 #         case d:
 #             assert_type(subj, Never)
 #             assert_type(d, Never)
@@ -407,31 +404,31 @@ def func12(subj: int, flt_cls: type[float], union_val: float | int):
 # class ClassE(Generic[T]):
 #     __match_args__ = ("x",)
 #     x: list[T]
-# 
-# 
+#
+#
 # class ClassF(ClassE[T]):
 #     pass
-# 
-# 
+#
+#
 # def func14(subj: ClassE[T]) -> T | None:
 #     match subj:
 #         case ClassF(a):
 #             assert_type(subj, ClassF[T])
 #             assert_type(a, list[T])
 #             return a[0]
-# 
-# 
+#
+#
 # class IntPair(tuple[int, int]):
 #     pass
-# 
-# 
+#
+#
 # def func15(x: IntPair | None) -> None:
 #     match x:
 #         case IntPair((y, z)):
 #             assert_type(y, int)
 #             assert_type(z, int)
-# 
-# 
+#
+#
 # def func16(x: str | float | bool | None):
 #     match x:
 #         case str(v) | bool(v) | float(v):
@@ -441,8 +438,8 @@ def func12(subj: int, flt_cls: type[float], union_val: float | int):
 #             assert_type(v, int | None)
 #             assert_type(x, int | None)
 #     assert_type(x, str | bool | float | int | None)
-# 
-# 
+#
+#
 # def func17(x: str | float | bool | None):
 #     match x:
 #         case str() | float() | bool():
@@ -450,8 +447,8 @@ def func12(subj: int, flt_cls: type[float], union_val: float | int):
 #         case _:
 #             assert_type(x, int | None)
 #     assert_type(x, str | float | bool | int | None)
-# 
-# 
+#
+#
 # def func18(x: str | float | bool | None):
 #     match x:
 #         case str(v) | float(v) | bool(v):
@@ -460,32 +457,32 @@ def func12(subj: int, flt_cls: type[float], union_val: float | int):
 #         case _:
 #             assert_type(x, int | None)
 #     assert_type(x, str | float | bool | int | None)
-# 
-# 
+#
+#
 # T5 = TypeVar("T5", complex, str)
-# 
-# 
+#
+#
 # def func19(x: T5) -> T5:
 #     match x:
 #         case complex():
 #             return x
 #         case str():
 #             return x
-# 
+#
 #     assert_type(x, float | int)
 #     return x
-# 
-# 
+#
+#
 # T6 = TypeVar("T6", bound=complex | str)
-# 
-# 
+#
+#
 # def func20(x: T6) -> T6:
 #     match x:
 #         case complex():
 #             return x
 #         case str():
 #             return x
-# 
+#
 #     assert_type(x, float | int)
 #     return x
 

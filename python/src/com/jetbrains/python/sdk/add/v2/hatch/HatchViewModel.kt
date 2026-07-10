@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.io.path.isDirectory
 
-class HatchViewModel<P : PathHolder>(
+internal class HatchViewModel<P : PathHolder>(
   val fileSystem: FileSystem<P>,
   propertyGraph: PropertyGraph,
   val projectPathFlows: ProjectPathFlows,

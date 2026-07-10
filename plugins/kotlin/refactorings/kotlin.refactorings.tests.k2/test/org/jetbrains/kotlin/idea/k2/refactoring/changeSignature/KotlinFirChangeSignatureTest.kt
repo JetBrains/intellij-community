@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.BaseKotlinChangeSignatureTest
 import org.jetbrains.kotlin.idea.test.Diagnostic
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
@@ -231,6 +230,17 @@ class KotlinFirChangeSignatureTest :
         addParameter(newIntParameter)
     }
 
+    fun testAddMultipleContextParameters() = doTest {
+        val psiFactory = KtPsiFactory(project)
+        val newIntParameter = createKotlinIntParameter(defaultValueForCall = kotlinDefaultIntValue,
+                                                       defaultValueAsDefaultParameter = true)
+        newIntParameter.isContextParameter = true
+        val newStringParameter = createKotlinStringParameter("s", defaultValueForCall = psiFactory.createExpression("\"ctx\""))
+        newStringParameter.isContextParameter = true
+        addParameter(newIntParameter)
+        addParameter(newStringParameter)
+    }
+
     fun testToContextParameterExtensionTopLevelFunctionReceiver() = doTest {
         newParameters[0].isContextParameter = true
         receiverParameterInfo = null
@@ -277,6 +287,12 @@ class KotlinFirChangeSignatureTest :
     fun testFromContextParameterToParameter() = doTest {
         val parameterInfo = newParameters[0]
         parameterInfo.isContextParameter = false
+    }
+
+    fun testContextParameterToReceiver() = doTest {
+        val parameterInfo = newParameters[0]
+        parameterInfo.isContextParameter = false
+        receiverParameterInfo = parameterInfo
     }
 
     fun testDeleteUsedContextParameter() = doTestConflict {

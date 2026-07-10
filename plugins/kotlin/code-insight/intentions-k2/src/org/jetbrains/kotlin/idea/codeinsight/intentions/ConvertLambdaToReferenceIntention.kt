@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.contextParameters
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -377,6 +378,8 @@ private fun isConvertibleCallInLambdaByAnalyze(
     val partiallyAppliedSymbol =
         calleeReferenceExpression.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
     val symbol = partiallyAppliedSymbol?.symbol ?: return false
+
+    if (symbol.contextParameters.isNotEmpty()) return false
 
     if (explicitReceiver?.isReferenceToPackage() == true) return false
 

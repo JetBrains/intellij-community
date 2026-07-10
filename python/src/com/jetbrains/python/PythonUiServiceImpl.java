@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.messages.MessagesService;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
@@ -29,10 +30,12 @@ import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsagePresentation;
@@ -50,30 +53,33 @@ import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.ui.PyUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
 import java.awt.Component;
 import java.awt.Font;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.List;
 
 public final class PythonUiServiceImpl extends PythonUiService {
   @Override
   public void showBalloonInfo(Project project, @PopupContent String message) {
-    PyUiUtil.showBalloon(project, message, MessageType.INFO);
+    showBalloon(project, message, MessageType.INFO);
   }
 
   @Override
   public void showBalloonWarning(Project project, @PopupContent String message) {
-    PyUiUtil.showBalloon(project, message, MessageType.WARNING);
+    showBalloon(project, message, MessageType.WARNING);
   }
 
 
   @Override
   public void showBalloonError(Project project, @PopupContent String message) {
-    PyUiUtil.showBalloon(project, message, MessageType.ERROR);
+    showBalloon(project, message, MessageType.ERROR);
   }
 
   @Override
@@ -142,6 +148,28 @@ public final class PythonUiServiceImpl extends PythonUiService {
   @Override
   public void annotateTypesIntention(Editor editor, PyFunction function) {
     PyAnnotateTypesIntention.annotateTypes(editor, function);
+  }
+
+  /**
+   * Shows an information balloon in a reasonable place at the top right of the window.
+   *
+   * @param project     our project
+   * @param message     the text, HTML markup allowed
+   * @param messageType message type, changes the icon and the background.
+   */
+  private static void showBalloon(@NotNull Project project, @NotNull @PopupContent String message, @NotNull MessageType messageType) {
+    // ripped from com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier
+    final JFrame frame = WindowManager.getInstance().getFrame(project.isDefault() ? null : project);
+    if (frame == null) return;
+    final JComponent component = frame.getRootPane();
+    if (component == null) return;
+    final Rectangle rect = component.getVisibleRect();
+    final Point p = new Point(rect.x + rect.width - 10, rect.y + 10);
+    final RelativePoint point = new RelativePoint(component, p);
+
+    JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, messageType.getDefaultIcon(), messageType.getPopupBackground(), null)
+      .setShowCallout(false).setCloseButtonEnabled(true)
+      .createBalloon().show(point, Balloon.Position.atLeft);
   }
 
   @Override

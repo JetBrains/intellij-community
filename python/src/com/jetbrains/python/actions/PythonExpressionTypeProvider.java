@@ -12,6 +12,7 @@ import com.jetbrains.python.documentation.PyTypeRenderer.Feature;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -19,7 +20,8 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public final class PythonExpressionTypeProvider extends ExpressionTypeProvider<PyExpression> {
+@ApiStatus.Internal
+final class PythonExpressionTypeProvider extends ExpressionTypeProvider<PyExpression> {
   @Override
   public @NotNull String getInformationHint(@NotNull PyExpression element) {
     TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());

@@ -76,7 +76,7 @@ class ToolchainPanel(data: ComponentData) : SettingsDialogUiComponent(data) {
     getToolchainField("Debugger").click()
     keyboard { key(KeyEvent.VK_DOWN) }
     driver.ui.popup("//div[@class='CustomComboPopup']").waitFound().list().clickItem(debugger.getDebuggerFieldName())
-    if (debugger.name.startsWith("CUSTOM")) {
+    if (debugger.shouldTypePath) {
       getToolchainField("Debugger").text = debugger.getDebuggerPath()
     }
   }

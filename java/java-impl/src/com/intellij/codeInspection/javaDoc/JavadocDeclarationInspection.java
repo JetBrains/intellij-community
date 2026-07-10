@@ -662,11 +662,14 @@ public final class JavadocDeclarationInspection extends LocalInspectionTool {
       if (valueElement == null) return;
       PsiSnippetDocTagBody body = valueElement.getBody();
       if (body == null) return;
+      boolean isMarkdown = PsiUtil.isInMarkdownDocComment(element);
+      String newText = isMarkdown
+                       ? StringUtil.join("/// {@snippet :\n" + StreamEx.split(myText, '\n', false)
+        .map(line -> "/// " + line).joining("\n") + "}\n")
+                       : StringUtil.join("/**\n* {@snippet :\n" + StreamEx.split(myText, '\n', false)
+                         .map(line -> "* " + line).joining("\n") + "}*/");
       PsiDocComment comment =
-        JavaPsiFacade.getElementFactory(project).createDocCommentFromText(StringUtil.join(
-          "/**\n* {@snippet :\n" + StreamEx.split(myText, '\n', false)
-            .map(line -> "* " + line).joining("\n") + "}*/"
-        ));
+        JavaPsiFacade.getElementFactory(project).createDocCommentFromText(newText);
       PsiSnippetDocTag newSnippet = PsiTreeUtil.getChildOfType(comment, PsiSnippetDocTag.class);
       if (newSnippet == null) return;
       PsiSnippetDocTagValue newValueElement = Objects.requireNonNull(newSnippet.getValueElement());

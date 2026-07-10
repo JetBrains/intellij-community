@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.Disposable;
@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.ElfCandidate;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.update.Activatable;
@@ -25,6 +26,7 @@ import java.util.List;
  *
  * @see LineLayout
  */
+@ElfCandidate
 final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   private static final Logger LOG = Logger.getInstance(TextLayoutCache.class);
 
@@ -36,7 +38,6 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   private final LineLayout myBidiNotRequiredMarker;
   private ArrayList<LineLayout> myLines = new ArrayList<>();
   private int myDocumentChangeOldEndLine;
-  private long myDocumentStamp;
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final ObjectLinkedOpenHashSet<LineLayout.Chunk> laidOutChunks = new ObjectLinkedOpenHashSet<>(MAX_CHUNKS_IN_ACTIVE_EDITOR);
@@ -134,7 +135,6 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
 
   @NotNull
   LineLayout getLineLayout(int line) {
-    resetIfOutdated(line);
     checkDisposed();
     if (line >= myLines.size()) LOG.error("Unexpected cache state", new Attachment("editorState.txt", myView.getEditor().dumpState()));
     LineLayout result = myLines.get(line);
@@ -146,7 +146,6 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   }
 
   boolean hasCachedLayoutFor(int line) {
-    resetIfOutdated(line);
     LineLayout layout = myLines.get(line);
     return layout != null && layout != myBidiNotRequiredMarker;
   }
@@ -156,7 +155,6 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   }
 
   void onChunkAccess(@NotNull LineLayout.Chunk chunk) {
-    resetIfOutdated();
     if (laidOutChunks.addAndMoveToFirst(chunk) && laidOutChunks.size() > getChunkCacheSizeLimit()) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Clearing chunk for " + myView.getEditor().getVirtualFile());
@@ -183,20 +181,6 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   private void checkDisposed() {
     if (myLines == null) {
       myView.getEditor().throwDisposalError("Editor is already disposed");
-    }
-  }
-
-  private void resetIfOutdated() {
-    if (myView.isAd() && myDocumentStamp != myDocument.getModificationStamp()) {
-      resetToDocumentSize(true);
-      myDocumentStamp = myDocument.getModificationStamp();
-    }
-  }
-
-  private void resetIfOutdated(int line) {
-    if (myView.isAd() && (myDocumentStamp != myDocument.getModificationStamp() || line >= myLines.size())) {
-      resetToDocumentSize(true);
-      myDocumentStamp = myDocument.getModificationStamp();
     }
   }
 }

@@ -19,7 +19,7 @@ import one.util.streamex.EntryStream;
 
 public class MapKeyValue {
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     final int max = EntryStream.of(1, 1, 2, 4, 3, 9)
         .mapKeyValue((k, v) -> k + v)
         .max(Integer::compareTo)

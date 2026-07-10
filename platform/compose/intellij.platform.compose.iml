@@ -46,7 +46,7 @@
     <orderEntry type="module" module-name="intellij.libraries.compose.runtime.desktop" />
     <orderEntry type="module" module-name="intellij.libraries.skiko" />
     <orderEntry type="library" exported="" name="jetbrains.compose.components.ui.tooling.preview.desktop" level="project" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />

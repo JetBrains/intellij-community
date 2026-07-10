@@ -62,6 +62,6 @@ public final class DocumentFragmentTooltipRenderer implements TooltipRenderer {
     if (endOffset < startOffset) return null;
 
     TextRange textRange = new TextRange(startOffset, endOffset);
-    return EditorFragmentComponent.showEditorFragmentHintAt(editor, textRange, p.y, false, false, true, true);
+    return EditorFragmentHint.showAt(editor, textRange, p.y, false, false, true, true);
   }
 }

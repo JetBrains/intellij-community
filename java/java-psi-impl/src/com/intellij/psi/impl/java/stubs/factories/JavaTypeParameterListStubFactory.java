@@ -5,20 +5,21 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
+import com.intellij.psi.impl.java.stubs.PsiTypeParameterListStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterListStubImpl;
 import com.intellij.psi.stubs.LightStubElementFactory;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaTypeParameterListStubFactory implements LightStubElementFactory<PsiTypeParameterListStubImpl, PsiTypeParameterList> {
+public class JavaTypeParameterListStubFactory implements LightStubElementFactory<PsiTypeParameterListStub, PsiTypeParameterList> {
   @Override
   public @NotNull PsiTypeParameterListStubImpl createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     return new PsiTypeParameterListStubImpl(parentStub);
   }
 
   @Override
-  public PsiTypeParameterList createPsi(@NotNull PsiTypeParameterListStubImpl stub) {
+  public PsiTypeParameterList createPsi(@NotNull PsiTypeParameterListStub stub) {
     return JavaStubElementType.getFileStub(stub).getPsiFactory().createTypeParameterList(stub);
   }
   

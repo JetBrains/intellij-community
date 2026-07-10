@@ -30,6 +30,7 @@ import com.intellij.xml.util.JspFileTypeUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -218,7 +219,7 @@ public abstract class XmlExtension {
   /**
    * @return list of files containing char entity definitions to be used for completion and resolution within a specified XML file
    */
-  public @NotNull List<@NotNull XmlFile> getCharEntitiesDTDs(@NotNull XmlFile file) {
+  public @NotNull @Unmodifiable List<@NotNull XmlFile> getCharEntitiesDTDs(@NotNull XmlFile file) {
     XmlDocument document = file.getDocument();
     if (HtmlUtil.isHtml5Document(document)) {
       return ContainerUtil.packNullables(XmlUtil.findXmlFile(file, Html5SchemaProvider.getCharsDtdLocation()));

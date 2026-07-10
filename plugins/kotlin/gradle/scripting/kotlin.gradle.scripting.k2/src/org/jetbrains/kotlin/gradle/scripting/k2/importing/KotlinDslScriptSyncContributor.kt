@@ -12,10 +12,8 @@ import org.jetbrains.kotlin.gradle.scripting.k2.definition.withIdeKeys
 import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleKotlinScriptEntitySource
 import org.jetbrains.kotlin.gradle.scripting.shared.definition.GradleDefinitionsParams
 import org.jetbrains.kotlin.gradle.scripting.shared.definition.loadGradleDefinitions
-import org.jetbrains.kotlin.gradle.scripting.shared.importing.collectErrors
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.getKotlinDslScripts
-import org.jetbrains.kotlin.gradle.scripting.shared.importing.kotlinDslSyncListenerInstance
-import org.jetbrains.kotlin.gradle.scripting.shared.importing.saveGradleBuildEnvironment
+import org.jetbrains.kotlin.gradle.scripting.shared.importing.reportErrors
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
@@ -32,22 +30,8 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
         context: ProjectResolverContext, storage: ImmutableEntityStorage
     ): ImmutableEntityStorage {
         val project = context.project
-        val taskId = context.externalSystemTaskId
-        val tasks = kotlinDslSyncListenerInstance?.tasks ?: return storage
-        val sync = synchronized(tasks) { tasks[taskId] }
 
-        val models = getKotlinDslScripts(context).toList()
-
-        if (sync != null) {
-            synchronized(sync) {
-                sync.models.addAll(models)
-                if (models.collectErrors().any()) {
-                    sync.failed = true
-                }
-            }
-        }
-
-        saveGradleBuildEnvironment(context)
+        val models = getKotlinDslScripts(context)
 
         if (models.isEmpty()) return storage
 
@@ -87,8 +71,10 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
         val definitions = loadGradleDefinitions(gradleDefinitionsParams).map { it.withIdeKeys() }
 
         val entitySource = GradleKotlinDslScriptEntitySource(context.projectPath, phase)
-        return GradleKotlinScriptEntityProvider.getInstance(project)
+        val updatedStorage = GradleKotlinScriptEntityProvider.getInstance(project)
             .getUpdatedStorage(builder, entitySource, gradleScripts, definitions, javaHome.pathString)
+        reportErrors(project, context.externalSystemTaskId, models)
+        return updatedStorage
     }
 }
 

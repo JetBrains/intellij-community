@@ -4,17 +4,14 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -175,23 +172,6 @@ public final class IdeBackgroundUtil {
   static void initFramePainters(@NotNull IdeGlassPaneImpl glassPane) {
     PainterHelper painters = glassPane.getNamedPainters(FRAME_PROP);
     PainterHelper.initWallpaperPainter(FRAME_PROP, painters);
-
-    painters.addPainter(new AbstractPainter() {
-      EditorEmptyTextPainter p = null;
-
-      @Override
-      public boolean needsRepaint() {
-        return true;
-      }
-
-      @Override
-      public void executePaint(@NotNull Component component, @NotNull Graphics2D g) {
-        if (p == null) {
-          p = ApplicationManager.getApplication().getService(EditorEmptyTextPainter.class);
-        }
-        p.paintEmptyText((JComponent)component, g);
-      }
-    }, null);
   }
 
   public static void resetBackgroundImagePainters() {

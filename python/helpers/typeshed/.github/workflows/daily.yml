@@ -43,7 +43,7 @@ jobs:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
         uses: actions/setup-python@v6
         with:
@@ -67,7 +67,7 @@ jobs:
         shard-index: [0, 1, 2, 3]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
@@ -115,26 +115,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout typeshed
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: typeshed
       - name: Checkout stub_uploader
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: typeshed-internal/stub_uploader
           path: stub_uploader
-      - uses: actions/setup-python@v6
-        with:
-          # Keep in sync with stub_uploader's check_scripts.yml workflow.
-          python-version: "3.13"
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@v8.2.0
         with:
           version-file: "typeshed/requirements-tests.txt"
       - name: Run tests
         run: |
           cd stub_uploader
-          uv pip install -r requirements.txt --system
-          python -m pytest tests
+          # Keep Python version in sync with stub_uploader's check_scripts.yml workflow.
+          uv run --python=3.13 --no-project --with-requirements=requirements.txt -m pytest tests
 
   # https://github.community/t/run-github-actions-job-only-if-previous-job-has-failed/174786/2
   create-issue-on-failure:
@@ -145,7 +141,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: actions/github-script@v8
+      - uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

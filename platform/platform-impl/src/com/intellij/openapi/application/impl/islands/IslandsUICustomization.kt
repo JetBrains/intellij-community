@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.impl.EditorHeaderComponent
 import com.intellij.openapi.editor.impl.SearchReplaceFacade
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorCompositePanel
-import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
 import com.intellij.openapi.fileEditor.impl.EditorTopPanel
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileEditor.impl.createTopBottomSideBorder
@@ -51,11 +50,9 @@ import com.intellij.openapi.wm.impl.content.ContentLayout
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.isInternal
-import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
-import com.intellij.toolWindow.ToolWindowRightToolbar
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.AbstractBorderPainter
 import com.intellij.ui.ClientProperty
@@ -82,7 +79,6 @@ import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.ui.tabs.impl.TabPainterAdapter
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBPoint
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
@@ -94,7 +90,6 @@ import java.awt.Component
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Insets
-import java.awt.Point
 import java.awt.Rectangle
 import java.awt.RenderingHints
 import java.awt.Shape
@@ -112,7 +107,6 @@ import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.SwingConstants
-import javax.swing.SwingUtilities
 import javax.swing.UIManager
 import javax.swing.border.AbstractBorder
 import javax.swing.border.Border
@@ -861,7 +855,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   private fun createToolWindowBorderPainter(toolwindow: ToolWindow, component: XNextIslandHolder) {
-    component.border = JBEmptyBorder(JBUI.insets("Island.ToolWindow.border", JBUI.insets(3)))
+    component.border = JBEmptyBorder(JBUI.insets("Island.ToolWindow.insets", JBUI.insets(3)))
 
     component.borderPainter = object : AbstractBorderPainter() {
       override fun paintAfterChildren(component: JComponent, g: Graphics) {
@@ -873,28 +867,25 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   private fun createEditorBorderPainter(component: EditorsSplitters) {
-    component.border = JBEmptyBorder(JBUI.insets("Island.Editor.border", JBUI.insets(2)))
+    component.border = JBEmptyBorder(JBUI.insets("Island.Editor.insets", JBUI.insets(2)))
 
     configureBackgroundPainting(component, recursive = true)
 
     component.borderPainter = object : AbstractBorderPainter() {
-      override fun paintAfterChildren(component: JComponent, g: Graphics) {
+      override fun paintBeforeChildren(component: JComponent, g: Graphics) {
         val project = ProjectUtil.getProjectForComponent(component)
         val fileEditorManager = project?.getServiceIfCreated(FileEditorManager::class.java)
 
-        // A bit special handling of the "empty frame" background.
-        // The editor empty text consists of the editor itself and the surrounding island.
-        // Both are technically parts of the same component (EditorsSplitters),
-        // but must use different backgrounds because the border is visually a part of the "editor and tools" background,
-        // and the empty text must use the "empty frame" background.
-        val frameBG = IdeBackgroundUtil.withFrameBackground(g, component)
-        val editorBG = IdeBackgroundUtil.withEditorBackground(g, component)
+        // Paint the "empty frame" background behind the editor children so that an
+        // interactive empty-state component (e.g. the inline Agent prompt) stays visible.
         if (fileEditorManager?.openFiles?.isEmpty() == true) {
+          val frameBG = IdeBackgroundUtil.withFrameBackground(g, component)
           paintBeforeEditorEmptyText(component, frameBG, editorTabPainterAdapter)
-
-          val editorEmptyTextPainter = ApplicationManager.getApplication().getService(EditorEmptyTextPainter::class.java)
-          editorEmptyTextPainter.doPaintEmptyText(component, frameBG)
         }
+      }
+
+      override fun paintAfterChildren(component: JComponent, g: Graphics) {
+        val editorBG = IdeBackgroundUtil.withEditorBackground(g, component)
 
         paintIslandBorder(component, editorBG, true)
       }
@@ -935,26 +926,6 @@ internal class IslandsUICustomization : InternalUICustomization() {
     return !IdeBackgroundUtil.isEditorBackgroundImageSet(project) // the border looks ugly with a background image
   }
 
-  private fun getLastOffset(component: JComponent): Point {
-    val rootPane = component.rootPane
-
-    val componentStart = Point()
-    SwingUtilities.convertPointToScreen(componentStart, component)
-
-    val rightStart = Point()
-    val rightSide = UIUtil.findComponentOfType(rootPane, ToolWindowRightToolbar::class.java)!!
-    SwingUtilities.convertPointToScreen(rightStart, rightSide)
-
-    val bottomStart = Point()
-    val bottomSide = UIUtil.findComponentOfType(rootPane, IdeStatusBarImpl::class.java)!!
-    SwingUtilities.convertPointToScreen(bottomStart, bottomSide)
-
-    val xDelta = rightStart.x - componentStart.x - component.width
-    val yDelta = bottomStart.y - componentStart.y - component.height
-
-    return JBPoint(if (xDelta == 0) 0 else 1, if (yDelta == 0) 0 else 1)
-  }
-
   private val sharedPath = Path2D.Float()
   private val cachedShape = CachedBoundsShape(sharedPath)
 
@@ -968,8 +939,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
     if (arcValue == 0) {
       if (isIslandBorderLineNeeded(component)) {
         g.color = JBColor.namedColor("Island.borderColor", getMainBackgroundColor())
-        val lastOffset = getLastOffset(component)
-        g.drawRect(0, 0, width + lastOffset.x, height + lastOffset.y)
+        g.drawRect(0, 0, width, height)
       }
       return
     }

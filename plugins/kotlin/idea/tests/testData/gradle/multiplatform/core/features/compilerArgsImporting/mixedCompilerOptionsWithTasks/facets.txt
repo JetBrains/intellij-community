@@ -56,12 +56,12 @@ project.iosX64Test
 project.jsMain
     languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
     apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
-    compilerSettings = -main call -opt-in CompilationOptInAnnotation
+    compilerSettings = -main call -nopack -opt-in CompilationOptInAnnotation
 
 project.jsTest
     languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
     apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
-    compilerSettings = -main call -opt-in CompilationOptInAnnotation
+    compilerSettings = -main call -nopack -opt-in CompilationOptInAnnotation
 
 project.jvmAndroidMain
     languageLevel = {{NEXT_MINIMAL_SUPPORTED}}

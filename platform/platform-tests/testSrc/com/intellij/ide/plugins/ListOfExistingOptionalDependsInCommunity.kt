@@ -28,18 +28,8 @@ val existingOptionalDependsTagInCommunityPlugins = mapOf(
   "JUnit" to setOf(
     "com.intellij.properties",
   ),
-  "Git4Idea" to setOf(
-    "com.jetbrains.performancePlugin",
-  ),
   "TestNG-J" to setOf(
     "org.intellij.intelliLang",
-  ),
-  "com.intellij.mcpServer" to setOf(
-    "org.jetbrains.plugins.terminal",
-    "Git4Idea",
-  ),
-  "com.intellij.ml.local.models" to setOf(
-    "com.intellij.java",
   ),
   "com.intellij.tasks" to setOf(
     "com.intellij.java",

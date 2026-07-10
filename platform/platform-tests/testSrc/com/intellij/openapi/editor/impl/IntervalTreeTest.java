@@ -130,7 +130,7 @@ public class IntervalTreeTest extends LightPlatformTestCase {
       });
       AtomicInteger all = new AtomicInteger();
       long t = TimeoutUtil.measureExecutionTime(() -> {
-        try (MarkupIterator<RangeMarkerEx> iterator = new FilteringMarkupIterator<>(tree.overlappingIterator(new TextRange(0, document.getTextLength())),
+        try (MarkupIterator<RangeMarkerEx> iterator = FilteringMarkupIterator.create(tree.overlappingIterator(new TextRange(0, document.getTextLength())),
                                                                                     h -> all.incrementAndGet() >= 0 && tree.getTasteFlags(h) == MY_TASTE_FLAG)) {
           int c = 0;
           while (iterator.hasNext()) {

@@ -1,7 +1,7 @@
 package com.intellij.python.hatch.impl
 
-import com.intellij.python.common.tools.ToolId
-import com.intellij.python.common.tools.spi.ToolIdToIconMapper
+import com.intellij.python.community.common.tools.ToolId
+import com.intellij.python.community.common.tools.spi.ToolIdToIconMapper
 import com.intellij.python.hatch.icons.PythonHatchIcons
 import javax.swing.Icon
 

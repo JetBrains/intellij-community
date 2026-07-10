@@ -18,6 +18,7 @@ import org.jetbrains.annotations.ApiStatus
  * Unlike [pythonSdk], this method suspends until the project model is fully loaded
  * before resolving the SDK, so it is safe to call during startup.
  */
+@ApiStatus.Experimental
 suspend fun Module.findPythonSdk(): Sdk? {
   return PyModuleService.getInstance(getProject()).findPythonSdkWaitingForProjectModel(this)
 }
@@ -41,7 +42,7 @@ var Module.pythonSdk: Sdk?
   set(newSdk) {
     val prevSdk = pythonSdk
     thisLogger.info("Setting PythonSDK $newSdk to module $this")
-    newSdk?.pyRichSdk(forceRefresh = true)
+    newSdk?.pythonInterpreter(forceRefresh = true)
     ModuleRootModificationUtil.setModuleSdk(this, newSdk)
     runInEdt {
       DaemonCodeAnalyzer.getInstance(project).restart("Setting PythonSDK $newSdk to module $this")

@@ -4,5 +4,5 @@ package com.intellij.python.community.impl.pipenv
 import com.intellij.python.community.impl.pipenv.icons.PythonCommunityImplPipenvIcons
 import javax.swing.Icon
 
-// TODO: Provide a special icon for pipenv
+@Deprecated("This icon is not the icon of pipenv")
 val PIPENV_ICON: Icon = PythonCommunityImplPipenvIcons.PythonClosed

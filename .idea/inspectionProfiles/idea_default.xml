@@ -2969,6 +2969,11 @@
         <constraint name="ARGS" maxCount="2147483647" within="" contains="" />
         <constraint name="DO" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="replace `relativeTo` with `relativeToOrNull`" description="`relativeTo` is error prone and, always have a safe fallback `relativeToOrNull` or `relativeToOrSelf`" text="$path$.relativeTo($arg$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$path$.relativeToOrNull($arg$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="path" nameOfExprType="java\.nio\.file\.Path" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="arg" within="" contains="" />
+      </replaceConfiguration>
       <replaceConfiguration name="Replace explicit RExpression#getType() with RTypeUtil#getType()" uuid="260bf7ef-989c-3b5b-b926-edbfeb9271cc" text="((RExpression)$foo$).getType()" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RTypeUtil.getType($foo$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="foo" within="" contains="" />

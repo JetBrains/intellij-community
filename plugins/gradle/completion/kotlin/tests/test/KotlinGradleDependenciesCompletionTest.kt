@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.completion.kotlin
+package com.intellij.gradle.completion.kotlin.tests.integration
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.Lookup
@@ -836,6 +836,17 @@ internal class KotlinGradleDependenciesCompletionTest : AbstractKotlinGradleComp
           "Expected no version completions for embeddedKotlin's second argument, but got: $lookupStrings"
         }
       }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test configuration names are not suggested for coordinate-like input`(gradleVersion: GradleVersion) {
+    test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
+      // "junit-api" contains a coordinate separator, so configuration names that merely contain "api"
+      // (api, testApi, ...) must not be suggested; only dependency coordinates should appear.
+      val file = writeTextAndCommit("build.gradle.kts", "dependencies { junit-api<caret> }")
+      assertCompletionDoesntSuggest(file, listOf("api", "testApi", "apiDependenciesMetadata", "testApiDependenciesMetadata"))
     }
   }
 

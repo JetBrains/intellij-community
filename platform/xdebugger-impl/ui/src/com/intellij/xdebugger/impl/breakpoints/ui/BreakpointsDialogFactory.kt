@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui
 
 
@@ -85,7 +85,7 @@ class BreakpointsDialogFactory(private val project: Project, private val scope: 
   }
 
   fun showDialog(initialBreakpointId: XBreakpointId?) {
-    if (SplitDebuggerMode.isSplitDebugger() && AppMode.isRemoteDevHost()) {
+    if (AppMode.isRemoteDevHost()) {
       hideBalloon()
       SHOW_BREAKPOINT_DIALOG_REMOTE_TOPIC.sendToClient(project, ShowBreakpointDialogRequest(initialBreakpointId))
       return

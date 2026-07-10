@@ -1,7 +1,7 @@
 // "Specify remaining required arguments by name" "true"
 // WITH_STDLIB
-// K2_ERROR: No value passed for parameter 'a'.
-// K2_ERROR: None of the following candidates is applicable:<br><br>fun foo(a: Int, b: String): Unit:<br>  No value passed for parameter 'b'.<br><br>fun foo(a: Int, b: String, c: Int): Unit:<br>  No value passed for parameter 'b'.<br>  No value passed for parameter 'c'.<br><br>fun foo(a: Int, b: String = ..., c: Int = ..., d: Int = ...): Unit
+// K2_ERROR: NONE_APPLICABLE
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
 fun foo(a: Int, b: String) {}
 fun foo(a: Int, b: String, c: Int) {}
 fun foo(a: Int, b: String = "", c: Int = 5, d: Int = 5) {}

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.platform.eel.EelLowLevelObjectsPool
@@ -44,21 +44,21 @@ import kotlin.time.Duration.Companion.milliseconds
 
 
 @ApiStatus.Experimental
-fun ReadableByteChannel.consumeAsEelChannel(): EelReceiveChannel =
-  NioReadToEelAdapter(this) { 0 }
+fun ReadableByteChannel.consumeAsEelChannel(dispatcher: CoroutineContext = unlimitedDispatcher): EelReceiveChannel =
+  NioReadToEelAdapter(this, dispatcher) { 0 }
 
 @ApiStatus.Experimental
-fun WritableByteChannel.asEelChannel(): EelSendChannel =
-  NioWriteToEelAdapter(this, null)
+fun WritableByteChannel.asEelChannel(dispatcher: CoroutineContext = unlimitedDispatcher): EelSendChannel =
+  NioWriteToEelAdapter(this, dispatcher)
 
 // Flushes data after each writing.
 @ApiStatus.Experimental
-fun OutputStream.asEelChannel(): EelSendChannel =
-  NioWriteToEelAdapter(Channels.newChannel(this), this)
+fun OutputStream.asEelChannel(dispatcher: CoroutineContext? = null): EelSendChannel =
+  NioWriteToEelAdapter(Channels.newChannel(this), dispatcher ?: unlimitedDispatcher, this)
 
 @ApiStatus.Experimental
-fun InputStream.consumeAsEelChannel(): EelReceiveChannel =
-  NioReadToEelAdapter(Channels.newChannel(this), this::available)
+fun InputStream.consumeAsEelChannel(dispatcher: CoroutineContext? = null): EelReceiveChannel =
+  NioReadToEelAdapter(Channels.newChannel(this), dispatcher ?: unlimitedDispatcher, this::available)
 
 @ApiStatus.Experimental
 fun EelReceiveChannel.consumeAsInputStream(blockingContext: CoroutineContext = Dispatchers.IO): InputStream =
@@ -153,7 +153,7 @@ suspend fun EelReceiveChannel.readAllBytes(bufferSize: Int = DEFAULT_BUFFER_SIZE
     // Redundant copy isn't optimal but ok for now
     val tmpBuffer = ByteArray(buffer.limit())
     buffer.get(tmpBuffer)
-    result.writeBytes(tmpBuffer)
+    result.write(tmpBuffer)
     buffer.clear()
   }
   return@withContext result.toByteArray()

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -20,8 +20,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.jcef.JBCefApp;
-import com.intellij.ui.AppUIUtilKt;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Url;
@@ -38,7 +38,7 @@ import static com.intellij.ide.browsers.OpenInBrowserRequestKt.createOpenInBrows
  */
 public final class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
   public OpenHtmlInEmbeddedBrowserAction() {
-    super(IdeBundle.messagePointer("action.open.web.preview.text"), null, new SynchronizedClearableLazy<>(() -> AppUIUtilKt.loadSmallApplicationIcon(ScaleContext.create(), 16, true)));
+    super(IdeBundle.messagePointer("action.open.web.preview.text"), null, new SynchronizedClearableLazy<>(() -> AppUIUtil.loadSmallApplicationIcon(ScaleContext.create(), 16, true)));
   }
 
   @Override

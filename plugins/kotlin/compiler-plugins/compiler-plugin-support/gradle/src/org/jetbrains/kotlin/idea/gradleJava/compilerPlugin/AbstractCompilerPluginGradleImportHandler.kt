@@ -5,11 +5,13 @@ package org.jetbrains.kotlin.idea.gradleJava.compilerPlugin
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler
 import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import java.nio.file.Path
 
 abstract class AbstractGradleImportHandler : GradleProjectImportHandler {
@@ -17,13 +19,25 @@ abstract class AbstractGradleImportHandler : GradleProjectImportHandler {
     open val replacementArtifactCoordinates: MavenCoordinates? = null
     abstract val replacementJarFromPluginBundle: Path
 
+    /**
+     * The earliest Kotlin version for which [replacementArtifactCoordinates] is published to Maven repositories.
+     */
+    open val availableSinceVersion: IdeKotlinVersion? = null
+
     override fun importByModule(facet: KotlinFacet, moduleNode: DataNode<ModuleData>) {
-        processCompilerPluginClasspath(facet)
+        if (shouldSubstitute(facet)) {
+            processCompilerPluginClasspath(facet)
+        }
     }
 
     override fun importBySourceSet(facet: KotlinFacet, sourceSetNode: DataNode<GradleSourceSetData>) {
-        processCompilerPluginClasspath(facet)
+        if (shouldSubstitute(facet)) {
+            processCompilerPluginClasspath(facet)
+        }
     }
+
+    private fun shouldSubstitute(facet: KotlinFacet): Boolean =
+        !GradleProjectSettings.isDelegatedBuildEnabled(facet.module)
 
     private fun processCompilerPluginClasspath(facet: KotlinFacet) {
         val project = facet.module.project
@@ -58,6 +72,11 @@ abstract class AbstractGradleImportHandler : GradleProjectImportHandler {
     private fun resolveSubstituteJar(project: Project, jarFile: String): Path {
         val coordinates = replacementArtifactCoordinates ?: return replacementJarFromPluginBundle
         val version = extractVersionFromMavenLayout(jarFile) ?: return replacementJarFromPluginBundle
+        val minimumVersion = availableSinceVersion
+        if (minimumVersion != null && IdeKotlinVersion.opt(version)?.let { it < minimumVersion } == true) {
+            // The non-embeddable artifact is not published for this (older) Kotlin version - don't waste a remote lookup.
+            return replacementJarFromPluginBundle
+        }
         return KotlinArtifactsDownloader.resolveProjectCompilerPluginArtifact(
             project, coordinates.groupId, coordinates.artifactId, version,
         ) ?: replacementJarFromPluginBundle

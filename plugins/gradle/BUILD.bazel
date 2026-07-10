@@ -51,6 +51,7 @@ jvm_library(
     ],
     deps = [
         # do not sort,
+        "//libraries/kryo5",
         "//plugins/gradle/settings",
         "//platform/analysis-api:analysis",
         "//platform/util/concurrency",
@@ -141,6 +142,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":gradle",
+        "//libraries/kryo5:kryo5_test_lib",
         "//plugins/gradle/settings:settings_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
@@ -332,7 +334,8 @@ jvm_library(
         "//libraries/mockito",
         "//libraries/mockito:mockito_test_lib",
         "@lib//:mockito-kotlin",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//plugins/gradle",
         "//plugins/gradle:gradle_test_lib",
         "//plugins/gradle:gradle-common",
@@ -414,8 +417,6 @@ jvm_library(
         "//platform/workspace/jps:jps_test_lib",
         "//platform/workspace/storage",
         "//platform/workspace/storage:storage_test_lib",
-        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
-        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
         "//platform/backend/observation",
         "//platform/backend/observation:observation_test_lib",
         "//platform/xdebugger-api:debugger",
@@ -456,6 +457,10 @@ jvm_library(
         "//plugins/groovy:groovy-tests_test_lib",
         "//platform/statistics",
         "//platform/statistics:statistics_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.tests` end
@@ -523,6 +528,8 @@ jvm_library(
         "//plugins/gradle/completion:completion-tests_test_lib",
         "//plugins/gradle/completion/toml:gradle-completion-toml-tests",
         "//plugins/gradle/completion/toml:gradle-completion-toml-tests_test_lib",
+        "//plugins/gradle/tooling-proxy:toolingProxy-tests",
+        "//plugins/gradle/tooling-proxy:toolingProxy-tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.tests.main` end

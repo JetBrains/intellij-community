@@ -489,8 +489,13 @@ open class IDETestContext(
         collectNativeThreads = collectNativeThreads,
         stdOut = stdOut
       )
-      configure(runContext)
-
+      try {
+        configure(runContext)
+      }
+      catch (throwable: Throwable) {
+        runContext.publishArtifacts()
+        throw throwable
+      }
       try {
         val ideRunResult = runContext.runIdeSuspending()
         if (isReportPublishingEnabled) {

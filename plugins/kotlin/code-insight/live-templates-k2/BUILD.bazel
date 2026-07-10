@@ -30,6 +30,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/references",
         "@lib//:kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-analysis-api",
         "//platform/core-api:core",
@@ -64,6 +65,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-codeInsight-liveTemplates",
+        "//plugins/kotlin/references:references_test_lib",
         "//platform/core-api:core_test_lib",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
         "//plugins/kotlin/base/code-insight:code-insight_test_lib",
@@ -171,6 +173,8 @@ jvm_library(
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework_test_lib",
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.liveTemplates.tests` end

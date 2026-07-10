@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.Ref;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Represents a variadic type parameter that can be substituted with an arbitrary number of types in the corresponding generic type.
  * A series of concrete types it can be replaced with is normally represented with {@link PyUnpackedTupleType}.
@@ -24,4 +27,6 @@ package com.jetbrains.python.psi.types;
  * @see PyUnpackedTupleType
  */
 public non-sealed interface PyTypeVarTupleType extends PyTypeParameterType, PyPositionalVariadicType {
+  @Override
+  @Nullable Ref<PyPositionalVariadicType> getDefaultType();
 }

@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "xpath-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":xpath-tests_test_lib"],
+)
+### skip generation section `test intellij.xpath.tests`
+
 ### auto-generated section `build intellij.xpath` start
 
 jvm_library(
@@ -103,7 +111,8 @@ jvm_library(
         "//RegExpSupport:regexp_test_lib",
         "//xml/xml-psi-api:psi_test_lib",
         "//libraries/jaxen:jaxen_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//xml/dom-impl:dom-impl_test_lib",
@@ -226,7 +235,8 @@ jvm_library(
         "//plugins/xpath/xslt-rt:rt_test_lib",
         "//libraries/jaxen",
         "//libraries/jaxen:jaxen_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//platform/util/nanoxml",
@@ -250,6 +260,8 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/util/concurrency",
         "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/structure-view-impl/plugin",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.xpath.tests` end
@@ -262,11 +274,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.xpath.tests` end
-
-### auto-generated section `test intellij.xpath.tests` start
-
-jps_test(
-    name = "xpath-tests_test",
-    runtime_deps = [":xpath-tests_test_lib"],
-)
-### auto-generated section `test intellij.xpath.tests` end

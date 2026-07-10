@@ -2,6 +2,7 @@
 package com.intellij.util.indexing;
 
 import com.google.common.collect.Iterators;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -33,7 +34,8 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.NoAccessDuringPsiEvents;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -160,7 +162,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private static final ThreadLocal<VirtualFile> ourIndexedFile = new ThreadLocal<>();
   private static final ThreadLocal<IndexWritingFile> ourWritingIndexFile = new ThreadLocal<>();
-  private static final boolean FORBID_LOOKUP_IN_NON_CANCELLABLE_SECTIONS = getBooleanProperty("forbid.index.lookup.in.non.cancellable.section", false);
+  private static final boolean FORBID_LOOKUP_IN_NON_CANCELLABLE_SECTIONS =
+    getBooleanProperty("forbid.index.lookup.in.non.cancellable.section", false);
 
   @Internal
   public static final Logger LOG = Logger.getInstance(FileBasedIndexImpl.class);
@@ -173,7 +176,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
    * If true -- track {@link FilesToUpdateCollector#modificationCount()} per project, and skip looking for
    * updates if current modCount was already processed per project
    */
-  private static final boolean USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES = getBooleanProperty("FileBasedIndexImpl.USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES", true);
+  private static final boolean USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES =
+    getBooleanProperty("FileBasedIndexImpl.USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES", true);
 
   final CoroutineScope coroutineScope;
 
@@ -215,7 +219,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   public final Lock writeLock;
 
   private IndexConfiguration getState() {
-    return myRegisteredIndexes.getConfigurationState();
+    final RegisteredIndexes registeredIndexes = myRegisteredIndexes;
+    if (registeredIndexes == null) {
+      throw new ServiceNotReadyException();
+    }
+    return registeredIndexes.getConfigurationState();
   }
 
   void dropRegisteredIndexes() {
@@ -887,7 +895,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       LOG.error("Indexes should not be accessed in non-cancellable section");
     }
     if (StubTreeBuilder.isBuildingStub()) {
-      THROTTLED_LOG.error("Stub building must not rely on data from indexes because it introduces circular dependency indexes -> stub building -> resolve -> indexes.");
+      THROTTLED_LOG.error(
+        "Stub building must not rely on data from indexes because it introduces circular dependency indexes -> stub building -> resolve -> indexes.");
     }
 
     ProgressManager.checkCanceled();
@@ -1059,8 +1068,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   private static void scheduleIndexRescanningForAllProjects(@NotNull String reason) {
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      new UnindexedFilesScanner(project, reason).queue();
+    for (Iterator<@NotNull Project> it = ProjectUtil.getOpenedProjects().iterator(); it.hasNext(); ) {
+      Project project = it.next();
+      if (!project.isDisposed()) {
+        new UnindexedFilesScanner(project, reason).queue();
+      }
     }
   }
 
@@ -1332,7 +1344,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           FileContentImpl fc = psiFile instanceof PsiBinaryFile ? (FileContentImpl)FileContentImpl.createByFile(virtualFile, project)
                                                                 : (FileContentImpl)FileContentImpl.createByText(virtualFile,
                                                                                                                 psiFile.getViewProvider()
-                                                                                                                .getContents(), project);
+                                                                                                                  .getContents(), project);
           initFileContent(fc, psiFile);
           Map<ID, Map> result = FactoryMap.create(key -> getIndex(key).getExtension().getIndexer().map(fc));
           return CachedValueProvider.Result.createSingleDependency(result, psiFile);
@@ -1937,6 +1949,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
    * Skips the task otherwise if there are no new updates since the last call.
    * The task execution is skipped only if it is _guaranteed_ there are no new updates, but the opposite is not true:
    * if the task is executed, it means we just _can't guarantee_ there are no new updates.
+   *
    * @param skipUpdatingIfNoNewUpdatesAvailable if false, always runs the task, doesn't check if there are new updates available,
    *                                            if true -- check if there are possibly new updates first before running the task.
    */
@@ -1960,7 +1973,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     long currentModCount = myFilesToUpdateCollector.modificationCount();
     if (lastProcessedModCount != null && lastProcessedModCount >= currentModCount) {
       if (LOG.isDebugEnabled()) {
-        THROTTLED_LOG_FAST.debug(() -> "modCountCheck[last: " + lastProcessedModCount + " >= current: " + currentModCount + "] -> skip updates");
+        THROTTLED_LOG_FAST.debug(
+          () -> "modCountCheck[last: " + lastProcessedModCount + " >= current: " + currentModCount + "] -> skip updates");
       }
       //everything is already processed
       return;
@@ -2362,15 +2376,16 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   // ==== Flushers implementations: =====
 
   //We're trying to guess when and how to flush indexes so that this flush is the least intrusive for others, who
-  //  also want an access index, or VFS. Current indexes are protected by a global lock, and VFS mostly protected
-  //  by StorageLockContext's global lock also, so indexes flush could create freeze whole app very easily,
-  //  especially if there is a lot of data to flush. Here we try to reduce the probability of a long freezes by
-  //  looking for the signs of intensive indexes/VFS use, and postponing index flush if such signs are present.
+  //  also want access Indexes.
+  //  Indexes are protected by (many) locks, so the flushing could hold those locks for a long time, which freezes
+  //  the whole app very easily, especially if there is a lot of data to flush.
+  //  We're trying to reduce the probability of such long freezes by looking for the signs of intensive Indexes use
+  //  and postponing index flushing if such signs are present.
 
 
   /**
-   * Legacy flushing implementation: do some basic precautions against contention. Wait for a period without modifications,
-   * use .tryLock() to avoid competing with other threads
+   * Basic flusher implementation: do some basic precautions against contention.
+   * Wait for a period without modifications to avoid competing with other threads.
    */
   private final class SimpleFlusher implements Runnable, AutoCloseable {
 
@@ -2394,11 +2409,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
 
     private void flushAllIndices(int modCount) {
-      if (betterToInterruptFlushingEarly(modCount)) {
+      if (betterSkipFlushing(modCount)) {
         return;
       }
 
-      IndexingStamp.flushCaches();
+      if (IndexingStamp.isDirty()) {
+        IndexingStamp.flushCaches();
+      }
 
       IndexConfiguration state = getState();
       for (ID<?, ?> indexId : state.getIndexIDs()) {
@@ -2407,9 +2424,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         }
         try {
           UpdatableIndex<?, ?, FileContent, ?> index = state.getIndex(indexId);
-          if (index != null) {
+          if (index != null && index.isDirty()) {
             index.flush();
-            Thread.yield();//be nice to other wanting to use indexes
+            Thread.yield();//be nice to others wanting to use indexes
           }
         }
         catch (Throwable e) {
@@ -2418,14 +2435,56 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
     }
 
+    /** More comprehensive, but also more expensive: called once, at the beginning of flushAllIndices() */
+    private boolean betterSkipFlushing(int modCount) {
+      //Basically, we're trying to flush 'if idle': i.e., we don't want to flush if somebody actively writes to
+      // indexes -- because flush will slow them down, if not stall them -- and (regular) flush is less important
+      // than e.g., a current UI task.
+      // So we skip/interrupt a flushing if:
+
+      if (betterToInterruptFlushingEarly(modCount)) {
+        return true;
+      }
+
+      //Scanning/Highlighting is in progress (they actively use IndexingStamps & indexes):
+      for (Iterator<@NotNull Project> it = ProjectUtil.getOpenedProjects().iterator(); it.hasNext(); ) {
+        Project project = it.next();
+        if (project.isDisposed()) {
+          continue;
+        }
+
+        UnindexedFilesScannerExecutor scannerExecutor = project.getServiceIfCreated(UnindexedFilesScannerExecutor.class);
+        if (scannerExecutor != null && Boolean.TRUE.equals(scannerExecutor.isRunning().getValue())) {
+          return true;
+        }
+
+        DaemonCodeAnalyzer daemonCodeAnalyzer = project.getServiceIfCreated(DaemonCodeAnalyzer.class);
+        if (daemonCodeAnalyzer != null && daemonCodeAnalyzer.isRunning()) {//=highlighting
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    /** Cheaper version: could be called frequently */
     private boolean betterToInterruptFlushingEarly(int modCount) {
-      //RC: Basically, we're trying to flush 'if idle': i.e., we don't want to
-      //    issue a flush if somebody actively writes to indexes because flush
-      //    will slow them down, if not stall them -- and (regular) flush is
-      //    less important than e.g., a current UI task.
-      //    So we issue a flush only if there _were no updates_ in indexes
-      //    since the last invocation of this method:
-      return HeavyProcessLatch.INSTANCE.isRunning() || modCount != myLocalModCount.get();
+      //Basically, we're trying to flush 'if idle': i.e., we don't want to flush if somebody actively writes to
+      // indexes -- because flush will slow them down, if not stall them -- and (regular) flush is less important
+      // than e.g., a current UI task.
+      // So we interrupt a flushing if:
+
+      //Any heavy processes are in progress:
+      if (HeavyProcessLatch.INSTANCE.isRunning()) {
+        return true;
+      }
+      //There have been some _updates_ in indexes since the last invocation of this method:
+      // (implies that someone else _writes_ to indexes -> better not to interfere)
+      if (modCount != myLocalModCount.get()) {
+        return true;
+      }
+
+      return false;
     }
 
     @Override

@@ -2,19 +2,18 @@
 package com.intellij.python.junit5Tests.env.tests.black
 
 import com.intellij.openapi.application.runReadAction
-import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
-import com.intellij.python.junit5Tests.framework.env.pySdkFixture
-import com.intellij.python.pyproject.PY_PROJECT_TOML
-import com.intellij.python.pytools.getState
-import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.fixture.moduleFixture
-import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.python.black.BlackFormattingRequest
 import com.intellij.python.black.BlackFormattingResponse
 import com.intellij.python.black.BlackPyTool
 import com.intellij.python.black.execute
-import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
+import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
+import com.intellij.python.junit5Tests.framework.env.pySdkFixture
+import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.pytools.PyToolsState
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.BeforeAll
@@ -38,10 +37,7 @@ internal class BlackPyProjectTomlAppliedTest {
     @JvmStatic
     @BeforeAll
     fun enableBlack() {
-      with (BlackPyTool.getInstance().getState(projectFixture.get())) {
-        enabled = true
-        discoveryMode = ExecutableDiscoveryMode.INTERPRETER
-      }
+      PyToolsState.getInstance(projectFixture.get()).setEnabled(BlackPyTool.getInstance(), true)
     }
   }
 

@@ -39,9 +39,11 @@ class GithubApiRequestExecutorAuthTest {
   @ValueSource(strings = [
     "https://ghe.mycorp.local/myorg/repo",
     "https://raw.ghe.mycorp.local/myorg/repo/v1/action.yml",
-    "https://ghe.mycorp.local/myorg/repo/raw/v1/action.yml"
+    "https://ghe.mycorp.local/myorg/repo/raw/v1/action.yml",
+    "https://avatars.ghe.mycorp.local/u/1234",
+    "https://media.ghe.mycorp.local/user/1234/files/abc123"
   ])
-  fun `given GHE server, main and raw subdomain URLs are accepted`(url: String) {
+  fun `given GHE server, its main, raw, avatars and media subdomain URLs are accepted`(url: String) {
     val sp = serverPath("ghe.mycorp.local")
     assertTrue(GithubApiRequestExecutor.isAuthorizedUrl(sp, URL(url)))
   }
@@ -104,7 +106,9 @@ class GithubApiRequestExecutorAuthTest {
     "https://raw.ghe.mycorp.local.malicious.com/org/repo/file",
     "https://raw.ghe.mycorp.malicious.local/org/repo/file",
     "https://raw.ghe.malicious.mycorp.local.com/org/repo/file",
-    "https://raw.malicious.ghe.mycorp.local.com/org/repo/file"
+    "https://raw.malicious.ghe.mycorp.local.com/org/repo/file",
+    "https://avatars.ghe.mycorp.local.malicious.com/u/1234",
+    "https://media.ghe.mycorp.local.malicious.com/user/1234/files/abc"
   ])
   fun `malicious hosts for GHE are rejected`(url: String) {
     val spEnterprise = serverPath("ghe.mycorp.local")

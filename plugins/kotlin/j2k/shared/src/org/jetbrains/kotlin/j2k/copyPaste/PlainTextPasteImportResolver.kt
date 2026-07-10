@@ -14,5 +14,5 @@ import com.intellij.psi.PsiImportStatementBase
  *      Note: imports for Java are added at once, but for Kotlin they are returned as a list, to be converted by J2K later.
  */
 interface PlainTextPasteImportResolver {
-    fun generateRequiredImports(): List<PsiImportStatementBase>
+    suspend fun generateRequiredImports(): List<PsiImportStatementBase>
 }

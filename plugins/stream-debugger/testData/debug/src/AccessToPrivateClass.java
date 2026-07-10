@@ -6,7 +6,7 @@ public class AccessToPrivateClass {
   }
 
   private void test() {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     Stream.generate(() -> new MyClass()).mapToInt(x -> x.field).limit(10).count();
   }
 

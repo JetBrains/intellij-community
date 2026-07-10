@@ -35,7 +35,7 @@ Key components:
    ```bash
    # WRONG - simple name won't match FQN
    -Dintellij.build.test.patterns=MyTest
-   
+
    # CORRECT - use wildcard or FQN
    -Dintellij.build.test.patterns=*MyTest
    -Dintellij.build.test.patterns=com.example.MyTest
@@ -255,18 +255,18 @@ Then attach debugger to port 5005.
 
 From `intellij-teamcity-config/.teamcity/src/ijplatform/KnownModules.kt`:
 
-| CI Constant | Module Name |
-|-------------|-------------|
+| CI Constant | Module Name                  |
+|-------------|------------------------------|
 | `ULTIMATE_TESTS` | `intellij.idea.ultimate.tests.main` |
 | `COMMUNITY_MAIN` | `intellij.idea.community.main.tests` |
-| `GOLAND_TESTS` | `intellij.goland.tests` |
-| `PYTHON_TESTS` | `intellij.python.tests` |
+| `GOLAND_TESTS` | `intellij.goland.tests`      |
+| `PYTHON_TESTS` | `intellij.python.tests`      |
 | `PHPSTORM_MAIN` | `intellij.phpstorm.main.tests` |
-| `CLION_MAIN` | `intellij.clion.main.tests` |
+| `CLION_MAIN` | `intellij.clion.main.tests`  |
 | `RUSTROVER_MAIN` | `intellij.rustrover.main.tests` |
-| `KOTLIN_K2_TESTS` | `kotlin.fir-all-tests` |
+| `KOTLIN_TESTS` | `intellij.kotlin.tests`      |
 | `KOTLIN_ULTIMATE_ALL_TESTS` | `intellij.kotlin-ultimate.all-tests` |
-| `DATABASE_TESTS` | `intellij.database.tests` |
+| `DATABASE_TESTS` | `intellij.database.tests`    |
 | `DATABASE_SQL_TESTS` | `intellij.database.sql.tests` |
 
 ### Module Configuration
@@ -289,7 +289,7 @@ Separate hierarchies (NOT in .main):
 ├── intellij.idea.ultimate.tests.kotlin.k2
 │   └── intellij.devkit.kotlin.fir.tests
 ├── intellij.idea.ultimate.tests.devBuildTests
-└── kotlin.fir-all-tests (K2/FIR tests)
+└── intellij.kotlin.tests
 ```
 
 ## TestingOptions Properties
@@ -491,7 +491,7 @@ This is a TeamCity convention for passing properties to nested processes.
    - Applied to EVERY class in classpath (must be fast)
 
 4. **PostDiscoveryFilter** (JUnit 5) - Post-discovery filter
-   - Calls `TestCaseLoader.isClassIncluded(className)`  
+   - Calls `TestCaseLoader.isClassIncluded(className)`
    - Checks bucketing (which runner should execute this test)
 
 5. **TestCaseLoader.fillTestCases()** (JUnit 3/4) - Scans classpath roots
@@ -508,7 +508,7 @@ This is a TeamCity convention for passing properties to nested processes.
 // className: "org.example.MyTest"
 "MyTest".matches("org.example.MyTest")  // Returns FALSE
 
-// Pattern: "*MyTest" → Regex: ".*MyTest"  
+// Pattern: "*MyTest" → Regex: ".*MyTest"
 ".*MyTest".matches("org.example.MyTest")  // Returns TRUE
 ```
 

@@ -132,6 +132,8 @@ public final class ShowExpressionTypeHandler implements CodeInsightActionHandler
                                                                                 @NotNull Document document,
                                                                                 @NotNull Set<? extends ExpressionTypeProvider> handlers) {
     if (handlers.isEmpty()) return Collections.emptyMap();
+    // the selection may include surrounding whitespace; trim it so the selected expression still matches
+    range = trimSelectionWhitespace(range, document.getImmutableCharSequence());
     boolean exactRange = false;
     final Map<PsiElement, ExpressionTypeProvider> map = new LinkedHashMap<>();
     int offset = !range.isEmpty() ? range.getStartOffset() : TargetElementUtil.adjustOffset(file, document, range.getStartOffset());
@@ -148,6 +150,14 @@ public final class ShowExpressionTypeHandler implements CodeInsightActionHandler
       }
     }
     return map;
+  }
+
+  private static @NotNull TextRange trimSelectionWhitespace(@NotNull TextRange range, @NotNull CharSequence text) {
+    int start = range.getStartOffset();
+    int end = range.getEndOffset();
+    while (start < end && Character.isWhitespace(text.charAt(start))) start++;
+    while (end > start && Character.isWhitespace(text.charAt(end - 1))) end--;
+    return start < end ? new TextRange(start, end) : range;
   }
 
   public static @NotNull Set<ExpressionTypeProvider> getHandlers(final Project project, Language... languages) {

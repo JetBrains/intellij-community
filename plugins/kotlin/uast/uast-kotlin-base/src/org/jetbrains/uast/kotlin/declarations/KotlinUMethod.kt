@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
-import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.uast.UAnchorOwner
 import org.jetbrains.uast.UAnnotation
@@ -44,6 +43,7 @@ import org.jetbrains.uast.UTypeReferenceExpression
 import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.UastLazyPart
 import org.jetbrains.uast.getOrBuild
+import org.jetbrains.uast.kotlin.declarations.KotlinContextUParameter
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 
 @ApiStatus.Internal
@@ -60,6 +60,7 @@ open class KotlinUMethod(
     private val psiRef: PsiMethod = psi
 
     private val receiverTypeReferencePart = UastLazyPart<KtTypeReference?>()
+    private val contextParametersPart = UastLazyPart<List<KtParameter>>()
     private val uastParametersPart = UastLazyPart<List<UParameter>>()
     private val uastAnchorPart = UastLazyPart<UIdentifier?>()
     private val uAnnotationsPart = UastLazyPart<List<UAnnotation>>()
@@ -74,14 +75,27 @@ open class KotlinUMethod(
                 else -> null
             }
 
-            val lightParams = psi.parameterList.parameters
-            val receiver = receiverTypeReference ?: return@getOrBuild lightParams.map { KotlinUParameter(it, parameterOrigin(it), this) }
-            val receiverLight = lightParams.firstOrNull() ?: return@getOrBuild emptyList()
-            val uParameters = SmartList<UParameter>(KotlinReceiverUParameter(receiverLight, receiver, this))
-            lightParams.drop(1).mapTo(uParameters) { KotlinUParameter(it, parameterOrigin(it), this) }
-            uParameters
+            val lightParams = javaPsi.parameterList.parameters
+            val receiver = receiverTypeReference
+            val thisUMethod = this
+            buildList {
+                lightParams.take(contextParameters.count())
+                    .mapTo(this) { lightContextParam ->
+                        KotlinContextUParameter(lightContextParam, parameterOrigin(lightContextParam), thisUMethod)
+                    }
+                if (receiver != null) {
+                    lightParams.drop(contextParameters.count()).firstOrNull()?.let { lightReceiver ->
+                        add(KotlinReceiverUParameter(lightReceiver, receiver, thisUMethod))
+                    }
+                }
+                val receiverCount = if (receiver != null) 1 else 0
+                lightParams.drop(contextParameters.count() + receiverCount).mapTo(this) { lightValueParam ->
+                    KotlinUParameter(lightValueParam, parameterOrigin(lightValueParam), thisUMethod)
+                }
+            }
         }
 
+    @Deprecated("see the base property description", ReplaceWith("javaPsi"))
     override val psi: PsiMethod = unwrap<UMethod, PsiMethod>(psi)
 
     override val javaPsi: PsiMethod = psi
@@ -92,16 +106,16 @@ open class KotlinUMethod(
 
     override fun getContainingFile(): PsiFile? {
         kotlinOrigin?.containingFile?.let { return it }
-        return unwrapFakeFileForLightClass(psi.containingFile)
+        return unwrapFakeFileForLightClass(javaPsi.containingFile)
     }
 
-    override fun getNameIdentifier(): UastLightIdentifier = UastLightIdentifier(psi, kotlinOrigin)
+    override fun getNameIdentifier(): UastLightIdentifier = UastLightIdentifier(javaPsi, kotlinOrigin)
 
     override val uAnnotations: List<UAnnotation>
         get() = uAnnotationsPart.getOrBuild {
             // NB: we can't use sourcePsi.annotationEntries directly due to annotation use-site targets. The given `psi` as a light element,
             // which spans regular function, property accessors, etc., is already built with targeted annotation.
-            baseResolveProviderService.getPsiAnnotations(psi).asSequence()
+            baseResolveProviderService.getPsiAnnotations(javaPsi).asSequence()
                 .filter { if (javaPsi.hasModifier(JvmModifier.STATIC)) !isJvmStatic(it) else true }
                 .mapNotNull { (it as? KtLightElement<*, *>)?.kotlinOrigin as? KtAnnotationEntry }
                 .map { baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this) }
@@ -115,6 +129,15 @@ open class KotlinUMethod(
                 is KtPropertyAccessor -> sourcePsi.property
                 else -> null
             }?.receiverTypeReference
+        }
+
+    private val contextParameters: List<KtParameter>
+        get() = contextParametersPart.getOrBuild {
+            when (sourcePsi) {
+                is KtCallableDeclaration -> sourcePsi
+                is KtPropertyAccessor -> sourcePsi.property
+                else -> null
+            }?.contextParameters.orEmpty()
         }
 
     override val uastAnchor: UIdentifier?

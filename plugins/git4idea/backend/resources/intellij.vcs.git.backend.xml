@@ -32,6 +32,8 @@
 
     <action id="Git.Log" class="git4idea.log.GitShowExternalLogAction">
       <add-to-group group-id="Vcs.Browse"/>
+      <add-to-group group-id="Vcs.Log.ToolWindow.TabActions.DropDown" relative-to-action="Vcs.ShowConsoleTab" anchor="after"/>
+      <synonym key="action.Git.Log.synonym"/>
     </action>
 
     <action class="git4idea.log.GitBrowseRepoAtRevisionAction" id="Git.BrowseRepoAtRevision"/>
@@ -84,16 +86,9 @@
       <action id="Git.Log.Branches.Navigate.Log.To.Branch.On.Selection"
               class="git4idea.ui.branch.dashboard.BranchesDashboardActions$NavigateLogToBranchAction"/>
       <separator/>
-      <action id="Git.Log.Branches.GroupBy.Directory"
-              icon="AllIcons.Actions.GroupByPackage"
-              class="git4idea.ui.branch.dashboard.BranchesDashboardActions$GroupBranchByDirectoryAction"/>
+      <reference ref="git.branches.group.by.directory"/>
+      <reference ref="git.branches.group.by.repository"/>
       <reference ref="git.branches.show.tags"/>
-    </group>
-    <group id="Git.Log.Branches.Grouping.Settings" icon="AllIcons.Actions.GroupBy"
-           class="git4idea.ui.branch.dashboard.BranchesDashboardActions$GroupingSettingsGroup">
-      <separator key="group.Git.Log.Branches.Grouping.Settings.text"/>
-      <action id="Git.Log.Branches.GroupBy.Repository"
-              class="git4idea.ui.branch.dashboard.BranchesDashboardActions$GroupBranchByRepositoryAction"/>
     </group>
     <action id="Git.Fixup.To.Commit" class="git4idea.rebase.GitCommitFixupBySubjectAction"/>
     <action id="Git.Squash.Into.Commit" class="git4idea.rebase.GitCommitSquashBySubjectAction"/>
@@ -269,16 +264,18 @@
       <reference ref="Git.CreateNewWorkingTree"/>
       <separator/>
       <action class="git4idea.actions.branch.GitUpdateSelectedBranchAction"/>
-      <action class="git4idea.actions.branch.GitPushBranchAction"/>
+      <action class="git4idea.actions.branch.GitPushBranchAction"
+              use-shortcut-of="Vcs.Push"/>
       <group id="Git.Branch.Tracked" class="git4idea.actions.branch.GitTrackedBranchActionGroup" popup="true"/>
       <action class="git4idea.actions.branch.GitPullBranchAction$WithRebase"/>
       <action class="git4idea.actions.branch.GitPullBranchAction$WithMerge"/>
       <separator/>
       <group id="Git.Push.Tags" class="git4idea.actions.tag.GitPushTagsActionGroup"/>
       <separator/>
-      <action class="git4idea.actions.branch.GitRenameBranchAction" id="Git.Rename.Local.Branch"/>
-      <action class="git4idea.actions.ref.GitDeleteRefAction"/>
-
+      <action id="Git.Rename.Local.Branch"
+              class="git4idea.actions.branch.GitRenameBranchAction"/>
+      <action class="git4idea.actions.ref.GitDeleteRefAction"
+              use-shortcut-of="$Delete"/>
       <add-to-group group-id="Git.Branch.Placeholder"/>
     </group>
 

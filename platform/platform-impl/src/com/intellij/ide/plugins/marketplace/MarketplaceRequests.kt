@@ -54,6 +54,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import org.xml.sax.InputSource
 import org.xml.sax.SAXException
+import tools.jackson.core.JacksonException
 import tools.jackson.core.type.TypeReference
 import tools.jackson.databind.ObjectMapper
 import tools.jackson.databind.json.JsonMapper
@@ -603,6 +604,10 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         IdeBundle.message("progress.downloading.available.plugins"),
         ::parseXmlIds,
       )
+    }
+    catch (e: JacksonException) {
+      LOG.infoOrDebug("Cannot parse plugins from Marketplace (corrupted or truncated response)", e)
+      return emptySet()
     }
     catch (e: IOException) {
       LOG.infoOrDebug("Cannot get plugins from Marketplace", e)

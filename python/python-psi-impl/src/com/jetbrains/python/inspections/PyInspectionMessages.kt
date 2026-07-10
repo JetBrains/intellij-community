@@ -4,8 +4,17 @@ package com.jetbrains.python.inspections
 import com.intellij.AbstractBundle
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.psi.PsiElement
 import com.intellij.xml.util.XmlStringUtil
+import com.jetbrains.python.documentation.PyDocumentationLink
+import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.inspections.PyInspectionMessages.bundleMessage
+import com.jetbrains.python.psi.PyQualifiedNameOwner
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import java.text.MessageFormat
 
@@ -36,9 +45,17 @@ object PyInspectionMessages {
   /** A localized inspection message paired with its editor-hover tooltip. */
   @JvmRecord
   data class ProblemMessage(
-    @InspectionMessage val description: String,
+    @InspectionMessage @Nls val description: String,
     @NlsContexts.Tooltip val tooltip: String,
   )
+
+  /**
+   * The [message]'s rich tooltip as a raw [HtmlChunk] (its outer `<html>` wrapper stripped), suitable for use as
+   * a diff headline that must keep its embedded `<code>` spans and `#element/` links rather than being escaped.
+   */
+  @JvmStatic
+  fun tooltipHeadline(message: ProblemMessage): HtmlChunk =
+    HtmlChunk.raw(message.tooltip.removeSurrounding("<html>", "</html>"))
 
   /**
    * A parameter value that carries its own description form and tooltip form. Use this when the value is
@@ -60,6 +77,48 @@ object PyInspectionMessages {
       fun joinNames(names: Iterable<String>): CodifiedParam = CodifiedParam(
         description = names.joinToString(", ") { "'$it'" },
         tooltip = names.joinToString(", ") { "<code>${XmlStringUtil.escapeString(it)}</code>" },
+      )
+
+      /**
+       * Renders [type] as a code-like span: the description is the plain type name shown in the Problems view
+       * (identical to [PythonDocumentationProvider.getTypeName]), and the tooltip is the same type rendered as
+       * HTML with highlighted, clickable class links, exactly as Quick Documentation shows it.
+       *
+       * Set [verbose] to mirror [PythonDocumentationProvider.getVerboseTypeName] (e.g. inline TypeVar bounds);
+       * use it for the *expected* side of a type-mismatch message.
+       *
+       * [anchor] is the element the type belongs to; it is used to resolve class names to their declarations.
+       */
+      @JvmStatic
+      @JvmOverloads
+      fun ofType(
+        type: PyType?,
+        anchor: PsiElement,
+        context: TypeEvalContext,
+        verbose: Boolean = false,
+      ): CodifiedParam = CodifiedParam(
+        description = if (verbose) PythonDocumentationProvider.getVerboseTypeName(type, context)
+        else PythonDocumentationProvider.getTypeName(type, context),
+        tooltip = if (verbose) PythonDocumentationProvider.getVerboseTypeNameWithLinks(type, context, anchor)
+        else PythonDocumentationProvider.getTypeNameWithLinks(type, context, anchor),
+      )
+
+      /**
+       * Renders a named symbol ([target]) as a code-like span: the description is [text] (plain, shown in the
+       * Problems view), and the tooltip is [text] wrapped in a navigable `#element/<fqn>` link pointing at
+       * [target] — so e.g. a class or method name in an inspection message becomes clickable on hover.
+       *
+       * [text] defaults to the symbol's own name; pass it explicitly when the message shows a different form,
+       * such as a qualified `B.f()` signature.
+       */
+      @JvmStatic
+      @JvmOverloads
+      fun ofReference(
+        target: PyQualifiedNameOwner,
+        text: @NlsSafe String = target.name.orEmpty(),
+      ): CodifiedParam = CodifiedParam(
+        description = text,
+        tooltip = PyDocumentationLink.toElementTooltipLink(target, text).toString(),
       )
     }
   }
@@ -138,6 +197,60 @@ object PyInspectionMessages {
     val (rendered, balanced) = renderBackticks { opening -> append(if (opening) "<code>" else "</code>") }
     return if (balanced) rendered else renderBackticks { append("'") }.first
   }
+
+  /**
+   * Converts an already-formatted message that marks code-like spans with backticks into an HTML fragment
+   * (no `<html>` wrapper): ordinary text is XML-escaped and each `` `…` `` pair becomes `<code>…</code>`;
+   * a doubled `` `` `` is a literal backtick. Use for strings that are produced *after* parameter
+   * substitution — e.g. a type-mismatch breakdown node built with [AbstractBundle.getMessage] from a
+   * backtick template — so it cannot distinguish template backticks from value backticks (callers pass
+   * names that do not contain backticks). An unbalanced delimiter is tolerated by closing the span.
+   */
+  @JvmStatic
+  fun codeSpansToHtmlFragment(message: @InspectionMessage String): @NlsContexts.Tooltip String {
+    val sb = StringBuilder(message.length + 16)
+    val text = StringBuilder()
+    fun flushText() {
+      if (text.isNotEmpty()) {
+        sb.append(XmlStringUtil.escapeString(text.toString()))
+        text.setLength(0)
+      }
+    }
+    var inCode = false
+    var i = 0
+    while (i < message.length) {
+      val c = message[i]
+      when {
+        c == '`' && i + 1 < message.length && message[i + 1] == '`' -> {
+          text.append('`') // `` -> a single literal backtick
+          i += 2
+        }
+        c == '`' -> {
+          flushText()
+          sb.append(if (inCode) "</code>" else "<code>")
+          inCode = !inCode
+          i++
+        }
+        else -> {
+          text.append(c)
+          i++
+        }
+      }
+    }
+    flushText()
+    if (inCode) sb.append("</code>")
+    return sb.toString()
+  }
+
+  /**
+   * The tooltip form of [message] as an HTML fragment for embedding inside a larger tooltip (e.g. as the
+   * headline above a type-mismatch breakdown). [formatTemplate] wraps code-bearing tooltips in `<html>…</html>`;
+   * this strips that wrapper. A plain message (no code spans) is XML-escaped so it is safe to embed verbatim.
+   */
+  @JvmStatic
+  fun tooltipFragment(message: ProblemMessage): @NlsContexts.Tooltip String =
+    if (message.tooltip.startsWith("<html>")) message.tooltip.removeSurrounding("<html>", "</html>")
+    else XmlStringUtil.escapeString(message.description)
 
   private fun Array<out Any?>.forDescription() = map {
     (it as? CodifiedParam)?.description ?: it

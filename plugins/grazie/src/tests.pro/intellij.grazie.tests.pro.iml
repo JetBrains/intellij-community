@@ -17,16 +17,37 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.rd.core" />
     <orderEntry type="module" module-name="intellij.markdown" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.grazie.markdown" scope="TEST" />
+    <orderEntry type="module-library">
+      <library name="ai.grazie.tasks.library.model.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.tasks-library:tasks-library-model-jvm:0.4.18">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/tasks-library/tasks-library-model-jvm/0.4.18/tasks-library-model-jvm-0.4.18.jar">
+              <sha256sum>970a6434c329880aa613e6e41776cc4595f0b21a483011da0ab6b473f0568b3c</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/tasks-library/tasks-library-model-jvm/0.4.18/tasks-library-model-jvm-0.4.18.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/tasks-library/tasks-library-model-jvm/0.4.18/tasks-library-model-jvm-0.4.18-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="ai.grazie.semantic.engine" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.java.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.collaborationTools" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
     <orderEntry type="module-library" scope="TEST">
       <library name="jetbrains.intellij.deps.languagetool.language.de" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-de:6.8.27">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-de:6.8.28">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.8.27/language-de-6.8.27.jar">
-              <sha256sum>e26ee963f737b86fdaa62711a5a9f4676dc0bd9d74156930ccadd6738355962a</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.8.28/language-de-6.8.28.jar">
+              <sha256sum>ee051208d099b22bcea6557dcfd42e1b9a4c36e59c12eee5b84ba1800796561a</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.4/german-pos-dict-1.2.4.jar">
               <sha256sum>56f0b00adb704cbc1e86776b45f6890efe90685ab370a34b5b299593cdcaae22</sha256sum>
@@ -46,7 +67,7 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.8.27/language-de-6.8.27.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.8.28/language-de-6.8.28.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.4/german-pos-dict-1.2.4.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.7/jwordsplitter-4.7.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
@@ -54,7 +75,7 @@
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.8.27/language-de-6.8.27-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.8.28/language-de-6.8.28-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.7/jwordsplitter-4.7-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.18.0/commons-lang3-3.18.0-sources.jar!/" />
@@ -63,10 +84,10 @@
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="jetbrains.intellij.deps.languagetool.language.el" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-el:6.8.27">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-el:6.8.28">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-el/6.8.27/language-el-6.8.27.jar">
-              <sha256sum>c14a376a1e30c4e627644f60646ff591942f5efba9e00c86f4666add0e9743b4</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-el/6.8.28/language-el-6.8.28.jar">
+              <sha256sum>a9f36e8a238199165dc94b9914b4a1b55570fb74afa2b9f00b77b41b6fff6160</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/ioperm/morphology-el/1.0.0/morphology-el-1.0.0.jar">
               <sha256sum>caa36b7e96fd4c1804b3f4763de803ce87468d86908087087814f7d47caee668</sha256sum>
@@ -77,22 +98,22 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-el/6.8.27/language-el-6.8.27.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-el/6.8.28/language-el-6.8.28.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/ioperm/morphology-el/1.0.0/morphology-el-1.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-el/6.8.27/language-el-6.8.27-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-el/6.8.28/language-el-6.8.28-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/ioperm/morphology-el/1.0.0/morphology-el-1.0.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="jetbrains.intellij.deps.languagetool.language.uk" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-uk:6.8.27">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-uk:6.8.28">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-uk/6.8.27/language-uk-6.8.27.jar">
-              <sha256sum>3515bb2a656805139916667d59743f418ee65f386ca0e58290f30b017ab5c7bc</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-uk/6.8.28/language-uk-6.8.28.jar">
+              <sha256sum>887550d56b9a0b98a5acd611f52f33ac1153f45c1e6718cb3c2ab4679246198e</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/ua/net/nlp/morfologik-ukrainian-lt/6.8.0/morfologik-ukrainian-lt-6.8.0.jar">
               <sha256sum>36ea195cb442c573a66082885ceb709e5b6c69a3b19deaa53b2a2918d847c1c0</sha256sum>
@@ -103,21 +124,21 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-uk/6.8.27/language-uk-6.8.27.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-uk/6.8.28/language-uk-6.8.28.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/ua/net/nlp/morfologik-ukrainian-lt/6.8.0/morfologik-ukrainian-lt-6.8.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-uk/6.8.27/language-uk-6.8.27-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-uk/6.8.28/language-uk-6.8.28-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="jetbrains.intellij.deps.languagetool.language.ru" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-ru:6.8.27">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-ru:6.8.28">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.8.27/language-ru-6.8.27.jar">
-              <sha256sum>6dc7dd0b8da0804f6e16c86c52322e43c80921abb748d54537ee6e55462275d9</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.8.28/language-ru-6.8.28.jar">
+              <sha256sum>345da3e518c89b9f875577fa85cb1f83d4bc218fe6d435dc6fdce89fbcfeef1f</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar">
               <sha256sum>33021c9cca70c6292d53ff7dac5d1832d422e986aba52ec998532a5f47f921f8</sha256sum>
@@ -128,22 +149,22 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.8.27/language-ru-6.8.27.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.8.28/language-ru-6.8.28.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.8.27/language-ru-6.8.27-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.8.28/language-ru-6.8.28-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="jetbrains.intellij.deps.languagetool.core" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core:6.8.27">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core:6.8.28">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.8.27/languagetool-core-6.8.27.jar">
-              <sha256sum>be8f6f4295da4601a3855f950f223218ca9cbaa7c95525def5d0851503df1a53</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.8.28/languagetool-core-6.8.28.jar">
+              <sha256sum>81c270c14516aebd4d7865f86771c721fa4ba0b3dbb359eae0e9854e5c4c8c9d</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/com/carrotsearch/hppc/0.8.2/hppc-0.8.2.jar">
               <sha256sum>97e45d4e0106d98dd3e76d9610e0bd3895409bd1ab1ed189855b05af0571025e</sha256sum>
@@ -400,7 +421,7 @@
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.8.27/languagetool-core-6.8.27.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.8.28/languagetool-core-6.8.28.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/carrotsearch/hppc/0.8.2/hppc-0.8.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.18.0/jackson-databind-2.18.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.18.0/jackson-annotations-2.18.0.jar!/" />
@@ -488,7 +509,7 @@
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.8.27/languagetool-core-6.8.27-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.8.28/languagetool-core-6.8.28-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/carrotsearch/hppc/0.8.2/hppc-0.8.2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.18.0/jackson-databind-2.18.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.18.0/jackson-annotations-2.18.0-sources.jar!/" />
@@ -772,6 +793,107 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.gec.util" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.gec:gec-util:0.8.184">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/gec/gec-util/0.8.184/gec-util-0.8.184.jar">
+              <sha256sum>360b9b2e1e7c995761a200a4cd47ea29a7bcd13a8b9a1109849a517554bc5168</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/gec/gec-util/0.8.184/gec-util-0.8.184.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/gec/gec-util/0.8.184/gec-util-0.8.184-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="ai.grazie.api.gateway.client.jvm" type="repository">
+        <properties maven-id="ai.grazie.api:api-gateway-client-jvm:0.8.184">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/api/api-gateway-client-jvm/0.8.184/api-gateway-client-jvm-0.8.184.jar">
+              <sha256sum>555b33ddcbbcd2192c3434b37d089d43234c55cb9b705d7a4c8d9615e0e11aa2</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/indexing/indexing-provider-api-jvm/0.8.184/indexing-provider-api-jvm-0.8.184.jar">
+              <sha256sum>fc5b58440da5fa25c2d47b669dd65969820e8758ddb16948649584a860d412ef</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/api/api-gateway-api-jvm/0.8.184/api-gateway-api-jvm-0.8.184.jar">
+              <sha256sum>83a6b488996c4dbc84c8e5c68b7c4082fd1e454b394a134ef4e142c22b3863c0</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-gateway-jvm/0.8.184/model-gateway-jvm-0.8.184.jar">
+              <sha256sum>3392479f899547ad31bc12c48ca433119f3bd0c6b750a7f5cf3c883e10f0cf91</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/client/client-cbor-jvm/0.8.184/client-cbor-jvm-0.8.184.jar">
+              <sha256sum>6ffc70b63b1aebf27552b5acab83c882d88edf9e9be9b0ead4f6a13956e9fafe</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-cbor-jvm/0.8.184/utils-cbor-jvm-0.8.184.jar">
+              <sha256sum>d68040a5ed1d2fefdb963182673b06b48678f8a285172f397d7bfca54244e0fd</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1.7.3/kotlinx-serialization-cbor-jvm-1.7.3.jar">
+              <sha256sum>ec45d74e2293eacbc1f804f3ec55d4908f9905ac5053316b565f1b66326f1f70</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="ai.grazie.auth:gec-agg-model-public-jvm" />
+            <dependency maven-id="ai.grazie.llm:llm-agg-api-model-jvm" />
+            <dependency maven-id="ai.grazie.model:model-cloud-jvm" />
+            <dependency maven-id="ai.grazie.model:model-nlc-jvm" />
+            <dependency maven-id="ai.grazie.model:model-feedback-jvm" />
+            <dependency maven-id="ai.grazie.model:model-gec-jvm" />
+            <dependency maven-id="ai.grazie.model:model-indexing-jvm" />
+            <dependency maven-id="ai.grazie.model:model-task-jvm" />
+            <dependency maven-id="ai.grazie.model:model-def-jvm" />
+            <dependency maven-id="ai.grazie.model:model-syn-jvm" />
+            <dependency maven-id="ai.grazie.model:model-sum-jvm" />
+            <dependency maven-id="ai.grazie.model:model-emb-jvm" />
+            <dependency maven-id="ai.grazie.model:model-nmt-jvm" />
+            <dependency maven-id="ai.grazie.model:model-ner-jvm" />
+            <dependency maven-id="ai.grazie.model:model-tree-jvm" />
+            <dependency maven-id="ai.grazie.model:model-qa-jvm" />
+            <dependency maven-id="ai.grazie.model:model-llm-jvm" />
+            <dependency maven-id="ai.grazie.model:model-quota-jvm" />
+            <dependency maven-id="ai.grazie.model:model-tone-formality-jvm" />
+            <dependency maven-id="ai.grazie.model:model-chat-jvm" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="ai.grazie.auth:auth-model-jvm" />
+            <dependency maven-id="ai.grazie.user.strg:user-strg-model-jvm" />
+            <dependency maven-id="ai.grazie.utils:utils-common-jvm" />
+            <dependency maven-id="ai.grazie.client:client-common-jvm" />
+            <dependency maven-id="ai.grazie.indexing:indexing-server-api-jvm" />
+            <dependency maven-id="ai.grazie.model:swagger-annotations-jvm" />
+            <dependency maven-id="ai.grazie.client:client-attribute-jvm" />
+            <dependency maven-id="ai.grazie.tasks-library:tasks-library-api-jvm" />
+            <dependency maven-id="ai.grazie.tasks.provider.model:tasks-provider-jet-completion-model-jvm" />
+            <dependency maven-id="ai.grazie.tasks.provider.llm.completion:tasks-provider-llm-completion-model-jvm" />
+            <dependency maven-id="ai.grazie.tasks.provider.model:tasks-provider-proxy-model-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/api/api-gateway-client-jvm/0.8.184/api-gateway-client-jvm-0.8.184.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/indexing/indexing-provider-api-jvm/0.8.184/indexing-provider-api-jvm-0.8.184.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/api/api-gateway-api-jvm/0.8.184/api-gateway-api-jvm-0.8.184.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-gateway-jvm/0.8.184/model-gateway-jvm-0.8.184.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/client/client-cbor-jvm/0.8.184/client-cbor-jvm-0.8.184.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-cbor-jvm/0.8.184/utils-cbor-jvm-0.8.184.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1.7.3/kotlinx-serialization-cbor-jvm-1.7.3.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/api/api-gateway-client-jvm/0.8.184/api-gateway-client-jvm-0.8.184-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/indexing/indexing-provider-api-jvm/0.8.184/indexing-provider-api-jvm-0.8.184-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/api/api-gateway-api-jvm/0.8.184/api-gateway-api-jvm-0.8.184-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-gateway-jvm/0.8.184/model-gateway-jvm-0.8.184-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/client/client-cbor-jvm/0.8.184/client-cbor-jvm-0.8.184-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-cbor-jvm/0.8.184/utils-cbor-jvm-0.8.184-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1.7.3/kotlinx-serialization-cbor-jvm-1.7.3-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
@@ -782,5 +904,7 @@
     <orderEntry type="module" module-name="intellij.python.community.services.systemPython.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.pyproject.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.services.internal.impl.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
   </component>
 </module>

@@ -25,25 +25,12 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DisposableHandle
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.concurrent.atomics.AtomicReference
-
-/**
- * [f] will be invoked each time when it's return value may be changed.
- * All subsequent repetitions of the same value are filtered out.
- * @return cold flow of read values, will subscribe to changes only when flow termination operation is invoked.
- *
- *  Note: this function has existed before Rete, which probably means that all it's usages are outdated and perhaps contains consistency issues.
- *  These are highlighted in the editor now, so that responsible developer could think a little bit and do one of two things:
- *  1. just `query {}.matchesFlow().map { it.value }` to lose the consistency explicitly, or
- *  2. `query{}.collect {}`, or `query {}.matchesFlow().transform().collectMatches { }`
- */
-@Deprecated("Use query", replaceWith = ReplaceWith("query { f() }", imports = ["fleet.kernel.rete.query"]))
-suspend fun <T> queryAsFlow(f: () -> T): Flow<T> =
-  query { f() }.asValuesFlow()
-
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 suspend fun <T : Entity> launchOnEachEntity(entityType: EntityType<T>, f: suspend CoroutineScope.(T) -> Unit) {
   entityType.each().launchOnEach { v ->
@@ -129,21 +116,31 @@ private object Logger {
   val logger = logger<Logger>()
 }
 
-suspend fun <T> waitForNotNullWithTimeout(timeMillis: Long = 30000L, p: () -> T?): T {
-  return waitForNotNullWithTimeoutOrNull(timeMillis, p) ?: run {
-    Logger.logger.error(Throwable("Timed out waiting for ${p::class} to return not null, $timeMillis ms"))
-    throw CancellationException("$p is null, after ${timeMillis}ms")
+suspend fun <T> waitForNotNullWithTimeout(timeout: Duration = 30.seconds, p: () -> T?): T {
+  return waitForNotNullWithTimeoutOrNull(timeout, p) ?: run {
+    Logger.logger.error(Throwable("Timed out waiting for ${p::class} to return not null, $timeout"))
+    throw CancellationException("$p is null, after $timeout")
   }
 }
 
-suspend fun <T> waitForNotNullWithTimeoutOrNull(timeMillis: Long = 30000L, p: () -> T?): T? {
+@Deprecated("Use overload with Duration")
+suspend fun <T> waitForNotNullWithTimeout(timeMillis: Long, p: () -> T?): T {
+  return waitForNotNullWithTimeout(timeMillis.milliseconds, p)
+}
+
+suspend fun <T> waitForNotNullWithTimeoutOrNull(timeout: Duration = 30.seconds, p: () -> T?): T? {
   val value = p()
   if (value != null) return value
-  return withTimeoutOrNull(timeMillis) { query { p() }.asValuesFlow().firstOrNull { it != null } }
+  return withTimeoutOrNull(timeout) { query { p() }.asValuesFlow().firstOrNull { it != null } }
+}
+
+@Deprecated("Use overload with Duration")
+suspend fun <T> waitForNotNullWithTimeoutOrNull(timeMillis: Long, p: () -> T?): T? {
+  return waitForNotNullWithTimeoutOrNull(timeMillis.milliseconds, p)
 }
 
 suspend fun <T> waitForNotNull(p: () -> T?): T {
-  return waitForNotNullWithTimeout(Long.MAX_VALUE, p)
+  return waitForNotNullWithTimeout(Duration.INFINITE, p)
 }
 
 /**

@@ -118,7 +118,7 @@ private fun PsiElement.classifyFromAncestor(ancestor: PsiElement): TypeAnnotatio
   // But strings nested inside non-type-routing calls are not: `class A(namedtuple('C', 'x y')): ...`
   is PyArgumentList -> when {
     ancestor.parent !is PyClass -> null
-    this.parents(false).takeWhile { it !== ancestor }.any { it is PyCallExpression } ->
+    this.parents(false).takeWhile { it !== ancestor }.any { it is PyKeywordArgument || it is PyCallExpression } ->
       TypeAnnotationPosition.NonTypeForm
     else -> TypeAnnotationPosition.TypeForm
   }

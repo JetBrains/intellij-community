@@ -32,6 +32,8 @@
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.searchEverywhere.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.searchEverywhereLucene.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.searchEverywhereLucene.backend" />
 </module>

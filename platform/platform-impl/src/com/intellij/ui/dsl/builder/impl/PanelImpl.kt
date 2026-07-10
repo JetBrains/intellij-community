@@ -27,7 +27,6 @@ import java.awt.Color
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-@ApiStatus.Internal
 internal class PanelImpl(
   private val dialogPanelConfig: DialogPanelConfig,
   var spacingConfiguration: SpacingConfiguration,

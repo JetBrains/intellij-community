@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -44,7 +43,6 @@ import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.impl.SdkInternalUtilKt;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
-import com.jetbrains.python.target.PyDetectedSdkAdditionalData;
 import com.jetbrains.python.target.PyInterpreterVersionUtil;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import com.jetbrains.python.venvReader.VirtualEnvReaderKt;
@@ -76,7 +74,6 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static com.intellij.execution.target.TargetBasedSdks.loadTargetConfiguration;
 import static com.intellij.platform.ide.progress.TasksKt.runWithModalProgressBlocking;
 import static com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.REFRESH_SKELETONS_FOR_REMOTE_INTERPRETER_FAILED;
 
@@ -172,7 +169,8 @@ public final class PythonSdkType extends SdkType {
         if (files.length != 0) {
           VirtualFile file = files[0];
 
-          record ValidationResult(boolean isValid, boolean isDirectory) {}
+          record ValidationResult(boolean isValid, boolean isDirectory) {
+          }
 
           ValidationResult result = runWithModalProgressBlocking(
             ModalTaskOwner.guess(), PyBundle.message("modal.progress.title.path.validation"), TaskCancellation.cancellable(),
@@ -205,8 +203,11 @@ public final class PythonSdkType extends SdkType {
       @Override
       public boolean isFileSelectable(@Nullable VirtualFile file) {
         if (file == null) return false;
-        Path pythonPath = VirtualEnvReaderKt.VirtualEnvReader().findPythonInPythonRoot(file.toNioPath());
-        return pythonPath != null;
+        // A regular file may be a Python binary or a wrapper script (e.g. a .bat/.sh launching Python), so allow
+        // selecting any file and let validateSelectedFiles() reject the invalid ones (PY-89236). A directory is
+        // selectable only when it contains a Python binary (the folder-selection feature from PY-86247).
+        if (!file.isDirectory()) return true;
+        return VirtualEnvReaderKt.VirtualEnvReader().findPythonInPythonRoot(file.toNioPath()) != null;
       }
     }
       .withTitle(PyBundle.message("sdk.select.path"))
@@ -321,16 +322,6 @@ public final class PythonSdkType extends SdkType {
 
     if (homePath != null) {
 
-      if (additional.getAttributeBooleanValue(PyDetectedSdkAdditionalData.PY_DETECTED_SDK_MARKER)) {
-        PyDetectedSdkAdditionalData data = new PyDetectedSdkAdditionalData(null, null);
-        data.load(additional);
-        TargetEnvironmentConfiguration targetEnvironmentConfiguration = loadTargetConfiguration(additional);
-        if (targetEnvironmentConfiguration != null) {
-          data.setTargetEnvironmentConfiguration(targetEnvironmentConfiguration);
-        }
-        return data;
-      }
-
       var targetAdditionalData = PyTargetAwareAdditionalData.loadTargetAwareData(currentSdk, additional);
       if (targetAdditionalData != null) {
         return targetAdditionalData;
@@ -398,7 +389,7 @@ public final class PythonSdkType extends SdkType {
           projectRef.set(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(ownerComponent)));
         }
         else {
-        projectRef.set(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()));
+          projectRef.set(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()));
         }
       });
     }

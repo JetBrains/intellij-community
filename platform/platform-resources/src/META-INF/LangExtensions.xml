@@ -76,7 +76,6 @@
 
     <applicationService serviceInterface="com.intellij.util.indexing.EntityIndexingService"
                         serviceImplementation="com.intellij.util.indexing.EntityIndexingServiceImpl"/>
-    <!--suppress PluginXmlCapitalization -->
     <registryKey defaultValue="true" key="use.dependencies.cache.service" restartRequired="true"
                  description="Rescan delta of AdditionalLibraryProvider, IndexableSetContributor, DirectoryIndexExcludePolicy values instead of full project."/>
     <registryKey defaultValue="20" key="scanning.dumb.mode.threshold" restartRequired="true"
@@ -387,8 +386,6 @@
 
     <applicationService serviceInterface="com.intellij.configurationStore.ModuleStoreFactory"
                         serviceImplementation="com.intellij.configurationStore.DefaultModuleStoreFactory"/>
-
-    <moduleService serviceImplementation="com.intellij.openapi.module.impl.DeprecatedModuleOptionManager"/>
 
     <applicationService serviceInterface="com.intellij.ide.scratch.ScratchFileService"
                         serviceImplementation="com.intellij.ide.scratch.ScratchFileServiceImpl"/>
@@ -1090,12 +1087,6 @@
 
     <annotator language="" implementationClass="com.intellij.codeInsight.highlighting.HyperlinkAnnotator" order="last"/>
 
-    <problemsViewPanelProvider implementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewHighlightingPanelProvider"/>
-    <problemsViewHighlightingProblemFactory id="default" implementation="com.intellij.analysis.problemsView.toolWindow.DefaultHighlightingProblemFactory"/>
-    <problemsViewPanelProvider implementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewProjectErrorsPanelProvider"/>
-
-    <projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewIconUpdater" open="true"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.analysis.problemsView.toolWindow.ProblemsViewStatsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.util.FileStructurePopupTimeTracker"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.hints.codeVision.CodeVisionFusCollector"/>
     <editorFactoryListener implementation="com.intellij.codeInsight.hints.codeVision.CodeVisionFusEditorListener" />
@@ -1496,6 +1487,9 @@
                  description="Action 'Insert Inline Completion Proposal Line' will also insert leading whitespaces of the next line"
                  defaultValue="true"/>
     <inline.completion.element.manipulator
+      implementation="com.intellij.codeInsight.inline.completion.elements.InlineCompletionFragmentedElementManipulator"
+      order="first"/>
+    <inline.completion.element.manipulator
       implementation="com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElementManipulator"
       order="last"/>
     <inline.completion.element.manipulator
@@ -1549,8 +1543,6 @@
                  description="Enable split implementation of File, Project Errors and Code Analysis tabs in Problems View. Key needs to be set in both client and host."
                  restartRequired="true"/>
 
-    <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowProblemsEmpty" canCloseContents="true"
-                factoryClass="com.intellij.analysis.problemsView.toolWindow.ProblemsView"/>
     <notificationGroup id="Execution" displayType="TOOL_WINDOW" bundle="messages.ExecutionBundle" key="notification.group.execution"/>
     <notificationGroup id="Inspection Results" displayType="TOOL_WINDOW" toolWindowId="Inspection Results"
                        bundle="messages.InspectionsBundle" key="notification.group.inspection.results"/>
@@ -1814,6 +1806,8 @@
     <listener class="com.intellij.openapi.fileEditor.impl.FileEditorVirtualFileAppearanceListener"
               topic="com.intellij.ide.ui.VirtualFileAppearanceListener"/>
     <listener class="com.intellij.codeInsight.daemon.impl.DaemonFusReporter"
+              topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
+    <listener class="com.intellij.codeInsight.daemon.impl.DaemonInitialActivityReporter"
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
     <listener class="com.intellij.codeInsight.inline.completion.InlineCompletionLookupManagerListener"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>

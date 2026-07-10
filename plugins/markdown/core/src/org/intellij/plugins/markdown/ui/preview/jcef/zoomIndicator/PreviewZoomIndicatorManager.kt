@@ -21,7 +21,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import org.intellij.plugins.markdown.ui.preview.jcef.MarkdownJCEFHtmlPanel
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewBrowserActions
 import java.lang.ref.WeakReference
 import kotlin.time.Duration.Companion.seconds
 
@@ -30,7 +30,7 @@ class PreviewZoomIndicatorManager(project: Project, coroutineScope: CoroutineSco
   private val cancelBalloonRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private var balloon: Balloon? = null
-  private var preview: WeakReference<MarkdownJCEFHtmlPanel> = WeakReference(null)
+  private var preview: WeakReference<MarkdownPreviewBrowserActions> = WeakReference(null)
 
   init {
     project.messageBus.connect(coroutineScope).subscribe(AnActionListener.TOPIC, object : AnActionListener {
@@ -56,7 +56,7 @@ class PreviewZoomIndicatorManager(project: Project, coroutineScope: CoroutineSco
     }
   }
 
-  fun createOrGetBalloon(preview: MarkdownJCEFHtmlPanel): Balloon? {
+  fun createOrGetBalloon(preview: MarkdownPreviewBrowserActions): Balloon? {
     val view = PreviewZoomIndicatorView(preview)
     val b = balloon
     if (this.preview.refersTo(preview) && (b as? BalloonImpl)?.isVisible == true) {

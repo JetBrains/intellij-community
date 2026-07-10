@@ -1,10 +1,11 @@
 <idea-plugin package="com.intellij.grazie.ide.language.json">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.grazie.core"/>
     <module name="intellij.json.backend"/>
-    <!-- endregion -->
+    <module name="intellij.platform.backend"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij.grazie">
     <textExtractor language="JSON" implementationClass="com.intellij.grazie.ide.language.json.JsonTextExtractor"/>

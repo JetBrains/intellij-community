@@ -20,6 +20,9 @@ public interface ImageRendererExtension {
     /**
      * Renders an image from a Markdown document.
      *
+     * **Note:** The [androidx.compose.ui.text.Placeholder] inside the returned [InlineTextContent] **must** use
+     * [androidx.compose.ui.unit.TextUnitType.Sp] units for both `width` and `height` so that they can properly scale.
+     *
      * @param image The image data, containing information like the image URL and alt text.
      * @return An [InlineTextContent] that will be embedded in the text flow, which will be used to display the image.
      */

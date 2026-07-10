@@ -1,10 +1,16 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
+
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.fixtures.PyInspectionTestCase
+import org.junit.ComparisonFailure
 
+@Subsystems.Inspections
+@Layers.Functional
 class PyInvalidCastInspectionTest : PyInspectionTestCase() {
   override fun getInspectionClass() = PyInvalidCastInspection::class.java
 
@@ -13,14 +19,15 @@ class PyInvalidCastInspectionTest : PyInspectionTestCase() {
       """
         from typing import cast
 
-        <warning descr="Cast of type 'str' to type 'int' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first.">cast(int, "a")</warning>
-        <warning descr="Cast of type 'list[str]' to type 'list[int]' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first.">cast(list[int], ["a"])</warning>
+        <warning descr="Cast of type 'Literal[\"a\"]' to type 'int' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first.">cast(int, "a")</warning>
 
         cast(int, object())  # ok
         cast(object, 1)  # ok
-        
+
+        # variance of generic type arguments is ignored by default
+        cast(list[int], ["a"])  # ok
         lint = [1, 2, 3]
-        <warning descr="Cast of type 'list[int]' to type 'list[object]' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first.">cast(list[object], lint)</warning>  # ok
+        cast(list[object], lint)  # ok
       """.trimIndent()
     )
   }
@@ -56,10 +63,29 @@ class PyInvalidCastInspectionTest : PyInspectionTestCase() {
   }
 
   /**
-   * test that normally castable generics will report an error if they are invariant
+   * test that the variance of invariant generics is ignored by default
    */
-  fun `test generic variance`() {
+  fun `test generic variance ignored by default`() {
     doTestByText(
+      """
+        from typing import cast, Sequence
+
+        lint = [1, 2, 3]
+        cast(list[object], lint)  # ok
+
+        cast(Sequence[object], lint)  # ok
+      """.trimIndent()
+    )
+  }
+
+  /**
+   * test that invariant generics are reported when the "ignore variance" option is disabled
+   */
+  fun `test generic variance reported when option disabled`() {
+    val inspection = PyInvalidCastInspection()
+    inspection.ignoreGenericVariance = false
+    myFixture.configureByText(
+      PythonFileType.INSTANCE,
       """
         from typing import cast, Sequence
 
@@ -69,6 +95,52 @@ class PyInvalidCastInspectionTest : PyInspectionTestCase() {
         cast(Sequence[object], lint)  # ok
       """.trimIndent()
     )
+    myFixture.enableInspections(inspection)
+    fixme("PY-89564", ComparisonFailure::class.java,
+          "Cast of type 'list[int]' to type 'list[object]' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first."
+    ) {
+      myFixture.checkHighlighting(isWarning, isInfo, isWeakWarning)
+    }
+  }
+
+  /**
+   * test that a TypedDict is treated as a dict by default, so casts between a dict and a TypedDict are allowed
+   */
+  fun `test typed dict treated as dict by default`() {
+    doTestByText(
+      """
+        from typing import TypedDict, cast
+
+        class TD(TypedDict):
+            x: int
+
+        def f(data: dict[str, object]):
+            cast(TD, data)  # ok
+            cast(dict[str, object], TD(x=1))  # ok
+      """.trimIndent()
+    )
+  }
+
+  /**
+   * test that casting a dict to a TypedDict is reported when the "ignore TypedDict structure" option is disabled
+   */
+  fun `test typed dict reported when option disabled`() {
+    val inspection = PyInvalidCastInspection()
+    inspection.ignoreTypedDictStructure = false
+    myFixture.configureByText(
+      PythonFileType.INSTANCE,
+      """
+        from typing import TypedDict, cast
+
+        class TD(TypedDict):
+            x: int
+
+        def f(data: dict[str, object]):
+            <warning descr="Cast of type 'dict[str, object]' to type 'TD' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first.">cast(TD, data)</warning>
+      """.trimIndent()
+    )
+    myFixture.enableInspections(inspection)
+    myFixture.checkHighlighting(isWarning, isInfo, isWeakWarning)
   }
 
   fun `test quickfix add intermediate cast`() {
@@ -101,7 +173,7 @@ class PyInvalidCastInspectionTest : PyInspectionTestCase() {
     )
   }
 
-  fun `test overlapping unions`() {
+  fun `test subtype-related unions`() {
     doTestByText("""
       from typing import cast, Literal
       

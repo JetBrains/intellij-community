@@ -23,6 +23,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -113,6 +114,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   @ApiStatus.Internal
   public record Mapping<T>(@Nls String name, @NotNull Supplier<? extends T> getter, @NotNull Consumer<? super T> setter) {
   }
+  private static final Logger LOG = Logger.getInstance(PerFileConfigurableBase.class);
+
   protected static final Key<@NlsContexts.Label String> DESCRIPTION = KeyWithDefaultValue.create("DESCRIPTION", "");
   protected static final Key<@NlsContexts.ColumnName String> TARGET_TITLE = KeyWithDefaultValue.create("TARGET_TITLE", () -> LangBundle.message("PerFileConfigurableBase.target.title"));
   protected static final Key<@NlsContexts.ColumnName String> MAPPING_TITLE = KeyWithDefaultValue.create("MAPPING_TITLE", () -> LangBundle.message("PerFileConfigurableBase.mapping.title"));
@@ -395,7 +398,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected Map<VirtualFile, T> getNewMappings() {
     ThreadingAssertions.assertEventDispatchThread();
     if (myModel == null) {
-      throw new AssertionError("createComponent() was not called first on " + getClass().getName());
+      LOG.error("createComponent() was not called first on " + getClass().getName());
+      return Collections.emptyMap();
     }
     HashMap<VirtualFile, T> map = new HashMap<>();
     for (Pair<Object, T> p : myModel.data) {

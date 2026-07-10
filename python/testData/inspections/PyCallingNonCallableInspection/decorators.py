@@ -38,7 +38,7 @@ def f():
 def f():
     pass
 
-<warning descr="'int' object is not callable">@d2()</warning>
+<warning descr="'Literal[0]' object is not callable">@d2()</warning>
 def f():
     pass
 
@@ -54,15 +54,15 @@ def f():
 def f():
     pass
 
-<warning descr="'int' object is not callable">@d4()</warning>
+<warning descr="'Literal[0]' object is not callable">@d4()</warning>
 def f():
     pass
 
-<warning descr="'int' object is not callable">@d5</warning>
+<warning descr="'Literal[1]' object is not callable">@d5</warning>
 def f():
     pass
 
-<warning descr="'int' object is not callable">@d5()</warning>
+<warning descr="'Literal[1]' object is not callable">@d5()</warning>
 def f():
     pass
 

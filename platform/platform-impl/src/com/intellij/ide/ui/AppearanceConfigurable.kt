@@ -727,7 +727,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
     if (oldIsSupportScreenReaders != generalSettings.isSupportScreenReaders ||
         (!SystemInfo.isWindows && oldMainMenuDisplayMode != settings.mainMenuDisplayMode && listOf(oldMainMenuDisplayMode,  settings.mainMenuDisplayMode).contains(MainMenuDisplayMode.SEPARATE_TOOLBAR)) ||
         oldMergeMainMenuWithWindowTitle != settings.mergeMainMenuWithWindowTitle) {
-      RestartDialogImpl.showRestartRequired()
+      ApplicationManager.getApplication().invokeLater { RestartDialogImpl.showRestartRequired() }
     }
   }
 }

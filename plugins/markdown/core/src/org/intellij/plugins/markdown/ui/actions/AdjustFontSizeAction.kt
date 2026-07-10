@@ -12,35 +12,32 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
-import org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable.Companion.fontSizeOptions
-import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor.Companion.PREVIEW_POPUP_POINT
-import org.intellij.plugins.markdown.ui.preview.jcef.MarkdownJCEFHtmlPanel
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewBrowserActions
+import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles.fontSizeOptions
 import java.awt.FlowLayout
 import javax.swing.BorderFactory
 import javax.swing.JButton
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-class AdjustFontSizeAction: DumbAwareAction() {
+class AdjustFontSizeAction : DumbAwareAction() {
   override fun actionPerformed(event: AnActionEvent) {
     val editor = MarkdownActionUtil.findMarkdownPreviewEditor(event)
     checkNotNull(editor) { "Preview editor should be obtainable from the action event" }
-    val preview = editor.getUserData(MarkdownPreviewFileEditor.PREVIEW_BROWSER)?.get() ?: return
-    if (preview !is MarkdownJCEFHtmlPanel) {
-      return
-    }
+    val preview = MarkdownActionUtil.findPreviewBrowserActions(event) ?: return
     val hintComponent = HintComponent(preview)
     val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(hintComponent, hintComponent).setRequestFocus(true).createPopup()
     val point = event.dataContext.getData(PREVIEW_POPUP_POINT)
     if (point != null) {
       popup.show(point)
-    } else {
+    }
+    else {
       popup.showInFocusCenter()
     }
   }
 
-  private class HintComponent(preview: MarkdownJCEFHtmlPanel) : JPanel(FlowLayout(FlowLayout.LEFT, 10, 5)) {
+  private class HintComponent(preview: MarkdownPreviewBrowserActions) : JPanel(FlowLayout(FlowLayout.LEFT, 10, 5)) {
     private val previewSettings
       get() = service<MarkdownPreviewSettings>()
 
@@ -82,7 +79,7 @@ class AdjustFontSizeAction: DumbAwareAction() {
       add(increaseButton.apply { addActionListener { updateFontSize { fontSizeOptions.find { step -> step > it } } } })
     }
 
-    private fun MarkdownJCEFHtmlPanel.getCurrentFontSize() = getTemporaryFontSize() ?: previewSettings.state.fontSize
+    private fun MarkdownPreviewBrowserActions.getCurrentFontSize() = getTemporaryFontSize() ?: previewSettings.state.fontSize
   }
 
   override fun update(event: AnActionEvent) {
@@ -94,4 +91,3 @@ class AdjustFontSizeAction: DumbAwareAction() {
     return ActionUpdateThread.EDT
   }
 }
-

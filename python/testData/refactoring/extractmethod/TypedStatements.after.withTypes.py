@@ -15,5 +15,5 @@ def f(p: Person, salutation: str, ageHolder: Ageholder):
 
 
 def greeting(ageHolder_new: Ageholder, p_new: Person, salutation_new: str) -> str:
-    return salutation_new + p_new.name + "(" + ageHolder_new.age + ")"
+    return salutation_new + p_new.name + "(" + str(ageHolder_new.age) + ")"
 

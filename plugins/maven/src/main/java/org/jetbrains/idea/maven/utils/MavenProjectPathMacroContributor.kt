@@ -3,11 +3,13 @@ package org.jetbrains.idea.maven.utils
 
 import com.intellij.application.options.PathMacrosImpl
 import com.intellij.openapi.components.impl.ProjectWidePathMacroContributor
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.EelProviderUtil
 import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.idea.maven.utils.MavenUtil.resolveDefaultLocalRepositoryForJpsMacros
 import java.nio.file.Path
 import java.util.Map
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Maven home path depends on an environment where the project is located.
@@ -15,12 +17,17 @@ import java.util.Map
  * such as WSL and Docker based. Here we decide the location by project.
  */
 internal class MavenProjectPathMacroContributor : ProjectWidePathMacroContributor {
+  private val repositoryByDescriptor = ConcurrentHashMap<EelDescriptor, String>()
+
   override fun getProjectPathMacros(projectFilePath: @SystemIndependent String): MutableMap<String, String> {
     return Map.of(PathMacrosImpl.MAVEN_REPOSITORY, getPathToDefaultMavenLocalRepositoryOnSpecificEnv(projectFilePath))
   }
 
   fun getPathToDefaultMavenLocalRepositoryOnSpecificEnv(projectFilePath: @SystemIndependent String): String {
     val projectFile = Path.of(projectFilePath)
-    return resolveDefaultLocalRepositoryForJpsMacros(EelProviderUtil.getEelDescriptor(projectFile)).toAbsolutePath().toString()
+    val descriptor = EelProviderUtil.getEelDescriptor(projectFile)
+    return repositoryByDescriptor.computeIfAbsent(descriptor) {
+      resolveDefaultLocalRepositoryForJpsMacros(it).toAbsolutePath().toString()
+    }
   }
 }

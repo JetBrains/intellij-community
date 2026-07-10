@@ -1,0 +1,19 @@
+[project]
+name = "workspace"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "nebula",
+    "quasar",
+    "abyss",
+]
+
+[tool.uv.workspace]
+members = ["cosmos/*", "ocean/*"]
+
+[tool.uv.sources]
+nebula = { workspace = true }
+quasar = { workspace = true }
+abyss = { workspace = true }

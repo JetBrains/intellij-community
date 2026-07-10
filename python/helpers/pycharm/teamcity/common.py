@@ -73,6 +73,11 @@ def dump_test_stdout(messages, test_id, flow_id, data):
         messages.testStdOut(test_id, chunk, flowId=flow_id)
 
 
+def dump_test_log(messages, test_id, flow_id, data):
+    for chunk in split_output(limit_output(data)):
+        messages.message('testLog', name=test_id, out=chunk, flowId=flow_id)
+
+
 def dump_test_stderr(messages, test_id, flow_id, data):
     for chunk in split_output(limit_output(data)):
         messages.testStdErr(test_id, chunk, flowId=flow_id)

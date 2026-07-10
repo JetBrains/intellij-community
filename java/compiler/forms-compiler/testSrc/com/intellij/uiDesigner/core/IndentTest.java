@@ -1,14 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.core;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import java.awt.Dimension;
 import java.awt.Insets;
 
-public class IndentTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class IndentTest {
+  @Test
   public void testSimple() {
     final GridLayoutManager layout = new GridLayoutManager(1,1, new Insets(0,0,0,0), 0, 0);
     final JPanel panel = new JPanel(layout);

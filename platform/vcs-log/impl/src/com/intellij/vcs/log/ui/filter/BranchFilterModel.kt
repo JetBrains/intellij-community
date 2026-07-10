@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.CommitId
-import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogBranchFilter
 import com.intellij.vcs.log.VcsLogDataPack
 import com.intellij.vcs.log.VcsLogFilter
@@ -59,10 +58,8 @@ class BranchFilterModel internal constructor(private val dataPackProvider: () ->
     return VcsLogFilterObject.fromCommits(values.mapNotNull { s: String ->
       val matcher = pattern.matcher(s)
       if (!matcher.matches()) {
-        if (VcsLogUtil.isFullHash(s)) {
-          val commitId = findCommitId(HashImpl.build(s))
-          if (commitId != null) return@mapNotNull commitId
-        }
+        val commitId = findCommitId(s)
+        if (commitId != null) return@mapNotNull commitId
         LOG.warn("Could not parse '$s' while creating revision filter")
         return@mapNotNull null
       }
@@ -80,9 +77,14 @@ class BranchFilterModel internal constructor(private val dataPackProvider: () ->
     })
   }
 
-  private fun findCommitId(hash: Hash): CommitId? {
+  private fun findCommitId(s: String): CommitId? {
     for (root in roots) {
-      val commitId = CommitId(hash, root)
+      val provider = dataPack.logProviders[root] ?: continue
+      if (!provider.isFullHash(root, s)) {
+        continue
+      }
+
+      val commitId = CommitId(HashImpl.build(s), root)
       if (storage.containsCommit(commitId)) {
         return commitId
       }
@@ -99,7 +101,7 @@ class BranchFilterModel internal constructor(private val dataPackProvider: () ->
       if (twoDots > 0 && twoDots == s.lastIndexOf("..")) {
         ranges.add(s)
       }
-      else if (VcsLogUtil.isFullHash(s)) {
+      else if (dataPack.logProviders.any { (root, provider) -> provider.isFullHash(root, s) }) {
         hashes.add(s)
       }
       else {

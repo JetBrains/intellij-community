@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.util.PlatformUtils;
@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public enum IntelliJPlatformProduct {
+  // sync myCdnCoordinates with IntelliJPlatformAuxiliaryArtifactProvider.CDN_GROUPS
   IDEA("IU", "IntelliJ IDEA", null, "com.jetbrains.intellij.idea:idea", "idea:idea"),
   IDEA_IU("IU", "IntelliJ IDEA", null, "com.jetbrains.intellij.idea:ideaIU", "idea:ideaIU"),
   IDEA_IC("IC", "IntelliJ IDEA Community Edition", PlatformUtils.IDEA_CE_PREFIX, "com.jetbrains.intellij.idea:ideaIC", "idea:ideaIC"),

@@ -21,11 +21,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.transformer.TextPresentationTransformers
-import com.intellij.util.DocumentUtil
 import kotlinx.coroutines.currentCoroutineContext
 import kotlin.io.path.name
 import kotlin.io.path.pathString
@@ -168,7 +168,7 @@ private suspend fun tryApplyUpdateWithDocument(
         moveFile(requestor, sourceFile, it.path, it.pathInProject)
       } ?: sourceFile
       if (hasContentChanges) {
-        writeFileTextByDocument(document, targetFile, updatedText)
+        document.setText(TextPresentationTransformers.fromPersistent(updatedText, virtualFile = targetFile))
         CachedDocumentPatchResult.Applied(document)
       }
       else {
@@ -245,7 +245,7 @@ private fun findFile(localFileSystem: LocalFileSystem, resolvedPath: java.nio.fi
 
 private fun moveFile(requestor: Any, file: VirtualFile, targetPath: java.nio.file.Path, targetPathInProject: String): VirtualFile {
   val parentPath = targetPath.parent ?: mcpFail("Move to requires a parent directory")
-  val targetParent = VfsUtil.createDirectories(parentPath.pathString)
+  val targetParent = VfsUtil.createDirectoryIfMissing(parentPath.pathString)!!
   val targetName = targetPath.name
   val existing = targetParent.findChild(targetName)
   if (existing != null && existing != file) mcpFail("File already exists: $targetPathInProject")
@@ -259,17 +259,6 @@ private fun moveFile(requestor: Any, file: VirtualFile, targetPath: java.nio.fil
   return file
 }
 
-private fun writeFileTextByDocument(
-  document: Document,
-  file: VirtualFile,
-  text: String,
-) {
-  val documentText = TextPresentationTransformers.fromPersistent(text, virtualFile = file)
-  DocumentUtil.executeInBulk(document, true) {
-    document.setText(documentText)
-  }
-}
-
 private fun writeFileTextByVfs(
   file: VirtualFile,
   text: String,
@@ -277,7 +266,7 @@ private fun writeFileTextByVfs(
 ) {
   val documentText = TextPresentationTransformers.fromPersistent(text, virtualFile = file)
   try {
-    VfsUtil.saveText(file, documentText.toString())
+    VfsUtilCore.saveText(file, documentText.toString())
   }
   catch (e: Exception) {
     mcpFail("Could not write file $pathInProject: ${e.message}")

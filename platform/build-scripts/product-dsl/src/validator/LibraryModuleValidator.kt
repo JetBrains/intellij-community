@@ -9,12 +9,8 @@ import org.jdom.Element
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
-import org.jetbrains.intellij.build.productLayout.pipeline.DataSlot
 import org.jetbrains.intellij.build.productLayout.pipeline.NodeIds
 import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
-import org.jetbrains.intellij.build.productLayout.pipeline.Slots
-import org.jetbrains.intellij.build.productLayout.stats.SuppressionType
-import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
 import org.jetbrains.intellij.build.productLayout.util.FileUpdateStrategy
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -27,8 +23,8 @@ import java.nio.file.Files
  * Library module replacement validation.
  *
  * Purpose: Replace direct project library deps with library module deps (`intellij.libraries.*`).
- * Inputs: plugin graph, JPS model, libraryModuleFilter, suppressions.
- * Output: `.iml` updates and `Slots.LIBRARY_SUPPRESSIONS`.
+ * Inputs: plugin graph, JPS model, libraryModuleFilter.
+ * Output: `.iml` updates.
  * Auto-fix: yes.
  *
  * Glossary: docs/validators/README.md.
@@ -36,20 +32,20 @@ import java.nio.file.Files
  */
 internal object LibraryModuleValidator : PipelineNode {
   override val id get() = NodeIds.LIBRARY_MODULE_VALIDATION
-  override val produces: Set<DataSlot<*>> get() = setOf(Slots.LIBRARY_SUPPRESSIONS)
 
   override suspend fun execute(ctx: ComputeContext) {
     val model = ctx.model
     val graph = model.pluginGraph
     val outputProvider = model.config.outputProvider
     val strategy = model.fileUpdater
-    val suppressionConfig = model.suppressionConfig
     val updateSuppressions = model.updateSuppressions
+    if (updateSuppressions) {
+      return
+    }
 
     // Map of project library name -> library module name (built from JPS library modules).
     val libraryToModuleMap = model.config.projectLibraryToModuleMap
     if (libraryToModuleMap.isEmpty()) {
-      ctx.publish(Slots.LIBRARY_SUPPRESSIONS, emptyList())
       return
     }
 
@@ -102,7 +98,7 @@ internal object LibraryModuleValidator : PipelineNode {
           // Check if module already depends on the library module
           val alreadyDependsOnLibraryModule = dependsOnModules.contains(libraryModuleName)
 
-        violationsByModule.computeIfAbsent(moduleName) { ArrayList() }.add(LibraryViolation(
+          violationsByModule.computeIfAbsent(moduleName) { ArrayList() }.add(LibraryViolation(
             libraryName = libName,
             libraryModuleName = libraryModuleName,
             isTestScope = isTestScope,
@@ -112,35 +108,9 @@ internal object LibraryModuleValidator : PipelineNode {
       }
     }
 
-    // Apply fixes only for non-suppressed libraries (per-module check)
-    // Track suppression usages for the unified suppression architecture
-    val suppressionUsages = ArrayList<SuppressionUsage>()
     for ((moduleName, violations) in violationsByModule) {
-      val contentModuleName = moduleName
-      if (updateSuppressions) {
-        for (violation in violations) {
-          suppressionUsages.add(SuppressionUsage(contentModuleName, violation.libraryName, SuppressionType.LIBRARY_REPLACEMENT))
-        }
-        continue
-      }
-      val suppressedLibraries = suppressionConfig.contentModules
-        .get(contentModuleName)?.suppressLibraries ?: emptySet()
-      val activeViolations = ArrayList<LibraryViolation>()
-      for (violation in violations) {
-        if (violation.libraryName in suppressedLibraries) {
-          // Suppression found and applied - report it
-          suppressionUsages.add(SuppressionUsage(contentModuleName, violation.libraryName, SuppressionType.LIBRARY_REPLACEMENT))
-        }
-        else {
-          activeViolations.add(violation)
-        }
-      }
-      if (activeViolations.isNotEmpty()) {
-        applyLibraryModuleFix(contentModuleName, activeViolations, outputProvider, strategy)
-      }
+      applyLibraryModuleFix(moduleName, violations, outputProvider, strategy)
     }
-
-    ctx.publish(Slots.LIBRARY_SUPPRESSIONS, suppressionUsages)
   }
 }
 

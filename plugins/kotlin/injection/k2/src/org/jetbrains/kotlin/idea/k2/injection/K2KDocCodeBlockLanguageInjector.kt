@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.injection
 import com.intellij.lang.Language
 import com.intellij.lang.injection.MultiHostInjector
 import com.intellij.lang.injection.MultiHostRegistrar
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -17,7 +18,7 @@ import kotlin.math.min
 private const val tripleQuotes = "```"
 private const val tripleTildes = "~~~"
 
-internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector {
+internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector, DumbAware {
     private val languages: Map<String, Language> by lazy {
         Language.getRegisteredLanguages().associateBy { it.id.lowercase() }
     }

@@ -5,7 +5,6 @@ import com.intellij.debugger.streams.core.lib.impl.ConcatOperation
 import com.intellij.debugger.streams.core.lib.impl.DistinctOperation
 import com.intellij.debugger.streams.core.lib.impl.FilterOperation
 import com.intellij.debugger.streams.core.lib.impl.FlatMappingOperation
-import com.intellij.debugger.streams.core.lib.impl.LibrarySupportBase
 import com.intellij.debugger.streams.core.lib.impl.MappingOperation
 import com.intellij.debugger.streams.core.lib.impl.OrderBasedOperation
 import com.intellij.debugger.streams.core.lib.impl.SortedOperation
@@ -17,12 +16,7 @@ import com.intellij.debugger.streams.core.trace.impl.handler.unified.DistinctTra
 /**
  * @author Vitaliy.Bibaev
  */
-class JBIterableSupport : LibrarySupportBase() {
-  companion object {
-    fun filterOperations(vararg names: String): Array<FilterOperation> = names.map { FilterOperation(it) }.toTypedArray()
-    fun mapOperations(vararg names: String): Array<MappingOperation> = names.map { MappingOperation(it) }.toTypedArray()
-  }
-
+class JBIterableSupport : JvmLibrarySupportBase() {
   init {
     addIntermediateOperationsSupport(*filterOperations("filter", "skip", "skipWhile", "take", "takeWhile"))
     addIntermediateOperationsSupport(*mapOperations("map", "transform"))
@@ -42,5 +36,10 @@ class JBIterableSupport : LibrarySupportBase() {
     addIntermediateOperationsSupport(SortedOperation("sorted"), SortedOperation("collect"))
 
     addIntermediateOperationsSupport(OrderBasedOperation("filterMap", FilteredMapResolver()))
+  }
+
+  companion object {
+    fun filterOperations(vararg names: String): Array<FilterOperation> = names.map { FilterOperation(it) }.toTypedArray()
+    fun mapOperations(vararg names: String): Array<MappingOperation> = names.map { MappingOperation(it) }.toTypedArray()
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.lang.LanguageAnnotators;
@@ -6,12 +6,14 @@ import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.editor.elf.ElfFeatureFlag;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -70,6 +72,16 @@ public class DocumentMarkupModelTest extends BasePlatformTestCase {
     model.addPersistentLineHighlighter(2, 0, null);
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(1, 4));
     assertFalse(h.isValid());
+  }
+
+  public void testDocumentMarkupModelKeepsRealDocumentWithLockFreeTyping() {
+    ElfFeatureFlag.withEnabled(() -> {
+      myFixture.configureByText(PlainTextFileType.INSTANCE, "foo");
+      Document realDocument = myFixture.getEditor().getDocument();
+      assertNotNull(Elf.getElf().getElfDocument(realDocument));
+      MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(realDocument, getProject(), true);
+      assertSame(realDocument, model.getDocument());
+    });
   }
 
   public void testCorrectUpdateOfPersistentHighlighterAfterFarAwayChange() {

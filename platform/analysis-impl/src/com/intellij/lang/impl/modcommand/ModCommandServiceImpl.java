@@ -72,9 +72,9 @@ public final class ModCommandServiceImpl implements ModCommandService {
 
   @Override
   public @NotNull ModCommand psiUpdate(@NotNull ActionContext context,
-                                       @NotNull Consumer<@NotNull Document> copyCleaner,
+                                       boolean deleteSelection,
                                        @NotNull Consumer<@NotNull ModPsiUpdater> updater) {
-    return PsiUpdateImpl.psiUpdate(context, copyCleaner, updater);
+    return PsiUpdateImpl.psiUpdate(context, deleteSelection, updater);
   }
 
   @Override

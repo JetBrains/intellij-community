@@ -103,7 +103,7 @@ class ReplaceInfixOrOperatorCallFix(
             }
         }
         if (elvis.isNotEmpty()) {
-            replacement?.moveCaretToEnd(context.project, updater)
+            replacement?.startTemplateForElvisTodo(updater)
         }
     }
 }

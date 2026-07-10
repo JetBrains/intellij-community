@@ -12,5 +12,5 @@ fun use() {
     produceCommonMainExpect().jvmApi()
 
     // iosMain API is not visible
-    <!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference 'produceIosMainExpect'.'")!>produceIosMainExpect<!>()
+    <!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE]'")!>produceIosMainExpect<!>()
 }

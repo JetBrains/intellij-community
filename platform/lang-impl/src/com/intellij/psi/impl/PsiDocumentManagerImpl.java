@@ -64,7 +64,9 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   @Override
   public void assertFileIsFromCorrectProject(@NotNull VirtualFile virtualFile) {
     if (myUnitTestMode && virtualFile.isValid()) {
-      Collection<Project> projects = ProjectLocator.getInstance().getProjectsForFile(virtualFile);
+      Project preferredProject = ProjectLocator.getPreferredProject(virtualFile);
+      Collection<Project> projects = preferredProject == null ? ProjectLocator.getInstance().getProjectsForFile(virtualFile)
+                                                              : Collections.singleton(preferredProject);
       boolean isMyProject = projects.isEmpty() || projects.contains(myProject)
                             // set aside the use-case for lazy developers who just don't care to retrieve the correct project for the file
                             // and use DefaultProjectFactory.getDefaultProject() because why bother

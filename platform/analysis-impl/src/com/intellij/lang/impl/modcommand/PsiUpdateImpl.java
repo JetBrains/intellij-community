@@ -3,8 +3,11 @@ package com.intellij.lang.impl.modcommand;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.RecalculatableResult;
 import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.impl.ModCommandAwareTemplateOptionalProcessor;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateOptionalProcessor;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.InjectionEditService;
 import com.intellij.lang.Language;
@@ -82,14 +85,14 @@ final class PsiUpdateImpl {
   private static final Key<PsiFile> ORIGINAL_FILE_FOR_INJECTION = Key.create("ORIGINAL_FILE_FOR_INJECTION");
 
   static @NotNull ModCommand psiUpdate(@NotNull ActionContext context,
-                                       @NotNull Consumer<@NotNull Document> copyCleaner,
+                                       boolean deleteSelection,
                                        @NotNull Consumer<@NotNull ModPsiUpdater> updater) {
     var runnable = new Runnable() {
       private ModPsiUpdaterImpl myUpdater;
 
       @Override
       public void run() {
-        myUpdater = new ModPsiUpdaterImpl(context, copyCleaner);
+        myUpdater = new ModPsiUpdaterImpl(context, deleteSelection);
         updater.accept(myUpdater);
       }
 
@@ -121,15 +124,13 @@ final class PsiUpdateImpl {
     private boolean myDeleted;
     private boolean myGuardModification;
 
-    FileTracker(@NotNull PsiFile origFile, @NotNull Map<PsiFile, FileTracker> changedFiles, @NotNull Consumer<@NotNull Document> copyCleaner) {
+    FileTracker(@NotNull PsiFile origFile, @NotNull Map<PsiFile, FileTracker> changedFiles, @Nullable TextRange selectionToDelete) {
       Project project = origFile.getProject();
       myCopyFile = copyFile(project, origFile);
-      PsiFileImplUtil.setNonPhysicalFileDeleteHandler(myCopyFile, f -> myDeleted = true);
-      assert !myCopyFile.getViewProvider().isEventSystemEnabled() : "Event system for " + myCopyFile.getName();
+      PsiFileImplUtil.setNonPhysicalFileDeleteHandler(myCopyFile, _ -> myDeleted = true);
+      assert !myCopyFile.getViewProvider().supportsSendingPsiEvents() : "Event system for " + myCopyFile.getName();
       myManager = PsiDocumentManager.getInstance(project);
       myDocument = myCopyFile.getFileDocument();
-      copyCleaner.accept(myDocument);
-      myManager.commitDocument(myDocument);
       InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(project);
       boolean injected = injectionManager.isInjectedFragment(origFile);
       if (injected) {
@@ -151,6 +152,16 @@ final class PsiUpdateImpl {
           }
         }, this);
         Disposer.register(this, disposable);
+        if (selectionToDelete != null) {
+          // The supplied selection is in host-document coordinates (completion uses the top-level editor);
+          // map it into the injected copy's coordinate space, as myDocument is the copy of the injected file here.
+          Document injectedDocument = origFile.getFileDocument();
+          if (injectedDocument instanceof DocumentWindow window) {
+            int start = injectionManager.mapInjectedOffsetToUnescaped(origFile, window.hostToInjected(selectionToDelete.getStartOffset()));
+            int end = injectionManager.mapInjectedOffsetToUnescaped(origFile, window.hostToInjected(selectionToDelete.getEndOffset()));
+            selectionToDelete = TextRange.create(start, end);
+          }
+        }
         myTargetFile = hostFileCopy;
         origFile = hostFile;
         myPositionDocument = hostFileCopy.getViewProvider().getDocument();
@@ -159,6 +170,10 @@ final class PsiUpdateImpl {
         myInjectionHost = null;
         myTargetFile = myCopyFile;
         myPositionDocument = myDocument;
+      }
+      if (selectionToDelete != null) {
+        myDocument.deleteString(selectionToDelete.getStartOffset(), selectionToDelete.getEndOffset());
+        myManager.commitDocument(myDocument);
       }
       myPositionDocument.addDocumentListener(this, this);
       myOrigText = myTargetFile.getText();
@@ -308,12 +323,12 @@ final class PsiUpdateImpl {
     private int myCaretVirtualEnd;
     private @NotNull TextRange mySelection;
     private final @NotNull List<@NotNull ModRegisterTabOut> myTabOutCommands = new ArrayList<>();
-    private final Consumer<@NotNull Document> myCopyCleaner;
+    private final boolean myDeleteSelection;
     private final List<ModHighlight.HighlightInfo> myHighlightInfos = new ArrayList<>();
     private final List<ModStartTemplate.TemplateField> myTemplateFields = new ArrayList<>();
     private final Map<String, Result> myTemplateValues = new HashMap<>();
     private final List<ModLaunchEditorAction> myLaunchEditorActions = new ArrayList<>();
-    private @NotNull Function<? super @NotNull PsiFile, ? extends @NotNull ModCommand> myTemplateFinishFunction = f -> nop();
+    private @NotNull Function<? super @NotNull PsiFile, ? extends @NotNull ModCommand> myTemplateFinishFunction = _ -> nop();
     private @Nullable ModStartRename myRenameSymbol;
     private final List<ModUpdateReferences> myTrackedDeclarations = new ArrayList<>();
     private boolean myPositionUpdated = false;
@@ -356,11 +371,11 @@ final class PsiUpdateImpl {
       }
     }
 
-    private ModPsiUpdaterImpl(@NotNull ActionContext actionContext, @NotNull Consumer<@NotNull Document> copyCleaner) {
+    private ModPsiUpdaterImpl(@NotNull ActionContext actionContext, boolean deleteSelection) {
       myActionContext = actionContext;
       myCaretOffset = myCaretVirtualEnd = actionContext.offset();
       mySelection = actionContext.selection();
-      myCopyCleaner = copyCleaner;
+      myDeleteSelection = deleteSelection;
     }
 
     private @NotNull FileTracker tracker() {
@@ -391,7 +406,15 @@ final class PsiUpdateImpl {
 
     private @NotNull FileTracker tracker(@NotNull PsiFile file) {
       FileTracker result = myChangedFiles.computeIfAbsent(file, origFile -> {
-        var tracker = new FileTracker(origFile, myChangedFiles, myActionContext.file() == file ? myCopyCleaner : doc -> {});
+        FileTracker tracker;
+        if (myDeleteSelection && myActionContext.file() == file && mySelection.getLength() > 0) {
+          tracker = new FileTracker(origFile, myChangedFiles, mySelection);
+          myCaretOffset = mySelection.getStartOffset();
+          mySelection = TextRange.from(myCaretOffset, 0);
+        }
+        else {
+          tracker = new FileTracker(origFile, myChangedFiles, null);
+        }
         Disposer.register(this, tracker);
         return tracker;
       });
@@ -417,7 +440,7 @@ final class PsiUpdateImpl {
       if (element instanceof PsiDirectory dir) {
         VirtualFile file = dir.getVirtualFile();
         if (file instanceof ChangedVirtualDirectory) return element;
-        ChangedDirectoryInfo directory = myChangedDirectories.computeIfAbsent(file, f -> ChangedDirectoryInfo.create(dir));
+        ChangedDirectoryInfo directory = myChangedDirectories.computeIfAbsent(file, _ -> ChangedDirectoryInfo.create(dir));
         @SuppressWarnings("unchecked") E result = (E)directory.psiDirectory;
         return result;
       }
@@ -554,16 +577,38 @@ final class PsiUpdateImpl {
           }
           TextRange rangeForTemplate = templateRange(elementRange, rangeInElement);
           TextRange range = mapRange(rangeForTemplate);
-          TemplateImpl.DummyContext context = new TemplateImpl.DummyContext(range, element, getPsiFile());
+          TemplateImpl.DummyContext context = new TemplateImpl.DummyContext(rangeForTemplate, element, getPsiFile());
           Result result = varName == null
                           ? expression.calculateResult(context)
-                          : myTemplateValues.computeIfAbsent(varName, v -> expression.calculateResult(context));
+                          : myTemplateValues.computeIfAbsent(varName, _ -> expression.calculateResult(context));
 
           if (result != null) {
             FileTracker tracker = requireNonNull(myTracker); // guarded by getRange call
             String fieldValue = result.toString();
-            tracker.myDocument.replaceString(rangeForTemplate.getStartOffset(), rangeForTemplate.getEndOffset(), fieldValue);
-            range = TextRange.from(range.getStartOffset(), fieldValue.length());
+            int start = rangeForTemplate.getStartOffset();
+            tracker.myDocument.replaceString(start, rangeForTemplate.getEndOffset(), fieldValue);
+            if (result instanceof RecalculatableResult recalc) {
+              // Mirror the interactive TemplateState path: shorten class references (and add imports) in the
+              // just-inserted field, then recalculate type bindings. Otherwise, types end up fully qualified.
+              RangeMarker marker = tracker.myDocument.createRangeMarker(start, start + fieldValue.length());
+              try {
+                shortenAndRecalc(tracker, recalc, marker);
+                range = mapRange(marker.getTextRange());
+              }
+              finally {
+                marker.dispose();
+              }
+            }
+            else {
+              range = TextRange.from(range.getStartOffset(), fieldValue.length());
+            }
+          }
+          else if (tracker().getHostCopy() != null && !rangeForTemplate.isEmpty()) {
+            // Injection only. The variable has no value (result == null), yet its range is non-empty.
+            // Root cause: in an injected fragment the reformat step (TemplateImpl.reformatTemplate) deletes
+            // an empty segment's placeholder together with a formatter-added trailing space. An empty field has no
+            // text, so collapse it to a zero-length caret stop at its start. Scoped to injections for now.
+            range = TextRange.from(range.getStartOffset(), 0);
           }
           myTemplateFields.add(new ModStartTemplate.ExpressionField(range, varName, expression));
           return this;
@@ -906,6 +951,29 @@ final class PsiUpdateImpl {
     private @NotNull ModCommand getTemplateCommand() {
       if (myTemplateFields.isEmpty()) return nop();
       return new ModStartTemplate(navigationFile(), myTemplateFields, myTemplateOptional, myTemplateFinishFunction);
+    }
+
+    /**
+     * Mirrors {@code TemplateState.shortenReferences()} followed by {@link RecalculatableResult#handleRecalc} for a freshly
+     * inserted template field: runs the ModCommand-aware optional processors (e.g. FQN shortening and import insertion) over
+     * the field range, then recalculates type bindings. Without this step results such as {@code PsiTypeResult} keep their
+     * fully qualified canonical text in the resulting command (and in the IDEA preview).
+     */
+    private void shortenAndRecalc(@NotNull FileTracker tracker,
+                                  @NotNull RecalculatableResult recalc,
+                                  @NotNull RangeMarker marker) {
+      Document document = tracker.myDocument;
+      PsiFile psiFile = tracker.myCopyFile;
+      Project project = getProject();
+      TemplateImpl stubTemplate = new TemplateImpl("", "", "");
+      stubTemplate.setToShortenLongNames(true);
+      for (TemplateOptionalProcessor processor : TemplateOptionalProcessor.EP_NAME.getExtensionList()) {
+        if (processor instanceof ModCommandAwareTemplateOptionalProcessor modProcessor) {
+          modProcessor.processText(stubTemplate, this, marker);
+        }
+      }
+      PsiDocumentManager.getInstance(project).commitDocument(document);
+      recalc.handleRecalc(psiFile, document, marker.getStartOffset(), marker.getEndOffset());
     }
   }
 }

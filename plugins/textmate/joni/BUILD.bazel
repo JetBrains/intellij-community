@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "joni-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":joni-tests_test_lib"],
+)
+### skip generation section `test intellij.textmate.joni.tests`
+
 ### auto-generated section `build intellij.textmate.joni` start
 
 jvm_library(
@@ -23,7 +31,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//plugins/textmate/core",
-        "@lib//:joni",
+        "//libraries/joni",
         "@lib//:slf4j-api",
     ],
 )
@@ -41,6 +49,7 @@ jvm_library(
         # do not sort,
         ":joni",
         "//plugins/textmate/core:core_test_lib",
+        "//libraries/joni:joni_test_lib",
         "//plugins/textmate/core/tests",
         "//plugins/textmate/core/tests:tests_test_lib",
         "//libraries/junit5",
@@ -92,7 +101,8 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//plugins/textmate/core",
         "//plugins/textmate/core:core_test_lib",
-        "@lib//:joni",
+        "//libraries/joni",
+        "//libraries/joni:joni_test_lib",
         "@lib//:slf4j-api",
         "//plugins/textmate/core/tests",
         "//plugins/textmate/core/tests:tests_test_lib",
@@ -110,11 +120,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.textmate.joni.tests` end
-
-### auto-generated section `test intellij.textmate.joni.tests` start
-
-jps_test(
-    name = "joni-tests_test",
-    runtime_deps = [":joni-tests_test_lib"],
-)
-### auto-generated section `test intellij.textmate.joni.tests` end

@@ -8,6 +8,13 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 
 class JavadocFormatterTest : AbstractJavaFormatterTest() {
+  
+  private fun doTextTestIdempotent(before: String, after: String) {
+    doTextTest(before, after)
+    doTextTest(after, after)
+  }
+  
+  
   fun testRIGHT_MARGIN() {
     settings.apply {
       WRAP_LONG_LINES = true
@@ -2389,4 +2396,56 @@ public class Test {
     """.trimIndent()
     doTextTest(before, before)
   }
+
+  /** See IDEA-389658 */
+  fun testMarkdownSnippetWithAnnotation() {
+    doTextTestIdempotent("""
+      /// {@snippet :
+      ///   @NullMarked
+      ///   final class Example {
+      ///     void example() {
+      ///       // Do nothing...
+      ///     }
+      ///   }}
+      class Foo {}
+      """.trimIndent(),
+               """
+      /// {@snippet :
+      ///   @NullMarked
+      ///   final class Example {
+      ///     void example() {
+      ///       // Do nothing...
+      ///     }
+      ///   }}
+      class Foo {
+      }
+      """.trimIndent())
+  }
+  
+  /** See IDEA-389658 */
+  fun testSnippetWithAnnotation() {
+    doTextTestIdempotent("""
+      /**
+       * {@snippet :
+       *@NullMarked
+       *   final class Example {
+       *     void example() {
+       *       // Do nothing...
+       *     }
+       *   }}
+       */
+       class Foo {}""".trimIndent(),"""
+      /**
+       * {@snippet :
+       * @NullMarked
+       *   final class Example {
+       *     void example() {
+       *       // Do nothing...
+       *     }
+       * }}
+       */
+      class Foo {
+      }""".trimIndent())
+  }
+  
 }

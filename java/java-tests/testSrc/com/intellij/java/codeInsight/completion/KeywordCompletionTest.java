@@ -413,6 +413,11 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testNoPrimitivesAfterExpressions3() { doTest(); }
 
   public void testNoPrimitivesAfterExpressions4() { doTest(); }
+  
+  @NeedsIndex.SmartMode(reason = "Smart is necessary for injection")
+  public void testInInjection() {
+    doTest();
+  }
 
   private void doTest() {
     configureByTestName();

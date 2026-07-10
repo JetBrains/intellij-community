@@ -12,5 +12,6 @@
     <orderEntry type="module" module-name="intellij.java.ui.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.server.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.maven.groovy.tests" scope="TEST" />
   </component>
 </module>

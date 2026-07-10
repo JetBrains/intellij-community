@@ -171,6 +171,11 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
 
       val actionEvent = AnActionEvent.createEvent(dataContext, null, "", ActionUiKind.NONE, null)
       val providersHolder = SeProvidersHolder.initialize(actionEvent, project, session, "Backend", true)
+
+      if (!Disposer.tryRegister(project, providersHolder)) {
+        Disposer.dispose(providersHolder)
+        return@withLock null
+      }
       sessionIdToProviderHolders[sessionEntity.eid] = providersHolder
 
       sessionEntity.onDispose(coroutineScope.coroutineContext[Rete]!!) {

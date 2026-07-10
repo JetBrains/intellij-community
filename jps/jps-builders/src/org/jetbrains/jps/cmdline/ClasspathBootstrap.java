@@ -296,8 +296,22 @@ public final class ClasspathBootstrap {
       if (relevantJarsRoot != null && mapping != null && instrumentationUtilPath.startsWith(relevantJarsRoot)) {
         return Arrays.asList(instrumentationUtilPath, mapping.get("production/intellij.java.compiler.instrumentationUtil.java8"));
       }
-      //running from jars: intellij.java.compiler.instrumentationUtil.java8 is located in the same jar
-      return Collections.singletonList(instrumentationUtilPath);
+
+      //running from jars: intellij.java.compiler.instrumentationUtil.java8 is located in the sibling jar named accordingly
+      String jrtLoaderPath = null;
+      try {
+        jrtLoaderPath = getResourcePath(Class.forName("com.intellij.compiler.instrumentation.JrtLoader"));
+      }
+      catch (Throwable e) {
+        LOG.info("Error resolving JrtLoader path location", e);
+      }
+
+      if (jrtLoaderPath == null) { // fallback
+        jrtLoaderPath = new File(instrumentationUtil.getParentFile(), "intellij.java.compiler.instrumentationUtil.java8.jar").getAbsolutePath();
+        LOG.info("Could not resolve JrtLoader path location; assuming  " + jrtLoaderPath);
+      }
+      
+      return Arrays.asList(instrumentationUtilPath, jrtLoaderPath);
     }
   }
 }

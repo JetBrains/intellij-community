@@ -47,6 +47,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import icons.ExternalSystemIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +64,7 @@ import java.util.Set;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public final class ExternalSystemKeymapExtension implements KeymapExtension {
   /**
    * Provides keymap group for keymap configuration dialog.
@@ -77,7 +79,6 @@ public final class ExternalSystemKeymapExtension implements KeymapExtension {
 
     KeymapGroup createGroup(Condition<? super AnAction> condition, final Project project);
   }
-
 
   @Override
   public KeymapGroup createGroup(Condition<? super AnAction> condition, final Project project) {
@@ -168,9 +169,9 @@ public final class ExternalSystemKeymapExtension implements KeymapExtension {
     return result;
   }
 
-  public static void updateActions(Project project, @NotNull Collection<? extends DataNode<TaskData>> taskData) {
-    clearActions(project, taskData);
-    createActions(project, taskData);
+  public static void updateActions(ActionManager actionManager, Project project, @NotNull Collection<? extends DataNode<TaskData>> taskData) {
+    clearActions(actionManager, project, taskData);
+    createActions(actionManager, project, taskData);
   }
 
   public static ExternalSystemAction getOrRegisterAction(Project project, String group, TaskData taskData) {
@@ -192,8 +193,7 @@ public final class ExternalSystemKeymapExtension implements KeymapExtension {
     return true;
   }
 
-  private static void createActions(Project project, Collection<? extends DataNode<TaskData>> taskNodes) {
-    ActionManager actionManager = ActionManager.getInstance();
+  private static void createActions(ActionManager actionManager, Project project, Collection<? extends DataNode<TaskData>> taskNodes) {
     final ExternalSystemShortcutsManager shortcutsManager = ExternalProjectsManagerImpl.getInstance(project).getShortcutsManager();
     if (actionManager != null) {
       for (DataNode<TaskData> each : taskNodes) {
@@ -211,29 +211,25 @@ public final class ExternalSystemKeymapExtension implements KeymapExtension {
     }
   }
 
-  static void clearActions(@NotNull ExternalSystemShortcutsManager externalSystemShortcutsManager) {
-    ActionManager manager = ActionManager.getInstance();
-    if (manager != null) {
-      for (String each : manager.getActionIdList(getActionPrefix(externalSystemShortcutsManager, null))) {
-        manager.unregisterAction(each);
-      }
+  static void clearActions(@NotNull ActionManager manager, @NotNull ExternalSystemShortcutsManager externalSystemShortcutsManager) {
+    for (String each : manager.getActionIdList(getActionPrefix(externalSystemShortcutsManager, null))) {
+      manager.unregisterAction(each);
     }
   }
 
-  private static void clearActions(Project project, Collection<? extends DataNode<TaskData>> taskData) {
-    ActionManager actionManager = ActionManager.getInstance();
-    if (actionManager != null) {
-      Set<String> externalProjectPaths = new HashSet<>();
-      for (DataNode<TaskData> node : taskData) {
-        externalProjectPaths.add(node.getData().getLinkedExternalProjectPath());
-      }
+  private static void clearActions(@NotNull ActionManager actionManager,
+                                   Project project,
+                                   Collection<? extends DataNode<TaskData>> taskData) {
+    Set<String> externalProjectPaths = new HashSet<>();
+    for (DataNode<TaskData> node : taskData) {
+      externalProjectPaths.add(node.getData().getLinkedExternalProjectPath());
+    }
 
-      for (String externalProjectPath : externalProjectPaths) {
-        for (String eachAction : actionManager.getActionIdList(getActionPrefix(project, externalProjectPath))) {
-          AnAction action = actionManager.getAction(eachAction);
-          if (!(action instanceof ExternalSystemRunConfigurationAction)) {
-            actionManager.unregisterAction(eachAction);
-          }
+    for (String externalProjectPath : externalProjectPaths) {
+      for (String eachAction : actionManager.getActionIdList(getActionPrefix(project, externalProjectPath))) {
+        AnAction action = actionManager.getAction(eachAction);
+        if (!(action instanceof ExternalSystemRunConfigurationAction)) {
+          actionManager.unregisterAction(eachAction);
         }
       }
     }

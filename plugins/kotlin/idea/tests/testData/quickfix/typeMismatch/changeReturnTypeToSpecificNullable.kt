@@ -1,5 +1,5 @@
 // "Change return type of enclosing function 'foo' to 'Int?'" "true"
-// K2_ERROR: Return type mismatch: expected 'String', actual 'Int?'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 
 fun foo(): String {
     val n: Int? = 1

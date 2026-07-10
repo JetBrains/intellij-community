@@ -1,6 +1,7 @@
 // "Opt in for 'PropertyTypeMarker' on constructor" "true"
 // PRIORITY: HIGH
 // RUNTIME_WITH_SCRIPT_RUNTIME
+// ACTION: Add parameter name to all callsites
 // ACTION: Convert to secondary constructor
 // ACTION: Create test
 // ACTION: Enable a trailing comma by default in the formatter
@@ -12,7 +13,7 @@
 // ACTION: Opt in for 'PropertyTypeMarker' on containing class 'PropertyTypeContainer'
 // ACTION: Propagate 'PropertyTypeMarker' opt-in requirement to constructor
 // ACTION: Propagate 'PropertyTypeMarker' opt-in requirement to containing class 'PropertyTypeContainer'
-// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@PropertyTypeMarker' or '@OptIn(PropertyTypeMarker::class)'
+// K2_ERROR: OPT_IN_USAGE_ERROR
 
 @RequiresOptIn
 annotation class PropertyTypeMarker

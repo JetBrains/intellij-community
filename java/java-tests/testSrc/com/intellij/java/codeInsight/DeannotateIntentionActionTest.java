@@ -12,6 +12,7 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
@@ -56,7 +57,7 @@ public final class DeannotateIntentionActionTest extends LightJavaCodeInsightFix
         """);
     PsiMethod method = ((PsiJavaFile)getFile()).getClasses()[0].getMethods()[0];
     ExternalAnnotationsManager.getInstance(getProject()).annotateExternally(method, CommonClassNames.JAVA_LANG_OVERRIDE, getFile(), null);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     ExternalAnnotationsManager.getInstance(getProject()).annotateExternally(method, CommonClassNames.JAVA_LANG_SAFE_VARARGS, getFile(), null);
     IntentionAction action = myFixture.findSingleIntention("Deannotate");
     assertEquals("""

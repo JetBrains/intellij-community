@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.proxy
 
+import org.jetbrains.plugins.gradle.tooling.proxy.serializer.GradleToolingProxySerializer
+import org.jetbrains.plugins.gradle.tooling.proxy.serializer.GradleToolingProxySerializerFactory
 import org.gradle.internal.remote.internal.inet.InetEndpoint
 import org.gradle.launcher.daemon.protocol.BuildEvent
 import org.gradle.launcher.daemon.protocol.DaemonMessageSerializer
@@ -19,9 +21,7 @@ import org.gradle.tooling.internal.provider.action.BuildActionSerializer
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildEnvironment
 import org.slf4j.LoggerFactory
-import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.ObjectOutputStream
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -31,6 +31,8 @@ object Main {
   private lateinit var LOG: org.slf4j.Logger
   private lateinit var serverConnector: TargetTcpServerConnector
   private lateinit var incomingConnectionHandler: TargetIncomingConnectionHandler
+
+  private val serializer: GradleToolingProxySerializer by lazy { GradleToolingProxySerializerFactory.getSerializer(Main::class.java.classLoader) }
 
   @JvmStatic
   fun main(args: Array<String>) {
@@ -119,8 +121,12 @@ object Main {
         .apply {
           setStreamedValueListener { result ->
             LOG.debug("Streamed value received for the phased build action: $result")
-            val convertedResult = convertAndSerializeData(result)
-            incomingConnectionHandler.dispatch(IntermediateResult(IntermediateResultType.STREAMED_VALUE, convertedResult))
+            val convertedResult = runCatching { convertAndSerializeData(result) }
+            if (convertedResult.isSuccess) {
+              incomingConnectionHandler.dispatch(IntermediateResult(IntermediateResultType.STREAMED_VALUE, convertedResult.getOrNull()!!))
+            } else {
+              incomingConnectionHandler.dispatch(Failure(convertedResult.exceptionOrNull()))
+            }
           }
         }
     }
@@ -186,7 +192,7 @@ object Main {
 
   private fun convertAndSerializeData(data: Any?): ByteArray {
     val convertedData = convertData(data)
-    return serializeData(convertedData)
+    return serializer.serialize(convertedData)
   }
 
   private fun convertData(data: Any?): Any? {
@@ -194,15 +200,6 @@ object Main {
       return InternalBuildEnvironment.convertBuildEnvironment(data)
     }
     return data
-  }
-
-  private fun serializeData(data: Any?): ByteArray {
-    val bos = ByteArrayOutputStream()
-    return ObjectOutputStream(bos).use {
-      it.writeObject(data)
-      it.flush()
-      bos.toByteArray()
-    }
   }
 
   private fun waitForIncomingConnection() {

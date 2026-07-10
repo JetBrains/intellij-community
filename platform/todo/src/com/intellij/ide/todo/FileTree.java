@@ -41,17 +41,15 @@ final class FileTree {
   void add(@NotNull VirtualFile file) {
     assertThreadIfNeeded();
 
-    if (myFiles.contains(file)) {
+    if (!myFiles.add(file)) {
       return;
     }
 
     VirtualFile dir = file.getParent();
     if (dir == null) {
-      LOG.error("Parent is null for " + file);
+      LOG.warn("Parent is null for " + file + ". File is added without directory hierarchy.");
       return;
     }
-
-    myFiles.add(file);
 
     List<VirtualFile> children = myStrictDirectory2Children.get(dir);
     if (children != null) {

@@ -78,6 +78,7 @@ private val appxFilesLogger = Logger.getInstance("com.jetbrains.python.sdk.WinAp
 /**
  * If file is AppX reparse point link -- return its product name
  */
+@get:ApiStatus.Internal
 val Path.appxProduct: String?
   get() {
     val userAppxFolder = userAppxFolder ?: return null

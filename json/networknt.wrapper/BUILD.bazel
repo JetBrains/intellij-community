@@ -31,7 +31,7 @@ jvm_library(
         "@lib//:json-networknt-wrapper-jackson-core-3",
         "@lib//:kotlin-stdlib",
         "@lib//:slf4j-api",
-        "@lib//:joni",
+        "//libraries/joni",
         "//json/backend",
         "//libraries/jackson/annotations",
         "//libraries/jackson3/dataformat-yaml:libraries-jackson3-dataformat-yaml",
@@ -62,6 +62,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":networknt.wrapper",
+        "//libraries/joni:joni_test_lib",
         "//json/backend:backend_test_lib",
         "//libraries/jackson/annotations:annotations_test_lib",
         "//libraries/jackson3/dataformat-yaml:libraries-jackson3-dataformat-yaml_test_lib",

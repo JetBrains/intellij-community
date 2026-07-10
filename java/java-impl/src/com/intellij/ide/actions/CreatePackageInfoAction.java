@@ -83,6 +83,9 @@ public class CreatePackageInfoAction extends CreateFromTemplateActionBase implem
     if (directories.length == 0) {
       return false;
     }
+    if (CreateClassAction.isJavaFileActionSuppressed(dataContext)) {
+      return false;
+    }
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final JavaDirectoryService directoryService = JavaDirectoryService.getInstance();
     final PsiNameHelper nameHelper = PsiNameHelper.getInstance(project);

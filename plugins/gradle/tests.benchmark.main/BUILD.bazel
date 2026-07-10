@@ -1,0 +1,52 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.gradle.tests.benchmark.main` start
+
+jvm_library(
+    name = "tests.benchmark.main",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.tests.benchmark.main",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "tests.benchmark.main_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.tests.benchmark.main",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":tests.benchmark.main",
+        "//platform/bootstrap/coroutine",
+        "//platform/bootstrap/coroutine:coroutine_test_lib",
+        "//plugins/gradle/tests.benchmark",
+        "//plugins/gradle/tests.benchmark:tests.benchmark_test_lib",
+        "//plugins/gradle/java/tests.benchmark",
+        "//plugins/gradle/java/tests.benchmark:tests.benchmark_test_lib",
+        "//plugins/gradle/completion/kotlin/tests.benchmark",
+        "//plugins/gradle/completion/kotlin/tests.benchmark:tests.benchmark_test_lib",
+    ],
+)
+### auto-generated section `build intellij.gradle.tests.benchmark.main` end
+
+### auto-generated section `iml intellij.gradle.tests.benchmark.main` start
+exports_files(
+    [
+        "intellij.gradle.tests.benchmark.main.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.gradle.tests.benchmark.main` end

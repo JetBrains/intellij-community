@@ -8,12 +8,12 @@
 // ERROR: Cannot create an instance of an abstract class
 // ERROR: Destructuring declaration initializer of type Foo must have a 'component1()' function
 // ERROR: Destructuring declaration initializer of type Foo must have a 'component2()' function
-// K2_ERROR: Cannot create an instance of an abstract class.
-// K2_ERROR: Destructuring of type 'Foo' requires operator function 'component1()'.
-// K2_ERROR: Destructuring of type 'Foo' requires operator function 'component2()'.
-// K2_AFTER_ERROR: Cannot create an instance of an abstract class.
-// K2_AFTER_ERROR: Destructuring of type 'Foo' requires operator function 'component1()'.
-// K2_AFTER_ERROR: Destructuring of type 'Foo' requires operator function 'component2()'.
+// K2_AFTER_ERROR: COMPONENT_FUNCTION_MISSING
+// K2_AFTER_ERROR: COMPONENT_FUNCTION_MISSING
+// K2_AFTER_ERROR: CREATING_AN_INSTANCE_OF_ABSTRACT_CLASS
+// K2_ERROR: COMPONENT_FUNCTION_MISSING
+// K2_ERROR: COMPONENT_FUNCTION_MISSING
+// K2_ERROR: CREATING_AN_INSTANCE_OF_ABSTRACT_CLASS
 abstract class Foo(val bar: String, val baz: Int)
 
 fun test() {

@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.FileVisitResult
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.measureTimedValue
 
 @ApiStatus.Internal
@@ -76,7 +75,7 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
       logger.info("Ultimate plugin is disabled. Paid plugins will not be enabled.")
       return
     }
-    val (loadablePlugins, requireRestartPlugins) = withContext(Dispatchers.Default.takeIf { DynamicPluginsSupport.getInstance () != null } ?: EmptyCoroutineContext) {
+    val (loadablePlugins, requireRestartPlugins) = withContext(Dispatchers.Default) {
       val pluginSet = PluginManagerCore.getPluginSetOrNull()
       if (pluginSet == null) {
         logger.info("Plugin set is not initialized. Paid plugins will not be enabled.")
@@ -176,35 +175,12 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
    * Tries including transitive dependencies as loadable without a restart when possible.
    *
    * @param this The list of plugins to analyze for determining loadability without requiring a restart.
-   * Acts as a context in [DynamicPlugins.allowLoadUnloadWithoutRestart]
+   * Acts as a context in [DynamicPlugins.findMaxLoadableSubsetApproximation]
    */
   private suspend fun List<PluginMainDescriptor>.splitPlugins(): Pair<List<PluginMainDescriptor>, List<PluginMainDescriptor>> {
-    if (DynamicPluginsSupport.getInstance() != null) {
-      val loadablePluginIds = DynamicPlugins.findMaxLoadableSubsetApproximation(this.map { it.pluginId }).toSet()
-      val (loadablePlugins, requireRestart) = this.partition { it.pluginId in loadablePluginIds }
-      return loadablePlugins to requireRestart
-    }
-
-    tailrec fun doSplit(
-      pluginsToLoad: List<PluginMainDescriptor>,
-      loadablePlugins: List<PluginMainDescriptor>,
-      requireRestartPlugins: List<PluginMainDescriptor>,
-    ): Pair<List<PluginMainDescriptor>, List<PluginMainDescriptor>> {
-      if (pluginsToLoad.isEmpty()) return loadablePlugins to requireRestartPlugins
-
-      val (loadable, requireRestart) = pluginsToLoad.partition {
-        DynamicPlugins.allowLoadUnloadWithoutRestart(it, context = pluginsToLoad)
-      }
-
-      return if (requireRestart.isEmpty()) {
-        // loadablePlugins.all { allowLoadUnloadWithoutRestart(it, context = loadablePlugins) } == true at this point
-        // we can load all of them safely
-        loadablePlugins + loadable to requireRestartPlugins
-      }
-      else doSplit(pluginsToLoad = loadable, loadablePlugins = loadablePlugins, requireRestartPlugins = requireRestartPlugins + requireRestart)
-    }
-
-    return doSplit(this, emptyList(), emptyList())
+    val loadablePluginIds = DynamicPlugins.findMaxLoadableSubsetApproximation(this.map { it.pluginId }).toSet()
+    val (loadablePlugins, requireRestart) = this.partition { it.pluginId in loadablePluginIds }
+    return loadablePlugins to requireRestart
   }
 }
 

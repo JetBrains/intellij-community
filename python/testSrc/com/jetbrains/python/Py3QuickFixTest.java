@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.testFramework.TestDataFile;
@@ -31,6 +34,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 @TestDataPath("$CONTENT_ROOT/../testData/inspections/")
+@Subsystems.QuickFixes
+@Layers.Functional
 public class Py3QuickFixTest extends PyTestCase {
 
   // PY-13685

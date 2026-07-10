@@ -11,12 +11,12 @@
 
   <actions>
     <action id="UiDslShowcaseAction" class="com.intellij.devkit.uiDsl.showcase.UiDslShowcaseAction"/>
+    <action id="UISandboxAction" internal="true" class="com.intellij.devkit.uiDsl.sandbox.UISandboxAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="devkit.uiDsl.usage.notification.feature.enabled" defaultValue="true"
-                 description="Add an editor notification for the first-time use of the Kotlin UI DSL"/>
-
     <editorNotificationProvider implementation="com.intellij.devkit.uiDsl.usageNotification.KotlinUiDslUsageNotificationProvider"/>
   </extensions>
 

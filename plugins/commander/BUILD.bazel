@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "commander-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":commander-tests_test_lib"],
+)
+### skip generation section `test intellij.commander.tests`
+
 ### auto-generated section `build intellij.commander` start
 
 jvm_library(
@@ -167,6 +175,8 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.commander.tests` end
@@ -179,11 +189,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.commander.tests` end
-
-### auto-generated section `test intellij.commander.tests` start
-
-jps_test(
-    name = "commander-tests_test",
-    runtime_deps = [":commander-tests_test_lib"],
-)
-### auto-generated section `test intellij.commander.tests` end

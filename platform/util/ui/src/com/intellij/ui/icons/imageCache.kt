@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Image
+import java.awt.Shape
 import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
 import java.io.IOException
@@ -61,15 +62,41 @@ fun loadImageByClassLoader(path: String, classLoader: ClassLoader, scaleContext:
                    useCache = false)
 }
 
-internal fun loadImage(path: String,
-                       resourceClass: Class<*>? = null,
-                       classLoader: ClassLoader?,
-                       scaleContext: ScaleContext = ScaleContext.create(),
-                       isDark: Boolean = StartupUiUtil.isDarkTheme,
-                       colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider? = null,
-                       filters: List<ImageFilter> = emptyList(),
-                       isStroke: Boolean = false,
-                       useCache: Boolean): Image? {
+internal fun loadImage(
+  path: String,
+  resourceClass: Class<*>? = null,
+  classLoader: ClassLoader?,
+  scaleContext: ScaleContext = ScaleContext.create(),
+  isDark: Boolean = StartupUiUtil.isDarkTheme,
+  colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider? = null,
+  filters: List<ImageFilter> = emptyList(),
+  isStroke: Boolean = false,
+  useCache: Boolean,
+): Image? {
+  return loadImageWithShape(
+    path,
+    resourceClass,
+    classLoader,
+    scaleContext,
+    isDark,
+    colorPatcherProvider,
+    filters,
+    isStroke,
+    useCache
+  )?.image
+}
+
+internal fun loadImageWithShape(
+  path: String,
+  resourceClass: Class<*>? = null,
+  classLoader: ClassLoader?,
+  scaleContext: ScaleContext = ScaleContext.create(),
+  isDark: Boolean = StartupUiUtil.isDarkTheme,
+  colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider? = null,
+  filters: List<ImageFilter> = emptyList(),
+  isStroke: Boolean = false,
+  useCache: Boolean,
+): ImageWithShape<Image>? {
   val start = StartUpMeasurer.getCurrentTimeIfEnabled()
   val descriptors = createImageDescriptorList(path = path,
                                               isDark = isDark,
@@ -92,6 +119,7 @@ internal fun loadImage(path: String,
     try {
       // check only for the first one, as io miss cache doesn't have a scale
       var image: Image?
+      var shape: Shape?
       if (useCache) {
         image = loadByDescriptor(rawPathWithoutExt = rawPathWithoutExt,
                                  ext = ext,
@@ -102,18 +130,21 @@ internal fun loadImage(path: String,
                                  imageCache = ImageCache,
                                  ioMissCacheKey = path,
                                  colorPatcherProvider = colorPatcherProvider)
+        shape = null // At this point shapes are only required when useCache == false (for icons that have their own caching).
       }
       else {
         if (i == 0 && ImageCache.ioMissCache.contains(path)) {
           return null
         }
 
-        image = loadByDescriptorWithoutCache(rawPathWithoutExt = rawPathWithoutExt,
+        val imageWithShape = loadByDescriptorWithoutCache(rawPathWithoutExt = rawPathWithoutExt,
                                              ext = ext,
                                              descriptor = descriptor,
                                              resourceClass = resourceClass,
                                              classLoader = classLoader,
                                              colorPatcherProvider = colorPatcherProvider)
+        image = imageWithShape?.image
+        shape = imageWithShape?.shape
       }
 
       if (image != null) {
@@ -121,11 +152,16 @@ internal fun loadImage(path: String,
           IconLoadMeasurer.addLoading(isSvg = descriptor.isSvg, start = start)
         }
 
-        return convertImage(image = image,
-                            filters = filters,
-                            scaleContext = scaleContext,
-                            isUpScaleNeeded = !descriptor.isSvg,
-                            imageScale = descriptor.scale)
+        return ImageWithShape(
+          image = convertImage(
+            image = image,
+            filters = filters,
+            scaleContext = scaleContext,
+            isUpScaleNeeded = !descriptor.isSvg,
+            imageScale = descriptor.scale
+          ),
+          shape = shape
+        )
       }
     }
     catch (e: IOException) {
@@ -143,7 +179,7 @@ private fun loadByDescriptorWithoutCache(rawPathWithoutExt: String,
                                          descriptor: ImageDescriptor,
                                          resourceClass: Class<*>?,
                                          classLoader: ClassLoader?,
-                                         colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?): Image? {
+                                         colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?): ImageWithShape<Image>? {
   val path = descriptor.pathTransform(rawPathWithoutExt, ext)
   return doLoadByDescriptor(path = path,
                             descriptor = descriptor,
@@ -204,7 +240,7 @@ private fun loadByDescriptor(rawPathWithoutExt: String,
                                  resourceClass = resourceClass,
                                  classLoader = classLoader,
                                  colorPatcherDigest = digest,
-                                 colorPatcher = colorPatcher) ?: return null
+                                 colorPatcher = colorPatcher)?.image ?: return null
   imageCache.imageCache.put(cacheKey, image)
   return image
 }
@@ -214,8 +250,8 @@ private fun doLoadByDescriptor(path: String,
                                resourceClass: Class<*>?,
                                classLoader: ClassLoader?,
                                colorPatcherDigest: LongArray?,
-                               colorPatcher: SvgAttributePatcher?): BufferedImage? {
-  var image: BufferedImage?
+                               colorPatcher: SvgAttributePatcher?): ImageWithShape<BufferedImage>? {
+  var image: ImageWithShape<BufferedImage>?
   val start = StartUpMeasurer.getCurrentTimeIfEnabled()
   if (resourceClass == null && (classLoader == null || URLUtil.containsScheme(path)) && !path.startsWith(FILE_SCHEME_PREFIX)) {
     val connection = URL(path).openConnection()
@@ -226,10 +262,11 @@ private fun doLoadByDescriptor(path: String,
                                     scale = descriptor.scale,
                                     compoundCacheKey = descriptor.toSvgMapper(),
                                     colorPatcherDigest = colorPatcherDigest ?: ArrayUtilRt.EMPTY_LONG_ARRAY,
-                                    colorPatcher = colorPatcher) { stream.readAllBytes() }
+                                    colorPatcher = colorPatcher,
+                                    withShape = descriptor.isModifier) { stream.readAllBytes() }
       }
       else {
-        loadRasterImage(stream = stream)
+        ImageWithShape(loadRasterImage(stream = stream), null)
       }
     }
     if (start != -1L) {
@@ -242,12 +279,15 @@ private fun doLoadByDescriptor(path: String,
                                   scale = descriptor.scale,
                                   compoundCacheKey = descriptor.toSvgMapper(),
                                   colorPatcherDigest = colorPatcherDigest ?: ArrayUtilRt.EMPTY_LONG_ARRAY,
-                                  colorPatcher = colorPatcher) {
+                                  colorPatcher = colorPatcher,
+                                  withShape = descriptor.isModifier) {
         getResourceData(path = path, resourceClass = resourceClass, classLoader = classLoader)
       }
     }
     else {
-      loadPngFromClassResource(path = path, classLoader = classLoader, resourceClass = resourceClass)
+      loadPngFromClassResource(path = path, classLoader = classLoader, resourceClass = resourceClass)?.let { result ->
+        ImageWithShape(result, null)
+      }
     }
     if (start != -1L) {
       IconLoadMeasurer.loadFromResources.end(start)

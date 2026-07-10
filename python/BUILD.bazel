@@ -88,7 +88,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//python/ide/impl",
-        "@lib//:tips-pycharm-community",
         "//python/ide/impl/intellij.pycharm.community.ide.impl.promotion:pycharm-community-ide-impl-promotion",
         "//python/ide/implTraining/intellij.pycharm.community.ide.implTraining:pycharm-community-ide-implTraining",
         "//python/ide/customization.shared",
@@ -285,7 +284,8 @@ jvm_library(
     runtime_deps = [":python-commonTests"],
     deps = [
         # do not sort,
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//python/python-psi-api:psi",
         "//python/python-psi-api:psi_test_lib",
         "//platform/core-api:core",
@@ -513,6 +513,7 @@ jvm_library(
         "//python/python-uv/backend",
         "//platform/testIntegration",
         "//platform/testIntegration-ui",
+        "//python/python-poetry/backend",
     ],
 )
 
@@ -669,6 +670,7 @@ jvm_library(
         "//python/python-uv/backend:backend_test_lib",
         "//platform/testIntegration:testIntegration_test_lib",
         "//platform/testIntegration-ui:testIntegration-ui_test_lib",
+        "//python/python-poetry/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.impl` end
@@ -1133,7 +1135,6 @@ jvm_library(
         "//python/python-test-env/common",
         "//python/services/shared",
         "//python/intellij.python.community.communityOnly:community-communityOnly",
-        "//json/backend",
         "//python/aliasProvider",
     ],
 )
@@ -1149,7 +1150,10 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.python.community.tests",
+    associates = [
+        "//python:python-community-impl",
+        "//python:python-community-impl_test_lib",
+    ],
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
@@ -1175,7 +1179,6 @@ jvm_library(
         "//platform/platform-impl/remote:remote_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//python/intellij.python.community.communityOnly:community-communityOnly_test_lib",
-        "//json/backend:backend_test_lib",
         "//python/aliasProvider:aliasProvider_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
     ],
@@ -1213,8 +1216,6 @@ jvm_library(
         "//platform/workspace/storage:storage_test_lib",
         "//python/python-psi-api:psi",
         "//python/python-psi-api:psi_test_lib",
-        "//python:python-community-impl",
-        "//python:python-community-impl_test_lib",
         "//python/python-pytools:pytools",
         "//python/python-pytools:pytools_test_lib",
         "//platform/xdebugger-api:debugger",
@@ -1316,6 +1317,8 @@ jvm_library(
         "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
         "//libraries/junit5-params",
         "//libraries/junit5-params:junit5-params_test_lib",
+        "//libraries/junit5-suites",
+        "//libraries/junit5-suites:junit5-suites_test_lib",
         "//platform/platform-impl/remote",
         "//platform/ide-core",
         "//platform/testFramework/junit5",
@@ -1387,6 +1390,8 @@ jvm_library(
         "//platform/todo/backend:backend_test_lib",
         "//platform/statistics",
         "//platform/statistics:statistics_test_lib",
+        "//json/backend",
+        "//json/backend:backend_test_lib",
         "//platform/progress/shared:ide-progress",
         "//platform/platform-api:ide",
         "//platform/platform-api:ide_test_lib",
@@ -1398,6 +1403,24 @@ jvm_library(
         "//platform/testIntegration:testIntegration_test_lib",
         "//platform/testIntegration-ui",
         "//platform/testIntegration-ui:testIntegration-ui_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//python/python-lsp-core:lsp-core",
+        "//python/python-lsp-core:lsp-core_test_lib",
+        "//platform/lsp",
+        "//platform/lsp:lsp_test_lib",
+        "//platform/lsp-impl",
+        "//platform/lsp-impl:lsp-impl_test_lib",
+        "//python/python-ty:ty",
+        "//python/python-ty:ty_test_lib",
+        "//python/python-ruff:ruff",
+        "//python/python-ruff:ruff_test_lib",
+        "//python/python-pyright:pyright",
+        "//python/python-pyright:pyright_test_lib",
+        "//plugins/toml/core",
+        "//plugins/toml/core:core_test_lib",
+        "//python/python-poetry/backend",
+        "//python/python-poetry/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.tests` end

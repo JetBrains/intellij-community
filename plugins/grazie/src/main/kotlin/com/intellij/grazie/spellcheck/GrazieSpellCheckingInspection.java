@@ -51,6 +51,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -72,8 +73,13 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
   private static final AtomicBoolean IS_LOGGED = new AtomicBoolean(false);
 
   public static Set<SpellCheckingScope> buildAllowedScopes(PsiElement element) {
-    var tool = getTool(element.getContainingFile(), SPELL_CHECKING_INSPECTION_TOOL_NAME, GrazieSpellCheckingInspection.class);
-    if (tool == null) return Set.of();
+    PsiFile file = element.getContainingFile();
+    var tool = getTool(file, SPELL_CHECKING_INSPECTION_TOOL_NAME, GrazieSpellCheckingInspection.class);
+    if (tool == null) {
+      // The commit editor uses a restricted profile that omits the spellcheck inspection.
+      // CommitAnnotator (already gated by the "Commit messages" toggle) drives the check, so allow all scopes.
+      return CommitMessage.isCommitMessage(file) ? EnumSet.allOf(SpellCheckingScope.class) : Set.of();
+    }
     return tool.buildAllowedScopes();
   }
 

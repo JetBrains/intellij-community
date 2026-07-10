@@ -1,12 +1,16 @@
 <idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.jediterm.core"/>
+    <module name="intellij.libraries.jediterm.ui"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.pty4j"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.eel.nioFs.impl"/>
     <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
@@ -46,11 +50,23 @@
     <ijent.dashboard.tab implementation="com.intellij.platform.ijent.community.ui.actions.dashboard.IjentDashboardTabInfo"/>
     <ijent.dashboard.tab implementation="com.intellij.platform.ijent.community.ui.actions.dashboard.IjentDashboardTabEnvVars"/>
     <project.root.unavailable implementation="com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogHandler"/>
+    <notificationGroup
+      id="IJent.EnvironmentVariables"
+      displayType="BALLOON"
+      bundle="messages.IjentImplBundle"
+      key="notification.group.ijent.env.vars"/>
+    <applicationService
+      serviceInterface="com.intellij.platform.eel.EnvironmentVariablesAwaitReporter"
+      serviceImplementation="com.intellij.platform.ijent.community.ui.settings.EnvironmentVariablesAwaitReporterImpl"/>
+    <applicationService
+      serviceInterface="com.intellij.platform.ijent.LoginShellEnvVarModeProvider"
+      serviceImplementation="com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeProviderImpl"/>
     <advancedSetting
       id="container.environments.env.var.shell.mode"
       enumClass="com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeProviderImpl$EnvVarShellMode"
       default="LOGIN_INTERACTIVE"
       bundle="messages.IjentImplBundle"
+      visible="false"
       groupKey="advanced.settings.container.environments"
     />
     <projectConfigurable

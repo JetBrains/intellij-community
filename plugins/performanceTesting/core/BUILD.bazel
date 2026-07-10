@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
+jps_test(
+    name = "tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":tests_test_lib"],
+)
+
+### skip generation section `test intellij.performanceTesting.tests`
+
 ### skip generation section `build intellij.performanceTesting`
 
 jvm_provided_library(
@@ -46,6 +55,7 @@ jvm_library(
         "//platform/diagnostic/telemetry",
         "//platform/editor-ui-api:editor-ui",
         "//platform/editor-ui-ex:editor-ex",
+        "//platform/eel-impl",
         "//platform/eel-provider",
         "//platform/execution",
         "//platform/execution-impl",
@@ -214,6 +224,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "@lib//:diogen-analysis",
         "//platform/remote-driver/model",
         "//platform/remote-driver/model:model_test_lib",
         "//platform/analysis-api:analysis",
@@ -326,6 +337,12 @@ jvm_library(
         "//platform/testFramework/teamCity:teamCity_test_lib",
         "//plugins/performanceTesting/freezes",
         "//plugins/performanceTesting/freezes:freezes_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.performanceTesting.tests` end
@@ -338,11 +355,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.performanceTesting.tests` end
-
-### auto-generated section `test intellij.performanceTesting.tests` start
-
-jps_test(
-    name = "tests_test",
-    runtime_deps = [":tests_test_lib"],
-)
-### auto-generated section `test intellij.performanceTesting.tests` end

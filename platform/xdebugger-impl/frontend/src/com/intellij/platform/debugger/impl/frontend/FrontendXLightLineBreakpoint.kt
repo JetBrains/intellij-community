@@ -11,10 +11,8 @@ import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlight
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallationInfo
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
 import com.intellij.xdebugger.impl.breakpoints.CommonBreakpointGutterIconRenderer
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointVisualRepresentation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -28,16 +26,16 @@ internal class FrontendXLightLineBreakpoint(
   parentCs: CoroutineScope,
   override val type: XLineBreakpointTypeProxy,
   private val installationInfo: XLineBreakpointInstallationInfo,
-  private val breakpointManager: XBreakpointManagerProxy,
+  private val breakpointManager: FrontendXBreakpointManager,
 ) : XLightLineBreakpointProxy {
   private val cs = parentCs.childScope("FrontendXLightLineBreakpoint")
 
-  private val visualRepresentation = XBreakpointVisualRepresentation(cs, this, SplitDebuggerMode.isSplitDebugger(), breakpointManager)
+  private val visualRepresentation = XBreakpointVisualRepresentation(cs, this, breakpointManager)
 
   init {
     // TODO IJPL-185322: let's add loading icon if light breakpoint is alive for more than ~300ms
     cs.launch(Dispatchers.EDT) {
-      breakpointManager.getLineBreakpointManager().breakpointChanged(this@FrontendXLightLineBreakpoint)
+      breakpointManager.getLineBreakpointVisualizationManager().breakpointChanged(this@FrontendXLightLineBreakpoint)
     }
   }
 

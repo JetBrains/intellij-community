@@ -1,5 +1,5 @@
 // "Add parameter to function 'baz'" "true"
-// K2_ERROR: Too many arguments for 'fun baz(): Unit'.
+// K2_ERROR: TOO_MANY_ARGUMENTS
 fun baz() {}
 
 fun foo() {

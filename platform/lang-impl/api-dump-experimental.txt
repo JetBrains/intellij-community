@@ -1,10 +1,3 @@
-*:com.intellij.analysis.problemsView.HighlightingDuplicateProblem
-- com.intellij.analysis.problemsView.FileProblem
-com.intellij.analysis.problemsView.Problem
-- *:getContextGroup():com.intellij.codeInsight.multiverse.CodeInsightContext
-f:com.intellij.analysis.problemsView.toolWindow.ProblemNode
-- com.intellij.analysis.problemsView.toolWindow.Node
-- *f:getContext():com.intellij.codeInsight.multiverse.CodeInsightContext
 a:com.intellij.build.AbstractViewManager
 - com.intellij.build.BuildProgressListener
 - com.intellij.build.BuildProgressObservable
@@ -21,8 +14,6 @@ a:com.intellij.build.AbstractViewManager
 - close():V
 - invokeOnCompletion(java.util.function.Consumer):V
 - setStdOut(Z):V
-*:com.intellij.build.BuildProgressObservable
-- a:addListener(com.intellij.build.BuildProgressListener,com.intellij.openapi.Disposable):V
 f:com.intellij.build.BuildTreeFilters
 - *sf:createFilteringActionsGroup(java.util.function.Supplier):com.intellij.openapi.actionSystem.DefaultActionGroup
 c:com.intellij.build.BuildView
@@ -57,6 +48,11 @@ c:com.intellij.build.ExecutionNode
 - com.intellij.ide.util.treeView.PresentableNodeDescriptor
 - *:isAlwaysLeaf():Z
 - *:setAlwaysLeaf(Z):V
+*a:com.intellij.build.FlowWithHistory
+- <init>(kotlinx.coroutines.CoroutineScope):V
+- f:getFlowWithHistory():kotlinx.coroutines.flow.Flow
+- pa:getHistory():java.util.List
+- pf:updateHistoryAndEmit(kotlin.jvm.functions.Function0):V
 c:com.intellij.build.SyncViewManager
 - com.intellij.build.AbstractViewManager
 - *s:createBuildProgress(com.intellij.openapi.project.Project):com.intellij.build.progress.BuildProgress
@@ -246,6 +242,13 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
 - a:findOffsetToCall(I,com.intellij.psi.PsiFile):java.lang.Integer
 - p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractInlineVariableCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.CommandProvider
+- <init>():V
+- pa:findElementToInline(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):com.intellij.psi.PsiElement
+- f:getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
+- p:getHighlightRange(I,com.intellij.psi.PsiFile):com.intellij.openapi.util.TextRange
+- pa:getPresentableName():java.lang.String
 *a:com.intellij.codeInsight.completion.command.commands.AbstractMoveCompletionCommandProvider
 - com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V
@@ -575,9 +578,10 @@ c:com.intellij.codeInsight.template.postfix.templates.ParenthesizedPostfixTempla
 - *:createModExpander():com.intellij.codeInsight.template.postfix.templates.PostfixModExpander
 c:com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate
 - com.intellij.codeInsight.template.CustomLiveTemplateBase
-- *s:computeTemplateKeyWithoutContextChecking(com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider,java.lang.CharSequence,I):java.lang.String
+- *s:computeTemplateKeyWithoutContextChecking(com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider,com.intellij.openapi.project.Project,com.intellij.lang.Language,java.lang.CharSequence,I):java.lang.String
 *:com.intellij.codeInsight.template.postfix.templates.PostfixModExpander
 - a:expand(com.intellij.modcommand.ActionContext,com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider,com.intellij.openapi.util.TextRange):com.intellij.modcommand.ModCommand
+- s:psiUpdateRemovingTemplateKey(com.intellij.modcommand.ActionContext,com.intellij.openapi.util.TextRange,java.util.function.Consumer):com.intellij.modcommand.ModCommand
 a:com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
 - com.intellij.openapi.project.PossiblyDumbAware
 - *:createModExpander():com.intellij.codeInsight.template.postfix.templates.PostfixModExpander

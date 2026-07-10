@@ -9,6 +9,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -24,7 +25,7 @@ public final class JavaStaticMemberTypeIndex extends StringStubIndexExtension<Ps
     return JavaStubIndexKeys.JVM_STATIC_MEMBERS_TYPES;
   }
 
-  public @NotNull Collection<PsiMember> getStaticMembers(@NotNull String shortTypeText, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+  public @NotNull @Unmodifiable Collection<PsiMember> getStaticMembers(@NotNull String shortTypeText, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     return StubIndex.getElements(JavaStubIndexKeys.JVM_STATIC_MEMBERS_TYPES, shortTypeText, project, new JavaSourceFilterScope(scope), PsiMember.class);
   }
 }

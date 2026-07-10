@@ -3,6 +3,8 @@
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.eclipse.lsp4j"/>
+    <module name="intellij.libraries.eclipse.lsp4j.jsonrpc"/>
     <module name="intellij.libraries.gson"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.codeStyle"/>
@@ -69,7 +71,7 @@
              implementationClass="com.intellij.platform.lsp.impl.features.completion.LspCompletionWeigher"/>
     <codeInsight.codeVisionProvider implementation="com.intellij.platform.lsp.impl.features.codeLens.LspCodeVisionProvider"/>
     <config.codeVisionGroupSettingProvider implementation="com.intellij.platform.lsp.impl.features.codeLens.LspCodeVisionGroupSettingProvider"/>
-    <codeInsight.inlayProviderFactory implementation="com.intellij.platform.lsp.impl.features.inlayHint.LspInlayHintsProviderFactory"/>
+    <codeInsight.inlayProviderFactory implementation="com.intellij.platform.lsp.impl.features.inlayCommon.LspInlayHintsProviderFactory"/>
     <codeInsight.parameterInfo id="LspParameterInfoHandler" language=""
                                implementationClass="com.intellij.platform.lsp.impl.features.parameterInfo.LspParameterInfoHandler"/>
     <psi.implicitReferenceProvider id="LspImplicitReferenceProvider"
@@ -146,8 +148,8 @@
   </applicationListeners>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.platform.lsp.clientProvider"
-                    interface="com.intellij.platform.lsp.api.LspClientProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.lsp.integrationProvider"
+                    interface="com.intellij.platform.lsp.api.LspIntegrationProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.lsp.serverSupportProvider"
                     interface="com.intellij.platform.lsp.api.LspServerSupportProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.lsp.documentAdapter"

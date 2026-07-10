@@ -34,8 +34,6 @@ fun isCommunityModule(module: JpsModule, context: BuildContext): Boolean {
 }
 
 val knownMissingModuleDependencies: List<String> = listOf(
-  // todo not included into any plugin - investigate why and fix
-  "intellij.javaee.jpa",
   "intellij.rider.plugins.fsharp",
   // conditional xi-include
   "kotlin.base.scripting.k1",

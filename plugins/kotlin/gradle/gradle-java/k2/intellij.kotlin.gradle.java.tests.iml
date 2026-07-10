@@ -18,7 +18,7 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.tests" scope="TEST" />
@@ -66,6 +66,9 @@
     <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.groovy" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.inspections" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.problemView.collector" scope="RUNTIME" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.kotlin.gradle.java" />
 </module>

@@ -163,9 +163,12 @@ public final class FormatDecode {
   /**
    * Returns the format specifiers of {@code formatString} in textual order. Implicit specifiers are numbered from
    * {@code implicitStart}; positional ({@code %k$}) and {@code '<'} specifiers are resolved absolutely, as in
-   * {@link #decode}. Unlike {@code decode}, this never throws: only recognizable specifiers are reported.
+   * {@link #decode}. Unlike {@code decode}, this never throws.
+   * <p>
+   * Returns {@code null} when the format string is malformed; the caller should then treat the injection as
+   * frankenstein rather than rely on a fabricated argument index. Otherwise, only recognizable specifiers are reported.
    */
-  public static @NotNull FormatSpecifiers getFormatSpecifiers(@NotNull String formatString, int implicitStart) {
+  public static @Nullable FormatSpecifiers getFormatSpecifiers(@NotNull String formatString, int implicitStart) {
     final List<FormatSpecifier> result = new ArrayList<>();
     final Matcher matcher = fsPattern.matcher(formatString);
     int implicit = implicitStart;
@@ -187,7 +190,9 @@ public final class FormatDecode {
       final String posSpec = matcher.group("posSpec");
       final String flags = matcher.group("flags");
       if (posSpec != null) {
-        pos = parsePositionSpecifier(posSpec);
+        Integer curPos = parsePositionSpecifier(posSpec);
+        if(curPos == null) return null;
+        pos = curPos;
         previousAllowed = true;
       }
       else if (flags != null && flags.indexOf('<') >= 0) {
@@ -203,12 +208,12 @@ public final class FormatDecode {
     return new FormatSpecifiers(result, implicit);
   }
 
-  private static int parsePositionSpecifier(@NotNull String posSpec) {
+  private static @Nullable Integer parsePositionSpecifier(@NotNull String posSpec) {
     try {
       return Integer.parseInt(posSpec.substring(0, posSpec.length() - 1)) - 1;
     }
     catch (NumberFormatException e) {
-      return 0;
+      return null;
     }
   }
 

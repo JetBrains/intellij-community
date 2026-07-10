@@ -28,6 +28,12 @@ class PySpecialMethodNamesCompletionContributor : CompletionContributor(), DumbA
   }
 
   private object MyCompletionProvider : CompletionProvider<CompletionParameters>() {
+    // Dunders that only make sense on a metaclass (a subclass of `type`). They are suppressed here so they aren't suggested in
+    // ordinary classes; metaclasses still get them through the regular base-method override completion. Operator/protocol dunders
+    // that `type` happens to implement (`__call__`, `__or__`, `__ror__`, ...) are intentionally NOT listed, since they are
+    // legitimate to define on ordinary classes (PY-90275).
+    private val metaclassOnlyMethods = setOf(PyNames.PREPARE, "__instancecheck__", "__subclasscheck__")
+
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
       val typeEvalContext = parameters.getTypeEvalContext()
 
@@ -35,10 +41,9 @@ class PySpecialMethodNamesCompletionContributor : CompletionContributor(), DumbA
       if (pyClass != null) {
         val builtins = PyBuiltinCache.getInstance(pyClass)
         val fromObject = builtins.getClass(PyNames.OBJECT)?.methods?.toSet()?.map { it.name }.orEmpty()
-        val fromType =  builtins.getClass(PyNames.TYPE)?.methods?.toSet()?.map { it.name }.orEmpty()
         PyNames.getBuiltinMethods(LanguageLevel.forElement(pyClass))
           .asSequence()
-          .filter { it.key !in fromObject && it.key !in fromType }
+          .filter { it.key !in fromObject && it.key !in metaclassOnlyMethods }
           .forEach { (name, description) ->
             val signature = description.signature
 

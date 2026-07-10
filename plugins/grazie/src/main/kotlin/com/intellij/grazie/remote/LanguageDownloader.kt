@@ -59,11 +59,10 @@ internal object LanguageDownloader {
         performDownload(languages)
       }
       catch (exception: Throwable) {
-        val installedSuccessfully = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           promptToSelectLanguageBundleManually(languages)
         }
         thisLogger().warn(exception)
-        if (!installedSuccessfully) throw exception
       }
     }
     performGrazieUpdate(languages)

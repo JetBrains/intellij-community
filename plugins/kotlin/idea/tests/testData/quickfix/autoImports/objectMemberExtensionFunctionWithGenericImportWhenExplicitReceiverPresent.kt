@@ -1,5 +1,5 @@
 // "Import extension function 'foobar'" "true"
-// K2_ERROR: Unresolved reference 'foobar' on receiver of type 'T'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 package p
 
 class T

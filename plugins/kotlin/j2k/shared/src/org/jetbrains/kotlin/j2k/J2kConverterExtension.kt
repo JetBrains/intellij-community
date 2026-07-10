@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
@@ -14,12 +13,13 @@ import org.jetbrains.kotlin.j2k.copyPaste.J2KCopyPasteConverter
 import org.jetbrains.kotlin.j2k.copyPaste.PlainTextPasteImportResolver
 import org.jetbrains.kotlin.j2k.copyPaste.TargetData
 import org.jetbrains.kotlin.nj2k.Conversion
+import org.jetbrains.kotlin.nj2k.JavaToKotlinConverter
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class J2kConverterExtension {
-    enum class Kind { K1_OLD, K1_NEW, K2 }
+    protected enum class Kind { K2 }
 
-    abstract val kind: Kind
+    protected abstract val kind: Kind
 
     abstract fun createJavaToKotlinConverter(
         project: Project,
@@ -29,18 +29,6 @@ abstract class J2kConverterExtension {
     ): JavaToKotlinConverter
 
     abstract fun createPostProcessor(formatCode: Boolean = true): PostProcessor
-
-    open fun doCheckBeforeConversion(project: Project, module: Module): Boolean =
-        project.service<J2KKotlinConfigurationService>().checkKotlinIsConfigured(module)
-
-    open fun setUpAndConvert(
-        project: Project,
-        module: Module,
-        javaFiles: List<PsiJavaFile>,
-        convertFunction: (List<PsiJavaFile>, Project, Module) -> Unit
-    ) {
-        project.service<J2KKotlinConfigurationService>().setUpAndConvert(module, javaFiles, convertFunction)
-    }
 
     abstract fun createWithProgressProcessor(
         progress: ProgressIndicator?,
@@ -66,6 +54,23 @@ abstract class J2kConverterExtension {
     companion object {
         val EP_NAME = ExtensionPointName<J2kConverterExtension>("org.jetbrains.kotlin.j2kConverterExtension")
 
-        fun extension(kind: Kind): J2kConverterExtension = EP_NAME.extensionList.first { it.kind == kind }
+        fun extension(): J2kConverterExtension = EP_NAME.extensionList.first { it.kind == Kind.K2 }
+
+        suspend fun convertJavaFilesToKotlin(
+            files: List<PsiJavaFile>,
+            project: Project,
+            module: Module,
+            settings: ConverterSettings,
+            preprocessorExtensions: List<J2kPreprocessorExtension> = J2kPreprocessorExtension.EP_NAME.extensionList,
+            postprocessorExtensions: List<J2kPostprocessorExtension> = J2kPostprocessorExtension.EP_NAME.extensionList,
+        ): ConversionResult {
+            val j2kConverterExtension = extension()
+            return j2kConverterExtension.createJavaToKotlinConverter(project, module, settings).filesToKotlin(
+                files = files,
+                postProcessor = j2kConverterExtension.createPostProcessor(),
+                preprocessorExtensions = preprocessorExtensions,
+                postprocessorExtensions = postprocessorExtensions,
+            )
+        }
     }
 }

@@ -19,14 +19,17 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaJavaFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -80,6 +83,11 @@ private val EXPECTED_LIKE_FACTORY_CALLS = setOf(
     "kotlin.intArrayOf",
     "kotlin.longArrayOf",
     "kotlin.shortArrayOf",
+)
+
+private val EXPECTED_LIKE_CONVERSIONS_PREFIXES = listOf(
+    "to",
+    "from",
 )
 
 internal class KotlinMisorderedAssertEqualsArgumentsInspection :
@@ -232,16 +240,34 @@ internal class KotlinMisorderedAssertEqualsArgumentsInspection :
         parameterPosition: ParameterPosition,
         visited: MutableSet<KtExpression>,
     ): Boolean {
-        val functionSymbol = resolveToCall()?.successfulFunctionCallOrNull()?.symbol as? KaNamedFunctionSymbol ?: return false
-        if (parameterPosition == ParameterPosition.ACTUAL && functionSymbol.name.asString() == "expected") return true
+        val functionSymbol = resolveToCall()?.successfulFunctionCallOrNull()?.symbol as? KaFunctionSymbol ?: return false
+        if (parameterPosition == ParameterPosition.ACTUAL && (functionSymbol as? KaNamedFunctionSymbol)?.name?.asString() == "expected") return true
 
         val allArgumentsAreExpectedLike = valueArguments.all { argument ->
             argument.getArgumentExpression()?.looksLikeExpectedArgument(parameterPosition, visited) == true
         }
         if (!allArgumentsAreExpectedLike) return false
 
+        if (functionSymbol.isExpectedLikeConstructorCall()) return true
+
         val callableName = functionSymbol.callableId?.asSingleFqName()?.asString()
-        return callableName in EXPECTED_LIKE_FACTORY_CALLS || receiverExpression?.isClassLikeQualifier() == true
+        if (callableName in EXPECTED_LIKE_FACTORY_CALLS) return true
+
+        val receiverLooksExpected = receiverExpression?.looksLikeExpectedArgument(parameterPosition, visited) == true
+        if (functionSymbol is KaNamedFunctionSymbol &&
+            functionSymbol.valueParameters.isEmpty() &&
+            receiverLooksExpected) {
+            val functionName = functionSymbol.name.asString()
+            if (EXPECTED_LIKE_CONVERSIONS_PREFIXES.any { functionName.startsWith(it) }) {
+                return true
+            }
+        }
+        return receiverExpression?.isClassLikeQualifier() == true
+    }
+
+    private fun KaFunctionSymbol.isExpectedLikeConstructorCall(): Boolean {
+        val constructorSymbol = this as? KaConstructorSymbol ?: return false
+        return (constructorSymbol.returnType.symbol as? KaNamedClassSymbol)?.isData == true
     }
 
     context(_: KaSession)

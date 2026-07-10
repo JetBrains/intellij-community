@@ -2,4 +2,4 @@ print(xrange(<warning descr="No overload of 'xrange' matches the arguments. Argu
 print(xrange(1))
 print(xrange(1, 2))
 print(xrange(1, 2, 3))
-print(xrange<warning descr="No overload of 'xrange' matches the arguments. Argument types: (int, int, int, int). Expected one of: (stop: int), (start: int, stop: int, step: int)">(1, 2, 3, 4)</warning>)
+print(xrange<warning descr="No overload of 'xrange' matches the arguments. Argument types: (Literal[1], Literal[2], Literal[3], Literal[4]). Expected one of: (stop: int), (start: int, stop: int, step: int)">(1, 2, 3, 4)</warning>)

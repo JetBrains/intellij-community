@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.colors;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Set;
@@ -73,7 +74,7 @@ public final class DelegatingFontPreferences extends FontPreferences {
   }
 
   @Override
-  public @NotNull Set<@NotNull String> getCharacterVariants() {
+  public @NotNull @Unmodifiable Set<@NotNull String> getCharacterVariants() {
     return myDelegateSupplier.get().getCharacterVariants();
   }
 }

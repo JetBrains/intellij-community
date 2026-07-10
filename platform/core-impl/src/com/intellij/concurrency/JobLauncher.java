@@ -49,7 +49,7 @@ public abstract class JobLauncher {
   public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
                                                      @NotNull ProgressIndicator progress,
                                                      @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
-    ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     return invokeConcurrentlyUnderProgress(things, progress, app.isReadAccessAllowed(), app.isInImpatientReader(), thingProcessor);
   }
 

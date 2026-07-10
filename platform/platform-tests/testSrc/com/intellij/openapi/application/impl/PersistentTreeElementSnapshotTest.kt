@@ -1337,4 +1337,23 @@ internal class PersistentTreeElementSnapshotTest {
       InternalPsiVersioning.inVersionedEnvironment(true, action)
     }
   }
+
+
+
+  @Test
+  @Suppress("KotlinMisorderedAssertEqualsArguments")
+  fun `psi version is consistent for complex locking actions`(@TestDisposable disposable: Disposable) {
+    installVersioningListeners(disposable)
+    WriteIntentReadAction.run {
+      val existingVersion = InternalPsiVersioning.getCurrentPsiVersion()
+      runWriteAction {
+        assertEquals(existingVersion + 1, InternalPsiVersioning.getCurrentPsiVersion())
+      }
+      assertEquals(existingVersion + 1, InternalPsiVersioning.getCurrentPsiVersion())
+      runWriteAction {
+        assertEquals(existingVersion + 2, InternalPsiVersioning.getCurrentPsiVersion())
+      }
+      assertEquals(existingVersion + 2, InternalPsiVersioning.getCurrentPsiVersion())
+    }
+  }
 }

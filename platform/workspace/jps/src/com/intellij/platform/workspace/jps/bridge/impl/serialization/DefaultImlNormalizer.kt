@@ -13,7 +13,7 @@ object DefaultImlNormalizer {
   }
 
   fun createDeprecatedModuleOptionManager(element: Element?): Element {
-    //this duplicates logic from ModuleStateStorageManager.beforeElementLoaded which is used to convert attributes to data in an artificial component
+    // converts iml root attributes (except `version`) into options of an artificial `DeprecatedModuleOptionManager` component
     val optionElement = Element("component").setAttribute("name", "DeprecatedModuleOptionManager")
     if (element != null) {
       val iterator = element.attributes.iterator()

@@ -67,7 +67,7 @@ public final class PersistentFSConnection {
    * just a suggestion. After that many errors, we show a modal dialog and insist on
    * restart now, since that many errors severely affect IDE operation.
    */
-  private static final int INSIST_TO_RESTART_AFTER_ERRORS_COUNT = getIntProperty("vfs.insist-to-restart-after-n-errors", 1000);
+  private static final int INSIST_ON_RESTART_AFTER_ERRORS_COUNT = getIntProperty("vfs.insist-on-restart-after-n-errors", 1000);
 
 
   private final @NotNull NotNullLazyValue<? extends IntList> freeRecords;
@@ -277,7 +277,7 @@ public final class PersistentFSConnection {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isHeadlessEnvironment()) {
         corruptionNotificationThrottler.runThrottled(System.nanoTime(), () -> {
-          boolean insistRestart = (corruptions >= INSIST_TO_RESTART_AFTER_ERRORS_COUNT);
+          boolean insistRestart = (corruptions >= INSIST_ON_RESTART_AFTER_ERRORS_COUNT);
           showCorruptionNotification(insistRestart);
         });
       }

@@ -41,6 +41,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.math.max
@@ -118,7 +119,8 @@ internal fun isFirstProjectScanningRequested(project: Project): Boolean {
   return project.getUserData(FIRST_SCANNING_REQUESTED) != null
 }
 
-internal fun isFirstProjectScanningPerformed(project: Project): Boolean {
+@ApiStatus.Internal
+fun isFirstProjectScanningPerformed(project: Project): Boolean {
   return project.getUserData(FIRST_SCANNING_REQUESTED) == FirstScanningState.PERFORMED
 }
 

@@ -56,7 +56,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.platform.ide.bootstrap.SplashManagerKt;
 import com.intellij.platform.ide.bootstrap.StartupErrorReporter;
-import com.intellij.ui.AppUIUtilKt;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.Restarter;
 import com.intellij.util.SystemProperties;
@@ -1112,6 +1112,7 @@ public final class ConfigImportHelper {
     new com.intellij.openapi.application.migrations.BigDataToolsMigration253().migratePlugins(options);
     new com.intellij.openapi.application.migrations.VcsPluginsMigration261().migratePlugins(options);
     new com.intellij.openapi.application.migrations.CwmMigration261().migratePlugins(options);
+    new com.intellij.openapi.application.migrations.RustMigration262().migratePlugins(options);
   }
 
   @SuppressWarnings({"KotlinInternalInJava", "UnnecessaryFullyQualifiedName"})
@@ -1227,7 +1228,7 @@ public final class ConfigImportHelper {
 
       var dialog = new ConfigImportProgressDialog();
       dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
-      AppUIUtilKt.updateAppWindowIcon(dialog);
+      AppUIUtil.updateAppWindowIcon(dialog);
       SplashManagerKt.hideSplash();
       runSynchronouslyInBackground(() -> {
         try {

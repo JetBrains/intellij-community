@@ -37,6 +37,9 @@
 - name: lib/modules/intellij.markdown.java.jar
   contentModules:
   - name: intellij.markdown.java
+- name: lib/modules/intellij.markdown.jcef.jar
+  contentModules:
+  - name: intellij.markdown.jcef
 - name: lib/modules/intellij.markdown.model.jar
   contentModules:
   - name: intellij.markdown.model

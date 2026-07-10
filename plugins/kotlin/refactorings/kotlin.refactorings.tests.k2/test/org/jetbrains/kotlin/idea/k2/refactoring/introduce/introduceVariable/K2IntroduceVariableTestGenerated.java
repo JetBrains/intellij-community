@@ -176,6 +176,19 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/explicitBackingFields")
+    public static class ExplicitBackingFields extends AbstractK2IntroduceVariableTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("backingField.kt")
+        public void testBackingField() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/explicitBackingFields/backingField.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/extractToScope")
     public static class ExtractToScope extends AbstractK2IntroduceVariableTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -893,6 +906,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
         @TestMetadata("IntroduceLambdaAndCreateBlock2.kt")
         public void testIntroduceLambdaAndCreateBlock2() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceLambdaAndCreateBlock2.kt");
+        }
+
+        @TestMetadata("IntroduceNameBasedDestructuringCommentSaver.kt")
+        public void testIntroduceNameBasedDestructuringCommentSaver() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceNameBasedDestructuringCommentSaver.kt");
         }
 
         @TestMetadata("IntroduceNameBasedDestructuringDeclarationComplete.kt")

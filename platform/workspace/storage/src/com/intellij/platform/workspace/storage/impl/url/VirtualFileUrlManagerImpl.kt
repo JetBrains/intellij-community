@@ -29,7 +29,7 @@ public open class VirtualFileUrlManagerImpl(isRootDirCaseSensitive: Boolean = fa
   }
 
   override fun findByUrl(uri: String): VirtualFileUrl? {
-    return findBySegments(splitNames(uri))
+    return findBySegments(splitNames(uri))?.getCachedVirtualFileUrl()
   }
 
   @Synchronized
@@ -50,7 +50,7 @@ public open class VirtualFileUrlManagerImpl(isRootDirCaseSensitive: Boolean = fa
   }
 
   @Synchronized
-  internal fun getSubtreeVirtualUrlsById(vfu: VirtualFileUrl): List<VirtualFileUrl>  {
+  internal fun getSubtreeVirtualUrlsById(vfu: VirtualFileUrl): List<VirtualFileUrl> {
     vfu as VirtualFileUrlImpl
     return id2NodeMapping.get(vfu.id).getSubtreeNodes().map { it.getVirtualFileUrl(this) }
   }
@@ -61,9 +61,23 @@ public open class VirtualFileUrlManagerImpl(isRootDirCaseSensitive: Boolean = fa
    */
   public fun processChildrenRecursively(url: VirtualFileUrl, processor: (VirtualFileUrl) -> TreeNodeProcessingResult): Boolean {
     val node = synchronized(this) { id2NodeMapping.get((url as VirtualFileUrlImpl).id) }
-    return node.processChildrenRecursively {
-      val childUrl = synchronized(this) { it.getVirtualFileUrl(this) }
-      processor(childUrl)
+    return processChildrenImpl(node, processor)
+  }
+
+  /**
+   * Processes children of [url] and their children recursively using [processor]. [url] itself isn't processed.
+   * @return `true` if processing finished normally, or `false` if [processor] returned [STOP][TreeNodeProcessingResult.STOP].
+   */
+  public fun processChildrenRecursively(url: String, processor: (VirtualFileUrl) -> TreeNodeProcessingResult): Boolean {
+    val node = findBySegments(splitNames(url))
+    if (node == null) return true
+
+    return processChildrenImpl(node, processor)
+  }
+
+  private fun processChildrenImpl(node: FilePathNode, processor: (VirtualFileUrl) -> TreeNodeProcessingResult): Boolean {
+    return node.processChildrenRecursively { childNode ->
+      childNode.getCachedVirtualFileUrl()?.let { processor(it) } ?: TreeNodeProcessingResult.CONTINUE
     }
   }
 
@@ -161,14 +175,14 @@ public open class VirtualFileUrlManagerImpl(isRootDirCaseSensitive: Boolean = fa
     }
     return getEmptyUrl()
   }
-  
-  private fun findBySegments(segments: List<String>): VirtualFileUrl? {
+
+  private fun findBySegments(segments: List<String>): FilePathNode? {
     var currentNode = rootNode
     for (segment in segments) {
       val nameId = fileNameStore.getIdForName(segment) ?: return null
       currentNode = currentNode.findChild(nameId) ?: return null
     }
-    return currentNode.getCachedVirtualFileUrl()
+    return currentNode
   }
 
   internal fun remove(path: String) {
@@ -272,16 +286,16 @@ public open class VirtualFileUrlManagerImpl(isRootDirCaseSensitive: Boolean = fa
       }
       return subtreeNodes
     }
-    
+
     fun processChildrenRecursively(processor: (FilePathNode) -> TreeNodeProcessingResult): Boolean {
       val childrenCopy = synchronized(this@VirtualFileUrlManagerImpl) { children?.clone() }
-      childrenCopy?.forEach { child ->
+      for (child in childrenCopy.orEmpty()) {
         when (processor(child)) {
           TreeNodeProcessingResult.CONTINUE -> {
             if (!child.processChildrenRecursively(processor)) {
               return false
             }
-          } 
+          }
           TreeNodeProcessingResult.SKIP_CHILDREN -> {}
           TreeNodeProcessingResult.SKIP_TO_PARENT -> return true
           TreeNodeProcessingResult.STOP -> return false

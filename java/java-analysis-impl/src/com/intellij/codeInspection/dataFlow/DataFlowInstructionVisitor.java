@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
@@ -25,9 +25,6 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaTokenType;
@@ -72,7 +69,6 @@ import java.util.stream.Stream;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 final class DataFlowInstructionVisitor implements JavaDfaListener {
-  private static final Logger LOG = Logger.getInstance(DataFlowInstructionVisitor.class);
   private final Map<NullabilityProblemKind.NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
   private final Map<PsiTypeCastExpression, StateInfo> myClassCastProblems = new HashMap<>();
   private final Map<PsiTypeCastExpression, TypeConstraint> myRealOperandTypes = new HashMap<>();
@@ -86,7 +82,6 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   private final Map<PsiExpression, Boolean> mySameValueAssigned = new HashMap<>();
   private final Map<PsiReferenceExpression, ArgResultEquality> mySameArguments = new HashMap<>();
   private final Map<PsiCaseLabelElement, ThreeState> mySwitchLabelsReachability = new HashMap<>();
-  private final boolean myDebug;
   private boolean myAlwaysReturnsNotNull = true;
   private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
   private final Set<DfaAnchor> myPotentiallyRedundantInstanceOf = new HashSet<>();
@@ -106,8 +101,6 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
 
   DataFlowInstructionVisitor(boolean strictMode) {
     myStrictMode = strictMode;
-    Application application = ApplicationManager.getApplication();
-    myDebug = application.isEAP() || application.isInternal() || application.isUnitTestMode();
   }
 
   @Override
@@ -120,23 +113,17 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     if (assignment == null) return;
     PsiExpression left = assignment.getLExpression();
     if (!Boolean.FALSE.equals(mySameValueAssigned.get(left))) {
-      if (!left.isPhysical()) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Non-physical element in assignment instruction: " + left.getParent().getText(), new Throwable());
-        }
-      } else {
-        DfType dfType = memState.getDfType(value);
-        // Reporting strings is skipped because string reassignment might be intentionally used to deduplicate the heap objects
-        // (we compare strings by contents)
-        if (memState.areEqual(value, target) &&
-            !isFloatingZero(dfType.getConstantOfType(Number.class)) &&
-            !(TypeUtils.isJavaLangString(left.getType()) && dfType != DfTypes.NULL) &&
-            !isAssignmentToDefaultValueInConstructor(target, assignment.getRExpression())) {
-          mySameValueAssigned.merge(left, Boolean.TRUE, Boolean::logicalAnd);
-        }
-        else {
-          mySameValueAssigned.put(left, Boolean.FALSE);
-        }
+      DfType dfType = memState.getDfType(value);
+      // Reporting strings is skipped because string reassignment might be intentionally used to deduplicate the heap objects
+      // (we compare strings by contents)
+      if (memState.areEqual(value, target) &&
+          !isFloatingZero(dfType.getConstantOfType(Number.class)) &&
+          !(TypeUtils.isJavaLangString(left.getType()) && dfType != DfTypes.NULL) &&
+          !isAssignmentToDefaultValueInConstructor(target, assignment.getRExpression())) {
+        mySameValueAssigned.merge(left, Boolean.TRUE, Boolean::logicalAnd);
+      }
+      else {
+        mySameValueAssigned.put(left, Boolean.FALSE);
       }
     }
   }
@@ -225,7 +212,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
 
   EntryStream<PsiElement, Boolean> streamConsumed() {
     return EntryStream.of(myStreamConsumed).filterValues(StateInfo::shouldReport).mapToValue(
-      (element, info) -> info.alwaysFails());
+      (_, info) -> info.alwaysFails());
   }
 
   StreamEx<PsiExpression> alwaysFailingCalls() {
@@ -313,9 +300,6 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   public void beforeExpressionPush(@NotNull DfaValue value,
                                    @NotNull PsiExpression expression,
                                    @NotNull DfaMemoryState memState) {
-    if (myDebug && !expression.isPhysical()) {
-      throw new IllegalStateException("Non-physical expression is passed");
-    }
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiTypeCastExpression cast) {
       TypeConstraint fact = TypeConstraint.fromDfType(memState.getDfType(value));
@@ -348,7 +332,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
       myOutOfBoundsArrayAccesses.merge(indexProblem.getAnchor(), failed, ThreeState::merge);
     }
     else if (problem instanceof ClassCastProblem castProblem) {
-      myClassCastProblems.computeIfAbsent(castProblem.getAnchor(), e -> new StateInfo())
+      myClassCastProblems.computeIfAbsent(castProblem.getAnchor(), _ -> new StateInfo())
         .update(state, ThreeState.fromBoolean(failed != ThreeState.YES));
     }
     else if (problem instanceof ArrayStoreProblem storeProblem && failed == ThreeState.YES) {
@@ -365,11 +349,11 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
       boolean notNullable = nullability != DfaNullability.NULL && nullability != DfaNullability.NULLABLE;
       boolean unknown = myStrictMode && nullability == DfaNullability.UNKNOWN;
       ThreeState ok = notNullable ? unknown ? ThreeState.UNSURE : ThreeState.YES : ThreeState.NO;
-      StateInfo info = myStateInfos.computeIfAbsent(nullabilityProblem, k -> new StateInfo());
+      StateInfo info = myStateInfos.computeIfAbsent(nullabilityProblem, _ -> new StateInfo());
       info.update(state, ok);
     }
     else if (problem instanceof ConsumedStreamProblem consumedStreamProblem) {
-      myStreamConsumed.computeIfAbsent(consumedStreamProblem.getAnchor(), e -> new StateInfo())
+      myStreamConsumed.computeIfAbsent(consumedStreamProblem.getAnchor(), _ -> new StateInfo())
         .update(state, ThreeState.fromBoolean(failed != ThreeState.YES));
     }
   }
@@ -381,7 +365,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
 
   private static boolean hasTrivialFailContract(@NotNull PsiExpression call) {
     List<? extends MethodContract> contracts = getContracts(call);
-    return contracts != null && contracts.size() == 1 && contracts.get(0).isTrivial() && contracts.get(0).getReturnValue().isFail();
+    return contracts != null && contracts.size() == 1 && contracts.getFirst().isTrivial() && contracts.getFirst().getReturnValue().isFail();
   }
 
   private void reportMutabilityViolation(boolean receiver, @NotNull PsiElement anchor) {

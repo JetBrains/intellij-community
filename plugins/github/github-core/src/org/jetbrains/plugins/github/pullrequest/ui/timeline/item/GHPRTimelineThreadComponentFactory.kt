@@ -193,18 +193,15 @@ internal object GHPRTimelineThreadComponentFactory {
     return TimelineDiffComponentFactory.createDiffWithHeader(this, vm, vm.filePath, fileNameClickListener) {
       Wrapper().apply {
         bindContentIn(this@createDiffWithHeader, vm.patchHunkWithAnchor) {
-          if (it == null) {
-            JLabel(CollaborationToolsBundle.message("review.thread.diff.not.loaded"))
-          }
-          else {
-            val (hunk, anchorRange) = it
-            if (hunk.lines.isEmpty()) {
-              JLabel(CollaborationToolsBundle.message("review.thread.diff.not.loaded"))
-            }
-            else {
+          val hunkWithAnchor = it?.takeIf { (hunk, _) -> hunk.lines.isNotEmpty() }
+          when {
+            hunkWithAnchor != null -> {
+              val (hunk, anchorRange) = hunkWithAnchor
               TimelineDiffComponentFactory
                 .createDiffComponentIn(this, vm.project, EditorFactory.getInstance(), hunk, anchorRange)
             }
+            vm.isFileComment -> null
+            else -> JLabel(CollaborationToolsBundle.message("review.thread.diff.not.loaded"))
           }
         }
       }

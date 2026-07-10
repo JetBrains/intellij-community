@@ -1,8 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.SafeDeferred
+import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.channels.EelSendChannel
+import com.intellij.platform.eel.channels.PeekableEelReceiveChannel
+import com.intellij.platform.eel.channels.peekable
 import com.intellij.platform.eel.map
+import com.intellij.platform.eel.provider.utils.asEelChannel
+import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
 import com.intellij.platform.ijent.IjentLog
 import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.IjentUnavailableException
@@ -10,19 +17,29 @@ import com.intellij.platform.ijent.ParentOfIjentScopes
 import com.intellij.platform.ijent.coroutineNameAppended
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy.CHECK_CODE
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy.NORMAL
+import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
-import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.withContext
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.FilterInputStream
+import java.io.FilterOutputStream
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.channels.ReadableByteChannel
+import java.nio.channels.WritableByteChannel
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -39,14 +56,17 @@ import kotlin.time.Duration.Companion.seconds
 class IjentSessionProcessMediator private constructor(
   override val ijentProcessScope: IjentScope,
   val process: ProcessFacade,
+  internal val exitsOnStdinEof: Boolean,
 ) : IjentSessionMediator {
   interface ProcessFacade {
-    val outputStream: OutputStream
-    val inputStream: InputStream
-    val errorStream: InputStream
+    val stdin: EelSendChannel
+    val stdout: PeekableEelReceiveChannel
+    val stderr: EelReceiveChannel
     val exitCode: SafeDeferred<Int>
-    fun destroyForcibly()
-    fun destroy()
+    suspend fun destroyForcibly()
+    suspend fun destroy()
+
+    val destroyIsGraceful: Boolean
 
     val isAlive: Boolean
       get() = when (exitCode.state) {
@@ -56,10 +76,21 @@ class IjentSessionProcessMediator private constructor(
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  class JavaProcessFacade(private val ijentProcessScope: IjentScope, private val process: Process) : ProcessFacade {
-    override val outputStream: OutputStream = process.outputStream
-    override val inputStream: InputStream = process.inputStream
-    override val errorStream: InputStream = process.errorStream
+  class JavaProcessFacade(ijentProcessScope: IjentScope, private val process: Process) : ProcessFacade {
+    init {
+      require(process.javaClass.name == "java.lang.ProcessImpl") {
+        "This code performs black magic with internals of java.lang.ProcessImpl, this class is not supported: ${process.javaClass.name}"
+      }
+    }
+
+    override val stdin: EelSendChannel =
+      process.outputStream.extractRawProcessStream().asEelChannel(IjentThreadPool.coroutineContext)
+
+    override val stdout: PeekableEelReceiveChannel =
+      process.inputStream.extractRawProcessStream().consumeAsEelChannel(IjentThreadPool.coroutineContext).peekable()
+
+    override val stderr: EelReceiveChannel =
+      process.errorStream.extractRawProcessStream().consumeAsEelChannel(IjentThreadPool.coroutineContext)
 
     // Pin the blocking `Process.waitFor()` call to `IjentThreadPool` via the explicit
     // `runInterruptible` context. `Process.awaitExit()` would otherwise route the JDK
@@ -78,12 +109,19 @@ class IjentSessionProcessMediator private constructor(
     })
     override val isAlive: Boolean get() = process.isAlive
 
-    override fun destroyForcibly() {
-      process.destroyForcibly()
+    override val destroyIsGraceful: Boolean =
+      runCatching { process.supportsNormalTermination() }.getOrDefault(!SystemInfoRt.isWindows)
+
+    override suspend fun destroyForcibly() {
+      withContext(blockingDispatcher) {
+        process.destroyForcibly()
+      }
     }
 
-    override fun destroy() {
-      process.destroy()
+    override suspend fun destroy() {
+      withContext(blockingDispatcher) {
+        process.destroy()
+      }
     }
   }
 
@@ -116,6 +154,7 @@ class IjentSessionProcessMediator private constructor(
       process: Process,
       ijentLabel: String,
       isExpectedProcessExit: suspend (exitCode: Int) -> Boolean = { it == 0 },
+      exitsOnStdinEof: Boolean = true,
     ): IjentSessionProcessMediator {
       val ijentProcessScope = IjentSessionMediatorUtils.createProcessScope(parentScope, ijentLabel, LOG)
       return create(
@@ -124,6 +163,7 @@ class IjentSessionProcessMediator private constructor(
         JavaProcessFacade(ijentProcessScope, process),
         ijentLabel,
         isExpectedProcessExit,
+        exitsOnStdinEof,
       )
     }
 
@@ -142,6 +182,7 @@ class IjentSessionProcessMediator private constructor(
       process: ProcessFacade,
       ijentLabel: String,
       isExpectedProcessExit: suspend (exitCode: Int) -> Boolean = { it == 0 },
+      exitsOnStdinEof: Boolean = true,
     ): IjentSessionProcessMediator {
       val context = IjentThreadPool.coroutineContext
 
@@ -155,10 +196,10 @@ class IjentSessionProcessMediator private constructor(
       // intention of the stderr logger is to write logs of the remote process, which come from the remote machine to the local one with
       // a delay.
       GlobalScope.launch(IjentThreadPool.coroutineContext + ijentProcessScope.s.coroutineNameAppended("stderr logger")) {
-        IjentSessionMediatorUtils.ijentProcessStderrLogger(process.errorStream, ijentLabel, lastStderrMessages, LOG)
+        IjentSessionMediatorUtils.ijentProcessStderrLogger(process.stderr, ijentLabel, lastStderrMessages, LOG)
       }
 
-      val mediator = IjentSessionProcessMediator(ijentProcessScope, process)
+      val mediator = IjentSessionProcessMediator(ijentProcessScope, process, exitsOnStdinEof)
 
       val awaiterScope = ijentProcessScope.s.launch(context = context + ijentProcessScope.s.coroutineNameAppended("exit awaiter scope")) {
         @Suppress("checkedExceptions") val exitCode = process.exitCode.await()
@@ -185,30 +226,69 @@ class IjentSessionProcessMediator private constructor(
   }
 }
 
-@OptIn(DelicateCoroutinesApi::class)
-private fun ijentProcessFinalizer(ijentLabel: String, mediator: IjentSessionProcessMediator) {
+private suspend fun ijentProcessFinalizer(ijentLabel: String, mediator: IjentSessionProcessMediator) {
   mediator.myExitPolicy = NORMAL
   val process = mediator.process
 
-  GlobalScope.launch(Dispatchers.IO + CoroutineName("$ijentLabel destruction")) {
-    try {
-      val politeAnswer = withTimeoutOrNull(5.seconds) { // A random timeout.
-        process.exitCode.await()
-      }
-      if (politeAnswer == null) {
-        LOG.warn("The process $ijentLabel is still alive, it will be killed")
-        process.destroy()
-      }
+  if (!process.isAlive) return
+
+  try {
+    LOG.debug { "Closing stdin of $ijentLabel" }
+    runCatching { process.stdin.close(null) }
+
+    // On Windows process.destroy() is an abrupt kill, so if ijent can react to stdin EOF, let's wait for a bit before destroying
+    if (!process.destroyIsGraceful && mediator.exitsOnStdinEof) {
+      awaitProcessExit(process, 1.5.seconds)
+      if (!process.isAlive) return
     }
-    catch (_: SafeDeferred.DeferredException) {
-      // Ignored.
+
+    process.destroy()
+
+    awaitProcessExit(process, 1.5.seconds)
+
+    if (process.isAlive) {
+      LOG.warn("The process $ijentLabel is still alive, it will be killed")
+      process.destroyForcibly()
     }
   }
-  GlobalScope.launch(Dispatchers.IO) {
-    if (process.isAlive) {
-      LOG.debug { "Closing stdin of $ijentLabel" }
-      process.outputStream.close()
-    }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    LOG.warn("Failed to terminate $ijentLabel", e)
+  }
+}
+
+private suspend fun awaitProcessExit(process: IjentSessionProcessMediator.ProcessFacade, timeout: Duration) {
+  val deadline = System.nanoTime() + timeout.inWholeNanoseconds
+  while (process.isAlive && System.nanoTime() < deadline) {
+    delay(50.milliseconds)
+  }
+}
+
+private tailrec fun InputStream.extractRawProcessStream(): ReadableByteChannel {
+  return when (this) {
+    is FileInputStream -> channel
+    is BufferedInputStream -> FilterInputStream::class.java
+      .getDeclaredField("in")
+      .apply { this.isAccessible = true }
+      .get(this)
+      .let { it as InputStream }
+      .extractRawProcessStream()
+    else -> throw IllegalStateException("Unexpected stream type: ${this::class.java}")
+  }
+}
+
+private fun OutputStream.extractRawProcessStream(): WritableByteChannel {
+  return when (this) {
+    is FileOutputStream -> channel
+    is BufferedOutputStream -> FilterOutputStream::class.java
+      .getDeclaredField("out")
+      .apply { this.isAccessible = true }
+      .get(this)
+      .let { it as OutputStream }
+      .extractRawProcessStream()
+    else -> throw IllegalStateException("Unexpected stream type: ${this::class.java}")
   }
 }
 

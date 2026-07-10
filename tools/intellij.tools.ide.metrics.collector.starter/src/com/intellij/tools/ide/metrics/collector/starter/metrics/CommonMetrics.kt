@@ -57,7 +57,17 @@ object CommonMetrics {
             "JVM.maxHeapBytes" to MetricsSelectionStrategy.MAXIMUM,
             "JVM.committedHeapBytes" to MetricsSelectionStrategy.LATEST,
             "JVM.maxThreadCount" to MetricsSelectionStrategy.MAXIMUM,
-            "JVM.totalTimeToSafepointsMs" to MetricsSelectionStrategy.SUM),
+            "JVM.totalTimeToSafepointsMs" to MetricsSelectionStrategy.SUM,
+            // total time the application was stopped at safepoints (the true stop-the-world time, distinct from time-to-safepoint above)
+            "JVM.totalTimeAtSafepointsMs" to MetricsSelectionStrategy.SUM,
+            "JVM.totalSafepointCount" to MetricsSelectionStrategy.SUM,
+            // bytes allocated across all threads; the "Bytes" suffix makes it publish as JVM.totalMegabytesAllocated
+            "JVM.totalBytesAllocated" to MetricsSelectionStrategy.SUM,
+            "JVM.usedHeapBytes" to MetricsSelectionStrategy.MAXIMUM,
+            "JVM.usedNativeBytes" to MetricsSelectionStrategy.MAXIMUM,
+            "JVM.totalDirectByteBuffersBytes" to MetricsSelectionStrategy.MAXIMUM,
+            "JVM.newThreadsCount" to MetricsSelectionStrategy.SUM,
+            "OS.loadAverage" to MetricsSelectionStrategy.MAXIMUM),
   ): List<PerformanceMetrics.Metric> {
     try {
       return metricsStrategies.flatMap { (metricName, strategy) ->

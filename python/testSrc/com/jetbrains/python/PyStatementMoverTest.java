@@ -1,6 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -9,6 +12,8 @@ import com.jetbrains.python.psi.LanguageLevel;
 /**
  * User : ktisha
  */
+@Subsystems.Editing
+@Layers.Functional
 public class PyStatementMoverTest extends PyTestCase {
   private void doTest() {
     final String testName = getTestName(true);

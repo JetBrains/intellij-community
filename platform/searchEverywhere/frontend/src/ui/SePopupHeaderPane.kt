@@ -22,6 +22,7 @@ import com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTab
 import com.intellij.platform.searchEverywhere.frontend.vm.SeDummyTabVm
 import com.intellij.platform.searchEverywhere.frontend.vm.SeTabVm
 import com.intellij.platform.searchEverywhere.frontend.withPrevious
+import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.AlignX
@@ -108,7 +109,7 @@ class SePopupHeaderPane(
       tabbedPane.addTab(tab.name, null, TabComponent(tab.id), tabShortcuts[tab.id])
     }
 
-    setSelectedIndexSafe(initialConfiguration.selectedIndexFlow.value)
+    setSelectedTabByIdSafe(initialConfiguration.selectedTabOrNull?.id)
 
     add(panel)
 
@@ -131,11 +132,14 @@ class SePopupHeaderPane(
 
   private suspend fun updateTabs(old: Configuration, new: Configuration) = coroutineScope {
     withContext(Dispatchers.EDT) {
+      val uiSelectedId = (tabbedPane.selectedComponent as? TabComponent)?.tabId
+      val modelSelectedId = new.selectedTabOrNull?.id
+
       // Select a tab from the new configuration if the old configuration doesn't contain the newly selected tab id,
       // or take the selected tab directly from UI
-      val tabIdToSelect = new.selectedTabOrNull?.id?.takeIf { newSelectedId ->
+      val chosenId = modelSelectedId?.takeIf { newSelectedId ->
         !old.tabs.any { newSelectedId == it.id }
-      } ?: (tabbedPane.selectedComponent as? TabComponent)?.tabId
+      } ?: uiSelectedId
 
       tabbedPane.removeAll()
 
@@ -148,8 +152,18 @@ class SePopupHeaderPane(
         tabbedPane.addTab(tab.name, null, TabComponent(tab.id), tabShortcuts[tab.id])
       }
 
-      new.selectedIndexFlow.value = new.tabs.indexOfTabWithIdOrZero(tabIdToSelect)
-      setSelectedIndexSafe(new.selectedIndexFlow.value)
+      val resolvedId = chosenId ?: new.tabs.first().id
+
+      if (modelSelectedId != null && new.tabs.none { it.id == modelSelectedId }) {
+        SeLog.warn("updateTabs: model selected tab id '$modelSelectedId' is missing in ${new.tabs.map { it.id }}; falling back to '$resolvedId'")
+      }
+
+      new.selectedTabIdFlow.value = resolvedId
+      setSelectedTabByIdSafe(resolvedId)
+
+      SeLog.log(SeLog.LIFE_CYCLE) {
+        "updateTabs: old=${old.tabs.map { it.id }} new=${new.tabs.map { it.id }} model=$modelSelectedId ui=$uiSelectedId chosen=$resolvedId"
+      }
     }
 
     bindSelectedTab(new)
@@ -158,10 +172,13 @@ class SePopupHeaderPane(
   @OptIn(AwaitCancellationAndInvoke::class)
   private suspend fun bindSelectedTab(configuration: Configuration) = coroutineScope {
     val changeListener = javax.swing.event.ChangeListener {
-      val idx = tabbedPane.selectedIndex
-      // JTabbedPane reports -1 when it has no tabs.
+      val id = (tabbedPane.selectedComponent as? TabComponent)?.tabId
+      // JTabbedPane reports no selection (null component / -1) when it has no tabs.
       // Don't propagate it into the model flow — keep the last valid selection.
-      if (idx >= 0) configuration.selectedIndexFlow.value = idx
+      if (id != null) {
+        SeLog.log(SeLog.LISTENERS) { "tab change-listener ui->flow: id=$id index=${tabbedPane.selectedIndex}" }
+        configuration.selectedTabIdFlow.value = id
+      }
     }
 
     withContext(Dispatchers.UI) {
@@ -169,11 +186,15 @@ class SePopupHeaderPane(
     }
 
     launch {
-      configuration.selectedIndexFlow.collectLatest { tabIndex ->
+      configuration.selectedTabIdFlow.collectLatest { tabId ->
+        // Select the tabbedPane tab by id, never by a bare index, so a value produced for a differently-ordered
+        // list resolves to the right tab or no-ops — it can never select a neighbor.
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          if (tabbedPane.selectedIndex != tabIndex && tabIndex >= 0 && tabIndex < tabbedPane.tabCount) {
+          val uiIndex = indexOfTabInUi(tabId)
+          if (uiIndex >= 0 && tabbedPane.selectedIndex != uiIndex) {
+            SeLog.log(SeLog.LISTENERS) { "mirror flow->ui: id=$tabId index=$uiIndex (was ${tabbedPane.selectedIndex})" }
             tabbedPane.removeChangeListener(changeListener)
-            tabbedPane.selectedIndex = tabIndex
+            tabbedPane.selectedIndex = uiIndex
             tabbedPane.addChangeListener(changeListener)
           }
         }
@@ -197,6 +218,14 @@ class SePopupHeaderPane(
     }?.let {
       tabbedPane.selectedIndex = it
     }
+  }
+
+  private fun indexOfTabInUi(tabId: String?): Int =
+    if (tabId == null) -1
+    else (0 until tabbedPane.tabCount).firstOrNull { (tabbedPane.getComponentAt(it) as? TabComponent)?.tabId == tabId } ?: -1
+
+  private fun setSelectedTabByIdSafe(tabId: String?) {
+    setSelectedIndexSafe(indexOfTabInUi(tabId))
   }
 
   fun setFilterActions(actions: List<AnAction>, showInFindToolWindowAction: AnAction?) {
@@ -251,17 +280,18 @@ class SePopupHeaderPane(
 
   class Configuration(
     val tabs: List<Tab>,
-    val selectedIndexFlow: MutableStateFlow<Int>
+    val selectedTabIdFlow: MutableStateFlow<String>,
   ) {
-    val selectedTabOrNull: Tab? get() = tabs.getOrNull(selectedIndexFlow.value)
+    val selectedTabOrNull: Tab? get() = selectedTabIdFlow.value.let { id -> tabs.firstOrNull { it.id == id } }
 
     companion object {
       fun createInitial(
         initialTabs: List<SeDummyTabVm>,
         selectedTabId: String,
-      ): Configuration = initialTabs.let {
-        val initialTabs = initialTabs.map { Tab(it) }
-        Configuration(initialTabs, MutableStateFlow(initialTabs.indexOfTabWithIdOrZero(selectedTabId)))
+      ): Configuration {
+        val tabs = initialTabs.map { Tab(it) }
+        val initialId = if (tabs.any { it.id == selectedTabId }) selectedTabId else tabs.firstOrNull()?.id ?: selectedTabId
+        return Configuration(tabs, MutableStateFlow(initialId))
       }
     }
   }
@@ -272,7 +302,3 @@ class SePopupHeaderPane(
     private const val MAX_FILTER_WIDTH = 100
   }
 }
-
-private fun List<SePopupHeaderPane.Tab>.indexOfTabWithIdOrZero(tabId: String?): Int = tabId?.let {
-  indexOfFirst { it.id == tabId }.takeIf { it != -1 }
-} ?: 0

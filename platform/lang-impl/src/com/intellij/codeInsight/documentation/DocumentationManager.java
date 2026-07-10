@@ -24,6 +24,7 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProviderEx;
 import com.intellij.lang.documentation.ExternalDocumentationHandler;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -128,6 +129,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
 import org.jsoup.nodes.Element;
@@ -179,7 +181,7 @@ import static com.intellij.lang.documentation.DocumentationMarkup.PRE_ELEMENT;
  */
 @SuppressWarnings("removal")
 @Deprecated(forRemoval = true)
-public class DocumentationManager extends DockablePopupManager<DocumentationComponent> {
+public class DocumentationManager extends DockablePopupManager<DocumentationComponent> implements Disposable {
   public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
   public static final String NEW_JAVADOC_LOCATION_AND_SIZE = "javadoc.popup.new";
   public static final DataKey<String> SELECTED_QUICK_DOC_TEXT = DataKey.create("QUICK_DOC.SELECTED_TEXT");
@@ -433,6 +435,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     toolWindow.setType(ToolWindowType.DOCKED, null);
     toolWindow.setSplitMode(true, null);
     toolWindow.setAutoHide(false);
+  }
+
+  @Override
+  public void dispose() {
+    restartAutoUpdate(false);
   }
 
   public static DocumentationManager getInstance(@NotNull Project project) {
@@ -1555,7 +1562,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       LOG.debug("Using provider ", provider);
 
       if (provider instanceof ExternalDocumentationProvider) {
-        List<String> urls = ReadAction.nonBlocking(
+        @Unmodifiable List<String> urls = ReadAction.nonBlocking(
           () -> {
             SmartPsiElementPointer<?> originalElementPtr = element.getUserData(ORIGINAL_ELEMENT_KEY);
             PsiElement originalElement = originalElementPtr != null ? originalElementPtr.getElement() : null;

@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.BackedByPersistentState;
+import com.intellij.openapi.options.NoAutomaticReset;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
@@ -72,7 +73,6 @@ import javax.swing.JPanel;
 import java.awt.AWTEvent;
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -655,15 +655,18 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
   /**
    * Calls {@link Configurable#isModified()} on {@code configurable} and returns the result,
-   * or {@code null} if the call throws (with a warning logged).
-   * Some configurables (e.g. {@code CustomizationConfigurable}) NPE before
-   * {@link Configurable#createComponent()} has been called.
+   * or {@code null} if {@link Configurable#createComponent()} has not been called yet
+   * (i.e. the configurable was never displayed) or if the call throws (with a warning logged).
    */
-  private static @Nullable Boolean isModifiedSafely(@NotNull Configurable configurable) {
+  private @Nullable Boolean isModifiedSafely(@NotNull Configurable configurable) {
+    if (editor.getContent(configurable) == null) {
+      LOG.debug("Configurable " + configurable.getDisplayName() + " was never displayed");
+      return null;
+    }
     try {
       return configurable.isModified();
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       LOG.warn("isModified() failed for " + configurable.getDisplayName(), e);
       return null;
     }
@@ -703,9 +706,14 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     if (isModified == null) return;
     LOG.debug("resetUnmodifiedOnWindowFocus: current=" + current.getDisplayName() + ", leaveState=" + leaveState + ", isModified=" + isModified);
     if (leaveState == Boolean.FALSE && isModified) {
-      LOG.warn("resetUnmodifiedOnWindowFocus: resetting " + current.getDisplayName());
-      current.reset();
-      filter.context.fireReset(current);
+      if (ConfigurableWrapper.cast(NoAutomaticReset.class, current) != null) {
+        LOG.debug("resetUnmodifiedOnWindowFocus: skipping reset for " + current.getDisplayName() + " (NoAutomaticReset)");
+      }
+      else {
+        LOG.warn("resetUnmodifiedOnWindowFocus: resetting " + current.getDisplayName());
+        current.reset();
+        filter.context.fireReset(current);
+      }
     }
     detectExternalChangesOnFocusGain();
   }

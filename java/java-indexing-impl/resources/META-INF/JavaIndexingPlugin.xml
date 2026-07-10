@@ -14,6 +14,9 @@
   ~ limitations under the License.
   -->
 <idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.allOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.java.shortNamesCache" area="IDEA_PROJECT" interface="com.intellij.psi.search.PsiShortNamesCache" dynamic="true"/>

@@ -6,9 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.awt.RelativePoint
-import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
 import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles
-import org.intellij.plugins.markdown.ui.preview.jcef.MarkdownJCEFHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.jcef.zoomIndicator.PreviewZoomIndicatorManager
 
 internal sealed class ChangeFontSizeAction(private val transform: (Int) -> Int): DumbAwareAction() {
@@ -19,16 +17,13 @@ internal sealed class ChangeFontSizeAction(private val transform: (Int) -> Int):
   override fun actionPerformed(event: AnActionEvent) {
     val editor = MarkdownActionUtil.findMarkdownPreviewEditor(event)
     checkNotNull(editor) { "Preview editor should be obtainable from the action event" }
-    val preview = editor.getUserData(MarkdownPreviewFileEditor.PREVIEW_BROWSER)?.get() ?: return
-    if (preview !is MarkdownJCEFHtmlPanel) {
-      return
-    }
+    val preview = MarkdownActionUtil.findPreviewBrowserActions(event) ?: return
     val currentSize = preview.getTemporaryFontSize() ?: PreviewLAFThemeStyles.defaultFontSize
     val newSize = transform(currentSize)
     preview.changeFontSize(newSize, temporary = true)
     val project = event.project
     val balloon = project?.service<PreviewZoomIndicatorManager>()?.createOrGetBalloon(preview)
-    balloon?.show(RelativePoint.getSouthOf(preview.component), Balloon.Position.below)
+    balloon?.show(RelativePoint.getSouthOf(preview.getComponent()), Balloon.Position.below)
   }
 
   override fun update(event: AnActionEvent) {

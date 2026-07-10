@@ -20,7 +20,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlResourceResolver;
 import org.apache.xerces.impl.Constants;
 import org.apache.xerces.impl.XMLEntityManager;
-import org.apache.xerces.impl.XercesAccessor;
 import org.apache.xerces.jaxp.JAXPConstants;
 import org.apache.xerces.jaxp.SAXParserFactoryImpl;
 import org.apache.xerces.util.SecurityManager;

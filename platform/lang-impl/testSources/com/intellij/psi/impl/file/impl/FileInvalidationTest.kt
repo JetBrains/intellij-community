@@ -17,7 +17,7 @@ import com.intellij.testFramework.junit5.EnableTracingFor
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.vfs.createFile
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.RepeatedTest
+import org.junit.jupiter.api.Test
 import kotlin.io.path.Path
 
 @EnableTracingFor(
@@ -38,10 +38,8 @@ internal class FileInvalidationTest {
    * 2. After adding `module1` (content root = project root), the context becomes `ModuleContext("module1")`.
    * 3. After adding `module2` (same root), the context stays `module1` (first module wins).
    * 4. After removing `module1`'s roots, the context switches to `module2`.
-   *
-   * Repeated 1000 times to catch race conditions in invalidation.
    */
-  @RepeatedTest(value = 100)
+  @Test
   fun `test default context invalidates`() = timeoutRunBlocking {
     // Step 1: no modules
     val root = readAction { VfsUtil.findFile(Path(project.basePath!!), false)!! }

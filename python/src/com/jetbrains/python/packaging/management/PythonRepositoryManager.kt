@@ -2,6 +2,8 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyPackageVersion
@@ -11,10 +13,9 @@ import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import org.jetbrains.annotations.ApiStatus
-import java.io.IOException
+import org.jetbrains.annotations.CheckReturnValue
 
-@ApiStatus.Internal
-interface PythonRepositoryManager {
+internal interface PythonRepositoryManager {
   val project: Project
   val repositories: List<PyPackageRepository>
 
@@ -22,21 +23,24 @@ interface PythonRepositoryManager {
   suspend fun getLatestVersion(packageName: String, repository: PyPackageRepository?): PyPackageVersion?
   suspend fun getVersions(packageName: String, repository: PyPackageRepository?): List<String>?
 
-  @Throws(IOException::class)
-  suspend fun refreshCaches()
+  @CheckReturnValue
+  suspend fun refreshCaches(): Result<Unit, PythonRepositoryIOError>
 
-  @Throws(IOException::class)
-  suspend fun initCaches()
+  @CheckReturnValue
+  suspend fun initCaches(): Result<Unit, PythonRepositoryIOError>
 
+  @RequiresBackgroundThread
   fun searchPackages(repository: PyPackageRepository, needle: String, pageSize: Int = 100): PythonPackageSearchResult {
     val normalizedNeedle = PyPackageName.normalizePackageName(needle)
     return repository.search(normalizedNeedle, pageSize)
   }
 
+  @RequiresBackgroundThread
   fun searchPackages(needle: String, pageSize: Int = 100): Map<PyPackageRepository, PythonPackageSearchResult> {
     return repositories.associateWith { searchPackages(it, needle, pageSize) }
   }
 
+  @RequiresBackgroundThread
   fun hasPackageSnapshot(packageName: String): Boolean {
     return repositories.any { it.hasPackage(packageName) }
   }
@@ -53,4 +57,6 @@ interface PythonRepositoryManager {
       requirement.versionSpecs.any { spec -> spec.matches(version) }
     }
   }
+
+  data class PythonRepositoryIOError(val message: String)
 }

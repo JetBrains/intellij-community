@@ -11,7 +11,7 @@ import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.idea.devkit.DevKitBundle
 import javax.swing.JComponent
 
-internal class ExtractToJpsModuleDialog(private val originalData: ExtractToContentModuleData) : DialogWrapper(originalData.originalModule.project, true) {
+internal class ExtractToJpsModuleDialog(private val originalData: ExtractToJpsModuleData) : DialogWrapper(originalData.originalModule.project, true) {
   private val project = originalData.originalModule.project
   private val validator = ModuleNameValidator(project)
   private var moduleName = originalData.newModuleName
@@ -48,7 +48,7 @@ internal class ExtractToJpsModuleDialog(private val originalData: ExtractToConte
     }
   }
 
-  fun showAndGetResult(): ExtractToContentModuleData? {
+  fun showAndGetResult(): ExtractToJpsModuleData? {
     if (!showAndGet()) return null
     return originalData.copy(newModuleName = moduleName, newModuleDirectoryPath = moduleDirectoryPath)
   }

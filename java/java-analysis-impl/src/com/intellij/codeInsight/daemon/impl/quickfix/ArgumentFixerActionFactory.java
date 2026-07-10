@@ -27,6 +27,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -178,8 +179,8 @@ public abstract class ArgumentFixerActionFactory {
     suggestedCasts.get(argumentCast.argumentIndex()).add(argumentCast.castType().getCanonicalText());
   }
 
-  private List<ArgumentCast> putCompilableCastsFirst(@NotNull List<@NotNull ArgumentCast> casts,
-                                                     @NotNull PsiExpression @NotNull [] expressions) {
+  private @Unmodifiable List<ArgumentCast> putCompilableCastsFirst(@NotNull List<@NotNull ArgumentCast> casts,
+                                                                   @NotNull PsiExpression @NotNull [] expressions) {
     List<ArgumentCast> compilableCasts = new ArrayList<>();
     List<ArgumentCast> nonCompilableCasts = new ArrayList<>();
     for (var argumentCast : casts) {

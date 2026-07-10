@@ -70,8 +70,8 @@ public final class OfflineViewParseUtil {
                                    @NotNull Object2IntMap<String> fqName2IdxMap,
                                    @NotNull Interner<@NlsSafe String> stringInterner,
                                    @NotNull Map<String, Set<OfflineProblemDescriptor>> package2Result) throws XMLStreamException {
-    final OfflineProblemDescriptor descriptor = new OfflineProblemDescriptor();
-    final List<String> packageNames = new ArrayList<>();
+    OfflineProblemDescriptor descriptor = new OfflineProblemDescriptor();
+    List<String> packageNames = new ArrayList<>();
     int depth = 0;
     int hintsDepth = -1;
     int textDepth = -1;
@@ -138,7 +138,7 @@ public final class OfflineViewParseUtil {
                                       @NotNull OfflineProblemDescriptor descriptor,
                                       @NotNull Object2IntMap<String> fqName2IdxMap) {
     descriptor.setType(reader.getAttributeValue(null, SmartRefElementPointerImpl.TYPE_ATTR));
-    final String fqName = reader.getAttributeValue(null, SmartRefElementPointerImpl.FQNAME_ATTR);
+    String fqName = reader.getAttributeValue(null, SmartRefElementPointerImpl.FQNAME_ATTR);
     descriptor.setFQName(fqName);
 
     if (!fqName2IdxMap.containsKey(fqName)) {
@@ -228,9 +228,9 @@ public final class OfflineViewParseUtil {
     }
   }
 
-  private static void appendDescriptor(final Map<String, Set<OfflineProblemDescriptor>> package2Result,
-                                       final String packageName,
-                                       final OfflineProblemDescriptor descriptor) {
+  private static void appendDescriptor(Map<String, Set<OfflineProblemDescriptor>> package2Result,
+                                       String packageName,
+                                       OfflineProblemDescriptor descriptor) {
     Set<OfflineProblemDescriptor> descriptors = package2Result.get(packageName);
     if (descriptors == null) {
       descriptors = new HashSet<>();

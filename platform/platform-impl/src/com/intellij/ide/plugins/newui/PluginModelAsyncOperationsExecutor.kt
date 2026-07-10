@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import kotlinx.coroutines.CoroutineScope
@@ -42,7 +41,7 @@ internal object PluginModelAsyncOperationsExecutor {
           return@withContext
         }
         val result = modelFacade.installOrUpdatePlugin(component, descriptor, null, stateForComponent)
-        pluginUpdateSourceApplier.revertIfNeeded(result)
+        pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
       }
     }.invokeOnCompletion (pluginUpdateSourceApplier::revertIfNeeded)
   }
@@ -65,7 +64,7 @@ internal object PluginModelAsyncOperationsExecutor {
 
   suspend fun loadUpdates(): List<PluginUiModel> {
     return withContext(Dispatchers.IO) {
-      UiPluginManager.getInstance().getUpdateModels()
+      PluginUpdatesService.getInstance().awaitUpdates().toList()
     }
   }
 
@@ -116,7 +115,7 @@ internal object PluginModelAsyncOperationsExecutor {
         }
         else {
           val result = modelFacade.installOrUpdatePlugin(component, plugin, updateDescriptor, modalityState)
-          pluginUpdateSourceApplier.revertIfNeeded(result)
+          pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
         }
       }
     }.invokeOnCompletion(pluginUpdateSourceApplier::revertIfNeeded)
@@ -145,10 +144,10 @@ internal object PluginModelAsyncOperationsExecutor {
     }
   }
 
-  fun findPlugins(downloaders: Collection<PluginDownloader>, callback: Function<Map<PluginId, PluginUiModel>, Unit>) {
+  fun findPlugins(pluginIds: Collection<PluginId>, callback: Function<Map<PluginId, PluginUiModel>, Unit>) {
     val coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope
     coroutineScope.launch(Dispatchers.IO) {
-      val pluginModels = UiPluginManager.getInstance().findInstalledPlugins(downloaders.map(PluginDownloader::id).toSet())
+      val pluginModels = UiPluginManager.getInstance().findInstalledPlugins(pluginIds.toSet())
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         callback.apply(pluginModels)
       }

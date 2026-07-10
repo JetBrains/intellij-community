@@ -1,7 +1,13 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.java.debugger.impl` start
+
+create_kotlinc_options(
+    name = "custom_impl",
+    x_context_parameters = True,
+)
 
 jvm_library(
     name = "impl",
@@ -13,6 +19,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_impl",
     module_name = "intellij.java.debugger.impl",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -52,7 +59,7 @@ jvm_library(
         "//jps/jps-builders:build",
         "//java/debugger/memory-agent:java-debugger-memory-agent",
         "@lib//:java-debugger-impl-sa-jdwp",
-        "@lib//:jb-jdi",
+        "//java/debugger/jb-jdi:java-debugger-libraries-jb-jdi",
         "//libraries/stream",
         "//platform/statistics",
         "//platform/core-ui",
@@ -102,6 +109,7 @@ jvm_library(
         allow_empty = True,
     ),
     associates = [":impl"],
+    kotlinc_opts = ":custom_impl",
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
@@ -176,7 +184,8 @@ jvm_library(
         "//java/debugger/memory-agent:java-debugger-memory-agent",
         "//java/debugger/memory-agent:java-debugger-memory-agent_test_lib",
         "@lib//:java-debugger-impl-sa-jdwp",
-        "@lib//:jb-jdi",
+        "//java/debugger/jb-jdi:java-debugger-libraries-jb-jdi",
+        "//java/debugger/jb-jdi:java-debugger-libraries-jb-jdi_test_lib",
         "//libraries/stream",
         "//libraries/stream:stream_test_lib",
         "//platform/statistics",
@@ -236,6 +245,8 @@ jvm_library(
         "//fleet/rpc:rpc_test_lib",
         "//platform/kernel/rpc",
         "//platform/kernel/rpc:rpc_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/common",
         "//platform/testFramework/common:common_test_lib",
         "//platform/bazel-runfiles",

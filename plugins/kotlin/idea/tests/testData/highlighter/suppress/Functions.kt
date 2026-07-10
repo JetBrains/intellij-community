@@ -12,7 +12,7 @@ fun b() {
     c()
 }
 
-fun doSmth(<warning descr="[UNUSED_PARAMETER] Parameter 'i' is never used">i</warning>: Int) = Unit
+fun doSmth(<warning descr="[UNUSED_PARAMETER]">i</warning>: Int) = Unit
 
 @Suppress("unused", "<warning descr="Redundant suppression">MoveVariableDeclarationIntoWhen</warning>")
 fun c() = Unit

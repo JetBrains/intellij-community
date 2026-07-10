@@ -1,4 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
 package com.intellij.openapi.observable.operation.core
 
 import com.intellij.openapi.Disposable
@@ -16,19 +17,15 @@ import java.util.concurrent.TimeoutException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 
-@ApiStatus.Internal
 fun ObservableOperationTrace.getOperationSchedulePromise(parentDisposable: Disposable): Promise<Nothing?> =
   scheduleObservable.getPromise(parentDisposable)
 
-@ApiStatus.Internal
 fun ObservableOperationTrace.getOperationStartPromise(parentDisposable: Disposable): Promise<Nothing?> =
   startObservable.getPromise(parentDisposable)
 
-@ApiStatus.Internal
 fun ObservableOperationTrace.getOperationFinishPromise(parentDisposable: Disposable): Promise<Nothing?> =
   finishObservable.getPromise(parentDisposable)
 
-@ApiStatus.Internal
 fun ObservableOperationTrace.getOperationCompletionPromise(parentDisposable: Disposable): Promise<Nothing?> =
   getPromise(parentDisposable) { disposable, listener ->
     withCompletedOperation(disposable) {
@@ -56,7 +53,6 @@ suspend fun ObservableOperationTrace.awaitOperationCompletion(
   completionTimeout: Duration
 ): Unit = waitForOperationCompletion(completionTimeout) { awaitPromise(it) }
 
-@ApiStatus.Internal
 inline fun <R> ObservableOperationTrace.waitForOperation(
   startTimeout: Duration,
   finishTimeout: Duration,
@@ -83,7 +79,6 @@ inline fun <R> ObservableOperationTrace.waitForOperation(
   }
 }
 
-@ApiStatus.Internal
 inline fun ObservableOperationTrace.waitForOperationCompletion(
   completionTimeout: Duration,
   wait: Promise<*>.(Duration) -> Unit,
@@ -95,7 +90,6 @@ inline fun ObservableOperationTrace.waitForOperationCompletion(
   }
 }
 
-@ApiStatus.Internal
 private fun <T> Result<T>.wrapTimeoutException(lazyMessage: () -> String): Result<T> {
   return try {
     Result.success(getOrThrow())
@@ -111,7 +105,6 @@ private fun <T> Result<T>.wrapTimeoutException(lazyMessage: () -> String): Resul
   }
 }
 
-@ApiStatus.Internal
 fun <T> Result<T>.throwOnFailureAndWrapTimeout(lazyMessage: () -> String) {
   wrapTimeoutException(lazyMessage).getOrThrow()
 }

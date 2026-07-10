@@ -3,14 +3,15 @@ package com.jetbrains.python.inspections.unusedLocal;
 
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,6 +29,8 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.PyConstructorSignatureUtil;
 import com.jetbrains.python.inspections.PyInspectionExtension;
+import com.jetbrains.python.inspections.PyInspectionMessages;
+import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam;
 import com.jetbrains.python.inspections.PyInspectionVisitor;
 import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRemoveAssignmentStatementTargetQuickFix;
@@ -101,23 +104,64 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   private final boolean myIgnoreLambdaParameters;
   private final boolean myIgnoreRangeIterationVariables;
   private final boolean myIgnoreVariablesStartingWithUnderscore;
+  private final ReportTarget myReportTarget;
+  private final SharedAnalysis mySharedAnalysis;
+
+  /** Which kind of unused element this visitor reports; each kind is exposed as a separate inspection. */
+  public enum ReportTarget { LOCALS, PARAMETERS, FUNCTIONS }
+
+  /**
+   * Analysis state shared by the unused-locals, unused-parameter, and unused-function inspections. All three perform the same
+   * control-flow analysis but report different element kinds; sharing this state through the {@link LocalInspectionToolSession}
+   * keeps the heavy analysis running once per file instead of once per inspection.
+   */
+  public static final class SharedAnalysis {
+    // Names defined directly in a scope. They all belong to this scope.
+    private final Map<ScopeOwner, @Unmodifiable Set<PsiElement>> scopeWrites = new ConcurrentHashMap<>();
+    // Names read directly in a scope. They might belong to some outer scope.
+    private final Map<ScopeOwner, @Unmodifiable Set<PsiElement>> scopeReads = new ConcurrentHashMap<>();
+    private volatile Set<PsiElement> unusedElements;
+  }
+
+  private static final Key<SharedAnalysis> SHARED_ANALYSIS_KEY = Key.create("PyUnusedLocal.SharedAnalysis");
+
+  /** Returns the analysis state shared by the unused-symbol inspections running on this session, creating it on first use. */
+  public static @NotNull SharedAnalysis getSharedAnalysis(@NotNull LocalInspectionToolSession session) {
+    SharedAnalysis analysis = session.getUserData(SHARED_ANALYSIS_KEY);
+    if (analysis == null) {
+      synchronized (SHARED_ANALYSIS_KEY) {
+        analysis = session.getUserData(SHARED_ANALYSIS_KEY);
+        if (analysis == null) {
+          analysis = new SharedAnalysis();
+          session.putUserData(SHARED_ANALYSIS_KEY, analysis);
+        }
+      }
+    }
+    return analysis;
+  }
 
   // Names defined directly in a scope. They all belong to this scope.
-  private final Map<ScopeOwner, @Unmodifiable Set<PsiElement>> myScopeWrites = new ConcurrentHashMap<>();
+  private final Map<ScopeOwner, @Unmodifiable Set<PsiElement>> myScopeWrites;
   // Names read directly in a scope. They might belong to some outer scope.
-  private final Map<ScopeOwner, @Unmodifiable Set<PsiElement>> myScopeReads = new ConcurrentHashMap<>();
+  private final Map<ScopeOwner, @Unmodifiable Set<PsiElement>> myScopeReads;
 
   public PyUnusedLocalInspectionVisitor(@NotNull ProblemsHolder holder,
                                         boolean ignoreTupleUnpacking,
                                         boolean ignoreLambdaParameters,
                                         boolean ignoreRangeIterationVariables,
                                         boolean ignoreVariablesStartingWithUnderscore,
+                                        @NotNull ReportTarget reportTarget,
+                                        @NotNull SharedAnalysis sharedAnalysis,
                                         @NotNull TypeEvalContext context) {
     super(holder, context);
     myIgnoreTupleUnpacking = ignoreTupleUnpacking;
     myIgnoreLambdaParameters = ignoreLambdaParameters;
     myIgnoreRangeIterationVariables = ignoreRangeIterationVariables;
     myIgnoreVariablesStartingWithUnderscore = ignoreVariablesStartingWithUnderscore;
+    myReportTarget = reportTarget;
+    mySharedAnalysis = sharedAnalysis;
+    myScopeWrites = sharedAnalysis.scopeWrites;
+    myScopeReads = sharedAnalysis.scopeReads;
   }
 
   @Override
@@ -149,6 +193,10 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   }
 
   private void collectAllWrites(ScopeOwner owner) {
+    if (myScopeWrites.containsKey(owner)) {
+      // Already computed for another unused-symbol inspection sharing this session.
+      return;
+    }
     Set<PsiElement> scopeWrites = new HashSet<>();
     // type parameter list is not included in CFG
     if (owner instanceof PyTypeParameterListOwner typeParameterListOwner) {
@@ -275,7 +323,8 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       final Instruction instruction = instructions[i];
       if (instruction instanceof ReadWriteInstruction readWriteInstruction) {
         final ReadWriteInstruction.ACCESS access = readWriteInstruction.getAccess();
-        if (!access.isReadAccess()) {
+        // A `del name` statement is a common pattern to suppress an unused parameter PY-39449
+        if (!access.isReadAccess() && !access.isDeleteAccess()) {
           continue;
         }
         final String name = readWriteInstruction.getName();
@@ -377,6 +426,16 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     return false;
   }
 
+  private static @NotNull ReportTarget categorize(@NotNull PsiElement element) {
+    if (element instanceof PyNamedParameter || element.getParent() instanceof PyNamedParameter) {
+      return ReportTarget.PARAMETERS;
+    }
+    if (element instanceof PyFunction) {
+      return ReportTarget.FUNCTIONS;
+    }
+    return ReportTarget.LOCALS;
+  }
+
   public void registerProblems() {
     final List<PyInspectionExtension> filters = PyInspectionExtension.EP_NAME.getExtensionList();
     // Register problems
@@ -384,11 +443,21 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     final Set<PyFunction> functionsWithInheritors = new HashSet<>();
     final Map<PyFunction, Boolean> emptyFunctions = new HashMap<>();
 
-    Set<PsiElement> unusedElements = StreamEx.of(myScopeWrites.entrySet())
-      .flatCollection(writeEntry -> ContainerUtil.subtract(writeEntry.getValue(), getReadsInsideScope(writeEntry.getKey())))
-      .toImmutableSet();
+    Set<PsiElement> unusedElements = mySharedAnalysis.unusedElements;
+    if (unusedElements == null) {
+      unusedElements = StreamEx.of(myScopeWrites.entrySet())
+        .flatCollection(writeEntry -> ContainerUtil.subtract(writeEntry.getValue(), getReadsInsideScope(writeEntry.getKey())))
+        .toImmutableSet();
+      // Benign race: concurrent inspections may recompute the identical set; the last write wins.
+      mySharedAnalysis.unusedElements = unusedElements;
+    }
 
     for (PsiElement element : unusedElements) {
+      // Parameters, functions, and the remaining "local symbols" are each reported by a separate inspection.
+      if (categorize(element) != myReportTarget) {
+        continue;
+      }
+
       boolean ignoreUnused = false;
       for (PyInspectionExtension filter : filters) {
         if (filter.ignoreUnused(element, myTypeEvalContext)) {
@@ -401,25 +470,26 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         // Local function
         final PsiElement nameIdentifier = ((PyFunction)element).getNameIdentifier();
         registerWarning(nameIdentifier == null ? element : nameIdentifier,
-                        PyPsiBundle.message("INSP.unused.locals.local.function.isnot.used",
-                                            ((PyFunction)element).getName()), new PyRemoveStatementQuickFix());
+                        PyPsiBundle.problemMessage("INSP.unused.locals.local.function.isnot.used",
+                                                   CodifiedParam.ofReference((PyFunction)element)), new PyRemoveStatementQuickFix());
       }
       else if (element instanceof PyClass cls) {
         // Local class
         final PsiElement name = cls.getNameIdentifier();
         registerWarning(name != null ? name : element,
-                        PyPsiBundle.message("INSP.unused.locals.local.class.isnot.used", cls.getName()), new PyRemoveStatementQuickFix());
+                        PyPsiBundle.problemMessage("INSP.unused.locals.local.class.isnot.used", CodifiedParam.ofReference(cls)),
+                        new PyRemoveStatementQuickFix());
       }
       else if (element instanceof PyTypeAliasStatement typeAlias) {
         final PsiElement name = typeAlias.getNameIdentifier();
         registerWarning(name != null ? name : element,
-                        PyPsiBundle.message("INSP.unused.locals.type.alias.isnot.used", typeAlias.getName()),
+                        PyPsiBundle.problemMessage("INSP.unused.locals.type.alias.isnot.used", CodifiedParam.ofReference(typeAlias)),
                         new PyRemoveStatementQuickFix());
       }
       else if (element instanceof PyTypeParameter typeParameter) {
         final PsiElement name = typeParameter.getNameIdentifier();
         registerWarning(name != null ? name : element,
-                        PyPsiBundle.message("INSP.unused.locals.type.parameter.isnot.used", typeParameter.getName()),
+                        PyPsiBundle.problemMessage("INSP.unused.locals.type.parameter.isnot.used", CodifiedParam.ofReference(typeParameter)),
                         new PyRemoveTypeParameterQuickFix());
       }
       else {
@@ -479,14 +549,15 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           if (canRemove) {
             fixes.add(new PyRemoveParameterQuickFix());
           }
-          registerWarning(element, PyPsiBundle.message("INSP.unused.locals.parameter.isnot.used", name),
+          registerWarning(element, PyPsiBundle.problemMessage("INSP.unused.locals.parameter.isnot.used", name),
                           fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
         else {
           if (myIgnoreVariablesStartingWithUnderscore && element.getText().startsWith(PyNames.UNDERSCORE)) continue;
           if (myIgnoreTupleUnpacking && isTupleUnpacking(element, unusedElements)) continue;
 
-          final String warningMsg = PyPsiBundle.message("INSP.unused.locals.local.variable.isnot.used", name);
+          final PyInspectionMessages.ProblemMessage warningMsg =
+            PyPsiBundle.problemMessage("INSP.unused.locals.local.variable.isnot.used", name);
 
           final PyForStatement forStatement = PyForStatementNavigator.getPyForStatementByIterable(element);
           if (forStatement != null) {
@@ -607,8 +678,10 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     return false;
   }
 
-  private void registerWarning(@NotNull PsiElement element, @InspectionMessage String msg, @NotNull LocalQuickFix @NotNull ... quickfixes) {
-    registerProblem(element, msg, ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, quickfixes);
+  private void registerWarning(@NotNull PsiElement element,
+                               @NotNull PyInspectionMessages.ProblemMessage msg,
+                               @NotNull LocalQuickFix @NotNull ... quickfixes) {
+    registerProblem(element, msg, ProblemHighlightType.LIKE_UNUSED_SYMBOL, quickfixes);
   }
 
   private static class ReplaceWithWildCard extends PsiUpdateModCommandQuickFix {

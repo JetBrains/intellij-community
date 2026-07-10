@@ -40,7 +40,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Point
@@ -52,7 +51,6 @@ import javax.accessibility.AccessibleRole
 import javax.swing.Icon
 import javax.swing.SwingConstants
 
-@ApiStatus.Internal
 internal class MarketplacePluginsTabSearchResultPanel(
   coroutineScope: CoroutineScope,
   marketplaceController: SearchUpDownPopupController,

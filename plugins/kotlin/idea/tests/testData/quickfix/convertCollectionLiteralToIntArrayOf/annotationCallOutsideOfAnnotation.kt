@@ -1,5 +1,5 @@
 // "Replace with 'arrayOf'" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'Array<Int>', but 'IntArray' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 annotation class Ann(val x: IntArray)
 
 fun test() {

@@ -19,7 +19,7 @@ internal abstract class SpecifyRemainingArgumentsByNameIntention :
         return element is KtCallExpression || element is KtValueArgumentList
     }
 
-    abstract fun shouldShowFor(element: KtElement, remainingArgumentsData: RemainingArgumentsData): Boolean
+    abstract fun isAvailableFor(element: KtElement, remainingArgumentsData: RemainingArgumentsData): Boolean
 
     override fun getApplicableRanges(element: KtElement): List<TextRange> {
         return when (element) {
@@ -43,7 +43,7 @@ internal abstract class SpecifyRemainingArgumentsByNameIntention :
 
     override fun KaSession.prepareContext(element: KtElement): RemainingArgumentsData? {
         val argumentList = element.getValueArgumentList() ?: return null
-        return findRemainingNamedArguments(argumentList)?.takeIf { shouldShowFor(element, it) }
+        return findRemainingNamedArguments(argumentList)?.takeIf { isAvailableFor(element, it) }
     }
 
     protected fun KtElement.getValueArgumentList(): KtValueArgumentList? = when (this) {

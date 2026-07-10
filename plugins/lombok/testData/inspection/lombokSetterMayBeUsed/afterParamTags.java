@@ -8,7 +8,7 @@ public class Foo {
     /**
      * -- SETTER --
      *  Sets The date.
-     *  It's an instance field.
+     * It's an instance field.
      *
      * @param The date
      * @param The value

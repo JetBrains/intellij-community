@@ -1,0 +1,43 @@
+- name: lib/modules/intellij.platform.sqlite.jar
+  contentModules:
+  - name: intellij.platform.sqlite
+  library: sqlite-native
+  files:
+  - name: $MAVEN_REPOSITORY$/org/sqlite/native/3/native-3.jar
+  reason: <- intellij.platform.sqlite
+- name: lib/modules/intellij.platform.vcs.dvcs.impl.jar
+  contentModules:
+  - name: intellij.platform.vcs.dvcs.impl
+- name: lib/modules/intellij.platform.vcs.dvcs.jar
+  contentModules:
+  - name: intellij.platform.vcs.dvcs
+- name: lib/modules/intellij.platform.vcs.impl.debugger.jar
+  contentModules:
+  - name: intellij.platform.vcs.impl.debugger
+- name: lib/modules/intellij.platform.vcs.impl.exec.jar
+  contentModules:
+  - name: intellij.platform.vcs.impl.exec
+- name: lib/modules/intellij.platform.vcs.impl.jar
+  contentModules:
+  - name: intellij.platform.vcs.impl
+- name: lib/modules/intellij.platform.vcs.impl.lang.actions.jar
+  contentModules:
+  - name: intellij.platform.vcs.impl.lang.actions
+- name: lib/modules/intellij.platform.vcs.impl.lang.jar
+  contentModules:
+  - name: intellij.platform.vcs.impl.lang
+- name: lib/modules/intellij.platform.vcs.log.graph.impl.jar
+  contentModules:
+  - name: intellij.platform.vcs.log.graph.impl
+- name: lib/modules/intellij.platform.vcs.log.graph.jar
+  contentModules:
+  - name: intellij.platform.vcs.log.graph
+- name: lib/modules/intellij.platform.vcs.log.impl.jar
+  contentModules:
+  - name: intellij.platform.vcs.log.impl
+- name: lib/modules/intellij.platform.vcs.log.jar
+  contentModules:
+  - name: intellij.platform.vcs.log
+- name: lib/platform-vcs-plugin.jar
+  modules:
+  - name: intellij.platform.vcs.plugin

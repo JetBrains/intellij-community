@@ -20,7 +20,7 @@ jvm_library(
         "//libraries/guava",
         "//platform/ide-core-impl",
         "@lib//:kotlin-test",
-        "@lib//:junit4",
+        "//libraries/junit4",
         "//plugins/kotlin/base/plugin",
         "//platform/util/jdom",
         "//platform/core-impl",
@@ -72,7 +72,8 @@ jvm_library(
         "//platform/ide-core-impl",
         "//platform/ide-core",
         "@lib//:kotlin-test",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/indexing-api:indexing",
         "//platform/indexing-api:indexing_test_lib",
         "//platform/lang-api:lang",
@@ -116,6 +117,8 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.common.tests` end

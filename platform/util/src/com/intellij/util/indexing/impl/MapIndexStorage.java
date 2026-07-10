@@ -14,6 +14,7 @@ import com.intellij.util.io.PersistentHashMapValueStorage.CreationTimeOptions;
 import com.intellij.util.io.PersistentMapBase;
 import com.intellij.util.io.PersistentMapBuilder;
 import com.intellij.util.io.PersistentMapImpl;
+import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +45,7 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
   private final boolean myReadOnly;
   private final boolean myEnableWal;
   private final @NotNull ValueContainerInputRemapping myInputRemapping;
+  private final @Nullable StorageLockContext myStorageLockContext;
 
   public MapIndexStorage(Path storageFile,
                          @NotNull KeyDescriptor<Key> keyDescriptor,
@@ -62,6 +64,21 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
                          boolean readOnly,
                          boolean enableWal,
                          @Nullable ValueContainerInputRemapping inputRemapping) throws IOException {
+    this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, initialize, readOnly, enableWal,
+         inputRemapping, null);
+  }
+
+  /** Allows index storage owners to share a storage lock context with companion storages without using thread-local setup. */
+  public MapIndexStorage(Path storageFile,
+                         @NotNull KeyDescriptor<Key> keyDescriptor,
+                         @NotNull DataExternalizer<Value> valueExternalizer,
+                         int cacheSize,
+                         boolean keyIsUniqueForIndexedFile,
+                         boolean initialize,
+                         boolean readOnly,
+                         boolean enableWal,
+                         @Nullable ValueContainerInputRemapping inputRemapping,
+                         @Nullable StorageLockContext storageLockContext) throws IOException {
     myBaseStorageFile = storageFile;
     myKeyDescriptor = keyDescriptor;
     myCacheSize = cacheSize;
@@ -69,6 +86,7 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
     myReadOnly = readOnly;
     myEnableWal = enableWal;
+    myStorageLockContext = storageLockContext;
     if (inputRemapping != null) {
       LOG.assertTrue(myReadOnly, "input remapping allowed only for read-only storage");
     }
@@ -90,6 +108,10 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
       );
       myMap = map;
     });
+  }
+
+  protected final @Nullable StorageLockContext storageLockContext() {
+    return myStorageLockContext;
   }
 
   private void onDropFromCache(Key key, @NotNull ChangeTrackingValueContainer<Value> valueContainer) {
@@ -135,7 +157,8 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
       PersistentMapBuilder<Key, UpdatableValueContainer<Value>> builder = PersistentMapBuilder
         .newBuilder(getStorageFile(), keyDescriptor, valueContainerExternalizer)
         .withReadonly(isReadOnly)
-        .withCompactOnClose(compactOnClose);
+        .withCompactOnClose(compactOnClose)
+        .withStorageLockContext(myStorageLockContext);
       if (myEnableWal && ENABLE_WAL && !isReadOnly) {
         builder
           .withWal(true)

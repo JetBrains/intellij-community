@@ -6,9 +6,6 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
@@ -17,8 +14,7 @@ import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createIterators
-import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder
+import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import java.util.function.Consumer
 
 class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
@@ -36,12 +32,7 @@ class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
   }
 
   private fun reindexFile(fileA: VirtualFile) {
-    val workspaceModel = WorkspaceModel.getInstance(project)
-    val storage = workspaceModel.currentSnapshot
-    val moduleEntity = storage.entities(ModuleEntity::class.java).iterator().next()
-    assertNotNull(moduleEntity)
-    val iterators = createIterators(moduleEntity, IndexingUrlRootHolder.fromUrl(fileA.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())),
-                                    storage)
+    val iterators = IndexableEntityProviderMethods.createModuleContentIterators(module, fileA, true)
     UnindexedFilesScanner(myFixture.project, ArrayList(iterators),
                           "Partial reindex of one of two indexable files").queue()
   }

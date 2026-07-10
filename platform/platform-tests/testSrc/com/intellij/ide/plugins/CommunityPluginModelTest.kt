@@ -38,7 +38,6 @@ val communityPluginValidationOptions: PluginValidationOptions = PluginValidation
     "intellij.platform.project.xml",
     "intellij.platform.ide.progress.xml",
     "intellij.platform.syntax.psi.xml",
-    "intellij.vcs.git.xml",
     "kotlin.plugin.k2.xml",
   ),
   referencedPluginIdsOfExternalPlugins = setOf(
@@ -49,11 +48,13 @@ val communityPluginValidationOptions: PluginValidationOptions = PluginValidation
     "com.intellij.modules.ultimate",
     "com.intellij.jetbrains.client",
     "com.intellij.modules.appcode.ide",
+    "com.intellij.modules.rustrover",
   ),
   componentImplementationClassesToIgnore = setOf(
     "com.intellij.designer.DesignerToolWindowManager",
     "com.intellij.designer.palette.PaletteToolWindowManager",
   ),
+  moduleLevelServicesToIgnore = existingModuleLevelServicesInCommunity,
 )
 
 class CommunityPluginModelTest {

@@ -80,6 +80,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   private final LogicalPositionCache myLogicalPositionCache;
   private final CharWidthCache myCharWidthCache;
   private final TabFragment myTabFragment;
+  private final SelectionVisualModel mySelectionVisualModel;
 
   private FontRenderContext myFontRenderContext; // guarded by myLock
   private String myPrefixText; // accessed only in EDT
@@ -116,6 +117,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     myLogicalPositionCache = new LogicalPositionCache(this);
     myCharWidthCache = new CharWidthCache(this);
     myTabFragment = new TabFragment(this);
+    mySelectionVisualModel = new SelectionVisualModel(myEditor);
 
     myEditor.getContentComponent().addHierarchyListener(this);
     getScrollingModel().addVisibleAreaListener(this);
@@ -152,12 +154,12 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   public @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
-    assertEditorAccessible();
+    EditorThreading.assertInteractionAllowed();
     return myMapper.offsetToLogicalPosition(offset);
   }
 
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    assertEditorAccessible();
+    EditorThreading.assertInteractionAllowed();
     return myMapper.logicalPositionToOffset(pos);
   }
 
@@ -613,10 +615,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return myPrefixAttributes;
   }
 
-  boolean isAd() {
-    return myEditorModel.isAd();
-  }
-
   EditorImpl getEditor() {
     return myEditor;
   }
@@ -663,6 +661,10 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
 
   ScrollingModel getScrollingModel() {
     return myEditorModel.getScrollingModel();
+  }
+
+  @NotNull SelectionVisualModel getSelectionVisualModel() {
+    return mySelectionVisualModel;
   }
 
   FontRenderContext getFontRenderContext() {
@@ -831,12 +833,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       invalidateFoldRegionLayouts();
       myCharWidthCache.clear();
       getFoldingModel().updateCachedOffsets();
-    }
-  }
-
-  private void assertEditorAccessible() {
-    if (!myEditorModel.isAd()) {
-      EditorThreading.assertInteractionAllowed();
     }
   }
 

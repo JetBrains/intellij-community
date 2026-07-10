@@ -33,6 +33,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
@@ -568,25 +569,34 @@ private suspend fun postOpenEditors(
   project: Project,
   toolWindowInitJob: Job,
 ) {
-  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-    // read the state of dockable editors
-    fileEditorManager.initDockableContentFactory()
+  try {
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      // read the state of dockable editors
+      fileEditorManager.initDockableContentFactory()
 
-    frameHelper.postInit()
-  }
-
-  project.getUserData(ProjectImpl.CREATION_TIME)?.let { startTime ->
-    LifecycleUsageTriggerCollector.onProjectOpenFinished(project, TimeoutUtil.getDurationMillis(startTime), frameHelper.isTabbedWindow)
-  }
-
-  // check after `initDockableContentFactory` - editor in a docked window
-  if (!fileEditorManager.hasOpenFiles()) {
-    stopOpenFilesActivity(project)
-    if (!isNotificationSilentMode(project)) {
-      openProjectViewIfNeeded(project, toolWindowInitJob)
-      findAndOpenReadmeIfNeeded(project)
+      frameHelper.postInit()
     }
-    FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(System.nanoTime())
+
+    project.getUserData(ProjectImpl.CREATION_TIME)?.let { startTime ->
+      LifecycleUsageTriggerCollector.onProjectOpenFinished(project, TimeoutUtil.getDurationMillis(startTime), frameHelper.isTabbedWindow)
+    }
+
+    // check after `initDockableContentFactory` - editor in a docked window
+    if (!fileEditorManager.hasOpenFiles()) {
+      stopOpenFilesActivity(project)
+      if (!isNotificationSilentMode(project)) {
+        openProjectViewIfNeeded(project, toolWindowInitJob)
+        findAndOpenReadmeIfNeeded(project)
+      }
+      FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(System.nanoTime())
+    }
+  }
+  finally {
+    withContext(NonCancellable + Dispatchers.EDT) {
+      if (!project.isDisposed) {
+        fileEditorManager.mainSplitters.enableRichEmptyStateComponents()
+      }
+    }
   }
 }
 
@@ -635,7 +645,7 @@ private fun focusSelectedEditorInComposite(composite: EditorComposite) {
   }
   else {
     AsyncEditorLoader.performWhenLoaded(textEditor.editor) {
-      FUSProjectHotStartUpMeasurer.firstOpenedEditor(composite.file, composite.project)
+      FUSProjectHotStartUpMeasurer.firstOpenedEditor(composite.file, composite.project, textEditor)
       preferredFocusedComponent.requestFocusInWindow()
     }
   }
@@ -748,7 +758,8 @@ private suspend fun openProjectViewIfNeeded(project: Project, toolWindowInitJob:
 }
 
 private suspend fun findAndOpenReadmeIfNeeded(project: Project) {
-  if (!AdvancedSettings.getBoolean("ide.open.readme.md.on.startup")) {
+  if (!AdvancedSettings.getBoolean("ide.open.readme.md.on.startup") ||
+      FileEditorManagerKeys.DO_NOT_REOPEN_FILES.isIn(project)) {
     return
   }
 

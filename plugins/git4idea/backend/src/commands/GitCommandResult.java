@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,6 +31,7 @@ public class GitCommandResult {
   private final int myExitCode;               // non-zero exit code doesn't necessarily mean an error
   private final boolean myAuthenticationFailed;
   private final List<String> myErrorOutput;
+  private final @Nullable @Nls String myPresentableErrorMessage;
   private final List<String> myOutput;
   protected final @Nullable @Nls String myRootName;
 
@@ -45,19 +47,21 @@ public class GitCommandResult {
                           @NotNull List<String> errorOutput,
                           @NotNull List<String> output,
                           @Nullable @Nls String rootName) {
-    this(startFailed, exitCode, false, errorOutput, output, rootName);
+    this(startFailed, exitCode, false, errorOutput, null, output, rootName);
   }
 
   private GitCommandResult(boolean startFailed,
                            int exitCode,
                            boolean authenticationFailed,
                            @NotNull List<String> errorOutput,
+                           @Nullable @Nls String presentableErrorMessage,
                            @NotNull List<String> output,
                            @Nullable @Nls String rootName) {
     myExitCode = exitCode;
     myStartFailed = startFailed;
     myAuthenticationFailed = authenticationFailed;
     myErrorOutput = errorOutput;
+    myPresentableErrorMessage = presentableErrorMessage;
     myOutput = output;
     myRootName = rootName;
   }
@@ -65,11 +69,14 @@ public class GitCommandResult {
   /**
    * @return result with specified value for authentication failure
    */
-  static @NotNull GitCommandResult withAuthentication(@NotNull GitCommandResult result, boolean authenticationFailed) {
+  static @NotNull GitCommandResult withAuthentication(@NotNull GitCommandResult result,
+                                                      boolean authenticationFailed,
+                                                      @Nullable @Nls String presentableErrorMessage) {
     return new GitCommandResult(result.myStartFailed,
                                 result.myExitCode,
                                 authenticationFailed,
                                 result.myErrorOutput,
+                                presentableErrorMessage,
                                 result.myOutput,
                                 result.myRootName);
   }
@@ -119,11 +126,11 @@ public class GitCommandResult {
   }
 
   public @NotNull @NlsSafe @NlsContexts.NotificationContent String getErrorOutputAsHtmlString() {
-    return StringUtil.join(cleanup(getErrorOrStdOutput()), XmlStringUtil::escapeString, UIUtil.BR);
+    return StringUtil.join(getPresentableErrorOutput(), XmlStringUtil::escapeString, UIUtil.BR);
   }
 
   public @NotNull @NlsSafe String getErrorOutputAsJoinedString() {
-    return StringUtil.join(cleanup(getErrorOrStdOutput()), "\n");
+    return StringUtil.join(getPresentableErrorOutput(), "\n");
   }
 
   // in some cases operation fails but no explicit error messages are given, in this case return the output to display something to user
@@ -154,6 +161,22 @@ public class GitCommandResult {
   public @NotNull @NlsSafe String getOutputOrThrow(int... ignoredErrorCodes) throws VcsException {
     throwOnError(ignoredErrorCodes);
     return getOutputAsJoinedString();
+  }
+
+  /**
+   * Returns cleaned error output for presentation to the user, with the additional presentable
+   * error message appended if available.
+   *
+   * @return cleaned user-visible error output
+   */
+  public @NotNull @NlsSafe List<String> getPresentableErrorOutput() {
+    List<String> errorOutput = getErrorOrStdOutput();
+
+    List<String> messages = new ArrayList<>(cleanup(errorOutput));
+    if (myPresentableErrorMessage != null) {
+      messages.add(myPresentableErrorMessage);
+    }
+    return messages;
   }
 
   /**

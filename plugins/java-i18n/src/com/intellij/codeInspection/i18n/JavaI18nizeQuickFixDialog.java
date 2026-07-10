@@ -257,6 +257,7 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
       ReadAction
         .nonBlocking(() -> getI18nizedText())
         .finishOnUiThread(ModalityState.stateForComponent(myPreviewLabel), (@NlsSafe String text) -> myPreviewLabel.setText(text))
+        .expireWith(this.myDisposable)
         .submit(myExecutorPool);
     }
     super.somethingChanged();

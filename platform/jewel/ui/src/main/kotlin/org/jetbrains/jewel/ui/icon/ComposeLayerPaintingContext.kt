@@ -34,6 +34,7 @@ public class ComposeLayerPaintingContext(
     override val slotWidth: Int? = null,
     override val slotHeight: Int? = null,
     private val overrideColorFilter: ColorFilter? = null,
+    override val alpha: Float = 1f,
     override val scaling: ScalingContext = DefaultScalingContext(drawScope.drawContext.density.density, 1f),
 ) : LayerPaintingContext {
     override fun createNestedLayer(
@@ -42,6 +43,7 @@ public class ComposeLayerPaintingContext(
         slotWidth: Int?,
         slotHeight: Int?,
         scale: Float,
+        alpha: Float,
         overrideColorFilter: ColorFilter?,
     ): LayerPaintingContext {
         return ComposeLayerPaintingContext(
@@ -51,6 +53,7 @@ public class ComposeLayerPaintingContext(
             slotWidth,
             slotHeight,
             overrideColorFilter ?: this.overrideColorFilter,
+            alpha,
             DefaultScalingContext(scaling.displayDensity, scaling.contextScale * scale),
         )
     }
@@ -68,7 +71,7 @@ public class ComposeLayerPaintingContext(
             color.toCompose(),
             radius,
             Offset(x.toFloat(), y.toFloat()),
-            alpha,
+            alpha * this.alpha,
             style = style,
             blendMode = blendMode,
         )
@@ -87,7 +90,7 @@ public class ComposeLayerPaintingContext(
             color.toCompose(),
             Offset(x.toFloat(), y.toFloat()),
             Size(width.toFloat(), height.toFloat()),
-            alpha,
+            alpha * this.alpha,
             style = style,
             blendMode = blendMode,
         )
@@ -189,7 +192,7 @@ public class ComposeLayerPaintingContext(
             with(image.painter) {
                 draw(
                     Size(targetSize.width.toFloat(), targetSize.height.toFloat()),
-                    alpha,
+                    alpha * this@ComposeLayerPaintingContext.alpha,
                     convertColorFilter(colorFilter ?: image.modifiers?.colorFilter),
                 )
             }
@@ -219,7 +222,7 @@ public class ComposeLayerPaintingContext(
             IntSize(srcWidth ?: image.size.width, srcHeight ?: image.size.height),
             dstOffset = IntOffset(x, y),
             dstSize = targetSize,
-            alpha = alpha,
+            alpha = alpha * this.alpha,
             colorFilter = convertColorFilter(colorFilter),
             filterQuality = FilterQuality.Low,
         )

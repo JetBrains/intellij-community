@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.training.promoter">
+<idea-plugin>
   <dependencies>
     <plugin id="org.jetbrains.kotlin"/>
     <plugin id="com.intellij.modules.idea"/>

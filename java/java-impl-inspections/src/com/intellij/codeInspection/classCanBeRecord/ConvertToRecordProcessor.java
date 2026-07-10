@@ -64,6 +64,7 @@ import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.util.CommentUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -636,7 +637,8 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(record.getProject()).getParserFacade();
     PsiDocComment recordDoc = record.getDocComment();
     if (recordDoc == null) {
-      PsiDocComment emptyDoc = parserFacade.createDocCommentFromText("/** */");
+      PsiDocComment emptyDoc =
+        parserFacade.createDocCommentFromText(CommentUtil.convertToDocComment(record.getContainingFile(), " "));
       recordDoc = (PsiDocComment)record.addBefore(emptyDoc, record.getFirstChild());
     }
     for (var entry : comments.entrySet()) {

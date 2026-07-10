@@ -77,7 +77,6 @@ internal class OTelReadWriteActionsMonitor(meter: Meter) : AutoCloseable {
 /**
  * Helps to rethrow exceptions coming from [actual] bypassing an exception-intolerant layer defined by [transformer]
  */
-@ApiStatus.Internal
 internal fun rethrowExceptions(transformer: (Runnable) -> Runnable, actual: Runnable): Runnable {
   val exception: AtomicReference<Throwable> = AtomicReference(null)
   val localTransformer = { r: Runnable -> if (actual is ContextAwareRunnable) ContextAwareRunnable { r.run() } else r }
@@ -266,7 +265,8 @@ object InternalThreading {
     exceptionRef.get()?.let { throw it }
   }
 
-  private val transferredWriteActionBackgroundDispatcher = Dispatchers.IO.limitedParallelism(1, "Transferred Write Action Background Dispatcher")
+  private val transferredWriteActionBackgroundDispatcher =
+    Dispatchers.IO.limitedParallelism(parallelism = Int.MAX_VALUE, "Transferred Write Action Background Dispatcher")
 
   @ApiStatus.Internal
   class TransferredWriteActionEvent private constructor(

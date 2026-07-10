@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("removal", "DEPRECATION", "unused")
+
 package com.intellij.openapi.command.undo
 
 import org.jetbrains.annotations.ApiStatus
@@ -6,6 +8,8 @@ import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicInteger
 
 @ApiStatus.Experimental
+@ApiStatus.ScheduledForRemoval
+@Deprecated("CWM per-user undo stacks are being removed under IJPL-248573.")
 class ImmutableActionChangeRange private constructor(
   override val offset: Int,
   override val oldLength: Int,

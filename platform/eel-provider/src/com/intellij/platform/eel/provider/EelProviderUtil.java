@@ -40,14 +40,6 @@ public final class EelProviderUtil {
     return EelPathDescriptorKt.ownsPath(machine, path);
   }
 
-  public static void setEelMachine(@NotNull Project project, @NotNull EelMachine machine) {
-    EelProviderProjectUtilKt.setEelMachine(project, machine);
-  }
-
-  public static void setEelDescriptor(@NotNull Project project, @NotNull EelDescriptor descriptor) {
-    EelProviderProjectUtilKt.setEelDescriptor(project, descriptor);
-  }
-
   public static @NotNull EelApi toEelApiBlocking(@NotNull EelDescriptor descriptor) {
     return EelProviderProjectUtilKt.toEelApiBlocking(descriptor);
   }

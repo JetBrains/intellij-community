@@ -326,6 +326,8 @@ jvm_library(
         "//plugins/kotlin/scripting:scripting_test_lib",
         "//plugins/kotlin/base/facet/tests",
         "//plugins/kotlin/base/facet/tests:tests_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.scripting.tests` end

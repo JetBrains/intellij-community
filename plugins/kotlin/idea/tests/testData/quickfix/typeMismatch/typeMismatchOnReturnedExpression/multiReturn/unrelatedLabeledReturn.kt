@@ -1,7 +1,7 @@
 // "Change return type of enclosing function 'bar' to 'String?'" "true"
 // WITH_STDLIB
-// K2_ERROR: Null cannot be a value of a non-null type 'Boolean'.
-// K2_ERROR: Return type mismatch: expected 'Boolean', actual 'String'.
+// K2_ERROR: NULL_FOR_NONNULL_TYPE
+// K2_ERROR: RETURN_TYPE_MISMATCH
 fun bar(n: Int): Boolean {
     if (true) return "bar"<caret>
     val list = listOf(1).map {

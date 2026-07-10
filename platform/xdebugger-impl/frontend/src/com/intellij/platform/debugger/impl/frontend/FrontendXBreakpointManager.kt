@@ -31,12 +31,12 @@ import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointItem
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import fleet.rpc.client.RpcClientException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -75,7 +75,9 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
 
   private var _breakpointsDialogSettings: XBreakpointsDialogState? = null
 
-  private val lineBreakpointManager = XLineBreakpointManager(project, cs, isEnabled = SplitDebuggerMode.isSplitDebugger(), this)
+  private val lineBreakpointManager = XLineBreakpointManager(project, this)
+
+  private val lineBreakpointVisualizationManager = FrontendXLineBreakpointVisualizationManager(project, cs, lineBreakpointManager)
 
   private val lightBreakpoints: ConcurrentMap<LightBreakpointPosition, FrontendXLightLineBreakpoint> = ConcurrentCollectionFactory.createConcurrentMap()
 
@@ -125,7 +127,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
         }
       }
 
-      lineBreakpointManager.queueAllBreakpointsUpdate()
+      lineBreakpointVisualizationManager.queueAllBreakpointsUpdate()
 
       breakpointEvents.toFlow().collect { event ->
         try {
@@ -203,8 +205,9 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     newBreakpoint.installListener {
       breakpointsChanged.tryEmit(Unit)
       if (newBreakpoint is XLineBreakpointProxy) {
-        lineBreakpointManager.breakpointChanged(newBreakpoint)
+        lineBreakpointVisualizationManager.breakpointChanged(newBreakpoint)
       }
+      DebuggerUIUtil.notifyBreakpointAttachments(newBreakpoint)
     }
     val previousBreakpoint = breakpoints.putIfAbsent(breakpointDto.id, newBreakpoint)
     if (previousBreakpoint != null) {
@@ -328,6 +331,10 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     return lineBreakpointManager
   }
 
+  internal fun getLineBreakpointVisualizationManager(): FrontendXLineBreakpointVisualizationManager {
+    return lineBreakpointVisualizationManager
+  }
+
   override fun getAllBreakpointTypes(): List<XBreakpointTypeProxy> {
     return FrontendXBreakpointTypesManager.getInstance(project).getBreakpointTypes()
   }
@@ -417,7 +424,10 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
         RegistrationStatus.IN_PROGRESS, RegistrationStatus.REGISTERED -> error("Breakpoint $id is already registered")
         RegistrationStatus.NOT_STARTED -> {
           if (!registrationInLineManagerStatus.compareAndSet(RegistrationStatus.NOT_STARTED, RegistrationStatus.IN_PROGRESS)) continue
-          lineBreakpointManager.registerBreakpoint(this, updateUI)
+          if (updateUI) {
+            lineBreakpointVisualizationManager.updateBreakpointNow(this)
+          }
+          lineBreakpointManager.registerBreakpoint(this)
           if (!registrationInLineManagerStatus.compareAndSet(RegistrationStatus.IN_PROGRESS, RegistrationStatus.REGISTERED)) {
             val newStatus = registrationInLineManagerStatus.get()
             check(newStatus == RegistrationStatus.DEREGISTERED) { "Unexpected status: $newStatus" }

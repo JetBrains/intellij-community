@@ -1,10 +1,18 @@
-from _typeshed import FileDescriptorOrPath
+from _typeshed import StrOrBytesPath, SupportsWrite
 from pathlib import Path
 from re import Pattern
-from typing import IO, TypeVar
+from typing import Final, NamedTuple, Protocol, TypeAlias, TypeVar, type_check_only
 from typing_extensions import Self
 
+from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat
 from paramiko.message import Message
+
+@type_check_only
+class _HasReadlines(Protocol):
+    def readlines(self) -> list[str]: ...
 
 OPENSSH_AUTH_MAGIC: bytes
 
@@ -17,16 +25,23 @@ class UnknownKeyType(Exception):
     key_bytes: bytes | None
     def __init__(self, key_type: str | type | None = None, key_bytes: bytes | None = None) -> None: ...
 
+class FileFormat(NamedTuple):
+    format: PrivateFormat
+    encoding: Encoding
+
+PrivateKey: TypeAlias = RSAPrivateKey | EllipticCurvePrivateKey | Ed25519PrivateKey
+
+PEM: Final[FileFormat]
+OPENSSH: Final[FileFormat]
+
 class PKey:
-    name: str
-    HASHES: dict[str, type]
     public_blob: PublicBlob | None
     BEGIN_TAG: Pattern[str]
     END_TAG: Pattern[str]
     @staticmethod
-    def from_path(path: Path | str, passphrase: bytes | None = None) -> PKey: ...
+    def from_path(path: Path | str, password: str | None = None) -> PKey: ...
     @staticmethod
-    def from_type_string(key_type: str, key_bytes: bytes) -> PKey: ...
+    def from_type_string(key_type: str, key_bytes: bytes, password: str | None = None) -> PKey: ...
     @classmethod
     def identifiers(cls) -> list[str]: ...
     def __init__(self, msg: Message | None = None, data: str | None = None) -> None: ...
@@ -46,11 +61,15 @@ class PKey:
     def sign_ssh_data(self, data: bytes, algorithm: str | None = None) -> Message: ...
     def verify_ssh_sig(self, data: bytes, msg: Message) -> bool: ...
     @classmethod
-    def from_private_key_file(cls, filename: FileDescriptorOrPath, password: str | None = None) -> Self: ...
+    def from_private_key_file(cls, filename: StrOrBytesPath, password: str | None = None) -> Self: ...
     @classmethod
-    def from_private_key(cls, file_obj: IO[str], password: str | None = None) -> Self: ...
-    def write_private_key_file(self, filename: FileDescriptorOrPath, password: str | None = None) -> None: ...
-    def write_private_key(self, file_obj: IO[str], password: str | None = None) -> None: ...
+    def from_private_key(cls, file_obj: _HasReadlines, password: str | None = None) -> Self: ...
+    def write_private_key_file(
+        self, filename: StrOrBytesPath, password: str | None = None, file_format: FileFormat = PEM  # noqa: Y011
+    ) -> None: ...
+    def write_private_key(
+        self, file_obj: SupportsWrite[str], password: str | None = None, file_format: FileFormat = PEM  # noqa: Y011
+    ) -> None: ...
     def load_certificate(self, value: Message | str) -> None: ...
 
 class PublicBlob:
@@ -59,7 +78,7 @@ class PublicBlob:
     comment: str
     def __init__(self, type_: str, blob: bytes, comment: str | None = None) -> None: ...
     @classmethod
-    def from_file(cls, filename: FileDescriptorOrPath) -> Self: ...
+    def from_file(cls, filename: StrOrBytesPath) -> Self: ...
     @classmethod
     def from_string(cls, string: str) -> Self: ...
     @classmethod

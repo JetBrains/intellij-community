@@ -340,7 +340,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
       }
     """.trimIndent())
 
-    myFixture.runQuickFix("Set language level to 25 (Preview) - Primitive types in patterns (3rd preview)")
+    myFixture.runQuickFix("Set language level to 25 (Preview) - Primitive types in patterns, instanceof, and switch (3rd preview)")
     assertEquals(LanguageLevel.JDK_25_PREVIEW, LanguageLevelUtil.getEffectiveLanguageLevel(myFixture.module))
   }
 
@@ -357,7 +357,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
       }
     """.trimIndent())
 
-    myFixture.runQuickFix("Set language level to 25 (Preview) - Primitive types in patterns (3rd preview)")
+    myFixture.runQuickFix("Set language level to 25 (Preview) - Primitive types in patterns, instanceof, and switch (3rd preview)")
     assertEquals(LanguageLevel.JDK_25_PREVIEW, LanguageLevelUtil.getEffectiveLanguageLevel(myFixture.module))
   }
 

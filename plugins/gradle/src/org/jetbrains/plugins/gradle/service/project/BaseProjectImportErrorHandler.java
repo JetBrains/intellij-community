@@ -3,30 +3,32 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.FilePosition;
 import com.intellij.build.issue.BuildIssue;
-import com.intellij.build.issue.BuildIssueChecker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.issue.BuildIssueException;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.gradle.cli.CommandLineArgumentException;
 import org.gradle.tooling.UnsupportedVersionException;
 import org.gradle.tooling.model.build.BuildEnvironment;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.issue.GradleIssueChecker;
 import org.jetbrains.plugins.gradle.issue.GradleIssueData;
+import org.jetbrains.plugins.gradle.issue.GradleIssueFailure;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler;
 import org.jetbrains.plugins.gradle.service.notification.OpenGradleSettingsCallback;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 
@@ -35,6 +37,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 /**
  * @author Vladislav.Soroka
  */
+@Internal
 public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHandler {
 
   private static final Logger LOG = Logger.getInstance(BaseProjectImportErrorHandler.class);
@@ -44,7 +47,7 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
                                                                @NotNull Throwable error,
                                                                @NotNull String projectPath,
                                                                @Nullable String buildFilePath) {
-    GradleExecutionErrorHandler executionErrorHandler = new GradleExecutionErrorHandler(error, projectPath, buildFilePath);
+    GradleExecutionErrorHandler executionErrorHandler = new GradleExecutionErrorHandler(error);
     ExternalSystemException exception = doGetUserFriendlyError(buildEnvironment, error, projectPath, buildFilePath, executionErrorHandler);
     if (!exception.isCauseInitialized()) {
       exception.initCause(notNull(executionErrorHandler.getRootCause(), error));
@@ -52,7 +55,6 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     return exception;
   }
 
-  @ApiStatus.Experimental
   ExternalSystemException checkErrorsWithoutQuickFixes(@Nullable BuildEnvironment buildEnvironment,
                                                        @NotNull Throwable error,
                                                        @NotNull String projectPath,
@@ -74,21 +76,13 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
 
     LOG.debug(String.format("Failed to run Gradle project at '%1$s'", projectPath), error);
 
-    Throwable rootCause = executionErrorHandler.getRootCause();
-    String location = executionErrorHandler.getLocation();
-    if (location == null && !StringUtil.isEmpty(buildFilePath)) {
-      location = String.format("Build file: '%1$s'", buildFilePath);
-    }
-    FilePosition errorFilePosition = getErrorFilePosition(location);
-    GradleIssueData issueData = new GradleIssueData(projectPath, error, buildEnvironment, errorFilePosition);
-    List<GradleIssueChecker> knownIssuesCheckList = GradleIssueChecker.getKnownIssuesCheckList();
-    for (BuildIssueChecker<GradleIssueData> checker : knownIssuesCheckList) {
-      BuildIssue buildIssue = checker.check(issueData);
-      if (buildIssue != null) {
-        return new BuildIssueException(buildIssue);
-      }
+    String location = getErrorLocation(executionErrorHandler, buildFilePath);
+    List<BuildIssue> buildIssues = getBuildIssues(buildEnvironment, error, projectPath, location);
+    if (!buildIssues.isEmpty()) {
+      return new BuildIssueException(buildIssues);
     }
 
+    Throwable rootCause = executionErrorHandler.getRootCause();
     if (rootCause instanceof UnsupportedVersionException) {
       String msg = "You are using unsupported version of Gradle.";
       msg += ('\n' + FIX_GRADLE_VERSION);
@@ -178,10 +172,51 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     return createUserFriendlyError(errMessage, location);
   }
 
+  private static @NotNull List<BuildIssue> getBuildIssues(
+    @Nullable BuildEnvironment buildEnvironment,
+    @NotNull Throwable error,
+    @NotNull String projectPath,
+    @Nullable String location
+  ) {
+    FilePosition filePosition = getErrorFilePosition(location);
+    GradleIssueFailure issueFailure = GradleIssueFailure.createIssueFailure(error);
+    GradleIssueData issueData = GradleIssueData.createIssueData(Path.of(projectPath), issueFailure, buildEnvironment, filePosition);
+    return ContainerUtil.mapNotNull(GradleIssueChecker.getKnownIssuesCheckList(), it -> it.check(issueData));
+  }
+
+  public static @Nullable FilePosition getErrorFilePosition(
+    @NotNull GradleIssueFailure failure,
+    @NotNull Path projectPath
+  ) {
+    FilePosition filePosition = failure.getFilePosition();
+    Path path = ObjectUtils.doIfNotNull(filePosition, it -> it.getPath());
+    if (path != null && !path.isAbsolute()) {
+      return new FilePosition(
+        projectPath.resolve(path).normalize(),
+        filePosition.getStartLine(),
+        filePosition.getStartColumn(),
+        filePosition.getEndLine(),
+        filePosition.getEndColumn()
+      );
+    }
+    return filePosition;
+  }
+
+  private static @Nullable String getErrorLocation(
+    @NotNull GradleExecutionErrorHandler executionErrorHandler,
+    @Nullable String buildFilePath
+  ) {
+    String location = executionErrorHandler.getLocation();
+    if (location != null) return location;
+    if (StringUtil.isEmpty(buildFilePath)) return location;
+    return String.format("Build file: '%1$s'", buildFilePath);
+  }
+
   private static @Nullable FilePosition getErrorFilePosition(@Nullable String location) {
     if (location == null) return null;
     Pair<String, Integer> errorLocation = GradleExecutionErrorHandler.getErrorLocation(location);
     if (errorLocation == null) return null;
-    return new FilePosition(new File(errorLocation.first), errorLocation.second - 1, 0);
+    int line = errorLocation.second;
+    return new FilePosition(Path.of(errorLocation.first), line < 0 ? line : line - 1, 0);
   }
 }

@@ -1011,14 +1011,14 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
       val injectedFile = injectionTestFixture.getAllInjections().single().second
       val injectedViewProvider = injectedFile.viewProvider
       assertEquals("SingleRootInjectedFileViewProvider", injectedViewProvider.javaClass.simpleName)
-      assertTrue(injectedViewProvider.isPhysical)
+      assertTrue(injectedViewProvider.correspondsToRealFile())
 
       val copy = injectedFile.copy() as PsiFile
       val copyViewProvider = copy.viewProvider
 
       assertEquals("SingleRootInjectedFileViewProvider", copyViewProvider.javaClass.simpleName)
       assertEquals(injectedFile.text, copy.text)
-      assertFalse(copyViewProvider.isPhysical)
+      assertFalse(copyViewProvider.correspondsToRealFile())
     }
   }
 

@@ -1,6 +1,6 @@
 // "Change the signature of constructor 'FooBar'" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'Int', but 'String' was expected.
-// K2_ERROR: Too many arguments for 'constructor(name: String): FooBar'.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: TOO_MANY_ARGUMENTS
 
 private data class FooBar(val name: String)
 fun test() {

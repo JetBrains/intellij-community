@@ -201,7 +201,6 @@ fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModule
   }
 
   include(CommunityProductFragments.javaIdeBaseFragment())
-  deprecatedInclude("intellij.idea.community.customization", "META-INF/tips-intellij-idea-community.xml")
 
   module("intellij.platform.coverage")
   module("intellij.platform.coverage.agent")
@@ -212,7 +211,6 @@ fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModule
   module("intellij.platform.customization.min")
   module("intellij.idea.customization.base")
   module("intellij.idea.customization.backend")
-  module("intellij.platform.tips")
 
   if (System.getProperty("idea.platform.prefix") == "AndroidStudio") {
     module("intellij.idea.android.customization")

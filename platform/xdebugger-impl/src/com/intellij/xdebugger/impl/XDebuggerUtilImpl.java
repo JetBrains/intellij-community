@@ -50,7 +50,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
-import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -289,23 +289,29 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return addLineBreakpoint(breakpointManager, variant, file, line, false);
   }
 
+  /**
+   * @deprecated Use {@link #addLineBreakpoint(XBreakpointManager, XLineBreakpointType.XLineBreakpointVariant, VirtualFile, int, XLineBreakpointAdditionalInfo)} instead.
+   */
+  @Deprecated(forRemoval = true)
   public static <P extends XBreakpointProperties> XLineBreakpoint<P> addLineBreakpoint(XBreakpointManager breakpointManager,
                                                                                        XLineBreakpointType<P>.XLineBreakpointVariant variant,
                                                                                        VirtualFile file,
                                                                                        int line,
                                                                                        Boolean temporary) {
-    return addLineBreakpoint(breakpointManager, variant, file, line, temporary, XLineBreakpointVerticalPlacement.ON_LINE);
+    XLineBreakpointAdditionalInfo additionalInfo = new XLineBreakpointAdditionalInfo.Builder()
+      .setTemporary(temporary)
+      .build();
+    return addLineBreakpoint(breakpointManager, variant, file, line, additionalInfo);
   }
 
   public static <P extends XBreakpointProperties> XLineBreakpoint<P> addLineBreakpoint(XBreakpointManager breakpointManager,
                                                                                        XLineBreakpointType<P>.XLineBreakpointVariant variant,
                                                                                        VirtualFile file,
                                                                                        int line,
-                                                                                       Boolean temporary,
-                                                                                       @NotNull XLineBreakpointVerticalPlacement placement) {
+                                                                                       @NotNull XLineBreakpointAdditionalInfo additionalInfo) {
     var properties = variant.createProperties();
     var type = variant.getType();
-    var breakpoint = addLineBreakpoint(breakpointManager, type, properties, file, line, temporary, placement);
+    var breakpoint = addLineBreakpoint(breakpointManager, type, properties, file, line, additionalInfo);
     if (!type.variantAndBreakpointMatch(breakpoint, variant)) {
       LOG.error("breakpoint doesn't match source variant, " + type + ", " + variant.getClass());
     }
@@ -317,9 +323,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                                         P properties,
                                                                                         VirtualFile file,
                                                                                         int line,
-                                                                                        Boolean temporary,
-                                                                                        @NotNull XLineBreakpointVerticalPlacement placement) {
-    return breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary, placement);
+                                                                                        @NotNull XLineBreakpointAdditionalInfo additionalInfo) {
+    return breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, additionalInfo);
   }
 
   @ApiStatus.Internal

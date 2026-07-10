@@ -1,4 +1,6 @@
 // "Specify 'Boolean' return type for called function 'A.hasNext'" "true"
+// K2_ERROR: HAS_NEXT_FUNCTION_TYPE_MISMATCH
+// K2_ERROR: INAPPLICABLE_OPERATOR_MODIFIER
 abstract class A {
     abstract operator fun hasNext
     abstract operator fun next(): Int

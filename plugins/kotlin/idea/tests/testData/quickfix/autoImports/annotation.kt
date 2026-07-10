@@ -1,5 +1,5 @@
 // "Import class 'TestOnly'" "true"
-// K2_ERROR: Unresolved reference 'TestOnly'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 @TestOnly<caret>
 fun foo() {}

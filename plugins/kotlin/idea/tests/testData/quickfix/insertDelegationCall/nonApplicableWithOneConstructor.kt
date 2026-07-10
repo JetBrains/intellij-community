@@ -3,8 +3,8 @@
 // ACTION: Insert 'super()' call
 // ACTION: Convert to primary constructor
 // ERROR: Explicit 'this' or 'super' call is required. There is no constructor in superclass that can be called without arguments
-// K2_ERROR: Explicit 'this' or 'super' call is required. There is no constructor in the superclass that can be called without arguments.
-// K2_AFTER_ERROR: Explicit 'this' or 'super' call is required. There is no constructor in the superclass that can be called without arguments.
+// K2_AFTER_ERROR: EXPLICIT_DELEGATION_CALL_REQUIRED
+// K2_ERROR: EXPLICIT_DELEGATION_CALL_REQUIRED
 
 open class B(val x: Int)
 

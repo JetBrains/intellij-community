@@ -2,8 +2,6 @@ package de.plushnikov.intellij.plugin.thirdparty;
 
 import com.intellij.openapi.util.text.StringUtil;
 
-import java.util.Locale;
-
 /**
  * Used for lombok configuration to determine how to transform field names when turning them into accessor method names and vice versa.
  */
@@ -12,8 +10,8 @@ public enum CapitalizationStrategy {
 		@Override
     public String capitalize(String s) {
       if (s.isEmpty()) return s;
-      if (s.length() == 1) return s.toUpperCase(Locale.ROOT);
       char ch = s.charAt(0);
+      if (s.length() == 1) return String.valueOf(Character.toUpperCase(ch));
       if (Character.isUpperCase(ch)) return s;
       return Character.toUpperCase(ch) + s.substring(1);
     }

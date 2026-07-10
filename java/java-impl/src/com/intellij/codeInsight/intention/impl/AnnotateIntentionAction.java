@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -78,8 +77,8 @@ public final class AnnotateIntentionAction implements ModCommandAction {
   }
 
   private static boolean alreadyAnnotated(PsiModifierListOwner owner, AnnotationProvider p, Project project) {
-    PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, ArrayUtil
-      .prepend(p.getName(owner.getProject()), p.getAnnotationsToRemove(project)));
+    PsiAnnotation annotation = 
+      AnnotationUtil.findAnnotation(owner, ArrayUtil.prepend(p.getName(owner.getProject()), p.getAnnotationsToRemove(project)));
     return annotation != null && !AnnotationUtil.isInferredAnnotation(annotation);
   }
 
@@ -95,7 +94,7 @@ public final class AnnotateIntentionAction implements ModCommandAction {
       return Presentation.of(AddAnnotationPsiFix.calcText(owner, mySingleAnnotationName)).withPriority(PriorityAction.Priority.LOW);
     }
     if (annotations.size() == 1) {
-      String providerName = annotations.get(0).getName(context.project());
+      String providerName = annotations.getFirst().getName(context.project());
       return Presentation.of(AddAnnotationPsiFix.calcText(owner, providerName)).withPriority(PriorityAction.Priority.LOW);
     }
     return Presentation.of(AddAnnotationPsiFix.calcText(owner, null)).withPriority(PriorityAction.Priority.LOW);
@@ -106,14 +105,13 @@ public final class AnnotateIntentionAction implements ModCommandAction {
     final PsiModifierListOwner owner = AddAnnotationPsiFix.getContainer(context.file(), context.offset());
     assert owner != null;
     AnnotationPlace place = ExternalAnnotationsManager.getInstance(context.project()).chooseAnnotationsPlaceNoUi(owner);
-    List<ModCommandAction> actions;
     Stream<AnnotationProvider> providers;
     if (mySingleAnnotationName != null) {
       providers = getProviderFor(context.file(), owner, mySingleAnnotationName).stream();
     } else {
       providers = availableAnnotations(owner, context.project());
     }
-    actions = providers.map(provider -> provider.createFix(owner, place)).toList();
+    List<ModCommandAction> actions = providers.map(provider -> provider.createFix(owner, place)).toList();
     return ModCommand.chooseAction(JavaBundle.message("annotate.intention.chooser.title"), actions);
   }
 }

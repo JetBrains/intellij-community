@@ -27,7 +27,6 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import java.io.IOException
 import javax.swing.JComponent
 
 internal class MoveFileToAnotherModuleAction : DumbAwareAction() {
@@ -76,7 +75,7 @@ internal class MoveFileToAnotherModuleAction : DumbAwareAction() {
     try {
       moveFile(project, file, targetLocation)
     }
-    catch (e: IOException) {
+    catch (e: Exception) {
       bail(e.message ?: "Unexpected error while moving the file")
     }
   }
@@ -95,7 +94,7 @@ internal class MoveFileToAnotherModuleAction : DumbAwareAction() {
             val path = collectPath(file, root)
             if (path != null) {
               sourceRootType = rootType
-              pathFromSourceRoot = path
+              pathFromSourceRoot = packagePrefixToPath(sourceFolder.packagePrefix) + path
               generatedSourceRoot = isGenerated(sourceFolder)
               return@outer
             }
@@ -133,6 +132,10 @@ internal class MoveFileToAnotherModuleAction : DumbAwareAction() {
     }
   }
 
+  private fun packagePrefixToPath(packagePrefix: String): List<String> {
+    return if (packagePrefix.isEmpty()) emptyList() else packagePrefix.split(".")
+  }
+
   private fun isGenerated(sourceFolder: SourceFolder) = when (val props = sourceFolder.jpsElement.properties) {
     is JavaSourceRootProperties -> props.isForGeneratedSources
     is JavaResourceRootProperties -> props.isForGeneratedSources
@@ -146,28 +149,35 @@ internal class MoveFileToAnotherModuleAction : DumbAwareAction() {
         contentEntry.getSourceFolders(sourceLocation.sourceRootType).forEach { sourceFolder ->
           val root = sourceFolder.file
           if (root != null && sourceLocation.generatedSourceRoot == isGenerated(sourceFolder)) {
-            return TargetLocation(root, sourceLocation.pathFromSourceRoot)
+            return TargetLocation(root, sourceFolder.packagePrefix, sourceLocation.pathFromSourceRoot)
           }
         }
       }
     }
     if (sourceLocation.pathFromContentRoot != null) {
       rootManager.contentRoots.firstOrNull()?.let {
-        return TargetLocation(it, sourceLocation.pathFromContentRoot)
+        return TargetLocation(it, "", sourceLocation.pathFromContentRoot)
       }
     }
     return null
   }
 
   private fun moveFile(project: Project, file: VirtualFile, targetLocation: TargetLocation) {
+    val prefixPath = packagePrefixToPath(targetLocation.rootPackagePrefix)
+    val requestedPath = targetLocation.pathFromRoot
+    val targetPath = if (requestedPath.size >= prefixPath.size && requestedPath.subList(0, prefixPath.size) == prefixPath) {
+      requestedPath.drop(prefixPath.size)
+    } else {
+      error("Incompatible package prefix in target module's content root: ${targetLocation.rootPackagePrefix}")
+    }
     writeCommandAction(project).withName("Move File").run<Exception> {
       val requestor = this@MoveFileToAnotherModuleAction
       var target = targetLocation.root
-      targetLocation.pathFromRoot.forEach {
+      targetPath.forEach {
         val child = target.findChild(it)
         target = child ?: target.createChildDirectory(requestor, it)
         if (target.isFile) {
-          throw IOException("Existing file in target module prevents moving: ${target.path}")
+          error("Existing file in target module prevents moving: ${target.path}")
         }
       }
       file.move(requestor, target)
@@ -187,6 +197,7 @@ internal class MoveFileToAnotherModuleAction : DumbAwareAction() {
 
   private data class TargetLocation(
     val root: VirtualFile,
+    val rootPackagePrefix: String,
     val pathFromRoot: List<String>
   )
 }

@@ -118,8 +118,8 @@ internal class ImageDataByPathLoader private constructor(override val path: Stri
 
   override fun getCoords(): Pair<String, ClassLoader> = path to classLoader
 
-  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
-    return loadImage(path = path,
+  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): ImageWithShape<Image>? {
+    return loadImageWithShape(path = path,
                      isDark = parameters.isDark,
                      filters = parameters.filters,
                      colorPatcherProvider = parameters.colorPatcher,

@@ -147,8 +147,8 @@ class HighlightVisitorRunner {
     return res;
   }
 
-  private static final PsiElement ANALYZE_BEFORE_RUN_VISITOR_FAKE_PSI_ELEMENT = HighlightInfoUpdaterImpl.createFakePsiElement("ANALYZE_BEFORE_RUN_VISITOR");
-  private static final PsiElement ANALYZE_AFTER_RUN_VISITOR_FAKE_PSI_ELEMENT = HighlightInfoUpdaterImpl.createFakePsiElement("ANALYZE_AFTER_RUN_VISITOR");
+  private static final PsiElement ANALYZE_BEFORE_RUN_VISITOR_FAKE_PSI_ELEMENT = HighlightFakePsiElement.create("ANALYZE_BEFORE_RUN_VISITOR");
+  private static final PsiElement ANALYZE_AFTER_RUN_VISITOR_FAKE_PSI_ELEMENT = HighlightFakePsiElement.create("ANALYZE_AFTER_RUN_VISITOR");
   /**
    * report infos created outside the {@link #runVisitor} call (either before or after, inside the {@link HighlightVisitor#analyze} method), starting from the {@param fromIndex}
    */

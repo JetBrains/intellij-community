@@ -15,9 +15,14 @@
  */
 package com.jetbrains.python.inspections
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyInspectionTestCase
 
+@Subsystems.Inspections
+@Layers.Functional
 class PyNoneFunctionAssignmentInspectionTest : PyInspectionTestCase() {
   fun testPass() {
     doTest()

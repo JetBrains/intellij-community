@@ -4,11 +4,7 @@ package com.jetbrains.python.inspections
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.ColorUtil
-import com.intellij.util.ui.NamedColorUtil
-import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.documentation.PythonDocumentationProvider
@@ -19,6 +15,8 @@ import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isAnyOrUnknown
+import com.jetbrains.python.psi.types.isUnknown
 import org.jetbrains.annotations.Nls
 
 /**
@@ -38,9 +36,48 @@ import org.jetbrains.annotations.Nls
  * the Problems view and batch mode) carries the same content without styling.
  */
 internal object PyMismatchTooltips {
-  /** One rendered cell — a provided argument type or an expected parameter — and whether it matched. */
+  /**
+   * One provided argument or expected parameter, split into a [name] part (a `keyword=` for arguments, a
+   * `name: ` for parameters, or empty) and a [type] part, plus whether it matched. Keeping the parts separate
+   * lets the renderer right-align the names so the types line up column-by-column.
+   */
   @JvmRecord
-  data class Slot(@NlsSafe val text: String, val matched: Boolean)
+  data class Slot(@NlsSafe val name: String, @NlsSafe val type: String, val matched: Boolean) {
+    @get:NlsSafe val text: String get() = name + type
+  }
+
+  /** A provided argument rendered as `type` or `keyword=type`. */
+  @JvmStatic
+  fun argumentSlot(argument: PyExpression, type: PyType?, context: TypeEvalContext, matched: Boolean): Slot {
+    val typeName = PythonDocumentationProvider.getTypeName(type, context)
+    val name = (argument as? PyKeywordArgument)?.keyword?.let { "$it=" } ?: ""
+    return Slot(name, typeName, matched)
+  }
+
+  /** An expected parameter rendered as `name: type` (with `*`/`**` for containers, just `name` when untyped). */
+  @JvmStatic
+  fun parameterSlot(parameter: PyCallableParameter, context: TypeEvalContext, matched: Boolean): Slot {
+    val type = parameter.getType(context)
+    return parameterSlot(parameter, if (type.isUnknown) null else PythonDocumentationProvider.getTypeName(type, context), matched)
+  }
+
+  /**
+   * An expected parameter rendered as `name: type` (with `*`/`**` for containers, just `name` when [typeName] is
+   * `null`), using an already-rendered [typeName]. Use this when the caller has a different type to show than the
+   * parameter's declared one (e.g. a substituted type).
+   */
+  @JvmStatic
+  fun parameterSlot(parameter: PyCallableParameter, @NlsSafe typeName: String?, matched: Boolean): Slot {
+    val prefix = containerPrefix(parameter)
+    val name = parameter.name ?: return Slot("", typeName.orEmpty(), matched)
+    return if (typeName == null) Slot("$prefix$name", "", matched) else Slot("$prefix$name: ", typeName, matched)
+  }
+
+  /** The `*`/`**` prefix for a positional/keyword container parameter, or empty for an ordinary parameter. */
+  @JvmStatic
+  @NlsSafe
+  fun containerPrefix(parameter: PyCallableParameter): String =
+    if (parameter.isPositionalContainer) "*" else if (parameter.isKeywordContainer) "**" else ""
 
   /**
    * The header naming the single common callee (rendered with the name as a `<code>` span in the tooltip and
@@ -80,7 +117,11 @@ internal object PyMismatchTooltips {
            PyPsiBundle.message("INSP.type.checker.expected.one.of.label") + " " + expected
   }
 
-  /** Styled HTML tooltip for the editor hover. */
+  /**
+   * Styled HTML tooltip for the editor hover. The provided argument types and each candidate signature are
+   * rendered as aligned, code-styled rows (via [PyTypeDiffGrid]) so the arguments line up column-by-column with the
+   * parameters; the parts that match are muted and only the offending parts stand out.
+   */
   @JvmStatic
   @NlsContexts.Tooltip
   fun tooltip(
@@ -88,74 +129,43 @@ internal object PyMismatchTooltips {
     argumentSlots: List<Slot>,
     expectedRows: List<List<Slot>>,
   ): @NlsContexts.Tooltip String {
-    val rows = mutableListOf(
-      row(PyPsiBundle.message("INSP.type.checker.argument.types.label"), codeTuple(argumentSlots.map { argumentChunk(it) }))
-    )
-    expectedRows.forEachIndexed { i, slots ->
-      val label = if (i == 0) PyPsiBundle.message("INSP.type.checker.expected.one.of.label") else ""
-      rows.add(row(label, codeTuple(slots.map { expectedChunk(it) })))
+    // When the structural diff is disabled, fall back to the plain description as the tooltip (no aligned grid).
+    if (!PyTypeDiff.diffTooltipsEnabled()) {
+      return HtmlChunk.text(description(header, argumentSlots, expectedRows)).wrapWith("html").toString()
     }
-    val headerHtml = header.tooltip.removeSurrounding("<html>", "</html>")
-    return HtmlBuilder()
-      .append(HtmlChunk.raw(headerHtml))
-      .append(HtmlBuilder().also { table -> rows.forEach(table::append) }.wrapWith("table"))
-      .wrapWith("html")
-      .toString()
-  }
-
-  /** Renders a provided argument as `type` or `keyword=type`. */
-  @JvmStatic
-  @NlsSafe
-  fun actualArgumentText(argument: PyExpression, type: PyType?, context: TypeEvalContext): @NlsSafe String {
-    val typeName = PythonDocumentationProvider.getTypeName(type, context)
-    if (argument is PyKeywordArgument) {
-      argument.keyword?.let { return "$it=$typeName" }
+    val columnCount = (expectedRows + listOf(argumentSlots)).maxOf { it.size }
+    val rows = mutableListOf(rowCells(argumentSlots, columnCount))
+    expectedRows.forEach { rows.add(rowCells(it, columnCount)) }
+    val labels = buildList {
+      add(PyPsiBundle.message("INSP.type.checker.argument.types.label"))
+      expectedRows.forEachIndexed { i, _ ->
+        add(if (i == 0) PyPsiBundle.message("INSP.type.checker.expected.one.of.label") else "")
+      }
     }
-    return typeName
+    @NlsSafe val headerHtml = header.tooltip.removeSurrounding("<html>", "</html>")
+    return PyTypeDiffGrid.tooltip(HtmlChunk.raw(headerHtml), rows, labels)
   }
 
-  /** Renders an expected parameter as `name: type` (with `*`/`**` for containers, just `name` when untyped). */
-  @JvmStatic
-  @NlsSafe
-  fun parameterText(parameter: PyCallableParameter, context: TypeEvalContext): @NlsSafe String {
-    val type = parameter.getType(context)
-    val typeName = if (type == null) null else PythonDocumentationProvider.getTypeName(type, context)
-    val name = parameter.name ?: return typeName.orEmpty()
-    val prefix = if (parameter.isPositionalContainer) "*" else if (parameter.isKeywordContainer) "**" else ""
-    return if (typeName == null) "$prefix$name" else "$prefix$name: $typeName"
-  }
-
-  private val mutedStyle: String get() = "color: " + ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground()) + ";"
-  private val errorStyle: String get() = "color: " + ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground()) + ";"
-  private val labelStyle: String get() = "$mutedStyle padding: 0px 8px 0px 4px;"
-
-  /** A provided-argument cell: muted when it maps somewhere, error-bold when it matches no candidate. */
-  private fun argumentChunk(slot: Slot): HtmlChunk {
-    val text = HtmlChunk.text(slot.text)
-    return if (slot.matched) text.wrapWith(HtmlChunk.span().style(mutedStyle))
-    else text.bold().wrapWith(HtmlChunk.span().style(errorStyle))
-  }
-
-  /** An expected-parameter cell: muted when a matching argument was provided, bold when it was not. */
-  private fun expectedChunk(slot: Slot): HtmlChunk {
-    val text = HtmlChunk.text(slot.text)
-    return if (slot.matched) text.wrapWith(HtmlChunk.span().style(mutedStyle)) else text.bold()
-  }
-
-  private fun row(@Nls label: String, value: HtmlChunk): HtmlChunk = HtmlChunk.tag("tr").children(
-    HtmlChunk.tag("td").style(labelStyle).addText(label),
-    HtmlChunk.tag("td").child(value),
-  )
-
-  private fun codeTuple(cells: List<HtmlChunk>): HtmlChunk {
-    val builder = HtmlBuilder()
-    builder.append(HtmlChunk.span().style(mutedStyle).addText("("))
-    for ((i, cell) in cells.withIndex()) {
-      if (i > 0) builder.append(HtmlChunk.span().style(mutedStyle).addText(", "))
-      builder.append(cell)
+  /**
+   * A `(slot, slot, …)` tuple rendered as [PyTypeDiffGrid] cells. Each slot becomes a right-aligned name cell and a
+   * type cell (so the types line up); an unmatched slot's type is red, but its name is never highlighted.
+   */
+  private fun rowCells(slots: List<Slot>, columnCount: Int): List<PyTypeDiffGrid.Cell> {
+    val cells = mutableListOf(PyTypeDiffGrid.delim("("))
+    for (i in 0 until columnCount) {
+      val slot = slots.getOrNull(i)
+      val suffix = if (i < slots.lastIndex) ", " else ""
+      if (slot == null) {
+        cells.add(PyTypeDiffGrid.delim(""))
+        cells.add(PyTypeDiffGrid.delim(""))
+      }
+      else {
+        cells.add(PyTypeDiffGrid.value(slot.name, mismatch = false, alignRight = true))
+        cells.add(PyTypeDiffGrid.value(slot.type, mismatch = !slot.matched, suffix = suffix))
+      }
     }
-    builder.append(HtmlChunk.span().style(mutedStyle).addText(")"))
-    return builder.wrapWith("code")
+    cells.add(PyTypeDiffGrid.delim(")"))
+    return cells
   }
 
   private fun tupleText(slots: List<Slot>): String = slots.joinToString(", ", "(", ")") { it.text }

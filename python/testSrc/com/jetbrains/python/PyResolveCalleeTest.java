@@ -3,11 +3,16 @@
 // found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -15,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyResolveCalleeTest extends PyTestCase {
 
   @NotNull
@@ -34,7 +41,9 @@ public class PyResolveCalleeTest extends PyTestCase {
   public void testInstanceCall() {
     final PyCallableType resolved = resolveCallee();
     assertNotNull(resolved.getCallable());
-    assertEquals(1, resolved.getImplicitOffset());
+
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    assertEquals("() -> None", PythonDocumentationProvider.getTypeName(resolved, context));
   }
 
   public void testClassCall() {
@@ -46,7 +55,6 @@ public class PyResolveCalleeTest extends PyTestCase {
   public void testDecoCall() {
     final PyCallableType resolved = resolveCallee();
     assertNotNull(resolved.getCallable());
-    assertEquals(1, resolved.getImplicitOffset());
   }
 
   public void testDecoParamCall() {
@@ -58,7 +66,9 @@ public class PyResolveCalleeTest extends PyTestCase {
   public void testWrappedStaticMethod() {
     final PyCallableType resolved = resolveCallee();
     assertNotNull(resolved.getCallable());
-    assertEquals(0, resolved.getImplicitOffset());
     assertEquals(PyAstFunction.Modifier.STATICMETHOD, resolved.getModifier());
+
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    assertEquals("(self: Unknown) -> None", PythonDocumentationProvider.getTypeName(resolved, context));
   }
 }

@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python.pyi;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Components;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -27,6 +30,9 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 
+@Subsystems.CodeInsight
+@Components.Stubs
+@Layers.Functional
 public class PyiResolveTest extends PyMultiFileResolveTestCase {
   @Override
   protected String getTestDataPath() {
