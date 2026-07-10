@@ -2,11 +2,13 @@
 package org.jetbrains.plugins.terminal.session.impl
 
 import com.intellij.platform.eel.EelDescriptor
-import java.awt.event.MouseEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.session.impl.dto.KeyEventProcessingResultDto
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 
 @ApiStatus.Internal
 interface TerminalSession {
@@ -70,4 +72,6 @@ interface TerminalSession {
     x: Int,
     y: Int,
   ): ByteArray?
+
+  fun processKeyEvent(e: KeyEvent): KeyEventProcessingResultDto
 }
