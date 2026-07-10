@@ -91,6 +91,69 @@ public abstract class FirMultilineParameterInfoTestGenerated extends AbstractFir
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/parameterInfo/explicitContextArguments")
+    public static class ExplicitContextArguments extends AbstractFirMultilineParameterInfoTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("contextArgumentStartsNamedMode.kt")
+        public void testContextArgumentStartsNamedMode() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/explicitContextArguments/contextArgumentStartsNamedMode.kt");
+        }
+
+        @TestMetadata("contextLambda.kt")
+        public void testContextLambda() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/explicitContextArguments/contextLambda.kt");
+        }
+
+        @TestMetadata("funWithParameters.kt")
+        public void testFunWithParameters() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/explicitContextArguments/funWithParameters.kt");
+        }
+
+        @TestMetadata("invokeOperator.kt")
+        public void testInvokeOperator() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/explicitContextArguments/invokeOperator.kt");
+        }
+
+        @TestMetadata("multipleContextArguments.kt")
+        public void testMultipleContextArguments() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/explicitContextArguments/multipleContextArguments.kt");
+        }
+
+        @TestMetadata("noParameters.kt")
+        public void testNoParameters() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/explicitContextArguments/noParameters.kt");
+        }
+
+        @TestMetadata("noParameters2.kt")
+        public void testNoParameters2() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/explicitContextArguments/noParameters2.kt");
+        }
+
+        @TestMetadata("reorderedContextArguments.kt")
+        public void testReorderedContextArguments() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/explicitContextArguments/reorderedContextArguments.kt");
+        }
+
+        @TestMetadata("sameTypeContextArguments.kt")
+        public void testSameTypeContextArguments() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/explicitContextArguments/sameTypeContextArguments.kt");
+        }
+
+        @TestMetadata("sameTypeContextArguments2.kt")
+        public void testSameTypeContextArguments2() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/explicitContextArguments/sameTypeContextArguments2.kt");
+        }
+
+        @TestMetadata("unnamedContextArguments.kt")
+        public void testUnnamedContextArguments() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/explicitContextArguments/unnamedContextArguments.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/parameterInfo/fromJava")
     public static class FromJava extends AbstractFirMultilineParameterInfoTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -258,6 +321,11 @@ public abstract class FirMultilineParameterInfoTestGenerated extends AbstractFir
         @TestMetadata("LocalFunctionBug.kt")
         public void testLocalFunctionBug() throws Exception {
             runTest("../../idea/tests/testData/parameterInfo/functionCall/LocalFunctionBug.kt");
+        }
+
+        @TestMetadata("MissingArgumentBeforeCurrent.kt")
+        public void testMissingArgumentBeforeCurrent() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/MissingArgumentBeforeCurrent.kt");
         }
 
         @TestMetadata("MixedNamedArguments.kt")

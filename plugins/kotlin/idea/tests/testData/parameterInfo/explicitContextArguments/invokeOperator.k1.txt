@@ -1,0 +1,1 @@
+Text: (param1: String, param2: Int), Disabled: true, Strikeout: false, Green: true
