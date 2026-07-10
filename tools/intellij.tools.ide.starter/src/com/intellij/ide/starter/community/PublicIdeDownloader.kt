@@ -10,6 +10,7 @@ import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
+import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.time.LocalDate
@@ -31,7 +32,10 @@ open class PublicIdeDownloader : IdeDownloader {
         filteringParams.majorVersion.isNotBlank() -> sortedByDate.first { it.majorVersion == filteringParams.majorVersion }
         // find the latest release / eap, if no specific params were provided
         filteringParams.versionNumber.isBlank() && filteringParams.buildNumber.isBlank() -> {
-          sortedByDate.first()
+          val latestMajor = sortedByDate
+            .map { it.majorVersion }
+            .maxWithOrNull(VersionComparatorUtil.COMPARATOR)
+          sortedByDate.first { it.majorVersion == latestMajor }
         }
         filteringParams.versionNumber.isNotBlank() -> {
           sortedByDate.first {
