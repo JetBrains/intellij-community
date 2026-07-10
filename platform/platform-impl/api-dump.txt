@@ -1433,6 +1433,25 @@ f:com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector
 - collectInfo(com.intellij.openapi.project.Project):java.lang.String
 f:com.intellij.ide.trustedProjects.TrustedProjects
 - sf:isProjectTrusted(com.intellij.openapi.project.Project):Z
+com.intellij.ide.trustedProjects.TrustedProjectsListener
+- sf:Companion:com.intellij.ide.trustedProjects.TrustedProjectsListener$Companion
+- sf:TOPIC:com.intellij.util.messages.Topic
+- onProjectTrusted(com.intellij.ide.trustedProjects.TrustedProjectsLocator$LocatedProject):V
+- onProjectTrusted(com.intellij.openapi.project.Project):V
+- onProjectTrustedFromNotification(com.intellij.openapi.project.Project):V
+- onProjectUntrusted(com.intellij.ide.trustedProjects.TrustedProjectsLocator$LocatedProject):V
+- onProjectUntrusted(com.intellij.openapi.project.Project):V
+- s:onceWhenProjectTrusted(com.intellij.openapi.Disposable,java.util.function.Consumer):V
+- s:onceWhenProjectTrusted(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- s:onceWhenProjectTrusted(java.util.function.Consumer):V
+- s:onceWhenProjectTrusted(kotlin.jvm.functions.Function1):V
+f:com.intellij.ide.trustedProjects.TrustedProjectsListener$Companion
+- f:onceWhenProjectTrusted(com.intellij.openapi.Disposable,java.util.function.Consumer):V
+- f:onceWhenProjectTrusted(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- f:onceWhenProjectTrusted(java.util.function.Consumer):V
+- f:onceWhenProjectTrusted(kotlin.jvm.functions.Function1):V
+- bs:onceWhenProjectTrusted$default(com.intellij.ide.trustedProjects.TrustedProjectsListener$Companion,com.intellij.openapi.Disposable,java.util.function.Consumer,I,java.lang.Object):V
+- bs:onceWhenProjectTrusted$default(com.intellij.ide.trustedProjects.TrustedProjectsListener$Companion,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 com.intellij.ide.trustedProjects.TrustedProjectsLocator
 - sf:Companion:com.intellij.ide.trustedProjects.TrustedProjectsLocator$Companion
 - a:getProjectRoots(com.intellij.openapi.project.Project):java.util.List
