@@ -15,7 +15,7 @@ import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.pathString
 
 class LoadFromSourceXIncludeLoader(
-  private val prefixesOfPathsIncludedFromLibrariesViaXiInclude: List<String>,
+  private val xiIncludeTargetsResidingInLibraries: List<String>,
   private val project: JpsProject,
   private val parentDirectoriesPatterns: List<String>,
 ) : XIncludeLoader {
@@ -61,8 +61,7 @@ class LoadFromSourceXIncludeLoader(
   }
 
   override fun loadXIncludeReference(path: String): LoadedXIncludeReference? {
-    if (prefixesOfPathsIncludedFromLibrariesViaXiInclude.any { path.startsWith(it) }) {
-      //todo: support loading from libraries
+    if (isLibraryXiIncludeTarget(path, xiIncludeTargetsResidingInLibraries)) {
       return LoadedXIncludeReference("<idea-plugin/>".encodeToByteArray(), "dummy tag for external $path")
     }
     val directoryName = path.substringBeforeLast(delimiter = '/', missingDelimiterValue = "")

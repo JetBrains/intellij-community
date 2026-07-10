@@ -15,10 +15,11 @@ private val communityPluginModelBuilderOptions = SourceCodeBasedPluginModelBuild
   modulesWithIncorrectlyPlacedModuleDescriptor = setOf(
     "intellij.android.device-explorer",
   ),
-  prefixesOfPathsIncludedFromLibrariesViaXiInclude = listOf(
-    "META-INF/analysis-api/analysis-api-fir.xml",
+  xiIncludeTargetsResidingInLibraries = listOf(
+    "META-INF/analysis-api/*",
+    "META-INF/extensions/*",
     "META-INF/wizard-template-impl.xml",
-    "META-INF/tips-",
+    "META-INF/tips-*",
   ),
   additionalPatternsOfDirectoriesContainingIncludedXmlFiles = listOf(
     "org/jetbrains/android/dom",
