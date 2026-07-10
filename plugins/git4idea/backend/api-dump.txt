@@ -217,6 +217,9 @@ f:git4idea.remote.hosting.GitAsyncExtensionsKt
 f:git4idea.remote.hosting.GitHostingUrlUtil
 - sf:getUriFromRemoteUrl(java.lang.String):java.net.URI
 - sf:removeProtocolPrefix(java.lang.String):java.lang.String
+f:git4idea.remote.hosting.GitRemoteBranchesUtil
+- f:fetchAndCheckoutInNewWorktree(git4idea.repo.GitRepository,git4idea.remote.hosting.HostedGitRepositoryRemote,java.lang.String,java.nio.file.Path,java.lang.String,java.lang.String,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- bs:fetchAndCheckoutInNewWorktree$default(git4idea.remote.hosting.GitRemoteBranchesUtil,git4idea.repo.GitRepository,git4idea.remote.hosting.HostedGitRepositoryRemote,java.lang.String,java.nio.file.Path,java.lang.String,java.lang.String,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 f:git4idea.remote.hosting.HostedGitRepositoriesManagerKt
 - sf:getKnownRepositories(git4idea.remote.hosting.HostedGitRepositoriesManager):java.util.Set
 f:git4idea.remote.hosting.SingleHostedGitRepositoryConnectionManagerImpl

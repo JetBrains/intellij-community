@@ -9,15 +9,18 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.platform.util.progress.reportSequentialProgress
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import git4idea.GitBranch
 import git4idea.GitLocalBranch
 import git4idea.GitReference
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitUtil
+import git4idea.actions.workingTree.GitCreateWorkingTreeService
 import git4idea.branch.GitBrancher
 import git4idea.branch.GitNewBranchDialog
 import git4idea.branch.GitNewBranchOptions
@@ -36,6 +39,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.net.URI
+import java.nio.file.Path
 
 data class HostedGitRepositoryRemote(
   val name: String,
@@ -102,6 +106,37 @@ object GitRemoteBranchesUtil {
       withContext(Dispatchers.Main) {
         checkoutRemoteBranch(repository, branch, newLocalBranchPrefix)
       }
+    }
+  }
+
+  /**
+   * @param parentDir directory the worktree is created under.
+   * @param worktreeName base name for the worktree directory/project.
+   * @param place FUS place identifying the invocation site.
+   * @param onProjectOpened invoked with the worktree project once it is opened.
+   */
+  suspend fun fetchAndCheckoutInNewWorktree(
+    repository: GitRepository,
+    remote: HostedGitRepositoryRemote,
+    remoteBranch: String,
+    parentDir: Path,
+    worktreeName: String,
+    place: String,
+    onProjectOpened: ((Project) -> Unit)? = null,
+  ) {
+    withBackgroundProgress(repository.project,
+                           CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description")) {
+      val branch = findOrCreateRemoteBranch(repository, remote, remoteBranch) ?: return@withBackgroundProgress
+
+      val fetchOk = withProgressText(GitBundle.message("progress.text.worktree.fetching.branch")) {
+        fetchBranch(repository, branch)
+      }
+      if (!fetchOk) return@withBackgroundProgress
+
+      // Reuse the local branch already tracking the remote one, so the worktree doesn't fail to create a duplicate branch.
+      val ref: GitBranch = findLocalBranchTrackingRemote(repository, branch) ?: branch
+      GitCreateWorkingTreeService.getInstance()
+        .createOrOpenWorktreeForBranch(repository, ref, parentDir, worktreeName, place, onProjectOpened)
     }
   }
 

@@ -79,7 +79,7 @@ internal class GHPRViewModelContainerImpl(
     }
   }
   override val infoVm: GHPRInfoViewModel by lazyInfoVm
-  private val reviewVmHelper: GHPRReviewViewModelHelper by lazy { GHPRReviewViewModelHelper(cs, dataProvider) }
+  private val reviewVmHelper: GHPRReviewViewModelHelper by lazy { GHPRReviewViewModelHelper(cs, project, dataProvider) }
 
   override val aiReviewVm: StateFlow<GHPRAIReviewViewModel?> =
     GHPRAIReviewExtension.singleFlow

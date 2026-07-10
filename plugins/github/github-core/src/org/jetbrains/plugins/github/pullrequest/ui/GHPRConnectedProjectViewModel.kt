@@ -3,14 +3,17 @@ package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.collaboration.async.withInitial
+import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.computeEmitting
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.collaboration.util.onFailure
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.remote.hosting.findHostedRemoteBranchTrackedByCurrent
+import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,8 +29,10 @@ import org.jetbrains.plugins.github.api.GHRepositoryConnection
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.GHPRListViewModel
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewInEditorViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRBranchWidgetViewModel
@@ -56,10 +61,31 @@ interface GHPRConnectedProjectViewModel {
 
   fun findDetails(id: GHPRIdentifier): GHPullRequestShort?
 
+  /**
+   * Whether a pull request branch can be checked out into a new Git worktree for the current repository.
+   */
+  val canCheckoutInNewWorktree: Boolean
+
+  /**
+   * Whether the given pull request's branch is currently checked out in this project.
+   */
+  fun isCheckedOut(id: GHPRIdentifier): Boolean
+
+  /**
+   * Fetch and checkout the head branch of the given pull request into the current worktree.
+   */
+  fun checkoutPullRequest(id: GHPRIdentifier)
+
+  /**
+   * Fetch and checkout the head branch of the given pull request into a new Git worktree.
+   */
+  fun checkoutPullRequestInNewWorktree(id: GHPRIdentifier)
+
   fun createPullRequest(requestFocus: Boolean = true)
   fun viewList(requestFocus: Boolean = true)
   fun viewPullRequest(id: GHPRIdentifier, requestFocus: Boolean = true)
   fun openPullRequestInfoAndTimeline(number: Long)
+  fun openPullRequestInfoAndDiff(id: GHPRIdentifier)
   fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean)
   fun openPullRequestDiff(id: GHPRIdentifier?, requestFocus: Boolean)
 }
@@ -115,6 +141,28 @@ abstract class GHPRConnectedProjectViewModelBase(
     dataContext.listLoader.loadedData.value.find { it.id == id.id }
     ?: dataContext.dataProviderRepository.findDataProvider(id)?.detailsData?.loadedDetails
 
+  override val canCheckoutInNewWorktree: Boolean
+    get() = GitWorkingTreesService.isWorktreeCreationSupported(dataContext.repositoryDataService.repositoryMapping.remote.repository)
+
+  override fun isCheckedOut(id: GHPRIdentifier): Boolean =
+    prOnCurrentBranch.value?.getOrNull() == id
+
+  override fun checkoutPullRequest(id: GHPRIdentifier) {
+    cs.launch {
+      val details = dataContext.dataProviderRepository.getDataProvider(id, cs).detailsData.loadDetails()
+      GHPRBranchesViewModel.fetchAndCheckoutBranch(dataContext.repositoryDataService.repositoryMapping.remote, details)
+      GHPRStatisticsCollector.logDetailsBranchCheckedOut(project)
+    }
+  }
+
+  override fun checkoutPullRequestInNewWorktree(id: GHPRIdentifier) {
+    cs.launch {
+      val details = dataContext.dataProviderRepository.getDataProvider(id, cs).detailsData.loadDetails()
+      GHPRBranchesViewModel.fetchAndCheckoutBranchInNewWorktree(dataContext.repositoryDataService.repositoryMapping.remote, details)
+      GHPRStatisticsCollector.logDetailsBranchCheckedOut(project)
+    }
+  }
+
   private val prOnCurrentBranchRefreshSignal =
     MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -145,6 +193,22 @@ abstract class GHPRConnectedProjectViewModelBase(
 
       viewPullRequest(prId, true)
       openPullRequestTimeline(prId, true)
+    }
+  }
+
+  override fun openPullRequestInfoAndDiff(id: GHPRIdentifier) {
+    cs.launch {
+      viewPullRequest(id, true)
+      val changesData = dataContext.dataProviderRepository.getDataProvider(id, cs).changesData
+      val changes = runCatching {
+        changesData.loadChanges().also { changesData.ensureAllRevisionsFetched() }.changes
+      }.onFailure {
+        LOG.warn("Failed to load changes for PR ${id.number} to open in diff", it)
+      }.getOrNull()
+      if (!changes.isNullOrEmpty()) {
+        acquireDiffViewModel(id, cs).showDiffFor(ChangesSelection.Precise(changes, 0))
+      }
+      openPullRequestDiff(id, true)
     }
   }
 

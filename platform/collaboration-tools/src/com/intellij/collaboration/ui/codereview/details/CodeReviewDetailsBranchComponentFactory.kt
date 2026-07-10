@@ -23,6 +23,7 @@ import com.intellij.util.ui.JBUI
 import icons.DvcsImplIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import java.awt.Dimension
 import java.awt.datatransfer.StringSelection
 import java.awt.event.ActionListener
@@ -66,6 +67,8 @@ object CodeReviewDetailsBranchComponentFactory {
     scope.launchNow {
       branchesVm.showBranchesRequests.collectLatest { (source, target, hasRemoteBranch) ->
         val point = RelativePoint.getSouthWestOf(panelWithIcon)
+        // A new worktree can't be created for a branch that is already checked out in the current one.
+        val checkedOut = branchesVm.isCheckedOut.first()
         val advertiser = if (!hasRemoteBranch) {
           HintUtil.createAdComponent(CollaborationToolsBundle.message("review.details.branch.cannot.checkout.as.branch"), JBUI.CurrentTheme.Advertiser.border(), SwingConstants.LEFT).apply {
             icon = AllIcons.General.Warning
@@ -75,18 +78,24 @@ object CodeReviewDetailsBranchComponentFactory {
           HintUtil.createAdComponent(CollaborationToolsBundle.message("review.details.branch.checkout.remote.ad.label", target, source), JBUI.CurrentTheme.Advertiser.border(), SwingConstants.LEFT)
         }
         val actions = buildList {
-          add(ReviewAction.Checkout)
+          if (!checkedOut) {
+            add(ReviewAction.Checkout)
+          }
+          if (branchesVm.canCheckoutInNewWorktree && !checkedOut) {
+            add(ReviewAction.CheckoutInNewWorktree)
+          }
           if (branchesVm.canShowInLog) {
             add(ReviewAction.ShowInLog)
           }
           add(ReviewAction.CopyBranchName)
         }
         JBPopupFactory.getInstance().createPopupChooserBuilder(actions)
-          .setRenderer(popupActionsRenderer(source, hasRemoteBranch))
+          .setRenderer(popupActionsRenderer(hasRemoteBranch))
           .setAdvertiser(advertiser)
           .setItemChosenCallback { action ->
             return@setItemChosenCallback when (action) {
               is ReviewAction.Checkout -> branchesVm.fetchAndCheckoutRemoteBranch()
+              is ReviewAction.CheckoutInNewWorktree -> branchesVm.checkoutInNewWorktree()
               is ReviewAction.ShowInLog -> branchesVm.fetchAndShowInLog()
               is ReviewAction.CopyBranchName -> {
                 CopyPasteManager.getInstance().setContents(StringSelection(source))
@@ -102,15 +111,18 @@ object CodeReviewDetailsBranchComponentFactory {
   }
 }
 
-private fun popupActionsRenderer(sourceBranch: String, hasRemoteBranch: Boolean): ListCellRenderer<ReviewAction> {
+private fun popupActionsRenderer(hasRemoteBranch: Boolean): ListCellRenderer<ReviewAction> {
   return SimplePopupItemRenderer.create { item ->
     when (item) {
       is ReviewAction.Checkout -> PopupItemPresentation.Simple(
-        if (hasRemoteBranch) CollaborationToolsBundle.message("review.details.branch.checkout.remote", sourceBranch)
-        else CollaborationToolsBundle.message("review.details.branch.checkout.remote.as.detached.head", sourceBranch)
+        if (hasRemoteBranch) CollaborationToolsBundle.message("review.details.branch.checkout.remote")
+        else CollaborationToolsBundle.message("review.details.branch.checkout.remote.as.detached.head")
+      )
+      is ReviewAction.CheckoutInNewWorktree -> PopupItemPresentation.Simple(
+        CollaborationToolsBundle.message("review.details.branch.checkout.in.new.worktree")
       )
       is ReviewAction.ShowInLog -> PopupItemPresentation.Simple(
-        CollaborationToolsBundle.message("review.details.branch.show.remote.in.git.log", sourceBranch)
+        CollaborationToolsBundle.message("review.details.branch.show.remote.in.git.log")
       )
       is ReviewAction.CopyBranchName -> PopupItemPresentation.Simple(CollaborationToolsBundle.message("review.details.branch.copy.name"))
     }
@@ -119,6 +131,7 @@ private fun popupActionsRenderer(sourceBranch: String, hasRemoteBranch: Boolean)
 
 private sealed interface ReviewAction {
   data object Checkout : ReviewAction
+  data object CheckoutInNewWorktree : ReviewAction
   data object ShowInLog : ReviewAction
   data object CopyBranchName : ReviewAction
 }
