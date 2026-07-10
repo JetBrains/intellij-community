@@ -187,19 +187,14 @@ private fun buildModules(
     }
     parameters.add(goal)
 
-    if (!includeDependentModules) {
-      if (mavenProjects.size > 1) {
-        parameters.add("--projects")
-        parameters.add(
-          mavenProjects.joinToString(",") {
-            val id = it.mavenId
-            "${id.groupId}:${id.artifactId}"
-          }
-        )
-      }
-      else {
-        parameters.add("--non-recursive")
-      }
+    if (!includeDependentModules && mavenProjects.size > 1) {
+      parameters.add("--projects")
+      parameters.add(
+        mavenProjects.joinToString(",") {
+          val id = it.mavenId
+          "${id.groupId}:${id.artifactId}"
+        }
+      )
     }
 
     val pomFile = (if (mavenProjects.size > 1) key else mavenProjects[0]).file
