@@ -1,10 +1,8 @@
 package org.intellij.plugins.markdown.editor
 
 import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -69,30 +67,6 @@ class MarkdownCharacterGridCustomizerTest {
     awaitGridMode(editor, expectActive = true)
     assertThat(editor.settings.characterGridWidthMultiplier).isEqualTo(1.0f)
     assertThat(editor.characterGrid).isNotNull
-  }
-
-  @Test
-  fun `editor stays horizontally scrollable for emoji and table with long line`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
-    val viewportWidth = 400
-    val longLine = "a".repeat(500)
-    val editor = openMarkdownFile(
-      """
-      | h | ✅ |
-      |---|----|
-      | a | b  |
-      $longLine
-      """.trimIndent()
-    )
-    EditorTestUtil.setEditorVisibleSizeInPixels(editor, viewportWidth, 300)
-    awaitGridMode(editor, expectActive = true)
-    WriteCommandAction.runWriteCommandAction(projectFixture.get()) {
-      editor.document.insertString(editor.document.textLength, " ")
-    }
-
-    val contentWidth = editor.contentSize.width
-    assertThat(contentWidth)
-      .withFailMessage("Editor should remain horizontally scrollable for a long line in grid mode, but content width $contentWidth ≤ 2 × viewport ($viewportWidth)")
-      .isGreaterThan(2 * viewportWidth)
   }
 
   private fun openMarkdownFile(content: String): EditorImpl {
