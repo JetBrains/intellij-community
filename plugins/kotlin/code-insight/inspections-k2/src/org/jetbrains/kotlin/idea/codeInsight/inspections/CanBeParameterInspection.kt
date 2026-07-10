@@ -56,7 +56,6 @@ internal class CanBeParameterInspection : AbstractKotlinInspection() {
             // Applicable to val / var parameters of a class / object primary constructors
             val valOrVarKeyword = parameter.valOrVarKeyword ?: return
             if (parameter.hasModifier(KtTokens.OVERRIDE_KEYWORD) || parameter.hasModifier(KtTokens.ACTUAL_KEYWORD)) return
-            if (parameter.annotationEntries.isNotEmpty()) return
             val constructor = parameter.parents.match(KtParameterList::class, last = KtPrimaryConstructor::class) ?: return
             val klass = constructor.getContainingClassOrObject() as? KtClass ?: return
             if (klass.isData()) return

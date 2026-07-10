@@ -10961,6 +10961,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/canBeParameter/similarPropNameUsedInPropertyInitializer.kt");
         }
 
+        @TestMetadata("suppressedConstructorParameter.kt")
+        public void testSuppressedConstructorParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canBeParameter/suppressedConstructorParameter.kt");
+        }
+
         @TestMetadata("usedActualModifier.kt")
         public void testUsedActualModifier() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/canBeParameter/usedActualModifier.kt");
