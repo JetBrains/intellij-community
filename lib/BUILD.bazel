@@ -6406,6 +6406,13 @@ jvm_import(
     source_jar = "@io_modelcontextprotocol-kotlin-sdk-core-jvm-0_12_0-sources_http//file",
 )
 
+java_library(
+    name = "io-modelcontextprotocol-kotlin-sdk-provided",
+    neverlink = True,
+    visibility = ["//visibility:public"],
+    exports = [":io-modelcontextprotocol-kotlin-sdk"],
+)
+
 copy_file(
     name = "io.qameta.allure/allure-java-commons-2.25.0.jar_copy",
     src = "@io_qameta_allure-allure-java-commons-2_25_0_http//file",

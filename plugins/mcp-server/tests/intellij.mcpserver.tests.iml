@@ -39,6 +39,7 @@
     <orderEntry type="module" module-name="intellij.libraries.ktor.client" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.stdio" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.mcpserver.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.tests.plugin" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.mcpserver.vcs" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.terminal" scope="TEST" />

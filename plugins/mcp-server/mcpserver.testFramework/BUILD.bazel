@@ -1,0 +1,86 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.mcpserver.testFramework` start
+jvm_library(
+    name = "mcpserver.testFramework",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.mcpserver.testFramework",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:io-modelcontextprotocol-kotlin-sdk-provided"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlin-stdlib",
+        "@lib//:io-modelcontextprotocol-kotlin-sdk-provided",
+        "//libraries/junit5",
+        "//libraries/kotlin/reflect",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/ktor/client",
+        "//plugins/mcp-server:mcpserver",
+        "//plugins/mcp-server/mcpserver.stdio",
+        "//platform/core-api:core",
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/projectModel-api:projectModel",
+        "//platform/testFramework",
+        "//platform/testFramework/junit5",
+        "//platform/util",
+        "//platform/util-ex",
+    ],
+)
+
+jvm_library(
+    name = "mcpserver.testFramework_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.mcpserver.testFramework",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:io-modelcontextprotocol-kotlin-sdk-provided"],
+    runtime_deps = [
+        # do not sort,
+        ":mcpserver.testFramework",
+        "@lib//:io-modelcontextprotocol-kotlin-sdk-provided",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/kotlin/reflect:reflect_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/ktor/client:client_test_lib",
+        "//plugins/mcp-server:mcpserver_test_lib",
+        "//plugins/mcp-server/mcpserver.stdio:mcpserver.stdio_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
+    ],
+)
+### auto-generated section `build intellij.mcpserver.testFramework` end
+
+### auto-generated section `iml intellij.mcpserver.testFramework` start
+exports_files(
+    [
+        "intellij.mcpserver.testFramework.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.mcpserver.testFramework` end

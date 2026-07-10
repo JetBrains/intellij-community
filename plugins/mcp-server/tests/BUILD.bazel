@@ -59,6 +59,8 @@ jvm_library(
         "//libraries/ktor/client:client_test_lib",
         "//plugins/mcp-server/mcpserver.stdio",
         "//plugins/mcp-server/mcpserver.stdio:mcpserver.stdio_test_lib",
+        "//plugins/mcp-server/mcpserver.testFramework",
+        "//plugins/mcp-server/mcpserver.testFramework:mcpserver.testFramework_test_lib",
         "//plugins/mcp-server/tests/plugin",
         "//plugins/mcp-server/tests/plugin:plugin_test_lib",
         "//plugins/mcp-server/mcpserver.vcs",
