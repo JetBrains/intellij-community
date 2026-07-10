@@ -190,7 +190,6 @@
     <orderEntry type="module" module-name="intellij.platform.compose.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.coverage.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore.impl.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.diagnostic.freezeAnalyzer.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.agent.extension.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.rt.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.tests" scope="TEST" />

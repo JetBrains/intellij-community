@@ -902,8 +902,6 @@ jvm_library(
         "//plugins/coverage-common:coverage-tests_test_lib",
         "//platform/credential-store-impl:credentialStore-impl-tests",
         "//platform/credential-store-impl:credentialStore-impl-tests_test_lib",
-        "//platform/diagnostic/freezeAnalyzer:freezeAnalyzer-tests",
-        "//platform/diagnostic/freezeAnalyzer:freezeAnalyzer-tests_test_lib",
         "//platform/diagnostic/telemetry/agent-extension:diagnostic-telemetry-agent-extension-tests",
         "//platform/diagnostic/telemetry/agent-extension:diagnostic-telemetry-agent-extension-tests_test_lib",
         "//platform/diagnostic/telemetry/rt:diagnostic-telemetry-rt-tests",

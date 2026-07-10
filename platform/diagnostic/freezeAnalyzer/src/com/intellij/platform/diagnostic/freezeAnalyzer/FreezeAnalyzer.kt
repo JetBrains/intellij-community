@@ -2,7 +2,7 @@
 package com.intellij.platform.diagnostic.freezeAnalyzer
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.diogen.analysis.freeze.ThreadDumpParser as DiogenThreadDumpParser
+import org.jetbrains.diogen.analysis.freeze.FreezeMessageFormatter
 
 @ApiStatus.Internal
 object FreezeAnalyzer {
@@ -10,11 +10,14 @@ object FreezeAnalyzer {
   /**
    * Analyze freeze based on the IJ Platform knowledge and try to infer the relevant message.
    * If analysis fails, it returns `null`.
+   *
+   * The analysis and message generation are implemented in the `diogen-analysis` library;
+   * this is a thin wrapper adapting its result to the platform API.
    */
-  fun analyzeFreeze(threadDump: String, testName: String? = null): FreezeAnalysisResult? {
-    val threadDumpParsed = runCatching { DiogenThreadDumpParser.parse(threadDump) }.getOrNull() ?: return null
-    return DiogenFreezeAnalysisAdapter.analyze(threadDumpParsed, testName)
-  }
+  fun analyzeFreeze(threadDump: String, testName: String? = null): FreezeAnalysisResult? =
+    FreezeMessageFormatter.analyzeAndFormat(threadDump, testName)?.let { result ->
+      FreezeAnalysisResult(result.message, result.threads.map(::FreezeAnalysisThread), result.additionalMessage)
+    }
 }
 
 @ApiStatus.Internal

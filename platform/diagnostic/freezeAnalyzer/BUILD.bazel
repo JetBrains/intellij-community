@@ -1,14 +1,4 @@
-load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-
-jps_test(
-    name = "freezeAnalyzer-tests_test",
-    timeout = "moderate",
-    tags = ["community-aggregator"],
-    runtime_deps = [":freezeAnalyzer-tests_test_lib"],
-)
-
-### skip generation section `test intellij.platform.diagnostic.freezeAnalyzer.tests`
 
 ### auto-generated section `build intellij.platform.diagnostic.freezeAnalyzer` start
 jvm_library(
@@ -49,10 +39,6 @@ jvm_library(
         # do not sort,
         ":freezeAnalyzer",
         "//libraries/fastutil:fastutil_test_lib",
-        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
-        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.diagnostic.freezeAnalyzer` end
@@ -65,56 +51,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.diagnostic.freezeAnalyzer` end
-
-### auto-generated section `build intellij.platform.diagnostic.freezeAnalyzer.tests` start
-jvm_library(
-    name = "freezeAnalyzer-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.diagnostic.freezeAnalyzer.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
-    name = "freezeAnalyzer-tests_test_lib",
-    testonly = True,
-    srcs = glob(
-        [
-            "testSrc/**/*.kt",
-            "testSrc/**/*.java",
-            "testSrc/**/*.form",
-        ],
-        allow_empty = True,
-    ),
-    associates = [
-        "//platform/diagnostic/freezeAnalyzer",
-        "//platform/diagnostic/freezeAnalyzer:freezeAnalyzer_test_lib",
-    ],
-    resource_strip_prefix = "testData",
-    resources = glob(
-        ["testData/**/*"],
-    ),
-    visibility = ["//visibility:public"],
-    runtime_deps = [":freezeAnalyzer-tests"],
-    deps = [
-        # do not sort,
-        "@lib//:kotlin-stdlib",
-        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
-        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
-        "@lib//:jetbrains-annotations",
-    ],
-)
-### auto-generated section `build intellij.platform.diagnostic.freezeAnalyzer.tests` end
-
-### auto-generated section `iml intellij.platform.diagnostic.freezeAnalyzer.tests` start
-exports_files(
-    [
-        "intellij.platform.diagnostic.freezeAnalyzer.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
-)
-### auto-generated section `iml intellij.platform.diagnostic.freezeAnalyzer.tests` end
