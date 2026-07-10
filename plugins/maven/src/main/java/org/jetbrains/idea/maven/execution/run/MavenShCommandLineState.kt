@@ -23,6 +23,7 @@ import com.intellij.execution.configurations.RemoteConnectionCreator
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.process.KillableColoredProcessHandler
+import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
@@ -37,6 +38,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
@@ -399,9 +401,10 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     descriptor.withProcessHandler(MavenBuildHandlerFilterSpyWrapper(processHandler, isWindows()), null)
     descriptor.withExecutionEnvironment(environment)
     val startBuildEvent = StartBuildEventImpl(descriptor, "")
+    val commandLine: @NlsSafe String? = (processHandler as? OSProcessHandler)?.commandLine
     val eventProcessor =
       MavenBuildEventProcessor(myConfiguration, viewManager, descriptor, taskId,
-                               { it }, { startBuildEvent })
+                               { it }, { startBuildEvent }, commandLine)
 
     processHandler.addProcessListener(BuildToolConsoleProcessAdapter(eventProcessor))
     val res = DefaultExecutionResult(consoleView, processHandler, DefaultActionGroup())

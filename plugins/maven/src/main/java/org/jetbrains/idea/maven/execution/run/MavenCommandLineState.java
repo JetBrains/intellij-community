@@ -85,8 +85,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
-import static org.jetbrains.idea.maven.server.MavenDistributionKt.isMaven4;
-
 /**
  * use MavenShCommandLineState or MavenTargetShCommandLineState instead
  */
@@ -194,7 +192,8 @@ public class MavenCommandLineState extends JavaCommandLineState implements Remot
     boolean withResumeAction = MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), myConfiguration);
     MavenBuildEventProcessor eventProcessor =
       new MavenBuildEventProcessor(myConfiguration, viewManager, descriptor, taskId,
-                                   targetFileMapper, getStartBuildEventSupplier(runner, processHandler, startBuildEvent, withResumeAction)
+                                   targetFileMapper, getStartBuildEventSupplier(runner, processHandler, startBuildEvent, withResumeAction),
+                                   ((OSProcessHandler)processHandler).getCommandLine()
       );
 
     processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor));
