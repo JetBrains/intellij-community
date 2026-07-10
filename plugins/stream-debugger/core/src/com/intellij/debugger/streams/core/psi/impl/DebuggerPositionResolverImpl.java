@@ -3,6 +3,7 @@ package com.intellij.debugger.streams.core.psi.impl;
 
 import com.intellij.debugger.streams.core.psi.DebuggerPositionResolver;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -11,6 +12,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 public final class DebuggerPositionResolverImpl implements DebuggerPositionResolver {
   private static final Logger logger = Logger.getInstance(DebuggerPositionResolverImpl.class);
@@ -22,10 +24,15 @@ public final class DebuggerPositionResolverImpl implements DebuggerPositionResol
 
     if (position == null) return null;
 
+    return getNearestElementToBreakpoint(session.getProject(), position);
+  }
+
+  @VisibleForTesting
+  public @Nullable PsiElement getNearestElementToBreakpoint(@NotNull Project project, @NotNull XSourcePosition position) {
     int offset = position.getOffset();
     final VirtualFile file = position.getFile();
     if (file.isValid() && 0 <= offset && offset < file.getLength()) {
-      @Nullable PsiFile psiFile = PsiManager.getInstance(session.getProject()).findFile(file);
+      @Nullable PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (logger.isDebugEnabled())
         logger.debug("Psi file: ", (psiFile != null ? psiFile.getName() : null));
 

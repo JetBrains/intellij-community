@@ -1,0 +1,52 @@
+LineBreakpoint created at ManyIntermediates.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! ManyIntermediates
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Stopped at ManyIntermediates.java:6
+=== before of (bytecode offset 23) ===
+  [0] traceable IntStream.of(1,2,3,4,5) -> map -> filter -> map -> sum
+=== before map (bytecode offset 31) ===
+  [0] traceable IntStream.of(1,2,3,4,5) -> map -> filter -> map -> sum
+=== after map (bytecode offset 36) ===
+  [0] traceable IntStream.of(1,2,3,4,5) -> map -> filter -> map -> sum
+=== before filter (bytecode offset 41) ===
+  [0] traceable IntStream.of(1,2,3,4,5) -> map -> filter -> map -> sum
+=== before map#1 (bytecode offset 51) ===
+  [0] traceable IntStream.of(1,2,3,4,5) -> map -> filter -> map -> sum
+=== after map#1 (bytecode offset 56) ===
+  [0] traceable IntStream.of(1,2,3,4,5) -> map -> filter -> map -> sum
+=== before sum (bytecode offset 56) ===
+  [0] traceable IntStream.of(1,2,3,4,5) -> map -> filter -> map -> sum
+Resuming ManyIntermediates.java:6
+Stopped at ManyIntermediates.java:6
+Resuming ManyIntermediates.java:6
+Stopped at ManyIntermediates.java:6
+Resuming ManyIntermediates.java:6
+Stopped at ManyIntermediates.java:6
+Resuming ManyIntermediates.java:6
+Stopped at ManyIntermediates.java:6
+Resuming ManyIntermediates.java:6
+Stopped at ManyIntermediates.java:6
+Resuming ManyIntermediates.java:6
+Stopped at ManyIntermediates.java:6
+Resuming ManyIntermediates.java:6
+Stopped at ManyIntermediates.java:6
+Resuming ManyIntermediates.java:6
+Stopped at ManyIntermediates.java:6
+Resuming ManyIntermediates.java:6
+Stopped at ManyIntermediates.java:6
+Resuming ManyIntermediates.java:6
+Stopped at ManyIntermediates.java:6
+Resuming ManyIntermediates.java:6
+Stopped at ManyIntermediates.java:6
+Resuming ManyIntermediates.java:6
+Stopped at ManyIntermediates.java:6
+Resuming ManyIntermediates.java:6
+Stopped at ManyIntermediates.java:6
+Resuming ManyIntermediates.java:6
+Stopped at ManyIntermediates.java:6
+Resuming ManyIntermediates.java:6
+Stopped at ManyIntermediates.java:6
+Resuming ManyIntermediates.java:6
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

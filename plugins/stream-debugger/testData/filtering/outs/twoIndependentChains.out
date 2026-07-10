@@ -1,0 +1,33 @@
+LineBreakpoint created at TwoIndependentChains.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! TwoIndependentChains
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Stopped at TwoIndependentChains.java:6
+=== before of (bytecode offset 15) ===
+  [0] traceable IntStream.of(1,2,3) -> sum
+  [1] traceable IntStream.of(4,5,6) -> filter -> sum
+=== after of (bytecode offset 18) ===
+  [0] traceable IntStream.of(1,2,3) -> sum
+  [1] traceable IntStream.of(4,5,6) -> filter -> sum
+=== before sum (bytecode offset 18) ===
+  [0] traceable IntStream.of(1,2,3) -> sum
+  [1] traceable IntStream.of(4,5,6) -> filter -> sum
+=== after sum (bytecode offset 23) ===
+  [0] traceable IntStream.of(1,2,3) -> sum
+  [1] traceable IntStream.of(4,5,6) -> filter -> sum
+=== before of#1 (bytecode offset 39) ===
+  [0] traceable IntStream.of(1,2,3) -> sum
+  [1] traceable IntStream.of(4,5,6) -> filter -> sum
+=== before filter (bytecode offset 47) ===
+  [0] traceable IntStream.of(1,2,3) -> sum
+  [1] traceable IntStream.of(4,5,6) -> filter -> sum
+=== after filter (bytecode offset 52) ===
+  [0] traceable IntStream.of(1,2,3) -> sum
+  [1] traceable IntStream.of(4,5,6) -> filter -> sum
+=== before sum#1 (bytecode offset 52) ===
+  [0] traceable IntStream.of(1,2,3) -> sum
+  [1] traceable IntStream.of(4,5,6) -> filter -> sum
+Resuming TwoIndependentChains.java:6
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
+21

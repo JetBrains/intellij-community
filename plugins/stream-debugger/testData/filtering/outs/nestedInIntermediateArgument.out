@@ -1,0 +1,29 @@
+LineBreakpoint created at NestedInIntermediateArgument.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! NestedInIntermediateArgument
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Stopped at NestedInIntermediateArgument.java:6
+=== before of (bytecode offset 28) ===
+  [0] traceable Stream.of(10,11,12) -> count
+  [1] traceable Stream.of(7,8,9) -> limit -> count
+=== after of (bytecode offset 31) ===
+  [0] traceable Stream.of(10,11,12) -> count
+  [1] traceable Stream.of(7,8,9) -> limit -> count
+=== before of#1 (bytecode offset 59) ===
+  [0] traceable Stream.of(10,11,12) -> count
+  [1] traceable Stream.of(7,8,9) -> limit -> count
+=== before count (bytecode offset 62) ===
+  [0] traceable Stream.of(10,11,12) -> count
+  [1] traceable Stream.of(7,8,9) -> limit -> count
+=== after count (bytecode offset 67) ===
+  [0] traceable Stream.of(10,11,12) -> count
+  [1] traceable Stream.of(7,8,9) -> limit -> count
+=== before limit (bytecode offset 67) ===
+  [0] traceable Stream.of(10,11,12) -> count
+  [1] traceable Stream.of(7,8,9) -> limit -> count
+=== before count#1 (bytecode offset 72) ===
+  [0] traceable Stream.of(10,11,12) -> count
+  [1] traceable Stream.of(7,8,9) -> limit -> count
+Resuming NestedInIntermediateArgument.java:6
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

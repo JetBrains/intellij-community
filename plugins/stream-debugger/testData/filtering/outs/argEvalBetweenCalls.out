@@ -1,0 +1,23 @@
+LineBreakpoint created at ArgEvalBetweenCalls.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! ArgEvalBetweenCalls
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Stopped at ArgEvalBetweenCalls.java:6
+=== before of (bytecode offset 11) ===
+  [0] traceable IntStream.of(1,2) -> sum
+  [1] traceable IntStream.of(3,4) -> sum
+=== after sum (bytecode offset 19) ===
+  [0] traceable IntStream.of(1,2) -> sum
+  [1] traceable IntStream.of(3,4) -> sum
+=== before of#1 (bytecode offset 30) ===
+  [0] traceable IntStream.of(1,2) -> sum
+  [1] traceable IntStream.of(3,4) -> sum
+=== after sum#1 (bytecode offset 38) ===
+  [0] traceable IntStream.of(1,2) -> sum
+  [1] traceable IntStream.of(3,4) -> sum
+=== before combine (bytecode offset 38) ===
+  [0] traceable IntStream.of(1,2) -> sum
+  [1] traceable IntStream.of(3,4) -> sum
+Resuming ArgEvalBetweenCalls.java:6
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

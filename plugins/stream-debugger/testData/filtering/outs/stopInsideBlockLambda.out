@@ -1,0 +1,12 @@
+LineBreakpoint created at StopInsideBlockLambda.java:7
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! StopInsideBlockLambda
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Stopped at StopInsideBlockLambda.java:7
+=== breakpoint (bytecode offset 0) ===
+  [0] traceable Stream.of(5,6) -> filter -> toList
+Resuming StopInsideBlockLambda.java:7
+Stopped at StopInsideBlockLambda.java:7
+Resuming StopInsideBlockLambda.java:7
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

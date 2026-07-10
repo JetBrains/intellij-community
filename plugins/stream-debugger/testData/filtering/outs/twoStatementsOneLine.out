@@ -1,0 +1,16 @@
+LineBreakpoint created at TwoStatementsOneLine.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! TwoStatementsOneLine
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Stopped at TwoStatementsOneLine.java:6
+=== before of (bytecode offset 18) ===
+  [0] traceable Stream.of(1,2) -> toList
+=== after toList (bytecode offset 26) ===
+  [0] traceable Stream.of(1,2) -> toList
+=== before of#1 (bytecode offset 45) ===
+  [0] traceable Stream.of(1,2) -> toList
+=== after toList#1 (bytecode offset 53) ===
+  [0] traceable Stream.of(1,2) -> toList
+Resuming TwoStatementsOneLine.java:6
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
