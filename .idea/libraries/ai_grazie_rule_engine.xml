@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="ai.grazie.rule.engine" type="repository">
-    <properties maven-id="ai.grazie:grazie-rule-engine:0.3.221">
+    <properties maven-id="ai.grazie:grazie-rule-engine:0.3.261">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0.3.221/grazie-rule-engine-0.3.221.jar">
-          <sha256sum>29c097698a3628ab6d45cf479158ffa37865af0a3d73555e053207c8a68785b8</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0.3.261/grazie-rule-engine-0.3.261.jar">
+          <sha256sum>980412becb7767ab746be7436f6f4a97be01deaa84de37e0a4a6a01283a6371c</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/net/fellbaum/jemoji/1.3.1/jemoji-1.3.1.jar">
           <sha256sum>80a2f8918240a07d3a6fc7cdcc543d278013f6943c080835e43a22fc90462a9f</sha256sum>
@@ -45,15 +45,39 @@
         <dependency maven-id="ai.grazie.nlp:nlp-patterns-jvm" />
         <dependency maven-id="ai.grazie.nlp:nlp-phonetics-jvm" />
         <dependency maven-id="ai.grazie.nlp:nlp-similarity-jvm" />
+        <dependency maven-id="cloud.jetbrains.sdk.ml:jbai-tree-api" />
+        <dependency maven-id="cloud.jetbrains.sdk.ml:jbai-ner-api" />
+        <dependency maven-id="io.ktor:ktor-serialization-kotlinx-json-jvm" />
+        <dependency maven-id="io.ktor:ktor-client-core-jvm" />
+        <dependency maven-id="io.ktor:ktor-client-content-negotiation-jvm" />
+        <dependency maven-id="cloud.jetbrains.sdk:jcp-sdk-http-client-runtime-jvm" />
+        <dependency maven-id="io.ktor:ktor-serialization-kotlinx-jvm" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-io-jvm" />
+        <dependency maven-id="io.ktor:ktor-http-jvm" />
+        <dependency maven-id="io.ktor:ktor-http-cio-jvm" />
+        <dependency maven-id="io.ktor:ktor-events-jvm" />
+        <dependency maven-id="io.ktor:ktor-websocket-serialization-jvm" />
+        <dependency maven-id="io.ktor:ktor-sse-jvm" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-slf4j" />
+        <dependency maven-id="io.ktor:ktor-serialization-jvm" />
+        <dependency maven-id="cloud.jetbrains.sdk:jcp-sdk-http-shared-runtime-jvm" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-io-core-jvm" />
+        <dependency maven-id="io.ktor:ktor-utils-jvm" />
+        <dependency maven-id="io.ktor:ktor-network-jvm" />
+        <dependency maven-id="io.ktor:ktor-io-jvm" />
+        <dependency maven-id="io.ktor:ktor-websockets-jvm" />
+        <dependency maven-id="io.github.oshai:kotlin-logging-jvm" />
+        <dependency maven-id="cloud.jetbrains.sdk:jcp-sdk-json-jvm" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0.3.221/grazie-rule-engine-0.3.221.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0.3.261/grazie-rule-engine-0.3.261.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/net/fellbaum/jemoji/1.3.1/jemoji-1.3.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0.3.221/grazie-rule-engine-0.3.221-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0.3.261/grazie-rule-engine-0.3.261-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/net/fellbaum/jemoji/1.3.1/jemoji-1.3.1-sources.jar!/" />
     </SOURCES>
   </library>
