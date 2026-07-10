@@ -22,7 +22,6 @@
   <xi:include href="parcelize.k2.xml"/>
   <xi:include href="jvm-debugger.xml"/>
   <xi:include href="jvm-debugger-evaluation.xml"/>
-  <xi:include href="dep-spellchecker.xml"/>
   <xi:include href="scripting-v1.xml"/>
   <xi:include href="native.xml"/>
   <xi:include href="facets-base.xml"/>
@@ -238,6 +237,7 @@
     <module name="intellij.kotlin.codeInsight.api" loading="embedded"/>
     <module name="intellij.kotlin.codeInsight.shared" loading="embedded"/>
     <module name="intellij.kotlin.codeInsight.overrideImplement" loading="embedded"/>
+    <module name="intellij.kotlin.spellchecker" loading="embedded"/>
     <module name="intellij.kotlin.uast.base" loading="embedded"/>
     <module name="intellij.kotlin.uast.idea.base" loading="embedded"/>
     <module name="intellij.kotlin.uast" loading="embedded"/>

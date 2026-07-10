@@ -59,7 +59,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.native",
       "intellij.kotlin.formatter",
       "kotlin.scripting",
-      "intellij.kotlin.spellchecker",
       "kotlin.j2k.shared",
       "intellij.kotlin.plugin.updater",
       "intellij.kotlin.preferences",

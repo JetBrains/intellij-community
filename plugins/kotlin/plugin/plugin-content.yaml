@@ -37,6 +37,9 @@
 - name: lib/intellij.kotlin.searching.base.jar
   contentModules:
   - name: intellij.kotlin.searching.base
+- name: lib/intellij.kotlin.spellchecker.jar
+  contentModules:
+  - name: intellij.kotlin.spellchecker
 - name: lib/intellij.kotlin.uast.base.jar
   contentModules:
   - name: intellij.kotlin.uast.base
@@ -157,7 +160,6 @@
   - name: intellij.kotlin.native
   - name: intellij.kotlin.formatter
   - name: kotlin.scripting
-  - name: intellij.kotlin.spellchecker
   - name: kotlin.j2k.shared
   - name: intellij.kotlin.plugin.updater
   - name: intellij.kotlin.preferences
