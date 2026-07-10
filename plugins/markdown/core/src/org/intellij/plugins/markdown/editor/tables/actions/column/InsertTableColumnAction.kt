@@ -31,8 +31,8 @@ internal abstract class InsertTableColumnAction(private val insertAfter: Boolean
 
   override fun update(event: AnActionEvent, table: MarkdownTable?, columnIndex: Int?) {
     super.update(event, table, columnIndex)
-    if (table != null && columnIndex != null) {
-      event.presentation.isEnabledAndVisible = table.hasCorrectBorders()
+    if (event.presentation.isEnabledAndVisible) {
+      event.presentation.isEnabledAndVisible = table?.hasCorrectBorders() == true
     }
   }
 
