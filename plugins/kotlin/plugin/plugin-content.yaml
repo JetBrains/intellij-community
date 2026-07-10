@@ -53,9 +53,6 @@
   - name: kotlinc.analysis-api
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-for-ide/2/analysis-api-for-ide-2.jar
-  - name: kotlinc.analysis-api-fe10
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2/analysis-api-fe10-for-ide-2.jar
   - name: kotlinc.analysis-api-impl-base
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2/analysis-api-impl-base-for-ide-2.jar
