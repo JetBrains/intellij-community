@@ -113,6 +113,24 @@ public interface ContentManager extends Disposable, BusyObject {
   void removeContentManagerListener(@NotNull ContentManagerListener listener);
 
   /**
+   * Adds a listener to this and all nested content managers.
+   */
+  @ApiStatus.Experimental
+  default void addRecursiveContentManagerListener(@NotNull ContentManagerListener listener) {
+    addContentManagerListener(listener);
+  }
+
+  /**
+   * Removes a listener from this and all nested content managers.
+   * <b>Should be used only with listeners registered via </b>
+   * {@link #addRecursiveContentManagerListener(ContentManagerListener)}
+   */
+  @ApiStatus.Experimental
+  default void removeRecursiveContentManagerListener(@NotNull ContentManagerListener listener) {
+    removeContentManagerListener(listener);
+  }
+
+  /**
    * Returns the localized name of the "Close All but This" action.
    */
   @ActionText
