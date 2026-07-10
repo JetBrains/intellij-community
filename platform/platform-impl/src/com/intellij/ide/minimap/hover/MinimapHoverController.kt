@@ -176,7 +176,7 @@ class MinimapHoverController(
   @RequiresEdt
   private fun computeHoverTargetAsync(snapshot: MinimapSnapshot, point: Point, onResult: (MinimapHoverTarget?) -> Unit) {
     hoverComputationJob?.cancel()
-    hoverComputationJob = scope.launch(Dispatchers.EDT + ModalityState.stateForComponent(panel).asContextElement()) {
+    hoverComputationJob = scope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
       // readAction dispatches its body to a background thread, so getPresentation runs off the EDT;
       // the coroutine then resumes on the EDT to apply the result.
       val target = readAction {
