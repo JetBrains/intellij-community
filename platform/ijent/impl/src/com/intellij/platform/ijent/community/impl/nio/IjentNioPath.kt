@@ -6,7 +6,9 @@ import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.path.platform
+import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
+import com.intellij.platform.ijent.IjentMachine
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.InvalidPathException
@@ -182,7 +184,8 @@ class AbsoluteIjentNioPath(val eelPath: EelPath, nioFs: IjentNioFileSystem, cach
   override fun toRealPath(vararg options: LinkOption): IjentNioPath {
     return eelPath.normalize()
       .let { normalizedPath ->
-        if (LinkOption.NOFOLLOW_LINKS in options)
+        // NOFOLLOW: caller opted out. Unavailable backend: avoid spinning up a fresh session against a torn-down IJent that would hang fsBlocking.
+        if (LinkOption.NOFOLLOW_LINKS in options || (eelPath.descriptor.getResolvedEelMachine() as? IjentMachine)?.isBackendAvailable() == false)
           normalizedPath
         else
           nioFs.ijentFs.fsBlocking { canonicalize(normalizedPath) }.getOrThrowFileSystemException()
