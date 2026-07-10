@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
@@ -206,7 +206,7 @@ class DecompressorTest {
       writeEntry(it, "rogue", link = "../rogue_f")
     }
     val dir = tempDir.resolve("unpacked")
-    Decompressor.Tar(tar).extract(dir)
+    Decompressor.Tar(tar).escapingSymlinkPolicy(Decompressor.EscapingSymlinkPolicy.ALLOW).extract(dir)
     assertThat(dir.resolve("links/ok")).isSymbolicLink().hasSameBinaryContentAs(dir.resolve("f"))
     assertThat(dir.resolve("rogue")).isSymbolicLink().hasSameBinaryContentAs(rogueTarget)
   }
@@ -233,7 +233,7 @@ class DecompressorTest {
       writeEntry(it, "rogue", link = "../rogue_f")
     }
     val dir = tempDir.resolve("unpacked")
-    Decompressor.Zip(zip).withZipExtensions().extract(dir)
+    Decompressor.Zip(zip).withZipExtensions().escapingSymlinkPolicy(Decompressor.EscapingSymlinkPolicy.ALLOW).extract(dir)
     assertThat(dir.resolve("links/ok")).isSymbolicLink().hasSameBinaryContentAs(dir.resolve("f"))
     assertThat(dir.resolve("rogue")).isSymbolicLink().hasSameBinaryContentAs(rogueTarget)
   }
@@ -244,8 +244,7 @@ class DecompressorTest {
     val zip = tempDir.resolve("test.zip")
     ZipArchiveOutputStream(zip.outputStream()).use { writeEntry(it, "rogue", link = "../f") }
 
-    val decompressor = Decompressor.Zip(zip).withZipExtensions().escapingSymlinkPolicy(
-      Decompressor.EscapingSymlinkPolicy.DISALLOW)
+    val decompressor = Decompressor.Zip(zip).withZipExtensions()
     val dir = tempDir.resolve("unpacked")
     testNoTraversal(decompressor, dir, dir.resolve("rogue"))
   }
@@ -256,8 +255,7 @@ class DecompressorTest {
     val tar = tempDir.resolve("test.tar")
     TarArchiveOutputStream(tar.outputStream()).use { writeEntry(it, "rogue", link = "../f") }
 
-    val decompressor = Decompressor.Tar(tar).escapingSymlinkPolicy(
-      Decompressor.EscapingSymlinkPolicy.DISALLOW)
+    val decompressor = Decompressor.Tar(tar)
     val dir = tempDir.resolve("unpacked")
     testNoTraversal(decompressor, dir, dir.resolve("rogue"))
   }
@@ -415,8 +413,7 @@ class DecompressorTest {
     val tar = tempDir.resolve("test.tar")
     TarArchiveOutputStream(tar.outputStream()).use { writeEntry(it, "a/b/c/rogue", link = "../f") }
 
-    val decompressor = Decompressor.Tar(tar).escapingSymlinkPolicy(
-      Decompressor.EscapingSymlinkPolicy.DISALLOW).removePrefixPath("a/b/c")
+    val decompressor = Decompressor.Tar(tar).removePrefixPath("a/b/c")
     val dir = tempDir.resolve("unpacked")
     testNoTraversal(decompressor, dir, dir.resolve("rogue"))
   }
@@ -427,8 +424,7 @@ class DecompressorTest {
     val zip = tempDir.resolve("test.zip")
     ZipArchiveOutputStream(zip.outputStream()).use { writeEntry(it, "a/b/c/rogue", link = "../f") }
 
-    val decompressor = Decompressor.Zip(zip).withZipExtensions().escapingSymlinkPolicy(
-      Decompressor.EscapingSymlinkPolicy.DISALLOW).removePrefixPath("a/b/c")
+    val decompressor = Decompressor.Zip(zip).withZipExtensions().removePrefixPath("a/b/c")
     val dir = tempDir.resolve("unpacked")
     testNoTraversal(decompressor, dir, dir.resolve("rogue"))
   }
@@ -502,8 +498,7 @@ class DecompressorTest {
     }
 
     val dir = tempDir.resolve("unpacked")
-    Decompressor.Tar(tar).escapingSymlinkPolicy(
-      Decompressor.EscapingSymlinkPolicy.RELATIVIZE_ABSOLUTE).extract(dir)
+    Decompressor.Tar(tar).escapingSymlinkPolicy(Decompressor.EscapingSymlinkPolicy.RELATIVIZE_ABSOLUTE).extract(dir)
 
     val symlink = dir.resolve("symlink")
     assertThat(symlink).isSymbolicLink()
