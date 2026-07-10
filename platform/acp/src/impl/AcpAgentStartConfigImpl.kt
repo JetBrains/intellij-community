@@ -7,18 +7,9 @@ import java.nio.file.Path
 internal class AcpAgentStartConfigImpl(
   override val command: String,
   override val baseArgs: List<String>,
-  private val acpArgs: List<String>,
+  override val acpArgs: List<String>,
   override val env: Map<String, String>,
   override val workingDir: Path? = null,
 ) : AcpAgentStartConfig {
   override val args: List<String> get() = baseArgs + acpArgs
-
-  override fun withCommand(command: String): AcpAgentStartConfig =
-    AcpAgentStartConfigImpl(command, baseArgs, acpArgs, env, workingDir)
-
-  override fun withBaseArgs(baseArgs: List<String>): AcpAgentStartConfig =
-    AcpAgentStartConfigImpl(command, baseArgs, acpArgs, env, workingDir)
-
-  override fun withWorkingDir(workingDir: Path): AcpAgentStartConfig =
-    AcpAgentStartConfigImpl(command, baseArgs, acpArgs, env, workingDir)
 }
