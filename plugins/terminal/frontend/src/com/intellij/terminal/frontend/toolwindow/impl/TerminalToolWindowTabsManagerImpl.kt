@@ -62,10 +62,8 @@ internal class TerminalToolWindowTabsManagerImpl(
   private val project: Project,
   private val coroutineScope: CoroutineScope,
 ) : TerminalToolWindowTabsManager {
-  private val mutableTabs: MutableList<TerminalToolWindowTab> = mutableListOf()
-
   override val tabs: List<TerminalToolWindowTab>
-    get() = mutableTabs.toList()
+    get() = getToolWindow().contentManager.contentsRecursively.mapNotNull { it.getUserData(TerminalToolWindowTab.KEY) }
 
   private var tabsRestoredDeferred: Deferred<Unit> = CompletableDeferred(Unit)
 
@@ -123,7 +121,6 @@ internal class TerminalToolWindowTabsManagerImpl(
     processOptions: TerminalRequestedProcessOptions,
   ): TerminalToolWindowTab {
     val tab = doCreateTab(view, closeOnProcessTermination, processOptions)
-    addToTabsList(tab)
     addTabToToolWindow(tab, contentManager, true)
     return tab
   }
@@ -159,7 +156,6 @@ internal class TerminalToolWindowTabsManagerImpl(
       closeOnProcessTermination = builder.closeOnProcessTermination,
       processOptions = builder.getRequestedProcessOptions()
     )
-    addToTabsList(tab)
     if (builder.shouldAddToToolWindow) {
       addTabToToolWindow(tab, builder.contentManager, builder.requestFocus)
       ReworkedTerminalUsageCollector.logTabOpened(
@@ -225,7 +221,9 @@ internal class TerminalToolWindowTabsManagerImpl(
       manager.removeContent(content, true)
     }
 
-    return TerminalToolWindowTabImpl(terminal, content, closeOnProcessTermination, processOptions)
+    val tab = TerminalToolWindowTabImpl(terminal, content, closeOnProcessTermination, processOptions)
+    content.putUserData(TerminalToolWindowTab.KEY, tab)
+    return tab
   }
 
   private fun addTabToToolWindow(
@@ -249,13 +247,6 @@ internal class TerminalToolWindowTabsManagerImpl(
     }
 
     project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).tabAdded(tab)
-  }
-
-  private fun addToTabsList(tab: TerminalToolWindowTab) {
-    mutableTabs.add(tab)
-    Disposer.register(tab.content) {
-      mutableTabs.remove(tab)
-    }
   }
 
   private fun createTerminalViewAndStartSession(builder: TerminalToolWindowTabBuilderImpl): TerminalView {
