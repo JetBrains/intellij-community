@@ -11,6 +11,7 @@ import com.intellij.analysis.problemsView.toolWindow.splitApi.HighlightingProble
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemDto
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemEvent
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemEventDto
+import com.intellij.analysis.problemsView.toolWindow.splitApi.MissingIdDiagnostics
 import com.intellij.analysis.problemsView.toolWindow.splitApi.actions.ProblemsViewEditorUtils
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.intention.IntentionAction
@@ -64,6 +65,13 @@ suspend fun buildChangelistFromEventsBatch(
       }
       is ProblemEvent.Disappeared -> {
         val problemId = ProblemLifetimeManager.getInstance(project).removeProblemId(event.problem)
+        MissingIdDiagnostics.trace("ProblemDtoBuilders",
+                                   "Disappeared:consume",
+                                   MissingIdDiagnostics.STEP_DISAPPEARED,
+                                   event.problem,
+                                   "removed=${problemId != null} " +
+                                   "batchSize=${eventsBatch.size} " +
+                                   "lifetime.active=${lifetime.coroutineScope.isActive}")
         if (problemId == null) {
           logMissingIdErrorWithDiagnostic(
             problem = event.problem,
