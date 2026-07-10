@@ -4,7 +4,7 @@
 import androidx.compose.runtime.Composable
 
 @Composable fun A() {}
-val aCallable: () -> Unit <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH]'")!>=<!> ::A
+val aCallable: () -> Unit = ::<!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH]'")!>A<!>
 val bCallable: @Composable () -> Unit = ::A
 val cCallable = ::A
 fun doSomething(fn: () -> Unit) { print(fn) }
