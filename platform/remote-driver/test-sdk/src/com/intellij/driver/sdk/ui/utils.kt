@@ -9,6 +9,7 @@ import com.intellij.driver.model.RdTarget
 import com.intellij.driver.sdk.Project
 import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.common.waitForIdeFrameReady
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
 import com.intellij.driver.sdk.waitFor
@@ -121,6 +122,7 @@ fun Driver.getSystemClipboard(): ClipboardRef = utility(ToolkitRef::class)
 
 
 fun Driver.syncVfs(rdTarget: RdTarget = RdTarget.BACKEND) {
+  waitForIdeFrameReady()
   withWriteAction {
     service<VirtualFileManagerRemote>(rdTarget).syncRefresh()
   }

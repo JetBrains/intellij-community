@@ -39,11 +39,12 @@ private val LOG = logger<UiComponent>()
 
 open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   private var cachedComponent: Component? = null
+  private var readinessCheckInProgress: Boolean = false
 
   val component: Component
     get() = data.foundComponent
             ?: kotlin.runCatching { cachedComponent?.takeIf { it.isShowing() } }.getOrNull()
-            ?: findThisComponent().apply { cachedComponent = this }
+            ?: findThisComponent()
 
   override val driver: Driver = data.driver
   override val searchService: SearchService = data.searchService
@@ -99,13 +100,40 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     withComponent { robot.focus(it) }
   }
 
-  private fun findThisComponent(timeout: Duration? = DEFAULT_FIND_TIMEOUT): Component =
-    waitForOne(
+  open fun waitReady(timeout: Duration = DEFAULT_FIND_TIMEOUT) {}
+
+  private fun findThisComponent(timeout: Duration? = DEFAULT_FIND_TIMEOUT): Component {
+    val findTimeout = timeout ?: DEFAULT_FIND_TIMEOUT
+    val found = waitForOne(
       message = "Find $this in ${data.parentSearchContext.contextAsString}",
-      timeout = timeout ?: DEFAULT_FIND_TIMEOUT,
+      timeout = findTimeout,
       interval = 1.seconds,
       getter = { data.parentSearchContext.findAll(data.xpath) }
     )
+    // Cache the component before the readiness check. The check searches inside this component,
+    // and such a search reads [component] again. Without the cache the search starts an infinite recursion.
+    cachedComponent = found
+    waitReadyOnce(findTimeout)
+    return found
+  }
+
+  /**
+   * Calls [waitReady] on this component, but only if no readiness check runs on it already.
+   *
+   * The cache in [findThisComponent] is not sufficient to stop a recursion.
+   * The [component] getter drops the cached value when the component is not showing,
+   * and [withComponent] drops it after an [IllegalComponentStateException].
+   */
+  private fun waitReadyOnce(timeout: Duration) {
+    if (readinessCheckInProgress) return
+    readinessCheckInProgress = true
+    try {
+      waitReady(timeout)
+    }
+    finally {
+      readinessCheckInProgress = false
+    }
+  }
 
   fun <T> withComponent(action: (Component) -> T): T {
     var lastException: Exception? = null

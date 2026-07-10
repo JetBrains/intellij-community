@@ -3,6 +3,7 @@ package com.intellij.driver.sdk.ui.settings
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
+import com.intellij.driver.sdk.ui.components.common.waitForIdeFrameReady
 
 /**
  * Programmatic settings update sometimes requires additional action in IDE to be done in order to launch actual settings update.
@@ -140,6 +141,7 @@ interface UiSettingsState {
 }
 
 fun Driver.updateUiSettings(settingsToUpdate: UiSettingsState.() -> Unit) {
+  waitForIdeFrameReady()
   val uiSettings = service(UiSettings::class)
   uiSettings.state.apply { settingsToUpdate() }
   withContext(OnDispatcher.EDT) {

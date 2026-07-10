@@ -9,6 +9,16 @@ import kotlin.collections.emptyList
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
+@RequiresOptIn(
+  level = RequiresOptIn.Level.WARNING,
+  message = "Prefer the pauseOnIndexing parameter of runIdeWithDriver. " +
+            "Use waitForIndicators only when pauseOnIndexing does not work for the test. " +
+            "Add @OptIn(ManualWaitForIndicators::class) after you check this requirement."
+)
+@Retention(AnnotationRetention.BINARY)
+@Target(AnnotationTarget.FUNCTION)
+annotation class ManualWaitForIndicators
+
 fun Driver.getProgressIndicators(project: Project): List<Pair<TaskInfo?, ProgressModel?>> {
   return withContext {
     val ideFrame = service<WindowManager>().getIdeFrame(project)
@@ -56,6 +66,7 @@ fun Driver.waitForProjectOpen(timeout: Duration = 1.minutes) {
 /**
  * Method waits till a project is opened and there are no indicators for 10 seconds.
  */
+@ManualWaitForIndicators
 fun Driver.waitForIndicators(project: Project, timeout: Duration, waitSmartLongEnough: Boolean = true) {
   waitForIndicators({ project }, timeout, waitSmartLongEnough = waitSmartLongEnough)
 }
@@ -63,6 +74,7 @@ fun Driver.waitForIndicators(project: Project, timeout: Duration, waitSmartLongE
 /**
  * Method waits till a project is opened and there are no indicators for 10 seconds.
  */
+@ManualWaitForIndicators
 fun Driver.waitForIndicators(timeout: Duration, waitSmartLongEnough: Boolean = true) {
   waitForProjectOpen(timeout)
   waitForIndicators(::singleProject, timeout, waitSmartLongEnough = waitSmartLongEnough)
