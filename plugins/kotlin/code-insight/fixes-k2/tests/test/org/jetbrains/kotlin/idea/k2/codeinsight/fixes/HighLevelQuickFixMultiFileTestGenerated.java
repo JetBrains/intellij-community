@@ -1767,9 +1767,29 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/conflictingImportsClass.before.Main.kt");
         }
 
+        @TestMetadata("conflictingImportsConstructor.before.Main.kt")
+        public void testConflictingImportsConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/conflictingImportsConstructor.before.Main.kt");
+        }
+
         @TestMetadata("conflictingImportsObject.before.Main.kt")
         public void testConflictingImportsObject() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/conflictingImportsObject.before.Main.kt");
+        }
+
+        @TestMetadata("constructor.before.Main.kt")
+        public void testConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/constructor.before.Main.kt");
+        }
+
+        @TestMetadata("function.before.Main.kt")
+        public void testFunction() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/function.before.Main.kt");
+        }
+
+        @TestMetadata("property.before.Main.kt")
+        public void testProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/property.before.Main.kt");
         }
 
         @TestMetadata("rootPackage.before.Main.kt")
@@ -2416,9 +2436,29 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/conflictingImportsClass.before.Main.kt");
             }
 
+            @TestMetadata("conflictingImportsConstructor.before.Main.kt")
+            public void testConflictingImportsConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/conflictingImportsConstructor.before.Main.kt");
+            }
+
             @TestMetadata("conflictingImportsObject.before.Main.kt")
             public void testConflictingImportsObject() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/conflictingImportsObject.before.Main.kt");
+            }
+
+            @TestMetadata("constructor.before.Main.kt")
+            public void testConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/constructor.before.Main.kt");
+            }
+
+            @TestMetadata("function.before.Main.kt")
+            public void testFunction() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/function.before.Main.kt");
+            }
+
+            @TestMetadata("property.before.Main.kt")
+            public void testProperty() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/property.before.Main.kt");
             }
 
             @TestMetadata("rootPackage.before.Main.kt")

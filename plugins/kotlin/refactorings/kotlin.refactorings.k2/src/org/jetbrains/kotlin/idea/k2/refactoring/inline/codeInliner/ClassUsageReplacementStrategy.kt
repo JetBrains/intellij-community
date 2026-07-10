@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.imports.addImportsFromStrings
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.refactoring.modifyPsiWithOptimizedImports
@@ -29,7 +30,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 class ClassUsageReplacementStrategy(
     typeReplacement: KtUserType?,
     constructorReplacement: CodeToInline?,
-    project: Project
+    project: Project,
+    val imports: List<String> = listOf(),
 ) : UsageReplacementStrategy {
 
     private val factory = KtPsiFactory(project)
@@ -133,6 +135,7 @@ class ClassUsageReplacementStrategy(
         else
             callExpression
 
+        callExpression.containingKtFile.addImportsFromStrings(imports)
         val result = modifyPsiWithOptimizedImports(callExpression.containingKtFile) {
             if (expressionToReplace != newExpression) {
                 expressionToReplace.replaced(newExpression)
