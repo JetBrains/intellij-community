@@ -66,7 +66,7 @@ public class SafeDeleteDialog extends DialogWrapper {
    *
    * @param project the project
    * @param elements the elements to delete
-   * @param message the message to show, computed using {@link DeleteUtil#generateSafeDeleteWarningMessageWithModalProgress(Project, String, PsiElement[])}
+   * @param message the message to show, computed using {@link DeleteUtil#generateSafeDeleteWarningMessageWithModalProgress(Project, boolean, PsiElement[])}
    * @param callback  the callback to invoke if the user agrees to delete
    */
   public SafeDeleteDialog(
@@ -111,8 +111,7 @@ public class SafeDeleteDialog extends DialogWrapper {
       warningMessage = myMessage;
     }
     else {
-      final String promptKey = isDelete() ? "prompt.delete.elements" : "search.for.usages.and.delete.elements";
-      warningMessage = DeleteUtil.generateSafeDeleteWarningMessage(promptKey, myElements);
+      warningMessage = DeleteUtil.generateSafeDeleteWarningMessage(isDelete(), myElements);
     }
 
     gbc.insets = JBInsets.create(4, 8);

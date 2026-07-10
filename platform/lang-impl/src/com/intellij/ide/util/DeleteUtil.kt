@@ -16,24 +16,35 @@ import com.intellij.psi.PsiDirectoryContainer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilBase
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.PropertyKey
 
+/**
+ * Generates a warning message for [com.intellij.refactoring.safeDelete.SafeDeleteDialog].
+ *
+ * Should be invoked on the EDT before showing the dialog.
+ * Ensures the message is computed under cancellable modal progress.
+ * Failure to precompute the message can cause UI freezes when the dialog computes it directly on the EDT.
+ *
+ * @param project the project
+ * @param isRegularDelete `true` to generate a message for "an unsafe delete action offering a safe delete option", corresponds to [com.intellij.refactoring.safeDelete.SafeDeleteDialog.isDelete]
+ * @param elements the elements to delete
+ */
 fun generateSafeDeleteWarningMessageWithModalProgress(
   project: Project,
-  key: @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String,
+  isRegularDelete: Boolean,
   elements: Array<PsiElement>,
 ): @NlsContexts.DialogMessage String {
   return runWithModalProgressBlocking(project, IdeBundle.message("progress.preparing.delete")) {
     readAction {
-      generateSafeDeleteWarningMessage(key, elements)
+      generateSafeDeleteWarningMessage(isRegularDelete, elements)
     }
   }
 }
 
 fun generateSafeDeleteWarningMessage(
-  key: @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String,
+  isRegularDelete: Boolean,
   elements: Array<PsiElement>,
 ): @NlsContexts.DialogMessage String {
+  val key = if (isRegularDelete) "prompt.delete.elements" else "search.for.usages.and.delete.elements"
   if (elements.size == 1) {
     val name = ElementDescriptionUtil.getElementDescription(elements[0], DeleteNameDescriptionLocation.INSTANCE)
     val type = ElementDescriptionUtil.getElementDescription(elements[0], DeleteTypeDescriptionLocation.SINGULAR)
@@ -92,7 +103,7 @@ private fun generateDeleteWarningMessage(
   filteredElements: Array<PsiElement>,
   safeDeleteApplicable: Boolean,
 ): @NlsContexts.DialogMessage String {
-  var warningMessage = generateSafeDeleteWarningMessage("prompt.delete.elements", filteredElements)
+  var warningMessage = generateSafeDeleteWarningMessage(isRegularDelete = true, filteredElements)
 
   var anyDirectories = false
   var directoryName: String? = null

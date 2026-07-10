@@ -137,7 +137,7 @@ public final class SafeDeleteHandler implements RefactoringActionHandler {
         processor.run();
       };
 
-      var message = generateSafeDeleteWarningMessageWithModalProgress(project, "search.for.usages.and.delete.elements", elementsToDelete);
+      var message = generateSafeDeleteWarningMessageWithModalProgress(project, false, elementsToDelete);
       SafeDeleteDialog dialog = new SafeDeleteDialog(project, elementsToDelete, message, callback);
       dialog.show();
     }

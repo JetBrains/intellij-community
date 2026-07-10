@@ -9,7 +9,6 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.RevealFileAction;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -17,7 +16,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.DumbService;
@@ -26,7 +24,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -141,7 +138,7 @@ public final class DeleteHandler {
     if (safeDeleteApplicable && !dumb) {
       if (needConfirmation) {
         final Ref<Boolean> exit = Ref.create(false);
-        var warningMessage = generateSafeDeleteWarningMessageWithModalProgress(project, "prompt.delete.elements", elements);
+        var warningMessage = generateSafeDeleteWarningMessageWithModalProgress(project, true, elements);
         final SafeDeleteDialog dialog = new SafeDeleteDialog(project, elements, warningMessage, new SafeDeleteDialog.Callback() {
           @Override
           public void run(final SafeDeleteDialog dialog) {
