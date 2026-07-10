@@ -1514,6 +1514,7 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.gradle.completion.tests",
   "intellij.gradle.java.maven.tests",
   "intellij.gradle.toolingExtension.tests",
+  "intellij.groovy.structuralSearch.tests",
   "intellij.html.tools.tests",
   "intellij.ide.startup.importSettings.tests",
   "intellij.idea.community.build.tasks.tests",
