@@ -17,7 +17,6 @@ import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
-import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewTrackableItemViewModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindChildIn
@@ -25,7 +24,6 @@ import com.intellij.collaboration.ui.util.bindEnabledIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.swingAction
-import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
@@ -68,28 +66,25 @@ internal object GitLabDiscussionComponentFactory {
       }
     }
 
-    return UiDataProvider.wrapComponent(
-      VerticalListPanel().apply {
-        name = "GitLab Discussion Panel ${vm.id}"
-        add(notesPanel)
+    return VerticalListPanel().apply {
+      name = "GitLab Discussion Panel ${vm.id}"
+      add(notesPanel)
 
-        cs.launchNow {
-          vm.replyVm.collectScoped { replyVm ->
-            if (replyVm == null) return@collectScoped
+      cs.launchNow {
+        vm.replyVm.collectScoped { replyVm ->
+          if (replyVm == null) return@collectScoped
 
-            bindChildIn(this, replyVm.newNoteVm) { newNoteVm ->
-              newNoteVm?.let {
-                createReplyField(ComponentType.COMPACT, project, this, vm, newNoteVm, avatarIconsProvider, place,
-                                 swingAction("") { replyVm.stopWriting() })
-              } ?: createReplyActionsPanel(vm, replyVm, project, place).apply {
-                border = JBUI.Borders.empty(8, ComponentType.COMPACT.fullLeftShift)
-              }
+          bindChildIn(this, replyVm.newNoteVm) { newNoteVm ->
+            newNoteVm?.let {
+              createReplyField(ComponentType.COMPACT, project, this, vm, newNoteVm, avatarIconsProvider, place,
+                               swingAction("") { replyVm.stopWriting() })
+            } ?: createReplyActionsPanel(vm, replyVm, project, place).apply {
+              border = JBUI.Borders.empty(8, ComponentType.COMPACT.fullLeftShift)
             }
           }
         }
-      }, { sink ->
-      sink[CodeReviewTrackableItemViewModel.TRACKABLE_ITEM_KEY] = vm
-      })
+      }
+    }
   }
 
   fun createReplyField(
