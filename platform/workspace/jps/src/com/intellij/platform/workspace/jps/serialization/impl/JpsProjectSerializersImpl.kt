@@ -183,9 +183,13 @@ class JpsProjectSerializersImpl(
     val affectedFileLoaders: LinkedHashSet<JpsFileEntitiesSerializer<*>>
     val changedSources = HashSet<JpsFileEntitySource>()
     lock.withLock {
+      val addedButExistingFileUrls = mutableSetOf<String>()
       for (addedFileUrl in addedFileUrls) {
         // The file may already be processed during class initialization
-        if (fileSerializersByUrl.containsKey(addedFileUrl)) continue
+        if (fileSerializersByUrl.containsKey(addedFileUrl)) {
+          addedButExistingFileUrls.add(addedFileUrl)
+          continue
+        }
 
         val factory = directorySerializerFactoriesByUrl[PathUtilRt.getParentPath(addedFileUrl)]
         val newFileSerializer = factory?.createSerializer(addedFileUrl, createFileInDirectorySource(
@@ -196,7 +200,7 @@ class JpsProjectSerializersImpl(
         }
       }
 
-      for ((changedUrl, _) in change.changedFileUrls) {
+      for (changedUrl in change.changedFileUrls.asSequence().map { it.first }.plus(addedButExistingFileUrls)) {
         val serializerFactory = moduleListSerializersByUrl[changedUrl]
         if (serializerFactory != null) {
           val newFileUrls = serializerFactory.loadFileList(reader, virtualFileManager)
