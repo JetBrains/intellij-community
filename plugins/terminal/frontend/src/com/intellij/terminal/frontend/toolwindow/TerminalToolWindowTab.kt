@@ -1,5 +1,6 @@
 package com.intellij.terminal.frontend.toolwindow
 
+import com.intellij.openapi.util.Key
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.ui.content.Content
 import org.jetbrains.annotations.ApiStatus
@@ -38,4 +39,8 @@ interface TerminalToolWindowTab {
    * Terminal process startup options that were specified in the [TerminalToolWindowTabBuilder].
    */
   val processOptions: TerminalRequestedProcessOptions
+
+  companion object {
+    val KEY: Key<TerminalToolWindowTab> = Key.create("TerminalToolWindowTab")
+  }
 }
