@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.openapi.util.NlsContexts.BorderTitle
 import com.intellij.openapi.util.NlsContexts.Checkbox
-import com.intellij.openapi.util.NlsContexts.DetailedDescription
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.util.NlsContexts.Label
@@ -28,7 +27,6 @@ import com.intellij.openapi.util.NlsContexts.RadioButton
 import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SimpleColoredComponent
@@ -38,7 +36,6 @@ import com.intellij.util.FontUtil
 import com.intellij.util.SmartList
 import com.intellij.util.io.URLUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.SwingHelper.addHistoryOnExpansion
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
@@ -49,7 +46,6 @@ import java.awt.LayoutManager2
 import javax.swing.Action
 import javax.swing.JCheckBox
 import javax.swing.JComponent
-import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JPasswordField
@@ -137,19 +133,6 @@ fun noteComponent(@Label note: String, linkHandler: ((url: String) -> Unit)? = n
   }
 
   return noteComponent
-}
-
-@ApiStatus.ScheduledForRemoval
-@ApiStatus.Internal
-@Deprecated("Use Kotlin UI DSL, method Row.text")
-fun htmlComponent(@DetailedDescription text: String = "",
-                  lineWrap: Boolean = false): JEditorPane {
-  val pane = SwingHelper.createHtmlViewer(lineWrap, null, null, null)
-  pane.text = text
-  pane.border = null
-  pane.disabledTextColor = UIUtil.getLabelDisabledForeground()
-  pane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
-  return pane
 }
 
 fun RadioButton(@RadioButton text: String): JRadioButton = JRadioButton(BundleBase.replaceMnemonicAmpersand(text))
