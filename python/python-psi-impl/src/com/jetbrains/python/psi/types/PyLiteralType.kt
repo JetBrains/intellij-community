@@ -44,6 +44,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.stubs.PyLiteralKind
 import com.jetbrains.python.psi.types.PyLiteralType.Companion.upcastLiteralToClass
+import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import org.jetbrains.annotations.ApiStatus
 import java.math.BigInteger
@@ -277,11 +278,13 @@ class PyLiteralType private constructor(
       }
 
       private fun promoteDictLiteral(expectedType: PyType?, dictLiteral: PyDictLiteralExpression): PyType? {
-        if (expectedType is PyTypedDictType) {
-          val typeCheckingResult = PyTypedDictType.TypeCheckingResult()
-          PyTypedDictType.checkExpression(expectedType, dictLiteral, context, typeCheckingResult)
-          if (!typeCheckingResult.hasErrors) {
-            return expectedType
+        for (candidate in expectedType.asUnionSequence()) {
+          if (candidate is PyTypedDictType) {
+            val typeCheckingResult = PyTypedDictType.TypeCheckingResult()
+            PyTypedDictType.checkExpression(candidate, dictLiteral, context, typeCheckingResult)
+            if (!typeCheckingResult.hasErrors) {
+              return candidate
+            }
           }
         }
         return promoteDictLiteralOrDictComprehension(expectedType, dictLiteral, dictLiteral.elements.asList())

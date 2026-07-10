@@ -536,6 +536,39 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
+    @TestFor(issues = ["PY-88391"])
+    fun `dict literal assignable to optional TypedDict`() = test("""
+      from typing import TypedDict
+
+      class Address(TypedDict):
+          street: str
+
+      a: Address | None = {"street": "Pine"}
+      b: Address | None = {"color": "red"}
+      #                   ^^^^^^^^^^^^^^^^ WARNING Expected type 'Address | None', got 'dict[Literal["color"], Literal["red"]]' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-88391"])
+    fun `dict literal assignable to one of several TypedDicts`() = test("""
+      from typing import TypedDict
+
+      class A(TypedDict):
+          a: str
+
+      class B(TypedDict):
+          b: int
+
+      class C(TypedDict):
+          c: int
+
+      first: A | B | C = {"a": "x"}
+      last:  A | B | C = {"c": 1}
+      none:  A | B | C = {"z": 1}
+      #                  ^^^^^^^^ WARNING Expected type 'A | B | C', got 'dict[Literal["z"], Literal[1]]' instead
+      """)
+
+    @Test
     @TestFor(issues = ["PY-38873"])
     fun `value access through list field`() = test("""
       from typing import TypedDict, List, LiteralString
