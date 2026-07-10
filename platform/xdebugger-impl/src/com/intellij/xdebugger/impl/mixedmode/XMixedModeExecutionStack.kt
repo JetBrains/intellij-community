@@ -53,9 +53,7 @@ class XMixedModeExecutionStack(
 
     // getTopFrame method is not adequate for us since in the split debugger the first call of getTopFrame will be cached forever,
     // but RiderJumpToStatementHandler needs a real position
-    val descriptor = XMixedModeExecutionStackDescriptor(highStackDescriptor, lowStackDescriptor)
-    //FrontendDescriptorStateManager.getInstance(session.project).registerDescriptor(descriptor, coroutineScope)
-    descriptor
+    XMixedModeExecutionStackDescriptor(highStackDescriptor, lowStackDescriptor)
   }
 
   init {

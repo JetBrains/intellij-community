@@ -22,16 +22,12 @@ internal object JavaProcessDescriptorFactory {
       val javaProcess = debuggerSession.process
       val sessionStateFlow = debuggerSession.sessionStateFlow
       val renderersFlow = MuteRendererUtils.getOrCreateFlow(session.sessionData)
-      val descriptor = JavaDebuggerSessionDto(
+      JavaDebuggerSessionDto(
         initialState = getJavaSessionState(debuggerSession, javaProcess),
         stateFlow = sessionStateFlow.map { getJavaSessionState(debuggerSession, javaProcess) }.toRpc(),
         areRenderersMutedInitial = renderersFlow.value,
         areRenderersMutedFlow = renderersFlow.toRpc(),
       )
-      // for actions to work in monolith
-      // TODO[IJPL-248436]: should we just remove this code below in comment?
-      // FrontendDescriptorStateManager.getInstance(debuggerSession.project).registerProcessDescriptor(session.id, descriptor, cs)
-      descriptor
     }
   }
 

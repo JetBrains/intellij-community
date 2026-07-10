@@ -64,17 +64,13 @@ internal fun getJavaValueXDescriptor(javaValue: JavaValue): CompletableFuture<XD
       }
     }
     val renderersUpdatedFlow = javaValue.evaluationContext.debugProcess.renderersUpdatedFlow
-    val xDescriptor = JavaValueDescriptor(
+    JavaValueDescriptor(
       valueDescriptor.isString(),
       objectReferenceInfo,
       valueDescriptor.lastRenderer?.toRpc(),
       valueDescriptor.lastRendererFlow.map { it?.toRpc() }.toRpc(),
       renderersUpdatedFlow.map { fetchApplicableNodeRenderers(javaValue).map { it.toRpc() } }.toRpc()
     )
-    // for actions to work in monolith
-    // TODO[IJPL-248436]: should we just remove this code below in comment?
-    // FrontendDescriptorStateManager.getInstance(valueDescriptor.project).registerDescriptor(xDescriptor, cs)
-    xDescriptor
   }
 }
 
