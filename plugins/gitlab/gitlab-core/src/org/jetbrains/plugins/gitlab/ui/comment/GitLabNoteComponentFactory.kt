@@ -12,13 +12,11 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
-import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewTrackableItemViewModel
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindTextIn
-import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.InlineIconButton
 import icons.CollaborationToolsIcons
@@ -66,14 +64,11 @@ internal object GitLabNoteComponentFactory {
     }
 
     val actionsPanel = createActions(cs, flowOf(vm), project, place)
-    return UiDataProvider.wrapComponent(
-      CodeReviewChatItemUIUtil.build(componentType,
-                                     { avatarIconsProvider.getIcon(vm.author, it) },
-                                     contentPanel) {
-        withHeader(createTitle(cs, vm, project, place), actionsPanel)
-      }, { sink ->
-      sink[CodeReviewTrackableItemViewModel.TRACKABLE_ITEM_KEY] = vm
-      })
+    return CodeReviewChatItemUIUtil.build(componentType,
+                                          { avatarIconsProvider.getIcon(vm.author, it) },
+                                          contentPanel) {
+      withHeader(createTitle(cs, vm, project, place), actionsPanel)
+    }
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
