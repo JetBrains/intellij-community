@@ -153,6 +153,13 @@ open class TypeEvalContextImpl internal constructor(
     if (this is AssumptionContext && isAlreadyAssumed(element, type)) {
       return func(this)
     }
+    // Bound assumption nesting: pathological def-use/operator chains (esp. in library code) can nest
+    // hundreds of levels, overflowing the stack / exhausting the heap. Past the cap fall back to the
+    // un-narrowed context — less precise narrowing, still sound.
+    val currentDepth = (this as? AssumptionContext)?.assumptionDepth ?: 0
+    if (currentDepth >= Registry.intValue("python.control.flow.assumption.max.depth", 8)) {
+      return func(this)
+    }
     val context = AssumptionContext(this, element, type)
     return try {
       func(context)
@@ -371,6 +378,10 @@ open class TypeEvalContextImpl internal constructor(
 
     private val assumedElement: PyTypedElement = element
     private val assumedType: PyType? = type
+
+    /** 1 for the outermost assumption, incremented for each nested one. Used to bound assumption nesting. */
+    val assumptionDepth: Int =
+      if (myParent is AssumptionContext) myParent.assumptionDepth + 1 else 1
 
     init {
       PyAnyType.validate(type)

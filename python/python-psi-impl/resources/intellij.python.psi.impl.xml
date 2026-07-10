@@ -899,6 +899,9 @@
     <registryKey defaultValue="true"
                  description="Enable experimental better handling of recursive cases in type inference"
                  key="python.use.better.control.flow.type.inference"/>
+    <registryKey defaultValue="8"
+                 description="Maximum nesting depth of control-flow type assumptions (AssumptionContext). Beyond it, type inference falls back to the un-narrowed context to avoid StackOverflowError/heap exhaustion on pathological def-use/operator chains."
+                 key="python.control.flow.assumption.max.depth"/>
     <registryKey defaultValue="true"
                  description="Enable pyi stubs distributed with numpy (see https://github.com/numpy/numpy/issues/18565)"
                  key="enable.numpy.pyi.stubs"/>
