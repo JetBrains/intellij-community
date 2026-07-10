@@ -58,6 +58,20 @@ class MarkdownCharacterGridCustomizerTest {
   }
 
   @Test
+  fun `grid mode activates for file with supplementary-plane emoji and table`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val editor = openMarkdownFile(
+      """
+      | h | 🚀 |
+      |---|----|
+      | a | b  |
+      """.trimIndent()
+    )
+    awaitGridMode(editor, expectActive = true)
+    assertThat(editor.settings.characterGridWidthMultiplier).isEqualTo(1.0f)
+    assertThat(editor.characterGrid).isNotNull
+  }
+
+  @Test
   fun `editor stays horizontally scrollable for emoji and table with long line`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     val viewportWidth = 400
     val longLine = "a".repeat(500)
