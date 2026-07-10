@@ -11,7 +11,59 @@
     <module name="intellij.kotlin.base.codeInsight"/>
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.resources"/>
-      <module name="intellij.kotlin.codeInsight.api"/>
-</dependencies>
+    <module name="intellij.kotlin.codeInsight.api"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinBlockIntoSingleStatementHandler"/>
+    <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinInitializerAndIfToElvisHandler"/>
+    <postFormatProcessor implementation="org.jetbrains.kotlin.idea.formatter.TrailingCommaPostFormatProcessor"/>
+    <breadcrumbsInfoProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinBreadcrumbsInfoProvider"/>
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings"/>
+    <applicationSettings service="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings"/>
+    <autoImportOptionsProvider instance="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightWorkspaceSettingsProvider"/>
+    <packageDependencies.visitor
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.packageDependencies.KotlinDependencyVisitorFactory"/>
+    <lang.surroundDescriptor
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression.KotlinExpressionSurroundDescriptor"/>
+    <filePasteProvider implementation="org.jetbrains.kotlin.idea.codeInsight.copyPaste.KotlinFilePasteProvider" order="first"/>
+    <psi.referenceContributor
+            id="kotlinFilePathReferenceContributor"
+            language="kotlin"
+            implementation="org.jetbrains.kotlin.idea.references.KotlinFilePathReferenceContributor"/>
+    <codeInsight.inlayActionHandler implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler"
+                                    handlerId="kotlin.fqn.class"/>
+    <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinGotoValVarTypeHandler"/>
+    <psi.referenceContributor
+            language="kotlin"
+            implementation="org.jetbrains.kotlin.idea.references.KotlinIssueReferenceContributor"/>
+    <deadCode implementation="org.jetbrains.kotlin.idea.inspections.KotlinJUnitStaticEntryPoint"/>
+    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.IDESettingsFUSCollector"/>
+    <lang.surroundDescriptor
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement.KotlinStatementSurroundDescriptor"/>
+    <codeInsight.surroundWithRangeAdjuster
+            implementation="org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinSurroundWithRangeAdjuster"/>
+    <testFinder implementation="org.jetbrains.kotlin.idea.codeinsights.impl.base.testIntegration.KotlinTestFinder"/>
+    <typeDeclarationProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinTypeDeclarationProvider"/>
+    <lang.unwrapDescriptor
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.unwrap.KotlinUnwrapDescriptor"/>
+    <usageToPsiElementProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinUsageToPsiElementProvider"/>
+    <vcs.codeVisionLanguageContext language="kotlin"
+                                   implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinVcsCodeVisionContext"/>
+    <psi.referenceContributor
+            language="kotlin"
+            implementation="org.jetbrains.kotlin.idea.references.KotlinWebReferenceContributor"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KtClassBodyFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KtLastLambdaParameterFixer"/>
+  </extensions>
   <!-- endregion -->
 </idea-plugin>

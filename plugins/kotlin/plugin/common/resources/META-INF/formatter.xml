@@ -4,8 +4,6 @@
 
     <preFormatProcessor implementation="org.jetbrains.kotlin.idea.formatter.KotlinPreFormatProcessor"/>
 
-    <postFormatProcessor implementation="org.jetbrains.kotlin.idea.formatter.TrailingCommaPostFormatProcessor"/>
-
     <langCodeStyleSettingsProvider implementation="org.jetbrains.kotlin.idea.formatter.KotlinLanguageCodeStyleSettingsProvider"/>
     <virtualFileCustomDataProvider implementation="org.jetbrains.kotlin.idea.formatter.KotlinCodeStyleSettingsCustomDataSynchronizer"/>
 

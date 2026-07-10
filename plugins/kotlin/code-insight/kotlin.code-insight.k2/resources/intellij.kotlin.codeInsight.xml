@@ -30,18 +30,6 @@
             dynamic="true"/>
   </extensionPoints>
 
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-
-      <smartEnterProcessorFixer
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KtLastLambdaParameterFixer"/>
-
-      <smartEnterProcessorFixer
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KtClassBodyFixer"/>
-
-  </extensions>
-
   <extensions defaultExtensionNs="com.intellij">
 
     <structureViewBuilder
@@ -115,8 +103,6 @@
                  restartRequired="true"/>
 
     <!-- inlay hints -->
-    <codeInsight.inlayActionHandler implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler"
-                                    handlerId="kotlin.fqn.class"/>
 
     <codeInsight.declarativeInlayProvider
             language="kotlin"
@@ -274,8 +260,6 @@
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.declaration.KtCompilerPluginGeneratedDeclarationsInlayHintsProvider"
             id="kotlin.compiler.plugins.declarations"/>
 
-    <vcs.codeVisionLanguageContext language="kotlin"
-                                   implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinVcsCodeVisionContext"/>
     <codeInsight.codeVisionProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KotlinReferencesCodeVisionProvider"/>
     <codeInsight.codeVisionSettingsPreviewLanguage modelId="references" language="kotlin"/>
     <codeInsight.daemonBoundCodeVisionProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KotlinInheritorsCodeVisionProvider"/>

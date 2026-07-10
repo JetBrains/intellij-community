@@ -20,7 +20,6 @@
             implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinCodeVisionUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinProjectSetupFUSCollector"/>
 
-    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.IDESettingsFUSCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.ProjectConfigurationCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.KotlinModuleSizeCollector"/>
