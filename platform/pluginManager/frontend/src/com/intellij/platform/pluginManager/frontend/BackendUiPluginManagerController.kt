@@ -28,9 +28,11 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSou
 import com.intellij.platform.pluginManager.shared.rpc.PluginInstallerApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.platform.project.projectId
+import fleet.rpc.client.RpcClientDisconnectedException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.completeWith
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
@@ -244,13 +246,13 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
   }
 
   override suspend fun updateDescriptorsForInstalledPlugins() {
-    service<BackendRpcCoroutineContext>().coroutineScope.launch {
+    launchRpcTask {
       PluginManagerApi.getInstance().updateDescriptorsForInstalledPlugins()
     }
   }
 
   override suspend fun closeSession(sessionId: String) {
-    service<BackendRpcCoroutineContext>().coroutineScope.launch {
+    launchRpcTask {
       PluginManagerApi.getInstance().closeSession(sessionId)
     }
   }
@@ -269,9 +271,22 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
   private fun <T> awaitForResult(body: suspend () -> T): T {
     val deferred = CompletableDeferred<T>()
     service<BackendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
-      deferred.complete(body())
+      deferred.completeWith(runCatching {
+        body()
+      })
     }
     return runBlocking { deferred.await() }
+  }
+
+  private fun launchRpcTask(block: suspend () -> Unit) {
+    service<BackendRpcCoroutineContext>().coroutineScope.launch {
+      try {
+        block()
+      }
+      catch (_: RpcClientDisconnectedException) {
+        // Fire-and-forget plugin manager RPC can race with frontend/backend disconnect.
+      }
+    }
   }
 }
 

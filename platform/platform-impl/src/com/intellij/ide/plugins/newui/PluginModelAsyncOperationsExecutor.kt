@@ -13,6 +13,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import fleet.rpc.client.RpcClientDisconnectedException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -72,10 +73,15 @@ internal object PluginModelAsyncOperationsExecutor {
   @ApiStatus.Internal
   fun updateErrors(cs: CoroutineScope = service<FrontendRpcCoroutineContext>().coroutineScope, sessionId: String, pluginId: PluginId, callback: (List<HtmlChunk>) -> Unit) {
     cs.launch(Dispatchers.IO) {
-      val errors = UiPluginManager.getInstance().getErrors(sessionId, pluginId)
-      val htmlChunks = MyPluginModel.getErrors(errors)
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        callback(htmlChunks)
+      try {
+        val errors = UiPluginManager.getInstance().getErrors(sessionId, pluginId)
+        val htmlChunks = MyPluginModel.getErrors(errors)
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          callback(htmlChunks)
+        }
+      }
+      catch (_: RpcClientDisconnectedException) {
+        // Error refresh can race with remote plugin manager disconnect.
       }
     }
   }
@@ -89,10 +95,15 @@ internal object PluginModelAsyncOperationsExecutor {
     callback: (SetEnabledStateResult) -> Unit,
   ) {
     cs.launch(Dispatchers.IO) {
-      val result = UiPluginManager.getInstance().enablePlugins(sessionId, descriptorIds, enable, project)
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        PluginManagerCustomizer.getInstance()?.updateAfterModificationAsync { }
-        callback(result)
+      try {
+        val result = UiPluginManager.getInstance().enablePlugins(sessionId, descriptorIds, enable, project)
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          PluginManagerCustomizer.getInstance()?.updateAfterModificationAsync { }
+          callback(result)
+        }
+      }
+      catch (_: RpcClientDisconnectedException) {
+        // Plugin state update can race with remote plugin manager disconnect.
       }
     }
   }
@@ -147,9 +158,14 @@ internal object PluginModelAsyncOperationsExecutor {
   fun findPlugins(pluginIds: Collection<PluginId>, callback: Function<Map<PluginId, PluginUiModel>, Unit>) {
     val coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope
     coroutineScope.launch(Dispatchers.IO) {
-      val pluginModels = UiPluginManager.getInstance().findInstalledPlugins(pluginIds.toSet())
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        callback.apply(pluginModels)
+      try {
+        val pluginModels = UiPluginManager.getInstance().findInstalledPlugins(pluginIds.toSet())
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          callback.apply(pluginModels)
+        }
+      }
+      catch (_: RpcClientDisconnectedException) {
+        // The remote plugin manager may be gone before this UI refresh completes.
       }
     }
   }
@@ -162,40 +178,50 @@ internal object PluginModelAsyncOperationsExecutor {
     callback: (PluginInstallationState, PluginUiModel?) -> Unit,
   ) {
     cs.launch(Dispatchers.IO) {
-      val installationState = UiPluginManager.getInstance().getPluginInstallationState(pluginId)
-      val installedDescriptor = if (isMarketplace && installationState.status != PluginStatus.INSTALLED_AND_REQUIRED_RESTART) {
-        UiPluginManager.getInstance().getPlugin(pluginId)
+      try {
+        val installationState = UiPluginManager.getInstance().getPluginInstallationState(pluginId)
+        val installedDescriptor = if (isMarketplace && installationState.status != PluginStatus.INSTALLED_AND_REQUIRED_RESTART) {
+          UiPluginManager.getInstance().getPlugin(pluginId)
+        }
+        else null
+        withContext(Dispatchers.EDT + ModalityState.stateForComponent(component).asContextElement()) {
+          callback(installationState, installedDescriptor)
+        }
       }
-      else null
-      withContext(Dispatchers.EDT + ModalityState.stateForComponent(component).asContextElement()) {
-        callback(installationState, installedDescriptor)
+      catch (_: RpcClientDisconnectedException) {
+        // Button refresh can race with remote plugin manager disconnect.
       }
     }
   }
 
   fun switchPlugins(coroutineScope: CoroutineScope, pluginModelFacade: PluginModelFacade, enable: Boolean, callback: (List<PluginUiModel>) -> Unit) {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      val models = mutableListOf<PluginUiModel>()
-      val group = pluginModelFacade.getModel().userInstalled
-      if (group == null || group.ui == null) {
-        val appInfo = ApplicationInfoEx.getInstanceEx()
+      try {
+        val models = mutableListOf<PluginUiModel>()
+        val group = pluginModelFacade.getModel().userInstalled
+        if (group == null || group.ui == null) {
+          val appInfo = ApplicationInfoEx.getInstanceEx()
 
-        val plugins = withContext(Dispatchers.IO) { UiPluginManager.getInstance().getPlugins() }
-        for (descriptor in plugins) {
-          if (!appInfo.isEssentialPlugin(descriptor.pluginId) && !descriptor.isBundled && descriptor.isEnabled != enable) {
-            models.add(descriptor)
+          val plugins = withContext(Dispatchers.IO) { UiPluginManager.getInstance().getPlugins() }
+          for (descriptor in plugins) {
+            if (!appInfo.isEssentialPlugin(descriptor.pluginId) && !descriptor.isBundled && descriptor.isEnabled != enable) {
+              models.add(descriptor)
+            }
           }
         }
-      }
-      else {
-        for (component in group.ui!!.plugins) {
-          val plugin: PluginUiModel = component.getPluginModel()
-          if (pluginModelFacade.isEnabled(plugin) != enable) {
-            models.add(plugin)
+        else {
+          for (component in group.ui!!.plugins) {
+            val plugin: PluginUiModel = component.getPluginModel()
+            if (pluginModelFacade.isEnabled(plugin) != enable) {
+              models.add(plugin)
+            }
           }
         }
+        callback(models)
       }
-      callback(models)
+      catch (_: RpcClientDisconnectedException) {
+        // Bulk plugin switch refresh can race with remote plugin manager disconnect.
+      }
     }
   }
 }
