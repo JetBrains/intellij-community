@@ -43,8 +43,7 @@ internal object SpecificationAnalyzer {
     val dependencies = storages.mapTo(HashSet()) { it.name }
 
     try {
-      val targetStorage = storages.first { it.file == file }
-      val textLength = targetStorage.text.length
+      val textLength = file.text.length
       if (storages.any { it.isOutdated(dependencies) })
         return executeRequestWithLock(analyzer, files) {
           val newStorages = storages.map { it.copy(cache = it.file.getUserData(analyzerKey)) }
@@ -71,7 +70,7 @@ internal object SpecificationAnalyzer {
               Cache(storage.text, dependencies, storage.stamp, analysis.data[storage.name].orEmpty())
             )
           }
-          analysis.data[targetStorage.name].orEmpty()
+          analysis.data[file.viewProvider.virtualFile.path].orEmpty()
         }
       return storages.first { it.file == file }.cache!!.data
     }
