@@ -63,9 +63,8 @@ internal class InvertIfConditionIntention :
     override fun getApplicableRanges(element: KtIfExpression): List<TextRange> =
         ApplicabilityRanges.ifKeyword(element)
 
-    override fun isApplicableByPsi(element: KtIfExpression): Boolean {
-        return element.condition != null && element.then != null
-    }
+    override fun isApplicableByPsi(element: KtIfExpression): Boolean =
+        element.condition != null && element.then != null
 
     override fun KaSession.prepareContext(element: KtIfExpression): Context {
         val rBrace = parentBlockRBrace(element)
@@ -195,7 +194,7 @@ internal class InvertIfConditionIntention :
 
     private fun matches(exitExpr1: KtExpression, exitExpr2: KtExpression): Boolean {
         return if (exitExpr1 is KtReturnExpression && exitExpr2 is KtReturnExpression) {
-            return exitExpr1 == exitExpr2 || (exitExpr1.returnedExpression == null && exitExpr2.returnedExpression == null)
+            exitExpr1 == exitExpr2 || (exitExpr1.returnedExpression == null && exitExpr2.returnedExpression == null)
         } else exitExpr1.javaClass == exitExpr2.javaClass
     }
 

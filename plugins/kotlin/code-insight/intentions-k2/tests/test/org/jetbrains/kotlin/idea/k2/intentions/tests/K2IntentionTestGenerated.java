@@ -6345,6 +6345,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/invertIfCondition/branchingIfStatements.kt");
         }
 
+        @TestMetadata("elvisOperator.kt")
+        public void testElvisOperator() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/elvisOperator.kt");
+        }
+
         @TestMetadata("endOfLineCommentBug.kt")
         public void testEndOfLineCommentBug() throws Exception {
             runTest("../../../idea/tests/testData/intentions/invertIfCondition/endOfLineCommentBug.kt");
