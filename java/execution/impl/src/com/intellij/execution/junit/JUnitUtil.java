@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaDirectoryService;
@@ -705,5 +706,19 @@ public final class JUnitUtil {
     public NoJUnitException(final String message) {
       super(ExecutionBundle.message("no.junit.in.scope.error.message", message));
     }
+  }
+
+  @SuppressWarnings("DuplicateBranchesInSwitch")
+  public static @NotNull GlobalSearchScope getScope(@Nullable Module module, @NotNull Project project) {
+    if (module == null) return GlobalSearchScope.allScope(project);
+
+    return switch (Registry.get("junit.version.detection.scope").getSelectedOption()) {
+      case "runtime" -> GlobalSearchScope.moduleRuntimeScope(module, true);
+      case "module" -> GlobalSearchScope.moduleScope(module);
+      case "testsWithDependents" -> GlobalSearchScope.moduleTestsWithDependentsScope(module);
+      case "withLibraries" -> GlobalSearchScope.moduleWithLibrariesScope(module);
+      case "withDependenciesAndLibraries" -> GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true);
+      case null, default -> GlobalSearchScope.moduleRuntimeScope(module, true);
+    };
   }
 }

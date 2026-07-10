@@ -638,24 +638,13 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
   }
 
-  @SuppressWarnings("DuplicateBranchesInSwitch")
-  private static GlobalSearchScope getScopeForJUnit(@Nullable Module module, Project project) {
-    if (module == null) return GlobalSearchScope.allScope(project);
-
-    return switch (Registry.get("junit.version.detection.scope").getSelectedOption()) {
-      case "runtime" -> GlobalSearchScope.moduleRuntimeScope(module, true);
-      case "module" -> GlobalSearchScope.moduleScope(module);
-      case "testsWithDependents" -> GlobalSearchScope.moduleTestsWithDependentsScope(module);
-      case "withLibraries" -> GlobalSearchScope.moduleWithLibrariesScope(module);
-      case "withDependenciesAndLibraries" -> GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true);
-      case null, default -> GlobalSearchScope.moduleRuntimeScope(module, true);
-    };
-  }
-
+  /**
+   * @deprecated use {@link JUnitUtil#getScope(Module, Project)} instead
+   */
+  @Deprecated(forRemoval = true)
   public static GlobalSearchScope getScopeForJUnit(JUnitConfiguration configuration) {
-    return getScopeForJUnit(configuration.getConfigurationModule().getModule(), configuration.getProject());
+    return JUnitUtil.getScope(configuration.getConfigurationModule().getModule(), configuration.getProject());
   }
-
 
   @Override
   public void appendRepeatMode() throws ExecutionException {
@@ -705,7 +694,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       Module module = configuration.getConfigurationModule().getModule();
       ThrowableComputable<Void, ExecutionException> downloader = () -> {
         appendJUnitLauncherClasses(preferredRunner, javaParameters, project,
-                                   getScopeForJUnit(module, project),
+                                   JUnitUtil.getScope(module, project),
                                    useModulePath() && module != null && ReadAction.compute(() -> findJavaModule(module, true) != null || findJavaModule(module, false) != null));
         if (forkPerModule()) {
           for (Module packageModule : ReadAction.compute(() -> collectPackageModules(configuration.getPackage()))) {
@@ -716,7 +705,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
             }
             parameters.setJdk(javaParameters.getJdk());
             appendJUnitLauncherClasses(preferredRunner, parameters, project,
-                                       getScopeForJUnit(packageModule, project),
+                                       JUnitUtil.getScope(packageModule, project),
                                        useModulePath() && packageModule != null && ReadAction.compute(() -> findJavaModule(packageModule, true) != null || findJavaModule(packageModule, false) != null));
             myAdditionalJarsForModuleFork.put(packageModule, parameters);
           }
@@ -884,7 +873,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   private @NotNull String getRunnerInner() {
     Project project = myConfiguration.getProject();
     LOG.assertTrue(!DumbService.getInstance(project).isAlternativeResolveEnabled());
-    final GlobalSearchScope globalSearchScope = getScopeForJUnit(myConfiguration);
+    final GlobalSearchScope globalSearchScope = JUnitUtil.getScope(myConfiguration.getConfigurationModule().getModule(), myConfiguration.getProject());
     JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     if (JUnitConfiguration.TEST_CATEGORY.equals(data.TEST_OBJECT)) {
       return JUnitStarter.JUNIT4_PARAMETER;
