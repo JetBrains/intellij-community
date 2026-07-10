@@ -1,0 +1,25 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java"/>
+    <module name="intellij.java.aetherDependencyResolver"/>
+    <module name="intellij.java.compiler"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.libraries.maven.resolver.provider"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <localInspection language="kotlin" implementationClass="org.jetbrains.kotlin.idea.configuration.inspections.KaptKotlinCompilerPluginInspection"
+                     shortName="KaptKotlinCompilerPlugin"
+                     key="kapt.kotlin.compiler.plugin.inspection.problem.display.name"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
+                     level="WARNING" enabledByDefault="true" bundle="messages.KotlinProjectConfigurationBundle"/>
+  </extensions>
+</idea-plugin>

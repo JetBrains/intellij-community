@@ -31,6 +31,9 @@
 - name: lib/intellij.kotlin.jvm.debugger.coroutines.jar
   contentModules:
   - name: intellij.kotlin.jvm.debugger.coroutines
+- name: lib/intellij.kotlin.projectConfiguration.jar
+  contentModules:
+  - name: intellij.kotlin.projectConfiguration
 - name: lib/intellij.kotlin.refactorings.base.jar
   contentModules:
   - name: intellij.kotlin.refactorings.base
@@ -164,7 +167,6 @@
   - name: intellij.kotlin.plugin.updater
   - name: intellij.kotlin.preferences
   - name: intellij.kotlin.references
-  - name: intellij.kotlin.projectConfiguration
   - name: intellij.kotlin.jvm.debugger.core
   - name: kotlin.jvm-debugger.evaluation
   - name: intellij.kotlin.jvm.debugger.eval4j

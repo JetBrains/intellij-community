@@ -112,15 +112,6 @@
 
   </extensions>
 
-  <extensions defaultExtensionNs="com.intellij">
-
-    <localInspection language="kotlin" implementationClass="org.jetbrains.kotlin.idea.configuration.inspections.KaptKotlinCompilerPluginInspection"
-                     shortName="KaptKotlinCompilerPlugin"
-                     key="kapt.kotlin.compiler.plugin.inspection.problem.display.name"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
-                     level="WARNING" enabledByDefault="true" bundle="messages.KotlinProjectConfigurationBundle"/>
-  </extensions>
-
   <content namespace="jetbrains">
     <module name="intellij.kotlin.base.analysis.platform"/>
     <module name="intellij.kotlin.base.externalSystem"/>
@@ -237,6 +228,7 @@
     <module name="intellij.kotlin.codeInsight.api" loading="embedded"/>
     <module name="intellij.kotlin.codeInsight.shared" loading="embedded"/>
     <module name="intellij.kotlin.codeInsight.overrideImplement" loading="embedded"/>
+    <module name="intellij.kotlin.projectConfiguration" loading="embedded"/>
     <module name="intellij.kotlin.spellchecker" loading="embedded"/>
     <module name="intellij.kotlin.uast.base" loading="embedded"/>
     <module name="intellij.kotlin.uast.idea.base" loading="embedded"/>
