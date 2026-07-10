@@ -19,6 +19,9 @@
 - name: lib/intellij.kotlin.codeInsight.api.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.api
+- name: lib/intellij.kotlin.codeInsight.overrideImplement.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight.overrideImplement
 - name: lib/intellij.kotlin.codeInsight.shared.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.shared
@@ -157,7 +160,6 @@
   - name: kotlin.inspections
   - name: intellij.kotlin.codeInsight.utils
   - name: intellij.kotlin.codeInsight.descriptions
-  - name: intellij.kotlin.codeInsight.overrideImplement
   - name: intellij.kotlin.uast
   - name: intellij.kotlin.uast.idea
   - name: intellij.kotlin.compilerPlugins.support.bundled
