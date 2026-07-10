@@ -5,22 +5,26 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
 import org.jetbrains.annotations.NotNull;
 
 class ToggleBreadcrumbsSettingsAction extends ToggleBreadcrumbsAction {
 
+  @InternalIgnoreDependencyViolation
   static final class ShowAbove extends ToggleBreadcrumbsSettingsAction {
     ShowAbove() {
       super(true, true);
     }
   }
 
+  @InternalIgnoreDependencyViolation
   static final class ShowBelow extends ToggleBreadcrumbsSettingsAction {
     ShowBelow() {
       super(true, false);
     }
   }
 
+  @InternalIgnoreDependencyViolation
   static final class HideBoth extends ToggleBreadcrumbsSettingsAction {
     HideBoth() {
       super(false, false);

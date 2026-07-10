@@ -4,6 +4,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java"/>
+    <module name="intellij.java.backend"/>
     <module name="intellij.java.frontback.impl"/>
     <module name="intellij.java.frontback.psi"/>
     <module name="intellij.java.impl"/>

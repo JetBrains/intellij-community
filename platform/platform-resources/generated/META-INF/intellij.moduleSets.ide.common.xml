@@ -376,15 +376,15 @@
     <module name="intellij.xml.dom.impl"/>
     <module name="intellij.xml.structureView"/>
     <module name="intellij.xml.structureView.impl"/>
-    <module name="intellij.xml.psi" loading="embedded"/>
-    <module name="intellij.xml.psi.impl" loading="embedded"/>
+    <module name="intellij.xml.psi"/>
+    <module name="intellij.xml.psi.impl"/>
     <module name="intellij.xml.analysis"/>
     <module name="intellij.xml.emmet"/>
     <module name="intellij.xml.emmet.backend"/>
     <module name="intellij.xml.emmet.frontend"/>
-    <module name="intellij.xml.ui.common" loading="embedded"/>
-    <module name="intellij.xml.parser" loading="embedded"/>
-    <module name="intellij.xml.syntax" loading="embedded"/>
+    <module name="intellij.xml.ui.common"/>
+    <module name="intellij.xml.parser"/>
+    <module name="intellij.xml.syntax"/>
     <module name="intellij.relaxng"/>
     <module name="intellij.xml.impl"/>
     <module name="intellij.xml.analysis.impl"/>
@@ -422,7 +422,7 @@
     <module name="intellij.platform.ide.impl.wsl"/>
     <module name="intellij.platform.diagnostic.telemetry.agent.extension"/>
     <module name="intellij.platform.polySymbols.backend"/>
-    <module name="intellij.regexp" loading="embedded"/>
+    <module name="intellij.regexp"/>
     <module name="intellij.platform.langInjection"/>
     <module name="intellij.platform.langInjection.backend"/>
     <module name="intellij.libraries.grpc"/>

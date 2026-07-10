@@ -587,10 +587,10 @@
       <separator>
       <separator>
       BuildArtifact
+    UpdateIdeFromSources
     Groovy.CheckResources
       Groovy.CheckResources.Make
       Groovy.CheckResources.Rebuild
-    UpdateIdeFromSources
     PluginDeployActions
       MakeJarAction
       MakeAllJarsAction
@@ -771,10 +771,10 @@
           ShowWslSatisfactionDialog
           OnboardingKotlin
             org.jetbrains.kotlin.onboarding.ShowKotlinOnboardingFeedbackDialogAction
-          BuildProcessSatisfaction
-            org.jetbrains.kotlin.onboarding.gradle.ShowBuildProcessSatisfactionDialogAction
           MavenBuildProcessSatisfaction
             org.jetbrains.kotlin.onboarding.maven.ShowMavenBuildProcessSatisfactionDialogAction
+          BuildProcessSatisfaction
+            org.jetbrains.kotlin.onboarding.gradle.ShowBuildProcessSatisfactionDialogAction
         UiInspectorGroup
           UiInspector
           UiThemeColorPickerAction
@@ -960,9 +960,9 @@
       InternalKotlin
         <separator>
         KotlinInternalGroup
-          InspectBreakpointApplicability
           InvalidateK2CachesInternalAction
           ShortenSelectionAction
+          InspectBreakpointApplicability
           CreateIncrementalCompilationBackup
           ReactivePostOpenProjectActionsAction
         <separator>
@@ -1006,8 +1006,8 @@
       ShowKotlinBytecode
       ConfigureKotlinInProject
       DecompileKotlinToJava
-    Groovy.Console
     WorkspaceModelGeneration
+    Groovy.Console
   VcsGroups
     Vcs.MainMenu
       Start.Use.Vcs
@@ -1514,8 +1514,8 @@
   ToggleBreakpointEnabled
 [group BuildMenu]
   Java.BuildMenu
-  Groovy.CheckResources
   UpdateIdeFromSources
+  Groovy.CheckResources
   PluginDeployActions
   AntBuildGroup
   RunTargetAction
@@ -1896,13 +1896,13 @@
   Github.PullRequest.Changed.MarkViewed.Toggle
   Mermaid.ExportDiagram
   JsonPathEvaluateAction
-  OpenInSceneBuilder
   XmlGenerateToolsGroup
   Maven.AddFileAsMavenProject
   Maven.GlobalProjectMenu
+  OpenInSceneBuilder
   ChangeTemplateDataLanguage
-  PackageFile
   XPathView.EditorPopup
+  PackageFile
   AddAntBuildFile
 [group EditorPopupMenu.GoTo]
   Console.TableResult.Navigate.Group
@@ -2248,8 +2248,8 @@
   GenerateCopyright
   HtmlAddTableColumnBefore
   HtmlAddTableColumnAfter
-  JavaGenerateGroup2
   org.editorconfig.configmanagement.generate.EditorConfigGenerateLanguagePropertiesAction
+  JavaGenerateGroup2
   KotlinMavenGenerate
   GenerateExternalization
   GuiDesigner.GenerateMain
@@ -2611,10 +2611,10 @@
   CreateResourceBundle
   Markdown.NewFile
   NewXmlDescriptor
-  Groovy.NewScript
-  Gant.NewScript
   DevkitObsoleteNewActions
   DevKit.NewTheme
+  Groovy.NewScript
+  Gant.NewScript
   GuiDesigner.NewActions
 [group NewMicroservices]
 [group NewProjectOrModuleGroup]
@@ -2750,12 +2750,12 @@
   Images.SetBackgroundImage
   DissociateResourceBundleAction
   CombinePropertiesFilesAction
+  XmlGenerateToolsGroup
   ConvertJavaToKotlin
   ConvertJavaToKotlinGroup
-  OpenInSceneBuilder
-  XmlGenerateToolsGroup
   Maven.AddFileAsMavenProject
   Maven.GlobalProjectMenu
+  OpenInSceneBuilder
   AddAntBuildFile
   XPathView.XSLT.Associations
   Gradle.ProjectViewDependencyAnalyzer
@@ -2865,8 +2865,8 @@
   RunContextGroupInner
   <separator>
   PythonPackageManagerActions
-  junit.add.to.pattern.group
   ReloadScriptConfiguration
+  junit.add.to.pattern.group
 [group RunContextGroupInner]
   RunContextExecutorsGroup
   RunContextGroupMore
@@ -3140,8 +3140,8 @@
   PyPackagingMenu
   DevKit.Bootstrap
   KotlinToolsGroup
-  Groovy.Console
   WorkspaceModelGeneration
+  Groovy.Console
 [group ToolsMenu.Services]
 [group TopStripeActionGroup]
 [group TouchBar]

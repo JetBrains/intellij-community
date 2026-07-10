@@ -210,6 +210,15 @@ object CommunityModuleSets {
   }
 
   /**
+   * JSP base API modules — shared JSP language base used by Java, Kotlin, Lombok plugins and language servers.
+   * Kept in its own module set because it does not belong to `essential` (JSP-specific) and needs its own
+   * classloader to depend on xml.psi (a separate content module).
+   */
+  fun jspBase(): ModuleSet = moduleSet("jsp.base") {
+    module("intellij.jsp.base")
+  }
+
+  /**
    * XML support modules.
    */
   fun xml(): ModuleSet = moduleSet("xml", alias = "com.intellij.modules.xml") {
@@ -217,19 +226,21 @@ object CommunityModuleSets {
     module("intellij.xml.dom.impl")
     module("intellij.xml.structureView")
     module("intellij.xml.structureView.impl")
-    embeddedModule("intellij.xml.psi")
-    embeddedModule("intellij.xml.psi.impl")
+    module("intellij.xml.psi")
+    module("intellij.xml.psi.impl")
     module("intellij.xml.analysis")
     module("intellij.xml.emmet")
     module("intellij.xml.emmet.backend")
     module("intellij.xml.emmet.frontend")
-    embeddedModule("intellij.xml.ui.common")
-    embeddedModule("intellij.xml.parser")
-    embeddedModule("intellij.xml.syntax")
+    module("intellij.xml.ui.common")
+    module("intellij.xml.parser")
+    module("intellij.xml.syntax")
     module("intellij.relaxng")
     module("intellij.xml.impl")
     module("intellij.xml.analysis.impl")
-    // embedded because intellij.xml.dom.impl which depends on it, is also embedded
+    // kept embedded (i.e. loaded by the core classloader): the non-embedded xml content modules
+    // (intellij.xml.dom, intellij.xml.dom.impl, ...) use these libraries at runtime and can only see them
+    // through the core classloader; as sibling content modules they would be invisible.
     embeddedModule("intellij.libraries.cglib")
     embeddedModule("intellij.libraries.xerces")
     module("intellij.xml.langInjection")
@@ -242,19 +253,21 @@ object CommunityModuleSets {
   fun xmlWithoutStructureView(): ModuleSet = moduleSet("xml.without.structureView", alias = "com.intellij.modules.xml") {
     module("intellij.xml.dom")
     module("intellij.xml.dom.impl")
-    embeddedModule("intellij.xml.psi")
-    embeddedModule("intellij.xml.psi.impl")
+    module("intellij.xml.psi")
+    module("intellij.xml.psi.impl")
     module("intellij.xml.analysis")
     module("intellij.xml.emmet")
     module("intellij.xml.emmet.backend")
     module("intellij.xml.emmet.frontend")
-    embeddedModule("intellij.xml.ui.common")
-    embeddedModule("intellij.xml.parser")
-    embeddedModule("intellij.xml.syntax")
+    module("intellij.xml.ui.common")
+    module("intellij.xml.parser")
+    module("intellij.xml.syntax")
     module("intellij.relaxng")
     module("intellij.xml.impl")
     module("intellij.xml.analysis.impl")
-    // embedded because intellij.xml.dom.impl which depends on it, is also embedded
+    // kept embedded (i.e. loaded by the core classloader): the non-embedded xml content modules
+    // (intellij.xml.dom, intellij.xml.dom.impl, ...) use these libraries at runtime and can only see them
+    // through the core classloader; as sibling content modules they would be invisible.
     embeddedModule("intellij.libraries.cglib")
     embeddedModule("intellij.libraries.xerces")
     module("intellij.xml.langInjection")
@@ -386,7 +399,7 @@ object CommunityModuleSets {
     module("intellij.platform.diagnostic.telemetry.agent.extension")
     // todo: move to essential modules when not embedded
     module("intellij.platform.polySymbols.backend")
-    embeddedModule("intellij.regexp")
+    module("intellij.regexp")
     module("intellij.platform.langInjection")
     module("intellij.platform.langInjection.backend")
     module("intellij.libraries.grpc")

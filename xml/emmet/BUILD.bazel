@@ -62,11 +62,6 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
-    name = "xml_ui-common_provided",
-    lib = "//xml/xml-ui-common:ui-common",
-)
-
-jvm_provided_library(
     name = "platform_ide-core_provided",
     lib = "//platform/ide-core",
 )
@@ -147,6 +142,7 @@ jvm_library(
         "//platform/kernel/shared:kernel",
         "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib-provided",
+        "//xml/xml-ui-common:ui-common",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/kernel/rpc",
         ":platform_core_provided",
@@ -161,7 +157,6 @@ jvm_library(
         ":libraries_xerces_provided",
         ":platform_analysis_provided",
         ":platform_core-impl_provided",
-        ":xml_ui-common_provided",
         ":platform_ide-core_provided",
         ":platform_ide-impl_provided",
         ":platform_editor-ex_provided",
@@ -216,7 +211,6 @@ jvm_library(
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
-        "//xml/xml-ui-common:ui-common",
         "//xml/xml-ui-common:ui-common_test_lib",
         "//platform/ide-core",
         "//platform/ide-core:ide-core_test_lib",

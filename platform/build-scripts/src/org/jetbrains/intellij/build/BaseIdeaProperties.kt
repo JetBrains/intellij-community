@@ -86,7 +86,6 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
 fun configurePropertiesForAllEditionsOfIntelliJIdea(properties: JetBrainsProductProperties) {
   properties.productLayout.addPlatformSpec { layout, _ ->
     layout.withModule("intellij.java.ide.resources")
-    layout.withModule("intellij.jsp.base")
 
     //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
     layout.withModule("intellij.java.rt", "idea_rt.jar")

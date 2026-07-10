@@ -44,7 +44,7 @@
     <orderEntry type="module" module-name="intellij.libraries.xerces" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.xml.ui.common" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.xml.ui.common" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" scope="PROVIDED" />
