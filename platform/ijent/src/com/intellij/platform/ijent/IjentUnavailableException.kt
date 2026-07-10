@@ -42,7 +42,6 @@ sealed class IjentUnavailableException : IOException, ExceptionWithAttachments {
     constructor(message: String, cause: Throwable, vararg attachments: Attachment) : super(message, cause, *attachments)
 
     var exitedExpectedly: Boolean = false
-      internal set
   }
 
   override fun getAttachments(): Array<out Attachment> = attachments
