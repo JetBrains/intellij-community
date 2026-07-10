@@ -13,6 +13,7 @@ import com.intellij.grazie.mlec.MlecChecker.MlecProblem
 import com.intellij.grazie.spellcheck.TypoProblem
 import com.intellij.grazie.text.GrazieProblem
 import com.intellij.grazie.text.TextProblem
+import com.intellij.grazie.text.TextProblem.Suggestion
 import com.intellij.grazie.text.TreeRuleChecker.TreeProblem
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
@@ -31,6 +32,7 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiFileRange
 import org.jetbrains.annotations.Nls
 import java.net.URLEncoder
+import java.util.function.Supplier
 import javax.swing.Icon
 import kotlin.math.abs
 
@@ -46,6 +48,13 @@ internal class GrazieYtReportAction(problem: TextProblem) : IntentionAndQuickFix
   private val isCloud = seemsCloudConnected()
   private val message = problem.shortMessage
   private val clazz: Class<*> = problem.javaClass
+  private val isSpellingProblem = problem.isSpellingProblem
+
+  private val title: String
+  private val words: List<String>
+  @get:Nls
+  private val problemKind: String
+  private val suggestions: Supplier<List<Suggestion>>
   private val elementRange: SmartPsiFileRange
   private val textRange: SmartPsiFileRange
 
@@ -54,23 +63,25 @@ internal class GrazieYtReportAction(problem: TextProblem) : IntentionAndQuickFix
     val manager = SmartPointerManager.getInstance(file.project)
     elementRange = manager.createSmartPsiFileRangePointer(file, problem.text.commonParent.textRange)
     textRange = manager.createSmartPsiFileRangePointer(file, problem.text.rangesInFile.reduce(TextRange::union))
-  }
 
-  // maybe expensive, so invoke only if fix is applied
-  private val title by lazy {
-    GrazieBundle.message(
-      "grazie.report.bug.${if (problem.isSpellingProblem) "spelling" else "grammar"}",
-      words.joinToString(),
+    val text = problem.text.toString()
+    words = problem.highlightRanges.map { it.substring(text) }
+    problemKind = when {
+      isSpellingProblem -> GrazieBundle.message("grazie.report.bug.spelling.name")
+      problem is MlecProblem -> problem.errorText
+      else -> problem.rule.globalId
+    }
+    suggestions = when (problem) {
+      is TypoProblem -> problem.getLazySuggestions()
+      else -> {
+        val suggestions = problem.suggestions
+        Supplier { suggestions }
+      }
+    }
+    title = GrazieBundle.message(
+      "grazie.report.bug.${if (isSpellingProblem) "spelling" else "grammar"}", words.joinToString(),
     )
   }
-  private val words by lazy { problem.highlightRanges.map { it.substring(problem.text.toString()) } }
-  @get:Nls
-  private val problemKind by lazy {
-    if (problem.isSpellingProblem) GrazieBundle.message("grazie.report.bug.spelling.name")
-    else if (problem is MlecProblem) problem.errorText
-    else problem.rule.globalId
-  }
-  private val suggestions by lazy { problem.suggestions.map { it.presentableText } }
 
 
   override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo = IntentionPreviewInfo.EMPTY
@@ -97,7 +108,7 @@ internal class GrazieYtReportAction(problem: TextProblem) : IntentionAndQuickFix
       appendLine("**Text:**\n```\n$problemText\n```")
       appendLine("**Highlighted words:** ${words.joinToString(" … ")}")
       appendLine("**Message:** $message")
-      appendLine("**Suggestions:** ${suggestions.joinToString(", ")}")
+      appendLine("**Suggestions:** ${suggestions.get().joinToString(", ") { it.presentableText }}")
       appendLine("**Problem Kind:** $problemKind")
       appendLine("**Processing:** ${if (isCloud) "Cloud" else "Local"}")
       appendLine("**${GrazieBundle.message("grazie.report.bug.additional.information")}:**")

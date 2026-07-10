@@ -41,6 +41,12 @@ class TypoProblem : TextProblem {
   override fun getSuggestions(): List<Suggestion> = fixes.map { Suggestion.replace(range, it) }
   override fun getFileHighlightRanges(): List<TextRange> = listOfNotNull(super.fileHighlightRanges.reduceOrNull(TextRange::union))
 
+  fun getLazySuggestions(): Supplier<List<Suggestion>> {
+    val supplier = fixesSupplier
+    val range = range
+    return Supplier { supplier.get().map { Suggestion.replace(range, it) } }
+  }
+
   override fun getCustomFixes(): List<LocalQuickFix> {
     val element = text.commonParent
     val fixes = if (isCloud) fixes else null
