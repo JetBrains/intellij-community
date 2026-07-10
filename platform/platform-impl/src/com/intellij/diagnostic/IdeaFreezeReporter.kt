@@ -111,18 +111,20 @@ internal class IdeaFreezeReporter : PerformanceListener {
   }
 
   override fun uiFreezeStarted(reportDir: Path, coroutineScope: CoroutineScope) {
-    if (DEBUG || !DebugAttachDetector.isAttached()) {
-      dumpTask?.stop()
-
-      reset()
-
-      val maxDumpDuration = FreezeReporterRegistry.maxDumpDurationMs()
-      if (maxDumpDuration <= 0) {
-        return
-      }
-
-      dumpTask = IdeaFreezeSamplingTask(reportDir, maxDumpDuration, coroutineScope)
+    if (!DEBUG && DebugAttachDetector.isAttached()) {
+      return
     }
+
+    dumpTask?.stop()
+
+    reset()
+
+    val maxDumpDuration = FreezeReporterRegistry.maxDumpDurationMs()
+    if (maxDumpDuration <= 0) {
+      return
+    }
+
+    dumpTask = IdeaFreezeSamplingTask(reportDir, maxDumpDuration, coroutineScope)
   }
 
   override fun dumpedThreads(toFile: Path, dump: ThreadDump) {
@@ -165,28 +167,36 @@ internal class IdeaFreezeReporter : PerformanceListener {
     }
 
     try {
-      if (FreezeReporterRegistry.isReporterEnabled()) {
-        LOG.debug("UI freeze recorded")
+      if (!FreezeReporterRegistry.isReporterEnabled()) {
+        return
+      }
 
-        if (((durationMs / 1000).toInt() > FreezeReporterRegistry.durationThresholdSeconds() || ApplicationManagerEx.isInIntegrationTest()) && !stacktraceCommonPart.isNullOrEmpty()) {
-          val dumps = ArrayList(currentDumps) // defensive copy
-          if (dumpTask.isValid() && dumps.size >= 2) {
-            val attachments = ArrayList<Attachment>()
-            addDumpsAttachments(from = dumps, textMapper = { it.rawDump }, container = attachments)
-            if (reportDir != null) {
-              EP_NAME.forEachExtensionSafe { attachments.addAll(it.getAttachments(reportDir)) }
-            }
+      LOG.debug("UI freeze recorded")
 
-            val loggingEvent = createEvent(dumpTask, durationMs, attachments, reportDir, PerformanceWatcher.getInstance(), finished = true)
-            if (loggingEvent != null) {
-              service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
-                processDumps(dumps, reportDir, loggingEvent, durationMs)
-              }
-            }
-          }
-          else {
-            LOG.debug("UI freeze recorded, but not enough dumps collected")
-          }
+      if ((durationMs / 1000).toInt() <= FreezeReporterRegistry.durationThresholdSeconds() && !ApplicationManagerEx.isInIntegrationTest()) {
+        return
+      }
+
+      if (stacktraceCommonPart.isNullOrEmpty()) {
+        return
+      }
+
+      val dumps = ArrayList(currentDumps) // defensive copy
+      if (!dumpTask.isValid() || dumps.size < 2) {
+        LOG.debug("UI freeze recorded, but not enough dumps collected")
+        return
+      }
+
+      val attachments = ArrayList<Attachment>()
+      addDumpsAttachments(from = dumps, textMapper = { it.rawDump }, container = attachments)
+      if (reportDir != null) {
+        EP_NAME.forEachExtensionSafe { attachments.addAll(it.getAttachments(reportDir)) }
+      }
+
+      val loggingEvent = createEvent(dumpTask, durationMs, attachments, reportDir, PerformanceWatcher.getInstance(), finished = true)
+      if (loggingEvent != null) {
+        service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
+          processDumps(dumps, reportDir, loggingEvent, durationMs)
         }
       }
     }
