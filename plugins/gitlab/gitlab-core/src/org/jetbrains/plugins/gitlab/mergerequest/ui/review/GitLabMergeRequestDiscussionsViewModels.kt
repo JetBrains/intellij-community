@@ -238,25 +238,22 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
     lookupAdjacentComment(currentThreadId, isNext = false, isVisible)
 
   private fun lookupAdjacentComment(cursorLocation: UnifiedCodeReviewItemPosition, isNext: Boolean, isVisible: (String) -> Boolean): String? {
-    // Fetch stuff
     val threads = allDiscussionsOrder.value ?: return null
     if (threads.isEmpty()) return null
 
     // Search from before the first comment on the selected line
-    var location: DiscussionIdAndMappedPosition? = DiscussionIdAndMappedPosition(null, Date.from(EPOCH), cursorLocation)
+    val cursorPosition = DiscussionIdAndMappedPosition("", Date.from(EPOCH), cursorLocation)
 
-    // Find the next or previous comment
-    location = when (isNext) {
-      true -> threads.ceiling(location)
-      false -> threads.floor(location)
+    val adjacentThread = when (isNext) {
+      true -> threads.ceiling(cursorPosition)
+      false -> threads.floor(cursorPosition)
     }
+    if (adjacentThread == null) return null
 
-    return if (location?.id == null || isVisible(location.id)) {
-      return location?.id
+    return if (isVisible(adjacentThread.id)) {
+      adjacentThread.id
     }
-    else {
-      lookupAdjacentComment(location.id, isNext, isVisible)
-    }
+    else lookupAdjacentComment(adjacentThread.id, isNext, isVisible)
   }
 
   private fun lookupAdjacentComment(currentThreadId: String, isNext: Boolean, isVisible: (String) -> Boolean): String? {
@@ -307,8 +304,10 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
             ))
         }
       }) { locations ->
+        // the same date will be used for all drafts when they are loaded from gitlab server, so ids are important
         TreeSet(Comparator<DiscussionIdAndMappedPosition> { left, right -> comparator.compare(left.mappedPosition, right.mappedPosition) }
-                  .thenComparing { left, right -> left.createdAt.compareTo(right.createdAt) })
+                  .thenComparing { left, right -> left.createdAt.compareTo(right.createdAt) }
+                  .thenComparing { left, right -> left.id.compareTo(right.id) })
           .apply { addAll(locations.filterNotNull()) }
       }
     }
@@ -338,7 +337,7 @@ private data class IntermediateDiscussionData(
 )
 
 private data class DiscussionIdAndMappedPosition(
-  val id: String?,
+  val id: String,
   val createdAt: Date,
   val mappedPosition: UnifiedCodeReviewItemPosition,
 )
