@@ -8,8 +8,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.util.AuthData
 import git4idea.remote.hosting.http.HostedGitAuthenticationFailureManager
-import git4idea.remote.hosting.http.SilentHostedGitHttpAuthDataProvider
+import git4idea.remote.hosting.http.SilentHostedGitHttpAuthDataProviderBase
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
@@ -20,7 +21,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefault
 
 private val LOG = logger<GHSilentHttpAuthDataProvider>()
 
-internal class GHSilentHttpAuthDataProvider : SilentHostedGitHttpAuthDataProvider<GithubAccount>() {
+internal class GHSilentHttpAuthDataProvider : SilentHostedGitHttpAuthDataProviderBase<GithubAccount, String>() {
   override val providerId: String = "GitHub Plugin"
 
   override val accountManager: AccountManager<GithubAccount, String>
@@ -34,13 +35,14 @@ internal class GHSilentHttpAuthDataProvider : SilentHostedGitHttpAuthDataProvide
     return project.service<GHGitAuthenticationFailureManager>()
   }
 
-  override suspend fun getAccountLogin(account: GithubAccount, token: String): String? {
-    return getAccountDetails(account, token)?.login
+  override suspend fun getAuthData(account: GithubAccount): AuthData? {
+    val token = accountManager.findCredentials(account) ?: return null
+    val login = getAccountDetails(account, token)?.login ?: return null
+    return AuthData(login, token)
   }
 
   override fun getPresentableErrorMessage(errorOutput: List<String>): @Nls String? =
     GHGitErrorMessagesUtils.oauthRestrictionMessage(errorOutput)
-
 
   companion object {
     suspend fun getAccountsWithTokens(project: Project, url: String): Map<GithubAccount, String?> {

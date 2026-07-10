@@ -137,6 +137,8 @@
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.mockk" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.mockk.jvm" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.vcs.git.backend" />
 </module>

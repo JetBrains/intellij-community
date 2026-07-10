@@ -90,19 +90,25 @@ f:git4idea.push.GitPushNotificationCustomizerKt
 - f:ignoreAccount(java.lang.String,com.intellij.collaboration.auth.Account):V
 - f:isAccountIgnored(java.lang.String,com.intellij.collaboration.auth.Account):Z
 *a:git4idea.remote.hosting.http.SilentHostedGitHttpAuthDataProvider
-- git4idea.remote.GitHttpAuthDataProvider
-- *sf:Companion:git4idea.remote.hosting.http.SilentHostedGitHttpAuthDataProvider$Companion
+- git4idea.remote.hosting.http.SilentHostedGitHttpAuthDataProviderBase
 - <init>():V
-- forgetPassword(com.intellij.openapi.project.Project,java.lang.String,com.intellij.util.AuthData):V
 - a:getAccountLogin(com.intellij.collaboration.auth.ServerAccount,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
-- a:getAccountManager():com.intellij.collaboration.auth.AccountManager
-- getAuthData(com.intellij.openapi.project.Project,java.lang.String):com.intellij.util.AuthData
-- getAuthData(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):com.intellij.util.AuthData
-- a:getAuthFailureManager(com.intellij.openapi.project.Project):git4idea.remote.hosting.http.HostedGitAuthenticationFailureManager
-- a:getDefaultAccountHolder(com.intellij.openapi.project.Project):com.intellij.collaboration.auth.DefaultAccountHolder
-- a:getProviderId():java.lang.String
-- isSilent():Z
-*f:git4idea.remote.hosting.http.SilentHostedGitHttpAuthDataProvider$Companion
+- pa:getAccountManager():com.intellij.collaboration.auth.AccountManager
+- pf:getAuthData(com.intellij.collaboration.auth.ServerAccount,kotlin.coroutines.Continuation):java.lang.Object
+*a:git4idea.remote.hosting.http.SilentHostedGitHttpAuthDataProviderBase
+- git4idea.remote.GitHttpAuthDataProvider
+- *sf:Companion:git4idea.remote.hosting.http.SilentHostedGitHttpAuthDataProviderBase$Companion
+- <init>():V
+- f:forgetPassword(com.intellij.openapi.project.Project,java.lang.String,com.intellij.util.AuthData):V
+- pa:getAccountManager():com.intellij.collaboration.auth.AccountManager
+- p:getAuthData(com.intellij.collaboration.auth.ServerAccount,kotlin.coroutines.Continuation):java.lang.Object
+- f:getAuthData(com.intellij.openapi.project.Project,java.lang.String):com.intellij.util.AuthData
+- f:getAuthData(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):com.intellij.util.AuthData
+- pa:getAuthFailureManager(com.intellij.openapi.project.Project):git4idea.remote.hosting.http.HostedGitAuthenticationFailureManager
+- pa:getDefaultAccountHolder(com.intellij.openapi.project.Project):com.intellij.collaboration.auth.DefaultAccountHolder
+- pa:getProviderId():java.lang.String
+- f:isSilent():Z
+*f:git4idea.remote.hosting.http.SilentHostedGitHttpAuthDataProviderBase$Companion
 - f:getAccountsWithTokens(com.intellij.collaboration.auth.AccountManager,git4idea.remote.hosting.http.HostedGitAuthenticationFailureManager,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 *e:git4idea.remote.hosting.ui.BaseOrHead
 - java.lang.Enum
