@@ -653,8 +653,15 @@ export async function renderSkills(options = {}) {
   }
 }
 
-async function main() {
-  const {basePartials, defaultEdition} = await loadRenderContext();
+/**
+ * Renders guide files without writing them so generation and freshness checks share the same implementation.
+ */
+export async function renderGuideOutputs() {
+  return renderGuideOutputsWithContext(await loadRenderContext());
+}
+
+async function renderGuideOutputsWithContext({basePartials, defaultEdition}) {
+  const renderedOutputs = new Map();
 
   for (const target of outputs) {
     if (!shouldRenderTarget(target, defaultEdition)) {
@@ -705,12 +712,22 @@ async function main() {
       }
     }
 
-    await writeFile(outputPath, normalize(finalText), "utf8");
+    renderedOutputs.set(target.output, normalize(finalText));
+  }
+
+  return renderedOutputs;
+}
+
+async function main() {
+  const renderContext = await loadRenderContext();
+  const renderedOutputs = await renderGuideOutputsWithContext(renderContext);
+  for (const [output, content] of renderedOutputs) {
+    await writeFile(join(repoRoot, output), content, "utf8");
   }
 
   await renderOpenCodeConfig();
   await renderOpenCodeSkills();
-  await renderSkills({edition: defaultEdition});
+  await renderSkills({edition: renderContext.defaultEdition});
 }
 
 function shouldRenderTarget(target, edition) {
