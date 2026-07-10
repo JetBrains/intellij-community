@@ -115,7 +115,7 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
       val (filesToOpen, filesToReformat) = invokeAndWaitIfNeeded {
         runWithModalProgressBlocking(project,
                                      UIBundle.message("label.project.wizard.new.assets.step.generate.sources.progress", project.name)) {
-          readAction { setupAssets(project) }
+          setupAssets(project)
           val outputDirectory = resolveOutputDirectory()
           Pair(resolveFilesToOpen(outputDirectory), generateSources(outputDirectory))
         }
