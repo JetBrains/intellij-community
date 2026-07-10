@@ -3,9 +3,7 @@ package com.intellij.java.debugger.impl.shared
 
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionDto
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManager
-import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManagerExtension
-import com.intellij.xdebugger.frame.XDescriptor
+import com.intellij.platform.debugger.impl.shared.CustomDescriptorStateManager
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,15 +35,7 @@ class SharedJavaDebuggerSession(dto: JavaDebuggerSessionDto, cs: CoroutineScope)
     fun findSession(e: AnActionEvent): SharedJavaDebuggerSession? {
       val project = e.project ?: return null
       val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: return null
-      return FrontendDescriptorStateManager.getInstance(project).getProcessDescriptorState(sessionProxy.id) as? SharedJavaDebuggerSession
+      return CustomDescriptorStateManager.getInstance(project).getProcessDescriptorState(sessionProxy.id) as? SharedJavaDebuggerSession
     }
   }
 }
-
-internal class JavaDebuggerSessionDtoStateExtension : FrontendDescriptorStateManagerExtension {
-  override fun createState(descriptor: XDescriptor, cs: CoroutineScope): Any? {
-    if (descriptor !is JavaDebuggerSessionDto) return null
-    return SharedJavaDebuggerSession(descriptor, cs)
-  }
-}
-

@@ -7,6 +7,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.debugger.impl.frontend.FrontendCustomDescriptorStateManager
 import com.intellij.platform.debugger.impl.rpc.XSourcePositionDto
 import com.intellij.platform.debugger.impl.rpc.XValueAdvancedPresentationPart
 import com.intellij.platform.debugger.impl.rpc.XValueApi
@@ -15,7 +16,6 @@ import com.intellij.platform.debugger.impl.rpc.XValueDtoWithPresentation
 import com.intellij.platform.debugger.impl.rpc.XValueMarkerDto
 import com.intellij.platform.debugger.impl.rpc.XValueSerializedPresentation
 import com.intellij.platform.debugger.impl.rpc.xExpression
-import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManager
 import com.intellij.platform.debugger.impl.shared.XValueStateFlows
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import com.intellij.platform.util.coroutines.childScope
@@ -96,7 +96,7 @@ class FrontendXValue private constructor(
   init {
     cs.launch {
       val descriptor = xValueDto.descriptor?.await() ?: return@launch
-      FrontendDescriptorStateManager.getInstance(project).registerDescriptor(descriptor, cs)
+      FrontendCustomDescriptorStateManager.getInstance(project).registerDescriptor(descriptor, cs)
     }
     cs.launch {
       pinToTopData = xValueDto.pinToTopData?.await()
