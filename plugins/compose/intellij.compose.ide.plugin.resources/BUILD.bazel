@@ -62,6 +62,7 @@ jvm_library(
         "//plugins/kotlin/base/psi",
         "//plugins/kotlin/references",
         "//platform/observable",
+        "//plugins/kotlin/code-insight/api",
     ],
 )
 
@@ -145,6 +146,7 @@ jvm_library(
         "//plugins/kotlin/base/psi:psi_test_lib",
         "//plugins/kotlin/references:references_test_lib",
         "//platform/observable:observable_test_lib",
+        "//plugins/kotlin/code-insight/api:api_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.resources` end

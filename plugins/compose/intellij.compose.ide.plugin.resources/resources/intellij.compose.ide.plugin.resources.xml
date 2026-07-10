@@ -105,6 +105,14 @@
     <xml.schemaProvider implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesDrawableXmlSchemaProvider"/>
     <xml.elementDescriptorProvider
       implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesDrawableXmlElementDescriptorProvider"/>
+    <localInspection implementationClass="com.intellij.compose.ide.plugin.resources.inspections.ComposeResourcesImageResourceInspection"
+                     language="kotlin"
+                     enabledByDefault="true"
+                     bundle="messages.ComposeIdeBundle"
+                     groupKey="compose.inspection.group.name"
+                     key="compose.inspection.image.resource.name"
+                     level="ERROR"
+                     shortName="ComposeResourcesImageResource"/>
   </extensions>
   <actions>
     <action id="compose.newVectorAsset"

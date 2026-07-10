@@ -35,11 +35,14 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtAnnotated
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
@@ -135,4 +138,11 @@ internal fun KtValueArgument.matchingParamTypeFqName(callee: KtNamedFunction): F
     val paramAtIndex = callee.valueParameters.getOrNull(argumentIndex) ?: return null
     paramAtIndex.returnTypeFqName()
   }
+}
+
+fun KtCallExpression.isCallTo(callableId: CallableId): Boolean = analyze(this) {
+  resolveToCall()
+    ?.singleFunctionCallOrNull()
+    ?.symbol
+    ?.callableId == callableId
 }
