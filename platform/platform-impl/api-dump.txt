@@ -5397,7 +5397,9 @@ c:com.intellij.ui.content.impl.ContentManagerImpl
 - com.intellij.ui.content.ContentManager
 - java.beans.PropertyChangeListener
 - addContent(com.intellij.ui.content.Content):V
+- addRecursiveContentManagerListener(com.intellij.ui.content.ContentManagerListener):V
 - getUI():com.intellij.ui.content.ContentUI
+- removeRecursiveContentManagerListener(com.intellij.ui.content.ContentManagerListener):V
 com.intellij.ui.content.impl.ContentManagerImpl$ContentUiProducer
 - a:createContent(com.intellij.ui.content.ContentManager,java.util.function.Supplier):com.intellij.ui.content.ContentUI
 f:com.intellij.ui.content.impl.TabbedContentImpl

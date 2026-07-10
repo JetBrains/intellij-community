@@ -93,6 +93,11 @@ c:com.intellij.ui.AnimatedIcon
 c:com.intellij.ui.UserActivityWatcher
 - com.intellij.ui.ComponentTreeWatcher
 - *sf:DO_NOT_WATCH:com.intellij.openapi.util.Key
+com.intellij.ui.content.ContentManager
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.util.BusyObject
+- *:addRecursiveContentManagerListener(com.intellij.ui.content.ContentManagerListener):V
+- *:removeRecursiveContentManagerListener(com.intellij.ui.content.ContentManagerListener):V
 f:com.intellij.util.ui.ShowingScopeKt
 - *sf:showingScope(java.awt.Component,java.lang.String,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function3):kotlinx.coroutines.Job
 - *sf:showingScope(java.awt.Component,java.lang.String,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
