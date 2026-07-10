@@ -4,16 +4,20 @@
 package com.intellij.ide.util
 
 import com.intellij.ide.IdeBundle
+import com.intellij.lang.LangBundle
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.ElementDescriptionUtil
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiDirectoryContainer
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiUtilBase
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.PropertyKey
 
-fun generateWarningMessage(
+fun generateSafeDeleteWarningMessage(
   key: @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String,
-  elements: Array<PsiElement>
+  elements: Array<PsiElement>,
 ): @NlsContexts.DialogMessage String {
   if (elements.size == 1) {
     val name = ElementDescriptionUtil.getElementDescription(elements[0], DeleteNameDescriptionLocation.INSTANCE)
@@ -53,4 +57,37 @@ fun generateWarningMessage(
   }
 
   return IdeBundle.message(key, buffer.toString())
+}
+
+fun generateDeleteWarningMessage(
+  elements: Array<PsiElement>,
+  filteredElements: Array<PsiElement>,
+  safeDeleteApplicable: Boolean,
+): @NlsContexts.DialogMessage String {
+  var warningMessage = generateSafeDeleteWarningMessage("prompt.delete.elements", filteredElements)
+
+  var anyDirectories = false
+  var directoryName: String? = null
+  for (psiElement in elements) {
+    if (psiElement is PsiDirectory && !PsiUtilBase.isSymLink(psiElement)) {
+      anyDirectories = true
+      directoryName = psiElement.getName()
+      break
+    }
+  }
+  if (anyDirectories) {
+    if (filteredElements.size == 1) {
+      warningMessage += IdeBundle.message("warning.delete.all.files.and.subdirectories", directoryName)
+    }
+    else {
+      warningMessage += IdeBundle.message("warning.delete.all.files.and.subdirectories.in.the.selected.directory")
+    }
+  }
+
+  if (safeDeleteApplicable) {
+    warningMessage +=
+      LangBundle.message("dialog.message.warning.safe.delete.not.available.while.updates.indices.no.usages.will.be.checked",
+                         ApplicationNamesInfo.getInstance().fullProductName)
+  }
+  return warningMessage
 }

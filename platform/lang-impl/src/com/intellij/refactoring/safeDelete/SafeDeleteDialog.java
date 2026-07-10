@@ -74,7 +74,7 @@ public class SafeDeleteDialog extends DialogWrapper {
     final GridBagConstraints gbc = new GridBagConstraints();
 
     final String promptKey = isDelete() ? "prompt.delete.elements" : "search.for.usages.and.delete.elements";
-    final String warningMessage = DeleteUtil.generateWarningMessage(promptKey, myElements);
+    final String warningMessage = DeleteUtil.generateSafeDeleteWarningMessage(promptKey, myElements);
 
     gbc.insets = JBInsets.create(4, 8);
     gbc.weighty = 1;
