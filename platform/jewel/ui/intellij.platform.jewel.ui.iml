@@ -14,9 +14,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>
-                <arg>$KOTLIN_COMPOSE_COMPILER_PLUGIN$</arg>
-              </args>
+              <args>$KOTLIN_COMPOSE_COMPILER_PLUGIN$</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -41,41 +39,37 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" exported="" />
     <orderEntry type="module-library" exported="">
       <library name="org.jetbrains.compose.components.components.resources" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources:1.11.0">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources:1.12.0-beta02">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.11.0/components-resources-1.11.0.jar">
-              <sha256sum>6ab4a950f0663d763ce6a66c367d9fe54776553f6c92bceb6ce5d328db44588e</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.12.0-beta02/components-resources-1.12.0-beta02.jar">
+              <sha256sum>fa8ea0bf4dc142596c3a65875d610b12fed6f8996d3f1863cdf39d3fbbd0cb08</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.11.0/components-resources-1.11.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.12.0-beta02/components-resources-1.12.0-beta02.jar!/" />
         </CLASSES>
-        <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.11.0/components-resources-1.11.0-javadoc.jar!/" />
-        </JAVADOC>
+        <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.11.0/components-resources-1.11.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.12.0-beta02/components-resources-1.12.0-beta02-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="org.jetbrains.compose.components.components.resources.desktop" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources-desktop:1.11.0">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources-desktop:1.12.0-beta02">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.11.0/components-resources-desktop-1.11.0.jar">
-              <sha256sum>05e1cad77c8ede7930ad21223b819932b70d7ad969ebfef97ddf272fc1a7bc39</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.12.0-beta02/components-resources-desktop-1.12.0-beta02.jar">
+              <sha256sum>9d5ad07d082fffc19c728516e87d51d3e439c00087cc067f821a116f27e8b29e</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.11.0/components-resources-desktop-1.11.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.12.0-beta02/components-resources-desktop-1.12.0-beta02.jar!/" />
         </CLASSES>
-        <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.11.0/components-resources-desktop-1.11.0-javadoc.jar!/" />
-        </JAVADOC>
+        <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.11.0/components-resources-desktop-1.11.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.12.0-beta02/components-resources-desktop-1.12.0-beta02-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
