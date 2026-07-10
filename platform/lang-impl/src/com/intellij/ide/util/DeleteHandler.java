@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -162,30 +163,7 @@ public final class DeleteHandler {
       }
     }
     else {
-      String warningMessage = DeleteUtil.generateWarningMessage("prompt.delete.elements", elements);
-
-      boolean anyDirectories = false;
-      String directoryName = null;
-      for (PsiElement psiElement : elementsToDelete) {
-        if (psiElement instanceof PsiDirectory && !PsiUtilBase.isSymLink((PsiDirectory)psiElement)) {
-          anyDirectories = true;
-          directoryName = ((PsiDirectory)psiElement).getName();
-          break;
-        }
-      }
-      if (anyDirectories) {
-        if (elements.length == 1) {
-          warningMessage += IdeBundle.message("warning.delete.all.files.and.subdirectories", directoryName);
-        }
-        else {
-          warningMessage += IdeBundle.message("warning.delete.all.files.and.subdirectories.in.the.selected.directory");
-        }
-      }
-
-      if (safeDeleteApplicable) {
-        warningMessage +=
-          LangBundle.message("dialog.message.warning.safe.delete.not.available.while.updates.indices.no.usages.will.be.checked", ApplicationNamesInfo.getInstance().getFullProductName());
-      }
+      var warningMessage = generateDeleteWarningMessage(elementsToDelete, elements, safeDeleteApplicable);
 
       if (needConfirmation) {
         int result = Messages.showOkCancelDialog(project, warningMessage, IdeBundle.message("title.delete"),
@@ -196,6 +174,34 @@ public final class DeleteHandler {
     }
 
     deleteInCommand(project, elements);
+  }
+
+  private static @NotNull @NlsContexts.DialogMessage String generateDeleteWarningMessage(PsiElement[] elements, PsiElement[] filteredElements, boolean safeDeleteApplicable) {
+    String warningMessage = DeleteUtil.generateWarningMessage("prompt.delete.elements", filteredElements);
+
+    boolean anyDirectories = false;
+    String directoryName = null;
+    for (PsiElement psiElement : elements) {
+      if (psiElement instanceof PsiDirectory && !PsiUtilBase.isSymLink((PsiDirectory)psiElement)) {
+        anyDirectories = true;
+        directoryName = ((PsiDirectory)psiElement).getName();
+        break;
+      }
+    }
+    if (anyDirectories) {
+      if (filteredElements.length == 1) {
+        warningMessage += IdeBundle.message("warning.delete.all.files.and.subdirectories", directoryName);
+      }
+      else {
+        warningMessage += IdeBundle.message("warning.delete.all.files.and.subdirectories.in.the.selected.directory");
+      }
+    }
+
+    if (safeDeleteApplicable) {
+      warningMessage +=
+        LangBundle.message("dialog.message.warning.safe.delete.not.available.while.updates.indices.no.usages.will.be.checked", ApplicationNamesInfo.getInstance().getFullProductName());
+    }
+    return warningMessage;
   }
 
   private static boolean makeWritable(Project project, PsiElement[] elements) {
