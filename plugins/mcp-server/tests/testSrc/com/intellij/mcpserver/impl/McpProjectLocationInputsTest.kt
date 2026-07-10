@@ -13,7 +13,6 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -147,12 +146,12 @@ class McpProjectLocationInputsTest {
       assertThat(bazelProject.basePath).isEqualTo(repo.invariantSeparatorsPathString)
 
       runBlocking(Dispatchers.Default) {
-        val project = service<McpSessionProjectResolver>().resolveSessionProject(
+        val project = McpProjectLocationInputs(
           projectPathFromArgument = null,
           projectPathFromCallHeader = repo.invariantSeparatorsPathString,
           projectPathFromSessionHeader = null,
           roots = emptySet(),
-        )
+        ).resolveProject()
 
         assertThat(project).isSameAs(bazelProject)
       }
