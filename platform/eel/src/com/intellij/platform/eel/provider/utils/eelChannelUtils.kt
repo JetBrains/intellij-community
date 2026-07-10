@@ -54,19 +54,39 @@ fun WritableByteChannel.asEelChannel(dispatcher: CoroutineContext = unlimitedDis
 // Flushes data after each writing.
 @ApiStatus.Experimental
 fun OutputStream.asEelChannel(dispatcher: CoroutineContext? = null): EelSendChannel =
-  NioWriteToEelAdapter(Channels.newChannel(this), dispatcher ?: unlimitedDispatcher, this)
+  if (this is OutputStreamAdapterImpl) {
+    sendChannel
+  }
+  else {
+    NioWriteToEelAdapter(WritableByteChannelFromOutputStream(this), dispatcher ?: unlimitedDispatcher, this)
+  }
 
 @ApiStatus.Experimental
 fun InputStream.consumeAsEelChannel(dispatcher: CoroutineContext? = null): EelReceiveChannel =
-  NioReadToEelAdapter(Channels.newChannel(this), dispatcher ?: unlimitedDispatcher, this::available)
+  if (this is InputStreamAdapterImpl) {
+    receiveChannel
+  }
+  else {
+    NioReadToEelAdapter(ReadableByteChannelFromInputStream(this), dispatcher ?: unlimitedDispatcher, this::available)
+  }
 
 @ApiStatus.Experimental
 fun EelReceiveChannel.consumeAsInputStream(blockingContext: CoroutineContext = Dispatchers.IO): InputStream =
-  InputStreamAdapterImpl(this, blockingContext)
+  if (this is NioReadToEelAdapter && readableByteChannel is ReadableByteChannelFromInputStream) {
+    readableByteChannel.inputStream
+  }
+  else {
+    InputStreamAdapterImpl(this, blockingContext)
+  }
 
 @ApiStatus.Experimental
 fun EelSendChannel.asOutputStream(blockingContext: CoroutineContext = Dispatchers.IO): OutputStream =
-  OutputStreamAdapterImpl(this, blockingContext)
+  if (this is NioWriteToEelAdapter && writableByteChannel is WritableByteChannelFromOutputStream) {
+    writableByteChannel.outputStream
+  }
+  else {
+    OutputStreamAdapterImpl(this, blockingContext)
+  }
 
 /**
  * Reads data from [receiveChannel] and returns it from channel (until [receiveChannel] is closed)
@@ -256,6 +276,9 @@ suspend fun copy(
     pool.returnBack(buffer)
   }
 }
+
+private class ReadableByteChannelFromInputStream(val inputStream: InputStream) : ReadableByteChannel by Channels.newChannel(inputStream)
+private class WritableByteChannelFromOutputStream(val outputStream: OutputStream) : WritableByteChannel by Channels.newChannel(outputStream)
 
 // Slowly increase timeout
 private fun backoff(): Iterator<Duration> =
