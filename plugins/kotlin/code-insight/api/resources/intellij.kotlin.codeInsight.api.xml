@@ -5,5 +5,8 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.projectStructure"/>
   </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService"/>
+  </extensions>
   <!-- endregion -->
 </idea-plugin>

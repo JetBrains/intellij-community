@@ -138,7 +138,6 @@
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
 
       <!--suppress LightServiceMigrationXML -->
-    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService"/>
 
   </extensions>
 
