@@ -268,6 +268,7 @@
     <module name="kotlin.fir"/>
     <module name="kotlin.fir.frontend-independent" loading="embedded"/>
     <module name="intellij.kotlin.searching.base" loading="embedded"/>
+    <module name="intellij.kotlin.refactorings.base" loading="embedded"/>
     <module name="intellij.kotlin.jvm.debugger.base.util" loading="embedded"/>
     <module name="intellij.kotlin.jvm.debugger.coroutines" loading="embedded"/>
     <module name="intellij.kotlin.base.projectStructure" loading="embedded"/>

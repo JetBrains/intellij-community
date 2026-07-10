@@ -355,16 +355,6 @@
   <!-- Declaration search and Find Usages -->
   <extensions defaultExtensionNs="com.intellij">
     <actionConfigurationCustomizer implementation="org.jetbrains.kotlin.idea.actions.KotlinActionsManager"/>
-    <refactoring.safeDelete.JavaSafeDeleteDelegate
-            id="kotlinJavaSafeDeleteDelegate"
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinJavaSafeDeleteDelegate"/>
-    <safeDelete.importSearcher implementation="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinImportSearcher"/>
-
-    <refactoring.inlineHandler
-            language="JAVA"
-            implementationClass="org.jetbrains.kotlin.idea.refactoring.inline.KotlinToJavaInlineHandler"/>
-
     <projectService
       serviceInterface="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider"
       serviceImplementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProviderImpl"/>

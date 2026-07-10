@@ -78,7 +78,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.codeInsight.overrideImplement",
       "intellij.kotlin.uast",
       "intellij.kotlin.uast.idea",
-      "intellij.kotlin.refactorings.base",
       "intellij.kotlin.compilerPlugins.support.bundled",
       "kotlin.jsr223",
       "intellij.kotlin.base.serialization"

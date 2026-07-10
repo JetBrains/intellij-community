@@ -28,6 +28,9 @@
 - name: lib/intellij.kotlin.jvm.debugger.coroutines.jar
   contentModules:
   - name: intellij.kotlin.jvm.debugger.coroutines
+- name: lib/intellij.kotlin.refactorings.base.jar
+  contentModules:
+  - name: intellij.kotlin.refactorings.base
 - name: lib/intellij.kotlin.searching.base.jar
   contentModules:
   - name: intellij.kotlin.searching.base
@@ -157,7 +160,6 @@
   - name: intellij.kotlin.codeInsight.overrideImplement
   - name: intellij.kotlin.uast
   - name: intellij.kotlin.uast.idea
-  - name: intellij.kotlin.refactorings.base
   - name: intellij.kotlin.compilerPlugins.support.bundled
   - name: kotlin.jsr223
   - name: intellij.kotlin.base.serialization

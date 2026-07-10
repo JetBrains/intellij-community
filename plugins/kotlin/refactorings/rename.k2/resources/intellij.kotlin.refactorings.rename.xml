@@ -4,6 +4,7 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.analysis"/>
     <module name="intellij.kotlin.refactorings"/>
+    <module name="intellij.kotlin.refactorings.base"/>
     <module name="intellij.kotlin.searching"/>
   </dependencies>
   <!-- endregion -->
