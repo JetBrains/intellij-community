@@ -7832,17 +7832,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/kotlin-compiler-embeddable-2.4.0.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlin-compiler-embeddable-2_4_0_http//file",
-    out = "org.jetbrains.kotlin/kotlin-compiler-embeddable-2.4.0.jar",
+    name = "org.jetbrains.kotlin/kotlin-compiler-embeddable-2.4.10-RC2.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlin-compiler-embeddable-2_4_10-RC2_http//file",
+    out = "org.jetbrains.kotlin/kotlin-compiler-embeddable-2.4.10-RC2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "kotlin-compiler-embeddable",
-    jar = "@org_jetbrains_kotlin-kotlin-compiler-embeddable-2_4_0_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlin-compiler-embeddable-2_4_0-sources_http//file",
+    jar = "@org_jetbrains_kotlin-kotlin-compiler-embeddable-2_4_10-RC2_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlin-compiler-embeddable-2_4_10-RC2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -7906,17 +7906,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/kotlin-metadata-jvm-2.4.0.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_4_0_http//file",
-    out = "org.jetbrains.kotlin/kotlin-metadata-jvm-2.4.0.jar",
+    name = "org.jetbrains.kotlin/kotlin-metadata-jvm-2.4.10-RC2.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_4_10-RC2_http//file",
+    out = "org.jetbrains.kotlin/kotlin-metadata-jvm-2.4.10-RC2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "kotlin-metadata",
-    jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_4_0_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_4_0-sources_http//file",
+    jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_4_10-RC2_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_4_10-RC2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -7936,47 +7936,47 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/kotlin-reflect-2.4.0.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlin-reflect-2_4_0_http//file",
-    out = "org.jetbrains.kotlin/kotlin-reflect-2.4.0.jar",
+    name = "org.jetbrains.kotlin/kotlin-reflect-2.4.10-RC2.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlin-reflect-2_4_10-RC2_http//file",
+    out = "org.jetbrains.kotlin/kotlin-reflect-2.4.10-RC2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "kotlin-reflect",
-    jar = "@org_jetbrains_kotlin-kotlin-reflect-2_4_0_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlin-reflect-2_4_0-sources_http//file",
+    jar = "@org_jetbrains_kotlin-kotlin-reflect-2_4_10-RC2_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlin-reflect-2_4_10-RC2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/kotlin-script-runtime-2.4.0.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlin-script-runtime-2_4_0_http//file",
-    out = "org.jetbrains.kotlin/kotlin-script-runtime-2.4.0.jar",
+    name = "org.jetbrains.kotlin/kotlin-script-runtime-2.4.10-RC2.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlin-script-runtime-2_4_10-RC2_http//file",
+    out = "org.jetbrains.kotlin/kotlin-script-runtime-2.4.10-RC2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "kotlin-script-runtime",
-    jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_4_0_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_4_0-sources_http//file",
+    jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_4_10-RC2_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_4_10-RC2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/kotlin-stdlib-2.4.0.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlin-stdlib-2_4_0_http//file",
-    out = "org.jetbrains.kotlin/kotlin-stdlib-2.4.0.jar",
+    name = "org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlin-stdlib-2_4_10-RC2_http//file",
+    out = "org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "kotlin-stdlib",
-    jar = "@org_jetbrains_kotlin-kotlin-stdlib-2_4_0_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlin-stdlib-2_4_0-sources_http//file",
+    jar = "@org_jetbrains_kotlin-kotlin-stdlib-2_4_10-RC2_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlin-stdlib-2_4_10-RC2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -7988,17 +7988,17 @@ java_library(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/kotlin-test-2.4.0.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlin-test-2_4_0_http//file",
-    out = "org.jetbrains.kotlin/kotlin-test-2.4.0.jar",
+    name = "org.jetbrains.kotlin/kotlin-test-2.4.10-RC2.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlin-test-2_4_10-RC2_http//file",
+    out = "org.jetbrains.kotlin/kotlin-test-2.4.10-RC2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "kotlin-test",
-    jar = "@org_jetbrains_kotlin-kotlin-test-2_4_0_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlin-test-2_4_0-sources_http//file",
+    jar = "@org_jetbrains_kotlin-kotlin-test-2_4_10-RC2_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlin-test-2_4_10-RC2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -8072,17 +8072,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/kotlin-test-junit-2.4.0.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlin-test-junit-2_4_0_http//file",
-    out = "org.jetbrains.kotlin/kotlin-test-junit-2.4.0.jar",
+    name = "org.jetbrains.kotlin/kotlin-test-junit-2.4.10-RC2.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlin-test-junit-2_4_10-RC2_http//file",
+    out = "org.jetbrains.kotlin/kotlin-test-junit-2.4.10-RC2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "kotlin-test-junit",
-    jar = "@org_jetbrains_kotlin-kotlin-test-junit-2_4_0_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlin-test-junit-2_4_0-sources_http//file",
+    jar = "@org_jetbrains_kotlin-kotlin-test-junit-2_4_10-RC2_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlin-test-junit-2_4_10-RC2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

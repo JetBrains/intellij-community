@@ -225,7 +225,7 @@ jvm_import(
     jar = "@kotlin-stdlib_http//file",
     # Version must match `kotlin_compiler_version` in MODULE.bazel — verified at
     # analysis time by `:kotlin-stdlib_import_coords_check`.
-    tags = ["maven_coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.4.0"],
+    tags = ["maven_coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.4.10-RC2"],
     visibility = ["//visibility:public"],
 )
 
