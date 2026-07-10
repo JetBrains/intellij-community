@@ -154,17 +154,18 @@ public final class TypeNullability {
     if (collection.size() == 1) return collection.iterator().next();
     Map<Nullability, Set<NullabilitySource>> map = collection.stream().collect(Collectors.groupingBy(
       TypeNullability::nullability, Collectors.mapping(TypeNullability::source, Collectors.toSet())));
+    // According to Jspecify the order is the next: NOT_NULL -> UNKNOWN -> NULLABLE.
     Set<NullabilitySource> sources = map.get(Nullability.NOT_NULL);
     if (sources != null) {
       return new TypeNullability(Nullability.NOT_NULL, NullabilitySource.multiSource(sources));
     }
-    sources = map.get(Nullability.NULLABLE);
-    if (sources != null) {
-      return new TypeNullability(Nullability.NULLABLE, NullabilitySource.multiSource(sources));
-    }
     sources = map.get(Nullability.UNKNOWN);
     if (sources != null) {
       return new TypeNullability(Nullability.UNKNOWN, NullabilitySource.multiSource(sources));
+    }
+    sources = map.get(Nullability.NULLABLE);
+    if (sources != null) {
+      return new TypeNullability(Nullability.NULLABLE, NullabilitySource.multiSource(sources));
     }
     return UNKNOWN;
   }

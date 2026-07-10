@@ -132,10 +132,6 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
         new Pair<>("TypeVariableUnspecToParent.java", 98), //IDEA-380143
 
         new Pair<>("DereferenceTypeVariable.java", 123),
-        new Pair<>("MultiBoundTypeVariableToObject.java", 43),
-        new Pair<>("MultiBoundTypeVariableToObject.java", 52),
-        new Pair<>("MultiBoundTypeVariableToOther.java", 43),
-        new Pair<>("MultiBoundTypeVariableToOther.java", 52),
         new Pair<>("MultiBoundTypeVariableUnspecToObject.java", 63),
         new Pair<>("MultiBoundTypeVariableUnspecToOther.java", 63),
         new Pair<>("UnionTypeArgumentWithUseSite.java", 95)
