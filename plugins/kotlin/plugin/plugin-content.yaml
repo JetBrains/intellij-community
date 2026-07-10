@@ -28,6 +28,9 @@
 - name: lib/intellij.kotlin.jvm.debugger.coroutines.jar
   contentModules:
   - name: intellij.kotlin.jvm.debugger.coroutines
+- name: lib/intellij.kotlin.searching.base.jar
+  contentModules:
+  - name: intellij.kotlin.searching.base
 - name: lib/javax-inject.jar
   library: javax-inject
   files:
@@ -152,7 +155,6 @@
   - name: intellij.kotlin.codeInsight.utils
   - name: intellij.kotlin.codeInsight.descriptions
   - name: intellij.kotlin.codeInsight.overrideImplement
-  - name: intellij.kotlin.searching.base
   - name: intellij.kotlin.uast
   - name: intellij.kotlin.uast.idea
   - name: intellij.kotlin.refactorings.base

@@ -17,7 +17,6 @@
   <xi:include href="jps.xml"/>
   <xi:include href="caches.xml"/>
   <xi:include href="kotlin-core.xml"/>
-  <xi:include href="searching-base.xml"/>
   <xi:include href="statistics.xml"/>
   <xi:include href="light-classes.xml"/>
   <xi:include href="parcelize.k2.xml"/>
@@ -269,6 +268,7 @@
     <module name="intellij.kotlin.codeInsight.shared" loading="embedded"/>
     <module name="kotlin.fir"/>
     <module name="kotlin.fir.frontend-independent" loading="embedded"/>
+    <module name="intellij.kotlin.searching.base" loading="embedded"/>
     <module name="intellij.kotlin.jvm.debugger.base.util" loading="embedded"/>
     <module name="intellij.kotlin.jvm.debugger.coroutines" loading="embedded"/>
     <module name="intellij.kotlin.base.projectStructure" loading="embedded"/>

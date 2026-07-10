@@ -10,6 +10,7 @@
     <module name="intellij.kotlin.codeInsight.api"/>
     <module name="intellij.kotlin.codeInsight.shared"/>
     <module name="intellij.kotlin.highlighting.minimal"/>
+    <module name="intellij.kotlin.searching.base"/>
     <module name="intellij.kotlin.searching"/>
   </dependencies>
   <!-- endregion -->

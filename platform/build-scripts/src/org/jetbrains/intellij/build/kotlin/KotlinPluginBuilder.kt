@@ -76,7 +76,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.codeInsight.utils",
       "intellij.kotlin.codeInsight.descriptions",
       "intellij.kotlin.codeInsight.overrideImplement",
-      "intellij.kotlin.searching.base",
       "intellij.kotlin.uast",
       "intellij.kotlin.uast.idea",
       "intellij.kotlin.refactorings.base",

@@ -14,6 +14,7 @@
     <module name="intellij.kotlin.codeInsight.shared"/>
     <module name="intellij.kotlin.highlighting"/>
     <module name="intellij.kotlin.refactorings"/>
+    <module name="intellij.kotlin.searching.base"/>
     <module name="intellij.kotlin.searching"/>
     <module name="kotlin.fir.frontend-independent"/>
   </dependencies>
