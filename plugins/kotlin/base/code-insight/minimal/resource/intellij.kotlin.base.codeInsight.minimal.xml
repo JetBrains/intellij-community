@@ -31,6 +31,124 @@
     <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinWhenEntryHandler"/>
     <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinWithTrailingCommaHandler"/>
     <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinToStringTemplateHandler"/>
+    <typedHandler implementation="org.jetbrains.kotlin.idea.kdoc.KDocTypedHandler"/>
+    <backspaceHandlerDelegate implementation="org.jetbrains.kotlin.idea.editor.KotlinBackspaceHandler"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.kotlin.idea.editor.wordSelection.KotlinBracketsSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.kotlin.idea.editor.wordSelection.KotlinCallExpressionWithLambdaSelectioner"/>
+    <declarationRangeHandler
+            key="org.jetbrains.kotlin.psi.KtClassOrObject"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinClassDeclarationRangeHandler"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.kotlin.idea.editor.wordSelection.KotlinClassMemberSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.kotlin.idea.editor.wordSelection.KotlinCodeBlockSelectioner"/>
+    <lang.commenter language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinCommenter"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.kotlin.idea.editor.wordSelection.KotlinDeclarationSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.kotlin.idea.editor.wordSelection.KotlinDocCommentSelectioner"/>
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.editor.KotlinEditorOptions"/>
+    <applicationSettings service="org.jetbrains.kotlin.idea.editor.KotlinEditorOptions"/>
 
+    <enterHandlerDelegate
+            id="KotlinEnterAfterUnmatchedBraceHandler"
+            order="before afterUnmatchedBrace"
+            implementation="org.jetbrains.kotlin.idea.editor.KotlinEnterAfterUnmatchedBraceHandler"/>
+
+    <enterBetweenBracesDelegate
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.editor.KotlinEnterBetweenBracesAndBracketsNoCommitDelegate"/>
+    <enterHandlerDelegate
+            id="KotlinEnterHandler"
+            order="before EnterBetweenBracesHandler, before xmlEnter"
+            implementation="org.jetbrains.kotlin.idea.editor.KotlinEnterHandler"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.kotlin.idea.editor.wordSelection.KotlinEscapedIdentifierSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.kotlin.idea.editor.wordSelection.KotlinEscapedIdentifierSelectioner"/>
+    <declarationRangeHandler
+            key="org.jetbrains.kotlin.psi.KtDeclarationWithBody"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinFunDeclarationRangeHandler"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.kotlin.idea.editor.wordSelection.KotlinInvokedExpressionSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.kotlin.idea.editor.wordSelection.KotlinLabeledReturnSelectioner"/>
+    <backspaceHandlerDelegate implementation="org.jetbrains.kotlin.idea.editor.KotlinLambdaBackspaceHandler"/>
+    <lineIndentProvider implementation="org.jetbrains.kotlin.idea.formatter.KotlinLineIndentProvider"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.kotlin.idea.editor.wordSelection.KotlinListSelectioner"/>
+    <moveLeftRightHandler language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinMoveLeftRightHandler"/>
+    <enterHandlerDelegate
+            id="KotlinMultilineStringEnterHandler"
+            order="before EnterBetweenBracesHandler, before xmlEnter"
+            implementation="org.jetbrains.kotlin.idea.editor.KotlinMultilineStringEnterHandler"/>
+    <lang.braceMatcher language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinPairedBraceMatcher"/>
+    <quoteHandler fileType="Kotlin" className="org.jetbrains.kotlin.idea.editor.KotlinQuoteHandler"/>
+    <backspaceHandlerDelegate implementation="org.jetbrains.kotlin.idea.editor.KotlinRawStringBackspaceHandler"/>
+    <typedHandler implementation="org.jetbrains.kotlin.idea.editor.KotlinRawStringTypedHandler"/>
+    <lang.smartEnterProcessor language="kotlin"
+                              implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.KotlinSmartEnterHandler"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.kotlin.idea.editor.wordSelection.KotlinStatementGroupSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.kotlin.idea.editor.wordSelection.KotlinStringLiteralSelectioner"/>
+    <backspaceHandlerDelegate implementation="org.jetbrains.kotlin.idea.editor.KotlinStringTemplateBackspaceHandler"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.kotlin.idea.editor.wordSelection.KotlinSuperTypeSelectioner"/>
+    <typedHandler implementation="org.jetbrains.kotlin.idea.editor.KotlinTypedHandler"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.kotlin.idea.editor.wordSelection.KotlinTypeSelectioner"/>
+    <basicWordSelectionFilter implementation="org.jetbrains.kotlin.idea.editor.wordSelection.KotlinWordSelectionFilter"/>
+
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinCatchBodyFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinCatchParameterFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinClassBodyFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinClassInitializerFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinDoWhileFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinFinallyBodyFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinForConditionFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinFunctionDeclarationBodyFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinFunctionParametersFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinIfConditionFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinMissingForOrWhileBodyFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinMissingIfBranchFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinMissingWhenBodyFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinMissingWhenEntryBodyFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinPropertyAccessorBodyFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinPropertySetterParametersFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinTryBodyFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinValueArgumentListFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinWhenSubjectCaretFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinWhileConditionFixer"/>
   </extensions>
 </idea-plugin>

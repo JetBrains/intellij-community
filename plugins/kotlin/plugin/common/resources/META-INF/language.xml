@@ -1,8 +1,5 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <lang.braceMatcher language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinPairedBraceMatcher"/>
-
-    <lang.commenter language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinCommenter"/>
 
     <inspection.basicVisitor class="org.jetbrains.kotlin.psi.KtVisitorVoid"/>
     <inspection.basicVisitor class="org.jetbrains.kotlin.psi.KtVisitor"/>
