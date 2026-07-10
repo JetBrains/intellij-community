@@ -306,10 +306,11 @@ f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider$DefaultIm
 - setText(java.lang.String):V
 - setTextToFile(com.intellij.openapi.fileChooser.ex.FileLookup$LookupFile):V
 f:com.intellij.openapi.fileChooser.universal.FileBrowser
-- *sf:builder(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.Disposable):com.intellij.openapi.fileChooser.universal.FileBrowser$Builder
+- *sf:builder(com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.Disposable):com.intellij.openapi.fileChooser.universal.FileBrowser$Builder
 *f:com.intellij.openapi.fileChooser.universal.FileBrowser$Builder
 - f:build():com.intellij.openapi.fileChooser.universal.FileBrowserPanel
 - f:contributors(java.util.Collection):com.intellij.openapi.fileChooser.universal.FileBrowser$Builder
+- f:forProject(com.intellij.openapi.project.Project):V
 - f:onDefaultAction(java.lang.Runnable):com.intellij.openapi.fileChooser.universal.FileBrowser$Builder
 - f:popupActions(com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.fileChooser.universal.FileBrowser$Builder
 - f:root(java.nio.file.Path):Z
