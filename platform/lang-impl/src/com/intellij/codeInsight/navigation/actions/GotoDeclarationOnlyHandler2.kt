@@ -19,8 +19,11 @@ import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.psi.PsiFile
-import com.intellij.ui.list.createTargetPopup
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.components.JBList
+import com.intellij.ui.list.buildTargetPopup
 
 internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclarationReporter?) : CodeInsightActionHandler {
 
@@ -39,7 +42,7 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
       project: Project,
       editor: Editor,
       actionResult: NavigationActionResult,
-      reporter: GotoDeclarationReporter?
+      reporter: GotoDeclarationReporter?,
     ) {
       // obtain event data before showing the popup,
       // because showing the popup will finish the GotoDeclarationAction#actionPerformed and clear the data
@@ -55,8 +58,7 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
         }
         is MultipleTargets -> {
           reporter?.reportDeclarationSearchFinished(GotoDeclarationReporter.DeclarationsFound.MULTIPLE)
-          val popup = createTargetPopup(
-            CodeInsightBundle.message("declaration.navigation.title"),
+          val builder = buildTargetPopup(
             actionResult.targets, LazyTargetWithPresentation::presentation
           ) { (requestor, _, navigationProvider) ->
             navigationProvider?.let {
@@ -65,7 +67,13 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
             navigateRequestLazy(project, requestor, editor)
             reporter?.reportNavigatedToDeclaration(GotoDeclarationReporter.NavigationType.FROM_POPUP, navigationProvider)
           }
-          popup.showInBestPositionFor(editor)
+          builder.setTitle(CodeInsightBundle.message("declaration.navigation.title"))
+
+          if (builder is PopupChooserBuilder<*>) {
+            ClientProperty.put<Boolean?>(builder.chooserComponent, JBList.IMMUTABLE_MODEL_AND_RENDERER, true)
+          }
+
+          builder.createPopup().showInBestPositionFor(editor)
           reporter?.reportLookupElementsShown()
         }
       }
