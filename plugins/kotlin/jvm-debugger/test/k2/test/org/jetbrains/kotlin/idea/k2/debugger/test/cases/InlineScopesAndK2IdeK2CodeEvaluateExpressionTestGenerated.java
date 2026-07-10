@@ -209,6 +209,26 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("../testData/evaluation/singleBreakpoint/contextParameters/unnamedContextParameters.kt");
             }
 
+            @TestMetadata("unnamedContextParametersInContextCall.kt")
+            public void testUnnamedContextParametersInContextCall() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/contextParameters/unnamedContextParametersInContextCall.kt");
+            }
+
+            @TestMetadata("unnamedContextParametersInLambda.kt")
+            public void testUnnamedContextParametersInLambda() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/contextParameters/unnamedContextParametersInLambda.kt");
+            }
+
+            @TestMetadata("unnamedContextParametersInNestedContextCall.kt")
+            public void testUnnamedContextParametersInNestedContextCall() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/contextParameters/unnamedContextParametersInNestedContextCall.kt");
+            }
+
+            @TestMetadata("unnamedContextParametersInNestedLambda.kt")
+            public void testUnnamedContextParametersInNestedLambda() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/contextParameters/unnamedContextParametersInNestedLambda.kt");
+            }
+
             @TestMetadata("valContextParameter.kt")
             public void testValContextParameter() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/contextParameters/valContextParameter.kt");
