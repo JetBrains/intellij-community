@@ -12,6 +12,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.kotlin.uast.idea.base",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -48,7 +52,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-uast-idea-base",
-        "@lib//:kotlin-test",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//plugins/kotlin/references:references_test_lib",
         "//platform/core-api:core_test_lib",
         "//plugins/kotlin/base/util:util_test_lib",

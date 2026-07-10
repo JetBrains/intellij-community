@@ -1,0 +1,17 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.java.uast"/>
+    <module name="intellij.kotlin.uast.base"/>
+    <module name="intellij.platform.uast"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="org.jetbrains.uast">
+    <uastLanguagePlugin implementation="org.jetbrains.uast.kotlin.FirKotlinUastLanguagePlugin"/>
+    <analysis.uastAnalysisPlugin implementation="org.jetbrains.uast.kotlin.FirKotlinUastAnalysisPlugin"/>
+  </extensions>
+</idea-plugin>

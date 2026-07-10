@@ -61,28 +61,8 @@
             order="last"/>
   </extensions>
 
-  <extensions defaultExtensionNs="org.jetbrains.uast">
-    <uastLanguagePlugin implementation="org.jetbrains.uast.kotlin.FirKotlinUastLanguagePlugin"/>
-    <analysis.uastAnalysisPlugin implementation="org.jetbrains.uast.kotlin.FirKotlinUastAnalysisPlugin"/>
-    <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.kotlin.IdeaFirKotlinUastCodeGenerationPlugin"/>
-    <evaluation.uastEvaluatorExtension implementation="org.jetbrains.uast.kotlin.evaluation.KotlinEvaluatorExtension"/>
-  </extensions>
-
   <extensions defaultExtensionNs="com.intellij">
     <resolveScopeEnlarger implementation="org.jetbrains.kotlin.idea.base.analysis.builtins.KotlinBuiltInsResolveScopeEnlarger" />
-
-
-    <applicationService serviceInterface="org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService"
-                        serviceImplementation="org.jetbrains.uast.kotlin.internal.FirIdeaKotlinUastResolveProviderService"/>
-    <applicationService serviceInterface="org.jetbrains.uast.kotlin.FirKotlinUastResolveProviderService"
-                    serviceImplementation="org.jetbrains.uast.kotlin.internal.FirIdeaKotlinUastResolveProviderService"/>
-    <applicationService serviceInterface="org.jetbrains.uast.kotlin.internal.FirKotlinUastLibraryPsiProviderService"
-                        serviceImplementation="org.jetbrains.uast.kotlin.internal.FirKotlinUastLibraryPsiProviderService$Default"/>
-
-    <registryKey key="kotlin.fir.uast.force.uinjectionhost"
-                 description="Whether to convert `KtStringTemplateExpression` to `KotlinStringTemplateUPolyadicExpression` in all cases"
-                 defaultValue="true"
-                 restartRequired="false"/>
 
     <registryKey key="kotlin.k2.only.bundled.compiler.plugins.enabled"
                  description="Allow only bundled K2 compiler plugins to be used"
@@ -258,6 +238,10 @@
     <module name="intellij.kotlin.codeInsight.api" loading="embedded"/>
     <module name="intellij.kotlin.codeInsight.shared" loading="embedded"/>
     <module name="intellij.kotlin.codeInsight.overrideImplement" loading="embedded"/>
+    <module name="intellij.kotlin.uast.base" loading="embedded"/>
+    <module name="intellij.kotlin.uast.idea.base" loading="embedded"/>
+    <module name="intellij.kotlin.uast" loading="embedded"/>
+    <module name="intellij.kotlin.uast.idea" loading="embedded"/>
     <module name="kotlin.fir"/>
     <module name="kotlin.fir.frontend-independent" loading="embedded"/>
     <module name="intellij.kotlin.searching.base" loading="embedded"/>

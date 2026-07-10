@@ -25,6 +25,10 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_kotlin-uast",
     module_name = "intellij.kotlin.uast",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,

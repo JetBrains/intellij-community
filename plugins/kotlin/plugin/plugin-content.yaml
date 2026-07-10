@@ -37,6 +37,18 @@
 - name: lib/intellij.kotlin.searching.base.jar
   contentModules:
   - name: intellij.kotlin.searching.base
+- name: lib/intellij.kotlin.uast.base.jar
+  contentModules:
+  - name: intellij.kotlin.uast.base
+- name: lib/intellij.kotlin.uast.idea.base.jar
+  contentModules:
+  - name: intellij.kotlin.uast.idea.base
+- name: lib/intellij.kotlin.uast.idea.jar
+  contentModules:
+  - name: intellij.kotlin.uast.idea
+- name: lib/intellij.kotlin.uast.jar
+  contentModules:
+  - name: intellij.kotlin.uast
 - name: lib/javax-inject.jar
   library: javax-inject
   files:
@@ -154,14 +166,10 @@
   - name: intellij.kotlin.jvm.debugger.core
   - name: kotlin.jvm-debugger.evaluation
   - name: intellij.kotlin.jvm.debugger.eval4j
-  - name: intellij.kotlin.uast.base
-  - name: intellij.kotlin.uast.idea.base
   - name: intellij.kotlin.migration
   - name: kotlin.inspections
   - name: intellij.kotlin.codeInsight.utils
   - name: intellij.kotlin.codeInsight.descriptions
-  - name: intellij.kotlin.uast
-  - name: intellij.kotlin.uast.idea
   - name: intellij.kotlin.compilerPlugins.support.bundled
   - name: kotlin.jsr223
   - name: intellij.kotlin.base.serialization

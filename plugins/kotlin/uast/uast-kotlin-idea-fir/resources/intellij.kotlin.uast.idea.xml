@@ -1,0 +1,32 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.refactorings.base"/>
+    <module name="intellij.kotlin.uast"/>
+    <module name="intellij.kotlin.uast.base"/>
+    <module name="intellij.kotlin.uast.idea.base"/>
+    <module name="intellij.platform.uast"/>
+    <module name="intellij.platform.uast.ide"/>
+    <module name="kotlin.fir.frontend-independent"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="org.jetbrains.uast">
+    <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.kotlin.IdeaFirKotlinUastCodeGenerationPlugin"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService"
+                        serviceImplementation="org.jetbrains.uast.kotlin.internal.FirIdeaKotlinUastResolveProviderService"/>
+    <applicationService serviceInterface="org.jetbrains.uast.kotlin.FirKotlinUastResolveProviderService"
+                        serviceImplementation="org.jetbrains.uast.kotlin.internal.FirIdeaKotlinUastResolveProviderService"/>
+    <applicationService serviceInterface="org.jetbrains.uast.kotlin.internal.FirKotlinUastLibraryPsiProviderService"
+                        serviceImplementation="org.jetbrains.uast.kotlin.internal.FirKotlinUastLibraryPsiProviderService$Default"/>
+
+    <registryKey key="kotlin.fir.uast.force.uinjectionhost"
+                 description="Whether to convert `KtStringTemplateExpression` to `KotlinStringTemplateUPolyadicExpression` in all cases"
+                 defaultValue="true"
+                 restartRequired="false"/>
+  </extensions>
+</idea-plugin>

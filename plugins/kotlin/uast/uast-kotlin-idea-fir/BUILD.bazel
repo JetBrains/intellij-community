@@ -24,6 +24,10 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_kotlin-uast-idea",
     module_name = "intellij.kotlin.uast.idea",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -63,7 +67,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-uast-idea",
-        "@lib//:kotlin-test",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base_test_lib",
         "//platform/util:util_test_lib",
         "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
