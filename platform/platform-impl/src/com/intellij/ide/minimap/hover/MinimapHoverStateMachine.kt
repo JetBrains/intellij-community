@@ -49,7 +49,7 @@ internal class MinimapHoverStateMachine(
     pendingTarget = target
     pendingActivationJob?.cancel()
     pendingActivationJob = if (delay > Duration.ZERO) {
-      scope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      scope.launch(Dispatchers.EDT + ModalityState.stateForComponent(panel).asContextElement()) {
         delay(delay)
         if (target.sameAs(pendingTarget)) {
           activate(target)
