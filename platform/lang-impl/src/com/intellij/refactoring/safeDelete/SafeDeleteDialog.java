@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
@@ -17,6 +18,7 @@ import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JCheckBox;
@@ -32,6 +34,7 @@ public class SafeDeleteDialog extends DialogWrapper {
   private final Project myProject;
   private final PsiElement[] myElements;
   private final Callback myCallback;
+  private final @Nullable @NlsContexts.DialogMessage String myMessage;
   private final SafeDeleteProcessorDelegate myDelegate;
 
   private StateRestoringCheckBox myCbSearchInComments;
@@ -42,11 +45,41 @@ public class SafeDeleteDialog extends DialogWrapper {
     void run(SafeDeleteDialog dialog);
   }
 
-  public SafeDeleteDialog(Project project, PsiElement[] elements, Callback callback) {
+  /**
+   * Constructs a safe delete confirmation dialog.
+   *
+   * @param project the project
+   * @param elements the elements to delete
+   * @param callback the callback to invoke if the user agrees to delete
+   * @deprecated prefer the other overload
+   */
+  @Deprecated
+  public SafeDeleteDialog(
+    @NotNull Project project,
+    @NotNull PsiElement @NotNull [] elements,
+    @Nullable Callback callback) {
+    this(project, elements, null, callback);
+  }
+
+  /**
+   * Constructs a safe delete confirmation dialog.
+   *
+   * @param project the project
+   * @param elements the elements to delete
+   * @param message the message to show, computed using {@link DeleteUtil#generateSafeDeleteWarningMessageWithModalProgress(Project, String, PsiElement[])}
+   * @param callback  the callback to invoke if the user agrees to delete
+   */
+  public SafeDeleteDialog(
+    @NotNull Project project,
+    @NotNull PsiElement @NotNull [] elements,
+    @Nullable @NlsContexts.DialogMessage String message,
+    @Nullable Callback callback
+  ) {
     super(project, true);
     myProject = project;
     myElements = elements;
     myCallback = callback;
+    myMessage = message;
     myDelegate = getDelegate();
     setTitle(SafeDeleteHandler.getRefactoringName());
     init();
@@ -73,8 +106,14 @@ public class SafeDeleteDialog extends DialogWrapper {
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints gbc = new GridBagConstraints();
 
-    final String promptKey = isDelete() ? "prompt.delete.elements" : "search.for.usages.and.delete.elements";
-    final String warningMessage = DeleteUtil.generateSafeDeleteWarningMessage(promptKey, myElements);
+    final String warningMessage;
+    if (myMessage != null) {
+      warningMessage = myMessage;
+    }
+    else {
+      final String promptKey = isDelete() ? "prompt.delete.elements" : "search.for.usages.and.delete.elements";
+      warningMessage = DeleteUtil.generateSafeDeleteWarningMessage(promptKey, myElements);
+    }
 
     gbc.insets = JBInsets.create(4, 8);
     gbc.weighty = 1;

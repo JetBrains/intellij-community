@@ -6,7 +6,10 @@ package com.intellij.ide.util
 import com.intellij.ide.IdeBundle
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiDirectoryContainer
@@ -14,6 +17,18 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilBase
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.PropertyKey
+
+fun generateSafeDeleteWarningMessageWithModalProgress(
+  project: Project,
+  key: @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String,
+  elements: Array<PsiElement>,
+): @NlsContexts.DialogMessage String {
+  return runWithModalProgressBlocking(project, IdeBundle.message("progress.preparing.delete")) {
+    readAction {
+      generateSafeDeleteWarningMessage(key, elements)
+    }
+  }
+}
 
 fun generateSafeDeleteWarningMessage(
   key: @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String,
@@ -59,7 +74,20 @@ fun generateSafeDeleteWarningMessage(
   return IdeBundle.message(key, buffer.toString())
 }
 
-fun generateDeleteWarningMessage(
+fun generateDeleteWarningMessageWithModalProgress(
+  project: Project,
+  elements: Array<PsiElement>,
+  filteredElements: Array<PsiElement>,
+  safeDeleteApplicable: Boolean,
+): @NlsContexts.DialogMessage String {
+  return runWithModalProgressBlocking(project, IdeBundle.message("progress.preparing.delete")) {
+    readAction {
+      generateDeleteWarningMessage(elements, filteredElements, safeDeleteApplicable)
+    }
+  }
+}
+
+private fun generateDeleteWarningMessage(
   elements: Array<PsiElement>,
   filteredElements: Array<PsiElement>,
   safeDeleteApplicable: Boolean,

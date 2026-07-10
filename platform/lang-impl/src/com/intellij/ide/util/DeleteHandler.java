@@ -68,6 +68,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.ide.util.DeleteUtil.generateDeleteWarningMessageWithModalProgress;
+import static com.intellij.ide.util.DeleteUtil.generateSafeDeleteWarningMessageWithModalProgress;
+
 @SuppressWarnings("SplitModeApiUsage")
 public final class DeleteHandler {
   private static Boolean ourOverrideNeedsConfirmation;
@@ -138,7 +141,8 @@ public final class DeleteHandler {
     if (safeDeleteApplicable && !dumb) {
       if (needConfirmation) {
         final Ref<Boolean> exit = Ref.create(false);
-        final SafeDeleteDialog dialog = new SafeDeleteDialog(project, elements, new SafeDeleteDialog.Callback() {
+        var warningMessage = generateSafeDeleteWarningMessageWithModalProgress(project, "prompt.delete.elements", elements);
+        final SafeDeleteDialog dialog = new SafeDeleteDialog(project, elements, warningMessage, new SafeDeleteDialog.Callback() {
           @Override
           public void run(final SafeDeleteDialog dialog) {
             if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), true)) return;
@@ -164,7 +168,7 @@ public final class DeleteHandler {
     }
     else {
       if (needConfirmation) {
-        var warningMessage = DeleteUtil.generateDeleteWarningMessage(elementsToDelete, elements, safeDeleteApplicable);
+        var warningMessage = generateDeleteWarningMessageWithModalProgress(project, elementsToDelete, elements, safeDeleteApplicable);
         int result = Messages.showOkCancelDialog(project, warningMessage, IdeBundle.message("title.delete"),
                                                  ApplicationBundle.message("button.delete"), CommonBundle.getCancelButtonText(),
                                                  Messages.getQuestionIcon());

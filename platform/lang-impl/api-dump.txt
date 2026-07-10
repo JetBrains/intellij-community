@@ -5305,6 +5305,7 @@ c:com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 - performInplaceRename():Z
 c:com.intellij.refactoring.safeDelete.SafeDeleteDialog
 - com.intellij.openapi.ui.DialogWrapper
+- <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement[],java.lang.String,com.intellij.refactoring.safeDelete.SafeDeleteDialog$Callback):V
 - isSearchForTextOccurences():Z
 - isSearchInComments():Z
 com.intellij.refactoring.safeDelete.SafeDeleteDialog$Callback
