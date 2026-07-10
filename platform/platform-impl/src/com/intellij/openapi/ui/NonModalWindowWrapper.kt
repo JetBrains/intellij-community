@@ -33,6 +33,7 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.FullScreenSupport
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.ToolbarService
+import com.intellij.ui.mac.MacFullScreenSupport
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
@@ -119,6 +120,8 @@ abstract class NonModalWindowWrapper(
   private lateinit var minWindowSize: Dimension
   private var windowListener: WindowAdapter? = null
   private var windowDisposable: Disposable? = null
+  /** Non-null only on macOS while [activeWindow] is a [WindowFrame]. Tracks native full-screen state. */
+  private var fullScreenSupport: FullScreenSupport? = null
 
   protected var isFloat: Boolean
     get() = PropertiesComponent.getInstance().getBoolean(floatModeKey, true)
@@ -303,10 +306,12 @@ abstract class NonModalWindowWrapper(
         frame.accessibleContext.accessibleName = getAccessibleWindowName()
         val wd = Disposer.newDisposable(frameDisposable)
         windowDisposable = wd
+        val fss = FullScreenSupport.NEW.apply("com.intellij.ui.mac.MacFullScreenSupport")
+        fullScreenSupport = fss
         ToolbarService.getInstance().setTransparentTitleBar(
           window = frame,
           rootPane = frame.rootPane,
-          handlerProvider = { FullScreenSupport.NEW.apply("com.intellij.ui.mac.MacFullScreenSupport") },
+          handlerProvider = { fss },
           onDispose = { runnable -> Disposer.register(wd) { runnable.run() } },
         )
       }
@@ -381,24 +386,47 @@ abstract class NonModalWindowWrapper(
   /**
    * Switches between Float ([JDialog]) and Window ([JFrame]) mode.
    * The [content] component is reparented and window bounds are transferred.
+   *
+   * On macOS, if the [WindowFrame] is in native full-screen when the user pins the window
+   * (toFloat=true, i.e. switching FROM WindowFrame TO FloatDialog), we first exit full-screen
+   * via [MacFullScreenSupport.exitFullScreen] and defer the actual switch until the OS animation
+   * completes. This ensures the new [FloatDialog] is created after macOS has restored the
+   * pre-full-screen window bounds. On non-macOS, [fullScreenSupport] is always null.
    */
   private fun switchWindowMode(toFloat: Boolean) {
-    val bounds = activeWindow.bounds
+    val macFss = if (toFloat) fullScreenSupport as? MacFullScreenSupport else null
+    if (macFss != null && macFss.isFullScreen) {
+      val ideFrame = getIdeJFrame()
+      macFss.exitFullScreen(activeWindow) {
+        if (!isDisposed) doSwitchWindowMode(toFloat, ideFrame)
+      }
+      return
+    }
+    doSwitchWindowMode(toFloat)
+  }
+
+  private fun doSwitchWindowMode(toFloat: Boolean, ideFrameToActivate: JFrame? = null) {
+    val oldBounds = activeWindow.bounds
     val wasVisible = activeWindow.isVisible
     val savedDefaultButton = (activeWindow as RootPaneContainer).rootPane.defaultButton
     windowListener?.let { activeWindow.removeWindowListener(it) }
     windowListener = null
     content.parent?.remove(content)
+    fullScreenSupport = null
     disposeWindow(activeWindow)
     windowDisposable?.let { Disposer.dispose(it) }
     windowDisposable = null
-    activeWindow = createAwtWindow(toFloat, content, minWindowSize, bounds.size)
+
+    activeWindow = createAwtWindow(toFloat, content, minWindowSize, oldBounds.size)
     fitWindowToScreen(activeWindow)
     installWindowListeners()
     savedDefaultButton?.let { (activeWindow as RootPaneContainer).rootPane.defaultButton = it }
-    activeWindow.bounds = bounds
+    activeWindow.bounds = oldBounds
     dimensionKey?.let { WindowStateService.getInstance(project).getState(it, activeWindow) }
     if (wasVisible) {
+      // When switching back from full-screen, first bring the IDE frame to front so macOS
+      // navigates to the IDE Space, then show the dialog on top of it.
+      ideFrameToActivate?.toFront()
       activeWindow.isVisible = true
       activeWindow.toFront()
       activeWindow.requestFocus()
