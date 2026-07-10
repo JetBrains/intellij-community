@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.packaging.artifacts.Artifact
 import com.intellij.packaging.artifacts.ArtifactProperties
 import com.intellij.task.ExecuteRunConfigurationTask
@@ -177,7 +178,7 @@ private fun buildModules(
   val clean = moduleBuildTasks.any { it !is ModuleFilesBuildTask && !it.isIncrementalBuild() }
   val compileOnly = moduleBuildTasks.all { it is ModuleFilesBuildTask }
   val includeDependentModules = moduleBuildTasks.any { it.isIncludeDependentModules() }
-  val goal: String = getGoal(buildOnlyResources, compileOnly)
+  val goal: String = getPhase(buildOnlyResources, compileOnly)
   val commands: MutableList<MavenRunnerParameters> = ArrayList()
   for ((key, mavenProjects) in rootProjectsToModules) {
     val parameters = ParametersList()
@@ -217,11 +218,11 @@ private fun buildModules(
   runBatch(project, commands, callback)
 }
 
-private fun getGoal(buildOnlyResources: Boolean, compileOnly: Boolean): String {
+private fun getPhase(buildOnlyResources: Boolean, compileOnly: Boolean): String {
   if (buildOnlyResources) {
     return "resources:resources"
   }
-  return if (compileOnly) "compile" else "install"
+  return if (compileOnly) "compile" else Registry.stringValue("maven.delegate.build.phase")
 }
 
 object MavenProjectTaskRunnerUtil {
