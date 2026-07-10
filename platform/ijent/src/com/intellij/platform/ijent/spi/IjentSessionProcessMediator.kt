@@ -10,6 +10,7 @@ import com.intellij.platform.eel.channels.peekable
 import com.intellij.platform.eel.map
 import com.intellij.platform.eel.provider.utils.asEelChannel
 import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
+import com.intellij.platform.ijent.IJENT_DEAD_SESSION_SAFE_DEFERRED_MAPPER
 import com.intellij.platform.ijent.IjentChildProcessAdapter
 import com.intellij.platform.ijent.IjentLog
 import com.intellij.platform.ijent.IjentScope
@@ -115,7 +116,7 @@ class IjentSessionProcessMediator private constructor(
         process.waitFor()
       }
       process.exitValue()
-    })
+    }, IJENT_DEAD_SESSION_SAFE_DEFERRED_MAPPER)
     override val isAlive: Boolean get() = process.isAlive
 
     override val destroyIsGraceful: Boolean =

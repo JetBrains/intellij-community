@@ -502,6 +502,7 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 *f:com.intellij.platform.eel.ReadResult$Companion
 *f:com.intellij.platform.eel.SafeDeferred
 - <init>(kotlinx.coroutines.Deferred):V
+- <init>(kotlinx.coroutines.Deferred,kotlin.jvm.functions.Function2):V
 - f:asCompletableFuture():java.util.concurrent.CompletableFuture
 - f:await(kotlin.coroutines.Continuation):java.lang.Object
 - f:getState():com.intellij.platform.eel.SafeDeferred$State

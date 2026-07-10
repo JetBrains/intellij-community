@@ -44,7 +44,7 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
     if (deferred != null) {
       deferred.invokeOnCompletion { if (it == null) deferred.getCompleted().close() }
       val message = "Explicitly unregistered and closed during initialization: $label"
-      deferred.cancel(message, IjentUnavailableException.ClosedByApplication(message))
+      deferred.cancel(message, IjentUnavailableException.ClosedByApplication(message, null))
     }
     return deferred != null
   }

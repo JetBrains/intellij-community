@@ -1,11 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * This error declares that communication with a specific IJent is impossible anymore.
@@ -14,33 +19,17 @@ import kotlin.coroutines.cancellation.CancellationException
 sealed class IjentUnavailableException : IOException, ExceptionWithAttachments {
   private val attachments: Array<out Attachment>
 
-  constructor(message: String) : super(message) {
-    attachments = emptyArray()
-  }
-
-  constructor(message: String, cause: Throwable) : super(message, cause) {
-    attachments = emptyArray()
-  }
-
-  constructor(message: String, vararg attachments: Attachment) : super(message) {
+  constructor(message: String, cause: Throwable?, vararg attachments: Attachment) : super(message, cause) {
     this.attachments = attachments
   }
 
-  constructor(message: String, cause: Throwable, vararg attachments: Attachment) : super(message, cause) {
-    this.attachments = attachments
-  }
+  class ClosedByApplication(message: String, cause: Throwable?) : IjentUnavailableException(message, cause)
 
-  class ClosedByApplication : IjentUnavailableException {
-    constructor(message: String) : super(message)
-    constructor(message: String, cause: Throwable) : super(message, cause)
-  }
-
-  class CommunicationFailure : IjentUnavailableException {
-    constructor(message: String) : super(message)
-    constructor(message: String, cause: Throwable) : super(message, cause)
-    constructor(message: String, vararg attachments: Attachment) : super(message, *attachments)
-    constructor(message: String, cause: Throwable, vararg attachments: Attachment) : super(message, cause, *attachments)
-
+  class CommunicationFailure(
+    message: String,
+    cause: Throwable?,
+    vararg attachments: Attachment,
+  ) : IjentUnavailableException(message, cause, *attachments) {
     var exitedExpectedly: Boolean = false
   }
 
@@ -72,5 +61,47 @@ sealed class IjentUnavailableException : IOException, ExceptionWithAttachments {
       }
       return initialError
     }
+
+    /**
+     * The default bound used by [resolveDeadSessionReason] when awaiting the canonical exit reason.
+     * Aligned with the exit-code consumer await in `GrpcIjentChildProcess`.
+     */
+    @Internal
+    val DEAD_SESSION_RESOLVE_TIMEOUT: Duration = 3.seconds
+
+    /**
+     * Resolves the canonical dead-session [IjentUnavailableException] for [initialError].
+     *
+     * First unwraps [CancellationException]s; if that already yields an [IjentUnavailableException], it is returned
+     * immediately. Otherwise, if the current coroutine runs inside an [IjentScope.IjentContext], its authoritative
+     * [IjentScope.IjentContext.exitReason] is awaited for at most [timeout] (in a [NonCancellable] section, so a
+     * cancelled boundary can still obtain the reason). Falls back to the unwrapped [initialError] if no canonical
+     * reason becomes available within the bound.
+     */
+    @Internal
+    suspend fun resolveDeadSessionReason(
+      initialError: Throwable,
+      timeout: Duration = DEAD_SESSION_RESOLVE_TIMEOUT,
+    ): Throwable {
+      val unwrapped = unwrapFromCancellationExceptions(initialError)
+      if (unwrapped is IjentUnavailableException) return unwrapped
+      val ijentContext = currentCoroutineContext()[IjentScope.IjentContext.Key] ?: return unwrapped
+      val resolved = withContext(NonCancellable) { ijentContext.resolveExitReason(timeout) }
+      return resolved ?: unwrapped
+    }
   }
+}
+
+/**
+ * A reusable [com.intellij.platform.eel.SafeDeferred] dead-session mapper for IJent-owned deferreds.
+ *
+ * When the backing deferred fails, this maps the failure to the canonical [IjentUnavailableException] (resolving it
+ * from the ambient [IjentScope.IjentContext] if necessary) so that `SafeDeferred.await` wraps the canonical
+ * [IjentUnavailableException] (instead of the low-level failure) into `SafeDeferred.FailedDeferred`.
+ * Returns `null` for failures that are not attributable to a dead session, preserving the default `FailedDeferred`
+ * behavior.
+ */
+@Internal
+val IJENT_DEAD_SESSION_SAFE_DEFERRED_MAPPER: suspend (Throwable) -> Throwable? = { err ->
+  IjentUnavailableException.resolveDeadSessionReason(err).takeIf { it is IjentUnavailableException }
 }
