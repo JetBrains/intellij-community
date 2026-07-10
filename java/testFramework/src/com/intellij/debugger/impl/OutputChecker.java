@@ -239,6 +239,8 @@ public class OutputChecker {
       if (!StringUtil.isEmpty(HOST_NAME)) {
         result = StringUtil.replace(result, HOST_NAME, "!HOST_NAME!", true);
       }
+      result = result.replace("0:0:0:0:0:0:0:1", "!HOST_NAME!");
+      result = result.replace("::1", "!HOST_NAME!");
       result = result.replace("127.0.0.1", "!HOST_NAME!");
 
       var productionFile = Path.of(PathUtil.getJarPathForClass(OutputChecker.class));
