@@ -3,7 +3,6 @@ package com.intellij.ide.minimap
 
 import com.intellij.openapi.util.Key
 import com.intellij.testFramework.TestModeFlags
-import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -11,6 +10,6 @@ object MinimapAvailability {
   val FORCE_AVAILABLE: Key<Boolean> = Key.create("minimap.force.available.in.tests")
 
   fun isAvailable(): Boolean {
-    return TestModeFlags.`is`(FORCE_AVAILABLE) || PlatformUtils.isPyCharm()
+    return TestModeFlags.`is`(FORCE_AVAILABLE)
   }
 }
