@@ -93,8 +93,6 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
     new SkipErrorFilter("jspecify_nullness_not_enough_information"), //it is useless for our goals
     new SkipIndividuallyFilter( //each case has its own reason (line number starts from 0)
       Set.of(
-        new Pair<>("ContravariantReturns.java", 32),  // see: IDEA-377687
-        new Pair<>("ContravariantReturns.java", 36),  // see: IDEA-377687
         new Pair<>("ExtendsTypeVariableImplementedForNullableTypeArgument.java",
                    28), // overriding method with @NotNull, original has @Nullable, but IDEA doesn't highlight the opposite example, see IDEA-377687
         new Pair<>("ExtendsTypeVariableImplementedForNullableTypeArgument.java",
@@ -474,7 +472,9 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
              "assigning.a.class.with.nullable.elements",
              "assigning.a.class.with.notnull.elements",
              "returning.a.class.with.nullable.arguments",
-             "returning.a.class.with.notnull.arguments"
+             "returning.a.class.with.notnull.arguments",
+             "overriding.a.class.with.nullable.elements",
+             "overriding.a.class.with.notnull.elements"
           //,  "non.null.type.argument.is.expected"  //todo see IDEA-377707
           -> warnings.put(anchor, "jspecify_nullness_mismatch");
         case "inspection.nullable.problems.method.overrides.NotNull", "inspection.nullable.problems.parameter.overrides.NotNull" ->

@@ -43,6 +43,14 @@ import java.util.Set;
 @ApiStatus.Internal
 public final class JavaTypeNullabilityUtil {
   /**
+   * The nullability of the implicit upper bound of an unbounded wildcard {@code ?} inside a {@code @NullMarked} scope.
+   * Per the JSpecify spec ("bound of an unbounded wildcard"), it is base type {@code Object} with nullness operator
+   * {@code UNION_NULL} (i.e. nullable). It is modeled as inherited from a bound to mirror {@code ? extends @Nullable Object}.
+   */
+  private static final TypeNullability UNBOUNDED_WILDCARD_NULLABILITY =
+    new TypeNullability(Nullability.NULLABLE, NullabilitySource.Standard.KNOWN).inherited();
+
+  /**
    * Computes the class type nullability
    *
    * @param type type to compute nullability for
@@ -268,10 +276,18 @@ public final class JavaTypeNullabilityUtil {
     if (declaredLeftParameterTypeList != null && declaredLeftParameterTypeList.size() != leftParameterTypeList.size()) {
       declaredLeftParameterTypeList = null;
     }
+    boolean rightInNullMarkedScope = isInNullMarkedScope(rightType);
 
     for (int i = 0; i < leftParameterTypeList.size(); i++) {
       PsiType leftParameterType = leftParameterTypeList.get(i);
       PsiType rightParameterType = rightParameterTypeList.get(i);
+      // unbounded '?' has an implicit upper bound of '@Nullable Object' inside a @NullMarked scope.
+      if (rightInNullMarkedScope &&
+          rightParameterType instanceof PsiWildcardType &&
+          !((PsiWildcardType)rightParameterType).isBounded() &&
+          rightParameterType.getNullability().nullability() == Nullability.UNKNOWN) {
+        rightParameterType = ((PsiWildcardType)rightParameterType).withNullability(UNBOUNDED_WILDCARD_NULLABILITY);
+      }
       PsiType declaredLeftParameterType = declaredLeftParameterTypeList == null ? null : declaredLeftParameterTypeList.get(i);
 
       NullabilityConflictContext contextTheCurrentCheck =
@@ -291,6 +307,15 @@ public final class JavaTypeNullabilityUtil {
 
   private static boolean isRawType(@NotNull PsiType type) {
     return type instanceof PsiClassType && ((PsiClassType)type).isRaw();
+  }
+
+  private static boolean isInNullMarkedScope(@NotNull PsiType type) {
+    PsiElement context = type instanceof PsiClassType ? ((PsiClassType)type).getPsiContext() : null;
+    if (context == null) return false;
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(context.getProject());
+    if (manager == null) return false;
+    NullabilityAnnotationInfo info = manager.findDefaultTypeUseNullability(context);
+    return info != null && info.getNullability() == Nullability.NOT_NULL && info.isContainer();
   }
 
   private static @Nullable List<@NotNull PsiType> getParentParameterTypeListFromDerivedType(@NotNull PsiType derivedType,
