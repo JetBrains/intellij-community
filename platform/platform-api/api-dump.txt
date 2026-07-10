@@ -9372,6 +9372,7 @@ pc:com.intellij.ui.table.JBTable$AccessibleJBTable
 - getAccessibleAt(I,I):javax.accessibility.Accessible
 - getAccessibleAt(java.awt.Point):javax.accessibility.Accessible
 - getAccessibleChild(I):javax.accessibility.Accessible
+- valueChanged(javax.swing.event.ListSelectionEvent):V
 pc:com.intellij.ui.table.JBTable$AccessibleJBTable$AccessibleJBTableCell
 - javax.swing.JTable$AccessibleJTable$AccessibleJTableCell
 - <init>(com.intellij.ui.table.JBTable$AccessibleJBTable,javax.swing.JTable,I,I,I):V
