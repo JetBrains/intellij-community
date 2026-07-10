@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.api
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.net.URI
 
 internal class GitLabApiUriQueryBuilderTest {
 
@@ -158,5 +159,83 @@ internal class GitLabApiUriQueryBuilderTest {
       }
     }
     assertEquals("object1[field1]=value1&object2[field2]=value2", result)
+  }
+
+  @Test
+  fun `test list of strings`() {
+    val result = GitLabApiUriQueryBuilder.build {
+      "labels" eq listOf("bug", "urgent")
+    }
+    assertEquals("labels[]=bug&labels[]=urgent", result)
+  }
+
+  @Test
+  fun `test list nested inside object`() {
+    val result = GitLabApiUriQueryBuilder.build {
+      "position" {
+        "reviewer_ids" eq listOf(1, 2)
+      }
+    }
+    assertEquals("position[reviewer_ids][]=1&position[reviewer_ids][]=2", result)
+  }
+
+  @Test
+  fun `test list values are URL encoded`() {
+    val result = GitLabApiUriQueryBuilder.build {
+      "labels" eq listOf("needs review", "a&b")
+    }
+    assertEquals("labels[]=needs+review&labels[]=a%26b", result)
+  }
+
+  @Test
+  fun `test nested null values are skipped`() {
+    val result = GitLabApiUriQueryBuilder.build {
+      "position" {
+        "base_sha" eq "abc"
+        "head_sha" eq null as String?
+      }
+    }
+    assertEquals("position[base_sha]=abc", result)
+  }
+
+  @Test
+  fun `test empty nested object produces empty string`() {
+    val result = GitLabApiUriQueryBuilder.build {
+      "position" { }
+    }
+    assertEquals("", result)
+  }
+
+  @Test
+  fun `test duplicate keys are all preserved`() {
+    val result = GitLabApiUriQueryBuilder.build {
+      "key" eq "first"
+      "key" eq "second"
+    }
+    assertEquals("key=first&key=second", result)
+  }
+
+  @Test
+  fun `test withQuery appends query string to URI`() {
+    val uri = URI("https://gitlab.com/api/v4/projects").withQuery {
+      "note" eq "comment text"
+      "reviewer_ids" eq listOf(1, 2)
+    }
+    assertEquals("https://gitlab.com/api/v4/projects?note=comment+text&reviewer_ids[]=1&reviewer_ids[]=2", uri.toString())
+  }
+
+  @Test
+  fun `test withQuery on empty builder leaves URI unchanged`() {
+    val base = URI("https://gitlab.com/api/v4/projects")
+    val uri = base.withQuery { }
+    assertEquals(base, uri)
+  }
+
+  @Test
+  fun `test withQuery preserves existing URI path`() {
+    val uri = URI("https://gitlab.com/api/v4/projects/1/merge_requests").withQuery {
+      "state" eq "opened"
+    }
+    assertEquals("https://gitlab.com/api/v4/projects/1/merge_requests?state=opened", uri.toString())
   }
 }
