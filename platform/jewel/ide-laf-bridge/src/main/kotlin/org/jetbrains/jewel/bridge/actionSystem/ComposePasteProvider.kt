@@ -25,7 +25,8 @@ public class ComposePasteProvider : PasteProvider {
 
     override fun isPasteEnabled(dataContext: DataContext): Boolean = isPastePossible(dataContext)
 
-    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+    // This needs to run on the EDT, or we risk synchronization issues like JEWEL-1359
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     private fun getPasteAction(dataContext: DataContext): AccessibilityAction<() -> Boolean>? {
         val contextComponent = dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
