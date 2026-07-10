@@ -13,8 +13,6 @@ import com.intellij.java.debugger.impl.shared.engine.JavaValueObjectReferenceInf
 import com.intellij.java.debugger.impl.shared.engine.NodeRendererDto
 import com.intellij.java.debugger.impl.shared.engine.NodeRendererId
 import com.intellij.openapi.application.readAction
-import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManager
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.XDescriptor
 import com.sun.jdi.ObjectReference

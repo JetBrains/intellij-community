@@ -24,7 +24,6 @@ import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.debugger.impl.ui.evaluate.quick.common.ValueLookupManager
 import com.intellij.platform.project.projectId
 import com.intellij.util.asDisposable
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.impl.XDebuggerManagerProxyListener
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope

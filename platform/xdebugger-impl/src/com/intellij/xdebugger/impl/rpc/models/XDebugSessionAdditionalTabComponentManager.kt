@@ -18,7 +18,6 @@ import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.ui.content.Content
 import com.intellij.util.asDisposable
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.impl.util.createEdtDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow

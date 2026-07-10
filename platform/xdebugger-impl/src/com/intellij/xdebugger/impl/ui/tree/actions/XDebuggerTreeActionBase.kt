@@ -7,13 +7,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.SplitDebuggerMode.showSplitWarnings
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.ui.SplitDebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
-import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase.Companion.getSelectedNodes
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImplDelegate
 

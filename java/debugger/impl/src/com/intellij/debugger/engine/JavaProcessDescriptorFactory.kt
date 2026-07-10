@@ -5,8 +5,6 @@ import com.intellij.debugger.actions.MuteRendererUtils
 import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionDto
 import com.intellij.java.debugger.impl.shared.rpc.JavaSessionState
-import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManager
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.frame.XDescriptor
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import fleet.rpc.core.toRpc

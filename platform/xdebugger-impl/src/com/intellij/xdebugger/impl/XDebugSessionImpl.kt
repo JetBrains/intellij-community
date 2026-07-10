@@ -47,7 +47,6 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive
 import com.intellij.ui.AppUIUtil.invokeOnEdt
-import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.application
