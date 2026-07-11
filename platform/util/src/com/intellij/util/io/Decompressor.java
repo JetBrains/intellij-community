@@ -2,7 +2,6 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
@@ -18,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -116,8 +114,8 @@ public abstract class Decompressor {
 
     /** @deprecated use {@link #Zip(Path)} instead */
     @Deprecated
-    @SuppressWarnings("IO_FILE_USAGE")
-    public Zip(@NotNull File file) {
+    @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+    public Zip(@NotNull java.io.File file) {
       mySource = file.toPath();
     }
 
@@ -349,8 +347,8 @@ public abstract class Decompressor {
 
   /** @deprecated use {@link #extract(Path)} instead */
   @Deprecated
-  @SuppressWarnings("IO_FILE_USAGE")
-  public final void extract(@NotNull File outputDir) throws IOException {
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public final void extract(@NotNull java.io.File outputDir) throws IOException {
     extract(outputDir.toPath());
   }
 
@@ -379,8 +377,9 @@ public abstract class Decompressor {
         }
         catch (IOException ioException) {
           if (myIgnoreIOExceptions) {
-            LOG.debug("Skipped exception because "  + ErrorHandlerChoice.SKIP_ALL + " was selected earlier", ioException);
-          } else {
+            LOG.debug("Skipped exception because " + ErrorHandlerChoice.SKIP_ALL + " was selected earlier", ioException);
+          }
+          else {
             switch (myErrorHandler.apply(entry, ioException)) {
               case ABORT:
                 while (!extractedPaths.isEmpty()) {
@@ -408,10 +407,8 @@ public abstract class Decompressor {
     }
   }
 
-  /**
-   * @return Path to an extracted entity
-   */
-  private @Nullable Path processEntry(@NotNull Path outputDir, Entry entry, boolean isWindows) throws IOException {
+  // returns a path of the extracted entity
+  private @Nullable Path processEntry(Path outputDir, Entry entry, boolean isWindows) throws IOException {
     if (myPathPrefix != null) {
       entry = mapPathPrefix(entry, myPathPrefix);
       if (entry == null) return null;
@@ -419,11 +416,12 @@ public abstract class Decompressor {
 
     Path outputFile = entryFile(outputDir, entry.name);
     switch (entry.type) {
-      case DIR:
+      case DIR: {
         NioFiles.createDirectories(outputFile);
         break;
+      }
 
-      case FILE:
+      case FILE: {
         if (myOverwrite || !Files.exists(outputFile)) {
           InputStream inputStream = openEntryStream(entry);
           try {
@@ -440,8 +438,9 @@ public abstract class Decompressor {
           }
         }
         break;
+      }
 
-      case SYMLINK:
+      case SYMLINK: {
         if (entry.linkTarget == null || entry.linkTarget.isEmpty()) {
           throw new IOException("Invalid symlink entry: " + entry.name + " (empty target)");
         }
@@ -455,7 +454,8 @@ public abstract class Decompressor {
           }
           case RELATIVIZE_ABSOLUTE: {
             if (OSAgnosticPathUtil.isAbsolute(target)) {
-              target = FileUtil.join(outputDir.toString(), entry.linkTarget.substring(1));
+              //noinspection IO_FILE_USAGE,UnnecessaryFullyQualifiedName
+              target = outputDir + java.io.File.separator + target.substring(1);
             }
             break;
           }
@@ -473,6 +473,7 @@ public abstract class Decompressor {
           }
         }
         break;
+      }
     }
 
     if (myPostProcessor != null) {
