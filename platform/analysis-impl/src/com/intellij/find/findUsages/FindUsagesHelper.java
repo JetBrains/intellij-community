@@ -4,6 +4,7 @@ package com.intellij.find.findUsages;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -73,16 +74,23 @@ public final class FindUsagesHelper {
   /**
    * @param processor must be thread-safe
    */
-  public static boolean processTextOccurrences(final @NotNull PsiElement element,
+  public static boolean processTextOccurrences(@NotNull PsiElement element,
                                                @NotNull String stringToSearch,
                                                @NotNull GlobalSearchScope searchScope,
-                                               final @NotNull UsageInfoFactory factory,
-                                               final @NotNull Processor<? super UsageInfo> processor) {
-    PsiSearchHelper helper = ReadAction.computeBlocking(() -> PsiSearchHelper.getInstance(element.getProject()));
-
-    return helper.processUsagesInNonJavaFiles(element, stringToSearch, (psiFile, startOffset, endOffset) -> {
+                                               @NotNull UsageInfoFactory factory,
+                                               @NotNull Processor<? super UsageInfo> processor) {
+    Project project = element.getProject();
+    var psiSearchHelper = PsiSearchHelper.getInstance(project);
+    return psiSearchHelper.processUsagesInNonJavaFiles(element, stringToSearch, (psiFile, startOffset, endOffset) -> {
       try {
-        UsageInfo usageInfo = ReadAction.computeBlocking(() -> factory.createUsageInfo(psiFile, startOffset, endOffset));
+        UsageInfo usageInfo = ReadAction.nonBlocking(() -> {
+            if (!psiFile.isValid()) return null;
+
+            return factory.createUsageInfo(psiFile, startOffset, endOffset);
+          })
+          .expireWith(project)
+          .executeSynchronously();
+
         return usageInfo == null || processor.process(usageInfo);
       }
       catch (ProcessCanceledException e) {
