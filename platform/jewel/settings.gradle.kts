@@ -50,11 +50,13 @@ include(
     ":samples:standalone",
     ":ui",
     ":ui-tests",
+    ":bazel-runfiles",
     ":jb-icons-api",
     ":jb-icons-api-rendering",
     ":jb-icons-impl"
 )
 
+project(":bazel-runfiles").projectDir = file("../bazel-runfiles")
 project(":jb-icons-api").projectDir = file("../icons-api")
 project(":jb-icons-api-rendering").projectDir = file("../icons-api/rendering")
 project(":jb-icons-impl").projectDir = file("../icons-impl")
