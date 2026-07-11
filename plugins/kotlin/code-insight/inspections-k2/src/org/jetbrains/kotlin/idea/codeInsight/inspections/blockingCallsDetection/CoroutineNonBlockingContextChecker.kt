@@ -90,12 +90,14 @@ internal class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
                 val blockingFriendlyDispatcherUsed = checkBlockingFriendlyDispatcherUsed(call, callExpression)
                 if (blockingFriendlyDispatcherUsed.isDefinitelyKnown) return blockingFriendlyDispatcherUsed
 
-                val parameterForArgument = call.argumentMapping[containingLambda] ?: return Blocking
+                val parameterForArgument = call.valueArgumentMapping[containingLambda] ?: return Blocking
                 val type = parameterForArgument.returnType
 
                 if (type is KaFunctionType) {
                     val hasRestrictSuspensionAnnotation = type.receiverType?.isRestrictsSuspensionReceiver() == true
                     return if (!hasRestrictSuspensionAnnotation && type.isSuspend) Unsure else Blocking
+                } else if (type.isFunctionalInterface) {
+                    return Blocking
                 }
             }
         }
