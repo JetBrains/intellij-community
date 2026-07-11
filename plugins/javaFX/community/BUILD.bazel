@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "community-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":community-tests_test_lib"],
+)
+
+### skip generation section `test intellij.javaFX.community.tests`
+
 ### auto-generated section `build intellij.javaFX.community` start
 jvm_library(
     name = "community",
@@ -169,12 +178,16 @@ jvm_library(
         "//xml/impl:impl_test_lib",
         "//plugins/groovy",
         "//plugins/groovy:groovy_test_lib",
+        "//plugins/groovy-scripting",
+        "//plugins/groovy-scripting:groovy-scripting_test_lib",
         "//plugins/javaFX/common",
         "//plugins/javaFX/common:common_test_lib",
         "//java/java-tests:tests",
         "//java/java-tests:tests_test_lib",
         "//plugins/groovy/structuralsearch-groovy:structuralSearch",
         "//plugins/groovy/structuralsearch-groovy:structuralSearch_test_lib",
+        "//java/structuralsearch-java:structuralSearch",
+        "//java/structuralsearch-java:structuralSearch_test_lib",
         "//java/compiler/openapi:java-compiler",
         "//java/compiler/openapi:java-compiler_test_lib",
         "//platform/core-ui",
@@ -185,6 +198,8 @@ jvm_library(
         "//plugins/javaFX:javaFX-properties_test_lib",
         "//xml/xml-psi-api:psi",
         "//xml/xml-psi-api:psi_test_lib",
+        "//java/xml.dom.impl",
+        "//java/xml.dom.impl:xml.dom.impl_test_lib",
         "//java/java-impl-refactorings:impl-refactorings",
         "//java/java-impl-refactorings:impl-refactorings_test_lib",
         "//libraries/fastutil",
@@ -211,10 +226,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.javaFX.community.tests` end
-
-### auto-generated section `test intellij.javaFX.community.tests` start
-jps_test(
-    name = "community-tests_test",
-    runtime_deps = [":community-tests_test_lib"],
-)
-### auto-generated section `test intellij.javaFX.community.tests` end
