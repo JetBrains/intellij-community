@@ -317,6 +317,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantWith/notApplicable_contextParameter.kt");
         }
 
+        @TestMetadata("notApplicable_contextParameterFunctionValue.kt")
+        public void testNotApplicable_contextParameterFunctionValue() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantWith/notApplicable_contextParameterFunctionValue.kt");
+        }
+
         @TestMetadata("notApplicable_contextParameterWithSubstitution.kt")
         public void testNotApplicable_contextParameterWithSubstitution() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantWith/notApplicable_contextParameterWithSubstitution.kt");

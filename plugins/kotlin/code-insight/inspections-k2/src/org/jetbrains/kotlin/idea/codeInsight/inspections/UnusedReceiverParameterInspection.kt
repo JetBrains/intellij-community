@@ -307,6 +307,7 @@ private fun isUsageOfSymbol(symbol: KaDeclarationSymbol, element: KtElement): Bo
 
             partiallyAppliedSymbol.dispatchReceiver?.getThisReceiverOwner() == symbol ||
                     partiallyAppliedSymbol.extensionReceiver?.getThisReceiverOwner() == symbol ||
+                    partiallyAppliedSymbol.contextArguments.any { it.getThisReceiverOwner() == symbol } ||
                     (receiverType != null && resolvedCall.hasContextReceiverOfType(receiverType)) // potentially captured by context receiver
         }
 
