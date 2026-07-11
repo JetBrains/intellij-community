@@ -18,7 +18,7 @@
     <cefNativeBundleProvider implementation="com.intellij.jcef.frontend.PluggableCefNativeBundleProvider"/>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.ActionsBundle">
     <action id="WebBrowser" class="com.intellij.jcef.frontend.internal.jcef.JBCefBrowserDemo"/>
   </actions>
 </idea-plugin>

@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "mermaid-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":mermaid-tests_test_lib"],
+)
+
+### skip generation section `test intellij.mermaid.tests`
+
 ### auto-generated section `build intellij.mermaid` start
 jvm_library(
     name = "mermaid",
@@ -171,12 +180,20 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/usageView",
         "//platform/usageView:usageView_test_lib",
+        "//platform/structure-view-impl:structureView",
+        "//platform/structure-view-impl:structureView_test_lib",
+        "//platform/structure-view-impl/plugin",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
         "//platform/util-ex",
         "//platform/util-ex:util-ex_test_lib",
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/ui.jcef",
         "//platform/ui.jcef:ui.jcef_test_lib",
+        "//plugins/jcef/plugin",
+        "//plugins/jcef/plugin:plugin_test_lib",
+        "//plugins/jcef/frontend",
+        "//plugins/jcef/frontend:frontend_test_lib",
         "//platform/built-in-server-api:builtInServer",
         "//platform/built-in-server-api:builtInServer_test_lib",
         "//platform/util:util-ui",
@@ -185,6 +202,10 @@ jvm_library(
         "//platform/testFramework/junit5:junit5_test_lib",
         "//libraries/jcef",
         "//libraries/jcef:jcef_test_lib",
+        "//spellchecker",
+        "//spellchecker:spellchecker_test_lib",
+        "//libraries/lucene.common",
+        "//libraries/lucene.common:lucene.common_test_lib",
         "//platform/testFramework/common",
         "//platform/testFramework/common:common_test_lib",
         "//platform/code-style-api:codeStyle",
@@ -207,10 +228,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.mermaid.tests` end
-
-### auto-generated section `test intellij.mermaid.tests` start
-jps_test(
-    name = "mermaid-tests_test",
-    runtime_deps = [":mermaid-tests_test_lib"],
-)
-### auto-generated section `test intellij.mermaid.tests` end
