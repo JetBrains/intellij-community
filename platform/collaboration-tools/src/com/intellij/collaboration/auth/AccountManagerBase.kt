@@ -115,12 +115,20 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
         persistentCredentials.persistCredentials(account, credentials)
       }
       catch (e: Exception) {
-        logger.warn(e)
+        logger.warn("Could not save credentials for account $account", e)
       }
     }
   }
 
-  override suspend fun findCredentials(account: A): Cred? = persistentCredentials.retrieveCredentials(account)
+  override suspend fun findCredentials(account: A): Cred? {
+    return try {
+      persistentCredentials.retrieveCredentials(account)
+    }
+    catch (e: Exception) {
+      logger.warn("Could not retrieve credentials for account $account", e)
+      throw e
+    }
+  }
 
   override fun getCredentialsFlow(account: A): Flow<Cred?> =
     accountsEventsFlow.transform {
