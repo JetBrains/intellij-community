@@ -45,13 +45,8 @@ internal class GitLabSettingsConfigurable(private val project: Project)
     val scope = scopeProvider.createDisposedScope(javaClass.name, disposable!!,
                                                   Dispatchers.EDT + ModalityState.any().asContextElement())
     val accountsModel = GitLabAccountsListModel()
-    val detailsProvider = GitLabAccountsDetailsProvider(scope, accountsModel) { account ->
-      accountsModel.newCredentials.getOrElse(account) {
-        accountManager.findCredentials(account)
-      }?.let {
-        service<GitLabApiManager>().getClient(account.server, it.accessToken)
-      }
-    }
+    val apiManager = service<GitLabApiManager>()
+    val detailsProvider = GitLabAccountsDetailsProvider(scope, apiManager, accountManager, accountsModel)
     val actionsController = GitLabAccountsPanelActionsController(project, accountsModel)
     val accountsPanelFactory = AccountsPanelFactory(scope, accountManager, defaultAccountHolder, accountsModel)
 

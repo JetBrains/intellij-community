@@ -38,12 +38,8 @@ import javax.swing.JComponent
 object GitLabMergeRequestSelectorsComponentFactory {
   fun createSelectorsComponent(cs: CoroutineScope, project: Project, selectorVm: GitLabRepositoryAndAccountSelectorViewModel, loginSource: GitLabLoginSource): JComponent {
     val defaultAccountHolder = project.service<GitLabProjectDefaultAccountHolder>()
-    val accountsDetailsProvider = GitLabAccountsDetailsProvider(cs, selectorVm.accountManager) { account ->
-      // TODO: separate loader
-      selectorVm.accountManager.findCredentials(account)?.let { credentials ->
-        service<GitLabApiManager>().getClient(account.server, credentials.accessToken)
-      }
-    }
+    val apiManager = service<GitLabApiManager>()
+    val accountsDetailsProvider = GitLabAccountsDetailsProvider(cs, apiManager, selectorVm.accountManager)
 
     val selectors = RepositoryAndAccountSelectorComponentFactory(selectorVm).create(
       scope = cs,
