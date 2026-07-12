@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.snippets
 
-import com.intellij.collaboration.async.modelFlow
-import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.snippets.PathHandlingMode
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -14,18 +12,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -33,7 +26,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
@@ -58,9 +50,9 @@ class GitLabSnippetFileContents(
 @ApiStatus.Experimental
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class GitLabCreateSnippetViewModel(
-  private val cs: CoroutineScope,
+  cs: CoroutineScope,
   val project: Project,
-  private val glAccountManager: GitLabAccountManager,
+  glAccountManager: GitLabAccountManager,
   glApiManager: GitLabApiManager,
   val availablePathModes: Set<PathHandlingMode>,
   contents: Deferred<List<GitLabSnippetFileContents>>,
@@ -81,36 +73,15 @@ internal class GitLabCreateSnippetViewModel(
     MutableStateFlow(account)
   }
 
-  /**
-   * Flow of the current account and credentials for that account. Credentials can be null for an account.
-   */
-  private val glAccountAndCredentials: SharedFlow<Pair<GitLabAccount, GitLabCredentials?>?> = glAccount
-    .flatMapLatest { accountOrNull ->
-      val account = accountOrNull ?: return@flatMapLatest flowOf(null)
-      glAccountManager.getCredentialsFlow(account)
-        .map { Unit }
-        .withInitial(Unit)
-        .map { Pair(account, glAccountManager.findCredentials(account)) }
-    }
-    .modelFlow(cs, LOG)
-
   /** Flow of [GitLabProjectCoordinates] based on the current selection of account. */
-  val glRepositories: StateFlow<List<GitLabProjectCoordinates>> = channelFlow {
-    val flowCs = this
-    val cache = mutableMapOf<Pair<GitLabAccount, GitLabCredentials?>?, Flow<List<GitLabProjectCoordinates>>>()
-    glAccountAndCredentials
-      .collectLatest { credentials ->
-        if (credentials == null) {
-          return@collectLatest
-        }
+  val glRepositories: StateFlow<List<GitLabProjectCoordinates>> = glAccount.flatMapLatest { account ->
+    if (account == null) return@flatMapLatest flowOf(emptyList())
 
-        cache.computeIfAbsent(credentials) { _ ->
-          val (account, credentialsOrNull) = credentials
-          val credentials = credentialsOrNull ?: return@computeIfAbsent flowOf(listOf())
-          glApiManager.getClient(account.server, credentials.accessToken).graphQL
-            .getSnippetAllowedProjects()
-            .shareIn(flowCs, SharingStarted.Lazily, 1) // Let this live for as long as the repositories flow lives
-        }.collectLatest { send(it) }
+    glApiManager.getClient(account).graphQL
+      .getSnippetAllowedProjects()
+      .catch {
+        LOG.warn("Failed to load the list of snippet-enabled projects for account $account", it)
+        emit(emptyList())
       }
   }.stateIn(cs, SharingStarted.Lazily, listOf())
 
@@ -159,7 +130,7 @@ internal class GitLabCreateSnippetViewModel(
    * Converts the values in this view model to a final immutable result.
    */
   suspend fun toResult(): GitLabCreateSnippetResult? {
-    val (account, _) = glAccountAndCredentials.firstOrNull() ?: return null
+    val account = glAccount.value ?: return null
     return GitLabCreateSnippetResult(
       account,
       onProject.value?.getOrNull(),
