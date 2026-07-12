@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.gitlab.api
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import org.jetbrains.plugins.gitlab.GitLabServersManager
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabMissingCredentialsException
 
 /**
  * Manages the creation of [GitLabApi] clients.
@@ -36,6 +40,23 @@ abstract class GitLabApiManager {
     GitLabApiImpl(serversManager, server, tokenSupplier)
 
   /**
+   * Gets a client that acquires the account credentials before each API call.
+   *
+   * The requests performed by the client may throw additional exceptions if something goes wrong when acquiring the credentials:
+   * * [org.jetbrains.plugins.gitlab.authentication.accounts.GitLabMissingCredentialsException] - if the client could not acquire any credentials from the store
+   */
+  fun getClient(account: GitLabAccount): GitLabApi =
+    getClient(account.server) {
+      try {
+        service<GitLabAccountManager>().findCredentials(account)?.accessToken
+      }
+      catch (e: Exception) {
+        rethrowControlFlowException(e)
+        throw GitLabMissingCredentialsException(account, e)
+      } ?: throw GitLabMissingCredentialsException(account)
+    }
+
+  /**
    * Gets an unauthenticated API Client that can be used for requests that are sure
    * to need no authentication. For any other requests, please use [getClient].
    */
@@ -43,6 +64,6 @@ abstract class GitLabApiManager {
     GitLabApiImpl(serversManager, server)
 }
 
-class GitLabApiManagerImpl : GitLabApiManager() {
+internal class GitLabApiManagerImpl : GitLabApiManager() {
   override val serversManager: GitLabServersManager by lazy { service<GitLabServersManager>() }
 }

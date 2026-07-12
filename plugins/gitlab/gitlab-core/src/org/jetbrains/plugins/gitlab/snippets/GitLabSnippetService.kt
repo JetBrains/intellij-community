@@ -5,13 +5,13 @@ import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.snippets.PathHandlingMode
 import com.intellij.collaboration.snippets.PathHandlingMode.Companion.getFileNameExtractor
-import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.ide.BrowserUtil
 import com.intellij.notification.NotificationListener
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
@@ -35,11 +35,11 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobActionEnum
 import org.jetbrains.plugins.gitlab.api.dto.GitLabVisibilityLevel
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
-import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.mergerequest.util.localizedMessageOrClassName
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
@@ -127,50 +127,19 @@ internal class GitLabSnippetService(private val project: Project, private val se
   }
 
   /**
-   * Gives the user a dialog to re-attempt login after no token could be found for a certain account.
-   * If the user could still not be authenticated could be done, `null` is returned.
+   * Prompts the user to re-login.
    */
-  private suspend fun reattemptLogin(apiManager: GitLabApiManager,
-                                     accountManager: GitLabAccountManager,
-                                     result: GitLabCreateSnippetResult): GitLabApi? {
+  private suspend fun reattemptLogin(accountManager: GitLabAccountManager, account: GitLabAccount): Boolean {
     return coroutineScope {
       async(Dispatchers.EDT) {
-        val loginResult = GitLabLoginUtil.updateToken(project, null, result.account, loginSource = GitLabLoginSource.SNIPPET) { server, name ->
+        val loginResult = GitLabLoginUtil.updateToken(project, null, account, loginSource = GitLabLoginSource.SNIPPET) { server, name ->
           GitLabLoginUtil.isAccountUnique(accountManager.accountsState.value, server, name)
-        }.asSafely<LoginResult.Success>() ?: return@async null
+        }.asSafely<LoginResult.Success>() ?: return@async false
 
-        accountManager.updateAccount(result.account, GitLabCredentials.Token(loginResult.token))
-        apiManager.getClient(result.account.server, loginResult.token)
+        accountManager.updateAccount(account, GitLabCredentials.Token(loginResult.token))
+        true
       }.await()
     }
-  }
-
-  /**
-   * Gets and verifies an API Client that can be used to create a snippet with.
-   * If no token is registered, the user is prompted to attempt a login. If the token is present,
-   * but it turns out to be invalid, the user is also prompted to attempt a login.
-   *
-   * The result is either an API Client that can be used to call API endpoints, or `null` if the
-   * user gives up.
-   */
-  private suspend fun getAndVerifyApi(accountManager: GitLabAccountManager,
-                                      apiManager: GitLabApiManager,
-                                      result: GitLabCreateSnippetResult): GitLabApi? {
-    // Fetch token, if no token is present, re-login
-    val server = result.account.server
-    val api = accountManager.findCredentials(result.account)?.let { apiManager.getClient(server, it.accessToken) }
-              ?: reattemptLogin(apiManager, accountManager, result)
-              ?: return null
-
-    // If a token is present, we check that it is valid with a test request. Reattempt login if token is invalid.
-    runCatchingUser { api.graphQL.getCurrentUser() }.onFailure {
-      when {
-        GitLabApiUtil.isInvalidCredentialsError(it) -> return reattemptLogin(apiManager, accountManager, result)
-        else -> throw it
-      }
-    }
-
-    return api
   }
 
   /**
@@ -185,8 +154,6 @@ internal class GitLabSnippetService(private val project: Project, private val se
                                     files: List<VirtualFile>) {
     // Process result by creating the snippet, copying url, etc.
     val data = result.data
-    val api = getAndVerifyApi(accountManager, apiManager, result) ?: return
-
     val fileNameExtractor = getFileNameExtractor(project, files, data.pathHandlingMode)
 
     val snippetBlobActions = result.nonEmptyContents.map { glContents ->
@@ -198,14 +165,15 @@ internal class GitLabSnippetService(private val project: Project, private val se
       )
     }
 
-    val httpResult = api.graphQL.createSnippet(
-      result.onProject,
-      data.title,
-      data.description,
-      if (data.isPrivate) GitLabVisibilityLevel.private else GitLabVisibilityLevel.public,
-      snippetBlobActions
-    )
-    val snippet = httpResult.getResultOrThrow()
+    val snippet = apiCallWithReLogin(apiManager, accountManager, result.account) {
+      graphQL.createSnippet(
+        result.onProject,
+        data.title,
+        data.description,
+        if (data.isPrivate) GitLabVisibilityLevel.private else GitLabVisibilityLevel.public,
+        snippetBlobActions
+      ).getResultOrThrow()
+    }
 
     val url = snippet.webUrl
     if (data.isCopyUrl) {
@@ -224,6 +192,34 @@ internal class GitLabSnippetService(private val project: Project, private val se
                        message("snippet.create.action.success.title"),
                        HtmlChunk.link(url, message("snippet.create.action.success.description")).toString())
       .setListener(NotificationListener.UrlOpeningListener(false))
+  }
+
+  /**
+   * Calls the API, prompting the user to re-login if the account credentials are missing or invalid.
+   */
+  private suspend fun <T> apiCallWithReLogin(
+    apiManager: GitLabApiManager,
+    accountManager: GitLabAccountManager,
+    account: GitLabAccount,
+    callApi: suspend GitLabApi.() -> T,
+  ): T {
+    while (true) {
+      try {
+        return apiManager.getClient(account).callApi()
+      }
+      catch (e: Exception) {
+        rethrowControlFlowException(e)
+        if (GitLabApiUtil.isAuthorizationError(e)) {
+          val loggedIn = reattemptLogin(accountManager, account)
+          if (!loggedIn) {
+            throw e
+          }
+        }
+        else {
+          throw e
+        }
+      }
+    }
   }
 
   /**
