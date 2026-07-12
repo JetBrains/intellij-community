@@ -32,7 +32,6 @@ import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.Property;
 import com.jetbrains.python.psi.PyAugAssignmentStatement;
-import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyDecoratorList;
@@ -73,6 +72,7 @@ import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyNarrowedType;
 import com.jetbrains.python.psi.types.PyOverloadType;
+import com.jetbrains.python.psi.types.PySyntheticCallHelper;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParameterType;
 import com.jetbrains.python.psi.types.PyTypeUtil;
@@ -95,6 +95,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -327,17 +328,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return getTypeOfMember(qualifierType, null, attrName, refExpr, PyResolveContext.noProperties(context), errors);
   }
 
-  private static @Nullable PyType getTypeFromDunderGetAttr(@NotNull PyClassType classType,
-                                                           @NotNull PyQualifiedExpression anchor,
-                                                           @NotNull TypeEvalContext context) {
-    final ResolveResult getattr = ContainerUtil.getFirstItem(
-      classType.resolveMember(PyNames.GETATTR, anchor, AccessDirection.READ, PyResolveContext.defaultContext(context)));
-    if (getattr != null && getattr.getElement() instanceof PyCallable method) {
-      return context.getReturnType(method);
-    }
-    return PyAnyType.getUnknown();
-  }
-
   private @Nullable Ref<PyType> getTypeFromTargets(@NotNull TypeEvalContext context) {
     final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
 
@@ -543,7 +533,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     List<? extends RatedResolveResult> resolveResults = classType.resolveMember(name, null, AccessDirection.READ, resolveContext);
     if (resolveResults == null || resolveResults.isEmpty()) {
-      return getTypeFromDunderGetAttr(classType, anchor, context);
+      PyType nameArg = Optional.<PyType>ofNullable(PyLiteralType.stringLiteral(anchor, name)).orElse(PyAnyType.getUnknown());
+      return PySyntheticCallHelper.getCallTypeByFunctionName(PyNames.GETATTR, classType, Collections.singletonList(nameArg), context);
     }
 
     List<PyType> providedTypes = StreamEx.of(resolveResults)

@@ -583,6 +583,40 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
+    @TestFor(issues = ["PY-90894"])
+    fun `dunder getattr generic return type`() = test("""
+      class Box[T]:
+          def __getattr__(self, item) -> T:
+              raise NotImplementedError
+
+      def foo(box: Box[int]):
+          expr = box.whatever
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90894"])
+    fun `dunder getattr overloaded by literal name`() = test("""
+      from typing import Literal, overload
+
+      class C:
+          @overload
+          def __getattr__(self, item: Literal["foo"]) -> int: ...
+          @overload
+          def __getattr__(self, item: Literal["bar"]) -> str: ...
+          def __getattr__(self, item):
+              raise NotImplementedError
+
+      def f(c: C):
+          foo = c.foo
+      #   └ TYPE int
+          bar = c.bar
+      #   └ TYPE str
+          baz = c.baz
+      #   └ TYPE Unknown
+      """)
+
+    @Test
     @TestFor(issues = ["PY-85595"])
     fun `dunder getattr not called for explicit Any annotation`() = test("""
       from typing import Any
