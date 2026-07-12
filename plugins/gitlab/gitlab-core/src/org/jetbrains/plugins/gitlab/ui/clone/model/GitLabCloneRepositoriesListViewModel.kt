@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.clone.model
 
-import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.async.collectBatches
 import com.intellij.collaboration.async.flatMapLatestEach
 import com.intellij.collaboration.async.mapStatefulToStateful
@@ -27,12 +26,14 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
+import org.jetbrains.plugins.gitlab.api.GitLabApiUtil
 import org.jetbrains.plugins.gitlab.api.request.getCloneableProjects
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabMissingCredentialsException
 import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneException
 import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneListItem
-import java.net.ConnectException
+import java.io.IOException
 
 /**
  * Represents a list of 'clone items' (could be an error or a list of repositories) associated
@@ -63,15 +64,9 @@ private class GitLabCloneRepositoriesForAccountViewModelImpl(
   @OptIn(ExperimentalCoroutinesApi::class)
   override val items: StateFlow<List<GitLabCloneListItem>> =
     reloadSignal.withInitial(Unit).transformLatest { _ ->
-
       try {
         _isLoading.value = true
-        val credentials = accountManager.findCredentials(account) ?: run {
-          emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.MissingAccessToken(account))))
-          return@transformLatest
-        }
-        val apiClient = apiManager.getClient(account.server, credentials.accessToken)
-        apiClient.graphQL.getCloneableProjects()
+        apiManager.getClient(account).graphQL.getCloneableProjects()
           .map { l -> l.map { GitLabCloneListItem.Repository(account, it) } }
           .collectBatches()
           .collect { emit(it) }
@@ -79,11 +74,14 @@ private class GitLabCloneRepositoriesForAccountViewModelImpl(
       catch (e: CancellationException) {
         throw e
       }
-      catch (_: ConnectException) {
+      catch (_: IOException) {
         emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.ConnectionError(account))))
       }
+      catch (e: GitLabMissingCredentialsException) {
+        emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.MissingAccessToken(account))))
+      }
       catch (e: Throwable) {
-        if (e is HttpStatusErrorException && e.statusCode == 401) {
+        if (GitLabApiUtil.isInvalidCredentialsError(e)) {
           emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.RevokedToken(account))))
         }
         else {
