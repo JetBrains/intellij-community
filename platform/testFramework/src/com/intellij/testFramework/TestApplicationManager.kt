@@ -41,6 +41,7 @@ import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
+import com.intellij.testFramework.common.MockitoThreadLocalCleanup
 import com.intellij.testFramework.common.TheAiSlopToPerformMockKThreadLocalCleanup
 import com.intellij.testFramework.common.assertDisposerEmpty
 import com.intellij.testFramework.common.assertNonDefaultProjectsAreNotLeaked
@@ -198,6 +199,7 @@ class TestApplicationManager private constructor() {
       // this chain to a disposed `ProjectImpl`. Per-test cleanup breaks unrelated MockK-using tests
       // that recreate mocks between tests; suite-level cleanup is safe.
       TheAiSlopToPerformMockKThreadLocalCleanup.clearMockKCallRecorder()
+      MockitoThreadLocalCleanup.clearMockitoState()
       disposeApplicationAndCheckForLeaks()
     }
 
