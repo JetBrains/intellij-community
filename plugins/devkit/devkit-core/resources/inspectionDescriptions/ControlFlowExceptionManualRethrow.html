@@ -1,0 +1,50 @@
+<html>
+<body>
+Reports hand-written guards that rethrow a control-flow exception, such as
+<code>if (e instanceof ControlFlowException) throw e;</code> or <code>if (Logger.shouldRethrow(e)) throw e;</code>.
+
+<p>
+  The quick-fix replaces such a guard with a call of the <code>com.intellij.diagnostic.rethrowControlFlowException()</code>
+  helper, which recognizes the whole control-flow set (<code>ControlFlowException</code> and <code>CancellationException</code>,
+  including <code>ProcessCanceledException</code>) and attaches the current stack trace as a suppressed exception.
+</p>
+<p>
+  Beyond being shorter, the helper is safer: a guard that checks only one of the types
+  (for example <code>CancellationException</code> but not <code>ControlFlowException</code>) silently misses the other,
+  while the helper rethrows both.
+</p>
+<p>
+  Unlike <code>Logger.shouldRethrow()</code>, the helper ignores the <code>idea.log.rethrow.ce</code> system property:
+  it rethrows a control-flow exception even when the property is set to <code>false</code>.
+</p>
+
+<h3>Example:</h3>
+<pre><code lang="java">
+// reported:
+try {
+  // ...
+} catch (Throwable e) {
+  if (e instanceof ControlFlowException) throw e;
+  LOG.error(e);
+}
+
+// after the fix:
+try {
+  // ...
+} catch (Throwable e) {
+  rethrowControlFlowException(e);
+  LOG.error(e);
+}
+</code></pre>
+
+<p>
+  The inspection runs only when the platform the plugin is built against has the helper.
+</p>
+<p>
+  See <a href="https://plugins.jetbrains.com/docs/intellij/background-processes.html#cancellation">Background Processes Cancellation</a> in IntelliJ Platform Plugin SDK docs for more details.
+</p>
+
+<!-- tooltip end -->
+<p><small>New in 2027.1</small></p>
+</body>
+</html>

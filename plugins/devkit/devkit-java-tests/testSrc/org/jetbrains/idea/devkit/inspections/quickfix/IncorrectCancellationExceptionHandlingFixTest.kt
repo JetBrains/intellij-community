@@ -53,4 +53,15 @@ class IncorrectCancellationExceptionHandlingFixTest : IncorrectCancellationExcep
       DevKitBundle.message("inspections.incorrect.cancellation.exception.insert.rethrow.helper.fix.name")))
     myFixture.checkResultByFile("${testName}_after.java")
   }
+
+  // The multi-catch also carries an 'IllegalArgumentException', whose log must stay.
+  fun testInsertRethrowHelperBeforeLogInMultiCatch() {
+    val testName = getTestName(false)
+    myFixture.testHighlighting("$testName.java")
+    assertEmpty(myFixture.filterAvailableIntentions(
+      DevKitBundle.message("inspections.incorrect.cancellation.exception.remove.logging.fix.name")))
+    myFixture.launchAction(myFixture.findSingleIntention(
+      DevKitBundle.message("inspections.incorrect.cancellation.exception.insert.rethrow.helper.fix.name")))
+    myFixture.checkResultByFile("${testName}_after.java")
+  }
 }

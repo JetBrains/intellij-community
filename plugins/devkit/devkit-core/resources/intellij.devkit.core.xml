@@ -686,6 +686,13 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.IncorrectCancellationExceptionHandlingInspection"
                      key="inspections.incorrect.cancellation.exception.handling.display.name"/>
 
+    <localInspection language="UAST" shortName="ControlFlowExceptionManualRethrow"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ControlFlowExceptionManualRethrowInspection"
+                     key="inspections.control.flow.exception.manual.rethrow.display.name"/>
+
     <localInspection language="UAST" shortName="StaticInitializationInExtensions" groupPathKey="inspections.group.path"
                      projectType="INTELLIJ_PLUGIN"
                      key="inspections.static.initialization.in.extensions.name" groupKey="inspections.group.code"

@@ -23,8 +23,8 @@ Reports <code>ProcessCanceledException</code> and <code>CancellationException</c
   because the <code>try</code> block may only pass it on.
 </p>
 <p>
-  The reported problems provide fixes to insert a leading <code>rethrowControlFlowException()</code> call into the catch body,
-  or to remove a logging statement.
+  Quick-fixes insert a leading <code>rethrowControlFlowException()</code> call into the catch body or remove a logging
+  statement when it logs only control-flow exceptions.
 </p>
 
 <h3>Examples:</h3>

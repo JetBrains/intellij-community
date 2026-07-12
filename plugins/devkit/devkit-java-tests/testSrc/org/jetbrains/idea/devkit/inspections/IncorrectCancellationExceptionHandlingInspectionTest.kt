@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.TestDataPath
+import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/incorrectCeHandling")
@@ -35,6 +36,25 @@ class IncorrectCancellationExceptionHandlingInspectionTest : IncorrectCancellati
 
   fun testIncorrectPceHandlingWhenPceCaughtImplicitlyTests() {
     doTest()
+  }
+
+  // This fixture has no 'com.intellij.diagnostic.ControlFlowExceptionsKt', as a plugin built against a platform before 263.
+  fun testInsertRethrowHelperNotOfferedWithoutHelper() {
+    myFixture.configureByText("WithoutHelper.java", """
+      import com.intellij.openapi.progress.ProcessCanceledException;
+
+      class WithoutHelper {
+        void m() {
+          try {
+            // anything
+          } catch (ProcessCanceledException <caret><error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown">e</error>) {
+          }
+        }
+      }
+      """.trimIndent())
+    myFixture.checkHighlighting()
+    assertEmpty(myFixture.filterAvailableIntentions(
+      DevKitBundle.message("inspections.incorrect.cancellation.exception.insert.rethrow.helper.fix.name")))
   }
 
   override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/incorrectCeHandling"

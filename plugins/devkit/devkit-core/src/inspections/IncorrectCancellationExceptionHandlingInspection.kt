@@ -23,6 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevKitBundle.message
 import org.jetbrains.idea.devkit.inspections.quickfix.CancellationExceptionHandlingFixProvider
 import org.jetbrains.idea.devkit.inspections.quickfix.cancellationExceptionHandlingFixes
+import org.jetbrains.idea.devkit.inspections.quickfix.isRethrowHelperAvailable
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UCatchClause
 import org.jetbrains.uast.UClass
@@ -58,7 +59,7 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
           val rawArgType = arg.getExpressionType() ?: continue
           val argTypes = rawArgType.expandDisjunctions()
           for (argType in argTypes) {
-            if (argType.isControlFlowExceptionType() && reportExceptionLogging(node, argType)) {
+            if (argType.isControlFlowExceptionType() && reportExceptionLogging(node, argType, loggingFixes(node, arg, argTypes))) {
               return super.visitCallExpression(node)
             }
           }
@@ -66,13 +67,30 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
         return super.visitCallExpression(node)
       }
 
-      private fun reportExceptionLogging(node: UCallExpression, argType: PsiType): Boolean {
+      private fun reportExceptionLogging(node: UCallExpression, argType: PsiType, fixes: Array<LocalQuickFix>): Boolean {
         val loggedClassName = argType.asSafely<PsiClassType>()?.resolve()?.qualifiedName ?: return false
         // 'as UExpression' selects the UExpression overload (anchors the whole call); the UCallExpression overload would
         // anchor only the method identifier.
-        holder.registerUProblem(node as UExpression, message("inspections.incorrect.exception.logged.name", loggedClassName),
-                                *removeLoggingFixes(node))
+        holder.registerUProblem(node as UExpression, message("inspections.incorrect.exception.logged.name", loggedClassName), *fixes)
         return true
+      }
+
+      /**
+       * Fixes for a log of [loggedArgument], whose type alternatives are [loggedTypes].
+       *
+       * The log is removed only when every alternative is a control-flow exception. A multi-catch parameter such as
+       * `IllegalArgumentException | ProcessCanceledException` also carries failures that must stay logged, so the
+       * cancellation is rethrown before the log instead.
+       */
+      private fun loggingFixes(node: UCallExpression, loggedArgument: UExpression, loggedTypes: List<PsiType>): Array<LocalQuickFix> {
+        if (loggedTypes.all { it.isControlFlowExceptionType() }) {
+          return removeLoggingFixes(node)
+        }
+        val loggedParameter = loggedArgument.skipParenthesizedExprDown().asSafely<USimpleNameReferenceExpression>()?.resolveToUElement()
+        if (loggedParameter is UParameter && loggedParameter.uastParent is UCatchClause) {
+          return insertHelperFixes(loggedParameter)
+        }
+        return LocalQuickFix.EMPTY_ARRAY
       }
 
       override fun visitCatchClause(node: UCatchClause): Boolean {
@@ -400,6 +418,10 @@ private fun cancellationExceptionHandlingChecker(language: Language): Cancellati
 }
 
 private fun insertHelperFixes(parameter: UParameter): Array<LocalQuickFix> {
+  val sourcePsi = parameter.sourcePsi ?: return LocalQuickFix.EMPTY_ARRAY
+  if (!isRethrowHelperAvailable(sourcePsi)) {
+    return LocalQuickFix.EMPTY_ARRAY
+  }
   return cancellationExceptionHandlingFixes(parameter, CancellationExceptionHandlingFixProvider::getInsertRethrowControlFlowExceptionFix)
 }
 

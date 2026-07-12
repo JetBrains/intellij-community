@@ -15,8 +15,10 @@ import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCatchClause
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtThrowExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 
 /**
@@ -35,6 +37,11 @@ internal class KtCancellationExceptionHandlingFixProvider : CancellationExceptio
   override fun getInsertRethrowControlFlowExceptionFix(caughtExceptionParameter: PsiElement): LocalQuickFix? {
     val parameter = caughtExceptionParameter as? KtParameter ?: return null
     return LocalQuickFix.from(KtInsertRethrowHelperFix(parameter))
+  }
+
+  override fun getReplaceGuardWithRethrowHelperFix(guardStatement: PsiElement): LocalQuickFix? {
+    val ifExpression = guardStatement as? KtIfExpression ?: return null
+    return LocalQuickFix.from(KtReplaceGuardFix(ifExpression))
   }
 }
 
@@ -63,5 +70,28 @@ private class KtInsertRethrowHelperFix(parameter: KtParameter) : PsiUpdateModCom
     block.addAfter(factory.createNewLine(), block.lBrace)
     ShortenReferencesFacility.getInstance().shorten(inserted)
     CodeStyleManager.getInstance(context.project()).reformat(block)
+  }
+}
+
+private class KtReplaceGuardFix(ifExpression: KtIfExpression) : PsiUpdateModCommandAction<KtIfExpression>(ifExpression) {
+
+  override fun getFamilyName(): String {
+    return DevKitBundle.message("inspections.control.flow.exception.manual.rethrow.fix.name")
+  }
+
+  override fun invoke(context: ActionContext, element: KtIfExpression, updater: ModPsiUpdater) {
+    val thrown = thrownExpression(element) ?: return
+    val replacement = KtPsiFactory(context.project()).createExpression("$RETHROW_CONTROL_FLOW_EXCEPTION_KOTLIN_FQN(${thrown.text})")
+    val inserted = element.replace(replacement) as KtElement
+    ShortenReferencesFacility.getInstance().shorten(inserted)
+  }
+
+  private fun thrownExpression(ifExpression: KtIfExpression): KtExpression? {
+    val throwExpression = when (val then = ifExpression.then) {
+      is KtThrowExpression -> then
+      is KtBlockExpression -> then.statements.singleOrNull() as? KtThrowExpression
+      else -> null
+    }
+    return throwExpression?.thrownExpression
   }
 }
