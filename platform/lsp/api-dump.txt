@@ -433,7 +433,6 @@ c:com.intellij.platform.lsp.api.customization.LspIntentionAction
 - f:invoke(com.intellij.openapi.vfs.VirtualFile):V
 - f:isAvailable():Z
 - isAvailable(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
-- f:isAvailable(kotlin.jvm.functions.Function1):Z
 - f:startInWriteAction():Z
 a:com.intellij.platform.lsp.api.customization.LspOnTypeFormattingCustomizer
 f:com.intellij.platform.lsp.api.customization.LspOnTypeFormattingDisabled

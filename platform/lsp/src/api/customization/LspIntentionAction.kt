@@ -87,23 +87,21 @@ open class LspIntentionAction(protected val lspClient: LspClient, private val in
    * and also fills the auxiliary [uriToDocumentMap] that is used later in the [invoke] function.
    */
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
-  fun isAvailable(): Boolean = isAvailable { true }
-
-  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
-  fun isAvailable(codeActionValidator: (CodeAction) -> Boolean): Boolean {
+  fun isAvailable(): Boolean {
     codeAction.disabled?.let { return false }
 
     resolveCodeAction()
 
     val workspaceEdit = codeAction.edit
+    if (workspaceEdit?.changes?.isNotEmpty() == true && workspaceEdit.documentChanges?.isNotEmpty() == true) return false
+
     if (!uriToDocumentMapInitialized) {
       uriToDocumentMap = if (workspaceEdit != null) getUriToDocumentMap(workspaceEdit) else emptyMap()
       uriToDocumentMapInitialized = true
     }
 
     return uriToDocumentMap != null &&
-           (workspaceEdit != null || codeAction.command != null) &&
-           codeActionValidator(codeAction)
+           (workspaceEdit != null || codeAction.command != null)
   }
 
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)

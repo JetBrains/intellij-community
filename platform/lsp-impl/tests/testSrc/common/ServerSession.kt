@@ -68,6 +68,18 @@ internal abstract class ServerSession : ServerSessionProtocolScope(), CoroutineS
     paramsBuilder: () -> Params,
   ): Response
 
+  /**
+   * Sends a server-to-client request and returns immediately without waiting for the response.
+   * Unlike [sendRequest], this is safe to call from within an [expectRequest] result lambda (which runs on the fake
+   * server's single message-processing thread) - awaiting the response there would deadlock that thread. The request is
+   * written to the wire before this function returns, so it reaches the client before any response the same lambda
+   * produces afterward.
+   */
+  abstract fun <Params : Any, Response> sendRequestNoWait(
+    method: ServerToClientLspRequest<Params, Response>,
+    paramsBuilder: () -> Params,
+  )
+
   abstract fun <Params : Any> sendNotification(
     method: ServerToClientLspNotification<Params>,
     paramsBuilder: () -> Params,
@@ -178,6 +190,13 @@ private class ServerSessionImpl(
     paramsBuilder: () -> Params,
   ): Response {
     return method.send(server.remoteLanguageClient, paramsBuilder()).await()
+  }
+
+  override fun <Params : Any, Response> sendRequestNoWait(
+    method: ServerToClientLspRequest<Params, Response>,
+    paramsBuilder: () -> Params,
+  ) {
+    method.send(server.remoteLanguageClient, paramsBuilder())
   }
 
   override fun <Params : Any> sendNotification(

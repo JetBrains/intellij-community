@@ -9,8 +9,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspIntentionAction
 import com.intellij.platform.lsp.api.customization.LspOptimizeImportsSupport
+import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.documentMapping
+import com.intellij.platform.lsp.impl.features.intention.toCodeAction
+import com.intellij.platform.lsp.impl.util.LspWorkspaceEditApplier
 import com.intellij.psi.PsiFile
 import org.eclipse.lsp4j.CodeAction
 import org.eclipse.lsp4j.CodeActionContext
@@ -19,6 +22,7 @@ import org.eclipse.lsp4j.CodeActionParams
 import org.eclipse.lsp4j.CodeActionTriggerKind
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
+import org.eclipse.lsp4j.WorkspaceEdit
 
 /**
  * There are two ways in which the Platform may come to [LspImportOptimizer]:
@@ -40,9 +44,21 @@ internal class LspImportOptimizer : ImportOptimizer {
   override fun processFile(psiFile: PsiFile): Runnable {
     val virtualFile = psiFile.virtualFile?.takeIf { it.isInLocalFileSystem && it !is VirtualFileWindow } ?: return noResult
     val lspClient = findClientToOptimizeImports(psiFile) ?: return noResult
+
     val codeAction = requestCodeAction(lspClient, virtualFile) ?: return noResult
+
     val intentionAction = LspIntentionAction(lspClient, codeAction)
-    if (!intentionAction.isAvailable { isReasonableOrganizeImportsAction(lspClient, virtualFile, it) }) return noResult
+    if (!intentionAction.isAvailable()) return noResult
+
+    val command = codeAction.command
+    // If codeAction.edit is null or effectively a no-op, handle Command in a synchronous way (see IJPL-235332)
+    if ((codeAction.edit == null || codeAction.edit == WorkspaceEdit()) && command != null) {
+      val edit = (lspClient as LspClientImpl).executeCommandExpectingWorkspaceEdit(command) ?: return noResult
+      val applier = LspWorkspaceEditApplier.create(lspClient, edit) ?: return noResult
+      return Runnable {
+        applier.applyWorkspaceEdit()
+      }
+    }
 
     return Runnable {
       intentionAction.invoke(virtualFile)
@@ -66,24 +82,12 @@ internal class LspImportOptimizer : ImportOptimizer {
 
       // Only one code action supported as UI does not suppose selection of the one import
       // option from the list (like it is processed in VS Code)
-      lspClient.sendRequestSync { it.textDocumentService.codeAction(params) }?.singleOrNull()?.right
+      lspClient.sendRequestSync { it.textDocumentService.codeAction(params) }?.singleOrNull()?.toCodeAction()
     }
 
     return results.firstOrNull()
   }
 
-  private fun isReasonableOrganizeImportsAction(lspClient: LspClient, virtualFile: VirtualFile, codeAction: CodeAction): Boolean {
-    val currentFileUri = lspClient.descriptor.getFileUri(virtualFile)
-    if (codeAction.kind != SourceOrganizeImports) return false
-    if (codeAction.command != null) return false // not expected for the Optimize Imports action
-    val edit = codeAction.edit ?: return false
-    if (edit.changes != null && edit.documentChanges != null) return false
-    if (edit.changes.isNullOrEmpty() && edit.documentChanges.isNullOrEmpty()) return false
-    if (edit.changes?.any { it.key != currentFileUri } == true) return false // other files editing is not expected
-    if (edit.documentChanges?.any { it.isRight } == true) return false // ResourceOperation is not expected
-    if (edit.documentChanges?.any { it.left?.textDocument?.uri != currentFileUri } == true) return false // other files editing is not expected
-    return true
-  }
 }
 
 

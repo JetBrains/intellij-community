@@ -15,6 +15,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import org.eclipse.lsp4j.ApplyWorkspaceEditParams
 import org.eclipse.lsp4j.CodeAction
 import org.eclipse.lsp4j.CodeActionKind
 import org.eclipse.lsp4j.CodeActionOptions
@@ -107,7 +108,6 @@ class LspOptimizeImportsTest {
     }
 
     codeInsightFixture.performEditorAction("OptimizeImports")
-    serverSession.awaitExpected()
     codeInsightFixture.checkResult("Alpha \nBeta \nGamma")
   }
 
@@ -125,7 +125,6 @@ class LspOptimizeImportsTest {
     }
 
     codeInsightFixture.performEditorAction("OptimizeImports")
-    serverSession.awaitExpected()
     codeInsightFixture.checkResult("A B C D")
   }
 
@@ -140,8 +139,97 @@ class LspOptimizeImportsTest {
     }
 
     codeInsightFixture.performEditorAction("OptimizeImports")
-    serverSession.awaitExpected()
     codeInsightFixture.checkResult("No imports to organize")
+  }
+
+  @Test
+  fun `server returns CodeAction with Command that triggers applyEdit`() = timeoutRunBlocking {
+    val virtualFile = codeInsightFixture.configureByText("cmd.txt", "Alpha Beta").virtualFile
+    val serverSession = configureServerSession(project, virtualFile)
+    val fileUri = serverSession.fileUri(virtualFile)
+
+    serverSession.expectRequest(
+      serverSession.CODE_ACTION,
+      { it.textDocument.uri == fileUri && it.context.only?.contains(CodeActionKind.SourceOrganizeImports) == true },
+    ) {
+      // A code action with a `command` and without an `edit`: the client must execute the command.
+      listOf<Either<Command, CodeAction>>(
+        Either.forRight(CodeAction().apply {
+          title = "Organize Imports"
+          kind = CodeActionKind.SourceOrganizeImports
+          command = Command("Organize Imports", "organizeImports")
+        })
+      )
+    }
+
+    // On `workspace/executeCommand`, the server sends a `workspace/applyEdit` request before returning the command response.
+    // The client must return that edit from executeCommandExpectingWorkspaceEdit() and apply it.
+    serverSession.expectRequest(serverSession.EXECUTE_COMMAND, { it.command == "organizeImports" }) {
+      serverSession.sendRequestNoWait(serverSession.APPLY_EDIT) {
+        ApplyWorkspaceEditParams(WorkspaceEdit(mapOf(
+          fileUri to listOf(TextEdit(Range(Position(0, 0), Position(0, 0)), "X"))
+        )))
+      }
+      "ok"
+    }
+
+    codeInsightFixture.performEditorAction("OptimizeImports")
+    codeInsightFixture.checkResult("XAlpha Beta")
+  }
+
+  @Test
+  fun `server returns CodeAction with Command that doesn't trigger applyEdit`() = timeoutRunBlocking {
+    val virtualFile = codeInsightFixture.configureByText("cmd2.txt", "Alpha Beta").virtualFile
+    val serverSession = configureServerSession(project, virtualFile)
+    val fileUri = serverSession.fileUri(virtualFile)
+
+    serverSession.expectRequest(
+      serverSession.CODE_ACTION,
+      { it.textDocument.uri == fileUri && it.context.only?.contains(CodeActionKind.SourceOrganizeImports) == true },
+    ) {
+      listOf<Either<Command, CodeAction>>(
+        Either.forRight(CodeAction().apply {
+          title = "Organize Imports"
+          kind = CodeActionKind.SourceOrganizeImports
+          command = Command("Organize Imports", "organizeImports")
+        })
+      )
+    }
+
+    serverSession.expectRequest(serverSession.EXECUTE_COMMAND, { it.command == "organizeImports" }) {
+      "ok"
+    }
+
+    codeInsightFixture.performEditorAction("OptimizeImports")
+    codeInsightFixture.checkResult("Alpha Beta")
+  }
+
+  @Test
+  fun `server returns bare Command that triggers applyEdit`() = timeoutRunBlocking {
+    val virtualFile = codeInsightFixture.configureByText("bareCommand.txt", "Alpha Beta").virtualFile
+    val serverSession = configureServerSession(project, virtualFile)
+    val fileUri = serverSession.fileUri(virtualFile)
+
+    serverSession.expectRequest(
+      serverSession.CODE_ACTION,
+      { it.textDocument.uri == fileUri && it.context.only?.contains(CodeActionKind.SourceOrganizeImports) == true },
+    ) {
+      listOf<Either<Command, CodeAction>>(
+        Either.forLeft(Command("Organize Imports", "organizeImports"))
+      )
+    }
+
+    serverSession.expectRequest(serverSession.EXECUTE_COMMAND, { it.command == "organizeImports" }) {
+      serverSession.sendRequestNoWait(serverSession.APPLY_EDIT) {
+        ApplyWorkspaceEditParams(WorkspaceEdit(mapOf(
+          fileUri to listOf(TextEdit(Range(Position(0, 0), Position(0, 0)), "X"))
+        )))
+      }
+      "ok"
+    }
+
+    codeInsightFixture.performEditorAction("OptimizeImports")
+    codeInsightFixture.checkResult("XAlpha Beta")
   }
 
   @Test
@@ -186,7 +274,6 @@ class LspOptimizeImportsTest {
     }
 
     codeInsightFixture.performEditorAction("OptimizeImports")
-    serverSession.awaitExpected()
     codeInsightFixture.checkResult("Alpha Beta")
   }
 }
