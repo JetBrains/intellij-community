@@ -19,5 +19,51 @@ f:com.intellij.platform.eel.provider.EelProviderProjectUtilKt
 - s:setEelMachine(com.intellij.openapi.project.Project,com.intellij.platform.eel.EelMachine):V
 - s:toEelApiBlocking(com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.EelApi
 - s:toEelApiBlocking(com.intellij.platform.eel.EelMachine,com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.EelApi
+*f:com.intellij.platform.eel.provider.utils.EelPathUtils
+- sf:INSTANCE:com.intellij.platform.eel.provider.utils.EelPathUtils
+- sf:createTemporaryDirectory(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,Z):java.nio.file.Path
+- sf:createTemporaryDirectory(com.intellij.platform.eel.EelApi,java.lang.String,java.lang.String,Z):java.nio.file.Path
+- bs:createTemporaryDirectory$default(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,Z,I,java.lang.Object):java.nio.file.Path
+- bs:createTemporaryDirectory$default(com.intellij.platform.eel.EelApi,java.lang.String,java.lang.String,Z,I,java.lang.Object):java.nio.file.Path
+- sf:createTemporaryFile(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,Z):java.nio.file.Path
+- bs:createTemporaryFile$default(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,Z,I,java.lang.Object):java.nio.file.Path
+- f:deleteRecursively(java.nio.file.Path):V
+- f:expandUserHome(com.intellij.platform.eel.EelDescriptor,java.lang.String):java.nio.file.Path
+- sf:getActualPath(java.nio.file.Path):java.nio.file.Path
+- sf:getHomePath(com.intellij.platform.eel.EelDescriptor):java.nio.file.Path
+- sf:getNioPath(java.lang.String,com.intellij.platform.eel.EelDescriptor):java.nio.file.Path
+- sf:getSystemFolder(com.intellij.openapi.project.Project):java.nio.file.Path
+- sf:getSystemFolder(com.intellij.platform.eel.EelApi):java.nio.file.Path
+- sf:getSystemFolder(com.intellij.platform.eel.EelDescriptor):java.nio.file.Path
+- sf:getUriLocalToEel(java.nio.file.Path):java.net.URI
+- sf:isPathLocal(java.nio.file.Path):Z
+- sf:isProjectLocal(com.intellij.openapi.project.Project):Z
+- sf:renderAsEelPath(java.nio.file.Path):java.lang.String
+- sf:transferContentsIfNonLocal(com.intellij.platform.eel.EelApi,java.nio.file.Path):java.nio.file.Path
+- sf:transferContentsIfNonLocal(com.intellij.platform.eel.EelApi,java.nio.file.Path,java.nio.file.Path):java.nio.file.Path
+- sf:transferContentsIfNonLocal(com.intellij.platform.eel.EelApi,java.nio.file.Path,java.nio.file.Path,com.intellij.platform.eel.provider.utils.EelFileTransferAttributesStrategy):java.nio.file.Path
+- bs:transferContentsIfNonLocal$default(com.intellij.platform.eel.EelApi,java.nio.file.Path,java.nio.file.Path,com.intellij.platform.eel.provider.utils.EelFileTransferAttributesStrategy,I,java.lang.Object):java.nio.file.Path
+- sf:transferLocalContentToRemote(java.nio.file.Path,com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget):java.nio.file.Path
+- sf:transferLocalContentToRemote(java.nio.file.Path,com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget,com.intellij.platform.eel.provider.utils.EelFileTransferAttributesStrategy):java.nio.file.Path
+- bs:transferLocalContentToRemote$default(java.nio.file.Path,com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget,com.intellij.platform.eel.provider.utils.EelFileTransferAttributesStrategy,I,java.lang.Object):java.nio.file.Path
+*:com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget
+*f:com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget$Explicit
+- com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget
+- <init>(java.nio.file.Path):V
+- f:component1():java.nio.file.Path
+- f:copy(java.nio.file.Path):com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget$Explicit
+- bs:copy$default(com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget$Explicit,java.nio.file.Path,I,java.lang.Object):com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget$Explicit
+- equals(java.lang.Object):Z
+- f:getPath():java.nio.file.Path
+- hashCode():I
+*f:com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget$Temporary
+- com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget
+- <init>(com.intellij.platform.eel.EelDescriptor):V
+- f:component1():com.intellij.platform.eel.EelDescriptor
+- f:copy(com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget$Temporary
+- bs:copy$default(com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget$Temporary,com.intellij.platform.eel.EelDescriptor,I,java.lang.Object):com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget$Temporary
+- equals(java.lang.Object):Z
+- f:getDescriptor():com.intellij.platform.eel.EelDescriptor
+- hashCode():I
 *f:com.intellij.platform.eel.provider.utils.EelPathUtilsKt
 - *sf:Path(java.lang.String,com.intellij.platform.eel.EelDescriptor):java.nio.file.Path

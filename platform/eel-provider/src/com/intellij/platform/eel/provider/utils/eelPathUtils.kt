@@ -477,6 +477,7 @@ object EelPathUtils {
     return null
   }
 
+  @ApiStatus.Internal
   fun getCaseSensitivity(directoryType: EelFileInfo.Type.Directory): FileAttributes.CaseSensitivity {
     return when (directoryType.sensitivity) {
       EelFileInfo.CaseSensitivity.SENSITIVE -> FileAttributes.CaseSensitivity.SENSITIVE
