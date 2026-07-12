@@ -108,7 +108,6 @@ abstract class GitLabConnectedProjectViewModelBase(
       filterVm = filterVm,
       repository = projectName,
       avatarIconsProvider = avatarIconProvider,
-      tokenRefreshFlow = connection.tokenRefreshFlow,
       loaderSupplier = { cs, filtersValue -> connection.projectData.mergeRequests.getListLoaderIn(cs, filtersValue.toSearchQuery()) }
     )
   }

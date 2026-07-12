@@ -55,7 +55,6 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
     // Init a list VM with mocked loader
     val vm = GitLabMergeRequestsListViewModelImpl(parentCs = backgroundScope, filterVm = filterVm, repository = "",
                                                   avatarIconsProvider = mockk(),
-                                                  tokenRefreshFlow = mockk(relaxed = true),
                                                   loaderSupplier = loaderSupplierMock)
     vm.awaitLoader()
     verify(exactly = 1) { loaderSupplierMock.invoke(any(), eq(defaultFilter)) }
@@ -98,7 +97,6 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
     // Init a list VM with mocked loader
     val vm = GitLabMergeRequestsListViewModelImpl(parentCs = backgroundScope, filterVm = filterVm, repository = "",
                                                   avatarIconsProvider = mockk(),
-                                                  tokenRefreshFlow = mockk(relaxed = true),
                                                   loaderSupplier = loaderSupplierMock)
 
     val filterValueStateMerged = GitLabMergeRequestsFiltersValue(state = MergeRequestStateFilterValue.MERGED)
@@ -130,7 +128,6 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
 
     val vm = GitLabMergeRequestsListViewModelImpl(parentCs = backgroundScope, filterVm = filterVm, repository = "",
                                                   avatarIconsProvider = mockk(),
-                                                  tokenRefreshFlow = mockk(relaxed = true),
                                                   loaderSupplier = loaderSupplierMock)
 
     val user = GitLabUserDTO(id = "", username = "", name = "", avatarUrl = "", webUrl = "")

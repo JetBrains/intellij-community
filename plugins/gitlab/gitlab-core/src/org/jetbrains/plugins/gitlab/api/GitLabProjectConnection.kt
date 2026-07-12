@@ -6,9 +6,6 @@ import git4idea.remote.hosting.HostedGitRepositoryConnection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
@@ -30,11 +27,8 @@ class GitLabProjectConnection(
   val currentUser: GitLabUserDTO,
   apiClient: GitLabApi,
   glMetadata: GitLabServerMetadata?,
-  tokenState: Flow<String>
 ) : HostedGitRepositoryConnection<GitLabProjectMapping, GitLabAccount> {
   val id: String = UUID.randomUUID().toString()
-
-  val tokenRefreshFlow: Flow<Unit> = tokenState.drop(1).map { }
 
   val imageLoader: GitLabImageLoader = GitLabImageLoader(apiClient)
 
@@ -44,7 +38,6 @@ class GitLabProjectConnection(
                                                      glMetadata,
                                                      projectDetails,
                                                      currentUser,
-                                                     tokenRefreshFlow,
                                                      // handle the project rename
                                                      repo.repository.copy(projectPath = projectDetails.path),
                                                      repo.remote)

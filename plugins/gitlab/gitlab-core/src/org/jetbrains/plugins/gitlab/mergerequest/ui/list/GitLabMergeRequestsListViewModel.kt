@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 import com.intellij.collaboration.async.ReloadablePotentiallyInfiniteListLoader
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.modelFlow
-import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.SingleCoroutineLauncher
@@ -17,7 +16,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -58,7 +56,6 @@ internal class GitLabMergeRequestsListViewModelImpl(
   override val filterVm: GitLabMergeRequestsFiltersViewModel,
   override val repository: String,
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-  tokenRefreshFlow: Flow<Unit>,
   private val loaderSupplier: (CoroutineScope, GitLabMergeRequestsFiltersValue) -> ReloadablePotentiallyInfiniteListLoader<GitLabMergeRequestShortRestDTO>,
 ) : GitLabMergeRequestsListViewModel {
 
@@ -70,7 +67,6 @@ internal class GitLabMergeRequestsListViewModelImpl(
 
   private val loaderFlow: Flow<ReloadablePotentiallyInfiniteListLoader<GitLabMergeRequestShortRestDTO>> =
     filterVm.searchState
-      .combine(tokenRefreshFlow.withInitial(Unit)) { search, _ -> search }
       .mapScoped { search -> loaderSupplier(this, search) }
       .shareIn(scope, SharingStarted.Lazily, 1)
 

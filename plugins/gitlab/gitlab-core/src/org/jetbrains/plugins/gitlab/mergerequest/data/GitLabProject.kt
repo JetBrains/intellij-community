@@ -121,7 +121,6 @@ internal class GitLabProjectImpl(
   private val glMetadata: GitLabServerMetadata?,
   private val details: GitLabProjectDetails,
   private val currentUser: GitLabUserDTO,
-  private val tokenRefreshFlow: Flow<Unit>,
   override val projectCoordinates: GitLabProjectCoordinates,
   override val gitRemote: GitRemoteUrlCoordinates,
 ) : GitLabProject {
@@ -142,7 +141,7 @@ internal class GitLabProjectImpl(
 
   override val mergeRequests: GitLabProjectMergeRequestsStore by lazy {
     CachingGitLabProjectMergeRequestsStore(project, cs, api, glMetadata, currentUser,
-                                           tokenRefreshFlow, projectCoordinates, projectId, gitRemote)
+                                           projectCoordinates, projectId, gitRemote)
   }
 
   private val labelsLoader by lazy {

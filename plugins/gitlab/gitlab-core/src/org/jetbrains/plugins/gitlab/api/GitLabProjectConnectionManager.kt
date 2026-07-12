@@ -12,14 +12,12 @@ import git4idea.remote.hosting.SingleHostedGitRepositoryConnectionManagerImpl
 import git4idea.remote.hosting.ValidatingHostedGitRepositoryConnectionFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.request.findProject
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.api.request.getProject
 import org.jetbrains.plugins.gitlab.api.request.getProjectNamespace
-import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.data.GitLabProjectDetails
@@ -39,8 +37,8 @@ internal class GitLabProjectConnectionManager(private val project: Project, cs: 
   private val connectionFactory = ValidatingHostedGitRepositoryConnectionFactory(
     { projectsManager },
     { accountManager }
-  ) { glProjectMapping, account, tokenState ->
-    doOpenConnectionIn(this, glProjectMapping, account, tokenState)
+  ) { glProjectMapping, account, _ ->
+    doOpenConnectionIn(this, glProjectMapping, account)
   }
 
   private val delegate = SingleHostedGitRepositoryConnectionManagerImpl(cs, connectionFactory)
@@ -63,7 +61,6 @@ internal class GitLabProjectConnectionManager(private val project: Project, cs: 
     scope: CoroutineScope,
     glProjectMapping: GitLabProjectMapping,
     account: GitLabAccount,
-    tokenState: StateFlow<GitLabCredentials>,
   ): GitLabProjectConnection {
     val apiClient = service<GitLabApiManager>().getClient(account)
     val glMetadata = apiClient.getMetadataOrNull()
@@ -76,8 +73,7 @@ internal class GitLabProjectConnectionManager(private val project: Project, cs: 
                                    account,
                                    currentUser,
                                    apiClient,
-                                   glMetadata,
-                                   tokenState.map { it.accessToken })
+                                   glMetadata)
   }
 
   private suspend fun GitLabApi.loadProjectDetails(

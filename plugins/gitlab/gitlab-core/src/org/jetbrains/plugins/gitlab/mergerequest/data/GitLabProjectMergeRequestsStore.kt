@@ -17,7 +17,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -81,7 +80,6 @@ class CachingGitLabProjectMergeRequestsStore(
   private val api: GitLabApi,
   private val glMetadata: GitLabServerMetadata?,
   private val currentUser: GitLabUserDTO,
-  private val tokenRefreshFlow: Flow<Unit>,
   private val projectCoordinates: GitLabProjectCoordinates,
   private val projectId: String,
   private val gitRemote: GitRemoteUrlCoordinates,
@@ -104,7 +102,6 @@ class CachingGitLabProjectMergeRequestsStore(
       api.rest.getMergeRequestListURI(projectId, searchQuery),
       { it.id },
 
-      requestReloadFlow = tokenRefreshFlow.withInitial(Unit),
       shouldTryToLoadAll = false
     ) { uri, etag ->
       api.rest.loadUpdatableJsonList<GitLabMergeRequestShortRestDTO>(
@@ -128,14 +125,6 @@ class CachingGitLabProjectMergeRequestsStore(
     }
 
     return loader
-  }
-
-  init {
-    cs.launch {
-      tokenRefreshFlow.collect {
-        models.keys.forEach { mrId -> reloadMergeRequest(mrId) }
-      }
-    }
   }
 
   override fun getShared(iid: String): SharedFlow<Result<GitLabMergeRequest>> {
