@@ -30,6 +30,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
+import org.jetbrains.plugins.gitlab.api.GitLabApiUtil
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobActionEnum
 import org.jetbrains.plugins.gitlab.api.dto.GitLabVisibilityLevel
@@ -40,7 +41,6 @@ import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabSelectorErrorStatusPresenter.Companion.isAuthorizationException
 import org.jetbrains.plugins.gitlab.mergerequest.util.localizedMessageOrClassName
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.CREATE_CANCEL
@@ -165,7 +165,7 @@ internal class GitLabSnippetService(private val project: Project, private val se
     // If a token is present, we check that it is valid with a test request. Reattempt login if token is invalid.
     runCatchingUser { api.graphQL.getCurrentUser() }.onFailure {
       when {
-        isAuthorizationException(it) -> return reattemptLogin(apiManager, accountManager, result)
+        GitLabApiUtil.isInvalidCredentialsError(it) -> return reattemptLogin(apiManager, accountManager, result)
         else -> throw it
       }
     }

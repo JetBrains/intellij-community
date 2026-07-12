@@ -12,12 +12,12 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.api.GitLabApi
+import org.jetbrains.plugins.gitlab.api.GitLabApiUtil
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.api.request.loadImage
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabSelectorErrorStatusPresenter.Companion.isAuthorizationException
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.Image
 
@@ -47,7 +47,9 @@ class GitLabAccountsDetailsProvider private constructor(
     try {
       val api = apiClientSupplier(account) ?: return Result.Error(CollaborationToolsBundle.message("account.token.missing"), true)
       val details = runCatchingUser { api.graphQL.getCurrentUser() }.getOrElse {
-        if (isAuthorizationException(it)) return Result.Error(CollaborationToolsBundle.message("account.token.invalid"), true)
+        if (GitLabApiUtil.isInvalidCredentialsError(it)) {
+          return Result.Error(CollaborationToolsBundle.message("account.token.invalid"), true)
+        }
         return Result.Error(it.localizedMessage, false)
       }
       val serversManager = service<GitLabServersManager>()
