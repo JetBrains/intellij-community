@@ -13,6 +13,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -25,8 +26,8 @@ import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
 import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
+import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.api.request.isProjectForked
-import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestMetricsDTO
@@ -443,15 +444,14 @@ internal class GitLabMetricsLoader(private val project: Project) {
     private val LOG = logger<GitLabMetricsLoader>()
   }
 
-  private suspend fun getApi(serverPath: GitLabServerPath): Pair<GitLabApi, GitLabAccount>? {
+  private suspend fun getApi(serverPath: GitLabServerPath): GitLabApi? {
     val accountManager = serviceAsync<GitLabAccountManager>()
     val defaultAccountManager = project.serviceAsync<GitLabProjectDefaultAccountHolder>()
 
     val account = defaultAccountManager.account.takeIf { it?.server == serverPath }
                   ?: accountManager.accountsState.value.firstOrNull { it.server == serverPath }
                   ?: return null
-    val credentials = accountManager.findCredentials(account) ?: return null
-    return service<GitLabApiManager>().getClient(serverPath, credentials.accessToken) to account
+    return service<GitLabApiManager>().getClient(account)
   }
 
   private suspend fun chooseRepo(): GitLabProjectMapping? {
@@ -465,7 +465,7 @@ internal class GitLabMetricsLoader(private val project: Project) {
 
     val nonFork = withContext(Dispatchers.IO) {
       knownRepos.firstOrNull { repo ->
-        val (api, _) = getApi(repo.repository.serverPath) ?: return@firstOrNull false
+        val api = getApi(repo.repository.serverPath) ?: return@firstOrNull false
         !api.isProjectForked(repo.repository.projectPath)
       }
     }
@@ -479,10 +479,12 @@ internal class GitLabMetricsLoader(private val project: Project) {
     try {
       val chosenRepoMapping = chooseRepo() ?: return null
 
-      val (api, account) = getApi(chosenRepoMapping.repository.serverPath) ?: return null
-      return api.graphQL.getMergeRequestMetrics(chosenRepoMapping.repository.projectPath, account.name).body()
+      val api = getApi(chosenRepoMapping.repository.serverPath) ?: return null
+      val currentUser = api.graphQL.getCurrentUser()
+      return api.graphQL.getMergeRequestMetrics(chosenRepoMapping.repository.projectPath, currentUser.username).body()
     }
     catch (e: Exception) {
+      rethrowControlFlowException(e)
       LOG.warn("Failed to load metrics", e)
       return null
     }
