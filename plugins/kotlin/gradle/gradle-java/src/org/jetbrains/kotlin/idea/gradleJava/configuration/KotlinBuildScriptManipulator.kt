@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.idea.configuration.getRepositoryForVersion
 import org.jetbrains.kotlin.idea.configuration.isRepositoryConfigured
 import org.jetbrains.kotlin.idea.configuration.toGradleCompileScope
 import org.jetbrains.kotlin.idea.configuration.toKotlinRepositorySnippet
+import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.COMPILER_OPTIONS
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.DefinedKotlinPluginManagementVersion
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.FOOJAY_RESOLVER_CONVENTION_NAME
@@ -628,10 +629,30 @@ class KotlinBuildScriptManipulator(
     override fun findKotlinPluginManagementVersion(): DefinedKotlinPluginManagementVersion? {
         val versionExpression = scriptFile.getPluginManagementBlock()
             ?.findBlock("plugins")
-            ?.findPluginExpressions(::isKotlinPluginIdentifier)?.versionExpression?.arguments?.singleOrNull() ?: return null
+            ?.findPluginExpressions(::isKotlinPluginIdentifier)
+            ?.versionExpression
+            ?.arguments
+            ?.singleOrNull()
+            ?: return null
+
         return DefinedKotlinPluginManagementVersion(
-            parsedVersion = versionExpression.extractStringValue()?.let { IdeKotlinVersion.opt(it) }
+            parsedVersion = versionExpression.resolveKotlinPluginVersion()
         )
+    }
+
+    private fun KtExpression.resolveKotlinPluginVersion(): IdeKotlinVersion? {
+        extractStringValue()
+            ?.let(IdeKotlinVersion::opt)
+            ?.let { return it }
+
+        val baseDir = scriptFile.virtualFile.parent?.path ?: return null
+        val propertyKey = extractKotlinGradlePropertyKey() ?: return null
+
+        val propertyValue = GradlePropertiesFileFacade(baseDir)
+            .readPropertyFromGradleProperties(propertyKey)
+            ?: return null
+
+        return IdeKotlinVersion.opt(propertyValue)
     }
 
     private fun KtFile.findScriptInitializer(startsWith: String): KtScriptInitializer? =

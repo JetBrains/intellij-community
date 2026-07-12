@@ -504,6 +504,18 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("7.6.x")
+    fun testConfigureKotlinVersionPluginManagementGradlePropertiesProviderKts() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6.x")
+    fun testConfigureKotlinVersionPluginManagementGradlePropertiesProviderGetKts() {
+        runJvmToolchainTest()
+    }
+
+    @Test
     @TargetVersions("<9.0.0")
     fun testListNonConfiguredModules() {
         importProjectFromTestData()
