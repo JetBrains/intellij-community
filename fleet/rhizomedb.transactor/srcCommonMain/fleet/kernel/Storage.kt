@@ -50,7 +50,7 @@ import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 private object Storage {
-  val logger = logger<Storage>()
+  val logger by lazy { logger<Storage>() }
 }
 
 const val DbSnapshotVersion: String = "11"

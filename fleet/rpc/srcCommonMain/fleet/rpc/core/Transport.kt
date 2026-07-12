@@ -19,7 +19,7 @@ import kotlinx.coroutines.selects.select
 import org.jetbrains.annotations.ApiStatus
 import kotlin.time.TimeSource
 
-private val logger = logger<Transport>()
+private val logger by lazy { logger<Transport>() }
 
 @ApiStatus.Internal
 class Transport(

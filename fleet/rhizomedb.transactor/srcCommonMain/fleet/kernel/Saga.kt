@@ -13,7 +13,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 private object Saga {
-  val logger = logger<Saga>()
+  val logger by lazy { logger<Saga>() }
 }
 
 /**

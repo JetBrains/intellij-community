@@ -153,7 +153,7 @@ internal data class RebaseLoopState(
 }
 
 internal object RebaseLogger {
-  val logger = logger<RebaseLogger>()
+  val logger by lazy { logger<RebaseLogger>() }
 }
 
 private suspend fun offering(transactor: Transactor, offersChan: ReceiveChannel<RebaseLoopState>) {

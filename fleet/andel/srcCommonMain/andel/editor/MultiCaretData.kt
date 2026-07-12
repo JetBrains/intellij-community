@@ -17,7 +17,7 @@ data class MultiCaretData(val sortedCarets: List<Caret> = emptyList(),
                           val caretsById: Map<CaretId, Caret> = emptyMap(),
                           val mergedAnchors: Map<CaretId, CaretId> = emptyMap()) {
   companion object {
-    val logger = logger<MultiCaretData>()
+    val logger by lazy { logger<MultiCaretData>() }
   }
 
   class Serializer : DataSerializer<MultiCaretData, Serializer.MultiCaretDataData>(MultiCaretDataData.serializer()) {

@@ -37,7 +37,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.incrementAndFetch
 
-private val LOG = logger<LspClient>()
+private val LOG by lazy { logger<LspClient>() }
 
 private class ProtocolViolation(message: String) : Exception(message)
 

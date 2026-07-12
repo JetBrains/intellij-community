@@ -113,7 +113,7 @@ suspend fun waitFor(p: () -> Boolean) {
 }
 
 private object Logger {
-  val logger = logger<Logger>()
+  val logger by lazy { logger<Logger>() }
 }
 
 suspend fun <T> waitForNotNullWithTimeout(timeout: Duration = 30.seconds, p: () -> T?): T {
