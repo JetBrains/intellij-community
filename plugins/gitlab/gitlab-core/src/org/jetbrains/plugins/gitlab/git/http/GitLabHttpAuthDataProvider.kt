@@ -49,15 +49,14 @@ class GitLabHttpAuthDataProvider : GitHttpAuthDataProvider {
 
 private suspend fun performLogin(project: Project, gitHostUrl: String, login: String? = null): LoginResult {
   val accountManager = serviceAsync<GitLabAccountManager>()
-  val accountsWithCredentials = accountManager.accountsState.value
+  val accounts = accountManager.accountsState.value
     .filter { GitHostingUrlUtil.matchHost(it.server.toURI(), gitHostUrl) }
-    .associateWith { accountManager.findCredentials(it) }
 
   val loginResult = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-    when (accountsWithCredentials.size) {
+    when (accounts.size) {
       0 -> accountManager.tryCreateAccount(project, gitHostUrl, login)
-      1 -> accountManager.reLogInWithAccount(project, accountsWithCredentials.keys.single(), login)
-      else -> accountManager.selectAccountAndLogIn(project, accountsWithCredentials, gitHostUrl, login)
+      1 -> accountManager.reLogInWithAccount(project, accounts.single(), login)
+      else -> accountManager.selectAccountAndLogIn(project, accounts, gitHostUrl, login)
     }
   }
 
@@ -94,14 +93,14 @@ private suspend fun GitLabAccountManager.reLogInWithAccount(
 
 private suspend fun GitLabAccountManager.selectAccountAndLogIn(
   project: Project,
-  accountsWithCredentials: Map<GitLabAccount, GitLabCredentials?>,
+  accounts: List<GitLabAccount>,
   url: String,
   login: String?,
 ): LoginResult = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
   val description = GitLabBundle.message("account.choose.git.description", url)
-  val account = GitLabLoginUtil.chooseAccount(project, null, description, accountsWithCredentials.keys)
+  val account = GitLabLoginUtil.chooseAccount(project, null, description, accounts)
                 ?: return@withContext LoginResult.Failure
-  val credentials = accountsWithCredentials[account]
+  val credentials = findCredentials(account)
   if (credentials == null) {
     GitLabLoginUtil.updateToken(project, null, account, login, loginSource = GitLabLoginSource.GIT, ::isAccountUnique)
   }
