@@ -12,8 +12,10 @@ import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.terminal.frontend.view.portForwarding.installPortForwarding
+import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -226,13 +228,13 @@ private class TransferableTerminalProjectBindingScope(val coroutineScope: Corout
 @ApiStatus.Internal
 @Service(Service.Level.APP)
 class TransferableTerminalSessionFactory(private val coroutineScope: CoroutineScope) {
-  fun create(
+  suspend fun create(
     project: Project,
     options: ShellStartupOptions,
     sourceNavigationProjectPath: String? = null,
     startupFusInfo: TerminalStartupFusInfo? = null,
   ): TransferableTerminalSession {
-    return TransferableTerminalSessionImpl(
+    return TransferableTerminalSessionImpl.create(
       parentScope = coroutineScope,
       initialProject = project,
       requestedOptions = options,
@@ -249,13 +251,13 @@ class TransferableTerminalSessionFactory(private val coroutineScope: CoroutineSc
 
 @ApiStatus.Internal
 @TestOnly
-fun createTransferableTerminalSessionForTest(
+suspend fun createTransferableTerminalSessionForTest(
   parentScope: CoroutineScope,
   initialProject: Project,
   sessionStarter: (CoroutineScope) -> TerminalSession,
   stateTransitionObserver: (TerminalViewSessionState) -> Unit,
 ): TransferableTerminalSession {
-  return TransferableTerminalSessionImpl(
+  return TransferableTerminalSessionImpl.create(
     parentScope = parentScope,
     initialProject = initialProject,
     requestedOptions = ShellStartupOptions.Builder().build(),
@@ -268,18 +270,8 @@ fun createTransferableTerminalSessionForTest(
 
 private class TransferableTerminalSessionImpl(
   parentScope: CoroutineScope,
-  initialProject: Project,
-  requestedOptions: ShellStartupOptions,
-  sourceNavigationProjectPath: String?,
   private val startupFusInfo: TerminalStartupFusInfo?,
-  sessionStarter: (Project, ShellStartupOptions, CoroutineScope) -> TerminalSession = { project, options, scope ->
-    startStandardTerminalSession(
-      project = project,
-      options = options,
-      scope = scope,
-      statisticsProject = null,
-    ).session
-  },
+  private val sessionStarter: (Project, ShellStartupOptions, CoroutineScope) -> TerminalSession,
   private val stateTransitionObserver: (TerminalViewSessionState) -> Unit = {},
 ) : TransferableTerminalSession {
   private val lifetime = TransferableTerminalLifetime(parentScope)
@@ -293,27 +285,38 @@ private class TransferableTerminalSessionImpl(
   private val closed = AtomicBoolean(false)
   private val stateLock = Any()
   private val viewLock = Any()
-  private val session: TerminalSession
+  private lateinit var session: TerminalSession
+
   @Volatile
   private lateinit var currentView: TerminalView
 
   override val view: TerminalView
     get() = currentView
 
-  init {
-    stateTransitionObserver(TerminalViewSessionState.NotStarted)
+  private suspend fun initialize(
+    initialProject: Project,
+    requestedOptions: ShellStartupOptions,
+    sourceNavigationProjectPath: String?,
+  ): TransferableTerminalSessionImpl {
     try {
-      session = sessionStarter(initialProject, requestedOptions, coroutineScope)
+      stateTransitionObserver(TerminalViewSessionState.NotStarted)
+      session = withContext(Dispatchers.IO) {
+        sessionStarter(initialProject, requestedOptions, coroutineScope)
+      }
       coroutineScope.coroutineContext.job.invokeOnCompletion {
         transitionToTerminated()
       }
       check(transitionToRunning()) { "Transferable terminal runtime terminated during startup" }
-      bind(initialProject, sourceNavigationProjectPath)
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        bind(initialProject, sourceNavigationProjectPath)
+      }
       check(sessionState.value == TerminalViewSessionState.Running) { "Transferable terminal runtime terminated during startup" }
+      return this
     }
     catch (t: Throwable) {
-      lifetime.close()
-      transitionToTerminated()
+      withContext(NonCancellable) {
+        close()
+      }
       throw t
     }
   }
@@ -332,6 +335,7 @@ private class TransferableTerminalSessionImpl(
   }
 
   override fun bind(project: Project, sourceNavigationProjectPath: String?): TerminalView {
+    ThreadingAssertions.assertEventDispatchThread()
     val prepared = prepareBind(project, sourceNavigationProjectPath)
     val committed = prepared.commit() ?: run {
       prepared.close()
@@ -342,6 +346,7 @@ private class TransferableTerminalSessionImpl(
   }
 
   override fun prepareBind(project: Project, sourceNavigationProjectPath: String?): PreparedTransferableTerminalBinding {
+    ThreadingAssertions.assertEventDispatchThread()
     check(!closed.get()) { "Transferable terminal session is already closed" }
     val projectScope = project.service<TransferableTerminalProjectBindingScope>().coroutineScope
     val prepared = lifetime.prepareBinding(projectScope) { bindingScope ->
@@ -413,5 +418,33 @@ private class TransferableTerminalSessionImpl(
 
   companion object {
     private val nextRuntimeId = AtomicLong(1)
+
+    suspend fun create(
+      parentScope: CoroutineScope,
+      initialProject: Project,
+      requestedOptions: ShellStartupOptions,
+      sourceNavigationProjectPath: String?,
+      startupFusInfo: TerminalStartupFusInfo?,
+      sessionStarter: (Project, ShellStartupOptions, CoroutineScope) -> TerminalSession = { project, options, scope ->
+        startStandardTerminalSession(
+          project = project,
+          options = options,
+          scope = scope,
+          statisticsProject = null,
+        ).session
+      },
+      stateTransitionObserver: (TerminalViewSessionState) -> Unit = {},
+    ): TransferableTerminalSession {
+      return TransferableTerminalSessionImpl(
+        parentScope = parentScope,
+        startupFusInfo = startupFusInfo,
+        sessionStarter = sessionStarter,
+        stateTransitionObserver = stateTransitionObserver,
+      ).initialize(
+        initialProject = initialProject,
+        requestedOptions = requestedOptions,
+        sourceNavigationProjectPath = sourceNavigationProjectPath,
+      )
+    }
   }
 }
