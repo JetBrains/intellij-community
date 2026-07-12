@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.idea.configuration.getRepositoryForVersion
 import org.jetbrains.kotlin.idea.configuration.isRepositoryConfigured
 import org.jetbrains.kotlin.idea.configuration.toGradleCompileScope
 import org.jetbrains.kotlin.idea.configuration.toGroovyRepositorySnippet
+import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.COMPILER_OPTIONS
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.DefinedKotlinPluginManagementVersion
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.FOOJAY_RESOLVER_CONVENTION_NAME
@@ -318,12 +319,34 @@ class GroovyBuildScriptManipulator(
     }
 
     override fun findKotlinPluginManagementVersion(): DefinedKotlinPluginManagementVersion? {
-        val block = scriptFile.getBlockByName("pluginManagement")?.getBlockByName("plugins") ?: return null
-        val kotlinVersionPart = block.findPluginExpressions("org.jetbrains.kotlin.jvm")?.versionExpression ?: return null
-        val kotlinVersionExpression = kotlinVersionPart.arguments.singleOrNull() ?: return null
+        val pluginsBlock = scriptFile
+            .getBlockByName("pluginManagement")
+            ?.getBlockByName("plugins")
+            ?: return null
+
+        val versionExpression = pluginsBlock
+            .findPluginExpressions("org.jetbrains.kotlin.jvm")
+            ?.versionExpression
+            ?.arguments
+            ?.singleOrNull()
+            ?: return null
+
         return DefinedKotlinPluginManagementVersion(
-            parsedVersion = IdeKotlinVersion.opt(kotlinVersionExpression.text.extractTextFromQuotes())
+            parsedVersion = versionExpression.resolveKotlinPluginVersion()
         )
+    }
+
+    private fun GrExpression.resolveKotlinPluginVersion(): IdeKotlinVersion? {
+        IdeKotlinVersion.opt(text.extractTextFromQuotes())?.let { return it }
+
+        val baseDir = scriptFile.virtualFile.parent?.path ?: return null
+        val propertyKey = extractGroovyGradlePropertyKey() ?: return null
+
+        val propertyValue = GradlePropertiesFileFacade(baseDir)
+            .readPropertyFromGradleProperties(propertyKey)
+            ?: return null
+
+        return IdeKotlinVersion.opt(propertyValue)
     }
 
     override fun changeLanguageFeatureConfiguration(
