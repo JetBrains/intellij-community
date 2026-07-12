@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 jps_test(
     name = "sdk-tests_test",
@@ -11,6 +12,14 @@ jps_test(
 ### skip generation section `test intellij.python.sdk.tests`
 
 ### auto-generated section `build intellij.python.sdk` start
+create_kotlinc_options(
+    name = "custom_sdk",
+    opt_in = [
+        "kotlin.time.ExperimentalTime",
+        "com.jetbrains.python.PyInternalExecApi",
+    ],
+)
+
 jvm_library(
     name = "sdk",
     srcs = glob(
@@ -23,6 +32,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_sdk",
     module_name = "intellij.python.sdk",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -84,6 +94,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_sdk",
     module_name = "intellij.python.sdk",
     visibility = ["//visibility:public"],
     runtime_deps = [

@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.pycharm.community` start
 resourcegroup(
@@ -338,6 +339,11 @@ jps_test(
 ### auto-generated section `test intellij.python.commonTests` end
 
 ### auto-generated section `build intellij.python.community.impl` start
+create_kotlinc_options(
+    name = "custom_python-community-impl",
+    opt_in = ["com.jetbrains.python.PyInternalExecApi"],
+)
+
 jvm_library(
     name = "python-community-impl",
     srcs = glob(
@@ -350,6 +356,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_python-community-impl",
     module_name = "intellij.python.community.impl",
     resource_strip_prefix = "pluginResources",
     resources = glob(
@@ -518,6 +525,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_python-community-impl",
     module_name = "intellij.python.community.impl",
     visibility = ["//visibility:public"],
     exports = [
