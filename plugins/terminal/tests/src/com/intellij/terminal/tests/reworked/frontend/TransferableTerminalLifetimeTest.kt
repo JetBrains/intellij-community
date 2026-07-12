@@ -4,6 +4,8 @@ package com.intellij.terminal.tests.reworked.frontend
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.terminal.frontend.session.TransferableTerminalLifetime
 import com.intellij.terminal.frontend.session.createStandardStateAwareTerminalSession
 import com.intellij.terminal.frontend.session.createTransferableTerminalSessionForTest
@@ -36,6 +38,59 @@ import org.junit.jupiter.api.Timeout
 @TestApplication
 class TransferableTerminalLifetimeTest {
   private val project: Project by projectFixture()
+
+  @Test
+  fun runtimeStartsOffEdtAndPresentationIsCreatedOnEdt() = runBlocking(Dispatchers.EDT) {
+    val applicationScope = childScope("test application")
+    var runtimeStartedOnEdt = true
+    val session = createTransferableTerminalSessionForTest(
+      parentScope = applicationScope,
+      initialProject = project,
+      sessionStarter = { runtimeScope ->
+        runtimeStartedOnEdt = ApplicationManager.getApplication().isDispatchThread
+        TestRawTerminalSession(runtimeScope)
+      },
+      stateTransitionObserver = {},
+    )
+    try {
+      assertThat(runtimeStartedOnEdt).isFalse()
+      assertThat(ApplicationManager.getApplication().isDispatchThread).isTrue()
+      assertThat(session.view.component).isNotNull
+    }
+    finally {
+      session.close()
+      applicationScope.cancel()
+    }
+    Unit
+  }
+
+  @Test
+  fun startupFailureClosesRuntimeBeforeReturning() = runBlocking {
+    val applicationScope = childScope("test application")
+    val transitions = mutableListOf<TerminalViewSessionState>()
+    lateinit var runtimeScope: CoroutineScope
+    try {
+      val result = runCatching {
+        createTransferableTerminalSessionForTest(
+          parentScope = applicationScope,
+          initialProject = project,
+          sessionStarter = { startedScope ->
+            runtimeScope = startedScope
+            error("runtime startup failed")
+          },
+          stateTransitionObserver = transitions::add,
+        )
+      }
+
+      assertThat(result.exceptionOrNull()).hasMessage("runtime startup failed")
+      assertThat(runtimeScope.isActive).isFalse()
+      assertThat(transitions).containsExactly(TerminalViewSessionState.NotStarted, TerminalViewSessionState.Terminated)
+    }
+    finally {
+      applicationScope.cancel()
+    }
+    Unit
+  }
 
   @Test
   fun sourceOwnerCancellationAfterRebindLeavesRuntimeAndDestinationBindingActive() = runBlocking(Dispatchers.Unconfined) {
