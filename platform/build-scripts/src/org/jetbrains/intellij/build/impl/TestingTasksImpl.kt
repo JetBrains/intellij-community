@@ -1612,6 +1612,7 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.syntax.i18n.tests",
   "intellij.platform.syntax.psi.tests",
   "intellij.platform.syntax.tests",
+  "intellij.platform.testFramework.tests",
   "intellij.platform.testFramework.junit5.jimfs.tests",
   "intellij.platform.testFramework.junit5.projectStructure.tests",
   "intellij.platform.testFramework.selfContainedProjects.tests",

@@ -1,6 +1,23 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
+jps_test(
+    name = "testFramework-tests_test",
+    timeout = "moderate",
+    ####
+    ## testFramework-tests_test runs tests from testFramework-tests_test_lib.jar,
+    ## but its runtime classpath also contains testFramework.jar.
+    ## That production framework jar contains classes in the default package:
+    ## _FirstInSuiteTest.class, _LastInSuiteTest.class
+    ## to prevent them from being executed as actual tests, we use filtering by testFramework-tests_test_lib.jar
+    ####
+    env = {"JB_TEST_JAR": "testFramework-tests_test_lib.jar"},
+    tags = ["community-aggregator"],
+    runtime_deps = [":testFramework-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.testFramework.tests`
+
 ### auto-generated section `build intellij.platform.testFramework` start
 jvm_provided_library(
     name = "libraries_junit5_provided",
@@ -478,10 +495,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.testFramework.tests` end
-
-### auto-generated section `test intellij.platform.testFramework.tests` start
-jps_test(
-    name = "testFramework-tests_test",
-    runtime_deps = [":testFramework-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.testFramework.tests` end
