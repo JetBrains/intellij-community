@@ -205,7 +205,7 @@ class String16(ValueField):
 
 class List(ValueField):
     structcode: None
-    type: Struct | ScalarObj | ResourceObj | ClassInfoClass | type[ValueField]
+    type: Struct | ScalarObj | ResourceObj | ClassInfoClass | Type[ValueField]
     pad: int
     def __init__(
         self, name: str, type: Struct | ScalarObj | ResourceObj | ClassInfoClass | Type[ValueField], pad: int = 1

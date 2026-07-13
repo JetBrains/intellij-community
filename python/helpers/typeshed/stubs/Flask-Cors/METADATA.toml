@@ -2,4 +2,4 @@ version = "6.0.3"
 upstream-repository = "https://github.com/corydolphin/flask-cors"
 # Requires a version of flask with a `py.typed` file
 dependencies = ["Flask>=2.0.0"]
-obsolete-since = "6.0.4" # Released on 2026-06-07
+obsolete-since = { version = "6.0.4", date = "2026-06-07" }

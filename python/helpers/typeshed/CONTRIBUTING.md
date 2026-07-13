@@ -176,10 +176,10 @@ supported:
   This defaults to `types-<distribution>` and should only be set in special
   cases.
 * `upstream-repository` (recommended): The URL of the upstream repository.
-* `obsolete-since` (optional): This field is part of our process for
+* `obsolete-since` (optional): This table is part of our process for
   [removing obsolete third-party libraries](#third-party-library-removal-policy).
   It contains the first version of the corresponding library that ships
-  its own `py.typed` file.
+  its own `py.typed` file, and the date when that version was released.
 * `no-longer-updated` (optional): This field is set to `true` before removing
   stubs for other reasons than the upstream library shipping with type
   information.
