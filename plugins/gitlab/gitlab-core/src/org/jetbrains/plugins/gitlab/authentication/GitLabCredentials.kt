@@ -2,10 +2,31 @@
 package org.jetbrains.plugins.gitlab.authentication
 
 import kotlinx.serialization.Serializable
+import kotlin.time.Clock
+import kotlin.time.Instant
+
+/**
+ * Safety margin, in seconds, subtracted from the access token expiration time so that a token that is about
+ * to expire is refreshed proactively instead of being used for an operation that may outlive it.
+ */
+private const val ACCESS_TOKEN_EXPIRY_MARGIN_SECONDS = 60
 
 @Serializable
 sealed class GitLabCredentials {
   abstract val accessToken: String
+
+  @Serializable
+  class OAuth(override val accessToken: String, val refreshToken: String, val expiresIn: Int, private val createdAt: Long) :
+    GitLabCredentials() {
+    fun isAccessTokenValid(): Boolean =
+      Clock.System.now() < Instant.fromEpochSeconds(createdAt + expiresIn - ACCESS_TOKEN_EXPIRY_MARGIN_SECONDS)
+
+    companion object {
+      fun fromDTO(dto: GitLabOAuthResponseDTO): OAuth = with(dto) {
+        OAuth(accessToken, refreshToken, expiresIn, createdAt)
+      }
+    }
+  }
 
   @Serializable
   class Token(override val accessToken: String) : GitLabCredentials()

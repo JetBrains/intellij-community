@@ -29,8 +29,10 @@ object HttpClientUtil {
   const val CONTENT_ENCODING_HEADER = "Content-Encoding"
   const val CONTENT_ENCODING_GZIP = "gzip"
 
+  const val ACCEPT_HEADER: String = "Accept"
   const val CONTENT_TYPE_HEADER = "Content-Type"
   const val CONTENT_TYPE_JSON = "application/json"
+  const val CONTENT_TYPE_ENCODED_FORM: String = "application/x-www-form-urlencoded"
 
   const val USER_AGENT_HEADER = "User-Agent"
 

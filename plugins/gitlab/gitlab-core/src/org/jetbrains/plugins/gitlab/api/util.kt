@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.api
 
 import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.util.resolveRelative
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabCredentialsRefreshException
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabMissingCredentialsException
 import java.net.HttpURLConnection
 import java.net.URI
@@ -10,7 +11,9 @@ import java.net.URLEncoder
 
 object GitLabApiUtil {
   fun isAuthorizationError(exception: Throwable): Boolean {
-    return exception is GitLabMissingCredentialsException || isInvalidCredentialsError(exception)
+    return exception is GitLabCredentialsRefreshException ||
+           exception is GitLabMissingCredentialsException ||
+           isInvalidCredentialsError(exception)
   }
 
   fun isInvalidCredentialsError(exception: Throwable): Boolean {

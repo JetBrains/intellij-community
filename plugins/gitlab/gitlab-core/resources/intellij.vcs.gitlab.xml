@@ -14,12 +14,17 @@
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.libraries.markdown"/>
     <module name="intellij.libraries.miglayout.swing"/>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.libraries.netty.codec.http"/>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.builtInServer"/>
+    <module name="intellij.platform.builtInServer.impl"/>
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.collaborationTools"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.credentialStore"/>
     <module name="intellij.platform.diff"/>
     <module name="intellij.platform.diff.impl"/>
     <module name="intellij.platform.editor.ui"/>
@@ -55,6 +60,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <httpRequestHandler implementation="org.jetbrains.plugins.gitlab.authentication.GitLabOAuthService$GitLabOAuthCallbackHandler"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabPersistentAccounts"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager"
                         serviceImplementation="org.jetbrains.plugins.gitlab.authentication.accounts.PersistentGitLabAccountManager"/>

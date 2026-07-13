@@ -38,6 +38,7 @@ internal class GitLabCloneListRenderer(
 
   private fun GitLabCloneException.message(): @Nls String = when (this) {
     is GitLabCloneException.ConnectionError -> CollaborationToolsBundle.message("error.connection.error")
+    is GitLabCloneException.AccessTokenRefreshFailure -> CollaborationToolsBundle.message("account.credentials.refresh.failed")
     is GitLabCloneException.MissingAccessToken -> CollaborationToolsBundle.message("account.token.missing")
     is GitLabCloneException.RevokedToken -> CollaborationToolsBundle.message("http.status.error.refresh.token")
     is GitLabCloneException.Unknown -> message
@@ -45,6 +46,7 @@ internal class GitLabCloneListRenderer(
 
   private fun GitLabCloneException.name(): @Nls String = when (this) {
     is GitLabCloneException.MissingAccessToken,
+    is GitLabCloneException.AccessTokenRefreshFailure,
     is GitLabCloneException.RevokedToken,
       -> CollaborationToolsBundle.message("login.again.action.text")
     is GitLabCloneException.ConnectionError,
@@ -55,8 +57,9 @@ internal class GitLabCloneListRenderer(
   private fun GitLabCloneException.performAction(): (Any) -> Unit {
     when (this) {
       is GitLabCloneException.MissingAccessToken,
+      is GitLabCloneException.AccessTokenRefreshFailure,
       is GitLabCloneException.RevokedToken,
-        -> return { cloneVm.switchToLoginPanel(account) }
+        -> return { cloneVm.switchToEntryLoginPanel(account) }
       is GitLabCloneException.ConnectionError,
       is GitLabCloneException.Unknown,
         -> return { vm.reload(account) }

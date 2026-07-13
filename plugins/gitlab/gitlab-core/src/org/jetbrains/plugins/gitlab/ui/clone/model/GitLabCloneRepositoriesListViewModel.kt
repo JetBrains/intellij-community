@@ -30,6 +30,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabApiUtil
 import org.jetbrains.plugins.gitlab.api.request.getCloneableProjects
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabCredentialsRefreshException
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabMissingCredentialsException
 import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneException
 import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneListItem
@@ -79,6 +80,9 @@ private class GitLabCloneRepositoriesForAccountViewModelImpl(
       }
       catch (e: GitLabMissingCredentialsException) {
         emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.MissingAccessToken(account))))
+      }
+      catch (e: GitLabCredentialsRefreshException) {
+        emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.AccessTokenRefreshFailure(account))))
       }
       catch (e: Throwable) {
         if (GitLabApiUtil.isInvalidCredentialsError(e)) {

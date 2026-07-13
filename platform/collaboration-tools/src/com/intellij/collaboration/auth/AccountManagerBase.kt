@@ -21,7 +21,7 @@ import kotlinx.coroutines.withContext
  * Credentials are stored in [credentialsRepository]
  */
 abstract class AccountManagerBase<A : Account, Cred : Any>(
-  private val logger: Logger
+  private val logger: Logger,
 ) : AccountManager<A, Cred> {
 
   private val persistentAccounts get() = accountsRepository()
@@ -37,86 +37,99 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
                                                   ?: _accountsState.asStateFlow()
 
   private val accountsEventsFlow = MutableSharedFlow<Event<A, Cred>>()
-  private val mutex = Mutex()
+  protected val dataGuard: Mutex = Mutex()
 
   override suspend fun updateAccounts(accountsWithCredentials: Map<A, Cred?>) {
-    withContext(Dispatchers.Default) {
-      mutex.withLock {
-        withContext(NonCancellable) {
-          val currentSet = persistentAccounts.accounts
-          val removed = currentSet - accountsWithCredentials.keys
-          for (account in removed) {
-            saveCredentialsSafe(account, null)
-          }
+    dataGuard.withLock {
+      doUpdateAccounts(accountsWithCredentials)
+    }
+  }
 
-          for ((account, credentials) in accountsWithCredentials) {
-            if (credentials != null) {
-              saveCredentialsSafe(account, credentials)
-            }
-          }
-          val added = accountsWithCredentials.keys - currentSet
-          if (added.isNotEmpty() || removed.isNotEmpty()) {
-            persistentAccounts.accounts = accountsWithCredentials.keys
-            _accountsState.value = accountsWithCredentials.keys
-            logger.debug("Account list changed to: ${persistentAccounts.accounts}")
-          }
-          accountsEventsFlow.emit(Event.AccountsRemoved(removed))
-          accountsEventsFlow.emit(Event.AccountsAddedOrUpdated(accountsWithCredentials))
+  /**
+   * NB: must be done under [dataGuard]
+   */
+  protected suspend fun doUpdateAccounts(accountsWithCredentials: Map<A, Cred?>) {
+    withContext(Dispatchers.Default + NonCancellable) {
+      val currentSet = persistentAccounts.accounts
+      val removed = currentSet - accountsWithCredentials.keys
+      for (account in removed) {
+        saveCredentialsSafe(account, null)
+      }
+
+      for ((account, credentials) in accountsWithCredentials) {
+        if (credentials != null) {
+          saveCredentialsSafe(account, credentials)
         }
       }
+      val added = accountsWithCredentials.keys - currentSet
+      if (added.isNotEmpty() || removed.isNotEmpty()) {
+        persistentAccounts.accounts = accountsWithCredentials.keys
+        _accountsState.value = accountsWithCredentials.keys
+        logger.debug("Account list changed to: ${persistentAccounts.accounts}")
+      }
+      accountsEventsFlow.emit(Event.AccountsRemoved(removed))
+      accountsEventsFlow.emit(Event.AccountsAddedOrUpdated(accountsWithCredentials))
     }
   }
 
   override suspend fun updateAccount(account: A, credentials: Cred) {
-    withContext(Dispatchers.Default) {
-      mutex.withLock {
-        withContext(NonCancellable) {
-          val currentSet = persistentAccounts.accounts
-          val newAccount = account !in currentSet
-          val newSet = if (!newAccount) {
-            // remove and add an account to update auxiliary fields
-            (currentSet - account) + account
-          }
-          else {
-            logger.debug("Added new account: $account")
-            currentSet + account
-          }
-          saveCredentialsSafe(account, credentials)
-          persistentAccounts.accounts = newSet
-          _accountsState.value = newSet
-          accountsEventsFlow.emit(Event.AccountsAddedOrUpdated(mapOf(account to credentials)))
-          logger.debug("Updated credentials for account: $account")
-        }
+    dataGuard.withLock {
+      doUpdateAccount(account, credentials)
+    }
+  }
+
+  /**
+   * NB: must be done under [dataGuard]
+   */
+  protected suspend fun doUpdateAccount(account: A, credentials: Cred) {
+    withContext(Dispatchers.Default + NonCancellable) {
+      val currentSet = persistentAccounts.accounts
+      val newAccount = account !in currentSet
+      val newSet = if (!newAccount) {
+        // remove and add an account to update auxiliary fields
+        (currentSet - account) + account
       }
+      else {
+        logger.debug("Added new account: $account")
+        currentSet + account
+      }
+      saveCredentialsSafe(account, credentials)
+      persistentAccounts.accounts = newSet
+      _accountsState.value = newSet
+      accountsEventsFlow.emit(Event.AccountsAddedOrUpdated(mapOf(account to credentials)))
+      logger.debug("Updated credentials for account: $account")
     }
   }
 
   override suspend fun removeAccount(account: A) {
-    withContext(Dispatchers.Default) {
-      mutex.withLock {
-        withContext(NonCancellable) {
-          val currentSet = persistentAccounts.accounts
-          val newSet = currentSet - account
-          if (newSet.size != currentSet.size) {
-            saveCredentialsSafe(account, null)
-            persistentAccounts.accounts = newSet
-            _accountsState.value = newSet
-            accountsEventsFlow.emit(Event.AccountsRemoved(setOf(account)))
-            logger.debug("Removed account: $account")
-          }
-        }
+    dataGuard.withLock {
+      doRemoveAccount(account)
+    }
+  }
+
+  /**
+   * NB: must be done under [dataGuard]
+   */
+  protected suspend fun doRemoveAccount(account: A) {
+    withContext(Dispatchers.Default + NonCancellable) {
+      val currentSet = persistentAccounts.accounts
+      val newSet = currentSet - account
+      if (newSet.size != currentSet.size) {
+        saveCredentialsSafe(account, null)
+        persistentAccounts.accounts = newSet
+        _accountsState.value = newSet
+        accountsEventsFlow.emit(Event.AccountsRemoved(setOf(account)))
+        logger.debug("Removed account: $account")
       }
     }
   }
 
   private suspend fun saveCredentialsSafe(account: A, credentials: Cred?) {
-    withContext(Dispatchers.IO) {
-      try {
-        persistentCredentials.persistCredentials(account, credentials)
-      }
-      catch (e: Exception) {
-        logger.warn("Could not save credentials for account $account", e)
-      }
+    try {
+      persistentCredentials.persistCredentials(account, credentials)
+    }
+    catch (e: Exception) {
+      logger.warn("Could not save credentials for account $account", e)
     }
   }
 

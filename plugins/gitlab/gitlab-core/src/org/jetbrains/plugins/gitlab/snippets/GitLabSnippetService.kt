@@ -116,7 +116,7 @@ internal class GitLabSnippetService(private val project: Project, private val se
   private suspend fun attemptLogin(accountManager: GitLabAccountManager): Boolean {
     return coroutineScope {
       async(Dispatchers.Main) {
-        GitLabLoginUtil.logInViaToken(project, null, loginSource = GitLabLoginSource.SNIPPET) { server, name ->
+        GitLabLoginUtil.loginWithOAuthOrToken(project, null, loginSource = GitLabLoginSource.SNIPPET) { server, name ->
           GitLabLoginUtil.isAccountUnique(accountManager.accountsState.value, server, name)
         }.asSafely<LoginResult.Success>()?.also {
           accountManager.save(it)
@@ -131,7 +131,7 @@ internal class GitLabSnippetService(private val project: Project, private val se
   private suspend fun reattemptLogin(accountManager: GitLabAccountManager, account: GitLabAccount): Boolean {
     return coroutineScope {
       async(Dispatchers.EDT) {
-        GitLabLoginUtil.reLogInViaToken(project, null, account, loginSource = GitLabLoginSource.SNIPPET) { server, name ->
+        GitLabLoginUtil.reLogIn(project, null, account, loginSource = GitLabLoginSource.SNIPPET) { server, name ->
           GitLabLoginUtil.isAccountUnique(accountManager.accountsState.value, server, name)
         }.asSafely<LoginResult.Success>()?.also {
           accountManager.save(it)

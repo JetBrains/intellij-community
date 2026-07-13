@@ -18,6 +18,7 @@ import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.api.request.loadImage
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabCredentialsRefreshException
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabMissingCredentialsException
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.Image
@@ -56,6 +57,9 @@ class GitLabAccountsDetailsProvider private constructor(
     }
     catch (e: Exception) {
       rethrowControlFlowException(e)
+      if (e is GitLabCredentialsRefreshException) {
+        return Result.Error(CollaborationToolsBundle.message("account.credentials.refresh.failed"), true)
+      }
       if (e is GitLabMissingCredentialsException) {
         return Result.Error(CollaborationToolsBundle.message("account.token.missing"), true)
       }
@@ -86,6 +90,5 @@ private fun GitLabApiManager.getClient(
   accountsModel: GitLabAccountsListModel,
 ): GitLabApi = getClient(account.server) {
   accountsModel.newCredentials[account]?.accessToken
-  ?: accountManager.findCredentials(account)?.accessToken
-  ?: throw GitLabMissingCredentialsException(account)
+  ?: accountManager.getAndRefreshCredentials(account).accessToken
 }

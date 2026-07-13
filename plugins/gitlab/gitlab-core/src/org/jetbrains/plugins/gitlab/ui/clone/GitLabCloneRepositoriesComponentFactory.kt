@@ -43,6 +43,7 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneRepositoriesViewModel
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneRepositoriesViewModel.SearchModel
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneViewModel
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.JSeparator
 import javax.swing.ListCellRenderer
@@ -241,14 +242,19 @@ internal object GitLabCloneRepositoriesComponentFactory {
   }
 
   private class AccountsPopupConfig(cloneVm: GitLabCloneViewModel) : CompactAccountsPanelFactory.PopupConfig<GitLabAccount> {
+    private val loginViaOAuthAction: AccountMenuItem.Action = AccountMenuItem.Action(
+      GitLabBundle.message("account.add.popup.text"),
+      { cloneVm.requestOAuthLogin() },
+      showSeparatorAbove = true
+    )
     private val loginWithTokenAction: AccountMenuItem.Action = AccountMenuItem.Action(
       CollaborationToolsBundle.message("clone.dialog.login.with.token.action"),
-      { cloneVm.switchToLoginPanel(account = null) },
+      { cloneVm.switchToTokenLoginPanel(account = null) },
       showSeparatorAbove = true
     )
 
     override val avatarSize: Int = VcsCloneDialogUiSpec.Components.popupMenuAvatarSize
 
-    override fun createActions(): Collection<AccountMenuItem.Action> = listOf(loginWithTokenAction)
+    override fun createActions(): Collection<AccountMenuItem.Action> = listOf(loginViaOAuthAction, loginWithTokenAction)
   }
 }

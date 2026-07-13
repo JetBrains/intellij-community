@@ -10,6 +10,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.components.ActionLink
 import com.intellij.util.asSafely
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.CoroutineScope
@@ -18,13 +19,16 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabSelectorErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabRepositoryAndAccountSelectorViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.LoginRequest
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import java.awt.event.ActionEvent
@@ -39,7 +43,6 @@ object GitLabMergeRequestSelectorsComponentFactory {
     cs: CoroutineScope,
     project: Project,
     selectorVm: GitLabRepositoryAndAccountSelectorViewModel,
-    loginSource: GitLabLoginSource,
   ): JComponent {
     val defaultAccountHolder = project.service<GitLabProjectDefaultAccountHolder>()
     val apiManager = service<GitLabApiManager>()
@@ -56,53 +59,88 @@ object GitLabMergeRequestSelectorsComponentFactory {
       accountsPopupActionsSupplier = { createPopupLoginActions(selectorVm, it) },
       submitActionText = GitLabBundle.message("view.merge.requests.button"),
       loginButtons = createLoginButtons(cs, selectorVm),
-      errorPresenter = GitLabSelectorErrorStatusPresenter(selectorVm.project, cs, selectorVm.accountManager, loginSource = loginSource) {
+      errorPresenter = GitLabSelectorErrorStatusPresenter(selectorVm.project, cs, selectorVm.accountManager, GitLabLoginSource.MR_TW) {
         selectorVm.submitSelection()
       }
     )
 
     cs.launch(Dispatchers.EDT) {
-      selectorVm.loginRequestsFlow.collect { req ->
-        val account = req.account
+      selectorVm.loginRequestsFlow.collect { request ->
+        val account = request.account
         if (account == null) {
-          val (newAccount, credentials) = GitLabLoginUtil.logInViaToken(
-            selectorVm.project,
-            selectors,
-            req.repo.repository.serverPath,
-            loginSource = loginSource
-          ) { server, name ->
-            GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
-          }.asSafely<LoginResult.Success>() ?: return@collect
-          req.login(newAccount, credentials)
+          val (newAccount, credentials) = request.logIn(selectorVm.project, selectors, selectorVm.accountManager.accountsState.value)
+                                            .asSafely<LoginResult.Success>() ?: return@collect
+          selectorVm.authenticateAccount(newAccount, credentials, request.submit)
         }
         else {
-          val (_, credentials) = GitLabLoginUtil.reLogInViaToken(
-            selectorVm.project,
-            selectors,
-            account,
-            loginSource = loginSource,
-          ) { server, name ->
-            GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
-          }.asSafely<LoginResult.Success>() ?: return@collect
-          req.login(account, credentials)
+          val (_, credentials) = request.reLogIn(selectorVm.project, selectors, account, selectorVm.accountManager.accountsState.value)
+                                   .asSafely<LoginResult.Success>() ?: return@collect
+          selectorVm.authenticateAccount(account, credentials, request.submit)
         }
       }
     }
-
     return selectors
+  }
+
+  private fun LoginRequest.logIn(
+    project: Project,
+    selectors: JComponent,
+    accounts: Set<GitLabAccount>,
+  ): LoginResult = when (type) {
+    LoginRequest.Type.TOKEN -> GitLabLoginUtil.logInViaToken(
+      project,
+      selectors,
+      repo.repository.serverPath,
+      loginSource = GitLabLoginSource.MR_TW) { server, name ->
+      GitLabLoginUtil.isAccountUnique(accounts, server, name)
+    }
+    LoginRequest.Type.OAUTH -> GitLabLoginUtil.logInViaOAuth(
+      project,
+      repo.repository.serverPath,
+      loginSource = GitLabLoginSource.MR_TW) { server, name ->
+      GitLabLoginUtil.isAccountUnique(accounts, server, name)
+    }
+  }
+
+  private fun LoginRequest.reLogIn(
+    project: Project,
+    selectors: JComponent,
+    account: GitLabAccount,
+    accounts: Set<GitLabAccount>,
+  ): LoginResult = when (type) {
+    LoginRequest.Type.OAUTH -> GitLabLoginUtil.reLogInViaOAuth(
+      project,
+      account,
+      loginSource = GitLabLoginSource.MR_TW) { server, name ->
+      GitLabLoginUtil.isAccountUnique(accounts, server, name)
+    }
+    LoginRequest.Type.TOKEN -> GitLabLoginUtil.reLogInViaToken(
+      project,
+      selectors,
+      account,
+      loginSource = GitLabLoginSource.MR_TW) { server, name ->
+      GitLabLoginUtil.isAccountUnique(accounts, server, name)
+    }
   }
 
   private fun createLoginButtons(cs: CoroutineScope, vm: GitLabRepositoryAndAccountSelectorViewModel)
     : List<JButton> {
     return listOf(
-      JButton(CollaborationToolsBundle.message("login.button")).apply {
-        isDefault = true
+      JButton(GitLabBundle.message("account.add.popup.text")).apply {
         isOpaque = false
-
+        isDefault = true
+        addActionListener {
+          vm.requestOAuthLogin(false, true)
+        }
+        bindDisabledIn(cs, vm.busyState)
+        bindVisibilityIn(cs, vm.oAuthLoginAvailableState)
+      },
+      ActionLink(CollaborationToolsBundle.message("accounts.action.add.account.with.token")).apply {
         addActionListener {
           vm.requestTokenLogin(false, true)
         }
-
+      }.apply {
+        autoHideOnDisable = false
         bindDisabledIn(cs, vm.busyState)
         bindVisibilityIn(cs, vm.tokenLoginAvailableState)
       }
@@ -111,11 +149,20 @@ object GitLabMergeRequestSelectorsComponentFactory {
 
   private fun createPopupLoginActions(vm: GitLabRepositoryAndAccountSelectorViewModel, mapping: GitLabProjectMapping?): List<Action> {
     if (mapping == null) return emptyList()
-    return listOf(object : AbstractAction(CollaborationToolsBundle.message("login.button")) {
-      override fun actionPerformed(e: ActionEvent?) {
-        vm.requestTokenLogin(true, false)
+    return buildList {
+      if (mapping.repository.serverPath == GitLabServerPath.DEFAULT_SERVER) {
+        add(object : AbstractAction(GitLabBundle.message("account.add.popup.text")) {
+          override fun actionPerformed(e: ActionEvent?) {
+            vm.requestOAuthLogin(true, false)
+          }
+        })
       }
-    })
+      add(object : AbstractAction(CollaborationToolsBundle.message("accounts.action.add.account.with.token")) {
+        override fun actionPerformed(e: ActionEvent?) {
+          vm.requestTokenLogin(true, false)
+        }
+      })
+    }
   }
 
   private fun getProjectDisplayName(allProjects: List<GitLabProjectCoordinates>, project: GitLabProjectCoordinates): @NlsSafe String {

@@ -107,6 +107,12 @@ jvm_library(
         "//platform/observable",
         "//platform/progress/shared:ide-progress",
         "//platform/lang-api:lang",
+        "//platform/built-in-server:builtInServer-impl",
+        "//platform/built-in-server-api:builtInServer",
+        "//libraries/netty/codec-http:libraries-netty-codec-http",
+        "//libraries/netty/buffer",
+        "//platform/platform-util-netty:ide-util-netty",
+        "//platform/credential-store",
         ":libraries_kotlinc_libraries-kotlinc-kotlinx-serialization-compiler-plugin_provided",
     ],
 )
@@ -189,6 +195,12 @@ jvm_library(
         "//platform/observable:observable_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
         "//platform/lang-api:lang_test_lib",
+        "//platform/built-in-server:builtInServer-impl_test_lib",
+        "//platform/built-in-server-api:builtInServer_test_lib",
+        "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
+        "//libraries/netty/buffer:buffer_test_lib",
+        "//platform/platform-util-netty:ide-util-netty_test_lib",
+        "//platform/credential-store:credential-store_test_lib",
     ],
 )
 ### auto-generated section `build intellij.vcs.gitlab` end

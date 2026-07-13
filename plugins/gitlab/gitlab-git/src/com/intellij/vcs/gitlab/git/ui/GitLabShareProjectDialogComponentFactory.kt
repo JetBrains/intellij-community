@@ -67,9 +67,9 @@ internal object GitLabShareProjectDialogComponentFactory {
             .align(AlignX.FILL).resizableColumn()
 
           link(GitLabBundle.message("share.dialog.account.addButton")) { event ->
-            GitLabLoginUtil.logInViaToken(
+            GitLabLoginUtil.loginWithOAuthOrToken(
               project,
-              event.source as JComponent,
+              event.source as? JComponent,
               loginSource = GitLabLoginSource.SHARE,
               uniqueAccountPredicate = { server, username -> vm.accounts.value.none { it.server == server && it.name == username } }
             ).asSafely<LoginResult.Success>()?.also { (account, credentials) ->
@@ -83,11 +83,12 @@ internal object GitLabShareProjectDialogComponentFactory {
 
           link(GitLabBundle.message("share.dialog.tokenExpired.label")) { event ->
             val account = vm.account.value ?: return@link
-            GitLabLoginUtil.reLogInViaToken(
+            GitLabLoginUtil.reLogIn(
               project,
-              event.source as JComponent,
+              event.source as? JComponent,
               account,
-              loginSource = GitLabLoginSource.SHARE,
+              null,
+              GitLabLoginSource.SHARE,
               uniqueAccountPredicate = { server, username -> vm.accounts.value.none { it.server == server && it.name == username } }
             ).asSafely<LoginResult.Success>()?.also { (account, credentials) ->
               vm.updateAccount(account, credentials)

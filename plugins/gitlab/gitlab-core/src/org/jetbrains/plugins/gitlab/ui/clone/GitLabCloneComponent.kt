@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.ui.clone
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.openapi.project.Project
@@ -12,7 +13,13 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.UIUtil.ComponentStyle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -21,6 +28,7 @@ import kotlinx.coroutines.yield
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneLoginViewModel
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneRepositoriesViewModel
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneViewModel
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 
 internal class GitLabCloneComponent(
@@ -34,7 +42,23 @@ internal class GitLabCloneComponent(
     bindContentIn(cs, vm.panelVm) { panelVm ->
       val innerCs = this
       when (panelVm) {
-        is GitLabCloneLoginViewModel -> GitLabCloneLoginComponentFactory.create(innerCs, panelVm, this@GitLabCloneComponent.vm)
+        is GitLabCloneLoginViewModel -> {
+          val titlePanel = simplePanel().apply {
+            @Suppress("DialogTitleCapitalization")
+            val title = JBLabel(GitLabBundle.message("clone.dialog.login.title"), ComponentStyle.LARGE).apply {
+              font = JBFont.label().biggerOn(5.0f)
+            }
+            addToLeft(title)
+            border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
+          }
+          val buttons = GitLabCloneLoginComponentFactory.create(innerCs, panelVm, this@GitLabCloneComponent.vm)
+
+          VerticalListPanel().apply {
+            border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
+            add(titlePanel)
+            add(buttons)
+          }
+        }
         is GitLabCloneRepositoriesViewModel -> GitLabCloneRepositoriesComponentFactory.create(
           project, innerCs, panelVm, this@GitLabCloneComponent.vm
         ).also { panel ->

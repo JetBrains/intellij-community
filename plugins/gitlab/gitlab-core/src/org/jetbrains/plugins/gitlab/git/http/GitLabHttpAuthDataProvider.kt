@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
@@ -72,7 +73,7 @@ private suspend fun GitLabAccountManager.tryCreateAccount(
   val isGitLabServer = service<GitLabServersManager>().checkIsGitLabServer(server)
   if (!isGitLabServer) return LoginResult.OtherMethod
   return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-    GitLabLoginUtil.logInViaToken(project, null, server, login, loginSource = GitLabLoginSource.GIT, ::isAccountUnique).also {
+    GitLabLoginUtil.loginWithOAuthOrToken(project, null, server, login, GitLabLoginSource.GIT, ::isAccountUnique).also {
       if (it is LoginResult.Success) {
         save(it)
       }
@@ -86,7 +87,7 @@ private suspend fun GitLabAccountManager.reLogInWithAccount(
   account: GitLabAccount,
   login: String?,
 ): LoginResult = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-  GitLabLoginUtil.reLogInViaToken(project, null, account, login, loginSource = GitLabLoginSource.GIT, ::isAccountUnique).also {
+  GitLabLoginUtil.reLogIn(project, null, account, login, loginSource = GitLabLoginSource.GIT, ::isAccountUnique).also {
     if (it is LoginResult.Success) {
       save(it)
     }
@@ -102,10 +103,17 @@ private suspend fun GitLabAccountManager.selectAccountAndLogIn(
   val description = GitLabBundle.message("account.choose.git.description", url)
   val account = GitLabLoginUtil.chooseAccount(project, null, description, accounts)
                 ?: return@withContext LoginResult.Failure
-  findCredentials(account)?.let { LoginResult.Success(account, it) }
-  ?: GitLabLoginUtil.reLogInViaToken(project, null, account, login, loginSource = GitLabLoginSource.GIT, ::isAccountUnique).also {
-    if (it is LoginResult.Success) {
-      save(it)
+  try {
+    getAndRefreshCredentials(account).let {
+      LoginResult.Success(account, it)
+    }
+  }
+  catch (e: Exception) {
+    rethrowControlFlowException(e)
+    GitLabLoginUtil.reLogIn(project, null, account, login, loginSource = GitLabLoginSource.GIT, ::isAccountUnique).also {
+      if (it is LoginResult.Success) {
+        save(it)
+      }
     }
   }
 }

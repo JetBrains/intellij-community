@@ -8,6 +8,7 @@ internal sealed interface GitLabCloneException {
   val account: GitLabAccount
 
   data class MissingAccessToken(override val account: GitLabAccount) : GitLabCloneException
+  data class AccessTokenRefreshFailure(override val account: GitLabAccount) : GitLabCloneException
   data class RevokedToken(override val account: GitLabAccount) : GitLabCloneException
   data class ConnectionError(override val account: GitLabAccount) : GitLabCloneException
   data class Unknown(override val account: GitLabAccount, val message: @Nls String) : GitLabCloneException

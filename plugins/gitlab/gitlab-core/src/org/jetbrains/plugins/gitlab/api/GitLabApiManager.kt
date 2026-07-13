@@ -2,11 +2,9 @@
 package org.jetbrains.plugins.gitlab.api
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
-import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabMissingCredentialsException
 
 /**
  * Manages the creation of [GitLabApi] clients.
@@ -22,8 +20,10 @@ abstract class GitLabApiManager {
    *
    * For a more robust client, use the overloaded version with a token supplier.
    */
-  fun getClient(server: GitLabServerPath,
-                token: String): GitLabApi =
+  fun getClient(
+    server: GitLabServerPath,
+    token: String,
+  ): GitLabApi =
     getClient(server) { token }
 
   /**
@@ -44,16 +44,11 @@ abstract class GitLabApiManager {
    *
    * The requests performed by the client may throw additional exceptions if something goes wrong when acquiring the credentials:
    * * [org.jetbrains.plugins.gitlab.authentication.accounts.GitLabMissingCredentialsException] - if the client could not acquire any credentials from the store
+   * * [org.jetbrains.plugins.gitlab.authentication.accounts.GitLabCredentialsRefreshException] - if the credentials are expired, and the client has failed to refresh them
    */
   fun getClient(account: GitLabAccount): GitLabApi =
     getClient(account.server) {
-      try {
-        service<GitLabAccountManager>().findCredentials(account)?.accessToken
-      }
-      catch (e: Exception) {
-        rethrowControlFlowException(e)
-        throw GitLabMissingCredentialsException(account, e)
-      } ?: throw GitLabMissingCredentialsException(account)
+      service<GitLabAccountManager>().getAndRefreshCredentials(account).accessToken
     }
 
   /**

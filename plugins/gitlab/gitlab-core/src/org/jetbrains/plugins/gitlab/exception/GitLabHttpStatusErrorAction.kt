@@ -28,7 +28,7 @@ internal sealed class GitLabHttpStatusErrorAction(@Nls name: String) : AbstractA
   ) : GitLabHttpStatusErrorAction(CollaborationToolsBundle.message("login.again.action.text")) {
     override fun actionPerformed(event: ActionEvent) {
       val parentComponent = event.source as? JComponent ?: return
-      val loginResult = GitLabLoginUtil.reLogInViaToken(project, parentComponent, account, loginSource) { _, _ -> true }
+      val loginResult = GitLabLoginUtil.reLogIn(project, parentComponent, account, loginSource = loginSource) { _, _ -> true }
                           .asSafely<LoginResult.Success>()
                         ?: return
       parentScope.launch {
