@@ -105,19 +105,25 @@ class TerminalLocalPathTranslator(private val descriptor: EelDescriptor) {
       LOG.debug { "Failed to translate not absolute $absolutePath, skipping" }
       return null
     }
-    try {
-      return absolutePath.asEelPath()
+    val eelPath = try {
+      absolutePath.asEelPath()
     }
-    catch (e: Exception) {
-      translateWindowsDrivePathToMountedWslPath(absolutePath)?.let {
-        return toEelPathOrNull(it)
-      }
-      translateWslUncPathWithSamePrefix(absolutePath.toString())?.let {
-        return toEelPathOrNull(it)
-      }
-      LOG.debug(e) { "Failed to translate $absolutePath to EelPath ($descriptor), skipping" }
-      return null
+    catch (_: EelPathException) {
+      null
     }
+    if (eelPath != null && eelPath.descriptor == this.descriptor) {
+      return eelPath
+    }
+
+    // Try to cover some WSL path cases
+    translateWindowsDrivePathToMountedWslPath(absolutePath)?.let {
+      return toEelPathOrNull(it)
+    }
+    translateWslUncPathWithSamePrefix(absolutePath.toString())?.let {
+      return toEelPathOrNull(it)
+    }
+    LOG.debug { "Failed to translate $absolutePath to EelPath ($descriptor), skipping" }
+    return null
   }
 
   private fun toEelPathOrNull(remotePathString: String): EelPath? {
