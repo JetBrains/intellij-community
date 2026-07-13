@@ -941,13 +941,8 @@ object PyCallExpressionHelper {
       val resolveResults = classType.resolveMember(PyNames.CALL, null, AccessDirection.READ, resolveContext)
       if (resolveResults.isNullOrEmpty()) return PyAnyType.unknown
 
-      val callType = PyTypeUtil.specializeMemberType(classType, classType, PyTypeUtil.getTypeOfMember(resolveResults, context), context)
-      if (callType is PyClassType) {
-        return createCallableFromClass(callType, resolveContext, errors)
-      }
-
-      val memberOwner = PyTypeUtil.getContainingClass(resolveResults)
-      return PyTypeUtil.bindFunction(classType, callType, memberOwner, context, errors)
+      val callType = PyTypeUtil.getTypeOfBoundMember(classType, resolveResults, context, errors)
+      return if (callType is PyClassType) createCallableFromClass(callType, resolveContext, errors) else callType
     }
 
     // https://typing.python.org/en/latest/spec/constructors.html
