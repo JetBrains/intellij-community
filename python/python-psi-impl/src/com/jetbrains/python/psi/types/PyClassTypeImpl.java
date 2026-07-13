@@ -876,8 +876,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
     PyClassTypeImpl classType = (PyClassTypeImpl)o;
 
+    // Cheap fields first, then the memoized-hashCode fast path guarding the deep myTypeArguments walk.
     if (myIsDefinition != classType.myIsDefinition) return false;
     if (!myClass.equals(classType.myClass)) return false;
+    if (hashCode() != classType.hashCode()) return false;
     if (!myTypeArguments.equals(classType.myTypeArguments)) return false;
 
     return true;
