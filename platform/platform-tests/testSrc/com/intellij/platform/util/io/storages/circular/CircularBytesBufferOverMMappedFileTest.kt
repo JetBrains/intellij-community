@@ -12,6 +12,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit.SECONDS
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -37,7 +38,7 @@ class CircularBytesBufferOverMMappedFileTest {
 
       assertTrue("Must still have 1 unprocessed record") { queue.hasUnprocessedRecords() }
 
-      queue.readConsuming { /*consume: */ true }
+      queue.readConsuming { }
       assertFalse("Must have no unprocessed record") { queue.hasUnprocessedRecords() }
     }
   }
@@ -58,7 +59,6 @@ class CircularBytesBufferOverMMappedFileTest {
       val secondPass = ArrayList<String>()
       val consumedOnSecondPass = queue.readConsuming { entryData ->
         secondPass += readString(entryData)
-        true
       }
 
       assertThat(consumedOnSecondPass).isEqualTo(2)
@@ -67,28 +67,34 @@ class CircularBytesBufferOverMMappedFileTest {
   }
 
   @Test
-  fun `consumed entries are skipped even if an earlier entry is kept`(@TempDir tempDir: Path) {
+  fun `stop keeps current and later entries for the next scan`(@TempDir tempDir: Path) {
     withQueue(tempDir) { queue ->
       queue.append("one".toByteArray(UTF_8))
       queue.append("two".toByteArray(UTF_8))
       queue.append("three".toByteArray(UTF_8))
 
       val firstPass = ArrayList<String>()
-      val consumed = queue.readConsuming { entryData ->
-        firstPass += readString(entryData)
-        firstPass.size != 2
+      val consumed = queue.readMaybeConsuming { entryData ->
+        when (val record = readString(entryData)) {
+          "one" -> CircularBytesBuffer.ReadDecision.consumeBy { leasedEntryData ->
+            firstPass += readString(leasedEntryData)
+          }
+          "two" -> CircularBytesBuffer.ReadDecision.stop()
+          else -> error("stop() must prevent processing later FIFO records, but reached $record")
+        }
       }
 
-      assertThat(consumed).isEqualTo(2)
-      assertThat(firstPass).containsExactly("one", "two", "three")
+      assertThat(consumed)
+        .withFailMessage("stop() must leave the current record and all later records unconsumed")
+        .isEqualTo(1)
+      assertThat(firstPass).containsExactly("one")
 
       val secondPass = ArrayList<String>()
       queue.readConsuming { entryData ->
         secondPass += readString(entryData)
-        true
       }
 
-      assertThat(secondPass).containsExactly("two")
+      assertThat(secondPass).containsExactly("two", "three")
     }
   }
 
@@ -99,9 +105,16 @@ class CircularBytesBufferOverMMappedFileTest {
       queue.append(record(size = 8, marker = 2))
       queue.append(record(size = 8, marker = 3))
 
-      queue.readConsuming { entryData ->
-        readBytes(entryData)[0] != 3.toByte()
+      val consumedBeforeWrap = queue.readMaybeConsuming { entryData ->
+        when (val marker = entryData.get(entryData.position()).toInt()) {
+          1, 2 -> CircularBytesBuffer.ReadDecision.consumeBy { }
+          3 -> CircularBytesBuffer.ReadDecision.stop()
+          else -> error("Unexpected record marker before wrap-around: $marker")
+        }
       }
+      assertThat(consumedBeforeWrap)
+        .withFailMessage("The third record must remain as the FIFO prefix before appending wrapped records")
+        .isEqualTo(2)
 
       queue.append(record(size = 20, marker = 4))
       queue.append(record(size = 4, marker = 5))
@@ -109,7 +122,6 @@ class CircularBytesBufferOverMMappedFileTest {
       val records = ArrayList<ByteArray>()
       queue.readConsuming { entryData ->
         records += readBytes(entryData)
-        true
       }
 
       assertThat(records.map { it.size }).containsExactly(8, 20, 4)
@@ -161,7 +173,6 @@ class CircularBytesBufferOverMMappedFileTest {
             assertTrue("Reader callback must be released by the test") {
               readerCanFinish.await(5, SECONDS)
             }
-            true
           }
         }
         catch (t: Throwable) {
@@ -199,9 +210,91 @@ class CircularBytesBufferOverMMappedFileTest {
       val remainingRecords = ArrayList<String>()
       queue.readConsuming { entryData ->
         remainingRecords += readString(entryData)
-        true
       }
       assertThat(remainingRecords).containsExactly("two")
+    }
+  }
+
+  @Test
+  fun `decision is not recomputed after leased record is released unconsumed`(@TempDir tempDir: Path) {
+    withQueue(tempDir) { queue ->
+      queue.append("one".toByteArray(UTF_8))
+
+      val firstReaderStarted = CountDownLatch(1)
+      val firstReaderCanFinish = CountDownLatch(1)
+      val firstReaderError = AtomicReference<Throwable?>()
+      val firstReaderThread = Thread {
+        try {
+          val consumed = queue.readMaybeConsuming {
+            CircularBytesBuffer.ReadDecision.readBy { entryData ->
+              assertThat(readString(entryData)).isEqualTo("one")
+              firstReaderStarted.countDown()
+              assertTrue("The test must release the first reader after the second reader decides") {
+                firstReaderCanFinish.await(5, SECONDS)
+              }
+            }
+          }
+          assertThat(consumed)
+            .withFailMessage("The first reader must release the lease without consuming the record")
+            .isEqualTo(0)
+        }
+        catch (t: Throwable) {
+          firstReaderError.set(t)
+        }
+      }
+
+      firstReaderThread.start()
+      try {
+        assertTrue("The first reader must lease the record before the second reader starts") {
+          firstReaderStarted.await(5, SECONDS)
+        }
+
+        val secondReaderDecided = CountDownLatch(1)
+        val secondReaderError = AtomicReference<Throwable?>()
+        val decisions = AtomicInteger()
+        val secondReaderThread = Thread {
+          try {
+            val consumed = queue.readMaybeConsuming { entryData ->
+              decisions.incrementAndGet()
+              assertThat(readString(entryData))
+                .withFailMessage("The decision stage may read routing data but must be reset before processing")
+                .isEqualTo("one")
+              secondReaderDecided.countDown()
+              CircularBytesBuffer.ReadDecision.consumeBy { leasedEntryData ->
+                assertThat(readString(leasedEntryData)).isEqualTo("one")
+              }
+            }
+            assertThat(consumed).isEqualTo(1)
+          }
+          catch (t: Throwable) {
+            secondReaderError.set(t)
+          }
+        }
+
+        secondReaderThread.start()
+        assertTrue("The second reader must decide while the record is leased by the first reader") {
+          secondReaderDecided.await(5, SECONDS)
+        }
+        assertThat(decisions.get())
+          .withFailMessage("Decision must be made once and reused after the foreign lease is released")
+          .isEqualTo(1)
+
+        firstReaderCanFinish.countDown()
+        firstReaderThread.join(5_000)
+        secondReaderThread.join(5_000)
+
+        assertFalse("The first reader thread must finish") { firstReaderThread.isAlive }
+        assertFalse("The second reader thread must finish") { secondReaderThread.isAlive }
+        firstReaderError.get()?.let { throw AssertionError("first reader failed", it) }
+        secondReaderError.get()?.let { throw AssertionError("second reader failed", it) }
+        assertThat(decisions.get())
+          .withFailMessage("Waiting for a leased record must not rerun the already computed decision")
+          .isEqualTo(1)
+        assertFalse("The second reader must consume the record") { queue.hasUnprocessedRecords() }
+      }
+      finally {
+        firstReaderCanFinish.countDown()
+      }
     }
   }
 
@@ -219,7 +312,6 @@ class CircularBytesBufferOverMMappedFileTest {
       val records = ArrayList<ByteArray>()
       queue.readConsuming { entryData ->
         records += readBytes(entryData)
-        true
       }
 
       assertThat(records.map { it.size }).containsExactly(12, 12, 12, 12)
@@ -230,7 +322,6 @@ class CircularBytesBufferOverMMappedFileTest {
       val recordsAfterDrain = ArrayList<ByteArray>()
       queue.readConsuming { entryData ->
         recordsAfterDrain += readBytes(entryData)
-        true
       }
 
       assertThat(recordsAfterDrain.map { it[0].toInt() }).containsExactly(4)
@@ -251,7 +342,6 @@ class CircularBytesBufferOverMMappedFileTest {
       val records = ArrayList<String>()
       queue.readConsuming { entryData ->
         records += readString(entryData)
-        true
       }
 
       assertThat(records).containsExactly("one", "two")
