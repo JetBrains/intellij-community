@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.lsp.api.LspBundle
 import com.intellij.platform.lsp.api.LspServerNotificationsHandler
-import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.impl.features.LspFeaturesRefreshing
 import com.intellij.platform.lsp.impl.util.LspWorkspaceEditApplier
 import com.intellij.platform.lsp.util.getOffsetInDocument
@@ -250,9 +249,7 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
                                  cancellable = value.cancellable ?: false) {
 
             coroutineContext.job.invokeOnCompletion { throwable ->
-              // A cancellation while the server is running means the user cancelled the indicator, so tell the server.
-              // A cancellation after the server stopped comes from cancelAllProgress(); there is no server to notify anymore.
-              if (throwable is CancellationException && value.cancellable == true && lspClient.state == LspServerState.Running) {
+              if (throwable is CancellationException && value.cancellable == true) {
                 lspClient.sendNotification { it.cancelProgress(WorkDoneProgressCancelParams(token)) }
               }
               progressJobs.remove(tokenId)
@@ -285,17 +282,6 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
         progressJobs.remove(tokenId)?.cancel()
       }
     }
-  }
-
-  /**
-   * Cancels every in-flight progress indicator started by the server. Called when the server stops so its background
-   * progresses don't keep running. The state is already set to shutdown by then, so the completion handler in
-   * [notifyProgress] won't send a `window/workDoneProgress/cancel` back to the server that is going away.
-   */
-  internal fun cancelAllProgress() {
-    progressTasks.clear()
-    progressJobs.values.forEach { it.cancel() }
-    progressJobs.clear()
   }
 
   override fun refreshSemanticTokens(): CompletableFuture<Void> {
