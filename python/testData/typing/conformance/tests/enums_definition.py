@@ -90,4 +90,3 @@ class Color12(Enum):
 assert_type(Color12.RED, Literal[Color12.RED])
 assert_type(Color12.GREEN, Literal[Color12.GREEN])
 Color12.BLUE  # E
-

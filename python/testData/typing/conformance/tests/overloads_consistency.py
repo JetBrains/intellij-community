@@ -115,4 +115,3 @@ def decorated(x: str, /) -> str:
 @_deco_2
 def decorated(y: bytes, z: bytes) -> bytes:
     return b""
-
