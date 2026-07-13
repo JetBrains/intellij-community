@@ -113,6 +113,7 @@
   </extensions>
 
   <content namespace="jetbrains">
+    <module name="intellij.kotlin.base.projectModel" loading="required"/>
     <module name="intellij.kotlin.base.analysis.platform"/>
     <module name="intellij.kotlin.base.externalSystem"/>
     <module name="intellij.kotlin.analysis.platform"/>

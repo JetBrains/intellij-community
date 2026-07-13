@@ -82,9 +82,8 @@
   - name: kotlin-tooling-core
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1/kotlin-tooling-core-1.jar
-  modules:
-  - name: intellij.kotlin.base.projectModel
   contentModules:
+  - name: intellij.kotlin.base.projectModel
   - name: intellij.kotlin.gradle.tooling.impl
 - name: lib/kotlin-plugin-shared.jar
   modules:

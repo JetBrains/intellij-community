@@ -8,6 +8,7 @@
     <module name="intellij.java.syntax"/>
     <module name="intellij.java.backend"/>
     <module name="intellij.kotlin.base.codeInsight.minimal"/>
+    <module name="intellij.kotlin.base.projectModel"/>
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.resources"/>
   </dependencies>

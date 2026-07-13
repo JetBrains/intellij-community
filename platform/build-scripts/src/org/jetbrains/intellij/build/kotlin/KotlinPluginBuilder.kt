@@ -102,17 +102,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "javax-inject",
     )
 
-    private val GRADLE_TOOLING_MODULES = java.util.List.of(
-      "intellij.kotlin.base.projectModel",
-      "intellij.kotlin.gradle.tooling.impl",
-    )
-
-    private val GRADLE_TOOLING_LIBRARIES = java.util.List.of(
-      "kotlin-gradle-plugin-idea",
-      "kotlin-gradle-plugin-idea-proto",
-      "kotlin-tooling-core",
-    )
-
     private val COMPILER_PLUGINS = java.util.List.of(
       "kotlinc.allopen-compiler-plugin",
       "kotlinc.noarg-compiler-plugin",
@@ -142,14 +131,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       }
 
       basePluginsAndLibraries(spec)
-
-      val toolingJarName = "kotlin-gradle-tooling.jar"
-      for (moduleName in GRADLE_TOOLING_MODULES) {
-        spec.withModule(moduleName, toolingJarName)
-      }
-      for (library in GRADLE_TOOLING_LIBRARIES) {
-        spec.withProjectLibraryUnpackedIntoJar(library, toolingJarName)
-      }
 
       spec.withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")
       withKotlincInPluginDirectory(spec = spec)
