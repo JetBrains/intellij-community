@@ -82,6 +82,19 @@ open class McpServerService(val cs: CoroutineScope) {
     val localAgentId: String? = null,
     val invocationMode: McpSessionInvocationMode? = null,
   ) {
+    var elicitationKind: McpElicitationKind? = null
+      private set
+
+    constructor(
+      commandExecutionMode: AskCommandExecutionMode,
+      toolFilter: McpToolFilter?,
+      localAgentId: String?,
+      invocationMode: McpSessionInvocationMode?,
+      elicitationKind: McpElicitationKind?,
+    ) : this(commandExecutionMode, toolFilter, localAgentId, invocationMode) {
+      this.elicitationKind = elicitationKind
+    }
+
     @Deprecated("ABI compat with 261.22158 that doesn't have `localAgentId`", level = DeprecationLevel.HIDDEN)
     constructor(
       commandExecutionMode: AskCommandExecutionMode,
@@ -348,7 +361,13 @@ open class McpServerService(val cs: CoroutineScope) {
         val useFiltersFromEP = allowedToolsFromHeader.isNullOrEmpty()
         // if no header provided, use the existing filter from sessionOptions
         val sessionOptions = if (headerFilter != null) {
-          McpSessionOptions(baseSessionOptions.commandExecutionMode, headerFilter, baseSessionOptions.localAgentId)
+          McpSessionOptions(
+            commandExecutionMode = baseSessionOptions.commandExecutionMode,
+            toolFilter = headerFilter,
+            localAgentId = baseSessionOptions.localAgentId,
+            invocationMode = baseSessionOptions.invocationMode,
+            elicitationKind = baseSessionOptions.elicitationKind,
+          )
         } else {
           baseSessionOptions
         }
@@ -383,7 +402,7 @@ open class McpServerService(val cs: CoroutineScope) {
           mcpServer = mcpServer,
           transportType = transportType,
           projectPathFromInitialRequest = projectPath,
-          elicitationKind = elicitationKind,
+          elicitationKind = sessionOptions.elicitationKind ?: elicitationKind,
           useFiltersFromEP = useFiltersFromEP,
         )
         // Process initial tools immediately to fix race condition
