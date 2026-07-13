@@ -18,9 +18,7 @@ import com.jetbrains.JBR
 import kotlinx.coroutines.delay
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import java.awt.Frame
 import java.awt.KeyboardFocusManager
-import java.awt.Window
 import java.util.IdentityHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
@@ -138,20 +136,21 @@ class ProjectLeakDetector(
   }
 
   /**
-   * AWT keeps live windows in static lists ([Window.getWindows], [Frame.getFrames]) and focus state in the
-   * [KeyboardFocusManager]; these are not reachable through [IdeEventQueue]. Add them explicitly so components
-   * (and the projects/editors they transitively reference) pinned only by AWT are found.
+   * AWT focus state lives in the [KeyboardFocusManager] and window statics in `sun.awt.AppContext`, neither
+   * reachable through [IdeEventQueue].
+   *
+   * `Window.getWindows()` / `Frame.getFrames()` are intentionally not used: they materialize a strong `Window[]`
+   * out of AWT's `Vector<WeakReference<Window>>` lists, which would strongify weak refs and report misleading/false
+   * leaks (IJPL-249998). Strongly-held windows are reached via the statics/app roots instead.
    */
   private fun addAwtRoots(roots: MutableMap<Any, String>) {
     try {
-      roots[Window.getWindows()] = "java.awt.Window.getWindows()"
-      roots[Frame.getFrames()] = "java.awt.Frame.getFrames()"
       KeyboardFocusManager.getCurrentKeyboardFocusManager()?.let {
         roots[it] = "KeyboardFocusManager.getCurrentKeyboardFocusManager()"
       }
     }
     catch (t: Throwable) {
-      LOG.warn("Cannot access AWT window roots; leak detection will skip them", t)
+      LOG.warn("Cannot access the AWT KeyboardFocusManager root; leak detection will skip it", t)
     }
 
     // sun.awt.AppContext holds additional AWT statics; reach it best-effort (may be blocked by JPMS access rules).

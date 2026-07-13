@@ -114,15 +114,16 @@ class ProjectLeakDetectorTest {
   }
 
   @Test
-  fun testRootsIncludeAwtStaticContainers() {
-    // AWT keeps live windows/focus state in static containers that are not reachable through IdeEventQueue.
+  fun testRootsUseFocusManagerNotWeakWindowSnapshots() {
+    // Window.getWindows()/Frame.getFrames() strongify AWT's weak window lists and report false leaks (IJPL-249998),
+    // so they must not be roots; the KeyboardFocusManager (a real object) still is.
     val labels = ProjectLeakDetector().buildRoots().values
-    assertTrue("java.awt.Window.getWindows()" in labels,
-               "expected a java.awt.Window.getWindows() root, got: $labels")
-    assertTrue("java.awt.Frame.getFrames()" in labels,
-               "expected a java.awt.Frame.getFrames() root, got: $labels")
     assertTrue("KeyboardFocusManager.getCurrentKeyboardFocusManager()" in labels,
                "expected a KeyboardFocusManager root, got: $labels")
+    assertFalse("java.awt.Window.getWindows()" in labels,
+                "weakly-held AWT windows must not be treated as a root, got: $labels")
+    assertFalse("java.awt.Frame.getFrames()" in labels,
+                "weakly-held AWT frames must not be treated as a root, got: $labels")
   }
 
   @Test
