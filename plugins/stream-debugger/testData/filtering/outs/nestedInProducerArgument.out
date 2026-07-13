@@ -27,12 +27,12 @@ Stopped at NestedInProducerArgument.java:7
   [1] traceable Stream.of(4,5,6) -> map -> toList
   [2] traceable Stream.of(Stream.of(1,2,3).toList(),Stream.of(4,5,6).map(x->x+1).toList()) -> flatMap -> count
 === before flatMap (bytecode offset 95) ===
-  [0] traceable Stream.of(1,2,3) -> toList
-  [1] traceable Stream.of(4,5,6) -> map -> toList
+  [0] filtered  Stream.of(1,2,3) -> toList
+  [1] filtered  Stream.of(4,5,6) -> map -> toList
   [2] traceable Stream.of(Stream.of(1,2,3).toList(),Stream.of(4,5,6).map(x->x+1).toList()) -> flatMap -> count
 === before count (bytecode offset 100) ===
-  [0] traceable Stream.of(1,2,3) -> toList
-  [1] traceable Stream.of(4,5,6) -> map -> toList
+  [0] filtered  Stream.of(1,2,3) -> toList
+  [1] filtered  Stream.of(4,5,6) -> map -> toList
   [2] traceable Stream.of(Stream.of(1,2,3).toList(),Stream.of(4,5,6).map(x->x+1).toList()) -> flatMap -> count
 Resuming NestedInProducerArgument.java:7
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'

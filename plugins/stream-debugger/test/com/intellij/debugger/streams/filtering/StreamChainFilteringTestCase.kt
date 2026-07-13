@@ -52,18 +52,12 @@ abstract class StreamChainFilteringTestCase : DebuggerTestCase() {
     if (builder.isChainExists(element)) builder.build(element) else emptyList()
   }
 
-  /**
-   * Entry point of the traceable-chain filtering algorithm.
-   *
-   * TODO(IDEA-385556): replace this stub with the real implementation. For now it returns all detected chains
-   * (no bytecode-based filtering), so every chain shows up as `traceable` in the goldens.
-   */
   protected open suspend fun filterTraceable(
     chains: List<StreamChain>,
     position: XSourcePosition,
     method: Method,
     bytecodeOffset: Long,
-  ): List<StreamChain> = chains
+  ): List<StreamChain> = filterTraceableStreams(project, chains, position, method, bytecodeOffset)
 
   /**
    * Launches [className] from `testData/filtering/src`, stops at its single `// Breakpoint!` and prints the golden

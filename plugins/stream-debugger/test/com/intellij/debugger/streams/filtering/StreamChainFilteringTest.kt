@@ -122,10 +122,16 @@ internal class StreamChainFilteringTest : StreamChainFilteringTestCase() {
     AfterInvoke("toList", occurrence = 1),
   )
 
-  // Two structurally identical chains in one statement (same operations/signatures, only the lambda differs);
-  // they can be told apart only by bytecode position.
-  fun testTwoIdenticalChains() = doFilteringTest(
-    "TwoIdenticalChains",
+  fun testTwoIdenticalChainsSameLine() = doFilteringTest(
+    "TwoIdenticalChainsSameLine",
+    BeforeInvoke("stream", occurrence = 0),
+    AfterInvoke("toList", occurrence = 0),
+    BeforeInvoke("stream", occurrence = 1),
+    AfterInvoke("toList", occurrence = 1),
+  )
+
+  fun testTwoIdenticalChainsMultiLine() = doFilteringTest(
+    "TwoIdenticalChainsMultiLine",
     BeforeInvoke("stream", occurrence = 0),
     AfterInvoke("toList", occurrence = 0),
     BeforeInvoke("stream", occurrence = 1),
@@ -146,4 +152,13 @@ internal class StreamChainFilteringTest : StreamChainFilteringTestCase() {
   )
 
   fun testStopInsideBlockLambda() = doFilteringTestAtBreakpoint("StopInsideBlockLambda")
+
+  // Several independent streams in one multi-line statement: the fast path alone (line comparison) already
+  // filters the streams that are fully above the stop line, without any bytecode analysis.
+  fun testMultiLineStatement() = doFilteringTest(
+    "MultiLineStatement",
+    BeforeInvoke("sum", occurrence = 0),
+    BeforeInvoke("sum", occurrence = 1),
+    BeforeInvoke("sum", occurrence = 2),
+  )
 }
