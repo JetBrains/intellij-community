@@ -32,6 +32,8 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_FILE_SYSTEM_LOCATION_PROPERTY
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROVIDER_HAS_MULTIPLE_VALUES
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROVIDER_MAP_PROPERTY
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROVIDER_PROVIDER
 
 /**
@@ -72,6 +74,9 @@ private fun createGradlePropertyMethodCallQuickFix(psi: PsiElement): ModCommandA
     val receiverType = qualifiedExpression.receiverExpression.expressionType ?: return null
 
     val isGradleFilePropertyType = receiverType.isSubtypeOf(topLevelClassId(GRADLE_API_FILE_SYSTEM_LOCATION_PROPERTY))
+    val isGradleCollectionPropertyType =
+        receiverType.isSubtypeOf(topLevelClassId(GRADLE_API_PROVIDER_HAS_MULTIPLE_VALUES)) ||
+        receiverType.isSubtypeOf(topLevelClassId(GRADLE_API_PROVIDER_MAP_PROPERTY))
     val isGradleProviderType = receiverType.isSubtypeOf(topLevelClassId(GRADLE_API_PROVIDER_PROVIDER))
 
     return when {
@@ -82,6 +87,8 @@ private fun createGradlePropertyMethodCallQuickFix(psi: PsiElement): ModCommandA
                 null
             }
         }
+
+        isGradleCollectionPropertyType -> null
 
         isGradleProviderType -> {
             UnwrapGradlePropertyMethodCallQuickFix(qualifiedExpression, GradlePropertyUnwrap.GET)
@@ -138,11 +145,15 @@ private fun PsiElement.gradlePropertyMethodCall(): KtDotQualifiedExpression? {
 
 // Checks whether the unresolved selector would become callable after unwrapping the Gradle property to java.io.File.
 private fun KtDotQualifiedExpression.hasFileCallableSelector(): Boolean {
-    val callExpression = selectorExpression as? KtCallExpression ?: return false
-    val calleeName = (callExpression.calleeExpression as? KtNameReferenceExpression)?.getReferencedName() ?: return false
+    val calleeName = selectorCallName() ?: return false
     val fileClass = JavaPsiFacade.getInstance(project).findClass(JAVA_IO_FILE_FQN, resolveScope)
     if (fileClass?.findMethodsByName(calleeName, true)?.isNotEmpty() == true) return true
     return hasKotlinIoFileExtensionFunction(calleeName)
+}
+
+private fun KtDotQualifiedExpression.selectorCallName(): String? {
+    val callExpression = selectorExpression as? KtCallExpression ?: return null
+    return (callExpression.calleeExpression as? KtNameReferenceExpression)?.getReferencedName()
 }
 
 private fun KtDotQualifiedExpression.hasKotlinIoFileExtensionFunction(calleeName: String): Boolean {
