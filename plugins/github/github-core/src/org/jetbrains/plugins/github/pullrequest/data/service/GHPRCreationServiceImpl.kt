@@ -24,6 +24,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.toPRIdentifier
+import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
 import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
@@ -59,7 +60,9 @@ internal class GHPRCreationServiceImpl(private val requestExecutor: GithubApiReq
       GithubApiRequests.Repos.PullRequests.find(baseRepo.repository,
                                                 GithubIssueState.open,
                                                 baseBranch?.nameForRemoteOperations,
-                                                headRepo.owner + ":" + headBranch.nameForRemoteOperations
+                                                headRepo.owner + ":" + headBranch.nameForRemoteOperations,
+                                                // only the first match is used, so fetch a single result
+                                                GithubRequestPagination(pageSize = 1)
       )).items.firstOrNull()?.toPRIdentifier()
 
   private fun getHeadRepoPrefix(headRepo: GHGitRepositoryMapping) =
