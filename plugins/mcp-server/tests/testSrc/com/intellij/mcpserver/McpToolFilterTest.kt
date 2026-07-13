@@ -1,5 +1,8 @@
 package com.intellij.mcpserver
 
+import com.intellij.mcpserver.McpToolFilterProvider.McpToolFilterContext
+import com.intellij.mcpserver.McpToolFilterProvider.McpToolState
+import kotlinx.serialization.json.JsonObject
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -155,5 +158,115 @@ class McpToolFilterTest {
     assertThat(filter.shouldInclude("read_file")).isTrue()
     assertThat(filter.shouldInclude("write_file")).isTrue()
     assertThat(filter.shouldInclude("other_tool")).isFalse()
+  }
+
+  // --- McpToolFilterContext tests ---
+
+  @Test
+  fun `updateState sets enabled only without affecting routerOnly`() {
+    val tool = fakeTool("read_file")
+    val context = McpToolFilterContext(listOf(tool))
+
+    context.updateState(enabled = false, predicate = { it == tool })
+
+    assertThat(context.onTools).doesNotContain(tool)
+    assertThat(context.routerOnlyTools).doesNotContain(tool)
+    // routerOnly should remain default (true), so the tool is neither onTools nor routerOnlyTools
+    // because enabled=false removes it from both sets
+  }
+
+  @Test
+  fun `updateState sets enabled and routerOnly independently`() {
+    val tool = fakeTool("read_file")
+    val context = McpToolFilterContext(listOf(tool))
+
+    context.updateState(enabled = true, routerOnly = false, predicate = { it == tool })
+
+    assertThat(context.onTools).contains(tool)
+    assertThat(context.routerOnlyTools).doesNotContain(tool)
+  }
+
+  @Test
+  fun `updateState second call can change routerOnly after enabled is already set`() {
+    val tool = fakeTool("read_file")
+    val context = McpToolFilterContext(listOf(tool))
+
+    // First call: disable the tool (enabled=false, routerOnly stays default true)
+    context.updateState(enabled = false, predicate = { it == tool })
+    assertThat(context.onTools).doesNotContain(tool)
+    assertThat(context.routerOnlyTools).doesNotContain(tool)
+
+    // Second call: re-enable but keep routerOnly=true
+    context.updateState(enabled = true, predicate = { it == tool })
+    assertThat(context.onTools).doesNotContain(tool)
+    assertThat(context.routerOnlyTools).contains(tool)
+  }
+
+  @Test
+  fun `updateState partial fields does not prevent subsequent provider from setting other field`() {
+    val toolA = fakeTool("tool_a")
+    val toolB = fakeTool("tool_b")
+    val context = McpToolFilterContext(listOf(toolA, toolB))
+
+    // Provider 1: sets enabled=false for toolA
+    context.updateState(enabled = false, predicate = { it == toolA })
+
+    // Provider 2: sets enabled=false AND routerOnly=false for toolA
+    // The fix ensures this still works — the skip logic no longer blocks
+    // because it now checks final values rather than individual fields
+    context.updateState(enabled = false, routerOnly = false, predicate = { it == toolA })
+
+    // toolA should not appear in either set (disabled)
+    assertThat(context.onTools).doesNotContain(toolA)
+    assertThat(context.routerOnlyTools).doesNotContain(toolA)
+
+    // toolB should be unaffected — still at defaults
+    assertThat(context.onTools).doesNotContain(toolB)
+    assertThat(context.routerOnlyTools).contains(toolB)
+  }
+
+  @Test
+  fun `updateState with null values preserves existing state`() {
+    val tool = fakeTool("read_file")
+    val context = McpToolFilterContext(listOf(tool))
+
+    // First: set enabled=true, routerOnly=false
+    context.updateState(enabled = true, routerOnly = false, predicate = { it == tool })
+    assertThat(context.onTools).contains(tool)
+
+    // Second: only change enabled to false; routerOnly should stay false
+    context.updateState(enabled = false, predicate = { it == tool })
+    assertThat(context.onTools).doesNotContain(tool)
+    assertThat(context.routerOnlyTools).doesNotContain(tool)
+    // routerOnly was false and stayed false, so tool is not in routerOnlyTools either
+  }
+
+  @Test
+  fun `updateState with McpToolState object sets both fields`() {
+    val tool = fakeTool("read_file")
+    val context = McpToolFilterContext(listOf(tool))
+
+    context.updateState(McpToolState(enabled = true, routerOnly = false), predicate = { it == tool })
+
+    assertThat(context.onTools).contains(tool)
+    assertThat(context.routerOnlyTools).doesNotContain(tool)
+  }
+
+  private fun fakeTool(name: String): McpTool {
+    return object : McpTool {
+      override val descriptor = McpToolDescriptor(
+        name = name,
+        description = name,
+        fullyQualifiedName = "test.$name",
+        category = McpToolCategory(shortName = "Test", fullyQualifiedName = "test", isExperimental = false),
+        inputSchema = McpToolSchema.ofPropertiesSchema(
+          JsonObject(emptyMap()), emptySet(), emptyMap()
+        ),
+      )
+      override suspend fun call(args: JsonObject): McpToolCallResult =
+        error("not needed")
+
+      override fun toString(): String = "McpTool $name"
+    }
   }
 }

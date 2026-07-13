@@ -8,6 +8,7 @@ import com.intellij.mcpserver.McpTool
 import com.intellij.mcpserver.McpToolCategory
 import com.intellij.mcpserver.McpToolsMarkdownExporter
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.toolsets.general.UniversalToolset
 import com.intellij.mcpserver.settings.McpToolDisallowListSettings.ToolState
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
@@ -622,11 +623,13 @@ class McpToolFilterConfigurable : SearchableConfigurable {
       separator.expanded = !separator.expanded
     }
     lateinit var categoryView: CategoryView
-    val toolRows = group.tools.map { tool ->
-      createToolRow(tool) {
-        refreshCategoryState(categoryView)
+    val toolRows = group.tools
+      .filter { it.descriptor.name != UniversalToolset::execute_tool.name }
+      .map { tool ->
+        createToolRow(tool) {
+          refreshCategoryState(categoryView)
+        }
       }
-    }
 
     enabledCheckBox.addActionListener {
       handleCategoryStateChange(categoryView) {
