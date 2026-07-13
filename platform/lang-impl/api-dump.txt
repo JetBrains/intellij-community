@@ -2661,6 +2661,7 @@ c:com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel
 - getEnteredName():java.lang.String
 - getNameField():javax.swing.JTextField
 - getSelectedTemplate():java.lang.String
+- setNameFieldToTemplateNameOnSelection():V
 - setTemplateSelectorMatcher(java.util.function.BiFunction):V
 f:com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel$TemplatePresentation
 - java.lang.Record

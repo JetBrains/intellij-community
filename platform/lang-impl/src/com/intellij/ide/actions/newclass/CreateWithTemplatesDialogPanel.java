@@ -59,6 +59,17 @@ public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPan
     return myTemplatesList.getSelectedValue().templateName();
   }
 
+  public void setNameFieldToTemplateNameOnSelection() {
+    myTemplatesList.addListSelectionListener(e -> {
+      if (!e.getValueIsAdjusting()) {
+        TemplatePresentation selectedTemplate = myTemplatesList.getSelectedValue();
+        if (selectedTemplate != null) {
+          myTextField.setText(selectedTemplate.templateName());
+        }
+      }
+    });
+  }
+
   private void setTextFieldIcon(Icon icon) {
     myTextField.setExtensions(new TemplateIconExtension(icon));
     myTextField.repaint();

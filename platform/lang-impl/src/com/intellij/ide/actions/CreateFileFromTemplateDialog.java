@@ -268,6 +268,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
         textField.selectAll();
       }
 
+      contentPanel.setNameFieldToTemplateNameOnSelection();
       if (myKindSelector != null) {
         contentPanel.setTemplateSelectorMatcher(myKindSelector);
       }

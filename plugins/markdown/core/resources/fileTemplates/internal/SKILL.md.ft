@@ -1,0 +1,11 @@
+#set($directoryNameStart = $DIR_PATH.lastIndexOf("/") + 1)
+#set($directoryName = $DIR_PATH.substring($directoryNameStart))
+---
+#if($directoryName)
+name: $directoryName
+#else
+name: TODO
+#end
+description: TODO
+---
+#[[$END$]]#

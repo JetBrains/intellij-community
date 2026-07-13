@@ -89,6 +89,11 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <internalFileTemplate name="Markdown File"/>
+    <internalFileTemplate name="README"/>
+    <internalFileTemplate name="AGENTS"/>
+    <internalFileTemplate name="SKILL"/>
+
     <typedHandler implementation="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableTypedHandler"/>
     <backspaceHandlerDelegate implementation="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableBackspaceHandler"/>
     <enterHandlerDelegate implementation="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableEnterHandler"/>
@@ -393,6 +398,12 @@
   </extensions>
 
   <actions>
+    <action id="Markdown.NewFile"
+            class="org.intellij.plugins.markdown.fileActions.MarkdownCreateFileAction"
+            icon="AllIcons.FileTypes.Markdown">
+      <add-to-group group-id="NewGroup"/>
+    </action>
+
     <group id="Markdown.TableActions" compact="true" class="org.intellij.plugins.markdown.editor.tables.actions.TableActionsGroup">
       <group id="Markdown.TableColumnActions" compact="true">
         <action id="Markdown.Table.SwapColumns.SwapWithLeftColumn"
