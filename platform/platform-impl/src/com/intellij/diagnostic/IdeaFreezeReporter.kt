@@ -638,17 +638,34 @@ object FreezeReporterRegistry {
   private const val DEFAULT_MAX_DUMP_DURATION_MS = 40_000
   private const val DEFAULT_DURATION_THRESHOLD_SECONDS = 10
 
-  fun isReporterEnabled(): Boolean = Registry.`is`(ENABLED, false)
+  @Volatile
+  private var overrides = FreezeReporterOverrides()
+
+  fun setOverrides(
+    enabled: Boolean?,
+    maxDumpDurationMs: Int?,
+    durationThresholdSeconds: Int?,
+  ) {
+    overrides = FreezeReporterOverrides(enabled, maxDumpDurationMs, durationThresholdSeconds)
+  }
+
+  fun isReporterEnabled(): Boolean = overrides.enabled ?: Registry.`is`(ENABLED, false)
 
   fun maxDumpDurationMs(): Int {
-    return Registry.intValue(MAX_DUMP_DURATION_MS, DEFAULT_MAX_DUMP_DURATION_MS)
+    return overrides.maxDumpDurationMs ?: Registry.intValue(MAX_DUMP_DURATION_MS, DEFAULT_MAX_DUMP_DURATION_MS)
   }
 
   fun durationThresholdSeconds(): Int {
-    val threshold = Registry.intValue(
+    val threshold = overrides.durationThresholdSeconds ?: Registry.intValue(
       DURATION_THRESHOLD_SECONDS,
       DEFAULT_DURATION_THRESHOLD_SECONDS,
     )
     return threshold.coerceAtLeast(0)
   }
 }
+
+private data class FreezeReporterOverrides(
+  val enabled: Boolean? = null,
+  val maxDumpDurationMs: Int? = null,
+  val durationThresholdSeconds: Int? = null,
+)

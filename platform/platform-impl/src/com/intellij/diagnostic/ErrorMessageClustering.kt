@@ -65,7 +65,14 @@ internal class ErrorMessageClustering(private val coroutineScope: CoroutineScope
 object ErrorMessageClusteringSettings {
   const val DEDUPLICATE_REPORTS: String = "ide.errors.deduplicate"
 
-  fun isDeduplicationEnabled(): Boolean = Registry.`is`(DEDUPLICATE_REPORTS, true)
+  @Volatile
+  private var deduplicationOverride: Boolean? = null
+
+  fun setDeduplicationOverride(enabled: Boolean?) {
+    deduplicationOverride = enabled
+  }
+
+  fun isDeduplicationEnabled(): Boolean = deduplicationOverride ?: Registry.`is`(DEDUPLICATE_REPORTS, true)
 }
 
 internal inline fun <reified T : Throwable> Throwable.isBackendInstance(): Boolean {
