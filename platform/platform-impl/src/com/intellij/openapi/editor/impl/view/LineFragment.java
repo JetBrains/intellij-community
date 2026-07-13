@@ -11,7 +11,13 @@ import java.util.function.Consumer;
  * A building block of text line layout, that knows how to draw itself, and convert between offset, column and x coordinate within itself.
  */
 @ApiStatus.Internal
-public interface LineFragment {
+public sealed interface LineFragment
+  permits TextFragment,
+          TextFragmentWindow,
+          SpecialCharacterFragment,
+          ApproximationFragment,
+          TabFragment {
+
   // offset-based
   int getLength();
 
@@ -38,10 +44,8 @@ public interface LineFragment {
   float offsetToX(float startX, int startOffset, int offset);
 
   // offsets are visual
-  @NotNull
-  Consumer<Graphics2D> draw(float x, float y, int startOffset, int endOffset);
+  @NotNull Consumer<Graphics2D> draw(float x, float y, int startOffset, int endOffset);
 
   // offsets are logical
-  @NotNull
-  LineFragment subFragment(int startOffset, int endOffset);
+  @NotNull LineFragment subFragment(int startOffset, int endOffset);
 }

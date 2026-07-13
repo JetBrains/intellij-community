@@ -27,25 +27,53 @@ public final class ComplexTextFragment extends TextFragment {
   private static final double CLIP_MARGIN = 1e4;
 
   private final @NotNull GlyphVector myGlyphVector;
-  private final short @Nullable [] myCodePoint2Offset; // Start offset of each Unicode code point in the fragment
-                                            // (null if each code point takes one char).
-                                            // We expect no more than 1025 chars in a fragment, so 'short' should be enough.
+
+  // Start offset of each Unicode code point in the fragment
+  // (null if each code point takes one char).
+  // We expect no more than 1025 chars in a fragment, so 'short' should be enough.
+  private final short @Nullable [] myCodePoint2Offset;
 
   @VisibleForTesting
-  public ComplexTextFragment(char @NotNull [] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo, @Nullable EditorView view) {
-    super(end - start, view);
-    assert start >= 0              : assertMessage(lineChars, start, end, isRtl, fontInfo);
-    assert end <= lineChars.length : assertMessage(lineChars, start, end, isRtl, fontInfo);
-    assert start < end             : assertMessage(lineChars, start, end, isRtl, fontInfo);
-
-    myGlyphVector = FontLayoutService.getInstance().layoutGlyphVector(
-      fontInfo.getFont(),
-      fontInfo.getFontRenderContext(),
+  public ComplexTextFragment(
+    char @NotNull [] lineChars,
+    int start,
+    int end,
+    boolean isRtl,
+    @NotNull FontInfo fontInfo,
+    @Nullable EditorView view
+  ) {
+    this(
       lineChars,
       start,
       end,
-      isRtl
+      isRtl,
+      FontLayoutService.getInstance().layoutGlyphVector(
+        fontInfo.getFont(),
+        fontInfo.getFontRenderContext(),
+        lineChars,
+        start,
+        end,
+        isRtl
+      ),
+      view
     );
+    assert start >= 0              : assertMessage(lineChars, start, end, isRtl, fontInfo);
+    assert end <= lineChars.length : assertMessage(lineChars, start, end, isRtl, fontInfo);
+    assert start < end             : assertMessage(lineChars, start, end, isRtl, fontInfo);
+  }
+
+  private ComplexTextFragment(
+    char @NotNull [] lineChars,
+    int start,
+    int end,
+    boolean isRtl,
+    @NotNull GlyphVector glyphVector,
+    @Nullable EditorView view
+  ) {
+    // RTL-ness is derived from the glyph vector, not from the isRtl parameter: FLAG_RUN_RTL reflects
+    // the actual glyph order, which may differ from the requested direction (e.g., for single-glyph runs)
+    super(end - start, BitUtil.isSet(glyphVector.getLayoutFlags(), GlyphVector.FLAG_RUN_RTL), view);
+    myGlyphVector = glyphVector;
     float[] alignments = null;
     if (isGridCellAlignmentEnabled()) {
       // This thing assumes that one glyph = one character.
@@ -146,25 +174,49 @@ public final class ComplexTextFragment extends TextFragment {
     }
   }
 
-  private void setCharPosition(int logicalCharIndex, float x, boolean isRtl, int numChars) {
-    int charPosition = isRtl ? numChars - logicalCharIndex - 2 : logicalCharIndex;
-    if (charPosition >= 0 && charPosition < numChars - 1) {
-      myCharPositions[charPosition] = x;
-    }
-  }
-
   @Override
-  boolean isRtl() {
-    return BitUtil.isSet(myGlyphVector.getLayoutFlags(), GlyphVector.FLAG_RUN_RTL);
-  }
-
-  @Override
-  int offsetToLogicalColumn(int offset) {
+  protected int offsetToLogicalColumn(int offset) {
     if (myCodePoint2Offset == null) return offset;
     if (offset == getLength()) return myCodePoint2Offset.length;
     int i = Arrays.binarySearch(myCodePoint2Offset, (short)offset);
     assert i >= 0;
     return i;
+  }
+
+  @Override
+  public int getLogicalColumnCount(int startColumn) {
+    return getCodePointCount();
+  }
+
+  @Override
+  public int getVisualColumnCount(float startX) {
+    return getCodePointCount();
+  }
+
+  @Override
+  public int visualColumnToOffset(float startX, int column) {
+    return visualColumnToVisualOffset(column);
+  }
+
+  @Override
+  public float visualColumnToX(float startX, int column) {
+    return startX + getX(visualColumnToVisualOffset(column));
+  }
+
+  @Override
+  public @NotNull VisualColumn xToVisualColumn(float startX, float x) {
+    float relX = x - startX;
+    float prevPos = 0;
+    int columnCount = getCodePointCount();
+    for (int i = 0; i < columnCount; i++) {
+      int visualOffset = visualColumnToVisualOffset(i);
+      float newPos = myCharPositions[visualOffset];
+      if (relX < (newPos + prevPos) / 2) {
+        return new VisualColumn(i, relX > prevPos);
+      }
+      prevPos = newPos;
+    }
+    return new VisualColumn(columnCount, relX > myCharPositions[myCharPositions.length - 1]);
   }
 
   // Drawing a portion of glyph vector using clipping might be not very effective
@@ -178,6 +230,14 @@ public final class ComplexTextFragment extends TextFragment {
   private static float lastStartX;
   private static float lastEndX;
   private static float lastY;
+
+  public static void flushDrawingCache(Graphics2D g) {
+    if (lastFragment != null) {
+      g.setColor(lastColor);
+      lastFragment.doDraw(g, lastStartX, lastY, lastStartColumn, lastEndColumn);
+      lastFragment = null;
+    }
+  }
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @Override
@@ -195,7 +255,6 @@ public final class ComplexTextFragment extends TextFragment {
         lastEndX = newX;
         return;
       }
-
       flushDrawingCache(g);
       lastFragment = this;
       lastStartColumn = startColumn;
@@ -229,57 +288,32 @@ public final class ComplexTextFragment extends TextFragment {
   }
 
   private int getCodePointCount() {
-    return myCodePoint2Offset == null ? myCharPositions.length : myCodePoint2Offset.length;
+    if (myCodePoint2Offset != null) {
+      return myCodePoint2Offset.length;
+    }
+    return myCharPositions.length;
   }
 
   private int visualColumnToVisualOffset(int column) {
-    if (myCodePoint2Offset == null) return column;
-    if (column <= 0) return 0;
-    if (column >= myCodePoint2Offset.length) return getLength();
-    return isRtl() ? getLength() - myCodePoint2Offset[myCodePoint2Offset.length - column] : myCodePoint2Offset[column];
-  }
-
-  @Override
-  public int getLogicalColumnCount(int startColumn) {
-    return getCodePointCount();
-  }
-
-  @Override
-  public int getVisualColumnCount(float startX) {
-    return getCodePointCount();
-  }
-
-  @Override
-  public int visualColumnToOffset(float startX, int column) {
-    return visualColumnToVisualOffset(column);
-  }
-
-  @Override
-  public @NotNull VisualColumn xToVisualColumn(float startX, float x) {
-    float relX = x - startX;
-    float prevPos = 0;
-    int columnCount = getCodePointCount();
-    for (int i = 0; i < columnCount; i++) {
-      int visualOffset = visualColumnToVisualOffset(i);
-      float newPos = myCharPositions[visualOffset];
-      if (relX < (newPos + prevPos) / 2) {
-        return new VisualColumn(i, relX > prevPos);
-      }
-      prevPos = newPos;
+    if (myCodePoint2Offset == null) {
+      return column;
     }
-    return new VisualColumn(columnCount, relX > myCharPositions[myCharPositions.length - 1]);
+    if (column <= 0) {
+      return 0;
+    }
+    if (column >= myCodePoint2Offset.length) {
+      return getLength();
+    }
+    if (isRtl()) {
+      return getLength() - myCodePoint2Offset[myCodePoint2Offset.length - column];
+    }
+    return myCodePoint2Offset[column];
   }
 
-  @Override
-  public float visualColumnToX(float startX, int column) {
-    return startX + getX(visualColumnToVisualOffset(column));
-  }
-
-  public static void flushDrawingCache(Graphics2D g) {
-    if (lastFragment != null) {
-      g.setColor(lastColor);
-      lastFragment.doDraw(g, lastStartX, lastY, lastStartColumn, lastEndColumn);
-      lastFragment = null;
+  private void setCharPosition(int logicalCharIndex, float x, boolean isRtl, int numChars) {
+    int charPosition = isRtl ? numChars - logicalCharIndex - 2 : logicalCharIndex;
+    if (charPosition >= 0 && charPosition < numChars - 1) {
+      myCharPositions[charPosition] = x;
     }
   }
 
