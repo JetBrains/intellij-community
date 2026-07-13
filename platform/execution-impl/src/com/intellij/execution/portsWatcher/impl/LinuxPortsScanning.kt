@@ -8,11 +8,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.fs.readFile
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.isLinux
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.utils.impl.localToIjent
 import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.CancellationException
 import java.nio.file.Files
@@ -115,7 +117,14 @@ private fun readLinuxSocketInodesForPid(eelDescriptor: EelDescriptor, pid: Long)
     catch (_: NoSuchFileException) {
       continue  // Process can be already terminated
     }
-    val match = socketInodeRegex.matchEntire(target) ?: continue
+    // The Linux kernel renders required symlink targets as "socket:[<inode>]".
+    // On a Windows host, however, the WSL 9P layer and IntelliJ's EEL nio provider transliterate ':'
+    // — illegal in Windows paths — to the private-use char U+F03A (see IJPL-213371),
+    // so the target arrives as "socket[<inode>]".
+    // Use the `localToIjent` utility to get the correct socket representation (with ':').
+    @OptIn(EelDelicateApi::class)
+    val translatedTarget = localToIjent(target)
+    val match = socketInodeRegex.matchEntire(translatedTarget) ?: continue
     val inode = match.groupValues[1].toLongOrNull() ?: continue
     result.add(inode)
   }
