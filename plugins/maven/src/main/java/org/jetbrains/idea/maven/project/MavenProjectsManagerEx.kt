@@ -549,6 +549,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
           edtWriteAction { it.finish() }
         }
         console.finishTransaction(spec.resolveIncrementally())
+        console.awaitAllEventsProcessed()
         syncActivity.finished {
           listOf(
             ProjectImportCollector.LINKED_PROJECTS.with(tree.rootProjects.count()),
