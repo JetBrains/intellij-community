@@ -490,7 +490,7 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
         if (myUseSoftWraps) {
           assert myRecalculationManager instanceof SoftWrappingEnabledRecalculationManager : "soft-wraps were not forced correctly";
           var recalculationManager = (SoftWrappingEnabledRecalculationManager)myRecalculationManager;
-          recalculationManager.recalculateAll();
+          recalculationManager.recalculateAll("soft wraps forced on document change");
           return;
         }
       }

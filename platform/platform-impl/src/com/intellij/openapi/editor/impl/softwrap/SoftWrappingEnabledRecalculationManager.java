@@ -157,7 +157,8 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
       int textLength = event.getDocument().getTextLength();
       // adding +1, as inlays at the end of the moved range stick to the following text (and impact its layout)
       myApplianceManager.recalculate(Arrays.asList(new TextRange(srcOffset, Math.min(textLength, srcOffset + event.getNewLength() + 1)),
-                                                   new TextRange(dstOffset, Math.min(textLength, dstOffset + event.getNewLength() + 1))));
+                                                   new TextRange(dstOffset, Math.min(textLength, dstOffset + event.getNewLength() + 1))),
+                                     "move insertion");
     }
   }
 
@@ -196,7 +197,7 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
     }
     try {
       if (!myDirty) { // no need to recalculate specific areas if the whole document will be reprocessed
-        myApplianceManager.recalculate(deferredFoldRegions);
+        myApplianceManager.recalculate(deferredFoldRegions, "fold processing end");
       }
     }
     finally {
@@ -230,7 +231,7 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
       if (inlay.getPlacement() == Inlay.Placement.AFTER_LINE_END) {
         offset = DocumentUtil.getLineEndOffset(offset, myDocument);
       }
-      myApplianceManager.recalculate(Collections.singletonList(new TextRange(offset, offset)));
+      myApplianceManager.recalculate(Collections.singletonList(new TextRange(offset, offset)), "inlay updated");
     }
   }
 
@@ -296,9 +297,9 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
     return myApplianceManager;
   }
 
-  public void recalculateAll() {
+  public void recalculateAll(@NotNull String reason) {
     myDirty = false;
-    myApplianceManager.recalculateAll();
+    myApplianceManager.recalculateAll(reason);
   }
 
   @Override
@@ -350,7 +351,7 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
     }
     try {
       if (!myDirty) { // no need to recalculate specific areas if the whole document will be reprocessed
-        myApplianceManager.recalculate(deferredCustomWraps);
+        myApplianceManager.recalculate(deferredCustomWraps, "custom wrap batch finished");
       }
     }
     finally {
