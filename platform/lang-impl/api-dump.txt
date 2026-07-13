@@ -4431,6 +4431,13 @@ c:com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
 - com.intellij.ide.DeleteProvider
 - com.intellij.ide.TitledHandler
 - <init>():V
+- f:canDeleteElement(com.intellij.openapi.actionSystem.DataContext):Z
+- f:deleteElement(com.intellij.openapi.actionSystem.DataContext):V
+- p:doDetachModules(com.intellij.openapi.project.Project,com.intellij.openapi.module.Module[],java.util.List):V
+- f:getActionTitle():java.lang.String
+- f:getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- s:getInstance():com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
+- s:removeModule(com.intellij.openapi.module.Module,java.util.Collection,com.intellij.openapi.module.ModifiableModuleModel):V
 f:com.intellij.openapi.roots.ui.configuration.impl.ModuleConfigurationEditorProviderEp
 - com.intellij.openapi.extensions.PluginAware
 - implementationClass:java.lang.String
