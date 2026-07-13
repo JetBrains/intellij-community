@@ -958,6 +958,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroducePositionBasedDestructuringDeclarationOnlySyntax.kt");
         }
 
+        @TestMetadata("IntroducePositionalBasedDestructuringDeclarationNameMismatch.kt")
+        public void testIntroducePositionalBasedDestructuringDeclarationNameMismatch() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroducePositionalBasedDestructuringDeclarationNameMismatch.kt");
+        }
+
         @TestMetadata("introduceToClass.kt")
         public void testIntroduceToClass() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/introduceToClass.kt");
