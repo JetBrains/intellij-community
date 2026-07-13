@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.CustomFoldRegion;
@@ -238,14 +238,14 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     return maxVisualColumn;
   }
 
-  private int[] getVisualColumnForXInsideFoldRegion(float x) {
+  private @NotNull VisualColumn getVisualColumnForXInsideFoldRegion(float x) {
     LineLayout layout = myView.getFoldRegionLayout(myFoldRegion);
     for (LineLayout.VisualFragment fragment : layout.getFragmentsInVisualOrder(0)) {
       if (x <= fragment.getEndX()) {
         return fragment.xToVisualColumn(x);
       }
     }
-    return new int[] {myFoldRegionColumns, 1};
+    return new VisualColumn(myFoldRegionColumns, true);
   }
 
   private float getXForVisualColumnInsideFoldRegion(int column) {
@@ -390,18 +390,18 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     // returns array of two elements
     // - first one is a visual column,
     // - second one is 1 if the target location is closer to larger columns, and 0 otherwise
-    int[] xToVisualColumn(float x) {
+    VisualColumn xToVisualColumn(float x) {
       if (myDelegate != null) {
         return myDelegate.xToVisualColumn(x);
       }
       else if (myFoldRegion != null) {
-        int[] column = getVisualColumnForXInsideFoldRegion(x - getStartX());
-        column[0] += getStartVisualColumn();
+        VisualColumn column = getVisualColumnForXInsideFoldRegion(x - getStartX());
+        column.column += getStartVisualColumn();
         return column;
       }
       else {
         boolean closerToStart = x < (getStartX() + getEndX()) / 2;
-        return new int[]{myCurrentVisualColumn - (closerToStart ? 1 : 0), closerToStart ? 0 : 1};
+        return new VisualColumn(myCurrentVisualColumn - (closerToStart ? 1 : 0), !closerToStart);
       }
     }
 
@@ -549,7 +549,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     }
 
     @Override
-    int[] xToVisualColumn(float x) {
+    VisualColumn xToVisualColumn(float x) {
       return super.xToVisualColumn(x - xOffset);
     }
   }

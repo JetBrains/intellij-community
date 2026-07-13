@@ -23,6 +23,7 @@ import static com.intellij.openapi.editor.impl.AbstractEditorTest.TEST_DESCENT;
 import static com.intellij.openapi.editor.impl.AbstractEditorTest.TEST_LINE_HEIGHT;
 import static com.intellij.openapi.editor.impl.AbstractEditorTest.assertTrue;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 public class ComplexTextFragmentTest {
   @Test
@@ -81,6 +82,12 @@ public class ComplexTextFragmentTest {
     );
   }
 
+  @Test
+  public void testEndPositionLeaning() {
+    assertEndVisualColumnForGlyphVector(glyph(0, 10).glyph(10, 20), 20, false);
+    assertEndVisualColumnForGlyphVector(glyph(0, 10).glyph(10, 20), 21, true);
+  }
+
   private static void assertCaretPositionsForGlyphVector(MyGlyphVector gv, int... expectedPositions) {
     FontLayoutService.setInstance(new MockFontLayoutService(TEST_CHAR_WIDTH, TEST_LINE_HEIGHT, TEST_DESCENT) {
       @NotNull
@@ -101,6 +108,30 @@ public class ComplexTextFragmentTest {
         charPositions[i] = (int)fragment.visualColumnToX(0, i + 1);
       }
       assertArrayEquals(expectedPositions, charPositions);
+    }
+    finally {
+      FontLayoutService.setInstance(null);
+    }
+  }
+
+  private static void assertEndVisualColumnForGlyphVector(MyGlyphVector gv, float x, boolean expectedLeansRight) {
+    FontLayoutService.setInstance(new MockFontLayoutService(TEST_CHAR_WIDTH, TEST_LINE_HEIGHT, TEST_DESCENT) {
+      @NotNull
+      @Override
+      public GlyphVector layoutGlyphVector(@NotNull Font font, @NotNull FontRenderContext fontRenderContext, char @NotNull [] chars,
+                                           int start, int end, boolean isRtl) {
+        return gv;
+      }
+    });
+    try {
+      int length = gv.getNumChars();
+      char[] text = new char[length];
+      FontInfo fontInfo = new FontInfo(Font.MONOSPACED, 1, Font.PLAIN, false, new FontRenderContext(null, false, false));
+      ComplexTextFragment fragment = new ComplexTextFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
+                                                             fontInfo, null);
+      VisualColumn column = fragment.xToVisualColumn(0, x);
+      assertEquals(length, column.column);
+      assertEquals(expectedLeansRight, column.leansRight);
     }
     finally {
       FontLayoutService.setInstance(null);

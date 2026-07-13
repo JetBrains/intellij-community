@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -25,7 +25,6 @@ final class SimpleTextFragment extends TextFragment {
     float x = 0;
     char[] text = myText;
     float[] charAlignment = null;
-    float[] charPositions = myCharPositions;
     boolean gridCellAlignmentEnabled = text.length == 0 || isGridCellAlignmentEnabled();
     for (int i = 0; i < text.length; i++) {
       int codePoint = text[i]; // SimpleTextFragment only handles BMP characters, so no need for codePointAt here
@@ -41,7 +40,7 @@ final class SimpleTextFragment extends TextFragment {
         }
       }
       x += charWidth;
-      charPositions[i] = x;
+      myCharPositions[i] = x;
     }
     myCharAlignment = charAlignment;
   }
@@ -122,17 +121,18 @@ final class SimpleTextFragment extends TextFragment {
   }
 
   @Override
-  public int @NotNull [] xToVisualColumn(float startX, float x) {
+  public @NotNull VisualColumn xToVisualColumn(float startX, float x) {
     float relX = x - startX;
     float prevPos = 0;
     for (int i = 0; i < myCharPositions.length; i++) {
       float newPos = myCharPositions[i];
       if (relX < (newPos + prevPos) / 2) {
-        return new int[] {i, relX <= prevPos ? 0 : 1};
+        return new VisualColumn(i, relX > prevPos);
       }
       prevPos = newPos;
     }
-    return new int[] {myCharPositions.length, relX <= myCharPositions[myCharPositions.length - 1] ? 0 : 1};
+    boolean leansRight = relX > myCharPositions[myCharPositions.length - 1];
+    return new VisualColumn(myCharPositions.length, leansRight);
   }
 
   @Override

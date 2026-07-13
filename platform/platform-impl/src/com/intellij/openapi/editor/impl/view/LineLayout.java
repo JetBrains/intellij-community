@@ -916,13 +916,9 @@ abstract class LineLayout {
       return delegate.offsetToX(startX, getRelativeOffset(startOffset), getRelativeOffset(offset));
     }
 
-    // x is expected to be between startX and endX for this fragment
-    // returns array of two elements
-    // - first one is visual column,
-    // - second one is 1 if target location is closer to larger columns and 0 otherwise
-    int[] xToVisualColumn(float x) {
-      int[] column = delegate.xToVisualColumn(startX, x);
-      column[0] += startVisualColumn;
+    @NotNull VisualColumn xToVisualColumn(float x) {
+      VisualColumn column = delegate.xToVisualColumn(startX, x);
+      column.column += startVisualColumn;
       return column;
     }
 

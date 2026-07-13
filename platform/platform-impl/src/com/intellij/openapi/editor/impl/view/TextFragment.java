@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -135,13 +135,19 @@ public abstract class TextFragment implements LineFragment {
     }
 
     @Override
-    public int @NotNull [] xToVisualColumn(float startX, float x) {
+    public @NotNull VisualColumn xToVisualColumn(float startX, float x) {
       int startColumnInParent = visualColumnToParent(0);
       float parentStartX = startX - TextFragment.this.visualColumnToX(0, startColumnInParent);
-      int[] parentColumn = TextFragment.this.xToVisualColumn(parentStartX, x);
-      int column = parentColumn[0] - startColumnInParent;
+      VisualColumn parentColumn = TextFragment.this.xToVisualColumn(parentStartX, x);
+      int column = parentColumn.column - startColumnInParent;
       int columnCount = getVisualColumnCount(startX);
-      return column < 0 ? new int[] {0, 0} : column > columnCount ? new int[] {columnCount, 1} : new int[] {column, parentColumn[1]};
+      if (column < 0) {
+        return new VisualColumn(0, false);
+      }
+      if (column > columnCount) {
+        return new VisualColumn(columnCount, true);
+      }
+      return new VisualColumn(column, parentColumn.leansRight);
     }
 
     private int visualOffsetToParent(int offset) {

@@ -130,11 +130,16 @@ final class SpecialCharacterFragment implements LineFragment {
   }
 
   @Override
-  public int @NotNull [] xToVisualColumn(float startX, float x) {
-    if (x <= startX) return new int[] {0, 0};
-    if (x > startX + myWidth) return new int[] {1, 1};
-    int column = (x <= startX + myWidth / 2) ? 0 : 1;
-    return new int[] {column, 1 - column};
+  public @NotNull VisualColumn xToVisualColumn(float startX, float x) {
+    if (x <= startX) {
+      return new VisualColumn(0, false);
+    }
+    if (x > startX + myWidth) {
+      return new VisualColumn(1, true);
+    }
+    boolean leansRight = x <= (startX + myWidth / 2);
+    int column = leansRight ? 0 : 1;
+    return new VisualColumn(column, leansRight);
   }
 
   @Override

@@ -73,22 +73,26 @@ final class TabFragment implements LineFragment {
   }
 
   @Override
-  public int @NotNull [] xToVisualColumn(float startX, float x) {
-    if (x <= startX) return new int[] {0, 0};
+  public @NotNull VisualColumn xToVisualColumn(float startX, float x) {
+    if (x <= startX) {
+      return new VisualColumn(0, false);
+    }
     float nextTabStop = getNextTabStop(startX);
-    if (x > nextTabStop) return new int[] {getVisualColumnCount(startX), 1};
+    if (x > nextTabStop) {
+      return new VisualColumn(getVisualColumnCount(startX), true);
+    }
     int column;
-    boolean closerToLargerColumns;
+    boolean leansRight;
     if (myEditor.getSettings().isCaretInsideTabs()) {
       float plainSpaceWidth = myView.getPlainSpaceWidth();
       column = Math.round((x - startX)/plainSpaceWidth);
-      closerToLargerColumns = (x - startX) > (column * plainSpaceWidth);
+      leansRight = (x - startX) > (column * plainSpaceWidth);
     }
     else {
       column = x > (startX + nextTabStop) / 2 ? getVisualColumnCount(startX) : 0;
-      closerToLargerColumns = column == 0;
+      leansRight = column == 0;
     }
-    return new int[] {column, closerToLargerColumns ? 1 : 0};
+    return new VisualColumn(column, leansRight);
   }
 
   @Override

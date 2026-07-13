@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -115,7 +115,7 @@ public final class ComplexTextFragment extends TextFragment {
           if (alignments != null) {
             newX = isRtl ? newX - alignments[visualGlyphIndex] : newX + alignments[visualGlyphIndex];
           }
-          newX = Math.max(0, Math.min(totalWidth, newX));
+          newX = Math.clamp(newX, 0, totalWidth);
           setCharPosition(charIndex, newX, isRtl, numChars);
           prevX = lastX;
           lastX = newX;
@@ -223,6 +223,7 @@ public final class ComplexTextFragment extends TextFragment {
       double yMax = y + CLIP_MARGIN;
       g.clip(new Rectangle2D.Double(xMin, yMin, xMax - xMin, yMax - yMin));
       g.drawGlyphVector(myGlyphVector, startX, y);
+      //noinspection GraphicsSetClipInspection
       g.setClip(savedClip);
     }
   }
@@ -254,7 +255,7 @@ public final class ComplexTextFragment extends TextFragment {
   }
 
   @Override
-  public int @NotNull [] xToVisualColumn(float startX, float x) {
+  public @NotNull VisualColumn xToVisualColumn(float startX, float x) {
     float relX = x - startX;
     float prevPos = 0;
     int columnCount = getCodePointCount();
@@ -262,11 +263,11 @@ public final class ComplexTextFragment extends TextFragment {
       int visualOffset = visualColumnToVisualOffset(i);
       float newPos = myCharPositions[visualOffset];
       if (relX < (newPos + prevPos) / 2) {
-        return new int[] {i, relX <= prevPos ? 0 : 1};
+        return new VisualColumn(i, relX > prevPos);
       }
       prevPos = newPos;
     }
-    return new int[] {columnCount, relX <= myCharPositions[myCharPositions.length - 1] ? 0 : 1};
+    return new VisualColumn(columnCount, relX > myCharPositions[myCharPositions.length - 1]);
   }
 
   @Override
