@@ -74,6 +74,21 @@ public class CommonLinkDestinationReferenceTest extends BasePlatformTestCase {
     doTest();
   }
 
+  public void testLinkText() {
+    PsiFile file = myFixture.getFile();
+    String fileText = file.getText();
+    assertSameReference(file, fileText.indexOf("[link]") + 1, fileText.indexOf("foo", fileText.indexOf("[link]")));
+    assertSameReference(file, fileText.indexOf("[linkBrack]") + 1, fileText.indexOf("foo", fileText.indexOf("[linkBrack]")));
+  }
+
+  private static void assertSameReference(PsiFile file, int linkTextOffset, int destinationOffset) {
+    PsiReference linkTextReference = file.findReferenceAt(linkTextOffset);
+    PsiReference destinationReference = file.findReferenceAt(destinationOffset);
+    assertNotNull(linkTextReference);
+    assertNotNull(destinationReference);
+    assertEquals(destinationReference.resolve(), linkTextReference.resolve());
+  }
+
   public void testTrailingSlashUrl() {
     final PsiReference reference = myFixture.getReferenceAtCaretPosition("trailingSlashUrl.md");
     assertNotNull(reference);

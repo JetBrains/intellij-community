@@ -14,8 +14,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.elementType
 import org.intellij.plugins.markdown.editor.runForEachCaret
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
@@ -55,10 +53,6 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
       event.presentation.isEnabled = false
       return false
     }
-    if (shouldIgnoreLinkElement(selectionElements)) {
-      event.presentation.isEnabled = false
-      return false
-    }
 
     val commonParents = selectionElements.map { (left, right) -> getCommonParentOfType(left, right, targetNodeType) }
     val hasMissingParents = commonParents.any { it == null }
@@ -84,8 +78,8 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
   }
 
   private fun processCaret(file: PsiFile, editor: Editor, caret: Caret, state: Boolean) {
-    val (first, second) = getElementsUnderCaretOrSelection(file, caret)
     if (!state) {
+      val (first, second) = getElementsUnderCaretOrSelection(file, caret)
       val parent = getCommonParentOfType(first, second, targetNodeType)
       if (parent == null) {
         thisLogger().warn("Could not find enclosing element on its destruction")
@@ -94,10 +88,7 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
       removeEmphasisFromSelection(editor.document, caret, parent.textRange)
       return
     }
-    val parent = PsiTreeUtil.findCommonParent(first, second)
-    if (parent.elementType !in elementsToIgnore) {
-      addEmphasisToSelection(editor.document, caret)
-    }
+    addEmphasisToSelection(editor.document, caret)
   }
 
   private fun removeEmphasisFromSelection(document: Document, caret: Caret, nodeRange: TextRange) {
@@ -168,21 +159,13 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
     targetNodeType !in elementsToProhibit
     && elementsToProhibit.any { elementType -> selectionElements.any { getCommonParentOfType(it.first, it.second, elementType) != null } }
 
-  private fun shouldIgnoreLinkElement(selectionElements: Sequence<Pair<PsiElement, PsiElement>>) =
-    selectionElements.any { (left, right) ->
-      elementsToIgnore.any { type -> getCommonParentOfType(left, right, type) != null }
-    }
-
   companion object {
     // If element is prohibited then action's presentation will be disabled
     private val elementsToProhibit = setOf(
       MarkdownElementTypes.CODE_SPAN,
-      MarkdownElementTypes.TEST_LINK,
-    )
-
-    // If element is ignored then action won't be invoked
-    private val elementsToIgnore = setOf(
+      MarkdownElementTypes.LINK_TEXT,
       MarkdownElementTypes.LINK_DESTINATION,
+      MarkdownElementTypes.TEST_LINK,
       MarkdownElementTypes.AUTOLINK,
       MarkdownTokenTypes.GFM_AUTOLINK
     )
