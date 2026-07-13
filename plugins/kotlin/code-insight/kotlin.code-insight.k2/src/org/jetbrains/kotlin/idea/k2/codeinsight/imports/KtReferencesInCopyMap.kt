@@ -21,9 +21,11 @@ internal class KtReferencesInCopyMap(
 
         if (reference == null) {
             LOG.error(buildString {
-                appendLine("Reference ${originalReference} not found")
+                appendLine("Reference '${originalReference}' (${System.identityHashCode(originalReference)}) not found")
 
-                val referenceMapRendered = referenceMap.entries.joinToString(";") { (key, value) -> "'$key' -> '$value'" }
+                val referenceMapRendered = referenceMap.entries.joinToString(";") { (key, value) ->
+                    "'$key' (${System.identityHashCode(key)}) -> '$value' (${System.identityHashCode(value)})"
+                }
                 appendLine("referenceMap: $referenceMapRendered")
             })
         }
