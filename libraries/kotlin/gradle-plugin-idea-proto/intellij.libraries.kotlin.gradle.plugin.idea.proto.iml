@@ -7,6 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.gradle.plugin.idea" scope="RUNTIME" />
     <orderEntry type="module-library" exported="">
       <library name="kotlin-gradle-plugin-idea-proto" type="repository">
         <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-plugin-idea-proto:1.9.20-dev-8162">

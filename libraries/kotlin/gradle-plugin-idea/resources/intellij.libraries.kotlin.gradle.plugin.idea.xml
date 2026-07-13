@@ -1,2 +1,5 @@
 <idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.libraries.kotlin.tooling.core"/>
+  </dependencies>
 </idea-plugin>

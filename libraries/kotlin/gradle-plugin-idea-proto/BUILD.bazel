@@ -14,7 +14,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlin-gradle-plugin-idea-proto-kotlin-gradle-plugin-idea-proto"],
-    runtime_deps = ["@lib//:libraries-kotlin-gradle-plugin-idea-proto-kotlin-gradle-plugin-idea-proto"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea",
+        "@lib//:libraries-kotlin-gradle-plugin-idea-proto-kotlin-gradle-plugin-idea-proto",
+    ],
 )
 
 jvm_library(
@@ -28,7 +32,11 @@ jvm_library(
     module_name = "intellij.libraries.kotlin.gradle.plugin.idea.proto",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlin-gradle-plugin-idea-proto-kotlin-gradle-plugin-idea-proto"],
-    runtime_deps = [":libraries-kotlin-gradle-plugin-idea-proto"],
+    runtime_deps = [
+        # do not sort,
+        ":libraries-kotlin-gradle-plugin-idea-proto",
+        "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.kotlin.gradle.plugin.idea.proto` end
 

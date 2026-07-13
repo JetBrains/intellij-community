@@ -14,7 +14,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlin-gradle-plugin-idea-kotlin-gradle-plugin-idea"],
-    runtime_deps = ["@lib//:libraries-kotlin-gradle-plugin-idea-kotlin-gradle-plugin-idea"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
+        "@lib//:libraries-kotlin-gradle-plugin-idea-kotlin-gradle-plugin-idea",
+    ],
 )
 
 jvm_library(
@@ -28,7 +32,11 @@ jvm_library(
     module_name = "intellij.libraries.kotlin.gradle.plugin.idea",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlin-gradle-plugin-idea-kotlin-gradle-plugin-idea"],
-    runtime_deps = [":libraries-kotlin-gradle-plugin-idea"],
+    runtime_deps = [
+        # do not sort,
+        ":libraries-kotlin-gradle-plugin-idea",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.kotlin.gradle.plugin.idea` end
 
