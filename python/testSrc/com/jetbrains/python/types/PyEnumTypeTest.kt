@@ -672,39 +672,21 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-88892"])
-    fun `enum member declared as a value-label tuple validates only the value element when supported`() = test("""
-      from enum import Enum, EnumType, StrEnum, IntEnum
-      from choices import Choices
+    fun `plain enum member declared as a tuple is validated as the whole value`() = test("""
+      from enum import Enum, StrEnum, IntEnum
 
+      # Plain stdlib enums have no metaclass/constructor that consumes extra elements: the whole tuple is the value,
+      # so a str/int-based enum rejects it (runtime TypeError). Only framework enums (e.g. django Choices) relax this
+      # via PyEnumMemberDeclarationProvider; see DjangoEnumTypeTest.
       class PlainStr(StrEnum):
-          # plain StrEnum passes the tuple to str(...): not a valid value (runtime TypeError)
           A = "A", "A"   # WARNING Expected type 'str', got 'tuple[Literal["A"], Literal["A"]]' instead
 
       class PlainInt(IntEnum):
-          # same for the plain int-based enum (runtime TypeError)
           B = 1, "label" # WARNING Expected type 'int', got 'tuple[Literal[1], Literal["label"]]' instead
 
       class PlainEnum(Enum):
           C = 1, 2       # OK: value type is inferred as the tuple itself
-
-      # Choices has a custom __init__ that consumes the extra element (django TextChoices form),
-      # so the tuple is forwarded to it and only the first element is the member value.
-      class MyChoices(Choices):
-          OK = "x", "label"  # OK: the value element 'x' is a str
-          BAD = 1, "label"   # WARNING Expected type 'str', got 'Literal[1]' instead
-
-      class PassthroughEnumType(EnumType): ...
-
-      class CustomMetaclassStrEnum(StrEnum, metaclass=PassthroughEnumType):
-          VALUE = "x", "label"  # WARNING Expected type 'str', got 'tuple[Literal["x"], Literal["label"]]' instead
-      """,
-      "choices.py" to """
-        from enum import Enum
-
-        class Choices(str, Enum):
-            def __init__(self, value, label=""): ...
-      """,
-    )
+      """)
 
     @Test
     @TestFor(issues = ["PY-87344"])

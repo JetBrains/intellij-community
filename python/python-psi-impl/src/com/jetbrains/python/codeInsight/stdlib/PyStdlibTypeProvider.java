@@ -143,29 +143,22 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
         return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getStrType());
       }
       else if ("enum.IntEnum.value".equals(name) && anchor instanceof PyReferenceExpression) {
-        return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getIntType());
+        PyType memberValueType = getEnumValueTypeFromQualifier(anchor, context);
+        return Ref.create(memberValueType != null ? memberValueType : PyBuiltinCache.getInstance(referenceTarget).getIntType());
       }
       else if ("enum.StrEnum.value".equals(name) && anchor instanceof PyReferenceExpression) {
-        return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getStrType());
+        PyType memberValueType = getEnumValueTypeFromQualifier(anchor, context);
+        return Ref.create(memberValueType != null ? memberValueType : PyBuiltinCache.getInstance(referenceTarget).getStrType());
       }
       else if ((PyNames.TYPE_ENUM_FLAG + ".value").equals(name) && anchor instanceof PyReferenceExpression) {
-        return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getIntType());
+        PyType memberValueType = getEnumValueTypeFromQualifier(anchor, context);
+        return Ref.create(memberValueType != null ? memberValueType : PyBuiltinCache.getInstance(referenceTarget).getIntType());
       }
-      else if ((PyNames.TYPE_ENUM + ".value").equals(name) &&
-               anchor instanceof PyReferenceExpression anchorExpr && context.maySwitchToAST(anchor)) {
-        final PyExpression qualifier = anchorExpr.getQualifier();
+      else if ((PyNames.TYPE_ENUM + ".value").equals(name) && anchor instanceof PyReferenceExpression) {
         // An enum value is retrieved programmatically, e.g. MyEnum[name].value, or just type-hinted
-        if (qualifier != null) {
-          PyClassType enumType = as(context.getType(qualifier), PyClassType.class);
-          if (enumType != null) {
-            PyClass enumClass = enumType.getPyClass();
-            if (isCustomEnum(enumClass, context)) {
-              // If the qualifier is a specific member (e.g. MyEnum.B), use that member's value type;
-              // otherwise fall back to the union of all members' value types.
-              String memberName = enumType instanceof PyLiteralType literalType ? literalType.getEnumMemberName() : null;
-              return Ref.create(getEnumValueType(enumClass, memberName, context));
-            }
-          }
+        PyType memberValueType = getEnumValueTypeFromQualifier(anchor, context);
+        if (memberValueType != null) {
+          return Ref.create(memberValueType);
         }
       }
       else if ("enum.EnumMeta.__members__".equals(name)) {
@@ -177,6 +170,21 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       return Ref.create(enumAutoType);
     }
     return null;
+  }
+
+  /**
+   * The value type of the enum member (or enum instance) that qualifies a {@code .value} access at {@code anchor}, or
+   * {@code null} when the AST is unavailable or the qualifier is not a custom enum. If the qualifier is a specific
+   * member (e.g. {@code MyEnum.B}), its own value type is used; otherwise the union of all members' value types.
+   */
+  private static @Nullable PyType getEnumValueTypeFromQualifier(@Nullable PsiElement anchor, @NotNull TypeEvalContext context) {
+    if (!(anchor instanceof PyReferenceExpression anchorExpr) || !context.maySwitchToAST(anchor)) return null;
+    final PyExpression qualifier = anchorExpr.getQualifier();
+    if (qualifier == null) return null;
+    PyClassType enumType = as(context.getType(qualifier), PyClassType.class);
+    if (enumType == null || !isCustomEnum(enumType.getPyClass(), context)) return null;
+    String memberName = enumType instanceof PyLiteralType literalType ? literalType.getEnumMemberName() : null;
+    return getEnumValueType(enumType.getPyClass(), memberName, context);
   }
 
   // Returns the type of enum attribute value transformed by 'EnumType' metaclass or null, if the attribute value is not transformed
@@ -254,6 +262,16 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (context.maySwitchToAST(targetExpression)) {
       PyExpression value = targetExpression.findAssignedValue();
       if (value == null) return null;
+
+      // Framework enums (e.g. Django Choices) transform the declaration before constructing the member: their
+      // metaclass/constructor consumes extra tuple elements such as a trailing label. Let a provider model that so
+      // the resulting member value type is consistent across the inspection, the `value` attribute, and completion.
+      for (var provider : PyEnumMemberDeclarationProvider.EP_NAME.getExtensionList()) {
+        Ref<PyType> transformed = provider.getMemberValueType(enumClass, value, context);
+        if (transformed != null) {
+          return getEnumAttributeInfo(enumClass, transformed.get(), context);
+        }
+      }
 
       var type = context.getType(value);
       return getEnumAttributeInfo(enumClass, type, context);
@@ -407,34 +425,12 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   /**
-   * Whether {@code enumClass} accepts tuple member declarations whose first element is the member value.
-   * <p>
-   * A custom {@code __new__}/{@code __init__} receives the tuple elements as arguments. Framework-specific enum
-   * implementations can support other declaration transformations through {@link PyEnumMemberDeclarationProvider}.
-   * Plain stdlib enums do neither: their tuple is passed to {@code str(...)}/{@code int(...)} and is not a valid value.
+   * The primitive value type contributed by an enum's data-type mixin (e.g. {@code int} for {@code IntEnum}/{@code IntFlag},
+   * {@code str} for {@code StrEnum} or a {@code str}-mixed enum), or {@code null} if the enum has no such mixin. Such a
+   * mixin constructs the member via {@code DataType(*value)}, so a (possibly transformed) tuple value collapses to a scalar.
    */
   @ApiStatus.Internal
-  public static boolean allowsTupleEnumMemberDeclaration(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
-    if (ContainerUtil.exists(PyEnumMemberDeclarationProvider.EP_NAME.getExtensionList(),
-                             provider -> provider.allowsTupleMemberDeclaration(enumClass, context))) return true;
-
-    PyFunction constructor = enumClass.findInitOrNew(true, context);
-    if (constructor == null) return false;
-    PyClass owner = constructor.getContainingClass();
-    if (owner == null) return false;
-    // Mixed-in primitive data type (str/int/bytes/float/object): not a custom enum constructor.
-    if (PyBuiltinCache.getInstance(enumClass).isBuiltin(owner)) return false;
-    // Builtin `enum` module classes (Enum/IntEnum/StrEnum/Flag/...): not custom.
-    String qualifiedName = owner.getQualifiedName();
-    return qualifiedName == null || !qualifiedName.startsWith("enum.");
-  }
-
-  /**
-   * returns the type of the {@code value} attribute of an enum member, or the union of all members' value types
-   */
-  private static @Nullable PyType getEnumValueType(@NotNull PyClass enumClass,
-                                                  @Nullable String memberName,
-                                                  @NotNull TypeEvalContext context) {
+  public static @Nullable PyType getEnumMixinValueType(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
     PyBuiltinCache cache = PyBuiltinCache.getInstance(enumClass);
 
     if (enumClass.isSubclass("enum.IntEnum", context) ||
@@ -445,7 +441,6 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (enumClass.isSubclass("enum.StrEnum", context)) {
       return cache.getStrType();
     }
-
     if (enumClass.isSubclass(PyNames.FQN.STR, context)) {
       return cache.getStrType();
     }
@@ -458,17 +453,34 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (enumClass.isSubclass(PyNames.FQN.FLOAT, context)) {
       return cache.getFloatType();
     }
+    return null;
+  }
 
+  /**
+   * returns the type of the {@code value} attribute of an enum member, or the union of all members' value types
+   */
+  private static @Nullable PyType getEnumValueType(@NotNull PyClass enumClass,
+                                                  @Nullable String memberName,
+                                                  @NotNull TypeEvalContext context) {
     // Infer from the MEMBERS' assigned values (not non-members like helpers/descriptors).
     List<PyType> memberValueTypes = new ArrayList<>();
     for (PyTargetExpression targetExpr : enumClass.getClassAttributes()) {
       EnumAttributeInfo attributeInfo = getEnumAttributeInfo(enumClass, targetExpr, context);
       if (attributeInfo != null && attributeInfo.attributeKind == EnumAttributeKind.MEMBER) {
+        // For a specific member, prefer its own (possibly transformed) value type so literals are preserved,
+        // e.g. `MyIntChoices.OK.value` is `Literal[1]`, not the widened `int` from the data-type mixin.
         if (Objects.equals(memberName, targetExpr.getName())) {
           return attributeInfo.assignedValueType;
         }
         memberValueTypes.add(attributeInfo.assignedValueType);
       }
+    }
+
+    // The enum-wide value type (no specific member, or the member is inherited) is the data-type mixin's type when
+    // present, otherwise the union of all members' value types.
+    PyType mixinValueType = getEnumMixinValueType(enumClass, context);
+    if (mixinValueType != null) {
+      return mixinValueType;
     }
     if (memberValueTypes.isEmpty()) {
       return PyAnyType.getUnknown();
