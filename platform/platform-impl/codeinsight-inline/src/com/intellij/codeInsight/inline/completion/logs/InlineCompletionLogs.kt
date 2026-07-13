@@ -48,7 +48,9 @@ object InlineCompletionLogs : CounterUsagesCollector() {
   }
 
   init {
-    Session.SESSION_EVENT // access session_event to load it
+    // Force Session to load so the "session" FUS event is registered at collector load. Goes through the
+    // subscription-free `preload` (not an accessor) so class initialization does not request a service.
+    Session.preload()
   }
 
   private val EP_NAME = ExtensionPointName.create<StatisticsEventLoggerProvider>("com.intellij.statistic.eventLog.eventLoggerProvider")
@@ -69,40 +71,93 @@ object InlineCompletionLogs : CounterUsagesCollector() {
     get() = mlRecorder.value?.recorderOptionsProvider?.getIntOption("cloud_logs_share") ?: 10
 
   object Session {
-    private val phaseToFieldList: List<Pair<Phase, EventField<*>>> = run {
+    /**
+     * Immutable snapshot of the EP-derived state. All fields are mutually consistent (in particular
+     * [sessionEvent] is registered with exactly the [phases] instances, which FUS validates by identity).
+     * Swapped atomically as a whole via the single volatile [snapshot] reference, so a reader that reads
+     * [snapshot] once always observes a consistent set - no per-field tearing between `phases`/`sessionEvent`.
+     */
+    class Snapshot internal constructor(
+      val phases: Map<Phase, ObjectEventField>,
+      val phaseByName: Map<String, Phase>,
+      val sessionEvent: VarargEventId,
+    )
+
+    @Volatile
+    private var snapshot: Snapshot = build()
+
+    // group logs to the phase so that each phase has its own object field
+    val phases: Map<Phase, ObjectEventField> get() = current().phases
+
+    val phaseByName: Map<String, Phase> get() = current().phaseByName
+
+    // Each phase has a separate ObjectEventField in the session event with the corresponding features.
+    val SESSION_EVENT: VarargEventId get() = current().sessionEvent
+
+    // Log fields are contributed via the dynamic InlineCompletionSessionLogsEP. The EP-derived state is
+    // snapshotted at class load, but extensions may be added/removed later - dynamic plugins at runtime, and,
+    // notably, tests that register their own log groups in setUp after this object is already initialized.
+    // Rebuild the snapshot on every EP change, subscribing lazily on first snapshot read (see `current`). The
+    // subscription needs a service (a coroutine scope), which the service container forbids requesting from an
+    // init; reads happen at runtime, so this stays out of class initialization.
+    private val subscription: Lazy<Unit> = lazy {
+      val cs = InlineCompletionLogsScopeProvider.getInstance().cs
+      // Rebuild once: extensions may have been added before we subscribed (tests register EPs in setUp,
+      // dynamic plugins may load before the first inline-completion session).
+      snapshot = build()
+      InlineCompletionSessionLogsEP.EP_NAME.point.addChangeListener(cs) {
+        snapshot = build()
+      }
+    }
+
+    /**
+     * Returns the current snapshot, subscribing to EP changes on first access so any reader (not just the log
+     * container) keeps an up-to-date snapshot without an explicit setup call. Reached only from the accessors,
+     * i.e. at runtime - never from init (which uses the subscription-free [preload]).
+     */
+    private fun current(): Snapshot {
+      subscription.value
+      return snapshot
+    }
+
+    /**
+     * Forces this object to initialize (building the initial snapshot and registering the "session" FUS event)
+     * without touching the subscription, so it is safe to call from [InlineCompletionLogs]'s class initializer.
+     * The call itself triggers `<clinit>`, which runs the `snapshot` field initializer - nothing else is needed.
+     */
+    internal fun preload() = Unit
+
+    fun isBasic(eventPair: EventPair<*>): Boolean {
+      return basicFields.contains(eventPair.field.name)
+    }
+
+    private fun build(): Snapshot {
+      val phaseToFieldList = computePhaseToFieldList()
+      val phases = Phase.entries.associateWith { phase ->
+        ObjectEventField(phase.name.lowercase(), phase.description, *phaseToFieldList.filter { phase == it.first }.map { it.second }.toTypedArray())
+      }
+      val phaseByName = phaseToFieldList.associate { it.second.name to it.first }
+      // FUS validates logged fields by instance identity, so the session event must reference these exact
+      // ObjectEventField instances - register it together with `phases` inside the same snapshot.
+      val sessionEvent = GROUP.registerVarargEvent("session", *phases.values.toTypedArray())
+      return Snapshot(phases, phaseByName, sessionEvent)
+    }
+
+    private fun computePhaseToFieldList(): List<Pair<Phase, EventField<*>>> {
       val fields = Cancellation.withNonCancelableSection().use {
         // Non-cancellable section, because this function is often used in
         // static initializer code of `object`, and any exception (namely, CancellationException)
         // breaks the object with ExceptionInInitializerError, and subsequent NoClassDefFoundError
         InlineCompletionSessionLogsEP.EP_NAME.extensionsIfPointIsRegistered
       }.flatMap { it.logGroups }.flatMap { phasedLogs ->
-        phasedLogs.registeredFields.map { field -> phasedLogs.phase to field}
+        phasedLogs.registeredFields.map { field -> phasedLogs.phase to field }
       }
 
       fields.groupingBy { it.second }.eachCount().filter { it.value > 1 }.forEach {
         thisLogger().error("Log ${it.key} is registered multiple times: ${it.value}")
       }
-      fields
+      return fields
     }
-
-    // group logs to the phase so that each phase has its own object field
-    val phases: Map<Phase, ObjectEventField> = Phase.entries.associateWith { phase ->
-      ObjectEventField(phase.name.lowercase(), phase.description, *phaseToFieldList.filter { phase == it.first }.map { it.second }.toTypedArray())
-    }
-
-    val phaseByName: Map<String, Phase> = phaseToFieldList.associate {
-      it.second.name to it.first
-    }
-
-    fun isBasic(eventPair: EventPair<*>): Boolean {
-      return basicFields.contains(eventPair.field.name)
-    }
-
-    // Each phase will have a separate ObjectEventField in the session event with the corresponding features.
-    val SESSION_EVENT: VarargEventId = GROUP.registerVarargEvent(
-      "session",
-      *phases.values.toTypedArray(),
-    )
   }
 
   @ApiStatus.Internal

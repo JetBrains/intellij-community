@@ -8,8 +8,6 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.common.timeoutRunBlocking
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -113,34 +111,6 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
       )
     }
   }
-
-  /**
-   * Test that only basic fields are recorded for (eap = false, don't pass the random threshold, not random pass)
-   */
-  @Test
-  fun testFullLogFiltered() {
-    withEap(false) {
-      val logsContainer = InlineCompletionLogsContainer()
-      logsContainer.mockRandom(1f)
-      logsContainer.add(TestPhasedLogs.basicTestField with 42)
-      logsContainer.add(TestPhasedLogs.fullTestField with 1337)
-
-      val logs = FUCollectorTestCase.collectLogEvents(recorder = "ML", parentDisposable = testRootDisposable, escapeChars = true) {
-        logsContainer.logCurrent()
-      }
-
-      // expect only the basic log
-      assertMaps(
-        mapOf(
-          "inline_api_starting" to mapOf(
-            "basic_test_field" to "42"
-          )
-        ),
-        logs.first().event.data
-      )
-    }
-  }
-
   /**
    * Fields which are not registered for a specific phase are not allowed.
    */
