@@ -38,7 +38,7 @@ import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
 
-private val CONDA_TOOL: ToolCommandExecutor = ToolCommandExecutor(
+internal val CONDA_TOOL: ToolCommandExecutor = ToolCommandExecutor(
   "conda",
   additionalSearchPaths = listOf(
     ToolSearchPath.RelativePathFromHome(listOf("anaconda3", "bin"), Platform.UNIX),

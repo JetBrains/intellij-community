@@ -4,8 +4,10 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.provider.localEel
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.Result
 import com.jetbrains.python.sdk.ToolCommandExecutor
+import com.jetbrains.python.sdk.ToolCommandSpec
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import java.nio.file.Path
@@ -21,6 +23,10 @@ object HatchConfiguration {
     "hatch",
     getToolPathFromSettings = { getValue(PYCHARM_HATCH_LOCAL_EXECUTABLE_PATH_SETTING) }
   )
+
+  @PyInternalExecApi
+  val toolCommandSpec: ToolCommandSpec
+    get() = HATCH_TOOL.toCommandSpec()
 
   fun persistPathForTarget(eelApi: EelApi = localEel, hatchExecutablePath: Path?) {
     if (eelApi is LocalEelApi) localHatchExecutablePath = hatchExecutablePath

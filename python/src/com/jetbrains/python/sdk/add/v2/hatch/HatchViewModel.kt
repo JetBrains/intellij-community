@@ -7,6 +7,7 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.hatch.HatchConfiguration
 import com.intellij.python.hatch.HatchConfiguration.getOrDetectHatchExecutablePath
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.getHatchService
@@ -48,6 +49,7 @@ internal class HatchViewModel<P : PathHolder>(
     toolVersionPrefix = "hatch",
     backProperty = hatchExecutable,
     propertyGraph = propertyGraph,
+    toolCommandSpec = HatchConfiguration.toolCommandSpec,
     defaultPathSupplier = { getOrDetectHatchExecutablePath(fileSystem).successOrNull }
   )
 

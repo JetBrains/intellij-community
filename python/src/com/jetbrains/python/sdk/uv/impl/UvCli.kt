@@ -18,6 +18,7 @@ import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.runExecutableWithProgress
+import com.jetbrains.python.sdk.ToolCommandSpec
 import com.jetbrains.python.sdk.uv.UvCli
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.CoroutineDispatcher
@@ -74,6 +75,9 @@ suspend fun getUvExecutableLocal(eel: EelApi = localEel): Path? = getUvExecutabl
 
 internal suspend fun <P : PathHolder> getUvExecutable(fileSystem: FileSystem<P>, pathFromSdk: FullPathOnTarget?): P? =
   UV_TOOL.getToolExecutable(fileSystem, pathFromSdk)
+
+internal val UV_TOOL_COMMAND_SPEC: ToolCommandSpec
+  get() = UV_TOOL.toCommandSpec()
 
 
 suspend fun hasUvExecutableLocal(): Boolean {

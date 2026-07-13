@@ -17,6 +17,7 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonToolViewModel
 import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
+import com.jetbrains.python.sdk.conda.CONDA_TOOL
 import com.jetbrains.python.sdk.conda.findConda
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
@@ -46,6 +47,7 @@ class CondaViewModel<P : PathHolder>(
     toolVersionPrefix = "conda",
     backProperty = condaExecutable,
     propertyGraph = propertyGraph,
+    toolCommandSpec = CONDA_TOOL.toCommandSpec(),
     defaultPathSupplier = {
       findConda(fileSystem)
     }

@@ -1,6 +1,15 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.python.pytools.ui` start
+create_kotlinc_options(
+    name = "custom_pytools-ui",
+    opt_in = [
+        "kotlin.time.ExperimentalTime",
+        "com.jetbrains.python.PyInternalExecApi",
+    ],
+)
+
 jvm_library(
     name = "pytools-ui",
     srcs = glob(
@@ -13,6 +22,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_pytools-ui",
     module_name = "intellij.python.pytools.ui",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -56,6 +66,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_pytools-ui",
     module_name = "intellij.python.pytools.ui",
     visibility = ["//visibility:public"],
     runtime_deps = [
