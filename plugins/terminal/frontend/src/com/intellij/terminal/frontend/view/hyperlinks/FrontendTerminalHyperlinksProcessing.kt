@@ -76,11 +76,13 @@ fun installHyperlinksProcessing(
   sessionModel: TerminalSessionModel,
   eelDescriptor: EelDescriptor,
   coroutineScope: CoroutineScope,
+  // A single applier must be shared per editor (its click/hover handling uses editor-global markup),
+  // so callers that also render other decorations (e.g. OSC8 links) can pass a shared instance.
+  applier: EditorTextDecorationApplier = createEditorTextDecorationApplier(editor, coroutineScope.asDisposable()),
 ): FrontendTerminalHyperlinkFacade {
   // The modification stamp of the most recent highlighting task whose
   // `TerminalHyperlinksOutputEvent.TaskFinished` event has been observed.
   val lastFinishedTaskStamp = MutableStateFlow(0L)
-  val applier = createEditorTextDecorationApplier(editor, coroutineScope.asDisposable())
 
   val sessionDeferred = coroutineScope.async(CoroutineName("createHyperlinksSession")) {
     createHyperlinksSession(project, eelDescriptor, coroutineScope.childScope("FrontendTerminalHyperlinksSession"))

@@ -193,7 +193,8 @@ internal class EchoingTerminalSession(
       trimmedCharsCount = 0,
       firstLineTrimmedCharsCount = 0,
       cursorOffset = screen.cursorOffset,
-      highlightings = emptyList()
+      highlightings = emptyList(),
+      osc8Hyperlinks = emptyList(),
     )
     val commandBlock = TerminalCommandBlockDto(
       id = TerminalBlockIdImpl(0),
@@ -213,7 +214,7 @@ internal class EchoingTerminalSession(
       startupOptions = startupOptions.toDto(),
       sessionState = sessionState.toDto(),
       outputModelState = outputModelState,
-      alternateBufferState = TerminalOutputModelStateDto("", 0, 0, 0, 0, emptyList()),
+      alternateBufferState = TerminalOutputModelStateDto("", 0, 0, 0, 0, emptyList(), emptyList()),
       blocksModelState = TerminalBlocksModelStateDto(listOf(commandBlock), 1),
     )
   }

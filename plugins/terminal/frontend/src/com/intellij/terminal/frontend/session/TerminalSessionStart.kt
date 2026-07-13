@@ -18,15 +18,12 @@ import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.model.JediTermTypeAheadModel
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
-import fleet.util.convertGlobToRegEx
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.ShellStartupOptions
-import org.jetbrains.plugins.terminal.original
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
 import org.jetbrains.plugins.terminal.util.closeConnectorAndStopEmulation
@@ -102,7 +99,7 @@ fun createTerminalSession(
     inputChannel = inputChannel,
     outputFlow = outputFlow.asSharedFlow(),
     coroutineScope = coroutineScope,
-    ttyConnector = ttyConnector.original as LocalTerminalTtyConnector,
+    ttyConnector = ttyConnector,
     terminalDisplay = services.terminalDisplay,
     terminal = services.controller,
   )
@@ -120,6 +117,7 @@ private fun createJediTermServices(
   val terminalDisplay = TerminalDisplayImpl(settings)
   val controller = ObservableJediTerminal(terminalDisplay, textBuffer, styleState)
   controller.setModeEnabled(TerminalMode.AltSendsEscape, settings.altSendsEscape())
+  controller.setUrlHyperlinkFilter(JediTermOsc8HyperlinkFilter())
 
   val typeAheadManager = TerminalTypeAheadManager(JediTermTypeAheadModel(controller, textBuffer, settings))
   val executorService = TerminalExecutorServiceManagerImpl()

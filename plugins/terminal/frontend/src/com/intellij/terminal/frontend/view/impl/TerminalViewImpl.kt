@@ -1,5 +1,6 @@
 package com.intellij.terminal.frontend.view.impl
 
+import com.intellij.execution.impl.createEditorTextDecorationApplier
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -36,6 +37,7 @@ import com.intellij.terminal.frontend.view.completion.ShellRuntimeContextProvide
 import com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionTypingListener
 import com.intellij.terminal.frontend.view.hyperlinks.FrontendTerminalHyperlinkFacade
 import com.intellij.terminal.frontend.view.hyperlinks.installHyperlinksProcessing
+import com.intellij.terminal.frontend.view.hyperlinks.installOsc8HyperlinksProcessing
 import com.intellij.terminal.frontend.view.inlineCompletion.TerminalInlineCompletionController
 import com.intellij.terminal.frontend.view.inlineCompletion.TerminalInlineCompletionInputListener
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAhead
@@ -363,7 +365,11 @@ class TerminalViewImpl(
       coroutineScope.childScope("Terminal VFS refresh on command finish")
     )
 
-    // Configure hyperlinks' processing
+    // Configure hyperlinks' processing.
+    // The filter-based and OSC8 hyperlinks of an editor must share a single decoration applier,
+    // because its click/hover handling operates on editor-global markup.
+    val outputDecorationApplier = createEditorTextDecorationApplier(outputEditor, coroutineScope.asDisposable())
+    val alternateBufferDecorationApplier = createEditorTextDecorationApplier(alternateBufferEditor, coroutineScope.asDisposable())
     coroutineScope.launch {
       val eelDescriptor = sessionDeferred.await().eelDescriptor
       outputBufferHyperlinksFacade = installHyperlinksProcessing(
@@ -372,7 +378,8 @@ class TerminalViewImpl(
         editor = outputEditor,
         sessionModel = sessionModel,
         eelDescriptor = eelDescriptor,
-        coroutineScope = coroutineScope.childScope("Output Buffer Hyperlinks")
+        coroutineScope = coroutineScope.childScope("Output Buffer Hyperlinks"),
+        applier = outputDecorationApplier,
       )
       alternateBufferHyperlinksFacade = installHyperlinksProcessing(
         project = project,
@@ -380,9 +387,26 @@ class TerminalViewImpl(
         editor = alternateBufferEditor,
         sessionModel = sessionModel,
         eelDescriptor = eelDescriptor,
-        coroutineScope = coroutineScope.childScope("Alternate Buffer Hyperlinks")
+        coroutineScope = coroutineScope.childScope("Alternate Buffer Hyperlinks"),
+        applier = alternateBufferDecorationApplier,
       )
     }
+
+    // Configure OSC8 hyperlinks' processing (rendered via the same appliers as above).
+    installOsc8HyperlinksProcessing(
+      project = project,
+      outputModel = outputModel,
+      editor = outputEditor,
+      applier = outputDecorationApplier,
+      coroutineScope = coroutineScope.childScope("Output Buffer OSC8 Hyperlinks"),
+    )
+    installOsc8HyperlinksProcessing(
+      project = project,
+      outputModel = alternateBufferModel,
+      editor = alternateBufferEditor,
+      applier = alternateBufferDecorationApplier,
+      coroutineScope = coroutineScope.childScope("Alternate Buffer OSC8 Hyperlinks"),
+    )
 
     shellIntegrationFeaturesInitJob = coroutineScope.launch(
       Dispatchers.EDT +
