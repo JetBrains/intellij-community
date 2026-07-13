@@ -18,7 +18,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
@@ -36,7 +35,12 @@ import javax.swing.JComponent
 
 @ApiStatus.Internal
 object GitLabMergeRequestSelectorsComponentFactory {
-  fun createSelectorsComponent(cs: CoroutineScope, project: Project, selectorVm: GitLabRepositoryAndAccountSelectorViewModel, loginSource: GitLabLoginSource): JComponent {
+  fun createSelectorsComponent(
+    cs: CoroutineScope,
+    project: Project,
+    selectorVm: GitLabRepositoryAndAccountSelectorViewModel,
+    loginSource: GitLabLoginSource,
+  ): JComponent {
     val defaultAccountHolder = project.service<GitLabProjectDefaultAccountHolder>()
     val apiManager = service<GitLabApiManager>()
     val accountsDetailsProvider = GitLabAccountsDetailsProvider(cs, apiManager, selectorVm.accountManager)
@@ -61,16 +65,26 @@ object GitLabMergeRequestSelectorsComponentFactory {
       selectorVm.loginRequestsFlow.collect { req ->
         val account = req.account
         if (account == null) {
-          val (newAccount, token) = GitLabLoginUtil.logInViaToken(selectorVm.project, selectors, req.repo.repository.serverPath, loginSource = loginSource) { server, name ->
+          val (newAccount, credentials) = GitLabLoginUtil.logInViaToken(
+            selectorVm.project,
+            selectors,
+            req.repo.repository.serverPath,
+            loginSource = loginSource
+          ) { server, name ->
             GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
           }.asSafely<LoginResult.Success>() ?: return@collect
-          req.login(newAccount, GitLabCredentials.Token(token))
+          req.login(newAccount, credentials)
         }
         else {
-          val (_, token) = GitLabLoginUtil.updateToken(selectorVm.project, selectors, account, loginSource = loginSource, ) { server, name ->
+          val (_, credentials) = GitLabLoginUtil.reLogInViaToken(
+            selectorVm.project,
+            selectors,
+            account,
+            loginSource = loginSource,
+          ) { server, name ->
             GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
           }.asSafely<LoginResult.Success>() ?: return@collect
-          req.login(account, GitLabCredentials.Token(token))
+          req.login(account, credentials)
         }
       }
     }

@@ -7,12 +7,12 @@ import com.intellij.util.asSafely
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.authentication.save
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JComponent
@@ -24,15 +24,15 @@ internal sealed class GitLabHttpStatusErrorAction(@Nls name: String) : AbstractA
     private val account: GitLabAccount,
     private val accountManager: GitLabAccountManager,
     private val loginSource: GitLabLoginSource,
-    private val resetAction: () -> Unit = {}
+    private val resetAction: () -> Unit = {},
   ) : GitLabHttpStatusErrorAction(CollaborationToolsBundle.message("login.again.action.text")) {
     override fun actionPerformed(event: ActionEvent) {
       val parentComponent = event.source as? JComponent ?: return
-      val loginResult = GitLabLoginUtil.updateToken(project, parentComponent, account, loginSource) { _, _ -> true }
+      val loginResult = GitLabLoginUtil.reLogInViaToken(project, parentComponent, account, loginSource) { _, _ -> true }
                           .asSafely<LoginResult.Success>()
                         ?: return
       parentScope.launch {
-        accountManager.updateAccount(account, GitLabCredentials.Token(loginResult.token))
+        accountManager.save(loginResult)
         resetAction()
       }
     }

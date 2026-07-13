@@ -24,6 +24,7 @@ import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.actionButton
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
+import com.intellij.util.asSafely
 import git4idea.DialogManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +32,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGroupDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNamespaceDTO
-import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
@@ -67,11 +67,14 @@ internal object GitLabShareProjectDialogComponentFactory {
             .align(AlignX.FILL).resizableColumn()
 
           link(GitLabBundle.message("share.dialog.account.addButton")) { event ->
-            val (account, token) = GitLabLoginUtil.logInViaToken(project, event.source as JComponent, loginSource = GitLabLoginSource.SHARE, uniqueAccountPredicate = { server, username ->
-              vm.accounts.value.none { it.server == server && it.name == username }
-            }) as? LoginResult.Success ?: return@link
-
-            vm.updateAccount(account, GitLabCredentials.Token(token))
+            GitLabLoginUtil.logInViaToken(
+              project,
+              event.source as JComponent,
+              loginSource = GitLabLoginSource.SHARE,
+              uniqueAccountPredicate = { server, username -> vm.accounts.value.none { it.server == server && it.name == username } }
+            ).asSafely<LoginResult.Success>()?.also { (account, credentials) ->
+              vm.updateAccount(account, credentials)
+            }
           }.align(AlignX.RIGHT)
         }
 
@@ -80,11 +83,15 @@ internal object GitLabShareProjectDialogComponentFactory {
 
           link(GitLabBundle.message("share.dialog.tokenExpired.label")) { event ->
             val account = vm.account.value ?: return@link
-            val (_, token) = GitLabLoginUtil.updateToken(project, event.source as JComponent, account, loginSource = GitLabLoginSource.SHARE, uniqueAccountPredicate = { server, username ->
-              vm.accounts.value.none { it.server == server && it.name == username }
-            }) as? LoginResult.Success ?: return@link
-
-            vm.updateAccount(account, GitLabCredentials.Token(token))
+            GitLabLoginUtil.reLogInViaToken(
+              project,
+              event.source as JComponent,
+              account,
+              loginSource = GitLabLoginSource.SHARE,
+              uniqueAccountPredicate = { server, username -> vm.accounts.value.none { it.server == server && it.name == username } }
+            ).asSafely<LoginResult.Success>()?.also { (account, credentials) ->
+              vm.updateAccount(account, credentials)
+            }
           }
         }.visibleIf(vm.reloginRequired.asObservableIn(cs))
 

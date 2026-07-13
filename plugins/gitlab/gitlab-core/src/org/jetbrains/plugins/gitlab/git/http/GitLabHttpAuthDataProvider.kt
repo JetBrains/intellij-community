@@ -17,12 +17,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
-import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.authentication.save
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 class GitLabHttpAuthDataProvider : GitHttpAuthDataProvider {
@@ -30,21 +30,21 @@ class GitLabHttpAuthDataProvider : GitHttpAuthDataProvider {
   override fun getAuthData(project: Project, url: String, login: String): AuthData? =
     runBlockingMaybeCancellable {
       when (val loginResult = performLogin(project, url, login)) {
-        is LoginResult.Success -> AuthData(loginResult.account.name, loginResult.token)
+        is LoginResult.Success -> AuthData(loginResult.account.name, loginResult.credentials.accessToken)
         is LoginResult.OtherMethod -> null
         is LoginResult.Failure -> throw ProcessCanceledException()
+      }
     }
-  }
 
   @RequiresBackgroundThread
   override fun getAuthData(project: Project, url: String): AuthData? =
     runBlockingMaybeCancellable {
       when (val loginResult = performLogin(project, url)) {
-        is LoginResult.Success -> AuthData(loginResult.account.name, loginResult.token)
+        is LoginResult.Success -> AuthData(loginResult.account.name, loginResult.credentials.accessToken)
         is LoginResult.OtherMethod -> null
         is LoginResult.Failure -> throw ProcessCanceledException()
+      }
     }
-  }
 }
 
 private suspend fun performLogin(project: Project, gitHostUrl: String, login: String? = null): LoginResult {
@@ -61,7 +61,7 @@ private suspend fun performLogin(project: Project, gitHostUrl: String, login: St
   }
 
   if (loginResult is LoginResult.Success) {
-    accountManager.updateAccount(loginResult.account, GitLabCredentials.Token(loginResult.token))
+    accountManager.save(loginResult)
   }
 
   return loginResult
@@ -88,7 +88,7 @@ private suspend fun GitLabAccountManager.reLogInWithAccount(
   account: GitLabAccount,
   login: String?,
 ): LoginResult = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-  GitLabLoginUtil.updateToken(project, null, account, login, loginSource = GitLabLoginSource.GIT, ::isAccountUnique)
+  GitLabLoginUtil.reLogInViaToken(project, null, account, login, loginSource = GitLabLoginSource.GIT, ::isAccountUnique)
 }
 
 private suspend fun GitLabAccountManager.selectAccountAndLogIn(
@@ -100,11 +100,6 @@ private suspend fun GitLabAccountManager.selectAccountAndLogIn(
   val description = GitLabBundle.message("account.choose.git.description", url)
   val account = GitLabLoginUtil.chooseAccount(project, null, description, accounts)
                 ?: return@withContext LoginResult.Failure
-  val credentials = findCredentials(account)
-  if (credentials == null) {
-    GitLabLoginUtil.updateToken(project, null, account, login, loginSource = GitLabLoginSource.GIT, ::isAccountUnique)
-  }
-  else {
-    LoginResult.Success(account, credentials.accessToken)
-  }
+  findCredentials(account)?.let { LoginResult.Success(account, it) }
+  ?: GitLabLoginUtil.reLogInViaToken(project, null, account, login, loginSource = GitLabLoginSource.GIT, ::isAccountUnique)
 }

@@ -35,12 +35,12 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobActionEnum
 import org.jetbrains.plugins.gitlab.api.dto.GitLabVisibilityLevel
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
-import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.authentication.save
 import org.jetbrains.plugins.gitlab.mergerequest.util.localizedMessageOrClassName
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.CREATE_CANCEL
@@ -116,12 +116,11 @@ internal class GitLabSnippetService(private val project: Project, private val se
   private suspend fun attemptLogin(accountManager: GitLabAccountManager): Boolean {
     return coroutineScope {
       async(Dispatchers.Main) {
-        val (account, token) = GitLabLoginUtil.logInViaToken(project, null, loginSource = GitLabLoginSource.SNIPPET) { server, name ->
+        GitLabLoginUtil.logInViaToken(project, null, loginSource = GitLabLoginSource.SNIPPET) { server, name ->
           GitLabLoginUtil.isAccountUnique(accountManager.accountsState.value, server, name)
-        }.asSafely<LoginResult.Success>() ?: return@async false
-
-        accountManager.updateAccount(account, GitLabCredentials.Token(token))
-        true
+        }.asSafely<LoginResult.Success>()?.also {
+          accountManager.save(it)
+        } != null
       }.await()
     }
   }
@@ -132,12 +131,11 @@ internal class GitLabSnippetService(private val project: Project, private val se
   private suspend fun reattemptLogin(accountManager: GitLabAccountManager, account: GitLabAccount): Boolean {
     return coroutineScope {
       async(Dispatchers.EDT) {
-        val loginResult = GitLabLoginUtil.updateToken(project, null, account, loginSource = GitLabLoginSource.SNIPPET) { server, name ->
+        GitLabLoginUtil.reLogInViaToken(project, null, account, loginSource = GitLabLoginSource.SNIPPET) { server, name ->
           GitLabLoginUtil.isAccountUnique(accountManager.accountsState.value, server, name)
-        }.asSafely<LoginResult.Success>() ?: return@async false
-
-        accountManager.updateAccount(account, GitLabCredentials.Token(loginResult.token))
-        true
+        }.asSafely<LoginResult.Success>()?.also {
+          accountManager.save(it)
+        } != null
       }.await()
     }
   }
@@ -148,10 +146,12 @@ internal class GitLabSnippetService(private val project: Project, private val se
    * @param result Provides the inputs the user gave for submitting a new snippet.
    * @param files The files the user selected, or the file that is in editor.
    */
-  private suspend fun createSnippet(accountManager: GitLabAccountManager,
-                                    apiManager: GitLabApiManager,
-                                    result: GitLabCreateSnippetResult,
-                                    files: List<VirtualFile>) {
+  private suspend fun createSnippet(
+    accountManager: GitLabAccountManager,
+    apiManager: GitLabApiManager,
+    result: GitLabCreateSnippetResult,
+    files: List<VirtualFile>,
+  ) {
     // Process result by creating the snippet, copying url, etc.
     val data = result.data
     val fileNameExtractor = getFileNameExtractor(project, files, data.pathHandlingMode)
@@ -243,10 +243,12 @@ internal class GitLabSnippetService(private val project: Project, private val se
   /**
    * Shows the 'Create Snippet' dialog and returns a view-model representing the final state of the user inputs.
    */
-  private suspend fun showDialog(initialTitle: String,
-                                 contents: Deferred<List<GitLabSnippetFileContents>>,
-                                 apiManager: GitLabApiManager,
-                                 files: List<VirtualFile>): GitLabCreateSnippetResult? =
+  private suspend fun showDialog(
+    initialTitle: String,
+    contents: Deferred<List<GitLabSnippetFileContents>>,
+    apiManager: GitLabApiManager,
+    files: List<VirtualFile>,
+  ): GitLabCreateSnippetResult? =
     coroutineScope {
       val availablePathHandlingModes =
         PathHandlingMode.entries.filter {
@@ -346,8 +348,10 @@ internal class GitLabSnippetService(private val project: Project, private val se
    * Collects the contents from [Editor], or list of [files][VirtualFile], or [file][VirtualFile] in that order.
    * The first content holder that is not `null` will be used.
    */
-  private fun collectContents(editor: Editor?,
-                              files: List<VirtualFile>?): List<GitLabSnippetFileContents>? =
+  private fun collectContents(
+    editor: Editor?,
+    files: List<VirtualFile>?,
+  ): List<GitLabSnippetFileContents>? =
     if (editor != null) {
       editor.collectContents()?.let(::listOf)
     }

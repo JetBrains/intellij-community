@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.toHttpsNormalizedURI
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabChooseAccountDialog
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
@@ -32,7 +33,7 @@ object GitLabLoginUtil {
     project: Project, parentComponent: JComponent?,
     serverPath: GitLabServerPath = GitLabServerPath.DEFAULT_SERVER,
     loginSource: GitLabLoginSource,
-    uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean
+    uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean,
   ): LoginResult = logInViaToken(project, parentComponent, serverPath, null, loginSource, uniqueAccountPredicate)
 
   @RequiresEdt
@@ -40,7 +41,7 @@ object GitLabLoginUtil {
     project: Project, parentComponent: JComponent?,
     serverPath: GitLabServerPath = GitLabServerPath.DEFAULT_SERVER, requiredUsername: String? = null,
     loginSource: GitLabLoginSource,
-    uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean
+    uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean,
   ): LoginResult {
 
     val model = GitLabTokenLoginPanelModel(requiredUsername, uniqueAccountPredicate).apply {
@@ -54,7 +55,8 @@ object GitLabLoginUtil {
         val loginResult = model.loginState.value.asSafely<LoginModel.LoginState.Connected>() ?: return LoginResult.Failure
         val loginData = GitLabLoginData(loginSource, isReLogin = false, isGitLabDotCom = serverPath.isDefault)
         GitLabLoginCollector.login(loginData)
-        return LoginResult.Success(GitLabAccount(name = loginResult.username, server = model.getServerPath()), model.token)
+        LoginResult.Success(GitLabAccount(name = loginResult.username, server = model.getServerPath()),
+                            GitLabCredentials.Token(model.token))
       }
       DialogWrapper.NEXT_USER_EXIT_CODE -> LoginResult.OtherMethod
       else -> LoginResult.Failure
@@ -63,20 +65,20 @@ object GitLabLoginUtil {
 
   @ApiStatus.Internal
   @RequiresEdt
-  fun updateToken(
+  fun reLogInViaToken(
     project: Project, parentComponent: JComponent?,
     account: GitLabAccount,
     loginSource: GitLabLoginSource,
-    uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean
-  ): LoginResult = updateToken(project, parentComponent, account, null, loginSource, uniqueAccountPredicate)
+    uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean,
+  ): LoginResult = reLogInViaToken(project, parentComponent, account, null, loginSource, uniqueAccountPredicate)
 
   @RequiresEdt
-  internal fun updateToken(
+  internal fun reLogInViaToken(
     project: Project, parentComponent: JComponent?,
     account: GitLabAccount,
     requiredUsername: String? = null,
     loginSource: GitLabLoginSource,
-    uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean
+    uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean,
   ): LoginResult {
     val predicateWithoutCurrent: (GitLabServerPath, String) -> Boolean = { serverPath, username ->
       if (serverPath == account.server && username == account.name) true
@@ -94,7 +96,7 @@ object GitLabLoginUtil {
       GitLabLoginCollector.login(loginData)
       return LoginResult.Success(
         GitLabAccount(id = account.id, name = loginState.username, server = model.getServerPath()),
-        model.token
+        GitLabCredentials.Token(model.token)
       )
     }
 
@@ -128,10 +130,12 @@ object GitLabLoginUtil {
   }
 
   @RequiresEdt
-  internal fun chooseAccount(project: Project,
-                             parentComponent: Component?,
-                             description: @Nls String?,
-                             accounts: Collection<GitLabAccount>): GitLabAccount? {
+  internal fun chooseAccount(
+    project: Project,
+    parentComponent: Component?,
+    description: @Nls String?,
+    accounts: Collection<GitLabAccount>,
+  ): GitLabAccount? {
     val dialog = GitLabChooseAccountDialog(project, parentComponent, accounts, false, true, description = description)
     return if (dialog.showAndGet()) {
       val account = dialog.account
@@ -150,7 +154,11 @@ object GitLabLoginUtil {
 }
 
 sealed interface LoginResult {
-  data class Success(val account: GitLabAccount, val token: String) : LoginResult
+  data class Success(val account: GitLabAccount, val credentials: GitLabCredentials) : LoginResult
   data object Failure : LoginResult
   data object OtherMethod : LoginResult
+}
+
+internal suspend fun GitLabAccountManager.save(loginResult: LoginResult.Success) {
+  updateAccount(loginResult.account, loginResult.credentials)
 }
