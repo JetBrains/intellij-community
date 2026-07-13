@@ -45,6 +45,18 @@ public class ConvertStringIntentionTest extends GroovyLatestTest implements Acti
   }
 
   @Test
+  public void convertStringWithInjectionToDollarSlashy() {
+    LinkedHashMap<String, String> data = new LinkedHashMap<>();
+    data.put("/${'/'}u21aF/", "$/${'/'}u21aF/$");
+    data.put("/x$ ${'a'} y\\/z/", "$/x$ ${'a'} y/z/$");
+    data.put("\"a${'b'}c\"", "$/a${'b'}c/$");
+    for (Map.Entry<String, String> entry : data.entrySet()) {
+      doActionTest(GroovyIntentionsBundle.message("convert.to.dollar.slash.regex.intention.name"),
+                   "print(<caret>" + entry.getKey() + ")", "print(<caret>" + entry.getValue() + ")");
+    }
+  }
+
+  @Test
   public void convertDollarSlashyToGString() {
     LinkedHashMap<String, String> data = new LinkedHashMap<>();
     data.put("\\u21aF", "\u21aF");
