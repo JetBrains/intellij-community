@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.DocumentInternalUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
@@ -114,7 +115,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     myMapper = new EditorCoordinateMapper(this);
     mySizeManager = new EditorSizeManager(this);
     myTextLayoutCache = new TextLayoutCache(this);
-    myLogicalPositionCache = new LogicalPositionCache(this);
+    myLogicalPositionCache = new LogicalPositionCache(myDocument, () -> myEditor.throwDisposalError("Editor is already disposed"));
     myCharWidthCache = new CharWidthCache(this);
     myTabFragment = new TabFragment(this);
     mySelectionVisualModel = new SelectionVisualModel(myEditor);
@@ -154,12 +155,10 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   public @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
-    EditorThreading.assertInteractionAllowed();
     return myMapper.offsetToLogicalPosition(offset);
   }
 
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    EditorThreading.assertInteractionAllowed();
     return myMapper.logicalPositionToOffset(pos);
   }
 
@@ -318,7 +317,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       case RTL -> Bidi.DIRECTION_RIGHT_TO_LEFT;
       default -> Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT;
     };
-    myLogicalPositionCache.reset(false);
+    myLogicalPositionCache.reset(false, getTabSize());
     myTextLayoutCache.resetToDocumentSize(false);
     invalidateFoldRegionLayouts();
     myCharWidthCache.clear();
@@ -345,7 +344,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
    */
   @RequiresEdt
   public void reset() {
-    myLogicalPositionCache.reset(true);
+    myLogicalPositionCache.reset(true, getTabSize());
     myTextLayoutCache.resetToDocumentSize(true);
     mySizeManager.reset();
   }
@@ -476,8 +475,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       offset = text.length();
       leanTowardsLargerOffsets = true;
     }
-    int logicalColumn = LogicalPositionCache.calcColumn(text, 0, 0, offset, getTabSize());
     int maxColumn = 0;
+    int logicalColumn = DocumentInternalUtil.calcLogicalColumn(text, 0, 0, offset, getTabSize());
     for (LineLayout.VisualFragment fragment : getFoldRegionLayout(region).getFragmentsInVisualOrder(0)) {
       int startLC = fragment.getStartLogicalColumn();
       int endLC = fragment.getEndLogicalColumn();
@@ -501,7 +500,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
           visualColumn == startVC && leansRight ||
           visualColumn == endVC && !leansRight) {
         int logicalColumn = fragment.visualToLogicalColumn(visualColumn);
-        return LogicalPositionCache.calcOffset(text, logicalColumn, 0, 0, text.length(), getTabSize());
+        return DocumentInternalUtil.calcLogicalOffset(text, logicalColumn, 0, 0, text.length(), getTabSize());
       }
     }
     return text.length();

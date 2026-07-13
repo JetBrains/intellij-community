@@ -106,10 +106,16 @@ final class EditorCoordinateMapper {
     return lineMin;
   }
 
+  /**
+   * Safe without read action
+   */
   @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
     return myView.getLogicalPositionCache().offsetToLogicalPosition(offset);
   }
 
+  /**
+   * Safe without read action
+   */
   int logicalPositionToOffset(@NotNull LogicalPosition pos) {
     return myView.getLogicalPositionCache().logicalPositionToOffset(pos);
   }

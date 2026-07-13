@@ -11,15 +11,19 @@ import org.jetbrains.annotations.ApiStatus;
  */
 @ApiStatus.Internal
 public final class EditorDocumentPriorities {
+  /**
+   * Logical position cache should be updated before range markers because caret position markers perform
+   * {@code 'logical position -> offset'} mapping during document change processing.
+   */
+  public static final int LOGICAL_POSITION_CACHE = 30;
 
   /**
-   * Assuming that range marker listeners work only with document offsets and don't perform document dimension mappings like
-   * {@code 'logical position -> visual position'}, {@code 'offset -> logical position'} etc.
+   * Range marker listeners may use logical position mappings backed by {@link #LOGICAL_POSITION_CACHE}, but shouldn't use
+   * mappings depending on later editor caches, e.g. {@code 'logical position -> visual position'}.
    */
   public static final int RANGE_MARKER = 40;
 
   public static final int FOLD_MODEL = 60;
-  public static final int LOGICAL_POSITION_CACHE = 65;
   public static final int EDITOR_TEXT_LAYOUT_CACHE = 70;
   public static final int LEXER_EDITOR = 80;
   public static final int SOFT_WRAP_MODEL = 100;

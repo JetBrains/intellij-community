@@ -1991,7 +1991,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
-    return EditorThreading.compute(() -> myView.offsetToLogicalPosition(offset));
+    return myView.offsetToLogicalPosition(offset);
   }
 
   @TestOnly
@@ -2903,7 +2903,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    return EditorThreading.compute(() -> myView.logicalPositionToOffset(pos));
+    return myView.logicalPositionToOffset(pos);
   }
 
   /**

@@ -17,6 +17,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.BitUtil;
+import com.intellij.util.DocumentInternalUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.CharArrayUtil;
@@ -80,7 +81,7 @@ abstract class LineLayout {
       int startColumn = prevColumn;
       int endColumn = text == null
                       ? view.getLogicalPositionCache().offsetToLogicalColumn(line, run.endOffset)
-                      : LogicalPositionCache.calcColumn(text, run.startOffset, prevColumn, run.endOffset, view.getTabSize());
+                      : DocumentInternalUtil.calcLogicalColumn(text, run.startOffset, prevColumn, run.endOffset, view.getTabSize());
       run.visualStartLogicalColumn = run.isRtl() ? endColumn : startColumn;
       prevColumn = endColumn;
       runArray[i] = run;
