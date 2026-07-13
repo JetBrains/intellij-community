@@ -32,10 +32,10 @@ data class UndoStack<C>(
     val action = amend?.amend(executedStack.lastOrNull(), command) ?: Action.Append(command)
     val newExecutedStack = when (action) {
       is Action.Replace -> {
-        if (executedStack.isEmpty()) executedStack.add(action.merged)
-        else executedStack.set(executedStack.lastIndex, action.merged)
+        if (executedStack.isEmpty()) executedStack.adding(action.merged)
+        else executedStack.replacingAt(executedStack.lastIndex, action.merged)
       }
-      is Action.Append -> executedStack.add(action.new)
+      is Action.Append -> executedStack.adding(action.new)
       is Action.Nothing -> executedStack
     }
     return copy(
@@ -50,11 +50,11 @@ data class UndoStack<C>(
 
   fun removeNextExecuted(): Pair<UndoStack<C>, C>? {
     val next = peekExecuted() ?: return null
-    return copy(executedStack = executedStack.removeAt(executedStack.lastIndex)) to next
+    return copy(executedStack = executedStack.removingAt(executedStack.lastIndex)) to next
   }
 
   fun pushReverted(command: C): UndoStack<C> {
-    return copy(revertedStack = revertedStack.add(command))
+    return copy(revertedStack = revertedStack.adding(command))
   }
 
   fun clearReverted(): UndoStack<C> {
@@ -67,7 +67,7 @@ data class UndoStack<C>(
 
   fun removeNextReverted(): Pair<UndoStack<C>, C>? {
     val next = peekReverted() ?: return null
-    return copy(revertedStack = revertedStack.removeAt(revertedStack.lastIndex)) to next
+    return copy(revertedStack = revertedStack.removingAt(revertedStack.lastIndex)) to next
   }
 }
 
