@@ -172,6 +172,36 @@ chaining above), not handled inside the reference provider itself.
 never possibly reference the given symbol, before the platform builds expensive cache keys or
 attempts a resolve. Use with care — it's often hard to prove a symbol with a pattern *can't* match.
 
+## References — own references (`PolySymbolOwnReferences`)
+
+The alternative to `PsiPolySymbolReferenceProvider`, not a feature of it. Own references are "known
+by the element, part of the language" (per `PsiExternalReferenceHost`'s own javadoc) — a language's
+own canonical resolve, meant to fully replace a legacy `PsiReferenceContributor`-style mechanism.
+External references (`PsiPolySymbolReferenceProvider`, above) are for a *different* plugin/language
+layering a reference onto a host that doesn't know about it — e.g. a filename string literal
+referenced by unrelated framework support.
+
+```kotlin
+interface PolySymbolOwnReferencesBuilder {
+  fun reference(symbol: PolySymbol, offset: Int = 0, showProblems: Boolean = true)
+  fun references(offsetsToSymbols: Map<Int, PolySymbol>, showProblems: Boolean = true)
+}
+
+fun polySymbolOwnReferences(element: PsiElement, configure: PolySymbolOwnReferencesBuilder.() -> Unit): PolySymbolOwnReferences
+```
+
+(`community/platform/polySymbols/backend/src/com/intellij/polySymbols/references/PolySymbolOwnReferences.kt`)
+Implement `PsiElement.getOwnReferences(): Collection<PsiSymbolReference>` directly on your PSI class
+and return `polySymbolOwnReferences(this) { ... }.references` — the builder reuses the same
+name-segment expansion (`MatchProblem`/deprecation reporting included) that
+`PsiPolySymbolReferenceProvider` uses internally, just without the EP/`getOffsetsToReferencedSymbols`
+indirection.
+
+**Do not implement both mechanisms for the same element.** Per
+`PsiSymbolReferenceServiceImpl.getReferences()`, own references — once non-empty — are used *instead
+of* external ones for resolve/search/rename, so a `PsiPolySymbolReferenceProvider` registered for a
+host that also overrides `getOwnReferences()` is dead code, not a supplement.
+
 ## Completion — `PolySymbolsCompletionProviderBase`
 
 ```kotlin

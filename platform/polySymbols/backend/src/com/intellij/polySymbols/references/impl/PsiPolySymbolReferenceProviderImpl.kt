@@ -90,9 +90,7 @@ class PsiPolySymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
       for (provider in getProviders(element)) {
         val showProblems = provider.shouldShowProblems(element)
         val offsetsFromProvider = provider.getOffsetsToReferencedSymbols(element)
-        result.addAll(offsetsFromProvider.flatMap { (offset, symbol) ->
-          getReferences(element, offset, symbol, showProblems)
-        })
+        result.addAll(createPolySymbolReferences(element, offsetsFromProvider, showProblems))
         offsets.putAllValues(offsetsFromProvider)
       }
       return Pair(offsets, result)
@@ -109,7 +107,20 @@ class PsiPolySymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
 
 }
 
-internal fun getReferences(
+/**
+ * The implementation details of how [PolySymbol] offsets are expanded into [PolySymbolReference]s stay in
+ * this `impl` package. [com.intellij.polySymbols.references.PolySymbolOwnReferences] (the own-references
+ * builder) calls into this function too, so both the EP-based path above and own references produce
+ * identically-shaped references.
+ */
+internal fun createPolySymbolReferences(
+  element: PsiElement,
+  offsetsToSymbols: Map<Int, PolySymbol>,
+  showProblems: Boolean,
+): List<PolySymbolReference> =
+  offsetsToSymbols.flatMap { (offset, symbol) -> createPolySymbolReferences(element, offset, symbol, showProblems) }
+
+internal fun createPolySymbolReferences(
   element: PsiElement,
   symbolNameOffset: Int,
   symbol: PolySymbol,

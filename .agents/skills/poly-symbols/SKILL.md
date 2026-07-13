@@ -24,7 +24,8 @@ documentation, and rename then work automatically through reference resolution t
 | `PolySymbolQueryExecutor` / `Factory` | Runs `nameMatchQuery`/`listSymbolsQuery`/`codeCompletionQuery` against contributed scopes |
 | `PolySymbolQueryScopeContributor` | Registers `PolySymbolScope`s for a PSI location — the main extension point you implement |
 | `PolySymbolQueryConfigurator` | Supplies `PolyContext` rules + symbol name-conversion rules |
-| `PsiPolySymbolReferenceProvider` | Resolves a host `PsiElement` to a referenced `PolySymbol` |
+| `PsiPolySymbolReferenceProvider` | Resolves a host `PsiElement` to a referenced `PolySymbol` — registered via EP, produces *external* references |
+| `PolySymbolOwnReferences` | Alternative to `PsiPolySymbolReferenceProvider`: builds references to return from `PsiElement.getOwnReferences()` directly — a language's own canonical resolve, not EP-registered |
 | `PolySymbolDeclarationProvider` | Supplies `PolySymbolDeclaration`s for a `PsiElement` (skip if `PsiLinkedPolySymbol` covers your case) |
 | `PolySymbolsCompletionProviderBase` | Base class for a `CompletionProvider` that runs a `codeCompletionQuery` |
 | `PolySymbolWithPattern` | A symbol expanded via a microsyntax pattern into a `PolySymbolMatch` |
@@ -85,6 +86,11 @@ assume the platform will pick one for you.
    Details: [references/query-model.md](references/query-model.md).
 3. **Resolve references**: implement `PsiPolySymbolReferenceProvider` per host `PsiElement` type
    (EP `com.intellij.polySymbols.psiReferenceProvider`, one registration per `hostElementClass`).
+   Alternative: implement `PsiElement.getOwnReferences()` directly via the `PolySymbolOwnReferences`
+   builder when PolySymbols should be the language's own canonical resolve rather than an
+   EP-contributed layer (e.g. replacing a legacy `PsiReferenceContributor`) — see
+   [references/query-model.md](references/query-model.md#references--own-references-polysymbolownreferences).
+   Don't register both for the same host — own references pre-empt external ones.
 4. **Supply declarations**: if a symbol maps 1:1 onto a real `PsiElement` and lives purely in the
    PolySymbols model, implement `PolySymbolDeclaredInPsi` plus a `PolySymbolDeclarationProvider`
    (EP `com.intellij.polySymbols.declarationProvider`) that builds the symbol — this is the default.

@@ -34,6 +34,7 @@ import com.intellij.polySymbols.highlighting.PolySymbolHighlightingCustomizer
 import com.intellij.polySymbols.highlighting.newSilentAnnotationWithDebugInfo
 import com.intellij.polySymbols.impl.PolySymbolNameSegmentImpl
 import com.intellij.polySymbols.inspections.impl.PolySymbolInspectionToolMappingEP
+import com.intellij.polySymbols.references.PolySymbolOwnReferencesHost
 import com.intellij.polySymbols.references.PolySymbolReference
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem.ProblemKind
@@ -59,30 +60,30 @@ internal class PolySymbolHighlightingAnnotator : Annotator {
   private val symbolReferencesProvider = PsiPolySymbolReferenceProviderImpl()
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+    PsiSymbolReferenceService.getService().getReferences(element, PolySymbolReference::class.java)
+      .filter { it.getProblems().isNotEmpty() }
+      .forEach { ref -> annotateReference(ref, holder) }
 
-    if (element is PsiExternalReferenceHost) {
-      // Use service, as PolySymbols may be contributed directly through PsiSymbolReferenceProvider
-      PsiSymbolReferenceService.getService().getReferences(element, PolySymbolReference::class.java)
-        .filter { it.getProblems().isNotEmpty() }
-        .forEach { ref -> annotateReference(ref, holder) }
+    // The automatic symbol-kind highlighting below is cosmetic (SYMBOL_TYPE_SEVERITY) and is
+    // discarded by the batch Annotator inspection, so skip its (non-trivial) computation in batch
+    // mode. The reference problems reported above are real diagnostics and must still run.
+    if (holder.isBatchMode()) return
 
-      // The automatic symbol-kind highlighting below is cosmetic (SYMBOL_TYPE_SEVERITY) and is
-      // discarded by the batch Annotator inspection, so skip its (non-trivial) computation in batch
-      // mode. The reference problems reported above are real diagnostics and must still run.
-      if (holder.isBatchMode()) return
+    // For symbols contributed through PsiPolySymbolReferenceProvider, PolySymbolOwnReferencesHost, and
+    // PolySymbolDeclarationProvider, provide automatic symbol kind highlighting
+    val multiMap = if (element is PsiExternalReferenceHost)
+      symbolReferencesProvider.getSymbolOffsetsAndReferences(element, PolySymbolReferenceHints.NO_HINTS).first.copy()
+    else
+      MultiMap.createSet()
+    (element as? PolySymbolOwnReferencesHost)?.let { multiMap.putAllValues(it.getPolySymbolOwnReferences().referencedSymbols) }
 
-      // For symbols contributed through PsiPolySymbolReferenceProvider and PolySymbolDeclarationProvider
-      // provide automatic symbol kind highlighting
-      val multiMap = symbolReferencesProvider.getSymbolOffsetsAndReferences(element, PolySymbolReferenceHints.NO_HINTS).first.copy()
+    PolySymbolDeclarationProvider.getAllDeclarations(element, -1).forEach { declaration ->
+      multiMap.putValue(declaration.rangeInDeclaringElement.startOffset, declaration.symbol)
+    }
 
-      PolySymbolDeclarationProvider.getAllDeclarations(element, -1).forEach { declaration ->
-        multiMap.putValue(declaration.rangeInDeclaringElement.startOffset, declaration.symbol)
-      }
-
-      val elementOffset = element.startOffset
-      multiMap.entrySet().forEach { (offset, symbols) ->
-        highlightSymbols(elementOffset + offset, symbols, element, holder)
-      }
+    val elementOffset = element.startOffset
+    multiMap.entrySet().forEach { (offset, symbols) ->
+      highlightSymbols(elementOffset + offset, symbols, element, holder)
     }
   }
 
@@ -98,7 +99,7 @@ internal class PolySymbolHighlightingAnnotator : Annotator {
   private fun highlightSymbols(
     offsetInFile: Int,
     topLevelSymbols: Collection<PolySymbol>,
-    host: PsiExternalReferenceHost,
+    host: PsiElement,
     holder: AnnotationHolder,
   ) {
     val result = MultiMap<TextRange, Pair<Int, TextAttributesKey>>()
