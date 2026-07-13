@@ -977,6 +977,9 @@
     <extensionPoint qualifiedName="Pythonid.typeCheckerExtension"
                     interface="com.jetbrains.python.psi.types.PyTypeCheckerExtension"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.pyEnumMemberDeclarationProvider"
+                    interface="com.jetbrains.python.psi.types.PyEnumMemberDeclarationProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyDataclassParametersProvider"
                     interface="com.jetbrains.python.codeInsight.PyDataclassParametersProvider"
                     dynamic="true"/>

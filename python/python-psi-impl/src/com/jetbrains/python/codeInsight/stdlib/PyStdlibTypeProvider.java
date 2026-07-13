@@ -48,6 +48,7 @@ import com.jetbrains.python.psi.types.PyCallableTypeImpl;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl;
+import com.jetbrains.python.psi.types.PyEnumMemberDeclarationProvider;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -415,6 +416,29 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
   @ApiStatus.Internal
   public static @Nullable PyType getEnumValueType(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
     return getEnumValueType(enumClass, null, context);
+  }
+
+  /**
+   * Whether {@code enumClass} accepts tuple member declarations whose first element is the member value.
+   * <p>
+   * A custom {@code __new__}/{@code __init__} receives the tuple elements as arguments. Framework-specific enum
+   * implementations can support other declaration transformations through {@link PyEnumMemberDeclarationProvider}.
+   * Plain stdlib enums do neither: their tuple is passed to {@code str(...)}/{@code int(...)} and is not a valid value.
+   */
+  @ApiStatus.Internal
+  public static boolean allowsTupleEnumMemberDeclaration(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
+    if (ContainerUtil.exists(PyEnumMemberDeclarationProvider.EP_NAME.getExtensionList(),
+                             provider -> provider.allowsTupleMemberDeclaration(enumClass, context))) return true;
+
+    PyFunction constructor = enumClass.findInitOrNew(true, context);
+    if (constructor == null) return false;
+    PyClass owner = constructor.getContainingClass();
+    if (owner == null) return false;
+    // Mixed-in primitive data type (str/int/bytes/float/object): not a custom enum constructor.
+    if (PyBuiltinCache.getInstance(enumClass).isBuiltin(owner)) return false;
+    // Builtin `enum` module classes (Enum/IntEnum/StrEnum/Flag/...): not custom.
+    String qualifiedName = owner.getQualifiedName();
+    return qualifiedName == null || !qualifiedName.startsWith("enum.");
   }
 
   /**

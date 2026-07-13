@@ -17,6 +17,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil.getScopeOwner
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.getEnumAttributeInfo
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.getEnumValueType
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.allowsTupleEnumMemberDeclaration
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.isCustomEnum
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.coroutineOrGeneratorElementType
@@ -510,20 +511,24 @@ open class PyTypeCheckerInspection : PyInspection() {
         // is itself inferred as a tuple, e.g. `class C(Enum): A = 1, 2`).
         if (match(expected, actual, myTypeEvalContext)) return
 
-        // A member declared as a tuple `(value, label, ...)` passes its elements to the enum's __new__/__init__
-        // (e.g. django TextChoices/IntegerChoices). By convention the first element is the actual member value,
-        // so validate only it against the scalar value type; the remaining elements are extra constructor
-        // arguments (label, encoding, ...). PyEnumInspection currently skips such tuples entirely.
-        val tuple = flattenParens(assignedValue) as? PyTupleExpression
-        if (tuple != null) {
-          val valueExpression = tuple.elements.firstOrNull() ?: return
-          val valueType = myTypeEvalContext.getType(valueExpression)
-          if (!match(expected, valueType, myTypeEvalContext)) {
-            registerTypeMismatch(PyTypeCheckerSuppressionCode.BAD_ASSIGNMENT, valueExpression, expected, valueType,
-                                 typeMismatchMessage(expected, valueType, valueExpression),
-                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+        // Enums with a custom __new__/__init__ forward a tuple member `(value, label, ...)` to that constructor.
+        // Framework-specific enum implementations may transform the declaration before constructing the member.
+        // By convention the first element is the actual member value, so validate only it against the scalar value
+        // type; the remaining elements are extra metadata or constructor arguments (label, encoding, ...).
+        // Plain stdlib enums (StrEnum/IntEnum/...) have no such constructor: their tuple is not a valid value and
+        // falls through to the whole-value mismatch report below.
+        if (allowsTupleEnumMemberDeclaration(scopeOwner, myTypeEvalContext)) {
+          val tuple = flattenParens(assignedValue) as? PyTupleExpression
+          if (tuple != null) {
+            val valueExpression = tuple.elements.firstOrNull() ?: return
+            val valueType = myTypeEvalContext.getType(valueExpression)
+            if (!match(expected, valueType, myTypeEvalContext)) {
+              registerTypeMismatch(PyTypeCheckerSuppressionCode.BAD_ASSIGNMENT, valueExpression, expected, valueType,
+                                   typeMismatchMessage(expected, valueType, valueExpression),
+                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+            }
+            return
           }
-          return
         }
 
         registerTypeMismatch(PyTypeCheckerSuppressionCode.BAD_ASSIGNMENT, assignedValue, expected, actual,
