@@ -47,7 +47,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.completion.api",
       "kotlin.completion.impl.shared",
       "intellij.kotlin.native",
-      "intellij.kotlin.formatter",
       "kotlin.scripting",
       "kotlin.j2k.shared",
       "intellij.kotlin.plugin.updater",
@@ -72,8 +71,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
 
     private val MODULES_SHARED_WITH_CLIENT = java.util.List.of(
       "intellij.kotlin.base.codeInsight.minimal",
-      "intellij.kotlin.highlighting.minimal",
-      "intellij.kotlin.formatter.minimal"
+      "intellij.kotlin.highlighting.minimal"
     )
 
     private val LIBRARIES_UNPACKED = java.util.List.of(

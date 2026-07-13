@@ -13,7 +13,6 @@
   <xi:include href="indices.xml"/>
   <xi:include href="file-types.xml"/>
   <xi:include href="language.xml"/>
-  <xi:include href="formatter.xml"/>
   <xi:include href="jps.xml"/>
   <xi:include href="caches.xml"/>
   <xi:include href="kotlin-core.xml"/>
@@ -193,6 +192,8 @@
 
     <module name="intellij.kotlin.highlighting"/>
     <module name="intellij.kotlin.highlighting.minimal" loading="embedded"/>
+    <module name="intellij.kotlin.formatter.minimal" loading="embedded"/>
+    <module name="intellij.kotlin.formatter" loading="embedded"/>
 
     <module name="intellij.kotlin.compilerReferenceIndex"/>
 

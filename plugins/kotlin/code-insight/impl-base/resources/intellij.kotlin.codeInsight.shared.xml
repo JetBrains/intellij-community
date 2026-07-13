@@ -1,7 +1,6 @@
 <idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java"/>
     <module name="intellij.java.frontback.psi"/>
     <module name="intellij.java.impl"/>
@@ -13,10 +12,11 @@
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.resources"/>
     <module name="intellij.kotlin.codeInsight.api"/>
+    <module name="intellij.kotlin.formatter"/>
     <module name="intellij.kotlin.projectConfiguration"/>
     <module name="intellij.kotlin.refactorings.base"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinBlockIntoSingleStatementHandler"/>
     <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinInitializerAndIfToElvisHandler"/>

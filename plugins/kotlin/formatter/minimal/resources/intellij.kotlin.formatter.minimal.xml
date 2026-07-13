@@ -1,2 +1,8 @@
 <idea-plugin visibility="internal">
+  <extensions defaultExtensionNs="com.intellij">
+    <virtualFileCustomDataProvider implementation="org.jetbrains.kotlin.idea.formatter.KotlinCodeStyleSettingsCustomDataSynchronizer"/>
+    <lang.formatter language="kotlin" implementationClass="org.jetbrains.kotlin.idea.formatter.KotlinFormattingModelBuilder"/>
+    <langCodeStyleSettingsProvider implementation="org.jetbrains.kotlin.idea.formatter.KotlinLanguageCodeStyleSettingsProvider"/>
+    <preFormatProcessor implementation="org.jetbrains.kotlin.idea.formatter.KotlinPreFormatProcessor"/>
+  </extensions>
 </idea-plugin>

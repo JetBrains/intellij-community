@@ -28,6 +28,12 @@
 - name: lib/intellij.kotlin.compilerPlugins.parcelize.common.jar
   contentModules:
   - name: intellij.kotlin.compilerPlugins.parcelize.common
+- name: lib/intellij.kotlin.formatter.jar
+  contentModules:
+  - name: intellij.kotlin.formatter
+- name: lib/intellij.kotlin.formatter.minimal.jar
+  contentModules:
+  - name: intellij.kotlin.formatter.minimal
 - name: lib/intellij.kotlin.jvm.debugger.base.util.jar
   contentModules:
   - name: intellij.kotlin.jvm.debugger.base.util
@@ -79,7 +85,6 @@
   modules:
   - name: intellij.kotlin.base.codeInsight.minimal
   - name: intellij.kotlin.highlighting.minimal
-  - name: intellij.kotlin.formatter.minimal
 - name: lib/kotlin-plugin.jar
   projectLibraries:
   - name: kotlin-metadata
@@ -153,7 +158,6 @@
   - name: intellij.kotlin.completion.api
   - name: kotlin.completion.impl.shared
   - name: intellij.kotlin.native
-  - name: intellij.kotlin.formatter
   - name: kotlin.scripting
   - name: kotlin.j2k.shared
   - name: intellij.kotlin.plugin.updater

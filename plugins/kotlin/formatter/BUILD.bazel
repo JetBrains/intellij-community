@@ -1,6 +1,14 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 ### auto-generated section `build intellij.kotlin.formatter` start
+resourcegroup(
+    name = "formatter_resources",
+    srcs = glob(
+        ["resources-en/**/*"],
+    ),
+    strip_prefix = "resources-en",
+)
+
 jvm_library(
     name = "formatter",
     srcs = glob(
@@ -12,9 +20,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.kotlin.formatter",
-    resource_strip_prefix = "resources-en",
+    resource_jars = [":formatter_resources"],
+    resource_strip_prefix = "resources",
     resources = glob(
-        ["resources-en/**/*"],
+        ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
     exports = ["//plugins/kotlin/formatter/minimal"],

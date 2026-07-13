@@ -5,6 +5,7 @@
     <module name="intellij.java.ui"/>
     <module name="intellij.kotlin.base.externalSystem"/>
     <module name="intellij.kotlin.codeInsight.api"/>
+    <module name="intellij.kotlin.formatter"/>
     <module name="intellij.kotlin.projectConfiguration"/>
     <module name="intellij.kotlin.projectWizard.core"/>
     <module name="intellij.platform.vcs.impl"/>
