@@ -108,6 +108,16 @@ value class Codepoint(val codepoint: Int) {
    */
   fun isISOControl(): Boolean = isISOControl(codepoint)
 
+  /**
+   * Returns true if this codepoint is a reserved for private use character (category Co).
+   */
+  fun isPrivateUse(): Boolean = isPrivateUse(codepoint)
+
+  /**
+   * Returns true if this codepoint is assigned to any category
+   */
+  fun isDefined(): Boolean = isDefined(codepoint)
+
   fun asString(): String {
     return if (codepoint ushr 16 == 0) {
       charArrayOf(codepoint.toChar())

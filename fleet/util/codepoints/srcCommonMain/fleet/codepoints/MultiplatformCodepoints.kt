@@ -173,5 +173,15 @@ internal object MultiplatformCodepoints {
       // C0 control codes (U+0000..U+001F) and C1 control codes (U+007F..U+009F)
         codepoint in 0x00..0x1F || codepoint in 0x7F..0x9F
 
+    fun isPrivateUse(codepoint: Int): Boolean {
+      val props = CharacterData.getProperties(codepoint)
+      return getCategory(props) == CharacterData.CAT_CO
+    }
+
+    fun isDefined(codepoint: Int): Boolean {
+      val props = CharacterData.getProperties(codepoint)
+      return getCategory(props) != CharacterData.CAT_CN
+    }
+
     fun getUnicodeScript(codepoint: Int): UnicodeScript = ScriptData.getScript(codepoint)
 }
