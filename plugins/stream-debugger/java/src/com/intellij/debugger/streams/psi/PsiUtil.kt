@@ -1,26 +1,28 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.debugger.streams.psi;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("PsiUtil")
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.NotNull;
+package com.intellij.debugger.streams.psi
 
-/**
- * @author Vitaliy.Bibaev
- */
-public final class PsiUtil {
-  private PsiUtil() {}
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtilCore
 
-  public static @NotNull PsiElement ignoreWhiteSpaces(@NotNull PsiElement element) {
-    PsiElement result = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
-    if (result == null) {
-      result = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class);
-      if (result == null) {
-        result = element;
-      }
+internal fun ignoreWhiteSpaces(element: PsiElement): PsiElement =
+  PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace::class.java)
+  ?: PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace::class.java)
+  ?: element
+
+internal fun findPsiMethodCall(psiFile: PsiFile, position: TextRange): PsiMethodCallExpression? {
+  var element: PsiElement? = PsiUtilCore.getElementAtOffset(psiFile, position.endOffset - 1)
+  while (element != null) {
+    if (element is PsiMethodCallExpression && element.textRange == position) {
+      return element
     }
-
-    return result;
+    element = element.parent
   }
+  return null
 }
