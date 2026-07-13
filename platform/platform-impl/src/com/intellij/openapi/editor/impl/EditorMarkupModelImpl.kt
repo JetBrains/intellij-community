@@ -302,7 +302,16 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     smallIconLabel.setBackground(JBColor.lazy { editor.colorsScheme.getDefaultBackground() })
     smallIconLabel.isVisible = false
 
-    val statusPanel = NonOpaquePanel()
+
+    // Placeholder to prevent the top of scroll bar from jumping while an analysis is running
+    val statusPanel = object : NonOpaquePanel() {
+      override fun getPreferredSize(): Dimension =
+        super.getPreferredSize().apply {
+          if (trafficLightVisible) {
+            height = height.coerceAtLeast(statusIconSize)
+          }
+        }
+    }
     statusPanel.isVisible = !editor.isOneLineMode
     statusPanel.setLayout(BoxLayout(statusPanel, BoxLayout.X_AXIS))
     statusPanel.add(toolbar)
