@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 /**
- * Type and type-checker tests for [enum][https://docs.python.org/3/library/enum.html] members,
+ * Type and type-checker tests for [enum](https://docs.python.org/3/library/enum.html) members,
  * values, aliases and narrowing.
  */
 @Subsystems.Typing

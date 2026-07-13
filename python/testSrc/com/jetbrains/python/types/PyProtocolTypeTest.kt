@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 /**
- * Type and type-checker tests for [typing.Protocol][https://docs.python.org/3/library/typing.html#typing.Protocol]:
+ * Type and type-checker tests for [typing.Protocol](https://docs.python.org/3/library/typing.html#typing.Protocol):
  * structural conformance, protocol assignability/subtyping, generic protocols and protocol members.
  */
 @Subsystems.Typing

@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 /**
- * Type and type-checker tests for variadic generics ([TypeVarTuple][https://peps.python.org/pep-0646/]).
+ * Type and type-checker tests for variadic generics ([TypeVarTuple](https://peps.python.org/pep-0646/)).
  */
 @Subsystems.Typing
 @Components.TypeInference

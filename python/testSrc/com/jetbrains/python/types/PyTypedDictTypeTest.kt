@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 /**
- * Type and type-checker tests for [TypedDict][https://docs.python.org/3/library/typing.html#typing.TypedDict]:
+ * Type and type-checker tests for [TypedDict](https://docs.python.org/3/library/typing.html#typing.TypedDict):
  * definition forms, subscription, required/optional/`ReadOnly` keys, `total=`, the alternative call
  * syntax, `NotRequired`/`Required`, `extra_items`, `Unpack[...]` kwargs, and related inspections.
  */

@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test
 
 /**
  * Type and type-checker tests for named tuples
- * ([typing.NamedTuple][https://docs.python.org/3/library/typing.html#typing.NamedTuple] in both class and
- * functional form, [collections.namedtuple][https://docs.python.org/3/library/collections.html#collections.namedtuple],
+ * ([typing.NamedTuple](https://docs.python.org/3/library/typing.html#typing.NamedTuple) in both class and
+ * functional form, [collections.namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple),
  * their fields, `_make`/`_replace`, unpacking and inheritance)
  */
 @Subsystems.Typing

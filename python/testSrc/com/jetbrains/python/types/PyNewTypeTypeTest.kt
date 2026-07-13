@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Test
 
 /**
- * Type and type-checker tests for [typing.NewType][https://docs.python.org/3/library/typing.html#newtype].
+ * Type and type-checker tests for [typing.NewType](https://docs.python.org/3/library/typing.html#newtype).
  */
 @Subsystems.Typing
 @Components.TypeInference

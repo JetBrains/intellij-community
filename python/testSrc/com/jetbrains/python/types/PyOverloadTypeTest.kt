@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 /**
- * Type and type-checker tests for [overloads][https://docs.python.org/3/library/typing.html#typing.overload]:
+ * Type and type-checker tests for [overloads](https://docs.python.org/3/library/typing.html#typing.overload):
  * overload resolution and matching, overloaded return types, and `Overload[...]` type assignability.
  */
 @Subsystems.Typing

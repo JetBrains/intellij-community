@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 /**
- * Type inference tests for generics and type parameters: [typing.Generic][https://docs.python.org/3/library/typing.html#typing.Generic],
- * [TypeVar][https://docs.python.org/3/library/typing.html#typing.TypeVar] (bounds/constraints/defaults),
+ * Type inference tests for generics and type parameters: [typing.Generic](https://docs.python.org/3/library/typing.html#typing.Generic),
+ * [TypeVar](https://docs.python.org/3/library/typing.html#typing.TypeVar) (bounds/constraints/defaults),
  * PEP 695 syntax (`class C[T]`, `def f[T]`, `type X[T] = ...`), `TypeVarTuple`, generic class/function/method
  * inference and type-parameter substitution/unification.
  */
