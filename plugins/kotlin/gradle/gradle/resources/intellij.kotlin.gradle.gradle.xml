@@ -11,6 +11,7 @@
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.gradle.tooling.impl"/>
     <module name="intellij.libraries.kotlin.gradle.plugin.idea.proto"/>
+    <module name="intellij.libraries.kotlin.tooling.core"/>
   </dependencies>
   <!-- endregion -->
 

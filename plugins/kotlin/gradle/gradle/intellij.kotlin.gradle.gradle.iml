@@ -36,7 +36,7 @@
     <orderEntry type="library" name="kotlinc.kotlin-gradle-statistics" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
-    <orderEntry type="library" name="kotlin-tooling-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.tooling.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.gradle.plugin.idea.proto" />
     <orderEntry type="library" name="kotlin-gradle-plugin-idea" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />

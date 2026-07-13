@@ -18,12 +18,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlin-tooling-core"],
+    exports = ["//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "@lib//:kotlin-gradle-plugin-idea",
-        "@lib//:kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
     ],
 )
 
@@ -37,8 +37,16 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.kotlin.base.projectModel",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlin-tooling-core"],
-    runtime_deps = [":project-model"],
+    exports = [
+        # do not sort,
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":project-model",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.kotlin.base.projectModel` end
 

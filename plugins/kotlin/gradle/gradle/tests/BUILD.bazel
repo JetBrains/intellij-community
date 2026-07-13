@@ -10,7 +10,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.gradle.gradle.tests",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlin-tooling-core"],
+    exports = ["//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core"],
     runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -48,7 +48,7 @@ jvm_library(
         "//libraries/kotlin/reflect",
         "//plugins/kotlin/native",
         "//libraries/kotlinx/coroutines/core",
-        "@lib//:kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
     ],
 )
 
@@ -69,7 +69,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlin-tooling-core"],
+    exports = [
+        # do not sort,
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":tests",
@@ -148,7 +152,8 @@ jvm_library(
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "@lib//:kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
         "//plugins/kotlin/run-configurations/jvm",
         "//plugins/kotlin/run-configurations/jvm:jvm_test_lib",
         "//plugins/groovy",

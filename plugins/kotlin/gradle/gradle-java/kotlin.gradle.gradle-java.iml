@@ -36,7 +36,7 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
-    <orderEntry type="library" name="kotlin-tooling-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.tooling.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.gradle.plugin.idea.proto" />
     <orderEntry type="library" name="kotlin-gradle-plugin-idea" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />

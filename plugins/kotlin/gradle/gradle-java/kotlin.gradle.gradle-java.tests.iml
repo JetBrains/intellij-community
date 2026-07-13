@@ -34,7 +34,7 @@
     <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlin-tooling-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.tooling.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.gradle.plugin.idea.proto" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-gradle-plugin-idea" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />

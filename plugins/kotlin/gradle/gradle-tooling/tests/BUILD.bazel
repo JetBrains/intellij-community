@@ -21,7 +21,7 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle-tooling/impl",
         "//plugins/gradle/tooling-extension-api:toolingExtension",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
-        "@lib//:kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
     ],
 )
 
@@ -59,7 +59,8 @@ jvm_library(
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
         "@lib//:gradle",
-        "@lib//:kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.gradle.tooling.tests` end

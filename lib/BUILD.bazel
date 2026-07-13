@@ -8094,28 +8094,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/kotlin-tooling-core-1.9.20-dev-8162.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlin-tooling-core-1_9_20-dev-8162_http//file",
-    out = "org.jetbrains.kotlin/kotlin-tooling-core-1.9.20-dev-8162.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlin-tooling-core",
-    jar = "@org_jetbrains_kotlin-kotlin-tooling-core-1_9_20-dev-8162_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlin-tooling-core-1_9_20-dev-8162-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "kotlin-tooling-core-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":kotlin-tooling-core"],
-)
-
-copy_file(
     name = "org.jetbrains.kotlin/allopen-compiler-plugin-for-ide-2.5.0-dev-2030.jar_copy",
     src = "@org_jetbrains_kotlin-allopen-compiler-plugin-for-ide-2_5_0-dev-2030_http//file",
     out = "org.jetbrains.kotlin/allopen-compiler-plugin-for-ide-2.5.0-dev-2030.jar",
@@ -12655,6 +12633,21 @@ jvm_import(
     name = "libraries-kotlin-gradle-plugin-idea-proto-kotlin-gradle-plugin-idea-proto",
     jar = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-proto-1_9_20-dev-8162_http//file",
     source_jar = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-proto-1_9_20-dev-8162-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.kotlin/kotlin-tooling-core-1.9.20-dev-8162.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlin-tooling-core-1_9_20-dev-8162_http//file",
+    out = "org.jetbrains.kotlin/kotlin-tooling-core-1.9.20-dev-8162.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-kotlin-tooling-core-kotlin-tooling-core",
+    jar = "@org_jetbrains_kotlin-kotlin-tooling-core-1_9_20-dev-8162_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlin-tooling-core-1_9_20-dev-8162-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
