@@ -24,8 +24,9 @@ data class Version(val value: String) {
   }
 }
 
-internal fun String.parseVersion(toolVersionPrefix: String): PyResult<Version> {
-    val pattern = "^$toolVersionPrefix,?(?:\\s\\(?version)?\\s([^\\s)]+).*$".toRegex(RegexOption.IGNORE_CASE)
+@ApiStatus.Internal
+fun String.parseVersion(toolVersionPrefix: String): PyResult<Version> {
+  val pattern = "^$toolVersionPrefix,?(?:\\s\\(?version)?\\s([^\\s)]+).*$".toRegex(RegexOption.IGNORE_CASE)
   // Tools may print extra lines around the version banner:
   //   - Black appends runtime info after the version line
   //   - Pyright prints upgrade warnings before the version line
@@ -49,6 +50,7 @@ internal fun String.parseVersion(toolVersionPrefix: String): PyResult<Version> {
     PyResult.localizedError(message("selected.tool.is.wrong", toolVersionPrefix.trim(), versionPresentation))
   }
 }
+
 /**
  * Runs `<binary> --version` and verifies that the leading token matches [toolVersionPrefix],
  * returning the parsed [Version] on success or a localized error otherwise. Used to verify a

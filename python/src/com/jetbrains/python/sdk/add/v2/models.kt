@@ -42,6 +42,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
+import kotlin.coroutines.EmptyCoroutineContext
 
 interface PythonToolViewModel {
   fun initialize(scope: CoroutineScope)
@@ -111,7 +112,10 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
       modificationCounter.updateAndGet { it + 1 }
     }.launchIn(scope + Dispatchers.EDT)
 
-    scope.launch(TraceContext(message("trace.context.loading.interpreter.list"), scope) + Dispatchers.EDT) {
+    val coroutineContext = if (fileSystem.isLocal) {
+      TraceContext(message("trace.context.loading.interpreter.list"), scope)
+    } else EmptyCoroutineContext
+    scope.launch(coroutineContext + Dispatchers.EDT) {
       installable = fileSystem.getInstallableInterpreters()
       val projectPathPrefix = projectPathFlows.projectPathWithDefault.first()
       val existingSelectableInterpreters = fileSystem.getExistingSelectableInterpreters(projectPathPrefix)

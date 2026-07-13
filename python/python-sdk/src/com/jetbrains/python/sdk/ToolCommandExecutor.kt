@@ -40,18 +40,12 @@ data class ToolCommandExecutor(
     fileSystem: FileSystem<P>,
     filter: (P) -> Boolean,
   ): P? {
-    val searchPaths = KNOWN_SEARCH_PATHS + additionalSearchPaths
-    val resolvedSearchPaths = searchPaths.distinct().filter {
-      it.platform == null || it.platform == fileSystem.platformAndRoot.platform
-    }.mapNotNull { searchPath ->
-      when (searchPath) {
-        is ToolSearchPath.RelativePath -> fileSystem.getFullPath(searchPath.prefixEnvVar, searchPath.pathComponents)
-        is ToolSearchPath.RelativePathFromHome -> fileSystem.getFullPathFromHome(searchPath.pathComponents)
-        is ToolSearchPath.AbsolutePath -> fileSystem.parsePath(searchPath.path).successOrNull
-      }
-    }
-    return fileSystem.detectTool(toolName, resolvedSearchPaths, filter)
+    val toolSpec = toCommandSpec()
+    val resolvedSearchPaths = fileSystem.resolveToolSearchPaths(toolSpec)
+    return fileSystem.detectTool(toolSpec.toolName, resolvedSearchPaths, filter)
   }
+
+  fun toCommandSpec(): ToolCommandSpec = ToolCommandSpec(toolName, KNOWN_SEARCH_PATHS + additionalSearchPaths)
 
   suspend fun <P : PathHolder> getToolExecutable(
     fileSystem: FileSystem<P>,
@@ -82,10 +76,10 @@ data class ToolCommandExecutor(
     val bin = fileSystem.getBinaryToExec(executable, dirPath)
     return runExecutableWithProgress(bin, 10.minutes, env = env, args = args, transformer = transformer)
   }
-
-  private suspend fun <P : PathHolder> FileSystem<P>.getValidExecutableOrNull(path: FullPathOnTarget, filter: (P) -> Boolean): P? =
-    parsePath(path).successOrNull?.takeIf { validateExecutable(it).isSuccess && filter(it) }
 }
+
+private suspend fun <P : PathHolder> FileSystem<P>.getValidExecutableOrNull(path: FullPathOnTarget, filter: (P) -> Boolean): P? =
+  parsePath(path).successOrNull?.takeIf { validateExecutable(it).isSuccess && filter(it) }
 
 @ApiStatus.Internal
 suspend fun <P : PathHolder> ToolCommandExecutor.runTool(
@@ -96,22 +90,3 @@ suspend fun <P : PathHolder> ToolCommandExecutor.runTool(
   env: Map<String, String> = emptyMap(),
 ): PyResult<String> =
   runTool(fileSystem, pathFromSdk, dirPath, args = args, env = env, transformer = ZeroCodeStdoutTransformer)
-
-/**
- * Represents the search path for locating a specific tool.
- *
- * This interface and its implementations define various ways to specify the location of a tool, whether
- * through a relative path, an environment variable prefix, or an absolute path.
- *
- * @property platform An optional platform specification indicating the platform supported by the path (or null if it's common).
- */
-@ApiStatus.Internal
-sealed interface ToolSearchPath {
-  val platform: Platform?
-
-  data class RelativePathFromHome(val pathComponents: List<String>, override val platform: Platform? = null) : ToolSearchPath
-  data class RelativePath(val prefixEnvVar: String, val pathComponents: List<String>, override val platform: Platform? = null) :
-    ToolSearchPath
-
-  data class AbsolutePath(val path: FullPathOnTarget, override val platform: Platform? = null) : ToolSearchPath
-}

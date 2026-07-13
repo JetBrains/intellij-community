@@ -26,7 +26,7 @@ import kotlin.io.path.createFile
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
-private val PIPENV_TOOL: ToolCommandExecutor = ToolCommandExecutor("pipenv") {
+internal val PIPENV_TOOL: ToolCommandExecutor = ToolCommandExecutor("pipenv") {
   pipenvPath
 }
 

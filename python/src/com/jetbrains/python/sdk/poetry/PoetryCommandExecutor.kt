@@ -51,7 +51,7 @@ private val poetryNotFoundException: @Nls String = PyBundle.message("python.sdk.
 private val VERSION_2 = "2.0.0".toVersion()
 
 
-private val POETRY_TOOL: ToolCommandExecutor = ToolCommandExecutor(
+internal val POETRY_TOOL: ToolCommandExecutor = ToolCommandExecutor(
   "poetry",
   // TODO: Poetry from store isn't detected because local eel doesn't obey appx binaries. We need to fix it on eel side
   additionalSearchPaths = listOf(ToolSearchPath.RelativePathFromHome(listOf(".poetry", ".bin"), Platform.WINDOWS)),
