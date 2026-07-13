@@ -170,7 +170,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
 
   private void setInlaysAndFragmentIterator(@Nullable SoftWrapEx startCustomWrap) {
     mySegmentEndOffset = getCurrentFoldRegionStartOffset();
-    assert mySegmentEndOffset >= mySegmentStartOffset : assertMessage();
+    myView.getEditor().assertOrDumpState(mySegmentEndOffset >= mySegmentStartOffset, assertMessage());
     if (mySegmentEndOffset > mySegmentStartOffset) {
       mySegmentEndOffset = Math.min(getNextWrapOffset(), Math.min(mySegmentEndOffset, myDocument.getLineEndOffset(myCurrentEndLogicalLine)));
       boolean normalLineEnd = mySegmentEndOffset < getCurrentFoldRegionStartOffset() &&
