@@ -49,23 +49,11 @@ internal fun hasRunningCommandsBlocking(shellEelProcess: ShellEelProcess): Boole
   if (EDT.isCurrentThreadEdt()) {
     val project = guessContextProject()
     return runWithModalProgressBlocking(project, "") {
-      try {
-        hasRunningCommands(shellEelProcess)
-      }
-      catch (e: IllegalStateException) {
-        LOG.warn("Cannot determine running commands, assuming none ($shellEelProcess)", e)
-        false
-      }
+      hasRunningCommandsCatching(shellEelProcess)
     }
   }
   return runBlockingMaybeCancellable {
-    try {
-      hasRunningCommands(shellEelProcess)
-    }
-    catch (e: IllegalStateException) {
-      LOG.warn("Cannot determine running commands, assuming none ($shellEelProcess)", e)
-      false
-    }
+    hasRunningCommandsBlocking(shellEelProcess)
   }
 }
 
@@ -81,6 +69,16 @@ private fun guessContextProject(): Project {
   return openProjects.singleOrNull() ?: run {
     LOG.warn("No project detected (open projects: ${openProjects.size}), using the default project to show the progress")
     ProjectManager.getInstance().defaultProject
+  }
+}
+
+private suspend fun hasRunningCommandsCatching(shellEelProcess: ShellEelProcess): Boolean {
+  return try {
+    hasRunningCommands(shellEelProcess)
+  }
+  catch (e: IllegalStateException) {
+    LOG.warn("Cannot determine running commands, assuming none ($shellEelProcess)", e)
+    false
   }
 }
 
