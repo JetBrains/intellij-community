@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.groovy">
+<idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="org.intellij.groovy"/>

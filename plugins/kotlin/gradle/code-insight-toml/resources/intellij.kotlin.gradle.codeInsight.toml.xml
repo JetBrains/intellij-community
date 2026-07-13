@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.gradle.versionCatalog.toml">
+<idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="org.toml.lang"/>

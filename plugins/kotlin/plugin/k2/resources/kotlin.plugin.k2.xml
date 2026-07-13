@@ -131,6 +131,7 @@
     <module name="intellij.kotlin.git"/>
     <module name="intellij.kotlin.grazie"/>
     <module name="intellij.kotlin.gradle.tooling"/>
+    <module name="intellij.kotlin.gradle.tooling.impl"/>
     <module name="intellij.kotlin.lombok"/>
     <module name="intellij.kotlin.maven"/>
     <module name="intellij.kotlin.completion.ml"/>

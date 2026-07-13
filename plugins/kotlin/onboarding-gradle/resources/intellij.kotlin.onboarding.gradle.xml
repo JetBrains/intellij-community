@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.kotlin.gradle.tooling"/>
+    <module name="intellij.kotlin.gradle.tooling.impl"/>
     <module name="intellij.kotlin.onboarding"/>
     <module name="intellij.kotlin.projectConfiguration"/>
     <module name="kotlin.gradle.gradle-java"/>

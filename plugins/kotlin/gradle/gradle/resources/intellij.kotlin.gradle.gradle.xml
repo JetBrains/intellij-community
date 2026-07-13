@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.gradle">
+<idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.kotlin.gradle.tooling"/>
@@ -8,6 +8,7 @@
     <module name="intellij.java.ui"/>
     <module name="intellij.kotlin.base.analysis"/>
     <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.gradle.tooling.impl"/>
   </dependencies>
   <!-- endregion -->
 

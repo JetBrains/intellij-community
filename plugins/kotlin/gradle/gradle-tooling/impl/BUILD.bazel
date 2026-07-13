@@ -16,6 +16,11 @@ jvm_provided_library(
     lib = "//platform/extensions",
 )
 
+jvm_provided_library(
+    name = "libraries_jspecify_provided",
+    lib = "//libraries/jspecify",
+)
+
 jvm_library(
     name = "impl",
     srcs = glob(
@@ -46,9 +51,9 @@ jvm_library(
         "//plugins/gradle/tooling-extension-api:toolingExtension",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
         "//libraries/opentelemetry",
-        "@lib//:jspecify-provided",
         "@lib//:gradle",
         ":platform_extensions_provided",
+        ":libraries_jspecify_provided",
     ],
 )
 
@@ -73,11 +78,13 @@ jvm_library(
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "@lib//:kotlin-test-junit",
-        "@lib//:kotlin-test",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//platform/extensions",
         "//platform/extensions:extensions_test_lib",
         "//libraries/opentelemetry:opentelemetry_test_lib",
-        "@lib//:jspecify-provided",
+        "//libraries/jspecify",
+        "//libraries/jspecify:jspecify_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.gradle.tooling.impl` end

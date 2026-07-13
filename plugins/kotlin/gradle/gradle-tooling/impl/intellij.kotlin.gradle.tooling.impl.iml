@@ -36,10 +36,10 @@
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.extensions" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry" />
-    <orderEntry type="library" scope="PROVIDED" name="jspecify" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jspecify" scope="PROVIDED" />
     <orderEntry type="library" name="Gradle" level="project" />
   </component>
 </module>
