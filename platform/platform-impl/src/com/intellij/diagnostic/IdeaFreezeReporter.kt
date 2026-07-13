@@ -116,7 +116,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
 
       reset()
 
-      val maxDumpDuration = Registry.intValue("freeze.reporter.maxDumpDuration.ms", 40000)
+      val maxDumpDuration = FreezeReporterRegistry.maxDumpDurationMs()
       if (maxDumpDuration <= 0) {
         return
       }
@@ -165,10 +165,10 @@ internal class IdeaFreezeReporter : PerformanceListener {
     }
 
     try {
-      if (Registry.`is`("freeze.reporter.enabled", false)) {
+      if (FreezeReporterRegistry.isReporterEnabled()) {
         LOG.debug("UI freeze recorded")
 
-        if (((durationMs / 1000).toInt() > FREEZE_THRESHOLD || ApplicationManagerEx.isInIntegrationTest()) && !stacktraceCommonPart.isNullOrEmpty()) {
+        if (((durationMs / 1000).toInt() > FreezeReporterRegistry.durationThresholdSeconds() || ApplicationManagerEx.isInIntegrationTest()) && !stacktraceCommonPart.isNullOrEmpty()) {
           val dumps = ArrayList(currentDumps) // defensive copy
           if (dumpTask.isValid() && dumps.size >= 2) {
             val attachments = ArrayList<Attachment>()
@@ -393,9 +393,6 @@ private fun buildTree(threadInfos: List<ThreadInfo>, time: Int): CallTreeNode {
 
 private val EP_NAME = ExtensionPointName<FreezeProfiler>("com.intellij.diagnostic.freezeProfiler")
 
-// intentionally hardcoded and not implemented via a registry key or system property
-// to be updated when we are ready to collect freezes from the specified duration and up
-private const val FREEZE_THRESHOLD = 10
 private const val REPORT_PREFIX = "report"
 private const val DUMP_PREFIX = "dump"
 private const val MESSAGE_FILE_NAME = ".message"
@@ -429,7 +426,7 @@ private suspend fun reportUnfinishedFreezes() {
     }
 
     // report deadly freeze
-    if (duration > FREEZE_THRESHOLD) {
+    if (duration > FreezeReporterRegistry.durationThresholdSeconds()) {
       logger<IdeaFreezeReporter>().info("Detected unfinished freeze ${dir.name} with duration ${duration}ms")
 
       try {
@@ -630,4 +627,28 @@ private class IdeaFreezeSamplingTask(val reportDir: Path, maxDurationMs: Int, co
   }
 
   fun isValid(): Boolean = sampleCount > (1000 / dumpInterval)
+}
+
+@ApiStatus.Internal
+object FreezeReporterRegistry {
+  const val ENABLED: String = "freeze.reporter.enabled"
+  const val MAX_DUMP_DURATION_MS: String = "freeze.reporter.maxDumpDuration.ms"
+  const val DURATION_THRESHOLD_SECONDS: String = "freeze.reporter.duration.threshold.seconds"
+
+  private const val DEFAULT_MAX_DUMP_DURATION_MS = 40_000
+  private const val DEFAULT_DURATION_THRESHOLD_SECONDS = 10
+
+  fun isReporterEnabled(): Boolean = Registry.`is`(ENABLED, false)
+
+  fun maxDumpDurationMs(): Int {
+    return Registry.intValue(MAX_DUMP_DURATION_MS, DEFAULT_MAX_DUMP_DURATION_MS)
+  }
+
+  fun durationThresholdSeconds(): Int {
+    val threshold = Registry.intValue(
+      DURATION_THRESHOLD_SECONDS,
+      DEFAULT_DURATION_THRESHOLD_SECONDS,
+    )
+    return threshold.coerceAtLeast(0)
+  }
 }
