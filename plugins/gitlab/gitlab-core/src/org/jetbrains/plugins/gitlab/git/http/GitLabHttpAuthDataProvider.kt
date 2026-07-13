@@ -52,19 +52,13 @@ private suspend fun performLogin(project: Project, gitHostUrl: String, login: St
   val accounts = accountManager.accountsState.value
     .filter { GitHostingUrlUtil.matchHost(it.server.toURI(), gitHostUrl) }
 
-  val loginResult = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+  return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     when (accounts.size) {
       0 -> accountManager.tryCreateAccount(project, gitHostUrl, login)
       1 -> accountManager.reLogInWithAccount(project, accounts.single(), login)
       else -> accountManager.selectAccountAndLogIn(project, accounts, gitHostUrl, login)
     }
   }
-
-  if (loginResult is LoginResult.Success) {
-    accountManager.save(loginResult)
-  }
-
-  return loginResult
 }
 
 private suspend fun GitLabAccountManager.tryCreateAccount(
@@ -78,7 +72,11 @@ private suspend fun GitLabAccountManager.tryCreateAccount(
   val isGitLabServer = service<GitLabServersManager>().checkIsGitLabServer(server)
   if (!isGitLabServer) return LoginResult.OtherMethod
   return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-    GitLabLoginUtil.logInViaToken(project, null, server, login, loginSource = GitLabLoginSource.GIT,::isAccountUnique)
+    GitLabLoginUtil.logInViaToken(project, null, server, login, loginSource = GitLabLoginSource.GIT, ::isAccountUnique).also {
+      if (it is LoginResult.Success) {
+        save(it)
+      }
+    }
   }
 }
 
@@ -88,7 +86,11 @@ private suspend fun GitLabAccountManager.reLogInWithAccount(
   account: GitLabAccount,
   login: String?,
 ): LoginResult = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-  GitLabLoginUtil.reLogInViaToken(project, null, account, login, loginSource = GitLabLoginSource.GIT, ::isAccountUnique)
+  GitLabLoginUtil.reLogInViaToken(project, null, account, login, loginSource = GitLabLoginSource.GIT, ::isAccountUnique).also {
+    if (it is LoginResult.Success) {
+      save(it)
+    }
+  }
 }
 
 private suspend fun GitLabAccountManager.selectAccountAndLogIn(
@@ -101,5 +103,9 @@ private suspend fun GitLabAccountManager.selectAccountAndLogIn(
   val account = GitLabLoginUtil.chooseAccount(project, null, description, accounts)
                 ?: return@withContext LoginResult.Failure
   findCredentials(account)?.let { LoginResult.Success(account, it) }
-  ?: GitLabLoginUtil.reLogInViaToken(project, null, account, login, loginSource = GitLabLoginSource.GIT, ::isAccountUnique)
+  ?: GitLabLoginUtil.reLogInViaToken(project, null, account, login, loginSource = GitLabLoginSource.GIT, ::isAccountUnique).also {
+    if (it is LoginResult.Success) {
+      save(it)
+    }
+  }
 }
