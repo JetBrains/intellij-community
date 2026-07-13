@@ -1,6 +1,7 @@
 <idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.kotlin.gradle.plugin.idea"/>
     <module name="intellij.libraries.kotlin.tooling.core"/>
   </dependencies>
   <!-- endregion -->

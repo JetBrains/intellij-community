@@ -29,7 +29,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.tooling.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.gradle.plugin.idea.proto" />
-    <orderEntry type="library" name="kotlin-gradle-plugin-idea" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.gradle.plugin.idea" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectModel" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension" />

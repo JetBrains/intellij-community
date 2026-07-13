@@ -1,0 +1,42 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.kotlin.gradle.plugin.idea` start
+jvm_library(
+    name = "libraries-kotlin-gradle-plugin-idea",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlin.gradle.plugin.idea",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlin-gradle-plugin-idea-kotlin-gradle-plugin-idea"],
+    runtime_deps = ["@lib//:libraries-kotlin-gradle-plugin-idea-kotlin-gradle-plugin-idea"],
+)
+
+jvm_library(
+    name = "libraries-kotlin-gradle-plugin-idea_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.kotlin.gradle.plugin.idea",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlin-gradle-plugin-idea-kotlin-gradle-plugin-idea"],
+    runtime_deps = [":libraries-kotlin-gradle-plugin-idea"],
+)
+### auto-generated section `build intellij.libraries.kotlin.gradle.plugin.idea` end
+
+### auto-generated section `iml intellij.libraries.kotlin.gradle.plugin.idea` start
+exports_files(
+    [
+        "intellij.libraries.kotlin.gradle.plugin.idea.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.kotlin.gradle.plugin.idea` end

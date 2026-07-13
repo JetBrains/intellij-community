@@ -38,7 +38,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.tooling.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.gradle.plugin.idea.proto" />
-    <orderEntry type="library" name="kotlin-gradle-plugin-idea" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.gradle.plugin.idea" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="library" name="Gradle" level="project" />

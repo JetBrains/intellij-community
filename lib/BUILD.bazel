@@ -7876,28 +7876,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-1.9.20-dev-8162.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-1_9_20-dev-8162_http//file",
-    out = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-1.9.20-dev-8162.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlin-gradle-plugin-idea",
-    jar = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-1_9_20-dev-8162_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-1_9_20-dev-8162-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "kotlin-gradle-plugin-idea-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":kotlin-gradle-plugin-idea"],
-)
-
-copy_file(
     name = "org.jetbrains.kotlin/kotlin-metadata-jvm-2.4.10-RC2.jar_copy",
     src = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_4_10-RC2_http//file",
     out = "org.jetbrains.kotlin/kotlin-metadata-jvm-2.4.10-RC2.jar",
@@ -12618,6 +12596,21 @@ jvm_import(
     name = "libraries-jzlib-jzlib",
     jar = "@com_jcraft-jzlib-1_1_3_http//file",
     source_jar = "@com_jcraft-jzlib-1_1_3-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-1.9.20-dev-8162.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-1_9_20-dev-8162_http//file",
+    out = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-1.9.20-dev-8162.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-kotlin-gradle-plugin-idea-kotlin-gradle-plugin-idea",
+    jar = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-1_9_20-dev-8162_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-1_9_20-dev-8162-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

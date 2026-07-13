@@ -72,10 +72,6 @@
   modules:
   - name: intellij.kotlin.base.jps
 - name: lib/kotlin-gradle-tooling.jar
-  projectLibraries:
-  - name: kotlin-gradle-plugin-idea
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea/1/kotlin-gradle-plugin-idea-1.jar
   contentModules:
   - name: intellij.kotlin.base.projectModel
   - name: intellij.kotlin.gradle.tooling.impl

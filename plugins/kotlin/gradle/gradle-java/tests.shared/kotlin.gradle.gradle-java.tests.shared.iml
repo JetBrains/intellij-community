@@ -39,7 +39,7 @@
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" scope="TEST" />
-    <orderEntry type="library" exported="" name="kotlin-gradle-plugin-idea" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.gradle.plugin.idea" exported="" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="TEST" />
     <orderEntry type="library" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectModel" scope="TEST" />

@@ -22,7 +22,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlin-gradle-plugin-idea",
+        "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea",
         "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
     ],
 )
@@ -45,6 +45,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":project-model",
+        "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea_test_lib",
         "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
     ],
 )

@@ -36,7 +36,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.tooling.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.gradle.plugin.idea.proto" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlin-gradle-plugin-idea" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.gradle.plugin.idea" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.guava" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="Gradle" level="project" />
