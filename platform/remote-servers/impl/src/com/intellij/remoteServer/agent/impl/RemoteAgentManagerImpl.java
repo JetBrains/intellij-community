@@ -9,8 +9,8 @@ import com.intellij.util.Base64;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -71,9 +71,8 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
       myAgentProxyFactory = agentProxyFactory;
       myAgentInterface = agentInterface;
 
-      File plugin = new File(PathUtil.getJarPathForClass(pluginClass));
-      myPluginPath = plugin.toPath();
-      myAllPluginsRoot = plugin.getParent();
+      myPluginPath = Path.of(PathUtil.getJarPathForClass(pluginClass));
+      myAllPluginsRoot = myPluginPath.getParent().toString();
     }
 
     @Override
@@ -113,28 +112,22 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
 
     @Override
     public Builder<T> withModuleDependency(@NotNull String runtimeModuleName, @NotNull String buildPathToJar) {
-      myModuleDependencies.add(resolveModuleDependency(runtimeModuleName, buildPathToJar));
+      Path specificsDir = Path.of(myAllPluginsRoot).resolve(FileUtil.toSystemDependentName(buildPathToJar));
+      if (Files.exists(specificsDir)) {
+        myModuleDependencies.add(specificsDir);
+        return this;
+      }
+      myModuleDependencies.add(resolveBuildPath(buildPathToJar));
       return this;
     }
 
-    private @NotNull Path resolveModuleDependency(@NotNull String runtimeModuleName, @NotNull String buildPathToJar) {
+    private @Nullable Path resolveBuildPath(@NotNull String buildPathToJar) {
       Path pluginsRoot = Path.of(myAllPluginsRoot);
-      Path specificsModule = pluginsRoot.resolve(runtimeModuleName);
-      if (specificsModule.toFile().exists()) {
-        return specificsModule;
+      Path specificsDir = pluginsRoot.resolve(FileUtil.toSystemDependentName(buildPathToJar));
+      if (Files.isDirectory(specificsDir)) {
+        return specificsDir;
       }
-
-      Path specificsJar = pluginsRoot.resolve("lib").resolve(FileUtil.toSystemDependentName(buildPathToJar));
-      if (specificsJar.toFile().exists()) {
-        return specificsJar;
-      }
-
-      Path jarCacheSpecificsJar = resolveJarCacheDependency(buildPathToJar);
-      if (jarCacheSpecificsJar != null) {
-        return jarCacheSpecificsJar;
-      }
-
-      return specificsModule;
+      return resolveJarCacheDependency(buildPathToJar);
     }
 
     private Path resolveJarCacheDependency(@NotNull String buildPathToJar) {
