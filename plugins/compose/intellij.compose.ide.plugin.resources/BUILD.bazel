@@ -299,6 +299,8 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//plugins/kotlin/plugin/k2",
         "//plugins/kotlin/plugin/k2:k2_test_lib",
+        "//plugins/kotlin/code-insight/api",
+        "//plugins/kotlin/code-insight/api:api_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.resources.tests` end
