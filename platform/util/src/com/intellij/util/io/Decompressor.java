@@ -445,31 +445,15 @@ public abstract class Decompressor {
           throw new IOException("Invalid symlink entry: " + entry.name + " (empty target)");
         }
 
-        String target = entry.linkTarget;
-
-        switch (myEscapingSymlinkPolicy) {
-          case DISALLOW: {
-            verifySymlinkTarget(entry.name, entry.linkTarget, outputDir, outputFile);
-            break;
-          }
-          case RELATIVIZE_ABSOLUTE: {
-            if (OSAgnosticPathUtil.isAbsolute(target)) {
-              //noinspection IO_FILE_USAGE,UnnecessaryFullyQualifiedName
-              target = outputDir + java.io.File.separator + target.substring(1);
-            }
-            break;
-          }
-        }
-
         if (myOverwrite || !Files.exists(outputFile, LinkOption.NOFOLLOW_LINKS)) {
           try {
-            Path outputTarget = Paths.get(target);
+            Path outputTarget = verifySymlinkTarget(entry.name, entry.linkTarget, outputDir, outputFile);
             NioFiles.createDirectories(outputFile.getParent());
             Files.deleteIfExists(outputFile);
             Files.createSymbolicLink(outputFile, outputTarget);
           }
           catch (InvalidPathException e) {
-            throw new IOException("Invalid symlink entry: " + entry.name + " -> " + target, e);
+            throw new IOException("Invalid symlink entry: " + entry.name + " -> " + entry.linkTarget, e);
           }
         }
         break;
@@ -483,20 +467,41 @@ public abstract class Decompressor {
     return outputFile;
   }
 
-  private static void verifySymlinkTarget(String entryName, String linkTarget, Path outputDir, Path outputFile) throws IOException {
-    try {
-      Path outputTarget = Paths.get(linkTarget);
-      if (outputTarget.isAbsolute()) {
-        throw new IOException("Invalid symlink (absolute path): " + entryName + " -> " + linkTarget);
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName", "DuplicateExpressions", "RedundantSuppression"})
+  private Path verifySymlinkTarget(String entryName, String linkTarget, Path outputDir, Path outputFile) throws IOException {
+    if (myEscapingSymlinkPolicy == EscapingSymlinkPolicy.ALLOW) {
+      return Paths.get(linkTarget);
+    }
+
+    if (myEscapingSymlinkPolicy == EscapingSymlinkPolicy.RELATIVIZE_ABSOLUTE) {
+      String relativeTarget = null;
+      if (linkTarget.startsWith("/")) {
+        relativeTarget = linkTarget.substring(1);
       }
-      Path linkTargetNormalized = outputFile.getParent().resolve(outputTarget).normalize();
-      if (!linkTargetNormalized.startsWith(outputDir.normalize())) {
-        throw new IOException("Invalid symlink (points outside of output directory): " + entryName + " -> " + linkTarget);
+      else if (OSAgnosticPathUtil.isAbsoluteDosPath(linkTarget)) {
+        relativeTarget = linkTarget.charAt(0) + linkTarget.substring(2).replace('\\', java.io.File.separatorChar);
+      }
+      else if (OSAgnosticPathUtil.isUncPath(linkTarget)) {
+        relativeTarget = linkTarget.substring(2).replace('\\', java.io.File.separatorChar);
+      }
+      if (relativeTarget != null) {
+        Path outputTarget = outputDir.resolve(relativeTarget);
+        if (!outputTarget.normalize().startsWith(outputDir.normalize())) {
+          throw new IOException("Invalid symlink (points outside of output directory): " + entryName + " -> " + linkTarget);
+        }
+        return outputTarget;
       }
     }
-    catch (InvalidPathException e) {
-      throw new IOException("Failed to verify symlink entry scope: " + entryName + " -> " + linkTarget, e);
+
+    Path outputTarget = Paths.get(linkTarget);
+    if (outputTarget.isAbsolute()) {
+      throw new IOException("Invalid symlink (absolute path): " + entryName + " -> " + linkTarget);
     }
+    Path linkTargetNormalized = outputFile.getParent().resolve(outputTarget).normalize();
+    if (!linkTargetNormalized.startsWith(outputDir.normalize())) {
+      throw new IOException("Invalid symlink (points outside of output directory): " + entryName + " -> " + linkTarget);
+    }
+    return outputTarget;
   }
 
   private static @Nullable Entry mapPathPrefix(Entry e, List<String> prefix) throws IOException {
