@@ -6,7 +6,7 @@
     <applicationConfigurable id="com.intellij.minimap" parentId="editor"
                              key="settings.name" bundle="messages.MinimapBundle"
                              provider="com.intellij.ide.minimap.settings.MinimapConfigurableProvider"/>
-    <registryKey key="ide.minimap.available" defaultValue="false" restartRequired="true"
+    <registryKey key="ide.minimap.available" defaultValue="true" restartRequired="true"
                  description="Makes editor minimap available in PyCharm"/>
 
     <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.TokenFillerLayerFactory"/>
