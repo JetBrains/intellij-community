@@ -51,13 +51,14 @@ public final class PySearchScopeBuilder {
   private boolean myExcludeThirdPartyBundledDeps = false;
   private boolean myExcludeThirdPartyTests = false;
   private final @NotNull Project myProject;
+  private final @Nullable Module myModule;
   private final @Nullable Sdk mySdk;
 
   /**
    * Creates a new builder for the given Python SDK.
    */
   public static @NotNull PySearchScopeBuilder forPythonSdk(@NotNull Project project, @NotNull Sdk sdk) {
-    return new PySearchScopeBuilder(project, sdk);
+    return new PySearchScopeBuilder(project, null, sdk);
   }
 
   /**
@@ -66,11 +67,12 @@ public final class PySearchScopeBuilder {
    * The element's own module answers first, then {@link MainPythonSdkKt#mainPythonSdk}.
    */
   public static @NotNull PySearchScopeBuilder forPythonSdkOf(@NotNull PsiElement element) {
-    return new PySearchScopeBuilder(element.getProject(), findPythonSdkForElement(element));
+    return new PySearchScopeBuilder(element.getProject(), ModuleUtilCore.findModuleForPsiElement(element), findPythonSdkForElement(element));
   }
 
-  private PySearchScopeBuilder(@NotNull Project project, @Nullable Sdk sdk) {
+  private PySearchScopeBuilder(@NotNull Project project, @Nullable Module module, @Nullable Sdk sdk) {
     myProject = project;
+    myModule = module;
     mySdk = sdk;
   }
 
@@ -102,7 +104,13 @@ public final class PySearchScopeBuilder {
    * Builds a {@link GlobalSearchScope} instance for the specified SDK according to the configuration.
    */
   public @NotNull GlobalSearchScope build() {
-    GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+    GlobalSearchScope scope;
+    if (myModule != null) {
+      scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule);
+    }
+    else {
+      scope = GlobalSearchScope.allScope(myProject);
+    }
     if (myExcludeStdlibTests) {
       scope = scope.intersectWith(GlobalSearchScope.notScope(buildStdlibTestsScope()));
     }

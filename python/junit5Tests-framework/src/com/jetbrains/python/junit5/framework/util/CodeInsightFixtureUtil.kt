@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.junit5.framework.util
 
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.logger
@@ -58,13 +59,14 @@ fun CodeInsightTestFixture.configureFromProjectFile(relativePath: String): PsiFi
 suspend fun CodeInsightTestFixture.completeBasicAtProjectFile(
   relativePath: String,
   expectedModuleName: String? = null,
+  invocationCount: Int = 1,
 ): List<String> = withContext(Dispatchers.EDT) {
   val file = configureFromProjectFile(relativePath)
   expectedModuleName?.let {
     val actualModuleName = ProjectFileIndex.getInstance(project).getModuleForFile(file.virtualFile)?.name
     Assertions.assertEquals(it, actualModuleName, "Unexpected module for $relativePath")
   }
-  completeBasic().orEmpty().map { it.lookupString }
+  complete(CompletionType.BASIC, invocationCount).orEmpty().map { it.lookupString }
 }
 
 /**
