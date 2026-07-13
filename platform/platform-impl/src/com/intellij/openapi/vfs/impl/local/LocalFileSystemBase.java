@@ -391,7 +391,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         return LocalFileSystemEelUtil.fetchCaseSensitivityUsingEel(eelPath);
       }
     }
-    return FileSystemUtil.readParentCaseSensitivity(Path.of(parent.getPath(), childName));
+
+    try {
+      return FileSystemUtil.readParentCaseSensitivity(Path.of(parent.getPath(), childName));
+    }
+    catch (InvalidPathException e) {
+      return CaseSensitivity.UNKNOWN;
+    }
   }
 
   @Override

@@ -151,10 +151,18 @@ public final class FileSystemUtil {
   @ApiStatus.Internal
   public static FileAttributes.@NotNull CaseSensitivity readParentCaseSensitivity(@NotNull Path anyChild) {
     Path parent = anyChild.getParent();
-    FileAttributes.CaseSensitivity detected = readDirectoryCaseSensitivityByNativeAPI(parent != null ? parent : anyChild);
+    return readDirectoryCaseSensitivity(parent != null ? parent : anyChild);
+  }
+
+  /**
+   * Assumes that the input argument is a directory.
+   */
+  @ApiStatus.Internal
+  public static FileAttributes.@NotNull CaseSensitivity readDirectoryCaseSensitivity(@NotNull Path directory) {
+    FileAttributes.CaseSensitivity detected = readDirectoryCaseSensitivityByNativeAPI(directory);
     if (detected.isKnown()) return detected;
     // native queries failed, fallback to the Java I/O:
-    return readParentCaseSensitivityByJavaIO(anyChild);
+    return readParentCaseSensitivityByJavaIO(directory);
   }
 
   @VisibleForTesting
