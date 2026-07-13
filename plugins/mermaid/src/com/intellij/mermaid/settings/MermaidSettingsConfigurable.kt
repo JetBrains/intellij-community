@@ -5,10 +5,10 @@ import com.intellij.mermaid.MermaidBundle
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.EnumComboBoxModel
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.toNullableProperty
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.application
 import com.intellij.util.messages.Topic
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
@@ -31,7 +31,7 @@ class MermaidSettingsConfigurable : BoundSearchableConfigurable(
       row(MermaidBundle.message("mermaid.settings.theme")) {
         comboBox(
           model = EnumComboBoxModel(MermaidSettingsState.Theme::class.java),
-          renderer = SimpleListCellRenderer.create("") { it?.printableName ?: "" }
+          renderer = textListCellRenderer("") { it.printableName }
         )
           .bindItem(settings::theme.toNullableProperty())
           .onApply {
