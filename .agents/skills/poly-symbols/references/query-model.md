@@ -202,6 +202,24 @@ indirection.
 of* external ones for resolve/search/rename, so a `PsiPolySymbolReferenceProvider` registered for a
 host that also overrides `getOwnReferences()` is dead code, not a supplement.
 
+**Preferred way to wire this up: `PolySymbolOwnReferencesHost`.** Implementing the raw builder above by
+hand still leaves you to write the `getOwnReferences()` override and your own caching. Instead, have
+your PSI class implement `PolySymbolOwnReferencesHost` and override its one abstract
+method:
+```kotlin
+interface PolySymbolOwnReferencesHost : PsiElement {
+  fun buildOwnReferences(builder: PolySymbolOwnReferencesBuilder)   // the only method you implement
+  fun getPolySymbolOwnReferences(): PolySymbolOwnReferences = ...   // cached per element, default-implemented
+  override fun getOwnReferences(): Collection<PsiSymbolReference> = getPolySymbolOwnReferences().references   // default-implemented
+}
+```
+It deliberately does **not** extend `PsiExternalReferenceHost` — an own-references host may not want
+external-reference support at all. `getPolySymbolOwnReferences()` is cached (`CachedValuesManager`,
+invalidated on PSI modification) and shared by both `getOwnReferences()` and
+`PolySymbolHighlightingAnnotator`'s symbol-kind highlighting (via `PolySymbolOwnReferencesHost`'s
+`referencedSymbols`), so implementing the interface gets you full automatic highlighting — including
+per-host `PolySymbolHighlightingCustomizer` overrides — with no extra work.
+
 ## Completion — `PolySymbolsCompletionProviderBase`
 
 ```kotlin
