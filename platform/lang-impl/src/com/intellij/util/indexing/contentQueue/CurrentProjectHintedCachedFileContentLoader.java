@@ -33,6 +33,7 @@ public final class CurrentProjectHintedCachedFileContentLoader implements Cached
     try {
       try (AccessToken ignored = ProjectLocator.withPreferredProject(file, myProject)) {
         content.getBytes();
+        content.getText(); // compute encoding and decode before read action
       }
     }
     catch (ProcessCanceledException e) {
