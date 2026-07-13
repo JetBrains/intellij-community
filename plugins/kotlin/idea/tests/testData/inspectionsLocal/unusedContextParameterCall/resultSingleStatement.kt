@@ -1,0 +1,8 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+fun produce(): Int = 1
+
+fun test() {
+    val result = <caret>context("") {
+        produce()
+    }
+}

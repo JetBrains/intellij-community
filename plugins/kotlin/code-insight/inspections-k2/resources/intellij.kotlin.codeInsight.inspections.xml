@@ -2444,5 +2444,12 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.replace.with.with.context" bundle="messages.KotlinBundle"/>
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.UnusedContextParameterCallInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.unused.context.parameter.call.description" bundle="messages.KotlinBundle"/>
   </extensions>
 </idea-plugin>
