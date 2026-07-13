@@ -45,7 +45,7 @@ fun indentRange(textView: TextView, lineNumber: LineNumber): TextRange {
   return TextRange(lineStartOffset, lineEndOffset)
 }
 
-fun indentStringOfLine(textView: TextView, lineNumber: LineNumber): CharSequence =
+fun indentStringOfLine(textView: TextView, lineNumber: LineNumber): String =
   textView.string(indentRange(textView, lineNumber))
 
 fun indentOfLine(textView: TextView, lineNumber: LineNumber): Int = indentRange(textView, lineNumber).length.toInt()
