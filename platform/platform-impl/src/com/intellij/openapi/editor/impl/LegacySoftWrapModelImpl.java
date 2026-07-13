@@ -520,7 +520,7 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
         forceSoftWraps();
         if (isSoftWrappingEnabled()) {
           myDirty = false;
-          applianceManager.recalculateAll();
+          applianceManager.recalculateAll("force soft wraps on document change");
           return;
         }
       }
@@ -534,7 +534,8 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
       int textLength = event.getDocument().getTextLength();
       // adding +1, as inlays at the end of the moved range stick to the following text (and impact its layout)
       applianceManager.recalculate(Arrays.asList(new TextRange(srcOffset, Math.min(textLength, srcOffset + event.getNewLength() + 1)),
-                                                 new TextRange(dstOffset, Math.min(textLength, dstOffset + event.getNewLength() + 1))));
+                                                 new TextRange(dstOffset, Math.min(textLength, dstOffset + event.getNewLength() + 1))),
+                                   "move insertion");
     }
   }
 
@@ -573,7 +574,7 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
     }
     try {
       if (!myDirty) { // no need to recalculate specific areas if the whole document will be reprocessed
-        applianceManager.recalculate(deferredFoldRegions);
+        applianceManager.recalculate(deferredFoldRegions, "fold processing end");
       }
     }
     finally {
@@ -607,7 +608,7 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
       if (inlay.getPlacement() == Inlay.Placement.AFTER_LINE_END) {
         offset = DocumentUtil.getLineEndOffset(offset, document);
       }
-      applianceManager.recalculate(Collections.singletonList(new TextRange(offset, offset)));
+      applianceManager.recalculate(Collections.singletonList(new TextRange(offset, offset)), "inlay updated");
     }
   }
 
