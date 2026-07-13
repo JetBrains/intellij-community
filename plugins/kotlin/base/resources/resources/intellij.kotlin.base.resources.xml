@@ -1,2 +1,7 @@
 <idea-plugin visibility="internal">
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.KotlinIconProviderService"
+            serviceImplementation="org.jetbrains.kotlin.idea.KotlinIdeFileIconProviderService"/>
+  </extensions>
 </idea-plugin>

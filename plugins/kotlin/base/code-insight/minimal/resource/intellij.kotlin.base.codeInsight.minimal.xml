@@ -9,8 +9,6 @@
     </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <lineIndentProvider implementation="org.jetbrains.kotlin.idea.formatter.KotlinLineIndentProvider"/>
-
     <moveLeftRightHandler language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinMoveLeftRightHandler"/>
 
     <statementUpDownMover
@@ -157,5 +155,8 @@
     <smartEnterProcessorFixer
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinValueArgumentListFixer"/>
+    <smartEnterProcessorFixer
+      language="kotlin"
+      implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinClassBodyFixer"/>
   </extensions>
 </idea-plugin>
