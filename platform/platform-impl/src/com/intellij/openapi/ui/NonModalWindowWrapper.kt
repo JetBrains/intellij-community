@@ -624,6 +624,13 @@ abstract class NonModalWindowWrapper(
       activeWindow.requestFocus()
       return
     }
+    // On macOS, a FloatDialog is owned by the IDE JFrame and lives on the IDE's Space.
+    // If the user invokes Settings from a detached editor tab (its own Space), macOS keeps
+    // focus on the detached tab's Space after the dialog becomes visible. Bringing the IDE
+    // frame to front first navigates macOS to the IDE Space before the dialog appears.
+    if (activeWindow is FloatDialog) {
+      getIdeJFrame()?.toFront()
+    }
     activeWindow.isVisible = true
     getPreferredFocusComponent()?.requestFocusInWindow()
     onShown()
