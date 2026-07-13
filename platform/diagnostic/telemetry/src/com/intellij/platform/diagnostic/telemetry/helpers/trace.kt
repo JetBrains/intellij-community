@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.helpers
 
-import com.intellij.openapi.util.ThrowableNotNullFunction
 import com.intellij.platform.diagnostic.telemetry.IJTracer
 import com.intellij.util.ThrowableConsumer
 import io.opentelemetry.api.trace.Span
@@ -84,14 +83,6 @@ suspend inline fun <T> SpanBuilder?.useOrRun(
       operation(span)
     }
   }
-}
-
-@Internal
-internal fun <T> computeWithSpanIgnoreThrows(
-  spanBuilder: SpanBuilder,
-  operation: ThrowableNotNullFunction<Span, T, out Throwable>,
-): T {
-  return spanBuilder.use(operation::`fun`)
 }
 
 @Internal
