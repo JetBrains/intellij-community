@@ -38,6 +38,7 @@ interface FindAndReplaceExecutor {
     onResult: (UsageInfoAdapter) -> Boolean,
     onFinish: () -> Unit?,
     maxUsages: Int,
+    isLoadMore: Boolean = false,
   )
 
   /**

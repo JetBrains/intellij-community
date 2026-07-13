@@ -394,6 +394,7 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
               null
             },
             maxUsages,
+            isLoadMore = loadMore,
           )
         }
 

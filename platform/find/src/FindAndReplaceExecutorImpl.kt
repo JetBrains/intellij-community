@@ -34,10 +34,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Consumer
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 private val LOG = logger<FindAndReplaceExecutorImpl>()
 
@@ -48,7 +48,11 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
   private var selectScopeJob: Job? = null
   private var currentSearchDisposable: CheckedDisposable? = null
 
-  @OptIn(ExperimentalAtomicApi::class)
+  // The current search "session" scope on which result models load their preview content. It is parented to
+  // the executor scope (NOT to the per-pass streaming job) so it survives an automatic load-more pass; it is
+  // cancelled only when the session is superseded by a fresh search (see findUsages / isLoadMore). IJPL-247145.
+  private var currentInitScope: CoroutineScope? = null
+
   override fun findUsages(
     project: Project,
     progressIndicator: ProgressIndicatorEx,
@@ -61,10 +65,16 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     onResult: (UsageInfoAdapter) -> Boolean,
     onFinish: () -> Unit?,
     maxUsages: Int,
+    isLoadMore: Boolean,
   ) {
     if (FindKey.isEnabled) {
-      LOG.debug { "FiF: executor.findUsages entry; cancelling prevJob=$findUsagesJob shouldThrottle=$shouldThrottle maxUsages=$maxUsages" }
+      LOG.debug { "FiF: executor.findUsages entry; cancelling prevJob=$findUsagesJob shouldThrottle=$shouldThrottle maxUsages=$maxUsages isLoadMore=$isLoadMore" }
+
+      // Cancel the previous streaming coroutine only. Model loads run on `currentInitScope` (a session scope
+      // parented to the executor scope), so cancelling the streaming job no longer cancels in-flight loads;
+      // that is what lets a load-more pass extend the session without stranding the previous pass's models.
       findUsagesJob?.cancel("new find request is started")
+
       findUsagesJob = coroutineScope.launch {
         var firstLogged = false
         try {
@@ -72,20 +82,38 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
           selectScopeJob?.join()
           LOG.debug { "FiF: selectScope join done" }
           val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfoModel)?.model?.fileId?.virtualFile() }.toSet()
-          currentSearchDisposable?.let { Disposer.dispose(it) }
-          currentSearchDisposable = Disposer.newCheckedDisposable( "Find in Project Search").also {
-            if (!Disposer.tryRegister(disposableParent, it)) {
-              Disposer.dispose(it)
+
+          // A load-more pass EXTENDS the current session: reuse its disposable + model-load scope so the
+          // previous pass's still-loading models (e.g. the auto-selected first row) keep loading. A fresh
+          // search supersedes: dispose the old session (cancels its models) and start a new scope. IJPL-247145.
+          val reuseSession = isLoadMore &&
+                             currentSearchDisposable?.isDisposed == false &&
+                             currentInitScope?.isActive == true
+          val searchDisposable: CheckedDisposable
+          val initScope: CoroutineScope
+          if (reuseSession) {
+            searchDisposable = currentSearchDisposable!!
+            initScope = currentInitScope!!
+          }
+          else {
+            currentSearchDisposable?.let { Disposer.dispose(it) }
+            val newDisposable = Disposer.newCheckedDisposable("Find in Project Search")
+            if (!Disposer.tryRegister(disposableParent, newDisposable)) {
+              Disposer.dispose(newDisposable)
               LOG.warn("Failed to register disposable for search. Looks like FindPopup is already closed. Search will be canceled.")
               return@launch
             }
-          }
-          val searchDisposable = currentSearchDisposable
-          val initScope = this.childScope("FindAndReplaceExecutorImpl.UsageInit")
-          if (searchDisposable != null && !searchDisposable.isDisposed) {
-            Disposer.register(searchDisposable) {
-              initScope.cancel("search disposed")
+
+            // Parent to the executor scope (not `this` streaming job) so the session survives load-more passes.
+            val newScope = coroutineScope.childScope("FindAndReplaceExecutorImpl.UsageInit")
+            Disposer.register(newDisposable) {
+              newScope.cancel("search disposed")
             }
+
+            currentSearchDisposable = newDisposable
+            currentInitScope = newScope
+            searchDisposable = newDisposable
+            initScope = newScope
           }
           FindRemoteApi.getInstance().findByModel(
             findModel = findModel,
@@ -98,7 +126,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
               else it.map { event -> ThrottledOneItem(event) }
             }
             .collect { throttledItems ->
-              if (searchDisposable?.isDisposed == true) {
+              if (searchDisposable.isDisposed) {
                 return@collect
               }
               if (!firstLogged) {
@@ -107,7 +135,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
               }
               throttledItems.items.forEach { item ->
                 val usage = UsageInfoModel.createUsageInfoModel(project, item, initScope, onUpdateModelCallback)
-                if (searchDisposable == null || !Disposer.tryRegister(searchDisposable, usage)) {
+                if (!Disposer.tryRegister(searchDisposable, usage)) {
                   Disposer.dispose(usage)
                   return@collect
                 }
