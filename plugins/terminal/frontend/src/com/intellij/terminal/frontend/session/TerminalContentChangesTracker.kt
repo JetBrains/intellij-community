@@ -17,7 +17,9 @@ import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.percentileOf
 import org.jetbrains.plugins.terminal.fus.thirdLargestOf
 import org.jetbrains.plugins.terminal.fus.totalDurationOf
+import org.jetbrains.plugins.terminal.session.impl.Osc8Hyperlink
 import org.jetbrains.plugins.terminal.session.impl.StyleRange
+import org.jetbrains.plugins.terminal.session.impl.dto.Osc8HyperlinkDto
 import org.jetbrains.plugins.terminal.session.impl.dto.StyleRangeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.toDto
 import java.util.concurrent.CopyOnWriteArrayList
@@ -140,20 +142,22 @@ class TerminalContentChangesTracker(
       text = output.text,
       styles = output.styleRanges.map { it.toDto() },
       startLineLogicalIndex = logicalLineIndex,
+      osc8Hyperlinks = output.osc8Hyperlinks.map { it.toDto() },
     )
   }
 
   private fun scrapeOutput(startLine: Int, additionalLines: List<TerminalLine>): StyledCommandOutput {
     val styles = mutableListOf<StyleRange>()
+    val osc8Hyperlinks = mutableListOf<Osc8Hyperlink>()
     val stringCollector = SimpleStringCollector()
-    val terminalLinesCollector = StylesCollectingTerminalLinesCollector(stringCollector, styles::add)
+    val terminalLinesCollector = StylesCollectingTerminalLinesCollector(stringCollector, styles::add, osc8Hyperlinks::add)
 
     for (line in additionalLines) {
       terminalLinesCollector.addLine(line)
     }
     textBuffer.collectLines(terminalLinesCollector, startLine)
 
-    return StyledCommandOutput(stringCollector.buildText(), styles)
+    return StyledCommandOutput(stringCollector.buildText(), styles, osc8Hyperlinks)
   }
 }
 
@@ -162,6 +166,7 @@ data class TerminalContentUpdate(
   val text: String,
   val styles: List<StyleRangeDto>,
   val startLineLogicalIndex: Long,
+  val osc8Hyperlinks: List<Osc8HyperlinkDto>,
 )
 
 /**

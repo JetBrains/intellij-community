@@ -24,6 +24,7 @@ import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCursorPositionChangedEvent
+import org.jetbrains.plugins.terminal.session.impl.dto.Osc8HyperlinkDto
 import org.jetbrains.plugins.terminal.session.impl.dto.StyleRangeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.toDto
 import org.jetbrains.plugins.terminal.util.getNow
@@ -324,6 +325,14 @@ class TerminalTypeAheadOutputModelControllerV2(
         ))
       }
     }
+    // Offsets are relative to `startOffset` (== the start of `firstLineIndex`), same as the styles above.
+    val osc8Hyperlinks = model.getOsc8Hyperlinks().map { link ->
+      Osc8HyperlinkDto(
+        startOffset = link.startOffset - model.startOffset,
+        endOffset = link.endOffset - model.startOffset,
+        uri = link.uri,
+      )
+    }
     val cursorOffset = model.cursorOffset
     val lineIndex = model.getLineByOffset(cursorOffset)
     val lineStart = model.getStartOfLine(lineIndex)
@@ -332,7 +341,8 @@ class TerminalTypeAheadOutputModelControllerV2(
       styles = styles,
       startLineLogicalIndex = model.firstLineIndex.toAbsolute(),
       cursorLogicalLineIndex = lineIndex.toAbsolute(),
-      cursorColumnIndex = (cursorOffset - lineStart).toInt()
+      cursorColumnIndex = (cursorOffset - lineStart).toInt(),
+      osc8Hyperlinks = osc8Hyperlinks,
     )
   }
 

@@ -461,7 +461,8 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
       trimmedCharsCount = 90,
       firstLineTrimmedCharsCount = 10,
       cursorOffset = 3,
-      highlightings = listOf(styleRange(90, 95), styleRange(95, 100))
+      highlightings = listOf(styleRange(90, 95), styleRange(95, 100)),
+      osc8Hyperlinks = emptyList(),
     )
 
     model.restore(state)

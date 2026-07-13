@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.session.impl
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.session.impl.dto.Osc8HyperlinkDto
 import org.jetbrains.plugins.terminal.session.impl.dto.StyleRangeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalBlocksModelStateDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalOutputModelStateDto
@@ -23,6 +24,8 @@ data class TerminalContentUpdatedEvent(
   val startLineLogicalIndex: Long,
   val cursorLogicalLineIndex: Long,
   val cursorColumnIndex: Int,
+  /** OSC8 hyperlinks found in [text]; offsets are relative to [text]. */
+  val osc8Hyperlinks: List<Osc8HyperlinkDto> = emptyList(),
   /** This value is used only on Backend. It is always null on the Frontend. */
   @Transient
   val readTime: TimeMark? = null,

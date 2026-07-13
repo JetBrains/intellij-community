@@ -22,9 +22,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.ShellStartupOptions
-import org.jetbrains.plugins.terminal.original
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
 import org.jetbrains.plugins.terminal.util.closeConnectorAndStopEmulation
@@ -100,7 +98,7 @@ fun createTerminalSession(
     inputChannel = inputChannel,
     outputFlow = outputFlow.asSharedFlow(),
     coroutineScope = coroutineScope,
-    ttyConnector = ttyConnector.original as LocalTerminalTtyConnector,
+    ttyConnector = ttyConnector,
   )
 }
 
@@ -115,6 +113,7 @@ private fun createJediTermServices(
   val textBuffer = TerminalTextBuffer(initialSize.columns, initialSize.rows, styleState, maxHistoryLinesCount)
   val terminalDisplay = TerminalDisplayImpl(settings)
   val controller = ObservableJediTerminal(terminalDisplay, textBuffer, styleState)
+  controller.setUrlHyperlinkFilter(JediTermOsc8HyperlinkFilter())
 
   val typeAheadManager = TerminalTypeAheadManager(JediTermTypeAheadModel(controller, textBuffer, settings))
   val executorService = TerminalExecutorServiceManagerImpl()

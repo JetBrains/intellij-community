@@ -1,6 +1,9 @@
 package com.intellij.terminal.frontend.session
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.jediterm.terminal.TtyConnector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -11,6 +14,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.TerminalUtil
+import org.jetbrains.plugins.terminal.original
 import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
@@ -20,7 +24,7 @@ internal class TerminalSessionImpl(
   private val inputChannel: SendChannel<TerminalInputEvent>,
   outputFlow: Flow<List<TerminalOutputEvent>>,
   override val coroutineScope: CoroutineScope,
-  private val ttyConnector: LocalTerminalTtyConnector,
+  private val ttyConnector: TtyConnector,
 ) : TerminalSession {
   @Volatile
   override var isClosed: Boolean = false
@@ -32,11 +36,31 @@ internal class TerminalSessionImpl(
     }
   }
 
+  private var missingLocalTtyConnectorLogged = false
+
+  private val localTtyConnector: LocalTerminalTtyConnector?
+    /**
+     * In production, [ttyConnector] is always a [LocalTerminalTtyConnector]; on a miss, [eelDescriptor]
+     * and [processId] return guesses, hence `LOG.error`.
+     * In tests with a fake connector (see `LoopbackTtyConnector`), `LOG.error` fails
+     * tests that rely on these getters.
+     */
+    get() = ttyConnector.original as? LocalTerminalTtyConnector ?: run {
+      if (!missingLocalTtyConnectorLogged) {
+        missingLocalTtyConnectorLogged = true
+        LOG.error("Unable to find LocalTerminalTtyConnector in $ttyConnector")
+      }
+      null
+    }
+
   override val eelDescriptor: EelDescriptor
-    get() = ttyConnector.eelDescriptor
+    get() = localTtyConnector?.eelDescriptor ?: LocalEelDescriptor
 
   override val processId: Long
-    get() = ttyConnector.shellEelProcess.eelProcess.pid.value
+    get() {
+      val localTtyConnector = localTtyConnector ?: return -1
+      return localTtyConnector.shellEelProcess.eelProcess.pid.value
+    }
 
   override suspend fun getInputChannel(): SendChannel<TerminalInputEvent> {
     if (isClosed) {
@@ -61,3 +85,5 @@ internal class TerminalSessionImpl(
     }
   }
 }
+
+private val LOG = logger<TerminalSessionImpl>()

@@ -167,7 +167,26 @@ interface TerminalOutputModel {
   /** Returns null if there is no specific highlighting range at [documentOffset] */
   @ApiStatus.Internal
   fun getHighlightingAt(documentOffset: TerminalOffset): HighlightingInfo?
+
+  /**
+   * Returns the OSC8 hyperlinks currently present in the output, ordered by offset.
+   *
+   * Offsets are absolute (see [TerminalOutputModel]), so a link keeps its identity across trimming.
+   */
+  @ApiStatus.Internal
+  fun getOsc8Hyperlinks(): List<TerminalOutputOsc8Hyperlink>
 }
+
+/**
+ * OSC8 hyperlink present in the terminal output: the [uri] target attached to the text
+ * range `[startOffset, endOffset)` (absolute offsets).
+ */
+@ApiStatus.Internal
+data class TerminalOutputOsc8Hyperlink(
+  val startOffset: TerminalOffset,
+  val endOffset: TerminalOffset,
+  val uri: String,
+)
 
 /**
  * A snapshot of [TerminalOutputModel].

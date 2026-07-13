@@ -12,6 +12,7 @@ import org.jetbrains.plugins.terminal.block.session.scraper.StylesCollectingTerm
 import org.jetbrains.plugins.terminal.block.session.scraper.TerminalLinesCollector
 import org.jetbrains.plugins.terminal.block.session.util.Debouncer
 import org.jetbrains.plugins.terminal.block.ui.withLock
+import org.jetbrains.plugins.terminal.session.impl.Osc8Hyperlink
 import org.jetbrains.plugins.terminal.session.impl.StyleRange
 import org.jetbrains.plugins.terminal.util.addModelListener
 import java.util.concurrent.CopyOnWriteArrayList
@@ -86,13 +87,17 @@ class ShellCommandOutputScraperImpl(
       val styleCollectingOutputBuilder: TerminalLinesCollector = StylesCollectingTerminalLinesCollector(stringCollector, styles::add)
       val terminalLinesCollector: TerminalLinesCollector = styleCollectingOutputBuilder
       textBuffer.collectLines(terminalLinesCollector, startLine)
-      return StyledCommandOutput(stringCollector.buildText(), styles)
+      return StyledCommandOutput(stringCollector.buildText(), styles, emptyList())
     }
   }
 }
 
 @ApiStatus.Internal
-data class StyledCommandOutput(val text: String, val styleRanges: List<StyleRange>)
+data class StyledCommandOutput(
+  val text: String,
+  val styleRanges: List<StyleRange>,
+  val osc8Hyperlinks: List<Osc8Hyperlink>,
+)
 
 @ApiStatus.Internal
 interface ShellCommandOutputListener {
