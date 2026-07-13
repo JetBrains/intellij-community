@@ -61,6 +61,15 @@ interface LibrarySupportProvider {
     )
   }
 
+  /**
+   * Filters [chains] leaving only those that can still be correctly traced from the current execution position of
+   * [session], i.e. the chains whose first operator has not started executing yet.
+   *
+   * The default keeps every chain; JVM-specific providers override to drop already-(partially-)executed chains using the
+   * current bytecode position.
+   */
+  suspend fun filterTraceableStreams(session: XDebugSession, chains: List<StreamChain>): List<StreamChain> = chains
+
   companion object {
     val EP_NAME: ExtensionPointName<LibrarySupportProvider> = create("org.jetbrains.platform.debugger.streams.librarySupport")
   }

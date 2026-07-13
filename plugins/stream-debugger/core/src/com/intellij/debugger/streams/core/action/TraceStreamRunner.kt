@@ -119,7 +119,19 @@ class TraceStreamRunner(val cs: CoroutineScope) {
         }
       }
     }
+    // Keep only the chains that can still be traced from the current execution position.
+    // This depends on the exact runtime position, so it must run here, outside the position-independent ChainResolver cache.
+    return filterTraceable(session, chains)
+  }
+
+  private suspend fun filterTraceable(session: XDebugSession, chains: List<StreamChainWithLibrary>): List<StreamChainWithLibrary> {
+    if (chains.isEmpty()) return chains
     return chains
+      .groupBy { it.provider }
+      .flatMap { (provider, group) ->
+        val traceable = provider.filterTraceableStreams(session, group.map { it.chain })
+        group.filter { it.chain in traceable }
+      }
   }
 
   private class MyStreamChainChooser(editor: Editor) : ElementChooserImpl<StreamChainOption?>(editor)

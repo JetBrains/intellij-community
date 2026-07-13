@@ -7,6 +7,7 @@ import com.intellij.debugger.impl.ClassLoadingUtils
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
+import com.intellij.debugger.streams.filtering.filterTraceableStreams
 import com.intellij.debugger.streams.core.trace.CollectionTreeBuilder
 import com.intellij.debugger.streams.core.trace.DebuggerCommandLauncher
 import com.intellij.debugger.streams.core.trace.StreamTracer
@@ -64,6 +65,17 @@ abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
       getXValueInterpreter(session.project),
       TraceResultInterpreterImpl(support.interpreterFactory)
     )
+  }
+
+  override suspend fun filterTraceableStreams(session: XDebugSession, chains: List<StreamChain>): List<StreamChain> {
+    if (chains.isEmpty()) return chains
+    val debugProcess = session.debugProcess as? JavaDebugProcess ?: return chains
+    val position = session.currentPosition ?: return chains
+    val context = debugProcess.debuggerSession.contextManager.context
+    return withDebugContext(context) {
+      val location = runCatching { context.frameProxy?.location() }.getOrNull() ?: return@withDebugContext chains
+      filterTraceableStreams(session.project, chains, position, location.method(), location.codeIndex())
+    }
   }
 
   private fun isSupportedVm(vm: VirtualMachineProxyImpl): Boolean = vm.canForceEarlyReturn() && vm.canGetMethodReturnValues()
