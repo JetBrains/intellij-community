@@ -1,4 +1,4 @@
-version = "1.*"
+version = "~= 1.82.1"
 upstream-repository = "https://github.com/grpc/grpc"
 partial-stub = true
 

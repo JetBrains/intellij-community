@@ -1,3 +1,4 @@
+import builtins
 from _typeshed import SupportsItems
 from collections.abc import Callable
 from typing import Any, Generic, Literal, overload
@@ -68,7 +69,7 @@ class value_property(Generic[_T, _DefaultT, _NoneLiteral, _ScopeT]):
 
 class CacheControl(Generic[_ScopeT]):
     header_value: str
-    update_dict: type[UpdateDict]
+    update_dict: builtins.type[UpdateDict]
     properties: dict[str, Any]
     type: _ScopeT
     def __init__(self, properties: dict[str, Any], type: _ScopeT) -> None: ...

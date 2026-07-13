@@ -23,7 +23,6 @@ else:
 import tomlkit
 from packaging.requirements import Requirement
 from packaging.specifiers import Specifier
-from tomlkit.items import String
 
 from .paths import PYPROJECT_PATH, STUBS_PATH, distribution_path
 
@@ -298,12 +297,15 @@ def read_metadata(distribution: str) -> StubMetadata:
             assert num_url_path_parts == 2, bad_github_url_msg
 
     obsolete_since = data.get("obsolete-since")
-    assert isinstance(obsolete_since, (String, type(None)))
-    if obsolete_since:
-        comment = obsolete_since.trivia.comment
-        since_date_string = comment.removeprefix("# Released on ")
-        since_date = datetime.date.fromisoformat(since_date_string)
-        obsolete = ObsoleteMetadata(since_version=obsolete_since, since_date=since_date)
+    assert isinstance(obsolete_since, (dict, type(None)))
+    if obsolete_since is not None:
+        obsolete_table: dict[str, object] = obsolete_since
+        obsolete_since_version = obsolete_table.get("version")
+        obsolete_since_date = obsolete_table.get("date")
+        assert isinstance(obsolete_since_version, str)
+        assert isinstance(obsolete_since_date, str)
+        since_date = datetime.date.fromisoformat(obsolete_since_date)
+        obsolete = ObsoleteMetadata(since_version=obsolete_since_version, since_date=since_date)
     else:
         obsolete = None
     no_longer_updated = data.get("no-longer-updated", False)

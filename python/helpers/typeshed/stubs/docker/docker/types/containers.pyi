@@ -1,3 +1,4 @@
+import builtins
 from collections.abc import Iterable, Mapping
 from typing import Any, Final, Literal
 
@@ -18,7 +19,7 @@ class LogConfigTypesEnum:
     NONE: Final = "none"
 
 class LogConfig(DictType[Any]):
-    types: type[LogConfigTypesEnum]
+    types: builtins.type[LogConfigTypesEnum]
     def __init__(
         self, *, type: str = ..., Type: str = ..., config: dict[str, str] = ..., Config: dict[str, str] = ...
     ) -> None: ...

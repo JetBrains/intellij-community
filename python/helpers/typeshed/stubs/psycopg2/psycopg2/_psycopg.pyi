@@ -424,6 +424,7 @@ class Xid:
     def __len__(self) -> int: ...
 
 _T_cur = TypeVar("_T_cur", bound=cursor)
+_Lobject: TypeAlias = lobject
 
 @disjoint_base
 class connection:
@@ -444,7 +445,7 @@ class connection:
     def binary_types(self) -> dict[Incomplete, Incomplete]: ...
     @property
     def closed(self) -> int: ...
-    cursor_factory: Callable[[connection, str | bytes | None], cursor]
+    cursor_factory: Callable[[connection, str | bytes | None], _Cursor]
     @property
     def dsn(self) -> str: ...
     @property
@@ -490,7 +491,7 @@ class connection:
     @overload
     def cursor(
         self, name: str | bytes | None = None, cursor_factory: None = None, withhold: bool = False, scrollable: bool | None = None
-    ) -> cursor: ...
+    ) -> _Cursor: ...
     @overload
     def cursor(
         self,
@@ -522,8 +523,8 @@ class connection:
         mode: str | None = ...,
         new_oid: int = ...,
         new_file: str | None = ...,
-        lobject_factory: type[lobject] = ...,
-    ) -> lobject: ...
+        lobject_factory: type[_Lobject] = ...,
+    ) -> _Lobject: ...
     def poll(self) -> int: ...
     def reset(self) -> None: ...
     def rollback(self) -> None: ...
