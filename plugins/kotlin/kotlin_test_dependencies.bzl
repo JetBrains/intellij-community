@@ -271,15 +271,9 @@ download_file(
 )
 
 download_file(
-    name = "kotlin-jps-plugin-snapshot-testdata-for-ide.jar",
+    name = "kotlin-jps-plugin-testdata-for-ide.jar",
     url = "{0}/org/jetbrains/kotlin/kotlin-jps-plugin-testdata-for-ide/{1}/kotlin-jps-plugin-testdata-for-ide-{1}.jar".format(kotlincRepositoryUrl, kotlinCompilerCliVersion),
     sha256 = "e18112cfd4f9a2b1315a23f08b495e687e79d1fc6050dfe452d55506d9fbf4e0",
-)
-
-download_file(
-    name = "kotlin-jps-plugin-stable-testdata-for-ide.jar",
-    url = "{0}/org/jetbrains/kotlin/kotlin-jps-plugin-testdata-for-ide/{1}/kotlin-jps-plugin-testdata-for-ide-{1}.jar".format(jpsPluginRepositoryUrl, kotlincKotlinJpsPluginTestsVersion),
-    sha256 = "d044021b0bd96315206e1fc6a28a5c44999110e2a133fbe380027bb86f2e924d",
 )
 
 download_file(
