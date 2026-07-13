@@ -484,6 +484,7 @@ libraries/junit6-launcher
 libraries/junit6-params
 libraries/jvm-native-trusted-roots
 libraries/jzlib
+libraries/kotlin/gradle-plugin-idea-proto
 libraries/kotlin/reflect
 libraries/kotlin/test
 libraries/kotlin/test-assertions-core-jvm

@@ -1074,6 +1074,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/junit6-params/intellij.libraries.junit6.params.iml" filepath="$PROJECT_DIR$/libraries/junit6-params/intellij.libraries.junit6.params.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jvm-native-trusted-roots/intellij.libraries.jvm.native.trusted.roots.iml" filepath="$PROJECT_DIR$/libraries/jvm-native-trusted-roots/intellij.libraries.jvm.native.trusted.roots.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jzlib/intellij.libraries.jzlib.iml" filepath="$PROJECT_DIR$/libraries/jzlib/intellij.libraries.jzlib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/kotlin/gradle-plugin-idea-proto/intellij.libraries.kotlin.gradle.plugin.idea.proto.iml" filepath="$PROJECT_DIR$/libraries/kotlin/gradle-plugin-idea-proto/intellij.libraries.kotlin.gradle.plugin.idea.proto.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/kotlin/reflect/intellij.libraries.kotlin.reflect.iml" filepath="$PROJECT_DIR$/libraries/kotlin/reflect/intellij.libraries.kotlin.reflect.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/kotlin/test/intellij.libraries.kotlinTest.iml" filepath="$PROJECT_DIR$/libraries/kotlin/test/intellij.libraries.kotlinTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/kotlin/test-assertions-core-jvm/intellij.libraries.kotlinTestAssertionsCoreJvm.iml" filepath="$PROJECT_DIR$/libraries/kotlin/test-assertions-core-jvm/intellij.libraries.kotlinTestAssertionsCoreJvm.iml" />

@@ -26,6 +26,10 @@
     <!-- endregion -->
   </dependencies>
 
+  <content>
+    <module name="intellij.libraries.kotlin.gradle.plugin.idea.proto" loading="embedded"/>
+  </content>
+
   <extensionPoints>
     <extensionPoint name="supportsKotlinPluginMode" dynamic="true"
                     beanClass="org.jetbrains.kotlin.idea.base.plugin.SupportsKotlinPluginMode">

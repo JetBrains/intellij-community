@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlin.gradle.plugin.idea.proto.jar
+  modules:
+  - name: intellij.libraries.kotlin.gradle.plugin.idea.proto
+    libraries:
+      kotlin-gradle-plugin-idea-proto:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1/kotlin-gradle-plugin-idea-proto-1.jar
