@@ -2174,6 +2174,7 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
 
     <!-- works as a fallback, after all providers -->
     <fileIconProvider implementation="com.intellij.platform.ide.impl.common.file.icons.CommonFileIconsProvider" order="last"/>
+    <projectEntitiesAttacher implementation="com.intellij.platform.JpsEntitiesProjectEntitiesAttacher"/>
   </extensions>
 
   <applicationListeners>

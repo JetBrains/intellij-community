@@ -40,7 +40,7 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
       ijBuildVersion = ApplicationInfo.getInstance().build.toString(),
     )
 
-  internal fun loadCacheFromFile(
+  fun loadCacheFromFile(
     file: Path,
     invalidateGlobalCachesMarkerFile: Path,
     invalidateCachesMarkerFile: Path,

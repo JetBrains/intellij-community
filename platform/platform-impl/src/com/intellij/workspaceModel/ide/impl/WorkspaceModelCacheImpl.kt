@@ -205,7 +205,7 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
     private val SERIALIZER_HOOKS = ExtensionPointName<WorkspaceModelSerializerHook>("com.intellij.workspaceModel.serializerHook")
 
     private val LOG = logger<WorkspaceModelCacheImpl>()
-    internal const val DATA_DIR_NAME: String = "project-model-cache"
+    const val DATA_DIR_NAME: String = "project-model-cache"
     private var forceEnableCaching = false
 
     @TestOnly
