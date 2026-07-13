@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal class LspDocumentSyncManager(private val client: LspClientImpl) {
 
   private val openedFiles: MutableSet<VirtualFile> = Collections.synchronizedSet(HashSet())
-  private val disposed = AtomicBoolean(false)
+  private val shutdown = AtomicBoolean(false)
 
   val openedFileCount: Int get() = openedFiles.size
 
@@ -45,9 +45,9 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
 
   fun forEachOpenedFile(action: (VirtualFile) -> Unit) = openedFiles.forEach(action)
 
-  fun dispose() {
+  fun shutdown() {
     openedFiles.clear()
-    disposed.set(true)
+    shutdown.set(true)
   }
 
   @RequiresWriteLock
@@ -56,7 +56,7 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
       // Error should not be logged if the sync manager is disposed of, as the server state
       // and thus sync manager state might have changed just after entering `open` method
       // and caller is not able to sync on the server state
-      if (!disposed.get()) {
+      if (!shutdown.get()) {
         client.logError("Server is not in the Running state. Ignoring open($file)")
       }
       return
@@ -85,7 +85,7 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
       // Error should not be logged if the sync manager is disposed of, as the server state
       // and thus sync manager state might have changed just after entering `open` method
       // and caller is not able to sync on the server state
-      if (!disposed.get()) {
+      if (!shutdown.get()) {
         client.logError("close() cannot be called for files that haven't been opened. Ignoring: $file")
       }
       return
