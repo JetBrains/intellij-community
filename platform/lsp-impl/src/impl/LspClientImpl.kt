@@ -293,7 +293,7 @@ class LspClientImpl internal constructor(
           LspInlayApplier.getInstance(project).scheduleRefresh(file)
         }
       }
-      documentSyncManager.dispose()
+      documentSyncManager.shutdown()
       requestExecutor.shutdownNow()
       serverNotificationsHandler.cancelAllProgress()
 
