@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="jetbrains.markdown" type="repository">
-    <properties maven-id="org.jetbrains:markdown-jvm:0.7.6">
+    <properties maven-id="org.jetbrains:markdown-jvm:0.7.7">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.7.6/markdown-jvm-0.7.6.jar">
-          <sha256sum>857ef5af28efdd7d25a35ae1d2676abe5bfc7d37ea6f3a7b275be168f8afa6f7</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.7.7/markdown-jvm-0.7.7.jar">
+          <sha256sum>df0b88266501c622ffcd0cc174b29aed9e19e73cb93e0d51b4ebca4cee01a82f</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -12,11 +12,11 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.7.6/markdown-jvm-0.7.6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.7.7/markdown-jvm-0.7.7.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.7.6/markdown-jvm-0.7.6-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.7.7/markdown-jvm-0.7.7-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
