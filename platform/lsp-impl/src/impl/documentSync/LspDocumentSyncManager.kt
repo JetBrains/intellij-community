@@ -46,8 +46,8 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
   fun forEachOpenedFile(action: (VirtualFile) -> Unit) = openedFiles.forEach(action)
 
   fun shutdown() {
-    openedFiles.clear()
     shutdown.set(true)
+    openedFiles.clear()
   }
 
   @RequiresWriteLock
@@ -81,7 +81,7 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
 
   @RequiresWriteLock
   fun close(file: VirtualFile) {
-    if (!openedFiles.remove(file)) {
+    if (!openedFiles.remove(file) || shutdown.get()) {
       // Error should not be logged if the sync manager is disposed of, as the server state
       // and thus sync manager state might have changed just after entering `open` method
       // and caller is not able to sync on the server state
