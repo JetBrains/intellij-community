@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.helpers
 
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.platform.diagnostic.telemetry.IJTracer
 import com.intellij.util.ThrowableConsumer
 import io.opentelemetry.api.trace.Span
@@ -11,7 +12,6 @@ import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.concurrent.CancellationException
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -105,10 +105,8 @@ inline fun <T> Span.useWithoutActiveScope(operation: (Span) -> T): T {
   try {
     return operation(this)
   }
-  catch (e: CancellationException) {
-    throw e
-  }
   catch (e: Throwable) {
+    rethrowControlFlowException(e)
     setStatus(StatusCode.ERROR)
     throw e
   }
