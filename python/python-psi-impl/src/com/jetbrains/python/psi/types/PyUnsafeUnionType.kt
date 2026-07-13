@@ -51,9 +51,11 @@ import java.util.Collections
  * @see PyUnionType.createWeakType
  */
 @ApiStatus.Experimental
-class PyUnsafeUnionType private constructor(members: Collection<PyType?>) : PyCompositeType {
-  override val members: Set<PyType?> = LinkedHashSet(members)
-    get() = Collections.unmodifiableSet<PyType?>(field)
+class PyUnsafeUnionType private constructor(members: Collection<PyType?>) : PyCompositeTypeBase() {
+  override val memberSet: Set<PyType?> = Collections.unmodifiableSet(LinkedHashSet(members))
+
+  override val members: Set<PyType?>
+    get() = memberSet
 
   override fun resolveMember(
     name: String,
@@ -96,19 +98,6 @@ class PyUnsafeUnionType private constructor(members: Collection<PyType?>) : PyCo
       return visitor.visitPyUnsafeUnionType(this)
     }
     return visitor.visitPyType(this)
-  }
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-
-    other as PyUnsafeUnionType
-
-    return members == other.members
-  }
-
-  override fun hashCode(): Int {
-    return members.hashCode()
   }
 
   override fun toString(): String {
