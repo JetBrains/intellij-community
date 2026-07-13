@@ -37,8 +37,10 @@ interface McpToolFilterProvider {
       }
       for ((tool, state) in toolStates) {
         if (predicate(tool)) {
-          if ((enabled == null || state.enabled == enabled) && (routerOnly == null || state.routerOnly == routerOnly)) continue
-          toolStates[tool] = state.copy(enabled = enabled ?: state.enabled, routerOnly = routerOnly ?: state.routerOnly)
+          val newEnabled = enabled ?: state.enabled
+          val newRouterOnly = routerOnly ?: state.routerOnly
+          if (state.enabled == newEnabled && state.routerOnly == newRouterOnly) continue
+          toolStates[tool] = state.copy(enabled = newEnabled, routerOnly = newRouterOnly)
         }
       }
     }
