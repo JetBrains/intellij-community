@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -24,9 +25,11 @@ import org.jetbrains.yaml.psi.YAMLDocument;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLMapping;
 import org.jetbrains.yaml.psi.YAMLSequenceItem;
+import org.jetbrains.yaml.schema.YamlObjectAdapter;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -174,7 +177,11 @@ public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspecti
   }
 
   private static @NotNull Collection<String> getMissingKeys(@NotNull YAMLMapping mapping, @NotNull YamlMetaType metaClass) {
-    Set<String> existingKeys = mapping.getKeyValues().stream().map(it -> it.getKeyText().trim()).collect(Collectors.toSet());
+    Set<String> existingKeys = new YamlObjectAdapter(mapping).getPropertyList().stream()
+      .map(JsonPropertyAdapter::getName)
+      .filter(Objects::nonNull)
+      .map(String::trim)
+      .collect(Collectors.toSet());
     return metaClass.computeMissingFields(existingKeys);
   }
 }
