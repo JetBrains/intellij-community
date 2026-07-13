@@ -116,8 +116,24 @@ inline fun <T> Span.useWithoutActiveScope(operation: (Span) -> T): T {
 }
 
 /**
- * Workaround issue with [operation] lifetime being longer than [io.opentelemetry.sdk.trace.SpanProcessor]s, making the span existence never logged.
- * [Span] is not passed to the [operation] as argument to avoid registering the similarly ignored events.
+ * Runs [operation] inside a span named [spanName], and records the operation's start immediately as a
+ * separate zero-duration `"<name>: started"` span.
+ *
+ * A span reaches the exporters only when it ends, so a span that outlives the
+ * [io.opentelemetry.sdk.trace.SpanProcessor] — a loop that ends only at shutdown, for example — is dropped,
+ * and its start is never logged. The extra span records that start. No [Span] is passed to [operation];
+ * events on the real span would be dropped too.
+ *
+ * **Not the canonical form — prefer a metric.**
+ *
+ * OpenTelemetry has no export-at-start hook (`onStart` only enriches a span synchronously), so a span cannot
+ * report an operation that never ends in time. The canonical signal is a metric — a counter of starts, or an
+ * up-down counter of active operations. The span stays only because nothing consumes this marker as a span
+ * today.
+ *
+ * References:
+ * - [Trace SDK: spans export on end, not on start](https://opentelemetry.io/docs/specs/otel/trace/sdk/#span-processor)
+ * - [Metrics API: Counter and UpDownCounter](https://opentelemetry.io/docs/specs/otel/metrics/api/#updowncounter)
  */
 @Internal
 inline fun <T> IJTracer.spanWithExplicitStart(spanName: String, operation: () -> T): T {
