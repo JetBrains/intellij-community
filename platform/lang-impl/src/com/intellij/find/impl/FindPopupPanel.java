@@ -405,7 +405,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
         @Override
         protected void dispose() {
-          FindAndReplaceExecutor.getInstance().cancelActivities();
+          FindAndReplaceExecutor.getInstance(myProject).cancelActivities();
           saveSettings();
           super.dispose();
         }
@@ -1814,7 +1814,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
     @Override
     public void refreshTableRenderer() {
-      TableCellRenderer renderer = FindAndReplaceExecutor.getInstance().createTableCellRenderer();
+      TableCellRenderer renderer = FindAndReplaceExecutor.getInstance(myProject).createTableCellRenderer();
       if (renderer == null) renderer = new UsageTableCellRenderer();
       myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(renderer);
     }
@@ -1963,7 +1963,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         return getValidationInfo();
       }
       setNewModel(validatedModel);
-      FindAndReplaceExecutor.getInstance().validateModel(validatedModel, (isDirectoryExists) -> {
+      FindAndReplaceExecutor.getInstance(myProject).validateModel(validatedModel, (isDirectoryExists) -> {
         FindModel currentModel = myHelper.getModel();
         if (couldSkipValidation() || isNecessaryToRevalidate(validatedModel, currentModel)) return null;
         setDirectoryExists(isDirectoryExists);

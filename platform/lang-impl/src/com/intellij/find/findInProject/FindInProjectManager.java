@@ -58,7 +58,7 @@ public class FindInProjectManager {
 
     FindUsagesCollector.findPopupShown(dataContext, findModel, stringToFindChanged);
     findManager.showFindDialog(findModel, () -> {
-      FindAndReplaceExecutor.getInstance().performFindAllOrReplaceAll(findModel, myProject);
+      FindAndReplaceExecutor.getInstance(myProject).performFindAllOrReplaceAll(findModel, myProject);
     });
   }
 
