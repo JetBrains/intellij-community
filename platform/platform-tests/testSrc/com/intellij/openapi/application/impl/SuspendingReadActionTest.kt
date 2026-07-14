@@ -8,14 +8,19 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ReadConstraint
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.constrainedReadAction
 import com.intellij.openapi.application.constrainedReadActionBlocking
 import com.intellij.openapi.application.constrainedReadActionUndispatched
 import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionBlocking
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.stallReadActionsIfThereIsPendingWrite
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProgressManager
@@ -50,12 +55,15 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
@@ -562,6 +570,39 @@ class BlockingSuspendingReadActionTest : SuspendingReadActionTest() {
     assertFalse(ApplicationManager.getApplication().isReadAccessAllowed)
     assertFalse(ApplicationManager.getApplication().isTopmostReadAccessAllowed)
     waEndJob.complete()
+  }
+
+
+  @Test
+  fun `Read actions are blocked while there is a pending write action`() = concurrencyTest {
+    Assumptions.assumeTrue { stallReadActionsIfThereIsPendingWrite }
+    val writeActionExecuted = AtomicBoolean(false)
+    launch {
+      WriteIntentReadAction.run {
+        checkpoint(1)
+        checkpoint(6)
+      }
+    }
+    launch {
+      checkpoint(2)
+      WriteAction.run<Throwable> {
+        writeActionExecuted.set(true)
+        checkpoint(7)
+      }
+    }
+    checkpoint(3)
+    delay(10.milliseconds)
+    launch {
+      checkpoint(4)
+      assertTrue { ApplicationManagerEx.getApplicationEx().isWriteActionPending() }
+      assertFalse { ApplicationManagerEx.getApplicationEx().isWriteActionInProgress() }
+      runReadActionBlocking {
+        assertTrue(writeActionExecuted.get(), "Write action should be executed at this point")
+        checkpoint(8)
+      }
+    }
+    checkpoint(5)
+    checkpoint(9)
   }
 }
 
