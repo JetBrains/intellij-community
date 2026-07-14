@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
+@Deprecated("Use com.intellij.platform.searchEverywhere.presentations.SeItemPresentation.getExtendedInfo instead")
 interface SearchEverywhereExtendedInfoProvider {
   /**
    * There is a footer in the search everywhere popup that shows additional information for a selected item.
