@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.intention.impl.TypeExpression;
@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -66,6 +65,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.refactoring.rename.inplace.SelectableInlayPresentation;
@@ -97,6 +97,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   private boolean myDeleteSelf = true;
   private final boolean mySkipTypeExpressionOnStart;
   private final boolean myCanBeVarType;
+  private final EditorState myEditorState;
 
   public JavaVariableInplaceIntroducer(final Project project,
                                        IntroduceVariableSettings settings, PsiElement chosenAnchor, final Editor editor,
@@ -122,6 +123,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     myReplaceSelf = parent instanceof PsiExpressionStatement && !(parent.getParent() instanceof PsiSwitchLabeledRuleStatement);
     mySkipTypeExpressionOnStart = !(myExpr instanceof PsiFunctionalExpression && myReplaceSelf);
     myCanBeVarType = IntroduceVariableBase.canBeExtractedWithoutExplicitType(myExpr);
+    myEditorState = new EditorState(project, editor);
   }
 
   @Override
@@ -212,11 +214,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
 
   @Override
   protected void performCleanup() {
-    super.performCleanup();
-    PsiVariable variable = getVariable();
-    if (variable != null) {
-      CommandProcessor.getInstance().executeCommand(myProject, () -> super.restoreState(variable), null, null);
-    }
+    myEditorState.revert();
   }
 
   @Override
