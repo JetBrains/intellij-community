@@ -20,7 +20,7 @@ def create_kotlinc_options(
         jvm_target = "25",
         api_version = "2.4",
         language_version = "2.4",
-        opt_in = ["com.intellij.openapi.util.IntellijInternalApi"],
+        opt_in = [],
         plugin_options = [],
         progressive = True,
         warn = "off",

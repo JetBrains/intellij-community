@@ -272,8 +272,6 @@ a:com.intellij.openapi.util.IconPathPatcher
 - patchPath(java.lang.String,java.lang.ClassLoader):java.lang.String
 f:com.intellij.openapi.util.IntRef
 - set(I):V
-@:com.intellij.openapi.util.IntellijInternalApi
-- java.lang.annotation.Annotation
 c:com.intellij.openapi.util.JDOMExternalizableStringList
 - <init>(I):V
 - <init>(java.util.Collection):V
