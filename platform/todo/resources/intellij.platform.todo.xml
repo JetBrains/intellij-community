@@ -57,6 +57,9 @@
                 factoryClass="com.intellij.ide.todo.TodoToolWindowFactory" canCloseContents="true"/>
     <projectService serviceImplementation="com.intellij.ide.todo.TodoViewChangesSupport" open="true"/>
     <projectSettings service="com.intellij.ide.todo.TodoView"/>
+
+    <rdct.remoteSettingProvider implementation="com.intellij.ide.todo.settings.TodoRemoteSettingsInfoProvider"/>
+    <applicationSettings service="com.intellij.ide.todo.TodoConfiguration"/>
   </extensions>
 
   <actions>
