@@ -239,7 +239,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    class StrMixin(str, Enum):
                        C = "c"
                    s2: str = StrMixin.C.value
-                   s3: int = <warning descr="Expected type 'int', got 'str' instead">StrMixin.C.value</warning>
+                   s3: int = <warning descr="Expected type 'int', got 'Literal[\\"c\\"]' instead">StrMixin.C.value</warning>
 
                    # Empty str mixin should also infer str
                    class EmptyStrMixin(str, Enum):

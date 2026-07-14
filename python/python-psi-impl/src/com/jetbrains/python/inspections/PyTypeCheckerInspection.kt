@@ -17,7 +17,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil.getScopeOwner
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.getEnumAttributeInfo
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.getEnumValueType
-import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.allowsTupleEnumMemberDeclaration
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.isCustomEnum
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.coroutineOrGeneratorElementType
@@ -506,34 +505,15 @@ open class PyTypeCheckerInspection : PyInspection() {
         if (info == null || info.attributeKind != PyStdlibTypeProvider.EnumAttributeKind.MEMBER) return
 
         val expected = getEnumValueType(scopeOwner, myTypeEvalContext)
+        // `assignedValueType` is the member value type produced by the enum's metaclass/constructor. For enums that
+        // transform the declaration (e.g. Django's `ChoicesType.__new__` drops a trailing label), the type provider
+        // already stripped the extra elements, so a plain match here is correct for both stdlib and framework enums.
         val actual = info.assignedValueType
-        // The whole assigned value matches the member value type: fine (also covers plain enums whose value type
-        // is itself inferred as a tuple, e.g. `class C(Enum): A = 1, 2`).
-        if (match(expected, actual, myTypeEvalContext)) return
-
-        // Enums with a custom __new__/__init__ forward a tuple member `(value, label, ...)` to that constructor.
-        // Framework-specific enum implementations may transform the declaration before constructing the member.
-        // By convention the first element is the actual member value, so validate only it against the scalar value
-        // type; the remaining elements are extra metadata or constructor arguments (label, encoding, ...).
-        // Plain stdlib enums (StrEnum/IntEnum/...) have no such constructor: their tuple is not a valid value and
-        // falls through to the whole-value mismatch report below.
-        if (allowsTupleEnumMemberDeclaration(scopeOwner, myTypeEvalContext)) {
-          val tuple = flattenParens(assignedValue) as? PyTupleExpression
-          if (tuple != null) {
-            val valueExpression = tuple.elements.firstOrNull() ?: return
-            val valueType = myTypeEvalContext.getType(valueExpression)
-            if (!match(expected, valueType, myTypeEvalContext)) {
-              registerTypeMismatch(PyTypeCheckerSuppressionCode.BAD_ASSIGNMENT, valueExpression, expected, valueType,
-                                   typeMismatchMessage(expected, valueType, valueExpression),
-                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
-            }
-            return
-          }
+        if (!match(expected, actual, myTypeEvalContext)) {
+          registerTypeMismatch(PyTypeCheckerSuppressionCode.BAD_ASSIGNMENT, assignedValue, expected, actual,
+                               typeMismatchMessage(expected, actual, assignedValue),
+                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
         }
-
-        registerTypeMismatch(PyTypeCheckerSuppressionCode.BAD_ASSIGNMENT, assignedValue, expected, actual,
-                             typeMismatchMessage(expected, actual, assignedValue),
-                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
         return
       }
 
