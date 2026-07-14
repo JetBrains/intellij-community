@@ -94,6 +94,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   private String myRecentEnteredPrefix;
   private SpeedSearchComparator myComparator = new SpeedSearchComparator(false);
   private boolean myClearSearchOnNavigateNoMatch;
+  protected boolean mySelectionFromNavigation;
 
   private Disposable myListenerDisposable;
 
@@ -650,6 +651,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
           String newText = oldText.substring(0, offs) + str + oldText.substring(offs);
           super.insertString(offs, str, a);
+          mySelectionFromNavigation = false;
           handleInsert(newText);
           updateSelection(findElement(newText), mySearchField.getText());
         }
@@ -706,6 +708,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
         int navKeyCode = getNavigationKeyCode(e);
         if (navKeyCode != 0) {
+          mySelectionFromNavigation = true;
           element = findTargetElement(navKeyCode, s);
           if (myClearSearchOnNavigateNoMatch && element == null) {
             manageSearchPopup(null);
@@ -713,6 +716,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
           }
         }
         else {
+          mySelectionFromNavigation = false;
           UIEventLogger.IncrementalSearchKeyTyped.log(myComponent.getClass());
           element = findElement(s);
         }
@@ -724,6 +728,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     public void processInputMethodEvent(InputMethodEvent e) {
       mySearchField.processInputMethodEvent(e);
       if (e.isConsumed()) {
+        mySelectionFromNavigation = false;
         updateLastPattern();
         String s = mySearchField.getText();
         updateSelection(findElement(s), s);

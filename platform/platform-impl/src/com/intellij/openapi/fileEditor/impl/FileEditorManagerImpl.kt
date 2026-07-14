@@ -1096,13 +1096,7 @@ open class FileEditorManagerImpl(
       ?.composites()?.firstOrNull { it.file == file }
   }
 
-  @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use public API.", level = DeprecationLevel.ERROR)
-  fun openFileImpl2(window: EditorWindow, file: VirtualFile, focusEditor: Boolean): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
-    return openFileImpl2(window = window, file = file, options = FileEditorOpenOptions(requestFocus = focusEditor)).retrofit()
-  }
-
-  open fun openFileImpl2(window: EditorWindow, file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
+    open fun openFileImpl2(window: EditorWindow, file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
     if (forbidSplitFor(file) && !window.isFileOpen(file)) {
       closeFile(file)
     }

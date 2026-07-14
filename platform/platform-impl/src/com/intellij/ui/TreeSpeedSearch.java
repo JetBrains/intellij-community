@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -201,7 +202,18 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
 
   @Override
   protected void selectElement(Object element, String selectedText) {
-    TreeUtil.selectPath(myComponent, (TreePath)element);
+    if (shouldAutoSelect()) {
+      TreeUtil.selectPath(myComponent, (TreePath)element);
+    }
+  }
+
+  /**
+   * Determines whether speed search should automatically select matching elements.
+   * When false, only highlighting is shown and navigation requires explicit arrow key usage.
+   * Subclasses can override to customize behavior.
+   */
+  protected boolean shouldAutoSelect() {
+    return mySelectionFromNavigation || Registry.is("ide.speed.search.tree.auto.select", true);
   }
 
   @Override
