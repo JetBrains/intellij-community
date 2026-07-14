@@ -1,4 +1,4 @@
-<idea-plugin visibility="private">
+<idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.libraries.kotlin.gradle.plugin.idea"/>
   </dependencies>

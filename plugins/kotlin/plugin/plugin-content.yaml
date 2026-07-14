@@ -77,10 +77,6 @@
 - name: lib/kotlin-base-jps.jar
   modules:
   - name: intellij.kotlin.base.jps
-- name: lib/kotlin-gradle-tooling.jar
-  contentModules:
-  - name: intellij.kotlin.base.projectModel
-  - name: intellij.kotlin.gradle.tooling.impl
 - name: lib/kotlin-plugin-shared.jar
   modules:
   - name: intellij.kotlin.base.codeInsight.minimal
@@ -185,16 +181,6 @@
   - name: intellij.debugger.jvm.advanced.kotlin
   - name: intellij.debugger.logpoints.kotlin
   - name: kotlin.plugin
-  contentModules:
-  - name: intellij.kotlin.gradle.tooling
-  - name: intellij.kotlin.gradle.gradle
-  - name: intellij.kotlin.gradle.codeInsight.common
-  - name: intellij.kotlin.gradle.codeInsight.groovy
-  - name: intellij.kotlin.gradle.codeInsight.toml
-  - name: kotlin.gradle.gradle-java
-  - name: intellij.kotlin.gradle.java
-  - name: kotlin.gradle.scripting.shared
-  - name: intellij.kotlin.gradle.scripting
 - name: lib/kotlin.fir.frontend-independent.jar
   contentModules:
   - name: kotlin.fir.frontend-independent
@@ -285,6 +271,9 @@
 - name: lib/modules/intellij.kotlin.base.externalSystem.jar
   contentModules:
   - name: intellij.kotlin.base.externalSystem
+- name: lib/modules/intellij.kotlin.base.projectModel.jar
+  contentModules:
+  - name: intellij.kotlin.base.projectModel
 - name: lib/modules/intellij.kotlin.base.scripting.jar
   contentModules:
   - name: intellij.kotlin.base.scripting
@@ -399,6 +388,30 @@
 - name: lib/modules/intellij.kotlin.git.jar
   contentModules:
   - name: intellij.kotlin.git
+- name: lib/modules/intellij.kotlin.gradle.codeInsight.common.jar
+  contentModules:
+  - name: intellij.kotlin.gradle.codeInsight.common
+- name: lib/modules/intellij.kotlin.gradle.codeInsight.groovy.jar
+  contentModules:
+  - name: intellij.kotlin.gradle.codeInsight.groovy
+- name: lib/modules/intellij.kotlin.gradle.codeInsight.toml.jar
+  contentModules:
+  - name: intellij.kotlin.gradle.codeInsight.toml
+- name: lib/modules/intellij.kotlin.gradle.gradle.jar
+  contentModules:
+  - name: intellij.kotlin.gradle.gradle
+- name: lib/modules/intellij.kotlin.gradle.java.jar
+  contentModules:
+  - name: intellij.kotlin.gradle.java
+- name: lib/modules/intellij.kotlin.gradle.scripting.jar
+  contentModules:
+  - name: intellij.kotlin.gradle.scripting
+- name: lib/modules/intellij.kotlin.gradle.tooling.impl.jar
+  contentModules:
+  - name: intellij.kotlin.gradle.tooling.impl
+- name: lib/modules/intellij.kotlin.gradle.tooling.jar
+  contentModules:
+  - name: intellij.kotlin.gradle.tooling
 - name: lib/modules/intellij.kotlin.grazie.jar
   contentModules:
   - name: intellij.kotlin.grazie
@@ -492,12 +505,36 @@
 - name: lib/modules/intellij.kotlin.searching.jar
   contentModules:
   - name: intellij.kotlin.searching
+- name: lib/modules/intellij.libraries.kotlin.gradle.plugin.idea.jar
+  contentModules:
+  - name: intellij.libraries.kotlin.gradle.plugin.idea
+    libraries:
+      kotlin-gradle-plugin-idea:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea/1/kotlin-gradle-plugin-idea-1.jar
+- name: lib/modules/intellij.libraries.kotlin.gradle.plugin.idea.proto.jar
+  contentModules:
+  - name: intellij.libraries.kotlin.gradle.plugin.idea.proto
+    libraries:
+      kotlin-gradle-plugin-idea-proto:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1/kotlin-gradle-plugin-idea-proto-1.jar
+- name: lib/modules/intellij.libraries.kotlin.tooling.core.jar
+  contentModules:
+  - name: intellij.libraries.kotlin.tooling.core
+    libraries:
+      kotlin-tooling-core:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1/kotlin-tooling-core-1.jar
 - name: lib/modules/kotlin.base.injection.jar
   contentModules:
   - name: kotlin.base.injection
 - name: lib/modules/kotlin.fir.jar
   contentModules:
   - name: kotlin.fir
+- name: lib/modules/kotlin.gradle.gradle-java.jar
+  contentModules:
+  - name: kotlin.gradle.gradle-java
+- name: lib/modules/kotlin.gradle.scripting.shared.jar
+  contentModules:
+  - name: kotlin.gradle.scripting.shared
 - name: lib/modules/kotlin.jvm.shared.jar
   contentModules:
   - name: kotlin.jvm.shared
