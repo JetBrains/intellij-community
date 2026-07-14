@@ -1,0 +1,19 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.kotlin.base.projectModel"/>
+    <module name="intellij.kotlin.base.resources"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.base.platforms.targetPlatformDetector"
+            interface="org.jetbrains.kotlin.idea.base.facet.platform.TargetPlatformDetector"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

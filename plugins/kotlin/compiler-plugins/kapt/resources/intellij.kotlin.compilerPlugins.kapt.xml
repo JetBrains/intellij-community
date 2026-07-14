@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.kotlin.gradle.tooling"/>
     <module name="intellij.kotlin.gradle.gradle"/>
+    <module name="intellij.kotlin.base.facet"/>
     <module name="intellij.kotlin.gradle.tooling.impl"/>
     <module name="kotlin.gradle.gradle-java"/>
   </dependencies>

@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
+    <module name="intellij.kotlin.base.facet"/>
     <module name="intellij.kotlin.base.projectStructure"/>
   </dependencies>
   <!-- endregion -->

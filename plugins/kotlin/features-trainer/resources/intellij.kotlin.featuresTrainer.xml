@@ -4,6 +4,7 @@
     <plugin id="training"/>
     <module name="intellij.java.featuresTrainer"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.facet"/>
     <module name="intellij.kotlin.formatter"/>
     <module name="intellij.kotlin.projectConfiguration"/>
   </dependencies>

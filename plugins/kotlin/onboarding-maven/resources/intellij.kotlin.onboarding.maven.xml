@@ -1,6 +1,7 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.kotlin.base.facet"/>
     <module name="intellij.kotlin.maven"/>
     <module name="intellij.kotlin.onboarding"/>
     <module name="intellij.kotlin.projectConfiguration"/>

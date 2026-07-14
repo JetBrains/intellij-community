@@ -3,11 +3,12 @@
   <dependencies>
     <module name="intellij.java"/>
     <module name="intellij.java.analysis"/>
+    <module name="intellij.java.backend"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
-    <module name="intellij.java.backend"/>
     <module name="intellij.kotlin.base.codeInsight.minimal"/>
+    <module name="intellij.kotlin.base.facet"/>
     <module name="intellij.kotlin.base.projectModel"/>
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.resources"/>

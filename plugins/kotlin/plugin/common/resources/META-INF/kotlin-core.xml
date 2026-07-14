@@ -47,11 +47,6 @@
             interface="org.jetbrains.kotlin.idea.configuration.BuildSystemTypeDetector"
             dynamic="true"/>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.idea.base.platforms.targetPlatformDetector"
-            interface="org.jetbrains.kotlin.idea.base.facet.platform.TargetPlatformDetector"
-            area="IDEA_PROJECT"
-            dynamic="true"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor"
             interface="org.jetbrains.kotlin.idea.compiler.configuration.FailedToDownloadJpsMavenArtifactSuggestedSolutionsContributor"
             area="IDEA_PROJECT"
