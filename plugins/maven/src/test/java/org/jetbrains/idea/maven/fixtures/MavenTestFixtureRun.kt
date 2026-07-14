@@ -4,14 +4,11 @@ package org.jetbrains.idea.maven.fixtures
 
 import com.intellij.maven.testFramework.fixtures.MavenImportingTestFixture
 import com.intellij.maven.testFramework.fixtures.MavenTestFixture
-import com.intellij.maven.testFramework.fixtures.getModule
 import com.intellij.maven.testFramework.fixtures.projectRoot
 import com.intellij.maven.testFramework.fixtures.testRootDisposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
 import junit.framework.TestCase.assertTrue
@@ -22,19 +19,6 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
 // JDK setup, Maven-goal execution and installation checks (ported from MavenImportingTestCase / MavenTestCase).
-
-fun MavenImportingTestFixture.setupJdkForModules(vararg moduleNames: String) {
-  for (each in moduleNames) {
-    setupJdkForModule(each)
-  }
-}
-
-fun MavenImportingTestFixture.setupJdkForModule(moduleName: String): Sdk {
-  val sdk = JavaAwareProjectJdkTableImpl.getInstanceEx().internalJdk
-  WriteAction.runAndWait<RuntimeException> { ProjectJdkTable.getInstance(project).addJdk(sdk, disposable) }
-  ModuleRootModificationUtil.setModuleSdk(getModule(moduleName), sdk)
-  return sdk
-}
 
 fun MavenImportingTestFixture.executeGoal(relativePath: String?, goal: String) {
   // Running a Maven goal requires a project JDK (legacy MavenTestCase.setUp did this via setupCustomJdk()).

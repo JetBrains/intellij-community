@@ -16,6 +16,7 @@ import com.intellij.maven.testFramework.fixtures.importProjectsAsync
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.maven.testFramework.fixtures.projectPath
 import com.intellij.maven.testFramework.fixtures.repositoryPathCanonical
+import com.intellij.maven.testFramework.fixtures.setupJdkForModules
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.WriteCommandAction
@@ -57,7 +58,6 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.io.DigestUtil.sha1
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.setupJdkForModules
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
