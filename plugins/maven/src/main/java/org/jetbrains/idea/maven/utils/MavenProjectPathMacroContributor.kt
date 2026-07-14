@@ -8,7 +8,6 @@ import com.intellij.platform.eel.provider.EelProviderUtil
 import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.idea.maven.utils.MavenUtil.resolveDefaultLocalRepositoryForJpsMacros
 import java.nio.file.Path
-import java.util.Map
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -19,8 +18,8 @@ import java.util.concurrent.ConcurrentHashMap
 internal class MavenProjectPathMacroContributor : ProjectWidePathMacroContributor {
   private val repositoryByDescriptor = ConcurrentHashMap<EelDescriptor, String>()
 
-  override fun getProjectPathMacros(projectFilePath: @SystemIndependent String): MutableMap<String, String> {
-    return Map.of(PathMacrosImpl.MAVEN_REPOSITORY, getPathToDefaultMavenLocalRepositoryOnSpecificEnv(projectFilePath))
+  override fun getProjectPathMacros(projectFilePath: @SystemIndependent String): Map<String, String> {
+    return mapOf(PathMacrosImpl.MAVEN_REPOSITORY to getPathToDefaultMavenLocalRepositoryOnSpecificEnv(projectFilePath))
   }
 
   fun getPathToDefaultMavenLocalRepositoryOnSpecificEnv(projectFilePath: @SystemIndependent String): String {
