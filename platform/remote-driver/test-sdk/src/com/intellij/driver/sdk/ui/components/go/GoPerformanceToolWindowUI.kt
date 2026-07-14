@@ -37,9 +37,9 @@ class GoPerformanceToolWindowUI(data: ComponentData) : ToolWindowUiComponent(dat
 
   fun profilerToolbarButton(text: String): UiComponent = x { byAccessibleName(text) }
 
-  val startCpuRecordingButton: UiComponent get() = profilerToolbarButton("Start CPU Recording")
+  val startCpuRecordingButton: UiComponent = profilerToolbarButton("Start CPU Recording")
 
-  val stopCpuRecordingButton: UiComponent get() = profilerToolbarButton("Stop CPU Recording")
+  val stopCpuRecordingButton: UiComponent = profilerToolbarButton("Stop CPU Recording")
 
   val moreProfilesButton: UiComponent = x { and(byClass("JButton"), byAccessibleName("More Profiles")) }
 }
