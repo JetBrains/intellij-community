@@ -2,12 +2,14 @@
 package com.intellij.ide.startup
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.createParentDirectories
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -125,12 +127,13 @@ class StartupActionScriptManagerTest {
       StartupActionScriptManager.DeleteCommand(Path.of("file-3"))
     ))
 
-    val badCommands = listOf(
+    val moreCommands = listOf(
       StartupActionScriptManager.DeleteCommand(Path.of("file-4")),
-      StartupActionScriptManager.ActionCommand { throw UnsupportedOperationException() },
       StartupActionScriptManager.DeleteCommand(Path.of("file-5"))
     )
-    assertThatCode { StartupActionScriptManager.addActionCommands(badCommands) }.isInstanceOf(IOException::class.java)
+    NioFiles.setReadOnly(scriptFile, true)
+    assertThatThrownBy { StartupActionScriptManager.addActionCommands(moreCommands) }.isInstanceOf(IOException::class.java)
+    NioFiles.setReadOnly(scriptFile, false)
 
     assertThat(scriptFile).exists()
     assertThat(StartupActionScriptManager.loadActionScript(scriptFile)).hasSize(3)

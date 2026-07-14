@@ -757,7 +757,6 @@ interface AppStarter {
   fun importFinished(newConfigDir: Path) {}
 }
 
-/** action script file contains commands for plugin (un-)installation/updates; may contain third-party commands */
 private fun runActionScript() {
   try {
     val scriptFile = PathManager.getStartupScriptDir().resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE)
