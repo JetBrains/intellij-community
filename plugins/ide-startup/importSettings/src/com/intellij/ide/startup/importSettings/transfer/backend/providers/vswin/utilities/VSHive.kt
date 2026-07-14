@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities
 
 import com.intellij.ide.startup.importSettings.TransferableIdeVersionId
@@ -42,6 +42,7 @@ class VSHive(val version: Version2, val instanceId: String? = null, val rootSuff
 
   private fun productVersionTextRepresentation(): String {
     return when (version.major) {
+      18 -> "2026"
       17 -> "2022"
       16 -> "2019"
       15 -> "2017"
