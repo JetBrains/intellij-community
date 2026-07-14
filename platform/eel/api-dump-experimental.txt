@@ -44,6 +44,7 @@
 - *:fetchLoginShellEnvVariables(kotlin.coroutines.Continuation):java.lang.Object
 - *a:findExeFilesInPath(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - *a:getDescriptor():com.intellij.platform.eel.EelDescriptor
+- *a:getProcessManagement():com.intellij.platform.eel.EelProcessManagementApi
 - *a:spawnProcess(com.intellij.platform.eel.EelExecApi$ExecuteProcessOptions,kotlin.coroutines.Continuation):java.lang.Object
 *f:com.intellij.platform.eel.EelExecApi$EnvironmentVariablesDeferred
 - *f:await(kotlin.coroutines.Continuation):java.lang.Object
@@ -124,6 +125,7 @@ f:com.intellij.platform.eel.EelExecApiKt
 *:com.intellij.platform.eel.EelExecPosixApi
 - com.intellij.platform.eel.EelExecApi
 - *a:environmentVariables(com.intellij.platform.eel.EelExecApi$EnvironmentVariablesOptions):com.intellij.platform.eel.EelExecApi$EnvironmentVariablesDeferred
+- *a:getProcessManagement():com.intellij.platform.eel.EelProcessManagementPosixApi
 - *a:spawnProcess(com.intellij.platform.eel.EelExecApi$ExecuteProcessOptions,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions
 - com.intellij.platform.eel.EelExecApi$EnvironmentVariablesOptions
@@ -156,6 +158,7 @@ f:com.intellij.platform.eel.EelExecPosixApiHelpersKt
 *:com.intellij.platform.eel.EelExecWindowsApi
 - com.intellij.platform.eel.EelExecApi
 - *a:environmentVariables(com.intellij.platform.eel.EelExecApi$EnvironmentVariablesOptions):com.intellij.platform.eel.EelExecApi$EnvironmentVariablesDeferred
+- *a:getProcessManagement():com.intellij.platform.eel.EelProcessManagementWindowsApi
 - *a:spawnProcess(com.intellij.platform.eel.EelExecApi$ExecuteProcessOptions,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.eel.EelExecWindowsApi$WindowsEnvironmentVariablesOptions
 - com.intellij.platform.eel.EelExecApi$EnvironmentVariablesOptions
@@ -311,6 +314,23 @@ f:com.intellij.platform.eel.EelPlatformKt
 *f:com.intellij.platform.eel.EelProcess$ResizePtyError$ProcessExited
 - com.intellij.platform.eel.EelProcess$ResizePtyError
 - <init>():V
+*:com.intellij.platform.eel.EelProcessInfo
+- a:getArguments():com.intellij.platform.eel.SafeDeferred
+- a:getExecutable():java.lang.String
+- a:getParentPid():com.intellij.platform.eel.EelApi$Pid
+- a:getPid():com.intellij.platform.eel.EelApi$Pid
+- a:getStartInstant():java.time.Instant
+- a:getUser():java.lang.String
+*:com.intellij.platform.eel.EelProcessManagementApi
+- *a:getDescriptor():com.intellij.platform.eel.EelDescriptor
+- *a:kill(J,kotlin.coroutines.Continuation):java.lang.Object
+- *a:listProcesses(kotlin.coroutines.Continuation):java.lang.Object
+- *a:processInfo(J,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.eel.EelProcessManagementPosixApi
+- com.intellij.platform.eel.EelProcessManagementApi
+- *a:terminate(J,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.eel.EelProcessManagementWindowsApi
+- com.intellij.platform.eel.EelProcessManagementApi
 *:com.intellij.platform.eel.EelProxy
 - a:getAcceptor():com.intellij.platform.eel.EelTunnelsApi$ConnectionAcceptor
 - a:runForever(kotlin.coroutines.Continuation):java.lang.Object

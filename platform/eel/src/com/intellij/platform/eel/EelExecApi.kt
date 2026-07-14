@@ -365,6 +365,15 @@ sealed interface EelExecApi {
   suspend fun findExeFilesInPath(binaryName: String): List<EelPath>
 
   /**
+   * Management of the processes running inside the environment: listing them, querying a single process by pid, and terminating them.
+   *
+   * On a POSIX environment this is an [EelProcessManagementPosixApi], on a Windows environment an [EelProcessManagementWindowsApi]
+   * (see [EelExecPosixApi.processManagement] / [EelExecWindowsApi.processManagement], which narrow the type accordingly).
+   */
+  @get:ApiStatus.Experimental
+  val processManagement: EelProcessManagementApi
+
+  /**
    * Represents a callback script which can be called from command-line tools like `git`.
    * The script passes its input data to the IDE and then passes back the answer.
    */
@@ -533,6 +542,9 @@ interface EelExecPosixApi : EelExecApi {
     @GeneratedBuilder(PosixEnvironmentVariablesOptions::class) opts: EelExecApi.EnvironmentVariablesOptions,
   ): EelExecApi.EnvironmentVariablesDeferred
 
+  @get:ApiStatus.Experimental
+  override val processManagement: EelProcessManagementPosixApi
+
   interface PosixEnvironmentVariablesOptions : EelExecApi.EnvironmentVariablesOptions
 }
 
@@ -549,6 +561,9 @@ interface EelExecWindowsApi : EelExecApi {
   override fun environmentVariables(
     @GeneratedBuilder(WindowsEnvironmentVariablesOptions::class) opts: EelExecApi.EnvironmentVariablesOptions,
   ): EelExecApi.EnvironmentVariablesDeferred
+
+  @get:ApiStatus.Experimental
+  override val processManagement: EelProcessManagementWindowsApi
 
   interface WindowsEnvironmentVariablesOptions : EelExecApi.EnvironmentVariablesOptions
 }
