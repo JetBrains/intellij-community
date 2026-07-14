@@ -22,7 +22,10 @@ import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SelectInRequest
 import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
+import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
+import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateBuilder
 import com.intellij.platform.projectView.settings.ProjectViewPaneSortKey
+import com.intellij.platform.projectView.settings.allProjectViewPaneOptions
 import kotlinx.coroutines.channels.Channel
 import org.jetbrains.annotations.ApiStatus
 
@@ -55,6 +58,9 @@ abstract class TreeBasedProjectViewPaneModel<T>(
   }
 
   override suspend fun manageState(builder: ProjectViewPaneStateBuilder) {
+    builder.updateSettingsState { settingsStateBuilder ->
+      buildSettingsState(settingsStateBuilder)
+    }
     val state = ProjectViewPaneTreeState(nodeProvider, builder)
     state.initialize()
     for (stateUpdateRequest in stateUpdateRequests) {
@@ -64,6 +70,22 @@ abstract class TreeBasedProjectViewPaneModel<T>(
         }
       }
     }
+  }
+
+  private fun buildSettingsState(settingsStateBuilder: ProjectViewPaneSettingsStateBuilder) {
+    val optionService = ProjectViewPaneSettingsService.getInstance(project)
+    for (option in allProjectViewPaneOptions()) {
+      settingsStateBuilder.setOptionState(
+        option = option,
+        isSelected = optionService.isOptionSelected(option),
+        isEnabled = optionService.isOptionEnabled(option) && supportsOption(option),
+        isAlwaysVisible = optionService.isOptionAlwaysVisible(option),
+      )
+    }
+  }
+
+  protected open fun supportsOption(option: ProjectViewPaneOption): Boolean {
+    return true
   }
 
   override suspend fun setSelected(
