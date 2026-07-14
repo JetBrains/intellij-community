@@ -86,7 +86,7 @@ abstract public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   abstract void onBulkDocumentUpdateFinished();
 
-  abstract void recalculate();
+  abstract void recalculate(@NotNull String reason);
 
   public abstract SoftWrapApplianceManager getApplianceManager();
 
