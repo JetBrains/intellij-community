@@ -115,6 +115,18 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
+  fun `test cache is invalidated when replacement contains tab in the middle`() {
+    initText("abcdef")
+    editor.settings.setTabSize(4)
+    assertOffset(line=0, column=3, expectedOffset=3)
+    runWriteCommand {
+      editor.document.replaceString(1, 5, "x\ty")
+    }
+    assertOffset(line=0, column=4, expectedOffset=3)
+    assertLogicalPosition(offset=3, expectedLine=0, expectedColumn=4)
+    checkConsistency()
+  }
+
   fun `test cache preserves trivial inserted lines`() {
     val firstLine = "before\n"
     initText("${firstLine}after")
@@ -131,6 +143,67 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
+  fun `test cache invalidates inserted line when simple newline exposes tab suffix`() {
+    initText("a\tb")
+    editor.settings.setTabSize(4)
+    assertOffset(line=0, column=4, expectedOffset=2)
+    runWriteCommand {
+      editor.document.insertString(1, "\n")
+    }
+    assertOffset(line=1, column=4, expectedOffset=3)
+    assertLogicalPosition(offset=3, expectedLine=1, expectedColumn=4)
+    checkConsistency()
+  }
+
+  fun `test cache stays consistent when simple newline follows tab prefix`() {
+    initText("a\tb")
+    editor.settings.setTabSize(4)
+    assertOffset(line=0, column=4, expectedOffset=2)
+    runWriteCommand {
+      editor.document.insertString(2, "\n")
+    }
+    assertOffset(line=0, column=4, expectedOffset=2)
+    assertLogicalPosition(offset=2, expectedLine=0, expectedColumn=4)
+    checkConsistency()
+  }
+
+  fun `test cache invalidates merged line when deleted separator exposes following tab line`() {
+    initText("aa\n\tbb")
+    editor.settings.setTabSize(4)
+    assertOffset(line=1, column=4, expectedOffset=4)
+    runWriteCommand {
+      editor.document.deleteString("aa".length, "aa\n".length)
+    }
+    assertOffset(line=0, column=4, expectedOffset=3)
+    assertLogicalPosition(offset=3, expectedLine=0, expectedColumn=4)
+    checkConsistency()
+  }
+
+  fun `test cache stays consistent when deleted separator follows tab line`() {
+    initText("a\t\nbb")
+    editor.settings.setTabSize(4)
+    assertOffset(line=0, column=4, expectedOffset=2)
+    runWriteCommand {
+      editor.document.deleteString("a\t".length, "a\t\n".length)
+    }
+    assertOffset(line=0, column=4, expectedOffset=2)
+    assertLogicalPosition(offset=2, expectedLine=0, expectedColumn=4)
+    checkConsistency()
+  }
+
+  fun `test cache invalidates inserted line when simple replacement exposes tab suffix on upper bound`() {
+    val replacement = "\nplain\n"
+    initText("aa\nbb\tcc\nzz")
+    editor.settings.setTabSize(4)
+    assertOffset(line=1, column=4, expectedOffset=6)
+    runWriteCommand {
+      editor.document.replaceString(1, "aa\nbb".length, replacement)
+    }
+    assertOffset(line=2, column=4, expectedOffset="a\nplain\n".length + 1)
+    assertLogicalPosition(offset="a\nplain\n".length + 1, expectedLine=2, expectedColumn=4)
+    checkConsistency()
+  }
+
   fun `test cache is invalidated after removing lines`() {
     val twoLines = "first\nsecond\n"
     initText(twoLines + "third")
@@ -140,6 +213,58 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     }
     assertLogicalPosition("first\n".length + 2, expectedLine=1, expectedColumn=2)
     assertOffset(line=1, column=2, expectedOffset= "first\n".length + 2)
+    checkConsistency()
+  }
+
+  fun `test cache is invalidated after replacing many lines with one line`() {
+    val text = buildString {
+      repeat(6001) {
+        if (it > 0) append('\n')
+        append("line").append(it)
+      }
+    }
+    initText(text)
+    val lastLineStart = text.lastIndexOf('\n') + 1
+    assertOffset(line=6000, column=4, expectedOffset=lastLineStart+4)
+    runWriteCommand {
+      editor.document.setText("single")
+    }
+    assertLogicalPosition(offset=3, expectedLine=0, expectedColumn=3)
+    assertOffset(line=0, column=4, expectedOffset=4)
+    checkConsistency()
+  }
+
+  fun `test cache is invalidated after deleting many middle lines before cached tail`() {
+    val prefix = "prefix\n"
+    val removed = buildString {
+      repeat(6000) {
+        append("remove").append(it).append('\n')
+      }
+    }
+    val bridge = "bridge\n"
+    val tail = "tail\tvalue"
+    initText(prefix + removed + bridge + tail)
+    editor.settings.setTabSize(4)
+    val oldTailStart = prefix.length + removed.length + bridge.length
+    assertOffset(line=6002, column=8, expectedOffset=oldTailStart+5)
+    runWriteCommand {
+      editor.document.deleteString(prefix.length, prefix.length + removed.length)
+    }
+    val newTailStart = prefix.length + bridge.length
+    assertOffset(line=2, column=8, expectedOffset=newTailStart+5)
+    assertLogicalPosition(offset=newTailStart+5, expectedLine=2, expectedColumn=8)
+    checkConsistency()
+  }
+
+  fun `test cache preserves trivial line after deleting line separator`() {
+    initText("ab\ncd")
+    assertOffset(line=0, column=1, expectedOffset=1)
+    assertOffset(line=1, column=1, expectedOffset=4)
+    runWriteCommand {
+      editor.document.deleteString("ab".length, "ab\n".length)
+    }
+    assertLogicalPosition(offset=3, expectedLine=0, expectedColumn=3)
+    assertOffset(line=0, column=3, expectedOffset=3)
     checkConsistency()
   }
 
@@ -159,11 +284,9 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     editor.settings.setTabSize(4)
     editor.caretModel.moveToLogicalPosition(LogicalPosition(0, 4))
     assertEquals(2, editor.caretModel.offset)
-
     runWriteCommand {
       editor.document.setText("abcd\nsame")
     }
-
     assertEquals(4, editor.caretModel.offset)
     checkConsistency()
   }

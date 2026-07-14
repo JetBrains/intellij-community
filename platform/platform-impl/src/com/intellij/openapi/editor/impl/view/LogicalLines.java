@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.ex.DocumentSnapshot;
+import kotlinx.collections.immutable.ExtensionsKt;
 import kotlinx.collections.immutable.PersistentList;
 import org.jetbrains.annotations.NotNull;
 
@@ -98,12 +99,12 @@ final class LogicalLines {
 
   private @NotNull PersistentList<LogicalColumns> invalidatedLines(
     int startLine,
-    int oldEndLine,
+    int endLine,
     int newEndLine,
     boolean preserveTrivialLines
   ) {
     if (preserveTrivialLines) {
-      for (int line = startLine; line <= oldEndLine; line++) {
+      for (int line = startLine; line <= endLine; line++) {
         LogicalColumns columns = lines.get(line);
         if (columns == null || !columns.isTrivial()) {
           preserveTrivialLines = false;
@@ -111,19 +112,35 @@ final class LogicalLines {
         }
       }
     }
-    PersistentList.Builder<LogicalColumns> builder = lines.builder();
+    var builder = lines.builder();
     if (!preserveTrivialLines) {
-      int endLine = Math.min(oldEndLine, newEndLine);
-      for (int line = startLine; line <= endLine; line++) {
+      int endLine0 = Math.min(endLine, newEndLine);
+      for (int line = startLine; line <= endLine0; line++) {
         builder.set(line, null);
       }
     }
-    if (oldEndLine < newEndLine) {
-      LogicalColumns columns = preserveTrivialLines ? LogicalColumns.getTrivial() : null;
-      builder.addAll(oldEndLine + 1, Collections.nCopies(newEndLine - oldEndLine, columns));
-    } else if (oldEndLine > newEndLine) {
-      builder.subList(newEndLine + 1, oldEndLine + 1).clear();
+    if (endLine == newEndLine) {
+      return builder.build();
     }
-    return builder.build();
+    if (endLine < newEndLine) {
+      LogicalColumns columns = preserveTrivialLines ? LogicalColumns.getTrivial() : null;
+      builder.addAll(endLine + 1, Collections.nCopies(newEndLine - endLine, columns));
+      return builder.build();
+    }
+    // endLine > newEndLine
+    int size = lines.size();
+    if (endLine == size - 1) {
+      //noinspection ListRemoveInLoop -- can't be replaced because of performance reasons
+      for (int line = size - 1; line > newEndLine; line--) {
+        builder.remove(line);
+      }
+      return builder.build();
+    } else {
+      // removing from the middle is slow, create new list
+      var newBuilder = ExtensionsKt.<LogicalColumns>persistentListOf().builder();
+      newBuilder.addAll(builder.subList(0, newEndLine + 1));
+      newBuilder.addAll(builder.subList(endLine + 1, size));
+      return newBuilder.build();
+    }
   }
 }
