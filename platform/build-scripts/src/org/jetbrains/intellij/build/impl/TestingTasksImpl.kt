@@ -1564,6 +1564,7 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.execution.tests",
   "intellij.platform.experiment.tests",
   "intellij.platform.externalProcessAuthHelper.tests",
+  "intellij.platform.externalSystem.dependencyUpdater.tests",
   "intellij.platform.icons.impl.intellij.tests",
   "intellij.platform.ide.concurrency.tests",
   "intellij.platform.ide.nonModalWelcomeScreen.tests",
