@@ -7,9 +7,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Allows plugins to split candidate files into sequential batches before each batch is processed concurrently.
+ * Allows plugins to reorder and optionally filter candidate files before they are processed concurrently.
  *
- * Returning `null` keeps the default platform ordering.
+ * The returned [Sequence] is consumed lazily. Each yielded list is processed as one sequential batch, while files
+ * inside a batch are still processed concurrently by the platform search pipeline.
+ *
+ * Returning `null` keeps the default platform ordering and candidate set.
  */
 @ApiStatus.Internal
 interface SearchCandidateBatcher {
