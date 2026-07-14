@@ -38,8 +38,9 @@ public final class StartupActionScriptManager {
     var scriptFile = getActionScriptFile();
     try {
       var commands = loadActionScript(scriptFile);
+      var fs = FileSystems.getDefault();
       for (var command : commands) {
-        command.execute();
+        command.execute(fs);
       }
     }
     finally {
@@ -56,7 +57,7 @@ public final class StartupActionScriptManager {
   ) throws IOException {
     var fs = oldTarget.getFileSystem();
     for (var command : commands) {
-      var toExecute = mapPaths(command, oldTarget, newTarget);
+      var toExecute = mapPaths(command, fs, oldTarget, newTarget);
       if (toExecute != null) {
         toExecute.execute(fs);
       }
@@ -144,21 +145,21 @@ public final class StartupActionScriptManager {
     }
   }
 
-  private static @Nullable ActionCommand mapPaths(ActionCommand command, Path oldTarget, Path newTarget) {
+  private static @Nullable ActionCommand mapPaths(ActionCommand command, FileSystem fs, Path oldTarget, Path newTarget) {
     if (command instanceof CopyCommand copyCommand) {
-      var destination = mapPath(copyCommand.myDestination, oldTarget, newTarget);
+      var destination = mapPath(fs.getPath(copyCommand.myDestination), oldTarget, newTarget);
       if (destination != null) {
-        return new CopyCommand(oldTarget.getFileSystem().getPath(copyCommand.mySource), destination);
+        return new CopyCommand(fs.getPath(copyCommand.mySource), destination);
       }
     }
     else if (command instanceof UnzipCommand unzipCommand) {
-      var destination = mapPath(unzipCommand.myDestination, oldTarget, newTarget);
+      var destination = mapPath(fs.getPath(unzipCommand.myDestination), oldTarget, newTarget);
       if (destination != null) {
-        return new UnzipCommand(oldTarget.getFileSystem().getPath(unzipCommand.mySource), destination, unzipCommand.myFilenameFilter);
+        return new UnzipCommand(fs.getPath(unzipCommand.mySource), destination, unzipCommand.myFilenameFilter);
       }
     }
     else if (command instanceof DeleteCommand deleteCommand) {
-      var source = mapPath(deleteCommand.mySource, oldTarget, newTarget);
+      var source = mapPath(fs.getPath(deleteCommand.mySource), oldTarget, newTarget);
       if (source != null) {
         return new DeleteCommand(source);
       }
@@ -167,9 +168,8 @@ public final class StartupActionScriptManager {
     return null;
   }
 
-  private static @Nullable Path mapPath(String path, Path oldTarget, Path newTarget) {
-    var fsPath = oldTarget.getFileSystem().getPath(path);
-    return fsPath.startsWith(oldTarget) ? newTarget.resolve(oldTarget.relativize(fsPath)) : null;
+  private static @Nullable Path mapPath(Path path, Path oldTarget, Path newTarget) {
+    return path.startsWith(oldTarget) ? newTarget.resolve(oldTarget.relativize(path)) : null;
   }
 
   @ApiStatus.Internal
@@ -193,9 +193,10 @@ public final class StartupActionScriptManager {
       var marketplaceCommands = partitioned.get(true);
       remainingCommands = partitioned.get(false);
 
+      var fs = FileSystems.getDefault();
       for (var command : marketplaceCommands) {
         marketplaceCommandsFound = true;
-        command.execute();
+        command.execute(fs);
       }
     } finally {
       if (remainingCommands == null || remainingCommands.isEmpty()) {
@@ -208,12 +209,6 @@ public final class StartupActionScriptManager {
   }
 
   public interface ActionCommand {
-    /// @deprecated implement [#execute(FileSystem)]
-    @Deprecated(forRemoval = true)
-    default void execute() throws IOException {
-      execute(FileSystems.getDefault());
-    }
-
     void execute(@NotNull FileSystem fs) throws IOException;
   }
 

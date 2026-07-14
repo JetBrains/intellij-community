@@ -1404,7 +1404,6 @@ f:com.intellij.ide.startup.StartupActionScriptManager
 - s:addActionCommand(com.intellij.ide.startup.StartupActionScriptManager$ActionCommand):V
 - s:addActionCommands(java.util.List):V
 com.intellij.ide.startup.StartupActionScriptManager$ActionCommand
-- execute():V
 - a:execute(java.nio.file.FileSystem):V
 f:com.intellij.ide.startup.StartupActionScriptManager$CopyCommand
 - com.intellij.ide.startup.StartupActionScriptManager$ActionCommand
