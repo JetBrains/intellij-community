@@ -419,7 +419,7 @@ class KotlinSourceRootDirsMavenTest(mavenVersion: String, modelVersion: String) 
 
     @Test
     fun `test root module with plugin management and processor submodule`() = runBlocking {
-        val mainPom = createProjectPom(
+        val mainPom = maven.createProjectPom(
             """
         <groupId>org.example</groupId>
         <artifactId>project</artifactId>
@@ -469,7 +469,7 @@ class KotlinSourceRootDirsMavenTest(mavenVersion: String, modelVersion: String) 
             """.trimIndent()
         )
 
-        val subModulePom = createModulePom(
+        val subModulePom = maven.createModulePom(
             "sub-mod",
             """
         <parent>
@@ -500,8 +500,8 @@ class KotlinSourceRootDirsMavenTest(mavenVersion: String, modelVersion: String) 
             """.trimIndent()
         )
 
-        importProjectsAsync(mainPom, subModulePom)
-        assertModules("project", "sub-mod")
+        maven.importProjectsAsync(mainPom, subModulePom)
+        maven.assertModules("project", "sub-mod")
 
         val module = project.modules.first { it.name == "project" }
 
@@ -605,9 +605,9 @@ class KotlinSourceRootDirsMavenTest(mavenVersion: String, modelVersion: String) 
 
         val childTextAfter = runReadAction { subModulePom.toPsiFile(project)!!.text }
         assertEquals(
-            "Submodule POM should stay untouched:\n$childTextAfter",
             childTextBefore,
-            childTextAfter
+            childTextAfter,
+            "Submodule POM should stay untouched:\n$childTextAfter"
         )
     }
 
