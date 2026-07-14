@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.jb
 
 import com.intellij.configurationStore.ComponentStoreImpl
@@ -415,12 +415,8 @@ internal class JbSettingsImporter(private val configDirPath: Path, private val p
       val importOptions = configImportOptions(progressIndicator, pluginsMap.keys)
       ImportSettingsEventsCollector.jbPluginsOldImport()
       ConfigImportHelper.migratePlugins(
-        pluginsPath,
-        configDirPath,
-        PathManager.getPluginsDir(),
-        PathManager.getConfigDir(),
-        importOptions
-      ) { false }
+        pluginsPath, configDirPath, PathManager.getPluginsDir(), PathManager.getConfigDir(), importOptions, emptySet()
+      )
       return
     }
     ImportSettingsEventsCollector.jbPluginsNewImport()

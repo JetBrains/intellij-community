@@ -169,7 +169,7 @@ public final class ConfigImportHelper {
         var newPluginsDir = newConfigDir.getFileSystem().getPath(PathManager.getPluginsDir().toString());
         var importOptions = createConfigImportOptions(importSettings, migrationOption, log);
         try {
-          migratePlugins(oldPluginsDir, oldConfigDir, newPluginsDir, newConfigDir, importOptions, Predicates.alwaysFalse());
+          migratePlugins(oldPluginsDir, oldConfigDir, newPluginsDir, newConfigDir, importOptions, Set.of());
         }
         catch (IOException e) {
           log.warn(e);
@@ -228,7 +228,7 @@ public final class ConfigImportHelper {
           }
         }
         catch (IOException e) {
-          log.error("Couldn't backup current config or delete current config directory", e);
+          log.error("Couldn't back up current config or delete current config directory", e);
         }
       }
       else if (inheritedDirectory != null) {
@@ -312,7 +312,7 @@ public final class ConfigImportHelper {
           new ConfigBackup(newConfigDir).moveToBackup(tempBackup);
         }
         catch (IOException e) {
-          log.warn(String.format("Couldn't move the backup of current config from temp dir [%s] to backup dir", tempBackup), e);
+          log.warn(String.format("Couldn't move the backup of current config from temp dir [%s] to back up dir", tempBackup), e);
         }
       }
     }
@@ -919,17 +919,16 @@ public final class ConfigImportHelper {
       Files.copy(oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME), newConfigDir.resolve(disabledPluginsFileName));
     }
 
-    var actionCommands = loadStartupActionScript(oldConfigDir, oldIdeHome, oldPluginsDir);
+    var actionScript = findStartupActionScript(oldConfigDir, oldIdeHome, oldPluginsDir);
+    var actionCommands = actionScript != null ? StartupActionScriptManager.loadActionScript(actionScript) : null;
 
     // copying plugins, unless the target directory is not empty (the plugin manager will sort out incompatible ones)
     if (!isEmptyDirectory(newPluginsDir)) {
       log.info("non-empty plugins directory: " + newPluginsDir);
     }
     else {
-      var hasPendingUpdate = Files.isDirectory(oldPluginsDir) ?
-        collectPendingPluginUpdates(actionCommands, oldPluginsDir.getFileSystem(), options.log) :
-        (Predicate<IdeaPluginDescriptor>)(_ -> false);
-      migratePlugins(oldPluginsDir, oldConfigDir, newPluginsDir, newConfigDir, options, hasPendingUpdate);
+      var pendingUpdates = getPendingPluginUpdates(actionCommands, oldPluginsDir.getFileSystem(), options.log);
+      migratePlugins(oldPluginsDir, oldConfigDir, newPluginsDir, newConfigDir, options, pendingUpdates);
     }
 
     migrateLocalization(oldConfigDir, oldPluginsDir);
@@ -938,8 +937,15 @@ public final class ConfigImportHelper {
       setKeymapIfNeeded(oldConfigDir, newConfigDir, log);
     }
 
-    // applying prepared updates to copied plugins
-    StartupActionScriptManager.executeActionScriptCommands(actionCommands, oldPluginsDir, newPluginsDir);
+    if (actionCommands != null) {
+      try {
+        // applying prepared updates to copied plugins
+        StartupActionScriptManager.executeActionScriptCommands(actionCommands, oldPluginsDir, newPluginsDir);
+      }
+      finally {
+        Files.deleteIfExists(actionScript);
+      }
+    }
 
     updateVMOptions(newConfigDir, oldConfigDir, log);
   }
@@ -949,7 +955,7 @@ public final class ConfigImportHelper {
     com.intellij.openapi.application.migrations.Localization242.INSTANCE.enableL10nIfPluginInstalled(parseVersionFromConfig(oldConfigDir), oldPluginsDir);
   }
 
-  private static List<ActionCommand> loadStartupActionScript(Path oldConfigDir, @Nullable Path oldIdeHome, Path oldPluginsDir) throws IOException {
+  private static @Nullable Path findStartupActionScript(Path oldConfigDir, @Nullable Path oldIdeHome, Path oldPluginsDir) throws IOException {
     if (Files.isDirectory(oldPluginsDir)) {
       var oldSystemDir = oldConfigDir.getParent().resolve(SYSTEM);
       if (!Files.isDirectory(oldSystemDir)) {
@@ -963,10 +969,10 @@ public final class ConfigImportHelper {
       }
       var script = oldSystemDir.resolve(PLUGINS + '/' + StartupActionScriptManager.ACTION_SCRIPT_FILE);  // PathManager#getPluginTempPath
       if (Files.isRegularFile(script)) {
-        return StartupActionScriptManager.loadActionScript(script);
+        return script;
       }
     }
-    return List.of();
+    return null;
   }
 
   public static void migratePlugins(
@@ -975,7 +981,7 @@ public final class ConfigImportHelper {
     @NotNull Path newPluginsDir,
     @NotNull Path newConfigDir,
     @NotNull ConfigImportOptions options,
-    @NotNull Predicate<IdeaPluginDescriptor> hasPendingUpdate
+    @NotNull Set<PluginId> pendingUpdates
   ) throws IOException {
     var log = options.log;
 
@@ -1011,12 +1017,18 @@ public final class ConfigImportHelper {
       migrateGlobalPlugins(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload, options.log);
     }
 
-    pluginsToMigrate.removeIf(hasPendingUpdate);
+    var filter = pendingUpdates.isEmpty() ? Predicates.<IdeaPluginDescriptor>alwaysFalse() : (Predicate<IdeaPluginDescriptor>)descriptor -> {
+      var skip = pendingUpdates.contains(descriptor.getPluginId());
+      if (skip) log.info("Plugin '" + descriptor.getPluginId() + "' skipped due to a pending update");
+      return skip;
+    };
+
+    pluginsToMigrate.removeIf(filter);
     if (!pluginsToMigrate.isEmpty()) {
       migratePlugins(newPluginsDir, pluginsToMigrate, log);
     }
 
-    pluginsToDownload.removeIf(hasPendingUpdate);
+    pluginsToDownload.removeIf(filter);
     if (!pluginsToDownload.isEmpty()) {
       downloadUpdatesForPlugins(newPluginsDir, options, pluginsToDownload, brokenPluginVersions);
 
@@ -1152,8 +1164,11 @@ public final class ConfigImportHelper {
     }
   }
 
-  private static Predicate<IdeaPluginDescriptor> collectPendingPluginUpdates(List<ActionCommand> actionCommands, FileSystem fs, Logger log) {
+  private static Set<PluginId> getPendingPluginUpdates(@Nullable List<ActionCommand> actionCommands, FileSystem fs, Logger log) {
+    if (actionCommands == null) return Set.of();
+
     var result = new LinkedHashSet<PluginId>();
+
     for (var command : actionCommands) {
       var source = switch (command) {
         case StartupActionScriptManager.CopyCommand cc -> cc.getSource();
@@ -1176,16 +1191,7 @@ public final class ConfigImportHelper {
       }
     }
 
-    return descriptor -> {
-      var pluginId = descriptor.getPluginId();
-      if (result.contains(pluginId)) {
-        log.info("Plugin '" + pluginId + "' skipped due to a pending update");
-        return true;
-      }
-      else {
-        return false;
-      }
-    };
+    return result;
   }
 
   public static void migratePlugins(Path newPluginsDir, List<IdeaPluginDescriptor> descriptors, Logger log) throws IOException {
@@ -1193,7 +1199,7 @@ public final class ConfigImportHelper {
       var pluginPath = descriptor.getPluginPath();
       var pluginId = descriptor.getPluginId();
       if (pluginPath == null) {
-        log.info("Skipping migration of plugin '" + pluginId + "', because it is officially homeless");
+        log.info("Skipping migration of plugin '%s', because it is officially homeless".formatted(pluginId));
         continue;
       }
 
@@ -1273,7 +1279,7 @@ public final class ConfigImportHelper {
         }
       }
       catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException ignored) {
-        log.info("Plugin download cancelled");
+        log.info("Plugin download canceled");
         break;
       }
       catch (IOException e) {

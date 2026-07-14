@@ -417,7 +417,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
   }
 
   @Test fun `filtering FLS VM option when importing from CE`() {
-    val oldICConfigDir = createConfigDir(version = "2025.2", product = @Suppress("SpellCheckingInspection") "IdeaIC")
+    val oldICConfigDir = createConfigDir(version = "2025.2", product = "IdeaIC")
     val oldIUConfigDir = createConfigDir(version = "2025.2", product = "IntelliJIdea")
     listOf(oldICConfigDir, oldIUConfigDir).forEach {
       it.resolve(VMOptions.getFileName())
