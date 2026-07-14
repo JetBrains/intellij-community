@@ -18,6 +18,10 @@
             qualifiedName="org.jetbrains.kotlin.equalsHashCodeGeneratorExtension"
             interface="org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.KotlinEqualsHashCodeGeneratorExtension"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.structureViewExtension"
+            interface="org.jetbrains.kotlin.idea.k2.codeinsight.structureView.KotlinStructureViewExtension"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
