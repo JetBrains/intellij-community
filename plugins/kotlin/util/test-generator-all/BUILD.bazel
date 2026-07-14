@@ -1,6 +1,13 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "test-generator-all_test",
+    tags = ["ultimate-smoke"],
+    runtime_deps = [":test-generator-all_test_lib"],
+)
+### skip generation section `test kotlin.util.test-generator-all`
+
 ### auto-generated section `build kotlin.util.test-generator-all` start
 jvm_library(
     name = "test-generator-all",
@@ -89,10 +96,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml kotlin.util.test-generator-all` end
-
-### auto-generated section `test kotlin.util.test-generator-all` start
-jps_test(
-    name = "test-generator-all_test",
-    runtime_deps = [":test-generator-all_test_lib"],
-)
-### auto-generated section `test kotlin.util.test-generator-all` end
