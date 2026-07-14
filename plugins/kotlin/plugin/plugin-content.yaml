@@ -19,6 +19,9 @@
 - name: lib/intellij.kotlin.base.scripting.shared.jar
   contentModules:
   - name: intellij.kotlin.base.scripting.shared
+- name: lib/intellij.kotlin.base.statistics.jar
+  contentModules:
+  - name: intellij.kotlin.base.statistics
 - name: lib/intellij.kotlin.codeInsight.api.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.api
@@ -149,7 +152,6 @@
   - name: intellij.kotlin.base.platforms
   - name: intellij.kotlin.base.analysis.utils
   - name: intellij.kotlin.base.compilerConfiguration.ui
-  - name: intellij.kotlin.base.statistics
   - name: intellij.kotlin.ide
   - name: intellij.kotlin.compilerPlugins.parcelize
   - name: intellij.kotlin.compilerPlugins.support

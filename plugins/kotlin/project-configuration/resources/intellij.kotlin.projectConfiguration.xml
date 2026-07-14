@@ -12,6 +12,7 @@
     <module name="intellij.kotlin.base.codeInsight"/>
     <module name="intellij.kotlin.base.facet"/>
     <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.statistics"/>
     <module name="intellij.libraries.maven.resolver.provider"/>
   </dependencies>
   <!-- endregion -->
