@@ -141,3 +141,5 @@ Load only when needed:
 - [Patterns](references/patterns.md) — the pattern DSL, `PolySymbolMatch`/name segments, `ReferencingPolySymbol`, the Vue directive worked example.
 - [Case studies](references/case-studies.md) — GDScript, JS/TS/HTML/CSS, Vue, Angular, in depth.
 - [Web Types](references/web-types.md) — static JSON symbol definitions.
+- [Testing](references/testing.md) — writing tests for a PolySymbols integration: the `PolySymbolsTestCase` hierarchy, the `PolySymbolsTestUtil.kt` cheat sheet, feature-by-feature recipes.
+- [Migration](references/migration.md) — migrating a PSI-based feature to PolySymbols, tests-first: the preliminary-tests-migration recipe, forbidden `CodeInsightTestFixture` methods, the per-kind production migration unit.
