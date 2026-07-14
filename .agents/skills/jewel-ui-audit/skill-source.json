@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "skill": "jewel-ui-audit",
+  "attribution": "Authored by Sebastiano Poggi for the JetBrains intellij-community Jewel environment. Evidence and conventions are derived from JetBrains intellij-community (https://github.com/JetBrains/intellij-community), Apache-2.0, including the Jewel toolkit and platform theme resources; the JetBrains IntelliJ Platform UI Guidelines and Int UI Kit (JetBrains); and public Compose/Jewel UI patterns.",
+  "sources": [
+    {
+      "type": "upstream-reference",
+      "role": "supporting-reference",
+      "label": "JetBrains intellij-community (Jewel toolkit + platform theme resources)",
+      "url": "https://github.com/JetBrains/intellij-community",
+      "version": "1af4c3c65abf676d3c085582a9f9dfebcee23179",
+      "versionSource": "gitCommit",
+      "fetchedAt": "2026-06-24",
+      "license": "Apache-2.0",
+      "check": {
+        "type": "github",
+        "repository": "JetBrains/intellij-community",
+        "path": "platform/jewel",
+        "trackingRef": "master",
+        "localCheckoutHint": "/Users/sebp/src/intellij-community"
+      }
+    },
+    {
+      "type": "upstream-reference",
+      "role": "supporting-reference",
+      "label": "JetBrains IntelliJ Platform UI Guidelines",
+      "url": "https://plugins.jetbrains.com/docs/intellij/ui-guidelines-welcome.html",
+      "version": "2026-06-24",
+      "versionSource": "fetchDate",
+      "fetchedAt": "2026-06-24",
+      "license": "unknown",
+      "check": {
+        "type": "manual",
+        "reason": "Hosted JetBrains documentation; no cheap commit/frontmatter signal to compare against."
+      }
+    },
+    {
+      "type": "upstream-reference",
+      "role": "supporting-reference",
+      "label": "JetBrains IntelliJ Platform docs: Supporting the Islands theme",
+      "url": "https://plugins.jetbrains.com/docs/intellij/supporting-islands-theme.html",
+      "version": "2026-06-24",
+      "versionSource": "fetchDate",
+      "fetchedAt": "2026-06-24",
+      "license": "unknown",
+      "check": {
+        "type": "manual",
+        "reason": "Hosted JetBrains documentation; no cheap commit/frontmatter signal to compare against."
+      }
+    },
+    {
+      "type": "upstream-reference",
+      "role": "supporting-reference",
+      "label": "Int UI Kit (Community) Figma — Int UI palette semantics",
+      "url": "https://www.figma.com/design/rjLthhZNFIiPSKqkCvSJdB/Int-UI-Kit--Community-",
+      "version": "2026-06-24",
+      "versionSource": "fetchDate",
+      "fetchedAt": "2026-06-24",
+      "license": "unknown",
+      "check": {
+        "type": "manual",
+        "reason": "Public Figma design file (explicitly noted as outdated); not automatically checkable."
+      }
+    },
+    {
+      "type": "upstream-reference",
+      "role": "supporting-reference",
+      "label": "IntelliJ Islands theme author confirmation re: Islands Darcula palette keys (JetBrains, via Slack)",
+      "url": "https://plugins.jetbrains.com/docs/intellij/supporting-islands-theme.html",
+      "version": "2026-06-24",
+      "versionSource": "fetchDate",
+      "fetchedAt": "2026-06-24",
+      "license": "unknown",
+      "check": {
+        "type": "manual",
+        "reason": "Direct confirmation from the Islands theme author; verified at runtime in IJ 261.3 and 262 EAP, expected to change no earlier than 263."
+      }
+    },
+    {
+      "type": "upstream-reference",
+      "role": "supporting-reference",
+      "label": "Compose Multiplatform resources SvgPainter raster-cache bug (CMP-10433), confirmed by the CMP team; source in JetBrains/compose-multiplatform components/resources SvgPainter.kt/DrawCache.kt",
+      "url": "https://youtrack.jetbrains.com/issue/CMP-10433",
+      "version": "2026-07-01",
+      "versionSource": "fetchDate",
+      "fetchedAt": "2026-07-01",
+      "license": "unknown",
+      "check": {
+        "type": "manual",
+        "reason": "YouTrack issue; no cheap commit/frontmatter signal. Anchors the icon-loading.md claim that Jewel SVG raster memoization is defeated (previousDrawSize never assigned). Re-check issue state before relying on the per-draw behavior; a fix would change it."
+      }
+    }
+  ]
+}
