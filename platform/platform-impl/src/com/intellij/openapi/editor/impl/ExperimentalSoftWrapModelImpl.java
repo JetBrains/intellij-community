@@ -556,8 +556,8 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
   }
 
   @Override
-  void recalculate() {
-    myRecalculationManager.recalculate();
+  void recalculate(@NotNull String reason) {
+    myRecalculationManager.recalculate(reason);
   }
 
   @Override

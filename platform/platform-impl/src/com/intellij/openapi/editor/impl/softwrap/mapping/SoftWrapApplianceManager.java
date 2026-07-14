@@ -287,7 +287,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
    *         have information about viewport width
    */
   @ApiStatus.Internal
-  public boolean recalculateIfNecessary() {
+  public boolean recalculateIfNecessary(@NotNull String reason) {
     if (myInProgress) {
       return false;
     }
@@ -306,7 +306,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     // Check if we need to recalculate soft wraps due to visible area width change.
     int currentVisibleAreaWidth = myAvailableWidth;
     if (!indentChanged && myVisibleAreaWidth == currentVisibleAreaWidth) {
-      return recalculateSoftWraps("visible area changed"); // Recalculate existing dirty regions if any.
+      return recalculateSoftWraps(reason + " (indent and width unchanged)"); // Recalculate existing dirty regions if any.
     }
 
     // We experienced the following situation:
@@ -323,7 +323,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     // that such a situation is triggered by the scroll bar (dis)appearance.
     if (currentVisibleAreaWidth - myVisibleAreaWidth == getVerticalScrollBarWidth()) {
       myVisibleAreaWidth = currentVisibleAreaWidth;
-      return recalculateSoftWraps("visible area changed: scrollbar");
+      return recalculateSoftWraps(reason + " (indent unchanged, width changed by scrollbar)");
     }
 
     // We want to adjust viewport's 'y' coordinate on complete recalculation, so, we remember number of soft-wrapped lines
@@ -339,7 +339,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     myStorage.removeAll();
     mySoftWrapNotifier.notifySoftWrapsChanged();
     myVisibleAreaWidth = currentVisibleAreaWidth;
-    final boolean result = recalculateSoftWraps("full recalculation");
+    final boolean result = recalculateSoftWraps(reason + " (indent or width changed)");
     if (!result) {
       return false;
     }

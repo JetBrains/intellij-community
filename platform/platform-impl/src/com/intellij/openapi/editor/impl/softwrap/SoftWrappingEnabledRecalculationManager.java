@@ -126,7 +126,7 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
       myDirty = false;
     }
 
-    myApplianceManager.recalculateIfNecessary();
+    myApplianceManager.recalculateIfNecessary("prepareToMapping");
   }
 
   @Override
@@ -168,7 +168,7 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
 
   @Override
   public void onBulkDocumentUpdateFinished() {
-    recalculate();
+    recalculate("bulk document update finished");
   }
 
   @Override
@@ -240,7 +240,7 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
     if (myBulkDocumentUpdateInProgress.getAsBoolean()) return;
     if (myInlayChangedInBatchMode) {
       myInlayChangedInBatchMode = false;
-      recalculate();
+      recalculate("inlay batch mode finished");
     }
   }
 
@@ -279,7 +279,7 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
   }
 
   @Override
-  public void recalculate() {
+  public void recalculate(@NotNull String reason) {
     if (myEditor.isPurePaintingMode()) {
       myDirty = true;
       return;
@@ -290,7 +290,7 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
     mySoftWrapChangeNotifier.notifySoftWrapsChanged();
     deferredFoldRegions.clear();
     deferredCustomWraps.clear();
-    myApplianceManager.recalculateIfNecessary();
+    myApplianceManager.recalculateIfNecessary(reason + " (full recalc)");
   }
 
   public SoftWrapApplianceManager getApplianceManager() {

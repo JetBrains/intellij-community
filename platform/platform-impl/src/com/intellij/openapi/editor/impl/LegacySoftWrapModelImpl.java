@@ -402,7 +402,7 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
       myDirty = false;
     }
 
-    applianceManager.recalculateIfNecessary();
+    applianceManager.recalculateIfNecessary("prepareToMapping");
   }
 
   /**
@@ -550,7 +550,7 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
     if (!myUseSoftWraps && shouldSoftWrapsBeForced()) {
       forceSoftWraps();
     }
-    recalculate();
+    recalculate("document bulk update finished");
   }
 
   @Override
@@ -617,7 +617,7 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
     if (document.isInBulkUpdate()) return;
     if (myInlayChangedInBatchMode) {
       myInlayChangedInBatchMode = false;
-      recalculate();
+      recalculate("inlay batch mode finished");
     }
   }
 
@@ -641,7 +641,7 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
   }
 
   @Override
-  void recalculate() {
+  void recalculate(@NotNull String reason) {
     if (!isSoftWrappingEnabled()) {
       myDirty = true;
       return;
@@ -651,7 +651,7 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
     storage.removeAll();
     mySoftWrapNotifier.notifySoftWrapsChanged();
     deferredFoldRegions.clear();
-    applianceManager.recalculateIfNecessary();
+    applianceManager.recalculateIfNecessary(reason + " (full recalc)");
   }
 
   @Override
