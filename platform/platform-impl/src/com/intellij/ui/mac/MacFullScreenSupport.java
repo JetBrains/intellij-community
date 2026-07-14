@@ -32,8 +32,14 @@ public final class MacFullScreenSupport implements FullScreenSupport {
     return myIsFullScreen;
   }
 
+  /** Client-property key on the window's root pane; value is the {@link MacFullScreenSupport} for that window. */
+  public static final String ROOT_PANE_KEY = "MacFullScreenSupport";
+
   @Override
   public void addListener(@NotNull Window window) {
+    if (window instanceof RootPaneContainer container && container.getRootPane() != null) {
+      container.getRootPane().putClientProperty(ROOT_PANE_KEY, this);
+    }
     myListener = new FullScreenListener() {
       @Override
       public void windowEnteringFullScreen(FullScreenEvent event) {
@@ -82,6 +88,7 @@ public final class MacFullScreenSupport implements FullScreenSupport {
   public void removeListener(@NotNull Window window) {
     if (window instanceof RootPaneContainer container && container.getRootPane() != null) {
       FullScreenUtilities.removeFullScreenListenerFrom(window, myListener);
+      container.getRootPane().putClientProperty(ROOT_PANE_KEY, null);
     }
   }
 }
