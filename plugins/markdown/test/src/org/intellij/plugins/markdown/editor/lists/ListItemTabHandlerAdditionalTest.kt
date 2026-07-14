@@ -31,4 +31,90 @@ class ListItemTabHandlerAdditionalTest: LightPlatformCodeInsightTestCase() {
     }
     checkResultByText(expected)
   }
+
+  @Test
+  fun `test tab inside fenced code block within list item does not shift the list item`() {
+    // language=Markdown
+    val content = """
+    * First item
+    * Second item
+      ```
+      <caret>code
+      ```
+    """.trimIndent()
+    // language=Markdown
+    val expected = """
+    * First item
+    * Second item
+      ```
+        <caret>code
+      ```
+    """.trimIndent()
+    configureFromFileText("some.md", content)
+    executeAction(IdeActions.ACTION_EDITOR_TAB)
+    checkResultByText(expected)
+  }
+
+  @Test
+  fun `test tab inside indented code block within list item does not shift the list item`() {
+    // language=Markdown
+    val content = """
+    * First item
+    * Second item
+
+          <caret>code
+    """.trimIndent()
+    // language=Markdown
+    val expected = """
+    * First item
+    * Second item
+
+            <caret>code
+    """.trimIndent()
+    configureFromFileText("some.md", content)
+    executeAction(IdeActions.ACTION_EDITOR_TAB)
+    checkResultByText(expected)
+  }
+
+  @Test
+  fun `test tab inside table cell within list item does not shift the list item`() {
+    // language=Markdown
+    val content = """
+    * First item
+    * Second item
+      | h1 | h2 |
+      |----|----|
+      | <caret>a  | b  |
+    """.trimIndent()
+    // language=Markdown
+    val expected = """
+    * First item
+    * Second item
+      | h1 | h2 |
+      |----|----|
+      |     <caret>a  | b  |
+    """.trimIndent()
+    configureFromFileText("some.md", content)
+    executeAction(IdeActions.ACTION_EDITOR_TAB)
+    checkResultByText(expected)
+  }
+
+  @Test
+  fun `test tab inside blockquote within list item does not shift the list item`() {
+    // language=Markdown
+    val content = """
+    * First item
+    * Second item
+      > <caret>quoted
+    """.trimIndent()
+    // language=Markdown
+    val expected = """
+    * First item
+    * Second item
+      >     <caret>quoted
+    """.trimIndent()
+    configureFromFileText("some.md", content)
+    executeAction(IdeActions.ACTION_EDITOR_TAB)
+    checkResultByText(expected)
+  }
 }
