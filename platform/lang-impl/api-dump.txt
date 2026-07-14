@@ -2774,12 +2774,10 @@ a:com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
 - getSearchProviderId():java.lang.String
 c:com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
 - com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
-- com.intellij.ide.actions.searcheverywhere.EssentialContributor
 - com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewProvider
 - <init>(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 - com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
-- com.intellij.ide.actions.searcheverywhere.EssentialContributor
 - com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewProvider
 - <init>(com.intellij.openapi.actionSystem.AnActionEvent):V
 - dispose():V
@@ -2793,7 +2791,6 @@ com.intellij.ide.actions.searcheverywhere.MergeableElement
 - a:shouldBeMergedIntoAnother():Z
 f:com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 - com.intellij.ide.actions.searcheverywhere.AutoCompletionContributor
-- com.intellij.ide.actions.searcheverywhere.EssentialContributor
 - com.intellij.ide.actions.searcheverywhere.PossibleSlowContributor
 - com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 - com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewProvider

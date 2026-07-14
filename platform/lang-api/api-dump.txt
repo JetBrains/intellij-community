@@ -1117,8 +1117,6 @@ com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory
 - a:createContributor(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 - isAvailable(com.intellij.openapi.project.Project):Z
-com.intellij.ide.actions.searcheverywhere.SearchFieldActionsContributor
-- a:createRightActions(kotlin.jvm.functions.Function1,java.lang.Runnable):java.util.List
 com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
 - com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 - fetchElements(java.lang.String,com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor):V

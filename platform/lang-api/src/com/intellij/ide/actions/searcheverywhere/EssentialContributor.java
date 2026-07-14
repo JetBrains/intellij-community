@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,7 +9,12 @@ import org.jetbrains.annotations.Nullable;
  * This is marker interface for an Essential Contributor. During the search process, it is guaranteed
  * that results are not displayed until all contributions marked as Essential have returned items
  * (or have completed processing with no results).
+ *
+ * @deprecated The old Search Everywhere API is being sunset.
+ * Use {@code com.intellij.platform.searchEverywhere.frontend.SeTab#essentialProviderIds} instead.
  */
+@ApiStatus.Internal
+@Deprecated
 public interface EssentialContributor {
 
   /**
