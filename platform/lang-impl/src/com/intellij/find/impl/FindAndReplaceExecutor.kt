@@ -3,7 +3,6 @@ package com.intellij.find.impl
 
 import com.intellij.find.FindModel
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.usages.FindUsagesProcessPresentation
@@ -17,8 +16,8 @@ interface FindAndReplaceExecutor {
 
   companion object {
     @JvmStatic
-    fun getInstance(): FindAndReplaceExecutor {
-      return ApplicationManager.getApplication().getService(FindAndReplaceExecutor::class.java)
+    fun getInstance(project: Project): FindAndReplaceExecutor {
+      return project.getService(FindAndReplaceExecutor::class.java)
     }
   }
 

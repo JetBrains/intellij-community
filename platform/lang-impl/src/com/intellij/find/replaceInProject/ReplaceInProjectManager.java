@@ -160,7 +160,7 @@ public class ReplaceInProjectManager {
     FindUsagesCollector.findPopupShown(dataContext, findModel, stringToFindChanged);
     findManager.showFindDialog(findModel, () -> {
       FindUsagesCollector.replaceAllInvoked();
-      FindAndReplaceExecutor.getInstance().performFindAllOrReplaceAll(findModel, myProject);
+      FindAndReplaceExecutor.getInstance(myProject).performFindAllOrReplaceAll(findModel, myProject);
     });
   }
 

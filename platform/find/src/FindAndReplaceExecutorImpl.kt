@@ -32,6 +32,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.isActive
@@ -43,15 +44,137 @@ private val LOG = logger<FindAndReplaceExecutorImpl>()
 
 @Internal
 open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : FindAndReplaceExecutor {
-  private var validationJob: Job? = null
-  private var findUsagesJob: Job? = null
-  private var selectScopeJob: Job? = null
-  private var currentSearchDisposable: CheckedDisposable? = null
+  @Volatile private var validationJob: Job? = null
+  @Volatile private var selectScopeJob: Job? = null
 
-  // The current search "session" scope on which result models load their preview content. It is parented to
-  // the executor scope (NOT to the per-pass streaming job) so it survives an automatic load-more pass; it is
-  // cancelled only when the session is superseded by a fresh search (see findUsages / isLoadMore). IJPL-247145.
-  private var currentInitScope: CoroutineScope? = null
+  // A single command channel + single consumer coroutine
+  private val requests = Channel<FindCommand>(capacity = Channel.UNLIMITED)
+
+  init {
+    val processor = coroutineScope.launch { requestProcessor() }
+    // Once the processor stops (service scope canceled, e.g. project close), close the channel so any later
+    // trySend fails fast and findUsages can fire its terminal callback instead of dropping the request silently.
+    processor.invokeOnCompletion { requests.close() }
+  }
+
+  private suspend fun requestProcessor() {
+    var currentSession: Session? = null
+    var currentPass: Job? = null
+    for (command in requests) {
+      when (command) {
+        is StartSearch -> {
+          LOG.debug { "FiF: processing StartSearch loadMore=${command.isLoadMore} maxUsages=${command.maxUsages}" }
+          // Cancel the previous streaming pass only.
+          currentPass?.cancel("new find request is started")
+
+          // A load-more pass EXTENDS the current session; a fresh search supersedes it. Both `currentSession`
+          // and the liveness checks are evaluated on this single coroutine, so there is no TOCTOU race.
+          val existing = currentSession
+          val session: Session
+
+          if (command.isLoadMore && existing != null && !existing.disposable.isDisposed && existing.initScope.isActive) {
+            session = existing
+          }
+          else {
+            currentSession?.let { Disposer.dispose(it.disposable) }
+            val newDisposable = Disposer.newCheckedDisposable("Find in Project Search")
+
+            if (!Disposer.tryRegister(command.disposableParent, newDisposable)) {
+              Disposer.dispose(newDisposable)
+              LOG.warn("Failed to register disposable for search. Looks like FindPopup is already closed. Search will be canceled.")
+              // The popup is gone, but still fire the terminal callback so nothing is left waiting.
+              command.onFinish()
+              continue
+            }
+
+            // Parent to the executor scope (not the pass) so the session survives load-more passes.
+            val newScope = coroutineScope.childScope("FindAndReplaceExecutorImpl.UsageInit")
+
+            Disposer.register(newDisposable) {
+              newScope.cancel("search disposed")
+            }
+
+            session = Session(newDisposable, newScope)
+            currentSession = session
+          }
+
+          currentPass = launchSearchPass(command, session)
+        }
+        CancelSearch -> {
+          LOG.debug { "FiF: processing CancelSearch" }
+          currentPass?.cancel("cancel all activities for find and replace executor")
+        }
+      }
+    }
+  }
+
+  /**
+   * Launches the streaming pass on [coroutineScope] (a sibling of the model-load coroutines, not a child of the
+   * session scope) so that cancelling the pass — e.g. when superseded by the next keystroke — never cancels the
+   * in-flight model loads of a reused session.
+   */
+  private fun launchSearchPass(command: StartSearch, session: Session): Job {
+    return coroutineScope.launch {
+      var firstLogged = false
+      try {
+        LOG.debug { "FiF: pass start; selectScope join begin (selectScopeJob=$selectScopeJob)" }
+        selectScopeJob?.join()
+        LOG.debug { "FiF: selectScope join done" }
+
+        val filesToScanInitially = command.previousUsages
+          .mapNotNull { (it as? UsageInfoModel)?.model?.fileId?.virtualFile() }
+          .toSet()
+
+        FindRemoteApi.getInstance().findByModel(
+          findModel = command.findModel,
+          projectId = command.project.projectId(),
+          filesToScanInitially = filesToScanInitially.map { it.rpcId() },
+          maxUsagesCount = command.maxUsages
+        ).take(command.maxUsages)
+          .let {
+            if (command.shouldThrottle) it.throttledWithAccumulation()
+            else it.map { event -> ThrottledOneItem(event) }
+          }
+          .collect { throttledItems ->
+            if (session.disposable.isDisposed) {
+              return@collect
+            }
+
+            if (!firstLogged) {
+              firstLogged = true
+              LOG.debug { "FiF: first collected item batch (size=${throttledItems.items.size})" }
+            }
+
+            throttledItems.items.forEach { item ->
+              val usage = UsageInfoModel.createUsageInfoModel(command.project, item, session.initScope, command.onUpdateModelCallback)
+              if (!Disposer.tryRegister(session.disposable, usage)) {
+                Disposer.dispose(usage)
+                return@collect
+              }
+
+              val shouldContinue = command.onResult(usage)
+              if (!shouldContinue) {
+                return@collect
+              }
+            }
+          }
+        LOG.debug { "FiF: collect completed normally" }
+      }
+      catch (ce: CancellationException) {
+        // A superseded/closed search pass is cancelled here. Re-throw to honour structured concurrency; the
+        // finally below still fires the terminal callback so the popup is never left stuck on "Searching…".
+        // The callback is generation-guarded on the caller side, so a superseded search becomes a no-op there.
+        LOG.debug { "FiF: pass CANCELLED: ${ce.message}" }
+        throw ce
+      }
+      finally {
+        // Always notify that this search pass has finished — including on cancellation or an early return above —
+        // so the Find popup is never left stuck showing "Searching…" with no results.
+        LOG.debug { "FiF: pass finally -> onFinish()" }
+        command.onFinish()
+      }
+    }
+  }
 
   override fun findUsages(
     project: Project,
@@ -68,101 +191,15 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     isLoadMore: Boolean,
   ) {
     if (FindKey.isEnabled) {
-      LOG.debug { "FiF: executor.findUsages entry; cancelling prevJob=$findUsagesJob shouldThrottle=$shouldThrottle maxUsages=$maxUsages isLoadMore=$isLoadMore" }
+      LOG.debug { "FiF: executor.findUsages entry; shouldThrottle=$shouldThrottle maxUsages=$maxUsages isLoadMore=$isLoadMore" }
+      val command = StartSearch(
+        project, findModel, previousUsages, shouldThrottle, disposableParent,
+        onUpdateModelCallback, onResult, onFinish, maxUsages, isLoadMore,
+      )
 
-      // Cancel the previous streaming coroutine only. Model loads run on `currentInitScope` (a session scope
-      // parented to the executor scope), so cancelling the streaming job no longer cancels in-flight loads;
-      // that is what lets a load-more pass extend the session without stranding the previous pass's models.
-      findUsagesJob?.cancel("new find request is started")
-
-      findUsagesJob = coroutineScope.launch {
-        var firstLogged = false
-        try {
-          LOG.debug { "FiF: coroutine start; selectScope join begin (selectScopeJob=$selectScopeJob)" }
-          selectScopeJob?.join()
-          LOG.debug { "FiF: selectScope join done" }
-          val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfoModel)?.model?.fileId?.virtualFile() }.toSet()
-
-          // A load-more pass EXTENDS the current session: reuse its disposable + model-load scope so the
-          // previous pass's still-loading models (e.g. the auto-selected first row) keep loading. A fresh
-          // search supersedes: dispose the old session (cancels its models) and start a new scope. IJPL-247145.
-          val reuseSession = isLoadMore &&
-                             currentSearchDisposable?.isDisposed == false &&
-                             currentInitScope?.isActive == true
-          val searchDisposable: CheckedDisposable
-          val initScope: CoroutineScope
-          if (reuseSession) {
-            searchDisposable = currentSearchDisposable!!
-            initScope = currentInitScope!!
-          }
-          else {
-            currentSearchDisposable?.let { Disposer.dispose(it) }
-            val newDisposable = Disposer.newCheckedDisposable("Find in Project Search")
-            if (!Disposer.tryRegister(disposableParent, newDisposable)) {
-              Disposer.dispose(newDisposable)
-              LOG.warn("Failed to register disposable for search. Looks like FindPopup is already closed. Search will be canceled.")
-              return@launch
-            }
-
-            // Parent to the executor scope (not `this` streaming job) so the session survives load-more passes.
-            val newScope = coroutineScope.childScope("FindAndReplaceExecutorImpl.UsageInit")
-            Disposer.register(newDisposable) {
-              newScope.cancel("search disposed")
-            }
-
-            currentSearchDisposable = newDisposable
-            currentInitScope = newScope
-            searchDisposable = newDisposable
-            initScope = newScope
-          }
-          FindRemoteApi.getInstance().findByModel(
-            findModel = findModel,
-            projectId = project.projectId(),
-            filesToScanInitially = filesToScanInitially.map { it.rpcId() },
-            maxUsagesCount = maxUsages
-          ).take(maxUsages)
-            .let {
-              if (shouldThrottle) it.throttledWithAccumulation()
-              else it.map { event -> ThrottledOneItem(event) }
-            }
-            .collect { throttledItems ->
-              if (searchDisposable.isDisposed) {
-                return@collect
-              }
-              if (!firstLogged) {
-                firstLogged = true
-                LOG.debug { "FiF: first collected item batch (size=${throttledItems.items.size})" }
-              }
-              throttledItems.items.forEach { item ->
-                val usage = UsageInfoModel.createUsageInfoModel(project, item, initScope, onUpdateModelCallback)
-                if (!Disposer.tryRegister(searchDisposable, usage)) {
-                  Disposer.dispose(usage)
-                  return@collect
-                }
-
-                val shouldContinue = onResult(usage)
-                if (!shouldContinue) {
-                  return@collect
-                }
-              }
-            }
-          LOG.debug { "FiF: collect completed normally" }
-        }
-        catch (ce: CancellationException) {
-          // A superseded/closed search generation is cancelled here. Re-throw to honour structured
-          // concurrency; the finally below still fires the terminal callback so the popup is never
-          // left stuck on "Searching…". The callback is generation-guarded on the caller side, so a
-          // superseded search becomes a no-op there.
-          LOG.debug { "FiF: coroutine CANCELLED: ${ce.message}" }
-          throw ce
-        }
-        finally {
-          // Always notify that this search generation has finished — including on cancellation or an
-          // early return above — so the Find popup is never left stuck showing "Searching…" with no
-          // results.
-          LOG.debug { "FiF: coroutine finally -> onFinish()" }
-          onFinish()
-        }
+      if (requests.trySend(command).isFailure) {
+        LOG.debug { "FiF: request channel closed; firing onFinish immediately" }
+        onFinish()
       }
     }
     else {
@@ -223,7 +260,29 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
   override fun cancelActivities() {
     val message = "cancel all activities for find and replace executor"
     validationJob?.cancel(message)
-    findUsagesJob?.cancel(message)
     selectScopeJob?.cancel(message)
+    // Route the search cancellation through the same channel so it is applied serially against the session state.
+    requests.trySend(CancelSearch)
   }
+
+  private sealed interface FindCommand
+
+  private class StartSearch(
+    val project: Project,
+    val findModel: FindModel,
+    val previousUsages: Set<UsageInfoAdapter>,
+    val shouldThrottle: Boolean,
+    val disposableParent: Disposable,
+    val onUpdateModelCallback: Consumer<UsageInfoAdapter>,
+    val onResult: (UsageInfoAdapter) -> Boolean,
+    val onFinish: () -> Unit?,
+    val maxUsages: Int,
+    val isLoadMore: Boolean,
+  ) : FindCommand
+
+  private object CancelSearch : FindCommand
+
+  // A search "session": the disposable that owns the pass's result models and the scope on which those models
+  // load their preview content. It survives automatic load-more passes and is superseded only by a fresh search.
+  private class Session(val disposable: CheckedDisposable, val initScope: CoroutineScope)
 }

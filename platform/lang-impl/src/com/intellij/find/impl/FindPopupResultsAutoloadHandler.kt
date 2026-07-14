@@ -311,7 +311,7 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
           val recentItemRef = ThreadLocal<java.lang.ref.Reference<FindPopupItem>>()
 
           LOG.debug { "FiF: run -> executor.findUsages hash=$hash loadMore=$loadMore" }
-          FindAndReplaceExecutor.getInstance().findUsages(
+          FindAndReplaceExecutor.getInstance(project).findUsages(
             project,
             progressIndicatorWhenSearchStarted,
             processPresentation,
