@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.EDT
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbAwareAction
@@ -113,6 +114,7 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
 
   fun getSelectedPackage(): DisplayablePackage? = descriptionController.getPackage()
 
+  @RequiresEdt
   private fun initOrientation(service: PyPackagingToolWindowService, horizontal: Boolean) {
     val proportionKey = if (horizontal) HORIZONTAL_SPLITTER_KEY else VERTICAL_SPLITTER_KEY
     contentSplitter = OnePixelSplitter(!horizontal, proportionKey, 0.3f).apply {
@@ -126,6 +128,7 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
     createAndAttachToolbar(service)
   }
 
+  @RequiresEdt
   private fun createAndAttachToolbar(service: PyPackagingToolWindowService) {
     ActionManager.getInstance().createActionToolbar(
       ActionPlaces.TOOLWINDOW_CONTENT,
@@ -150,6 +153,7 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
     }
   }
 
+  @RequiresEdt
   private fun createLeftPanel(): JComponent {
     val topToolbar = createTopToolbar()
     val leftPanel = JPanel(BorderLayout()).apply {
@@ -171,6 +175,7 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
     }
   }
 
+  @RequiresEdt
   private fun createTopToolbar(): JComponent {
     val actionToolbar = ActionManager.getInstance().createActionToolbar(
       ActionPlaces.TOOLWINDOW_CONTENT,
@@ -220,11 +225,10 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
    * sections: the left panel and the right panel.</p>
    */
   private fun recreateModulePanel() {
-    moduleController.refreshModuleListAndSelection()
-    val newPanel = createLeftPanel()
     PyPackagingToolWindowService.getInstance(project).serviceScope.launch {
       withContext(Dispatchers.EDT) {
-        leftPanel = newPanel
+        moduleController.refreshModuleListAndSelection()
+        leftPanel = createLeftPanel()
         contentSplitter.firstComponent = leftPanel
         contentSplitter.repaint()
       }
@@ -264,15 +268,18 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
     packageListController.setLoadingState(visible)
   }
 
+  @RequiresEdt
   internal fun syncSdkControllerSelection(sdk: Sdk?) {
     moduleController.refreshAndSyncSelection(sdk)
   }
 
-  fun clearFocus() {
-    val kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager()
-    val owner = kfm.focusOwner
-    if (owner != null && SwingUtilities.isDescendingFrom(owner, this)) {
-      kfm.clearGlobalFocusOwner()
+  suspend fun clearFocus() {
+    withContext(Dispatchers.EDT) {
+      val kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+      val owner = kfm.focusOwner
+      if (owner != null && SwingUtilities.isDescendingFrom(owner, this@PyPackagingToolWindowPanel)) {
+        kfm.clearGlobalFocusOwner()
+      }
     }
   }
 
