@@ -49,6 +49,7 @@ import org.eclipse.lsp4j.TextDocumentRegistrationOptions
 import org.eclipse.lsp4j.TextDocumentSyncKind
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.Collections
 import java.util.concurrent.CompletableFuture
 import kotlin.time.DurationUnit
@@ -181,6 +182,7 @@ class LspClientImpl internal constructor(
     highlightingCacheRegistry.semanticTokensCache.getHighlightings(file)
 
   @RequiresBackgroundThread
+  @VisibleForTesting
   fun getDiagnosticsAndQuickFixes(file: VirtualFile): List<DiagnosticAndQuickFixes> =
     highlightingCacheRegistry.getDiagnosticsAndQuickFixes(file)
 
