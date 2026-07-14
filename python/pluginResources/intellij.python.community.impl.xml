@@ -32,7 +32,6 @@
     <module name="intellij.python.requirements"/>
     <module name="intellij.python.sdk"/>
     <module name="intellij.python.sdk.ui"/>
-    <module name="intellij.python.sdkConfigurator.common"/>
     <module name="intellij.python.syntax"/>
     <module name="intellij.python.uv.backend"/>
     <module name="intellij.python.uv.common"/>

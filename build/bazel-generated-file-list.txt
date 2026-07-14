@@ -1656,8 +1656,6 @@ python/python-restructuredtext
 python/python-ruff
 python/python-sdk
 python/python-sdk-configurator/backend
-python/python-sdk-configurator/common
-python/python-sdk-configurator/frontend
 python/python-sdk-ui
 python/python-syntax
 python/python-syntax-core

@@ -197,12 +197,6 @@
 - name: lib/modules/intellij.python.sdkConfigurator.backend.jar
   contentModules:
   - name: intellij.python.sdkConfigurator.backend
-- name: lib/modules/intellij.python.sdkConfigurator.common.jar
-  contentModules:
-  - name: intellij.python.sdkConfigurator.common
-- name: lib/modules/intellij.python.sdkConfigurator.frontend.jar
-  contentModules:
-  - name: intellij.python.sdkConfigurator.frontend
 - name: lib/modules/intellij.python.syntax.core.jar
   contentModules:
   - name: intellij.python.syntax.core
