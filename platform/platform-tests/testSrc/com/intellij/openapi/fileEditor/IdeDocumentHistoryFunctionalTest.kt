@@ -7,11 +7,16 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.ide.navigation.NavigationOptions
+import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.ide.navigation.impl.performNavigationHistoryAware
+import com.intellij.psi.PsiManager
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -20,6 +25,7 @@ import com.intellij.util.OpenSourceUtil
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicReference
 
 internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase() {
   fun testNavigateBetweenEditLocations() {
@@ -307,6 +313,105 @@ internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase
     assertThat(history.getBackPlaces()).hasSize(1)
   }
 
+  fun testMultipleTargetsRecordSingleBackPlace() {
+    withNavigationRequests(isAsync = true) {
+      val target1 = myFixture.addFileToProject("target1.txt", "target1").virtualFile
+      val target2 = myFixture.addFileToProject("target2.txt", "target2").virtualFile
+      myFixture.configureByText("source.txt", "source<caret>")
+      val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
+      clearDocumentHistory()
+
+      @Suppress("UsagesOfObsoleteApi")
+      val scope = (project as ComponentManagerEx).getCoroutineScope()
+      val result = AtomicReference<Boolean>()
+      val requests = listOf(createNavigationRequest(target1, 0), createNavigationRequest(target2, 0))
+      scope.launch {
+        result.set(project.serviceAsync<NavigationService>().navigate(requests, NavigationOptions.defaultOptions()))
+      }
+
+      waitUntil("Navigation did not open both targets") {
+        fileEditorManager.isFileOpen(target1) && fileEditorManager.isFileOpen(target2)
+      }
+      waitUntil("Navigation did not commit source place to history") {
+        IdeDocumentHistory.getInstance(project).isBackAvailable()
+      }
+      waitUntil("Navigation result was not produced") { result.get() != null }
+      assertThat(result.get()).isTrue()
+      assertThat(IdeDocumentHistory.getInstance(project).getBackPlaces()).hasSize(1)
+    }
+  }
+
+  fun testEmptyRequestBatchReturnsFalse() {
+    val result = AtomicReference<Boolean>()
+    @Suppress("UsagesOfObsoleteApi")
+    val scope = (project as ComponentManagerEx).getCoroutineScope()
+    scope.launch {
+      result.set(
+        project.serviceAsync<NavigationService>().navigate(
+          emptyList<NavigationRequest>(),
+          NavigationOptions.defaultOptions(),
+        )
+      )
+    }
+
+    waitUntil("Navigation result was not produced") { result.get() != null }
+    assertThat(result.get()).isFalse()
+  }
+
+  fun testBatchOpensFirstHandledSourceInRightSplit() {
+    withNavigationRequests(isAsync = true) {
+      val directory = myFixture.tempDirFixture.findOrCreateDir("directory")
+      val target1 = myFixture.addFileToProject("target1.txt", "target1").virtualFile
+      val target2 = myFixture.addFileToProject("target2.txt", "target2").virtualFile
+      myFixture.configureByText("source.txt", "source<caret>")
+      val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
+      val result = AtomicReference<Boolean>()
+      val requests = listOf(
+        createDirectoryNavigationRequest(directory),
+        createNavigationRequest(target1, 0),
+        createNavigationRequest(target2, 0),
+      )
+      @Suppress("UsagesOfObsoleteApi")
+      val scope = (project as ComponentManagerEx).getCoroutineScope()
+
+      scope.launch {
+        result.set(
+          project.serviceAsync<NavigationService>().navigate(
+            requests,
+            NavigationOptions.defaultOptions().openInRightSplit(true),
+          )
+        )
+      }
+
+      waitUntil("Navigation did not open both source targets") {
+        fileEditorManager.isFileOpen(target1) && fileEditorManager.isFileOpen(target2)
+      }
+      waitUntil("Navigation result was not produced") { result.get() != null }
+      assertThat(result.get()).isTrue()
+      assertThat(fileEditorManager.windowSplitCount).isEqualTo(2)
+      assertThat(fileEditorManager.currentWindow!!.fileList).contains(target1, target2)
+    }
+  }
+
+  fun testLegacyNavigateRequestIsDeferredFromWriteAction() {
+    withNavigationRequests(isAsync = false) {
+      myFixture.configureByText("${getTestName(false)}.txt", "target\n\nsource<caret>")
+      val file = myFixture.file.virtualFile
+      val sourceOffset = editor.caretModel.offset
+      val targetOffset = editor.document.text.indexOf("target")
+      val request = createNavigationRequest(file, targetOffset)
+
+      ApplicationManager.getApplication().runWriteAction {
+        navigateRequest(project, request)
+        assertThat(editor.caretModel.offset).isEqualTo(sourceOffset)
+      }
+
+      waitUntil("Registry fallback did not navigate after leaving the write action") {
+        editor.caretModel.offset == targetOffset
+      }
+    }
+  }
+
   fun testOpenSourceUtilFallbackIsDeferredFromWriteAction() {
     withNavigationRequests(isAsync = false) {
       myFixture.configureByText("${getTestName(false)}.txt", "target\n\nsource<caret>")
@@ -338,13 +443,25 @@ internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase
   }
 
   private fun navigateToSource(file: VirtualFile, offset: Int) {
-    // bg-thread is required
-    val request = ApplicationManager.getApplication().executeOnPooledThread<NavigationRequest?> {
+    navigateRequest(project, createNavigationRequest(file, offset))
+  }
+
+  private fun createNavigationRequest(file: VirtualFile, offset: Int): NavigationRequest {
+    return ApplicationManager.getApplication().executeOnPooledThread<NavigationRequest?> {
       ReadAction.computeBlocking<NavigationRequest?, RuntimeException> {
         NavigationRequest.sourceNavigationRequest(project, file, offset)
       }
     }.get() ?: error("Cannot create navigation request for ${file.path}:$offset")
-    navigateRequest(project, request)
+  }
+
+  private fun createDirectoryNavigationRequest(directory: VirtualFile): NavigationRequest {
+    return ApplicationManager.getApplication().executeOnPooledThread<NavigationRequest?> {
+      ReadAction.computeBlocking<NavigationRequest?, RuntimeException> {
+        val psiDirectory = PsiManager.getInstance(project).findDirectory(directory)
+                           ?: error("Cannot find PSI directory for ${directory.path}")
+        NavigationRequest.directoryNavigationRequest(psiDirectory)
+      }
+    }.get() ?: error("Cannot create directory navigation request for ${directory.path}")
   }
 
   private fun waitUntil(message: String, condition: () -> Boolean) {

@@ -70,6 +70,15 @@ private class RecordingNavigationService : NavigationService {
     return true
   }
 
+  override suspend fun navigate(
+    requests: Collection<NavigationRequest>,
+    options: NavigationOptions,
+    dataContext: DataContext?,
+  ): Boolean {
+    requestCalls += requests.size
+    return requests.isNotEmpty()
+  }
+
   override suspend fun navigate(navigatables: List<Navigatable>, options: NavigationOptions, dataContext: DataContext?): Boolean {
     navigatableCalls++
     return true

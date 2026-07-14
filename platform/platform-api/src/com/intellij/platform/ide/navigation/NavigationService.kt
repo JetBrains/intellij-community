@@ -43,6 +43,19 @@ interface NavigationService {
     dataContext: DataContext? = null,
   ): Boolean
 
+  /**
+   * Navigates to a batch of [requests] as one operation.
+   * The batch is serialized as a whole and produces at most one back-history entry.
+   * If [NavigationOptions.openInRightSplit] is enabled, all requests are opened in a single new split.
+   *
+   * @return `true` if at least one request was handled
+   */
+  suspend fun navigate(
+    requests: Collection<NavigationRequest>,
+    options: NavigationOptions = NavigationOptions.defaultOptions(),
+    dataContext: DataContext? = null,
+  ): Boolean
+
   @Internal // compatibility function
   suspend fun navigate(
     navigatables: List<Navigatable>,

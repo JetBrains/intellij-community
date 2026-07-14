@@ -98,9 +98,13 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
   }
 
   override suspend fun navigate(request: NavigationRequest, options: NavigationOptions, dataContext: DataContext?): Boolean {
+    return navigate(listOf(request), options, dataContext)
+  }
+
+  override suspend fun navigate(requests: Collection<NavigationRequest>, options: NavigationOptions, dataContext: DataContext?): Boolean {
     return semaphore.withPermit {
       withHistoryIfNeeded(options) {
-        navigate(project = project, requests = listOf(request), options = options, dataContext = dataContext)
+        navigate(project = project, requests = requests, options = options, dataContext = dataContext)
       }
     }
   }
@@ -119,9 +123,9 @@ private val LOG: Logger = Logger.getInstance("#com.intellij.platform.ide.navigat
 /**
  * Navigates to all sources from [requests], or navigates to first non-source request.
  */
-private suspend fun navigate(project: Project, requests: List<NavigationRequest>, options: NavigationOptions, dataContext: DataContext?): Boolean {
+private suspend fun navigate(project: Project, requests: Collection<NavigationRequest>, options: NavigationOptions, dataContext: DataContext?): Boolean {
   val maxSourceRequests = if (requests.size == 1) Int.MAX_VALUE else Registry.intValue("ide.source.file.navigation.limit", 100)
-  var nonSourceRequest: NavigationRequest? = null
+  var nonSourceRequest: Pair<NavigationRequest, NavigationOptions.Impl>? = null
 
   options as NavigationOptions.Impl
   var navigatedSourcesCounter = 0
@@ -129,11 +133,17 @@ private suspend fun navigate(project: Project, requests: List<NavigationRequest>
     if (maxSourceRequests in 1..navigatedSourcesCounter) {
       break
     }
-    if (tryNavigateToSource(project = project, request = requestFromNavigatable, options = options, dataContext = dataContext)) {
+    val requestOptions = if (navigatedSourcesCounter == 0 || !options.openInRightSplit) {
+      options
+    }
+    else {
+      options.openInRightSplit(false) as NavigationOptions.Impl
+    }
+    if (tryNavigateToSource(project = project, request = requestFromNavigatable, options = requestOptions, dataContext = dataContext)) {
       navigatedSourcesCounter++
     }
     else if (nonSourceRequest == null) {
-      nonSourceRequest = requestFromNavigatable
+      nonSourceRequest = requestFromNavigatable to requestOptions
     }
   }
 
@@ -142,12 +152,12 @@ private suspend fun navigate(project: Project, requests: List<NavigationRequest>
   }
   if (nonSourceRequest == null || options.sourceNavigationOnly) {
     if (nonSourceRequest != null && LOG.isDebugEnabled) {
-      LOG.debug("Skipping non-source request because of sourceNavigationOnly: $nonSourceRequest")
+      LOG.debug("Skipping non-source request because of sourceNavigationOnly: ${nonSourceRequest.first}")
     }
     return false
   }
 
-  navigateNonSource(project = project, request = nonSourceRequest, options = options)
+  navigateNonSource(project = project, request = nonSourceRequest.first, options = nonSourceRequest.second)
   return true
 }
 

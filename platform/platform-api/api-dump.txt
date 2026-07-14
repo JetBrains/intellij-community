@@ -5419,7 +5419,9 @@ com.intellij.platform.ide.navigation.NavigationService
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.ide.navigation.NavigationService
 - a:navigate(com.intellij.openapi.actionSystem.DataContext,com.intellij.platform.ide.navigation.NavigationOptions,kotlin.coroutines.Continuation):java.lang.Object
 - a:navigate(com.intellij.platform.backend.navigation.NavigationRequest,com.intellij.platform.ide.navigation.NavigationOptions,com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
+- a:navigate(java.util.Collection,com.intellij.platform.ide.navigation.NavigationOptions,com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
 - bs:navigate$default(com.intellij.platform.ide.navigation.NavigationService,com.intellij.platform.backend.navigation.NavigationRequest,com.intellij.platform.ide.navigation.NavigationOptions,com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- bs:navigate$default(com.intellij.platform.ide.navigation.NavigationService,java.util.Collection,com.intellij.platform.ide.navigation.NavigationOptions,com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 f:com.intellij.platform.ide.navigation.NavigationService$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.ide.navigation.NavigationService
 com.intellij.platform.ide.productMode.IdeProductMode
