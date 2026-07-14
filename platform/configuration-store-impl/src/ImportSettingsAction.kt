@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.IdeBundle
@@ -24,12 +24,16 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.PathUtilRt
-import com.intellij.util.io.copy
+import com.intellij.util.io.Compressor
+import com.intellij.util.io.Decompressor
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.io.InputStream
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.zip.ZipException
@@ -120,10 +124,23 @@ open class ImportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
     }
 
     val tempFile = PathManager.getStartupScriptDir().resolve(saveFile.fileName)
-    saveFile.copy(tempFile)
-    val filenameFilter = ImportSettingsFilenameFilter(getRelativeNamesToExtract(getMarkedComponents(dialog.exportableComponents)))
-    StartupActionScriptManager.addActionCommands(listOf(StartupActionScriptManager.UnzipCommand(tempFile, configPath, filenameFilter),
-                                                        StartupActionScriptManager.DeleteCommand(tempFile)))
+    runWithModalProgressBlocking(ModalTaskOwner.guess(), ConfigurationStoreBundle.message("message.settings.preparing")) {
+      val filenameFilter = ImportSettingsFilenameFilter(getRelativeNamesToExtract(getMarkedComponents(dialog.exportableComponents)))
+      val tempDir = Files.createTempDirectory(PathManager.getStartupScriptDir(), saveFile.fileName.toString())
+      Decompressor.Zip(saveFile)
+        .withZipExtensions()
+        .filter(filenameFilter)
+        .extract(tempDir)
+      Compressor.Zip(tempFile).use { zip ->
+        zip.addDirectory(tempDir)
+      }
+      NioFiles.deleteRecursively(tempDir)
+    }
+
+    StartupActionScriptManager.addActionCommands(listOf(
+      StartupActionScriptManager.UnzipCommand(tempFile, configPath),
+      StartupActionScriptManager.DeleteCommand(tempFile)
+    ))
 
     UpdateSettings.getInstance().forceCheckForUpdateAfterRestart()
 
@@ -172,22 +189,20 @@ open class ImportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
     result.add(PluginManager.INSTALLED_TXT)
     return result
   }
-}
 
-@ApiStatus.Internal
-fun getPaths(input: InputStream): Set<String> {
-  val result = mutableSetOf<String>()
-  val zipIn = ZipInputStream(input)
-  zipIn.use {
-    while (true) {
-      val entry = zipIn.nextEntry ?: break
-      var path = entry.name.trimEnd('/')
-      result.add(path)
+  private fun getPaths(saveFile: Path): Set<String> {
+    val result = mutableSetOf<String>()
+    ZipInputStream(saveFile.inputStream()).use { zipIn ->
       while (true) {
-        path = PathUtilRt.getParentPath(path).takeIf { it.isNotEmpty() } ?: break
+        val entry = zipIn.nextEntry ?: break
+        var path = entry.name.trimEnd('/')
         result.add(path)
+        while (true) {
+          path = PathUtilRt.getParentPath(path).takeIf { it.isNotEmpty() } ?: break
+          result.add(path)
+        }
       }
     }
+    return result
   }
-  return result
 }

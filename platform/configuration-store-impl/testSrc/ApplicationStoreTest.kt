@@ -1,6 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.concurrency.currentTemporaryThreadContextOrNull
@@ -52,6 +50,7 @@ import java.io.InputStream
 import java.nio.file.Path
 import java.util.EnumMap
 import java.util.concurrent.CancellationException
+import java.util.zip.ZipInputStream
 import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.deleteIfExists
@@ -190,7 +189,9 @@ class ApplicationStoreTest {
     exportSettings(setOf(ExportableItem(FileSpec("a.xml", "a.xml", false), ""),
                          ExportableItem(FileSpec("foo", "foo", true), "")), exportedData, mapOf(), storageManager)
 
-    val relativePaths = getPaths(exportedData.toInputStream())
+    val relativePaths = ZipInputStream(exportedData.toInputStream()).use { zip ->
+      generateSequence { zip.nextEntry }.map { it.name.trimEnd('/') }.toList()
+    }
     assertThat(relativePaths).containsOnly("a.xml", "foo", "foo/bar.icls", "IntelliJ IDEA Global Settings")
 
     fun <B> Path.to(that: B) = MapEntry.entry(this, that)
