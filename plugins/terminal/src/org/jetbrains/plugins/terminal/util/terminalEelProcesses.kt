@@ -54,7 +54,7 @@ internal fun hasRunningCommandsBlocking(shellEelProcess: ShellEelProcess): Boole
     }
   }
   return runBlockingMaybeCancellable {
-    hasRunningCommandsBlocking(shellEelProcess)
+    hasRunningCommandsCatching(shellEelProcess)
   }
 }
 
