@@ -15,14 +15,14 @@ Stopped at NestedInIntermediateArgument.java:6
   [0] traceable Stream.of(10,11,12) -> count
   [1] traceable Stream.of(7,8,9) -> limit -> count
 === after count (bytecode offset 67) ===
-  [0] traceable Stream.of(10,11,12) -> count
+  [0] filtered  Stream.of(10,11,12) -> count
   [1] traceable Stream.of(7,8,9) -> limit -> count
 === before limit (bytecode offset 67) ===
-  [0] traceable Stream.of(10,11,12) -> count
+  [0] filtered  Stream.of(10,11,12) -> count
   [1] traceable Stream.of(7,8,9) -> limit -> count
 === before count#1 (bytecode offset 72) ===
-  [0] traceable Stream.of(10,11,12) -> count
-  [1] traceable Stream.of(7,8,9) -> limit -> count
+  [0] filtered  Stream.of(10,11,12) -> count
+  [1] filtered  Stream.of(7,8,9) -> limit -> count
 Resuming NestedInIntermediateArgument.java:6
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 

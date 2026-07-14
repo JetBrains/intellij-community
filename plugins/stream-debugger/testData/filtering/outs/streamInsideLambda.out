@@ -4,7 +4,7 @@ Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socke
 Stopped at StreamInsideLambda.java:7
 === breakpoint (bytecode offset 0) ===
   [0] traceable Stream.of(x) -> count
-  [1] traceable Stream.of(1,2) -> map -> toList
+  [1] filtered  Stream.of(1,2) -> map -> toList
 Resuming StreamInsideLambda.java:7
 Stopped at StreamInsideLambda.java:7
 Resuming StreamInsideLambda.java:7

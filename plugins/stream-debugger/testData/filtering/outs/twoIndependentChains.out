@@ -12,20 +12,20 @@ Stopped at TwoIndependentChains.java:6
   [0] traceable IntStream.of(1,2,3) -> sum
   [1] traceable IntStream.of(4,5,6) -> filter -> sum
 === after sum (bytecode offset 23) ===
-  [0] traceable IntStream.of(1,2,3) -> sum
+  [0] filtered  IntStream.of(1,2,3) -> sum
   [1] traceable IntStream.of(4,5,6) -> filter -> sum
 === before of#1 (bytecode offset 39) ===
-  [0] traceable IntStream.of(1,2,3) -> sum
+  [0] filtered  IntStream.of(1,2,3) -> sum
   [1] traceable IntStream.of(4,5,6) -> filter -> sum
 === before filter (bytecode offset 47) ===
-  [0] traceable IntStream.of(1,2,3) -> sum
+  [0] filtered  IntStream.of(1,2,3) -> sum
   [1] traceable IntStream.of(4,5,6) -> filter -> sum
 === after filter (bytecode offset 52) ===
-  [0] traceable IntStream.of(1,2,3) -> sum
-  [1] traceable IntStream.of(4,5,6) -> filter -> sum
+  [0] filtered  IntStream.of(1,2,3) -> sum
+  [1] filtered  IntStream.of(4,5,6) -> filter -> sum
 === before sum#1 (bytecode offset 52) ===
-  [0] traceable IntStream.of(1,2,3) -> sum
-  [1] traceable IntStream.of(4,5,6) -> filter -> sum
+  [0] filtered  IntStream.of(1,2,3) -> sum
+  [1] filtered  IntStream.of(4,5,6) -> filter -> sum
 Resuming TwoIndependentChains.java:6
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 

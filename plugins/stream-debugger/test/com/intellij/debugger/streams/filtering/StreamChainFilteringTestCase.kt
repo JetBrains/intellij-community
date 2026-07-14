@@ -57,7 +57,10 @@ abstract class StreamChainFilteringTestCase : DebuggerTestCase() {
     position: XSourcePosition,
     method: Method,
     bytecodeOffset: Long,
-  ): List<StreamChain> = filterTraceableStreams(project, chains, position, method, bytecodeOffset)
+  ): List<StreamChain> {
+    val breakpointElement = readAction { positionResolver.getNearestElementToBreakpoint(project, position) } ?: return chains
+    return filterTraceableStreams(chains, position, breakpointElement, method, bytecodeOffset)
+  }
 
   /**
    * Launches [className] from `testData/filtering/src`, stops at its single `// Breakpoint!` and prints the golden

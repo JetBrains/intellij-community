@@ -7,15 +7,15 @@ Stopped at ManyIntermediates.java:6
 === before map (bytecode offset 31) ===
   [0] traceable IntStream.of(1,2,3,4,5) -> map -> filter -> map -> sum
 === after map (bytecode offset 36) ===
-  [0] traceable IntStream.of(1,2,3,4,5) -> map -> filter -> map -> sum
+  [0] filtered  IntStream.of(1,2,3,4,5) -> map -> filter -> map -> sum
 === before filter (bytecode offset 41) ===
-  [0] traceable IntStream.of(1,2,3,4,5) -> map -> filter -> map -> sum
+  [0] filtered  IntStream.of(1,2,3,4,5) -> map -> filter -> map -> sum
 === before map#1 (bytecode offset 51) ===
-  [0] traceable IntStream.of(1,2,3,4,5) -> map -> filter -> map -> sum
+  [0] filtered  IntStream.of(1,2,3,4,5) -> map -> filter -> map -> sum
 === after map#1 (bytecode offset 56) ===
-  [0] traceable IntStream.of(1,2,3,4,5) -> map -> filter -> map -> sum
+  [0] filtered  IntStream.of(1,2,3,4,5) -> map -> filter -> map -> sum
 === before sum (bytecode offset 56) ===
-  [0] traceable IntStream.of(1,2,3,4,5) -> map -> filter -> map -> sum
+  [0] filtered  IntStream.of(1,2,3,4,5) -> map -> filter -> map -> sum
 Resuming ManyIntermediates.java:6
 Stopped at ManyIntermediates.java:6
 Resuming ManyIntermediates.java:6

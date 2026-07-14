@@ -13,7 +13,7 @@ Stopped at StopInsideQualifier.java:6
 === before map (bytecode offset 11) ===
   [0] traceable Arrays.stream(makeArray()) -> map -> sum
 === before sum (bytecode offset 16) ===
-  [0] traceable Arrays.stream(makeArray()) -> map -> sum
+  [0] filtered  Arrays.stream(makeArray()) -> map -> sum
 Resuming StopInsideQualifier.java:6
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 

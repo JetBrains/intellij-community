@@ -1,41 +1,59 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.filtering
 
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.impl.DebuggerUtilsEx
+import com.intellij.debugger.jdi.MethodBytecodeUtil
 import com.intellij.debugger.streams.core.wrapper.StreamChain
+import com.intellij.debugger.streams.psi.findPsiMethodCall
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.project.Project
+import com.intellij.psi.JavaRecursiveElementVisitor
+import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiLambdaExpression
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.util.ClassUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.sun.jdi.Method
+import org.jetbrains.org.objectweb.asm.Label
+import org.jetbrains.org.objectweb.asm.MethodVisitor
+import org.jetbrains.org.objectweb.asm.Opcodes
 
 /**
- * Result of the [classifyBySourcePosition] fast path.
- * - [traceable] - the chain has not started yet, keep it
- * - [notTraceable] - the chain has already (fully) executed, filter it out
- * - [uncertain] - the chain crosses the breakpoint line, only the precise bytecode analysis can decide
+ * Filters [chains] leaving only the ones still traceable from the current position: a chain is traceable while execution
+ * has not reached its first operator (the first intermediate call, or the terminal call when there are no intermediate
+ * ones). The producer/qualifier and its arguments are not operators.
+ *
+ * [classifyBySourcePosition] decides the chains lying fully above/below the stop line; the ones straddling it are decided
+ * precisely by matching each chain's first operator ([computeStreamCallMappings]) against the method bytecode
+ * ([matchOperatorOffsets]). [contextElement] and [position] describe where execution is stopped. Must be called on the
+ * debugger manager thread.
  */
-private data class ClassifiedStreams(
-  val traceable: List<StreamChain>,
-  val notTraceable: List<StreamChain>,
-  val uncertain: List<StreamChain>,
-)
-
 internal suspend fun filterTraceableStreams(
-  project: Project,
   chains: List<StreamChain>,
   position: XSourcePosition,
+  contextElement: PsiElement,
   method: Method,
   bytecodeOffset: Long,
 ): List<StreamChain> {
+  DebuggerManagerThreadImpl.assertIsManagerThread()
   if (chains.isEmpty()) return chains
+
   val classified = readAction {
-    val document = FileDocumentManager.getInstance().getDocument(position.file) ?: return@readAction null
+    val document = contextElement.containingFile?.fileDocument ?: return@readAction null
     classifyBySourcePosition(chains, document, position.line)
   } ?: return chains
-  return classified.traceable + classified.uncertain
+  if (classified.uncertain.isEmpty()) return classified.traceable
+
+  val bytecodeFiltered = filterByBytecodeOffset(contextElement, classified.uncertain, method, bytecodeOffset)
+  return classified.traceable + bytecodeFiltered
 }
 
+/**
+ * Fast line-based filter to remove irrelevant chains that are located entirely above the current debugger position.
+ */
 private fun classifyBySourcePosition(
   chains: List<StreamChain>,
   document: Document,
@@ -54,4 +72,158 @@ private fun classifyBySourcePosition(
     }
   }
   return ClassifiedStreams(traceable, notTraceable, uncertain)
+}
+
+private data class ClassifiedStreams(
+  val traceable: List<StreamChain>,
+  val notTraceable: List<StreamChain>,
+  val uncertain: List<StreamChain>,
+)
+
+private suspend fun filterByBytecodeOffset(
+  breakpointElement: PsiElement,
+  chains: List<StreamChain>,
+  method: Method,
+  bytecodeOffset: Long,
+): List<StreamChain> {
+  val mappings = readAction { computeStreamCallMappings(breakpointElement, chains) }
+  if (mappings.callIdToChain.isEmpty()) return mappings.candidates
+
+  val firstOperatorOffsets = matchOperatorOffsets(method, mappings.callIdToChain, mappings.lineRange)
+  return mappings.candidates.filter { chain ->
+    val offset = firstOperatorOffsets[chain]
+    offset == null || offset >= bytecodeOffset
+  }
+}
+
+/**
+ * Computes mapping of `call identifier => stream chain to which it corresponds`
+ *
+ * The unique call identifier is constructed as `method name + ASM signature + sequential call number within the method`.
+ *
+ * We build mappings only for the first operator in each chain
+ * because it is enough for us to know whether the stream execution has started or not.
+ *
+ * All the necessary information from the source code is precomputed at this stage to avoid mixing bytecode analysis and PSI parsing on DMT.
+ */
+private fun computeStreamCallMappings(breakpointElement: PsiElement, chains: List<StreamChain>): StreamCallMappings {
+  val psiFile = breakpointElement.containingFile ?: return StreamCallMappings(chains, emptyMap(), IntRange.EMPTY)
+  val host = DebuggerUtilsEx.getContainingMethod(breakpointElement) ?: return StreamCallMappings(chains, emptyMap(), IntRange.EMPTY)
+  val document = psiFile.fileDocument
+
+  val firstOperatorCallToChain = LinkedHashMap<PsiMethodCallExpression, StreamChain>()
+  val candidates = mutableListOf<StreamChain>()
+  for (chain in chains) {
+    val firstOperator = chain.intermediateCalls.firstOrNull() ?: chain.terminationCall
+    val firstOperatorCall = findPsiMethodCall(psiFile, firstOperator.textRange)
+    when {
+      firstOperatorCall == null -> candidates += chain
+      DebuggerUtilsEx.getContainingMethod(firstOperatorCall) != host -> Unit // operator in a nested method is already executing
+      else -> {
+        candidates += chain
+        firstOperatorCallToChain[firstOperatorCall] = chain
+      }
+    }
+  }
+
+  val hostBody = DebuggerUtilsEx.getBody(host)
+  val lineRange = computeLineBoundsForChains(document, chains)
+
+  if (firstOperatorCallToChain.isEmpty() || hostBody == null) return StreamCallMappings(candidates, emptyMap(), lineRange)
+
+  val signatureCounter = HashMap<String, Int>()
+  val callIdToChain = HashMap<String, StreamChain>()
+  visitMethodCallsInExecutionOrder(hostBody) { methodCall ->
+    if (document.getLineNumber(methodCall.textRange.startOffset) !in lineRange) return@visitMethodCallsInExecutionOrder
+    val callee = methodCall.resolveMethod() ?: return@visitMethodCallsInExecutionOrder
+    val signature = callee.name + ClassUtil.getAsmMethodSignature(callee)
+    val ordinal = signatureCounter.compute(signature) { _, value -> if (value == null) 0 else value + 1 }!!
+
+    val chain = firstOperatorCallToChain[methodCall]
+    if (chain != null) {
+      callIdToChain[invocationId(signature, ordinal)] = chain
+    }
+  }
+  return StreamCallMappings(candidates, callIdToChain, lineRange)
+}
+
+private fun invocationId(signature: String, ordinal: Int): String = "$signature#$ordinal"
+
+private class StreamCallMappings(
+  val candidates: List<StreamChain>,
+  // JVM signature of the operator call -> stream chain
+  val callIdToChain: Map<String, StreamChain>,
+  val lineRange: IntRange,
+)
+
+private fun computeLineBoundsForChains(document: Document, chains: List<StreamChain>): IntRange {
+  var min = Int.MAX_VALUE
+  var max = Int.MIN_VALUE
+  for (chain in chains) {
+    min = minOf(min, document.getLineNumber(chain.qualifierExpression.textRange.startOffset))
+    max = maxOf(max, document.getLineNumber(chain.terminationCall.textRange.endOffset))
+  }
+  return min..max
+}
+
+/**
+ * Scans the bytecode of [method] and, numbering the `invoke*` instructions on lines within [lineRange] exactly as
+ * [computeStreamCallMappings] numbers the PSI method calls.
+ *
+ * @returns the bytecode offset matching each chain's first operator
+ */
+private fun matchOperatorOffsets(
+  method: Method,
+  callIdToChain: Map<String, StreamChain>,
+  lineRange: IntRange,
+): Map<StreamChain, Long> {
+  val vm = method.virtualMachine()
+  if (!vm.canGetBytecodes() || !vm.canGetConstantPool()) return emptyMap()
+  val signatureCounter = HashMap<String, Int>()
+  val offsets = HashMap<StreamChain, Long>()
+  val visitor = object : MethodVisitor(Opcodes.API_VERSION), MethodBytecodeUtil.InstructionOffsetReader {
+    private var currentOffset = -1L
+    private var currentLine = -1 // 0-based, kept in sync with visitLineNumber
+
+    override fun readBytecodeInstructionOffset(offset: Int) {
+      currentOffset = offset.toLong()
+    }
+
+    override fun visitLineNumber(line: Int, start: Label) {
+      currentLine = line - 1 // JVM line numbers are 1-based
+    }
+
+    override fun visitMethodInsn(opcode: Int, owner: String, name: String, descriptor: String, isInterface: Boolean) {
+      if (currentLine !in lineRange) return
+      val signature = name + descriptor
+      val ordinal = signatureCounter.compute(signature) { _, value -> if (value == null) 0 else value + 1 }!!
+      val chain = callIdToChain[invocationId(signature, ordinal)]
+      if (chain != null) {
+        offsets[chain] = currentOffset
+      }
+    }
+  }
+  MethodBytecodeUtil.visit(method, visitor, true)
+  return offsets
+}
+
+/**
+ * Visits method calls in execution (post-)order so their per-signature ordinals line up with the bytecode invoke order.
+ * Lambda/class bodies are separate JVM methods, so we skip them.
+ */
+private inline fun visitMethodCallsInExecutionOrder(element: PsiElement, crossinline onCall: (PsiMethodCallExpression) -> Unit) {
+  element.accept(object : JavaRecursiveElementVisitor() {
+    override fun visitClass(aClass: PsiClass) {}
+    override fun visitLambdaExpression(expression: PsiLambdaExpression) {}
+
+    override fun visitAnonymousClass(aClass: PsiAnonymousClass) {
+      aClass.argumentList?.accept(this)
+    }
+
+    override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
+      expression.methodExpression.qualifierExpression?.accept(this)
+      expression.argumentList.accept(this)
+      onCall(expression)
+    }
+  })
 }

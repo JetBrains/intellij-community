@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.PsiElement
 import com.intellij.xdebugger.XDebugSession
 
 abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
@@ -67,14 +68,18 @@ abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
     )
   }
 
-  override suspend fun filterTraceableStreams(session: XDebugSession, chains: List<StreamChain>): List<StreamChain> {
+  override suspend fun filterTraceableStreams(
+    session: XDebugSession,
+    chains: List<StreamChain>,
+    contextElement: PsiElement,
+  ): List<StreamChain> {
     if (chains.isEmpty()) return chains
     val debugProcess = session.debugProcess as? JavaDebugProcess ?: return chains
     val position = session.currentPosition ?: return chains
     val context = debugProcess.debuggerSession.contextManager.context
     return withDebugContext(context) {
       val location = runCatching { context.frameProxy?.location() }.getOrNull() ?: return@withDebugContext chains
-      filterTraceableStreams(session.project, chains, position, location.method(), location.codeIndex())
+      filterTraceableStreams(chains, position, contextElement, location.method(), location.codeIndex())
     }
   }
 

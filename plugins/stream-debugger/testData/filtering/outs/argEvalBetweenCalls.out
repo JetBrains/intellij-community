@@ -6,17 +6,17 @@ Stopped at ArgEvalBetweenCalls.java:6
   [0] traceable IntStream.of(1,2) -> sum
   [1] traceable IntStream.of(3,4) -> sum
 === after sum (bytecode offset 19) ===
-  [0] traceable IntStream.of(1,2) -> sum
+  [0] filtered  IntStream.of(1,2) -> sum
   [1] traceable IntStream.of(3,4) -> sum
 === before of#1 (bytecode offset 30) ===
-  [0] traceable IntStream.of(1,2) -> sum
+  [0] filtered  IntStream.of(1,2) -> sum
   [1] traceable IntStream.of(3,4) -> sum
 === after sum#1 (bytecode offset 38) ===
-  [0] traceable IntStream.of(1,2) -> sum
-  [1] traceable IntStream.of(3,4) -> sum
+  [0] filtered  IntStream.of(1,2) -> sum
+  [1] filtered  IntStream.of(3,4) -> sum
 === before combine (bytecode offset 38) ===
-  [0] traceable IntStream.of(1,2) -> sum
-  [1] traceable IntStream.of(3,4) -> sum
+  [0] filtered  IntStream.of(1,2) -> sum
+  [1] filtered  IntStream.of(3,4) -> sum
 Resuming ArgEvalBetweenCalls.java:6
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 

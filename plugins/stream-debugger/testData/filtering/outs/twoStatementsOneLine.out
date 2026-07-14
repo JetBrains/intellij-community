@@ -5,11 +5,11 @@ Stopped at TwoStatementsOneLine.java:6
 === before of (bytecode offset 18) ===
   [0] traceable Stream.of(1,2) -> toList
 === after toList (bytecode offset 26) ===
-  [0] traceable Stream.of(1,2) -> toList
+  [0] filtered  Stream.of(1,2) -> toList
 === before of#1 (bytecode offset 45) ===
-  [0] traceable Stream.of(1,2) -> toList
+  [0] filtered  Stream.of(1,2) -> toList
 === after toList#1 (bytecode offset 53) ===
-  [0] traceable Stream.of(1,2) -> toList
+  [0] filtered  Stream.of(1,2) -> toList
 Resuming TwoStatementsOneLine.java:6
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 

@@ -9,11 +9,11 @@ Stopped at MultiLineChain.java:6
 === before map (bytecode offset 23) ===
   [0] traceable IntStream.of(1,2,3) -> map -> filter -> sum
 === after map (bytecode offset 28) ===
-  [0] traceable IntStream.of(1,2,3) -> map -> filter -> sum
+  [0] filtered  IntStream.of(1,2,3) -> map -> filter -> sum
 === before filter (bytecode offset 33) ===
-  [0] traceable IntStream.of(1,2,3) -> map -> filter -> sum
+  [0] filtered  IntStream.of(1,2,3) -> map -> filter -> sum
 === before sum (bytecode offset 38) ===
-  [0] traceable IntStream.of(1,2,3) -> map -> filter -> sum
+  [0] filtered  IntStream.of(1,2,3) -> map -> filter -> sum
 Resuming MultiLineChain.java:6
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 

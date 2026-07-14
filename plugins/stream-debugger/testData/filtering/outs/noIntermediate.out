@@ -9,7 +9,7 @@ Stopped at NoIntermediate.java:6
 === before count (bytecode offset 22) ===
   [0] traceable Stream.of("a","b","c") -> count
 === after count (bytecode offset 27) ===
-  [0] traceable Stream.of("a","b","c") -> count
+  [0] filtered  Stream.of("a","b","c") -> count
 Resuming NoIntermediate.java:6
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 

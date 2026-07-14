@@ -30,6 +30,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
@@ -105,31 +106,35 @@ class TraceStreamRunner(val cs: CoroutineScope) {
   }
 
   private suspend fun getChains(session: XDebugSession): List<StreamChainWithLibrary> {
+    val element = readAction { myPositionResolver.getNearestElementToBreakpoint(session) }
+    if (element == null) {
+      LOG.info("Element at cursor is not found")
+      return emptyList()
+    }
     val chains = readAction {
       runBlockingCancellable {
-        val element = myPositionResolver.getNearestElementToBreakpoint(session)
-        if (element == null) {
-          LOG.info("Element at cursor is not found")
-          emptyList()
-        }
-        else {
-          withBackgroundProgress(session.project, StreamDebuggerBundle.message("action.calculating.chains.background.progress.title")) {
-            CHAIN_RESOLVER.getChains(element)
-          }
+        withBackgroundProgress(session.project, StreamDebuggerBundle.message("action.calculating.chains.background.progress.title")) {
+          CHAIN_RESOLVER.getChains(element)
         }
       }
     }
     // Keep only the chains that can still be traced from the current execution position.
     // This depends on the exact runtime position, so it must run here, outside the position-independent ChainResolver cache.
-    return filterTraceable(session, chains)
+    return withBackgroundProgress(session.project, StreamDebuggerBundle.message("action.filtering.chains.background.progress.title")) {
+      filterTraceable(session, chains, element)
+    }
   }
 
-  private suspend fun filterTraceable(session: XDebugSession, chains: List<StreamChainWithLibrary>): List<StreamChainWithLibrary> {
+  private suspend fun filterTraceable(
+    session: XDebugSession,
+    chains: List<StreamChainWithLibrary>,
+    contextElement: PsiElement,
+  ): List<StreamChainWithLibrary> {
     if (chains.isEmpty()) return chains
     return chains
       .groupBy { it.provider }
       .flatMap { (provider, group) ->
-        val traceable = provider.filterTraceableStreams(session, group.map { it.chain })
+        val traceable = provider.filterTraceableStreams(session, group.map { it.chain }, contextElement)
         group.filter { it.chain in traceable }
       }
   }
