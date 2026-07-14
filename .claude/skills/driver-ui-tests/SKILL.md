@@ -331,6 +331,13 @@ After test failure, check:
 - Screenshots: `out/ide-tests/tests/{IDE-version}/{TestName}/{test-method}/log/screenshots/`
 - Exceptions: `out/ide-tests/tests/{IDE-version}/{TestName}/{test-method}/error/`
 
+### Inspect the LIVE UI hierarchy, not just the post-mortem file
+
+The `ui-hierarchy/ui.html` and `full-screen.png` written on failure are captured **after** `useDriverAndCloseIde` tears the IDE down — by then the session has ended and panels often revert to an empty/welcome state, so they can be misleading. Two better sources:
+
+- **Heartbeat screenshot** `log/screenshots/001_heartbeat/` — captured mid-run, shows the real state during the wait.
+- **Live UI hierarchy server** — while the IDE is up, the component tree is browsable at `http://localhost:<port>/api/remote-driver/` (the harness sets `-Dexpose.ui.hierarchy.url=true`; the port is logged at startup as `UI Hierarchy: http://localhost:<port>/api/remote-driver/`). To inspect interactively, **park the test** at the point of interest — temporarily raise a `waitFor` timeout (e.g. to `20.minutes`) — and `curl`/open that URL while the IDE stays alive. Each node exposes `class` (simple), `javaclass` (FQN, incl. `Outer$Inner` for inner classes), `visible_text`, and `accessiblename`; read these to build a reliable matcher instead of guessing from source.
+
 ### Common Issues
 
 1. **Element Not Found**: Check UI hierarchy HTML for the correct accessible name or class
