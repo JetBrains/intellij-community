@@ -4,4 +4,3 @@
     IO.println("Hello, world!");
     IO.print("Hello, world!");
 }
-

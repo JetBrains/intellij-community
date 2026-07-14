@@ -4,4 +4,3 @@ import p.List;
     List a = null;
     IO.println("Hello, world!" + args);
 }
-
