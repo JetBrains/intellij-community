@@ -38,6 +38,24 @@ private val MAVEN_VERSIONS: Array<String> = arrayOf<String>(
   "4/4.0.0",
 )
 
+/**
+ * @deprecated Use JUnit 5 with [com.intellij.maven.testFramework.fixtures.mavenImportingFixture] and
+ * [com.intellij.maven.testFramework.fixtures.MavenVersionArguments] for multi-version parameterization instead.
+ *
+ * Example:
+ * ```kotlin
+ * @TestApplication
+ * @ParameterizedClass
+ * @ArgumentsSource(MavenVersionArguments::class)
+ * class MyTest(mavenVersion: String, modelVersion: String) {
+ *   private val maven by mavenImportingFixture(mavenVersion, modelVersion)
+ *
+ *   @Test
+ *   fun myTest() = runBlocking { ... }
+ * }
+ * ```
+ */
+@Deprecated("Use JUnit 5 with mavenImportingFixture() and @ArgumentsSource(MavenVersionArguments::class) from com.intellij.maven.testFramework.fixtures instead")
 @RunWith(Parameterized::class)
 abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
 
