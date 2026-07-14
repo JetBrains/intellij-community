@@ -4,6 +4,8 @@ package com.intellij.polySymbols.testFramework
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.codeInsight.TargetElementUtilBase
 import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2
@@ -16,9 +18,14 @@ import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.find.usages.impl.buildUsageViewQuery
 import com.intellij.find.usages.impl.symbolSearchTarget
 import com.intellij.injected.editor.DocumentWindow
+import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolReference
+import com.intellij.model.psi.PsiSymbolReferenceService
+import com.intellij.model.psi.PsiSymbolService
+import com.intellij.model.psi.impl.allDeclarationsAround
 import com.intellij.model.psi.impl.referencesAt
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
@@ -40,17 +47,16 @@ import com.intellij.platform.backend.documentation.impl.computeDocumentationAsyn
 import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.declarations.PolySymbolDeclaration
-import com.intellij.polySymbols.declarations.PolySymbolDeclarationProvider
 import com.intellij.polySymbols.impl.canUnwrapSymbols
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.search.PsiLinkedPolySymbol
-import com.intellij.polySymbols.utils.PolySymbolDeclaredInPsi
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiPolyVariantReference
+import com.intellij.psi.PsiReference
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
@@ -60,6 +66,8 @@ import com.intellij.psi.search.SearchRequestCollector
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.SearchSession
 import com.intellij.psi.util.elementsAtOffsetUp
+import com.intellij.refactoring.rename.RenameProcessor
+import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.symbol.SymbolRenameTargetFactory
 import com.intellij.testFramework.PlatformTestUtil
@@ -139,7 +147,7 @@ fun CodeInsightTestFixture.checkLookupItems(
   fileName: String = InjectedLanguageManager.getInstance(project).getTopLevelFile(file).virtualFile.nameWithoutExtension,
   expectedDataLocation: String = "",
   expectedItemsLocation: String = expectedDataLocation,
-  expectedItemsFileNameInfixProvider: (prefix: String, suffix: String) -> String = { _,_ -> "" },
+  expectedItemsFileNameInfixProvider: (prefix: String, suffix: String) -> String = { _, _ -> "" },
   lookupItemFilter: (item: LookupElementInfo) -> Boolean = { true },
 ) {
   val hasDir = expectedItemsLocation.isNotEmpty()
@@ -162,8 +170,12 @@ fun CodeInsightTestFixture.checkLookupItems(
       val doc = targets.firstOrNull()?.let { computeDocumentationBlocking(it.createPointer()) }?.html?.trim()
 
       val sanitizedLookupString = lookupString.replace(Regex("[*\"?<>/\\[\\]:;|,#]"), "_")
-      val fullPrefix = "$expectedDataLocation${InjectedLanguageManager.getInstance(project).getTopLevelFile(file).virtualFile.nameWithoutExtension}$fileSuffix#$sanitizedLookupString"
-      checkDocumentation(doc ?: "<no documentation>", "$fileSuffix#$sanitizedLookupString${expectedItemsFileNameInfixProvider(fullPrefix, ".html")}", expectedDataLocation)
+      val fullPrefix = "$expectedDataLocation${
+        InjectedLanguageManager.getInstance(project).getTopLevelFile(file).virtualFile.nameWithoutExtension
+      }$fileSuffix#$sanitizedLookupString"
+      checkDocumentation(doc ?: "<no documentation>",
+                         "$fileSuffix#$sanitizedLookupString${expectedItemsFileNameInfixProvider(fullPrefix, ".html")}",
+                         expectedDataLocation)
     }
   }
 
@@ -422,38 +434,64 @@ fun PsiFile.findOffsetBySignature(signature: String): Int {
   return pos + caretOffset
 }
 
-fun CodeInsightTestFixture.polySymbolAtCaret(): PolySymbol? =
+fun CodeInsightTestFixture.symbolAtCaret(includePsiSymbols: Boolean = false): Symbol? {
+  // Symbol declarations
   injectionThenHost(file, caretOffset) { file, offset ->
-    file.polySymbolDeclarationsAt(offset).takeIf { it.isNotEmpty() }
-    ?: if (offset > 0) file.polySymbolDeclarationsAt(offset - 1).takeIf { it.isNotEmpty() } else null
+    file.allDeclarationsAround(offset).takeIf { it.isNotEmpty() }
+    ?: if (offset > 0) file.allDeclarationsAround(offset - 1).takeIf { it.isNotEmpty() } else null
   }
     ?.takeIf { it.isNotEmpty() }
     ?.also { if (it.size > 1) throw AssertionError("Multiple PolySymbolDeclarations found at caret position: $it") }
     ?.firstOrNull()
     ?.symbol
-  ?: injectionThenHost(file, caretOffset) { file, offset ->
+    ?.let { return it }
+
+  // Symbol references
+  injectionThenHost(file, caretOffset) { file, offset ->
     file.referencesAt(offset).filter { it.absoluteRange.contains(offset) }.takeIf { it.isNotEmpty() }
-    ?: if (offset > 0) file.referencesAt(offset - 1).filter { it.absoluteRange.contains(offset - 1) }.takeIf { it.isNotEmpty() } else null
+    ?: if (offset > 0) file.referencesAt(offset - 1)
+      .filter { it.absoluteRange.contains(offset - 1) }.takeIf { it.isNotEmpty() }
+    else null
   }
     ?.also { if (it.size > 1) throw AssertionError("Multiple PsiSymbolReferences found at caret position: $it") }
-    ?.resolveToPolySymbols()
+    ?.resolveToSymbols()
     ?.also {
       if (it.size > 1) {
         throw AssertionError("More than one symbol at caret position: $it")
       }
     }
     ?.getOrNull(0)
+    ?.let { return it }
 
+  if (!includePsiSymbols) return null
 
-fun CodeInsightTestFixture.polySymbolSourceAtCaret(): PsiElement? =
-  when (val symbol = polySymbolAtCaret()) {
-    is PsiLinkedPolySymbol -> symbol.linkedElement
-    is PolySymbolDeclaredInPsi -> symbol.sourceElement
-    else -> null
+  // PSI references
+  injectionThenHost(file, caretOffset) { file, offset ->
+    file.psiReferencesAt(offset).filter { it.absoluteRange.contains(offset) }.takeIf { it.isNotEmpty() }
+    ?: if (offset > 0) file.psiReferencesAt(offset - 1)
+      .filter { it.absoluteRange.contains(offset - 1) }.takeIf { it.isNotEmpty() }
+    else null
   }
+    ?.also { if (it.size > 1) throw AssertionError("Multiple PsiReferences found at caret position: $it") }
+    ?.firstOrNull()
+    ?.resolve()
+    ?.let { return PsiSymbolService.getInstance().asSymbol(it) }
 
-fun CodeInsightTestFixture.resolvePolySymbolReference(signature: String): PolySymbol {
-  val symbols = multiResolvePolySymbolReference(signature)
+  // PSI declarations
+  injectionThenHost(file, caretOffset) { file, offset ->
+    file.psiDeclarationAt(offset)
+    ?: if (offset > 0) file.psiDeclarationAt(offset - 1) else null
+  }
+    ?.let { return PsiSymbolService.getInstance().asSymbol(it) }
+
+  return null
+}
+
+fun CodeInsightTestFixture.polySymbolAtCaret(): PolySymbol? =
+  symbolAtCaret() as? PolySymbol
+
+fun CodeInsightTestFixture.resolveSymbolReference(signature: String): Symbol {
+  val symbols = multiResolveSymbolReference(signature)
   if (symbols.isEmpty()) {
     throw AssertionError("Reference resolves to null at '$signature'")
   }
@@ -464,7 +502,32 @@ fun CodeInsightTestFixture.resolvePolySymbolReference(signature: String): PolySy
   return symbols[0]
 }
 
-fun CodeInsightTestFixture.multiResolvePolySymbolReference(signature: String): List<PolySymbol> {
+fun CodeInsightTestFixture.resolvePolySymbolReference(signature: String): PolySymbol {
+  val symbols = multiResolveSymbolReference(signature).filterIsInstance<PolySymbol>()
+  if (symbols.isEmpty()) {
+    throw AssertionError("Reference resolves to null at '$signature'")
+  }
+  if (symbols.size != 1) {
+    throw AssertionError("Reference resolves to more than one element at '" + signature + "': "
+                         + symbols)
+  }
+  return symbols[0]
+}
+
+fun PsiElement.psiSymbolReferences(): Collection<PsiSymbolReference> {
+  val ownOrExternal = PsiSymbolReferenceService.getService().getReferences(this)
+  if (ownOrExternal.isNotEmpty()) {
+    return ownOrExternal
+  }
+  val classicReferences = references
+  if (classicReferences.isEmpty()) {
+    return emptyList()
+  }
+  val symbolService = PsiSymbolService.getInstance()
+  return classicReferences.map { symbolService.asSymbolReference(it) }
+}
+
+fun CodeInsightTestFixture.multiResolveSymbolReference(signature: String): List<Symbol> {
   val signatureOffset = file.findOffsetBySignature(signature)
   return injectionThenHost(file, signatureOffset) { file, offset ->
     file.referencesAt(offset)
@@ -477,15 +540,14 @@ fun CodeInsightTestFixture.multiResolvePolySymbolReference(signature: String): L
         }
         else refs
       }
-      .resolveToPolySymbols()
+      .resolveToSymbols()
       .takeIf { it.isNotEmpty() }
   } ?: emptyList()
 }
 
-private fun Collection<PsiSymbolReference>.resolveToPolySymbols(): List<PolySymbol> =
+fun Collection<PsiSymbolReference>.resolveToSymbols(): List<Symbol> =
   asSequence()
     .flatMap { it.resolveReference() }
-    .filterIsInstance<PolySymbol>()
     .flatMap {
       if (it is PolySymbolMatch
           && it.nameSegments.size == 1
@@ -496,11 +558,22 @@ private fun Collection<PsiSymbolReference>.resolveToPolySymbols(): List<PolySymb
     }
     .toList()
 
-private fun PsiFile.polySymbolDeclarationsAt(offset: Int): Collection<PolySymbolDeclaration> {
+private fun PsiFile.psiDeclarationAt(offset: Int): PsiElement? {
   for ((element, offsetInElement) in elementsAtOffsetUp(offset)) {
-    val declarations = PolySymbolDeclarationProvider.getAllDeclarations(element, offsetInElement)
-    if (declarations.isNotEmpty()) {
-      return declarations
+    val psiDeclaration = element as? PsiNamedElement ?: TargetElementUtilBase.getNamedElement(element, offsetInElement)
+    if (psiDeclaration != null) {
+      return psiDeclaration
+    }
+  }
+  return null
+}
+
+private fun PsiFile.psiReferencesAt(offset: Int): Collection<PsiReference> {
+  for ((element, offsetInElement) in elementsAtOffsetUp(offset)) {
+    val references = element.references
+    if (references.isNotEmpty()) {
+      return references
+        .filter { it.rangeInElement.contains(offsetInElement) }
     }
   }
   return emptyList()
@@ -519,8 +592,17 @@ private fun <T> injectionThenHost(file: PsiFile, offset: Int, computation: (PsiF
   return computation(file, offset)
 }
 
+/**
+ * Unwraps the backing [PsiElement] of [this] symbol, whether it's a legacy resolve target
+ * wrapped as [com.intellij.model.psi.impl.Psi2Symbol] or a PolySymbols-migrated
+ * [PsiLinkedPolySymbol] (e.g. [gdscript.polySymbols.psi.GdPsiMethodSymbol]).
+ */
+fun Symbol.toPsiElementOrNull(): PsiElement? =
+  PsiSymbolService.getInstance().extractElementFromSymbol(this)
+  ?: (this as? PsiLinkedPolySymbol)?.linkedElement
+
 fun CodeInsightTestFixture.resolveToPolySymbolSource(signature: String): PsiElement {
-  val polySymbol = resolvePolySymbolReference(signature)
+  val polySymbol = resolveSymbolReference(signature)
   val result = assertInstanceOf<PsiLinkedPolySymbol>(polySymbol).linkedElement
   assertNotNull("PolySymbol $polySymbol source is null", result)
   return result!!
@@ -566,7 +648,7 @@ fun CodeInsightTestFixture.multiResolveReference(signature: String): List<PsiEle
 
 @JvmOverloads
 fun CodeInsightTestFixture.assertUnresolvedReference(signature: String, okWithNoRef: Boolean = false, allowSelfReference: Boolean = false) {
-  assertEmpty("Reference at $signature should not resolve to PolySymbols.", multiResolvePolySymbolReference(signature))
+  assertEmpty("Reference at $signature should not resolve to PolySymbols.", multiResolveSymbolReference(signature))
   val offsetBySignature = file.findOffsetBySignature(signature)
   val ref = file.findReferenceAt(offsetBySignature)
   if (okWithNoRef && ref == null) {
@@ -695,38 +777,57 @@ fun CodeInsightTestFixture.checkTextByFile(actualContents: String, @TestDataFile
   }
 }
 
-fun CodeInsightTestFixture.canRenamePolySymbolAtCaret(): Boolean =
-  polySymbolAtCaret().let {
-    it is RenameTarget || it?.renameTarget != null || (it is PsiLinkedPolySymbol && it.linkedElement != null)
-  }
-
-fun CodeInsightTestFixture.renamePolySymbol(newName: String) {
-  val symbol = polySymbolAtCaret() ?: throw AssertionError("No PolySymbol at caret")
+fun CodeInsightTestFixture.renameSymbolAtCaret(newName: String, searchCommentsAndText: Boolean = false) {
+  val symbol = symbolAtCaret()
   var target: RenameTarget? = null
-
-  for (factory: SymbolRenameTargetFactory in SymbolRenameTargetFactory.EP_NAME.extensions) {
-    target = factory.renameTarget(project, symbol)
-    if (target != null) break
-  }
-  if (target == null) {
-    target = when (symbol) {
-      is RenameTarget -> symbol
-      is PsiLinkedPolySymbol -> {
-        val psiTarget = symbol.linkedElement
-                        ?: throw AssertionError("Symbol $symbol provides null source")
-        renameElement(psiTarget, newName)
-        return
+  if (symbol != null) {
+    for (factory in SymbolRenameTargetFactory.EP_NAME.extensions) {
+      target = factory.renameTarget(project, symbol)
+      if (target != null) break
+    }
+    if (target == null) {
+      target = when (symbol) {
+        is RenameTarget -> symbol
+        is PsiLinkedPolySymbol -> {
+          val psiTarget = symbol.linkedElement
+                          ?: throw AssertionError("Symbol $symbol provides null source")
+          renameElement(psiTarget, newName, searchCommentsAndText)
+          return
+        }
+        else -> (symbol as? PolySymbol)?.renameTarget
       }
-      else -> symbol.renameTarget
-              ?: throw AssertionError("Symbol $symbol does not provide rename target nor is a PsiLinkedPolySymbol")
+    }
+    if (target != null) {
+      if (target.createPointer().dereference() == null) {
+        throw AssertionError("Target $target pointer dereferences to null")
+      }
+      renameTarget(target, newName)
+      return
     }
   }
-  if (target.createPointer().dereference() == null) {
-    throw AssertionError("Target $target pointer dereferences to null")
+
+  // fallback to rename PSI element
+  val editor = editor
+  val findTargetFlags = TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED or TargetElementUtil.ELEMENT_NAME_ACCEPTED
+  var targetElement = TargetElementUtil.findTargetElement(editor, findTargetFlags)
+
+  // if no references found in injected fragment, try outer document
+  if (targetElement == null && editor is EditorWindow) {
+    targetElement = TargetElementUtil.findTargetElement(editor.getDelegate(), findTargetFlags)
   }
-  renameTarget(target, newName)
+  if (targetElement == null)
+    throw AssertionError("No Symbol or PSI Element to rename at caret position.")
+
+  renameElement(targetElement, newName, searchCommentsAndText)
 }
 
+private fun CodeInsightTestFixture.renameElement(targetElement: PsiElement, newName: String, searchCommentsAndText: Boolean) {
+  val targetElement = RenamePsiElementProcessor.forElement(targetElement)
+    .substituteElementToRename(targetElement, editor)
+  val renameProcessor = RenameProcessor(project, targetElement!!, newName,
+                                        searchCommentsAndText, searchCommentsAndText)
+  renameProcessor.run()
+}
 
 fun doCompletionItemsTest(
   fixture: CodeInsightTestFixture,
@@ -792,13 +893,24 @@ private val Editor.currentPositionSignature: String
 private val Editor.topLevelEditor
   get() = InjectedLanguageEditorUtil.getTopLevelEditor(this)
 
+
+@JvmOverloads
+fun CodeInsightTestFixture.usagesAtOffsetBySignature(
+  signature: String,
+  scope: SearchScope? = null,
+  usagesTestHelper: UsagesTestHelper = UsagesTestHelper.Default,
+): List<String> {
+  moveToOffsetBySignature(signature)
+  return usagesAtCaret(scope, usagesTestHelper)
+}
+
 @JvmOverloads
 fun CodeInsightTestFixture.usagesAtCaret(
   scope: SearchScope? = null,
   usagesTestHelper: UsagesTestHelper = UsagesTestHelper.Default,
 ): List<String> {
   val usages =
-    polySymbolAtCaret()
+    symbolAtCaret()
       ?.let { symbolSearchTarget(project, it) }
       ?.let { findUsages(it) }
       ?.mapNotNull { (it as? UsageInfo2UsageAdapter)?.usageInfo }

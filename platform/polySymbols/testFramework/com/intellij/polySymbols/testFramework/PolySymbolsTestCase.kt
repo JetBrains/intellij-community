@@ -846,19 +846,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
       configureCodeStyleSettings = configureCodeStyleSettings,
     ) {
       signature?.let { moveToOffsetBySignature(it) }
-      if (canRenamePolySymbolAtCaret()) {
-        renamePolySymbol(newName)
-      }
-      else {
-        var targetElement = TargetElementUtil.findTargetElement(
-          editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED or TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED)
-        if (targetElement == null)
-          throw AssertionError("No Symbol or PSI Element to rename at caret position.")
-        targetElement = RenamePsiElementProcessor.forElement(targetElement)
-          .substituteElementToRename(targetElement, editor)
-        val renameProcessor = RenameProcessor(project, targetElement!!, newName, searchCommentsAndText, searchCommentsAndText)
-        renameProcessor.run()
-      }
+      renameSymbolAtCaret(newName, searchCommentsAndText)
     }
   }
 
