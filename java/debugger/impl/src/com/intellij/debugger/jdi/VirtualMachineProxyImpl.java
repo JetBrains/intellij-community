@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.JavaVersion;
 import com.jetbrains.jdi.ReferenceTypeImpl;
 import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.BooleanValue;
@@ -487,6 +488,10 @@ public class VirtualMachineProxyImpl extends UserDataHolderBase implements JdiTi
 
   public String version() {
     return myVirtualMachine.version();
+  }
+
+  public JavaVersion javaVersion() {
+    return JavaVersion.parse(myVirtualMachine.version());
   }
 
   public String name() {

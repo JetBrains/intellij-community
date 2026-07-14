@@ -9,11 +9,13 @@ import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.withDebugContext
+import com.intellij.util.lang.JavaVersion
 import com.sun.jdi.ClassLoaderReference
 import com.sun.jdi.ClassType
 import com.sun.jdi.InvocationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.org.objectweb.asm.ClassReader
 import java.io.IOException
 import java.net.URLClassLoader
 import kotlin.io.path.Path
@@ -253,18 +255,29 @@ private fun defineClass(
       rtJarClassLoader.getResourceAsStream(classFilePath)
       ?: sourceClassLoader?.getResourceAsStream(classFilePath)
       ?: throw EvaluateException("Unable to find $name class bytes in idea-rt.jar: $ideaRtPath")
-    stream.use { stream ->
-      try {
-        ClassLoadingUtils.defineClass(name, stream.readAllBytes(), evaluationContext, classLoader)
-      }
-      catch (e: EvaluateException) {
-        throw ClassDefineTrialException(listOf(e))
-      }
+    val bytes = stream.use { it.readAllBytes() }
+    val classJavaVersion = extractJavaVersion(bytes) ?: throw EvaluateException("Cannot define $name, as class file version cannot be read")
+    val targetJavaVersion = evaluationContext.virtualMachineProxy.javaVersion()
+    if (classJavaVersion.feature > targetJavaVersion.feature) {
+      throw EvaluateException("Unable to define $name class compiled for Java $classJavaVersion: target VM is Java $targetJavaVersion")
+    }
+    try {
+      ClassLoadingUtils.defineClass(name, bytes, evaluationContext, classLoader)
+    }
+    catch (e: EvaluateException) {
+      throw ClassDefineTrialException(listOf(e))
     }
   }
   catch (ioe: IOException) {
     throw EvaluateException("Unable to read $name class bytes", ioe)
   }
+}
+
+private fun extractJavaVersion(bytes: ByteArray): JavaVersion? {
+  if (bytes.size < 7) return null
+  val major = ClassReader(bytes).readUnsignedShort(6)
+  if (major < 44) return null
+  return JavaVersion.compose(major - 44) // 44 = 1.0, 45 = 1.1, 46 = 1.2 etc.
 }
 
 private class ClassDefineTrialException(val trials: List<EvaluateException>) : Exception()

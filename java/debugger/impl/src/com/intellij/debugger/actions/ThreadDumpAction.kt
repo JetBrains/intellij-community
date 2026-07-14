@@ -33,7 +33,6 @@ import com.intellij.unscramble.DumpItem
 import com.intellij.unscramble.InfoDumpItem
 import com.intellij.unscramble.JavaThreadContainerDesc
 import com.intellij.unscramble.toDumpItems
-import com.intellij.util.lang.JavaVersion
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.jetbrains.jdi.ThreadReferenceImpl
 import com.sun.jdi.ArrayReference
@@ -488,7 +487,7 @@ internal class JavaVirtualThreadsProvider : ThreadDumpItemsProviderFactory() {
     private val enabled =
       Registry.`is`("debugger.thread.dump.include.virtual.threads") &&
       // Virtual threads first appeared in Java 19 as part of Project Loom.
-      JavaVersion.parse(vm.version()).feature >= 19 &&
+      vm.javaVersion().feature >= 19 &&
       // Check if VirtualThread class is at least loaded.
       vm.classesByName("java.lang.VirtualThread").isNotEmpty()
 
