@@ -190,5 +190,8 @@
     <applicationSettings service="com.intellij.toolWindow.xNext.toolbar.data.XNextPinnedService"/>
     <applicationSettings service="com.intellij.notification.impl.RemindLaterManager"/>
     <applicationSettings service="com.intellij.ide.plugins.org.PluginManagerConfigurableForOrgConfig"/>
+
+    <applicationService serviceInterface="com.intellij.ide.plugins.PluginPermissionService"
+                        serviceImplementation="com.intellij.openapi.updateSettings.impl.PluginPermissionServiceImpl"/>
   </extensions>
 </idea-plugin>

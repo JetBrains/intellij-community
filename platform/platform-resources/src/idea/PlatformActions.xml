@@ -1974,6 +1974,8 @@
 
     <action class="com.intellij.openapi.updateSettings.impl.PluginUpdateSourcesResetAction" internal="true"
             id="PluginUpdateSourcesResetAction"/>
+    <action class="com.intellij.openapi.updateSettings.impl.ResetPluginPermissionsAction"
+            id="ResetPluginPermissions"/>
   </actions>
 
   <actions resource-bundle="messages.MinimapBundle">
