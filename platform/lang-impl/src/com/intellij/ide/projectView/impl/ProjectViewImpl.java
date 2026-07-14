@@ -1257,7 +1257,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           }
         }
         catch (Throwable e) {
-          LOG.warn("An exception occurred when trying to add the pane " + pane.getId() + ", it may not appear or may have inconsistent state");
+          // Yes, we log EVERYTHING here, including CEs, because this particular thing isn't supposed to be cancellable.
+          LOG.error("An exception occurred when trying to add the pane " + pane.getId() + ", it may not appear or may have inconsistent state", e);
         }
       }
     }
