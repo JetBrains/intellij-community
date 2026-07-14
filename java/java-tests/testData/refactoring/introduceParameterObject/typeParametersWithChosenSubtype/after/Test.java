@@ -10,6 +10,6 @@ public class Test<U extends List> {
 		Collection v = foo(new Param(p));
 	}
 
-    private static record Param(Collection p) {
+    private record Param(Collection p) {
     }
 }

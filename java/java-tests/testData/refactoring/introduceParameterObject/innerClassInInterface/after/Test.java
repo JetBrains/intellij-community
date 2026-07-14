@@ -1,7 +1,7 @@
 public interface Test {
   void foo(Param param);
 
-    private static record Param(String s) {
+    private record Param(String s) {
     }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -292,7 +292,9 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
         final PsiClass[] classes = newFile.getClasses();
         assert classes.length > 0 : classString;
         final PsiClass innerClass = (PsiClass)containingClass.add(classes[0]);
-        PsiUtil.setModifierProperty(innerClass, PsiModifier.STATIC, true);
+        if (!innerClass.hasModifierProperty(PsiModifier.STATIC)) {
+          PsiUtil.setModifierProperty(innerClass, PsiModifier.STATIC, true);
+        }
         return (PsiClass)JavaCodeStyleManager.getInstance(newFile.getProject()).shortenClassReferences(innerClass);
       }
       else {
