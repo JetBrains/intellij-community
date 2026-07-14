@@ -3,7 +3,9 @@ package com.intellij.platform.projectView.pane
 
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
-import com.intellij.platform.projectView.actions.EditorChoice
+import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
+import com.intellij.platform.projectView.settings.ProjectViewPaneOption
+import com.intellij.platform.projectView.settings.ProjectViewPaneSortKey
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental

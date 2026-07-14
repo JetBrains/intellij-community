@@ -12,9 +12,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.platform.projectView.pane.FileNestingStateDTO
-import com.intellij.platform.projectView.pane.NestingRuleDTO
-import com.intellij.platform.projectView.pane.toDTO
+import com.intellij.platform.projectView.settings.FileNestingStateDTO
+import com.intellij.platform.projectView.settings.NestingRuleDTO
+import com.intellij.platform.projectView.settings.toDTO
 import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 
 internal class ConfigureFilesNestingAction : DumbAwareAction(), ActionRemoteBehaviorSpecification {

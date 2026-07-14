@@ -28,7 +28,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.actions.ProjectViewOptionMenuUpdater
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
-import com.intellij.platform.projectView.pane.NestingRuleDTO
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
 import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
 import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
@@ -45,14 +44,15 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneChangeSortKeyReques
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneOptionDTO
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionChanged
-import com.intellij.platform.projectView.pane.ProjectViewPaneSettingsStateDTO
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewSettingsStateEvent
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SuperRootModel
+import com.intellij.platform.projectView.settings.NestingRuleDTO
+import com.intellij.platform.projectView.settings.ProjectViewPaneOptionDTO
+import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateDTO
 import com.intellij.pom.Navigatable
 import com.intellij.ui.AutoScrollToSourceHandler
 import com.intellij.ui.ClientProperty

@@ -5,6 +5,8 @@ package com.intellij.platform.projectView.pane
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.actions.fromDTO
+import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValueImpl
+import com.intellij.platform.projectView.settings.toSettingValue
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview

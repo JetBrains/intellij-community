@@ -14,8 +14,8 @@
 - navigate(J,com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions,kotlin.coroutines.Continuation):java.lang.Object
 - pa:order(kotlin.coroutines.Continuation):java.lang.Object
 - pa:presentableName(kotlin.coroutines.Continuation):java.lang.Object
-- setFileNesting(com.intellij.platform.projectView.pane.ProjectViewPaneFileNestingValue,kotlin.coroutines.Continuation):java.lang.Object
-- setOptionValue(com.intellij.platform.projectView.pane.ProjectViewPaneOption,Z,kotlin.coroutines.Continuation):java.lang.Object
+- setFileNesting(com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue,kotlin.coroutines.Continuation):java.lang.Object
+- setOptionValue(com.intellij.platform.projectView.settings.ProjectViewPaneOption,Z,kotlin.coroutines.Continuation):java.lang.Object
 - setSelected(Z,com.intellij.platform.projectView.pane.ProjectViewPaneSelectionOptions,kotlin.coroutines.Continuation):java.lang.Object
-- setSortKey(com.intellij.platform.projectView.pane.ProjectViewPaneSortKey,kotlin.coroutines.Continuation):java.lang.Object
+- setSortKey(com.intellij.platform.projectView.settings.ProjectViewPaneSortKey,kotlin.coroutines.Continuation):java.lang.Object
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V

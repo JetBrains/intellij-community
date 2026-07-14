@@ -5,6 +5,9 @@ package com.intellij.platform.projectView.pane
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateBuilder
+import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateBuilderImpl
+import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateDTO
 import com.intellij.platform.util.coroutines.flow.IncrementalUpdateFlowProducer
 import com.intellij.platform.util.coroutines.flow.MutableStateWithIncrementalUpdates
 import kotlinx.coroutines.flow.Flow

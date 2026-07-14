@@ -23,11 +23,11 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
-import com.intellij.platform.projectView.pane.ProjectViewPaneOptionDTO
-import com.intellij.platform.projectView.pane.ProjectViewOptionStateDTO
-import com.intellij.platform.projectView.pane.ProjectViewPaneOption
-import com.intellij.platform.projectView.pane.ProjectViewPaneOptionImpl
-import com.intellij.platform.projectView.pane.ProjectViewSortKeyStateDTO
+import com.intellij.platform.projectView.settings.ProjectViewOptionStateDTO
+import com.intellij.platform.projectView.settings.ProjectViewPaneOption
+import com.intellij.platform.projectView.settings.ProjectViewPaneOptionDTO
+import com.intellij.platform.projectView.settings.ProjectViewPaneOptionImpl
+import com.intellij.platform.projectView.settings.ProjectViewSortKeyStateDTO
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

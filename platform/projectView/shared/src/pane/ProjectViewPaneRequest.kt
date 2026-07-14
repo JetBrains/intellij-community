@@ -2,6 +2,8 @@
 package com.intellij.platform.projectView.pane
 
 import com.intellij.ide.projectView.NodeSortKey
+import com.intellij.platform.projectView.settings.NestingRuleDTO
+import com.intellij.platform.projectView.settings.ProjectViewPaneOptionDTO
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
@@ -31,8 +33,8 @@ data class ProjectViewPaneNavigateRequest(
 @ApiStatus.Internal
 @Serializable
 data class ProjectViewPaneChangeOptionValueRequest(
-  val option: ProjectViewPaneOptionDTO,
-  val newValue: Boolean,
+    val option: ProjectViewPaneOptionDTO,
+    val newValue: Boolean,
 ) : ProjectViewPaneRequest()
 
 @ApiStatus.Internal
@@ -44,6 +46,6 @@ data class ProjectViewPaneChangeSortKeyRequest(
 @ApiStatus.Internal
 @Serializable
 data class ProjectViewPaneChangeFileNestingRequest(
-  val isFileNestingOn: Boolean,
-  val activeRules: List<NestingRuleDTO>,
+    val isFileNestingOn: Boolean,
+    val activeRules: List<NestingRuleDTO>,
 ) : ProjectViewPaneRequest()

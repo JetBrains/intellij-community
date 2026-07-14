@@ -12,17 +12,17 @@ import com.intellij.platform.projectView.pane.ProjectViewNodeModelImpl
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
-import com.intellij.platform.projectView.pane.ProjectViewPaneFileNestingValue
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenOptions
 import com.intellij.platform.projectView.pane.ProjectViewPaneModel
 import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions
-import com.intellij.platform.projectView.pane.ProjectViewPaneOption
 import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionOptions
-import com.intellij.platform.projectView.pane.ProjectViewPaneSortKey
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilder
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SelectInRequest
+import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
+import com.intellij.platform.projectView.settings.ProjectViewPaneOption
+import com.intellij.platform.projectView.settings.ProjectViewPaneSortKey
 import kotlinx.coroutines.channels.Channel
 import org.jetbrains.annotations.ApiStatus
 

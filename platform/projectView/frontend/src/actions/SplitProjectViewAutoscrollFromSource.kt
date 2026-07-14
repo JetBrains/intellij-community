@@ -10,11 +10,11 @@ import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.actions.EditorChoice
-import com.intellij.platform.projectView.pane.ProjectViewPaneSettingsStateDTO
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
-import com.intellij.platform.projectView.pane.ProjectViewPaneOptionDTO
 import com.intellij.platform.projectView.actions.SelectInSplitProjectViewImpl
 import com.intellij.platform.projectView.frontend.window.ProjectViewToolWindowServiceImpl
+import com.intellij.platform.projectView.settings.ProjectViewPaneOptionDTO
+import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateDTO
 import com.intellij.util.asDisposable
 import com.intellij.util.ui.update.DebouncedUpdates
 import kotlinx.coroutines.CoroutineName

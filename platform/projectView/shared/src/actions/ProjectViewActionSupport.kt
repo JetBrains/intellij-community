@@ -3,9 +3,9 @@ package com.intellij.platform.projectView.actions
 
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.openapi.project.Project
-import com.intellij.platform.projectView.pane.NestingRuleDTO
-import com.intellij.platform.projectView.pane.ProjectViewPaneSettingsStateDTO
-import com.intellij.platform.projectView.pane.ProjectViewPaneOptionDTO
+import com.intellij.platform.projectView.settings.NestingRuleDTO
+import com.intellij.platform.projectView.settings.ProjectViewPaneOptionDTO
+import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateDTO
 import com.intellij.platform.projectView.window.ProjectViewToolWindowService
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
