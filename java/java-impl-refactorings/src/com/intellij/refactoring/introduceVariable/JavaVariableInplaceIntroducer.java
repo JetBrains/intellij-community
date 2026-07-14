@@ -2,6 +2,7 @@
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.intention.impl.TypeExpression;
+import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
@@ -40,7 +41,6 @@ import com.intellij.psi.PsiFunctionalExpression;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiInstanceOfExpression;
 import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.PsiPattern;
 import com.intellij.psi.PsiPatternVariable;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
@@ -99,13 +99,15 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   private final boolean myCanBeVarType;
   private final EditorState myEditorState;
 
-  public JavaVariableInplaceIntroducer(final Project project,
-                                       IntroduceVariableSettings settings, PsiElement chosenAnchor, final Editor editor,
-                                       final PsiExpression expr,
-                                       final boolean cantChangeFinalModifier,
-                                       final PsiExpression[] occurrences,
-                                       final TypeSelectorManagerImpl selectorManager,
-                                       final @NlsContexts.Command String title) {
+  public JavaVariableInplaceIntroducer(Project project,
+                                       IntroduceVariableSettings settings,
+                                       PsiElement chosenAnchor,
+                                       Editor editor,
+                                       PsiExpression expr,
+                                       boolean cantChangeFinalModifier,
+                                       PsiExpression[] occurrences,
+                                       TypeSelectorManagerImpl selectorManager,
+                                       @NlsContexts.Command String title) {
     super(project, editor, CommonJavaRefactoringUtil.outermostParenthesizedExpression(expr), null, occurrences, selectorManager, title);
     mySettings = settings;
     myChosenAnchor = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(chosenAnchor);
@@ -160,18 +162,15 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
 
   @Override
   protected @Nullable PsiVariable getVariable() {
-    final PsiElement declarationStatement = myPointer != null ? myPointer.getElement() : null;
-    if (declarationStatement instanceof PsiDeclarationStatement) {
-      PsiElement[] declaredElements = ((PsiDeclarationStatement)declarationStatement).getDeclaredElements();
+    final PsiElement element = myPointer != null ? myPointer.getElement() : null;
+    if (element instanceof PsiDeclarationStatement declaration) {
+      PsiElement[] declaredElements = declaration.getDeclaredElements();
       return declaredElements.length == 0 ? null : (PsiVariable)declaredElements[0];
     }
-    else if (declarationStatement instanceof PsiInstanceOfExpression) {
-      PsiPattern pattern = ((PsiInstanceOfExpression)declarationStatement).getPattern();
-      if (pattern instanceof PsiTypeTestPattern) {
-        return ((PsiTypeTestPattern)pattern).getPatternVariable();
-      }
+    else if (element instanceof PsiInstanceOfExpression expression && expression.getPattern() instanceof PsiTypeTestPattern pattern) {
+      return pattern.getPatternVariable();
     }
-    return declarationStatement instanceof PsiVariable ? (PsiVariable)declarationStatement : null;
+    return element instanceof PsiVariable var ? var : null;
   }
 
   @Override
@@ -185,9 +184,9 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   }
 
   @Override
-  protected void restoreState(@NotNull PsiVariable psiField) {
+  protected void restoreState(@NotNull PsiVariable variable) {
     if (myDeleteSelf) return;
-    super.restoreState(psiField);
+    super.restoreState(variable);
   }
 
   @Override
@@ -228,10 +227,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   @Override
   protected PsiExpression getBeforeExpr() {
     final PsiVariable variable = getVariable();
-    if (variable != null) {
-      return variable.getInitializer();
-    }
-    return super.getBeforeExpr();
+    return variable != null ? variable.getInitializer() : super.getBeforeExpr();
   }
 
   @Override
@@ -304,10 +300,11 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     boolean canBeVarType = myCanBeVarType && variable instanceof PsiLocalVariable;
     if (myCantChangeFinalModifier && !canBeVarType) return;
 
-    IntroduceVariablePopupComponent
-      popupComponent = new IntroduceVariablePopupComponent(myEditor, myProject, myCantChangeFinalModifier, canBeVarType, getCommandName(), () -> getVariable());
-    
-    SelectableInlayPresentation presentation = TemplateInlayUtil.createSettingsPresentation((EditorImpl)templateState.getEditor(), popupComponent.logStatisticsOnShowCallback());
+    IntroduceVariablePopupComponent popupComponent =
+      new IntroduceVariablePopupComponent(myEditor, myProject, myCantChangeFinalModifier, canBeVarType, getCommandName(), () -> getVariable());
+
+    SelectableInlayPresentation presentation =
+      TemplateInlayUtil.createSettingsPresentation((EditorImpl)templateState.getEditor(), popupComponent.logStatisticsOnShowCallback());
     TemplateInlayUtil.SelectableTemplateElement templateElement = new TemplateInlayUtil.SelectableTemplateElement(presentation) {
       @Override
       public void onSelect(@NotNull TemplateState templateState) {
@@ -315,12 +312,13 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
         popupComponent.logStatisticsOnShow(null);
       }
     };
-    TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, 
+    TemplateInlayUtil.createNavigatableButtonWithPopup(templateState,
                                                        currentVariableRange.getEndOffset(),
-                                                       presentation, 
-                                                       popupComponent.createPopupPanel(), 
+                                                       presentation,
+                                                       popupComponent.createPopupPanel(),
                                                        templateElement,
-                                                       popupComponent.logStatisticsOnHideCallback()); 
+                                                       false,
+                                                       popupComponent.logStatisticsOnHideCallback());
   }
 
   @Override
@@ -334,7 +332,8 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     if (variable != null) {
       final PsiTypeElement typeElement = variable.getTypeElement();
       if (typeElement != null) {
-        builder.replaceElement(typeElement, "Variable_Type", IntroduceVariableUtil.createExpression(myExpression, typeElement.getText()), true, mySkipTypeExpressionOnStart);
+        Expression expression = IntroduceVariableUtil.createExpression(myExpression, typeElement.getText());
+        builder.replaceElement(typeElement, "Variable_Type", expression, true, mySkipTypeExpressionOnStart);
       }
     }
   }
@@ -346,7 +345,8 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
         LOG.assertTrue(expression.isValid(), expression.getText());
         stringUsages.add(Pair.create(expression, new TextRange(0, expression.getTextLength())));
       }
-    } else if (getExpr() != null && !myReplaceSelf && getExpr().getParent() != getVariable()) {
+    }
+    else if (getExpr() != null && !myReplaceSelf && getExpr().getParent() != getVariable()) {
       final PsiExpression expr = getExpr();
       LOG.assertTrue(expr.isValid(), expr.getText());
       stringUsages.add(Pair.create(expr, new TextRange(0, expr.getTextLength())));
@@ -364,25 +364,22 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     super.addReferenceAtCaret(refs);
   }
 
-  private static void appendTypeCasts(List<RangeMarker> occurrenceMarkers,
-                                      PsiFile file,
-                                      Project project,
-                                      @Nullable PsiVariable psiVariable) {
+  private static void appendTypeCasts(List<RangeMarker> occurrenceMarkers, PsiFile file, Project project, @Nullable PsiVariable variable) {
     if (occurrenceMarkers != null) {
       for (RangeMarker occurrenceMarker : occurrenceMarkers) {
         final PsiElement refVariableElement = file.findElementAt(occurrenceMarker.getStartOffset());
         final PsiReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
         if (referenceExpression != null) {
           final PsiElement parent = referenceExpression.getParent();
-          if (parent instanceof PsiVariable) {
-            createCastInVariableDeclaration(project, (PsiVariable)parent);
+          if (parent instanceof PsiVariable var) {
+            createCastInVariableDeclaration(project, var);
           }
-          else if (parent instanceof PsiReferenceExpression && psiVariable != null) {
-            final PsiExpression initializer = psiVariable.getInitializer();
+          else if (parent instanceof PsiReferenceExpression ref && variable != null) {
+            final PsiExpression initializer = variable.getInitializer();
             LOG.assertTrue(initializer != null);
             final PsiType type = initializer.getType();
-            if (((PsiReferenceExpression)parent).resolve() == null && type != null && !type.equals(psiVariable.getType()) &&
-                !LambdaUtil.notInferredType(type) && !PsiTypes.nullType().equals(type)) {
+            if (ref.resolve() == null && type != null && !type.equals(variable.getType())
+                && !LambdaUtil.notInferredType(type) && !PsiTypes.nullType().equals(type)) {
               final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
               final PsiExpression castedExpr =
                 elementFactory.createExpressionFromText("((" + type.getCanonicalText() + ")" + referenceExpression.getText() + ")", parent);
@@ -392,8 +389,8 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
         }
       }
     }
-    if (psiVariable != null && psiVariable.isValid() && !PsiTypes.nullType().equals(psiVariable.getType())) {
-      DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> createCastInVariableDeclaration(project, psiVariable));
+    if (variable != null && variable.isValid() && !PsiTypes.nullType().equals(variable.getType())) {
+      DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> createCastInVariableDeclaration(project, variable));
     }
   }
 
@@ -412,9 +409,9 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     }
   }
 
-  private static @Nullable @NlsContexts.PopupAdvertisement String getAdvertisementText(final PsiDeclarationStatement declaration,
-                                                                                       final PsiType type,
-                                                                                       final boolean hasTypeSuggestion) {
+  private static @Nullable @NlsContexts.PopupAdvertisement String getAdvertisementText(PsiDeclarationStatement declaration,
+                                                                                       PsiType type,
+                                                                                       boolean hasTypeSuggestion) {
     final VariablesProcessor processor = ReassignVariableUtil.findVariablesOfType(declaration, type);
     if (processor.size() > 0) {
       final Shortcut shortcut = KeymapUtil.getPrimaryShortcut("IntroduceVariable");
@@ -435,7 +432,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     return IntroduceVariableBase.createFinals(file);
   }
 
-  public static void adjustLine(final PsiVariable psiVariable, final Document document) {
+  public static void adjustLine(PsiVariable psiVariable, Document document) {
     final int modifierListOffset = psiVariable.getTextRange().getStartOffset();
     final int varLineNumber = document.getLineNumber(modifierListOffset);
 
@@ -458,9 +455,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
 
     if (isReplaceAllOccurrences()) {
       List<RangeMarker> occurrences = new ArrayList<>();
-      ReferencesSearch.search(variable).asIterable().forEach(reference -> {
-        occurrences.add(createMarker(reference.getElement()));
-      });
+      ReferencesSearch.search(variable).asIterable().forEach(reference -> occurrences.add(createMarker(reference.getElement())));
       setOccurrenceMarkers(occurrences);
       myOccurrences = new PsiExpression[occurrences.size()];
     }
@@ -488,8 +483,8 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     if (variable instanceof PsiField || variable instanceof PsiResourceVariable) {
       myPointer = smartPointerManager.createSmartPsiElementPointer(variable);
     }
-    else if (variable instanceof PsiPatternVariable) {
-      PsiElement parent = ((PsiPatternVariable)variable).getPattern().getParent();
+    else if (variable instanceof PsiPatternVariable var) {
+      PsiElement parent = var.getPattern().getParent();
       LOG.assertTrue(parent instanceof PsiInstanceOfExpression);
       myPointer = smartPointerManager.createSmartPsiElementPointer(parent);
     }
