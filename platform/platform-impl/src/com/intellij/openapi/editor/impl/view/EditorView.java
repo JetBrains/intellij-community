@@ -477,7 +477,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     }
     int maxColumn = 0;
     int logicalColumn = DocumentInternalUtil.calcLogicalColumn(text, 0, 0, offset, getTabSize());
-    for (LineLayout.VisualFragment fragment : getFoldRegionLayout(region).getFragmentsInVisualOrder(0)) {
+    for (LineVisualFragment fragment : getFoldRegionLayout(region).getFragmentsInVisualOrder(0)) {
       int startLC = fragment.getStartLogicalColumn();
       int endLC = fragment.getEndLogicalColumn();
       if (logicalColumn > startLC && logicalColumn < endLC ||
@@ -493,7 +493,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   public int visualColumnToOffsetInFoldRegion(@NotNull FoldRegion region, int visualColumn, boolean leansRight) {
     if (visualColumn < 0 || visualColumn == 0 && !leansRight) return 0;
     String text = region.getPlaceholderText();
-    for (LineLayout.VisualFragment fragment : getFoldRegionLayout(region).getFragmentsInVisualOrder(0)) {
+    for (LineVisualFragment fragment : getFoldRegionLayout(region).getFragmentsInVisualOrder(0)) {
       int startVC = fragment.getStartVisualColumn();
       int endVC = fragment.getEndVisualColumn();
       if (visualColumn > startVC && visualColumn < endVC ||

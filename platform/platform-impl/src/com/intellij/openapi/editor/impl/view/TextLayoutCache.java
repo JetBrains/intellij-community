@@ -10,12 +10,14 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.ElfCandidate;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Font;
+import java.text.Bidi;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +41,7 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   private ArrayList<LineLayout> myLines = new ArrayList<>();
   private int myDocumentChangeOldEndLine;
 
-  private final ObjectLinkedOpenHashSet<LineLayout.Chunk> laidOutChunks = new ObjectLinkedOpenHashSet<>(MAX_CHUNKS_IN_ACTIVE_EDITOR);
+  private final ObjectLinkedOpenHashSet<LineChunk> laidOutChunks = new ObjectLinkedOpenHashSet<>(MAX_CHUNKS_IN_ACTIVE_EDITOR);
 
   TextLayoutCache(EditorView view) {
     myView = view;
@@ -77,10 +79,10 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     return layout != null && layout != myBidiNotRequiredMarker;
   }
 
-  void onChunkAccess(@NotNull LineLayout.Chunk chunk) {
+  void onChunkAccess(@NotNull LineChunk chunk) {
     if (laidOutChunks.addAndMoveToFirst(chunk) && laidOutChunks.size() > getChunkCacheSizeLimit()) {
       debug();
-      laidOutChunks.removeLast().clearCache();
+      laidOutChunks.removeLast().clearFragments();
     }
   }
 
@@ -124,7 +126,7 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
       myDocumentChangeOldEndLine,
       newEndLine,
       true,
-      LineLayout.isBidiLayoutRequired(event.getNewFragment())
+      isBidiLayoutRequired(event.getNewFragment())
     );
     if (myLines.size() != myDocument.getLineCount()) {
       LOG.error(
@@ -190,9 +192,9 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   private void trimChunkCache() {
     int limit = getChunkCacheSizeLimit();
     while (laidOutChunks.size() > limit) {
-      LineLayout.Chunk chunk = laidOutChunks.removeLast();
+      LineChunk chunk = laidOutChunks.removeLast();
       debug();
-      chunk.clearCache();
+      chunk.clearFragments();
     }
   }
 
@@ -210,5 +212,10 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     if (myLines == null) {
       myView.getEditor().throwDisposalError("Editor is already disposed");
     }
+  }
+
+  private static boolean isBidiLayoutRequired(@NotNull CharSequence text) {
+    char[] chars = CharArrayUtil.fromSequence(text);
+    return Bidi.requiresBidi(chars, 0, chars.length);
   }
 }

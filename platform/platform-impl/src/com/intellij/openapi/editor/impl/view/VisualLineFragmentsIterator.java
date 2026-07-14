@@ -60,13 +60,13 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
   private int mySegmentStartOffset;
   private int mySegmentEndOffset;
   private int myCurrentFoldRegionIndex;
-  private Iterator<LineLayout.VisualFragment> myFragmentIterator;
+  private Iterator<LineVisualFragment> myFragmentIterator;
   private List<Inlay<?>> myInlays;
   private int myCurrentInlayIndex;
   private float myCurrentX;
   private float myPrevX;
   private int myCurrentVisualColumn;
-  private LineLayout.VisualFragment myDelegate;
+  private LineVisualFragment myDelegate;
   private FoldRegion myFoldRegion;
   private int myFoldRegionColumns;
   private int myCurrentStartLogicalLine;
@@ -200,7 +200,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
           }
         }
       }
-      if (myInlays.isEmpty() || myInlays.get(0).getOffset() > mySegmentStartOffset) {
+      if (myInlays.isEmpty() || myInlays.getFirst().getOffset() > mySegmentStartOffset) {
         setFragmentIterator();
       }
     }
@@ -232,7 +232,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
 
   private int getFoldRegionWidthInColumns() {
     int maxVisualColumn = 0;
-    for (LineLayout.VisualFragment fragment : myView.getFoldRegionLayout(myFoldRegion).getFragmentsInVisualOrder(0)) {
+    for (LineVisualFragment fragment : myView.getFoldRegionLayout(myFoldRegion).getFragmentsInVisualOrder(0)) {
       maxVisualColumn = fragment.getEndVisualColumn();
     }
     return maxVisualColumn;
@@ -240,7 +240,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
 
   private @NotNull VisualColumn getVisualColumnForXInsideFoldRegion(float x) {
     LineLayout layout = myView.getFoldRegionLayout(myFoldRegion);
-    for (LineLayout.VisualFragment fragment : layout.getFragmentsInVisualOrder(0)) {
+    for (LineVisualFragment fragment : layout.getFragmentsInVisualOrder(0)) {
       if (x <= fragment.getEndX()) {
         return fragment.xToVisualColumn(x);
       }
@@ -250,7 +250,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
 
   private float getXForVisualColumnInsideFoldRegion(int column) {
     LineLayout layout = myView.getFoldRegionLayout(myFoldRegion);
-    for (LineLayout.VisualFragment fragment : layout.getFragmentsInVisualOrder(0)) {
+    for (LineVisualFragment fragment : layout.getFragmentsInVisualOrder(0)) {
       if (column <= fragment.getEndVisualColumn()) {
         return fragment.visualColumnToX(column);
       }
@@ -293,7 +293,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
       myDelegate = null;
       myFoldRegion = null;
       myCurrentStartLogicalLine = myCurrentEndLogicalLine;
-      Inlay inlay = myInlays.get(myCurrentInlayIndex);
+      Inlay<?> inlay = myInlays.get(myCurrentInlayIndex);
       myCurrentX += alignToInt(inlay.getWidthInPixels());
       myCurrentVisualColumn++;
       myCurrentInlayIndex++;
@@ -414,7 +414,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
       if (myDelegate != null) return myDelegate.getLength();
       if (myFoldRegion != null) {
         int length = 0;
-        for (LineLayout.VisualFragment fragment : myView.getFoldRegionLayout(myFoldRegion).getFragmentsInVisualOrder(0)) {
+        for (LineVisualFragment fragment : myView.getFoldRegionLayout(myFoldRegion).getFragmentsInVisualOrder(0)) {
           length += fragment.getLength();
         }
         return length;
@@ -427,7 +427,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
       if (myDelegate != null) return myDelegate.visualColumnToOffset(relativeVisualColumn);
       if (myFoldRegion != null) {
         int relativeOffset = 0;
-        for (LineLayout.VisualFragment fragment : myView.getFoldRegionLayout(myFoldRegion).getFragmentsInVisualOrder(0)) {
+        for (LineVisualFragment fragment : myView.getFoldRegionLayout(myFoldRegion).getFragmentsInVisualOrder(0)) {
           if (relativeVisualColumn >= fragment.getStartVisualColumn() && relativeVisualColumn <= fragment.getEndVisualColumn()) {
             return relativeOffset + fragment.visualColumnToOffset(relativeVisualColumn - fragment.getStartVisualColumn());
           }
@@ -498,7 +498,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
         LineLayout foldRegionLayout = myView.getFoldRegionLayout(myFoldRegion);
         return g -> {
           int relativeOffset = 0;
-          for (LineLayout.VisualFragment fragment : foldRegionLayout.getFragmentsInVisualOrder(x)) {
+          for (LineVisualFragment fragment : foldRegionLayout.getFragmentsInVisualOrder(x)) {
             int relativeOffsetEnd = relativeOffset + fragment.getLength();
             if (relativeOffset < endRelativeOffset && relativeOffsetEnd > startRelativeOffset) {
               fragment.draw(fragment.getStartX(), y,
@@ -509,7 +509,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
           }
         };
       }
-      return g -> {};
+      return _ -> {};
     }
   }
 

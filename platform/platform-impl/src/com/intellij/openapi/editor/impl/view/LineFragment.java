@@ -22,7 +22,7 @@ public sealed interface LineFragment
   int getLength();
 
   int getLogicalColumnCount(int startColumn);
-  
+
   int getVisualColumnCount(float startX);
 
   // columns are visual

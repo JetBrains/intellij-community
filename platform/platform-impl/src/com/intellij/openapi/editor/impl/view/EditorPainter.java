@@ -914,7 +914,7 @@ public final class EditorPainter implements TextDrawingCallback {
                                             @Nullable Color effectColor, @Nullable EffectType effectType) {
       paintTextEffect(x, x + layout.getWidth(), (int)y, effectColor, effectType, false);
       myGraphics.setColor(color);
-      for (LineLayout.VisualFragment fragment : layout.getFragmentsInVisualOrder(x)) {
+      for (LineVisualFragment fragment : layout.getFragmentsInVisualOrder(x)) {
         fragment.draw(myGraphics, fragment.getStartX(), y);
         x = fragment.getEndX();
       }
