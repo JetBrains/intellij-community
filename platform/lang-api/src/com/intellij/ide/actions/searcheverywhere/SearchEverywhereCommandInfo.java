@@ -5,6 +5,12 @@ import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nls;
 
+/**
+ * @deprecated The old Search Everywhere API is being sunset.
+ * Use {@code com.intellij.platform.searchEverywhere.SeCommandInfo} and
+ * {@code com.intellij.platform.searchEverywhere.SeCommandInfoFactory} instead.
+ */
+@Deprecated
 public final class SearchEverywhereCommandInfo {
   private final String command;
   private final @Nls String definition;
