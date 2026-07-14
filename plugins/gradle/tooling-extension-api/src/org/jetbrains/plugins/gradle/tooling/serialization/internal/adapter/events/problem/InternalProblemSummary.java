@@ -3,8 +3,10 @@ package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.even
 
 import org.gradle.tooling.events.problems.ProblemId;
 import org.gradle.tooling.events.problems.ProblemSummary;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class InternalProblemSummary implements ProblemSummary {
 
   private final @NotNull ProblemId id;

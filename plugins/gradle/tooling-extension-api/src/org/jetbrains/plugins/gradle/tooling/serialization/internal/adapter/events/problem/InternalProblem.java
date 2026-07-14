@@ -4,12 +4,14 @@ package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.even
 import org.gradle.tooling.events.problems.Location;
 import org.gradle.tooling.events.problems.Problem;
 import org.gradle.tooling.events.problems.Solution;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.InternalFailure;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public class InternalProblem implements Problem {
 
   private final @NotNull InternalProblemDefinition definition;

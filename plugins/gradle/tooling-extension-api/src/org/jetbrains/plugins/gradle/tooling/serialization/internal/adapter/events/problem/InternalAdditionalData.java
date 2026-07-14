@@ -2,10 +2,12 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem;
 
 import org.gradle.tooling.events.problems.AdditionalData;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
+@ApiStatus.Internal
 public class InternalAdditionalData implements AdditionalData {
 
   private final @NotNull Map<String, Object> data;

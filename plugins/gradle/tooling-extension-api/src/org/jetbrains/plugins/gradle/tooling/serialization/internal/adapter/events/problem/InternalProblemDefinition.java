@@ -2,9 +2,11 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem;
 
 import org.gradle.tooling.events.problems.ProblemDefinition;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class InternalProblemDefinition implements ProblemDefinition {
 
   private final @NotNull InternalProblemId id;

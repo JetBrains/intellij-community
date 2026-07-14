@@ -2,9 +2,11 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem;
 
 import org.gradle.tooling.events.problems.ProblemGroup;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class InternalProblemGroup implements ProblemGroup {
 
   private final @NotNull String name;

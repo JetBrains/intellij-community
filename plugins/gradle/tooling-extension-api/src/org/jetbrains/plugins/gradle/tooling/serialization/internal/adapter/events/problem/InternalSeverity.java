@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem;
 
 import org.gradle.tooling.events.problems.Severity;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class InternalSeverity implements Severity {
 
   private final int severity;

@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem;
 
 import org.gradle.tooling.events.problems.Details;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class InternalDetails implements Details {
 
   private final @NotNull String details;

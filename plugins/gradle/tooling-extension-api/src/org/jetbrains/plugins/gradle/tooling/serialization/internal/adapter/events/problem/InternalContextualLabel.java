@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem;
 
 import org.gradle.tooling.events.problems.ContextualLabel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class InternalContextualLabel implements ContextualLabel {
 
   private final @NotNull String contextualLabel;

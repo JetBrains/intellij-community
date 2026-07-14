@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem;
 
 import org.gradle.tooling.events.problems.DocumentationLink;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class InternalDocumentationLink implements DocumentationLink {
 
   private final @NotNull String url;
