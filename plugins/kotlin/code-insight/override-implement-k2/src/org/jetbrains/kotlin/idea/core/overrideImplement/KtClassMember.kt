@@ -57,7 +57,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.findClass
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaContextParameterOwnerSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -485,7 +484,7 @@ object ContextParametersListRenderer: KaContextReceiverListRenderer {
         typeRenderer: KaTypeRenderer,
         printer: PrettyPrinter
     ) {
-        if (owner is KaContextParameterOwnerSymbol && owner.contextParameters.any { it.psi is KtParameter }) {
+        if (owner is KaCallableSymbol && owner.contextParameters.any { it.psi is KtParameter }) {
             printer {
                 append("context(")
                 printCollection(owner.contextParameters) { contextParameter ->

@@ -313,6 +313,11 @@ public class FirKeywordCompletionTestGenerated extends AbstractFirKeywordComplet
         runTest("../../completion/testData/keywords/InIf.kt");
     }
 
+    @TestMetadata("InInterfaceCompanionBlockScope.kt")
+    public void testInInterfaceCompanionBlockScope() throws Exception {
+        runTest("../../completion/testData/keywords/InInterfaceCompanionBlockScope.kt");
+    }
+
     @TestMetadata("InInterfaceScope.kt")
     public void testInInterfaceScope() throws Exception {
         runTest("../../completion/testData/keywords/InInterfaceScope.kt");

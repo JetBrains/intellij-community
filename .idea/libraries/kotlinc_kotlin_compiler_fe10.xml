@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-compiler-fe10" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-fe10-for-ide:2.4.20-dev-9133">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-fe10-for-ide:2.5.0-dev-498">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.4.20-dev-9133/kotlin-compiler-fe10-for-ide-2.4.20-dev-9133.jar">
-          <sha256sum>820d6190cf45eb0eb94fe53a8c2dd7c72a827bc01b9a62c386f63c1c66ad738a</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.5.0-dev-498/kotlin-compiler-fe10-for-ide-2.5.0-dev-498.jar">
+          <sha256sum>ef466488cbee555170441a746f609b78b4ff78a84ffc970efacd09499415e0b7</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.4.20-dev-9133/kotlin-compiler-fe10-for-ide-2.4.20-dev-9133.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.5.0-dev-498/kotlin-compiler-fe10-for-ide-2.5.0-dev-498.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.4.20-dev-9133/kotlin-compiler-fe10-for-ide-2.4.20-dev-9133-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.5.0-dev-498/kotlin-compiler-fe10-for-ide-2.5.0-dev-498-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
