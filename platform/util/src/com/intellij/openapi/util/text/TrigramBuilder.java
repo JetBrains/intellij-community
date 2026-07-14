@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.AbstractMap;
@@ -84,8 +85,12 @@ public final class TrigramBuilder {
   }
 
   public static @NotNull Map<Integer, Void> getTrigramsAsMap(@NotNull CharSequence text) {
+    return getTrigramsAsMap(text, null);
+  }
+
+  public static @NotNull Map<Integer, Void> getTrigramsAsMap(@NotNull CharSequence text, @Nullable Runnable checkCanceled) {
     return new AbstractMap<Integer, Void>() {
-      final IntSet trigrams = getTrigrams(text);
+      final IntSet trigrams = getTrigrams(text, checkCanceled);
 
       @Override
       public int size() {
@@ -160,9 +165,13 @@ public final class TrigramBuilder {
    * Every single trigram is represented by a single integer where char bytes are stored with 8-bit offsets.
    */
   public static @NotNull IntSet getTrigrams(@NotNull CharSequence text) {
+    return getTrigrams(text, null);
+  }
+
+  public static @NotNull IntSet getTrigrams(@NotNull CharSequence text, @Nullable Runnable checkCanceled) {
     State state = new State(new AddonlyIntSet(1 + text.length() / 8));
     char[] array = CharArrayUtil.fromSequenceWithoutCopying(text);
-    return array != null ? state.processArray(array) : state.processSequence(text);
+    return array != null ? state.processArray(array) : state.processSequence(text, checkCanceled);
   }
 
   private static class State {
@@ -193,9 +202,12 @@ public final class TrigramBuilder {
       }
     }
 
-    AddonlyIntSet processSequence(CharSequence text) {
+    AddonlyIntSet processSequence(CharSequence text, @Nullable Runnable checkCanceled) {
       int length = text.length();
       for (int i = 0; i < length; i++) {
+        if (checkCanceled != null && i % 10000 == 0) {
+          checkCanceled.run();
+        }
         process(text.charAt(i));
       }
       return set;
