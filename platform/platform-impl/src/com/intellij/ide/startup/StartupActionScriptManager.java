@@ -274,6 +274,9 @@ public final class StartupActionScriptManager {
       this(source.toPath(), destination.toPath());
     }
 
+    /// @deprecated no longer supported; repack the archive in advance if needed
+    @Deprecated(forRemoval = true)
+    @SuppressWarnings("DeprecatedIsStillUsed")
     public UnzipCommand(@NotNull Path source, @NotNull Path destination, @Nullable Predicate<? super String> filenameFilter) {
       mySource = source.toAbsolutePath().toString();
       myDestination = destination.toAbsolutePath().toString();
