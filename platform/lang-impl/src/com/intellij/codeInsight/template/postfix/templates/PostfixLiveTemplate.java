@@ -128,6 +128,12 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   /**
    * Adjusts the provided key with command completion based on certain conditions.
    *
+   * <p>Example: the {@code if} template has the key {@code .if}. Command completion uses the same {@code '.'}
+   * as its {@link CommandCompletionFactory#filterSuffix() filter suffix}, so typing {@code expr..if} triggers
+   * it. The raw key is still {@code .if}, missing the extra {@code '.'}, so this method widens it to
+   * {@code ..if} — matching the whole fragment that is replaced on expansion. Plain {@code expr.if} keeps the
+   * key {@code .if}.
+   *
    * @param key The key to adjust, may be null.
    * @param project The current project context, may be null.
    * @param language The programming language context, may be null.
