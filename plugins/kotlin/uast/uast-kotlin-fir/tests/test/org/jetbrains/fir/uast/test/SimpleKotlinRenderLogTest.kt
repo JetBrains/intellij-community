@@ -29,6 +29,9 @@ class SimpleKotlinRenderLogTest : AbstractFirUastTest(), AbstractKotlinRenderLog
     fun testWhenIs() = doCheck("WhenIs.kt")
 
     @Test
+    fun testWhenElse() = doCheck("WhenElse.kt")
+
+    @Test
     fun testDefaultImpls() = doCheck("DefaultImpls.kt")
 
     @Test
