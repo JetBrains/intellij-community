@@ -14,6 +14,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.testFramework.RunAll
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenImportListener
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -96,20 +97,22 @@ abstract class KotlinMavenImportingTestBase(
       })
   }
 
-  @AfterEach
-  fun tearDownKotlinMavenImportingBase(): Unit = runBlocking {
-    try {
-      assertWithinTimeout {
-        val scheduled = artifactDownloadingScheduled.get()
-        val finished = artifactDownloadingFinished.get()
-        Assertions.assertEquals( scheduled, finished,"Expected $scheduled artifact downloads, but finished $finished")
-      }
+    @AfterEach
+    fun tearDownKotlinMavenImportingBase() {
+      RunAll.runAll(
+        {
+          runBlocking {
+            assertWithinTimeout {
+              val scheduled = artifactDownloadingScheduled.get()
+              val finished = artifactDownloadingFinished.get()
+              Assertions.assertEquals(scheduled, finished, "Expected $scheduled artifact downloads, but finished $finished")
+            }
+          }
+        },
+        { resetCodeStyle(project) },
+        { sdkCreationChecker?.removeNewKotlinSdk() },
+      )
     }
-    finally {
-      resetCodeStyle(project)
-      sdkCreationChecker?.removeNewKotlinSdk()
-    }
-  }
 
   protected fun facetSettings(moduleName: String): IKotlinFacetSettings =
     KotlinFacet.get(maven.getModule(moduleName))!!.configuration.settings
