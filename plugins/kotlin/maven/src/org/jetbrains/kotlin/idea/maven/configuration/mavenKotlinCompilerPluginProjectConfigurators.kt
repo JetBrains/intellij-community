@@ -153,7 +153,7 @@ class LombokMavenKotlinCompilerPluginProjectConfigurator : AbstractMavenKotlinCo
         val configPath = module.findLombokConfigPath() ?: return
         val configurationElement = kotlinPlugin.configuration.ensureTagExists()
         val pluginOptions = configurationElement.findSubTagOrCreate("pluginOptions")
-        val option = "lombok:config=$configPath"
+        val option = $$"lombok:config=${project.basedir}/$$configPath"
         if (pluginOptions.findSubTags("option").any { it.value.text == option }) return
 
         pluginOptions.add(pluginOptions.createChildTag("option", option))
