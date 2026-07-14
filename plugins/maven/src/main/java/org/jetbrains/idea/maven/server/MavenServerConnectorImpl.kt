@@ -78,7 +78,7 @@ open class MavenServerConnectorImpl(project: Project,
         mySupport = factory.create(jdk, vmOptions, mavenDistribution, project, myDebugPort)
         mySupport!!.onTerminate(Consumer {
           MavenLog.LOG.debug("[connector] terminate " + this@MavenServerConnectorImpl)
-          val mavenServerManager = ApplicationManager.getApplication().getServiceIfCreated(
+          val mavenServerManager = ApplicationManager.getApplication()?.getServiceIfCreated(
             MavenServerManager::class.java)
           mavenServerManager?.shutdownConnector(this@MavenServerConnectorImpl, false)
         })
