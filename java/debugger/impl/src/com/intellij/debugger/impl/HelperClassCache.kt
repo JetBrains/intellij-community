@@ -9,8 +9,6 @@ import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.withDebugContext
-import com.intellij.debugger.impl.ClassLoaderInfo.DefinedInCompanionClassLoader
-import com.intellij.debugger.impl.ClassLoaderInfo.LoadFailedMarker
 import com.sun.jdi.ClassLoaderReference
 import com.sun.jdi.ClassType
 import com.sun.jdi.InvocationException
@@ -20,11 +18,6 @@ import java.io.IOException
 import java.net.URLClassLoader
 import kotlin.io.path.Path
 import kotlin.time.Duration.Companion.seconds
-
-private sealed interface ClassLoaderInfo {
-  object LoadFailedMarker : ClassLoaderInfo
-  class DefinedInCompanionClassLoader(val classLoader: ClassLoaderReference) : ClassLoaderInfo
-}
 
 /**
  * Helper classes are loaded into the user's process to be able to make efficient debugger computations.
@@ -42,7 +35,8 @@ private sealed interface ClassLoaderInfo {
  * and will be used for further loading requests.
  */
 internal class HelperClassCache(debugProcess: DebugProcessImpl, managerThread: DebuggerManagerThreadImpl) {
-  private val evaluationClassLoaderMapping = HashMap<ClassLoaderReference?, ClassLoaderInfo>()
+  private val companionClassLoaders = HashMap<ClassLoaderReference?, ClassLoaderReference>()
+  private val failedToLoad = HashMap<ClassLoaderReference?, HashSet<String>>()
 
   init {
     debugProcess.addDebugProcessListener(object : DebugProcessListener {
@@ -59,15 +53,14 @@ internal class HelperClassCache(debugProcess: DebugProcessImpl, managerThread: D
     cls: Class<*>, vararg additionalClassesToLoad: String,
   ): ClassType? {
     val currentClassLoader = evaluationContext.classLoader
-    val classLoaderInfo = evaluationClassLoaderMapping[currentClassLoader]
+    val failed = failedToLoad[currentClassLoader]
+    if (failed != null && cls.name in failed) return null
+    val companionClassLoader = companionClassLoaders[currentClassLoader]
     try {
-      if (classLoaderInfo == null && !forceNewClassLoader) {
+      if (companionClassLoader == null && !forceNewClassLoader) {
         return tryLoadingInParentOrCompanion(evaluationContext, cls, *additionalClassesToLoad)
       }
-      return when (classLoaderInfo) {
-        is LoadFailedMarker -> null
-        is DefinedInCompanionClassLoader? -> tryLoadingInCompanion(classLoaderInfo, evaluationContext, cls, *additionalClassesToLoad)
-      }
+      return tryLoadingInCompanion(companionClassLoader, evaluationContext, cls, *additionalClassesToLoad)
     }
     catch (e: ClassDefineTrialException) {
       val exception = e.trials.last()
@@ -120,25 +113,26 @@ internal class HelperClassCache(debugProcess: DebugProcessImpl, managerThread: D
   }
 
   private fun tryLoadingInCompanion(
-    currentInfo: DefinedInCompanionClassLoader?,
+    cachedCompanionClassLoader: ClassLoaderReference?,
     evaluationContext: EvaluationContextImpl,
     cls: Class<*>, vararg additionalClassesToLoad: String,
   ): ClassType? {
     try {
-      val companionClassLoader = currentInfo?.classLoader
+      val companionClassLoader = cachedCompanionClassLoader
                                  ?: ClassLoadingUtils.getClassLoader(evaluationContext, evaluationContext.debugProcess)
       val type = tryToDefineInClassLoader(evaluationContext, companionClassLoader, companionClassLoader,
                                           cls, *additionalClassesToLoad) ?: return null
-      if (currentInfo == null) {
+      if (cachedCompanionClassLoader == null) {
         DebuggerUtilsAsync.disableCollection(companionClassLoader)
-        evaluationClassLoaderMapping[evaluationContext.classLoader] = DefinedInCompanionClassLoader(companionClassLoader)
+        companionClassLoaders[evaluationContext.classLoader] = companionClassLoader
       }
       return type
     }
     catch (e: Throwable) {
       val isLoadingFailed = e is EvaluateException || e is ClassDefineTrialException
-      if (isLoadingFailed && currentInfo == null) {
-        evaluationClassLoaderMapping[evaluationContext.classLoader] = LoadFailedMarker
+      if (isLoadingFailed && cachedCompanionClassLoader == null) {
+        val failed = failedToLoad.getOrPut(evaluationContext.classLoader) { HashSet() }
+        failed.add(cls.name)
       }
       throw e
     }
@@ -153,12 +147,15 @@ internal class HelperClassCache(debugProcess: DebugProcessImpl, managerThread: D
       while (true) {
         delay(5.seconds)
         withDebugContext(managerThread, PrioritizedTask.Priority.LOWEST) {
-          val allClassLoadersSnapshot = evaluationClassLoaderMapping.keys.filterNotNull()
+          val allClassLoadersSnapshot = HashSet<ClassLoaderReference>()
+          allClassLoadersSnapshot.addAll(companionClassLoaders.keys.filterNotNull())
+          allClassLoadersSnapshot.addAll(failedToLoad.keys.filterNotNull())
           val collectedClassLoaders = allClassLoadersSnapshot.filter { it.isCollectedAsync() }
           for (classLoader in collectedClassLoaders) {
-            val info = evaluationClassLoaderMapping.remove(classLoader)
-            if (info is DefinedInCompanionClassLoader) {
-              DebuggerUtilsImpl.enableCollection(info.classLoader)
+            val companionClassLoader = companionClassLoaders.remove(classLoader)
+            failedToLoad.remove(classLoader)
+            if (companionClassLoader != null) {
+              DebuggerUtilsImpl.enableCollection(companionClassLoader)
             }
           }
         }
@@ -168,11 +165,11 @@ internal class HelperClassCache(debugProcess: DebugProcessImpl, managerThread: D
 
   private fun releaseAllClassLoaders() {
     DebuggerManagerThreadImpl.assertIsManagerThread()
-    val createdLoaders = evaluationClassLoaderMapping.values.filterIsInstance<DefinedInCompanionClassLoader>()
-    for (info in createdLoaders) {
-      DebuggerUtilsImpl.enableCollection(info.classLoader)
+    for (companionClassLoader in companionClassLoaders.values) {
+      DebuggerUtilsImpl.enableCollection(companionClassLoader)
     }
-    evaluationClassLoaderMapping.clear()
+    companionClassLoaders.clear()
+    failedToLoad.clear()
   }
 }
 
