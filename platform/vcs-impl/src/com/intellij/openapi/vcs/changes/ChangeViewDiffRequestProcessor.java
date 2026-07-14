@@ -260,7 +260,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   protected @Nullable AnAction createGoToChangeAction() {
     Supplier<ListSelection<? extends Wrapper>> changesSupplier =
       Registry.is("vcs.diff.preview.scope.navigation.to.group")
-      ? this::getCurrentGroupListSelection
+      ? this::getGroupOrMultiSelectionListSelection
       : this::getChanges;
     return PresentableGoToChangePopupAction.create(changesSupplier::get, new MyGoToChangePopupController());
   }
@@ -273,10 +273,15 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     return Collections.emptyList();
   }
 
-  private @NotNull ListSelection<? extends Wrapper> getCurrentGroupListSelection() {
+  private @NotNull ListSelection<? extends Wrapper> getGroupOrMultiSelectionListSelection() {
     Wrapper currentChange = getCurrentChange();
     if (currentChange == null) {
       return ListSelection.empty();
+    }
+    // If there is an explicit multiple selection (2+ items), scope the navigation to it.
+    List<? extends Wrapper> selectedChanges = ContainerUtil.newArrayList(iterateSelectedChanges());
+    if (selectedChanges.size() > 1) {
+      return ListSelection.create(selectedChanges, currentChange);
     }
     List<? extends Wrapper> groupChanges = toListIfNotMany(iterateChangesInSameGroup(currentChange), true);
     if (groupChanges == null) {
