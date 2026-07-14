@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WindowStateService
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
@@ -51,6 +52,7 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.EventQueue
 import java.awt.Frame
+import java.awt.KeyboardFocusManager
 import java.awt.Rectangle
 import java.awt.Toolkit
 import java.awt.Window
@@ -122,6 +124,14 @@ abstract class NonModalWindowWrapper(
   private var windowDisposable: Disposable? = null
   /** Non-null only on macOS while [activeWindow] is a [WindowFrame]. Tracks native full-screen state. */
   private var fullScreenSupport: FullScreenSupport? = null
+
+  /**
+   * The AWT window that had focus when this wrapper was constructed — i.e. the window the user
+   * was in when they invoked the action that opened Settings. Captured eagerly so that
+   * [isInvokingFrameInFullScreen] can identify the invoking IDE frame even after AWT focus
+   * has shifted to the newly created Settings window.
+   */
+  private val invokingWindow: Window? = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
 
   protected var isFloat: Boolean
     get() = PropertiesComponent.getInstance().getBoolean(floatModeKey, true)
@@ -196,7 +206,8 @@ abstract class NonModalWindowWrapper(
     IdeBundle.messagePointer("action.ToggleAction.description.pin.window"),
     AllIcons.General.Pin_tab,
   ) {
-    override fun isSelected(e: AnActionEvent): Boolean = isFloat
+    override fun isSelected(e: AnActionEvent): Boolean =
+      if (::activeWindow.isInitialized) activeWindow is FloatDialog else isFloat
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       isFloat = state
       switchWindowMode(state)
@@ -216,7 +227,11 @@ abstract class NonModalWindowWrapper(
   protected fun initWindow(content: JComponent, minSize: Dimension, initialSize: Dimension) {
     this.content = content
     this.minWindowSize = minSize
-    activeWindow = createAwtWindow(isFloat, content, minSize, initialSize)
+    // When the invoking IDE frame is in full-screen, always open as a dialog (float/pinned) so
+    // the Settings window appears on the IDE's Space rather than spawning its own separate Space.
+    // The saved preference is not modified so it is honoured the next time the IDE is not in full-screen.
+    val effectiveFloat = isFloat || isInvokingFrameInFullScreen()
+    activeWindow = createAwtWindow(effectiveFloat, content, minSize, initialSize)
     loadAndRegisterWindowState(activeWindow)
     fitWindowToScreen(activeWindow)
     installWindowListeners()
@@ -598,6 +613,27 @@ abstract class NonModalWindowWrapper(
   /** Returns the IDE's JFrame for [project]; used as a fallback [JDialog] owner in Float mode. */
   protected fun getIdeJFrame(): JFrame? =
     ComponentUtil.getWindow(WindowManager.getInstance().getIdeFrame(project)?.component) as? JFrame
+
+  /**
+   * Returns `true` if the window that triggered this invocation is in macOS native full-screen.
+   *
+   * Two mechanisms are used:
+   * - [IdeFrame.isInFullScreen] — reliable for the main IDE JFrame (handled by the macOS frame decorator).
+   * - [MacFullScreenSupport] stored as a root-pane client property — reliable for [FrameWrapper]-based
+   *   windows (e.g. detached editor tabs) whose [IdeFrame.isInFullScreen] always returns `false`.
+   *
+   * Returns `false` on non-macOS.
+   */
+  private fun isInvokingFrameInFullScreen(): Boolean {
+    val ultimateParent = ComponentUtil.findUltimateParent(invokingWindow ?: return false)
+    // Main IDE frame: IdeFrame.isInFullScreen() is reliable (MacMainFrameDecorator).
+    if ((ultimateParent as? IdeFrame)?.isInFullScreen == true) return true
+    // Detached editor tabs (FrameWrapper.MyJFrame): isInFullScreen() always returns false,
+    // so fall back to MacFullScreenSupport stored in the root pane by addListener.
+    val rootPane = (invokingWindow as? RootPaneContainer)?.rootPane ?: return false
+    val fss = rootPane.getClientProperty(MacFullScreenSupport.ROOT_PANE_KEY) as? MacFullScreenSupport
+    return fss?.isFullScreen == true
+  }
 
   // ── Public API ───────────────────────────────────────────────────────────────
 
