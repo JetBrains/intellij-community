@@ -194,8 +194,16 @@ private fun tryToDefineInClassLoader(
   for (fqn in listOf(cls.name, *additionalClassesToLoad)) {
     val alreadyDefined = tryLoadInClassLoader(evaluationContext, fqn, loaderForDefine)
     if (alreadyDefined != null) continue // ensure no double define
-    // we use `cls.classLoader` as a fallback loader because additional classes are usually available from the same class loader
-    defineClass(fqn, evaluationContext, loaderForDefine, cls.classLoader)
+    try {
+      // we use `cls.classLoader` as a fallback loader because additional classes are usually available from the same class loader
+      defineClass(fqn, evaluationContext, loaderForDefine, cls.classLoader)
+    }
+    catch (e: ClassDefineTrialException) {
+      // Another debugger worker may define the class already in case many thread breakpoint pauses.
+      val definedInParallel = tryLoadInClassLoader(evaluationContext, fqn, loaderForDefine)
+      if (definedInParallel != null) continue
+      throw e
+    }
   }
 
   return tryLoadInClassLoader(evaluationContext, cls.name, loaderForLookup)
