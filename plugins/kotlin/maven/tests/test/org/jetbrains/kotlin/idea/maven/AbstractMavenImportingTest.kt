@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
@@ -31,6 +32,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.project.MavenImportListener
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import org.jetbrains.kotlin.idea.test.KotlinSdkCreationChecker
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.TestFile
 import org.junit.jupiter.api.Assertions
@@ -68,10 +70,16 @@ abstract class AbstractMavenImportingTest(
   private val artifactDownloadingFinished = AtomicInteger()
 
   private var testMethodName: String = ""
+  private var sdkCreationChecker: KotlinSdkCreationChecker? = null
 
   @BeforeEach
   fun captureTestName(info: TestInfo) {
     testMethodName = info.testMethod.map { it.name }.orElse(info.displayName)
+  }
+
+  @BeforeEach
+  fun setUpSdkCreationChecker() {
+    sdkCreationChecker = KotlinSdkCreationChecker()
   }
 
   @BeforeEach
@@ -90,11 +98,18 @@ abstract class AbstractMavenImportingTest(
 
   @AfterEach
   fun waitForScheduledArtifactDownloads(): Unit = runBlocking {
-    assertWithinTimeout {
-      val scheduled = artifactDownloadingScheduled.get()
-      val finished = artifactDownloadingFinished.get()
-      Assertions.assertEquals( scheduled, finished,"Expected $scheduled artifact downloads, but finished $finished")
-    }
+    RunAll.runAll(
+      {
+        runBlocking {
+          assertWithinTimeout {
+            val scheduled = artifactDownloadingScheduled.get()
+            val finished = artifactDownloadingFinished.get()
+            Assertions.assertEquals(scheduled, finished, "Expected $scheduled artifact downloads, but finished $finished")
+          }
+        }
+      },
+      { sdkCreationChecker?.removeNewKotlinSdk() },
+    )
   }
 
   private fun getTestName(): String = UsefulTestCase.getTestName(testMethodName, true)
