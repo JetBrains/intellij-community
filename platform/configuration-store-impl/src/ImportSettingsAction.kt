@@ -16,9 +16,9 @@ import com.intellij.openapi.application.ConfigBackup
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.CustomConfigMigrationOption
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ex.ApplicationEx
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
@@ -35,7 +35,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.zip.ZipException
 import java.util.zip.ZipInputStream
 import kotlin.io.path.exists
@@ -43,25 +42,26 @@ import kotlin.io.path.inputStream
 import kotlin.io.path.isDirectory
 import kotlin.io.path.pathString
 
+@Suppress("UseOptimizedEelFunctions")
 @ApiStatus.Internal
 open class ImportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.Frontend, DumbAware {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = true
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     val dataContext = e.dataContext
     val component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext)
 
-    val descriptor = object : FileChooserDescriptor(true, true, true, true, false, false) {
-      override fun isFileSelectable(file: VirtualFile?): Boolean = when {
-        file == null -> false
-        file.isDirectory -> file.fileSystem.getNioPath(file)?.let { path -> ConfigImportHelper.isConfigDirectory(path) } == true
-        else -> super.isFileSelectable(file)
+    val descriptor = object : FileChooserDescriptor(FileChooserDescriptorFactory.singleFileOrDir()) {
+      @Throws(Exception::class)
+      override fun validateSelectedFiles(files: Array<out VirtualFile>) {
+        val file = files[0]
+        if (file.isDirectory && !ConfigImportHelper.isConfigDirectory(file.toNioPath())) {
+          throw Exception("${file.presentableUrl} is not a valid settings directory")
+        }
       }
     }.apply {
       title = ConfigurationStoreBundle.message("title.import.file.location")
@@ -71,20 +71,23 @@ open class ImportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
     }
 
     chooseSettingsFile(descriptor, PathManager.getOriginalConfigDir().pathString, component) {
-      val saveFile = Paths.get(it.path)
+      val saveFile = it.toNioPath()
       try {
         doImport(saveFile)
       }
       catch (e1: ZipException) {
         Messages.showErrorDialog(
           ConfigurationStoreBundle.message("error.reading.settings.file", saveFile, e1.message),
-          ConfigurationStoreBundle.message("title.invalid.file"))
+          ConfigurationStoreBundle.message("title.invalid.file")
+        )
       }
       catch (e1: IOException) {
-          Messages.showErrorDialog(ConfigurationStoreBundle.message("error.reading.settings.file.2", saveFile, e1.message),
-                                   IdeBundle.message("title.error.reading.file"))
-        }
+        Messages.showErrorDialog(
+          ConfigurationStoreBundle.message("error.reading.settings.file.2", saveFile, e1.message),
+          IdeBundle.message("title.error.reading.file")
+        )
       }
+    }
   }
 
   protected open fun getExportableComponents(relativePaths: Set<String>): Map<FileSpec, List<ExportableItem>> {
@@ -96,8 +99,10 @@ open class ImportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
 
   protected open fun doImport(saveFile: Path) {
     if (!saveFile.exists()) {
-      Messages.showErrorDialog(ConfigurationStoreBundle.message("error.cannot.find.file", saveFile),
-                               ConfigurationStoreBundle.message("title.file.not.found"))
+      Messages.showErrorDialog(
+        ConfigurationStoreBundle.message("error.cannot.find.file", saveFile),
+        ConfigurationStoreBundle.message("title.file.not.found")
+      )
       return
     }
 
@@ -106,11 +111,12 @@ open class ImportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
       return
     }
 
-    val relativePaths = getPaths(saveFile.inputStream())
+    val relativePaths = getPaths(saveFile)
     if (!relativePaths.contains(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER)) {
       Messages.showErrorDialog(
         ConfigurationStoreBundle.message("error.no.settings.to.import", saveFile),
-        ConfigurationStoreBundle.message("title.invalid.file"))
+        ConfigurationStoreBundle.message("title.invalid.file")
+      )
       return
     }
 
@@ -118,7 +124,8 @@ open class ImportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
     val dialog = ChooseComponentsToExportDialog(
       getExportableComponents(relativePaths), false,
       ConfigurationStoreBundle.message("title.select.components.to.import"),
-      ConfigurationStoreBundle.message("prompt.check.components.to.import"))
+      ConfigurationStoreBundle.message("prompt.check.components.to.import")
+    )
     if (!dialog.showAndGet()) {
       return
     }
@@ -144,32 +151,30 @@ open class ImportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
 
     UpdateSettings.getInstance().forceCheckForUpdateAfterRestart()
 
-    if (confirmRestart(ConfigurationStoreBundle.message("message.settings.imported.successfully", getRestartActionName(),
-                                                        ApplicationNamesInfo.getInstance().fullProductName))) {
+    val message = ConfigurationStoreBundle.message("message.settings.imported.successfully", getRestartActionName(), ApplicationNamesInfo.getInstance().fullProductName)
+    if (confirmRestart(message)) {
       restart()
     }
   }
 
   private fun restart() {
-    invokeLater {
-      (ApplicationManager.getApplication() as ApplicationEx).restart(true)
+    val app = ApplicationManagerEx.getApplicationEx()
+    app.invokeLater {
+      app.restart(true)
     }
   }
 
-  private fun confirmRestart(@NlsContexts.DialogMessage message: String): Boolean =
-    (Messages.OK == showOkCancelDialog(
-      title = ConfigurationStoreBundle.message("import.settings.confirmation.title"),
-      message = message,
-      okText = getRestartActionName(),
-      icon = Messages.getQuestionIcon()
-    ))
+  private fun confirmRestart(message: @NlsContexts.DialogMessage String): Boolean = Messages.OK == showOkCancelDialog(
+    title = ConfigurationStoreBundle.message("import.settings.confirmation.title"),
+    message = message,
+    okText = getRestartActionName(),
+    icon = Messages.getQuestionIcon()
+  )
 
-  @NlsContexts.Button
-  private fun getRestartActionName(): String =
-    if (ApplicationManager.getApplication().isRestartCapable)
-      ConfigurationStoreBundle.message("import.settings.confirmation.button.restart")
-    else
-      ConfigurationStoreBundle.message("import.default.settings.confirmation.button.shutdown")
+  private fun getRestartActionName(): @NlsContexts.Button String = when {
+    ApplicationManager.getApplication().isRestartCapable -> ConfigurationStoreBundle.message("import.settings.confirmation.button.restart")
+    else -> ConfigurationStoreBundle.message("import.default.settings.confirmation.button.shutdown")
+  }
 
   private fun doImportFromDirectory(saveFile: Path) {
     val confirmationMessage = ConfigurationStoreBundle.message("restore.default.settings.confirmation.message",
@@ -182,10 +187,9 @@ open class ImportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
 
   private fun getRelativeNamesToExtract(chosenComponents: Set<ExportableItem>): Set<String> {
     val result = HashSet<String>()
-    for (item in chosenComponents) {
+    for (@Suppress("DestructuringDeclaration") item in chosenComponents) {
       result.add(item.fileSpec.relativePath)
     }
-
     result.add(PluginManager.INSTALLED_TXT)
     return result
   }
