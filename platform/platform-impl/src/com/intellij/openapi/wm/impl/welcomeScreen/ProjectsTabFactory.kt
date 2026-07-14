@@ -114,7 +114,7 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
 
           val recentProjectsPanel = when {
             isStationWelcomeScreenPromoEnabled() -> createTwoRowRecentProjectsPanel(false)
-            Registry.`is`("jetbrainsd.new.connection.tabs.flow.enabled", false) -> createTwoRowRecentProjectsPanel(true)
+            Registry.`is`("jetbrainsd.new.connection.flow.enabled", false) -> createTwoRowRecentProjectsPanel(true)
             else -> createRecentProjectsPanel()
           }
           val emptyStatePanel = createEmptyStatePanel()

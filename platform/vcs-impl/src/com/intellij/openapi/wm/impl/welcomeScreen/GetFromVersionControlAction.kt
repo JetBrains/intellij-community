@@ -34,7 +34,7 @@ internal open class GetFromVersionControlAction : DumbAwareAction() {
         presentation.icon = AllIcons.Welcome.FromVCSTab
         presentation.selectedIcon = AllIcons.Welcome.FromVCSTabSelected
         presentation.text = ActionsBundle.message("Vcs.VcsClone.Tabbed.Welcome.text")
-        if (Registry.`is`("jetbrainsd.new.connection.tabs.flow.enabled", false)) {
+        if (Registry.`is`("jetbrainsd.new.connection.flow.enabled", false)) {
           presentation.putClientProperty(WelcomeScreenActionsUtil.TEXT_BUTTON_ICON, AllIcons.Vcs.Branch)
           presentation.text = VcsBundle.message("clone.dialog.clone.button")
         }
