@@ -149,7 +149,7 @@ internal class GHPushNotificationCustomizer(private val project: Project) : GitP
       remoteBranch = remoteBranchName,
       sourceRevision = sourceRevision,
     )
-    lookupCache.get(cacheKey, System.currentTimeMillis())?.let { return it }
+    lookupCache.get(cacheKey)?.let { return it }
 
     val accountManager = serviceAsync<GHAccountManager>()
     val token = accountManager.findCredentials(account) ?: return emptyList()
@@ -162,7 +162,7 @@ internal class GHPushNotificationCustomizer(private val project: Project) : GitP
                           // only the 0/1/>1 distinction matters, so two results are enough
                           pagination = GithubRequestPagination(pageSize = 2))
       ).items
-      lookupCache.put(cacheKey, existingPrs, System.currentTimeMillis())
+      lookupCache.put(cacheKey, existingPrs)
       existingPrs
     }
     catch (ce: CancellationException) {
