@@ -4103,7 +4103,6 @@ f:com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 - filterControlSymbols(java.lang.String):java.lang.String
 - getActions(java.lang.Runnable):java.util.List
 - getAdvertisement():java.lang.String
-- getAutocompleteItems(java.lang.String,I):java.util.List
 - getEffectiveContributor():com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 - getElementPriority(java.lang.Object,java.lang.String):I
 - getElementsRenderer():javax.swing.ListCellRenderer

@@ -2790,7 +2790,6 @@ com.intellij.ide.actions.searcheverywhere.MergeableElement
 - a:mergeWith(com.intellij.ide.actions.searcheverywhere.MergeableElement):com.intellij.ide.actions.searcheverywhere.MergeableElement
 - a:shouldBeMergedIntoAnother():Z
 f:com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
-- com.intellij.ide.actions.searcheverywhere.AutoCompletionContributor
 - com.intellij.ide.actions.searcheverywhere.PossibleSlowContributor
 - com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 - com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewProvider

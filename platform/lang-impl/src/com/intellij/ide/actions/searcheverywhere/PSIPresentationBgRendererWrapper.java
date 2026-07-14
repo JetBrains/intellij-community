@@ -51,7 +51,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public final class PSIPresentationBgRendererWrapper implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting,
-                                                               AutoCompletionContributor, PossibleSlowContributor, EssentialContributor,
+                                                               PossibleSlowContributor, EssentialContributor,
                                                                SearchEverywhereExtendedInfoProvider, SearchEverywherePreviewProvider,
                                                                SearchEverywhereContributorWrapper, PossibleInternalCommandsContributor {
   private static final Logger LOG = Logger.getInstance(PSIPresentationBgRendererWrapper.class);
@@ -63,13 +63,6 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
   }
 
   public PSIPresentationBgRendererWrapper(WeightedSearchEverywhereContributor<Object> delegate) { myDelegate = delegate; }
-
-  @Override
-  public List<AutoCompletionCommand> getAutocompleteItems(String pattern, int caretPosition) {
-    return myDelegate instanceof AutoCompletionContributor
-           ? ((AutoCompletionContributor)myDelegate).getAutocompleteItems(pattern, caretPosition)
-           : Collections.emptyList();
-  }
 
   @Override
   public boolean isSlow() {
