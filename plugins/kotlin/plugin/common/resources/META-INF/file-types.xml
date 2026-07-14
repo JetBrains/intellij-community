@@ -7,16 +7,5 @@
 
     <lang.substitutor language="kotlin" order="last" implementationClass="org.jetbrains.kotlin.idea.KotlinLanguageSubstitutor"/>
 
-    <internalFileTemplate name="Kotlin File"/>
-    <internalFileTemplate name="Kotlin Annotation"/>
-    <internalFileTemplate name="Kotlin Class"/>
-    <internalFileTemplate name="Kotlin Interface"/>
-    <internalFileTemplate name="Kotlin Data Class"/>
-    <internalFileTemplate name="Kotlin Sealed Class"/>
-    <internalFileTemplate name="Kotlin Sealed Interface"/>
-    <internalFileTemplate name="Kotlin Enum"/>
-    <internalFileTemplate name="Kotlin Object"/>
-    <internalFileTemplate name="Kotlin Script"/>
-    <internalFileTemplate name="Kotlin Script MainKts"/>
   </extensions>
 </idea-plugin>
