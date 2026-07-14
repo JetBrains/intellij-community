@@ -213,7 +213,7 @@ class KeywordCompletion() {
             mapOf<KtKeywordToken, Set<KtKeywordToken?>>(
                 COMPANION_KEYWORD to buildSet {
                     add(OBJECT_KEYWORD)
-                    if (languageVersionSettings.supportsFeature(LanguageFeature.CompanionBlocksAndExtensions)) {
+                    if (languageVersionSettings.supportsFeature(LanguageFeature.CompanionBlocks)) {
                         add(null)
                     }
                 },
