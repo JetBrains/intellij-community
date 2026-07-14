@@ -403,6 +403,29 @@ c:com.intellij.openapi.options.ex.ConfigurableWrapper
 - a:openInChildProcess(java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.project.impl.P3SupportKt
 - *sf:processPerProjectSupport():com.intellij.openapi.project.impl.P3Support
+*f:com.intellij.openapi.updateSettings.AccessPluginClassLoadersRequest
+- com.intellij.ide.plugins.PluginPermissionRequest
+- <init>(java.lang.String):V
+- f:getMessage():java.lang.String
+*f:com.intellij.openapi.updateSettings.DisablePluginRequest
+- com.intellij.ide.plugins.PluginPermissionRequest
+- <init>(com.intellij.openapi.extensions.PluginId,java.lang.String):V
+- f:getMessage():java.lang.String
+- f:getPluginId():com.intellij.openapi.extensions.PluginId
+*f:com.intellij.openapi.updateSettings.EnablePluginRequest
+- com.intellij.ide.plugins.PluginPermissionRequest
+- <init>(com.intellij.openapi.extensions.PluginId,java.lang.String):V
+- f:getMessage():java.lang.String
+- f:getPluginId():com.intellij.openapi.extensions.PluginId
+*f:com.intellij.openapi.updateSettings.InstallPluginRequest
+- com.intellij.ide.plugins.PluginPermissionRequest
+- <init>(com.intellij.openapi.extensions.PluginId,java.lang.String):V
+- f:getMessage():java.lang.String
+- f:getPluginId():com.intellij.openapi.extensions.PluginId
+*:com.intellij.openapi.updateSettings.PluginManagementAction
+- a:apply():V
+*:com.intellij.openapi.updateSettings.ReadPluginDescriptorsAction
+- a:getPluginDescriptors():java.util.List
 *f:com.intellij.openapi.util.io.CancellableComputation
 - java.util.function.Function
 - *sf:Companion:com.intellij.openapi.util.io.CancellableComputation$Companion

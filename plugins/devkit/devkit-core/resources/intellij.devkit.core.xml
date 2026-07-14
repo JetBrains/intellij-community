@@ -1225,6 +1225,8 @@
       <action id="DevKit.AnalyzePersistentSyntaxTreeOverhead" internal="true"
               class="org.jetbrains.idea.devkit.hprof.AnalyzePersistentSyntaxTreeOverheadAction"/>
       <action id="AnalyzeUnloadablePlugins" internal="true" class="org.jetbrains.idea.devkit.internal.AnalyzeUnloadablePluginsAction"/>
+      <action id="PluginPermissionServiceDemo" internal="true"
+              class="org.jetbrains.idea.devkit.plugins.PluginPermissionServiceDemoAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 

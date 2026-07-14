@@ -47,6 +47,7 @@ internal val FLEET_BACKEND_PLUGINS_THIRD_PARTY_ACCEPT = System.getProperty("flee
  *
  * @implNote Prefer to use only JDK classes. Any post-start-up functionality should be placed in [PluginManager] class.
  * @see PluginDetailsService for information about plugins for applied functionality
+ * @see PluginPermissionService for suggestions to enable/disable plugins to users
  */
 object PluginManagerCore {
   const val META_INF: String = "META-INF/"
@@ -144,6 +145,8 @@ object PluginManagerCore {
    * Use [loadedPlugins] if you need to get loaded plugins only.
    *
    * Do not call this method during bootstrap, should be called in a copy of PluginManager, loaded by PluginClassLoader.
+   *
+   * @see PluginDetailsService instead for usage in plugins
    */
   @get:ApiStatus.Internal
   @JvmStatic
@@ -161,6 +164,8 @@ object PluginManagerCore {
   /**
    * Returns descriptors of plugins which are successfully loaded into the IDE.
    * The result is sorted in a way that if each plugin comes after the plugins it depends on.
+   *
+   * @see PluginDetailsService instead for usage in plugins
    */
   @get:ApiStatus.Internal
   @JvmStatic
@@ -178,6 +183,9 @@ object PluginManagerCore {
     return plugin != null && isLoaded(plugin)
   }
 
+  /**
+   * @see PluginDetailsService instead for usage in plugins
+   */
   @ApiStatus.Internal
   @JvmStatic
   fun isLoaded(plugin: PluginDescriptor): Boolean = (plugin as? IdeaPluginDescriptorImpl)?.isLoaded ?: false
@@ -202,6 +210,8 @@ object PluginManagerCore {
    * Marks the plugin with a given id as disabled (a persistent setting). Note that this method does not unload the plugin.
    *
    * Internal. Plugins may not disable plugins this way.
+   *
+   * @see PluginPermissionService instead for suggestions to users
    */
   @JvmStatic
   @ApiStatus.Internal
@@ -211,6 +221,8 @@ object PluginManagerCore {
    * Marks the plugin with a given id as enabled (a persistent setting). Note that this method does not load the plugin.
    *
    * Internal. Plugins may not enable plugins this way.
+   *
+   * @see PluginPermissionService instead for suggestions to users
    */
   @JvmStatic
   @ApiStatus.Internal

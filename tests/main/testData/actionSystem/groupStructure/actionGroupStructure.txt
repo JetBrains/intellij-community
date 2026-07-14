@@ -975,6 +975,7 @@
         ShowHelpPageById
         DevKit.AnalyzePersistentSyntaxTreeOverhead
         AnalyzeUnloadablePlugins
+        PluginPermissionServiceDemo
       tasks.internal
         show.certificate
         deadlock.with.certificate.dialog
