@@ -6,5 +6,5 @@
 // Do not use it for real new violations. Fix those instead; see Split Mode documentation IJPL-A-632.
 // Contact the RemDev team in #ij-remote-dev if unsure.
 {
-    "currentProjectBaselineVersion": 3
+    "currentProjectBaselineVersion": 4
 }
