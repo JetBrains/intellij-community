@@ -60,7 +60,7 @@ public class RunContentDescriptor implements Disposable {
   private RunContentDescriptorId myId = null;
   private final AnAction @NotNull [] myRestartActions;
 
-  private final @Nullable Runnable myActivationCallback;
+  private @Nullable Runnable myActivationCallback;
 
   private String myRunConfigurationName;
   private String myRunConfigurationTypeId;
@@ -161,6 +161,8 @@ public class RunContentDescriptor implements Disposable {
     myComponent = null;
     myProcessHandler = null;
     myContent = null;
+    myActivationCallback = null;
+    myRunnerLayoutUi = null;
   }
 
   /**
