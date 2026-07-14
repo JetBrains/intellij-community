@@ -66,7 +66,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaContextParameterOwnerSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaClassErrorType
@@ -204,7 +203,7 @@ internal class KotlinIdeDeclarationRenderer(
             typeRenderer: KaTypeRenderer,
             printer: PrettyPrinter
         ) {
-            if (owner is KaContextParameterOwnerSymbol && owner.contextParameters.any { it.psi is KtParameter }) {
+            if (owner is KaCallableSymbol && owner.contextParameters.any { it.psi is KtParameter }) {
                 printer {
                     append(highlight("context") { asKeyword })
                     append(highlight("(") { asParentheses } )

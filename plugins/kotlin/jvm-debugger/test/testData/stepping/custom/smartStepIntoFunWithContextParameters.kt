@@ -26,5 +26,3 @@ fun main() {
 }
 
 // IGNORE_OLD_BACKEND
-// TODO: remove after KT-87335 is fixed
-// IGNORE_K2

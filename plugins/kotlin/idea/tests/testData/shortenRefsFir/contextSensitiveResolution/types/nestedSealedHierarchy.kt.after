@@ -1,0 +1,17 @@
+// COMPILER_ARGUMENTS: -Xcontext-sensitive-resolution
+package test
+
+sealed class Outer {
+    sealed class Mid1 : Outer() {
+        class Leaf1 : Mid1()
+        class Leaf2 : Mid1()
+    }
+    sealed class Mid2 : Outer()
+}
+
+fun testMid(m: Outer.Mid1) {
+    when (m) {
+        is Leaf1 -> {}
+        is Outer.Mid1.Leaf2 -> {}
+    }
+}
