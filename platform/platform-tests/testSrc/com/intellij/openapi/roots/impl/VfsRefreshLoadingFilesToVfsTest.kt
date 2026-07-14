@@ -6,6 +6,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest.Companion.collectFilesLoadedIntoVfsBeforeListenersRuns
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
@@ -16,6 +17,7 @@ import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.TestObservation
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.junit5.RegistryKey
@@ -97,6 +99,8 @@ class VfsRefreshLoadingFilesToVfsTest {
       val newPackageRoot = rootDir.rootPath.resolve("single/newpkg")
       newPackageRoot.createDirectories()
       generateFiles(newPackageRoot, packagePrefix = "")
+
+      assertThat(VfsUtil.findFile(newPackageRoot, false)).isNull()
 
       val filesLoadedIntoVfs = collectFilesLoadedIntoVfsBeforeListenersRuns(rootVirtualFile, disposable)
       assertSubtreeLoadedIntoVfs(filesLoadedIntoVfs, rootVirtualFile, relativeRoot = Path("single/newpkg"), packagePrefix = "")
@@ -188,6 +192,7 @@ class VfsRefreshLoadingFilesToVfsTest {
         contentRoots = listOf(ContentRootEntity(contentRoot.toVirtualFileUrl(urlManager), emptyList(), NonPersistentEntitySource))
       })
     }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
   private suspend fun addModuleWithContentRootUnderExplicitExclude(
@@ -207,6 +212,7 @@ class VfsRefreshLoadingFilesToVfsTest {
         )
       })
     }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
   private fun stageNestedExcludedLayout() {

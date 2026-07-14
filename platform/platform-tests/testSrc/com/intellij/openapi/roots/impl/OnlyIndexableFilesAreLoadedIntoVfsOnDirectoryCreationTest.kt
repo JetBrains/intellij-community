@@ -22,6 +22,7 @@ import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.TestObservation
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.junit5.TestApplication
@@ -168,6 +169,7 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
       project.workspaceModel.update("Add indexable non-recursive root") {
         it.addEntity(NonRecursiveTestEntity(rootVirtualFile.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager()), NonPersistentEntitySource))
       }
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
 
       Assertions.assertTrue(readAction { WorkspaceFileIndex.getInstance(project).isIndexable(rootVirtualFile) })
 
@@ -197,6 +199,7 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
           )
         })
       }
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
 
       val outerFile = rootDir.newFileNio("outerFile.txt")
       outerFile.writeText("outer")
@@ -222,6 +225,7 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
       project.workspaceModel.update("Add excluded dir $excludedUrl") {
         it.addEntity(ExcludedTestEntity(excludedUrl, NonPersistentEntitySource))
       }
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
 
       // trigger WorkspaceFileIndex in the "before" event (IJPL-228634)
       VirtualFileManager.getInstance().addAsyncFileListenerBackgroundable({
@@ -262,6 +266,7 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
           )
         })
       }
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
 
       val nestedFile = rootDir.newFileNio("content/build/generated/source/kapt/main/Generated.kt")
       nestedFile.writeText("class Generated")
@@ -308,6 +313,7 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
           NonPersistentEntitySource,
         ))
       }
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
 
       rootDir.newFileNio("content/build/generated/source/kapt/main/Generated.kt").writeText("class Generated")
       rootDir.newFileNio("content/build/tmp/marker.txt").writeText("marker")
