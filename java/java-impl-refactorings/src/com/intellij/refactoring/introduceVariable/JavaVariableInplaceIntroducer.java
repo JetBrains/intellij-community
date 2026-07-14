@@ -115,10 +115,6 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     myExpression = new TypeExpression(myProject, isReplaceAllOccurrences()
                                                  ? myTypeSelectorManager.getTypesForAll()
                                                  : myTypeSelectorManager.getTypesForOne());
-
-    final List<RangeMarker> rangeMarkers = getOccurrenceMarkers();
-    editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY,
-                       rangeMarkers.toArray(new RangeMarker[0]));
     PsiElement parent = myExpr.getParent();
     myReplaceSelf = parent instanceof PsiExpressionStatement && !(parent.getParent() instanceof PsiSwitchLabeledRuleStatement);
     mySkipTypeExpressionOnStart = !(myExpr instanceof PsiFunctionalExpression && myReplaceSelf);
