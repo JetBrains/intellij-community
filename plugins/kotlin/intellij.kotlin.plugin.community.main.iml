@@ -173,6 +173,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.internal" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.scripting" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.vcs" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.scripting" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.serialization" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.references" exported="" />

@@ -150,6 +150,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.eval4j" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.decompiler" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.vcs" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.uast.base" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.uast.idea.base" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm.shared" scope="RUNTIME" />

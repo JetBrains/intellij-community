@@ -56,8 +56,6 @@
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.unwrap.KotlinUnwrapDescriptor"/>
     <usageToPsiElementProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinUsageToPsiElementProvider"/>
-    <vcs.codeVisionLanguageContext language="kotlin"
-                                   implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinVcsCodeVisionContext"/>
     <psi.referenceContributor
             language="kotlin"
             implementation="org.jetbrains.kotlin.idea.references.KotlinWebReferenceContributor"/>

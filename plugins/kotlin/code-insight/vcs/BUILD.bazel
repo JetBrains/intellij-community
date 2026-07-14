@@ -1,0 +1,66 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.kotlin.codeInsight.vcs` start
+jvm_library(
+    name = "vcs",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.codeInsight.vcs",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinc-kotlin-compiler-common",
+        "//platform/vcs-api:vcs",
+        "//platform/util",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//plugins/kotlin/base/statistics",
+        "//platform/statistics",
+        "//platform/core-impl",
+        "//java/java-analysis-impl:analysis-impl",
+    ],
+)
+
+jvm_library(
+    name = "vcs_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.codeInsight.vcs",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":vcs",
+        "//platform/vcs-api:vcs_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//plugins/kotlin/base/statistics:statistics_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//java/java-analysis-impl:analysis-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.kotlin.codeInsight.vcs` end
+
+### auto-generated section `iml intellij.kotlin.codeInsight.vcs` start
+exports_files(
+    [
+        "intellij.kotlin.codeInsight.vcs.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.codeInsight.vcs` end

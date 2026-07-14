@@ -312,6 +312,9 @@
 - name: lib/modules/intellij.kotlin.codeInsight.structuralSearch.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.structuralSearch
+- name: lib/modules/intellij.kotlin.codeInsight.vcs.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight.vcs
 - name: lib/modules/intellij.kotlin.compilerPlugins.allopen.maven.jar
   contentModules:
   - name: intellij.kotlin.compilerPlugins.allopen.maven

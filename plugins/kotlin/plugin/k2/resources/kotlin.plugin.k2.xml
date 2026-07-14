@@ -249,5 +249,6 @@
     <module name="intellij.libraries.kotlin.tooling.core" loading="required"/>
     <module name="intellij.libraries.kotlin.gradle.plugin.idea" loading="required"/>
     <module name="intellij.libraries.kotlin.gradle.plugin.idea.proto" loading="required"/>
+    <module name="intellij.kotlin.codeInsight.vcs"/>
   </content>
 </idea-plugin>

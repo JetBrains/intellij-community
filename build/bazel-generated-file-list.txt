@@ -1273,6 +1273,7 @@ plugins/kotlin/code-insight/postfix-templates
 plugins/kotlin/code-insight/structural-search-k2
 plugins/kotlin/code-insight/structural-search-k2/tests
 plugins/kotlin/code-insight/utils
+plugins/kotlin/code-insight/vcs
 plugins/kotlin/compiler-plugins/allopen/maven
 plugins/kotlin/compiler-plugins/android-extensions-stubs
 plugins/kotlin/compiler-plugins/assignment/common

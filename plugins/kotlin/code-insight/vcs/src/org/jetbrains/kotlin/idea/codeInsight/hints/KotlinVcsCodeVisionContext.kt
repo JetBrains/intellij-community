@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.VcsCodeVisionCurlyBracketLanguageContext
@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.siyeh.ipp.psiutils.ErrorUtil
 import org.jetbrains.kotlin.idea.statistics.KotlinCodeVisionUsagesCollector
-import org.jetbrains.kotlin.idea.util.CommentSaver.Companion.tokenType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassInitializer
@@ -48,6 +47,6 @@ class KotlinVcsCodeVisionContext : VcsCodeVisionCurlyBracketLanguageContext() {
     }
 
     override fun isRBrace(element: PsiElement): Boolean {
-        return element.tokenType === KtTokens.RBRACE
+        return element.node.elementType === KtTokens.RBRACE
     }
 }

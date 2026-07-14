@@ -1,0 +1,11 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.analysis.impl"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <vcs.codeVisionLanguageContext language="kotlin"
+                                   implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinVcsCodeVisionContext"/>
+  </extensions>
+</idea-plugin>
