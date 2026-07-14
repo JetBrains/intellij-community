@@ -14,7 +14,8 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
     private var actionState: ProjectViewPaneSettingsStateDTO? = null
     private val superRoot = Node(SuperRootModel as ProjectViewNodeModelImpl<*>)
     private val nodeById = hashMapOf<Long, Node>().also { it[SUPER_ROOT_ID] = superRoot }
-    
+    private val nodeByUserObject = hashMapOf<Any, Node>()
+
     override suspend fun applyUpdate(update: ProjectViewPaneStateEvent): ProjectViewPaneStateEvent? {
       LOG.debug("Handling update: $update")
       when (update) {
@@ -22,6 +23,7 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
           actionState = null
           nodeById.clear()
           nodeById[SUPER_ROOT_ID] = superRoot
+          nodeByUserObject.clear()
           superRoot.children = null
         }
         is ProjectViewChildrenLoaded -> {
@@ -29,24 +31,24 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
           val children = update.children.mapTo(mutableListOf()) { Node(it) }
           parent.children = children
           for (child in children) {
-            nodeById[child.model.id] = child
+            addNode(child.model.id, child)
           }
         }
         is ProjectViewNodeAdded -> {
           val parent = nodeById[update.parentId] ?: return null
           val newNode = Node(update.model, mutableListOf())
           parent.children?.add(update.index, newNode)
-          nodeById[newNode.model.id] = newNode
+          addNode(newNode.model.id, newNode)
         }
         is ProjectViewChildRemoved -> {
           val parent = nodeById[update.parentId] ?: return null
           val removedNode = parent.children?.removeAt(update.index) ?: return null
-          nodeById.remove(removedNode.model.id)
+          removeNode(removedNode.model.id)
         }
         is ProjectViewChildrenRemoved -> {
           val parent = nodeById[update.parentId] ?: return null
           parent.children?.forEach { child ->
-              nodeById.remove(child.model.id)
+            removeNode(child.model.id)
           }
           parent.children?.clear()
         }
@@ -63,6 +65,22 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
         dumpState()
       }
       return update
+    }
+
+    private fun addNode(id: Long, node: Node) {
+      nodeById[id] = node
+      val userObject = node.model.userObject
+      if (userObject != null) { // null on the frontend
+        nodeByUserObject[userObject] = node
+      }
+    }
+
+    private fun removeNode(id: Long) {
+      val removed = nodeById.remove(id)
+      val userObject = removed?.model?.userObject
+      if (userObject != null) {
+        nodeByUserObject.remove(userObject)
+      }
     }
 
     override suspend fun takeSnapshot(): List<ProjectViewPaneStateEvent> {
@@ -112,9 +130,14 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
         dumpState(child.model.id, level + 1)
       }
     }
-  }
 
-  private data class Node(var model: ProjectViewNodeModelImpl<*>, var children: MutableList<Node>? = null)
+    fun asBackendStateAccessor(): BackendProjectViewPaneStateAccessor<*> {
+      return BackendProjectViewPaneStateAccessorImpl<Any>(
+        nodeById,
+        nodeByUserObject
+      )
+    }
+  }
 
   private val flowProducer = IncrementalUpdateFlowProducer(state)
 
@@ -161,6 +184,35 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
   private suspend fun updateState(update: ProjectViewPaneStateEvent) {
     flowProducer.handleUpdate(update)
   }
+
+  @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
+  override fun <T> asBackendStateAccessor(): BackendProjectViewPaneStateAccessor<T> {
+    return state.asBackendStateAccessor() as BackendProjectViewPaneStateAccessor<T>
+  }
 }
+
+private class BackendProjectViewPaneStateAccessorImpl<T>(
+  private val nodeById: HashMap<Long, Node>,
+  private val nodeByUserObject: HashMap<Any, Node>,
+) : BackendProjectViewPaneStateAccessor<T> {
+  @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
+  override fun getNodeById(id: Long): BackendProjectViewNodeModel<T>? {
+    return nodeById[id]?.model as BackendProjectViewNodeModel<T>?
+  }
+
+  @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
+  override fun getNodeByUserObject(userObject: T): BackendProjectViewNodeModel<T>? {
+    return nodeByUserObject[userObject as Any]?.model as BackendProjectViewNodeModel<T>?
+  }
+
+  @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
+  override fun getChildren(parent: BackendProjectViewNodeModel<T>?): List<BackendProjectViewNodeModel<T>>? {
+    val parentId = parent?.id ?: SUPER_ROOT_ID
+    val parent = nodeById[parentId] ?: return null
+    return parent.children?.map { it.model as BackendProjectViewNodeModel<T> }
+  }
+}
+
+private data class Node(var model: ProjectViewNodeModelImpl<*>, var children: MutableList<Node>? = null)
 
 private val LOG = logger<ProjectViewPaneStateBuilder>()

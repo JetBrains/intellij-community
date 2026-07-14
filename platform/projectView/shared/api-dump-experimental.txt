@@ -1,6 +1,10 @@
 *:com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
 - com.intellij.platform.projectView.pane.ProjectViewNodeModel
 - a:getUserObject():java.lang.Object
+*:com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccessor
+- a:getChildren(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel):java.util.List
+- a:getNodeById(J):com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
+- a:getNodeByUserObject(java.lang.Object):com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
 *:com.intellij.platform.projectView.pane.ProjectViewNodeModel
 - a:canNavigate():Z
 - a:canNavigateToSource():Z
@@ -106,6 +110,7 @@
 - f:byType():com.intellij.platform.projectView.pane.ProjectViewPaneSortByType
 *:com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilder
 - a:addNode(J,I,com.intellij.platform.projectView.pane.ProjectViewNodeModel,kotlin.coroutines.Continuation):java.lang.Object
+- a:asBackendStateAccessor():com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccessor
 - a:clear(kotlin.coroutines.Continuation):java.lang.Object
 - a:removeNodeChild(J,I,kotlin.coroutines.Continuation):java.lang.Object
 - a:removeNodeChildren(J,kotlin.coroutines.Continuation):java.lang.Object

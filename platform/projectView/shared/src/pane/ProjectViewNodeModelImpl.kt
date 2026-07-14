@@ -1,3 +1,4 @@
+@file:ApiStatus.Internal
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.pane
 
@@ -92,7 +93,7 @@ private fun flags(canNavigate: Boolean, canNavigateToSource: Boolean, isIncluded
   (if (isIncludedInExpandAll) FLAG_INCLUDED_IN_EXPAND_ALL else 0) or
   (if (isDirectory) FLAG_IS_DIRECTORY else 0)
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 const val SUPER_ROOT_ID: Long = 0L
 
 @ApiStatus.Internal

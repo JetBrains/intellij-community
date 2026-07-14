@@ -10,6 +10,7 @@ import com.intellij.ide.projectView.impl.AbstractProjectViewPane
 import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
 import com.intellij.ide.projectView.impl.ProjectViewImpl
+import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
@@ -101,6 +102,8 @@ internal class LegacyBackendProjectViewPaneProvider : ProjectViewPaneProvider {
   }
 }
 
+private val PANES_WITH_NEW_IMPLEMENTATIONS = setOf(ProjectViewPane.ID)
+
 @Service(Service.Level.PROJECT)
 private class LegacyBackendProjectViewPaneService(
   private val project: Project,
@@ -116,6 +119,7 @@ private class LegacyBackendProjectViewPaneService(
   }
 
   private fun createLegacyPanes(legacyPane: AbstractProjectViewPane): Iterable<ProjectViewPaneModel> {
+    if (legacyPane.id in PANES_WITH_NEW_IMPLEMENTATIONS) return emptyList()
     val stateManager = AbstractProjectViewPaneStateManager(project, coroutineScope.childScope("LegacyBackendProjectViewPane: $legacyPane"), legacyPane)
     val subIds = legacyPane.subIds
     if (subIds.isEmpty()) {

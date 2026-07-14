@@ -29,6 +29,7 @@
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.projectView.backend.rpc.ProjectViewRpcProvider"/>
+    <project.view.pane.backend implementation="com.intellij.platform.projectView.backend.impl.project.ProjectPaneProvider"/>
     <project.view.pane.backend implementation="com.intellij.platform.projectView.backend.impl.legacy.LegacyBackendProjectViewPaneProvider"/>
     <uiDataRule implementation="com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneUiDataRule"/>
   </extensions>

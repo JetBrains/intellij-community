@@ -14,4 +14,12 @@ sealed interface ProjectViewPaneStateBuilder {
   suspend fun removeNodeChild(parentId: Long, index: Int)
   suspend fun updateSettingsState(build: (ProjectViewPaneSettingsStateBuilder) -> Unit)
   suspend fun clear()
+  fun <T> asBackendStateAccessor(): BackendProjectViewPaneStateAccessor<T>
+}
+
+@ApiStatus.Experimental
+sealed interface BackendProjectViewPaneStateAccessor<T> {
+  fun getNodeById(id: Long): BackendProjectViewNodeModel<T>?
+  fun getNodeByUserObject(userObject: T): BackendProjectViewNodeModel<T>?
+  fun getChildren(parent: BackendProjectViewNodeModel<T>?): List<BackendProjectViewNodeModel<T>>?
 }
