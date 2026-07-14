@@ -83,17 +83,23 @@ fun UiComponent.invokeActionByShortcut(actionId: String) {
 fun Driver.invokeAction(actionId: String, now: Boolean = true, component: Component? = null, place: String? = null, rdTarget: RdTarget? = null) {
   val target = rdTarget ?: if (isRemDevMode) RdTarget.FRONTEND else RdTarget.DEFAULT
   val actionManager = service<ActionManager>(target)
-  val action = withContext(OnDispatcher.EDT) {
-    actionManager.getAction(actionId)
-  }
-  checkNotNull(action) { "Action $actionId was not found" }
-  fileLogger().info("Invoking action $actionId on $target")
-  val actionCallback = step("Invoke action ${action.getTemplateText()}") {
-    withContext(OnDispatcher.EDT, semantics = LockSemantics.READ_ACTION) {
-      actionManager.tryToExecute(action, null, component, place, now)
+  withContext {
+    val action = withContext(OnDispatcher.EDT) {
+      actionManager.getAction(actionId)
+    }
+    checkNotNull(action) { "Action $actionId was not found" }
+    fileLogger().info("Invoking action $actionId on $target")
+    step("Invoke action ${action.getTemplateText()}") {
+      // `tryToExecute` requires EDT, but the rejection check must stay off it: the action may have opened a modal
+      // dialog, and an EDT dispatched call would then wait in LaterInvocator until the dialog is closed.
+      val actionCallback = withContext(OnDispatcher.EDT, semantics = LockSemantics.READ_ACTION) {
+        actionManager.tryToExecute(action, null, component, place, now)
+      }
+      check(!actionCallback.isRejected()) {
+        "Action $actionId was rejected with error: ${actionCallback.getError()}"
+      }
     }
   }
-  check(!actionCallback.isRejected()) { "Action $actionId was rejected with error: ${actionCallback.getError()}" }
 }
 
 fun Driver.invokeActionWithRetries(
