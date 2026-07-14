@@ -1,6 +1,7 @@
 <idea-plugin>
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
+    <module name="intellij.markdown.backend"/>
     <module name="intellij.platform.backend"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">

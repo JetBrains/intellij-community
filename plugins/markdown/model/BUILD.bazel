@@ -21,6 +21,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//plugins/markdown/core:markdown",
+        "//plugins/markdown/core/backend",
         "//platform/editor-ui-api:editor-ui",
         "//xml/xml-psi-api:psi",
         "//xml/xml-psi-impl:psi-impl",
@@ -49,6 +50,7 @@ jvm_library(
         # do not sort,
         ":model",
         "//plugins/markdown/core:markdown_test_lib",
+        "//plugins/markdown/core/backend:backend_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//xml/xml-psi-api:psi_test_lib",
         "//xml/xml-psi-impl:psi-impl_test_lib",

@@ -1,5 +1,5 @@
 MarkdownFile
-  markdown: Markdown:ATX_1
+  Markdown:Markdown:ATX_1
     PsiElement(Markdown:Markdown:ATX_HEADER)('#')
     MarkdownHeaderContent(Markdown:ATX_CONTENT)
       PsiWhiteSpace(' ')
@@ -14,13 +14,13 @@ MarkdownFile
     PsiElement(Markdown:Markdown:CODE_LINE)('    blockquote')
   PsiWhiteSpace('\n')
   PsiWhiteSpace('\n')
-  markdown: Markdown:ATX_1
+  Markdown:Markdown:ATX_1
     PsiElement(Markdown:Markdown:ATX_HEADER)('#')
     MarkdownHeaderContent(Markdown:ATX_CONTENT)
       PsiWhiteSpace(' ')
       PsiElement(Markdown:Markdown:TEXT)('Other header')
   PsiWhiteSpace('\n')
-  markdown: Markdown:ATX_1
+  Markdown:Markdown:ATX_1
     PsiWhiteSpace('  ')
     PsiElement(Markdown:Markdown:ATX_HEADER)('#')
     MarkdownHeaderContent(Markdown:ATX_CONTENT)

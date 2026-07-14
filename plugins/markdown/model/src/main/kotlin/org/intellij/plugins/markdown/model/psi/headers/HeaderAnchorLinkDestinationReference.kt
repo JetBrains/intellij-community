@@ -16,9 +16,9 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.util.PlatformIcons
+import com.intellij.markdown.backend.index.HeaderAnchorIndex
 import org.intellij.plugins.markdown.MarkdownIcons
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.model.psi.MarkdownPsiSymbolReferenceBase
 import org.intellij.plugins.markdown.model.psi.headers.html.HtmlAnchorSymbol
@@ -86,7 +86,7 @@ class HeaderAnchorLinkDestinationReference(
     private fun getCachedInlineAnchors(file: PsiFile): Map<String, List<HtmlAnchorSymbol>> =
       CachedValuesManager.getCachedValue(file, inlineHtmlAnchorKeys) {
         val traverser = SyntaxTraverser.psiTraverser(file).asSequence()
-        var htmlFiles = traverser.filter { it.node?.elementType == MarkdownTokenTypes.HTML_TAG }
+        val htmlFiles = traverser.filter { it.node?.elementType == MarkdownTokenTypes.HTML_TAG }
         val result = htmlFiles.mapNotNull { token ->
             inlineAnchors.find(token.text)?.groups?.get(1)?.let { group ->
               group.value to HtmlAnchorSymbol(file, TextRange.from(token.textRange.startOffset + group.range.first, group.value.length), group.value)

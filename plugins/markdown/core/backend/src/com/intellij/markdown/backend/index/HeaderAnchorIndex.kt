@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.lang.index
+package com.intellij.markdown.backend.index
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope

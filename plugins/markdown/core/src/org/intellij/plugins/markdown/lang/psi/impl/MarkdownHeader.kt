@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiReference
@@ -26,7 +27,6 @@ import org.intellij.plugins.markdown.lang.psi.util.children
 import org.intellij.plugins.markdown.lang.psi.util.childrenOfType
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElement
-import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElementType
 import org.intellij.plugins.markdown.structureView.MarkdownStructureColors
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -39,7 +39,7 @@ import javax.swing.Icon
 @Suppress("DEPRECATION")
 class MarkdownHeader: MarkdownHeaderImpl {
   constructor(node: ASTNode): super(node)
-  constructor(stub: MarkdownHeaderStubElement, type: MarkdownHeaderStubElementType): super(stub, type)
+  constructor(stub: MarkdownHeaderStubElement, type: IElementType): super(stub, type)
 
   val level
     get() = calculateHeaderLevel()

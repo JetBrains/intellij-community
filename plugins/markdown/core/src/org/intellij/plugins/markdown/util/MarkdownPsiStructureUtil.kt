@@ -128,7 +128,7 @@ internal object MarkdownPsiStructureUtil {
           }
           if (maxContentLevel == null || isSameLevelOrHigher(element, maxContentLevel)) {
             maxContentLevel = element
-            if (element.elementType in PRESENTABLE_TYPES) {
+            if (element.hasType(PRESENTABLE_TYPES)) {
               resultConsumer.consume(element)
             }
           }

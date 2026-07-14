@@ -227,10 +227,6 @@
 
     <lang.foldingBuilder language="Markdown" implementationClass="org.intellij.plugins.markdown.folding.MarkdownFoldingBuilder"/>
 
-    <stubIndex implementation="org.intellij.plugins.markdown.lang.index.HeaderTextIndex"/>
-    <stubElementTypeHolder class="org.intellij.plugins.markdown.lang.MarkdownStubElementTypes"/>
-    <stubIndex implementation="org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex"/>
-
     <pathReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.RelativeFileWithoutExtensionReferenceProvider"/>
     <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.LineNumberPathReferenceProvider"/>
 

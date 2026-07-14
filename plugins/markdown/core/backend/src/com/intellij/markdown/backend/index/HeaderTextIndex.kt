@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.lang.index
+package com.intellij.markdown.backend.index
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement

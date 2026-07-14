@@ -9,6 +9,7 @@
         implementation="com.intellij.markdown.backend.providers.MarkdownLinkOpenerApiProvider"/>
       <platform.rpc.backend.remoteApiProvider
         implementation="com.intellij.markdown.backend.providers.VirtualFileAccessorProvider"/>
+      <stubElementRegistryExtension implementation="com.intellij.markdown.backend.index.MarkdownStubRegistryExtension"/>
 
       <localInspection language="Markdown"
                        shortName="MarkdownIncorrectTableFormatting"
@@ -75,5 +76,8 @@
       <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.backtick.BacktickReferenceContributor"/>
       <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.github.GithubWikiLocalReferenceContributor"/>
       <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.test.TestPsiReferenceContributor"/>
+
+      <stubIndex implementation="com.intellij.markdown.backend.index.HeaderTextIndex"/>
+      <stubIndex implementation="com.intellij.markdown.backend.index.HeaderAnchorIndex"/>
     </extensions>
 </idea-plugin>
