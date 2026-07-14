@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.platform.backend.presentation.TargetPresentation;
+import org.jetbrains.annotations.ApiStatus;
 
 
 /**
@@ -10,7 +11,10 @@ import com.intellij.platform.backend.presentation.TargetPresentation;
  * in the background to prevent freezing of the interface. ListCellRenderers are required to implement this interface when the items returned
  * are not implementations of either the PsiElement or the NavigationItem. Implementing this interface ensures that the correct TargetPresentation
  * is returned for such items.
+ * @deprecated The functionality is redundant.
  */
+@ApiStatus.Internal
+@Deprecated
 public interface SearchEverywherePresentationProvider<T> {
   TargetPresentation getTargetPresentation(T element);
 }
