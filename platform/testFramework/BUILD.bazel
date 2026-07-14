@@ -2,6 +2,16 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 jps_test(
+    name = "testFramework-tests_test_smoke",
+    timeout = "moderate",
+    env = {
+        "JB_TEST_JUNIT5_FILTERS": "include-package=com.intellij.testFramework.extensions.ignore",
+    },
+    tags = ["ultimate-smoke"],
+    runtime_deps = [":testFramework-tests_test_lib"],
+)
+
+jps_test(
     name = "testFramework-tests_test",
     timeout = "moderate",
     ####
