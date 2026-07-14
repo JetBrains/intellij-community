@@ -52,7 +52,7 @@ suspend inline fun <T> SpanBuilder.useWithScope(
 ): T {
   return startSpan().useWithoutActiveScope { span ->
     // inner withContext to ensure that we report the end of the span only when all child tasks are completed
-    withContext(context + Context.current().with(span).asContextElement()) {
+    withContext(context + span.asContextElement()) {
       operation(span)
     }
   }
