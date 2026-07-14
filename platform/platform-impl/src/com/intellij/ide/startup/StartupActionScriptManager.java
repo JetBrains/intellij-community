@@ -44,8 +44,7 @@ public final class StartupActionScriptManager {
       }
     }
     finally {
-      // deleting a file should not cause an exception
-      Files.deleteIfExists(scriptFile);
+      Files.deleteIfExists(scriptFile);  // deleting a file should not cause an exception
     }
   }
 
@@ -77,8 +76,9 @@ public final class StartupActionScriptManager {
     addActionCommands(commands, false);
   }
 
-  private static synchronized void addActionCommands(@NotNull List<? extends ActionCommand> commands, boolean toEndOfScript) throws IOException {
-    List<ActionCommand> script = new ArrayList<>(), originalScript = null;
+  private static synchronized void addActionCommands(List<? extends ActionCommand> commands, boolean toEndOfScript) throws IOException {
+    var script = new ArrayList<ActionCommand>();
+    var originalScript = (List<ActionCommand>)null;
     var scriptFile = getActionScriptFile();
     if (Files.exists(scriptFile)) {
       originalScript = loadActionScript(scriptFile);
@@ -140,29 +140,34 @@ public final class StartupActionScriptManager {
       try {
         Files.deleteIfExists(scriptFile);
       }
-      catch (IOException e) { t.addSuppressed(e); }
+      catch (IOException e) {
+        t.addSuppressed(e);
+      }
       throw t;
     }
   }
 
   private static @Nullable ActionCommand mapPaths(ActionCommand command, FileSystem fs, Path oldTarget, Path newTarget) {
-    if (command instanceof CopyCommand copyCommand) {
-      var destination = mapPath(fs.getPath(copyCommand.myDestination), oldTarget, newTarget);
-      if (destination != null) {
-        return new CopyCommand(fs.getPath(copyCommand.mySource), destination);
+    switch (command) {
+      case CopyCommand copyCommand -> {
+        var destination = mapPath(fs.getPath(copyCommand.myDestination), oldTarget, newTarget);
+        if (destination != null) {
+          return new CopyCommand(fs.getPath(copyCommand.mySource), destination);
+        }
       }
-    }
-    else if (command instanceof UnzipCommand unzipCommand) {
-      var destination = mapPath(fs.getPath(unzipCommand.myDestination), oldTarget, newTarget);
-      if (destination != null) {
-        return new UnzipCommand(fs.getPath(unzipCommand.mySource), destination, unzipCommand.myFilenameFilter);
+      case UnzipCommand unzipCommand -> {
+        var destination = mapPath(fs.getPath(unzipCommand.myDestination), oldTarget, newTarget);
+        if (destination != null) {
+          return new UnzipCommand(fs.getPath(unzipCommand.mySource), destination, unzipCommand.myFilenameFilter);
+        }
       }
-    }
-    else if (command instanceof DeleteCommand deleteCommand) {
-      var source = mapPath(fs.getPath(deleteCommand.mySource), oldTarget, newTarget);
-      if (source != null) {
-        return new DeleteCommand(source);
+      case DeleteCommand deleteCommand -> {
+        var source = mapPath(fs.getPath(deleteCommand.mySource), oldTarget, newTarget);
+        if (source != null) {
+          return new DeleteCommand(source);
+        }
       }
+      default -> { }
     }
 
     return null;
@@ -175,19 +180,15 @@ public final class StartupActionScriptManager {
   @ApiStatus.Internal
   public static synchronized void executeMarketplaceCommandsFromActionScript() throws IOException {
     var scriptFile = getActionScriptFile();
-    @Nullable List<ActionCommand> remainingCommands = null;
-    boolean marketplaceCommandsFound = false;
+    var remainingCommands = (List<ActionCommand>)null;
+    var marketplaceCommandsFound = false;
     try {
       var commands = loadActionScript(scriptFile);
 
-      var partitioned = commands.stream().collect(Collectors.partitioningBy(command -> {
-        if (command instanceof UnzipCommand unzipCommand) {
-          return Path.of(unzipCommand.mySource).getFileName().toString().startsWith("marketplace");
-        }
-        else if (command instanceof DeleteCommand deleteCommand) {
-          return Path.of(deleteCommand.mySource).getFileName().toString().equals("marketplace");
-        }
-        return false;
+      var partitioned = commands.stream().collect(Collectors.partitioningBy(command -> switch (command) {
+        case UnzipCommand unzipCommand -> Path.of(unzipCommand.mySource).getFileName().toString().startsWith("marketplace");
+        case DeleteCommand deleteCommand -> Path.of(deleteCommand.mySource).getFileName().toString().equals("marketplace");
+        default -> false;
       }));
 
       var marketplaceCommands = partitioned.get(true);
@@ -198,7 +199,8 @@ public final class StartupActionScriptManager {
         marketplaceCommandsFound = true;
         command.execute(fs);
       }
-    } finally {
+    }
+    finally {
       if (remainingCommands == null || remainingCommands.isEmpty()) {
         Files.deleteIfExists(scriptFile);
       }
