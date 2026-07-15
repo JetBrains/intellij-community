@@ -159,6 +159,7 @@ class FileStructurePopup(
   private val constructorCallTime = System.nanoTime()
   private var showTime: Long = 0
   private val rebuildCounter = AtomicLong()
+  private var wasNarrowedDown: Boolean = false
 
   private var myCanClose = true
 
@@ -303,7 +304,6 @@ class FileStructurePopup(
 
               rebuildVisibleTree(RebuildReason.SPEED_SEARCH)
 
-              expandAllVisibleNodes(TreePath(rootNode))
               if (isBackspace && handleBackspace(prefix)) {
                 return@withContext
               }
@@ -578,8 +578,9 @@ class FileStructurePopup(
   }
 
   /**
-   * Rebuilds the Swing-visible tree projection from the current source tree and enabled actions. Backend DTOs are already applied
-   * to [StructureViewNode.sourceChildren] by the UI model; this method only rewrites [StructureViewNode.visibleChildren].
+   * Rebuilds the Swing-visible tree projection. Backend DTOs are already applied to [StructureViewNode.sourceChildren] by the UI
+   * model; this method caches the action-projected topology in [StructureViewNode.projectedChildren] and rewrites
+   * [StructureViewNode.visibleChildren].
    *
    * Existing expansion is restored by [TreeState]. The previous popup selection is then replayed explicitly so Swing applies expansion
    * from the selected path. If the previous popup selection is no longer visible, the current editor selection is selected when
@@ -589,20 +590,41 @@ class FileStructurePopup(
   private fun rebuildVisibleTree(reason: RebuildReason) {
     val rebuildId = rebuildCounter.incrementAndGet()
     val rebuildStartTime = System.nanoTime()
+    val visibilitySnapshot = createVisibilitySnapshot()
+    val shouldRebuildProjection = reason.requiresProjectionRebuild()
+    val shouldRebuildVisibility = shouldRebuildProjection || visibilitySnapshot.narrowDown || wasNarrowedDown
+
+    if (!shouldRebuildVisibility) {
+      LOG.trace {
+        "FileStructurePopup#rebuild[$rebuildId]: skipped; reason=$reason, narrowDown=${visibilitySnapshot.narrowDown}"
+      }
+      mySpeedSearch.refreshSelection()
+      return
+    }
+
+    val projectionSnapshot = if (shouldRebuildProjection) createProjectionSnapshot() else null
     val selectionBeforeRebuild = selectedNode
     // nodeStructureChanged(root) can make JTree discard descendant expansion state even when node instances are reused.
     val treeState = TreeState.createOn(tree, true, false)
-    val snapshot = createRebuildSnapshot()
 
     LOG.trace {
       "FileStructurePopup#rebuild[$rebuildId]: started; reason=$reason, selection=${selectionBeforeRebuild?.id}, " +
-      "filters=${snapshot.enabledFilters.size}, providers=${snapshot.enabledNodeProviders.size}, narrowDown=${snapshot.narrowDown}"
+      "filters=${projectionSnapshot?.enabledFilters?.size ?: 0}, " +
+      "providers=${projectionSnapshot?.enabledNodeProviders?.size ?: 0}, narrowDown=${visibilitySnapshot.narrowDown}, " +
+      "rebuildProjection=$shouldRebuildProjection"
     }
 
-    rebuildVisibleChildren(rootNode, snapshot)
+    if (projectionSnapshot != null) {
+      rebuildProjectedAndVisibleChildren(rootNode, projectionSnapshot, visibilitySnapshot)
+    }
+    else {
+      rebuildVisibleChildrenFromProjected(rootNode, visibilitySnapshot)
+    }
+
+    wasNarrowedDown = visibilitySnapshot.narrowDown
     treeModel.nodeStructureChanged(rootNode)
     treeState.applyTo(tree)
-    if (snapshot.narrowDown) {
+    if (visibilitySnapshot.narrowDown) {
       expandAllVisibleNodes(TreePath(rootNode))
     }
     else {
@@ -625,40 +647,52 @@ class FileStructurePopup(
     FileStructurePopupTimeTracker.logRebuildTime(totalRebuildTime)
   }
 
-  private fun createRebuildSnapshot(): RebuildSnapshot {
+  private fun createProjectionSnapshot(): ProjectionSnapshot {
     val actions = myModel.getActions()
+    return ProjectionSnapshot(
+      enabledFilters = actions.filterIsInstance<FilterTreeAction>().filter { myModel.isActionEnabled(it) },
+      enabledNodeProviders = actions.filterIsInstance<NodeProviderTreeAction>().filter { myModel.isActionEnabled(it) },
+    )
+  }
+
+  private fun createVisibilitySnapshot(): VisibilitySnapshot {
     val prefix = searchPrefix
     val isNarrowDownActive = isShouldNarrowDown &&
                              StringUtil.isNotEmpty(prefix) &&
                              (ApplicationManager.getApplication().isUnitTestMode() || mySpeedSearch.isPopupActive)
-    return RebuildSnapshot(
-      enabledFilters = actions.filterIsInstance<FilterTreeAction>().filter { myModel.isActionEnabled(it) },
-      enabledNodeProviders = actions.filterIsInstance<NodeProviderTreeAction>().filter { myModel.isActionEnabled(it) },
+    return VisibilitySnapshot(
       searchPrefix = prefix,
       narrowDown = isNarrowDownActive,
     )
   }
 
-  private fun rebuildVisibleChildren(node: StructureViewNode, snapshot: RebuildSnapshot): Boolean {
+  private fun rebuildProjectedAndVisibleChildren(
+    node: StructureViewNode,
+    projectionSnapshot: ProjectionSnapshot,
+    visibilitySnapshot: VisibilitySnapshot,
+  ): Boolean {
     val children = ArrayList<StructureViewNode>()
     children.addAll(node.sourceChildren)
-    for (provider in snapshot.enabledNodeProviders) {
+    for (provider in projectionSnapshot.enabledNodeProviders) {
       children.addAll(provider.getNodes(node))
     }
     children.sortBy { it.indexInParent }
 
+    node.projectedChildren.clear()
     node.visibleChildren.clear()
     var hasMatchingDescendant = false
     for (child in children) {
-      val childMatchesSpeedSearch = snapshot.matchesSpeedSearch(child)
-      if (!snapshot.enabledFilters.all { it.isVisible(child) }) {
-        clearVisibleChildren(child)
+      if (!projectionSnapshot.enabledFilters.all { it.isVisible(child) }) {
+        clearProjectedAndVisibleChildren(child)
         continue
       }
 
+      node.projectedChildren.add(child)
+      val childMatchesSpeedSearch = visibilitySnapshot.matchesSpeedSearch(child)
+
       // Match the old FilteringTreeStructure-based popup: keep direct matches and all of their visible ancestors.
-      val hasMatchingDescendantInChild = rebuildVisibleChildren(child, snapshot)
-      if (!snapshot.narrowDown || childMatchesSpeedSearch || hasMatchingDescendantInChild) {
+      val hasMatchingDescendantInChild = rebuildProjectedAndVisibleChildren(child, projectionSnapshot, visibilitySnapshot)
+      if (!visibilitySnapshot.narrowDown || childMatchesSpeedSearch || hasMatchingDescendantInChild) {
         node.visibleChildren.add(child)
         hasMatchingDescendant = hasMatchingDescendant || childMatchesSpeedSearch || hasMatchingDescendantInChild
       }
@@ -670,6 +704,28 @@ class FileStructurePopup(
     return hasMatchingDescendant
   }
 
+  private fun rebuildVisibleChildrenFromProjected(node: StructureViewNode, visibilitySnapshot: VisibilitySnapshot): Boolean {
+    node.visibleChildren.clear()
+    var hasMatchingDescendant = false
+    for (child in node.projectedChildren) {
+      val childMatchesSpeedSearch = visibilitySnapshot.matchesSpeedSearch(child)
+      val hasMatchingDescendantInChild = rebuildVisibleChildrenFromProjected(child, visibilitySnapshot)
+      if (!visibilitySnapshot.narrowDown || childMatchesSpeedSearch || hasMatchingDescendantInChild) {
+        node.visibleChildren.add(child)
+        hasMatchingDescendant = hasMatchingDescendant || childMatchesSpeedSearch || hasMatchingDescendantInChild
+      }
+      else {
+        clearVisibleChildren(child)
+      }
+    }
+    return hasMatchingDescendant
+  }
+
+  private fun clearProjectedAndVisibleChildren(node: StructureViewNode) {
+    node.projectedChildren.clear()
+    clearVisibleChildren(node)
+  }
+
   private fun clearVisibleChildren(node: StructureViewNode) {
     for (child in node.visibleChildren) {
       clearVisibleChildren(child)
@@ -677,7 +733,7 @@ class FileStructurePopup(
     node.visibleChildren.clear()
   }
 
-  private fun RebuildSnapshot.matchesSpeedSearch(node: StructureViewNode): Boolean {
+  private fun VisibilitySnapshot.matchesSpeedSearch(node: StructureViewNode): Boolean {
     if (!narrowDown) return false
 
     val prefix = searchPrefix ?: return false
@@ -762,9 +818,12 @@ class FileStructurePopup(
     TreeUtil.ensureSelection(tree)
   }
 
-  private data class RebuildSnapshot(
+  private data class ProjectionSnapshot(
     val enabledFilters: List<FilterTreeAction>,
     val enabledNodeProviders: List<NodeProviderTreeAction>,
+  )
+
+  private data class VisibilitySnapshot(
     val searchPrefix: String?,
     val narrowDown: Boolean,
   )
@@ -776,6 +835,19 @@ class FileStructurePopup(
     NARROW_DOWN,
     UI_SETTINGS,
     TEST,
+  }
+
+  private fun RebuildReason.requiresProjectionRebuild(): Boolean {
+    return when (this) {
+      RebuildReason.MODEL_UPDATE,
+      RebuildReason.ACTION_STATE,
+      RebuildReason.UI_SETTINGS,
+      RebuildReason.TEST,
+      -> true
+      RebuildReason.SPEED_SEARCH,
+      RebuildReason.NARROW_DOWN,
+      -> false
+    }
   }
 
   override fun setTitle(title: @NlsContexts.PopupTitle String) {

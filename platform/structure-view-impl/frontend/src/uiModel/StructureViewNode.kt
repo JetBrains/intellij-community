@@ -22,8 +22,10 @@ internal class StructureViewNode : StructureUiTreeElement, TreeNode, PathElement
 
   internal var parentNode: StructureViewNode? = null
 
-  // sourceChildren is the reusable backend graph. visibleChildren is the current Swing projection after actions and speed search.
+  // sourceChildren is the reusable backend graph. projectedChildren caches action-applied topology,
+  // visibleChildren is the current Swing projection after narrow-down / speed search.
   internal val sourceChildren: MutableList<StructureViewNode> = mutableListOf()
+  internal val projectedChildren: MutableList<StructureViewNode> = mutableListOf()
   internal val visibleChildren: MutableList<StructureViewNode> = mutableListOf()
 
   override val id: Int
