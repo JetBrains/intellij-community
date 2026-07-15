@@ -65,15 +65,24 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     ShellStartupOptions updatedOptions = LocalOptionsConfigurer.configureStartupOptions(baseOptions, myProject);
 
     if (IdeProductMode.isFrontend() && !IdeProductMode.isLight() && updatedOptions.getEelDescriptorNotNull() == LocalEelDescriptor.INSTANCE) {
+      TerminalProjectOptionsProvider optionsProvider = TerminalProjectOptionsProvider.getInstance(myProject);
       throw new IllegalStateException(("""
                                          It is prohibited to start a local process in RemDev mode. Something went wrong.
                                          Requested options: %s
                                          Configured options: %s
                                          Project EelDescriptor: %s
                                          Remote project path: %s
+                                         Starting directory: %s
+                                         Default starting directory: %s
+                                         Existent starting directory: %s
+                                         Existent default starting directory: %s
                                          """).formatted(baseOptions, updatedOptions,
                                                         EelProviderUtil.getEelDescriptor(myProject),
-                                                        RemoteProjectPathProviderKt.getRemoteProjectBaseNioPath(myProject)));
+                                                        RemoteProjectPathProviderKt.getRemoteProjectBaseNioPath(myProject),
+                                                        optionsProvider.getStartingDirectory(),
+                                                        optionsProvider.getDefaultStartingDirectory(),
+                                                        toExistentNioDirectory(optionsProvider.getStartingDirectory(), null),
+                                                        toExistentNioDirectory(optionsProvider.getDefaultStartingDirectory(), null)));
     }
 
     if (updatedOptions.getProcessType() == TerminalProcessType.SHELL && enableShellIntegration()) {
