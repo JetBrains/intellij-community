@@ -46,19 +46,20 @@ internal class LogFinderHyperlinkHandler(private val probableClassName: Probable
       logVisitor
     }
 
-    if (visitor.similarClasses.isNotEmpty()) {
+    if (visitor.similarClasses.isEmpty()) {
+      return
+    }
+
+    // navigate is async and DROP_OLDEST
+    if (visitor.similarCalls.isNotEmpty()) {
+      navigateToCalls(visitor, project, targetEditor)
+    }
+    else {
       val uClass = visitor.similarClasses.minBy { it.sourcePsi?.textRange?.startOffset ?: Int.MAX_VALUE }
       val sourcePsi = uClass.uastAnchor?.sourcePsi
       if (sourcePsi != null) {
         EditSourceUtil.navigateToPsiElement(sourcePsi)
       }
-    }
-    else {
-      return
-    }
-
-    if (!visitor.similarCalls.isEmpty()) {
-      navigateToCalls(visitor, project, targetEditor)
     }
   }
 

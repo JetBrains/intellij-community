@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.gotosuper;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.lang.CodeInsightActions;
+import com.intellij.testFramework.NavigationTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -40,6 +41,7 @@ public class GroovyGoToSuperTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
     final CodeInsightActionHandler handler = CodeInsightActions.GOTO_SUPER.forLanguage(GroovyLanguage.INSTANCE);
     handler.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+    NavigationTestUtil.awaitPendingNavigation(getProject());
 
     myFixture.checkResult(data.get(1));
   }

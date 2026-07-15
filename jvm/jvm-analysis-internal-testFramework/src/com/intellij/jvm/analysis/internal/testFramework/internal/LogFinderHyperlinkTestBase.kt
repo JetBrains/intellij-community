@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.awaitPendingNavigation
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import org.intellij.lang.annotations.Language
 import org.junit.Assert
@@ -74,6 +75,7 @@ abstract class LogFinderHyperlinkTestBase : LightJvmCodeInsightFixtureTestCase()
       val info = result!!.firstHyperlinkInfo
       Assert.assertNotNull(logItem.toString(), info)
       info!!.navigate(project)
+      awaitPendingNavigation(project)
       val actualPos = editor.caretModel.logicalPosition
       Assert.assertEquals(logItem.toString(), logItem.position, actualPos)
     }

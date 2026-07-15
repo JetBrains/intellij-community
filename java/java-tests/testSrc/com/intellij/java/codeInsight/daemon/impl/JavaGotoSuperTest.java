@@ -17,8 +17,8 @@ package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.GutterIconDescriptor;
+import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerSettings;
@@ -42,7 +42,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.NavigationTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -69,6 +69,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     configureByFile(getBasePath() + getTestName(false) + ".java");
     final CodeInsightActionHandler handler = CodeInsightActions.GOTO_SUPER.forLanguage(JavaLanguage.INSTANCE);
     handler.invoke(getProject(), getEditor(), getFile());
+    NavigationTestUtil.awaitPendingNavigation(getProject());
     checkResultByFile(getBasePath() + getTestName(false) + ".after.java");
   }
 
@@ -136,6 +137,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     GutterIconNavigationHandler<PsiElement> handler =
       (GutterIconNavigationHandler<PsiElement>)aMarker.getNavigationHandler();
     handler.navigate(fakeClickEvent(), aMarker.getElement());
+    NavigationTestUtil.awaitPendingNavigation(getProject());
 
     int caretOffset = getEditor().getCaretModel().getOffset();
     assertTrue(
@@ -163,6 +165,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     GutterIconNavigationHandler<PsiElement> handler =
       (GutterIconNavigationHandler<PsiElement>)marker.getNavigationHandler();
     handler.navigate(fakeClickEvent(), marker.getElement());
+    NavigationTestUtil.awaitPendingNavigation(getProject());
 
     int caretOffset = getEditor().getCaretModel().getOffset();
     assertTrue(
@@ -208,6 +211,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     action.update(event);
     assertTrue(event.getPresentation().isEnabledAndVisible());
     action.actionPerformed(event);
+    NavigationTestUtil.awaitPendingNavigation(getProject());
     checkResultByFile(getBasePath() + "SiblingInheritance.java");
   }
 
@@ -218,7 +222,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     action.update(event);
     assertTrue(event.getPresentation().isEnabledAndVisible());
     action.actionPerformed(event);
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    NavigationTestUtil.awaitPendingNavigation(getProject());
     checkResultByFile(getBasePath() + "GoToImplementations.after.java");
   }
 
@@ -229,6 +233,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     action.update(event);
     assertTrue(event.getPresentation().isEnabledAndVisible());
     action.actionPerformed(event);
+    NavigationTestUtil.awaitPendingNavigation(getProject());
     checkResultByFile(getBasePath() + "SiblingInheritanceAndGenerics.after.java");
   }
 

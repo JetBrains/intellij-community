@@ -52,6 +52,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.NavigationTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.ClientProperty;
@@ -140,6 +141,7 @@ public class EditorTestFixture {
     if (event.getPresentation().isEnabled()) {
       ActionUtil.performAction(action, event);
       LOG.info("performEditorAction(): performing action '" + event.getActionManager().getId(action) + "'");
+      NavigationTestUtil.awaitPendingNavigationIfEnabled(myProject);
       return true;
     }
     return false;

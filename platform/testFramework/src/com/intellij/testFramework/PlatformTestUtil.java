@@ -856,6 +856,10 @@ public final class PlatformTestUtil {
     ActionUtil.updateAction(action, event);
     assertTrue(event.getPresentation().isEnabled());
     ActionUtil.performAction(action, event);
+    var project = event.getData(CommonDataKeys.PROJECT);
+    if (project != null) {
+      NavigationTestUtil.awaitPendingNavigationIfEnabled(project);
+    }
   }
 
   /**

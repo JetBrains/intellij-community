@@ -172,6 +172,7 @@ import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.InspectionTestUtil;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.NavigationTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.RunAll;
@@ -232,12 +233,12 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
-import java.time.Duration;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.ref.Reference;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -608,9 +609,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private static void copyContent(@NotNull File sourceFile, @NotNull VirtualFile targetFile) {
     try {
       WriteAction.runAndWait(() -> {
+        FileDocumentManager manager = FileDocumentManager.getInstance();
+        Document document = manager.getCachedDocument(targetFile);
+        if (document != null) {
+          // save changes to prevent possible memory-disk conflicts with re-configure
+          manager.saveDocument(document);
+        }
         targetFile.setBinaryContent(FileUtil.loadFileBytes(sourceFile));
         // update the document now, otherwise MemoryDiskConflictResolver will do it later at unexpected moment of time
-        FileDocumentManager.getInstance().reloadFiles(targetFile);
+        manager.reloadFiles(targetFile);
       });
     }
     catch (IOException e) {
@@ -1134,6 +1141,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     ActionUtil.updateAction(action, e);
     if (e.getPresentation().isEnabled()) {
       ActionUtil.performAction(action, e);
+      NavigationTestUtil.awaitPendingNavigationIfEnabled(getProject());
     }
     return e.getPresentation();
   }

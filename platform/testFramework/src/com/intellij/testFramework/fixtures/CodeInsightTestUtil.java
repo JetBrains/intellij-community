@@ -56,6 +56,7 @@ import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.NavigationTestUtil;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
@@ -317,6 +318,7 @@ public final class CodeInsightTestUtil {
       }
       finally {
         Disposer.dispose(popup);
+        NavigationTestUtil.awaitPendingNavigationIfEnabled(file.getProject());
       }
     }
     return data;
