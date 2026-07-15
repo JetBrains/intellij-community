@@ -7,6 +7,7 @@ import ai.grazie.spell.lists.WordList
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.detection.toLanguage
 import com.intellij.grazie.spellcheck.GrazieCheckers
+import com.intellij.grazie.utils.getHunspellLanguages
 import com.intellij.openapi.components.service
 import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Present
@@ -16,9 +17,17 @@ internal class WordListAdapter : WordList, EditableWordListAdapter() {
     if (Alphabet.ENGLISH.matchAny(word)) {
       return false
     }
-    val matchedLanguages = GrazieConfig.get().availableLanguages
+
+    val state = GrazieConfig.get()
+    val matchedLanguages = state.enabledLanguages
       .filter { it.toLanguage().alphabet.matchEntire(word) }
-    return (matchedLanguages.isEmpty() || !service<GrazieCheckers>().hasSpellerTool(matchedLanguages)) && !aggregator.contains(word)
+    if (matchedLanguages.isEmpty()) {
+      return !aggregator.contains(word)
+    }
+
+    val enabledHunspell = getHunspellLanguages(state)
+    val hasSpeller = matchedLanguages.any { it.iso in enabledHunspell } || service<GrazieCheckers>().hasSpellerTool(matchedLanguages)
+    return !hasSpeller && !aggregator.contains(word)
   }
 
   override fun contains(word: String, caseSensitive: Boolean): Boolean =

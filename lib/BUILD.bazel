@@ -4067,6 +4067,59 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.jetbrains.intellij.deps.languagetool/language-ja-6.8.27.jar_copy",
+    src = "@org_jetbrains_intellij_deps_languagetool-language-ja-6_8_27_http//file",
+    out = "org.jetbrains.intellij.deps.languagetool/language-ja-6.8.27.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.github.lucene-gosen/lucene-gosen-6.2.1-ipadic.jar_copy",
+    src = "@com_github_lucene-gosen-lucene-gosen-6_2_1-ipadic_http//file",
+    out = "com.github.lucene-gosen/lucene-gosen-6.2.1-ipadic.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.ibm.icu/icu4j-77.1.jar_copy",
+    src = "@com_ibm_icu-icu4j-77_1_http//file",
+    out = "com.ibm.icu/icu4j-77.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "grazie-tests-jetbrains-intellij-deps-languagetool-language-ja",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":org_jetbrains_intellij_deps_languagetool-language-ja-6_8_27_http_import",
+        ":com_github_lucene-gosen-lucene-gosen-6_2_1-ipadic_http_import",
+        ":com_ibm_icu-icu4j-77_1_http_import",
+    ],
+)
+
+jvm_import(
+    name = "org_jetbrains_intellij_deps_languagetool-language-ja-6_8_27_http_import",
+    jar = "@org_jetbrains_intellij_deps_languagetool-language-ja-6_8_27_http//file",
+    source_jar = "@org_jetbrains_intellij_deps_languagetool-language-ja-6_8_27-sources_http//file",
+)
+
+jvm_import(
+    name = "com_github_lucene-gosen-lucene-gosen-6_2_1-ipadic_http_import",
+    jar = "@com_github_lucene-gosen-lucene-gosen-6_2_1-ipadic_http//file",
+    source_jar = "@com_github_lucene-gosen-lucene-gosen-6_2_1-sources_http//file",
+)
+
+jvm_import(
+    name = "com_ibm_icu-icu4j-77_1_http_import",
+    jar = "@com_ibm_icu-icu4j-77_1_http//file",
+    source_jar = "@com_ibm_icu-icu4j-77_1-sources_http//file",
+)
+
+copy_file(
     name = "org.jetbrains.intellij.deps.languagetool/language-uk-6.8.27.jar_copy",
     src = "@org_jetbrains_intellij_deps_languagetool-language-uk-6_8_27_http//file",
     out = "org.jetbrains.intellij.deps.languagetool/language-uk-6.8.27.jar",

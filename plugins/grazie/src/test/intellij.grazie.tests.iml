@@ -271,6 +271,37 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
+      <library name="jetbrains.intellij.deps.languagetool.language.ja" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-ja:6.8.27">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ja/6.8.27/language-ja-6.8.27.jar">
+              <sha256sum>9f5b6c42cfc8f57237ea622dd372df87cf6c01d23e7c50be42ff9c43125d35e5</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/github/lucene-gosen/lucene-gosen/6.2.1/lucene-gosen-6.2.1-ipadic.jar">
+              <sha256sum>1e5cd3b8c26e73ac13ba56ef80c7edda711dd7b58c1f497a9876f79a8d5c2947</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/ibm/icu/icu4j/77.1/icu4j-77.1.jar">
+              <sha256sum>b3640b9f416a4411fd33c59abbeea8fd57d024c23e1819bf9673220a97499fe3</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ja/6.8.27/language-ja-6.8.27.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/lucene-gosen/lucene-gosen/6.2.1/lucene-gosen-6.2.1-ipadic.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/ibm/icu/icu4j/77.1/icu4j-77.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ja/6.8.27/language-ja-6.8.27-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/lucene-gosen/lucene-gosen/6.2.1/lucene-gosen-6.2.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/ibm/icu/icu4j/77.1/icu4j-77.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
       <library name="jetbrains.intellij.deps.languagetool.language.uk" type="repository">
         <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-uk:6.8.27">
           <verification>

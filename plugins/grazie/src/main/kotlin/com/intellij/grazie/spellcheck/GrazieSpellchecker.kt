@@ -3,7 +3,6 @@ package com.intellij.grazie.spellcheck
 
 import ai.grazie.detector.heuristics.rule.RuleFilter
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.GrazieDynamic.dynamicFolder
 import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.ide.msg.CONFIG_STATE_TOPIC
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
@@ -11,6 +10,7 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.utils.FirstInvocationCancellationGuard
 import com.intellij.grazie.utils.TextStyleDomain
+import com.intellij.grazie.utils.getHunspellLanguages
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -33,18 +33,12 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.spelling.SpellingCheckRule
-import java.nio.file.Files
 
 @ApiStatus.Internal
 @Service(Service.Level.APP)
 class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
 
   private val filter by lazy { RuleFilter.withAllBuiltIn() }
-
-  private fun isHunspellAvailable(lang: Lang, enabledLanguages: Set<Lang>): Boolean {
-    val hunspell = lang.hunspellRemote ?: return false
-    return lang in enabledLanguages && Files.exists(dynamicFolder.resolve(hunspell.file))
-  }
 
   private fun filterCheckers(word: String): Set<SpellerTool> {
     val checkers = heavyInit()
@@ -53,11 +47,8 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
     }
 
     val preferred = filter.filter(listOf(word)).preferred
-    val enabledLanguages = GrazieConfig.get().enabledLanguages
     return checkers.asSequence()
       .filter { checker -> preferred.any { checker.lang.equalsTo(it) } }
-      // Hunspell dictionary (if it's present) should do spellchecking / suggestions
-      .filterNot { isHunspellAvailable(it.lang, enabledLanguages) }
       .toSet()
   }
 
@@ -125,23 +116,30 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
     val checkers = this.checkers
     if (checkers != null) return checkers
 
-    val set = LinkedHashSet<SpellerTool>()
-    runWithCheckCanceled {
-      for (lang in GrazieConfig.get().availableLanguages.filterNot { it.isEnglish() }) {
-        val tool = LangTool.getTool(lang, TextStyleDomain.Other)
-        tool.allSpellingCheckRules.firstOrNull()
-          ?.let { set.add(SpellerTool(tool, lang, it)) }
-      }
-    }
+    val set = runWithCheckCanceled { buildTools() }
     this.checkers = set
     return set
+  }
+
+  private fun buildTools(): Set<SpellerTool> {
+    val tools = LinkedHashSet<SpellerTool>()
+    val state = GrazieConfig.get()
+    val enabledHunspell = getHunspellLanguages(state)
+    for (lang in state.enabledLanguages.filterNot { it.isEnglish() }) {
+      if (lang.hunspellRemote != null && lang.iso in enabledHunspell) continue
+      if (lang.jLanguage == null) continue
+      val tool = LangTool.getTool(lang, TextStyleDomain.Other)
+      tool.allSpellingCheckRules.firstOrNull()
+        ?.let { tools.add(SpellerTool(tool, lang, it)) }
+    }
+    return tools
   }
 
   override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
     if (prevState.enabledLanguages == newState.enabledLanguages) return
     checkers = null
     configurationScope.launch {
-      heavyInit()
+      checkers = buildTools()
     }
   }
 
