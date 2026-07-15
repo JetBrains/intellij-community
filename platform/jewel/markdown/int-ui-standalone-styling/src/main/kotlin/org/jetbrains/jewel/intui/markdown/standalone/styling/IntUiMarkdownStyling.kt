@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.intui.markdown.standalone.styling
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
@@ -33,7 +32,6 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPosition
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Indented
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading
-import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.HtmlBlock
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Image
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered
@@ -56,9 +54,8 @@ public fun MarkdownStyling.Companion.light(
     list: List = List.light(baseTextStyle),
     image: Image = Image.default(),
     thematicBreak: ThematicBreak = ThematicBreak.light(),
-    htmlBlock: HtmlBlock = HtmlBlock.light(editorTextStyle.copy(color = blockContentColorLight)),
 ): MarkdownStyling =
-    MarkdownStyling(blockVerticalSpacing, paragraph, heading, blockQuote, code, list, image, thematicBreak, htmlBlock)
+    MarkdownStyling(blockVerticalSpacing, paragraph, heading, blockQuote, code, list, image, thematicBreak)
 
 @ApiStatus.Experimental
 @ExperimentalJewelApi
@@ -74,9 +71,8 @@ public fun MarkdownStyling.Companion.dark(
     list: List = List.dark(baseTextStyle),
     image: Image = Image.default(),
     thematicBreak: ThematicBreak = ThematicBreak.dark(),
-    htmlBlock: HtmlBlock = HtmlBlock.dark(editorTextStyle.copy(color = blockContentColorDark)),
 ): MarkdownStyling =
-    MarkdownStyling(blockVerticalSpacing, paragraph, heading, blockQuote, code, list, image, thematicBreak, htmlBlock)
+    MarkdownStyling(blockVerticalSpacing, paragraph, heading, blockQuote, code, list, image, thematicBreak)
 
 @ApiStatus.Experimental
 @ExperimentalJewelApi
@@ -799,30 +795,6 @@ public fun ThematicBreak.Companion.dark(
     lineWidth: Dp = 2.dp,
     lineColor: Color = Color.DarkGray,
 ): ThematicBreak = ThematicBreak(padding, lineWidth, lineColor)
-
-@ApiStatus.Experimental
-@ExperimentalJewelApi
-public fun HtmlBlock.Companion.light(
-    textStyle: TextStyle = defaultEditorTextStyle.copy(color = Color.DarkGray),
-    padding: PaddingValues = PaddingValues(8.dp),
-    shape: Shape = RoundedCornerShape(4.dp),
-    background: Color = Color.LightGray,
-    borderWidth: Dp = 1.dp,
-    borderColor: Color = Color.Gray,
-    fillWidth: Boolean = true,
-): HtmlBlock = HtmlBlock(textStyle, padding, shape, background, borderWidth, borderColor, fillWidth)
-
-@ApiStatus.Experimental
-@ExperimentalJewelApi
-public fun HtmlBlock.Companion.dark(
-    textStyle: TextStyle = defaultEditorTextStyle.copy(color = Color.Gray),
-    padding: PaddingValues = PaddingValues(8.dp),
-    shape: Shape = RoundedCornerShape(4.dp),
-    background: Color = Color.DarkGray,
-    borderWidth: Dp = 1.dp,
-    borderColor: Color = Color.Gray,
-    fillWidth: Boolean = true,
-): HtmlBlock = HtmlBlock(textStyle, padding, shape, background, borderWidth, borderColor, fillWidth)
 
 @ApiStatus.Experimental
 @ExperimentalJewelApi

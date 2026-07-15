@@ -235,15 +235,5 @@ fun createMarkdownTestStyling(codeEditorTextStyle: TextStyle = TextStyle.Default
             ),
         thematicBreak =
             MarkdownStyling.ThematicBreak(padding = PaddingValues(4.dp), lineWidth = 2.dp, lineColor = Color.DarkGray),
-        htmlBlock =
-            MarkdownStyling.HtmlBlock(
-                textStyle = TextStyle.Default,
-                padding = PaddingValues(4.dp),
-                shape = RectangleShape,
-                background = Color.White,
-                borderWidth = 1.dp,
-                borderColor = Color.Gray,
-                fillWidth = true,
-            ),
     )
 }

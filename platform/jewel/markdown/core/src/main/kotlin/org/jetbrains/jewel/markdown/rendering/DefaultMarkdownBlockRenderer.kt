@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package org.jetbrains.jewel.markdown.rendering
 
 import androidx.compose.foundation.background
@@ -84,7 +86,7 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.FencedCodeBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.IndentedCodeBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.Heading
-import org.jetbrains.jewel.markdown.MarkdownBlock.HtmlBlock
+import org.jetbrains.jewel.markdown.MarkdownBlock.HtmlBlockWithAttributes
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.OrderedList
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.UnorderedList
@@ -114,7 +116,7 @@ internal const val COMPOSE_INLINE_CONTENT_ANNOTATION_TAG = "androidx.compose.fou
  *
  * @see MarkdownBlockRenderer
  */
-@Suppress("OVERRIDE_DEPRECATION", "LargeClass")
+@Suppress("OVERRIDE_DEPRECATION", "LargeClass", "DEPRECATION")
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public open class DefaultMarkdownBlockRenderer(
@@ -122,17 +124,6 @@ public open class DefaultMarkdownBlockRenderer(
     override val rendererExtensions: List<MarkdownRendererExtension> = emptyList(),
     override val inlineRenderer: InlineMarkdownRenderer = InlineMarkdownRenderer.create(rendererExtensions),
 ) : MarkdownBlockRenderer {
-    @Composable
-    override fun render(
-        blocks: List<MarkdownBlock>,
-        enabled: Boolean,
-        onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
-        modifier: Modifier,
-    ) {
-        RenderBlocks(blocks, enabled, onUrlClick, modifier)
-    }
-
     @Composable
     override fun RenderBlocks(
         blocks: List<MarkdownBlock>,
@@ -148,32 +139,18 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun render(
-        block: MarkdownBlock,
-        enabled: Boolean,
-        onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
-        modifier: Modifier,
-    ) {
-        RenderBlock(block, enabled, onUrlClick, modifier)
-    }
-
-    @Composable
     override fun RenderBlock(block: MarkdownBlock, enabled: Boolean, onUrlClick: (String) -> Unit, modifier: Modifier) {
         when (block) {
             is BlockQuote -> RenderBlockQuote(block, rootStyling.blockQuote, enabled, onUrlClick, modifier)
             is FencedCodeBlock -> RenderFencedCodeBlock(block, rootStyling.code.fenced, enabled, modifier)
             is IndentedCodeBlock -> RenderIndentedCodeBlock(block, rootStyling.code.indented, enabled, modifier)
             is Heading -> RenderHeading(block, rootStyling.heading, enabled, onUrlClick, modifier)
-            is HtmlBlock -> RenderHtmlBlock(block, rootStyling.htmlBlock, enabled, modifier)
             is OrderedList -> RenderOrderedList(block, rootStyling.list.ordered, enabled, onUrlClick, modifier)
             is UnorderedList -> RenderUnorderedList(block, rootStyling.list.unordered, enabled, onUrlClick, modifier)
             is ListItem -> RenderListItem(block, enabled, onUrlClick, modifier)
             is Paragraph -> RenderParagraph(block, rootStyling.paragraph, enabled, onUrlClick, modifier)
             ThematicBreak -> RenderThematicBreak(rootStyling.thematicBreak, enabled, modifier)
-            is MarkdownBlock.HtmlBlockWithAttributes ->
-                RenderHtmlBlockWithAttributes(block, enabled, onUrlClick, modifier)
-
+            is HtmlBlockWithAttributes -> RenderHtmlBlockWithAttributes(block, enabled, onUrlClick, modifier)
             is CustomBlock -> {
                 rendererExtensions
                     .find { it.blockRenderer?.canRender(block) == true }
@@ -188,18 +165,6 @@ public open class DefaultMarkdownBlockRenderer(
                     )
             }
         }
-    }
-
-    @Composable
-    override fun render(
-        block: Paragraph,
-        styling: MarkdownStyling.Paragraph,
-        enabled: Boolean,
-        onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
-        modifier: Modifier,
-    ) {
-        RenderParagraph(block, styling, enabled, onUrlClick, modifier)
     }
 
     @Composable
@@ -282,18 +247,6 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun render(
-        block: Heading,
-        styling: MarkdownStyling.Heading,
-        enabled: Boolean,
-        onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
-        modifier: Modifier,
-    ) {
-        RenderHeading(block, styling, enabled, onUrlClick, modifier)
-    }
-
-    @Composable
     override fun RenderHeading(
         block: Heading,
         styling: MarkdownStyling.Heading,
@@ -310,18 +263,6 @@ public open class DefaultMarkdownBlockRenderer(
             6 -> RenderHeading(block, styling.h6, enabled, onUrlClick, modifier)
             else -> JewelLogger.getInstance(javaClass).error("Heading level ${block.level} not supported:\n$block")
         }
-    }
-
-    @Composable
-    override fun render(
-        block: Heading,
-        styling: MarkdownStyling.Heading.HN,
-        enabled: Boolean,
-        onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
-        modifier: Modifier,
-    ) {
-        RenderHeading(block, styling, enabled, onUrlClick, modifier)
     }
 
     @Composable
@@ -355,15 +296,21 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun render(
-        block: BlockQuote,
-        styling: MarkdownStyling.BlockQuote,
-        enabled: Boolean,
-        onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
-        modifier: Modifier,
-    ) {
-        RenderBlockQuote(block, styling, enabled, onUrlClick, modifier)
+    private fun renderedImages(blockInlineContent: WithInlineMarkdown): Map<String, InlineTextContent> {
+        val map = remember(blockInlineContent) { mutableStateMapOf<String, InlineTextContent>() }
+
+        val imagesRenderer = rendererExtensions.firstNotNullOfOrNull { it.imageRendererExtension }
+
+        for (image in getImages(blockInlineContent)) {
+            val renderedImage = imagesRenderer?.renderImageContent(image)
+            if (renderedImage == null) {
+                map.remove(image.source)
+            } else {
+                map[image.source] = renderedImage
+            }
+        }
+
+        return map
     }
 
     @Composable
@@ -400,18 +347,6 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun render(
-        block: ListBlock,
-        styling: MarkdownStyling.List,
-        enabled: Boolean,
-        onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
-        modifier: Modifier,
-    ) {
-        RenderList(block, styling, enabled, onUrlClick, modifier)
-    }
-
-    @Composable
     override fun RenderList(
         block: ListBlock,
         styling: MarkdownStyling.List,
@@ -423,18 +358,6 @@ public open class DefaultMarkdownBlockRenderer(
             is OrderedList -> RenderOrderedList(block, styling.ordered, enabled, onUrlClick, modifier)
             is UnorderedList -> RenderUnorderedList(block, styling.unordered, enabled, onUrlClick, modifier)
         }
-    }
-
-    @Composable
-    override fun render(
-        block: OrderedList,
-        styling: MarkdownStyling.List.Ordered,
-        enabled: Boolean,
-        onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
-        modifier: Modifier,
-    ) {
-        RenderOrderedList(block, styling, enabled, onUrlClick, modifier)
     }
 
     @Composable
@@ -486,18 +409,6 @@ public open class DefaultMarkdownBlockRenderer(
         }
 
     @Composable
-    override fun render(
-        block: UnorderedList,
-        styling: MarkdownStyling.List.Unordered,
-        enabled: Boolean,
-        onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
-        modifier: Modifier,
-    ) {
-        RenderUnorderedList(block, styling, enabled, onUrlClick, modifier)
-    }
-
-    @Composable
     override fun RenderUnorderedList(
         block: UnorderedList,
         styling: MarkdownStyling.List.Unordered,
@@ -544,28 +455,12 @@ public open class DefaultMarkdownBlockRenderer(
         }
 
     @Composable
-    override fun render(
-        block: ListItem,
-        enabled: Boolean,
-        onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
-        modifier: Modifier,
-    ) {
-        RenderListItem(block, enabled, onUrlClick, modifier)
-    }
-
-    @Composable
     override fun RenderListItem(block: ListItem, enabled: Boolean, onUrlClick: (String) -> Unit, modifier: Modifier) {
         Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
             for (childBlock in block.children) {
                 RenderBlock(childBlock, enabled, onUrlClick, Modifier)
             }
         }
-    }
-
-    @Composable
-    override fun render(block: CodeBlock, styling: MarkdownStyling.Code, enabled: Boolean, modifier: Modifier) {
-        RenderCodeBlock(block, styling, enabled, modifier)
     }
 
     @Composable
@@ -576,19 +471,9 @@ public open class DefaultMarkdownBlockRenderer(
         modifier: Modifier,
     ) {
         when (block) {
-            is FencedCodeBlock -> render(block, styling.fenced, enabled, modifier)
-            is IndentedCodeBlock -> render(block, styling.indented, enabled, modifier)
+            is FencedCodeBlock -> RenderFencedCodeBlock(block, styling.fenced, enabled, modifier)
+            is IndentedCodeBlock -> RenderIndentedCodeBlock(block, styling.indented, enabled, modifier)
         }
-    }
-
-    @Composable
-    override fun render(
-        block: IndentedCodeBlock,
-        styling: MarkdownStyling.Code.Indented,
-        enabled: Boolean,
-        modifier: Modifier,
-    ) {
-        RenderIndentedCodeBlock(block, styling, enabled, modifier)
     }
 
     @Composable
@@ -620,16 +505,6 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun render(
-        block: FencedCodeBlock,
-        styling: MarkdownStyling.Code.Fenced,
-        enabled: Boolean,
-        modifier: Modifier,
-    ) {
-        RenderFencedCodeBlock(block, styling, enabled, modifier)
-    }
-
-    @Composable
     override fun RenderFencedCodeBlock(
         block: FencedCodeBlock,
         styling: MarkdownStyling.Code.Fenced,
@@ -656,6 +531,7 @@ public open class DefaultMarkdownBlockRenderer(
                     )
                 }
 
+                @Suppress("DEPRECATION")
                 if (MIME_TYPE_REGEX.matches(language)) {
                     val mimeType = MimeType.Known.fromMimeTypeString(language)
                     // Enabled is always true as the container handles the disabled alpha
@@ -678,6 +554,7 @@ public open class DefaultMarkdownBlockRenderer(
         }
     }
 
+    @Suppress("DEPRECATION")
     @Deprecated(
         message =
             "This class function is not scalable as it relies on a pre-resolved MimeType object. " +
@@ -749,11 +626,6 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun renderThematicBreak(styling: MarkdownStyling.ThematicBreak, enabled: Boolean, modifier: Modifier) {
-        RenderThematicBreak(styling, enabled, modifier)
-    }
-
-    @Composable
     override fun RenderThematicBreak(styling: MarkdownStyling.ThematicBreak, enabled: Boolean, modifier: Modifier) {
         Divider(
             orientation = Orientation.Horizontal,
@@ -761,21 +633,6 @@ public open class DefaultMarkdownBlockRenderer(
             color = styling.lineColor,
             thickness = styling.lineWidth,
         )
-    }
-
-    @Composable
-    override fun render(block: HtmlBlock, styling: MarkdownStyling.HtmlBlock, enabled: Boolean, modifier: Modifier) {
-        RenderHtmlBlock(block, styling, enabled, modifier)
-    }
-
-    @Composable
-    override fun RenderHtmlBlock(
-        block: HtmlBlock,
-        styling: MarkdownStyling.HtmlBlock,
-        enabled: Boolean,
-        modifier: Modifier,
-    ) {
-        // HTML blocks are intentionally not rendered
     }
 
     @Composable
@@ -790,31 +647,13 @@ public open class DefaultMarkdownBlockRenderer(
         }
 
     @Composable
-    private fun renderedImages(blockInlineContent: WithInlineMarkdown): Map<String, InlineTextContent> {
-        val map = remember(blockInlineContent) { mutableStateMapOf<String, InlineTextContent>() }
-
-        val imagesRenderer = rendererExtensions.firstNotNullOfOrNull { it.imageRendererExtension }
-
-        for (image in getImages(blockInlineContent)) {
-            val renderedImage = imagesRenderer?.renderImageContent(image)
-            if (renderedImage == null) {
-                map.remove(image.source)
-            } else {
-                map[image.source] = renderedImage
-            }
-        }
-
-        return map
-    }
-
-    @Composable
     protected fun MaybeScrollingContainer(
         isScrollable: Boolean,
         modifier: Modifier = Modifier,
         content: @Composable () -> Unit,
     ) {
-        // We use movableContent so changing the flag doesn't reset the content
-        val movableContent = remember { movableContentOf { content() } }
+        // We use movableContent, so changing the flag doesn't reset the content
+        val movableContent = remember(content) { movableContentOf { content() } }
         if (isScrollable) {
             HorizontallyScrollableContainer(modifier) { movableContent() }
         } else {
@@ -824,11 +663,20 @@ public open class DefaultMarkdownBlockRenderer(
 
     @Composable
     private fun RenderHtmlBlockWithAttributes(
-        block: MarkdownBlock.HtmlBlockWithAttributes,
+        block: HtmlBlockWithAttributes,
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         modifier: Modifier = Modifier,
     ) {
+        val mdBlock = block.mdBlock
+        if (
+            block.attributes.isEmpty() &&
+                mdBlock is Paragraph &&
+                mdBlock.inlineContent.singleOrNull() is InlineMarkdown.HtmlInline
+        ) {
+            return
+        }
+
         val textAlignment: TextAlign =
             when (block.attributes["align"]) {
                 "left" -> TextAlign.Start
@@ -1188,6 +1036,7 @@ private fun getImages(input: WithInlineMarkdown): List<InlineMarkdown.Image> = b
     collectImagesRecursively(input.inlineContent)
 }
 
+@Suppress("DEPRECATION")
 @Deprecated(
     message =
         "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", \"python\"). " +
