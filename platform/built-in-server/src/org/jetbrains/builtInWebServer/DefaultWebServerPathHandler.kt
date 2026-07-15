@@ -95,8 +95,9 @@ internal class DefaultWebServerPathHandler : WebServerPathHandler {
 
     val canonicalPath = if (indexUsed) "${path}/${pathInfo.name}" else path
     for (fileHandler in FILE_HANDLER_EP_NAME.extensionList) {
+      val projectNameForHandlers = if (isCustomHost) null else projectName
       LOG.runAndLogException {
-        if (fileHandler.process(pathInfo, canonicalPath, project, request, channel, if (isCustomHost) null else projectName, authHeaders)) {
+        if (fileHandler.process(pathInfo, canonicalPath, project, request, channel, projectNameForHandlers, authHeaders)) {
           return true
         }
       }
