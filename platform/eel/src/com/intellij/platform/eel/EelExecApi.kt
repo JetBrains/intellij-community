@@ -6,6 +6,7 @@ import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -15,7 +16,6 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
-import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.util.Collections
 import java.util.WeakHashMap
@@ -141,6 +141,7 @@ sealed interface EelExecApi {
   @Suppress("FunctionName")
   @ApiStatus.Internal
   @ApiStatus.Obsolete
+  @VisibleToClasses("com.intellij.platform.ijent.impl.base.GrpcIjentExecPosixApi")
   suspend fun `_private useEnvironmentVariableDefaultInFetchLoginShellEnvVariables`(): EnvironmentVariablesOptions.Mode? = null
 
   /**
@@ -630,6 +631,10 @@ suspend fun EelExecApi.execInShell(vararg commands: String): EelExecApiHelpers.S
 
 /** Hopefully, it's a temporary workaround. */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.platform.eel.impl.local.EelLocalExecPosixApi",
+  "com.intellij.platform.eel.impl.local.EelLocalExecWindowsApi",
+)
 interface LocalEelExecApi
 
 /**
@@ -638,10 +643,10 @@ interface LocalEelExecApi
  * * `true` if the cache corresponds to a success record, false otherwise.
  */
 @ApiStatus.Internal
-@VisibleForTesting
+@VisibleToClasses("com.intellij.platform.ijent.functional.processes.EelExecApiTest")
 val cacheForObsoleteEnvVarExpireAt: MutableMap<EelDescriptor, Pair<Long, Boolean>> = Collections.synchronizedMap(WeakHashMap())
 
 // The previous implementation used the same timeout, and in the previous implementation it was chosen as a wild guess.
 @ApiStatus.Internal
-@VisibleForTesting
+@VisibleToClasses("com.intellij.platform.ijent.functional.processes.EelExecApiTest")
 var fetchLoginShellEnvVariablesCacheExpirationTime: Duration = 10.seconds

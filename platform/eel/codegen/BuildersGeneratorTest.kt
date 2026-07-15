@@ -573,6 +573,8 @@ private fun findBuilders(psiFile: PsiFile, methods: MutableList<BuilderRequest>)
             org[.]jetbrains[.]annotations[.]ApiStatus[.](Internal|Experimental|Obsolete|ScheduledForRemoval)
             |
             kotlin[.]Deprecated
+            |
+            com[.]intellij[.]platform[.]util[.]annotations[.]VisibleToClasses
             )
           """.trimIndent(), RegexOption.COMMENTS)
 
