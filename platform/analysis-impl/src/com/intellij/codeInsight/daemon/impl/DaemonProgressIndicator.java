@@ -13,7 +13,9 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Context;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -131,6 +133,20 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
     assert !isRunning() : "running";
     mySpan = myTraceManager.spanBuilder("run daemon").startSpan();
     super.start();
+  }
+
+  @ApiStatus.Internal
+  public @Nullable Span newSpan(@NonNls @NotNull String name) {
+    Span parentSpan = mySpan;
+    if (parentSpan == null) {
+      return null;
+    }
+    return newSpan(name, parentSpan);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull Span newSpan(@NonNls @NotNull String name, @NotNull Span parentSpan) {
+    return myTraceManager.spanBuilder(name).setParent(Context.current().with(parentSpan)).startSpan();
   }
 
 
