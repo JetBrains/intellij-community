@@ -41,6 +41,7 @@
   <!-- endregion -->
   <content namespace="jetbrains">
     <module name="intellij.mermaid.markdown" loading="optional"/>
+    <module name="intellij.mermaid.frontend"/>
     <module name="intellij.mermaid.json" required-if-available="intellij.platform.backend"/>
     <module name="intellij.mermaid.backend.split"/>
     <module name="intellij.mermaid.frontend.split"/>

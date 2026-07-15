@@ -1552,6 +1552,7 @@ plugins/mcp-server/mcpserver.vcs
 plugins/mcp-server/tests
 plugins/mcp-server/tests/plugin
 plugins/mermaid
+plugins/mermaid/frontend
 plugins/mermaid/json
 plugins/mermaid/markdown
 plugins/mermaid/spellchecker

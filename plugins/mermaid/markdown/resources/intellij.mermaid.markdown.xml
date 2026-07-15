@@ -41,8 +41,6 @@
                            order="after DefaultMermaidCodeFenceLanguageProvider"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
-    <fileEditorProvider implementation="com.intellij.mermaid.markdown.preview.MermaidEditorWithPreviewProvider"/>
-
     <editorNotificationProvider implementation="com.intellij.mermaid.markdown.preview.ExportedDiagramEditorNotificationProvider"/>
 
     <completion.contributor language="Markdown"

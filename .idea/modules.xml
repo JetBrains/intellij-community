@@ -1290,6 +1290,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/mcpserver.toolsets/intellij.mcpserver.toolsets.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/mcpserver.toolsets/intellij.mcpserver.toolsets.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/mcpserver.vcs/intellij.mcpserver.vcs.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/mcpserver.vcs/intellij.mcpserver.vcs.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mermaid/intellij.mermaid.iml" filepath="$PROJECT_DIR$/plugins/mermaid/intellij.mermaid.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/mermaid/frontend/intellij.mermaid.frontend.iml" filepath="$PROJECT_DIR$/plugins/mermaid/frontend/intellij.mermaid.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mermaid/json/intellij.mermaid.json.iml" filepath="$PROJECT_DIR$/plugins/mermaid/json/intellij.mermaid.json.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mermaid/markdown/intellij.mermaid.markdown.iml" filepath="$PROJECT_DIR$/plugins/mermaid/markdown/intellij.mermaid.markdown.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mermaid/spellchecker/intellij.mermaid.spellchecker.iml" filepath="$PROJECT_DIR$/plugins/mermaid/spellchecker/intellij.mermaid.spellchecker.iml" />

@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.mermaid.markdown.preview
+package com.intellij.mermaid.frontend.preview
 
+import com.intellij.mermaid.markdown.preview.MermaidEditorWithPreview
+import com.intellij.mermaid.markdown.preview.MermaidPreviewEditor
+import com.intellij.mermaid.markdown.preview.MermaidPreviewFileEditorProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.TextEditor
