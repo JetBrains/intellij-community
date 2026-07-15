@@ -48,13 +48,11 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
   init {
     myComponent.addMouseListener(object : PopupHandler() {
       override fun invokePopup(component: Component, x: Int, y: Int) {
-        if (enabled()) {
-          val action = ActionManager.getInstance().getAction("ToolWindowShowNamesAction")!!
-          val group = object : ActionGroup() {
-            override fun getChildren(e: AnActionEvent?) = arrayOf(action)
-          }
-          showPopup(group, component, x, y)
+        val action = ActionManager.getInstance().getAction("ToolWindowShowNamesAction")!!
+        val group = object : ActionGroup() {
+          override fun getChildren(e: AnActionEvent?) = arrayOf(action)
         }
+        showPopup(group, component, x, y)
       }
     })
   }
@@ -203,16 +201,8 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
 
   @ApiStatus.Internal
   companion object {
-    fun enabled(): Boolean {
-      return true
-    }
 
-    fun isShowNames(): Boolean = enabled() && UISettings.getInstance().showToolWindowsNames
-
-    fun setShowNames(value: Boolean) {
-      UISettings.getInstance().showToolWindowsNames = value
-      applyShowNames()
-    }
+    fun isShowNames(): Boolean = UISettings.getInstance().showToolWindowsNames
 
     fun applyShowNames() {
       val uiSettings = UISettings.getInstance()
