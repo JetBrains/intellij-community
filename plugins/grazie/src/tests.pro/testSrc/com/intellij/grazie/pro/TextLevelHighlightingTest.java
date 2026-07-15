@@ -149,6 +149,26 @@ public class TextLevelHighlightingTest extends BaseTestCase {
 
   @NeedsCloud
   @Test
+  public void testNoIncompleteSentenceWarningsInKotlinLiterals() {
+    GrazieConfig.Companion.update(config -> config
+      .withCheckingContext(config.getCheckingContext().copy(
+        false,
+        true,
+        false,
+        false,
+        config.getCheckingContext().getDisabledLanguages(),
+        config.getCheckingContext().getEnabledLanguages())));
+
+    myFixture.configureByText("a.kt", """
+      private suspend fun renderReport() {
+          val report = "Report not found"
+      }
+      """);
+    myFixture.checkHighlighting();
+  }
+
+  @NeedsCloud
+  @Test
   public void testKdocSentenceCapitalization() {
     myFixture.configureByText("a.kt", """
       /**
