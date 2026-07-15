@@ -1,5 +1,14 @@
+load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = ":custom_multiplatform",
+    module_name = "fleet.util.multiplatform",
+    visibility = ["//visibility:public"],
+    deps = ["@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib"],
+)
 
 ### auto-generated section `build fleet.util.multiplatform` start
 create_kotlinc_options(

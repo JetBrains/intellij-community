@@ -1,5 +1,20 @@
+load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = ":custom_api",
+    module_name = "fleet.util.logging.api",
+    plugins = ["@community//fleet/compiler-plugins/expects:expects-plugin"],
+    visibility = ["//visibility:public"],
+    exports = [
+        "@community//fleet/util/multiplatform:wasmjs_module_lib",
+        "@kmp_deps//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
+        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+    ],
+    deps = ["@kmp_deps//:org_jetbrains_kotlin_wrappers_kotlin_browser"],
+)
 
 ### auto-generated section `build fleet.util.logging.api` start
 create_kotlinc_options(

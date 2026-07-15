@@ -1,6 +1,34 @@
-load("@community//fleet/build:fleet.bzl", "fleet_plugin_services_resources")
+load("@community//fleet/build:fleet.bzl", "fleet_plugin_services_resources", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = ":custom_rhizomedb.transactor",
+    module_name = "fleet.rhizomedb.transactor",
+    plugins = [
+        "@community//fleet/compiler-plugins/rpc:rpc-plugin",
+        "@lib//:kotlin-serialization-plugin",
+    ],
+    visibility = ["//visibility:public"],
+    exports = [
+        "@community//fleet/rpc:wasmjs_module_lib",
+        "@community//fleet/util/core:wasmjs_module_lib",
+    ],
+    deps = [
+        "@community//fleet/bifurcan:wasmjs_module_lib",
+        "@community//fleet/fastutil:wasmjs_module_lib",
+        "@community//fleet/multiplatform.shims:wasmjs_module_lib",
+        "@community//fleet/openmap:wasmjs_module_lib",
+        "@community//fleet/reporting/api:wasmjs_module_lib",
+        "@community//fleet/reporting/shared:wasmjs_module_lib",
+        "@community//fleet/rhizomedb:wasmjs_module_lib",
+        "@kmp_deps//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
+        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_core",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_json",
+    ],
+)
 
 ### auto-generated section `build fleet.rhizomedb.transactor` start
 create_kotlinc_options(

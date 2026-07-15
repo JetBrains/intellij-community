@@ -1,5 +1,19 @@
+load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = ":custom_multiplatform.shims",
+    module_name = "fleet.multiplatform.shims",
+    plugins = ["@community//fleet/compiler-plugins/expects:expects-plugin"],
+    visibility = ["//visibility:public"],
+    exports = ["@community//fleet/util/multiplatform:wasmjs_module_lib"],
+    deps = [
+        "@kmp_deps//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
+        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+    ],
+)
 
 ### auto-generated section `build fleet.multiplatform.shims` start
 create_kotlinc_options(

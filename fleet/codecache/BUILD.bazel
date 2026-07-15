@@ -1,5 +1,26 @@
+load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = ":custom_codecache",
+    module_name = "fleet.codecache",
+    plugins = ["@lib//:kotlin-serialization-plugin"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@community//fleet/bundles:wasmjs_module_lib",
+        "@community//fleet/ktor/client/core:wasmjs_module_lib",
+        "@community//fleet/modules/api:wasmjs_module_lib",
+        "@community//fleet/util/logging/api:wasmjs_module_lib",
+        "@kmp_deps//:org_jetbrains_annotations",
+        "@kmp_deps//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
+        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_collections_immutable",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_core",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_json",
+    ],
+)
 
 ### auto-generated section `build fleet.codecache` start
 create_kotlinc_options(

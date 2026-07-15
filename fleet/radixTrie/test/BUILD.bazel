@@ -1,6 +1,21 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = ":custom_test",
+    module_name = "fleet.radixTrie.test",
+    plugins = ["@lib//:kotlin-serialization-plugin"],
+    test_deps = [
+        "@community//fleet/radixTrie:wasmjs_module_lib",
+        "@community//fleet/test-runtime:wasmjs_module_lib",
+        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_core",
+    ],
+    visibility = ["//visibility:public"],
+)
 
 ### auto-generated section `build fleet.radixTrie.test` start
 create_kotlinc_options(
