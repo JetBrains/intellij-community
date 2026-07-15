@@ -2,6 +2,7 @@
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -24,7 +25,9 @@ public final class ScrollToRunningTestAction extends AnAction implements DumbAwa
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(myModel != null && myModel.isRunning());
+    boolean tracked = myModel != null && TestConsoleProperties.TRACK_RUNNING_TEST.value(myModel.getProperties());
+    e.getPresentation().setVisible(tracked);
+    e.getPresentation().setEnabled(tracked && myModel.isRunning());
   }
 
   @Override
