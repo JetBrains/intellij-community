@@ -128,6 +128,7 @@ public final class ThreadLeakTracker {
       "rd throttler", // daemon thread created by com.jetbrains.rd.util.AdditionalApiKt.getTimer
       "Reference Handler",
       "Rider.Backend", // ignore process + io threads because backend follows application lifecycle and can be started during the test
+      "Rider.LightweightBackend", // same as Rider.Backend, but for the lightweight backend process
       "RMI GC Daemon",
       "RMI TCP ",
       "Save classpath indexes for file loader",
