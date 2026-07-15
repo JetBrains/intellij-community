@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor
 
 import com.intellij.openapi.editor.Document
@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.tree.IElementType
+import org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy.Companion.MAX_LEXING_CONTEXT_LENGTH
 import org.intellij.plugins.markdown.highlighting.MarkdownSyntaxHighlighter
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 
@@ -40,17 +41,67 @@ class MarkdownLineWrapPositionStrategy : GenericLineWrapPositionStrategy() {
     val position = super.calculateWrapPosition(document, project, startOffset, endOffset, maxPreferredOffset,
                                                allowToBeyondMaxPreferredOffset, isSoftWrap)
     if (position < 0) return position
+    // Soft wrapping calls this method for every wrapped visual line, so the amount of text lexed per call must stay
+    // bounded, or large documents freeze the editor. The token checks below are line-scoped ([findOnLine] stops at EOL),
+    // and the Markdown constructs they detect (headers, tables, inline links) do not span blank lines, so lexing the
+    // enclosing blank-line-delimited block is enough. All offsets inside the checks are relative to [contextStart].
+    // See IJPL-250302 for details.
+    val text = document.immutableCharSequence
+    val contextStart = findContextStart(text, position)
+    val contextEnd = findContextEnd(text, position)
     val highlighter = LexerEditorHighlighter(MarkdownSyntaxHighlighter(), EmptyColorScheme.getEmptyScheme())
-    highlighter.setText(document.immutableCharSequence)
+    highlighter.setText(text.subSequence(contextStart, contextEnd))
 
-    val decision = classifyForbidden(highlighter, position) ?: return position
+    val decision = classifyForbidden(highlighter, position - contextStart) ?: return position
     if (decision == ForbiddenDecision.NoWrap) return -1
-    val forbiddenStart = (decision as ForbiddenDecision.WrapBefore).offset
+    val forbiddenStart = contextStart + (decision as ForbiddenDecision.WrapBefore).offset
     if (forbiddenStart <= startOffset) return -1
     val retry = super.calculateWrapPosition(document, project, startOffset, forbiddenStart,
                                             minOf(maxPreferredOffset, forbiddenStart),
                                             allowToBeyondMaxPreferredOffset, isSoftWrap)
     return if (retry > 0) retry else forbiddenStart
+  }
+
+  /**
+   * Returns the offset of the first character of the blank-line-delimited block containing [position],
+   * looking back at most [MAX_LEXING_CONTEXT_LENGTH] characters. For a line longer than the limit the block is cut
+   * mid-line; the checks then degrade to "no forbidden construct found", which only affects the wrap position choice.
+   */
+  private fun findContextStart(text: CharSequence, position: Int): Int {
+    val lowerBound = (position - MAX_LEXING_CONTEXT_LENGTH).coerceAtLeast(0)
+    var blockStart = lowerBound
+    var lineIsBlank = true
+    for (offset in lowerBound until position) {
+      when (text[offset]) {
+        '\n' -> {
+          if (lineIsBlank) blockStart = offset + 1
+          lineIsBlank = true
+        }
+        ' ', '\t' -> {}
+        else -> lineIsBlank = false
+      }
+    }
+    return blockStart
+  }
+
+  /**
+   * Returns the end offset (exclusive) of the blank-line-delimited block containing,
+   * looking ahead at most [MAX_LEXING_CONTEXT_LENGTH] characters.
+   */
+  private fun findContextEnd(text: CharSequence, position: Int): Int {
+    val upperBound = (position + MAX_LEXING_CONTEXT_LENGTH).coerceAtMost(text.length)
+    var lineIsBlank = false // the line containing the wrap candidate is never blank
+    for (offset in position until upperBound) {
+      when (text[offset]) {
+        '\n' -> {
+          if (lineIsBlank) return offset
+          lineIsBlank = true
+        }
+        ' ', '\t' -> {}
+        else -> lineIsBlank = false
+      }
+    }
+    return upperBound
   }
 
   private sealed interface ForbiddenDecision {
@@ -129,6 +180,8 @@ class MarkdownLineWrapPositionStrategy : GenericLineWrapPositionStrategy() {
   private enum class Direction { BACKWARD, FORWARD }
 
   companion object {
+    private const val MAX_LEXING_CONTEXT_LENGTH = 4096
+
     private val FORBIDDEN_INSIDE_LINK = setOf(
       MarkdownTokenTypes.URL,
       MarkdownTokenTypes.AUTOLINK,
