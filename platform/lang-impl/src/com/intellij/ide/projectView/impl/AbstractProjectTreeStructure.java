@@ -10,18 +10,26 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractProjectTreeStructure extends ProjectAbstractTreeStructureBase implements ViewSettings {
+  private final @Nullable ViewSettings myViewSettings;
   private final AbstractTreeNode myRoot;
 
   public AbstractProjectTreeStructure(@NotNull Project project) {
     super(project);
+    myViewSettings = null;
     myRoot = createRoot(project, this);
   }
 
   public AbstractProjectTreeStructure(@NotNull Project project, @NotNull ViewSettings settings) {
     super(project);
+    myViewSettings = settings;
     myRoot = createRoot(project, settings);
+  }
+
+  public @NotNull ViewSettings getViewSettings() {
+    return myViewSettings != null ? myViewSettings : this;
   }
 
   protected AbstractTreeNode<?> createRoot(@NotNull Project project, @NotNull ViewSettings settings) {
