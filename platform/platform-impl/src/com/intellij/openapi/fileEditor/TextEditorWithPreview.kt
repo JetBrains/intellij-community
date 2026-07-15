@@ -298,7 +298,7 @@ open class TextEditorWithPreview @JvmOverloads constructor(
 
   override fun getState(level: FileEditorStateLevel): FileEditorState {
     return MyFileEditorState(
-      splitLayout = layout,
+      splitLayout = layout.takeUnless { level == FileEditorStateLevel.UNDO },
       firstState = myEditor.getState(level),
       secondState = myPreview.getState(level),
       isVerticalSplit = isVerticalSplit(),
