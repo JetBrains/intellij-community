@@ -253,15 +253,11 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     BackgroundTaskUtil.executeOnPooledThread(processHandler, () -> {
       var progressIndicator = ObjectUtils.notNull(myEnv.getUserData(PROGRESS_INDICATOR_KEY), () -> new EmptyProgressIndicator());
       var dataContext = BuildConsoleUtils.getDataContext(task.getId(), progressListener, consoleView);
-      var startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
-      var settingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings);
-      var greeting = ExternalSystemBundle.message("run.text.starting.task", startDateTime, settingsDescription) + "\n";
-      processHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
       try (var eventDispatcher = new ExternalSystemEventDispatcher(task.getId(), progressListener, false)) {
         ExternalSystemTelemetryUtil.runWithSpan(mySettings.getExternalSystemId(), "ExternalSystemTaskExecution", _ ->
           task.execute(progressIndicator, new ExternalSystemTaskEventMulticaster(
             processHandler, eventDispatcher, buildDescriptor, dataContext,
-            consoleManager, consoleView, settingsDescription
+            consoleManager, consoleView
           ))
         );
         ExternalSystemTelemetryUtil.runWithSpan(mySettings.getExternalSystemId(), "ExternalSystemTaskResultProcessing", _ ->
@@ -450,7 +446,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     private final @NotNull DataContext myDataContext;
     private final @NotNull ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler> myConsoleManager;
     private final @Nullable ExecutionConsole myConsoleView;
-    private final @NotNull String mySettingsDescription;
+
+    private final @NotNull String mySettingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings);
 
     private ExternalSystemTaskEventMulticaster(
       @NotNull ExternalSystemProcessHandler processHandler,
@@ -458,8 +455,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       @NotNull BuildDescriptor buildDescriptor,
       @NotNull DataContext dataContext,
       @NotNull ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler> consoleManager,
-      @Nullable ExecutionConsole consoleView,
-      @NotNull String settingsDescription
+      @Nullable ExecutionConsole consoleView
     ) {
       myProcessHandler = processHandler;
       myEventDispatcher = eventDispatcher;
@@ -467,11 +463,14 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       myDataContext = dataContext;
       myConsoleManager = consoleManager;
       myConsoleView = consoleView;
-      mySettingsDescription = settingsDescription;
     }
 
     @Override
     public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
+      var startDateTime = DateFormatUtil.formatTimeWithSeconds(myBuildDescriptor.getStartTime());
+      var greeting = ExternalSystemBundle.message("run.text.starting.task", startDateTime, mySettingsDescription) + "\n";
+      myProcessHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
+
       var eventMessage = BuildBundle.message("build.status.running");
       var viewSettingsProvider = ObjectUtils.doIfCast(myConsoleView, BuildViewSettingsProvider.class, BuildViewSettingsProviderAdapter::new);
       myEventDispatcher.onEvent(id,
@@ -545,7 +544,6 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       final String endDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
       final String farewell = ExternalSystemBundle.message("run.text.ended.task", endDateTime, mySettingsDescription);
       myProcessHandler.notifyTextAvailable(farewell + "\n", ProcessOutputTypes.SYSTEM);
-      ExternalSystemRunConfiguration.foldGreetingOrFarewell(myConsoleView, farewell, false);
       myProcessHandler.notifyProcessTerminated(0);
     }
   }

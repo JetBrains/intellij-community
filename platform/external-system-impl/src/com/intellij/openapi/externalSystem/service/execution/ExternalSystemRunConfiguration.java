@@ -11,17 +11,10 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.SearchScopeProvidingRunProfile;
-import com.intellij.execution.console.DuplexConsoleView;
-import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -39,7 +32,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,8 +40,6 @@ import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -58,7 +48,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Icon;
 import java.io.File;
 import java.io.InputStream;
 import java.util.Collections;
@@ -262,52 +251,6 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       }
     }
     return scope;
-  }
-
-  static void foldGreetingOrFarewell(@Nullable ExecutionConsole consoleView, String text, boolean isGreeting) {
-    int limit = 100;
-    if (text.length() < limit) {
-      return;
-    }
-    final ConsoleViewImpl consoleViewImpl;
-    if (consoleView instanceof ConsoleViewImpl) {
-      consoleViewImpl = (ConsoleViewImpl)consoleView;
-    }
-    else if (consoleView instanceof DuplexConsoleView duplexConsoleView) {
-      if (duplexConsoleView.getPrimaryConsoleView() instanceof ConsoleViewImpl) {
-        consoleViewImpl = (ConsoleViewImpl)duplexConsoleView.getPrimaryConsoleView();
-      }
-      else if (duplexConsoleView.getSecondaryConsoleView() instanceof ConsoleViewImpl) {
-        consoleViewImpl = (ConsoleViewImpl)duplexConsoleView.getSecondaryConsoleView();
-      }
-      else {
-        consoleViewImpl = null;
-      }
-    }
-    else {
-      consoleViewImpl = null;
-    }
-    if (consoleViewImpl != null) {
-      UIUtil.invokeLaterIfNeeded(() -> {
-        consoleViewImpl.performWhenNoDeferredOutput(() -> {
-          if (!ApplicationManager.getApplication().isDispatchThread()) return;
-
-          Document document = consoleViewImpl.getEditor().getDocument();
-          int line = isGreeting ? 0 : document.getLineCount() - 2;
-          if (CharArrayUtil.regionMatches(document.getCharsSequence(), document.getLineStartOffset(line), text)) {
-            final FoldingModel foldingModel = consoleViewImpl.getEditor().getFoldingModel();
-            foldingModel.runBatchFoldingOperation(() -> {
-              FoldRegion region = foldingModel.addFoldRegion(document.getLineStartOffset(line),
-                                                             document.getLineEndOffset(line) + 1,
-                                                             StringUtil.trimLog(text, limit));
-              if (region != null) {
-                region.setExpanded(false);
-              }
-            });
-          }
-        });
-      });
-    }
   }
 
   @Override
