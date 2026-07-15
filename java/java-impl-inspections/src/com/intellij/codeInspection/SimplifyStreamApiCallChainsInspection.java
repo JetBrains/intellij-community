@@ -176,6 +176,7 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
   private static final CallMatcher STREAM_ALL_MATCH = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "allMatch").parameterCount(1);
   private static final CallMatcher STREAM_COLLECT = instanceCall(JAVA_UTIL_STREAM_STREAM, "collect").parameterCount(1);
   private static final CallMatcher OPTIONAL_IS_PRESENT = instanceCall(JAVA_UTIL_OPTIONAL, "isPresent").parameterCount(0);
+  private static final CallMatcher OPTIONAL_IS_EMPTY = instanceCall(JAVA_UTIL_OPTIONAL, "isEmpty").parameterCount(0);
   private static final CallMatcher BOOLEAN_EQUALS = instanceCall(JAVA_LANG_BOOLEAN, "equals").parameterCount(1);
   private static final CallMatcher STREAM_OF = staticCall(JAVA_UTIL_STREAM_STREAM, "of").parameterTypes("T");
   private static final CallMatcher ARRAYS_STREAM = anyOf(
@@ -233,7 +234,8 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
     CollectorToListSize.handler(),
     IterateTakeWhileFix.handler(),
     FilterAndMapUseSameMethodChainFix.handler(),
-    ReplaceWithOrElseThrowFix.handler()
+    ReplaceWithOrElseThrowFix.handler(),
+    StreamFindEmptyCheckFix.handler()
   ).registerAll(SimplifyMatchNegationFix.handlers());
 
   private static final Logger LOG = Logger.getInstance(SimplifyStreamApiCallChainsInspection.class);
@@ -1828,6 +1830,63 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
           }
         }
         return null;
+      });
+    }
+  }
+
+  static class StreamFindEmptyCheckFix implements CallChainSimplification {
+    private final boolean myNegated;
+
+    StreamFindEmptyCheckFix(boolean negated) {
+      myNegated = negated;
+    }
+
+    private String replacementText() {
+      return (myNegated ? "!" : "") + "isEmpty()";
+    }
+
+    @Override
+    public String getName() {
+      return CommonQuickFixBundle.message("fix.replace.with.x", replacementText());
+    }
+
+    @Override
+    public String getMessage() {
+      return CommonQuickFixBundle.message("fix.can.replace.with.x", replacementText());
+    }
+
+    @Override
+    public boolean keepsStream() {
+      return false;
+    }
+
+    @Override
+    public PsiElement simplify(PsiMethodCallExpression call) {
+      PsiMethodCallExpression findCall = getQualifierMethodCall(call);
+      if (!STREAM_FIND.test(findCall)) return null;
+      PsiMethodCallExpression streamCall = getQualifierMethodCall(findCall);
+      if (!COLLECTION_STREAM.test(streamCall)) return null;
+      PsiExpression collection = streamCall.getMethodExpression().getQualifierExpression();
+      if (collection == null) return null;
+      boolean present = OPTIONAL_IS_PRESENT.test(call);
+      boolean parentNegated = SimplifyMatchNegationFix.isParentNegated(call);
+      boolean bang = present ^ parentNegated;
+      PsiElement target = parentNegated ? PsiUtil.skipParenthesizedExprUp(call.getParent()) : call;
+      CommentTracker ct = new CommentTracker();
+      String replacement = (bang ? "!" : "") + ct.text(collection) + ".isEmpty()";
+      return ct.replaceAndRestoreComments(target, replacement);
+    }
+
+    static CallHandler<CallChainSimplification> handler() {
+      return CallHandler.of(anyOf(OPTIONAL_IS_PRESENT, OPTIONAL_IS_EMPTY), call -> {
+        PsiMethodCallExpression findCall = getQualifierMethodCall(call);
+        if (!STREAM_FIND.test(findCall)) return null;
+        PsiMethodCallExpression streamCall = getQualifierMethodCall(findCall);
+        if (!COLLECTION_STREAM.test(streamCall)) return null;
+        if (streamCall.getMethodExpression().getQualifierExpression() == null) return null;
+        boolean present = OPTIONAL_IS_PRESENT.test(call);
+        boolean parentNegated = SimplifyMatchNegationFix.isParentNegated(call);
+        return new StreamFindEmptyCheckFix(present ^ parentNegated);
       });
     }
   }
