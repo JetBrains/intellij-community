@@ -171,8 +171,11 @@ class TextMateLexerCore(
                                                         lexerState = lastState,
                                                         checkCancelledCallback = checkCancelledCallback)
         val lineLength = line.length.charOffset()
-        if (endMatch.matched && (!currentMatch.matched || currentMatch.byteRange().start >= endMatch.byteRange().start || lastState == currentState)) {
-          // todo: applyEndPatternLast
+        // by default the `end` pattern wins over the nested patterns when both match at the same offset.
+        // `applyEndPatternLast` inverts this tie-break so that the nested patterns are applied first
+        // and the `end` pattern is applied only when it matches strictly before the nested match.
+        val applyEndPatternLast = isApplyEndPatternLast(lastRule)
+        if (endMatch.matched && (!currentMatch.matched || endWinsOverCurrent(applyEndPatternLast, currentMatch, endMatch) || lastState == currentState)) {
           val poppedState = states.last()
           if (poppedState.matchData.matched && !poppedState.matchedEOL) {
             // if begin hasn't matched EOL, it was performed on the same line; we need to use its anchor
@@ -425,6 +428,25 @@ class TextMateLexerCore(
      * then lexing of current line stops and lexer moved to the EOL.
      */
     private const val MAX_LOOPS_COUNT = 10
+
+    private fun isApplyEndPatternLast(syntaxRule: SyntaxNodeDescriptor): Boolean {
+      val value = syntaxRule.getStringAttribute(Constants.StringKey.APPLY_END_PATTERN_LAST)
+      return value != null && (value.contentEquals("1") || value.contentEquals("true", ignoreCase = true))
+    }
+
+    /**
+     * Decides whether the `end` match should be applied instead of the nested (current) match.
+     * Both matches are expected to be matched. With [applyEndPatternLast] the `end` pattern wins only
+     * when it matches strictly before the nested pattern; otherwise it also wins the ties.
+     */
+    private fun endWinsOverCurrent(applyEndPatternLast: Boolean, currentMatch: MatchData, endMatch: MatchData): Boolean {
+      return if (applyEndPatternLast) {
+        currentMatch.byteRange().start > endMatch.byteRange().start
+      }
+      else {
+        currentMatch.byteRange().start >= endMatch.byteRange().start
+      }
+    }
 
     private fun containsLexerState(states: MutableSet<TextMateLexerState>, state: TextMateLexerState): Boolean {
       for (s in states) {

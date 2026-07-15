@@ -13,7 +13,8 @@ interface Constants {
     END("end"),
     SCOPE_NAME("scopeName"),
     MATCH("match"),
-    BEGIN("begin");
+    BEGIN("begin"),
+    APPLY_END_PATTERN_LAST("applyEndPatternLast");
 
     companion object {
       fun fromName(name: String): StringKey? {
