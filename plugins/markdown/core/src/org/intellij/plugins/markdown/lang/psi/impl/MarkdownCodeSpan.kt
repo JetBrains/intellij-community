@@ -1,14 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.lang.psi.impl
 
+import com.intellij.lang.ASTFactory
 import com.intellij.lang.ASTNode
 import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.AbstractElementManipulator
 import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
-import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.IncorrectOperationException
+import org.intellij.plugins.markdown.lang.MarkdownElementTypes
+import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.jetbrains.annotations.ApiStatus
 
 class MarkdownCodeSpan(node: ASTNode) : MarkdownCompositePsiElementBase(node), PsiExternalReferenceHost {
@@ -18,11 +21,7 @@ class MarkdownCodeSpan(node: ASTNode) : MarkdownCompositePsiElementBase(node), P
   @ApiStatus.Internal
   fun getContentRange(): TextRange? {
     val text = text
-    val openingMarkerLength = text.takeWhile { it == '`' }.length
-    val closingMarkerLength = text.takeLastWhile { it == '`' }.length
-    if (openingMarkerLength == 0 || closingMarkerLength == 0 || openingMarkerLength + closingMarkerLength >= text.length) {
-      return null
-    }
+    val (openingMarkerLength, closingMarkerLength) = getMarkerLengths(node) ?: return null
 
     var startOffset = openingMarkerLength
     var endOffset = text.length - closingMarkerLength
@@ -41,21 +40,53 @@ class MarkdownCodeSpan(node: ASTNode) : MarkdownCompositePsiElementBase(node), P
 
   internal class Manipulator : AbstractElementManipulator<MarkdownCodeSpan>() {
     @Throws(IncorrectOperationException::class)
-    override fun handleContentChange(element: MarkdownCodeSpan, range: TextRange, newContent: String): MarkdownCodeSpan =
-      replaceContentLeaf(element, range, newContent) ?: throw IncorrectOperationException("Failed to create code span")
+    override fun handleContentChange(element: MarkdownCodeSpan, range: TextRange, newContent: String): MarkdownCodeSpan {
+      if (newContent.startsWith('`') || newContent.endsWith('`')) return element
+      return replaceContent(element, newContent) ?: throw IncorrectOperationException("Failed to create code span")
+    }
 
     override fun getRangeInElement(element: MarkdownCodeSpan): TextRange = element.getContentRange() ?: TextRange.EMPTY_RANGE
 
-    private fun replaceContentLeaf(element: MarkdownCodeSpan, range: TextRange, newContent: String): MarkdownCodeSpan? {
-      val leaf = element.node.findLeafElementAt(range.startOffset)?.psi as? LeafPsiElement ?: return null
-      val leafRange = leaf.textRangeInParent
-      if (range.startOffset < leafRange.startOffset || range.endOffset > leafRange.endOffset) {
-        return null
-      }
+    private fun replaceContent(element: MarkdownCodeSpan, newContent: String): MarkdownCodeSpan? {
+      val (openingMarkerLength, closingMarkerLength) = getMarkerLengths(element.node, newContent) ?: return null
+      val node = ASTFactory.composite(MarkdownElementTypes.CODE_SPAN)
+      node.rawAddChildren(ASTFactory.leaf(MarkdownTokenTypes.BACKTICK, "`".repeat(openingMarkerLength)))
+      node.rawAddChildren(ASTFactory.leaf(MarkdownTokenTypes.TEXT, newContent))
+      node.rawAddChildren(ASTFactory.leaf(MarkdownTokenTypes.BACKTICK, "`".repeat(closingMarkerLength)))
+      CodeEditUtil.setNodeGeneratedRecursively(node, true)
 
-      val leafChangeRange = range.shiftLeft(leafRange.startOffset)
-      leaf.replaceWithText(leafChangeRange.replace(leaf.text, newContent.removeSurrounding("`")))
-      return element
+      val parent = element.node.treeParent ?: return null
+      val replacement = MarkdownCodeSpan(node)
+      parent.replaceChild(element.node, node)
+      return replacement
+    }
+
+    private fun getMarkerLengths(node: ASTNode, newContent: String): Pair<Int, Int>? {
+      val (openingMarkerLength, closingMarkerLength) = getMarkerLengths(node) ?: return null
+      var maxBacktickSequenceLength = 0
+      var currentBacktickSequenceLength = 0
+      for (character in newContent) {
+        if (character == '`') {
+          currentBacktickSequenceLength++
+          maxBacktickSequenceLength = maxOf(maxBacktickSequenceLength, currentBacktickSequenceLength)
+        }
+        else {
+          currentBacktickSequenceLength = 0
+        }
+      }
+      val requiredMarkerLength = maxBacktickSequenceLength + 1
+      return Pair(maxOf(openingMarkerLength, requiredMarkerLength), maxOf(closingMarkerLength, requiredMarkerLength))
     }
   }
+}
+
+private fun getMarkerLengths(node: ASTNode): Pair<Int, Int>? {
+  val openingMarker = node.firstChildNode ?: return null
+  val closingMarker = node.lastChildNode ?: return null
+  if (openingMarker == closingMarker ||
+      openingMarker.elementType != MarkdownTokenTypes.BACKTICK ||
+      closingMarker.elementType != MarkdownTokenTypes.BACKTICK) {
+    return null
+  }
+  return Pair(openingMarker.textLength, closingMarker.textLength)
 }
