@@ -17,22 +17,28 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
+import com.intellij.psi.impl.light.LightRecordField;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -40,8 +46,9 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -197,35 +204,41 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     }
 
     PsiField[] fields = aClass.getFields();
-    if (compatibleConstructor == null && !areTypesCompatible(getParamsToMerge(), fields, aClass)) {
+    if (compatibleConstructor == null && !areTypesCompatible(paramsToMerge, fields, aClass)) {
       return null;
     }
 
-    final PsiVariable[] constructorParams = compatibleConstructor != null ? compatibleConstructor.getParameterList().getParameters()
-                                                                          : fields;
-    for (int i = 0; i < getParamsToMerge().length; i++) {
-      final int oldIndex = getParamsToMerge()[i].getOldIndex();
+    final PsiVariable[] constructorParams =
+      compatibleConstructor != null ? compatibleConstructor.getParameterList().getParameters() : fields;
+    for (int i = 0; i < paramsToMerge.length; i++) {
+      final int oldIndex = paramsToMerge[i].getOldIndex();
       final ParameterInfoImpl methodParam = getParameterInfo(oldIndex);
       final Property property = new Property();
       myExistingClassProperties.put(methodParam, property);
 
       final PsiVariable var = constructorParams[i];
 
-      final PsiField field = var instanceof PsiParameter ? findFieldAssigned((PsiParameter)var, compatibleConstructor) : (PsiField)var;
+      final PsiField field = var instanceof PsiParameter parameter
+              ? new ParamAssignmentFinder(parameter, compatibleConstructor).findFieldAssigned()
+              : (PsiField)var;
       if (field == null) {
         return null;
       }
 
       property.setField(field);
 
-      final PsiMethod getterForField = PropertyUtilBase.findGetterForField(field);
+      final PsiMethod getterForField = field instanceof LightRecordField f
+                                       ? JavaPsiRecordUtil.getAccessorForRecordComponent(f.getRecordComponent())
+                                       : PropertyUtilBase.findGetterForField(field);
       if (getterForField != null) {
         property.setGetter(getterForField.getName());
       }
 
-      final PsiMethod setterForField = PropertyUtilBase.findSetterForField(field);
-      if (setterForField != null) {
-        property.setSetter(setterForField.getName());
+      if (!(field instanceof LightRecordField)) {
+        final PsiMethod setterForField = PropertyUtilBase.findSetterForField(field);
+        if (setterForField != null) {
+          property.setSetter(setterForField.getName());
+        }
       }
     }
     return compatibleConstructor;
@@ -247,12 +260,6 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
       }
     }
     return true;
-  }
-
-  private static PsiField findFieldAssigned(PsiParameter param, PsiMethod constructor) {
-    final ParamAssignmentFinder visitor = new ParamAssignmentFinder(param);
-    constructor.accept(visitor);
-    return visitor.getFieldAssigned();
   }
 
   @Override
@@ -347,38 +354,66 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
 
 
   private static class ParamAssignmentFinder extends JavaRecursiveElementWalkingVisitor {
-
-    private final PsiParameter param;
-
+    private PsiParameter myParameter;
+    private PsiMethod myMethod;
     private PsiField fieldAssigned;
 
-    ParamAssignmentFinder(PsiParameter param) {
-      this.param = param;
+    ParamAssignmentFinder(PsiParameter parameter, PsiMethod method) {
+      myParameter = parameter;
+      myMethod = method;
     }
 
     @Override
-    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
-      super.visitAssignmentExpression(assignment);
-      final PsiExpression lhs = assignment.getLExpression();
-      final PsiExpression rhs = assignment.getRExpression();
-      if (!(lhs instanceof PsiReferenceExpression)) {
-        return;
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+      if (fieldAssigned != null) return;
+      super.visitReferenceExpression(expression);
+      if (expression.resolve() != myParameter) return;
+      PsiExpression e = expression;
+      PsiElement parent = expression.getParent();
+      while (parent instanceof PsiParenthesizedExpression p) {
+        e = p;
+        parent = p.getExpression();
       }
-      if (!(rhs instanceof PsiReferenceExpression)) {
-        return;
+      if (parent instanceof PsiAssignmentExpression assignment) {
+        if (assignment.getRExpression() == e
+            && assignment.getLExpression() instanceof PsiReferenceExpression ref
+            && ref.resolve() instanceof PsiField field) {
+          fieldAssigned = field;
+        }
       }
-      final PsiElement referent = ((PsiReference)rhs).resolve();
-      if (referent == null || !referent.equals(param)) {
-        return;
+      else if (parent instanceof PsiExpressionList list
+               && parent.getParent() instanceof PsiMethodCallExpression call
+               && JavaPsiConstructorUtil.isChainedConstructorCall(call)) {
+        PsiExpression[] expressions = list.getExpressions();
+        int i = ArrayUtil.find(expressions, e);
+        PsiMethod method = call.resolveMethod();
+        if (method != null && i >= 0) {
+          myMethod = method;
+          myParameter = method.getParameterList().getParameter(i);
+        }
       }
-      final PsiElement assigned = ((PsiReference)lhs).resolve();
-      if (!(assigned instanceof PsiField)) {
-        return;
-      }
-      fieldAssigned = (PsiField)assigned;
     }
 
-    public PsiField getFieldAssigned() {
+    private boolean followChain() {
+      if (myMethod == null || fieldAssigned != null) return false;
+      PsiMethod method = myMethod;
+      myMethod = null;
+      if (method instanceof LightRecordCanonicalConstructor
+          && myParameter instanceof LightRecordCanonicalConstructor.LightRecordConstructorParameter p) {
+        PsiRecordComponent component = p.getRecordComponent();
+        if (component != null) {
+          fieldAssigned = JavaPsiRecordUtil.getFieldForComponent(component);
+          return false;
+        }
+      }
+      method.accept(this);
+      return true;
+    }
+
+    public PsiField findFieldAssigned() {
+      while (followChain()) {
+        // empty
+      }
       return fieldAssigned;
     }
   }
