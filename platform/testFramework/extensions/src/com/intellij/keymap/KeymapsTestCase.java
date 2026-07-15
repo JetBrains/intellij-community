@@ -444,7 +444,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     }),
     Map.entry("NetBeans 6.5", new String[][]{
       {"F4",                       "RunToCursor", "EditSource"},
-      {"F5",                       "Debugger.ResumeThread", "Resume", "Graph.RouteEdges", "WebInspector.Browser.Refresh"},
+      {"F5",                       "Resume", "Graph.RouteEdges", "WebInspector.Browser.Refresh"},
       {"alt UP",                   "GotoPrevElementUnderCaretUsage", "JupyterNotebookMoveCellUpCommandModeAction", "NotebookMoveCellUpAction"},
       {"alt DOWN",                 "GotoNextElementUnderCaretUsage", "ShowContent", "ShowSearchHistory", "JupyterNotebookMoveCellDownCommandModeAction", "NotebookMoveCellDownAction"},
       {"control 1",                "ActivateProjectToolWindow", "DuplicatesForm.SendToLeft"},

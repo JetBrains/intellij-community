@@ -129,9 +129,6 @@
         <keyboard-shortcut first-keystroke="f5" />
     </action>
     <action id="Debugger.EditArrayFilter" />
-    <action id="Debugger.EditFrameSource">
-        <keyboard-shortcut first-keystroke="f4" />
-    </action>
     <action id="Debugger.RemoveArrayFilter">
         <keyboard-shortcut first-keystroke="delete" />
         <keyboard-shortcut first-keystroke="back_space" />
