@@ -1,0 +1,54 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="org.jetbrains.kotlin"/>
+    <module name="intellij.java"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.codeInsight.minimal"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.resources"/>
+    <module name="intellij.kotlin.base.scripting.shared"/>
+    <module name="intellij.kotlin.base.statistics"/>
+    <module name="intellij.kotlin.codeInsight.shared"/>
+    <module name="intellij.kotlin.projectConfiguration"/>
+    <module name="intellij.kotlin.refactorings.base"/>
+    <module name="intellij.platform.structureView"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <versionInfoProvider implementation="org.jetbrains.kotlin.idea.base.compilerPreferences.facet.KotlinVersionInfoProviderByModuleDependencies"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <createFromTemplateHandler implementation="org.jetbrains.kotlin.idea.actions.KotlinCreateFromTemplateHandler"/>
+    <stripTrailingSpacesFilterFactory implementation="org.jetbrains.kotlin.idea.editor.KotlinStripTrailingSpacesFilterFactory"/>
+    <search.topHitProvider implementation="org.jetbrains.kotlin.idea.editor.KotlinEditorOptionsTopHitProvider"/>
+    <pluginSuggestionProvider order="first" implementation="org.jetbrains.kotlin.idea.suggestions.JupyterNotebookSuggestionProvider"/>
+    <pluginSuggestionProvider implementation="org.jetbrains.kotlin.idea.suggestions.AmperPluginSuggestionProvider"/>
+    <editorSmartKeysConfigurable instance="org.jetbrains.kotlin.idea.editor.KotlinEditorOptionsConfigurable"/>
+    <editorFileSwapper implementation="org.jetbrains.kotlin.idea.editor.KotlinEditorFileSwapper"/>
+    <copyPastePreProcessor implementation="org.jetbrains.kotlin.idea.editor.KDocCopyPastePreProcessor"/>
+    <actionConfigurationCustomizer implementation="org.jetbrains.kotlin.idea.actions.KotlinActionsManager"/>
+    <diff.lang.DiffIgnoredRangeProvider implementation="org.jetbrains.kotlin.idea.diff.KotlinDiffIgnoredRangeProvider"/>
+    <navbar id="kotlinNavBar" implementation="org.jetbrains.kotlin.idea.navigationToolbar.KotlinNavBarModelExtension"/>
+    <gotoByName.defaultProvider.ignoreLanguage language="kotlin"/>
+  </extensions>
+  <actions>
+    <action id="Kotlin.NewFile" class="org.jetbrains.kotlin.idea.actions.NewKotlinFileAction"
+            icon="icons.KotlinBaseResourcesIcons.Kotlin_file">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewGroup1"/>
+    </action>
+    <action id="Kotlin.NewScript" class="org.jetbrains.kotlin.idea.actions.NewKotlinScriptAction"
+            icon="icons.KotlinBaseResourcesIcons.Kotlin_script">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewWebDevelopment"/>
+    </action>
+    <group id="KotlinToolsGroup" popup="true" icon="icons.KotlinBaseResourcesIcons.Kotlin"
+           class="org.jetbrains.kotlin.idea.actions.KotlinActionGroup">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </group>
+    <action id="CheckComponentsUsageSearchAction"
+            class="org.jetbrains.kotlin.idea.actions.internal.CheckComponentsUsageSearchAction"/>
+  </actions>
+</idea-plugin>

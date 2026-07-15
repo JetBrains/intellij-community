@@ -8,7 +8,6 @@
 
   <xi:include href="/META-INF/analysis-api/analysis-api-fir.xml"/> <!-- comes from the Kotlin compiler -->
 
-  <xi:include href="navigation.xml"/>
   <xi:include href="indices.xml"/>
   <xi:include href="file-types.xml"/>
   <xi:include href="language.xml"/>
@@ -243,6 +242,7 @@
     <module name="intellij.kotlin.jvm.debugger.coroutines" loading="embedded"/>
     <module name="intellij.kotlin.base.projectStructure" loading="embedded"/>
     <module name="intellij.kotlin.base.facet" loading="embedded"/>
+    <module name="intellij.kotlin.ide" loading="embedded"/>
     <module name="intellij.kotlin.base.statistics" loading="embedded"/>
     <module name="intellij.libraries.kotlin.tooling.core" loading="required"/>
     <module name="intellij.libraries.kotlin.gradle.plugin.idea" loading="required"/>

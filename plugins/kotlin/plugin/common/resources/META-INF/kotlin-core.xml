@@ -146,18 +146,12 @@
             id="KotlinReferenceImporter"
             implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporter"/>
 
-    <createFromTemplateHandler implementation="org.jetbrains.kotlin.idea.actions.KotlinCreateFromTemplateHandler"/>
-
-
     <lang.elementManipulator
             forClass="org.jetbrains.kotlin.psi.KtStringTemplateExpression"
             implementationClass="org.jetbrains.kotlin.psi.psiUtil.KtStringTemplateExpressionManipulator"/>
 
     <annotationSupport language="kotlin" implementationClass="com.intellij.psi.impl.source.tree.java.JavaAnnotationSupport"/>
 
-    <stripTrailingSpacesFilterFactory implementation="org.jetbrains.kotlin.idea.editor.KotlinStripTrailingSpacesFilterFactory"/>
-
-    <search.topHitProvider implementation="org.jetbrains.kotlin.idea.editor.KotlinEditorOptionsTopHitProvider"/>
 
     <advancedSetting
             id="kotlin.enable.autoconfiguration"
@@ -221,8 +215,6 @@
             id="kotlinSkipAutopopupInStrings"
             order="after propertyKeys"/>
 
-    <pluginSuggestionProvider order="first" implementation="org.jetbrains.kotlin.idea.suggestions.JupyterNotebookSuggestionProvider"/>
-    <pluginSuggestionProvider implementation="org.jetbrains.kotlin.idea.suggestions.AmperPluginSuggestionProvider"/>
   </extensions>
 
   <!-- Templates -->
@@ -243,8 +235,6 @@
   </projectListeners>
 
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <versionInfoProvider implementation="org.jetbrains.kotlin.idea.base.compilerPreferences.facet.KotlinVersionInfoProviderByModuleDependencies"/>
-
     <pluginUpdateVerifier implementation="org.jetbrains.kotlin.idea.update.GooglePluginUpdateVerifier"/>
 
     </extensions>
@@ -253,12 +243,6 @@
 
   <!-- Editing -->
   <extensions defaultExtensionNs="com.intellij">
-
-    <editorSmartKeysConfigurable instance="org.jetbrains.kotlin.idea.editor.KotlinEditorOptionsConfigurable"/>
-
-    <editorFileSwapper implementation="org.jetbrains.kotlin.idea.editor.KotlinEditorFileSwapper"/>
-
-    <copyPastePreProcessor implementation="org.jetbrains.kotlin.idea.editor.KDocCopyPastePreProcessor"/>
 
     <registryKey
             key="kotlin.enable.inlay.hint.for.lambda.return.type"
@@ -341,7 +325,6 @@
 
   <!-- Declaration search and Find Usages -->
   <extensions defaultExtensionNs="com.intellij">
-    <actionConfigurationCustomizer implementation="org.jetbrains.kotlin.idea.actions.KotlinActionsManager"/>
     <projectService
       serviceInterface="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider"
       serviceImplementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProviderImpl"/>
@@ -361,25 +344,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <copyPastePostProcessor implementation="org.jetbrains.kotlin.j2k.copyPaste.ConvertJavaCopyPasteProcessor"/>
     <copyPastePostProcessor implementation="org.jetbrains.kotlin.j2k.copyPaste.ConvertTextJavaCopyPasteProcessor"/>
-    <diff.lang.DiffIgnoredRangeProvider implementation="org.jetbrains.kotlin.idea.diff.KotlinDiffIgnoredRangeProvider"/>
   </extensions>
 
   <actions>
-    <action id="Kotlin.NewFile" class="org.jetbrains.kotlin.idea.actions.NewKotlinFileAction"
-            icon="icons.KotlinBaseResourcesIcons.Kotlin_file">
-      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewGroup1"/>
-    </action>
-
-    <action id="Kotlin.NewScript" class="org.jetbrains.kotlin.idea.actions.NewKotlinScriptAction"
-            icon="icons.KotlinBaseResourcesIcons.Kotlin_script">
-      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewWebDevelopment"/>
-    </action>
-
-    <group id="KotlinToolsGroup" popup="true" icon="icons.KotlinBaseResourcesIcons.Kotlin"
-           class="org.jetbrains.kotlin.idea.actions.KotlinActionGroup">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </group>
-
     <!-- Standalone action (shown when only 1 action) -->
     <action id="ConvertJavaToKotlin"
             class="org.jetbrains.kotlin.idea.actions.JavaToKotlinAction"
@@ -417,11 +384,6 @@
       <separator/>
 
       <group id="KotlinInternalGroup" popup="true">
-
-        <action
-                id="CheckComponentsUsageSearchAction"
-                class="org.jetbrains.kotlin.idea.actions.internal.CheckComponentsUsageSearchAction"/>
-
 
       </group>
 

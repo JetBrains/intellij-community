@@ -40,6 +40,9 @@
 - name: lib/intellij.kotlin.formatter.minimal.jar
   contentModules:
   - name: intellij.kotlin.formatter.minimal
+- name: lib/intellij.kotlin.ide.jar
+  contentModules:
+  - name: intellij.kotlin.ide
 - name: lib/intellij.kotlin.jvm.debugger.base.util.jar
   contentModules:
   - name: intellij.kotlin.jvm.debugger.base.util
@@ -152,7 +155,6 @@
   - name: intellij.kotlin.base.platforms
   - name: intellij.kotlin.base.analysis.utils
   - name: intellij.kotlin.base.compilerConfiguration.ui
-  - name: intellij.kotlin.ide
   - name: intellij.kotlin.compilerPlugins.parcelize
   - name: intellij.kotlin.compilerPlugins.support
   - name: intellij.kotlin.completion.api

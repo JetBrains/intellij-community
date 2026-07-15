@@ -1,6 +1,7 @@
 <idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <plugin id="org.jetbrains.kotlin"/>
     <module name="intellij.java"/>
     <module name="intellij.java.aetherDependencyResolver"/>
     <module name="intellij.java.compiler"/>
