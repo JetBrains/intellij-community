@@ -13,5 +13,18 @@
     <module name="intellij.platform.smRunner"/>
     <module name="kotlin.fir.frontend-independent"/>
   </dependencies>
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.debugger.coroutine.DisableCoroutineViewListener"
+              topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
+  </projectListeners>
+  <extensions defaultExtensionNs="com.intellij">
+    <debugger.creationStackTraceProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineAsyncStackTraceProvider"/>
+    <runConfigurationExtension implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebugConfigurationExtension"/>
+    <debugger.dumpItemsProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutinesDumpAsyncProvider"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor"
+            serviceImplementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineStackFrameInterceptor"/>
+    <threadDumpItemFactory implementation="org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutineThreadDumpItemFactory"/>
+  </extensions>
   <!-- endregion -->
 </idea-plugin>
