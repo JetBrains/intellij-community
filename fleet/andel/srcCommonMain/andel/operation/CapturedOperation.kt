@@ -8,8 +8,9 @@ import andel.intervals.Intervals
 import andel.text.TextRange
 import kotlinx.serialization.Serializable
 
-data class CapturedOperation(val operation: Operation,
-                             val base: EditLog
+data class CapturedOperation(
+  val operation: Operation,
+  val base: EditLog
 )
 
 @Deprecated("Consider using rebaseOrNull since rebase could throw IllegalStateException and destroy your worker")
@@ -40,8 +41,9 @@ fun MutableDocument.applyDiff(capturedOperation: CapturedOperation): Boolean {
 }
 
 @Serializable
-data class CapturedOffset(val offset: Long,
-                          val base: EditLog
+data class CapturedOffset(
+  val offset: Long,
+  val base: EditLog
 )
 
 @Deprecated("Consider using rebaseOrNull since rebase could throw IllegalStateException and destroy your worker")
@@ -56,8 +58,9 @@ fun CapturedOffset.rebaseOrNull(document: Document, direction: Sticky = Sticky.L
 }
 
 @Serializable
-data class CapturedTextRange(val range: TextRange,
-                             val base: EditLog
+data class CapturedTextRange(
+  val range: TextRange,
+  val base: EditLog
 )
 
 /**
@@ -74,8 +77,9 @@ fun CapturedTextRange.rebaseOrNull(document: Document): TextRange? {
   return range.transformOnto(arrow, Sticky.LEFT)
 }
 
-data class CapturedIntervals<K, V>(val intervals: Intervals<K, V>,
-                                   val base: EditLog
+data class CapturedIntervals<K, V>(
+  val intervals: Intervals<K, V>,
+  val base: EditLog
 )
 
 fun <K, V> CapturedIntervals<K, V>.rebase(document: Document): Intervals<K, V> {
@@ -84,8 +88,9 @@ fun <K, V> CapturedIntervals<K, V>.rebase(document: Document): Intervals<K, V> {
 }
 
 @Serializable
-data class CapturedCaretPosition(val caretPosition: CaretPosition,
-                                 val base: EditLog
+data class CapturedCaretPosition(
+  val caretPosition: CaretPosition,
+  val base: EditLog
 )
 
 fun Document.captureCaretPosition(caretPosition: CaretPosition): CapturedCaretPosition {
@@ -133,37 +138,73 @@ fun bridgeOrNull(fromLog: EditLog, toLog: EditLog): Operation? {
   return toBefore.invert().compose(toAfter).normalizeHard()
 }
 
+data class EditLogsBase(
+  val tsBefore: Long,
+  val tsAfter: Long,
+)
 
-private fun v(logBefore: EditLog, logAfter: EditLog): Result<Pair<Operation, Operation>> {
+/**
+ * Finds the deepest timestamps at which [logBefore] and [logAfter] contain the same operation *instance* — the point up to
+ * which both logs are identical. Everything above it (`tsBefore`/`tsAfter` exclusive) diverges: appended, rebased, or
+ * dropped between the two snapshots. Returns `null` when the logs share nothing.
+ *
+ * The scan runs from the tails downward, so its cost is proportional to the divergent suffixes, not to the accumulated
+ * log size.
+ *
+ * **The scan compares identities ([EditLog.identityAtTimestamp]), NOT the stable operation ids ([EditLog.idAtTimestamp]) — do
+ * not "fix" it to use stable ids.** Stable ids survive a rebase: when the rebase loop replays local speculation on top of
+ * a new base, the replayed operation keeps its stable id even though its content is OT-transformed and its position
+ * shifts. A stable-id scan from the tail would match the replayed speculation itself and treat it as common, hiding the
+ * remote operations the rebase inserted below it (e.g. producing an identity [bridge] where a real transform is needed).
+ * Identity ids are regenerated on every append, so a replayed instance never matches its pre-rebase self, and a match
+ * here guarantees the logs are truly identical up to and including that position.
+ */
+fun findCommonBase(logBefore: EditLog, logAfter: EditLog): Result<EditLogsBase?> {
   if (logBefore.isEmpty() || logAfter.isEmpty()) {
     if (logBefore.isTrimmed || logAfter.isTrimmed) {
       return Result.failure(IllegalStateException("Could not build operation to represent trimmed EditLog"))
     }
-    return Result.success(logBefore.operations.compose() to logAfter.operations.compose())
+    return Result.success(null)
   }
+
   var i = logBefore.timestamp - 1
   var j = logAfter.timestamp - 1
-  var found = false
-  while (i >= 0 && j >= 0 && !found) {
-    val iId = logBefore.idAtTimestamp(i).getOrElse { return Result.failure(it) }
-    val jId = logAfter.idAtTimestamp(j).getOrElse { return Result.failure(it) }
-    found = when {
-      iId == jId -> true
+  while (i >= 0 && j >= 0) {
+    val iId = logBefore.identityAtTimestamp(i).getOrElse { return Result.failure(it) }
+    val jId = logAfter.identityAtTimestamp(j).getOrElse { return Result.failure(it) }
+    when {
+      iId == jId -> {
+        return Result.success(EditLogsBase(tsBefore = i, tsAfter = j))
+      }
       i < j && j > 0 -> {
         j--
-        false
       }
       else -> {
         i--
-        false
       }
     }
   }
-  if (!found) {
-    i = -1
-    j = -1
+
+  return if (logBefore.isTrimmed || logAfter.isTrimmed) {
+    Result.failure(IllegalStateException("Could not find a common base of trimmed EditLogs"))
   }
-  val toBefore = logBefore.slice(i + 1, logBefore.timestamp).compose()
-  val toAfter = logAfter.slice(j + 1, logAfter.timestamp).compose()
-  return Result.success(toBefore to toAfter)
+  else {
+    Result.success(null)
+  }
+}
+
+private fun v(logBefore: EditLog, logAfter: EditLog): Result<Pair<Operation, Operation>> {
+  return findCommonBase(logBefore, logAfter)
+    .map { commonBase ->
+      if (commonBase == null) {
+        val toBefore = logBefore.operations.compose()
+        val toAfter = logAfter.operations.compose()
+        toBefore to toAfter
+      }
+      else {
+        val toBefore = logBefore.slice(commonBase.tsBefore + 1, logBefore.timestamp).compose()
+        val toAfter = logAfter.slice(commonBase.tsAfter + 1, logAfter.timestamp).compose()
+        toBefore to toAfter
+      }
+    }
 }

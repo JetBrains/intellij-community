@@ -144,9 +144,9 @@ data class EditGroup(
  * given [lastGroup], the most recent entry already on the stack for the same origin.
  */
 fun amendDocumentEdit(
-    document: Document,
-    lastGroup: EditGroup?,
-    newGroup: EditGroup,
+  document: Document,
+  lastGroup: EditGroup?,
+  newGroup: EditGroup,
 ): UndoStack.Action<EditGroup> {
   val editList = newGroup.entryIndices.map { document.edits[it] }
   val includeIntoLog = newGroup.attributes.map[UndoGroupAttributes.includeIntoLog] ?: !editList.all { it.isIdentity() }
@@ -191,10 +191,10 @@ private fun canMergeEditGroups(lastGroup: EditGroup, newGroup: EditGroup): Boole
  *   should push it onto the opposite stack.
  */
 fun editorUndo(
-    editor: MutableEditor,
-    compositionCache: CompositionCache,
-    editGroup: EditGroup,
-    isCaretMovementUndoStep: Boolean,
+  editor: MutableEditor,
+  compositionCache: CompositionCache,
+  editGroup: EditGroup,
+  isCaretMovementUndoStep: Boolean,
 ): EditGroup? {
   val inversion = computeInversion(compositionCache, editGroup)
   val operation = inversion.operation
@@ -235,9 +235,9 @@ fun editorUndo(
  * @return the [EditGroup] capturing the reverse operation, to push onto the opposite stack.
  */
 fun documentUndo(
-    document: MutableDocument,
-    compositionCache: CompositionCache,
-    editGroup: EditGroup,
+  document: MutableDocument,
+  compositionCache: CompositionCache,
+  editGroup: EditGroup,
 ): EditGroup {
   val inversion = computeInversion(compositionCache, editGroup)
   val entryIndexFrom = document.edits.timestamp
