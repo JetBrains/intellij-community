@@ -22,6 +22,7 @@ import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SelectInRequest
 import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
+import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateBuilder
 import com.intellij.platform.projectView.settings.ProjectViewPaneSortKey
@@ -37,10 +38,7 @@ interface ProjectViewTreeNodeProvider<T> {
 }
 
 @ApiStatus.Experimental
-abstract class TreeBasedProjectViewPaneModel<T>(
-  protected val project: Project,
-  private val nodeProvider: ProjectViewTreeNodeProvider<T>,
-) : ProjectViewPaneModel {
+abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) : ProjectViewPaneModel {
   private val stateUpdateRequests = Channel<StateUpdateRequest>(capacity = Channel.BUFFERED)
 
   protected open suspend fun isDefault(): Boolean = false
@@ -58,10 +56,13 @@ abstract class TreeBasedProjectViewPaneModel<T>(
     return builder.build(id(), presentableName(), order())
   }
 
+  protected abstract suspend fun createNodeProvider(settingsAccessor: ProjectViewPaneSettingsAccessor): ProjectViewTreeNodeProvider<T>
+
   override suspend fun manageState(builder: ProjectViewPaneStateBuilder) {
     builder.updateSettingsState { settingsStateBuilder ->
       buildSettingsState(settingsStateBuilder)
     }
+    val nodeProvider = createNodeProvider(builder.asSettingsAccessor())
     val state = ProjectViewPaneTreeState(nodeProvider, builder)
     state.initialize()
     for (stateUpdateRequest in stateUpdateRequests) {

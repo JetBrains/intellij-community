@@ -5,9 +5,16 @@ package com.intellij.platform.projectView.pane
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
+import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValueImpl
+import com.intellij.platform.projectView.settings.ProjectViewPaneOption
+import com.intellij.platform.projectView.settings.ProjectViewPaneOptionImpl
+import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateBuilder
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateBuilderImpl
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateDTO
+import com.intellij.platform.projectView.settings.ProjectViewPaneSortKey
+import com.intellij.platform.projectView.settings.toSettingValue
 import com.intellij.platform.util.coroutines.flow.IncrementalUpdateFlowProducer
 import com.intellij.platform.util.coroutines.flow.MutableStateWithIncrementalUpdates
 import kotlinx.coroutines.flow.Flow
@@ -140,6 +147,10 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
         nodeByUserObject
       )
     }
+
+    fun asSettingsAccessor(): ProjectViewPaneSettingsAccessor {
+      return ProjectViewPaneSettingsAccessorImpl { actionState }
+    }
   }
 
   private val flowProducer = IncrementalUpdateFlowProducer(state)
@@ -192,6 +203,10 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
   override fun <T> asBackendStateAccessor(): BackendProjectViewPaneStateAccessor<T> {
     return state.asBackendStateAccessor() as BackendProjectViewPaneStateAccessor<T>
   }
+
+  override fun asSettingsAccessor(): ProjectViewPaneSettingsAccessor {
+    return state.asSettingsAccessor()
+  }
 }
 
 private class BackendProjectViewPaneStateAccessorImpl<T>(
@@ -213,6 +228,26 @@ private class BackendProjectViewPaneStateAccessorImpl<T>(
     val parentId = parent?.id ?: SUPER_ROOT_ID
     val parent = nodeById[parentId] ?: return null
     return parent.children?.map { it.model as BackendProjectViewNodeModel<T> }
+  }
+}
+
+private class ProjectViewPaneSettingsAccessorImpl(
+  private val stateGetter: () -> ProjectViewPaneSettingsStateDTO?
+) : ProjectViewPaneSettingsAccessor {
+  override fun isOptionSelected(option: ProjectViewPaneOption): Boolean {
+    return stateGetter()?.optionStates[(option as ProjectViewPaneOptionImpl).dto]?.isSelected == true
+  }
+
+  override fun getSortKey(): ProjectViewPaneSortKey {
+    return stateGetter()?.sortKeyState?.sortKey?.toSettingValue() ?: ProjectViewPaneSortKey.byName()
+  }
+
+  override fun getFileNesting(): ProjectViewPaneFileNestingValue {
+    val fileNesting = stateGetter()?.fileNestingState ?: return ProjectViewPaneFileNestingValueImpl(false, emptyList())
+    return ProjectViewPaneFileNestingValueImpl(
+      isFileNestingOn = fileNesting.isFileNestingOn,
+      nestingRules = fileNesting.activeRules.map { it.toNestingRule() },
+    )
   }
 }
 

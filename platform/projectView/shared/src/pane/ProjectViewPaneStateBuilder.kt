@@ -3,6 +3,7 @@
 
 package com.intellij.platform.projectView.pane
 
+import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateBuilder
 import org.jetbrains.annotations.ApiStatus
 
@@ -16,6 +17,7 @@ sealed interface ProjectViewPaneStateBuilder {
   suspend fun updateSettingsState(build: (ProjectViewPaneSettingsStateBuilder) -> Unit)
   suspend fun clear()
   fun <T> asBackendStateAccessor(): BackendProjectViewPaneStateAccessor<T>
+  fun asSettingsAccessor(): ProjectViewPaneSettingsAccessor
 }
 
 @ApiStatus.Experimental

@@ -81,3 +81,11 @@ interface ProjectViewPaneSettingsStateBuilder {
     defaultRules: List<ProjectViewFileNestingService.NestingRule>,
   )
 }
+
+@ApiStatus.Experimental
+@ApiStatus.NonExtendable
+interface ProjectViewPaneSettingsAccessor {
+  fun isOptionSelected(option: ProjectViewPaneOption): Boolean
+  fun getSortKey(): ProjectViewPaneSortKey
+  fun getFileNesting(): ProjectViewPaneFileNestingValue
+}
