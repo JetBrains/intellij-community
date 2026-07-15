@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.ide.util.TreeJavaClassChooserDialog;
@@ -277,10 +277,7 @@ public class IntroduceParameterObjectDialog
     buttonGroup.add(createNewClassButton);
     buttonGroup.add(myCreateInnerClassRadioButton);
     createNewClassButton.setSelected(true);
-    if (containingClass == null ||
-        containingClass.getQualifiedName() == null ||
-        containingClass.getContainingClass() != null ||
-        containingClass.isInterface()) {
+    if (containingClass == null || containingClass.getQualifiedName() == null || containingClass.getContainingClass() != null) {
       myCreateInnerClassRadioButton.setEnabled(false);
     }
     init();
