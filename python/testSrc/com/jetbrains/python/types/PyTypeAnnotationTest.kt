@@ -1,17 +1,20 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.inspections
+package com.jetbrains.python.types
 
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyInspectionTestCase
+import com.jetbrains.python.inspections.PyAssertTypeInspection
+import com.jetbrains.python.inspections.PyInspection
+import com.jetbrains.python.inspections.PyTypeHintsInspection
 import com.jetbrains.python.psi.LanguageLevel
 import org.intellij.lang.annotations.Language
 
 @Subsystems.Inspections
 @Layers.Functional
-class PyTypeHintsInspectionTest : PyInspectionTestCase() {
+class PyTypeAnnotationTest : PyInspectionTestCase() {
 
   @TestFor(issues = ["PY-28243"])
   fun `test TypeVar and target name`() {
