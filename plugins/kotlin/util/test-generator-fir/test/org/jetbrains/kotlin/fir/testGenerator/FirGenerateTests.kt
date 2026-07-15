@@ -137,6 +137,7 @@ import org.jetbrains.kotlin.testGenerator.model.GroupCategory.J2K
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.NAVIGATION
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.QUICKFIXES
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.RENAME_REFACTORING
+import org.jetbrains.kotlin.testGenerator.model.Junit5Suite
 import org.jetbrains.kotlin.testGenerator.model.MutableTSuite
 import org.jetbrains.kotlin.testGenerator.model.Patterns
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
@@ -620,12 +621,19 @@ private fun assembleWorkspace(): TWorkspace = workspace() {
             model("configurator/jvm", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestWithMaven")
         }
 
-        testClass<AbstractKotlinMavenInspectionTest> {
-            val mavenInspections = "maven-inspections"
-            val pattern = Patterns.forRegex("^([\\w\\-]+).xml$")
-            testDataRoot.resolve(mavenInspections).listFiles()!!.onEach { check(it.isDirectory) }.sorted().forEach {
-                model("$mavenInspections/${it.name}", pattern = pattern, flatten = true)
-            }
+        testClass<AbstractKotlinMavenInspectionTest>(
+            junit5 = Junit5Suite(
+                constructorParams = "mavenVersion: String, modelVersion: String",
+                superConstructorArgs = "mavenVersion, modelVersion",
+                classAnnotations = listOf("ParameterizedClass", "ArgumentsSource(MavenVersionArguments::class)"),
+                imports = listOf(
+                    "com.intellij.maven.testFramework.fixtures.MavenVersionArguments",
+                    "org.junit.jupiter.params.ParameterizedClass",
+                    "org.junit.jupiter.params.provider.ArgumentsSource",
+                ),
+            ),
+        ) {
+            model("maven-inspections", pattern = Patterns.forRegex("^([\\w\\-]+).xml$"), isRecursive = false)
         }
     }
 
