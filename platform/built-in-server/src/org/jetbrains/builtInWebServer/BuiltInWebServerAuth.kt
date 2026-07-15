@@ -16,6 +16,7 @@ import io.netty.handler.codec.http.QueryStringDecoder
 import io.netty.handler.codec.http.cookie.DefaultCookie
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder
+import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
@@ -63,7 +64,8 @@ class BuiltInWebServerAuth {
     return null
   }
 
-  internal fun isRequestSigned(request: HttpRequest): Boolean {
+  @ApiStatus.Internal
+  fun isRequestSigned(request: HttpRequest): Boolean {
     if (BuiltInServerOptions.getInstance().allowUnsignedRequests) {
       return true
     }
