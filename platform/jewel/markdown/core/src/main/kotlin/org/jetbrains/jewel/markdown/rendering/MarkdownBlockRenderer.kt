@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.markdown.rendering
 
+import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -644,6 +645,38 @@ public interface MarkdownBlockRenderer {
         enabled: Boolean,
         modifier: Modifier,
     )
+
+    /**
+     * Renders a [MarkdownBlock.HtmlBlockWithAttributes] into a Compose UI. Raw HTML blocks may be exposed as
+     * [MarkdownBlock.HtmlBlockWithAttributes] wrapping a paragraph with raw HTML inline content. Supported parsed HTML
+     * is converted into Markdown blocks and wrapped with attributes when applicable.
+     *
+     * @param block The HTML block to render.
+     * @param onUrlClick The callback invoked when a link is clicked.
+     * @param enabled True if the block should be enabled, false otherwise.
+     * @param modifier The modifier to be applied to the composable.
+     */
+    @Composable
+    public fun RenderHtmlBlockWithAttributes(
+        block: MarkdownBlock.HtmlBlockWithAttributes,
+        enabled: Boolean,
+        onUrlClick: (String) -> Unit,
+        modifier: Modifier = Modifier,
+    ) {
+        // No-op by default
+    }
+
+    /**
+     * Renders a paragraph containing only images into a Compose UI. This is delegated to from [RenderParagraph] when it
+     * only contains images, and uses a more efficient path than inline images in a text run.
+     *
+     * @param images The images to render.
+     * @param modifier The modifier to be applied to the composable.
+     */
+    @Composable
+    public fun RenderImagesOnlyParagraph(images: Map<String, InlineTextContent>, modifier: Modifier = Modifier) {
+        // No-op by default
+    }
 
     /**
      * Creates a copy of this instance, using the provided non-null parameters, or the current values for the null ones.

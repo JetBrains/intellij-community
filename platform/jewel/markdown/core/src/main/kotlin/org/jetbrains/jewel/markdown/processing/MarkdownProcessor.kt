@@ -60,7 +60,8 @@ import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
  *   provided by the [MarkdownParserFactory], but you can provide your own if you need to customize the parser — e.g.,
  *   to ignore certain tags. If [markdownMode] is `MarkdownMode.WithEditor`, make sure you set
  *   `includeSourceSpans(IncludeSourceSpans.BLOCKS)` on the parser.
- * @param parseEmbeddedHtml If `true`, a subset of native HTML elements will be parsed as Markdown blocks.
+ * @param parseEmbeddedHtml If `true`, a subset of native HTML elements will be parsed as Markdown blocks. See
+ *   [MarkdownHtmlConverter].
  */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
@@ -71,7 +72,7 @@ public class MarkdownProcessor(
         MarkdownParserFactory.create(optimizeEdits = markdownMode is MarkdownMode.EditorPreview, extensions),
     private val parseEmbeddedHtml: Boolean = false,
 ) {
-    @Suppress("UnusedPrivateProperty") // languageRecognizer is only here for binary compat reasons
+    @Suppress("UnusedPrivateProperty", "DEPRECATION") // languageRecognizer is only here for binary compat reasons
     @Deprecated(
         "`languageRecognizer` is not necessary anymore. Use the constructor without it.",
         replaceWith = ReplaceWith("MarkdownProcessor(extensions, markdownMode, commonMarkParser)"),
@@ -85,6 +86,7 @@ public class MarkdownProcessor(
         parseEmbeddedHtml: Boolean = false,
     ) : this(extensions, markdownMode, commonMarkParser, parseEmbeddedHtml)
 
+    @Suppress("DEPRECATION")
     @Deprecated("Use a version with a `parseEmbeddedHtml` parameter", level = DeprecationLevel.HIDDEN)
     public constructor(
         extensions: List<MarkdownProcessorExtension> = emptyList(),
@@ -94,6 +96,7 @@ public class MarkdownProcessor(
         languageRecognizer: (String) -> MimeType? = { MimeType.Known.fromMarkdownLanguageName(it) },
     ) : this(extensions, markdownMode, commonMarkParser, languageRecognizer, false)
 
+    @Suppress("DEPRECATION")
     @Deprecated("Use a version with a `parseEmbeddedHtml` parameter", level = DeprecationLevel.HIDDEN)
     public constructor(
         extensions: List<MarkdownProcessorExtension> = emptyList(),
@@ -315,7 +318,7 @@ public class MarkdownProcessor(
             is FencedCodeBlock -> toMarkdownCodeBlockOrNull()
             is IndentedCodeBlock -> toMarkdownCodeBlockOrNull()
             is ThematicBreak -> MarkdownBlock.ThematicBreak
-            is HtmlBlock -> toMarkdownHtmlBlockOrNull()
+            is HtmlBlock -> toMarkdownHtmlBlockWithAttributesOrNull()
             is CustomBlock -> {
                 blockExtensions.find { it.canProcess(this) }?.processMarkdownBlock(this, this@MarkdownProcessor)
             }
@@ -351,7 +354,7 @@ public class MarkdownProcessor(
             intermediateHtmlBlocks.mapNotNull { htmlElement ->
                 htmlConverter.convert(this@MarkdownProcessor, htmlElement) { newMdBlock, lines ->
                     when (newMdBlock) {
-                        is MarkdownBlock.HtmlBlock -> return@convert newMdBlock
+                        is MarkdownBlock.HtmlBlockWithAttributes -> return@convert newMdBlock
                         is MarkdownBlock.ListItem ->
                             return@convert newMdBlock // we convert the list item's inner block instead
                         else -> {
@@ -370,7 +373,7 @@ public class MarkdownProcessor(
         MarkdownBlock.BlockQuote(processChildren(this))
 
     private fun Heading.toMarkdownHeadingOrNull(): MarkdownBlock.Heading? {
-        if (level < 1 || level > 6) return null
+        if (level !in 1..6) return null
         return MarkdownBlock.Heading(inlineContent = readInlineMarkdown(this@MarkdownProcessor), level = level)
     }
 
@@ -379,6 +382,14 @@ public class MarkdownProcessor(
 
     private fun IndentedCodeBlock.toMarkdownCodeBlockOrNull(): CodeBlock.IndentedCodeBlock =
         CodeBlock.IndentedCodeBlock(literal.trimEnd('\n'))
+
+    private fun HtmlBlock.toMarkdownHtmlBlockWithAttributesOrNull(): MarkdownBlock.HtmlBlockWithAttributes? {
+        if (literal.isBlank()) return null
+        return MarkdownBlock.HtmlBlockWithAttributes(
+            mdBlock = MarkdownBlock.Paragraph(listOf(InlineMarkdown.HtmlInline(literal.trimEnd('\n')))),
+            attributes = emptyMap(),
+        )
+    }
 
     private fun BulletList.toMarkdownListOrNull(): ListBlock.UnorderedList? {
         val children = processListItems()
@@ -441,11 +452,6 @@ public class MarkdownProcessor(
     private fun Node.traverseAll(action: (Node) -> Unit) {
         action(this)
         forEachChild { child -> child.traverseAll(action) }
-    }
-
-    private fun HtmlBlock.toMarkdownHtmlBlockOrNull(): MarkdownBlock.HtmlBlock? {
-        if (literal.isBlank()) return null
-        return MarkdownBlock.HtmlBlock(literal.trimEnd('\n'))
     }
 
     /** Creates a copy of this [MarkdownProcessor] with the same properties, plus the provided [extension]. */

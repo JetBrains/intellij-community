@@ -8,6 +8,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
@@ -34,13 +36,7 @@ public class DefaultMarkdownBlockRendererTest {
             setContent {
                 MarkdownTestTheme {
                     val renderer = DefaultMarkdownBlockRenderer(createMarkdownTestStyling(), emptyList())
-                    renderer.render(
-                        blocks,
-                        enabled = true,
-                        onUrlClick = onUrlClick,
-                        onTextClick = {},
-                        modifier = Modifier,
-                    )
+                    renderer.RenderBlocks(blocks, enabled = true, onUrlClick = onUrlClick, modifier = Modifier)
                 }
             }
 
@@ -72,11 +68,10 @@ public class DefaultMarkdownBlockRendererTest {
             setContent {
                 MarkdownTestTheme {
                     val renderer = DefaultMarkdownBlockRenderer(createMarkdownTestStyling(), emptyList())
-                    renderer.render(
+                    renderer.RenderBlocks(
                         blocks,
                         enabled = enabled,
                         onUrlClick = { url -> clickedUrl = url },
-                        onTextClick = {},
                         modifier = Modifier,
                     )
                 }
@@ -113,13 +108,7 @@ public class DefaultMarkdownBlockRendererTest {
             setContent {
                 MarkdownTestTheme {
                     val renderer = DefaultMarkdownBlockRenderer(createMarkdownTestStyling(), emptyList())
-                    renderer.render(
-                        blocks,
-                        enabled = enabled,
-                        onUrlClick = onUrlClick,
-                        onTextClick = {},
-                        modifier = Modifier,
-                    )
+                    renderer.RenderBlocks(blocks, enabled = enabled, onUrlClick = onUrlClick, modifier = Modifier)
                 }
             }
 
@@ -136,6 +125,23 @@ public class DefaultMarkdownBlockRendererTest {
             onNodeWithText("Click me").performClick()
             waitForIdle()
             assertEquals("second:https://example.com", clickedUrl)
+        }
+    }
+
+    @Test
+    public fun `raw HTML blocks are not rendered by default`() {
+        runComposeUiTest {
+            val processor = MarkdownProcessor()
+            val blocks = processor.processMarkdownDocument("<div>Raw HTML</div>")
+
+            setContent {
+                MarkdownTestTheme {
+                    val renderer = DefaultMarkdownBlockRenderer(createMarkdownTestStyling(), emptyList())
+                    renderer.RenderBlocks(blocks, enabled = true, onUrlClick = {}, modifier = Modifier)
+                }
+            }
+
+            onAllNodesWithText("<div>Raw HTML</div>").assertCountEquals(0)
         }
     }
 
