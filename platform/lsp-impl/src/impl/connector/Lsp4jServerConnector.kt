@@ -55,6 +55,18 @@ internal abstract class Lsp4jServerConnector protected constructor(private val l
 
   protected abstract fun disconnect()
 
+  /**
+   * Called on the LSP listener thread right after it has stopped reading [serverToIdeStream], either
+   * because the server closed the stream (clean EOF) or because the listener loop failed. Implementations
+   * that re-buffer the server output must release [serverToIdeStream] here so that the process output reader
+   * can never stay blocked writing into a full buffer while nobody drains it. Otherwise that reader thread
+   * stays blocked, the process handler never observes the process ending (`processTerminated` never fires),
+   * so neither the handler and its reader threads nor the external server process (a separate executable)
+   * are ever cleaned up — and killing that OS process by hand would not help, because the thread is stuck
+   * writing into an in-process Java pipe, not into the process (IJPL-250254).
+   */
+  protected open fun releaseServerToIdeStream() {}
+
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   internal fun connect(onSuccess: (InitializeResult) -> Unit) {
@@ -88,10 +100,20 @@ internal abstract class Lsp4jServerConnector protected constructor(private val l
         }
         finally {
           logger.debug("$descriptor: LSP server listener thread finished")
+          // This thread was the only consumer of serverToIdeStream. Now that it stopped reading, release
+          // the stream so that the process output reader cannot block forever writing into a full buffer
+          // while the server process is still alive (IJPL-250254).
+          try {
+            releaseServerToIdeStream()
+          }
+          catch (e: Throwable) {
+            logger.warn("$descriptor: failed to release the serverToIdeStream stream", e)
+          }
           val manager = ReadAction.computeBlocking<LspClientManagerImpl?, Throwable> {
             if (!lspClient.project.isDisposed) LspClientManagerImpl.getInstanceImpl(lspClient.project) else null
           }
           val text = "${descriptor.lspCommunicationChannel.javaClass.simpleName} connection closed"
+          // handleMaybeUnexpectedServerStop normally tires to run shutdown & exit, it's important NOT to do it in this finally block
           manager?.handleMaybeUnexpectedServerStop(lspClient, text)
         }
       }
@@ -130,7 +152,21 @@ internal abstract class Lsp4jServerConnector protected constructor(private val l
 
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
-  internal fun shutdownExitDisconnect() {
+  internal fun shutdownExitDisconnect(graceful: Boolean) {
+    try {
+      // On an unexpected stop the listener thread is no longer reading serverToIdeStream, so the shutdown response
+      // can never arrive and `shutdown().get(...)` could only time out — skip it and just disconnect.
+      // (Alternatively, we could send shutdown without waiting for a response.)
+      if (graceful) {
+        gracefulShutdownAndExit()
+      }
+    }
+    finally {
+      disconnectAndNotifyStopped()
+    }
+  }
+
+  private fun gracefulShutdownAndExit() {
     try {
       if (::lsp4jServer.isInitialized && isConnectionAlive()) {
         val future = lsp4jServer.shutdown()
@@ -141,21 +177,20 @@ internal abstract class Lsp4jServerConnector protected constructor(private val l
       logger.warn("$descriptor: `shutdown` request failed: $e")
     }
     finally {
-      try {
-        if (::lsp4jServer.isInitialized && isConnectionAlive()) {
-          lsp4jServer.exit()
-        }
+      if (::lsp4jServer.isInitialized && isConnectionAlive()) {
+        lsp4jServer.exit()
       }
-      finally {
-        try {
-          lsCommunicationLogger?.let { LanguageServiceLoggerService.getInstance().disconnect(it) }
-          lsCommunicationLogger = null
-          disconnect()
-        }
-        finally {
-          descriptor.lspServerListener?.serverStopped(lspClient.state == LspServerState.ShutdownNormally)
-        }
-      }
+    }
+  }
+
+  private fun disconnectAndNotifyStopped() {
+    try {
+      lsCommunicationLogger?.let { LanguageServiceLoggerService.getInstance().disconnect(it) }
+      lsCommunicationLogger = null
+      disconnect()
+    }
+    finally {
+      descriptor.lspServerListener?.serverStopped(lspClient.state == LspServerState.ShutdownNormally)
     }
   }
 
