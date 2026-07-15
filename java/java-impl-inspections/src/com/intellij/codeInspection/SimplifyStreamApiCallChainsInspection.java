@@ -183,6 +183,7 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
   private static final CallMatcher COLLECTION_IS_EMPTY = instanceCall(JAVA_UTIL_COLLECTION, "isEmpty").parameterCount(0);
   private static final CallMatcher STREAM_TO_LIST = instanceCall(JAVA_UTIL_STREAM_STREAM, "toList").parameterCount(0);
   private static final CallMatcher STREAM_TO_ARRAY = instanceCall(JAVA_UTIL_STREAM_STREAM, "toArray");
+  private static final CallMatcher COLLECTION_TO_ARRAY = instanceCall(JAVA_UTIL_COLLECTION, "toArray");
   private static final CallMatcher COLLECTORS_TO_LIST_OR_SET =
     staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toList", "toUnmodifiableList", "toSet", "toUnmodifiableSet").parameterCount(0);
   private static final CallMatcher BOOLEAN_EQUALS = instanceCall(JAVA_LANG_BOOLEAN, "equals").parameterCount(1);
@@ -243,7 +244,8 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
     IterateTakeWhileFix.handler(),
     FilterAndMapUseSameMethodChainFix.handler(),
     ReplaceWithOrElseThrowFix.handler(),
-    StreamFindEmptyCheckFix.handler()
+    StreamFindEmptyCheckFix.handler(),
+    CollectToArrayFix.handler()
   ).registerAll(SimplifyMatchNegationFix.handlers())
     .registerAll(CollectEmptyCheckFix.handlers());
 
@@ -2035,6 +2037,80 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
                            @Nullable PsiExpression predicate, boolean resultIsEmpty,
                            boolean optionalIsEmptyAvailable,
                            PsiElement target) {
+    }
+  }
+
+  /**
+   * Removes a redundant list materialization before {@code toArray}:
+   * <ul>
+   *   <li>{@code stream.collect(toList()/toUnmodifiableList()).toArray()} / {@code stream.toList().toArray()}
+   *   &rarr; {@code stream.toArray()}</li>
+   *   <li>{@code ...collect(toList()).toArray(String[]::new)} &rarr; {@code stream.toArray(String[]::new)}</li>
+   *   <li>{@code ...collect(toList()).toArray(new String[0])} &rarr; {@code stream.toArray(String[]::new)}</li>
+   * </ul>
+   * Only ordered (list) terminals are handled, so the stream's encounter order is preserved.
+   */
+  static class CollectToArrayFix implements CallChainSimplification {
+    private final String myFromDescription;
+
+    CollectToArrayFix(String fromDescription) {
+      myFromDescription = fromDescription;
+    }
+
+    @Override
+    public String getName() {
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", myFromDescription, "toArray()");
+    }
+
+    @Override
+    public String getMessage() {
+      return CommonQuickFixBundle.message("fix.can.replace.x.with.y", myFromDescription, "toArray()");
+    }
+
+    @Override
+    public PsiElement simplify(PsiMethodCallExpression toArrayCall) {
+      PsiMethodCallExpression terminal = getQualifierMethodCall(toArrayCall);
+      if (!isListTerminal(terminal)) return null;
+      PsiExpression streamExpression = terminal.getMethodExpression().getQualifierExpression();
+      if (streamExpression == null) return null;
+      CommentTracker ct = new CommentTracker();
+      String argument = streamToArrayArgument(toArrayCall, ct);
+      if (argument == null) return null;
+      PsiElement result = ct.replaceAndRestoreComments(toArrayCall, ct.text(streamExpression) + ".toArray(" + argument + ")");
+      return JavaCodeStyleManager.getInstance(result.getProject()).shortenClassReferences(result);
+    }
+
+    private static boolean isListTerminal(@Nullable PsiMethodCallExpression call) {
+      if (call == null) return false;
+      if (STREAM_TO_LIST.test(call)) return true;
+      return STREAM_COLLECT.test(call) && COLLECTORS_TO_LIST.matches(call.getArgumentList().getExpressions()[0]);
+    }
+
+    /**
+     * Maps the argument of a {@code Collection.toArray(...)} call to the argument of the equivalent
+     * {@code Stream.toArray(...)} call, or returns {@code null} if the conversion is not statically safe.
+     */
+    private static @Nullable String streamToArrayArgument(PsiMethodCallExpression toArrayCall, CommentTracker ct) {
+      PsiExpression[] args = toArrayCall.getArgumentList().getExpressions();
+      if (args.length == 0) return "";
+      if (args.length != 1) return null;
+      PsiExpression arg = args[0];
+      if (arg.getType() instanceof PsiArrayType arrayType) {
+        // Collection.toArray(T[]) matches Stream.toArray(T[]::new) only for a freshly created empty array
+        return ConstructionUtils.isEmptyArrayInitializer(arg) ? arrayType.getComponentType().getCanonicalText() + "[]::new" : null;
+      }
+      // Collection.toArray(IntFunction) -> Stream.toArray(sameGenerator)
+      return ct.text(arg);
+    }
+
+    static CallHandler<CallChainSimplification> handler() {
+      return CallHandler.of(COLLECTION_TO_ARRAY, toArrayCall -> {
+        PsiMethodCallExpression terminal = getQualifierMethodCall(toArrayCall);
+        if (!isListTerminal(terminal)) return null;
+        if (streamToArrayArgument(toArrayCall, new CommentTracker()) == null) return null;
+        String from = STREAM_TO_LIST.test(terminal) ? "toList().toArray()" : "collect().toArray()";
+        return new CollectToArrayFix(from);
+      });
     }
   }
 
