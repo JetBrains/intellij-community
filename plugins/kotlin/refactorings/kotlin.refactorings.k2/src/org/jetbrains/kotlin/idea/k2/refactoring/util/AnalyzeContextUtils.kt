@@ -17,6 +17,11 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
  * Finds the nearest enclosing declaration that can be used as a context for a code fragment built from [this] expression.
  */
 @ApiStatus.Internal
+@Deprecated(
+    message = "Temporary workaround. Do not use.",
+    level = DeprecationLevel.WARNING,
+)
+@ApiStatus.ScheduledForRemoval
 fun KtExpression.findContextToAnalyze(): KtExpression? {
     for (element in parentsWithSelf) {
         when (element) {
