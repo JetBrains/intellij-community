@@ -14,9 +14,9 @@ import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.project.projectId
@@ -25,6 +25,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
+import com.intellij.util.asDisposable
 import com.intellij.util.cancelOnDispose
 import fleet.rpc.client.RpcClientException
 import fleet.rpc.client.RpcTimeoutException
@@ -36,6 +37,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Consumer
@@ -60,50 +62,57 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
   private suspend fun requestProcessor() {
     var currentSession: Session? = null
     var currentPass: Job? = null
-    for (command in requests) {
-      when (command) {
-        is StartSearch -> {
-          LOG.debug { "FiF: processing StartSearch loadMore=${command.isLoadMore} maxUsages=${command.maxUsages}" }
-          // Cancel the previous streaming pass only.
-          currentPass?.cancel("new find request is started")
+    loop@ for (command in requests) {
+      runCatching {
+        when (command) {
+          is StartSearch -> {
+            LOG.debug { "FiF: processing StartSearch loadMore=${command.isLoadMore} maxUsages=${command.maxUsages}" }
+            // Cancel the previous streaming pass only; model loads run on the session scope and keep going.
+            currentPass?.cancel("new find request is started")
+            currentPass = null
 
-          // A load-more pass EXTENDS the current session; a fresh search supersedes it. Both `currentSession`
-          // and the liveness checks are evaluated on this single coroutine, so there is no TOCTOU race.
-          val existing = currentSession
-          val session: Session
+            // A load-more pass EXTENDS the current session; a fresh search supersedes it. `currentSession` and the
+            // liveness check are read on this single coroutine, so there is no TOCTOU race.
+            val existing = currentSession
+            val session: Session
+            if (command.isLoadMore && existing != null && existing.initScope.isActive) {
+              session = existing
+            }
+            else {
+              // Supersede: cancel the previous session's scope, which disposes its result models.
+              existing?.initScope?.cancel("superseded by a fresh search")
 
-          if (command.isLoadMore && existing != null && !existing.disposable.isDisposed && existing.initScope.isActive) {
-            session = existing
-          }
-          else {
-            currentSession?.let { Disposer.dispose(it.disposable) }
-            val newDisposable = Disposer.newCheckedDisposable("Find in Project Search")
+              val newScope = coroutineScope.childScope("FindAndReplaceExecutorImpl.UsageInit")
+              val sessionDisposable = newScope.asDisposable()
+              if (!Disposer.tryRegister(command.disposableParent, sessionDisposable)) {
+                // The popup is already closed; don't leak the freshly created scope.
+                newScope.cancel("popup already closed")
+                LOG.warn("Failed to register disposable for search. Looks like FindPopup is already closed. Search will be canceled.")
+                // The popup is gone, but still fire the terminal callback so nothing is left waiting.
+                command.onFinish()
+                currentSession = null
+                continue@loop
+              }
+              newScope.coroutineContext.job.cancelOnDispose(sessionDisposable)
 
-            if (!Disposer.tryRegister(command.disposableParent, newDisposable)) {
-              Disposer.dispose(newDisposable)
-              LOG.warn("Failed to register disposable for search. Looks like FindPopup is already closed. Search will be canceled.")
-              // The popup is gone, but still fire the terminal callback so nothing is left waiting.
-              command.onFinish()
-              continue
+              session = Session(newScope, sessionDisposable)
+              currentSession = session
             }
 
-            // Parent to the executor scope (not the pass) so the session survives load-more passes.
-            val newScope = coroutineScope.childScope("FindAndReplaceExecutorImpl.UsageInit")
-
-            Disposer.register(newDisposable) {
-              newScope.cancel("search disposed")
-            }
-
-            session = Session(newDisposable, newScope)
-            currentSession = session
+            currentPass = launchSearchPass(command, session)
           }
-
-          currentPass = launchSearchPass(command, session)
+          CancelSearch -> {
+            LOG.debug { "FiF: processing CancelSearch" }
+            // cancelActivities is the dialog-close path: cancel the running pass and tear the session down
+            currentPass?.cancel("cancel all activities for find and replace executor")
+            currentPass = null
+            currentSession?.initScope?.cancel("find and replace activities canceled")
+            currentSession = null
+          }
         }
-        CancelSearch -> {
-          LOG.debug { "FiF: processing CancelSearch" }
-          currentPass?.cancel("cancel all activities for find and replace executor")
-        }
+      }.getOrHandleException {
+        LOG.error("Find/Replace request processing failed; recovering")
+        if (command is StartSearch) command.onFinish()
       }
     }
   }
@@ -136,7 +145,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
             else it.map { event -> ThrottledOneItem(event) }
           }
           .collect { throttledItems ->
-            if (session.disposable.isDisposed) {
+            if (!session.initScope.isActive) {
               return@collect
             }
 
@@ -233,7 +242,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     if (validationJob?.isActive == true) {
       validationJob?.cancel("new validation request is started")
     }
-    validationJob = coroutineScope.launch {
+    val job = coroutineScope.launch {
       try {
         FindRemoteApi.getInstance().checkDirectoryExists(findModel).let { onFinish(it) }
       } catch (ex: RpcClientException) {
@@ -241,10 +250,14 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
         onFinish(false)
       }
     }
+    validationJob = job
+    // Release the reference once the job finishes so a completed job (and whatever it captured) isn't pinned; the
+    // identity guard prevents a stale completion from clearing a newer job. IJPL-247145.
+    job.invokeOnCompletion { if (validationJob === job) validationJob = null }
   }
 
   override fun performScopeSelection(scopeId: String, project: Project) {
-    selectScopeJob = coroutineScope.launch {
+    val job = coroutineScope.launch {
       val deferred = try {
        ScopeModelRemoteApi.getInstance().performScopeSelection(scopeId, project.projectId())
       }
@@ -255,6 +268,8 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
       deferred?.cancelOnDispose(project)
       deferred?.await()
     }
+    selectScopeJob = job
+    job.invokeOnCompletion { if (selectScopeJob === job) selectScopeJob = null }
   }
 
   override fun cancelActivities() {
@@ -282,7 +297,9 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
 
   private object CancelSearch : FindCommand
 
-  // A search "session": the disposable that owns the pass's result models and the scope on which those models
-  // load their preview content. It survives automatic load-more passes and is superseded only by a fresh search.
-  private class Session(val disposable: CheckedDisposable, val initScope: CoroutineScope)
+  // A search "session": the coroutine scope that owns the pass's result-model loading, plus a scope-derived
+  // disposable ([CoroutineScope.asDisposable]) under which those result models are registered. Cancelling the
+  // scope disposes the disposable and every model beneath it. The session survives automatic load-more passes and
+  // is superseded (its scope canceled) only by a fresh search or dialog close.
+  private class Session(val initScope: CoroutineScope, val disposable: Disposable)
 }
