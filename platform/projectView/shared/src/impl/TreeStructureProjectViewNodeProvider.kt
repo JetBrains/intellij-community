@@ -1,14 +1,23 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("DestructuringDeclaration") // let's not use destructuring when it hurts readability
+
 package com.intellij.platform.projectView.impl
 
+import com.intellij.ide.projectView.NodeSortKey
+import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
+import com.intellij.ide.projectView.impl.GroupByTypeComparator
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
 import com.intellij.ide.util.treeView.ValidateableNode
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
 import com.intellij.platform.projectView.pane.buildProjectViewNodeModel
+import com.intellij.platform.projectView.settings.ProjectViewPaneOptionImpl
+import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
+import com.intellij.platform.projectView.settings.toLegacySortKey
 import com.intellij.ui.tree.LeafState
 import com.intellij.ui.tree.buildTreeNodeDescriptorPresentation
 import com.intellij.ui.treeStructure.TreeNodePresentationBuilder
@@ -22,15 +31,18 @@ sealed interface TreeStructureProjectViewNode
 
 private data class TreeStructureProjectViewNodeImpl(
   val element: Any,
-  val parentDescriptor: NodeDescriptor<*>?,
+  val elementDescriptor: NodeDescriptor<*>,
 ) : TreeStructureProjectViewNode
 
 @ApiStatus.Experimental
 class TreeStructureProjectViewNodeProvider(
-  structure: AbstractTreeStructure,
+  project: Project,
+  structure: AbstractProjectTreeStructure,
+  settings: ProjectViewPaneSettingsAccessor,
 ) : ProjectViewTreeNodeProvider<TreeStructureProjectViewNode> {
   private val structure = TypesafeTreeStructure(structure)
   private val semaphore = Semaphore(permits = 1)
+  private val comparator = MyGroupByTypeComparator(project, settings)
 
   private suspend fun <T> read(read: () -> T): T {
     return semaphore.withPermit {
@@ -44,11 +56,17 @@ class TreeStructureProjectViewNodeProvider(
     parent as TreeStructureProjectViewNodeImpl?
     return read {
       if (parent == null) {
-        listOf(structure.getRoot())
+        val root = structure.getRoot()
+        root.elementDescriptor.update()
+        listOf(root)
       }
       else {
         if (!structure.isValid(parent)) return@read null
-        structure.getChildren(parent)
+        val children = structure.getChildren(parent)
+        for (child in children) {
+          child.elementDescriptor.update() // sadly, needed for the comparator
+        }
+        children.sortedWith { node1, node2 -> comparator.compare(node1.elementDescriptor, node2.elementDescriptor) }
       }
     }
   }
@@ -66,7 +84,7 @@ class TreeStructureProjectViewNodeProvider(
   }
 
   private fun buildPresentation(builder: TreeNodePresentationBuilder, validNode: TreeStructureProjectViewNodeImpl) {
-    val descriptor = structure.createDescriptor(validNode)
+    val descriptor = validNode.elementDescriptor
     descriptor.update()
     builder.setLeaf(computeIsLeaf(validNode))
     if (descriptor !is PresentableNodeDescriptor<*>) {
@@ -83,6 +101,25 @@ class TreeStructureProjectViewNodeProvider(
       else -> structure.getChildren(validNode).isEmpty()
     }
   }
+
+  private class MyGroupByTypeComparator(project: Project, private val settings: ProjectViewPaneSettingsAccessor) : GroupByTypeComparator(project, null) {
+
+    override fun getSortKey(): NodeSortKey {
+      return settings.getSortKey().toLegacySortKey()
+    }
+
+    override fun isManualOrder(): Boolean {
+      return settings.isOptionSelected(ProjectViewPaneOptionImpl.ManualOrder)
+    }
+
+    override fun isAbbreviateQualifiedNames(): Boolean {
+      return settings.isOptionSelected(ProjectViewPaneOptionImpl.AbbreviatePackageNames)
+    }
+
+    override fun isFoldersAlwaysOnTop(): Boolean {
+      return settings.isOptionSelected(ProjectViewPaneOptionImpl.FoldersAlwaysOnTop)
+    }
+  }
 }
 
 private class TypesafeTreeStructure(
@@ -90,14 +127,23 @@ private class TypesafeTreeStructure(
 ) {
   fun getRoot(): TreeStructureProjectViewNodeImpl {
     ThreadingAssertions.assertReadAccess()
-    return TreeStructureProjectViewNodeImpl(structure.rootElement, parentDescriptor = null)
+    val rootElement = structure.rootElement
+    return TreeStructureProjectViewNodeImpl(
+      element = rootElement,
+      elementDescriptor = structure.createDescriptor(rootElement, null),
+    )
   }
 
   fun getChildren(parent: TreeStructureProjectViewNodeImpl): List<TreeStructureProjectViewNodeImpl> {
     ThreadingAssertions.assertReadAccess()
     val validParent = parent.takeIf { isValid(it) } ?: return emptyList()
-    val parentDescriptor = createDescriptor(validParent)
-    return structure.getChildElements(validParent.element).map { TreeStructureProjectViewNodeImpl(it, parentDescriptor) }
+    val parentDescriptor = validParent.elementDescriptor
+    return structure.getChildElements(validParent.element).map {
+      TreeStructureProjectViewNodeImpl(
+        element = it,
+        elementDescriptor = structure.createDescriptor(it, parentDescriptor),
+      )
+    }
   }
 
   fun isValid(node: TreeStructureProjectViewNodeImpl): Boolean {
@@ -107,11 +153,6 @@ private class TypesafeTreeStructure(
     if (element is ValidateableNode && !element.isValid) return false
     if (!structure.isValid(element)) return false
     return true
-  }
-
-  fun createDescriptor(node: TreeStructureProjectViewNodeImpl): NodeDescriptor<*> {
-    ThreadingAssertions.assertReadAccess()
-    return structure.createDescriptor(node.element, node.parentDescriptor)
   }
 
   fun getLeafState(node: TreeStructureProjectViewNodeImpl): LeafState {

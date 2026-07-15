@@ -31,7 +31,7 @@
 *:com.intellij.platform.projectView.impl.TreeStructureProjectViewNode
 *f:com.intellij.platform.projectView.impl.TreeStructureProjectViewNodeProvider
 - com.intellij.platform.projectView.impl.ProjectViewTreeNodeProvider
-- <init>(com.intellij.ide.util.treeView.AbstractTreeStructure):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.ide.projectView.impl.AbstractProjectTreeStructure,com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor):V
 - createNodeModel(J,com.intellij.platform.projectView.impl.TreeStructureProjectViewNode,kotlin.coroutines.Continuation):java.lang.Object
 - getChildren(com.intellij.platform.projectView.impl.TreeStructureProjectViewNode,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.projectView.pane.BackendProjectViewNodeModel

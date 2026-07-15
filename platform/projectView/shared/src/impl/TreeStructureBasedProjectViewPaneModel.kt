@@ -12,7 +12,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 abstract class TreeStructureBasedProjectViewPaneModel(project: Project) : TreeBasedProjectViewPaneModel<TreeStructureProjectViewNode>(project) {
   override suspend fun createNodeProvider(settingsAccessor: ProjectViewPaneSettingsAccessor): TreeStructureProjectViewNodeProvider {
-    return TreeStructureProjectViewNodeProvider(createTreeStructure(ProjectViewPaneViewSettings(settingsAccessor)))
+    return TreeStructureProjectViewNodeProvider(
+      project = project,
+      structure = createTreeStructure(ProjectViewPaneViewSettings(settingsAccessor)),
+      settings = settingsAccessor,
+    )
   }
 
   protected abstract fun createTreeStructure(viewSettings: ViewSettings): AbstractProjectTreeStructure

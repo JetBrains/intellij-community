@@ -235,7 +235,8 @@ private class ProjectViewPaneSettingsAccessorImpl(
   private val stateGetter: () -> ProjectViewPaneSettingsStateDTO?
 ) : ProjectViewPaneSettingsAccessor {
   override fun isOptionSelected(option: ProjectViewPaneOption): Boolean {
-    return stateGetter()?.optionStates[(option as ProjectViewPaneOptionImpl).dto]?.isSelected == true
+    val optionState = stateGetter()?.optionStates[(option as ProjectViewPaneOptionImpl).dto]
+    return optionState?.isSelected == true && optionState.isEnabled // disabled options are considered effectively off
   }
 
   override fun getSortKey(): ProjectViewPaneSortKey {
