@@ -136,19 +136,11 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   }
 
   @ApiStatus.Internal
-  public @Nullable Span newSpan(@NonNls @NotNull String name) {
-    Span parentSpan = mySpan;
-    if (parentSpan == null) {
-      return null;
-    }
-    return newSpan(name, parentSpan);
+  public @Nullable Span newSpan(@NonNls @NotNull String name, @Nullable Span parentSpan) {
+    Span actualParent = parentSpan == null ? mySpan : parentSpan;
+    Context context = actualParent == null ? Context.current() : Context.current().with(actualParent);
+    return myTraceManager.spanBuilder(name).setParent(context).startSpan();
   }
-
-  @ApiStatus.Internal
-  public @NotNull Span newSpan(@NonNls @NotNull String name, @NotNull Span parentSpan) {
-    return myTraceManager.spanBuilder(name).setParent(Context.current().with(parentSpan)).startSpan();
-  }
-
 
   /**
    * @deprecated Please use the more structured {@link #runInDebugMode} instead

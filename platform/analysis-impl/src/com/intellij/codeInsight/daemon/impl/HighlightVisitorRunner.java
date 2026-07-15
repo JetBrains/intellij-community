@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
@@ -23,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
 import kotlinx.coroutines.Job;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,33 +125,26 @@ class HighlightVisitorRunner {
         try {
           int[] sizeAfterRunVisitor = new int[1];
           HighlightInfoHolder holder = visitorInfo.holder();
-          @Nullable Span span = progress instanceof DaemonProgressIndicator daemonProgressIndicator
-                               ? daemonProgressIndicator.newSpan(visitor.getClass().getName())
-                               : null;
-          boolean result;
-          try (Scope ignored = span == null ? null : span.makeCurrent()) {
-            result = visitor.analyze(psiFile, myUpdateAll, holder, () -> {
+          Span span = newSpan(progress, null, visitor.getClass().getName());
+          Ref<Boolean> result = Ref.create(false);
+          runWithSpan(span, () -> {
+            boolean resultValue = visitor.analyze(psiFile, myUpdateAll, holder, () -> {
               reportOutOfRunVisitorInfos(0, ANALYZE_BEFORE_RUN_VISITOR_FAKE_PSI_ELEMENT, holder, visitor, resultSink);
-              runWithSpan(progress, span, PRIORITY_HIGHLIGHTING_RANGE_SPAN,
-                          () -> runVisitor(psiFile, elements1, chunkSize, visitorInfo.skipParentsSet(), holder, forceHighlightParents, visitor,
-                                           resultSink));
-              runWithSpan(progress, span, RESTRICTED_BUT_NOT_PRIORITY_RANGE_SPAN,
-                          () -> runVisitor(psiFile, elements2, chunkSize, visitorInfo.skipParentsSet(), holder, forceHighlightParents, visitor,
-                                           resultSink));
+              runWithSpan(newSpan(progress, span, PRIORITY_HIGHLIGHTING_RANGE_SPAN), () ->
+                runVisitor(psiFile, elements1, chunkSize, visitorInfo.skipParentsSet(), holder, forceHighlightParents, visitor, resultSink)
+              );
+              runWithSpan(newSpan(progress, span, RESTRICTED_BUT_NOT_PRIORITY_RANGE_SPAN), () ->
+                runVisitor(psiFile, elements2, chunkSize, visitorInfo.skipParentsSet(), holder, forceHighlightParents, visitor, resultSink));
               sizeAfterRunVisitor[0] = holder.size();
             });
-          }
-          finally {
-            if (span != null) {
-              span.end();
-            }
-          }
+            result.set(resultValue);
+          });
           reportOutOfRunVisitorInfos(sizeAfterRunVisitor[0], ANALYZE_AFTER_RUN_VISITOR_FAKE_PSI_ELEMENT, holder, visitor, resultSink);
           if (GeneralHighlightingPass.LOG.isTraceEnabled()) {
             GeneralHighlightingPass.LOG.trace("HighlightVisitorRunner: visitor finished " + visitor + "(" + visitor.getClass() + ") progress=" + progress+
-                                              (result ? "" : " returned false") + "; holder: "+holder.size()+" results"+"; "+Thread.currentThread());
+                                              (result.get() ? "" : " returned false") + "; holder: "+holder.size()+" results"+"; "+Thread.currentThread());
           }
-          return result;
+          return result.get();
         }
         catch (CancellationException e) {
           throw e;
@@ -167,13 +162,16 @@ class HighlightVisitorRunner {
     return res;
   }
 
-  private static void runWithSpan(@Nullable ProgressIndicator progress,
-                                  @Nullable Span parentSpan,
-                                  @NotNull String spanName,
+  private static @Nullable Span newSpan(@Nullable ProgressIndicator indicator,
+                                        @Nullable Span parentSpan,
+                                        @NonNls @NotNull String spanName) {
+    return indicator instanceof DaemonProgressIndicator daemonProgressIndicator
+           ? daemonProgressIndicator.newSpan(spanName, parentSpan)
+           : null;
+  }
+
+  private static void runWithSpan(@Nullable Span span,
                                   @NotNull Runnable runnable) {
-    @Nullable Span span = progress instanceof DaemonProgressIndicator daemonProgressIndicator && parentSpan != null
-                          ? daemonProgressIndicator.newSpan(spanName, parentSpan)
-                          : null;
     try (Scope ignored = span == null ? null : span.makeCurrent()) {
       runnable.run();
     }
