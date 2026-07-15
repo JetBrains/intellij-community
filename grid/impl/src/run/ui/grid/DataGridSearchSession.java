@@ -36,6 +36,7 @@ import com.intellij.platform.util.coroutines.CoroutineScopeKt;
 import com.intellij.ui.ClientProperty;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
+import kotlin.Pair;
 import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.Dispatchers;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.Component;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 import static com.intellij.database.datagrid.GridUtil.getConfigProvider;
 
@@ -198,6 +200,18 @@ public class DataGridSearchSession implements GridSearchSession<GridRow, GridCol
   @Override
   public boolean hasMatches() {
     return worker.getOccurence(true, DataGridSearchSessionWorker.SearchDirection.FORWARD) != null;
+  }
+
+  public int matchesCount() {
+    return worker.matchesCount();
+  }
+
+  public List<Pair<ModelIndex<GridRow>, ModelIndex<GridColumn>>> getMatches() {
+    return worker.getOccurrences();
+  }
+
+  public @Nullable Pair<ModelIndex<GridRow>, ModelIndex<GridColumn>> getCurrentMatch() {
+    return worker.getOccurence(true, DataGridSearchSessionWorker.SearchDirection.FORWARD);
   }
 
   @Override
