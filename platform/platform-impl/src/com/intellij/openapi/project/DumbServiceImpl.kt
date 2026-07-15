@@ -273,32 +273,38 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   override suspend fun <T> runInDumbMode(debugReason: @NonNls String, block: suspend () -> T): T {
     LOG.info("[$project]: running dumb task without visible indicator: $debugReason")
 
+    var counterIncremented = false
     suspend fun incrementCounter() {
       // we need correct modality
       // Because we need to avoid additional dispatch. UNDISPATCHED coroutine is not a solution, because
       // multiple UNDISPATCHED coroutines in the same (EDT) thread ends up in some strange state (as revealed by unit tests)
       incrementDumbCounterBlocking(trace = Throwable())
-    }
-
-    if (EDT.isCurrentThreadEdt()) {
-      incrementCounter()
-    }
-    else if (Registry.`is`("ide.dumb.service.use.background.write.action")) {
-      incrementDumbCounterSuspending(Throwable())
-    } else {
-      withContext(Dispatchers.EDT) {
-        incrementCounter()
-      }
+      counterIncremented = true
     }
 
     try {
+      if (EDT.isCurrentThreadEdt()) {
+        incrementCounter()
+      }
+      else if (Registry.`is`("ide.dumb.service.use.background.write.action")) {
+        incrementDumbCounterSuspending(Throwable()) {
+          counterIncremented = true
+        }
+      }
+      else {
+        withContext(Dispatchers.EDT) {
+          incrementCounter()
+        }
+      }
       return block()
     }
     finally {
       // in the case of cancellation, this block won't execute if NonCancellable is omitted
-      withContext(Dispatchers.EDT + NonCancellable) {
-        decrementDumbCounterBlocking()
-        LOG.info("[$project]: finished dumb task without visible indicator: $debugReason")
+      if (counterIncremented) {
+        withContext(Dispatchers.EDT + NonCancellable) {
+          decrementDumbCounterBlocking()
+          LOG.info("[$project]: finished dumb task without visible indicator: $debugReason")
+        }
       }
     }
   }
@@ -358,18 +364,25 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   /**
    * Executes update of dumb counter with the help of background write action
    */
-  private suspend fun incrementDumbCounterSuspending(trace: Throwable) {
+  private suspend fun incrementDumbCounterSuspending(trace: Throwable, onCounterIncremented: () -> Unit = {}) {
     withContext(dispatcher) {
       // `runWriteActionWithCheckInWriteIntent` is a glorified 'if' statement that provides atomic transition to background write action if the condition is true
-       getGlobalThreadingSupport().runWriteActionWithCheckInWriteIntent(::tryIncrementStateCounter) {
+      getGlobalThreadingSupport().runWriteActionWithCheckInWriteIntent({
+        val enterDumbMode = tryIncrementStateCounter()
+        if (!enterDumbMode) {
+          onCounterIncremented()
+        }
+        enterDumbMode
+      }) {
         // If already dumb - just increment the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
         // Otherwise, increment the counter under write action because this will change dumb state
-         val enteredDumb = doIncrementStateCounter()
-         if (enteredDumb) {
-           application.invokeLater {
-             proceedWithPublishingOfIncrementEvents(true, trace)
-           }
-         }
+        val enteredDumb = doIncrementStateCounter()
+        onCounterIncremented()
+        if (enteredDumb) {
+          application.invokeLater {
+            proceedWithPublishingOfIncrementEvents(true, trace)
+          }
+        }
       }
     }
     LOG.assertTrue(state.value.isDumb, "Should be dumb")
