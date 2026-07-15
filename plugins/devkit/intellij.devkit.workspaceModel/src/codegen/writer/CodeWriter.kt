@@ -242,6 +242,8 @@ object CodeWriter {
     val apiVersionFromDownloadedJar = getApiVersionFromManifest(codeGeneratorFromDownloadedJar::class.java).let { parseCodegenApi(it) }
 
     if (apiVersionInDevkit.compatible(apiVersionFromDownloadedJar)) {
+      if (apiVersionInDevkit.patch == apiVersionFromDownloadedJar.patch)
+        return true
       val groupId = DevKitWorkspaceModelBundle.message("notification.workspace.compatible.but.different.codegen.api.versions")
       val message = DevKitWorkspaceModelBundle.message("notification.workspace.compatible.but.different.codegen.api.versions.content",
                                                        apiVersionInDevkit,
