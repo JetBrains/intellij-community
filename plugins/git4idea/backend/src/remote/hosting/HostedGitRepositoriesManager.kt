@@ -6,6 +6,8 @@ import git4idea.repo.GitRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 interface HostedGitRepositoriesManager<M : HostedGitRepositoryMapping> {
   val knownRepositoriesState: StateFlow<Set<M>>
@@ -19,9 +21,24 @@ fun <M : HostedGitRepositoryMapping> HostedGitRepositoriesManager<M>.findKnownRe
     it.remote.repository == repository
   }
 
+/**
+ * Emits the hosted repository mapping and the remote branch tracked by the current local branch (the branch whose
+ * pull/merge request the current branch is reviewed against), or `null` when the current branch tracks no hosted branch.
+ *
+ * Re-emits not only when the tracked branch changes, but also when its tip commit moves (e.g. after a push): review
+ * features rely on this to re-resolve "which PR/MR corresponds to the current branch" without requiring a branch switch.
+ * [GitRemoteBranch] equality ignores the commit it points to, so the tip hash is folded into the dedup key explicitly.
+ */
 fun <M : HostedGitRepositoryMapping> HostedGitRepositoriesManager<M>.findHostedRemoteBranchTrackedByCurrent(repository: GitRepository)
   : Flow<Pair<M, GitRemoteBranch>?> =
-  knownRepositoriesState.combine(repository.currentRemoteBranchFlow()) { repositories, branch ->
+  knownRepositoriesState.combine(
+    repository.infoFlow()
+      .map { info ->
+        val branch = info.findFirstRemoteBranchTrackedByCurrent()
+        branch to branch?.let { info.remoteBranchesWithHashes[it] }
+      }
+      .distinctUntilChanged()
+  ) { repositories, (branch, _) ->
     if (branch == null) {
       null
     }

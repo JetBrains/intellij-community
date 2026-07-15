@@ -12,8 +12,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -40,6 +43,12 @@ interface GitLabMergeRequestsListViewModel : ReviewListViewModel {
   val loading: Flow<Boolean>
   val error: Flow<Throwable?>
 
+  /**
+   * Emits whenever the list is reloaded or refreshed. Consumers can use this to re-run branch-scoped lookups
+   * (e.g. "which MR corresponds to the current branch") when the user refreshes the merge request list.
+   */
+  val listUpdated: Flow<Unit>
+
   fun requestMore()
 }
 
@@ -55,6 +64,9 @@ internal class GitLabMergeRequestsListViewModelImpl(
 
   private val scope = parentCs.childScope("GL MR List VM")
   private val requestMoreLauncher = SingleCoroutineLauncher(scope.childScope("Request More"))
+
+  private val listUpdatedSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  override val listUpdated: Flow<Unit> = listUpdatedSignal.asSharedFlow()
 
   private val loaderFlow: Flow<ReloadablePotentiallyInfiniteListLoader<GitLabMergeRequestShortRestDTO>> =
     filterVm.searchState
@@ -75,12 +87,14 @@ internal class GitLabMergeRequestsListViewModelImpl(
   }
 
   override fun refresh() {
+    listUpdatedSignal.tryEmit(Unit)
     scope.launch {
       loaderFlow.first().refresh()
     }
   }
 
   override fun reload() {
+    listUpdatedSignal.tryEmit(Unit)
     scope.launch {
       loaderFlow.first().reload()
     }

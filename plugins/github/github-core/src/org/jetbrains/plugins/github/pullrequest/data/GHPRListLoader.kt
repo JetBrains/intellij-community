@@ -12,8 +12,10 @@ import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -41,6 +43,10 @@ internal class GHPRListLoader(
   private val reloadRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val refreshRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val updateRequests = MutableSharedFlow<Updated<GHPullRequestShort>>(replay = 1)
+
+  private val listUpdatedRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  val listUpdated: Flow<Unit> = listUpdatedRequests.asSharedFlow()
 
   private val loader = GraphQLListLoader.startIn(
     cs,
@@ -76,12 +82,14 @@ internal class GHPRListLoader(
 
   fun refresh() {
     refreshRequests.tryEmit(Unit)
+    listUpdatedRequests.tryEmit(Unit)
   }
 
   fun reload() {
     cs.launchNow {
       reloadRequests.emit(Unit)
     }
+    listUpdatedRequests.tryEmit(Unit)
   }
 
   companion object {

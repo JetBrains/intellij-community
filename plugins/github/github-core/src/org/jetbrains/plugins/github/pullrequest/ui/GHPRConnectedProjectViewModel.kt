@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combineTransform
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -166,9 +167,13 @@ abstract class GHPRConnectedProjectViewModelBase(
   private val prOnCurrentBranchRefreshSignal =
     MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
+  // Re-run the lookup on an explicit refresh and whenever the PR list is reloaded/refreshed, so a PR opened outside
+  // the IDE (or otherwise missed by the initial lookup) is picked up on the next refresh without switching branches.
+  private val prOnCurrentBranchRefresh = merge(prOnCurrentBranchRefreshSignal, dataContext.listLoader.listUpdated)
+
   override val prOnCurrentBranch: StateFlow<ComputedResult<GHPRIdentifier?>?> =
     repoManager.findHostedRemoteBranchTrackedByCurrent(connection.repo.gitRepository)
-      .combineTransform(prOnCurrentBranchRefreshSignal.withInitial(Unit)) { projectAndBranch, _ ->
+      .combineTransform(prOnCurrentBranchRefresh.withInitial(Unit)) { projectAndBranch, _ ->
         if (projectAndBranch == null) {
           emit(ComputedResult.success(null))
         }
