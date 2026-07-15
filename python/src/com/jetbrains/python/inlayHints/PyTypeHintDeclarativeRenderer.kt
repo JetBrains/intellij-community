@@ -13,7 +13,6 @@ import com.jetbrains.python.getEffectiveLanguageLevel
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyLiteralStringType
 import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyNamedTupleType
@@ -39,7 +38,7 @@ internal fun PresentationTreeBuilder.printPyTypeHint(type: PyType?, context: Typ
     // tuple[...] (homogeneous/empty forms) and NamedTuple have dedicated formatting.
     type is PyTupleType || type is PyNamedTupleType -> fallbackText(type, context)
     type is PyUnionType -> printUnion(type, context)
-    type is PyCollectionType && !type.isDefinition -> printGenericType(type, context)
+    type is PyClassType && type.isParameterized && !type.isDefinition -> printGenericType(type, context)
     type is PyClassType && !type.isDefinition -> printClassType(type, context)
     else -> fallbackText(type, context)
   }
@@ -73,7 +72,7 @@ private fun PresentationTreeBuilder.printUnion(union: PyUnionType, context: Type
   fallbackText(union, context)
 }
 
-private fun PresentationTreeBuilder.printGenericType(type: PyCollectionType, context: TypeEvalContext) {
+private fun PresentationTreeBuilder.printGenericType(type: PyClassType, context: TypeEvalContext) {
   val name = type.name
   val origin = context.origin
   val builtinGenericsAvailable = origin == null || getEffectiveLanguageLevel(origin).isAtLeast(LanguageLevel.PYTHON39)

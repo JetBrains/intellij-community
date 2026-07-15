@@ -8,7 +8,7 @@ import com.jetbrains.python.psi.PyDoubleStarExpression;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyKeyValueExpression;
-import com.jetbrains.python.psi.types.PyCollectionType;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyType;
@@ -39,7 +39,7 @@ public class PyDictCompExpressionImpl extends PyComprehensionElementImpl impleme
       final PyExpression mapping = doubleStarExpression.getExpression();
       if (mapping != null &&
           PyTypeUtil.convertToType(context.getType(mapping), "typing.Mapping", doubleStarExpression, context)
-            instanceof PyCollectionType mappingType) {
+            instanceof PyClassType mappingType && mappingType.isParameterized()) {
         final List<PyType> elementTypes = mappingType.getTypeArguments();
         if (elementTypes.size() == 2) {
           keyType = elementTypes.get(0);
