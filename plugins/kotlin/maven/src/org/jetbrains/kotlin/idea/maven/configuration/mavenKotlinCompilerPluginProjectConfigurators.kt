@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.maven.createChildTag
 import org.jetbrains.kotlin.idea.maven.findSubTagOrCreate
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import java.nio.file.Files
+import kotlin.io.path.relativeTo
 
 abstract class AbstractMavenKotlinCompilerPluginProjectConfigurator: KotlinCompilerPluginProjectConfigurator {
     override fun isApplicable(module: Module): Boolean =
@@ -180,15 +181,16 @@ class JpaMavenKotlinCompilerPluginProjectConfigurator : AbstractMavenKotlinCompi
 private fun Module.findLombokConfigPath(): String? {
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
     val mavenProject = mavenProjectsManager.findProject(this) ?: return null
-    val moduleConfig = mavenProject.directoryPath.resolve("lombok.config")
-    if (Files.exists(moduleConfig)) return "lombok.config"
-
-    val parentConfig = mavenProject.parentId
+    val projectPath = mavenProject.directoryPath
+    val configName = "lombok.config"
+    val moduleConfig = projectPath.resolve(configName)
+    val lombokConfig = moduleConfig.takeIf(Files::exists) ?: mavenProject.parentId
         ?.let(mavenProjectsManager::findProject)
         ?.directoryPath
-        ?.resolve("lombok.config")
+        ?.resolve(configName)
         ?.takeIf(Files::exists)
-    return parentConfig?.toString()
+    val relativeTo = lombokConfig?.relativeTo(projectPath)
+    return relativeTo?.toString()
 }
 
 internal fun PomFile.addAllOpenKotlinCompilerPluginPreset(kotlinPlugin: MavenDomPlugin, kotlinCompilerPluginId: String) {
