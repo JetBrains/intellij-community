@@ -1,256 +1,230 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.execution;
+package org.jetbrains.idea.maven.execution
 
-import com.intellij.debugger.impl.RemoteConnectionBuilder;
-import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.LogFileOptions;
-import com.intellij.execution.configurations.ParametersList;
-import com.intellij.execution.configurations.PredefinedLogFile;
-import com.intellij.execution.configurations.RemoteConnection;
-import com.intellij.execution.configurations.RemoteConnectionCreator;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.util.ExecutionErrorDialog;
-import com.intellij.execution.util.JavaParametersUtil;
-import com.intellij.execution.util.ProgramParametersUtil;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.task.ExecuteRunConfigurationTask;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import com.intellij.debugger.impl.RemoteConnectionBuilder
+import com.intellij.debugger.settings.DebuggerSettings
+import com.intellij.execution.CantRunException
+import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.Executor
+import com.intellij.execution.RunManager.Companion.getInstance
+import com.intellij.execution.application.ApplicationConfiguration
+import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.JavaParameters
+import com.intellij.execution.configurations.ParametersList
+import com.intellij.execution.configurations.RemoteConnection
+import com.intellij.execution.configurations.RemoteConnectionCreator
+import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder
+import com.intellij.execution.runners.ProgramRunner
+import com.intellij.execution.util.ExecutionErrorDialog
+import com.intellij.execution.util.JavaParametersUtil
+import com.intellij.execution.util.ProgramParametersUtil
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.JavaSdkType
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.task.ExecuteRunConfigurationTask
+import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.idea.maven.execution.MavenExecutionEnvironmentProviderUtil.patchVmParameters
+import org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import java.io.File
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
-import static com.intellij.openapi.util.text.StringUtil.isEmpty;
-import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
-import static com.intellij.util.containers.ContainerUtil.indexOf;
-
-public final class MavenApplicationConfigurationExecutionEnvironmentProvider implements MavenExecutionEnvironmentProvider {
-
-  @Override
-  public boolean isApplicable(@NotNull ExecuteRunConfigurationTask task) {
-    return task.getRunProfile() instanceof ApplicationConfiguration;
+class MavenApplicationConfigurationExecutionEnvironmentProvider : MavenExecutionEnvironmentProvider {
+  override fun isApplicable(task: ExecuteRunConfigurationTask): Boolean {
+    return task.getRunProfile() is ApplicationConfiguration
   }
 
-  @Override
-  public @Nullable ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, @NotNull ExecuteRunConfigurationTask task,
-                                                                   @Nullable Executor executor) {
-
-    ApplicationConfiguration applicationConfiguration = (ApplicationConfiguration)task.getRunProfile();
-    ConfigurationFactory configurationFactory = new MavenExecConfigurationFactory(applicationConfiguration);
-    String mainClassName = applicationConfiguration.getMainClassName();
-    if (isEmpty(mainClassName)) {
-      return null;
+  override fun createExecutionEnvironment(
+    project: Project, task: ExecuteRunConfigurationTask,
+    executor: Executor?,
+  ): ExecutionEnvironment? {
+    var executor = executor
+    val applicationConfiguration = task.getRunProfile() as ApplicationConfiguration
+    val configurationFactory: ConfigurationFactory = MavenExecConfigurationFactory(applicationConfiguration)
+    val mainClassName = applicationConfiguration.mainClassName
+    if (StringUtil.isEmpty(mainClassName)) {
+      return null
     }
 
-    Module module = applicationConfiguration.getConfigurationModule().getModule();
+    val module = applicationConfiguration.configurationModule.module
     if (module == null) {
-      return null;
+      return null
     }
 
-    MavenProject mavenProject = MavenProjectsManager.getInstance(project).findProject(module);
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(module)
     if (mavenProject == null) {
-      return null;
+      return null
     }
 
     //todo: Should be merged with MavenRunConfiguration
-    RunnerAndConfigurationSettings runnerAndConfigurationSettings =
-      RunManager.getInstance(project).createConfiguration(applicationConfiguration.getName(), configurationFactory);
+    val runnerAndConfigurationSettings =
+      getInstance(project).createConfiguration(applicationConfiguration.name, configurationFactory)
 
-    MyExecRunConfiguration mavenRunConfiguration = (MyExecRunConfiguration)runnerAndConfigurationSettings.getConfiguration();
+    val mavenRunConfiguration = runnerAndConfigurationSettings.getConfiguration() as MyExecRunConfiguration
 
-    mavenRunConfiguration.setBeforeRunTasks(applicationConfiguration.getBeforeRunTasks());
-    copyLogParameters(applicationConfiguration, mavenRunConfiguration);
+    mavenRunConfiguration.setBeforeRunTasks(applicationConfiguration.beforeRunTasks)
+    copyLogParameters(applicationConfiguration, mavenRunConfiguration)
 
-    MavenRunnerParameters runnerParameters = mavenRunConfiguration.getRunnerParameters();
-    runnerParameters.setWorkingDirPath(mavenProject.getDirectory());
-    runnerParameters.setPomFileName(mavenProject.getFile().getName());
+    val runnerParameters = mavenRunConfiguration.runnerParameters
+    runnerParameters.workingDirPath = mavenProject.directory
+    runnerParameters.pomFileName = mavenProject.file.getName()
 
-    JavaParameters javaParameters = new JavaParameters();
-    JavaParametersUtil.configureConfiguration(javaParameters, applicationConfiguration);
+    val javaParameters = JavaParameters()
+    JavaParametersUtil.configureConfiguration(javaParameters, applicationConfiguration)
 
-    ParametersList execArgs = new ParametersList();
-    execArgs.addAll(javaParameters.getVMParametersList().getList());
-    execArgs.add("-classpath");
-    execArgs.add("%classpath");
-    execArgs.add(mainClassName);
-    execArgs.addParametersString(applicationConfiguration.getProgramParameters());
+    val execArgs = ParametersList()
+    execArgs.addAll(javaParameters.vmParametersList.getList())
+    execArgs.add("-classpath")
+    execArgs.add("%classpath")
+    execArgs.add(mainClassName)
+    execArgs.addParametersString(applicationConfiguration.programParameters)
 
-    String execExecutable = getJdkExecPath(applicationConfiguration);
+    val execExecutable: String? = getJdkExecPath(applicationConfiguration)
     if (execExecutable == null) {
-      throw new RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"));
+      throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
     }
 
-    String workingDirectory = ProgramParametersUtil.getWorkingDir(applicationConfiguration, project, module);
+    val workingDirectory = ProgramParametersUtil.getWorkingDir(applicationConfiguration, project, module)
 
-    List<String> goals = new ArrayList<>(runnerParameters.getGoals());
-    if (isNotEmpty(workingDirectory)) {
-      goals.add("-Dexec.workingdir=" + workingDirectory);
+    val goals = ArrayList(runnerParameters.goals)
+    if (StringUtil.isNotEmpty(workingDirectory)) {
+      goals.add("-Dexec.workingdir=$workingDirectory")
     }
-    goals.add("-Dexec.args=" + execArgs.getParametersString());
-    goals.add("-Dexec.executable=" + toSystemDependentName(execExecutable));
-    goals.add("exec:exec");
-    runnerParameters.setGoals(goals);
+    goals.add("-Dexec.args=" + execArgs.parametersString)
+    goals.add("-Dexec.executable=" + FileUtil.toSystemDependentName(execExecutable))
+    goals.add("exec:exec")
+    runnerParameters.setGoals(goals)
 
     if (executor == null) {
-      executor = DefaultRunExecutor.getRunExecutorInstance();
+      executor = DefaultRunExecutor.getRunExecutorInstance()
     }
 
-    return new ExecutionEnvironmentBuilder(project, executor)
+    return ExecutionEnvironmentBuilder(project, executor)
       .runProfile(mavenRunConfiguration)
-      .runnerAndSettings(ProgramRunner.getRunner(executor.getId(), runnerAndConfigurationSettings.getConfiguration()), runnerAndConfigurationSettings)
-      .build();
-
+      .runnerAndSettings(
+        ProgramRunner.getRunner(executor.getId(), runnerAndConfigurationSettings.getConfiguration())!!,
+        runnerAndConfigurationSettings
+      )
+      .build()
   }
 
-  private static String getJdkExecPath(@NotNull ApplicationConfiguration applicationConfiguration) {
-    Project project = applicationConfiguration.getProject();
-    try {
-      Sdk jdk = JavaParametersUtil.createProjectJdk(project, applicationConfiguration.getAlternativeJrePath());
-      if (jdk == null) {
-        throw new RuntimeException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
-      }
-
-      SdkTypeId type = jdk.getSdkType();
-      if (!(type instanceof JavaSdkType)) {
-        throw new RuntimeException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
-      }
-
-      return ((JavaSdkType)type).getVMExecutablePath(jdk);
-    }
-    catch (CantRunException e) {
-      ExecutionErrorDialog.show(e, RunnerBundle.message("dialog.title.cannot.use.specified.jre"), project);
-    }
-    return null;
-  }
-
-  private static void copyLogParameters(ApplicationConfiguration applicationConfiguration, MavenRunConfiguration mavenRunConfiguration) {
-    for (PredefinedLogFile file : applicationConfiguration.getPredefinedLogFiles()) {
-      mavenRunConfiguration.addPredefinedLogFile(file);
-    }
-
-    for (LogFileOptions op : applicationConfiguration.getLogFiles()) {
-      mavenRunConfiguration.addLogFile(op.getPathPattern(), op.getName(), op.isEnabled(), op.isSkipContent(), op.isShowAll());
-    }
-
-    mavenRunConfiguration.setFileOutputPath(applicationConfiguration.getOutputFilePath());
-    mavenRunConfiguration.setSaveOutputToFile(applicationConfiguration.isSaveOutputToFile());
-
-    mavenRunConfiguration.setShowConsoleOnStdOut(applicationConfiguration.isShowConsoleOnStdOut());
-    mavenRunConfiguration.setShowConsoleOnStdErr(applicationConfiguration.isShowConsoleOnStdErr());
-  }
-
-  public static List<String> patchVmParameters(ParametersList vmParameters) {
-    List<String> patchedVmParameters = new ArrayList<>(vmParameters.getList());
-    for (Iterator<String> iterator = patchedVmParameters.iterator(); iterator.hasNext(); ) {
-      String parameter = iterator.next();
-      if (parameter.contains("suspend=n,server=y")) {
-        iterator.remove();
-        patchedVmParameters.add(StringUtil.replace(parameter, "suspend=n,server=y", "suspend=y,server=y"));
-        break;
-      }
-    }
-    return patchedVmParameters;
-  }
-
-  public static class MyExecRunConfiguration extends MavenRunConfiguration {
-
-    private final ApplicationConfiguration myApplicationConfiguration;
-
-    MyExecRunConfiguration(Project project, ConfigurationFactory configurationFactory,
-                           ApplicationConfiguration applicationConfiguration) {
-      super(project, configurationFactory, applicationConfiguration.getName());
-      myApplicationConfiguration = applicationConfiguration;
-    }
-
-    @Override
-    public @NotNull RemoteConnectionCreator createRemoteConnectionCreator(JavaParameters javaParameters) {
-      return new RemoteConnectionCreator() {
-
-        @Override
-        public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
+  class MyExecRunConfiguration internal constructor(
+    project: Project?, configurationFactory: ConfigurationFactory?,
+    private val myApplicationConfiguration: ApplicationConfiguration,
+  ) : MavenRunConfiguration(project, configurationFactory, myApplicationConfiguration.name) {
+    override fun createRemoteConnectionCreator(javaParameters: JavaParameters): RemoteConnectionCreator {
+      return object : RemoteConnectionCreator {
+        override fun createRemoteConnection(environment: ExecutionEnvironment): RemoteConnection? {
           try {
-            JavaParameters parameters = new JavaParameters();
-            parameters.setJdk(JavaParametersUtil.createProjectJdk(getProject(), myApplicationConfiguration.getAlternativeJrePath()));
-            RemoteConnection connection = new RemoteConnectionBuilder(false, DebuggerSettings.getInstance().getTransport(), "")
+            val parameters = JavaParameters()
+            parameters.jdk = JavaParametersUtil.createProjectJdk(project, myApplicationConfiguration.alternativeJrePath)
+            val connection = RemoteConnectionBuilder(false, DebuggerSettings.getInstance().getTransport(), "")
               .asyncAgent(true)
-              .project(environment.getProject())
-              .create(parameters);
+              .project(environment.project)
+              .create(parameters)
 
-            ParametersList programParametersList = javaParameters.getProgramParametersList();
+            val programParametersList = javaParameters.programParametersList
 
-            String execArgsPrefix = "-Dexec.args=";
-            int execArgsIndex = indexOf(programParametersList.getList(), s -> s.startsWith(execArgsPrefix));
-            String execArgsStr = programParametersList.get(execArgsIndex);
+            val execArgsPrefix = "-Dexec.args="
+            val execArgsIndex = ContainerUtil.indexOf<String?>(
+              programParametersList.getList(),
+              Condition { s: String? -> s!!.startsWith(execArgsPrefix) })
+            val execArgsStr = programParametersList.get(execArgsIndex)
 
-            ParametersList execArgs = new ParametersList();
-            execArgs.addAll(patchVmParameters(parameters.getVMParametersList()));
+            val execArgs = ParametersList()
+            execArgs.addAll(patchVmParameters(parameters.vmParametersList))
 
-            execArgs.addParametersString(execArgsStr.substring(execArgsPrefix.length()));
+            execArgs.addParametersString(execArgsStr.substring(execArgsPrefix.length))
 
-            String classPath = toSystemDependentName(parameters.getClassPath().getPathsString());
-            execArgs.replaceOrPrepend("%classpath", "%classpath" + File.pathSeparator + classPath);
+            val classPath = FileUtil.toSystemDependentName(parameters.classPath.pathsString)
+            execArgs.replaceOrPrepend("%classpath", "%classpath" + File.pathSeparator + classPath)
 
-            programParametersList.set(execArgsIndex, execArgsPrefix + execArgs.getParametersString());
-            return connection;
+            programParametersList.set(execArgsIndex, execArgsPrefix + execArgs.parametersString)
+            return connection
           }
-          catch (ExecutionException e) {
-            throw new RuntimeException("Cannot create debug connection", e);
+          catch (e: ExecutionException) {
+            throw RuntimeException("Cannot create debug connection", e)
           }
         }
 
-        @Override
-        public boolean isPollConnection() {
-          return true;
+        override fun isPollConnection(): Boolean {
+          return true
         }
-      };
+      }
     }
   }
 
-  private static class MavenExecConfigurationFactory extends ConfigurationFactory {
-    private final ApplicationConfiguration myApplicationConfiguration;
-
-    protected MavenExecConfigurationFactory(ApplicationConfiguration applicationConfiguration) {
-      super(MavenRunConfigurationType.getInstance());
-      myApplicationConfiguration = applicationConfiguration;
+  private class MavenExecConfigurationFactory(private val myApplicationConfiguration: ApplicationConfiguration) :
+    ConfigurationFactory(MavenRunConfigurationType.getInstance()) {
+    override fun getId(): String {
+      return "Maven"
     }
 
-    @Override
-    public @NotNull String getId() {
-      return "Maven";
+    override fun createTemplateConfiguration(project: Project): RunConfiguration {
+      return MyExecRunConfiguration(project, this, myApplicationConfiguration)
     }
 
-    @Override
-    public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
-      return new MyExecRunConfiguration(project, this, myApplicationConfiguration);
-    }
-
-    @Override
-    public @NotNull RunConfiguration createConfiguration(@Nullable String name, @NotNull RunConfiguration template) {
-      return new MyExecRunConfiguration(template.getProject(), this, myApplicationConfiguration);
+    override fun createConfiguration(name: String?, template: RunConfiguration): RunConfiguration {
+      return MyExecRunConfiguration(template.getProject(), this, myApplicationConfiguration)
     }
   }
+
+}
+
+object MavenExecutionEnvironmentProviderUtil {
+  fun patchVmParameters(vmParameters: ParametersList): List<String> {
+    val patchedVmParameters: MutableList<String> = ArrayList(vmParameters.getList())
+    val iterator: MutableIterator<String> = patchedVmParameters.iterator()
+    while (iterator.hasNext()) {
+      val parameter = iterator.next()
+      if (parameter.contains("suspend=n,server=y")) {
+        iterator.remove()
+        patchedVmParameters.add(StringUtil.replace(parameter, "suspend=n,server=y", "suspend=y,server=y"))
+        break
+      }
+    }
+    return patchedVmParameters
+  }
+}
+
+private fun getJdkExecPath(applicationConfiguration: ApplicationConfiguration): String? {
+  val project = applicationConfiguration.project
+  try {
+    val jdk = JavaParametersUtil.createProjectJdk(project, applicationConfiguration.alternativeJrePath)
+    if (jdk == null) {
+      throw RuntimeException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"))
+    }
+
+    val type = jdk.sdkType
+    if (type !is JavaSdkType) {
+      throw RuntimeException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"))
+    }
+
+    return (type as JavaSdkType).getVMExecutablePath(jdk)
+  }
+  catch (e: CantRunException) {
+    ExecutionErrorDialog.show(e, RunnerBundle.message("dialog.title.cannot.use.specified.jre"), project)
+  }
+  return null
+}
+
+private fun copyLogParameters(applicationConfiguration: ApplicationConfiguration, mavenRunConfiguration: MavenRunConfiguration) {
+  for (file in applicationConfiguration.predefinedLogFiles) {
+    mavenRunConfiguration.addPredefinedLogFile(file)
+  }
+
+  for (op in applicationConfiguration.logFiles) {
+    mavenRunConfiguration.addLogFile(op.pathPattern, op.name, op.isEnabled, op.isSkipContent, op.isShowAll)
+  }
+
+  mavenRunConfiguration.setFileOutputPath(applicationConfiguration.outputFilePath)
+  mavenRunConfiguration.isSaveOutputToFile = applicationConfiguration.isSaveOutputToFile
+
+  mavenRunConfiguration.isShowConsoleOnStdOut = applicationConfiguration.isShowConsoleOnStdOut
+  mavenRunConfiguration.isShowConsoleOnStdErr = applicationConfiguration.isShowConsoleOnStdErr
 }

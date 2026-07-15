@@ -30,7 +30,7 @@ public final class MavenRunnerParameters implements Cloneable {
   private String myPomFileName;
 
   private String myMultimoduleDir;
-  private final List<String> myGoals = new ArrayList<>();
+  private final List<@NotNull String> myGoals = new ArrayList<>();
 
   private boolean myResolveToWorkspace;
 
@@ -167,11 +167,11 @@ public final class MavenRunnerParameters implements Cloneable {
 
   }
 
-  public @Unmodifiable List<String> getGoals() {
+  public @Unmodifiable List<@NotNull String> getGoals() {
     return Collections.unmodifiableList(myGoals);
   }
 
-  public void setGoals(@Nullable List<String> goals) {
+  public void setGoals(@Nullable List<@NotNull String> goals) {
     if (myGoals == goals) return;  // Called from XML Serializer
     myGoals.clear();
 
