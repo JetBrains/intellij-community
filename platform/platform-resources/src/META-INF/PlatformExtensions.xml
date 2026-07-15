@@ -1829,6 +1829,8 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  description="Maximum duration of performance watcher dumps in ms"/>
     <registryKey key="performance.watcher.unresponsive.interval.ms" defaultValue="5000"
                  description="Log UI freezes longer than the specified time interval in ms"/>
+    <registryKey key="performance.watcher.unresponsive.interval.force.value" defaultValue="false"
+                 description="Set it to true to allow for values of 'performance.watcher.unresponsive.interval.ms' that are smaller than 500 ms"/>
     <registryKey key="performance.watcher.enable.smoke.and.mirrors.compensation" defaultValue="true"
                  description="Enable UI freezes reporting for long-running background tasks that may impale UI interactions without a visible impact on UI rendering"/>
 
