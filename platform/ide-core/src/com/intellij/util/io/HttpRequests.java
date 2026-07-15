@@ -649,8 +649,10 @@ public final class HttpRequests {
 
       var method = httpURLConnection.getRequestMethod();
 
-      LOG.assertTrue(method.equals("GET") || method.equals("HEAD") || method.equals("DELETE"),
-                     "'" + method + "' not supported; please use GET, HEAD, DELETE, PUT or POST");
+      LOG.assertTrue(
+        method.equals("GET") || method.equals("HEAD") || method.equals("DELETE"),
+        "'" + method + "' not supported; please use GET, HEAD, DELETE, PUT or POST"
+      );
 
       if (LOG.isDebugEnabled()) {
         LOG.debug("connecting to " + url);
