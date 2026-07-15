@@ -12,6 +12,23 @@ references, documentation, navigation, rename, find-usages, semantic highlightin
 languages and frameworks. It was called "Web Symbols" in 2022.3–2025.1 and is still marked
 experimental. Core module: `community/platform/polySymbols/` (`src`, `backend`, `src-web`).
 
+### Do not modify PolySymbols platform source
+
+**Never edit anything under `community/platform/polySymbols/**` without the user's explicit,
+one-time permission for that specific change** — not even a small, purely-additive generalization
+that looks obviously safe. This is shared framework code consumed by every PolySymbols integration
+in the repo (Angular, Vue, CSS, JS, GDScript, mermaid, etc.); a "safe-looking" generalization made to
+fix one integration's test can silently change behavior for all the others. If you hit a real gap or
+limitation in platform behavior while integrating a language/framework, the default response is to
+**report it and ask**, not to patch the platform — the right fix is almost always something owned by
+your own plugin (a plugin-registered EP implementation, e.g. its own `UsageSearcher`/
+`RenameUsageSearcher`/`CustomUsageSearcher`, not a platform-file edit). This was learned the hard way:
+a session generalized `PolySymbolUsageSearcher`'s `PsiLinkedPolySymbol`-only raw-PSI-reference bridge
+to also cover `PolySymbolDeclaredInPsi`, when the actual, documented platform design is that
+`PolySymbolDeclaredInPsi` intentionally does **not** provide that bridge (see
+[references/query-model.md](references/query-model.md#declarations)) — the fix should have stopped
+at "ask the user," not at "patch the framework."
+
 Implementing a new integration typically means: build declaration/reference/completion providers
 on the platform side as usual, plus a handful of PolySymbols contributor classes — find-usages,
 documentation, and rename then work automatically through reference resolution to a `PolySymbol`.
@@ -95,6 +112,11 @@ assume the platform will pick one for you.
 4. **Supply declarations**: if a symbol maps 1:1 onto a real `PsiElement` and lives purely in the
    PolySymbols model, implement `PolySymbolDeclaredInPsi` plus a `PolySymbolDeclarationProvider`
    (EP `com.intellij.polySymbols.declarationProvider`) that builds the symbol — this is the default.
+   **The provider is pure dispatch**: decide which symbol(s) a `PsiElement` backs, instantiate them,
+   and return `symbol.declaration` (the interface's own default). Don't hand-roll a
+   `PolySymbolDeclaration` implementation or thread a range through the provider — a non-default
+   declaration range is a `textRangeInSourceElement` override on the symbol class itself; the symbol
+   represents itself, the provider only knows *which* symbol to build.
    Reach for `PsiLinkedPolySymbol` + `polySymbols.psiLinkedSymbol host="..."` only when that same
    `PsiElement` must *also* keep working as a target for a **legacy, non-PolySymbols**
    find-usages/rename mechanism you're running alongside (a bridge for partial migrations, not a

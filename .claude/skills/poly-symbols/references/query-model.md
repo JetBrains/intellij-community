@@ -151,7 +151,25 @@ find-usages/rename:
   `PsiElement` and returns its `declaration`. You get navigation, find-usages, and rename for the
   *symbol* for free. It does **not** link the symbol to the `PsiElement` for reverse lookups — a
   usage/rename search started directly on `sourceElement` (bypassing the symbol) will not find or
-  rename it. Reach for this first; it doesn't require a legacy PSI-reference mechanism to exist.
+  rename it, and this includes any *other*, unrelated classic `PsiReferenceBase` elsewhere in the
+  project (even in another language/file type) that resolves straight to `sourceElement` — that
+  classic reference will not be recognized as a usage of the symbol. There is no supported way to
+  get that back other than `PsiLinkedPolySymbol` below (which requires the *declaring* symbol to
+  implement it, not something the referencing side can opt into) — if you hit this, it's a real
+  platform limitation, not a bug in your provider; stop and ask before reaching for a platform patch
+  (see [SKILL.md](../SKILL.md#do-not-modify-polysymbols-platform-source)).
+  **The provider must be pure dispatch — decide *which* symbol(s) a `PsiElement` backs, then return
+  `symbol.declaration` (the interface's own default, built from `sourceElement`/
+  `textRangeInSourceElement`).** Do not hand-roll a `PolySymbolDeclaration` implementation inside the
+  provider, and do not thread a range through provider-side helper functions. If a symbol's
+  declaration range differs from the default (`TextRange(0, sourceElement.textLength)`) — e.g. a
+  symbol anchored to a whole file with no real name-identifier token to point at — override
+  `textRangeInSourceElement` **on that symbol class**, not in the provider: the symbol represents
+  itself, the provider only knows which symbol to build. See GDScript's
+  `GdPsiPolySymbolDeclarationProvider`/`GdPsiResourceClassSymbol` for the worked example (the latter
+  overrides `textRangeInSourceElement` to `TextRange.EMPTY_RANGE` since a whole-file declaration has
+  no caret-anchorable position). Reach for `PolySymbolDeclaredInPsi` first; it doesn't require a
+  legacy PSI-reference mechanism to exist.
 - **`PsiLinkedPolySymbol`** (`community/platform/polySymbols/src/com/intellij/polySymbols/search/PsiLinkedPolySymbol.kt`)
   + registering `polySymbols.psiLinkedSymbol host="..."` — **a bridge, not a general shortcut.**
   Its own doc comment says exactly this: *"serves as a bridge between Symbol-based functionality
