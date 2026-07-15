@@ -5,9 +5,9 @@ import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
 import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.projectView.backend.impl.TreeBasedProjectViewPaneModel
-import com.intellij.platform.projectView.backend.impl.TreeStructureProjectViewNode
-import com.intellij.platform.projectView.backend.impl.TreeStructureProjectViewNodeProvider
+import com.intellij.platform.projectView.impl.TreeBasedProjectViewPaneModel
+import com.intellij.platform.projectView.impl.TreeStructureProjectViewNode
+import com.intellij.platform.projectView.impl.TreeStructureProjectViewNodeProvider
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneModel
 import com.intellij.platform.projectView.pane.ProjectViewPaneProvider

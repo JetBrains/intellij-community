@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.projectView.backend.impl
+package com.intellij.platform.projectView.impl
 
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeStructure
@@ -15,15 +15,18 @@ import com.intellij.ui.treeStructure.TreeNodePresentationBuilder
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import org.jetbrains.annotations.ApiStatus
 
-internal sealed interface TreeStructureProjectViewNode
+@ApiStatus.Experimental
+sealed interface TreeStructureProjectViewNode
 
 private data class TreeStructureProjectViewNodeImpl(
   val element: Any,
   val parentDescriptor: NodeDescriptor<*>?,
 ) : TreeStructureProjectViewNode
 
-internal class TreeStructureProjectViewNodeProvider(
+@ApiStatus.Experimental
+class TreeStructureProjectViewNodeProvider(
   structure: AbstractTreeStructure,
 ) : ProjectViewTreeNodeProvider<TreeStructureProjectViewNode> {
   private val structure = TypesafeTreeStructure(structure)
