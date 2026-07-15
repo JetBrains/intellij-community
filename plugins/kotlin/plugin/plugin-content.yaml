@@ -49,6 +49,9 @@
 - name: lib/intellij.kotlin.jvm.debugger.coroutines.jar
   contentModules:
   - name: intellij.kotlin.jvm.debugger.coroutines
+- name: lib/intellij.kotlin.migration.jar
+  contentModules:
+  - name: intellij.kotlin.migration
 - name: lib/intellij.kotlin.projectConfiguration.jar
   contentModules:
   - name: intellij.kotlin.projectConfiguration
@@ -168,7 +171,6 @@
   - name: intellij.kotlin.jvm.debugger.core
   - name: kotlin.jvm-debugger.evaluation
   - name: intellij.kotlin.jvm.debugger.eval4j
-  - name: intellij.kotlin.migration
   - name: kotlin.inspections
   - name: intellij.kotlin.codeInsight.utils
   - name: intellij.kotlin.codeInsight.descriptions

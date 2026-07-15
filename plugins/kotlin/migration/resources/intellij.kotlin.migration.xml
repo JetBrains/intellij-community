@@ -1,0 +1,40 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="org.jetbrains.kotlin"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.resources"/>
+    <module name="intellij.kotlin.formatter"/>
+    <module name="intellij.kotlin.ide"/>
+  </dependencies>
+  <!-- endregion -->
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.configuration.notifications.ExternalKotlinCompilerProjectDataImportListener"
+              topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"/>
+    <listener class="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService$CommonCompilerSettingsChangeListener"
+              topic="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener"/>
+  </projectListeners>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectFUSCollector"/>
+    <notificationGroup
+            id="kotlin.external.compiler.updates"
+            displayType="BALLOON"
+            key="kotlin.external.compiler.updates.notification.group.name"
+    />
+    <notificationGroup
+            id="Kotlin Migration"
+            displayType="STICKY_BALLOON"
+            key="configuration.migration.group.name"
+    />
+  </extensions>
+  <actions>
+    <action id="KotlinCodeMigration" class="org.jetbrains.kotlin.idea.migration.CodeMigrationAction">
+      <!-- TODO: Not assigned to any group because there should be a panel for filling migration options -->
+    </action>
+    <action id="KotlinCodeMigrationToggle" class="org.jetbrains.kotlin.idea.migration.CodeMigrationToggleAction">
+      <add-to-group group-id="KotlinToolsGroup"/>
+    </action>
+  </actions>
+  <resource-bundle>messages.KotlinMigrationBundle</resource-bundle>
+</idea-plugin>

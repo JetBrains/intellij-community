@@ -50,5 +50,18 @@
     </group>
     <action id="CheckComponentsUsageSearchAction"
             class="org.jetbrains.kotlin.idea.actions.internal.CheckComponentsUsageSearchAction"/>
+    <group id="InternalKotlin" internal="true">
+      <separator/>
+
+      <group id="KotlinInternalGroup" popup="true">
+
+      </group>
+
+      <separator/>
+
+      <add-to-group group-id="Internal" anchor="last"/>
+    </group>
+
   </actions>
+  <resource-bundle>messages.KotlinBundle</resource-bundle>
 </idea-plugin>

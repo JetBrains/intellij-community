@@ -52,7 +52,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.jvm.debugger.core",
       "kotlin.jvm-debugger.evaluation",
       "intellij.kotlin.jvm.debugger.eval4j",
-      "intellij.kotlin.migration",
       "kotlin.inspections",
       "intellij.kotlin.codeInsight.utils",
       "intellij.kotlin.codeInsight.descriptions",

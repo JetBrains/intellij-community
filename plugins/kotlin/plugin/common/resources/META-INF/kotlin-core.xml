@@ -225,15 +225,6 @@
     />
   </extensions>
 
-  <projectListeners>
-      <listener class="org.jetbrains.kotlin.idea.configuration.notifications.ExternalKotlinCompilerProjectDataImportListener"
-                topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"/>
-
-    <listener class="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService$CommonCompilerSettingsChangeListener"
-              topic="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener"/>
-
-  </projectListeners>
-
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <pluginUpdateVerifier implementation="org.jetbrains.kotlin.idea.update.GooglePluginUpdateVerifier"/>
 
@@ -283,16 +274,6 @@
 
   <!-- Notifications -->
   <extensions defaultExtensionNs="com.intellij">
-    <notificationGroup
-            id="kotlin.external.compiler.updates"
-            displayType="BALLOON"
-            key="kotlin.external.compiler.updates.notification.group.name"
-    />
-    <notificationGroup
-            id="Kotlin Migration"
-            displayType="STICKY_BALLOON"
-            key="configuration.migration.group.name"
-    />
     <notificationGroup
             id="Kotlin EAP"
             displayType="STICKY_BALLOON"
@@ -373,24 +354,6 @@
       <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
     </group>
 
-    <action id="KotlinCodeMigration" class="org.jetbrains.kotlin.idea.migration.CodeMigrationAction">
-      <!-- TODO: Not assigned to any group because there should be a panel for filling migration options -->
-    </action>
-    <action id="KotlinCodeMigrationToggle" class="org.jetbrains.kotlin.idea.migration.CodeMigrationToggleAction">
-      <add-to-group group-id="KotlinToolsGroup"/>
-    </action>
-
-    <group id="InternalKotlin" internal="true">
-      <separator/>
-
-      <group id="KotlinInternalGroup" popup="true">
-
-      </group>
-
-      <separator/>
-
-      <add-to-group group-id="Internal" anchor="last"/>
-    </group>
 
     <action id="KotlinShellExecute" class="com.intellij.openapi.actionSystem.EmptyAction">
       <keyboard-shortcut first-keystroke="control ENTER" keymap="$default"/>
