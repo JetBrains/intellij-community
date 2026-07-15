@@ -5,7 +5,6 @@ import com.intellij.debugger.DebuggerTestCase;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
-import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
@@ -21,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreeNode;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -138,20 +136,8 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
     }
   }
 
-  // Still used in kotlin tests
-  protected void expandAll(final DebuggerTree tree, final Runnable runnable) {
-    expandAll(tree, runnable, new HashSet<>(), null);
-  }
-
   protected interface NodeFilter {
     boolean shouldExpand(TreeNode node);
-  }
-
-  protected void expandAll(final DebuggerTree tree,
-                           final Runnable runnable,
-                           final Set<? super Value> alreadyExpanded,
-                           final NodeFilter filter) {
-    expandAll(tree, runnable, alreadyExpanded, filter, tree.getDebuggerContext().getSuspendContext());
   }
 
   protected void expandAll(final Tree tree,

@@ -6,7 +6,6 @@ import com.intellij.debugger.actions.JvmDropFrameActionHandler;
 import com.intellij.debugger.actions.JvmSmartStepIntoActionHandler;
 import com.intellij.debugger.actions.ResumeAllJavaThreadsActionHandler;
 import com.intellij.debugger.engine.dfaassist.DfaAssist;
-import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -29,11 +28,8 @@ import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.AlternativeSourceNotificationProvider;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.overhead.OverheadView;
-import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.ExecutionConsoleEx;
@@ -207,22 +203,7 @@ public class JavaDebugProcess extends XDebugProcess {
       }
     });
 
-    myNodeManager = new NodeManagerImpl(session.getProject(), null) {
-      @Override
-      public @NotNull DebuggerTreeNodeImpl createNode(final NodeDescriptor descriptor, EvaluationContext evaluationContext) {
-        return new DebuggerTreeNodeImpl(null, descriptor);
-      }
-
-      @Override
-      public DebuggerTreeNodeImpl createMessageNode(MessageDescriptor descriptor) {
-        return new DebuggerTreeNodeImpl(null, descriptor);
-      }
-
-      @Override
-      public @NotNull DebuggerTreeNodeImpl createMessageNode(String message) {
-        return new DebuggerTreeNodeImpl(null, new MessageDescriptor(message));
-      }
-    };
+    myNodeManager = new NodeManagerImpl(session.getProject());
     session.addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionPaused() {
