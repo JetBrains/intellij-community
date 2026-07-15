@@ -13,9 +13,12 @@ LangString update_context_menu_group ${LANG_JAPANESE} "コンテキストメニ�
 LangString update_context_menu_label ${LANG_JAPANESE} '"フォルダーをプロジェクトとして開く" の追加'
 LangString create_associations_group ${LANG_JAPANESE} "関連付けの作成"
 ; Rider-specific
-LangString additional_features ${LANG_JAPANESE} "追加機能"
+LangString system_integration ${LANG_JAPANESE} "システム統合"
+LangString microsoft_defender ${LANG_JAPANESE} "Microsoft Defender"
 LangString install_etw_service ${LANG_JAPANESE} "JetBrains ETW Host Service のインストール"
-LangString windows_defender_exclusions ${LANG_JAPANESE} "Rider を Microsoft Defender の除外設定に追加"
+LangString windows_defender_exclusions ${LANG_JAPANESE} "Rider 実行ファイルを除外"
+LangString exclude_rider_processes ${LANG_JAPANESE} "Rider プロセスを除外*"
+LangString exclude_rider_processes_text ${LANG_JAPANESE} "* これらのプロセスのリアルタイム スキャン、ASR ルール、ネットワーク保護を無効にします。"
 
 ; Uninstall options page
 LangString uninstall_options ${LANG_JAPANESE} "${MUI_PRODUCT} のアンインストール"

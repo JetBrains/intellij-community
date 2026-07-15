@@ -13,9 +13,12 @@ LangString update_context_menu_group ${LANG_SIMPCHINESE} "更新上下文菜单"
 LangString update_context_menu_label ${LANG_SIMPCHINESE} '添加"将文件夹打开为项目"'
 LangString create_associations_group ${LANG_SIMPCHINESE} "创建关联"
 ; Rider-specific
-LangString additional_features ${LANG_SIMPCHINESE} "附加功能"
+LangString system_integration ${LANG_SIMPCHINESE} "系统集成"
+LangString microsoft_defender ${LANG_SIMPCHINESE} "Microsoft Defender"
 LangString install_etw_service ${LANG_SIMPCHINESE} "安装 JetBrains ETW 主机服务"
-LangString windows_defender_exclusions ${LANG_SIMPCHINESE} "将 Rider 可执行文件添加到 Microsoft Defender 排除项"
+LangString windows_defender_exclusions ${LANG_SIMPCHINESE} "排除 Rider 可执行文件"
+LangString exclude_rider_processes ${LANG_SIMPCHINESE} "排除 Rider 进程*"
+LangString exclude_rider_processes_text ${LANG_SIMPCHINESE} "* 为这些进程禁用实时扫描、ASR 规则和网络保护。"
 
 ; Uninstall options page
 LangString uninstall_options ${LANG_SIMPCHINESE} "卸载 ${MUI_PRODUCT}"
