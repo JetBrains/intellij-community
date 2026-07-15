@@ -242,6 +242,19 @@ public abstract class K2MultiFileLocalInspectionTestGenerated extends AbstractK2
     @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName")
     public abstract static class RedundantQualifierName extends AbstractK2MultiFileLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/aliasImportConflict")
+        public static class AliasImportConflict extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("fromKotlinTest.test")
+            public void testFromKotlinTest() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/aliasImportConflict/fromKotlinTest.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/javaStatic")
         public static class JavaStatic extends AbstractK2MultiFileLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -264,6 +277,32 @@ public abstract class K2MultiFileLocalInspectionTestGenerated extends AbstractK2
             @TestMetadata("fromKotlinTest.test")
             public void testFromKotlinTest() throws Exception {
                 runTest("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/javaStatic2/fromKotlinTest.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/redundantWithImport")
+        public static class RedundantWithImport extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("fromKotlinTest.test")
+            public void testFromKotlinTest() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/redundantWithImport/fromKotlinTest.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/starImport")
+        public static class StarImport extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("fromKotlinTest.test")
+            public void testFromKotlinTest() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/starImport/fromKotlinTest.test");
             }
         }
 
@@ -303,6 +342,32 @@ public abstract class K2MultiFileLocalInspectionTestGenerated extends AbstractK2
             @TestMetadata("fromKotlinTest.test")
             public void testFromKotlinTest() throws Exception {
                 runTest("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/unnecessaryNonDirectParentClassQualifierDisabled/fromKotlinTest.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/userType")
+        public static class UserType extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("fromKotlinTest.test")
+            public void testFromKotlinTest() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/userType/fromKotlinTest.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/userTypeAppliable")
+        public static class UserTypeAppliable extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("fromKotlinTest.test")
+            public void testFromKotlinTest() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/userTypeAppliable/fromKotlinTest.test");
             }
         }
     }
