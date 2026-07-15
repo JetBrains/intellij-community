@@ -12,19 +12,15 @@ import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.engine.JavaStackFrame;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.ui.impl.DebuggerTreePanel;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.DoubleClickListener;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -32,9 +28,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JTree;
 import javax.swing.tree.TreePath;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,10 +39,6 @@ public abstract class DebuggerAction extends AnAction {
 
   public static @Nullable DebuggerTree getTree(DataContext dataContext) {
     return DebuggerTree.DATA_KEY.getData(dataContext);
-  }
-
-  public static @Nullable DebuggerTreePanel getPanel(DataContext dataContext) {
-    return DebuggerTreePanel.DATA_KEY.getData(dataContext);
   }
 
   public static @Nullable DebuggerTreeNodeImpl getSelectedNode(DataContext dataContext) {
@@ -87,32 +77,8 @@ public abstract class DebuggerAction extends AnAction {
   }
 
   public static @NotNull DebuggerContextImpl getDebuggerContext(DataContext dataContext) {
-    DebuggerTreePanel panel = getPanel(dataContext);
-    if (panel != null) {
-      return panel.getContext();
-    }
-    else {
-      Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      return project != null ? (DebuggerManagerEx.getInstanceEx(project)).getContext() : DebuggerContextImpl.EMPTY_CONTEXT;
-    }
-  }
-
-  public static Disposable installEditAction(final JTree tree, String actionName) {
-    final DoubleClickListener listener = new DoubleClickListener() {
-      @Override
-      protected boolean onDoubleClick(@NotNull MouseEvent e) {
-        if (tree.getPathForLocation(e.getX(), e.getY()) == null) return false;
-        DataContext dataContext = DataManager.getInstance().getDataContext(tree);
-        GotoFrameSourceAction.doAction(dataContext);
-        return true;
-      }
-    };
-    listener.installOn(tree);
-
-    Disposable disposable = () -> listener.uninstall(tree);
-    DebuggerUIUtil.registerActionOnComponent(actionName, tree, disposable);
-
-    return disposable;
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    return project != null ? DebuggerManagerEx.getInstanceEx(project).getContext() : DebuggerContextImpl.EMPTY_CONTEXT;
   }
 
   public static void refreshViews(final AnActionEvent e) {

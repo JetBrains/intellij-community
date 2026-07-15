@@ -29,7 +29,6 @@ import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.AlternativeSourceNotificationProvider;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
-import com.intellij.debugger.ui.impl.ThreadsPanel;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
@@ -433,8 +432,6 @@ public class JavaDebugProcess extends XDebugProcess {
     return new XDebugTabLayouter() {
       @Override
       public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
-        // TODO[IJPL-248436]: should we just remove this code below in the comment?
-        // registerThreadsPanel(ui);
         registerMemoryViewPanel(ui);
         registerOverheadMonitor(ui);
       }
@@ -450,31 +447,6 @@ public class JavaDebugProcess extends XDebugProcess {
           content = super.registerConsoleContent(ui, console);
         }
         return content;
-      }
-
-      private void registerThreadsPanel(@NotNull RunnerLayoutUi ui) {
-        final ThreadsPanel panel = new ThreadsPanel(myJavaSession.getProject(), getDebuggerStateManager());
-        final Content threadsContent = ui.createContent(
-          DebuggerContentInfo.THREADS_CONTENT, panel, XDebuggerBundle.message("debugger.session.tab.threads.title"),
-          null, panel.getDefaultFocusedComponent());
-        threadsContent.setCloseable(false);
-        ui.addContent(threadsContent, 0, PlaceInGrid.left, true);
-        ui.addListener(new ContentManagerListener() {
-          @Override
-          public void selectionChanged(@NotNull ContentManagerEvent event) {
-            if (event.getContent() == threadsContent) {
-              if (threadsContent.isSelected()) {
-                panel.setUpdateEnabled(true);
-                if (panel.isRefreshNeeded()) {
-                  panel.rebuildIfVisible(DebuggerSession.Event.CONTEXT);
-                }
-              }
-              else {
-                panel.setUpdateEnabled(false);
-              }
-            }
-          }
-        }, threadsContent);
       }
 
       private void registerMemoryViewPanel(@NotNull RunnerLayoutUi ui) {
