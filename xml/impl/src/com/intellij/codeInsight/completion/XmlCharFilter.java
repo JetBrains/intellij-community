@@ -23,14 +23,13 @@ public class XmlCharFilter extends CharFilter {
   public static boolean isInXmlContext(Lookup lookup) {
     if (!lookup.isCompletion()) return false;
 
-    if (!Elf.getElf().isPsiInteractionAllowed()) {
-      // TODO: rework for lock-free typing, getContainingFile requires RA on EDT
-      return false;
-    }
-
     PsiElement psiElement = lookup.getPsiElement();
     PsiFile file = lookup.getPsiFile();
     if (!(file instanceof XmlFile) && psiElement != null) {
+      if (!Elf.getElf().isPsiInteractionAllowed()) {
+        // element.getContainingFile: throws from LeafPsiElement.invalid
+        return false;
+      }
       file = psiElement.getContainingFile();
     }
 

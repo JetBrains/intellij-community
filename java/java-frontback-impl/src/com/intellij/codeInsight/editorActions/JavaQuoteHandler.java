@@ -4,6 +4,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.definition.AbstractBasicJavaDefinitionService;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -134,6 +135,10 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
   public void insertClosingQuote(@NotNull Editor editor, int offset, @NotNull PsiFile file, @NotNull CharSequence closingQuote) {
     editor.getDocument().insertString(offset, "\n\"\"\"");
     Project project = file.getProject();
+    if (!Elf.getElf().isPsiInteractionAllowed()) {
+      // commitDocument is not supported yet for lock-free typing
+      return;
+    }
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     PsiJavaToken token = ObjectUtils.tryCast(file.findElementAt(offset), PsiJavaToken.class);
     if (token == null) return;

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
@@ -27,6 +27,7 @@ import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorThreading
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.coroutineToIndicator
@@ -514,7 +515,7 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
   @RequiresEdt
   private fun traceBlocking(event: InlineCompletionEventType) {
     ThreadingAssertions.assertEventDispatchThread()
-    WriteIntentReadAction.run {
+    EditorThreading.runWritable { // triggered on caret move
       eventListeners.getMulticaster().on(event)
     }
   }

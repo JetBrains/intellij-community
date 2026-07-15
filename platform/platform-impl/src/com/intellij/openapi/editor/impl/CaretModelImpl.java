@@ -3,13 +3,13 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.CaretActionListener;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.CaretState;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -458,7 +458,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
 
   @Override
   public void onBatchModeFinish(@NotNull Editor editor) {
-    WriteIntentReadAction.run(() -> {
+    EditorThreading.runWritable(() -> {
       if (isInBulkUpdate()) return;
       doWithCaretMerging(() -> {
         for (CaretImpl caret : allCarets) {

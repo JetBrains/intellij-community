@@ -46,6 +46,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -219,7 +220,8 @@ public final class DaemonListeners implements Disposable {
               intentionsUI.invalidateForEditor(editor);
             }
           }, ModalityState.current(), myProject.getDisposed());
-          if (!psiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
+          boolean psiGuard = Elf.getElf().isPsiInteractionAllowed(); // hasEventSystemEnabledUncommittedDocuments is not supported yet for lock-free typing
+          if (!psiGuard || !psiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
             // daemon might want to auto-import a reference if the caret is close enough
             // but do not restart a daemon too early before PSI is committed,
             // because the typing would cause canceling daemon twice otherwise: on caret movement during typing and later on PSI commit after the doc modification

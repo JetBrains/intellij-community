@@ -6,9 +6,9 @@ import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.codeWithMe.ClientId
-import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.editor.elf.Elf
 
 private class InlineCompletionLookupManagerListener : LookupManagerListener {
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
@@ -23,7 +23,7 @@ private class InlineCompletionLookupManagerListener : LookupManagerListener {
           LOG.trace { "[Inline Completion] currentItemChanged ignored: item is null (clientId=${ClientId.currentOrNull})" }
           return
         }
-        val editor = runReadActionBlocking { event.lookup.editor }
+        val editor = Elf.getElf().runReadAction { event.lookup.editor }
         val lookupChanged = InlineCompletionEvent.LookupChange(editor, event)
         val handler = InlineCompletion.getHandlerOrNull(lookupChanged.topLevelEditor)
         LOG.trace {
@@ -35,7 +35,7 @@ private class InlineCompletionLookupManagerListener : LookupManagerListener {
       }
 
       override fun lookupCanceled(event: LookupEvent) {
-        val editor = runReadActionBlocking { event.lookup.editor }
+        val editor = Elf.getElf().runReadAction { event.lookup.editor }
         val lookupCancelled = InlineCompletionEvent.LookupCancelled(editor, event)
         val handler = InlineCompletion.getHandlerOrNull(lookupCancelled.topLevelEditor)
         LOG.trace {

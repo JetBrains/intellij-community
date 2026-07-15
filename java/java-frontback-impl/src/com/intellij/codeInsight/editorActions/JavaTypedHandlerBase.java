@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.EditorThreading;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -227,6 +228,10 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
           return Result.STOP;
         }
       }
+      if (!Elf.getElf().isPsiInteractionAllowed()) {
+        // commitDocument is not supported yet for lock-free typing
+        return Result.CONTINUE;
+      }
       PsiDocumentManager.getInstance(project).commitDocument(doc);
       final PsiElement leaf = file.findElementAt(offset);
       if (PsiTreeUtil.getParentOfType(leaf, PsiArrayInitializerExpression.class, false, PsiCodeBlock.class, PsiMember.class) != null) {
@@ -273,6 +278,10 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
   }
 
   private static boolean isAtTopLevelInClassBody(int offset, @NotNull Editor editor, @NotNull PsiFile file) {
+    if (!Elf.getElf().isPsiInteractionAllowed()) {
+      // commitDocument is not supported yet for lock-free typing
+      return false;
+    }
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
     PsiElement element = file.findElementAt(offset);
     if (element == null && offset > 0) {
@@ -443,6 +452,10 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
       int line = document.getLineNumber(offset);
       int lineStart = document.getLineStartOffset(line);
       if (StringUtil.isEmptyOrSpaces(document.getCharsSequence().subSequence(lineStart, offset))) {
+        if (!Elf.getElf().isPsiInteractionAllowed()) {
+          // commitDocument is not supported yet for lock-free typing
+          return false;
+        }
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
         CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
         return true;

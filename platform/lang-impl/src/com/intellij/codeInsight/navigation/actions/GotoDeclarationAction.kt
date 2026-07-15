@@ -141,7 +141,6 @@ open class GotoDeclarationAction : BaseCodeInsightAction(), DumbAware, CtrlMouse
       LOG.trace {
         val project = event.project
         val baseEditor = event.getData(CommonDataKeys.EDITOR)
-        val psiInteractionAllowed = Elf.getElf().isPsiInteractionAllowed()
         val inElfScope = Elf.getElf().isInElfScope()
         val lookupActive = project != null && LookupManager.getInstance(project).activeLookup != null
         val document = baseEditor?.document
@@ -157,7 +156,7 @@ open class GotoDeclarationAction : BaseCodeInsightAction(), DumbAware, CtrlMouse
         // getPsiFileInEditor may THROW on an invalid file (ensureValid) — that is itself the disable cause:
         var psiInEditorError: String? = null
         val psiInEditor = try {
-          val f = if (project != null && baseEditor != null && psiInteractionAllowed) {
+          val f = if (project != null && baseEditor != null) {
             PsiUtilBase.getPsiFileInEditor(baseEditor, project)
           }
           else null
@@ -181,7 +180,6 @@ open class GotoDeclarationAction : BaseCodeInsightAction(), DumbAware, CtrlMouse
         ", document@$docId" +
         ", file=${vFile?.name ?: "null"}" +
         ", caretOffset=$caretOffset" +
-        ", psiInteractionAllowed=$psiInteractionAllowed" +
         ", inElfScope=$inElfScope" +
         ", lookupActive=$lookupActive" +
         ", documentCommitted=$committed" +

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.elf
 
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.elf.Elf
@@ -9,6 +10,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.Command
+import com.intellij.psi.util.PsiVersioningService
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
@@ -24,7 +26,9 @@ internal class ElfImpl : Elf {
     val old = inElfScope
     inElfScope = true
     try {
-      action.run()
+      PsiVersioningService.freezePsiVersion {
+        action.run()
+      }
     } finally {
       inElfScope = old
       if (!isInElfScope()) {
@@ -48,6 +52,13 @@ internal class ElfImpl : Elf {
 
   override fun isPsiInteractionAllowed(): Boolean {
     return !isInElfScope() || isLockFreePsiSupported()
+  }
+
+  override fun <T> runReadAction(action: () -> T): T {
+    if (isInElfScope()) {
+      return action()
+    }
+    return runReadActionBlocking(action)
   }
 
   override fun getElfDocument(document: Document): Document {

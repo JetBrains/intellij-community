@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
@@ -7,10 +7,10 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.elf.Elf
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -317,6 +317,10 @@ interface InlineCompletionEvent {
 }
 
 private fun getPsiFile(caret: Caret, project: Project): PsiFile? {
+  if (!Elf.getElf().isPsiInteractionAllowed()) {
+    // getEditorDataContext -> FileManagerImpl.findFile requires read lock
+    return null
+  }
   val psiFileFromContext = when (EDT.isCurrentThreadEdt()) {
     true -> EditorUtil.getEditorDataContext(caret.editor).getData(CommonDataKeys.PSI_FILE)
     else -> null
@@ -356,14 +360,14 @@ private inline fun getRequest(
   specificEndOffset: Int? = null,
   crossinline getLookupElement: () -> LookupElement? = { null },
 ): InlineCompletionRequest? {
-  return runReadActionBlocking {
+  return Elf.getElf().runReadAction {
     if (editor.caretModel.caretCount != 1 ||
         editor.document.isInBulkUpdate /* caret position is not valid */ ) {
-      return@runReadActionBlocking null
+      return@runReadAction null
     }
     val caret = specificCaret ?: editor.caretModel.currentCaret
-    val project = editor.project ?: return@runReadActionBlocking null
-    val file = specificFile ?: getPsiFile(caret, project) ?: return@runReadActionBlocking null
+    val project = editor.project ?: return@runReadAction null
+    val file = specificFile ?: getPsiFile(caret, project) ?: return@runReadAction null
     val offset = caret.offset
     InlineCompletionRequest(
       event = event,

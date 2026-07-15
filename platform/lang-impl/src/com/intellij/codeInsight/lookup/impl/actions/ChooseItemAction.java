@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.LatencyAwareEditorAction;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -97,6 +98,10 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
 
     final Editor editor = lookup.getEditor();
     final int offset = editor.getCaretModel().getOffset();
+    if (!Elf.getElf().isPsiInteractionAllowed()) {
+      // commitDocument is not supported yet for lock-free typing
+      return false;
+    }
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
 
     final LiveTemplateLookupElement liveTemplateLookup = ContainerUtil.findInstance(lookup.getItems(), LiveTemplateLookupElement.class);

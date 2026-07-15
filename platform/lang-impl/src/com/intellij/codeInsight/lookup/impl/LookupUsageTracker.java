@@ -30,6 +30,7 @@ import com.intellij.lang.documentation.ide.impl.DocumentationPopupListener;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.EditorKind;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IncompleteDependenciesService;
@@ -245,6 +246,10 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
 
     private void triggerLookupUsed(@NotNull FinishType finishType, @Nullable LookupElement currentItem,
                                    char completionChar) {
+      if (!Elf.getElf().isPsiInteractionAllowed()) {
+        // TODO: why fus is collected on EDT during typing?
+        return;
+      }
       List<EventPair<?>> data = ReadAction.computeBlocking(() -> getCommonUsageInfo(finishType, currentItem, completionChar));
 
       final List<EventPair<?>> additionalData = new ArrayList<>();
