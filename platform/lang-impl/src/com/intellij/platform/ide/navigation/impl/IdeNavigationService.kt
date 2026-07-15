@@ -41,6 +41,7 @@ import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
 import com.intellij.platform.ide.navigation.NavigationHandler
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
+import com.intellij.platform.ide.navigation.NavigationTaskCoordinator
 import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.platform.util.progress.mapWithProgress
 import com.intellij.pom.Navigatable
@@ -58,31 +59,61 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
    */
   private val semaphore: OverflowSemaphore = OverflowSemaphore(permits = 1, overflow = BufferOverflow.DROP_OLDEST)
 
+  private val taskCoordinator: NavigationTaskCoordinator
+    get() = NavigationTaskCoordinator.getInstance(project)
+
   override suspend fun navigate(dataContext: DataContext, options: NavigationOptions): Boolean {
-    if (!isAsyncDataContext(dataContext)) {
-      LOG.error("Expected async context, got: $dataContext")
-      val asyncContext = withContext(Dispatchers.EDT) {
-        // hope that context component is still available
-        Utils.createAsyncDataContext(dataContext)
-      }
-      return navigate(asyncContext, options)
-    }
-    return semaphore.withPermit {
-      val navigatables = readAction {
-        dataContext.getData(CommonDataKeys.NAVIGATABLE_ARRAY)
-      }
-      if (!navigatables.isNullOrEmpty()) {
-        doNavigate(navigatables = navigatables.toList(), options = options, dataContext = dataContext)
+    return taskCoordinator.runWithTracking {
+      val asyncContext = if (isAsyncDataContext(dataContext)) {
+        dataContext
       }
       else {
-        false
+        LOG.error("Expected async context, got: $dataContext")
+        withContext(Dispatchers.EDT) {
+          // hope that context component is still available
+          Utils.createAsyncDataContext(dataContext)
+        }
+      }
+
+      semaphore.withPermit {
+        val navigatables = readAction {
+          asyncContext.getData(CommonDataKeys.NAVIGATABLE_ARRAY)
+        }
+        if (!navigatables.isNullOrEmpty()) {
+          doNavigate(navigatables = navigatables.toList(), options = options, dataContext = asyncContext)
+        }
+        else {
+          false
+        }
+      }
+    }
+  }
+
+  override suspend fun navigateRequests(options: NavigationOptions, supplier: suspend () -> Collection<NavigationRequest>): Boolean {
+    return taskCoordinator.runWithTracking {
+      semaphore.withPermit {
+        val requests = withContext(Dispatchers.Default) { supplier() }
+        requests.isNotEmpty() && withHistoryIfNeeded(options) {
+          navigate(project = project, requests = requests, options = options, dataContext = null)
+        }
+      }
+    }
+  }
+
+  override suspend fun navigate(options: NavigationOptions, supplier: suspend () -> Collection<Navigatable>): Boolean {
+    return taskCoordinator.runWithTracking {
+      semaphore.withPermit {
+        val navigatables = withContext(Dispatchers.Default) { supplier() }
+        navigatables.isNotEmpty() && doNavigate(navigatables.toList(), options, dataContext = null)
       }
     }
   }
 
   override suspend fun navigate(navigatables: List<Navigatable>, options: NavigationOptions, dataContext: DataContext?): Boolean {
-    return semaphore.withPermit {
-      doNavigate(navigatables, options, dataContext)
+    return taskCoordinator.runWithTracking {
+      semaphore.withPermit {
+        doNavigate(navigatables, options, dataContext)
+      }
     }
   }
 
@@ -102,9 +133,11 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
   }
 
   override suspend fun navigate(requests: Collection<NavigationRequest>, options: NavigationOptions, dataContext: DataContext?): Boolean {
-    return semaphore.withPermit {
-      withHistoryIfNeeded(options) {
-        navigate(project = project, requests = requests, options = options, dataContext = dataContext)
+    return taskCoordinator.runWithTracking {
+      semaphore.withPermit {
+        withHistoryIfNeeded(options) {
+          navigate(project = project, requests = requests, options = options, dataContext = dataContext)
+        }
       }
     }
   }

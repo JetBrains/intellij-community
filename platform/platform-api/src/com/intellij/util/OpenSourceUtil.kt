@@ -3,32 +3,26 @@
 
 package com.intellij.util
 
-import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.ui.IdeUiService
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
+import com.intellij.platform.ide.navigation.NavigationTaskCoordinator
+import com.intellij.platform.ide.navigation.requestNavigate
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 
 internal fun openSourcesFrom(context: DataContext, requestFocus: Boolean) {
   val project = context.getData(CommonDataKeys.PROJECT) ?: return
-  val asyncContext = IdeUiService.getInstance().createAsyncDataContext(context)
   val options = NavigationOptions.defaultOptions().requestFocus(requestFocus)
-  @Suppress("UsagesOfObsoleteApi")
-  (project as ComponentManagerEx).getCoroutineScope().launch(ClientId.coroutineContext()) {
-    project.serviceAsync<NavigationService>().navigate(asyncContext, options)
-  }
+  requestNavigate(project, context, options)
 }
 
 internal fun navigate(project: Project, requestFocus: Boolean, tryNotToScroll: Boolean, navigatables: Iterable<Navigatable?>?) {
@@ -37,8 +31,7 @@ internal fun navigate(project: Project, requestFocus: Boolean, tryNotToScroll: B
   }
   val filteredNavigatables = navigatables.filterNotNull()
   val options = NavigationOptions.defaultOptions().requestFocus(requestFocus).preserveCaret(tryNotToScroll)
-  @Suppress("UsagesOfObsoleteApi")
-  (project as ComponentManagerEx).getCoroutineScope().launch(ClientId.coroutineContext()) {
+  NavigationTaskCoordinator.getInstance(project).dispatchNavigation {
     project.serviceAsync<NavigationService>().navigate(filteredNavigatables, options)
   }
 }

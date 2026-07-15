@@ -48,10 +48,9 @@ class IdeNavigationServiceExecutor {
  */
 @ApiStatus.Internal
 suspend fun <T> performNavigationHistoryAware(project: Project, action: suspend () -> T): T {
-  val documentHistory = project.serviceAsync<IdeDocumentHistory>()
   // Keep creation and processing atomic with respect to caller cancellation
   val commitAfterNavigation = withContext(Dispatchers.EDT + NonCancellable) {
-    documentHistory.prepareHistorySnapshot()
+    project.serviceAsync<IdeDocumentHistory>().prepareHistorySnapshot()
   }
 
   return try {

@@ -69,7 +69,6 @@ import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 import java.util.ArrayDeque
 import java.util.Deque
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
 
 private val LOG = Logger.getInstance(IdeDocumentHistoryImpl::class.java)
@@ -355,13 +354,14 @@ open class IdeDocumentHistoryImpl(
   override fun prepareHistorySnapshot(): NavigationHistorySnapshot {
     ThreadingAssertions.assertEventDispatchThread()
     val lastPlace = getCurrentPlaceInfo()
-    val isCompleted = AtomicBoolean(false)
+    var isCompleted = false
 
     return NavigationHistorySnapshot {
       ThreadingAssertions.assertEventDispatchThread()
-      if (!isCompleted.compareAndSet(false, true)) {
+      if (isCompleted) {
         return@NavigationHistorySnapshot
       }
+      isCompleted = true
       if (lastPlace != null && !backInProgress && !forwardInProgress && hasChangedSince(lastPlace)) {
         commitBackPlace(lastPlace, groupId = null, checkCommandGroup = false)
       }

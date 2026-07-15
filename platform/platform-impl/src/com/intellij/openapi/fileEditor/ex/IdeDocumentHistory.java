@@ -36,8 +36,10 @@ public abstract class IdeDocumentHistory {
   /**
    * Captures the navigation origin before a delayed (asynchronous) navigation starts.
    * <p>Every prepared snapshot <b>must</b> be committed via {@link NavigationHistorySnapshot#commitIfChanged()},
-   * even when the navigation fails or is canceled. Prefer {@code performNavigationHistoryAware}, which enforces
-   * this contract and suppresses command-based history only while executing the corresponding navigation coroutine.
+   * even when the navigation fails or is canceled. Prefer
+   * {@link com.intellij.platform.ide.navigation.impl.IdeNavigationServiceExecutorKt#performNavigationHistoryAware},
+   * which enforces this contract and suppresses command-based history only while executing the corresponding
+   * navigation coroutine.
    */
   @ApiStatus.Internal
   @RequiresEdt

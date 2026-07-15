@@ -32,6 +32,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.platform.ide.navigation.NavigationTaskCoordinator
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -280,8 +281,10 @@ private class ActionsAdjustLastListener : AnActionListener {
       val data = dataContext.getUserData(ADJUST_LAST)
       if (data != true) return
       val project = event.project ?: return
-      val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
-      moveCaretToEnd(editor)
+      NavigationTaskCoordinator.getInstance(project).runAfterTasksCompletion(event.coroutineScope) {
+        val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return@runAfterTasksCompletion
+        moveCaretToEnd(editor)
+      }
     }
   }
 
