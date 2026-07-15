@@ -8,10 +8,12 @@ import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.toMutableProperty
+import com.intellij.xml.util.XmlStringUtil
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.put
 
@@ -24,14 +26,26 @@ class ComboBoxBlock(@NlsContexts.Label private val myLabel: String,
   private var myColumnSize: Int = COMBOBOX_COLUMN_SIZE
   private var myRandomizeOptionOrder: Boolean = false
   private var myUseAlignFill: Boolean = false
+  private var myUseWrappingLabel: Boolean = false
 
   override fun addToPanel(panel: Panel) {
     val items = if (myRandomizeOptionOrder) myItems.shuffled() else myItems
 
     panel.apply {
+      // A long label rendered as a single-line JBLabel forces the whole dialog to become very wide,
+      // so it can optionally be shown as a word-wrapped label above the combo box instead.
+      if (myUseWrappingLabel) {
+        row {
+          text("<b>${XmlStringUtil.escapeString(myLabel)}</b>", maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
+        }.bottomGap(BottomGap.NONE)
+      }
       row {
         comboBox(items)
-          .label(createBoldJBLabel(myLabel), LabelPosition.TOP)
+          .apply {
+            if (!myUseWrappingLabel) {
+              label(createBoldJBLabel(myLabel), LabelPosition.TOP)
+            }
+          }
           .bindItem(::myProperty.toMutableProperty())
           .apply {
             if (myUseAlignFill) {
@@ -79,6 +93,15 @@ class ComboBoxBlock(@NlsContexts.Label private val myLabel: String,
 
   fun useFillAlign(): ComboBoxBlock {
     myUseAlignFill = true
+    return this
+  }
+
+  /**
+   * Renders the label as a word-wrapped text above the combo box instead of a single-line label,
+   * so a long question does not stretch the whole dialog horizontally.
+   */
+  fun useWrappingLabel(): ComboBoxBlock {
+    myUseWrappingLabel = true
     return this
   }
 
