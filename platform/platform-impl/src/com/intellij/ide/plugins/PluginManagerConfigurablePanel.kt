@@ -39,6 +39,7 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ModalityState.any
 import com.intellij.openapi.application.UI
@@ -108,7 +109,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(
   private val coroutineScope: CoroutineScope
 
   private val pluginModelFacade: PluginModelFacade
-  private val updateSubscription: PluginUpdateSubscription
+  private var updateSubscription: PluginUpdateSubscription? = null
   private val pluginManagerCustomizer: PluginManagerCustomizer? = PluginManagerCustomizer.getInstance()
 
   private val tabHeaderComponent: TabbedPaneHeaderComponent
@@ -149,7 +150,9 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(
 
     laterSearchQuery = searchQuery
 
-    UiPluginManager.getInstance().updateDescriptorsForInstalledPlugins()
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+      UiPluginManager.getInstance().updateDescriptorsForInstalledPlugins()
+    }
 
     PluginManagerUsageCollector.logSessionStarted(openSource)
 
@@ -165,10 +168,12 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(
       pluginManagerCustomizer.initCustomizer(cardPanel)
     }
 
-    updateSubscription =
-      UiPluginManager.getInstance().subscribeToPluginUpdatesFiltered(pluginModelFacade.getModel().sessionId) { pluginUpdates ->
-        coroutineScope.launch(Dispatchers.UI + any().asContextElement()) { onPluginUpdatesRecalculation(pluginUpdates) }
-      }
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+      updateSubscription =
+        UiPluginManager.getInstance().subscribeToPluginUpdatesFiltered(pluginModelFacade.getModel().sessionId) { pluginUpdates ->
+          coroutineScope.launch(Dispatchers.UI + any().asContextElement()) { onPluginUpdatesRecalculation(pluginUpdates) }
+        }
+    }
   }
 
   @RequiresEdt
@@ -373,7 +378,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(
 
     installedTab.getInstalledSearchPanel().dispose()
 
-    updateSubscription.cancel()
+    updateSubscription?.cancel()
     PluginPriceService.cancel()
 
     pluginsState.runShutdownCallback()
