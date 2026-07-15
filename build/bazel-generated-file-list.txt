@@ -1622,6 +1622,8 @@ plugins/maven-server-api/test
 plugins/maven/artifact-resolver-m31
 plugins/maven/artifact-resolver/common
 plugins/maven/completion
+plugins/maven/delegation/junit
+plugins/maven/delegation/testng
 plugins/maven/groovy
 plugins/maven/jps
 plugins/maven/jps/ide

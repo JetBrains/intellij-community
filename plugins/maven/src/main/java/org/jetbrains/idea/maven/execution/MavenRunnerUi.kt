@@ -41,9 +41,7 @@ internal class MavenRunnerUi(project: Project, runConfigurationMode: Boolean, pr
   @JvmField
   val panel = panel {
     if (!runConfigurationMode) {
-      row {
-        cell(delegateToMavenCheckbox)
-      }
+      row { cell(delegateToMavenCheckbox) }
     }
 
     row(MavenConfigurableBundle.message("maven.settings.runner.vm.options")) {

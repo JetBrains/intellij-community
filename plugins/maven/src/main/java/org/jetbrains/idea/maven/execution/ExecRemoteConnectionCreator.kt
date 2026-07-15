@@ -48,15 +48,47 @@ internal class ExecRemoteConnectionCreator : MavenRemoteConnectionCreator() {
   override fun createRemoteConnectionForScript(runConfiguration: MavenRunConfiguration): MavenRemoteConnectionWrapper {
     val parameters = JavaParameters()
     val connection = createConnection(runConfiguration.project, parameters)
-    val parametersOfConnection = parameters.vmParametersList
 
-    return MavenRemoteConnectionWrapper(connection) { mavenOpts ->
+    val goals = runConfiguration.runnerParameters.goals
+    val isExecExec = goals.any { it == "exec:exec" || EXEC_MAVEN_PLUGIN_PATTERN.matcher(it).matches() }
 
-      if (mavenOpts.isEmpty()) return@MavenRemoteConnectionWrapper parametersOfConnection.parametersString
-
-      return@MavenRemoteConnectionWrapper "${parametersOfConnection.parametersString} $mavenOpts"
+    if (isExecExec) {
+      // Application delegation via exec:exec: JDWP must go to the forked application JVM via exec.args,
+      // not to the Maven JVM via MAVEN_OPTS.
+      val jdwpArgs = MavenExecutionEnvironmentProviderUtil.patchVmParameters(parameters.vmParametersList)
+      val execArgsPrefix = "-Dexec.args="
+      val updatedGoals = ArrayList(goals)
+      val execArgsIndex = updatedGoals.indexOfFirst { it.startsWith(execArgsPrefix) }
+      val execArgsStr = if (execArgsIndex != -1) {
+        updatedGoals[execArgsIndex].substring(execArgsPrefix.length)
+      }
+      else {
+        getExecArgsFromPomXml(runConfiguration.project, runConfiguration.runnerParameters)
+      }
+      val execArgs = ParametersList()
+      execArgs.addAll(jdwpArgs)
+      execArgs.addParametersString(execArgsStr)
+      val classPath = FileUtil.toSystemDependentName(parameters.classPath.pathsString)
+      if (classPath.isNotEmpty()) {
+        appendToClassPath(execArgs, classPath)
+      }
+      val execArgsCommandLineArg = execArgsPrefix + execArgs.parametersString
+      if (execArgsIndex != -1) {
+        updatedGoals[execArgsIndex] = execArgsCommandLineArg
+      }
+      else {
+        updatedGoals.add(execArgsCommandLineArg)
+      }
+      runConfiguration.runnerParameters.setGoals(updatedGoals)
+      return MavenRemoteConnectionWrapper(connection) { mavenOpts -> mavenOpts }
     }
 
+    // Regular maven run (e.g. a plugin goal): add JDWP to MAVEN_OPTS to debug the Maven process itself.
+    val parametersOfConnection = parameters.vmParametersList
+    return MavenRemoteConnectionWrapper(connection) { mavenOpts ->
+      if (mavenOpts.isEmpty()) parametersOfConnection.parametersString
+      else "${parametersOfConnection.parametersString} $mavenOpts"
+    }
   }
 
   override fun createRemoteConnection(javaParameters: JavaParameters, runConfiguration: MavenRunConfiguration): RemoteConnection? {

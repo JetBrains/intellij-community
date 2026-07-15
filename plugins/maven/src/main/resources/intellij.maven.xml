@@ -56,6 +56,7 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.refactoring"/>
+    <module name="intellij.platform.smRunner"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.testRunner"/>
     <module name="intellij.platform.usageView"/>
@@ -769,6 +770,7 @@
     <log.spy.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.InvalidTargetReleaseQuickFix"/>
     <log.spy.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.Maven4ModelVersionErrorParser"/>
 
+    <mavenRemoteConnectionCreator implementation="org.jetbrains.idea.maven.execution.SurefireRemoteConnectionCreator"/>
     <mavenRemoteConnectionCreator implementation="org.jetbrains.idea.maven.execution.ExecRemoteConnectionCreator" order="last"/>
 
   </extensions>

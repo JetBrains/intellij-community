@@ -13,8 +13,8 @@ import com.intellij.execution.scratch.JavaScratchConfiguration
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.packaging.artifacts.Artifact
 import com.intellij.packaging.artifacts.ArtifactProperties
 import com.intellij.task.ExecuteRunConfigurationTask
@@ -57,9 +57,8 @@ class MavenProjectTaskRunner : ProjectTaskRunner() {
       return false
     }
 
-    if (!MavenRunner.getInstance(project).settings.isDelegateBuildToMaven) {
-      return false
-    }
+    val settings = MavenRunner.getInstance(project).settings
+    if (!settings.isDelegateBuildToMaven) return false
 
     if (projectTask is ModuleBuildTask) {
       return isMavenModule(projectTask.getModule())
@@ -217,7 +216,7 @@ private fun getPhase(buildOnlyResources: Boolean, compileOnly: Boolean): String 
   if (buildOnlyResources) {
     return "resources:resources"
   }
-  return if (compileOnly) "compile" else Registry.stringValue("maven.delegate.build.phase")
+  return if (compileOnly) "compile" else AdvancedSettings.getEnum("maven.delegate.build.phase", MavenDelegateBuildPhase::class.java).phaseName
 }
 
 object MavenProjectTaskRunnerUtil {

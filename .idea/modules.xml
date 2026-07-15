@@ -1334,6 +1334,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver/common/intellij.maven.artifactResolver.common.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver/common/intellij.maven.artifactResolver.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver-m31/intellij.maven.artifactResolver.m31.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver-m31/intellij.maven.artifactResolver.m31.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/completion/intellij.maven.completion.iml" filepath="$PROJECT_DIR$/plugins/maven/completion/intellij.maven.completion.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/maven/delegation/junit/intellij.maven.delegation.junit.iml" filepath="$PROJECT_DIR$/plugins/maven/delegation/junit/intellij.maven.delegation.junit.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/maven/delegation/testng/intellij.maven.delegation.testng.iml" filepath="$PROJECT_DIR$/plugins/maven/delegation/testng/intellij.maven.delegation.testng.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/groovy/intellij.maven.groovy.iml" filepath="$PROJECT_DIR$/plugins/maven/groovy/intellij.maven.groovy.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/groovy/intellij.maven.groovy.tests.iml" filepath="$PROJECT_DIR$/plugins/maven/groovy/intellij.maven.groovy.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/src/integrationTest/intellij.maven.integration.tests.iml" filepath="$PROJECT_DIR$/plugins/maven/src/integrationTest/intellij.maven.integration.tests.iml" />

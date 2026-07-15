@@ -90,6 +90,8 @@ dev_dist_plugin(
     prepacked_content_modules = [
         # do not sort,
         "intellij.maven.completion",
+        "intellij.maven.delegation.junit",
+        "intellij.maven.delegation.testng",
         "intellij.maven.groovy",
         "intellij.maven.jps.ide",
         "intellij.maven.jps",
