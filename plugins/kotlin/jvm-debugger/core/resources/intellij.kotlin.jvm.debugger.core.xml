@@ -1,4 +1,24 @@
-<idea-plugin>
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java"/>
+    <module name="intellij.java.debugger"/>
+    <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.java.debugger.impl.shared"/>
+    <module name="intellij.java.debugger.libraries.jb.jdi"/>
+    <module name="intellij.java.execution"/>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.resources"/>
+    <module name="intellij.kotlin.jvm.debugger.base.util"/>
+    <module name="intellij.kotlin.ide"/>
+  </dependencies>
+  <!-- endregion -->
   <actions>
     <action id="Kotlin.XDebugger.ToggleKotlinVariableView"
             class="org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesView">
@@ -118,4 +138,5 @@
             defaultValue="false"
             description="Enable Kotlin evaluation features when hitting/suspending in Java frames (suggest Kotlin language in evaluation prompts, conditional breakpoints, and 'Evaluate and log' field; support Kotlin watches)"/>
   </extensions>
+  <resource-bundle>messages.KotlinBundle</resource-bundle>
 </idea-plugin>

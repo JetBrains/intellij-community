@@ -1,4 +1,4 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.jvm.debugger.core` start
@@ -6,6 +6,11 @@ create_kotlinc_options(
     name = "custom_core",
     opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"],
     x_context_parameters = True,
+)
+
+jvm_provided_library(
+    name = "java_rt_provided",
+    lib = "//java/java-runtime:rt",
 )
 
 jvm_library(
@@ -25,6 +30,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin/kotlin.ide"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -76,11 +82,11 @@ jvm_library(
         "//libraries/gson",
         "//java/debugger/shared",
         "//platform/util/jdom",
-        "//java/java-runtime:rt",
         "@lib//:kotlin-metadata",
         "//platform/execution",
         "//platform/forms_rt:java-guiForms-rt",
         "//java/java-frontback-psi-api:frontback-psi",
+        ":java_rt_provided",
     ],
 )
 
@@ -103,6 +109,7 @@ jvm_library(
         "//platform/analysis-api:analysis_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/core-api:core_test_lib",
+        "//plugins/kotlin/kotlin.ide:kotlin.ide_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/indexing-api:indexing_test_lib",
@@ -142,6 +149,7 @@ jvm_library(
         "//libraries/gson:gson_test_lib",
         "//java/debugger/shared:shared_test_lib",
         "//platform/util/jdom:jdom_test_lib",
+        "//java/java-runtime:rt",
         "//java/java-runtime:rt_test_lib",
         "//platform/execution:execution_test_lib",
         "//platform/forms_rt:java-guiForms-rt_test_lib",

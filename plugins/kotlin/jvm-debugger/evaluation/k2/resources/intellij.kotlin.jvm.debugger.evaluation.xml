@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal">
+<idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java.debugger.impl"/>
@@ -6,6 +6,7 @@
     <module name="intellij.kotlin.codeInsight.inspections"/>
     <module name="intellij.kotlin.codeInsight.shared"/>
     <module name="intellij.kotlin.jvm.debugger.base.util"/>
+    <module name="intellij.kotlin.jvm.debugger.core"/>
   </dependencies>
   <!-- endregion -->
  <extensions defaultExtensionNs="com.intellij">

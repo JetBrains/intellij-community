@@ -9,10 +9,12 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.analysis"/>
     <module name="intellij.kotlin.jvm.debugger.base.util"/>
+    <module name="intellij.kotlin.jvm.debugger.core"/>
     <module name="intellij.libraries.maven.resolver.provider"/>
     <module name="intellij.platform.smRunner"/>
     <module name="kotlin.fir.frontend-independent"/>
   </dependencies>
+  <!-- endregion -->
   <projectListeners>
     <listener class="org.jetbrains.kotlin.idea.debugger.coroutine.DisableCoroutineViewListener"
               topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
@@ -26,5 +28,4 @@
             serviceImplementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineStackFrameInterceptor"/>
     <threadDumpItemFactory implementation="org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutineThreadDumpItemFactory"/>
   </extensions>
-  <!-- endregion -->
 </idea-plugin>

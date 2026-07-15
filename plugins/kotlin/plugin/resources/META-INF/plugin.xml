@@ -20,10 +20,6 @@
     <plugin id="com.intellij.java"/>
     <module name="intellij.java.backend"/>
     <module name="intellij.platform.collaborationTools"/>
-    <module name="intellij.platform.scriptDebugger.ui"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="intellij.platform.debugger.impl.ui"/>
-    <!-- endregion -->
   </dependencies>
 
   <extensionPoints>
