@@ -11,7 +11,6 @@
   </actions>
 
   <projectListeners>
-    <listener class="org.jetbrains.kotlin.idea.debugger.evaluate.DropCodeFragmentCacheOnRefreshListener" topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
     <listener class="org.jetbrains.kotlin.idea.debugger.coroutine.DisableCoroutineViewListener"
               topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
   </projectListeners>

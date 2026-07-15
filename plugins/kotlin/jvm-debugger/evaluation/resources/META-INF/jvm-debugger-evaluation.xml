@@ -13,5 +13,12 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinCodeFragmentCompiler"
             serviceImplementation="org.jetbrains.kotlin.idea.debugger.evaluate.K2KotlinCodeFragmentCompiler"/>
+    <statistics.counterUsagesCollector
+            implementationClass="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluatorStatisticsCollector"/>
+    <statistics.validation.customValidationRule
+            implementation="org.jetbrains.kotlin.idea.debugger.evaluate.StandardExceptionNameRuleValidator"/>
   </extensions>
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.debugger.evaluate.DropCodeFragmentCacheOnRefreshListener" topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
+  </projectListeners>
 </idea-plugin>
