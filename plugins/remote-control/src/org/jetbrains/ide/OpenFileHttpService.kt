@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.intellij.codeWithMe.ClientId
@@ -24,7 +24,7 @@ import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.HttpUtil
 import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager
-import org.jetbrains.builtInWebServer.hasAccess
+import org.jetbrains.builtInWebServer.checkAccess
 import org.jetbrains.io.send
 import java.nio.file.Path
 import java.util.regex.Pattern
@@ -159,18 +159,6 @@ internal class OpenFileHttpService : RestService() {
       }
     }
     return null
-  }
-
-  private fun checkAccess(file: Path): Boolean {
-    var parent = file
-    do {
-      if (!hasAccess(parent)) {
-        return false
-      }
-      parent = parent.parent ?: break
-    }
-    while (parent != file.root)
-    return true
   }
 
   private fun navigate(project: Project?, file: VirtualFile, request: OpenFileRequest) {
