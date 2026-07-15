@@ -2,6 +2,8 @@
 package com.intellij.psi.impl.source.tree.mvcc
 
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.application.allowUsingFrozenPsi
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.psi.impl.source.tree.TreeElement
 import com.intellij.psi.util.PsiVersioningService
 import com.intellij.util.asSafely
@@ -13,6 +15,12 @@ internal class PsiVersioningServiceImpl : PsiVersioningService {
   }
 
   override fun <T> runAndFreezePsiVersion(action: () -> T): T {
-    return InternalPsiVersioning.freezePsiVersion(action)
+    return if (allowUsingFrozenPsi) {
+      InternalPsiVersioning.freezePsiVersion(action)
+    } else {
+      runReadActionBlocking {
+        action()
+      }
+    }
   }
 }
