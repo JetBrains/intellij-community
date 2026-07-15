@@ -99,11 +99,6 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
                    33), // overriding method with @NotNull, original has @Nullable, but IDEA doesn't highlight the opposite example, see IDEA-377687
         new Pair<>("OverrideParameters.java", 66),  // see: IDEA-377687
 
-        new Pair<>("ContainmentExtends.java", 27),  // see: IDEA-377696
-        new Pair<>("ContainmentSuper.java", 36),  // see: IDEA-377696
-        new Pair<>("ContainmentSuperVsExtends.java", 22),  // see: IDEA-377696
-        new Pair<>("ContainmentSuperVsExtendsSameType.java", 21),  // see: IDEA-377696
-
         new Pair<>("WildcardCapturesToBoundOfTypeParameterNotToTypeVariableItself.java", 24) ,// see: IDEA-377699
 
         new Pair<>("SelfType.java", 34),  // see: IDEA-377707 (also see the commented case in warning matchers)

@@ -119,9 +119,11 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
@@ -519,6 +521,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         super.visitReferenceElement(reference);
 
         checkNullableNotNullInstantiationConflict(reference);
+        checkReferenceTypeArgumentBounds(holder, reference);
 
         PsiElement list = reference.getParent();
         PsiElement parent = list instanceof PsiReferenceList ? list.getParent() : null;
@@ -640,6 +643,44 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         }
       }
     };
+  }
+
+  private void checkReferenceTypeArgumentBounds(@NotNull ProblemsHolder holder, @NotNull PsiJavaCodeReferenceElement reference) {
+    PsiReferenceParameterList parameterList = reference.getParameterList();
+    PsiTypeElement[] typeArguments = parameterList == null ? PsiTypeElement.EMPTY_ARRAY : parameterList.getTypeParameterElements();
+    if (typeArguments.length == 0 || typeArguments[0].getType() instanceof PsiDiamondType) return;
+    JavaResolveResult resolveResult = reference.advancedResolve(false);
+    if (!(resolveResult.getElement() instanceof PsiClass psiClass)) return;
+    PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+    if (typeParameters.length != typeArguments.length) return;
+    PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+    for (PsiTypeParameter subParameter : typeParameters) {
+      PsiType actualType = substitutor.substitute(subParameter);
+      if (actualType == null) continue;
+      for (PsiTypeParameter superParameter : collectTransitiveBoundParameters(subParameter, typeParameters)) {
+        if (checkNestedGenericClasses(holder, reference, substitutor.substitute(superParameter), actualType,
+                                      ConflictNestedTypeProblem.TYPE_ARGUMENT_BOUND_PROBLEM)) {
+          return;
+        }
+      }
+    }
+  }
+
+  private static @NotNull Set<PsiTypeParameter> collectTransitiveBoundParameters(@NotNull PsiTypeParameter parameter,
+                                                                                 PsiTypeParameter @NotNull [] scope) {
+    Set<PsiTypeParameter> result = new LinkedHashSet<>();
+    List<PsiTypeParameter> worklist = new ArrayList<>();
+    worklist.add(parameter);
+    while (!worklist.isEmpty()) {
+      PsiTypeParameter current = worklist.removeLast();
+      for (PsiType bound : current.getExtendsListTypes()) {
+        if (PsiUtil.resolveClassInClassTypeOnly(bound) instanceof PsiTypeParameter boundParameter &&
+            ArrayUtil.contains(boundParameter, scope) && result.add(boundParameter)) {
+          worklist.add(boundParameter);
+        }
+      }
+    }
+    return result;
   }
 
   private boolean checkNestedGenericClasses(@NotNull ProblemsHolder holder,
@@ -1453,6 +1494,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     RETURN_NESTED_TYPE_PROBLEM("returning.a.class.with.notnull.arguments", "returning.a.class.with.nullable.arguments"),
     ASSIGNMENT_NESTED_TYPE_PROBLEM("assigning.a.class.with.notnull.elements", "assigning.a.class.with.nullable.elements"),
     OVERRIDING_NESTED_TYPE_PROBLEM("overriding.a.class.with.notnull.elements", "overriding.a.class.with.nullable.elements"),
+    TYPE_ARGUMENT_BOUND_PROBLEM("complex.problem.with.nullability", "complex.problem.with.nullability"),
     ;
 
     @NotNull

@@ -277,18 +277,47 @@ public final class JavaTypeNullabilityUtil {
       declaredLeftParameterTypeList = null;
     }
     boolean rightInNullMarkedScope = isInNullMarkedScope(rightType);
+    PsiTypeParameter[] typeParameters = leftClass.getTypeParameters();
 
     for (int i = 0; i < leftParameterTypeList.size(); i++) {
       PsiType leftParameterType = leftParameterTypeList.get(i);
       PsiType rightParameterType = rightParameterTypeList.get(i);
-      // unbounded '?' has an implicit upper bound of '@Nullable Object' inside a @NullMarked scope.
+      PsiType declaredLeftParameterType = declaredLeftParameterTypeList == null ? null : declaredLeftParameterTypeList.get(i);
+      // Example:
+      // new Box<Container<? extends Foo>, Container<? extends @Nullable Foo>>();
+      //
+      // @NullMarked interface Container<T extends Foo>
+      // Foo is already bounded as not-null and ? extends @Nullable doesn't change it.
+      if (i < typeParameters.length &&
+          leftParameterType instanceof PsiWildcardType && ((PsiWildcardType)leftParameterType).isExtends() &&
+          rightParameterType instanceof PsiWildcardType && ((PsiWildcardType)rightParameterType).isExtends() &&
+          TypeNullability.ofTypeParameter(typeParameters[i]).nullability() == Nullability.NOT_NULL) {
+        PsiType leftBound = GenericsUtil.getWildcardBound(leftParameterType);
+        PsiType rightBound = GenericsUtil.getWildcardBound(rightParameterType);
+        if (leftBound != null && rightBound != null) {
+          PsiType declaredLeftBound = declaredLeftParameterType == null ? null : GenericsUtil.getWildcardBound(declaredLeftParameterType);
+          NullabilityConflictContext nested = getNullabilityConflictInAssignment(leftBound, declaredLeftBound, rightBound, level + 1, options);
+          if (nested.nullabilityConflict != NullabilityConflict.UNKNOWN) return nested;
+        }
+        continue;
+      }
+
+      // An unbounded '?' has an implicit '@Nullable Object' upper bound in a @NullMarked scope (JSpecify spec,
+      // "Bound of an 'unbounded' wildcard").
+      //
+      // A '? super X' is not covered by that section; the spec handles it via
+      // capture conversion in nullness-subtyping.
+      // We approximate that captured upper bound as nullable so that
+      // '? super' is not contained in a non-null '? extends' bound.
       if (rightInNullMarkedScope &&
           rightParameterType instanceof PsiWildcardType &&
-          !((PsiWildcardType)rightParameterType).isBounded() &&
-          rightParameterType.getNullability().nullability() == Nullability.UNKNOWN) {
-        rightParameterType = ((PsiWildcardType)rightParameterType).withNullability(UNBOUNDED_WILDCARD_NULLABILITY);
+          rightParameterType.getNullability().nullability() == Nullability.UNKNOWN &&
+          (!((PsiWildcardType)rightParameterType).isBounded() ||
+           (((PsiWildcardType)rightParameterType).isSuper() &&
+            leftParameterType instanceof PsiWildcardType && ((PsiWildcardType)leftParameterType).isExtends()))) {
+        PsiWildcardType rightWildcard = (PsiWildcardType)rightParameterType;
+        rightParameterType = rightWildcard.withNullability(UNBOUNDED_WILDCARD_NULLABILITY);
       }
-      PsiType declaredLeftParameterType = declaredLeftParameterTypeList == null ? null : declaredLeftParameterTypeList.get(i);
 
       NullabilityConflictContext contextTheCurrentCheck =
         getNullabilityConflictTypeContext(leftParameterType, declaredLeftParameterType, rightParameterType, options);
