@@ -3173,6 +3173,7 @@ a:com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
 - com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase
 - com.intellij.ide.projectView.ViewSettings
 - <init>(com.intellij.openapi.project.Project):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.ide.projectView.ViewSettings):V
 a:com.intellij.ide.projectView.impl.AbstractProjectViewPane
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.actionSystem.UiCompatibleDataProvider
