@@ -202,7 +202,9 @@ class FileStructurePopup(
     })
     tree.setCellRenderer(object : NodeRenderer() {
       override fun getPresentation(node: Any?): ItemPresentation? {
-        return (node as? StructureUiTreeElement)?.presentation ?: super.getPresentation(node)
+        if (node is StructureUiTreeElement) return node.presentation
+
+        return super.getPresentation(node)
       }
     })
     myProject.getMessageBus()
@@ -301,7 +303,7 @@ class FileStructurePopup(
 
               rebuildVisibleTree(RebuildReason.SPEED_SEARCH)
 
-              expandAllVisibleNodes()
+              expandAllVisibleNodes(TreePath(rootNode))
               if (isBackspace && handleBackspace(prefix)) {
                 return@withContext
               }
@@ -601,10 +603,10 @@ class FileStructurePopup(
     treeModel.nodeStructureChanged(rootNode)
     treeState.applyTo(tree)
     if (snapshot.narrowDown) {
-      expandAllVisibleNodes()
+      expandAllVisibleNodes(TreePath(rootNode))
     }
     else {
-      expandAutoNodes()
+      expandAutoNodes(TreePath(rootNode))
     }
 
     val selectionPath = selectionBeforeRebuild?.let { findPathForElementOrAncestor(it) }
@@ -683,14 +685,6 @@ class FileStructurePopup(
     return mySpeedSearch.comparator.matchingFragments(prefix, text) != null
   }
 
-  private fun expandAutoNodes() {
-    expandAutoNodes(TreePath(rootNode), 0)
-  }
-
-  private fun expandAllVisibleNodes() {
-    expandAllVisibleNodes(TreePath(rootNode))
-  }
-
   private fun expandAllVisibleNodes(path: TreePath) {
     tree.expandPath(path)
     val node = path.lastPathComponent as? StructureViewNode ?: return
@@ -699,7 +693,7 @@ class FileStructurePopup(
     }
   }
 
-  private fun expandAutoNodes(path: TreePath, depth: Int) {
+  private fun expandAutoNodes(path: TreePath, depth: Int = 0) {
     val node = path.lastPathComponent as? StructureViewNode ?: return
     val shouldExpand = depth < myModel.minimumAutoExpandDepth ||
                        node.shouldAutoExpand ||
