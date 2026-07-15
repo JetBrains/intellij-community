@@ -47,6 +47,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -72,6 +73,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.io.File
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.Phaser
 import java.util.concurrent.TimeUnit
@@ -836,6 +838,47 @@ class DumbServiceImplTest {
           throw AssertionError(t)
         }
       }
+    }
+  }
+
+  @Test
+  fun `DumbService_runInDumbMode should handle coroutine cancellation before block starts`(): Unit = runBlocking(Dispatchers.EDT) {
+    val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    val releaseBlockingTask = CountDownLatch(1)
+    try {
+      val scope = CoroutineScope(dispatcher)
+      val dumbTaskBlockStarted = Job()
+      val blockingTaskStarted = Job()
+
+      val dumbTask = scope.launch {
+        dumbService.runInDumbMode("Test dumb task cancelled before block starts") {
+          dumbTaskBlockStarted.complete()
+          awaitCancellation()
+        }
+      }
+      val blockingTask = scope.launch {
+        blockingTaskStarted.complete()
+        releaseBlockingTask.awaitOrThrow(10, "Test didn't release blocking task")
+      }
+
+      withTimeout(10.seconds) {
+        blockingTaskStarted.join()
+        dumbService.state.first { it.isDumb }
+
+        dumbTask.cancel("Cancel dumb task before block starts")
+        assertFalse("Dumb task block should not start", dumbTaskBlockStarted.isCompleted)
+
+        releaseBlockingTask.countDown()
+        dumbTask.join()
+        blockingTask.join()
+        withContext(Dispatchers.IO) {
+          waitForSmartModeFiveSecondsOrThrow()
+        }
+      }
+    }
+    finally {
+      releaseBlockingTask.countDown()
+      dispatcher.close()
     }
   }
 
