@@ -46,6 +46,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import static com.intellij.ide.todo.TodoImplementationChooserKt.shouldUseSplitTodo;
+
 @State(name = "TodoView", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), perClient = true)
 public class TodoView implements PersistentStateComponent<TodoView.State>, Disposable {
 
@@ -72,7 +74,11 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     state.all.arePackagesShown = true;
 
     MessageBusConnection connection = project.getMessageBus().connect(this);
-    connection.subscribe(TodoConfiguration.PROPERTY_CHANGE, new MyPropertyChangeListener());
+    if (!shouldUseSplitTodo()) {
+      // to make sure the backend has the latest TodoConfiguration settings,
+      // in split mode, backend subscribes to TodoConfiguration.PROPERTY_CHANGE
+      connection.subscribe(TodoConfiguration.PROPERTY_CHANGE, new MyPropertyChangeListener());
+    }
     connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
 
     myChangesSupport = project.getService(TodoViewChangesSupport.class);
