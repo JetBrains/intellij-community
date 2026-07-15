@@ -15,6 +15,7 @@
     <module name="intellij.kotlin.projectConfiguration"/>
     <module name="intellij.kotlin.searching"/>
     <module name="kotlin.fir.frontend-independent"/>
+    <module name="kotlin.jvm-debugger.evaluation"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">

@@ -1,4 +1,22 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.debugger"/>
+    <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.statistics"/>
+    <module name="intellij.kotlin.jvm.debugger.base.util"/>
+    <module name="intellij.kotlin.jvm.debugger.core"/>
+    <module name="intellij.kotlin.jvm.debugger.coroutines"/>
+  </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinForeignValueProviderService"

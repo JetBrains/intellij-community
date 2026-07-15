@@ -171,7 +171,6 @@
   - name: intellij.kotlin.plugin.updater
   - name: intellij.kotlin.preferences
   - name: intellij.kotlin.references
-  - name: kotlin.jvm-debugger.evaluation
   - name: intellij.kotlin.jvm.debugger.eval4j
   - name: kotlin.inspections
   - name: intellij.kotlin.codeInsight.utils
@@ -548,6 +547,9 @@
 - name: lib/modules/kotlin.gradle.scripting.shared.jar
   contentModules:
   - name: kotlin.gradle.scripting.shared
+- name: lib/modules/kotlin.jvm-debugger.evaluation.jar
+  contentModules:
+  - name: kotlin.jvm-debugger.evaluation
 - name: lib/modules/kotlin.jvm.shared.jar
   contentModules:
   - name: kotlin.jvm.shared

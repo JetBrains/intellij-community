@@ -15,7 +15,6 @@
   <xi:include href="caches.xml"/>
   <xi:include href="kotlin-core.xml"/>
   <xi:include href="parcelize.k2.xml"/>
-  <xi:include href="jvm-debugger-evaluation.xml"/>
   <xi:include href="scripting-v1.xml"/>
   <xi:include href="native.xml"/>
   <xi:include href="extensions.xml"/>
@@ -172,6 +171,7 @@
     <module name="intellij.kotlin.completion.impl"/>
 
     <module name="intellij.kotlin.jvm.debugger.evaluation"/>
+    <module name="kotlin.jvm-debugger.evaluation"/>
 
     <module name="intellij.kotlin.searching"/>
     <module name="intellij.kotlin.refactorings"/>
