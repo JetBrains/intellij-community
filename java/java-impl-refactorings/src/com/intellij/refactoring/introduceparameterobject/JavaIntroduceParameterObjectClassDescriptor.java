@@ -264,8 +264,25 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
       return getExistingClass();
     }
 
+    final PsiClass containingClass = method.getContainingClass();
     final ParameterObjectBuilder beanClassBuilder = new ParameterObjectBuilder();
-    beanClassBuilder.setVisibility(isCreateInnerClass() ? PsiModifier.PRIVATE : PsiModifier.PUBLIC);
+    if (containingClass != null && containingClass.isInterface() && isCreateInnerClass()) {
+      // nested class in interface is public by default and is not allowed to be anything else
+      beanClassBuilder.setVisibility("");
+    }
+    else if (method.hasModifierProperty(PsiModifier.PUBLIC)) {
+      beanClassBuilder.setVisibility(PsiModifier.PUBLIC);
+    }
+    else if (method.hasModifierProperty(PsiModifier.PROTECTED)) {
+      beanClassBuilder.setVisibility(PsiModifier.PROTECTED);
+    }
+    else if (method.hasModifierProperty(PsiModifier.PRIVATE) && isCreateInnerClass()) {
+      // top-level class cannot be private
+      beanClassBuilder.setVisibility(PsiModifier.PRIVATE);
+    }
+    else {
+      beanClassBuilder.setVisibility("");
+    }
     beanClassBuilder.setProject(method.getProject());
     beanClassBuilder.setFile(method.getContainingFile());
     beanClassBuilder.setTypeArguments(getTypeParameters());
@@ -288,7 +305,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
       final PsiJavaFile newFile =
         (PsiJavaFile)factory.createFileFromText(getClassName() + ".java", JavaFileType.INSTANCE, classString);
       if (isCreateInnerClass()) {
-        final PsiClass containingClass = method.getContainingClass();
+        assert containingClass != null;
         final PsiClass[] classes = newFile.getClasses();
         assert classes.length > 0 : classString;
         final PsiClass innerClass = (PsiClass)containingClass.add(classes[0]);

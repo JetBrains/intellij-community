@@ -1,7 +1,7 @@
-public class Param {
+class Param {
     private int i;
 
-    public Param(int i) {
+    Param(int i) {
         this.i = i;
     }
 
