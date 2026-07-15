@@ -17,10 +17,10 @@ public class Tests {
     if ((int) collection.stream().filter(String::isEmpty).count() + 1 > 0) {
       
     }
-    if (collection.stream().filter(String::isEmpty).count() == 0) {
+    if (collection.stream().noneMatch(String::isEmpty)) {
       
     }
-    if (!(collection.stream().filter(String::isEmpty).count() == 0)) {
+    if (collection.stream().anyMatch(String::isEmpty)) {
       
     }
   }

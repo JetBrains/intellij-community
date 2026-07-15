@@ -16,6 +16,9 @@ Simplification will often avoid some temporary object creation during collection
   <li><code>Collections.emptyList().stream()</code> &rarr; <code>Stream.empty()</code>
   <li><code>stream.filter().findFirst().isPresent()</code> &rarr; <code>stream.anyMatch()</code>
   <li><code>collection.stream().findFirst().isPresent()</code> &rarr; <code>!collection.isEmpty()</code>
+  <li><code>stream.filter(pred).collect(toList()).isEmpty()</code> &rarr; <code>stream.noneMatch(pred)</code>
+  <li><code>stream.filter(pred).toArray().length &gt; 0</code> &rarr; <code>stream.anyMatch(pred)</code>
+  <li><code>stream.collect(toList()).isEmpty()</code> &rarr; <code>stream.findFirst().isEmpty()</code>
   <li><code>stream.collect(counting())</code> &rarr; <code>stream.count()</code>
   <li><code>stream.collect(maxBy())</code> &rarr; <code>stream.max()</code>
   <li><code>stream.collect(mapping())</code> &rarr; <code>stream.map().collect()</code>
