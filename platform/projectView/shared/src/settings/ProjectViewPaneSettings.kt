@@ -2,6 +2,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.settings
 
+import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
 import com.intellij.platform.projectView.actions.fromDTO
 import org.jetbrains.annotations.ApiStatus
@@ -41,6 +42,11 @@ interface ProjectViewPaneSortKey {
     fun byType(): ProjectViewPaneSortByType = ProjectViewPaneSortByTypeImpl
     fun byTime(isAscending: Boolean): ProjectViewPaneSortByTime = ProjectViewPaneSortByTimeImpl(isAscending)
   }
+}
+
+@ApiStatus.Experimental
+fun allProjectViewPaneSortKeys(): List<ProjectViewPaneSortKey> {
+  return NodeSortKey.entries.map { it.toSettingValue() }
 }
 
 @ApiStatus.Experimental

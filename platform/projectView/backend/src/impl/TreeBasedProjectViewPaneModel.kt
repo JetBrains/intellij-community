@@ -26,6 +26,7 @@ import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateBuilder
 import com.intellij.platform.projectView.settings.ProjectViewPaneSortKey
 import com.intellij.platform.projectView.settings.allProjectViewPaneOptions
+import com.intellij.platform.projectView.settings.allProjectViewPaneSortKeys
 import kotlinx.coroutines.channels.Channel
 import org.jetbrains.annotations.ApiStatus
 
@@ -73,19 +74,36 @@ abstract class TreeBasedProjectViewPaneModel<T>(
   }
 
   private fun buildSettingsState(settingsStateBuilder: ProjectViewPaneSettingsStateBuilder) {
-    val optionService = ProjectViewPaneSettingsService.getInstance(project)
+    val settingsService = ProjectViewPaneSettingsService.getInstance(project)
     for (option in allProjectViewPaneOptions()) {
       settingsStateBuilder.setOptionState(
         option = option,
-        isSelected = optionService.isOptionSelected(option),
-        isEnabled = optionService.isOptionEnabled(option) && supportsOption(option),
-        isAlwaysVisible = optionService.isOptionAlwaysVisible(option),
+        isSelected = settingsService.isOptionSelected(option),
+        isEnabled = settingsService.isOptionEnabled(option) && supportsOption(option),
+        isAlwaysVisible = settingsService.isOptionAlwaysVisible(option),
       )
     }
+    settingsStateBuilder.setAvailableSortKeys(supportedSortKeys())
+    settingsStateBuilder.setSortKey(settingsService.getSortKey())
+    val fileNesting = settingsService.getFileNesting()
+    settingsStateBuilder.setFileNesting(
+      fileNesting.isFileNestingOn && supportsFileNesting(),
+      supportsFileNesting(),
+      fileNesting.nestingRules,
+      ProjectViewFileNestingService.getInstance().getDefaultRules(),
+    )
   }
 
   protected open fun supportsOption(option: ProjectViewPaneOption): Boolean {
     return true
+  }
+
+  protected open fun supportedSortKeys(): List<ProjectViewPaneSortKey> {
+    return allProjectViewPaneSortKeys()
+  }
+
+  protected open fun supportsFileNesting(): Boolean {
+    return false
   }
 
   override suspend fun setSelected(

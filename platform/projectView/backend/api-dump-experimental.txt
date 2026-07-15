@@ -18,5 +18,7 @@
 - setOptionValue(com.intellij.platform.projectView.settings.ProjectViewPaneOption,Z,kotlin.coroutines.Continuation):java.lang.Object
 - setSelected(Z,com.intellij.platform.projectView.pane.ProjectViewPaneSelectionOptions,kotlin.coroutines.Continuation):java.lang.Object
 - setSortKey(com.intellij.platform.projectView.settings.ProjectViewPaneSortKey,kotlin.coroutines.Continuation):java.lang.Object
+- p:supportedSortKeys():java.util.List
+- p:supportsFileNesting():Z
 - p:supportsOption(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V

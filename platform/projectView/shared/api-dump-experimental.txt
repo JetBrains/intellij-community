@@ -107,10 +107,13 @@
 - com.intellij.platform.projectView.settings.ProjectViewPaneOption
 *f:com.intellij.platform.projectView.settings.ProjectViewPaneSettingsKt
 - *sf:allProjectViewPaneOptions():java.util.List
+- *sf:allProjectViewPaneSortKeys():java.util.List
 *f:com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
 - *sf:Companion:com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService$Companion
 - <init>(com.intellij.openapi.project.Project):V
+- f:getFileNesting():com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
 - *sf:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
+- f:getSortKey():com.intellij.platform.projectView.settings.ProjectViewPaneSortKey
 - f:isOptionAlwaysVisible(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
 - f:isOptionEnabled(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
 - f:isOptionSelected(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z

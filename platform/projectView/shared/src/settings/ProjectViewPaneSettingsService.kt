@@ -3,6 +3,7 @@ package com.intellij.platform.projectView.settings
 
 import com.intellij.application.options.OptionId
 import com.intellij.application.options.OptionsApplicabilityFilter
+import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
 import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper
 import com.intellij.ide.scratch.ScratchTreeStructureProvider
@@ -20,28 +21,29 @@ class ProjectViewPaneSettingsService(private val project: Project) {
     @JvmStatic fun getInstance(project: Project): ProjectViewPaneSettingsService = project.service()
   }
 
+  private val state = ProjectViewState.getInstance(project)
+
   fun isOptionSelected(option: ProjectViewPaneOption): Boolean {
-    val projectViewState = ProjectViewState.getInstance(project)
     // The DTO is an enum, so we can use an exhaustive when with it.
     val dto = (option as ProjectViewPaneOptionImpl).dto
     return when (dto) {
       ProjectViewPaneOptionDTO.OPEN_IN_PREVIEW_TAB -> UISettings.getInstance().openInPreviewTabIfPossible
-      ProjectViewPaneOptionDTO.AUTOSCROLL_TO_SOURCE -> projectViewState.autoscrollToSource
-      ProjectViewPaneOptionDTO.OPEN_DIRECTORIES_WITH_SINGLE_CLICK -> projectViewState.openDirectoriesWithSingleClick
-      ProjectViewPaneOptionDTO.AUTOSCROLL_FROM_SOURCE -> projectViewState.autoscrollFromSource
-      ProjectViewPaneOptionDTO.SHOW_MODULES -> projectViewState.showModules
-      ProjectViewPaneOptionDTO.SHOW_MEMBERS -> projectViewState.showMembers
-      ProjectViewPaneOptionDTO.SHOW_EXCLUDED_FILES -> projectViewState.showExcludedFiles
-      ProjectViewPaneOptionDTO.SHOW_VISIBILITY_ICONS -> projectViewState.showVisibilityIcons
-      ProjectViewPaneOptionDTO.SHOW_LIBRARY_CONTENTS -> projectViewState.showLibraryContents
-      ProjectViewPaneOptionDTO.SHOW_SCRATCHES_AND_CONSOLES -> projectViewState.showScratchesAndConsoles
-      ProjectViewPaneOptionDTO.FLATTEN_MODULES -> projectViewState.flattenModules
-      ProjectViewPaneOptionDTO.FLATTEN_PACKAGES -> projectViewState.flattenPackages
-      ProjectViewPaneOptionDTO.ABBREVIATE_PACKAGE_NAMES -> projectViewState.abbreviatePackageNames
-      ProjectViewPaneOptionDTO.HIDE_EMPTY_MIDDLE_PACKAGES -> projectViewState.hideEmptyMiddlePackages
-      ProjectViewPaneOptionDTO.COMPACT_DIRECTORIES -> projectViewState.compactDirectories
-      ProjectViewPaneOptionDTO.FOLDERS_ALWAYS_ON_TOP -> projectViewState.foldersAlwaysOnTop
-      ProjectViewPaneOptionDTO.MANUAL_ORDER -> projectViewState.manualOrder
+      ProjectViewPaneOptionDTO.AUTOSCROLL_TO_SOURCE -> state.autoscrollToSource
+      ProjectViewPaneOptionDTO.OPEN_DIRECTORIES_WITH_SINGLE_CLICK -> state.openDirectoriesWithSingleClick
+      ProjectViewPaneOptionDTO.AUTOSCROLL_FROM_SOURCE -> state.autoscrollFromSource
+      ProjectViewPaneOptionDTO.SHOW_MODULES -> state.showModules
+      ProjectViewPaneOptionDTO.SHOW_MEMBERS -> state.showMembers
+      ProjectViewPaneOptionDTO.SHOW_EXCLUDED_FILES -> state.showExcludedFiles
+      ProjectViewPaneOptionDTO.SHOW_VISIBILITY_ICONS -> state.showVisibilityIcons
+      ProjectViewPaneOptionDTO.SHOW_LIBRARY_CONTENTS -> state.showLibraryContents
+      ProjectViewPaneOptionDTO.SHOW_SCRATCHES_AND_CONSOLES -> state.showScratchesAndConsoles
+      ProjectViewPaneOptionDTO.FLATTEN_MODULES -> state.flattenModules
+      ProjectViewPaneOptionDTO.FLATTEN_PACKAGES -> state.flattenPackages
+      ProjectViewPaneOptionDTO.ABBREVIATE_PACKAGE_NAMES -> state.abbreviatePackageNames
+      ProjectViewPaneOptionDTO.HIDE_EMPTY_MIDDLE_PACKAGES -> state.hideEmptyMiddlePackages
+      ProjectViewPaneOptionDTO.COMPACT_DIRECTORIES -> state.compactDirectories
+      ProjectViewPaneOptionDTO.FOLDERS_ALWAYS_ON_TOP -> state.foldersAlwaysOnTop
+      ProjectViewPaneOptionDTO.MANUAL_ORDER -> state.manualOrder
     }
   }
 
@@ -67,5 +69,16 @@ class ProjectViewPaneSettingsService(private val project: Project) {
 
   private fun isOptionSelectedAndEnabled(option: ProjectViewPaneOption): Boolean {
     return isOptionEnabled(option) && isOptionSelected(option)
+  }
+
+  fun getSortKey(): ProjectViewPaneSortKey {
+    return state.sortKey.toSettingValue()
+  }
+
+  fun getFileNesting(): ProjectViewPaneFileNestingValue {
+    return ProjectViewPaneFileNestingValueImpl(
+      state.useFileNestingRules,
+      ProjectViewFileNestingService.getInstance().getRules(),
+    )
   }
 }
