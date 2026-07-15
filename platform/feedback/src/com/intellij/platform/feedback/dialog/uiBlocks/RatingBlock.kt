@@ -12,18 +12,35 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.put
+import org.jetbrains.annotations.Nls
 
-class RatingBlock(@NlsContexts.Label private val myLabel: String,
-                  private val myJsonElementName: String) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
+class RatingBlock(
+  @NlsContexts.Label private val myLabel: String,
+  private val myJsonElementName: String,
+) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
 
   private var myProperty: Int = 0
   private var requireAnswer: Boolean = true
+  private var myHint: @Nls String? = null
 
   override fun addToPanel(panel: Panel) {
+    val hint = myHint
     panel.apply {
+      // With a hint, show the label and the hint above the rating (like RatingGroupBlock);
+      // otherwise keep the label attached on top of the rating for backward compatibility.
+      if (hint != null) {
+        row {
+          label(myLabel).bold()
+          rowComment(hint)
+        }.bottomGap(BottomGap.NONE)
+      }
       row {
         rating()
-          .label(createBoldJBLabel(myLabel), LabelPosition.TOP)
+          .apply {
+            if (hint == null) {
+              label(createBoldJBLabel(myLabel), LabelPosition.TOP)
+            }
+          }
           .apply {
             onApply {
               myProperty = this.component.myRating
@@ -55,6 +72,11 @@ class RatingBlock(@NlsContexts.Label private val myLabel: String,
 
   fun doNotRequireAnswer(): RatingBlock {
     requireAnswer = false
+    return this
+  }
+
+  fun setHint(@Nls hint: String): RatingBlock {
+    myHint = hint
     return this
   }
 }

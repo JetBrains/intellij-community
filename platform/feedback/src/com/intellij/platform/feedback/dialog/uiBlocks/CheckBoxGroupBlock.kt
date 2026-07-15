@@ -11,6 +11,7 @@ import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.layout.selected
@@ -34,6 +35,7 @@ class CheckBoxGroupBlock(
   private var myIncludeOtherTextField = false
   private var myOtherProperty: String = ""
   private var myOtherTextfieldPlaceholderText: String = ""
+  private var myColumnCount: Int = 1
 
   private var otherCheckBox: JBCheckBox? = null
   private var otherTextField: JBTextField? = null
@@ -41,23 +43,31 @@ class CheckBoxGroupBlock(
   override fun addToPanel(panel: Panel) {
     val allCheckBoxes = mutableListOf<JBCheckBox>()
 
-    panel.apply {
-      buttonsGroup(indent = false) {
+    fun Row.addCheckBox(itemData: CheckBoxItemData) {
+      allCheckBoxes += checkBox(itemData.label)
+        .bindSelected({ itemData.property }, { itemData.property = it })
+        .addChooseOptionValidation(allCheckBoxes)
+        .component
+    }
+
+    val itemRows = myItemsData.chunked(myColumnCount)
+
+    val groupContent: (Panel) -> Unit = { container ->
+      container.buttonsGroup(indent = false) {
         row {
           label(myGroupLabel)
             .bold()
         }.bottomGap(BottomGap.NONE)
-        myItemsData.forEachIndexed { i, itemData ->
-          row {
-            allCheckBoxes += checkBox(itemData.label).bindSelected(
-              { myItemsData[i].property },
-              { myItemsData[i].property = it }
-            ).addChooseOptionValidation(allCheckBoxes)
-              .component
-          }.apply {
-            if (i == myItemsData.size - 1 && !myIncludeOtherTextField) {
-              this.bottomGap(BottomGap.MEDIUM)
-            }
+        itemRows.forEachIndexed { rowIndex, rowItems ->
+          // Use the standard multi-column DSL helpers so the checkboxes align in evenly spaced columns.
+          val cells: List<(Row.() -> Unit)?> = rowItems.map { itemData -> { addCheckBox(itemData) } }
+          val addedRow = when (myColumnCount) {
+            2 -> twoColumnsRow(cells.getOrNull(0), cells.getOrNull(1))
+            3 -> threeColumnsRow(cells.getOrNull(0), cells.getOrNull(1), cells.getOrNull(2))
+            else -> row { rowItems.forEach { addCheckBox(it) } }
+          }
+          if (rowIndex == itemRows.lastIndex && !myIncludeOtherTextField) {
+            addedRow.bottomGap(BottomGap.MEDIUM)
           }
         }
 
@@ -109,6 +119,17 @@ class CheckBoxGroupBlock(
         }
       }
     }
+
+    panel.apply {
+      if (myColumnCount > 1) {
+        // Isolate the multi-column grid in its own sub-panel so its wide columns do not force sibling
+        // blocks (e.g. rating rows) to align with them.
+        panel { groupContent(this) }
+      }
+      else {
+        groupContent(this)
+      }
+    }
   }
 
   override fun collectBlockTextDescription(stringBuilder: StringBuilder) {
@@ -148,6 +169,22 @@ class CheckBoxGroupBlock(
 
   fun requireAnswer(): CheckBoxGroupBlock {
     requireAnswer = true
+    return this
+  }
+
+  /**
+   * Lays the checkboxes out over the given number of [columnCount] columns (1, 2 or 3) to keep tall option
+   * lists compact, using the standard [Panel.twoColumnsRow]/[Panel.threeColumnsRow] layout.
+   *
+   * Follow the IntelliJ UI guidelines when choosing the value:
+   * arrange checkboxes with labels of up to 30 characters in 2 columns,
+   * and checkboxes with labels of up to 15 characters in 3 columns.
+   *
+   * @see <a href="https://plugins.jetbrains.com/docs/intellij/layout.html#checkboxes-and-radio-buttons">Layout guidelines</a>
+   */
+  fun setColumnCount(columnCount: Int): CheckBoxGroupBlock {
+    require(columnCount in 1..3) { "columnCount must be 1, 2 or 3, but was $columnCount" }
+    myColumnCount = columnCount
     return this
   }
 
