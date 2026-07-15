@@ -23,12 +23,12 @@ source.fsharp;comment.line.markdown.fsharp;meta.tag.structure.summary.start.html
 source.fsharp;comment.line.markdown.fsharp;meta.tag.structure.summary.start.html;punctuation.definition.tag.end.html: [39, 40], {>}
 source.fsharp;comment.line.markdown.fsharp: [40, 41], {
 }
-source.fsharp;comment.line.markdown.fsharp;binding.fsharp;keyword.fsharp: [41, 44], {let}
-source.fsharp;comment.line.markdown.fsharp;binding.fsharp: [44, 45], { }
-source.fsharp;comment.line.markdown.fsharp;binding.fsharp;variable.fsharp: [45, 49], {main}
-source.fsharp;comment.line.markdown.fsharp;binding.fsharp;variable.parameter.fsharp: [49, 55], { args }
-source.fsharp;comment.line.markdown.fsharp;binding.fsharp;keyword.symbol.fsharp: [55, 56], {=}
-source.fsharp;comment.line.markdown.fsharp: [56, 57], {
+source.fsharp;binding.fsharp;keyword.fsharp: [41, 44], {let}
+source.fsharp;binding.fsharp: [44, 45], { }
+source.fsharp;binding.fsharp;variable.fsharp: [45, 49], {main}
+source.fsharp;binding.fsharp;variable.parameter.fsharp: [49, 55], { args }
+source.fsharp;binding.fsharp;keyword.symbol.fsharp: [55, 56], {=}
+source.fsharp: [56, 57], {
 }
-source.fsharp;comment.line.markdown.fsharp: [57, 59], {  }
-source.fsharp;comment.line.markdown.fsharp;constant.numeric.integer.nativeint.fsharp: [59, 60], {0}
+source.fsharp: [57, 59], {  }
+source.fsharp;constant.numeric.integer.nativeint.fsharp: [59, 60], {0}

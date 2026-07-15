@@ -117,6 +117,8 @@ class TextMateLexerCore(
 
     return mySyntaxMatcher.matchingString(line) { string ->
       if (checkWhileConditions) {
+        // Check the while-conditions of the rules currently on the stack. When a while-condition fails, its rule
+        // together with every rule nested inside it is discarded from the stack.
         var whileStates = states
         while (!whileStates.isEmpty()) {
           val whileState = whileStates.last()
@@ -136,8 +138,14 @@ class TextMateLexerCore(
               }
             }
             else {
-              closeScopeSelector(output, linePosition + lineStartOffset)
-              closeScopeSelector(output, linePosition + lineStartOffset)
+              // The while-condition failed: discard this rule together with every rule nested inside it
+              // (everything above `whileStates` on the stack). Each discarded rule opened a name and a
+              // content-name selector, so close two selectors per rule. Closing only a fixed pair here used to
+              // leave the outer rules' scopes leaked onto the following tokens.
+              repeat(states.size - whileStates.size) {
+                closeScopeSelector(output, linePosition + lineStartOffset)
+                closeScopeSelector(output, linePosition + lineStartOffset)
+              }
               states = whileStates
               anchorByteOffset = (-1).byteOffset()
             }
