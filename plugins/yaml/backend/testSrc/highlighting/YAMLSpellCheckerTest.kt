@@ -62,6 +62,14 @@ class YAMLSpellCheckerTest : BasePlatformTestCase() {
     myFixture.checkHighlighting(true, false, true)
   }
 
+  fun testEscapeSequenceInDoubleQuotedString() {
+    myFixture.configureByText("escapes.yaml", """
+      key: "word\nanother"
+    """.trimIndent())
+
+    myFixture.checkHighlighting(true, false, true)
+  }
+
   fun testInjectedFragments() {
     myFixture.configureByText("hashes.yaml", """
       data:
