@@ -3,7 +3,6 @@ package com.intellij.psi.versioning
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.elf.Elf
 import com.intellij.openapi.editor.elf.ElfFeatureFlag
@@ -99,13 +98,11 @@ internal class FileViewProviderElfIntegrationTest {
     }
 
     Elf.getElf().withElfScope {
-      val file = runReadActionBlocking {
-        PsiDocumentManager.getInstance(project).getPsiFile(editor.document)!!
-      }
+      val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)!!
       assertEquals(modifiedText, editor.document.text)
       // todo: this test just fixes the existing behavior. Tecnhically, the modified ELF document is not committed, and we need to assert equality with the initial text.
       //    this will be done when the lightweight commit arrives
-      assertEquals(modifiedText, file.viewProvider.contents.toString())
+      assertEquals(initialText, file.viewProvider.contents.toString())
     }
   }
 
