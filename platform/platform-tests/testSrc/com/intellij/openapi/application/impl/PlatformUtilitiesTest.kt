@@ -313,6 +313,7 @@ class PlatformUtilitiesTest {
         }
       }
       assertThat(exception.message).isEqualTo("custom message")
+      assertThat(exception.suppressed.single()).hasMessageContaining("breaks atomicity")
     }
   }
 
