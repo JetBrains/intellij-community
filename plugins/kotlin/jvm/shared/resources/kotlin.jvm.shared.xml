@@ -60,8 +60,6 @@
 
     <library.javaSourceRootDetector implementation="org.jetbrains.kotlin.idea.jvm.shared.configuration.KotlinSourceRootDetector"/>
 
-    <multipleRunLocationsProvider implementation="org.jetbrains.kotlin.idea.run.multiplatform.KotlinMultiplatformRunLocationsProvider"/>
-
     <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.compiler.KotlinCompilableFileTypesProvider"/>
 
     <compiler.task execute="BEFORE" implementation="org.jetbrains.kotlin.idea.jvm.shared.internal.makeBackup.MakeBackupCompileTask"/>

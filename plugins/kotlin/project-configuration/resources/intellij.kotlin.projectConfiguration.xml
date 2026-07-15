@@ -19,6 +19,12 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey
+            key="repo.with.kotlin.versions.url"
+            description="URL of a JSON file with Kotlin versions"
+            defaultValue="https://central.sonatype.com/solrsearch/select?q=g:org.jetbrains.kotlin+AND+a:kotlin-stdlib&amp;core=gav&amp;rows=20&amp;wt=json&amp;sort=v+desc"
+            restartRequired="false"/>
+
     <localInspection language="kotlin" implementationClass="org.jetbrains.kotlin.idea.configuration.inspections.KaptKotlinCompilerPluginInspection"
                      shortName="KaptKotlinCompilerPlugin"
                      key="kapt.kotlin.compiler.plugin.inspection.problem.display.name"

@@ -14,13 +14,11 @@
   <xi:include href="jps.xml"/>
   <xi:include href="caches.xml"/>
   <xi:include href="kotlin-core.xml"/>
-  <xi:include href="light-classes.xml"/>
   <xi:include href="parcelize.k2.xml"/>
   <xi:include href="jvm-debugger.xml"/>
   <xi:include href="jvm-debugger-evaluation.xml"/>
   <xi:include href="scripting-v1.xml"/>
   <xi:include href="native.xml"/>
-  <xi:include href="jvm.xml"/>
   <xi:include href="extensions.xml"/>
 
   <xi:include href="ultimate-plugin.k2.xml">
