@@ -158,6 +158,8 @@ jvm_library(
         "//platform/execution",
         "//platform/execution:execution_test_lib",
         "//platform/ide-core",
+        "//jps/model-impl",
+        "//jps/model-impl:model-impl_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//libraries/junit5",
