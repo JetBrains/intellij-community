@@ -40,10 +40,36 @@ attributes, a JS class scoping its members) — `PolySymbol.queryScope` defaults
 the symbol implements `PolySymbolScope`.
 
 **For any scope backed by more than a handful of symbols, or whose computation should be cached**,
-extend `PolySymbolScopeWithCache` instead of implementing `PolySymbolScope` directly — override
-`initialize()` and pass caching-strategy parameters to the superclass constructor. Every scope
-example in [case-studies.md](case-studies.md) (GDScript's SDK scopes, Vue's `VueCodeModelSymbolScope`)
-does this.
+use the `polySymbolScopeCached(...)` DSL
+(`community/platform/polySymbols/src/com/intellij/polySymbols/query/PolySymbolScopeDsl.kt`) rather
+than hand-extending `PolySymbolScopeWithCache` — it's the same `PolySymbolScopeWithCache`/
+`CachedValuesManager` engine underneath, just without the manual `createPointer()`/`equals`/
+`hashCode` boilerplate:
+
+```kotlin
+fun <T : PsiElement, K> polySymbolScopeCached(element: T, key: K, configure: PsiPolySymbolScopeCachedBuilder<T, K>.() -> Unit): PolySymbolScope
+fun <T : PsiElement> polySymbolScopeCached(element: T, configure: PsiPolySymbolScopeCachedBuilder<T, Unit>.() -> Unit): PolySymbolScope
+fun polySymbolScopeCached(project: Project, configure: ProjectPolySymbolScopeCachedBuilder<Unit>.() -> Unit): PolySymbolScope
+fun <T : UserDataHolder, K> polySymbolScopeCached(project: Project, dataHolder: T, key: K, configure: PolySymbolScopeCachedBuilder<T, K>.() -> Unit): PolySymbolScope
+```
+
+Four overloads keyed by holder shape — a `PsiElement` (cache keyed on that element, invalidated via
+whatever you pass to `cacheDependencies(...)`), a `Project` (`Unit` key, hard-pointer), or an
+arbitrary `UserDataHolder` + explicit key (requires an explicit `pointer { }` in the config lambda —
+omitting it throws). The builder exposes `provides(...)`/`exclusiveFor(...)`/`requiresResolve(...)`
+as one-liners, plus `filterCodeCompletions { }`/`filterNameMatches { }` to post-process the cached
+base result without subclassing. The `initialize { }` block must call `cacheDependencies(...)` with
+a non-empty set (throws otherwise) and add symbols via `add`/`addAll`/`+`/`addSymbol`. Real examples:
+`contrib/Astro/src/org/jetbrains/astro/polySymbols/scope/AstroAvailableComponentsScope.kt` (Project,
+Unit key), `AstroNamespacedComponentsScope.kt` (PsiElement, Unit key, with `filterCodeCompletions`).
+
+**Caveat**: the DSL does not expose `PolySymbolScopeWithCache.partialMatchingSupport` — if a scope
+answers `getMatchingSymbols` via a direct name-indexed lookup instead of building the full symbol map
+first (e.g. GDScript's `GdPsiClassesPolySymbolScope`/`GdPsiResourceClassesPolySymbolScope`, see
+[case-studies.md](case-studies.md#gdscript)), keep it hand-written — converting would force every
+lookup through the full-cache path, a real perf regression for a project-wide index. Reach for
+hand-written `PolySymbolScopeWithCache` only for that case, or when you need custom `createPointer()`
+chaining through an owning symbol (rare).
 
 `isExclusiveFor(kind)`: when a scope is exclusive for a kind, pattern-matching stops walking further
 down the scope stack for that kind once this scope has been consulted — use it when a scope is
@@ -273,4 +299,34 @@ Register a `PolySymbolQueryResultsCustomizerFactory` at EP
 whatever the query returned" hook — e.g. Angular Forms uses it to wrap resolved
 `formControlName`/`formGroupName`/`formArrayName` attribute symbols so their *value* is forced to
 resolve as a `FormGroup`-key symbol reference instead of a free string (see
-[case-studies.md](case-studies.md#angular)).
+[case-studies.md](case-studies.md#angular)). One instance is created per query-executor build, via
+`PolySymbolQueryResultsCustomizerFactory.create(location, context)` — it's context/location-scoped
+and can change *which* symbols resolve or complete, not just how they render.
+
+## PolySymbolCodeCompletionItemCustomizer
+
+```kotlin
+interface PolySymbolCodeCompletionItemCustomizer {
+  fun customize(item: PolySymbolCodeCompletionItem, context: PolyContext, kind: PolySymbolKind, location: PsiElement): PolySymbolCodeCompletionItem?
+}
+```
+
+Register at EP `com.intellij.polySymbols.codeCompletionItemCustomizer`
+(`community/platform/polySymbols/backend/src/com/intellij/polySymbols/completion/PolySymbolCodeCompletionItemCustomizer.kt`).
+**Global, unscoped hook** — every registered customizer runs, in registration order, for every
+completion item from every language/framework
+(`PolySymbolsCompletionProviderBase.processPolySymbolCodeCompletionItems`, right after a scope's
+`getCodeCompletions()` — custom or the `getSymbols()`-derived platform default — has already
+produced the item). Each implementation must self-gate, typically on
+`item.symbol?.namespace`/`item.symbol is SomeBaseSymbolClass` (CSS's
+`CssImplCodeCompletionItemCustomizer`, GDScript's `GdPolySymbolCodeCompletionItemCustomizer`) or on
+`context.framework` (Angular's `Angular2CodeCompletionItemCustomizer`) — returning the item
+unchanged, or `null` to drop it, when it doesn't apply.
+
+**Not the same thing as [`PolySymbolQueryResultsCustomizer`](#polysymbolqueryresultscustomizer)
+above**: that's the heavier, per-query-executor-build mechanism used for *semantic remapping* of
+both resolve matches and completion items. `PolySymbolCodeCompletionItemCustomizer` is purely
+presentational — it only ever adjusts a completion item's rendering
+(`icon`/`priority`/`tailText`/`typeText`/etc.) after the symbol set is already final; it cannot
+change *which* symbols are offered. Prefer this one whenever the goal is "make completion items for
+symbols of kind X look right," not "change what X resolves to."

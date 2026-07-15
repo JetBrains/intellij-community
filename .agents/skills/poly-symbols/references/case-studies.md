@@ -58,10 +58,12 @@ duplicate Find Usages results until the legacy path is deleted. Concretely:
   LOADED_CLASS_ALIAS, AUTOLOAD` — no locals at all.
 - Nested-class qualifiers in `extends Outer.Inner` (`GdInheritanceSubIdRef`) and all resource-path
   references (`GdResourceReferenceContributor`) have **zero** PolySymbols coverage.
-- Completion self-limits to SDK symbols only — `gdCodeCompletions()` explicitly
-  `.filterIsInstance<GdSdkPolySymbol>()` with the comment *"PSI isn't fully implemented with Poly
-  Symbols... the PSI implementation should handle it for now"* — so all user-defined/local
-  completion still comes from separate, untouched legacy `completion.contributor`s.
+- Completion is not a PolySymbols EP integration point — five plain `completion.contributor`s each
+  call `PolySymbolsCompletionProviderBase`'s query helpers by hand, then rely on the platform default
+  `getCodeCompletions()` (derived from `getSymbols()`) plus a `GdPolySymbolCodeCompletionItemCustomizer`
+  (EP `com.intellij.polySymbols.codeCompletionItemCustomizer`, see [query-model.md](query-model.md))
+  to populate `icon`/`priority`/`tailText`/`typeText` from `GdPolySymbol`. This covers SDK and
+  user-defined/PSI symbols uniformly — the once-present SDK-only completion filter is gone.
 - The TSCN language (`.tscn`/resource references) has no PolySymbols involvement whatsoever.
 
 **Worth reading**: `test/.../polySymbols/model/GdCoreSdkPolySymbolModelTest.kt` (SDK query executor
