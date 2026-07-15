@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 jps_test(
     name = "python-community-services-shared-tests_test",
@@ -10,6 +11,11 @@ jps_test(
 ### skip generation section `test intellij.python.community.services.shared.tests`
 
 ### auto-generated section `build intellij.python.community.services.shared` start
+create_kotlinc_options(
+    name = "custom_shared",
+    warn = "error",
+)
+
 jvm_library(
     name = "shared",
     srcs = glob(
@@ -20,6 +26,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_shared",
     module_name = "intellij.python.community.services.shared",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -45,6 +52,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_shared",
     module_name = "intellij.python.community.services.shared",
     visibility = ["//visibility:public"],
     runtime_deps = [
