@@ -93,7 +93,9 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.Value;
+import com.sun.jdi.VoidValue;
 import com.sun.jdi.event.ExceptionEvent;
+import com.sun.jdi.event.MethodExitEvent;
 import kotlinx.coroutines.flow.Flow;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
@@ -279,6 +281,41 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     return Collections.emptyList();
   }
 
+  protected @Nullable XNamedValue createCurrentMethodReturnValueNode(@NotNull EvaluationContextImpl evaluationContext,
+                                                                     @NotNull MethodExitEvent methodExitEvent) {
+    if (!myDebugProcess.canGetMethodReturnValue() ||
+        myDescriptor.getUiIndex() != 0 ||
+        !myDescriptor.getFrameProxy().threadProxy().getThreadReference().equals(methodExitEvent.thread())) {
+      return null;
+    }
+
+    Value returnValue = methodExitEvent.returnValue();
+    if (returnValue instanceof VoidValue) {
+      return null;
+    }
+
+    var descriptor = myNodeManager.getCurrentMethodReturnValueDescriptor(myDescriptor, methodExitEvent.method(), returnValue);
+    return JavaValue.create(descriptor, evaluationContext, myNodeManager);
+  }
+
+  private void addReturnValueNodes(@NotNull EvaluationContextImpl evaluationContext, @NotNull XValueChildrenList children) {
+    // Add the current method return value when stopped at a method exit.
+    MethodExitEvent exitEvent = evaluationContext.getSuspendContext().getCurrentMethodExitEvent();
+    if (exitEvent != null) {
+      XNamedValue currentMethodReturnValueNode = createCurrentMethodReturnValueNode(evaluationContext, exitEvent);
+      if (currentMethodReturnValueNode != null) {
+        children.add(currentMethodReturnValueNode);
+        // Do not add the last method return value if the watcher captured the same method exit.
+        // This can happen when a method exit breakpoint interrupts a step.
+        if (Pair.create(exitEvent.method(), exitEvent.returnValue()).equals(myDebugProcess.getLastExecutedMethod())) {
+          return;
+        }
+      }
+    }
+    // Add the last method return value, if available.
+    createReturnValueNodes(evaluationContext).forEach(children::add);
+  }
+
   protected @NotNull List<? extends XNamedValue> createExceptionNodes(EvaluationContextImpl evaluationContext) {
     if (myDescriptor.getUiIndex() != 0) {
       return Collections.emptyList();
@@ -314,8 +351,8 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       // static group
       addStaticGroup(evaluationContext, node);
 
-      // last method return value if any
-      createReturnValueNodes(evaluationContext).forEach(children::add);
+      // method return values
+      addReturnValueNodes(evaluationContext, children);
 
       // context exceptions
       createExceptionNodes(evaluationContext).forEach(children::add);

@@ -25,6 +25,7 @@ import com.sun.jdi.ObjectReference
 import com.sun.jdi.ThreadReference
 import com.sun.jdi.event.EventSet
 import com.sun.jdi.event.LocatableEvent
+import com.sun.jdi.event.MethodExitEvent
 import com.sun.jdi.request.EventRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -433,6 +434,10 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
       myActiveExecutionStack!!.initTopFrame()
     }
   }
+
+  // EventSet guarantees that all MethodExitEvent instances in a set represent the same method exit
+  // and therefore have the same return value.
+  val currentMethodExitEvent: MethodExitEvent? get() = eventSet?.find { it is MethodExitEvent } as? MethodExitEvent
 
   override fun computeExecutionStacks(container: XExecutionStackContainer) {
     managerThread.schedule(object : SuspendContextCommandImpl(this) {

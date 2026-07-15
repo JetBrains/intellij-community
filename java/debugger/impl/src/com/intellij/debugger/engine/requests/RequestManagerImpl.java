@@ -68,6 +68,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   private static final Key CLASS_NAME = Key.create("ClassName");
   private static final Key<Requestor> REQUESTOR = Key.create("Requestor");
+  public static final Key<Requestor> TRANSIENT_REQUESTOR = Key.create("TRANSIENT_REQUESTOR");
 
   private final DebugProcessImpl myDebugProcess;
   private final Map<Requestor, String> myRequestWarnings = new HashMap<>();
@@ -159,6 +160,22 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   private void addLocatableRequest(FilteredRequestor requestor, EventRequest request) {
+    applySuspendPolicy(requestor, request);
+
+    // When a condition is enabled, the count filter is applied manually after the condition is evaluated.
+    // The JDI count filter would also count events that fail the condition.
+    if (requestor.isCountFilterEnabled() && !requestor.isConditionEnabled()) {
+      request.addCountFilter(requestor.getCountFilter());
+    }
+
+    if (requestor.isClassFiltersEnabled() && !(request instanceof BreakpointRequest) /*no built-in class filters support for breakpoint requests*/) {
+      addClassFilters(request, requestor.getClassFilters(), requestor.getClassExclusionFilters());
+    }
+
+    registerRequestInternal(requestor, request);
+  }
+
+  private static void applySuspendPolicy(FilteredRequestor requestor, EventRequest request) {
     if (DebuggerSettings.SUSPEND_ALL.equals(requestor.getSuspendPolicy())) {
       if (DebuggerUtils.isAlwaysSuspendThreadBeforeSwitch()) {
         request.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD);
@@ -171,17 +188,6 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       //we should pause thread in order to evaluate conditions
       request.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD);
     }
-
-    // count filter has to be applied manually if condition is specified
-    if (requestor.isCountFilterEnabled() && !requestor.isConditionEnabled()) {
-      request.addCountFilter(requestor.getCountFilter());
-    }
-
-    if (requestor.isClassFiltersEnabled() && !(request instanceof BreakpointRequest) /*no built-in class filters support for breakpoint requests*/) {
-      addClassFilters(request, requestor.getClassFilters(), requestor.getClassExclusionFilters());
-    }
-
-    registerRequestInternal(requestor, request);
   }
 
   public void addClassFilters(EventRequest request, ClassFilter[] classFilters, ClassFilter[] classExclusionFilters) {
@@ -264,6 +270,30 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     MethodExitRequest req = myEventRequestManager.createMethodExitRequest();
     addLocatableRequest(requestor, req);
     return req;
+  }
+
+  /**
+   * Creates a transient method exit request to collect the exiting method's return value.
+   * <p>
+   * Note: hit counts are undefined for emulated method exit breakpoints until
+   * <a href="https://youtrack.jetbrains.com/issue/IDEA-392005">IDEA-392005</a>.
+   * The counter lives on the event request and will be reset by this per-hit transient request.
+   */
+  public MethodExitRequest createTransientMethodExitRequest(FilteredRequestor requestor) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    MethodExitRequest request = myEventRequestManager.createMethodExitRequest();
+
+    // Register the request with its own transient requestor.
+    // Deleting that requestor removes this request without touching the breakpoint's other requests.
+    var transientRequestor = new Requestor() {};
+    registerRequest(transientRequestor, request);
+    request.putProperty(TRANSIENT_REQUESTOR, transientRequestor);
+
+    // Apply only the suspend policy. The original breakpoint handles count and class filtering.
+    // Do not use addLocatableRequest() here. It would apply those filters a second time.
+    applySuspendPolicy(requestor, request);
+    registerRequestInternal(requestor, request);
+    return request;
   }
 
   public BreakpointRequest createBreakpointRequest(FilteredRequestor requestor, Location location) {

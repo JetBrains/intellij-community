@@ -23,6 +23,7 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.icons.AllIcons;
@@ -56,7 +57,7 @@ import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
 
 public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointProperties> implements MethodBreakpointBase {
-  private static final Logger LOG = Logger.getInstance(ExceptionBreakpoint.class);
+  private static final Logger LOG = Logger.getInstance(WildcardMethodBreakpoint.class);
 
   public WildcardMethodBreakpoint(Project project, XBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
     super(project, breakpoint);
@@ -183,6 +184,11 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
   }
 
   @Override
+  public boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) throws EventProcessingException {
+    return MethodBreakpointBase.processWithReturnValueCapture(this, action, event, LOG, () -> super.processLocatableEvent(action, event));
+  }
+
+  @Override
   public String getEventMessage(@NotNull LocatableEvent event) {
     return MethodBreakpoint.getEventMessage(event, "");
   }
@@ -270,6 +276,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     return new WildcardMethodBreakpoint(project, classPattern, methodName, xBreakpoint);
   }
 
+  @Override
   public boolean isEmulated() {
     return getProperties().EMULATED;
   }

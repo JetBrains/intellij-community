@@ -15,6 +15,7 @@ import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -539,6 +540,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     }
   }
 
+  @Override
   public boolean isEmulated() {
     return getProperties().EMULATED;
   }
@@ -664,6 +666,11 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   private static void updateProgress(ProgressIndicator progressIndicator, int current, int total) {
     progressIndicator.setText2(current + "/" + total);
     progressIndicator.setFraction((double)current / total);
+  }
+
+  @Override
+  public boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) throws EventProcessingException {
+    return MethodBreakpointBase.processWithReturnValueCapture(this, action, event, LOG, () -> super.processLocatableEvent(action, event));
   }
 
   /**

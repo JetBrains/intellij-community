@@ -375,6 +375,8 @@
                  description="Watch if a thread we do stepping in is blocked by another suspended thread"/>
     <registryKey key="debugger.check.source" defaultValue="true"
                  description="Check that the source code matches the bytecode"/>
+    <registryKey key="debugger.emulated.method.return.values" defaultValue="true"
+                 description="Show method return values at emulated method exit breakpoints"/>
     <applicationSettings service="com.intellij.debugger.settings.TraceSettings"/>
     <applicationSettings service="com.intellij.debugger.settings.ViewsGeneralSettings"/>
     <applicationSettings service="com.intellij.debugger.settings.ThreadsViewSettings"/>

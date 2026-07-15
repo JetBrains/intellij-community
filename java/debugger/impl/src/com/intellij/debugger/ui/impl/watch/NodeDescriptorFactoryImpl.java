@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.impl.descriptors.data.ArgValueData;
 import com.intellij.debugger.impl.descriptors.data.ArrayItemData;
+import com.intellij.debugger.impl.descriptors.data.CurrentMethodReturnValueData;
 import com.intellij.debugger.impl.descriptors.data.DescriptorData;
 import com.intellij.debugger.impl.descriptors.data.DescriptorKey;
 import com.intellij.debugger.impl.descriptors.data.DisplayKey;
@@ -179,6 +180,10 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
 
   public ValueDescriptorImpl getMethodReturnValueDescriptor(NodeDescriptorImpl parent, Method method, Value value) {
     return getDescriptor(parent, new MethodReturnValueData(method, value));
+  }
+
+  public ValueDescriptorImpl getCurrentMethodReturnValueDescriptor(NodeDescriptorImpl parent, Method method, Value value) {
+    return getDescriptor(parent, new CurrentMethodReturnValueData(method, value));
   }
 
   public ValueDescriptorImpl getThrownExceptionObjectDescriptor(NodeDescriptorImpl parent, ObjectReference exceptionObject) {

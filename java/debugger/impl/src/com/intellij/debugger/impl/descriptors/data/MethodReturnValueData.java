@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public final class MethodReturnValueData extends DescriptorData<MethodReturnValueDescriptorImpl> {
+public class MethodReturnValueData extends DescriptorData<MethodReturnValueDescriptorImpl> {
   private final @Nullable Value myReturnValue;
   private final @NotNull Method myMethod;
 

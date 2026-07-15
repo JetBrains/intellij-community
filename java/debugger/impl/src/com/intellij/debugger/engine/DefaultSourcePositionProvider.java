@@ -9,6 +9,7 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.watch.ArgumentValueDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.CurrentMethodReturnValueDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.MethodReturnValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
@@ -66,6 +67,12 @@ public final class DefaultSourcePositionProvider extends SourcePositionProvider 
       Collection<String> names = ((ArgumentValueDescriptorImpl)descriptor).getVariable().getMatchedNames();
       if (!names.isEmpty()) {
         return getSourcePositionForLocalVariable(names.iterator().next(), project, context, nearest);
+      }
+    }
+    else if (descriptor instanceof CurrentMethodReturnValueDescriptorImpl) {
+      var suspendContext = context.getSuspendContext();
+      if (suspendContext != null && suspendContext.getCurrentMethodExitEvent() != null) {
+        return context.getSourcePosition();
       }
     }
     else if (descriptor instanceof MethodReturnValueDescriptorImpl) {
