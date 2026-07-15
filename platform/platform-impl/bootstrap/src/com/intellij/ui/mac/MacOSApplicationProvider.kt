@@ -258,8 +258,10 @@ private fun installProtocolHandler(desktop: Desktop, mainScope: CoroutineScope) 
     if (LoadingState.APP_STARTED.isOccurred) {
       mainScope.launch {
         CommandLineProcessor.processProtocolCommand(uriString)
-        CommandLineProcessor.findVisibleFrame()?.let { frame ->
-          AppIcon.getInstance().requestFocus(frame)
+        withContext(Dispatchers.EDT) {
+          CommandLineProcessor.findVisibleFrame()?.let { frame ->
+            AppIcon.getInstance().requestFocus(frame)
+          }
         }
       }
     }
