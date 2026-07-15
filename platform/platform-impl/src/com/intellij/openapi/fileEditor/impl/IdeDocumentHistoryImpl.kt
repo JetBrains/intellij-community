@@ -762,6 +762,8 @@ open class IdeDocumentHistoryImpl(
     }
 
     fun recentFileUpdated(file: VirtualFile)
+
+    fun recentFileRemoved(file: VirtualFile)
   }
 }
 

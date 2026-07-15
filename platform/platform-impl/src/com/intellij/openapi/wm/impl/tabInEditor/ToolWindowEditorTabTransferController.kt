@@ -4,8 +4,10 @@ package com.intellij.openapi.wm.impl.tabInEditor
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
+import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.getPreferredFocusedComponent
 import com.intellij.openapi.util.KeyedExtensionCollector
@@ -68,7 +70,12 @@ class ToolWindowEditorTabTransferController(
     file.withSkippedCloseHandler {
       FileEditorManager.getInstance(project).closeFile(file)
     }
+
+    EditorHistoryManager.getInstance(project).removeFile(file)
+    project.messageBus.syncPublisher(IdeDocumentHistoryImpl.RecentFileHistoryOrderListener.TOPIC).recentFileRemoved(file)
+
     file.isValid = false
+
     restoreContentToToolWindow(content, toolWindow, targetDecorator?.contentManager)
   }
 

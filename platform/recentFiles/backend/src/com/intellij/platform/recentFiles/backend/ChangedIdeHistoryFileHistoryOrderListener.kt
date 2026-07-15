@@ -13,4 +13,9 @@ internal class ChangedIdeHistoryFileHistoryOrderListener(private val project: Pr
     thisLogger().trace { "Files to apply changes for: ${file.name}" }
     BackendRecentFileEventsController.applyRelevantEventsToModel(listOf(file), FileChangeKind.ADDED, project)
   }
+
+  override fun recentFileRemoved(file: VirtualFile) {
+    thisLogger().trace { "Files to apply changes for: ${file.name}" }
+    BackendRecentFileEventsController.applyRelevantEventsToModel(listOf(file), FileChangeKind.REMOVED, project)
+  }
 }
