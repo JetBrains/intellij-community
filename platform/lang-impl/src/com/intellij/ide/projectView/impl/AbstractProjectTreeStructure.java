@@ -20,7 +20,7 @@ public abstract class AbstractProjectTreeStructure extends ProjectAbstractTreeSt
   }
 
   protected AbstractTreeNode<?> createRoot(@NotNull Project project, @NotNull ViewSettings settings) {
-    return new ProjectViewProjectNode(myProject, this);
+    return new ProjectViewProjectNode(myProject, settings);
   }
 
   @Override
