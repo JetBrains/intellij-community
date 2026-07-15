@@ -261,8 +261,79 @@ It deliberately does **not** extend `PsiExternalReferenceHost` — an own-refere
 external-reference support at all. `getPolySymbolOwnReferences()` is cached (`CachedValuesManager`,
 invalidated on PSI modification) and shared by both `getOwnReferences()` and
 `PolySymbolHighlightingAnnotator`'s symbol-kind highlighting (via `PolySymbolOwnReferencesHost`'s
-`referencedSymbols`), so implementing the interface gets you full automatic highlighting — including
-per-host `PolySymbolHighlightingCustomizer` overrides — with no extra work.
+`referencedSymbols`).
+
+**This does not mean "full automatic highlighting with no extra work," though — two corrections to a
+common misreading:** (1) `PolySymbolHighlightingAnnotator` picks up highlighting from **either**
+own-references **or** EP-provided (`PsiExternalReferenceHost`) references — own-references is not
+the exclusive source, it's one of two equally-supported paths. (2) Neither path produces *any* actual
+color by itself. Confirmed by reading the annotator's attribute-lookup chain directly
+(`PolySymbolHighlightingAnnotator.highlightSymbols()`): for every resolved symbol it tries, in order,
+`PolySymbolHighlightingCustomizer.getSymbolTextAttributes(host, symbol, level)`, then
+`symbol[TextAttributesKeyProperty]`, then `PolySymbolHighlightingCustomizer.getTextAttributesFor(kind)`
+— all three return `null` unless something registers a customizer or sets a per-symbol property. With
+nothing registered, a fully-working own/external reference resolves and is find-usages/rename-able,
+but renders with zero color. Implementing `PolySymbolOwnReferencesHost` gets you the *mechanism*
+(a hook the annotator will call into); a [`PolySymbolHighlightingCustomizer`](#polysymbolhighlightingcustomizer)
+is what actually supplies the colors.
+
+## PolySymbolHighlightingCustomizer
+
+```kotlin
+interface PolySymbolHighlightingCustomizer {
+  fun getSymbolKindTextAttributes(kind: PolySymbolKind): TextAttributesKey? = null
+  fun getDefaultHostClassTextAttributes(): Map<Class<out PsiElement>, TextAttributesKey> = emptyMap()
+  fun getSymbolTextAttributes(host: PsiElement, symbol: PolySymbol, level: Int): TextAttributesKey? = null
+}
+```
+
+Register at EP `com.intellij.polySymbols.highlightingCustomizer`
+(`community/platform/polySymbols/backend/src/com/intellij/polySymbols/highlighting/PolySymbolHighlightingCustomizer.kt`).
+All three methods default to "no opinion" (`null`/empty map) — a customizer only needs to implement
+the one(s) it actually has an answer for. Multiple registered customizers compose **first-non-null-wins**,
+in EP registration order, so `order="before ..."` matters when more than one customizer could answer
+for the same kind/symbol — Angular registers `order="before js, before html"` so its own coloring for
+Angular-specific symbol kinds takes precedence over the generic JS/HTML customizers that would
+otherwise also match.
+
+Two real shapes:
+- **Kind-only**: CSS's customizer just maps `PolySymbolKind` → `TextAttributesKey` via
+  `getSymbolKindTextAttributes` — no need to inspect the concrete symbol.
+- **Symbol-aware**: override `getSymbolTextAttributes(host, symbol, level)` when the color depends on
+  something the kind alone can't express — a modifier (static vs. instance), which class declared it
+  (user code vs. SDK/builtin), or the host's own syntax (is this identifier followed by a call).
+  JS's and GDScript's customizers (`GdPolySymbolHighlightingCustomizer`) are both this shape.
+
+**The `symbol` passed to `getSymbolTextAttributes` is whatever the query/reference machinery
+produced — usually the raw, unwrapped `nameMatchQuery` result, not necessarily the real underlying
+symbol.** Confirmed by reading `PolySymbolHighlightingAnnotator.highlightSymbols()`: it passes
+`nameSegment.symbols` entries straight through. For a language whose own-references go through
+`fromNameMatchQuery`-style filtering, that's the same `PolySymbolMatchBase` wrapper whose own `.kind`
+reports the *query's* composite kind, not the real symbol's — unwrap first
+(`symbol.unwrapMatchedSymbols().firstOrNull()`) before reading `.kind`/`.modifiers`/anything else
+kind-specific, or the customizer will silently return `null`/a wrong answer for almost every symbol
+once it's wired in as the real coloring path (not a niche fallback). GDScript's
+`GdPolySymbolHighlightingCustomizer` hit exactly this while migrating off a legacy annotator: a
+mechanical transplant of the old (correct, because it ran *after* a classic-PSI-resolve success)
+`when (symbol.kind)` coloring logic silently rendered almost everything as a generic fallback color
+once it became the primary path, because the raw query result it now received had a useless `.kind`.
+
+**No platform hook exists for unresolved-reference diagnostics or resolution-dependent checks** —
+worth knowing explicitly rather than assuming a customizer/EP covers it. The only built-in mechanism
+is mechanical: a `PsiPolySymbolReferenceProvider`/own-reference can return
+`PsiPolySymbolReferenceProvider.unresolvedSymbol(kind, name)` instead of `null`, which the annotator
+turns into a hardcoded `WARNING`-severity "unrecognized identifier" annotation — optionally remapped
+to a real, user-configurable inspection via EP `com.intellij.polySymbols.inspectionToolMapping`
+(`PolySymbolInspectionToolMappingEP`; Vue's `VueUnrecognizedSlotInspection` is the worked example).
+There is **no** hook for: domain-specific tolerance logic that should suppress "unresolved" for
+certain shapes (e.g. GDScript tolerates unresolved members on a `Variant`/`Node`-typed qualifier), or
+a diagnostic that depends on resolution *succeeding* to a particular kind (GDScript's "SDK builtin
+type with a constructor can't be assigned to a variable" check — that only makes sense once you know
+what the reference resolved *to*). Both stay hand-written `Annotator`s that resolve via the
+PolySymbols APIs (`element.getOwnReferences()`/a `resolveSymbolReference()`-style helper) and run
+their own checks on the result — see GDScript's `GdRefIdAnnotator` for the worked example of an
+annotator that does exactly this and nothing else (coloring is fully delegated to the customizer
+above).
 
 ## Completion — `PolySymbolsCompletionProviderBase`
 
