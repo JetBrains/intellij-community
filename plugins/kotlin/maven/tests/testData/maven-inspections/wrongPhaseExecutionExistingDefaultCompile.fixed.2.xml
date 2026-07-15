@@ -68,4 +68,4 @@
 </project>
 
 <!-- mkjava -->
-<!-- problem: on compile, title Kotlin plugin should run before javac so kotlin classes could be visible from Java -->
+<!-- problem: on compile, title Kotlin plugin should run before javac so Kotlin classes could be visible from Java -->
