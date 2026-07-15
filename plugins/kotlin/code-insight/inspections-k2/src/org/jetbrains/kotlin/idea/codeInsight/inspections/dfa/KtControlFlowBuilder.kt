@@ -115,7 +115,6 @@ import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
-import org.jetbrains.kotlin.analysis.api.components.targetSymbol
 import org.jetbrains.kotlin.analysis.api.components.type
 import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractCallsInPlaceContractEffectDeclaration
@@ -1048,18 +1047,22 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val endOffset = DeferredOffset()
         for (entry in expr.entries) {
             val skipBranch = DeferredOffset()
+            val whenGuardAnchor = entry.guard?.let { KotlinAnchor.KotlinWhenGuardAnchor(it) }
+
             if (entry.elseKeyword == null) {
                 val branchStart = DeferredOffset()
                 for (condition in entry.conditions) {
-                    processWhenCondition(dfVar, kotlinType, condition)
+                    processWhenCondition(dfVar, kotlinType, condition, whenGuardAnchor)
                     addInstruction(ConditionalGotoInstruction(branchStart, DfTypes.TRUE))
                 }
                 addInstruction(GotoInstruction(skipBranch))
                 setOffset(branchStart)
             }
-            val guard = entry.guard
-            if (guard != null) {
-                processExpression(guard.getExpression())
+            if (whenGuardAnchor != null) {
+                val condition = whenGuardAnchor.whenGuard.getExpression()
+                processExpression(condition)
+                unboxIfNecessary(condition)
+                addInstruction(ResultOfInstruction(whenGuardAnchor))
                 addInstruction(ConditionalGotoInstruction(skipBranch, DfTypes.FALSE))
             }
             processExpression(entry.expression)
@@ -1072,7 +1075,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     context(_: KaSession)
-    private fun processWhenCondition(dfVar: DfaVariableValue?, dfVarType: KaType?, condition: KtWhenCondition) {
+    private fun processWhenCondition(dfVar: DfaVariableValue?, dfVarType: KaType?, condition: KtWhenCondition, guard: KotlinAnchor.KotlinWhenGuardAnchor?) {
         when (condition) {
             is KtWhenConditionWithExpression -> {
                 val expr = condition.expression
@@ -1083,7 +1086,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     addImplicitConversion(exprType, balancedType)
                     addInstruction(PushInstruction(dfVar, null))
                     addImplicitConversion(dfVarType, balancedType)
-                    addInstruction(BooleanBinaryInstruction(RelationType.EQ, true, KotlinWhenConditionAnchor(condition)))
+                    addInstruction(BooleanBinaryInstruction(RelationType.EQ, true, KotlinWhenConditionAnchor(condition, guard)))
                 } else {
                     unboxIfNecessary(expr)
                 }
@@ -1098,9 +1101,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     addInstruction(PushValueInstruction(type))
                     if (condition.isNegated) {
                         addInstruction(InstanceofInstruction(null, false))
-                        addInstruction(NotInstruction(KotlinWhenConditionAnchor(condition)))
+                        addInstruction(NotInstruction(KotlinWhenConditionAnchor(condition, guard)))
                     } else {
-                        addInstruction(InstanceofInstruction(KotlinWhenConditionAnchor(condition), false))
+                        addInstruction(InstanceofInstruction(KotlinWhenConditionAnchor(condition, guard), false))
                     }
                 }
             }
@@ -1111,7 +1114,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 } else {
                     pushUnknown()
                 }
-                processInCheck(dfVarType, condition.rangeExpression, KotlinWhenConditionAnchor(condition), condition.isNegated)
+                processInCheck(dfVarType, condition.rangeExpression, KotlinWhenConditionAnchor(condition, guard), condition.isNegated)
             }
 
             else -> broken = true

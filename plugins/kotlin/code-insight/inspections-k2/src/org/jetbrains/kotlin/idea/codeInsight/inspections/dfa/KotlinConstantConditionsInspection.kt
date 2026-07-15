@@ -216,86 +216,90 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         listener: KotlinDfaListener,
         holder: ProblemsHolder
     ) {
-        listener.constantConditions.forEach { (anchor, cv) ->
-            if (cv != ConstantValue.UNKNOWN) {
-                when (anchor) {
-                    is KotlinExpressionAnchor -> {
-                        val expr = anchor.expression
-                        if (!analyze(expr) { shouldSuppress(cv, expr, false) }) {
-                            val key = when (cv) {
-                                ConstantValue.TRUE ->
-                                    if (shouldReportAsValue(cv, expr))
-                                        "inspection.message.value.always.true"
-                                    else if (logicalChain(expr))
-                                        "inspection.message.condition.always.true.when.reached"
-                                    else
-                                        "inspection.message.condition.always.true"
+        for ((anchor, cv) in listener.constantConditions) {
+            when (anchor) {
+                is KotlinExpressionAnchor if cv != ConstantValue.UNKNOWN -> {
+                    val expr = anchor.expression
+                    if (!analyze(expr) { shouldSuppress(cv, expr, false) }) {
+                        val key = when (cv) {
+                            ConstantValue.TRUE ->
+                                if (shouldReportAsValue(cv, expr))
+                                    "inspection.message.value.always.true"
+                                else if (logicalChain(expr))
+                                    "inspection.message.condition.always.true.when.reached"
+                                else
+                                    "inspection.message.condition.always.true"
 
-                                ConstantValue.FALSE ->
-                                    if (shouldReportAsValue(cv, expr))
-                                        "inspection.message.value.always.false"
-                                    else if (logicalChain(expr))
-                                        "inspection.message.condition.always.false.when.reached"
-                                    else
-                                        "inspection.message.condition.always.false"
+                            ConstantValue.FALSE ->
+                                if (shouldReportAsValue(cv, expr))
+                                    "inspection.message.value.always.false"
+                                else if (logicalChain(expr))
+                                    "inspection.message.condition.always.false.when.reached"
+                                else
+                                    "inspection.message.condition.always.false"
 
-                                ConstantValue.NULL -> "inspection.message.value.always.null"
-                                ConstantValue.ZERO -> "inspection.message.value.always.zero"
-                                else -> throw IllegalStateException("Unexpected constant: $cv")
-                            }
-                            val highlightType =
-                                if (shouldReportAsValue(cv, expr)) ProblemHighlightType.WEAK_WARNING
-                                else ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-                            if (warnOnConstantRefs || highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
-                                val simplifyExpressionFixIfAvailable = when (cv) {
-                                    ConstantValue.TRUE -> ConstantExpressionValue.of(true)
-                                    ConstantValue.FALSE -> ConstantExpressionValue.of(false)
-                                    ConstantValue.ZERO -> ConstantExpressionValue.of(0)
-                                    ConstantValue.NULL -> ConstantExpressionValue.of(null)
-                                    else -> null
-                                }?.let { constantExpressionValue ->
-                                    LocalQuickFix.from(SimplifyExpressionFix(expr, constantExpressionValue))
-                                }
-                                val fixes = if (simplifyExpressionFixIfAvailable != null)
-                                    arrayOf(simplifyExpressionFixIfAvailable)
-                                else emptyArray()
-                                holder.registerProblem(
-                                    expr, KotlinBundle.message(key, expr.text), highlightType, *fixes
-                                )
-                            }
+                            ConstantValue.NULL -> "inspection.message.value.always.null"
+                            ConstantValue.ZERO -> "inspection.message.value.always.zero"
+                            else -> throw IllegalStateException("Unexpected constant: $cv")
                         }
-                    }
-
-                    is KotlinWhenConditionAnchor -> {
-                        val condition = anchor.condition
-                        if (!shouldSuppressWhenCondition(cv, condition)) {
-                            val message = KotlinBundle.message("inspection.message.when.condition.always.false")
-                            if (cv == ConstantValue.FALSE) {
-                                holder.registerProblem(condition, message)
-                            } else if (cv == ConstantValue.TRUE) {
-                                condition.siblings(forward = true, withSelf = false)
-                                    .filterIsInstance<KtWhenCondition>()
-                                    .filter { cond -> cond.text.isNotEmpty() }
-                                    .forEach { cond -> holder.registerProblem(cond, message) }
-                                val nextEntry = condition.parent as? KtWhenEntry ?: return@forEach
-                                nextEntry.siblings(forward = true, withSelf = false)
-                                    .filterIsInstance<KtWhenEntry>()
-                                    .filterNot { entry -> entry.isElse }
-                                    .flatMap { entry -> entry.conditions.asSequence() }
-                                    .filter { cond -> cond.text.isNotEmpty() }
-                                    .forEach { cond -> holder.registerProblem(cond, message) }
+                        val highlightType =
+                            if (shouldReportAsValue(cv, expr)) ProblemHighlightType.WEAK_WARNING
+                            else ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+                        if (warnOnConstantRefs || highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
+                            val simplifyExpressionFixIfAvailable = when (cv) {
+                                ConstantValue.TRUE -> ConstantExpressionValue.of(true)
+                                ConstantValue.FALSE -> ConstantExpressionValue.of(false)
+                                ConstantValue.ZERO -> ConstantExpressionValue.of(0)
+                                ConstantValue.NULL -> ConstantExpressionValue.of(null)
+                                else -> null
+                            }?.let { constantExpressionValue ->
+                                LocalQuickFix.from(SimplifyExpressionFix(expr, constantExpressionValue))
                             }
-                        }
-                    }
-
-                    is KotlinForVisitedAnchor -> {
-                        val loopRange = anchor.forExpression.loopRange!!
-                        if (cv == ConstantValue.FALSE && !shouldSuppressForCondition(loopRange)) {
-                            val message = KotlinBundle.message("inspection.message.for.never.visited")
-                            holder.registerProblem(loopRange, message)
+                            val fixes = if (simplifyExpressionFixIfAvailable != null)
+                                arrayOf(simplifyExpressionFixIfAvailable)
+                            else emptyArray()
+                            holder.registerProblem(
+                                expr, KotlinBundle.message(key, expr.text), highlightType, *fixes
+                            )
                         }
                     }
                 }
+
+                is KotlinWhenConditionAnchor -> {
+                    val condition = anchor.condition
+                    val guardAnchor = anchor.whenGuardAnchor
+                    val guardAnchorValue = guardAnchor?.let { listener.constantConditions[it] }
+
+                    if (!shouldSuppressWhenCondition(cv, condition, guardAnchor, guardAnchorValue)) {
+                        val message = KotlinBundle.message("inspection.message.when.condition.always.false")
+                        if (cv == ConstantValue.FALSE || guardAnchorValue == ConstantValue.FALSE) {
+                            holder.registerProblem(condition, message)
+                        } else if (cv == ConstantValue.TRUE && (guardAnchor == null || guardAnchorValue == ConstantValue.TRUE)) {
+                            condition.siblings(forward = true, withSelf = false)
+                                .filterIsInstance<KtWhenCondition>()
+                                .filter { cond -> cond.text.isNotEmpty() }
+                                .forEach { cond -> holder.registerProblem(cond, message) }
+                            val nextEntry = condition.parent as? KtWhenEntry ?: continue
+                            nextEntry.siblings(forward = true, withSelf = false)
+                                .filterIsInstance<KtWhenEntry>()
+                                .filterNot { entry -> entry.isElse }
+                                .flatMap { entry -> entry.conditions.asSequence() }
+                                .filter { cond -> cond.text.isNotEmpty() }
+                                .forEach { cond -> holder.registerProblem(cond, message) }
+                        }
+                    }
+                }
+
+                is KotlinForVisitedAnchor if cv != ConstantValue.UNKNOWN -> {
+                    val loopRange = anchor.forExpression.loopRange!!
+                    if (cv == ConstantValue.FALSE && !shouldSuppressForCondition(loopRange)) {
+                        val message = KotlinBundle.message("inspection.message.for.never.visited")
+                        holder.registerProblem(loopRange, message)
+                    }
+                }
+
+                // Ignore other cases. In particular, `KotlinWhenGuardAnchor` is only used in conjunction with `KotlinWhenConditionAnchor`
+                else -> {}
             }
         }
         listener.problems.forEach { (problem, state) ->
@@ -364,12 +368,17 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         return false
     }
 
+    private fun ConstantValue?.isUnknownBoolean(): Boolean =
+        this == null || (this != ConstantValue.FALSE && this != ConstantValue.TRUE)
+
     private fun shouldSuppressWhenCondition(
         cv: ConstantValue,
-        condition: KtWhenCondition
+        condition: KtWhenCondition,
+        guardAnchor: KotlinAnchor.KotlinWhenGuardAnchor?,
+        guardAnchorValue: ConstantValue?
     ): Boolean {
-        if (cv != ConstantValue.FALSE && cv != ConstantValue.TRUE) return true
-        if (cv == ConstantValue.TRUE && isLastCondition(condition)) return true
+        if (cv.isUnknownBoolean() && (guardAnchor == null || guardAnchorValue.isUnknownBoolean())) return true
+        if (cv == ConstantValue.TRUE && (guardAnchor == null || guardAnchorValue == ConstantValue.TRUE) && isLastCondition(condition)) return true
         if (cv == ConstantValue.FALSE && isFailingBranchInExhaustiveWhen(condition)) return true
         if (condition.textLength == 0) return true
         return isCompilationWarning(condition)
@@ -602,7 +611,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
          * @return true if we should not warn about expression being equal to a specified value
          */
         fun shouldSuppress(value: DfType, expression: KtExpression): Boolean {
-            val constant = when(value) {
+            val constant = when (value) {
                 DfTypes.NULL -> ConstantValue.NULL
                 DfTypes.TRUE -> ConstantValue.TRUE
                 DfTypes.FALSE -> ConstantValue.FALSE
