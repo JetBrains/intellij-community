@@ -54,7 +54,7 @@ import java.util.Set;
 public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParameterObjectClassDescriptor<PsiMethod, ParameterInfoImpl> {
   private static final Logger LOG = Logger.getInstance(JavaIntroduceParameterObjectClassDescriptor.class);
   private final Set<PsiTypeParameter> myTypeParameters = new LinkedHashSet<>();
-  private final Map<ParameterInfoImpl, ParameterBean> myExistingClassProperties = new HashMap<>();
+  private final Map<ParameterInfoImpl, Property> myExistingClassProperties = new HashMap<>();
   private final MoveDestination myMoveDestination;
 
   public JavaIntroduceParameterObjectClassDescriptor(@NotNull String className,
@@ -112,41 +112,38 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
   }
 
   public String getGetter(ParameterInfoImpl param) {
-    final ParameterBean bean = getBean(param);
-    return bean != null ? bean.getGetter() : null;
+    final Property property = myExistingClassProperties.get(param);
+    return property != null ? property.getGetter() : null;
   }
 
   public String getSetter(ParameterInfoImpl param) {
-    final ParameterBean bean = getBean(param);
-    return bean != null ? bean.getSetter() : null;
+    final Property property = myExistingClassProperties.get(param);
+    return property != null ? property.getSetter() : null;
   }
 
   @Override
   public String getSetterName(ParameterInfoImpl parameterInfo, @NotNull PsiElement context) {
-    final ParameterBean bean = getBean(parameterInfo);
-    @NonNls String setter = bean != null ? bean.getSetter() : null;
+    final Property property = myExistingClassProperties.get(parameterInfo);
+    @NonNls String setter = property != null ? property.getSetter() : null;
     if (setter == null) {
-      setter = bean != null && bean.getField() != null
-               ? GenerateMembersUtil.suggestSetterName(bean.getField())
-               : GenerateMembersUtil
-                 .suggestSetterName(parameterInfo.getName(), parameterInfo.getTypeWrapper().getType(context),
-                                    context.getProject());
+      setter = property != null && property.getField() != null
+               ? GenerateMembersUtil.suggestSetterName(property.getField())
+               : GenerateMembersUtil.suggestSetterName(parameterInfo.getName(), parameterInfo.getTypeWrapper().getType(context),
+                                                       context.getProject());
     }
 
     return setter;
   }
 
   @Override
-  public String getGetterName(ParameterInfoImpl paramInfo,
-                              @NotNull PsiElement context,
-                              ReadWriteAccessDetector.Access access) {
-    final ParameterBean bean = getBean(paramInfo);
-    @NonNls String getter = bean != null ? bean.getGetter() : null;
+  public String getGetterName(ParameterInfoImpl paramInfo, @NotNull PsiElement context, ReadWriteAccessDetector.Access access) {
+    final Property property = myExistingClassProperties.get(paramInfo);
+    @NonNls String getter = property != null ? property.getGetter() : null;
     if (getter == null) {
-      if (bean != null && bean.getField() != null) {
-        getter = GenerateMembersUtil.suggestGetterName(bean.getField());
+      if (property != null && property.getField() != null) {
+        getter = GenerateMembersUtil.suggestGetterName(property.getField());
       }
-      else if (bean == null && access == ReadWriteAccessDetector.Access.Read && PsiUtil.isAvailable(JavaFeature.RECORDS, context)) {
+      else if (property == null && access == ReadWriteAccessDetector.Access.Read && PsiUtil.isAvailable(JavaFeature.RECORDS, context)) {
         getter = paramInfo.getName();
       }
       else {
@@ -166,12 +163,12 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
   }
 
   public @Nullable PsiField getField(ParameterInfoImpl parameter) {
-    final ParameterBean bean = getBean(parameter);
-    return bean != null ? bean.getField() : null;
+    final Property property = myExistingClassProperties.get(parameter);
+    return property != null ? property.getField() : null;
   }
 
-  public ParameterBean getBean(ParameterInfoImpl param) {
-    return myExistingClassProperties.get(param);
+  boolean hasProperty(ParameterInfoImpl param) {
+    return myExistingClassProperties.get(param) != null;
   }
 
   private @Nullable PsiMethod findCompatibleConstructor(@NotNull PsiClass aClass) {
@@ -181,10 +178,10 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
       final PsiType paramType = parameterInfo.getTypeWrapper().getType(aClass);
       String fqn = aClass.getQualifiedName();
       if (fqn != null && TypeConversionUtil.isPrimitiveWrapper(fqn)) {
-        ParameterBean bean = new ParameterBean();
-        bean.setField(aClass.findFieldByName("value", false));
-        bean.setGetter(paramType.getCanonicalText() + "Value");
-        myExistingClassProperties.put(parameterInfo, bean);
+        Property property = new Property();
+        property.setField(aClass.findFieldByName("value", false));
+        property.setGetter(paramType.getCanonicalText() + "Value");
+        myExistingClassProperties.put(parameterInfo, property);
         for (PsiMethod constructor : aClass.getConstructors()) {
           if (isConstructorCompatible(constructor, new ParameterInfoImpl[]{parameterInfo}, aClass)) return constructor;
         }
@@ -209,8 +206,8 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     for (int i = 0; i < getParamsToMerge().length; i++) {
       final int oldIndex = getParamsToMerge()[i].getOldIndex();
       final ParameterInfoImpl methodParam = getParameterInfo(oldIndex);
-      final ParameterBean bean = new ParameterBean();
-      myExistingClassProperties.put(methodParam, bean);
+      final Property property = new Property();
+      myExistingClassProperties.put(methodParam, property);
 
       final PsiVariable var = constructorParams[i];
 
@@ -219,16 +216,16 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
         return null;
       }
 
-      bean.setField(field);
+      property.setField(field);
 
       final PsiMethod getterForField = PropertyUtilBase.findGetterForField(field);
       if (getterForField != null) {
-        bean.setGetter(getterForField.getName());
+        property.setGetter(getterForField.getName());
       }
 
       final PsiMethod setterForField = PropertyUtilBase.findSetterForField(field);
       if (setterForField != null) {
-        bean.setSetter(setterForField.getName());
+        property.setSetter(setterForField.getName());
       }
     }
     return compatibleConstructor;
@@ -386,8 +383,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     }
   }
 
-  @ApiStatus.Internal
-  public static final class ParameterBean {
+  private static final class Property {
     private PsiField myField;
     private String myGetter;
     private String mySetter;
