@@ -15,5 +15,23 @@
             interface="org.jetbrains.kotlin.idea.base.facet.platform.TargetPlatformDetector"
             area="IDEA_PROJECT"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.facetConfigurationExtension"
+            interface="org.jetbrains.kotlin.idea.facet.KotlinFacetConfigurationExtension"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.versionInfoProvider"
+            interface="org.jetbrains.kotlin.idea.facet.KotlinVersionInfoProvider"/>
   </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <workspaceModel.facetContributor implementation="org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetContributor"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.config.KotlinFacetSettingsProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.facet.KotlinFacetSettingsProviderImpl"/>
+    <facetType implementation="org.jetbrains.kotlin.idea.facet.KotlinFacetTypeImpl"/>
+    <library.type implementation="org.jetbrains.kotlin.idea.framework.CommonLibraryType"/>
+    <workspaceModel.customFacetRelatedEntitySerializer
+            implementation="org.jetbrains.kotlin.idea.workspaceModel.KotlinModuleSettingsSerializer" />
+    <sdkType implementation="org.jetbrains.kotlin.idea.framework.KotlinSdkType"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.framework.CreateKotlinSdkActivity"/>
+  </extensions>
 </idea-plugin>

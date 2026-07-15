@@ -35,6 +35,72 @@
     <readWriteAccessDetector implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector"
                              id="kotlin"
                              order="first"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.caches.ProbablyInjectedCallableNames"
+            serviceImplementation="org.jetbrains.kotlin.idea.caches.ProbablyInjectedCallableNamesImpl"/>
+    <referencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinAliasedImportedElementSearcher"/>
+    <resolveScopeEnlarger implementation="org.jetbrains.kotlin.idea.base.analysis.builtins.KotlinBuiltInsResolveScopeEnlarger" />
+    <methodReferencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinConstructorDelegationCallReferenceSearcher"/>
+    <methodReferencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinConventionMethodReferencesSearcher"/>
+    <useScopeOptimizer implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDeclarationScopeOptimizer"/>
+    <directClassInheritorsSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDirectInheritorsSearcher"/>
+    <gotoClassContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoClassContributor"/>
+    <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoClassSymbolContributor"/>
+    <gotoClassContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoFacadeClassContributor"/>
+    <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoFacadeClassContributor"/>
+    <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoFunctionSymbolContributor"/>
+    <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoJvmNameSymbolContributor"/>
+    <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoPropertySymbolContributor"/>
+    <gotoClassContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoTypeAliasContributor"/>
+    <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoTypeAliasContributor"/>
+    <idIndexer filetype="Kotlin" implementationClass="org.jetbrains.kotlin.idea.search.KotlinIdIndexer"/>
+    <indexPatternBuilder implementation="org.jetbrains.kotlin.idea.search.KotlinIndexPatternBuilder"/>
+    <globalIndexFilter implementation="org.jetbrains.kotlin.idea.stubindex.KotlinNonSourceRootIndexFilter"/>
+    <methodReferencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinOverridingMethodReferenceSearcher"/>
+    <overridingMethodsSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinOverridingMethodsWithFlexibleTypesSearcher"/>
+    <psi.treeChangePreprocessor implementation="org.jetbrains.kotlin.idea.caches.KotlinPackageStatementPsiTreeChangePreprocessor"/>
+    <methodReferencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinPropertyAccessorsReferenceSearcher"/>
+    <referencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearcher"/>
+    <referencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearcher"/>
+    <java.shortNamesCache implementation="org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache"/>
+    <todoIndexer filetype="Kotlin" implementationClass="org.jetbrains.kotlin.idea.search.KotlinTodoIndexer"/>
+    <indexPatternSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinTodoSearcher"/>
+    <itemPresentationProvider
+            implementationClass="org.jetbrains.kotlin.idea.presentation.KtDefaultDeclarationPresenter"
+            forClass="org.jetbrains.kotlin.psi.KtClass"/>
+    <itemPresentationProvider
+            implementationClass="org.jetbrains.kotlin.idea.presentation.KtDefaultDeclarationPresenter"
+            forClass="org.jetbrains.kotlin.psi.KtObjectDeclaration"/>
+    <itemPresentationProvider
+            implementationClass="org.jetbrains.kotlin.idea.presentation.KtDefaultDeclarationPresenter"
+            forClass="org.jetbrains.kotlin.psi.KtProperty"/>
+    <itemPresentationProvider
+            implementationClass="org.jetbrains.kotlin.idea.presentation.KtDefaultDeclarationPresenter"
+            forClass="org.jetbrains.kotlin.psi.KtParameter"/>
+    <itemPresentationProvider
+            implementationClass="org.jetbrains.kotlin.idea.presentation.KtDefaultDeclarationPresenter"
+            forClass="org.jetbrains.kotlin.psi.KtTypeAlias"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledClassCustomization"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysis.IdeaDecompiledClassCustomization"
+    />
+    <projectService serviceInterface="org.jetbrains.kotlin.psi.KtFileClassProvider"
+                    serviceImplementation="org.jetbrains.kotlin.idea.caches.resolve.KtFileClassProviderImpl"/>
+    <itemPresentationProvider
+            implementationClass="org.jetbrains.kotlin.idea.presentation.KtFunctionPresenter"
+            forClass="org.jetbrains.kotlin.psi.KtFunction"/>
+    <itemPresentationProvider
+            implementationClass="org.jetbrains.kotlin.idea.presentation.KtJvmNameAnnotationPresenter"
+            forClass="org.jetbrains.kotlin.psi.KtAnnotationEntry"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.asJava.classes.LightClassInheritanceHelper"
+            serviceImplementation="org.jetbrains.kotlin.idea.caches.lightClasses.IdeLightClassInheritanceHelper"
+    />
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.psi.stubs.elements.StubIndexService"
+            serviceImplementation="org.jetbrains.kotlin.idea.stubindex.IdeStubIndexService"/>
+    <applicationService serviceInterface="org.jetbrains.kotlin.analysis.decompiler.stub.file.FileAttributeService"
+                        serviceImplementation="org.jetbrains.kotlin.idea.caches.FileAttributeServiceImpl"/>
   </extensions>
 
   <projectListeners>
@@ -42,5 +108,9 @@
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
     <listener class="org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService$PackageCacheModuleRootListener"
               topic="com.intellij.openapi.roots.ModuleRootListener"/>
+    <listener class="org.jetbrains.kotlin.idea.stubindex.resolve.KotlinRepairIdeAfterCorruptionNotification"
+              topic="org.jetbrains.kotlin.idea.stubindex.resolve.KotlinCorruptedIndexListener"
+              activeInHeadlessMode="false"
+              activeInTestMode="false"/>
   </projectListeners>
 </idea-plugin>

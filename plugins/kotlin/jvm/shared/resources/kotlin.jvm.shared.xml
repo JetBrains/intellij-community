@@ -65,14 +65,10 @@
 
     <compiler.task execute="BEFORE" implementation="org.jetbrains.kotlin.idea.jvm.shared.internal.makeBackup.MakeBackupCompileTask"/>
 
-    <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.configuration.KotlinExternalSystemSyncListener"/>
+      <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.versions.UnsupportedAbiVersionNotificationPanelProvider"/>
 
-    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.versions.UnsupportedAbiVersionNotificationPanelProvider"/>
-
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerStartupActivity"/>
-
-    <notificationGroup id="Configure Kotlin in Project" displayType="STICKY_BALLOON" isLogByDefault="true"
-                       bundle="messages.KotlinJvmBundle" key="notification.group.configure.kotlin.in.project"/>
+      <notificationGroup id="Configure Kotlin in Project" displayType="STICKY_BALLOON" isLogByDefault="true"
+                         bundle="messages.KotlinJvmBundle" key="notification.group.configure.kotlin.in.project"/>
 
     <registryKey key="kotlin.ultra.light.classes.empty.text.range"
                  description="Return 'null' text range as in old light class implementation"
@@ -98,13 +94,7 @@
 
   <resource-bundle>messages.KotlinBundle</resource-bundle>
   <projectListeners>
-    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
-              topic="com.intellij.openapi.roots.ModuleRootListener"/>
-    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
-              topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
-    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
-              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
-    <listener class="org.jetbrains.kotlin.idea.jvm.shared.compiler.KotlinCompilationStatusListener"
-              topic="com.intellij.openapi.compiler.CompilationStatusListener"/>
+      <listener class="org.jetbrains.kotlin.idea.jvm.shared.compiler.KotlinCompilationStatusListener"
+                topic="com.intellij.openapi.compiler.CompilationStatusListener"/>
   </projectListeners>
 </idea-plugin>

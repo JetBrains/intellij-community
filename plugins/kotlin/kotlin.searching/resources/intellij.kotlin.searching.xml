@@ -33,9 +33,7 @@
                     serviceImplementation="org.jetbrains.kotlin.idea.searching.kmp.KotlinK2ExpectActualSupport"/>
     <usageTypeProvider implementation="org.jetbrains.kotlin.idea.searching.usages.KotlinK2UsageTypeProvider"/>
 
-    <lang.findUsagesProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesProviderBase"/>
-
-    <elementDescriptionProvider
+      <elementDescriptionProvider
             implementation="org.jetbrains.kotlin.idea.searching.usages.KotlinK2ElementDescriptionProvider"
             order="first"/>
   </extensions>

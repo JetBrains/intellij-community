@@ -247,17 +247,9 @@
 
     <pluginUpdateVerifier implementation="org.jetbrains.kotlin.idea.update.GooglePluginUpdateVerifier"/>
 
-        <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator"/>
-    <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJsModuleConfigurator"/>
-    <buildSystemDependencyManager implementation="org.jetbrains.kotlin.idea.configuration.JpsKotlinBuildSystemDependencyManager"/>
-  </extensions>
+    </extensions>
 
   <!-- Line markers -->
-  <extensions defaultExtensionNs="com.intellij">
-    <optionController implementation="org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProvider"/>
-    <optionController implementation="org.jetbrains.kotlin.idea.configuration.KotlinDependencyProvider"/>
-    <optionController implementation="org.jetbrains.kotlin.idea.configuration.JpsDependencyProvider"/>
-  </extensions>
 
   <!-- Editing -->
   <extensions defaultExtensionNs="com.intellij">

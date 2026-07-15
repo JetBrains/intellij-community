@@ -12,6 +12,7 @@
 
     <predefinedCodeStyle implementation="org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle"/>
     <predefinedCodeStyle implementation="org.jetbrains.kotlin.idea.formatter.KotlinObsoleteCodeStyle"/>
+    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector"/>
 
   </extensions>
 </idea-plugin>

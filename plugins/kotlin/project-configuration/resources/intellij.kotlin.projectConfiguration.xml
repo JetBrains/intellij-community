@@ -23,5 +23,28 @@
                      key="kapt.kotlin.compiler.plugin.inspection.problem.display.name"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
                      level="WARNING" enabledByDefault="true" bundle="messages.KotlinProjectConfigurationBundle"/>
+    <optionController implementation="org.jetbrains.kotlin.idea.configuration.JpsDependencyProvider"/>
+    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.ProjectConfigurationCollector"/>
+    <optionController implementation="org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProvider"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerStartupActivity"/>
+    <optionController implementation="org.jetbrains.kotlin.idea.configuration.KotlinDependencyProvider"/>
+    <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.configuration.KotlinExternalSystemSyncListener"/>
+    <fileBasedIndex implementation="org.jetbrains.kotlin.idea.versions.KotlinJvmMetadataVersionIndex"/>
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.configuration.KotlinSetupEnvironmentNotificationProvider"/>
+    <statistics.validation.customValidationRule implementation="org.jetbrains.kotlin.idea.statistics.LanguageFeatureValidationRule"/>
   </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <buildSystemDependencyManager implementation="org.jetbrains.kotlin.idea.configuration.JpsKotlinBuildSystemDependencyManager"/>
+    <newFileHook implementation="org.jetbrains.kotlin.idea.configuration.NewKotlinFileConfigurationHook"/>
+    <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator"/>
+    <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJsModuleConfigurator"/>
+  </extensions>
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
+              topic="com.intellij.openapi.roots.ModuleRootListener"/>
+    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
+              topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
+    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+  </projectListeners>
 </idea-plugin>

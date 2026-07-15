@@ -2,12 +2,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectFUSCollector"/>
 
-    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector"/>
-    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.ProjectConfigurationCollector"/>
     <statistics.counterUsagesCollector
             implementationClass="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluatorStatisticsCollector"/>
     <statistics.validation.customValidationRule
             implementation="org.jetbrains.kotlin.idea.debugger.evaluate.StandardExceptionNameRuleValidator"/>
-    <statistics.validation.customValidationRule implementation="org.jetbrains.kotlin.idea.statistics.LanguageFeatureValidationRule"/>
   </extensions>
 </idea-plugin>

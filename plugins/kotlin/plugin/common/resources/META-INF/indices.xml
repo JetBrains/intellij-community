@@ -36,7 +36,6 @@
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinOverridableInternalMembersShortNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinSubclassObjectNameIndex"/>
 
-    <fileBasedIndex implementation="org.jetbrains.kotlin.idea.versions.KotlinJvmMetadataVersionIndex"/>
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinPartialPackageNamesIndex"/>
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinClassFileIndex"/>
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinMetadataFileIndex"/>
@@ -53,19 +52,9 @@
 
     <indexedRootsProvider implementation="org.jetbrains.kotlin.idea.base.indices.contributors.BuiltInsIndexableSetContributor"/>
 
-    <idIndexer filetype="Kotlin" implementationClass="org.jetbrains.kotlin.idea.search.KotlinIdIndexer"/>
-    <todoIndexer filetype="Kotlin" implementationClass="org.jetbrains.kotlin.idea.search.KotlinTodoIndexer"/>
-    <indexPatternBuilder implementation="org.jetbrains.kotlin.idea.search.KotlinIndexPatternBuilder"/>
-
-    <applicationService
-            serviceInterface="org.jetbrains.kotlin.psi.stubs.elements.StubIndexService"
-            serviceImplementation="org.jetbrains.kotlin.idea.stubindex.IdeStubIndexService"/>
-
-    <globalIndexFilter implementation="org.jetbrains.kotlin.idea.stubindex.KotlinNonSourceRootIndexFilter"/>
-
-    <registryKey key="kotlin.indices.diagnostic.enabled"
-                 defaultValue="false"
-                 description="Allows indices access diagnostic" />
+      <registryKey key="kotlin.indices.diagnostic.enabled"
+                   defaultValue="false"
+                   description="Allows indices access diagnostic" />
     <registryKey key="kotlin.indices.timing.threshold.single"
                  defaultValue="2500"
                  description="Time threshold in ms to report slow index single get access" />
@@ -83,10 +72,4 @@
             key="kotlin.repair.indices.group.name"
     />
   </extensions>
-  <projectListeners>
-    <listener class="org.jetbrains.kotlin.idea.stubindex.resolve.KotlinRepairIdeAfterCorruptionNotification"
-              topic="org.jetbrains.kotlin.idea.stubindex.resolve.KotlinCorruptedIndexListener"
-              activeInHeadlessMode="false"
-              activeInTestMode="false"/>
-  </projectListeners>
 </idea-plugin>

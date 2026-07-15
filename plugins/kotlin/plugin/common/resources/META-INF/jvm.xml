@@ -5,10 +5,6 @@
             description="URL of a JSON file with Kotlin versions"
             defaultValue="https://central.sonatype.com/solrsearch/select?q=g:org.jetbrains.kotlin+AND+a:kotlin-stdlib&amp;core=gav&amp;rows=20&amp;wt=json&amp;sort=v+desc"
             restartRequired="false"/>
+  </extensions>
 
-    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.configuration.KotlinSetupEnvironmentNotificationProvider"/>
-  </extensions>
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <newFileHook implementation="org.jetbrains.kotlin.idea.configuration.NewKotlinFileConfigurationHook"/>
-  </extensions>
 </idea-plugin>
