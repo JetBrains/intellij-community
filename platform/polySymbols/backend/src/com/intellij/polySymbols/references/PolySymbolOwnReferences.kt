@@ -2,6 +2,7 @@
 package com.intellij.polySymbols.references
 
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.references.impl.PolySymbolOwnReferencesBuilderImpl
 import com.intellij.psi.PsiElement
 
@@ -26,6 +27,9 @@ class PolySymbolOwnReferences internal constructor(
   }
 
   interface Builder {
+    fun fromNameMatchQuery(kind: PolySymbolKind, name: String)
+    fun fromNameMatchQuery(kind: PolySymbolKind, name: String, filter: (PolySymbol) -> Boolean)
+    fun reference(symbol: PolySymbol)
     fun reference(symbol: PolySymbol, offset: Int = 0, showProblems: Boolean = true)
     fun references(offsetsToSymbols: Map<Int, PolySymbol>, showProblems: Boolean = true)
   }

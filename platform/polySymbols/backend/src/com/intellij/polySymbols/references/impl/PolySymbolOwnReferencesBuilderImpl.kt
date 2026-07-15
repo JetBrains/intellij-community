@@ -2,6 +2,8 @@
 package com.intellij.polySymbols.references.impl
 
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolKind
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.references.PolySymbolOwnReferences
 import com.intellij.polySymbols.references.PolySymbolReference
 import com.intellij.psi.PsiElement
@@ -11,6 +13,24 @@ internal class PolySymbolOwnReferencesBuilderImpl(private val element: PsiElemen
 
   private val referencedSymbols = LinkedHashMap<Int, PolySymbol>()
   private val references = SmartList<PolySymbolReference>()
+
+  override fun fromNameMatchQuery(kind: PolySymbolKind, name: String) =
+    fromNameMatchQuery(kind, name) { true }
+
+  override fun fromNameMatchQuery(
+    kind: PolySymbolKind,
+    name: String,
+    filter: (PolySymbol) -> Boolean,
+  ) {
+    PolySymbolQueryExecutorFactory.create(element, true)
+      .nameMatchQuery(kind, name)
+      .run()
+      .filter(filter)
+      .forEach { reference(it) }
+  }
+
+  override fun reference(symbol: PolySymbol) =
+    reference(symbol, 0)
 
   override fun reference(symbol: PolySymbol, offset: Int, showProblems: Boolean) {
     referencedSymbols[offset] = symbol
