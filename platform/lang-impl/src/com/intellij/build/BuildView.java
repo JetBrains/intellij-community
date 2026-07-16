@@ -55,6 +55,7 @@ import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -165,10 +166,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
       return;
     }
 
-    myViewSettingsProvider = startBuildEvent.getBuildViewSettings();
-    if (myViewSettingsProvider == null) {
-      myViewSettingsProvider = () -> false;
-    }
+    myViewSettingsProvider = Objects.requireNonNullElse(startBuildEvent.getBuildViewSettings(), BuildViewSettingsProvider.EMPTY);
     if (myExecutionConsole == null) {
       Supplier<? extends RunContentDescriptor> descriptorSupplier = myBuildDescriptor.getContentDescriptorSupplier();
       RunContentDescriptor runContentDescriptor = descriptorSupplier != null ? descriptorSupplier.get() : null;
@@ -205,7 +203,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
       eventView = getEventView();
       if (eventView == null) {
         String eventViewName = BuildTreeConsoleView.class.getName();
-        eventView = new BuildTreeConsoleView(myProject, myBuildDescriptor, myExecutionConsole);
+        eventView = new BuildTreeConsoleView(myProject, myBuildDescriptor, myExecutionConsole, myViewSettingsProvider);
         addView(eventView, eventViewName);
         showView(eventViewName, false);
       }

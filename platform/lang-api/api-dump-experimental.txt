@@ -16,8 +16,6 @@
 - getPropertyDescription(java.lang.String):java.lang.String
 *:com.intellij.build.BuildProgressObservable
 - a:addListener(com.intellij.build.BuildProgressListener,com.intellij.openapi.Disposable):V
-*:com.intellij.build.BuildViewSettingsProvider
-- a:isExecutionViewHidden():Z
 *:com.intellij.build.BuildWorkspaceConfiguration
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.build.BuildWorkspaceConfiguration
 - a:isShowFirstErrorInEditor():Z
@@ -26,6 +24,7 @@
 - a:withFilePosition(com.intellij.build.FilePosition):com.intellij.build.eventBuilders.BuildIssueEventBuilder
 - a:withHint(java.lang.String):com.intellij.build.eventBuilders.BuildIssueEventBuilder
 - a:withId(java.lang.Object):com.intellij.build.eventBuilders.BuildIssueEventBuilder
+- a:withOutputIds(java.util.List):com.intellij.build.eventBuilders.BuildIssueEventBuilder
 - a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.BuildIssueEventBuilder
 - a:withTime(java.lang.Long):com.intellij.build.eventBuilders.BuildIssueEventBuilder
 *:com.intellij.build.eventBuilders.PresentableBuildEventBuilder
@@ -56,9 +55,6 @@ com.intellij.build.eventBuilders.StartBuildEventBuilder
 - com.intellij.build.events.BuildEvent
 - s:builder(java.lang.String,com.intellij.build.events.BuildEventPresentationData):com.intellij.build.eventBuilders.PresentableBuildEventBuilder
 - a:getPresentationData():com.intellij.build.events.BuildEventPresentationData
-com.intellij.build.events.StartBuildEvent
-- com.intellij.build.events.StartEvent
-- *:getBuildViewSettings():com.intellij.build.BuildViewSettingsProvider
 *:com.intellij.build.issue.BuildIssueChecker
 - a:check(com.intellij.build.issue.BuildIssueData):com.intellij.build.issue.BuildIssue
 *:com.intellij.build.issue.BuildIssueData

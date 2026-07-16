@@ -8,6 +8,11 @@ import com.intellij.execution.process.ProcessOutputType
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.annotations.CheckReturnValue
 
+/**
+ * A builder of the [OutputBuildEvent].
+ *
+ * @see OutputBuildEvent.builder
+ */
 @NonExtendable
 interface OutputBuildEventBuilder {
 

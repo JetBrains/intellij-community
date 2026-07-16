@@ -2,6 +2,7 @@
 package com.intellij.build;
 
 import com.intellij.build.console.BuildConsoleViewHandler;
+import com.intellij.build.console.BuildConsoleViewStrategy;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.DerivedResult;
 import com.intellij.build.events.DuplicateMessageAware;
@@ -14,6 +15,7 @@ import com.intellij.build.events.FinishEvent;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.MessageEventResult;
 import com.intellij.build.events.OutputBuildEvent;
+import com.intellij.build.events.OutputReferenceEvent;
 import com.intellij.build.events.PresentableBuildEvent;
 import com.intellij.build.events.ProgressBuildEvent;
 import com.intellij.build.events.StartBuildEvent;
@@ -23,9 +25,11 @@ import com.intellij.build.events.impl.SkippedResultImpl;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.ui.ConsoleViewWithDelegateKt;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.IdeBundle;
@@ -127,6 +131,7 @@ public final class BuildTreeConsoleView
   private final @NotNull Project myProject;
   private final @NotNull DefaultBuildDescriptor myBuildDescriptor;
   private final @NotNull String myWorkingDir;
+  private final @NotNull BuildConsoleViewStrategy myConsoleViewStrategy;
   private final BuildConsoleViewHandler myConsoleViewHandler;
   private final AtomicBoolean myFinishedBuildEventReceived = new AtomicBoolean();
   private final AtomicBoolean myDisposed = new AtomicBoolean();
@@ -143,9 +148,19 @@ public final class BuildTreeConsoleView
   private final OccurenceNavigator myOccurrenceNavigatorSupport;
   private final Set<BuildEvent> myDeferredEvents = ConcurrentCollectionFactory.createConcurrentSet();
 
+  @Deprecated
   public BuildTreeConsoleView(@NotNull Project project,
                               @NotNull BuildDescriptor buildDescriptor,
-                              @Nullable ExecutionConsole executionConsole) {
+                              @Nullable ExecutionConsole executionConsole
+  ) {
+    this(project, buildDescriptor, executionConsole, BuildViewSettingsProvider.EMPTY);
+  }
+
+  public BuildTreeConsoleView(@NotNull Project project,
+                              @NotNull BuildDescriptor buildDescriptor,
+                              @Nullable ExecutionConsole executionConsole,
+                              @NotNull BuildViewSettingsProvider buildViewSettingsProvider
+  ) {
     myProject = project;
     myBuildDescriptor = buildDescriptor instanceof DefaultBuildDescriptor
                         ? (DefaultBuildDescriptor)buildDescriptor
@@ -173,7 +188,8 @@ public final class BuildTreeConsoleView
     OnePixelSplitter myThreeComponentsSplitter = new OnePixelSplitter(SPLITTER_PROPERTY, SPLITTER_DEFAULT_PROPORTION);
     myThreeComponentsSplitter.setFirstComponent(mySplitComponent);
     List<Filter> filters = myBuildDescriptor.getExecutionFilters();
-    myConsoleViewHandler = new BuildConsoleViewHandler(myProject, myBuildProgressRootNode, this, executionConsole, filters);
+    myConsoleViewStrategy = BuildConsoleViewStrategy.create(buildViewSettingsProvider.isSingleBuildConsoleView());
+    myConsoleViewHandler = new BuildConsoleViewHandler(myProject, myBuildProgressRootNode, this, executionConsole, filters, myConsoleViewStrategy);
     myThreeComponentsSplitter.setSecondComponent(myConsoleViewHandler.getComponent());
     myPanel.add(myThreeComponentsSplitter, BorderLayout.CENTER);
     BuildTreeFilters.install(this);
@@ -327,6 +343,7 @@ public final class BuildTreeConsoleView
       case ProgressBuildEvent progressEvent -> onProgressEvent(progressEvent);
       case MessageEvent messageEvent -> onMessageEvent(messageEvent);
       case OutputBuildEvent outputEvent -> onOutputEvent(outputEvent);
+      case OutputReferenceEvent outputEvent -> onOutputReferenceEvent(outputEvent);
       case PresentableBuildEvent presentableEvent -> onPresentableEvent(presentableEvent);
       default -> onBuildEvent(event);
     }
@@ -446,14 +463,7 @@ public final class BuildTreeConsoleView
       setResult(node, event.getResult(), updatedNodes);
       setEndTime(node, event.getEventTime());
 
-      if (parentNode != null && !isBuildProgressRootNode(parentNode)) {
-        myConsoleViewHandler.withConsoleView(parentNode, consoleView ->
-          consoleView.onEvent(event)
-        );
-      }
-      myConsoleViewHandler.withConsoleView(node, consoleView ->
-        consoleView.onEvent(event)
-      );
+      myConsoleViewStrategy.dispatchMessageEvent(myConsoleViewHandler, parentNode, node, event);
     });
 
     var node = findNode(event);
@@ -491,11 +501,11 @@ public final class BuildTreeConsoleView
       LOG.debug("Output event id collision found:" + event.getId() + ", was also in node: " + existingNode.getTitle());
       return;
     }
-    var parentNode = getParentNode(event);
+    myConsoleViewStrategy.dispatchOutputEvent(myConsoleViewHandler, getParentNode(event), event);
+  }
 
-    myConsoleViewHandler.withConsoleView(parentNode, consoleView ->
-      consoleView.onEvent(event)
-    );
+  private void onOutputReferenceEvent(@NotNull OutputReferenceEvent event) {
+    myConsoleViewStrategy.dispatchOutputReferenceEvent(myConsoleViewHandler, event);
   }
 
   private void onBuildEvent(@NotNull BuildEvent event) {
@@ -504,13 +514,10 @@ public final class BuildTreeConsoleView
       LOG.debug("Build event id collision found:" + event.getId() + ", was also in node: " + existingNode.getTitle());
       return;
     }
-    var parentNode = getParentNode(event);
 
     runUpdateAction(event, _ -> {});
 
-    myConsoleViewHandler.withConsoleView(parentNode, consoleView ->
-      consoleView.onEvent(event)
-    );
+    myConsoleViewStrategy.dispatchNodeEvent(myConsoleViewHandler, getParentNode(event), event);
   }
 
   private static void setDefaultData(
@@ -586,7 +593,12 @@ public final class BuildTreeConsoleView
   @TestOnly
   @ApiStatus.Internal
   public @NotNull ExecutionConsole resolveNodeConsole(@NotNull ExecutionNode node) {
-    return myConsoleViewHandler.resolveExecutionConsole(node);
+    var console = myConsoleViewStrategy.resolveNodeConsole(myProject, myConsoleViewHandler, node);
+    var originalConsole = ConsoleViewWithDelegateKt.unwrapDelegate(console);
+    if (originalConsole instanceof ConsoleViewImpl consoleImpl) {
+      consoleImpl.flushDeferredText();
+    }
+    return console;
   }
 
   @TestOnly
@@ -749,9 +761,8 @@ public final class BuildTreeConsoleView
 
     updatedNodes.add(failureNode);
 
-    myConsoleViewHandler.withConsoleView(failureNode, consoleView ->
-      consoleView.onFailure(failure)
-    );
+    Object failureNodeId = failureNode.getId();
+    myConsoleViewStrategy.dispatchFailure(myConsoleViewHandler, failureNode, failureNodeId, failure);
     return failureNode;
   }
 
@@ -975,7 +986,7 @@ public final class BuildTreeConsoleView
   }
 
   void selectNode(@NotNull ExecutionNode node) {
-    myConsoleViewHandler.setNodeIfChanged(node);
+    myConsoleViewHandler.setExecutionNode(node);
   }
 
   BuildViewId getBuildViewId() {

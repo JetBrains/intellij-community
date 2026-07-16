@@ -11,6 +11,7 @@ import com.intellij.build.eventBuilders.FinishBuildEventBuilder
 import com.intellij.build.eventBuilders.FinishEventBuilder
 import com.intellij.build.eventBuilders.MessageEventBuilder
 import com.intellij.build.eventBuilders.OutputBuildEventBuilder
+import com.intellij.build.eventBuilders.OutputReferenceEventBuilder
 import com.intellij.build.eventBuilders.PresentableBuildEventBuilder
 import com.intellij.build.eventBuilders.ProgressBuildEventBuilder
 import com.intellij.build.eventBuilders.StartBuildEventBuilder
@@ -49,6 +50,11 @@ interface BuildEvents {
   fun output(
     message: @Message String,
   ): OutputBuildEventBuilder
+
+  fun outputReference(
+    startId: Any,
+    outputIds: List<Any>
+  ): OutputReferenceEventBuilder
 
   fun progress(
     startId: Any,

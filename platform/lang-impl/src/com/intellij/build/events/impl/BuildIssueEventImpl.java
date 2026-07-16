@@ -12,11 +12,16 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author Vladislav.Soroka
  */
 @Internal
 public class BuildIssueEventImpl extends AbstractBuildEvent implements BuildIssueEvent {
+
+  private final @NotNull List<Object> myOutputIds;
 
   private final @NotNull Kind myKind;
   private final @NotNull BuildIssue myIssue;
@@ -27,10 +32,12 @@ public class BuildIssueEventImpl extends AbstractBuildEvent implements BuildIssu
     @Nullable Object parentId,
     @Nullable Long time,
     @Nullable @BuildEventsNls.Hint String hint,
+    @NotNull List<Object> outputIds,
     @NotNull BuildIssue buildIssue,
     @NotNull Kind kind
   ) {
     super(id, parentId, time, buildIssue.getTitle(), hint, buildIssue.getDescription());
+    myOutputIds = outputIds;
     myIssue = buildIssue;
     myKind = kind;
   }
@@ -40,7 +47,12 @@ public class BuildIssueEventImpl extends AbstractBuildEvent implements BuildIssu
     @NotNull BuildIssue buildIssue,
     @NotNull Kind kind
   ) {
-    this(null, parentId, null, null, buildIssue, kind);
+    this(null, parentId, null, null, Collections.emptyList(), buildIssue, kind);
+  }
+
+  @Override
+  public @NotNull List<Object> getOutputIds() {
+    return myOutputIds;
   }
 
   @Override

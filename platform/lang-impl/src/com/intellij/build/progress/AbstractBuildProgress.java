@@ -2,6 +2,7 @@
 package com.intellij.build.progress;
 
 import com.intellij.build.BuildProgressListener;
+import com.intellij.build.BuildViewSettingsProvider;
 import com.intellij.build.FilePosition;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.BuildEventPresentationData;
@@ -62,6 +63,12 @@ public abstract class AbstractBuildProgress implements BuildProgress<BuildProgre
   @Override
   public final @NotNull BuildProgress<BuildProgressDescriptor> start(@NotNull BuildProgressDescriptor descriptor) {
     return start(getStartMessage(), descriptor);
+  }
+
+  @Override
+  public @NotNull BuildProgress<BuildProgressDescriptor> start(@NotNull BuildProgressDescriptor descriptor,
+                                                               @NotNull BuildViewSettingsProvider buildViewSettingsProvider) {
+    return start(getStartMessage(), descriptor, buildViewSettingsProvider);
   }
 
   @Override

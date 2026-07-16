@@ -16,6 +16,8 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -37,9 +39,10 @@ public class FileMessageEventImpl extends MessageEventImpl implements FileMessag
     @NotNull Kind kind,
     @Nullable @Title String group,
     @Nullable Navigatable navigatable,
+    @NotNull List<Object> outputIds,
     @NotNull FilePosition filePosition
   ) {
-    super(id, parentId, time, message, hint, description, kind, group, navigatable);
+    super(id, parentId, time, message, hint, description, kind, group, navigatable, outputIds);
     myFilePosition = filePosition;
   }
 
@@ -55,7 +58,7 @@ public class FileMessageEventImpl extends MessageEventImpl implements FileMessag
     @Nullable @Description String detailedMessage,
     @NotNull FilePosition filePosition
   ) {
-    this(null, parentId, null, message, null, detailedMessage, kind, group, null, filePosition);
+    this(null, parentId, null, message, null, detailedMessage, kind, group, null, Collections.emptyList(), filePosition);
   }
 
   @Override

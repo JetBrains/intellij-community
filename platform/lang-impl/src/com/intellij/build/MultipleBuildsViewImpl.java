@@ -9,7 +9,9 @@ import com.intellij.build.events.FailureResult;
 import com.intellij.build.events.FinishBuildEvent;
 import com.intellij.build.events.FinishEvent;
 import com.intellij.build.events.MessageEvent;
+import com.intellij.build.events.ProgressBuildEvent;
 import com.intellij.build.events.StartBuildEvent;
+import com.intellij.build.events.StartEvent;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -294,10 +296,9 @@ public final class MultipleBuildsViewImpl implements MultipleBuildsView {
           }
           myViewManager.onBuildFinish(buildInfo);
         }
-        else {
+        else if (event instanceof ProgressBuildEvent || event instanceof StartEvent || event instanceof FinishEvent) {
           buildInfo.statusMessage = event.getMessage();
         }
-
       }
     });
 

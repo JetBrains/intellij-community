@@ -9,5 +9,9 @@ internal interface BuildConsoleView : ExecutionConsole {
 
   fun onEvent(event: BuildEvent)
 
-  fun onFailure(failure: Failure)
+  fun onFailure(nodeId: Any, failure: Failure)
+
+  fun scrollToNodeOutput(nodeId: Any)
+
+  fun selectProgressOutput(nodeId: Any)
 }

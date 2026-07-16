@@ -38,6 +38,10 @@ com.intellij.build.BuildDescriptor
 - a:getWorkingDir():java.lang.String
 com.intellij.build.BuildProgressListener
 - a:onEvent(java.lang.Object,com.intellij.build.events.BuildEvent):V
+com.intellij.build.BuildViewSettingsProvider
+- sf:EMPTY:com.intellij.build.BuildViewSettingsProvider
+- isExecutionViewHidden():Z
+- isSingleBuildConsoleView():Z
 f:com.intellij.build.FilePosition
 - <init>(java.nio.file.Path,I,I):V
 - <init>(java.nio.file.Path,I,I,I,I):V
@@ -72,6 +76,7 @@ com.intellij.build.eventBuilders.FileMessageEventBuilder
 - a:withGroup(java.lang.String):com.intellij.build.eventBuilders.FileMessageEventBuilder
 - a:withHint(java.lang.String):com.intellij.build.eventBuilders.FileMessageEventBuilder
 - a:withId(java.lang.Object):com.intellij.build.eventBuilders.FileMessageEventBuilder
+- a:withOutputIds(java.util.List):com.intellij.build.eventBuilders.FileMessageEventBuilder
 - a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.FileMessageEventBuilder
 - a:withTime(java.lang.Long):com.intellij.build.eventBuilders.FileMessageEventBuilder
 com.intellij.build.eventBuilders.FinishBuildEventBuilder
@@ -94,6 +99,7 @@ com.intellij.build.eventBuilders.MessageEventBuilder
 - a:withHint(java.lang.String):com.intellij.build.eventBuilders.MessageEventBuilder
 - a:withId(java.lang.Object):com.intellij.build.eventBuilders.MessageEventBuilder
 - a:withNavigatable(com.intellij.pom.Navigatable):com.intellij.build.eventBuilders.MessageEventBuilder
+- a:withOutputIds(java.util.List):com.intellij.build.eventBuilders.MessageEventBuilder
 - a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.MessageEventBuilder
 - a:withTime(java.lang.Long):com.intellij.build.eventBuilders.MessageEventBuilder
 com.intellij.build.eventBuilders.OutputBuildEventBuilder
@@ -104,6 +110,8 @@ com.intellij.build.eventBuilders.OutputBuildEventBuilder
 - a:withOutputType(com.intellij.execution.process.ProcessOutputType):com.intellij.build.eventBuilders.OutputBuildEventBuilder
 - a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.OutputBuildEventBuilder
 - a:withTime(java.lang.Long):com.intellij.build.eventBuilders.OutputBuildEventBuilder
+com.intellij.build.eventBuilders.OutputReferenceEventBuilder
+- a:build():com.intellij.build.events.OutputReferenceEvent
 com.intellij.build.eventBuilders.ProgressBuildEventBuilder
 - a:build():com.intellij.build.events.ProgressBuildEvent
 - a:withDescription(java.lang.String):com.intellij.build.eventBuilders.ProgressBuildEventBuilder
@@ -172,6 +180,7 @@ com.intellij.build.events.MessageEvent
 - a:getGroup():java.lang.String
 - a:getKind():com.intellij.build.events.MessageEvent$Kind
 - a:getNavigatable(com.intellij.openapi.project.Project):com.intellij.pom.Navigatable
+- getOutputIds():java.util.List
 - a:getResult():com.intellij.build.events.MessageEventResult
 e:com.intellij.build.events.MessageEvent$Kind
 - java.lang.Enum
@@ -186,6 +195,14 @@ com.intellij.build.events.OutputBuildEvent
 - a:getMessage():java.lang.String
 - a:getOutputType():com.intellij.execution.process.ProcessOutputType
 - isStdOut():Z
+com.intellij.build.events.OutputReferenceEvent
+- com.intellij.build.events.BuildEvent
+- sf:Companion:com.intellij.build.events.OutputReferenceEvent$Companion
+- s:builder(java.lang.Object,java.util.List):com.intellij.build.eventBuilders.OutputReferenceEventBuilder
+- a:getOutputIds():java.util.List
+- a:getStartId():java.lang.Object
+f:com.intellij.build.events.OutputReferenceEvent$Companion
+- f:builder(java.lang.Object,java.util.List):com.intellij.build.eventBuilders.OutputReferenceEventBuilder
 com.intellij.build.events.ProgressBuildEvent
 - com.intellij.build.events.BuildEvent
 - s:builder(java.lang.Object,java.lang.String):com.intellij.build.eventBuilders.ProgressBuildEventBuilder
@@ -195,6 +212,7 @@ com.intellij.build.events.StartBuildEvent
 - com.intellij.build.events.StartEvent
 - s:builder(java.lang.String,com.intellij.build.BuildDescriptor):com.intellij.build.eventBuilders.StartBuildEventBuilder
 - a:getBuildDescriptor():com.intellij.build.BuildDescriptor
+- getBuildViewSettings():com.intellij.build.BuildViewSettingsProvider
 com.intellij.build.events.StartEvent
 - com.intellij.build.events.BuildEvent
 - s:builder(java.lang.Object,java.lang.String):com.intellij.build.eventBuilders.StartEventBuilder

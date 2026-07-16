@@ -30,5 +30,8 @@ interface FileMessageEventBuilder {
   @CheckReturnValue
   fun withGroup(group: @Title String?): FileMessageEventBuilder
 
+  @CheckReturnValue
+  fun withOutputIds(outputIds: List<Any>): FileMessageEventBuilder
+
   fun build(): FileMessageEvent
 }

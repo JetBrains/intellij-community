@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.execution;
 
+import com.intellij.build.BuildViewSettingsProvider;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputType;
@@ -136,4 +137,8 @@ public interface ExternalSystemExecutionConsoleManager<EC extends ExecutionConso
     @NotNull ExternalSystemTask task,
     @Nullable ExecutionEnvironment env
   ) { return AnAction.EMPTY_ARRAY; }
+
+  default @NotNull BuildViewSettingsProvider getExecutionConsoleSettings() {
+    return BuildViewSettingsProvider.EMPTY;
+  }
 }

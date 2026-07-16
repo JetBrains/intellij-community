@@ -19,7 +19,6 @@ import com.intellij.build.BuildDescriptor;
 import com.intellij.build.BuildViewSettingsProvider;
 import com.intellij.build.eventBuilders.StartBuildEventBuilder;
 import com.intellij.build.events.BuildEventsNls.Message;
-import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.CheckReturnValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +30,6 @@ public interface StartBuildEvent extends StartEvent {
 
   @NotNull BuildDescriptor getBuildDescriptor();
 
-  @Experimental
   default @Nullable BuildViewSettingsProvider getBuildViewSettings() {
     return null;
   }

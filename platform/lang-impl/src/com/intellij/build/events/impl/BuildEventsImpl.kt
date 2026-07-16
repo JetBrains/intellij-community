@@ -11,6 +11,7 @@ import com.intellij.build.eventBuilders.impl.FinishBuildEventBuilderImpl
 import com.intellij.build.eventBuilders.impl.FinishEventBuilderImpl
 import com.intellij.build.eventBuilders.impl.MessageEventBuilderImpl
 import com.intellij.build.eventBuilders.impl.OutputBuildEventBuilderImpl
+import com.intellij.build.eventBuilders.impl.OutputReferenceEventBuilderImpl
 import com.intellij.build.eventBuilders.impl.PresentableBuildEventBuilderImpl
 import com.intellij.build.eventBuilders.impl.ProgressBuildEventBuilderImpl
 import com.intellij.build.eventBuilders.impl.StartBuildEventBuilderImpl
@@ -49,6 +50,11 @@ internal class BuildEventsImpl : BuildEvents {
   override fun output(
     message: @Message String,
   ) = OutputBuildEventBuilderImpl(message)
+
+  override fun outputReference(
+    startId: Any,
+    outputIds: List<Any>,
+  ) = OutputReferenceEventBuilderImpl(startId, outputIds)
 
   override fun progress(
     startId: Any,

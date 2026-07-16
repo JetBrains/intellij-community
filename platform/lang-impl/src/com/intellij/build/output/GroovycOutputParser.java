@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -69,6 +70,7 @@ public final class GroovycOutputParser implements BuildOutputParser {
       int column = Integer.parseInt(location.group(2));
       messageConsumer.accept(new FileMessageEventImpl(null, reader.getParentEventId(), null, message, null, detailedMessage,
                                                       MessageEvent.Kind.ERROR, LangBundle.message("build.event.title.compiler"), null,
+                                                      Collections.emptyList(),
                                                       new FilePosition(path, row - 1, column - 1)));
       return true;
     }

@@ -6,10 +6,12 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputType;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -41,6 +43,18 @@ public final class BuildTextConsoleView extends ConsoleViewImpl implements Build
     myAnsiEscapeDecoder.escapeText(text, outputType, (decodedText, attributes) ->
       print(decodedText, ConsoleViewContentType.getConsoleViewType(attributes))
     );
+  }
+
+  @ApiStatus.Internal
+  public static void print(@NotNull ConsoleView consoleView, @NotNull String text, @NotNull Key<?> outputType) {
+    if (consoleView instanceof BuildTextConsoleView buildTextConsoleView) {
+      // Route through the ANSI-decoding print so that escape sequences in the build output are converted into text
+      // attributes instead of leaking into the console document (mirrors the old per-node console).
+      buildTextConsoleView.print(text, outputType);
+    }
+    else {
+      consoleView.print(text, ConsoleViewContentType.getConsoleViewType(outputType));
+    }
   }
 }
 

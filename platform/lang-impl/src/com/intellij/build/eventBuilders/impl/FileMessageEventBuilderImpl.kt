@@ -26,6 +26,7 @@ class FileMessageEventBuilderImpl(
   private var description: @Description String? = null
 
   private var group: @Title String? = null
+  private var outputIds: List<Any> = emptyList()
 
   override fun withId(id: Any?): FileMessageEventBuilderImpl =
     apply { this.id = id }
@@ -45,6 +46,9 @@ class FileMessageEventBuilderImpl(
   override fun withGroup(group: @Title String?): FileMessageEventBuilderImpl =
     apply { this.group = group }
 
+  override fun withOutputIds(outputIds: List<Any>): FileMessageEventBuilderImpl =
+    apply { this.outputIds = outputIds }
+
   override fun build(): FileMessageEventImpl =
-    FileMessageEventImpl(id, parentId, time, message, hint, description, kind, group, null, filePosition)
+    FileMessageEventImpl(id, parentId, time, message, hint, description, kind, group, null, outputIds, filePosition)
 }

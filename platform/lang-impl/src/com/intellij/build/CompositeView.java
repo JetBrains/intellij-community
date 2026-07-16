@@ -103,6 +103,20 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
     return StringUtil.equals(myVisibleViewRef.get(), viewName);
   }
 
+  public @Nullable T getVisibleView() {
+    var viewName = myVisibleViewRef.get();
+    if (viewName == null) return null;
+    return getView(viewName);
+  }
+
+  public boolean hasView(@NotNull String viewName) {
+    return myViewMap.containsKey(viewName);
+  }
+
+  public boolean hasDeferredView(@NotNull String viewName) {
+    return myDeferredViewConsumers.containsKey(viewName);
+  }
+
   public T getView(@NotNull String viewName) {
     return myViewMap.get(viewName);
   }

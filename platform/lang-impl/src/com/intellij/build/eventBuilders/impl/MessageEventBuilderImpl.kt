@@ -27,6 +27,7 @@ class MessageEventBuilderImpl(
 
   private var group: @Title String? = null
   private var navigatable: Navigatable? = null
+  private var outputIds: List<Any> = emptyList()
 
   private var filePosition: FilePosition? = null
 
@@ -51,12 +52,15 @@ class MessageEventBuilderImpl(
   override fun withNavigatable(navigatable: Navigatable?): MessageEventBuilderImpl =
     apply { this.navigatable = navigatable }
 
+  override fun withOutputIds(outputIds: List<Any>): MessageEventBuilderImpl =
+    apply { this.outputIds = outputIds }
+
   override fun withFilePosition(filePosition: FilePosition?): MessageEventBuilderImpl =
     apply { this.filePosition = filePosition }
 
   override fun build(): MessageEventImpl =
     when (val filePosition = filePosition) {
-      null -> MessageEventImpl(id, parentId, time, message, hint, description, kind, group, navigatable)
-      else -> FileMessageEventImpl(id, parentId, time, message, hint, description, kind, group, navigatable, filePosition)
+      null -> MessageEventImpl(id, parentId, time, message, hint, description, kind, group, navigatable, outputIds)
+      else -> FileMessageEventImpl(id, parentId, time, message, hint, description, kind, group, navigatable, outputIds, filePosition)
     }
 }

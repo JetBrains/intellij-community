@@ -14,6 +14,8 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -27,6 +29,7 @@ public class MessageEventImpl extends AbstractBuildEvent implements MessageEvent
   private final @NotNull Kind myKind;
   private final @NotNull @Title String myGroup;
   private final @Nullable Navigatable myNavigatable;
+  private final @NotNull List<Object> myOutputIds;
 
   @Internal
   public MessageEventImpl(
@@ -38,12 +41,14 @@ public class MessageEventImpl extends AbstractBuildEvent implements MessageEvent
     @Nullable @Description String description,
     @NotNull Kind kind,
     @Nullable @Title String group,
-    @Nullable Navigatable navigatable
+    @Nullable Navigatable navigatable,
+    @NotNull List<Object> outputIds
   ) {
     super(id, parentId, time, message, hint, description);
     myKind = kind;
     myGroup = notNull(group, () -> LangBundle.message("build.event.title.other.messages"));
     myNavigatable = navigatable;
+    myOutputIds = outputIds;
   }
 
   /**
@@ -57,7 +62,7 @@ public class MessageEventImpl extends AbstractBuildEvent implements MessageEvent
     @NotNull @Message String message,
     @Nullable @Description String detailedMessage
   ) {
-    this(null, parentId, null, message, null, detailedMessage, kind, group, null);
+    this(null, parentId, null, message, null, detailedMessage, kind, group, null, Collections.emptyList());
   }
 
   @Override
@@ -93,6 +98,11 @@ public class MessageEventImpl extends AbstractBuildEvent implements MessageEvent
         return getDescription();
       }
     };
+  }
+
+  @Override
+  public @NotNull List<Object> getOutputIds() {
+    return myOutputIds;
   }
 
   @Override

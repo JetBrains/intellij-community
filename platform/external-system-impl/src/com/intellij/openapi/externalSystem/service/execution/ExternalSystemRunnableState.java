@@ -234,6 +234,10 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
     var consoleManager = getConsoleManagerFor(task);
     var consoleView = consoleManager.attachExecutionConsole(myProject, task, myEnv, processHandler);
+    var consoleSettings = consoleView instanceof BuildViewSettingsProvider
+                          ? new BuildViewSettingsProviderAdapter((BuildViewSettingsProvider)consoleView)
+                          : consoleManager.getExecutionConsoleSettings();
+
     attachExecutionConsole(myProject, consoleView, processHandler);
 
     var buildDescriptor = createBuildDescriptor(task, processHandler, consoleManager, consoleView);
@@ -251,7 +255,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
         ExternalSystemTelemetryUtil.runWithSpan(mySettings.getExternalSystemId(), "ExternalSystemTaskExecution", _ ->
           task.execute(progressIndicator, new ExternalSystemTaskEventMulticaster(
             processHandler, eventDispatcher, buildDescriptor, dataContext,
-            consoleManager, consoleView
+            consoleManager, consoleView, consoleSettings
           ))
         );
         ExternalSystemTelemetryUtil.runWithSpan(mySettings.getExternalSystemId(), "ExternalSystemTaskResultProcessing", _ ->
@@ -440,6 +444,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     private final @NotNull DataContext myDataContext;
     private final @NotNull ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler> myConsoleManager;
     private final @Nullable ExecutionConsole myConsoleView;
+    private final @Nullable BuildViewSettingsProvider myConsoleSettings;
 
     private final @NotNull String mySettingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings);
 
@@ -449,7 +454,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       @NotNull BuildDescriptor buildDescriptor,
       @NotNull DataContext dataContext,
       @NotNull ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler> consoleManager,
-      @Nullable ExecutionConsole consoleView
+      @Nullable ExecutionConsole consoleView,
+      @Nullable BuildViewSettingsProvider consoleSettings
     ) {
       myProcessHandler = processHandler;
       myEventDispatcher = eventDispatcher;
@@ -457,6 +463,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       myDataContext = dataContext;
       myConsoleManager = consoleManager;
       myConsoleView = consoleView;
+      myConsoleSettings = consoleSettings;
     }
 
     @Override
@@ -466,10 +473,9 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       myProcessHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
 
       var eventMessage = BuildBundle.message("build.status.running");
-      var viewSettingsProvider = ObjectUtils.doIfCast(myConsoleView, BuildViewSettingsProvider.class, BuildViewSettingsProviderAdapter::new);
       myEventDispatcher.onEvent(id,
         StartBuildEvent.builder(eventMessage, myBuildDescriptor)
-          .withBuildViewSettings(viewSettingsProvider)
+          .withBuildViewSettings(myConsoleSettings)
           .build()
       );
     }

@@ -89,7 +89,9 @@ c:com.intellij.build.SyncViewManager
 - a:progress(java.lang.String):com.intellij.build.progress.BuildProgress
 - a:progress(java.lang.String,J,J,java.lang.String):com.intellij.build.progress.BuildProgress
 - a:start(com.intellij.build.progress.BuildProgressDescriptor):com.intellij.build.progress.BuildProgress
+- a:start(com.intellij.build.progress.BuildProgressDescriptor,com.intellij.build.BuildViewSettingsProvider):com.intellij.build.progress.BuildProgress
 - a:start(java.lang.String,com.intellij.build.progress.BuildProgressDescriptor):com.intellij.build.progress.BuildProgress
+- a:start(java.lang.String,com.intellij.build.progress.BuildProgressDescriptor,com.intellij.build.BuildViewSettingsProvider):com.intellij.build.progress.BuildProgress
 - a:startChildProgress(java.lang.String):com.intellij.build.progress.BuildProgress
 *:com.intellij.build.progress.BuildProgressDescriptor
 - a:getBuildDescriptor():com.intellij.build.BuildDescriptor

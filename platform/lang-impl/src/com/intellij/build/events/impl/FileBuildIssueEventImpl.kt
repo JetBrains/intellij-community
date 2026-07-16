@@ -13,10 +13,11 @@ internal class FileBuildIssueEventImpl(
   parentId: Any?,
   time: Long?,
   hint: @Hint String?,
+  outputIds: List<Any>,
   issue: BuildIssue,
   kind: MessageEvent.Kind,
   private val filePosition: FilePosition,
-) : BuildIssueEventImpl(id, parentId, time, hint, issue, kind),
+) : BuildIssueEventImpl(id, parentId, time, hint, outputIds, issue, kind),
     FileMessageEvent {
 
   override fun getFilePosition(): FilePosition = filePosition

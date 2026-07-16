@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * @author Vladislav.Soroka
@@ -24,7 +25,7 @@ import java.util.Arrays;
 public final class StartBuildEventImpl extends StartEventImpl implements StartBuildEvent {
 
   private final @NotNull DefaultBuildDescriptor myBuildDescriptor;
-  private @Nullable BuildViewSettingsProvider myBuildViewSettings;
+  private final @NotNull BuildViewSettingsProvider myBuildViewSettings;
 
   @Internal
   public StartBuildEventImpl(
@@ -38,7 +39,7 @@ public final class StartBuildEventImpl extends StartEventImpl implements StartBu
     super(buildDescriptor.getId(), parentId, buildDescriptor.getStartTime(), message, hint, description);
     myBuildDescriptor = buildDescriptor instanceof DefaultBuildDescriptor defaultBuildDescriptor
                         ? defaultBuildDescriptor : new DefaultBuildDescriptor(buildDescriptor);
-    myBuildViewSettings = buildViewSettings;
+    myBuildViewSettings = Objects.requireNonNullElse(buildViewSettings, BuildViewSettingsProvider.EMPTY);
   }
 
   /**
@@ -58,7 +59,7 @@ public final class StartBuildEventImpl extends StartEventImpl implements StartBu
   }
 
   @Override
-  public @Nullable BuildViewSettingsProvider getBuildViewSettings() {
+  public @NotNull BuildViewSettingsProvider getBuildViewSettings() {
     return myBuildViewSettings;
   }
 
@@ -87,15 +88,5 @@ public final class StartBuildEventImpl extends StartEventImpl implements StartBu
   @Experimental
   public @Nullable BuildViewSettingsProvider getBuildViewSettingsProvider() {
     return myBuildViewSettings;
-  }
-
-  /**
-   * @deprecated Use {@link StartBuildEvent#builder} event builder instead.
-   */
-  @Deprecated
-  @Experimental
-  public StartBuildEventImpl withBuildViewSettingsProvider(@Nullable BuildViewSettingsProvider viewSettingsProvider) {
-    myBuildViewSettings = viewSettingsProvider;
-    return this;
   }
 }

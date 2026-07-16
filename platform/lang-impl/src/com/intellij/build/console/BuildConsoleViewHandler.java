@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.console;
 
-import com.intellij.build.BuildTextConsoleView;
 import com.intellij.build.CompositeView;
 import com.intellij.build.ExecutionNode;
 import com.intellij.build.events.BuildEventPresentationData;
@@ -9,7 +8,6 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.execution.actions.ClearConsoleAction;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.impl.ConsoleViewImpl;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -41,8 +39,8 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static com.intellij.execution.ui.ConsoleViewWithDelegateKt.unwrapDelegate;
 
@@ -51,49 +49,62 @@ public final class BuildConsoleViewHandler implements Disposable.Default {
   private final Project myProject;
   private final JPanel myPanel;
   private final CompositeView<ExecutionConsole> myView;
-  private final AtomicReference<String> myNodeConsoleViewName = new AtomicReference<>();
+  private final @NotNull ExecutionNode myRootExecutionNode;
   private @Nullable ExecutionNode myExecutionNode;
   private final @NotNull List<? extends Filter> myExecutionConsoleFilters;
   private final BuildProgressStripe myPanelWithProgress;
   private final DefaultActionGroup myConsoleToolbarActionGroup;
   private final ActionToolbar myToolbar;
 
+  private final @NotNull BuildConsoleViewStrategy myStrategy;
+
   public BuildConsoleViewHandler(@NotNull Project project,
                                  @NotNull ExecutionNode buildProgressRootNode,
                                  @NotNull Disposable parentDisposable,
                                  @Nullable ExecutionConsole executionConsole,
-                                 @NotNull List<? extends Filter> executionConsoleFilters) {
+                                 @NotNull List<? extends Filter> executionConsoleFilters,
+                                 @NotNull BuildConsoleViewStrategy strategy) {
     myProject = project;
+    myStrategy = strategy;
     myPanel = new NonOpaquePanel(new BorderLayout());
     myPanelWithProgress = new BuildProgressStripe(myPanel, parentDisposable, (int)ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS);
     myExecutionConsoleFilters = executionConsoleFilters;
-    Disposer.register(parentDisposable, this);
+
     myView = new CompositeView<>(null) {
       @Override
       public void addView(@NotNull ExecutionConsole view, @NotNull String viewName) {
         super.addView(view, viewName);
         UIUtil.removeScrollBorder(view.getComponent());
       }
+
+      @Override
+      public void showView(@NotNull String viewName, boolean requestFocus) {
+        super.showView(viewName, requestFocus);
+        withView(viewName, it -> showTextConsoleToolbarActions(it));
+        myPanel.setVisible(true);
+      }
     };
     Disposer.register(this, myView);
-    if (executionConsole != null) {
-      var nodeConsoleViewName = getNodeConsoleViewName(buildProgressRootNode);
-      var console = executionConsole instanceof ConsoleView consoleView ?
-                    new BuildConsoleViewImpl(project, consoleView) :
-                    executionConsole;
-      myView.addViewAndShowIfNeeded(console, nodeConsoleViewName, true, false);
-      myNodeConsoleViewName.set(nodeConsoleViewName);
-    }
     myPanel.add(myView.getComponent(), BorderLayout.CENTER);
+
     myConsoleToolbarActionGroup = new DefaultActionGroup();
     myConsoleToolbarActionGroup.copyFromGroup(createDefaultTextConsoleToolbar());
     myToolbar = ActionManager.getInstance().createActionToolbar("BuildConsole", myConsoleToolbarActionGroup, false);
     myToolbar.setTargetComponent(myView);
     myPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
 
+    myRootExecutionNode = buildProgressRootNode;
+    if (executionConsole != null) {
+      var rootConsoleViewName = getNodeConsoleViewName(buildProgressRootNode);
+      var rootConsoleView = myStrategy.createRootConsoleView(project, executionConsole);
+      myView.addViewAndShowIfNeeded(rootConsoleView, rootConsoleViewName, true, false);
+    }
+
     if (ExperimentalUI.isNewUI()) {
       UIUtil.setBackgroundRecursively(myPanel, JBUI.CurrentTheme.ToolWindow.background());
     }
+
+    Disposer.register(parentDisposable, this);
   }
 
   private void showTextConsoleToolbarActions(@NotNull ExecutionConsole console) {
@@ -133,9 +144,7 @@ public final class BuildConsoleViewHandler implements Disposable.Default {
   }
 
   public @Nullable ExecutionConsole getCurrentConsole() {
-    String nodeConsoleViewName = myNodeConsoleViewName.get();
-    if (nodeConsoleViewName == null) return null;
-    return myView.getView(nodeConsoleViewName);
+    return myView.getVisibleView();
   }
 
   /**
@@ -144,8 +153,12 @@ public final class BuildConsoleViewHandler implements Disposable.Default {
   @TestOnly
   @Deprecated
   public @NotNull ExecutionConsole getCurrentConsoleOrEmpty() {
-    var currentConsole = ObjectUtils.doIfNotNull(getCurrentConsole(), it -> unwrapDelegate(it));
-    var console = ObjectUtils.notNull(currentConsole, () -> new ConsoleViewImpl(myProject, GlobalSearchScope.EMPTY_SCOPE, true, false));
+    var console = ObjectUtils.doIfNotNull(getCurrentConsole(), it -> unwrapDelegate(it));
+    if (console == null) {
+      var empty = new ConsoleViewImpl(myProject, GlobalSearchScope.EMPTY_SCOPE, true, false);
+      Disposer.register(this, empty); // own it so it's disposed with the handler
+      console = empty;
+    }
     if (console instanceof ConsoleViewImpl consoleImpl) {
       consoleImpl.flushDeferredText();
     }
@@ -170,35 +183,46 @@ public final class BuildConsoleViewHandler implements Disposable.Default {
     return null;
   }
 
-  public void setNodeIfChanged(@NotNull ExecutionNode node) {
-    if (myProject.isDisposed() || node == myExecutionNode) return;
-    setExecutionNode(node);
-  }
-
   public @Nullable ExecutionNode getExecutionNode() {
     return myExecutionNode;
   }
 
   public void setExecutionNode(@NotNull ExecutionNode node) {
+    if (myProject.isDisposed()) return;
     myExecutionNode = node;
-    var nodeConsoleViewName = getNodeConsoleViewName(node);
-    myNodeConsoleViewName.set(nodeConsoleViewName);
-
-    var console = myView.getOrAddView(nodeConsoleViewName, this::createExecutionConsole);
-    myView.showView(nodeConsoleViewName, false);
-
-    showTextConsoleToolbarActions(console);
-
-    myPanel.setVisible(true);
+    myStrategy.showExecutionNode(myProject, this, node);
   }
 
-  private @NotNull ExecutionConsole createExecutionConsole() {
-    return new BuildConsoleViewImpl(myProject, new BuildTextConsoleView(myProject, true, myExecutionConsoleFilters));
+  public @NotNull ExecutionNode getRootExecutionNode() {
+    return myRootExecutionNode;
   }
 
-  @TestOnly
-  public @NotNull ExecutionConsole resolveExecutionConsole(@NotNull ExecutionNode node) {
-    return myView.getOrAddView(getNodeConsoleViewName(node), this::createExecutionConsole);
+  public @NotNull List<? extends Filter> getExecutionConsoleFilters() {
+    return myExecutionConsoleFilters;
+  }
+
+  public boolean hasNodeView(@NotNull ExecutionNode node) {
+    return myView.hasView(getNodeConsoleViewName(node));
+  }
+
+  public boolean hasDeferredNodeView(@NotNull ExecutionNode node) {
+    return myView.hasDeferredView(getNodeConsoleViewName(node));
+  }
+
+  public @Nullable ExecutionConsole getNodeView(@NotNull ExecutionNode node) {
+    return myView.getView(getNodeConsoleViewName(node));
+  }
+
+  public void addNodeView(@NotNull ExecutionNode node, @NotNull ExecutionConsole view) {
+    myView.addView(view, getNodeConsoleViewName(node));
+  }
+
+  public @NotNull ExecutionConsole getOrAddNodeView(@NotNull ExecutionNode node, @NotNull Supplier<? extends ExecutionConsole> create) {
+    return myView.getOrAddView(getNodeConsoleViewName(node), create);
+  }
+
+  public void showNodeView(@NotNull ExecutionNode node) {
+    myView.showView(getNodeConsoleViewName(node), false);
   }
 
   public void maybeAddExecutionConsole(@NotNull ExecutionNode node, @NotNull BuildEventPresentationData presentationData) {

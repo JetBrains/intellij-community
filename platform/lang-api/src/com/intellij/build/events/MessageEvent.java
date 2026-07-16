@@ -10,6 +10,9 @@ import org.jetbrains.annotations.CheckReturnValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author Vladislav.Soroka
  */
@@ -26,6 +29,13 @@ public interface MessageEvent extends BuildEvent {
   @Nullable Navigatable getNavigatable(@NotNull Project project);
 
   @NotNull MessageEventResult getResult();
+
+  /**
+   * The {@link OutputBuildEvent#getId}'s that are referenced by this event.
+   */
+  default @NotNull List<Object> getOutputIds() {
+    return Collections.emptyList();
+  }
 
   @CheckReturnValue
   static @NotNull MessageEventBuilder builder(

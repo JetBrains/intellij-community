@@ -3,6 +3,7 @@ package com.intellij.build.progress;
 
 import com.intellij.build.BuildBundle;
 import com.intellij.build.BuildProgressListener;
+import com.intellij.build.BuildViewSettingsProvider;
 import com.intellij.build.events.EventResult;
 import com.intellij.build.events.FinishBuildEvent;
 import com.intellij.build.events.StartBuildEvent;
@@ -61,6 +62,19 @@ public final class BuildRootProgressImpl extends AbstractBuildProgress {
     return event(
       StartBuildEvent.builder(message, descriptor.getBuildDescriptor())
         .withParentId(getParentId())
+        .build()
+    );
+  }
+
+  @Override
+  public @NotNull BuildProgress<BuildProgressDescriptor> start(@NotNull String message,
+                                                               @NotNull BuildProgressDescriptor descriptor,
+                                                               @NotNull BuildViewSettingsProvider buildViewSettingsProvider) {
+    myDescriptor = descriptor;
+    return event(
+      StartBuildEvent.builder(message, descriptor.getBuildDescriptor())
+        .withParentId(getParentId())
+        .withBuildViewSettings(buildViewSettingsProvider)
         .build()
     );
   }

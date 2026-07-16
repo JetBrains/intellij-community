@@ -25,6 +25,9 @@ interface BuildIssueEventBuilder {
   fun withHint(hint: @Hint String?): BuildIssueEventBuilder
 
   @CheckReturnValue
+  fun withOutputIds(outputIds: List<Any>): BuildIssueEventBuilder
+
+  @CheckReturnValue
   fun withFilePosition(filePosition: FilePosition?): BuildIssueEventBuilder
 
   fun build(): BuildIssueEvent

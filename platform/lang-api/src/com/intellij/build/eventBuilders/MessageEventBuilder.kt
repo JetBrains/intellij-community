@@ -35,6 +35,9 @@ interface MessageEventBuilder {
   fun withNavigatable(navigatable: Navigatable?): MessageEventBuilder
 
   @CheckReturnValue
+  fun withOutputIds(outputIds: List<Any>): MessageEventBuilder
+
+  @CheckReturnValue
   fun withFilePosition(filePosition: FilePosition?): MessageEventBuilder
 
   fun build(): MessageEvent
