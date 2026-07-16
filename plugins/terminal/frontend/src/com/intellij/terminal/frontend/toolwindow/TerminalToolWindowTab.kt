@@ -9,11 +9,7 @@ import org.jetbrains.annotations.ApiStatus
  * Represents the Reworked Terminal tab in the Terminal Tool Window.
  *
  * The lifetime of this object is bound to the lifetime of the [content].
- * Once the [content] is disposed, the tab is removed from the Terminal Tool Window.
- * But the [view] can have a longer lifetime, because it can be detached from the tab ([TerminalToolWindowTabsManager.detachTab]).
- *
- * Do not dispose the [content] and do not cancel the [view] coroutine scope manually.
- * Use [TerminalToolWindowTabsManager.closeTab] instead.
+ * Once the [content] is disposed, the underlying [TerminalView] is disposed and started terminal process is terminated.
  */
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable

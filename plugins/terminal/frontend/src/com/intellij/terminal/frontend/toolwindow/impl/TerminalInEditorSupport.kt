@@ -9,7 +9,6 @@ import com.intellij.terminal.frontend.editor.TerminalViewVirtualFile
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.toolwindow.findTabByContent
-import com.intellij.terminal.frontend.toolwindow.impl.TerminalToolWindowTabsManagerImpl.Companion.TAB_DETACHED_KEY
 import com.intellij.ui.content.Content
 
 internal class TerminalInEditorSupport : ToolWindowInEditorSupport {
@@ -27,8 +26,7 @@ internal class TerminalInEditorSupport : ToolWindowInEditorSupport {
     tab: TerminalToolWindowTab,
     editorWindow: EditorWindow,
   ) {
-    tab.content.putUserData(TAB_DETACHED_KEY, Unit)
-    val file = TerminalViewVirtualFile(tab.view, tab.closeOnProcessTermination, tab.processOptions)
+    val file = TerminalViewVirtualFile(tab)
 
     file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, true)
     try {
