@@ -51,8 +51,6 @@ public class ConfigurationState {
 
     CLFlags.WARN,
     CLFlags.X_WASM_ATTACH_JS_EXCEPTION,
-    CLFlags.X_WASM_GENERATE_CLOSED_WORLD_MULTIMODULE,
-    CLFlags.X_WASM_KCLASS_FQN,
     CLFlags.ADD_EXPORT,
     CLFlags.ADD_READS,
 
