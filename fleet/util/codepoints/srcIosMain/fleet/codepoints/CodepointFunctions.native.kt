@@ -2,7 +2,6 @@ package fleet.codepoints
 
 import fleet.util.multiplatform.Actual
 
-@Actual internal fun codepointsToStringNative(vararg codepoints: Int): String = MultiplatformCodepoints.codepointsToString(*codepoints)
 @Actual internal fun codepointOfNative(highSurrogate: Char, lowSurrogate: Char): Codepoint = MultiplatformCodepoints.codepointOf(highSurrogate, lowSurrogate)
 @Actual internal fun highSurrogateNative(codepoint: Int): Char = MultiplatformCodepoints.highSurrogate(codepoint)
 @Actual internal fun lowSurrogateNative(codepoint: Int): Char = MultiplatformCodepoints.lowSurrogate(codepoint)
