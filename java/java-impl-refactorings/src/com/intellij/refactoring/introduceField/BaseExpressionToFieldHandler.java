@@ -53,6 +53,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.SmartTypePointer;
 import com.intellij.psi.SmartTypePointerManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -346,12 +347,13 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       pattern.append("=0");
     }
     pattern.append(";");
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(parentClass.getProject());
+    Project project = parentClass.getProject();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     try {
-      PsiField field = factory.createFieldFromText(pattern.toString(), null);
+      PsiField field = factory.createFieldFromText(pattern.toString(), parentClass);
       field.getTypeElement().replace(factory.createTypeElement(type));
-      field = (PsiField)CodeStyleManager.getInstance(parentClass.getProject()).reformat(field);
-      return field;
+      field = (PsiField)CodeStyleManager.getInstance(project).reformat(field);
+      return (PsiField)JavaCodeStyleManager.getInstance(project).shortenClassReferences(field);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

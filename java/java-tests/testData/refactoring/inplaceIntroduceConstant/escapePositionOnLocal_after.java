@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 class Test {
-
     void simpleMethod() {
         boolean <caret>bb = false;
     }
