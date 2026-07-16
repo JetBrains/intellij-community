@@ -293,10 +293,12 @@ Expected: `✓ All files unchanged`. If files change, inspect them — the gener
 
 # Validates plugin availability in IDEA Free mode
 ./tests.cmd --module intellij.projectStructureTests \
-  --test "com.intellij.idea.ultimate.build.smokeTests.PluginsAvailableInIdeaFreeModeTest"
+  --test "com.intellij.ideaProjectStructure.fast.PluginsAvailableInIdeaFreeModeTest"
 ```
 
 All three must pass before the work is done.
+
+Run them one at a time. `tests.cmd` kills leftover processes by name on startup (`Killing process containing subpath 'ide-tests'`), so a concurrent run shoots down the one already in flight — which surfaces as an unrelated-looking failure such as `AllProductsPackagingTest#build`.
 
 ---
 
@@ -325,6 +327,7 @@ All three must pass before the work is done.
 | Supertype cascade after removing a dep | `Cannot access 'com.X.BaseClass' which is a supertype of 'SubClass'` — even though `BaseClass` is never directly imported | Kotlin needs the full supertype chain of every used type. If you use `SubClass` (from dep Y) whose supertype `BaseClass` lives in dep X, removing X breaks compilation even without direct X imports. Fix: move the `SubClass` usage entirely into the EP implementation in the new module, and expose only a non-X return type (e.g. `Language` instead of `PostCssLanguage`) through the EP interface |
 | Class hierarchy access fails after removing a dep | `cannot access BaseClass: class file not found` | Subclasses of platform types may transitively require the platform dep; keep it even without direct imports |
 | Broad downstream breakage after large file move | Many unrelated modules fail to compile | After moving 10+ files, build `//plugins/... //contrib/...` immediately to find all broken consumers |
+| Two `tests.cmd` runs at once | A test that passes on its own fails, typically `AllProductsPackagingTest#build`; log shows `Killing process containing subpath 'ide-tests'` | Run the required tests one at a time — each `tests.cmd` kills leftover `ide-tests` processes on startup, including a run still in flight |
 
 ---
 
