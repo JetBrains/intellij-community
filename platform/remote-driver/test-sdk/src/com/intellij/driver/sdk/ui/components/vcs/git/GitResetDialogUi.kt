@@ -1,4 +1,4 @@
-package com.intellij.driver.sdk.ui.components.vcs
+package com.intellij.driver.sdk.ui.components.vcs.git
 
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
