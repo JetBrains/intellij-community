@@ -362,6 +362,18 @@ class UploadToS3UtilsTest {
     assertTrue(expectedArchive.exists(), "Archive should exist")
     assertNotEquals(source, put.file, "Original file path must not be uploaded when archiving is requested")
   }
+
+  @Test
+  fun closes_when_close_called(): Unit = runTest {
+    val client = FakeFleetS3Client(storageDir)
+
+    client.close()
+
+    val close = client.calls
+    val expected: List<Call> = listOf(Call.Close)
+
+    assertEquals(expected, close)
+  }
 }
 
 private class FakeFleetS3Client(
@@ -372,6 +384,7 @@ private class FakeFleetS3Client(
     data class Put(val bucket: String, val key: String, val file: Path) : Call()
     data class Exists(val bucket: String, val key: String) : Call()
     data class Get(val bucket: String, val key: String, val temporaryDir: Path) : Call()
+    data object Close : Call()
   }
 
   val calls = mutableListOf<Call>()
@@ -396,5 +409,9 @@ private class FakeFleetS3Client(
       .resolve(key)
       .createParentDirectories()
     file.copyTo(newFile)
+  }
+
+  override fun close() {
+    calls += Call.Close
   }
 }
