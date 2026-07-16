@@ -2,6 +2,8 @@
 package com.jetbrains.python.inspections
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.ide.ui.ColorBlindness
+import com.intellij.ide.ui.UISettings
 import com.intellij.idea.TestFor
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.Disposable
@@ -75,10 +77,110 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
     // union is not one span.
     assertExpected(tooltip, "str")
     assertNotHighlighted(tooltip, "int | str")
-    assertTrue("int<span style=\"color: $mutedColor;\"> | </span>" in tooltip, tooltip)
+    // The union separator stays muted (the matched `int` member before it is now a navigable link, not highlighted).
+    assertTrue("<span style=\"color: $mutedColor;\"> | </span>" in tooltip, tooltip)
     // The parameter names are never highlighted.
     assertNotHighlighted(tooltip, "a: ")
     assertNotHighlighted(tooltip, "b: ")
+  }
+
+  // A top-level union mismatch aligns members into columns (matching members pair up and stay plain, pipes line up),
+  // and — because a provided value may legitimately omit some expected alternatives — flags ONLY a provided member the
+  // expected union can't accept. So `range | int` assigned to `int | str` highlights just `range`; the absent `str` is
+  // not highlighted, and its gap on the provided row is not painted.
+  @Test
+  fun `top-level union flags only the unassignable provided member`() {
+    val tooltip = tooltipFor("""
+      a: range | int
+      b: int | str = a
+    """)
+    assertProvided(tooltip, "range")
+    assertNotHighlighted(tooltip, "str")
+    assertNotHighlighted(tooltip, "int")
+    // The members are padded into shared columns, so the two rows are the same width and the pipes line up vertically.
+    assertRowsAligned(tooltip)
+  }
+
+  // Members that share structure (here `list[int]` and `list[str]`) pair into one column and recurse, so only their
+  // differing element is highlighted instead of the whole members landing in separate columns.
+  @Test
+  fun `top-level union pairs structurally-similar members`() {
+    val tooltip = tooltipFor("""
+      a: list[str] | bytes
+      b: list[int] | bytes = a
+    """)
+    assertProvided(tooltip, "str")
+    assertExpected(tooltip, "int")
+    assertNotHighlighted(tooltip, "bytes")
+    assertRowsAligned(tooltip)
+  }
+
+  // Non-mismatched type names keep their editor syntax-highlight colour — a builtin like `int` in the builtin colour,
+  // `None` in the keyword colour — via the rich link+highlight rendering, instead of the plain code colour.
+  @Test
+  fun `matched type names keep their editor syntax colour`() {
+    val tooltip = tooltipFor("""
+      a: int | None | range
+      b: int | None | str = a
+    """)
+    assertSyntaxColored(tooltip, "int")
+    assertSyntaxColored(tooltip, "None")
+  }
+
+  // The overload-call report (`No overload matches`) shares the grid, so via the single `typeValue` factory it gets the
+  // SAME rich rendering as the structural diff: a matched type name keeps its syntax colour and is a navigable link.
+  @Test
+  fun `overload-call report syntax-colours and links its type names`() {
+    val tooltip = tooltipFor("""
+      from typing import overload
+      @overload
+      def f(a: int, x: None) -> int: ...
+      @overload
+      def f(a: str, x: None) -> str: ...
+      f(None, None)
+    """)
+    assertSyntaxColored(tooltip, "None")   // the matched `None` keeps its keyword colour…
+    // …and the EXPECTED candidate parameter types are navigable links too — `int`/`str` appear only in the candidate
+    // rows, so these links prove the candidates' PyType reaches the grid (not just the row's red/green Side styling).
+    assertTrue("href=\"#element/builtins.int\"" in tooltip, tooltip)
+    assertTrue("href=\"#element/builtins.str\"" in tooltip, tooltip)
+  }
+
+  // The overload-call report goes through the SAME grid as the structural diff, so it colours mismatches identically:
+  // the unmatched provided argument is red and the expected candidate parameters it failed are green — each over a
+  // background band — instead of a flat bare-red. (The report used to omit the per-row side and fall back to plain red.)
+  @Test
+  fun `overload-call report colours provided red and expected green over a background`() {
+    val tooltip = tooltipFor("""
+      from typing import overload
+      @overload
+      def f(a: int, x: None) -> int: ...
+      @overload
+      def f(a: str, x: None) -> str: ...
+      f(None, None)
+    """)
+    assertProvided(tooltip, "None")   // the unmatched provided argument `None` is red…
+    assertExpected(tooltip, "int")    // …and the expected candidate parameters it failed are green…
+    assertExpected(tooltip, "str")
+    // …each highlight over a background band, exactly like the two-row structural diff (not a flat bare red).
+    assertTrue("color: $providedColor; background-color:" in tooltip, tooltip)
+    assertTrue("color: $expectedColor; background-color:" in tooltip, tooltip)
+  }
+
+  // An intersection type (here produced by narrowing `x: A` with `isinstance(x, B)`) is shown member by member too,
+  // its parts joined by ` & `, instead of falling back to a plain message.
+  @Test
+  fun `intersection type is shown member by member`() {
+    val tooltip = tooltipFor("""
+      class A: ...
+      class B: ...
+      def f(x: A):
+          if isinstance(x, B):
+              y: int = x
+    """)
+    assertTrue(" &amp; " in tooltip, tooltip)
+    assertCodeLineContains(tooltip, "A")
+    assertCodeLineContains(tooltip, "B")
   }
 
   // Like an editor diff, the provided value's incompatible parts are red and the expected type's are green, and
@@ -96,6 +198,46 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
     // Both highlights carry a background-color band behind the colored text.
     assertTrue("color: $providedColor; background-color:" in tooltip, tooltip)
     assertTrue("color: $expectedColor; background-color:" in tooltip, tooltip)
+  }
+
+  // Red+green is exactly the pair red-green colour-vision deficiency can't separate, so the diff honours the IDE's
+  // colour-blindness setting and switches to a distinguishable orange/blue pair instead.
+  @Test
+  fun `red-green colors are replaced under a colour-blindness setting`() {
+    val settings = UISettings.getInstance()
+    val previous = settings.colorBlindness
+    settings.colorBlindness = ColorBlindness.deuteranopia
+    try {
+      val tooltip = tooltipFor("""
+        from typing import Callable
+        def f(a: int) -> object: ...
+        x: Callable[[int], int] = f
+      """)
+      // The provided `object` and expected `int` are still highlighted — just not in the red/green a red-green
+      // CVD user can't tell apart.
+      assertFalse("color: $providedColor;" in tooltip, tooltip)
+      assertFalse("color: $expectedColor;" in tooltip, tooltip)
+      assertCodeLineContains(tooltip, "object")
+      assertCodeLineContains(tooltip, "int")
+    }
+    finally {
+      settings.colorBlindness = previous
+    }
+  }
+
+  // Each class name in the diff is a navigable `#element/…` link to its declaration, and the mismatch colour is kept
+  // inside the link (the link wraps the coloured span, so navigation is added without changing the diff's colours).
+  @Test
+  fun `type names are navigable element links`() {
+    val tooltip = tooltipFor("""
+      from typing import Callable
+      def f(a: int) -> object: ...
+      x: Callable[[int], int] = f
+    """)
+    assertTrue("href=\"#element/builtins.int\"" in tooltip, tooltip)
+    assertTrue("href=\"#element/builtins.object\"" in tooltip, tooltip)
+    assertProvided(tooltip, "object")
+    assertExpected(tooltip, "int")
   }
 
   // The name and the default value of an incompatible parameter are NOT highlighted — only its type is.
@@ -735,6 +877,18 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
   /** Asserts no muted (delimiter-colored) span starts with [text]; type names must keep the normal color. */
   private fun assertNotMuted(tooltip: String, text: String) =
     assertFalse("color: $mutedColor;\">$text" in tooltip, tooltip)
+
+  /** Asserts [text] is wrapped in the platform's editor syntax-highlight colour span (its keyword/builtin colour,
+   *  the name optionally a link, e.g. `<span style="color:#000080;"><a href="#element/builtins.int">int</a></span>`),
+   *  not the diff's own red/green mismatch or muted colour. */
+  private fun assertSyntaxColored(tooltip: String, text: String) {
+    // Syntax-highlight spans use `color:#hex` (no space); the diff's own red/green/muted use `color: #hex` (a space),
+    // so requiring no space skips a same-named mismatch (e.g. a red argument `None`) and finds the syntax-coloured one.
+    val match = Regex("""<span style="color:(#[0-9a-fA-F]{6})[^"]*">(?:<a [^>]*>)?${Regex.escape(text)}</""").find(tooltip)
+    assertNotNull(match, "expected a syntax-colour span around '$text' in:\n$tooltip")
+    assertFalse(match!!.groupValues[1] in setOf(providedColor, expectedColor, mutedColor),
+                "'$text' should keep its editor syntax colour, not a diff colour")
+  }
 
   /** Asserts the tooltip is the two-row labeled diff grid (not the flat "Expected …, got …" message). */
   private fun assertDiffGrid(tooltip: String) =

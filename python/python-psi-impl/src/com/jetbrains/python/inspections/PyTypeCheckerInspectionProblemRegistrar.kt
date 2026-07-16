@@ -11,7 +11,6 @@ import com.intellij.psi.PsiElement
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.typing.matchingProtocolDefinitions
-import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.inspections.PyTypeCheckerInspection.AnalyzeArgumentResult
 import com.jetbrains.python.inspections.PyTypeCheckerInspection.AnalyzeCalleeResults
 import com.jetbrains.python.inspections.PyTypeCheckerInspectionProblemRegistrar.breakdownTooltipFromFragment
@@ -169,8 +168,8 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
   ) {
     val header = PyMismatchTooltips.header(calleesResults.map { it.callable })
     val argumentSlots = getReferenceResults(calleesResults).map { argumentResult ->
-      PyMismatchTooltips.argumentSlot(argumentResult.argument, argumentResult.actualType, context,
-                                      !argumentMatchesNoCallee(argumentResult.argument, calleesResults))
+      PyMismatchTooltips.Slot.argument(argumentResult.argument, argumentResult.actualType, context,
+                                       !argumentMatchesNoCallee(argumentResult.argument, calleesResults))
     }
     val expectedRows = calleesResults.map { calleeResults ->
       calleeResults.results.map { getExpectedParameterSlot(it, context, it.isMatched) }
@@ -349,10 +348,10 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     context: TypeEvalContext,
     matched: Boolean,
   ): PyMismatchTooltips.Slot {
+    // Pass the PyType (not just its rendered name) so the candidate parameter keeps its colour + navigable link.
     val type = argumentResult.expectedTypeAfterSubstitution.takeUnless { it.isUnknown } ?: argumentResult.expectedType
-    val typeName = PythonDocumentationProvider.getTypeName(type, context)
-    val parameter = argumentResult.parameter ?: return PyMismatchTooltips.Slot("", typeName, matched)
-    return PyMismatchTooltips.parameterSlot(parameter, typeName, matched)
+    val parameter = argumentResult.parameter ?: return PyMismatchTooltips.Slot.ofType(type, context, matched)
+    return PyMismatchTooltips.Slot.parameter(parameter, type, context, matched)
   }
 
   /**

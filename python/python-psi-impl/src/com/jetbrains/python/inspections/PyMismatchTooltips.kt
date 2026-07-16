@@ -15,9 +15,7 @@ import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isUnknown
-import org.jetbrains.annotations.Nls
 
 /**
  * Shared logic and messaging for "this call matches none of the candidate signatures" inspection reports,
@@ -37,40 +35,59 @@ import org.jetbrains.annotations.Nls
  */
 internal object PyMismatchTooltips {
   /**
-   * One provided argument or expected parameter, split into a [name] part (a `keyword=` for arguments, a
-   * `name: ` for parameters, or empty) and a [type] part, plus whether it matched. Keeping the parts separate
-   * lets the renderer right-align the names so the types line up column-by-column.
+   * One provided argument or expected parameter: a [name] part (a `keyword=` for arguments, a `name: ` for
+   * parameters, or empty) followed by its type. The type is carried as a [PyType] — never just a rendered string —
+   * so the grid can ALWAYS colour and link it; a slot that shows a type without one cannot be built. Construct
+   * slots only through [argument]/[parameter]/[ofType] (the constructor is private), which derive the displayed
+   * [type] name from the [PyType], so the name and the type can never diverge.
    */
-  @JvmRecord
-  data class Slot(@NlsSafe val name: String, @NlsSafe val type: String, val matched: Boolean) {
+  class Slot private constructor(
+    @NlsSafe val name: String,
+    val pyType: PyType?,
+    @NlsSafe val type: String,
+    val matched: Boolean,
+  ) {
+    /** The plain `name + type` text, for the Problems-view description. */
     @get:NlsSafe val text: String get() = name + type
-  }
 
-  /** A provided argument rendered as `type` or `keyword=type`. */
-  @JvmStatic
-  fun argumentSlot(argument: PyExpression, type: PyType?, context: TypeEvalContext, matched: Boolean): Slot {
-    val typeName = PythonDocumentationProvider.getTypeName(type, context)
-    val name = (argument as? PyKeywordArgument)?.keyword?.let { "$it=" } ?: ""
-    return Slot(name, typeName, matched)
-  }
+    companion object {
+      /** A provided argument rendered as `type` or `keyword=type`. An argument always has an (inferred) type, so it
+       *  is always rendered — `getTypeName` shows `Any` when it can't be determined. */
+      @JvmStatic
+      fun argument(argument: PyExpression, type: PyType?, context: TypeEvalContext, matched: Boolean): Slot {
+        val name = (argument as? PyKeywordArgument)?.keyword?.let { "$it=" } ?: ""
+        return Slot(name, type, PythonDocumentationProvider.getTypeName(type, context), matched)
+      }
 
-  /** An expected parameter rendered as `name: type` (with `*`/`**` for containers, just `name` when untyped). */
-  @JvmStatic
-  fun parameterSlot(parameter: PyCallableParameter, context: TypeEvalContext, matched: Boolean): Slot {
-    val type = parameter.getType(context)
-    return parameterSlot(parameter, if (type.isUnknown) null else PythonDocumentationProvider.getTypeName(type, context), matched)
-  }
+      /** An expected parameter using its DECLARED type: an unannotated parameter (a null type) shows just its name,
+       *  with no `: type`. */
+      @JvmStatic
+      fun parameter(parameter: PyCallableParameter, context: TypeEvalContext, matched: Boolean): Slot {
+        val type = parameter.getType(context)
+        return of(parameter, type, if (type.isUnknown) null else PythonDocumentationProvider.getTypeName(type, context), matched)
+      }
 
-  /**
-   * An expected parameter rendered as `name: type` (with `*`/`**` for containers, just `name` when [typeName] is
-   * `null`), using an already-rendered [typeName]. Use this when the caller has a different type to show than the
-   * parameter's declared one (e.g. a substituted type).
-   */
-  @JvmStatic
-  fun parameterSlot(parameter: PyCallableParameter, @NlsSafe typeName: String?, matched: Boolean): Slot {
-    val prefix = containerPrefix(parameter)
-    val name = parameter.name ?: return Slot("", typeName.orEmpty(), matched)
-    return if (typeName == null) Slot("$prefix$name", "", matched) else Slot("$prefix$name: ", typeName, matched)
+      /** An expected parameter shown with a specific [type] (e.g. one substituted at the call site) rather than its
+       *  declared one — always rendered (`getTypeName` shows `Any` when unknown). The [type] is REQUIRED, so its
+       *  colour and link are never dropped. */
+      @JvmStatic
+      fun parameter(parameter: PyCallableParameter, type: PyType?, context: TypeEvalContext, matched: Boolean): Slot =
+        of(parameter, type, PythonDocumentationProvider.getTypeName(type, context), matched)
+
+      /** A bare type with no parameter name (an expected position whose parameter is unknown). */
+      @JvmStatic
+      fun ofType(type: PyType?, context: TypeEvalContext, matched: Boolean): Slot =
+        Slot("", type, PythonDocumentationProvider.getTypeName(type, context), matched)
+
+      /** Assembles a parameter slot: `name: typeName` when [typeName] is given (an explicit/declared type), or just
+       *  the name when it is null (an unannotated parameter); always carries [type] for the grid to colour + link. */
+      private fun of(parameter: PyCallableParameter, type: PyType?, @NlsSafe typeName: String?, matched: Boolean): Slot {
+        val prefix = containerPrefix(parameter)
+        val name = parameter.name ?: return Slot("", type, typeName.orEmpty(), matched)
+        return if (typeName == null) Slot("$prefix$name", type, "", matched)
+               else Slot("$prefix$name: ", type, typeName, matched)
+      }
+    }
   }
 
   /** The `*`/`**` prefix for a positional/keyword container parameter, or empty for an ordinary parameter. */
@@ -134,16 +151,19 @@ internal object PyMismatchTooltips {
       return HtmlChunk.text(description(header, argumentSlots, expectedRows)).wrapWith("html").toString()
     }
     val columnCount = (expectedRows + listOf(argumentSlots)).maxOf { it.size }
-    val rows = mutableListOf(rowCells(argumentSlots, columnCount))
-    expectedRows.forEach { rows.add(rowCells(it, columnCount)) }
-    val labels = buildList {
-      add(PyPsiBundle.message("INSP.type.checker.argument.types.label"))
-      expectedRows.forEachIndexed { i, _ ->
-        add(if (i == 0) PyPsiBundle.message("INSP.type.checker.expected.one.of.label") else "")
+    // The provided arguments are one PROVIDED (red) row; each candidate signature is an EXPECTED (green) row. So the
+    // overload report colours its mismatches exactly like the structural diff — red provided vs green expected, each
+    // over a background — because it goes through the SAME shared grid with each row tagged by its side.
+    val rows = buildList {
+      add(PyTypeDiffGrid.Row(PyPsiBundle.message("INSP.type.checker.argument.types.label"),
+                             rowCells(argumentSlots, columnCount), PyTypeDiffGrid.Side.PROVIDED))
+      expectedRows.forEachIndexed { i, row ->
+        val label = if (i == 0) PyPsiBundle.message("INSP.type.checker.expected.one.of.label") else ""
+        add(PyTypeDiffGrid.Row(label, rowCells(row, columnCount), PyTypeDiffGrid.Side.EXPECTED))
       }
     }
     @NlsSafe val headerHtml = header.tooltip.removeSurrounding("<html>", "</html>")
-    return PyTypeDiffGrid.tooltip(HtmlChunk.raw(headerHtml), rows, labels)
+    return PyTypeDiffGrid.tooltip(HtmlChunk.raw(headerHtml), rows)
   }
 
   /**
@@ -161,7 +181,7 @@ internal object PyMismatchTooltips {
       }
       else {
         cells.add(PyTypeDiffGrid.value(slot.name, mismatch = false, alignRight = true))
-        cells.add(PyTypeDiffGrid.value(slot.type, mismatch = !slot.matched, suffix = suffix))
+        cells.add(PyTypeDiffGrid.typeValue(slot.pyType, slot.type, mismatch = !slot.matched, suffix = suffix))
       }
     }
     cells.add(PyTypeDiffGrid.delim(")"))
