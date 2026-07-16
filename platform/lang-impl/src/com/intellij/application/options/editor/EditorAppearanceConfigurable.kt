@@ -4,7 +4,7 @@ package com.intellij.application.options.editor
 import com.intellij.codeInsight.actions.ReaderModeSettingsListener
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.documentation.render.DocRenderManager
-import com.intellij.ide.IdeBundle
+import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ApplicationBundle
@@ -57,8 +57,8 @@ private val myShowVerticalIndentGuidesCheckBox        get() = CheckboxDescriptor
 private val myFocusModeCheckBox                       get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.highlight.only.current.declaration"), model::isFocusMode, model::setFocusMode)
 private val myCbShowIntentionBulbCheckBox             get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.intention.bulb"), model::isShowIntentionBulb, model::setShowIntentionBulb)
 private val myShowIntentionPreviewCheckBox            get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.intention.preview"), model::isShowIntentionPreview, model::setShowIntentionPreview)
-private val myCodeLensCheckBox                        get() = CheckboxDescriptor(IdeBundle.message("checkbox.show.editor.preview.popup"), UISettings.getInstance()::showEditorToolTip)
-private val myRenderedDocCheckBox                     get() = CheckboxDescriptor(IdeBundle.message("checkbox.show.rendered.doc.comments"), model::isDocCommentRenderingEnabled, model::setDocCommentRenderingEnabled)
+private val myCodeLensCheckBox                        get() = CheckboxDescriptor(message("checkbox.show.editor.preview.popup"), UISettings.getInstance()::showEditorToolTip)
+private val myRenderedDocCheckBox                     get() = CheckboxDescriptor(message("checkbox.show.rendered.doc.comments"), model::isDocCommentRenderingEnabled, model::setDocCommentRenderingEnabled)
 private val myUseEditorFontInInlays                   get() = CheckboxDescriptor(ApplicationBundle.message("use.editor.font.for.inlays"), model::isUseEditorFontInInlays, model::setUseEditorFontInInlays)
 // @formatter:on
 
@@ -71,110 +71,121 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
   override fun createPanel(): DialogPanel {
     val model = EditorSettingsExternalizable.getInstance()
     return panel {
-      var cbBlinkCaret: Cell<JBCheckBox>? = null
-      row {
-        cbBlinkCaret = checkBox(myCbBlinkCaret)
-          .gap(RightGap.SMALL)
-        intTextField(range = EditorSettingsExternalizable.BLINKING_RANGE.asRange(), keyboardStep = 100)
-          .bindIntText(model::getBlinkPeriod, model::setBlinkPeriod)
-          .columns(5)
-          .enabledIf(cbBlinkCaret.selected)
-      }
-      row {
-        checkBox(myCbSmoothBlinkCaret)
-        icon(Badge.new)
-      }.enabledIf(cbBlinkCaret!!.selected)
-      row {
-        checkBox(myCbBlockCursor)
-      }
-      row {
-        checkBox(myCbFullLineHeightCursor)
-      }
-      row {
-        checkBox(myCbSmoothCaretMovement)
-        comboBox(
-          DefaultComboBoxModel(EditorSettings.CaretEasing.entries.toTypedArray()),
-          renderer = textListCellRenderer {
-            when (it) {
-              EditorSettings.CaretEasing.NINJA -> ApplicationBundle.message("settings.editor.animated.caret.ninja")
-              EditorSettings.CaretEasing.EASE -> ApplicationBundle.message("settings.editor.animated.caret.ease")
-              null -> ""
+      group(message("title.caret")) {
+        var cbBlinkCaret: Cell<JBCheckBox>? = null
+        row {
+          cbBlinkCaret = checkBox(myCbBlinkCaret)
+            .gap(RightGap.SMALL)
+          intTextField(range = EditorSettingsExternalizable.BLINKING_RANGE.asRange(), keyboardStep = 100)
+            .bindIntText(model::getBlinkPeriod, model::setBlinkPeriod)
+            .columns(5)
+            .enabledIf(cbBlinkCaret.selected)
+        }
+        row {
+          checkBox(myCbSmoothBlinkCaret)
+          icon(Badge.new)
+        }.enabledIf(cbBlinkCaret!!.selected)
+        row {
+          checkBox(myCbBlockCursor)
+        }
+        row {
+          checkBox(myCbFullLineHeightCursor)
+        }
+        row {
+          checkBox(myCbSmoothCaretMovement)
+          comboBox(
+            DefaultComboBoxModel(EditorSettings.CaretEasing.entries.toTypedArray()),
+            renderer = textListCellRenderer {
+              when (it) {
+                EditorSettings.CaretEasing.NINJA -> ApplicationBundle.message("settings.editor.animated.caret.ninja")
+                EditorSettings.CaretEasing.EASE -> ApplicationBundle.message("settings.editor.animated.caret.ease")
+                null -> ""
+              }
             }
-          }
-        ).bindItem(model::getCaretEasing, model::setCaretEasing)
-          .customize(UnscaledGaps(right = 20))
-        icon(Badge.new)
+          ).bindItem(model::getCaretEasing, model::setCaretEasing)
+            .customize(UnscaledGaps(right = 20))
+          icon(Badge.new)
+        }
       }
-      row {
-        checkBox(myCbHighlightSelectionOccurrences)
-      }
-      row {
-        checkBox(myCbRightMargin)
-      }
-      row {
-        checkBox(myCbShowLineNumbers)
-        comboBox(
-          DefaultComboBoxModel(EditorSettings.LineNumerationType.values()),
-          renderer = textListCellRenderer {
-            when (it) {
-              EditorSettings.LineNumerationType.ABSOLUTE -> ApplicationBundle.message("line.numeration.type.absolute")
-              EditorSettings.LineNumerationType.RELATIVE -> ApplicationBundle.message("line.numeration.type.relative")
-              EditorSettings.LineNumerationType.HYBRID -> ApplicationBundle.message("line.numeration.type.hybrid")
-              null -> ""
+
+      group(message("title.code.structure")) {
+        row {
+          checkBox(myCbRightMargin)
+        }
+        row {
+          checkBox(myCbShowLineNumbers)
+          comboBox(
+            DefaultComboBoxModel(EditorSettings.LineNumerationType.entries.toTypedArray()),
+            renderer = textListCellRenderer {
+              when (it) {
+                EditorSettings.LineNumerationType.ABSOLUTE -> ApplicationBundle.message("line.numeration.type.absolute")
+                EditorSettings.LineNumerationType.RELATIVE -> ApplicationBundle.message("line.numeration.type.relative")
+                EditorSettings.LineNumerationType.HYBRID -> ApplicationBundle.message("line.numeration.type.hybrid")
+                null -> ""
+              }
             }
+          ).bindItem(model::getLineNumeration, model::setLineNumeration)
+        }
+        row {
+          checkBox(myCbShowMethodSeparators)
+        }
+        row {
+          checkBox(myShowVerticalIndentGuidesCheckBox)
+        }
+        if (ApplicationManager.getApplication().isInternal) {
+          row {
+            checkBox(myFocusModeCheckBox)
           }
-        ).bindItem(model::getLineNumeration, model::setLineNumeration)
-      }
-      row {
-        checkBox(myCbShowMethodSeparators)
+        }
       }
 
-      lateinit var cbWhitespace: Cell<JBCheckBox>
-      row {
-        cbWhitespace = checkBox(myWhitespacesCheckbox)
+      group(message("title.presentation")) {
+        row {
+          checkBox(myCbHighlightSelectionOccurrences)
+        }
+
+        lateinit var cbWhitespace: Cell<JBCheckBox>
+        row {
+          cbWhitespace = checkBox(myWhitespacesCheckbox)
+        }
+
+        indent {
+          row {
+            checkBox(myLeadingWhitespacesCheckBox)
+          }
+          row {
+            checkBox(myInnerWhitespacesCheckBox)
+          }
+          row {
+            checkBox(myTrailingWhitespacesCheckBox)
+          }
+          row {
+            checkBox(mySelectionWhitespacesCheckBox)
+          }
+        }.enabledIf(cbWhitespace.selected)
+
+        assert(lazyInlineDocAdditionalConfigurable.isNotEmpty())
+        val bestInlineDocAdditionalConfigurable = lazyInlineDocAdditionalConfigurable.first()
+        appendDslConfigurable(bestInlineDocAdditionalConfigurable)
+        row {
+          checkBox(myUseEditorFontInInlays)
+        }
+
+        for (configurable in configurables) {
+          appendDslConfigurable(configurable)
+        }
       }
 
-      indent {
+      group(message("title.code.assistance")) {
         row {
-          checkBox(myLeadingWhitespacesCheckBox)
+          checkBox(myCbShowIntentionBulbCheckBox)
         }
         row {
-          checkBox(myInnerWhitespacesCheckBox)
+          checkBox(myShowIntentionPreviewCheckBox)
         }
         row {
-          checkBox(myTrailingWhitespacesCheckBox)
+          checkBox(myCodeLensCheckBox)
         }
-        row {
-          checkBox(mySelectionWhitespacesCheckBox)
-        }
-      }.enabledIf(cbWhitespace.selected)
-
-      row {
-        checkBox(myShowVerticalIndentGuidesCheckBox)
-      }
-      if (ApplicationManager.getApplication().isInternal) {
-        row {
-          checkBox(myFocusModeCheckBox)
-        }
-      }
-      row {
-        checkBox(myCbShowIntentionBulbCheckBox)
-      }
-      row {
-        checkBox(myShowIntentionPreviewCheckBox)
-      }
-      assert(lazyInlineDocAdditionalConfigurable.isNotEmpty())
-      val bestInlineDocAdditionalConfigurable = lazyInlineDocAdditionalConfigurable.first()
-      appendDslConfigurable(bestInlineDocAdditionalConfigurable)
-      row {
-        checkBox(myCodeLensCheckBox)
-      }
-      row {
-        checkBox(myUseEditorFontInInlays)
-      }
-
-      for (configurable in configurables) {
-        appendDslConfigurable(configurable)
       }
     }
   }
@@ -220,11 +231,10 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
     override fun Panel.createContent() {
       row {
         checkBox(myRenderedDocCheckBox)
-          .commentRight(IdeBundle.message("checkbox.also.in.reader.mode")) {
+          .commentRight(message("checkbox.also.in.reader.mode")) {
             ReaderModeSettingsListener.goToEditorReaderMode()
           }
       }
     }
-
   }
 }
