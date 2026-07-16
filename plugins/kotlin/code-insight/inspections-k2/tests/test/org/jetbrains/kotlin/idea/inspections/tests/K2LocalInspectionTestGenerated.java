@@ -24533,6 +24533,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/propertyWithTypeParameter.kt");
         }
 
+        @TestMetadata("propertyWithTypeParameterAndReturn.kt")
+        public void testPropertyWithTypeParameterAndReturn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/propertyWithTypeParameterAndReturn.kt");
+        }
+
         @TestMetadata("propertyWithTypeParameterInClass.kt")
         public void testPropertyWithTypeParameterInClass() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/propertyWithTypeParameterInClass.kt");
