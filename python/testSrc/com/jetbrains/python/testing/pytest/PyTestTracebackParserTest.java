@@ -76,6 +76,21 @@ public final class PyTestTracebackParserTest {
     assertNull(new PyTestTracebackParser().findLinkInTrace("a/b/c/d"));
   }
 
+  @Test
+  public void testHttpUrlsAreNotParsedAsFileLinks() {
+
+    assertNull(new PyTestTracebackParser().findLinkInTrace("http://localhost"));
+    assertNull(new PyTestTracebackParser().findLinkInTrace("http://127.0.0.1"));
+    assertNull(new PyTestTracebackParser().findLinkInTrace("https://localhost"));
+    assertNull(new PyTestTracebackParser().findLinkInTrace("https://127.0.0.1"));
+    assertNull(new PyTestTracebackParser().findLinkInTrace("https://192.168.0.1"));
+    assertNull(new PyTestTracebackParser().findLinkInTrace("http://localhost/foo.py"));
+    assertNull(new PyTestTracebackParser().findLinkInTrace("http://127.0.0.1/foo.py"));
+    assertNull(new PyTestTracebackParser().findLinkInTrace("http://localhost:8080"));
+    assertNull(new PyTestTracebackParser().findLinkInTrace("http://127.0.0.1:8080"));
+    assertNull(new PyTestTracebackParser().findLinkInTrace("https://localhost:8080"));
+  }
+
   private static void ensureLinkIsCorrect(@NotNull String text,
                                           @NotNull String linkSubText,
                                           @NotNull String fileName,
