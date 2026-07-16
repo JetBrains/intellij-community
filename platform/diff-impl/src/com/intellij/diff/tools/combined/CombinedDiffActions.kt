@@ -25,6 +25,7 @@ import com.intellij.openapi.diff.DiffBundle.message
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
+import com.intellij.openapi.util.registry.Registry
 
 internal class CombinedNextBlockAction(private val context: DiffContext) : DumbAwareAction() {
   init {
@@ -213,6 +214,10 @@ internal abstract class CombinedGlobalBlockNavigationAction : DumbAwareAction() 
 
 internal class CombinedCaretToNextBlockAction : CombinedGlobalBlockNavigationAction() {
 
+  init {
+    templatePresentation.isRWLockRequired = Registry.`is`("actions.update.and.perform.arrow.actions.with.rw.lock")
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val viewer = e.getRequiredData(COMBINED_DIFF_VIEWER)
     if (viewer.canGoNextBlock()) {
@@ -222,6 +227,10 @@ internal class CombinedCaretToNextBlockAction : CombinedGlobalBlockNavigationAct
 }
 
 internal class CombinedCaretToPrevBlockAction : CombinedGlobalBlockNavigationAction() {
+
+  init {
+    templatePresentation.isRWLockRequired = Registry.`is`("actions.update.and.perform.arrow.actions.with.rw.lock")
+  }
 
   override fun actionPerformed(e: AnActionEvent) {
     val viewer = e.getRequiredData(COMBINED_DIFF_VIEWER)

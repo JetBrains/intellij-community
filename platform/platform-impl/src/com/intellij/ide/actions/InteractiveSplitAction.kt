@@ -95,6 +95,10 @@ internal class InteractiveSplitAction : AnAction(), ActionRemoteBehaviorSpecific
     }
 
     internal class SplitTop : Key() {
+      init {
+        templatePresentation.isRWLockRequired = Registry.`is`("actions.update.and.perform.arrow.actions.with.rw.lock")
+      }
+
       override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         SplitterService.getInstance(project).setSplitSide(EditorWindow.RelativePosition.UP)
@@ -102,6 +106,10 @@ internal class InteractiveSplitAction : AnAction(), ActionRemoteBehaviorSpecific
     }
 
     internal class SplitLeft : Key() {
+      init {
+        templatePresentation.isRWLockRequired = Registry.`is`("actions.update.and.perform.arrow.actions.with.rw.lock")
+      }
+
       override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         SplitterService.getInstance(project).setSplitSide(EditorWindow.RelativePosition.LEFT)
@@ -109,6 +117,10 @@ internal class InteractiveSplitAction : AnAction(), ActionRemoteBehaviorSpecific
     }
 
     internal class SplitDown : Key() {
+      init {
+        templatePresentation.isRWLockRequired = Registry.`is`("actions.update.and.perform.arrow.actions.with.rw.lock")
+      }
+
       override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         SplitterService.getInstance(project).setSplitSide(EditorWindow.RelativePosition.DOWN)
@@ -116,6 +128,10 @@ internal class InteractiveSplitAction : AnAction(), ActionRemoteBehaviorSpecific
     }
 
     internal class SplitRight : Key() {
+      init {
+        templatePresentation.isRWLockRequired = Registry.`is`("actions.update.and.perform.arrow.actions.with.rw.lock")
+      }
+
       override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         SplitterService.getInstance(project).setSplitSide(EditorWindow.RelativePosition.RIGHT)

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.block.prompt
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
@@ -39,12 +40,20 @@ internal class TerminalSelectPromptAction : TerminalOutputSelectionAction() {
 }
 
 internal class TerminalSelectBlockBelowAction : TerminalOutputSelectionAction() {
+  init {
+    templatePresentation.isRWLockRequired = Registry.`is`("actions.update.and.perform.arrow.actions.with.rw.lock")
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     e.selectionController?.selectRelativeBlock(isBelow = true, dropCurrentSelection = true)
   }
 }
 
 internal class TerminalSelectBlockAboveAction : TerminalOutputSelectionAction() {
+  init {
+    templatePresentation.isRWLockRequired = Registry.`is`("actions.update.and.perform.arrow.actions.with.rw.lock")
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     e.selectionController?.selectRelativeBlock(isBelow = false, dropCurrentSelection = true)
   }

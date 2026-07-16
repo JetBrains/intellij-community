@@ -146,6 +146,10 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <registryKey defaultValue="false"
                  description="Whether actions with `getActionUpdateThread() == EDT` are automatically updated without read lock and performed without the write lock."
                  key="actions.update.and.perform.edt.actions.without.rw.lock"/>
+    <registryKey defaultValue="false"
+                 restartRequired="true"
+                 description="Whether actions bound to arrow keys need read lock for update and write-intent lock for perform"
+                 key="actions.update.and.perform.arrow.actions.with.rw.lock"/>
     <registryKey key="show.last.visited.timestamps" defaultValue="true"
                  description="Shows recent files or code locations last visited timestamps"/>
     <registryKey key="project.view.show.vfs.cached.children.count.limit" defaultValue="0"
