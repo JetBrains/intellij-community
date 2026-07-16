@@ -3,6 +3,7 @@
 
 package com.intellij.platform.projectView.pane
 
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
@@ -27,7 +28,7 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
     private val nodeByUserObject = hashMapOf<Any, Node>()
 
     override suspend fun applyUpdate(update: ProjectViewPaneStateEvent): ProjectViewPaneStateEvent? {
-      LOG.debug("Handling update: $update")
+      LOG.debug { "Handling update: $update" }
       when (update) {
         is ProjectViewClearStateEvent -> {
           actionState = null
@@ -70,7 +71,7 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
           actionState = update.settingsState
         }
       }
-      LOG.debug("Handled update: $update")
+      LOG.debug { "Handled update: $update" }
       if (LOG.isTraceEnabled) {
         dumpState()
       }
