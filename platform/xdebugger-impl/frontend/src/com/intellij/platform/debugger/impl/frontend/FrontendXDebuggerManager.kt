@@ -25,6 +25,7 @@ import com.intellij.platform.debugger.impl.ui.evaluate.quick.common.ValueLookupM
 import com.intellij.platform.project.projectId
 import com.intellij.util.asDisposable
 import com.intellij.xdebugger.impl.XDebuggerManagerProxyListener
+import fleet.rpc.client.RpcClientDisconnectedException
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -71,7 +72,9 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
 
       launch(Dispatchers.EDT) {
         // await listening started on the backend
-        XDebuggerValueLookupHintsRemoteApi.getInstance().getValueLookupListeningFlow(project.projectId()).first { it }
+        durable {
+          XDebuggerValueLookupHintsRemoteApi.getInstance().getValueLookupListeningFlow(project.projectId()).first { it }
+        }
         val lookupManager = ValueLookupManager.getInstance(project)
         lookupManager.startListening(XQuickEvaluateHandler())
         currentSessionFlow.collectLatest {
@@ -166,7 +169,12 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
     val selectedSessionId = MutableSharedFlow<XDebugSessionId?>(1, 1, BufferOverflow.DROP_OLDEST)
     cs.launch {
       selectedSessionId.collectLatest { sessionId ->
-        XDebuggerManagerApi.getInstance().sessionTabSelected(project.projectId(), sessionId)
+        try {
+          XDebuggerManagerApi.getInstance().sessionTabSelected(project.projectId(), sessionId)
+        }
+        catch (_: RpcClientDisconnectedException) {
+          // Content selection can race with remote debugger disconnect.
+        }
       }
     }
 
@@ -183,7 +191,12 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
         if (descriptor == null) return
         val sessionId = getSessionIdByContentDescriptor(descriptor) ?: return
         cs.launch {
-          XDebuggerManagerApi.getInstance().sessionTabClosed(sessionId)
+          try {
+            XDebuggerManagerApi.getInstance().sessionTabClosed(sessionId)
+          }
+          catch (_: RpcClientDisconnectedException) {
+            // The backend may already be disconnected, so there is no tab to close remotely.
+          }
         }
       }
     })
