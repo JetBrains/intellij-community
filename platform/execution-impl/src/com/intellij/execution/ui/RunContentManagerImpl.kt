@@ -396,13 +396,9 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
           }
         }
       }
-      processHandler.addProcessListener(processAdapter)
+      processHandler.addProcessListener(processAdapter, descriptor)
       if (processHandler.isStartNotified && !processAdapter.processStarted.get()) {
         processAdapter.startNotified(ProcessEvent(processHandler))
-      }
-      val disposer = content.disposer
-      if (disposer != null) {
-        Disposer.register(disposer, Disposable { processHandler.removeProcessListener(processAdapter) })
       }
     }
     else {
