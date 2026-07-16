@@ -12,6 +12,7 @@ import com.intellij.debugger.streams.core.StreamDebuggerBundle
 import com.intellij.debugger.streams.core.StreamChainInlayState
 import com.intellij.debugger.streams.core.ChainDetectionStateManager
 import com.intellij.debugger.streams.core.action.TraceStreamRunner
+import com.intellij.debugger.streams.core.statistics.TraceEntryPoint
 import com.intellij.debugger.streams.shared.icons.DebuggerStreamsSharedIcons
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -109,7 +110,7 @@ internal class StreamDebuggerInlayDisplay(private val project: Project, private 
   private class ClickHandler(private val session: XDebugSession) : InlayPresentationFactory.ClickListener {
     override fun onClick(event: MouseEvent, translated: Point) {
       when (event.mouseButton) {
-        MouseButton.Left -> TraceStreamRunner.getInstance(session.project).actionPerformed(session)
+        MouseButton.Left -> TraceStreamRunner.getInstance(session.project).actionPerformed(session, TraceEntryPoint.INLAY_HINT)
         MouseButton.Right -> showByEvent(event, "StreamDebuggerInlayPopup",
                                          ActionManager.getInstance().getAction("StreamDebuggerInlayPopup") as ActionGroup)
         else -> Unit

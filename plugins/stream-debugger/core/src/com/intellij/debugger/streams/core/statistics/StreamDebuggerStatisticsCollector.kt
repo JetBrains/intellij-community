@@ -18,7 +18,7 @@ internal object StreamDebuggerStatisticsCollector : CounterUsagesCollector() {
     INTERNAL_ERROR,
   }
 
-  private val GROUP = EventLogGroup("debugger.streams", 1)
+  private val GROUP = EventLogGroup("debugger.streams", 2)
 
   // We want to record type of the stream (stream api, streamex, kotlin sequence)
   // The type of the stream can be inferred from the library support provider class
@@ -27,6 +27,10 @@ internal object StreamDebuggerStatisticsCollector : CounterUsagesCollector() {
   private val TRACER = EventFields.Class("tracer")
   private val RESULT = EventFields.Enum("result", StreamTraceResult::class.java)
   private val TRACE_FINISHED = GROUP.registerVarargEvent("stream.trace.finished", LIBRARY_SUPPORT_PROVIDER, TRACER, RESULT)
+
+  // Records which entry point requested the trace: the toolbar action or the editor inlay hint.
+  private val ENTRY_POINT = EventFields.Enum("entry_point", TraceEntryPoint::class.java)
+  private val TRACE_STARTED = GROUP.registerEvent("stream.trace.started", ENTRY_POINT)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -46,6 +50,11 @@ internal object StreamDebuggerStatisticsCollector : CounterUsagesCollector() {
     TRACE_FINISHED.log(project, events)
   }
 
+  @JvmStatic
+  fun logTraceStarted(project: Project, entryPoint: TraceEntryPoint) {
+    TRACE_STARTED.log(project, entryPoint)
+  }
+
   private fun getTraceResult(result: StreamTracer.Result): StreamTraceResult {
     return when (result) {
       is StreamTracer.Result.Evaluated -> {
@@ -56,4 +65,10 @@ internal object StreamDebuggerStatisticsCollector : CounterUsagesCollector() {
       StreamTracer.Result.Unknown -> StreamTraceResult.INTERNAL_ERROR
     }
   }
+}
+
+@ApiStatus.Internal
+enum class TraceEntryPoint {
+  TOOLBAR_ACTION,
+  INLAY_HINT,
 }

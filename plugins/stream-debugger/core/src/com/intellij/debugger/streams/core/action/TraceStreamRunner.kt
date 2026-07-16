@@ -8,6 +8,7 @@ import com.intellij.debugger.streams.core.diagnostic.ex.TraceCompilationExceptio
 import com.intellij.debugger.streams.core.diagnostic.ex.TraceEvaluationException
 import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
 import com.intellij.debugger.streams.core.statistics.StreamDebuggerStatisticsCollector
+import com.intellij.debugger.streams.core.statistics.TraceEntryPoint
 import com.intellij.debugger.streams.core.trace.StreamTracer
 import com.intellij.debugger.streams.core.trace.formatResolvedTrace
 import com.intellij.debugger.streams.core.trace.formatTrace
@@ -47,11 +48,12 @@ import kotlin.coroutines.CoroutineContext
 
 @Service(Service.Level.PROJECT)
 class TraceStreamRunner(val cs: CoroutineScope) {
-  fun actionPerformed(session: XDebugSession?): Job = cs.launch(Dispatchers.Default) {
+  fun actionPerformed(session: XDebugSession?, entryPoint: TraceEntryPoint): Job = cs.launch(Dispatchers.Default) {
     if (session == null) {
       LOG.info("Session is null")
       return@launch
     }
+    StreamDebuggerStatisticsCollector.logTraceStarted(session.project, entryPoint)
 
     val chainsState = withBackgroundProgress(session.project, StreamDebuggerBundle.message("action.calculating.chains.background.progress.title"), true) {
       ChainDetectionStateManager

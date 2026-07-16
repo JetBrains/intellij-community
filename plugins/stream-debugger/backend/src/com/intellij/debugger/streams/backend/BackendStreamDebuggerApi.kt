@@ -3,6 +3,7 @@ package com.intellij.debugger.streams.backend
 import com.intellij.debugger.streams.core.ChainStatus
 import com.intellij.debugger.streams.core.ChainDetectionStateManager
 import com.intellij.debugger.streams.core.action.TraceStreamRunner
+import com.intellij.debugger.streams.core.statistics.TraceEntryPoint
 import com.intellij.debugger.streams.shared.ChainStatusDto
 import com.intellij.debugger.streams.shared.StreamDebuggerApi
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
@@ -24,7 +25,7 @@ internal class BackendStreamDebuggerApi : StreamDebuggerApi {
 
   override suspend fun showTraceDebuggerDialog(sessionId: XDebugSessionId) {
     val session = sessionId.findValue() ?: return
-    TraceStreamRunner.getInstance(session.project).actionPerformed(session)
+    TraceStreamRunner.getInstance(session.project).actionPerformed(session, TraceEntryPoint.TOOLBAR_ACTION)
   }
 }
 
