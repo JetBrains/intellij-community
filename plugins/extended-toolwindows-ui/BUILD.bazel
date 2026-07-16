@@ -1,0 +1,51 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.extendedToolWindowsUi` start
+jvm_library(
+    name = "extendedToolWindowsUi",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.extendedToolWindowsUi",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/platform-impl:ide-impl",
+    ],
+)
+
+jvm_library(
+    name = "extendedToolWindowsUi_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.extendedToolWindowsUi",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":extendedToolWindowsUi",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.extendedToolWindowsUi` end
+
+### auto-generated section `iml intellij.extendedToolWindowsUi` start
+exports_files(
+    [
+        "intellij.extendedToolWindowsUi.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.extendedToolWindowsUi` end

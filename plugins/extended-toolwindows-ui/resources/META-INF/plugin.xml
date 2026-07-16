@@ -1,0 +1,15 @@
+<idea-plugin require-restart="true">
+  <name>Extended ToolWindows UI</name>
+  <id>com.intellij.extendedToolWindowsUi</id>
+  <vendor>JetBrains</vendor>
+
+  <dependencies>
+    <module name="intellij.platform.monolith"/>
+  </dependencies>
+  <incompatible-with>com.intellij.jetbrains.client</incompatible-with>
+
+  <description><![CDATA[
+        Provides toolwindows features, like tool window layout, vertical toolwindow labels, etc.
+    ]]></description>
+
+</idea-plugin>
