@@ -57,12 +57,14 @@ internal class HelperClassCache(debugProcess: DebugProcessImpl, managerThread: D
     val currentClassLoader = evaluationContext.classLoader
     val failed = failedToLoad[currentClassLoader]
     if (failed != null && cls.name in failed) return null
-    val companionClassLoader = companionClassLoaders[currentClassLoader]
     try {
-      if (companionClassLoader == null && !forceNewClassLoader) {
-        return tryLoadingInParentOrCompanion(evaluationContext, cls, *additionalClassesToLoad)
+      val hasCompanionClassLoader = companionClassLoaders[currentClassLoader] != null
+      return if (hasCompanionClassLoader || forceNewClassLoader) {
+        tryLoadingInCompanion(evaluationContext, cls, *additionalClassesToLoad)
       }
-      return tryLoadingInCompanion(companionClassLoader, evaluationContext, cls, *additionalClassesToLoad)
+      else {
+        tryLoadingInParentOrCompanion(evaluationContext, cls, *additionalClassesToLoad)
+      }
     }
     catch (e: ClassDefineTrialException) {
       val exception = e.trials.last()
@@ -96,7 +98,7 @@ internal class HelperClassCache(debugProcess: DebugProcessImpl, managerThread: D
     }
     try {
       // finally, load in companion class loader
-      return tryLoadingInCompanion(null, evaluationContext, cls, *additionalClassesToLoad)
+      return tryLoadingInCompanion(evaluationContext, cls, *additionalClassesToLoad)
     }
     catch (e: ClassDefineTrialException) {
       val trials = listOfNotNull(previousException?.trials, e.trials).flatten()
@@ -115,29 +117,33 @@ internal class HelperClassCache(debugProcess: DebugProcessImpl, managerThread: D
   }
 
   private fun tryLoadingInCompanion(
-    cachedCompanionClassLoader: ClassLoaderReference?,
     evaluationContext: EvaluationContextImpl,
     cls: Class<*>, vararg additionalClassesToLoad: String,
   ): ClassType? {
     try {
-      val companionClassLoader = cachedCompanionClassLoader
-                                 ?: ClassLoadingUtils.getClassLoader(evaluationContext, evaluationContext.debugProcess)
-      val type = tryToDefineInClassLoader(evaluationContext, companionClassLoader, companionClassLoader,
-                                          cls, *additionalClassesToLoad) ?: return null
-      if (cachedCompanionClassLoader == null) {
-        DebuggerUtilsAsync.disableCollection(companionClassLoader)
-        companionClassLoaders[evaluationContext.classLoader] = companionClassLoader
-      }
-      return type
+      val companionClassLoader = getOrCreateCompanionClassLoader(evaluationContext)
+      return tryToDefineInClassLoader(evaluationContext, companionClassLoader, companionClassLoader,
+                                      cls, *additionalClassesToLoad)
     }
     catch (e: Throwable) {
-      val isLoadingFailed = e is EvaluateException || e is ClassDefineTrialException
-      if (isLoadingFailed && cachedCompanionClassLoader == null) {
+      if (e is EvaluateException || e is ClassDefineTrialException) {
         val failed = failedToLoad.getOrPut(evaluationContext.classLoader) { HashSet() }
         failed.add(cls.name)
       }
       throw e
     }
+  }
+
+  private fun getOrCreateCompanionClassLoader(evaluationContext: EvaluationContextImpl): ClassLoaderReference {
+    val currentClassLoader = evaluationContext.classLoader
+    val existing = companionClassLoaders[currentClassLoader]
+    if (existing != null) return existing
+    val companionClassLoader = ClassLoadingUtils.getClassLoader(evaluationContext, evaluationContext.debugProcess)
+    // Check the cache again, as class loader creation causes evaluation and DMT fork, so a race can appear.
+    val previouslyCached = companionClassLoaders.putIfAbsent(currentClassLoader, companionClassLoader)
+    if (previouslyCached != null) return previouslyCached
+    DebuggerUtilsAsync.disableCollection(companionClassLoader)
+    return companionClassLoader
   }
 
   /**
