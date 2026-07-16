@@ -157,6 +157,43 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
     assertTrue("href=\"#element/builtins.str\"" in tooltip, tooltip)
   }
 
+  // A one-sided union member that isn't highlighted (a duplicate `(a: int) -> None`, which IS assignable to `C`) is
+  // still recursed so its parts are syntax-coloured + linked, instead of rendering as one flat, uncoloured string.
+  @Test
+  fun `a non-highlighted one-sided union member is syntax-coloured`() {
+    val tooltip = tooltipFor("""
+      from typing import Protocol
+      def f1(a: int): ...
+      def f2(a: int): ...
+      def f3(b: int): ...
+      class C(Protocol):
+          def __call__(self, a: int): ...
+      x: C = f1 or f2 or f3
+    """)
+    // The paired member and the expected `C` each contribute an `int` link; the duplicate one-sided member now
+    // contributes one too (before the fix it was flat text) — so there are at least three `int` links.
+    val intLinks = Regex("#element/builtins\\.int").findAll(tooltip).count()
+    assertTrue(intLinks >= 3, "the non-highlighted one-sided member's `int` should be a link too (found $intLinks):\n$tooltip")
+  }
+
+  // A generic overload-call report shows each candidate in SOURCE form: its `[T: int]` type-parameter list and the
+  // parameters in terms of the type variable `T`, NOT the `int` solved for `T` at this call site.
+  @Test
+  fun `generic overload-call report shows type parameters and the declared type variable`() {
+    val tooltip = tooltipFor("""
+      from typing import overload
+      @overload
+      def f[T: int](t: T, t2: T) -> int: ...
+      @overload
+      def f[T: int](t: None, t2: None) -> int: ...
+      f(1, "")
+    """)
+    val candidate = codeLineTexts(tooltip).first { "t2" in it }
+    assertTrue("[T: int]" in candidate, "the candidate should show its type-parameter list: $candidate")
+    assertTrue("t: T" in candidate && "t2: T" in candidate,
+               "parameters should show the declared type variable `T`, not the solved `int`: $candidate")
+  }
+
   // The overload-call report goes through the SAME grid as the structural diff, so it colours mismatches identically:
   // the unmatched provided argument is red and the expected candidate parameters it failed are green — each over a
   // background band — instead of a flat bare-red. (The report used to omit the per-row side and fall back to plain red.)
@@ -176,6 +213,56 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
     // …each highlight over a background band, exactly like the two-row structural diff (not a flat bare red).
     assertTrue("color: $providedColor; background-color:" in tooltip, tooltip)
     assertTrue("color: $expectedColor; background-color:" in tooltip, tooltip)
+  }
+
+  // A provided `async def` shows its source `async` modifier (highlighted, since the expected callable is sync) and
+  // its return type in source form (`int`), not the desugared `Coroutine[Any, Any, int]`.
+  @Test
+  fun `async callable shows the async modifier and the source return type`() {
+    val tooltip = tooltipFor("""
+      from typing import Callable
+      async def f(a: int) -> int: ...
+      x: Callable[[int], int] = f
+    """)
+    assertDiffGrid(tooltip)
+    val provided = codeLineTexts(tooltip)[1]
+    assertTrue("async" in provided && provided.trimEnd().endsWith("-> int"),
+               "provided row should read as source `async …-> int`: '$provided'")
+    assertFalse("Coroutine" in provided, "the async return must be unwrapped to its source form: '$provided'")
+    // The `async` modifier is the incompatibility, so it is highlighted on the provided (red) side.
+    assertTrue(Regex("color: ${Regex.escape(providedColor)};[^\"]*\">async").containsMatchIn(tooltip), tooltip)
+  }
+
+  // An `async def` is compatible with an expected callable that returns an awaitable. Only the parameter is wrong, so
+  // the diff must not flag the `async` modifier or the return type.
+  @Test
+  fun `async callable against an awaitable return flags only the real mismatch`() {
+    val tooltip = tooltipFor("""
+      from typing import Awaitable, Callable
+      async def f(a: str) -> int: ...
+      x: Callable[[int], Awaitable[int]] = f
+    """)
+    assertDiffGrid(tooltip)
+    assertProvided(tooltip, "str")
+    assertExpected(tooltip, "int")
+    assertNotHighlighted(tooltip, "async")
+    assertNotHighlighted(tooltip, "Awaitable")
+    assertNotHighlighted(tooltip, "Coroutine")
+  }
+
+  // A provided generic function shows its `[T]` type-parameter list in source form (a bare `Callable[…]` has none).
+  @Test
+  fun `generic callable shows its type-parameter list in source form`() {
+    val tooltip = tooltipFor("""
+      from typing import Callable
+      async def f[T](t: T) -> int: ...
+      x: Callable[[int], str] = f
+    """)
+    assertDiffGrid(tooltip)
+    val provided = codeLineTexts(tooltip)[1]
+    assertTrue("async" in provided && "[T]" in provided,
+               "provided row should show the `async` modifier and `[T]` type-parameter list: '$provided'")
+    assertFalse("Coroutine" in provided, "'$provided'")
   }
 
   // A method override whose only difference is a type-parameter BOUND (base `def f[T: str]`, override `def f[T: int]`)

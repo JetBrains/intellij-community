@@ -33,7 +33,7 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
         a: int
     class C:
         a: str
-    x: A = C()  # WARNING TOOLTIP incompatible with protocol \n Attribute 'a' \n not assignable
+    x: A = C()  # WARNING TOOLTIP Attribute a of C is str, but int was expected
     """.trimIndent())
 
   @Test
@@ -43,13 +43,13 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
         a: int
     class C:
         b: int
-    x: A = C()  # WARNING TOOLTIP incompatible with protocol \n Attribute 'a' is missing
+    x: A = C()  # WARNING TOOLTIP C has no attribute a
     """.trimIndent())
 
   @Test
   fun `generic element mismatch is reported`() = test("""
     def get_ints() -> list[int]: ...
-    x: list[str] = get_ints()  # WARNING TOOLTIP 'int' is not assignable to 'str' FIXME Type parameter 1 \n not assignable # PY-89564
+    x: list[str] = get_ints()  # WARNING TOOLTIP Type argument [1] is int, but str was expected FIXME Type parameter 1 \n not assignable # PY-89564
     """.trimIndent())
 
   /**
@@ -64,7 +64,7 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
   @Test
   fun `nested generic mismatch keeps both levels`() = test("""
     def get_nested_strs() -> list[list[str]]: ...
-    x: list[list[int]] = get_nested_strs()  # WARNING TOOLTIP 'str' is not assignable to 'int' FIXME Type parameter 1 \n Type parameter 1 \n not assignable # PY-89564
+    x: list[list[int]] = get_nested_strs()  # WARNING TOOLTIP Type argument [1][1] is str, but int was expected FIXME Type parameter 1 \n Type parameter 1 \n not assignable # PY-89564
     """.trimIndent())
 
   @Test
@@ -74,12 +74,12 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
     class Box(Generic[T]):
         def get(self) -> T: ...
     def get_box() -> Box[str]: ...
-    x: Box[int] = get_box()  # WARNING TOOLTIP 'str' is not assignable to 'int' FIXME Type parameter 1 \n not assignable # PY-89564
+    x: Box[int] = get_box()  # WARNING TOOLTIP Type argument [1] is str, but int was expected FIXME Type parameter 1 \n not assignable # PY-89564
     """.trimIndent())
 
   @Test
   fun `heterogeneous tuple element mismatch is reported`() = test("""
-    x: tuple[int, str] = (1, 2)  # WARNING TOOLTIP 'Literal[2]' is not assignable to 'str' FIXME Type parameter 2 \n not assignable # PY-89564
+    x: tuple[int, str] = (1, 2)  # WARNING TOOLTIP Type argument [2] is Literal[2], but str was expected FIXME Type parameter 2 \n not assignable # PY-89564
     """.trimIndent())
 
   /**
@@ -108,7 +108,7 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
     class P(NamedTuple):
         x: str
     def get_p() -> P: ...
-    y: HasX = get_p()  # WARNING TOOLTIP incompatible with protocol \n Attribute 'x' \n not assignable
+    y: HasX = get_p()  # WARNING TOOLTIP Attribute x of P is str, but int was expected
     """.trimIndent())
 
   @Test
@@ -125,35 +125,35 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
         b: int
     class C:
         a: str
-    x: A | B = C()  # WARNING TOOLTIP not assignable to any member \n incompatible with protocol 'A' \n Attribute 'a' \n not assignable \n incompatible with protocol 'B' \n Attribute 'b' is missing
+    x: A | B = C()  # WARNING TOOLTIP C is not assignable to any member of A | B \n A needs a to be int, but C has str \n C lacks attribute b, which B requires
     """.trimIndent())
 
   /** The actual side is the union: every member that isn't assignable to the expected type is listed. */
   @Test
   fun `a union value with a non-assignable member is reported per member`() = test("""
     def get_str_or_bytes() -> str | bytes: ...
-    x: int = get_str_or_bytes()  # WARNING TOOLTIP Not all members of \n 'str' is not assignable \n 'bytes' is not assignable
+    x: int = get_str_or_bytes()  # WARNING TOOLTIP Not all members of str | bytes are assignable to int
     """.trimIndent())
 
   @Test
   fun `callable return type mismatch is reported`() = test("""
     from typing import Callable
     def f() -> str: ...
-    x: Callable[[], int] = f  # WARNING TOOLTIP Return type is incompatible \n not assignable
+    x: Callable[[], int] = f  # WARNING TOOLTIP The return type is str, but int was expected
     """.trimIndent())
 
   @Test
   fun `callable parameter type mismatch names the offending parameter`() = test("""
     from typing import Callable
     def f(x: str) -> None: ...
-    y: Callable[[int], None] = f  # WARNING TOOLTIP Parameter 'x' has an incompatible type \n not assignable
+    y: Callable[[int], None] = f  # WARNING TOOLTIP Parameter x is called with int, but only accepts str
     """.trimIndent())
 
   @Test
   fun `callable parameter type mismatch names the offending parameter among several`() = test("""
     from typing import Callable
     def fn(a: int, b: int) -> str: ...
-    x: Callable[[int, int | str], str] = fn  # WARNING TOOLTIP Parameter 'b' has an incompatible type \n Not all members of 'int | str' are assignable to 'int' \n not assignable
+    x: Callable[[int, int | str], str] = fn  # WARNING TOOLTIP Parameter b is called with int | str, but only accepts int
     """.trimIndent())
 
   @Test
@@ -218,7 +218,7 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
         name: str
         year: str
     def get_book() -> Book: ...
-    x: Movie = get_book()  # WARNING TOOLTIP Value of key 'year' has an incompatible type
+    x: Movie = get_book()  # WARNING TOOLTIP Key year of Movie is str, but int was expected
     """.trimIndent())
 
   @Test
@@ -230,7 +230,7 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
     class Named(TypedDict):
         name: str
     def get_named() -> Named: ...
-    x: Movie = get_named()  # WARNING TOOLTIP Key 'year' is missing
+    x: Movie = get_named()  # WARNING TOOLTIP Movie has no key year
     """.trimIndent())
 
   /** No key to point at when the source isn't a TypedDict at all: keep the whole-type message. */
@@ -240,7 +240,7 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
     class Movie(TypedDict):
         name: str
         year: int
-    x: Movie = 1  # WARNING TOOLTIP incompatible with TypedDict
+    x: Movie = 1  # WARNING TOOLTIP Literal[1] is not assignable to Movie
     """.trimIndent())
 
   @Test
@@ -266,7 +266,7 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
         a: int
     class C:
         a: str
-    expected: A = C()  # WARNING TOOLTIP incompatible with protocol \n not assignable \n <code>a</code> \n element/builtins.str \n element/builtins.int
+    expected: A = C()  # WARNING TOOLTIP Attribute \n <code>a</code> \n element/builtins.str \n element/builtins.int
     """.trimIndent())
 
   /**
@@ -296,7 +296,7 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
     class Base:
         def f(self, x: int) -> None: ...
     class Derived(Base):
-        def f(self, x: str) -> None: ...  # WARNING TOOLTIP not assignable
+        def f(self, x: str) -> None: ...  # WARNING TOOLTIP Parameter x is called with int, but only accepts str
     """.trimIndent())
 
   @Test
@@ -313,7 +313,7 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
         @overload
         def f(self, x: int) -> int: ...
         @overload
-        def f(self, x: str) -> str: ...  # WARNING TOOLTIP not assignable
+        def f(self, x: str) -> str: ...  # WARNING TOOLTIP Parameter x is called with str, but only accepts int
         def f(self, x: int): ...
     """.trimIndent())
 
@@ -327,7 +327,7 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
             def put(self, value: T) -> None:
                 self.x = value
         c = Box(10)
-        c.put("foo") # WARNING TOOLTIP not assignable
+        c.put("foo") # WARNING TOOLTIP put() needs parameter value of type int
     """.trimIndent())
 
   /**

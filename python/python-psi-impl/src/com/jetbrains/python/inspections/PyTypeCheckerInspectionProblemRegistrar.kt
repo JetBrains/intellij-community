@@ -18,10 +18,14 @@ import com.jetbrains.python.psi.PyAugAssignmentStatement
 import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyCallSiteOwner
+import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyTypeParameterListOwner
 import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils.getFirstChildOfType
 import com.jetbrains.python.psi.types.PyClassLikeType
+import com.jetbrains.python.psi.types.PyLiteralStringType
+import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyStructuralType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
@@ -82,11 +86,22 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
       val expectedTypeAfterSubstitution = if (argumentResult.expectedTypeAfterSubstitution.isUnknown) null else argumentResult.expectedTypeAfterSubstitution
       val expected = expectedTypeAfterSubstitution ?: argumentResult.expectedType
       PyTypeCheckerProblemReporter.reportWithTooltip(holder, code, argument, message, type) {
+        // The call site lets the breakdown read as "f() needs parameter 'a' … / 'x' is …" instead of a bare tree.
+        val callSite = PyTypeMismatchProse.CallSite(
+          callee = calleeParam(calleeResults.callable),
+          argument = shortenExpression(argument),
+          parameterName = argumentResult.parameter?.name,
+          parameterType = PyInspectionMessages.CodifiedParam.ofType(expected, argument, context),
+          actualType = PyInspectionMessages.CodifiedParam.ofType(argumentResult.actualType, argument, context),
+          // A literal actual (e.g. `"a"`, `42`) restates the argument expression, so its type clause is dropped.
+          actualIsLiteral = argumentResult.actualType.let { it is PyLiteralType || it is PyLiteralStringType },
+        )
         breakdownTooltip(message,
                          expected,
                          argumentResult.actualType,
                          context,
-                         argument)
+                         argument,
+                         callSite)
       }
     }
 
@@ -172,13 +187,23 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
                                        !argumentMatchesNoCallee(argumentResult.argument, calleesResults))
     }
     val expectedRows = calleesResults.map { calleeResults -> expectedParameterRow(calleeResults, context) }
+    // Each candidate's source type-parameter list (`[T: int]`, empty when it declares none), shown before its params.
+    val expectedTypeParameters = calleesResults.map { typeParameterPrefix(it.callable) }
 
-    val description = PyMismatchTooltips.description(header, argumentSlots, expectedRows)
+    val description = PyMismatchTooltips.description(header, argumentSlots, expectedRows, expectedTypeParameters)
     val highlightType = highlightOverride ?: ProblemHighlightType.GENERIC_ERROR_OR_WARNING
     // The aligned-table tooltip is only worth building on-the-fly; reportWithTooltip invokes the supplier then.
     PyTypeCheckerProblemReporter.reportWithTooltip(holder, code, element, description, highlightType) {
-      PyMismatchTooltips.tooltip(header, argumentSlots, expectedRows)
+      PyMismatchTooltips.tooltip(header, argumentSlots, expectedRows, expectedTypeParameters)
     }
+  }
+
+  /** A callable's type-parameter list in source form (`[T: int]`), or empty when it declares none (or is not a
+   *  `def`/`async def` — a lambda or synthesized callable can't be generic). */
+  private fun typeParameterPrefix(callable: PyCallable?): String {
+    val typeParameterList = (callable as? PyTypeParameterListOwner)?.typeParameterList ?: return ""
+    // The grid shows each candidate on one line, so a type-parameter list that spans several lines is collapsed.
+    return if (typeParameterList.typeParameters.isEmpty()) "" else typeParameterList.text.replace(WHITESPACE_RUN, " ")
   }
 
   private fun getSingleCalleeProblemMessage(
@@ -372,38 +397,69 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     context: TypeEvalContext,
     matched: Boolean,
   ): PyMismatchTooltips.Slot {
-    // Pass the PyType (not just its rendered name) so the candidate parameter keeps its colour + navigable link.
-    val type = argumentResult.expectedTypeAfterSubstitution.takeUnless { it.isUnknown } ?: argumentResult.expectedType
-    val parameter = argumentResult.parameter ?: return PyMismatchTooltips.Slot.ofType(type, context, matched)
-    return PyMismatchTooltips.Slot.parameter(parameter, type, context, matched)
+    // Show the parameter's DECLARED type (e.g. the type variable `T`), not the type solved for it at this call site
+    // (`int`) — the signature is written in terms of its type parameters, which are shown as a `[T: bound]` prefix.
+    val parameter = argumentResult.parameter
+                    ?: return PyMismatchTooltips.Slot.ofType(argumentResult.expectedType, context, matched)
+    return PyMismatchTooltips.Slot.parameter(parameter, context, matched)
   }
 
+  /** The argument expression as a single-line, length-capped label for the call-site prose (e.g. `to_app_page()`). */
+  private fun shortenExpression(expression: PyExpression): String =
+    StringUtil.shortenTextWithEllipsis(expression.text.replace(WHITESPACE_RUN, " ").trim(), 40, 0)
+
   /**
-   * Renders [headlineFragment] (already an HTML fragment, with any `<code>` spans) followed by the
-   * [explanations] trees as an HTML tooltip (on-the-fly only). Each level is indented; a node's message marks
-   * code-like spans with backticks, which become `<code>` blocks while the surrounding text is escaped. The
-   * result is used as the problem's tooltip, not its description, so batch results stay one line.
+   * The callee rendered as a clickable `name()` span (a navigable `#element/` link to the function/method) for
+   * the call-site prose; null for an anonymous callee, which disables the framing.
+   */
+  private fun calleeParam(callable: PyCallable?): PyInspectionMessages.CodifiedParam? {
+    val name = callable?.name ?: return null
+    return PyInspectionMessages.CodifiedParam.ofReference(callable, "$name()")
+  }
+
+  private val WHITESPACE_RUN = Regex("\\s+")
+
+  /**
+   * Renders [headlineFragment] (already an HTML fragment, with any `<code>` spans) followed by the [explanations]
+   * trees, folded into prose by [PyTypeMismatchProse], as an HTML tooltip (on-the-fly only). The result is used as
+   * the problem's tooltip, not its description, so batch results stay one line.
+   *
+   * When the mismatch is a single call-argument failure ([callSite] supplied), the two-line requirement/actual
+   * framing replaces the headline instead; several independent reasons always keep the headline above them.
    */
   @NlsContexts.Tooltip
   private fun breakdownTooltipFromFragment(
     @NlsContexts.Tooltip headlineFragment: String,
     explanations: List<PyTypeMismatchExplanation>,
+    callSite: PyTypeMismatchProse.CallSite?,
   ): @NlsContexts.Tooltip String {
-    val builder = HtmlBuilder().appendRaw(headlineFragment)
-    appendBreakdownNodes(builder, explanations, 1)
+    val builder = HtmlBuilder()
+    // When the mismatch is a call argument, prefer the two-line requirement/actual framing, which names the
+    // callee and argument and replaces the "Expected type …, got …" headline. It returns null for shapes it
+    // doesn't reframe, in which case we keep the headline followed by the plain folded breakdown.
+    val framed = explanations.singleOrNull()?.let { single -> callSite?.let { PyTypeMismatchProse.argumentProseLines(it, single) } }
+    if (framed != null) {
+      PyTypeMismatchProse.appendLines(builder, framed, leadingBreak = false)
+    }
+    else {
+      builder.appendRaw(headlineFragment)
+      PyTypeMismatchProse.appendLines(builder, PyTypeMismatchProse.proseLines(explanations), leadingBreak = true)
+    }
     return builder.wrapWith("html").toString()
   }
 
   /** [breakdownTooltipFromFragment] with an enriched headline; its `<code>` spans (and any links) are kept. */
   @NlsContexts.Tooltip
   @JvmStatic
+  @JvmOverloads
   fun breakdownTooltip(
     headline: PyInspectionMessages.ProblemMessage,
     explanation: PyTypeMismatchExplanation,
+    callSite: PyTypeMismatchProse.CallSite? = null,
   ): @NlsContexts.Tooltip String =
-    breakdownTooltipFromFragment(PyInspectionMessages.tooltipFragment(headline), listOf(explanation))
+    breakdownTooltipFromFragment(PyInspectionMessages.tooltipFragment(headline), listOf(explanation), callSite)
 
-  /** [breakdownTooltip] for a headline explained by several independent reasons, each rendered as its own top-level node. */
+  /** [breakdownTooltip] for a headline explained by several independent reasons, each folded into its own prose line. */
   @NlsContexts.Tooltip
   @JvmStatic
   fun breakdownTooltip(
@@ -411,7 +467,7 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     explanations: List<PyTypeMismatchExplanation>,
   ): @NlsContexts.Tooltip String? =
     if (explanations.isEmpty()) null
-    else breakdownTooltipFromFragment(PyInspectionMessages.tooltipFragment(headline), explanations)
+    else breakdownTooltipFromFragment(PyInspectionMessages.tooltipFragment(headline), explanations, null)
 
   /**
    * The breakdown tooltip explaining why [actual] doesn't match [expected], or null when the failure category
@@ -420,27 +476,20 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
    *
    * [anchor] is the element the problem is reported on; it is used to resolve type and class names in the
    * breakdown to their declarations so they render as clickable links (as in the enriched headline).
+   *
+   * [callSite], when the mismatch is a call argument, reframes the breakdown as a two-line requirement/actual
+   * sentence naming the callee and argument (see [PyTypeMismatchProse.argumentProseLines]).
    */
   @NlsContexts.Tooltip
   @JvmStatic
+  @JvmOverloads
   fun breakdownTooltip(
     headline: PyInspectionMessages.ProblemMessage,
     expected: PyType?,
     actual: PyType?,
     context: TypeEvalContext,
     anchor: PsiElement?,
+    callSite: PyTypeMismatchProse.CallSite? = null,
   ): @NlsContexts.Tooltip String? =
-    PyTypeChecker.explainMismatch(expected, actual, context, anchor)?.let { breakdownTooltip(headline, it) }
-
-  private fun appendBreakdownNodes(
-    builder: HtmlBuilder,
-    nodes: List<PyTypeMismatchExplanation>,
-    depth: Int,
-  ) {
-    for (node in nodes) {
-      builder.br().appendRaw(StringUtil.repeat("&nbsp;", depth * 2))
-        .appendRaw(PyInspectionMessages.tooltipFragment(node.message))
-      appendBreakdownNodes(builder, node.children, depth + 1)
-    }
-  }
+    PyTypeChecker.explainMismatch(expected, actual, context, anchor)?.let { breakdownTooltip(headline, it, callSite) }
 }

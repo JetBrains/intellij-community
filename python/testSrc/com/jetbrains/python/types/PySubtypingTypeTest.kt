@@ -1081,9 +1081,9 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           float(False)
           complex(False)
           divmod(False, False)
-          divmod(b'foo', 'bar') # WARNING No overload of 'divmod' matches the arguments. Argument types: (bytes, Literal["bar"]). Expected one of: (x: SupportsDivMod[_T_contra, _T_co], y: str), (x: bytes, y: SupportsRDivMod[bytes, _T_co])
+          divmod(b'foo', 'bar') # WARNING No overload of 'divmod' matches the arguments. Argument types: (bytes, Literal["bar"]). Expected one of: (x: SupportsDivMod[_T_contra, _T_co], y: _T_contra), (x: _T_contra, y: SupportsRDivMod[_T_contra, _T_co])
           pow(False, True)
-          round(False, 'foo') # WARNING No overload of 'round' matches the arguments. Argument types: (Literal[False], Literal["foo"]). Expected one of: (number: _SupportsRound1[int], ndigits: None), (number: _SupportsRound2[int], ndigits: SupportsIndex)
+          round(False, 'foo') # WARNING No overload of 'round' matches the arguments. Argument types: (Literal[False], Literal["foo"]). Expected one of: (number: _SupportsRound1[_T], ndigits: None), (number: _SupportsRound2[_T], ndigits: SupportsIndex)
       """.trimIndent())
 
     @Test

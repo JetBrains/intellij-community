@@ -7,7 +7,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.psi.types.PyTypeRendererFeature
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyExpression
@@ -15,6 +14,7 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeRendererFeature
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isUnknown
 
@@ -143,13 +143,16 @@ internal object PyMismatchTooltips {
 
   /** Flat one-line description for the Problems view and batch mode. */
   @JvmStatic
+  @JvmOverloads
   @InspectionMessage
   fun description(
     header: PyInspectionMessages.ProblemMessage,
     argumentSlots: List<Slot>,
     expectedRows: List<List<Slot>>,
+    expectedTypeParameters: List<@NlsSafe String> = emptyList(),
   ): @InspectionMessage String {
-    val expected = expectedRows.joinToString(", ") { tupleText(it) }
+    @NlsSafe val expected = expectedRows.mapIndexed { i, row -> expectedTypeParameters.getOrElse(i) { "" } + tupleText(row) }
+      .joinToString(", ")
     return header.description + ". " +
            PyPsiBundle.message("INSP.type.checker.argument.types.label") + " " + tupleText(argumentSlots) + ". " +
            PyPsiBundle.message("INSP.type.checker.expected.one.of.label") + " " + expected
@@ -161,26 +164,30 @@ internal object PyMismatchTooltips {
    * parameters; the parts that match are muted and only the offending parts stand out.
    */
   @JvmStatic
+  @JvmOverloads
   @NlsContexts.Tooltip
   fun tooltip(
     header: PyInspectionMessages.ProblemMessage,
     argumentSlots: List<Slot>,
     expectedRows: List<List<Slot>>,
+    expectedTypeParameters: List<@NlsSafe String> = emptyList(),
   ): @NlsContexts.Tooltip String {
     // When the structural diff is disabled, fall back to the plain description as the tooltip (no aligned grid).
     if (!PyTypeDiff.diffTooltipsEnabled()) {
-      return HtmlChunk.text(description(header, argumentSlots, expectedRows)).wrapWith("html").toString()
+      return HtmlChunk.text(description(header, argumentSlots, expectedRows, expectedTypeParameters)).wrapWith("html").toString()
     }
     val columnCount = (expectedRows + listOf(argumentSlots)).maxOf { it.size }
     // The provided arguments are one PROVIDED (red) row; each candidate signature is an EXPECTED (green) row. So the
     // overload report colours its mismatches exactly like the structural diff — red provided vs green expected, each
-    // over a background — because it goes through the SAME shared grid with each row tagged by its side.
+    // over a background — because it goes through the SAME shared grid with each row tagged by its side. A generic
+    // candidate carries a leading `[T: bound]` type-parameter column (the argument row and non-generic candidates
+    // pad it), so the reader sees the type variables the signature is written in.
     val rows = buildList {
       add(PyTypeDiffGrid.Row(PyPsiBundle.message("INSP.type.checker.argument.types.label"),
-                             rowCells(argumentSlots, columnCount), PyTypeDiffGrid.Side.PROVIDED))
+                             rowCells("", argumentSlots, columnCount), PyTypeDiffGrid.Side.PROVIDED))
       expectedRows.forEachIndexed { i, row ->
         val label = if (i == 0) PyPsiBundle.message("INSP.type.checker.expected.one.of.label") else ""
-        add(PyTypeDiffGrid.Row(label, rowCells(row, columnCount), PyTypeDiffGrid.Side.EXPECTED))
+        add(PyTypeDiffGrid.Row(label, rowCells(expectedTypeParameters.getOrElse(i) { "" }, row, columnCount), PyTypeDiffGrid.Side.EXPECTED))
       }
     }
     @NlsSafe val headerHtml = header.tooltip.removeSurrounding("<html>", "</html>")
@@ -191,8 +198,10 @@ internal object PyMismatchTooltips {
    * A `(slot, slot, …)` tuple rendered as [PyTypeDiffGrid] cells. Each slot becomes a right-aligned name cell and a
    * type cell (so the types line up); an unmatched slot's type is red, but its name is never highlighted.
    */
-  private fun rowCells(slots: List<Slot>, columnCount: Int): List<PyTypeDiffGrid.Cell> {
-    val cells = mutableListOf(PyTypeDiffGrid.delim("("))
+  private fun rowCells(@NlsSafe typeParameters: String, slots: List<Slot>, columnCount: Int): List<PyTypeDiffGrid.Cell> {
+    // A leading `[T: bound]` column, present only on generic candidates; the argument row and non-generic candidates
+    // pass an empty prefix (padded to this column's width) so every `(` still lines up.
+    val cells = mutableListOf(PyTypeDiffGrid.value(typeParameters, mismatch = false), PyTypeDiffGrid.delim("("))
     for (i in 0 until columnCount) {
       val slot = slots.getOrNull(i)
       val suffix = if (i < slots.lastIndex) ", " else ""
@@ -209,5 +218,6 @@ internal object PyMismatchTooltips {
     return cells
   }
 
+  @NlsSafe
   private fun tupleText(slots: List<Slot>): String = slots.joinToString(", ", "(", ")") { it.text }
 }

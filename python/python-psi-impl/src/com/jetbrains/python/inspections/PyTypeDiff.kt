@@ -12,11 +12,11 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ast.PyAstSingleStarParameter
 import com.jetbrains.python.ast.PyAstSlashParameter
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.psi.types.PyTypeRendererFeature
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.inspections.PyTypeDiff.columns
 import com.jetbrains.python.inspections.PyTypeDiff.diffTooltip
 import com.jetbrains.python.inspections.PyTypeDiffGrid.Cell
+import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyTypeParameter
 import com.jetbrains.python.psi.PyTypeParameterList
@@ -33,6 +33,7 @@ import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeParameterType
+import com.jetbrains.python.psi.types.PyTypeRendererFeature
 import com.jetbrains.python.psi.types.PyTypeVarTupleType
 import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.PyUnionType
@@ -369,10 +370,23 @@ internal object PyTypeDiff {
         // when it is the incompatible one.
         val member = slot.expected ?: slot.actual
         val onExpected = slot.expected != null
-        val name = bareTypeName(member, context)
-        val cell = PyTypeDiffGrid.typeValue(member, name, oneSidedMemberBad(member, onExpected, isUnion, expected, actual, variance, context))
+        val bad = oneSidedMemberBad(member, onExpected, isUnion, expected, actual, variance, context)
         val gap = PyTypeDiffGrid.value("", mismatch = false)
-        columns.add(if (onExpected) Col(gap, cell) else Col(cell, gap))
+        // A non-highlighted STRUCTURED member (a callable/tuple/generic) would otherwise render as one flat,
+        // un-syntax-coloured string (its type name alone carries no link); recurse it against itself so each part
+        // gets the platform's colour + links, with the absent opposite side shown as a gap. A highlighted (bad)
+        // member, and a plain leaf, keep the single [typeValue] cell (a leaf's own class name is already coloured).
+        val decomposed = if (bad) null else structuredColumns(member, member, context, variance, depth + 1)
+        if (decomposed != null) {
+          for (col in decomposed) {
+            val sideCell = if (onExpected) col.expected else col.actual
+            columns.add(if (onExpected) Col(gap, sideCell) else Col(sideCell, gap))
+          }
+        }
+        else {
+          val cell = PyTypeDiffGrid.typeValue(member, bareTypeName(member, context), bad)
+          columns.add(if (onExpected) Col(gap, cell) else Col(cell, gap))
+        }
       }
     }
     return columns
@@ -643,12 +657,82 @@ internal object PyTypeDiff {
   private fun callableColumns(expected: PyCallableType, actual: PyCallableType, context: TypeEvalContext, variance: Variance = Variance.COVARIANT, depth: Int = 0): List<Col>? {
     val expectedParameters = expected.getParameters(context) ?: return null
     val actualParameters = actual.getParameters(context) ?: return null
-    // Parameters are contravariant relative to the callable's own position; the return type keeps it.
+
+    val expectedFunction = callableFunction(expected)
+    val actualFunction = callableFunction(actual)
+    var expectedAsync = expectedFunction?.isAsync == true
+    var actualAsync = actualFunction?.isAsync == true
+    // Only one side is an `async def`, but its coroutine is compatible with the other side's return type (for example
+    // `Callable[..., Awaitable[int]]`). The source form would then show a false mismatch, so compare the real types.
+    if (expectedAsync != actualAsync &&
+        !typesMismatch(actual.getReturnType(context), expected.getReturnType(context), variance, context)) {
+      expectedAsync = false
+      actualAsync = false
+    }
+
+    val columns = mutableListOf<Col>()
+    // The `async` modifier, in source form, on the side(s) whose callable is a coroutine function — highlighted
+    // when only one side has it, since an `async def` isn't assignable where a plain callable is expected.
+    if (expectedAsync || actualAsync) {
+      val mismatch = expectedAsync != actualAsync
+      columns.add(Col(asyncModifierCell(actualAsync, mismatch), asyncModifierCell(expectedAsync, mismatch)))
+    }
+    // The leading `[T, …]` type-parameter list, in source form, so a generic function reads `[T](T) -> …`; when both
+    // sides are generic a differing name or bound is highlighted position-by-position.
+    columns.addAll(callableTypeParameterColumns(expectedFunction?.typeParameterList, actualFunction?.typeParameterList, context))
+
+    // Parameters are contravariant relative to the callable's own position; the return type keeps it. For an async
+    // function the return is shown as its source form (`int`), not the desugared `Coroutine[Any, Any, int]`.
     val parameterVariance = variance.then(Variance.CONTRAVARIANT)
-    val columns = parameterListColumns(expectedParameters, actualParameters, context, parameterVariance, depth).toMutableList()
+    columns.addAll(parameterListColumns(expectedParameters, actualParameters, context, parameterVariance, depth))
     columns.add(delimColumn(" -> "))
-    columns.addAll(columns(expected.getReturnType(context), actual.getReturnType(context), context, variance, depth + 1))
+    columns.addAll(columns(sourceReturnType(expected, expectedAsync, context), sourceReturnType(actual, actualAsync, context), context, variance, depth + 1))
     return columns
+  }
+
+  /** The declaring function behind [type], when it is a plain `def`/`async def` (not a synthesized `Callable[…]`
+   *  or a lambda) — the source of the `async` modifier and the type-parameter list. */
+  private fun callableFunction(type: PyCallableType): PyFunction? = (type as? PyFunctionType)?.callable as? PyFunction
+
+  /** The return type in source form: for an `async def` the awaited result (`int`), not the desugared coroutine
+   *  ([PyCallableType.getReturnType] yields `Coroutine[Any, Any, int]`); everything else is returned unchanged. */
+  private fun sourceReturnType(type: PyCallableType, isAsync: Boolean, context: TypeEvalContext): PyType? {
+    val returnType = type.getReturnType(context)
+    return if (isAsync) PyTypingTypeProvider.unwrapCoroutineReturnType(returnType)?.get() ?: returnType else returnType
+  }
+
+  private fun asyncModifierCell(present: Boolean, mismatch: Boolean): Cell =
+    if (present) PyTypeDiffGrid.value("async ", mismatch) else PyTypeDiffGrid.value("", mismatch = false)
+
+  /**
+   * The leading `[T, …]` type-parameter group for the two callables. When only one side is generic there is nothing
+   * to align, so its list is rendered as a plain (unhighlighted) prefix on that side and the other side stays bare;
+   * when both are generic they are aligned position-by-position (reusing [typeParameterColumns]) so a differing name
+   * or bound is highlighted.
+   */
+  private fun callableTypeParameterColumns(expected: PyTypeParameterList?, actual: PyTypeParameterList?, context: TypeEvalContext): List<Col> {
+    val expectedParams = expected?.typeParameters.orEmpty()
+    val actualParams = actual?.typeParameters.orEmpty()
+    return when {
+      expectedParams.isEmpty() && actualParams.isEmpty() -> emptyList()
+      expectedParams.isEmpty() || actualParams.isEmpty() ->
+        listOf(Col(plainTypeParameterList(actualParams, context), plainTypeParameterList(expectedParams, context)))
+      else -> typeParameterColumns(expected, actual, context)
+    }
+  }
+
+  /** A whole type-parameter list `[T, U: bound]` rendered as one plain, unhighlighted cell (empty when there are none). */
+  private fun plainTypeParameterList(params: List<PyTypeParameter>, context: TypeEvalContext): Cell {
+    if (params.isEmpty()) return PyTypeDiffGrid.value("", mismatch = false)
+    return PyTypeDiffGrid.value(params.joinToString(", ", "[", "]") { typeParameterSource(it, context) }, mismatch = false)
+  }
+
+  /** A single type parameter in source form: its name, plus `: bound` when it is bounded. */
+  @NlsSafe
+  private fun typeParameterSource(param: PyTypeParameter, context: TypeEvalContext): String {
+    val name = param.name.orEmpty()
+    val bound = typeParameterBound(param, context) ?: return name
+    return "$name: ${bareTypeName(bound, context)}"
   }
 
   private fun parameterListColumns(
