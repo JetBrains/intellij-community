@@ -1509,7 +1509,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       if (overloadDefinition.operand.text != PyNames.OVERLOAD_TYPE) return null
       val items = PyPsiUtils.flattenParens(overloadDefinition.indexExpression)
       if (items !is PyTupleExpression) return null
-      val signatures = items.map {
+      val signatures = items.mapNotNull {
         getType(it, context)?.get() as? PyCallableType
       }
       return Ref(PyOverloadType(signatures, null))

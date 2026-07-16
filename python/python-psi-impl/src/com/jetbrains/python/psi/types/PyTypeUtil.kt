@@ -506,7 +506,7 @@ object PyTypeUtil {
     return when (functionType) {
       is PyClassLikeType -> emptySequence()
       is PyCallableType -> sequenceOf(functionType)
-      is PyOverloadType -> functionType.items.filterNotNull().asSequence()
+      is PyOverloadType -> functionType.items.asSequence()
       else -> emptySequence()
     }
   }
@@ -568,18 +568,24 @@ object PyTypeUtil {
       return memberType
     }
 
-    val overloads = mutableListOf<PyCallableType?>()
+    val overloads = mutableListOf<PyCallableType>()
     var impl: Ref<PyType?>? = null
     if (PyiUtil.isOverload(last, context)) {
-      overloads.add(lastType as? PyCallableType)
+      overloads.add(lastType)
     }
     else {
       impl = Ref.create(lastType)
     }
     for (i in elements.lastIndex - 1 downTo 0) {
       val el = elements[i]
-      if (!PyiUtil.isOverload(el, context)) break
-      overloads.add(context.getType(el) as? PyCallableType)
+      if (PyiUtil.isOverload(el, context)) {
+        val type = context.getType(el)
+        if (type is PyCallableType) {
+          overloads.add(type)
+          continue
+        }
+      }
+      break
     }
     if (overloads.isEmpty()) return lastType
 

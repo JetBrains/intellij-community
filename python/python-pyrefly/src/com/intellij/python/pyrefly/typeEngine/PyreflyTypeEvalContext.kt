@@ -302,7 +302,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     val overloads = tspType.overloads
     val implementationTsp = tspType.implementation
     if (overloads.isNullOrEmpty() && implementationTsp == null) return null
-    val items = overloads?.map { buildPyType(pyElement, it)?.get() as? PyCallableType } ?: emptyList()
+    val items = overloads?.mapNotNull { buildPyType(pyElement, it)?.get() as? PyCallableType } ?: emptyList()
     val impl = implementationTsp?.let { buildPyType(pyElement, it) }
     if (items.isEmpty() && impl == null) return null
     thisLogger().info("Pyrefly TSP: built PyOverloadType with ${items.size} overloads (impl=${impl?.get() != null})")

@@ -172,7 +172,7 @@ object PyCallExpressionHelper {
   private fun PyType?.flattenToCallables(): List<PyCallableType> {
     return when (this) {
       is PyCompositeType -> members.flatMap { it.flattenToCallables() }
-      is PyOverloadType -> items.filterNotNull()
+      is PyOverloadType -> items
       is PyCallableType -> listOf(this)
       else -> emptyList()
     }
