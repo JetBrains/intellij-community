@@ -262,7 +262,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     T = TypeVar('T')
     S = TypeVar('S')
 
-    class C(Generic[T], Iterable[S]):
+    class C(Generic[T], Iterable[S]):  # ISSUES *
     #      ^^^^^^^^^^^^^^^^^^^^^^^^^ ERROR 'Generic[...]' or 'Protocol[...]' should list all type variables (S)
         pass
 
@@ -272,19 +272,19 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     B = Generic
     D = T
-    class A(B[D], Iterable[S]):
+    class A(B[D], Iterable[S]):  # ISSUES *
     #      │  └ ERROR Parameters to 'Generic[...]' must all be type variables
     #      ^^^^^^^^^^^^^^^^^^^ ERROR 'Generic[...]' or 'Protocol[...]' should list all type variables (S)
         pass
 
-    class E(Generic[T], Iterable[T]):
+    class E(Generic[T], Iterable[T]):  # ISSUES *
         pass
 
     class F(B[D]):
     #         └ ERROR Parameters to 'Generic[...]' must all be type variables
         pass
 
-    class G(Iterable[T]):
+    class G(Iterable[T]):  # ISSUES *
         pass
     """)
 
@@ -371,7 +371,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
   @Test
   @TestFor(issues = ["PY-78878"])
   fun `Generic class can not use type variables from outer scope`() = test("""
-    from typing import TypeVar, Generic, Iterable
+    from typing import TypeVar, Generic
 
     T = TypeVar('T')
     S = TypeVar('S')
@@ -391,13 +391,13 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #         ^^^^^^^^^ WARNING Some type variables (U) are already in use by an outer scope
 
     class Outer(Generic[T]):
-        class Bad(Iterable[T]): ...
+        class Bad(list[T]): ...
     #         ^^^ WARNING Some type variables (T) are already in use by an outer scope
         class AlsoBad:
             x: list[T]
     #               └ WARNING Unbound type variable
 
-        class Inner(Iterable[S]): ...
+        class Inner(list[S]): ...
         attr: Inner[T]
 
     class OuterNewSyntax[U]:
@@ -408,11 +408,11 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
   @Test
   @TestFor(issues = ["PY-82835"])
   fun `type parameter is already in use by outer scope`() = test("""
-    from typing import Sequence, TypeAlias
+    from typing import TypeAlias
 
     T = 0
 
-    class ClassA[T](Sequence[T]):
+    class ClassA[T](list[T]):
         T = 1
 
         def method1[T](self): ...
@@ -514,11 +514,13 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class A:
         pass
 
-    assert isinstance(A(), TypeVar)
+    a = A()
+
+    assert isinstance(a, TypeVar)
     assert issubclass(A, TypeVar)
 
-    assert isinstance(A(), T)
-    #                      └ ERROR Type variables cannot be used with instance and class checks
+    assert isinstance(a, T)
+    #                    └ ERROR Type variables cannot be used with instance and class checks
     assert issubclass(A, T)
     #                    └ ERROR Type variables cannot be used with instance and class checks
     """)
@@ -533,27 +535,29 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class A:
         pass
 
-    assert isinstance(A(), Union)
-    #                      ^^^^^ ERROR 'Union' cannot be used with instance and class checks
+    a = A()
+
+    assert isinstance(a, Union)
+    #                    ^^^^^ ERROR 'Union' cannot be used with instance and class checks
     B = Union
     assert issubclass(A, B)
     #                    └ ERROR 'Union' cannot be used with instance and class checks
 
-    assert isinstance(A(), Union[int, str])
-    #                      ^^^^^^^^^^^^^^^ ERROR 'Union' cannot be used with instance and class checks
+    assert isinstance(a, Union[int, str])
+    #                    ^^^^^^^^^^^^^^^ ERROR 'Union' cannot be used with instance and class checks
     assert issubclass(A, B[int, str])
     #                    ^^^^^^^^^^^ ERROR 'Union' cannot be used with instance and class checks
     C = B[int, str]
     assert issubclass(A, C)
     #                    └ ERROR 'Union' cannot be used with instance and class checks
-    assert isinstance(A(), Union[str, Union[str, Union[list, dict]]])
-    #                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ERROR 'Union' cannot be used with instance and class checks
-    assert isinstance(A(), Union[str, Union[str, Union[list[int], dict]]])
-    #                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ERROR 'Union' cannot be used with instance and class checks
-    assert isinstance(A(), int | str)
-    #                      ^^^^^^^^^ ERROR Python version 3.9 does not allow writing union types as X | Y
-    assert isinstance(A(), int | list[str])
-    #                      ^^^^^^^^^^^^^^^ ERROR Python version 3.9 does not allow writing union types as X | Y
+    assert isinstance(a, Union[str, Union[str, Union[list, dict]]])
+    #                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ERROR 'Union' cannot be used with instance and class checks
+    assert isinstance(a, Union[str, Union[str, Union[list[int], dict]]])
+    #                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ERROR 'Union' cannot be used with instance and class checks
+    assert isinstance(a, int | str)
+    #                    ^^^^^^^^^ ERROR Python version 3.9 does not allow writing union types as X | Y
+    assert isinstance(a, int | list[str])
+    #                    ^^^^^^^^^^^^^^^ ERROR Python version 3.9 does not allow writing union types as X | Y
     assert issubclass(A, int | str)
     #                    ^^^^^^^^^ ERROR Python version 3.9 does not allow writing union types as X | Y
     assert issubclass(A, int | list[str])
@@ -571,27 +575,29 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class A:
         pass
 
-    assert isinstance(A(), Union)
-    #                      ^^^^^ ERROR 'Union' cannot be used with instance and class checks
+    a = A()
+
+    assert isinstance(a, Union)
+    #                    ^^^^^ ERROR 'Union' cannot be used with instance and class checks
     B = Union
     assert issubclass(A, B)
     #                    └ ERROR 'Union' cannot be used with instance and class checks
 
-    assert isinstance(A(), Union[int, str])
-    #                      ^^^^^^^^^^^^^^^ ERROR 'Union' cannot be used with instance and class checks
+    assert isinstance(a, Union[int, str])
+    #                    ^^^^^^^^^^^^^^^ ERROR 'Union' cannot be used with instance and class checks
     assert issubclass(A, B[int, str])
     #                    ^^^^^^^^^^^ ERROR 'Union' cannot be used with instance and class checks
     C = B[int, str]
     assert issubclass(A, C)
     #                    └ ERROR 'Union' cannot be used with instance and class checks
-    assert isinstance(A(), Union[str, Union[str, Union[list, dict]]])
-    #                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ERROR 'Union' cannot be used with instance and class checks
-    assert isinstance(A(), Union[str, Union[str, Union[list[int], dict]]])
-    #                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ERROR 'Union' cannot be used with instance and class checks
-    assert isinstance(A(), int | str)
-    #                      ^^^^^^^^^ ERROR Python version 3.9 does not allow writing union types as X | Y
-    assert isinstance(A(), int | list[str])
-    #                      ^^^^^^^^^^^^^^^ ERROR Python version 3.9 does not allow writing union types as X | Y
+    assert isinstance(a, Union[str, Union[str, Union[list, dict]]])
+    #                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ERROR 'Union' cannot be used with instance and class checks
+    assert isinstance(a, Union[str, Union[str, Union[list[int], dict]]])
+    #                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ERROR 'Union' cannot be used with instance and class checks
+    assert isinstance(a, int | str)
+    #                    ^^^^^^^^^ ERROR Python version 3.9 does not allow writing union types as X | Y
+    assert isinstance(a, int | list[str])
+    #                    ^^^^^^^^^^^^^^^ ERROR Python version 3.9 does not allow writing union types as X | Y
     assert issubclass(A, int | str)
     #                    ^^^^^^^^^ ERROR Python version 3.9 does not allow writing union types as X | Y
     assert issubclass(A, int | list[str])
@@ -606,22 +612,24 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class A:
         pass
 
-    assert isinstance(A(), Union)
-    #                      ^^^^^ ERROR 'Union' cannot be used with instance and class checks
+    a = A()
+
+    assert isinstance(a, Union)
+    #                    ^^^^^ ERROR 'Union' cannot be used with instance and class checks
     B = Union
     assert issubclass(A, B)
     #                    └ ERROR 'Union' cannot be used with instance and class checks
 
-    assert isinstance(A(), Union[int, str])
+    assert isinstance(a, Union[int, str])
     assert issubclass(A, B[int, str])
     C = B[int, str]
     assert issubclass(A, C)
-    assert isinstance(A(), Union[str, Union[str, Union[list, dict]]])
-    assert isinstance(A(), Union[str, Union[str, Union[list[int], dict]]])
-    #                                                  ^^^^^^^^^ ERROR Parameterized generics cannot be used with instance and class checks
-    assert isinstance(A(), int | str)
-    assert isinstance(A(), int | list[str])
-    #                            ^^^^^^^^^ ERROR Parameterized generics cannot be used with instance and class checks
+    assert isinstance(a, Union[str, Union[str, Union[list, dict]]])
+    assert isinstance(a, Union[str, Union[str, Union[list[int], dict]]])
+    #                                                ^^^^^^^^^ ERROR Parameterized generics cannot be used with instance and class checks
+    assert isinstance(a, int | str)
+    assert isinstance(a, int | list[str])
+    #                          ^^^^^^^^^ ERROR Parameterized generics cannot be used with instance and class checks
     assert issubclass(A, int | str)
     assert issubclass(A, int | list[str])
     #                          ^^^^^^^^^ ERROR Parameterized generics cannot be used with instance and class checks
@@ -637,14 +645,16 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class A:
         pass
 
-    assert isinstance(A(), Optional)
-    #                      ^^^^^^^^ ERROR 'Optional' cannot be used with instance and class checks
+    a = A()
+
+    assert isinstance(a, Optional)
+    #                    ^^^^^^^^ ERROR 'Optional' cannot be used with instance and class checks
     B = Optional
     assert issubclass(A, B)
     #                    └ ERROR 'Optional' cannot be used with instance and class checks
 
-    assert isinstance(A(), Optional[int])
-    #                      ^^^^^^^^^^^^^ ERROR 'Optional' cannot be used with instance and class checks
+    assert isinstance(a, Optional[int])
+    #                    ^^^^^^^^^^^^^ ERROR 'Optional' cannot be used with instance and class checks
     assert issubclass(A, B[int])
     #                    ^^^^^^ ERROR 'Optional' cannot be used with instance and class checks
     C = B[int]
@@ -663,14 +673,16 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class A:
         pass
 
-    assert isinstance(A(), Optional)
-    #                      ^^^^^^^^ ERROR 'Optional' cannot be used with instance and class checks
+    a = A()
+
+    assert isinstance(a, Optional)
+    #                    ^^^^^^^^ ERROR 'Optional' cannot be used with instance and class checks
     B = Optional
     assert issubclass(A, B)
     #                    └ ERROR 'Optional' cannot be used with instance and class checks
 
-    assert isinstance(A(), Optional[int])
-    #                      ^^^^^^^^^^^^^ ERROR 'Optional' cannot be used with instance and class checks
+    assert isinstance(a, Optional[int])
+    #                    ^^^^^^^^^^^^^ ERROR 'Optional' cannot be used with instance and class checks
     assert issubclass(A, B[int])
     #                    ^^^^^^ ERROR 'Optional' cannot be used with instance and class checks
     C = B[int]
@@ -686,13 +698,15 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class A:
         pass
 
-    assert isinstance(A(), Optional)
-    #                      ^^^^^^^^ ERROR 'Optional' cannot be used with instance and class checks
+    a = A()
+
+    assert isinstance(a, Optional)
+    #                    ^^^^^^^^ ERROR 'Optional' cannot be used with instance and class checks
     B = Optional
     assert issubclass(A, B)
     #                    └ ERROR 'Optional' cannot be used with instance and class checks
 
-    assert isinstance(A(), Optional[int])
+    assert isinstance(a, Optional[int])
     assert issubclass(A, B[int])
     C = B[int]
     assert issubclass(A, C)
@@ -706,14 +720,16 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class A:
         pass
 
-    assert isinstance(A(), ClassVar)
-    #                      ^^^^^^^^ ERROR 'ClassVar' cannot be used with instance and class checks
+    a = A()
+
+    assert isinstance(a, ClassVar)
+    #                    ^^^^^^^^ ERROR 'ClassVar' cannot be used with instance and class checks
     B = ClassVar
     assert issubclass(A, B)
     #                    └ ERROR 'ClassVar' cannot be used with instance and class checks
 
-    assert isinstance(A(), ClassVar[int])
-    #                      ^^^^^^^^^^^^^ ERROR 'ClassVar' cannot be used with instance and class checks
+    assert isinstance(a, ClassVar[int])
+    #                    ^^^^^^^^^^^^^ ERROR 'ClassVar' cannot be used with instance and class checks
     assert issubclass(A, B[int])
     #                    ^^^^^^ ERROR 'ClassVar' cannot be used with instance and class checks
     C = B[int]
@@ -755,14 +771,16 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class A:
         pass
 
-    assert isinstance(A(), Final)
-    #                      ^^^^^ ERROR 'Final' cannot be used with instance and class checks
+    a = A()
+
+    assert isinstance(a, Final)
+    #                    ^^^^^ ERROR 'Final' cannot be used with instance and class checks
     B = Final
     assert issubclass(A, B)
     #                    └ ERROR 'Final' cannot be used with instance and class checks
 
-    assert isinstance(A(), Final[T])
-    #                      ^^^^^^^^ ERROR 'Final' cannot be used with instance and class checks
+    assert isinstance(a, Final[T])
+    #                    ^^^^^^^^ ERROR 'Final' cannot be used with instance and class checks
     assert issubclass(A, B[T])
     #                    ^^^^ ERROR 'Final' cannot be used with instance and class checks
     C = B[T]
@@ -778,14 +796,16 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class A:
         pass
 
-    assert isinstance(A(), Literal)
-    #                      ^^^^^^^ ERROR 'Literal' cannot be used with instance and class checks
+    a = A()
+
+    assert isinstance(a, Literal)
+    #                    ^^^^^^^ ERROR 'Literal' cannot be used with instance and class checks
     B = Literal
     assert issubclass(A, B)
     #                    └ ERROR 'Literal' cannot be used with instance and class checks
 
-    assert isinstance(A(), Literal[1])
-    #                      ^^^^^^^^^^ ERROR 'Literal' cannot be used with instance and class checks
+    assert isinstance(a, Literal[1])
+    #                    ^^^^^^^^^^ ERROR 'Literal' cannot be used with instance and class checks
     assert issubclass(A, B[1])
     #                    ^^^^ ERROR 'Literal' cannot be used with instance and class checks
     C = B[1]
@@ -801,13 +821,15 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class A:
         pass
 
-    assert isinstance(A(), TypeAlias)
-    #                      ^^^^^^^^^ ERROR 'TypeAlias' cannot be used with instance and class checks
+    a = A()
+
+    assert isinstance(a, TypeAlias)
+    #                    ^^^^^^^^^ ERROR 'TypeAlias' cannot be used with instance and class checks
     assert issubclass(A, TypeAlias)
     #                    ^^^^^^^^^ ERROR 'TypeAlias' cannot be used with instance and class checks
     B = TypeAlias
-    assert isinstance(A(), B)
-    #                      └ ERROR 'TypeAlias' cannot be used with instance and class checks
+    assert isinstance(a, B)
+    #                    └ ERROR 'TypeAlias' cannot be used with instance and class checks
     assert issubclass(A, B)
     #                    └ ERROR 'TypeAlias' cannot be used with instance and class checks
     """)
@@ -843,7 +865,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class A:
         pass
 
-    assert isinstance(A(), Tuple)
+    assert isinstance(A(), Tuple)  # ISSUES *
     B = Tuple
     assert issubclass(A, B)
 
@@ -864,12 +886,14 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class A:
         pass
 
-    assert isinstance(A(), Type)
+    a = A()
+
+    assert isinstance(a, Type)  # ISSUES *
     B = Type
     assert issubclass(A, B)
 
-    assert isinstance(A(), Type[int])
-    #                      ^^^^^^^^^ ERROR Parameterized generics cannot be used with instance and class checks
+    assert isinstance(a, Type[int])
+    #                    ^^^^^^^^^ ERROR Parameterized generics cannot be used with instance and class checks
     assert issubclass(A, B[int])
     #                    ^^^^^^ ERROR Parameterized generics cannot be used with instance and class checks
     C = B[int]
@@ -906,14 +930,18 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class A:
         pass
 
+    a = A()
+
     T = TypeVar("T")
 
-    assert isinstance(A(), Protocol)
+    assert isinstance(a, Protocol)
+    #                    ^^^^^^^^ ERROR Only @runtime_checkable protocols can be used with instance and class checks
     B = Protocol
     assert issubclass(A, B)
+    #                    └ ERROR Only @runtime_checkable protocols can be used with instance and class checks
 
-    assert isinstance(A(), Protocol[T])
-    #                      ^^^^^^^^^^^ ERROR Parameterized generics cannot be used with instance and class checks
+    assert isinstance(a, Protocol[T])
+    #                    ^^^^^^^^^^^ ERROR Parameterized generics cannot be used with instance and class checks
     assert issubclass(A, B[T])
     #                    ^^^^ ERROR Parameterized generics cannot be used with instance and class checks
     C = B[T]
@@ -950,7 +978,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
   @Test
   @TestFor(issues = ["PY-28249"])
   fun `instance and class checks on unknown`() = test("""
-    from m1 import D
+    from m1 import D  # ISSUES *
 
     class A:
         pass
@@ -1060,6 +1088,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         pass
 
     v1 = Union(int, str)
+    #    ^^^^^^^^^^^^^^^ WARNING '_SpecialForm' object is not callable
     v2 = None  # type: Union(int, str)
     #                  ^^^^^^^^^^^^^^^ ERROR Generics should be specified through square brackets
 
@@ -1069,9 +1098,10 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         pass
 
     v3 = U(int, str)
+    #    ^^^^^^^^^^^ WARNING '_SpecialForm' object is not callable
 
-    with foo() as bar:  # type: Union(int,str)
-    #                           ^^^^^^^^^^^^^^ ERROR Generics should be specified through square brackets
+    with open("x") as bar:  # type: Union(int,str)
+    #                               ^^^^^^^^^^^^^^ ERROR Generics should be specified through square brackets
         pass
 
     for x in []:  # type: Union(int,str)
@@ -1085,7 +1115,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #               ^^^^^^^^^^^^^^^^^ WARNING Assigned value of type alias must be a correct type
     A3 = Union(int, str)  # type: TypeAlias
     #    ^^^^^^^^^^^^^^^ ERROR Generics should be specified through square brackets
-    A3 = 'Union(int, str)'  # type: TypeAlias
+    A4 = 'Union(int, str)'  # type: TypeAlias
     #    │^^^^^^^^^^^^^^^ ERROR Generics should be specified through square brackets
     #    ^^^^^^^^^^^^^^^^^ WARNING Assigned value of type alias must be a correct type
     """)
@@ -1112,8 +1142,8 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                            ^^^^^^^^^^^^^^^^^ ERROR Invalid type argument
        pass
 
-    def f(x: Annotated[dict(key="value"), ""]):
-    #                  ^^^^^^^^^^^^^^^^^ WARNING Generics should be specified through square brackets
+    def f(x: Annotated[dict(key=1), ""]):
+    #                  ^^^^^^^^^^^ WARNING Generics should be specified through square brackets
        pass
     """)
 
@@ -1139,7 +1169,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     T = TypeVar("T")
 
     class A(Generic[T]):
-        def __init__(self, v):
+        def __init__(self, v=None):
             pass
 
     def a(b: A(int)):
@@ -1228,8 +1258,8 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         def method(self, i: int):
             v1: self.B
     #           ^^^^ ERROR Invalid type 'self'
-            v2 = None  # type: self.B
-    #                          ^^^^ ERROR Invalid type 'self'
+            v2 = self.B()  # type: self.B
+    #                              ^^^^ ERROR Invalid type 'self'
             print(self.B)
 
         class B:
@@ -1244,6 +1274,10 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
   @Test
   @TestFor(issues = ["PY-20530"])
   fun `tuple unpacking`() = test("""
+    from typing import Any
+
+    def undefined() -> Any: ...
+
     a1 = undefined()  # type: int
 
     b1, (c1, d1) = undefined()  # type: int, (int, str)
@@ -1258,8 +1292,8 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
   @Test
   @TestFor(issues = ["PY-20530"])
   fun `annotation and type comment`() = test("""
-    a: int = None  # type: int
-    #│             ^^^^^^^^^^^ WARNING Types specified both in a type comment and annotation
+    a: int = 1  # type: int
+    #│          ^^^^^^^^^^^ WARNING Types specified both in a type comment and annotation
     #^^^^^ WARNING Types specified both in a type comment and annotation
 
     def foo(a: int  # type: int
@@ -1460,9 +1494,9 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
   fun `typing member parameters`() = test("""
     from typing import Callable, List
 
-    foo1: Callable[[int], [int]] = None
+    foo1: Callable[[int], [int]]
     #                     ^^^^^ ERROR Parameters to generic types must be types
-    foo2: Callable[[int], [int, str]] = None
+    foo2: Callable[[int], [int, str]]
     #                     ^^^^^^^^^^ ERROR Parameters to generic types must be types
     foo3: List[[int]]
     #          ^^^^^ ERROR Parameters to generic types must be types
@@ -1472,9 +1506,9 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     l1 = [int]
     l2 = [int, str]
 
-    foo5: Callable[[int], l1] = None
+    foo5: Callable[[int], l1]
     #                     ^^ ERROR Parameters to generic types must be types
-    foo6: Callable[[int], l2] = None
+    foo6: Callable[[int], l2]
     #                     ^^ ERROR Parameters to generic types must be types
     foo7: List[l1]
     #          ^^ ERROR Parameters to generic types must be types
@@ -1499,7 +1533,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #       ^^^ WARNING Non-self attribute could not be type hinted
 
     class B:
-        pass
+        a = ""
 
     B.a: str = "2"
     #^^ WARNING Non-self attribute could not be type hinted
@@ -1757,14 +1791,16 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class A:
         pass
 
-    assert isinstance(A(), Annotated)
-    #                      ^^^^^^^^^ ERROR 'Annotated' cannot be used with instance and class checks
+    a = A()
+
+    assert isinstance(a, Annotated)
+    #                    ^^^^^^^^^ ERROR 'Annotated' cannot be used with instance and class checks
     B = Annotated
     assert issubclass(A, B)
     #                    └ ERROR 'Annotated' cannot be used with instance and class checks
 
-    assert isinstance(A(), Annotated[1])
-    #                      ^^^^^^^^^^^^ ERROR 'Annotated' cannot be used with instance and class checks
+    assert isinstance(a, Annotated[1])
+    #                    ^^^^^^^^^^^^ ERROR 'Annotated' cannot be used with instance and class checks
     assert issubclass(A, B[1])
     #                    ^^^^ ERROR 'Annotated' cannot be used with instance and class checks
     C = B[int, 2]
@@ -1804,7 +1840,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
   @Test
   @TestFor(issues = ["PY-42334"])
   fun `non-top-level TypeAlias`() = test("""
-    from typing import TypeAlias
+    from typing import Final, TypeAlias
 
     Alias: Final[TypeAlias] = str
     #            ^^^^^^^^^ WARNING 'TypeAlias' must be used as standalone type hint
@@ -1944,7 +1980,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         def foo(self: SomeClass, bar: Self) -> Self:
     #                                 │        ^^^^ WARNING Cannot use 'Self' if 'self' parameter is not 'Self' annotated
     #                                 ^^^^ WARNING Cannot use 'Self' if 'self' parameter is not 'Self' annotated
-            return self
+            return bar
     """)
 
   @Test
@@ -1958,7 +1994,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         def foo(cls: SomeClass, bar: Self) -> Self:
     #                                │        ^^^^ WARNING Cannot use 'Self' if 'cls' parameter is not 'Self' annotated
     #                                ^^^^ WARNING Cannot use 'Self' if 'cls' parameter is not 'Self' annotated
-            return self
+            return bar
     """)
 
   @Test
@@ -1969,7 +2005,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class C:
         @staticmethod
         def m():
-            obj: Self = None
+            obj: Self
     #            ^^^^ WARNING Cannot use 'Self' in staticmethod
     """)
 
@@ -1980,7 +2016,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     class C:
         def m(self: C):
-            obj: Self = None
+            obj: Self
     #            ^^^^ WARNING Cannot use 'Self' if 'self' parameter is not 'Self' annotated
     """)
 
@@ -2316,19 +2352,21 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     Ts1 = TypeVarTuple("Ts1")
     P1 = ParamSpec("P1")
 
-    class Clazz[T = int]: ...
-    class Clazz[T = dict[int, str]]: ...
-    class Clazz[T, T1 = T]: ...
-    class Clazz[T = 1]: ...
-    #               └ WARNING Default type must be a type expression
-    class Clazz[T = True]: ...
-    #               ^^^^ WARNING Default type must be a type expression
-    class Clazz[T = Ts1]: ...
-    #               ^^^ WARNING 'TypeVarTuple' cannot be used in default type of TypeVar
-    class Clazz[T = P1]: ...
-    #               ^^ WARNING 'ParamSpec' cannot be used in default type of TypeVar
-    class Clazz[T = [int]]: ...
-    #               ^^^^^ WARNING Default type must be a type expression
+    class Clazz1[T = int]: ...
+    class Clazz2[T = dict[int, str]]: ...
+    class Clazz3[T, T1 = T]: ...
+    class Clazz4[T = 1]: ...
+    #                └ WARNING Default type must be a type expression
+    class Clazz5[T = True]: ...
+    #                ^^^^ WARNING Default type must be a type expression
+    class Clazz6[T = Ts1]: ...
+    #                ^^^ WARNING 'TypeVarTuple' cannot be used in default type of TypeVar
+    #                ^^^ WARNING Type variable 'Ts1' is out of scope
+    class Clazz7[T = P1]: ...
+    #                ^^ WARNING 'ParamSpec' cannot be used in default type of TypeVar
+    #                ^^ WARNING Type variable 'P1' is out of scope
+    class Clazz8[T = [int]]: ...
+    #                ^^^^^ WARNING Default type must be a type expression
     """)
 
   @Test
@@ -2367,19 +2405,21 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     Ts1 = TypeVarTuple("Ts1")
     P1 = ParamSpec("P1")
 
-    class Clazz[**P = []]: ...
-    class Clazz[**P = [int]]: ...
-    class Clazz[**P = [int, str]]: ...
-    class Clazz[**P = [int, 3]]: ...
-    #                       └ WARNING Default type must be a type expression
-    class Clazz[**P = [int, True]]: ...
-    #                       ^^^^ WARNING Default type must be a type expression
-    class Clazz[**P = True]: ...
-    #                 ^^^^ WARNING Default type of ParamSpec must be a ParamSpec type or a list of types
-    class Clazz[**P = T1]: ...
-    #                 ^^ WARNING Default type of ParamSpec must be a ParamSpec type or a list of types
-    class Clazz[**P = Ts1]: ...
-    #                 ^^^ WARNING Default type of ParamSpec must be a ParamSpec type or a list of types
+    class Clazz1[**P = []]: ...
+    class Clazz2[**P = [int]]: ...
+    class Clazz3[**P = [int, str]]: ...
+    class Clazz4[**P = [int, 3]]: ...
+    #                        └ WARNING Default type must be a type expression
+    class Clazz5[**P = [int, True]]: ...
+    #                        ^^^^ WARNING Default type must be a type expression
+    class Clazz6[**P = True]: ...
+    #                  ^^^^ WARNING Default type of ParamSpec must be a ParamSpec type or a list of types
+    class Clazz7[**P = T1]: ...
+    #                  ^^ WARNING Default type of ParamSpec must be a ParamSpec type or a list of types
+    #                  ^^ WARNING Type variable 'T1' is out of scope
+    class Clazz8[**P = Ts1]: ...
+    #                  ^^^ WARNING Default type of ParamSpec must be a ParamSpec type or a list of types
+    #                  ^^^ WARNING Type variable 'Ts1' is out of scope
     """)
 
   @Test
@@ -2406,22 +2446,22 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
   fun `new-style TypeVarTuple allows default values`() = test("""
     from typing import TypeVar, Generic, ParamSpec, TypeVarTuple, Unpack
 
-    class Clazz[T1, *Ts = Unpack[tuple[int, T1]]]: ...
-    class Clazz[*Ts = 1]: ...
-    #                 └ WARNING Default type of TypeVarTuple must be unpacked
-    class Clazz[*Ts = True]: ...
-    #                 ^^^^ WARNING Default type of TypeVarTuple must be unpacked
-    class Clazz[*Ts = tuple[int]]: ...
-    #                 ^^^^^^^^^^ WARNING Default type of TypeVarTuple must be unpacked
-    class Clazz[*Ts = *tuple[int]]: ...
-    class Clazz[*Ts = Unpack[tuple[int]]]: ...
-    class Clazz[T1, *Ts = T1]: ...
-    #                     ^^ WARNING Default type of TypeVarTuple must be unpacked
-    class Clazz[*Ts1, *Ts = Ts1]: ...
-    #                       ^^^ WARNING Default type of TypeVarTuple must be unpacked
-    class Clazz[**P1, *Ts = P1]: ...
-    #                       ^^ WARNING Default type of TypeVarTuple must be unpacked
-    class Clazz[*Ts = Unpack[tuple[int, ...]]]: ...
+    class Clazz1[T1, *Ts = Unpack[tuple[int, T1]]]: ...
+    class Clazz2[*Ts = 1]: ...
+    #                  └ WARNING Default type of TypeVarTuple must be unpacked
+    class Clazz3[*Ts = True]: ...
+    #                  ^^^^ WARNING Default type of TypeVarTuple must be unpacked
+    class Clazz4[*Ts = tuple[int]]: ...
+    #                  ^^^^^^^^^^ WARNING Default type of TypeVarTuple must be unpacked
+    class Clazz5[*Ts = *tuple[int]]: ...
+    class Clazz6[*Ts = Unpack[tuple[int]]]: ...
+    class Clazz7[T1, *Ts = T1]: ...
+    #                      ^^ WARNING Default type of TypeVarTuple must be unpacked
+    class Clazz8[*Ts1, *Ts = Ts1]: ...
+    #                        ^^^ WARNING Default type of TypeVarTuple must be unpacked
+    class Clazz9[**P1, *Ts = P1]: ...
+    #                        ^^ WARNING Default type of TypeVarTuple must be unpacked
+    class Clazz10[*Ts = Unpack[tuple[int, ...]]]: ...
     """)
 
   @Test
@@ -2853,9 +2893,9 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
   @Test
   @TestFor(issues = ["PY-76839"])
   fun `implicit type alias parameterization union`() = test("""
-    ListOrSetAlias = list | set
-    x: ListOrSetAlias[int]
-    #                 ^^^ WARNING Type alias is not generic or already specialized
+    ListOrTupleAlias = list | tuple
+    x: ListOrTupleAlias[int]
+    #                   ^^^ WARNING Type alias is not generic or already specialized
     """)
 
   @Test
@@ -2871,7 +2911,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     GoodTypeAlias4 = list[T]
     GoodTypeAlias8 = Callable[[int, T], T]
 
-    p1: GoodTypeAlias2[int]
+    p1: GoodTypeAlias2[int]  # ISSUES *
     #                  ^^^ WARNING Type alias is not generic or already specialized
     p2: GoodTypeAlias3[int]
     #                  ^^^ WARNING Type alias is not generic or already specialized
@@ -2884,13 +2924,15 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     ListOrSetAlias = list | set
     x1: list[str] = ListAlias()
     x2 = ListAlias[int]()
-    x4: ListOrSetAlias[int]
+    x4: ListOrSetAlias[int]  # ISSUES *
     #                  ^^^ WARNING Type alias is not generic or already specialized
     """)
 
   @Test
   @TestFor(issues = ["PY-76820"])
-  fun `explicit TypeAlias invalid values conformance tests`() = test("""
+  fun `explicit TypeAlias invalid values conformance tests`() = test(
+    TestOptions(assertRecursionPrevention = false),
+    """
     from typing import TypeAlias as TA
 
     var1 = 3
@@ -2908,7 +2950,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     BadTypeAlias4: TA = [int for i in range(1)]
     #                   │             ^^^^^^^^ WARNING Generics should be specified through square brackets
     #                   ^^^^^^^^^^^^^^^^^^^^^^^ WARNING Assigned value of type alias must be a correct type
-    BadTypeAlias5: TA = {"a": "b"}
+    BadTypeAlias5: TA = {"a": "b"}  # ISSUES *
     #                   ^^^^^^^^^^ WARNING Assigned value of type alias must be a correct type
     BadTypeAlias6: TA = (lambda: int)()
     #                   ^^^^^^^^^^^^^^^ WARNING Assigned value of type alias must be a correct type
@@ -2926,11 +2968,11 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                    ^^^^^^^^^^^ WARNING Assigned value of type alias must be a correct type
     BadTypeAlias13: TA = f"{'int'}"
     #                    ^^^^^^^^^^ WARNING Assigned value of type alias must be a correct type
-    BadTypeAlias14: TA = f"int"
+    BadTypeAlias14: TA = f"int"  # ISSUES *
     #                    ^^^^^^ WARNING Assigned value of type alias must be a correct type
-    BadTypeAlias15: TA = u"int"
+    BadTypeAlias15: TA = u"int"  # ISSUES *
     #                    ^^^^^^ WARNING Assigned value of type alias must be a correct type
-    BadTypeAlias16: TA = b"int"
+    BadTypeAlias16: TA = b"int"  # ISSUES *
     #                    ^^^^^^ WARNING Assigned value of type alias must be a correct type
     BadTypeAlias17: TA = "foo()"
     #                    ^^^^^^^ WARNING Assigned value of type alias must be a correct type
@@ -3186,9 +3228,12 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
   @Test
   @TestFor(issues = ["PY-76834"])
   fun `TypeExpr valid annotations conformance tests suite`() = test("""
-    import abc
     import types
+    from abc import ABC
     from typing import Any, Callable, Tuple, Union
+
+    class UserDefinedClass: ...
+    class AbstractBaseClass(ABC): ...
 
     def valid_annotations(
         p1: int,
@@ -3222,7 +3267,9 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
   @Test
   @TestFor(issues = ["PY-76834"])
-  fun `TypeExpr invalid annotations conformance tests suite`() = test("""
+  fun `TypeExpr invalid annotations conformance tests suite`() = test(
+    TestOptions(assertRecursionPrevention = false),
+    """
     import types
 
     var1 = 3
@@ -3350,7 +3397,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
   @Test
   fun `unresolved reference not reported as invalid type argument`() = test("""
-    from missing_module import SomeType  # type: ignore
+    from missing_module import SomeType  # ISSUES *
 
     def func4(some_type_tuple: tuple[SomeType, ...]):
         pass
@@ -3358,6 +3405,8 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class Clazz[T, T1]: ...
 
     c = Clazz[RefToNoWhere, WrongRef]() # will be reported by PyUnresolvedReferencesInspection, but not here
+    #         │             ^^^^^^^^ ERROR Unresolved reference 'WrongRef'
+    #         ^^^^^^^^^^^^ ERROR Unresolved reference 'RefToNoWhere'
     """)
 
   @Test
@@ -3623,7 +3672,9 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
   @Test
   @TestFor(issues = ["PY-76851"])
-  fun `invalid type alias statement`() = test("""
+  fun `invalid type alias statement`() = test(
+    TestOptions(assertRecursionPrevention = false),
+    """
     var1 = 1
     type BadTypeAlias1 = eval("".join(map(chr, [105, 110, 116])))
     #                    │    │       ^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Generics should be specified through square brackets
@@ -3719,19 +3770,19 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     class C[*Ts: str]: ...
     #            ^^^ ERROR Type variable tuples cannot have constraints or upper bounds
-    c = C[str, str]()
-    c = C[str, int]()
-    #     ^^^^^^^^ WARNING Expected type '*Ts ≤: str', got '*tuple[str, int]' instead
-    c = C[int, str]()
-    #     ^^^^^^^^ WARNING Expected type '*Ts ≤: str', got '*tuple[int, str]' instead
+    c1 = C[str, str]()
+    c2 = C[str, int]()
+    #      ^^^^^^^^ WARNING Expected type '*Ts ≤: str', got '*tuple[str, int]' instead
+    c3 = C[int, str]()
+    #      ^^^^^^^^ WARNING Expected type '*Ts ≤: str', got '*tuple[int, str]' instead
 
     class D[*Ts: Unpack[tuple[str]]]: ...
     #            ^^^^^^^^^^^^^^^^^^ ERROR Type variable tuples cannot have constraints or upper bounds
-    d = D[str]()
-    d = D[str, str]()
-    #     ^^^^^^^^ WARNING Expected type '*Ts ≤: *tuple[str]', got '*tuple[str, str]' instead
-    d = D[int, str]()
-    #     ^^^^^^^^ WARNING Expected type '*Ts ≤: *tuple[str]', got '*tuple[int, str]' instead
+    d1 = D[str]()
+    d2 = D[str, str]()
+    #      ^^^^^^^^ WARNING Expected type '*Ts ≤: *tuple[str]', got '*tuple[str, str]' instead
+    d3 = D[int, str]()
+    #      ^^^^^^^^ WARNING Expected type '*Ts ≤: *tuple[str]', got '*tuple[int, str]' instead
     """)
 
   @Test
@@ -3957,7 +4008,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #     ^^^^ WARNING Cannot use 'Self' outside class
     class B:
        def __init__(self):
-           self.l: List[Self] = []  # OK
+           self.l: list[Self]  # OK
     """)
 
   @Test
@@ -4394,39 +4445,39 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     from a import config_response
 
     config_map = config_response["spec"]["config_map"]
-    kafka_consumer_key = config_map["component.job.static.job2"]["spec.plugin.kafka.connectivity.in"]
+    kafka_consumer_key1 = config_map["component.job.static.job2"]["spec.plugin.kafka.connectivity.in"]
 
     config_response = {}
     config_map = config_response["spec"]["config_map"]
-    kafka_consumer_key = config_map["component.job.static.job2"]["spec.plugin.kafka.connectivity.in"]
+    kafka_consumer_key2 = config_map["component.job.static.job2"]["spec.plugin.kafka.connectivity.in"]
 
     config_response = {}
     config_map = config_response["spec"]["config_map"]
-    kafka_consumer_key = config_map["component.job.static.job2"]["spec.plugin.kafka.connectivity.in"]
+    kafka_consumer_key3 = config_map["component.job.static.job2"]["spec.plugin.kafka.connectivity.in"]
 
     config_response = {}
     config_map = config_response["spec"]["config_map"]
-    kafka_consumer_key = config_map["component.job.static.job2"]["spec.plugin.kafka.connectivity.in"]
+    kafka_consumer_key4 = config_map["component.job.static.job2"]["spec.plugin.kafka.connectivity.in"]
 
     config_response = {}
     config_map = config_response["spec"]["config_map"]
-    kafka_consumer_key = config_map["component.job.static.job2"]["spec.plugin.kafka.connectivity.in"]
+    kafka_consumer_key5 = config_map["component.job.static.job2"]["spec.plugin.kafka.connectivity.in"]
 
     config_response = {}
     config_map = config_response["spec"]["config_map"]
-    kafka_consumer_key = config_map["component.job.static.job2"]["spec.plugin.kafka.connectivity.in"]
+    kafka_consumer_key6 = config_map["component.job.static.job2"]["spec.plugin.kafka.connectivity.in"]
 
     config_response = {}
     config_map = config_response["spec"]["config_map"]
-    kafka_consumer_key = config_map["component.job.static.job2"]["spec.plugin.kafka.connectivity.in"]
+    kafka_consumer_key7 = config_map["component.job.static.job2"]["spec.plugin.kafka.connectivity.in"]
 
     config_response = {}
     config_map = config_response["spec"]["config_map"]
-    kafka_consumer_key = config_map["component.job.static.job2"]["spec.plugin.kafka.connectivity.in"]
+    kafka_consumer_key8 = config_map["component.job.static.job2"]["spec.plugin.kafka.connectivity.in"]
 
     config_response = {}
     config_map = config_response["spec"]["config_map"]
-    kafka_consumer_key = config_map["component.job.static.job2"]["spec.plugin.kafka.connectivity.in"]
+    kafka_consumer_key9 = config_map["component.job.static.job2"]["spec.plugin.kafka.connectivity.in"]
     """,
     "a.py" to "config_response = {}",
   )
@@ -4489,22 +4540,22 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                     ^^^^^^^^^ WARNING Invalid type annotation
     class ClassC[T: (int, var)]: ...
     #                     ^^^ WARNING Invalid type annotation
-    class ClassC[T: (int, lambda x: x)]: ...
+    class ClassD[T: (int, lambda x: x)]: ...
     #                     ^^^^^^^^^^^ WARNING Invalid type annotation
-    class ClassD[T: (int, ClassA[bytes]())]: ...
+    class ClassE[T: (int, ClassA[bytes]())]: ...
     #                     ^^^^^^^^^^^^^^^ WARNING Invalid type annotation
 
-    class ClassA[T: (3, bytes)]: ...
+    class ClassF[T: (3, bytes)]: ...
     #                └ WARNING Invalid type annotation
-    class ClassB[T: (int, [1, 2, 3])]: ...
+    class ClassG[T: (int, [1, 2, 3])]: ...
     #                     ^^^^^^^^^ WARNING Invalid type annotation
-    class ClassC[T: (int, var)]: ...
+    class ClassH[T: (int, var)]: ...
     #                     ^^^ WARNING Invalid type annotation
-    class ClassC[T: (int, lambda x: x)]: ...
+    class ClassI[T: (int, lambda x: x)]: ...
     #                     ^^^^^^^^^^^ WARNING Invalid type annotation
-    class ClassD[T: (int, ClassA[bytes]())]: ...
+    class ClassJ[T: (int, ClassA[bytes]())]: ...
     #                     ^^^^^^^^^^^^^^^ WARNING Invalid type annotation
-    class ClassD[T: [int]]: ...
+    class ClassK[T: [int]]: ...
     #               ^^^^^ WARNING Invalid type annotation
     """)
 
@@ -4528,11 +4579,11 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                     ^^^^^^^^^ WARNING Invalid type annotation
     class ClassC[T: (int, var)]: ...
     #                     ^^^ WARNING Invalid type annotation
-    class ClassC[T: (int, lambda x: x)]: ...
+    class ClassD[T: (int, lambda x: x)]: ...
     #                     ^^^^^^^^^^^ WARNING Invalid type annotation
-    class ClassD[T: (int, ClassA[bytes]())]: ...
+    class ClassE[T: (int, ClassA[bytes]())]: ...
     #                     ^^^^^^^^^^^^^^^ WARNING Invalid type annotation
-    class ClassE[T: 3]: ...
+    class ClassF[T: 3]: ...
     #               └ WARNING Invalid type annotation
     """)
 
@@ -4719,10 +4770,6 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     _: Literal[(1, "a")]
     #          ^^^^^^^^ WARNING 'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types
     """)
-
-  override val defaultInspections: Set<Class<out LocalInspectionTool>> = setOf(
-    PyTypeHintsInspection::class.java,
-  )
 
   companion object {
     private const val TRIPLE_QUOTE = "\"\"\""
