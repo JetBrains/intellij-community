@@ -34,6 +34,7 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -63,7 +64,7 @@ internal class TerminalToolWindowTabsManagerImpl(
   private val coroutineScope: CoroutineScope,
 ) : TerminalToolWindowTabsManager {
   override val tabs: List<TerminalToolWindowTab>
-    get() = getToolWindow().contentManager.contentsRecursively.mapNotNull { it.getUserData(TerminalToolWindowTab.KEY) }
+    get() = getToolWindow().contentManager.getTerminalTabs()
 
   private var tabsRestoredDeferred: Deferred<Unit> = CompletableDeferred(Unit)
 
@@ -280,13 +281,24 @@ internal class TerminalToolWindowTabsManagerImpl(
     return toolWindow
   }
 
+  @RequiresEdt
+  private fun installTabsPersistence() {
+    val toolWindow = getToolWindow()
+    installTerminalTabsPersistence(
+      project = toolWindow.project,
+      contentManager = toolWindow.contentManager,
+      coroutineScope = coroutineScope.childScope("TerminalTabsPersistence")
+    )
+  }
+
   internal class Initializer : TerminalToolWindowInitializer {
     override fun initialize(toolWindow: ToolWindow) {
       val manager = TerminalToolWindowTabsManager.getInstance(toolWindow.project) as TerminalToolWindowTabsManagerImpl
 
-      if (shouldUseReworkedTerminal()) {
+      if (shouldUseReworkedTerminal() && TrustedProjects.isProjectTrusted(manager.project)) {
         scheduleTabsRestoring(manager)
       }
+      else manager.installTabsPersistence()
 
       TerminalAgentsAvailabilityService.getInstance(toolWindow.project).prewarm()
 
@@ -312,12 +324,12 @@ internal class TerminalToolWindowTabsManagerImpl(
     }
 
     private fun scheduleTabsRestoring(manager: TerminalToolWindowTabsManagerImpl) {
-      if (TrustedProjects.isProjectTrusted(manager.project)) {
-        manager.tabsRestoredDeferred = manager.coroutineScope.async {
-          val tabs: List<TerminalSessionPersistedTab> = TerminalTabsStorage.getInstance(manager.project).getStoredTabs()
-          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            restoreTabs(tabs, manager)
-          }
+      manager.tabsRestoredDeferred = manager.coroutineScope.async {
+        val tabs: List<TerminalSessionPersistedTab> = TerminalTabsStorage.getInstance(manager.project).getStoredTabs()
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          restoreTabs(tabs, manager)
+          // Install tabs persistence after restoring already stored tabs to not override them accidentally with empty content.
+          manager.installTabsPersistence()
         }
       }
     }
