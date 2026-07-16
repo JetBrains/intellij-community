@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditorOrNull
+import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XBreakpointEvent
 import com.intellij.platform.debugger.impl.rpc.XBreakpointsSetDto
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionDataDto
@@ -75,10 +76,15 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
 
   override suspend fun sessions(projectId: ProjectId): XDebugSessionsList {
     val project = projectId.findProjectOrNull()
-                  ?: return XDebugSessionsList(emptyList(), emptyFlow<XDebuggerManagerSessionEvent>().toRpc())
-    val sessions = XDebuggerManager.getInstance(project).debugSessions.map { createSessionDto(it as XDebugSessionImpl, it.debugProcess) }
-    val initialSessions = sessions.map { it.id }.toSet()
-    return XDebugSessionsList(sessions, createSessionManagerEvents(projectId, initialSessions).toRpc())
+                  ?: return XDebugSessionsList(emptyList(), null, emptyFlow<XDebuggerManagerSessionEvent>().toRpc())
+    val manager = XDebuggerManager.getInstance(project)
+    val sessions = manager.debugSessions.map { it as XDebugSessionImpl }
+    val currentSession = manager.currentSession as? XDebugSessionImpl ?: sessions.firstOrNull()
+    val sessionDtos = sessions.map { createSessionDto(it, it.debugProcess) }
+    val initialSessions = sessionDtos.map { it.id }.toSet()
+    val currentSessionId = currentSession?.id
+    val managerEvents = createSessionManagerEvents(project, currentSessionId, initialSessions).toRpc()
+    return XDebugSessionsList(sessionDtos, currentSessionId, managerEvents)
   }
 
   private suspend fun createSessionDto(currentSession: XDebugSessionImpl, debugProcess: XDebugProcess): XDebugSessionDto {
@@ -142,8 +148,11 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     childActionsOrStubs.mapNotNull { it?.rpcId(cs) }
 
 
-  private fun createSessionManagerEvents(projectId: ProjectId, initialSessionIds: Set<XDebugSessionId>): Flow<XDebuggerManagerSessionEvent> {
-    val project = projectId.findProjectOrNull() ?: return emptyFlow()
+  private fun createSessionManagerEvents(
+    project: Project,
+    initialCurrentSessionId: XDebugSessionId?,
+    initialSessionIds: Set<XDebugSessionId>,
+  ): Flow<XDebuggerManagerSessionEvent> {
     return channelFlow {
       val listener = object : XDebuggerManagerListener {
         override fun processStarted(debugProcess: XDebugProcess) {
@@ -166,16 +175,21 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
         }
       }
       project.messageBus.connect(this).subscribe(XDebuggerManager.TOPIC, listener)
-      val currentSessions = XDebuggerManager.getInstance(project).debugSessions.filterIsInstance<XDebugSessionImpl>().associateBy { it.id }
-      val newlyAddedSessions = currentSessions.keys - initialSessionIds
-      val completedSessions = initialSessionIds - currentSessions.keys
+      val manager = XDebuggerManager.getInstance(project)
+      val activeSessions = manager.debugSessions.filterIsInstance<XDebugSessionImpl>().associateBy { it.id }
+      val newlyAddedSessions = activeSessions.keys - initialSessionIds
+      val completedSessions = initialSessionIds - activeSessions.keys
+      val currentSessionId = (manager.currentSession as XDebugSessionImpl?)?.id ?: activeSessions.keys.firstOrNull()
 
       for (newlyAddedSession in newlyAddedSessions) {
-        val session = currentSessions[newlyAddedSession] ?: continue
+        val session = activeSessions[newlyAddedSession] ?: continue
         listener.processStarted(session.debugProcess)
       }
       for (completedSession in completedSessions) {
         send(XDebuggerManagerSessionEvent.ProcessStopped(completedSession))
+      }
+      if (currentSessionId != initialCurrentSessionId) {
+        send(XDebuggerManagerSessionEvent.CurrentSessionChanged(initialCurrentSessionId, currentSessionId))
       }
 
       awaitClose()

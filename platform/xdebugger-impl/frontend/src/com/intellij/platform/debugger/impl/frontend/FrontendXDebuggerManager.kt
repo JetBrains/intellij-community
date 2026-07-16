@@ -94,9 +94,11 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
 
   private fun initSessions() = cs.launch {
     durableWithStateReset(block = {
-      val (sessionsList, eventFlow) = XDebuggerManagerApi.getInstance().sessions(project.projectId())
+      val (sessionsList, currentId, eventFlow) = XDebuggerManagerApi.getInstance().sessions(project.projectId())
+      currentSessionId = currentId
       for (sessionDto in sessionsList) {
-        createDebuggerSession(sessionDto)
+        val session = createDebuggerSession(sessionDto)
+        project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).sessionStarted(session)
       }
       eventFlow.toFlow().collect { event ->
         when (event) {

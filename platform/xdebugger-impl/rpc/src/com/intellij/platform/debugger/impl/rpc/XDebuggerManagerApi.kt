@@ -148,5 +148,6 @@ data class SuspendData(
 @Serializable
 data class XDebugSessionsList(
   val list: List<XDebugSessionDto>,
+  val currentSessionId: XDebugSessionId?,
   val eventFlow: RpcFlow<XDebuggerManagerSessionEvent>,
 )
