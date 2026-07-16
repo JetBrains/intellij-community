@@ -63,7 +63,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.assignment.gradle" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.assignment.maven" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.scripting" exported="" />
-    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.common" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.powerAssert.gradle" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.completion.api" exported="" />

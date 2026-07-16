@@ -1,0 +1,23 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.implementationDetailClassNameCheckerProvider"
+                    interface="org.jetbrains.kotlin.idea.base.psi.extensions.ImplementationDetailClassNameCheckerProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="org.jetbrains.kotlin.psi.KtPsiMutationService"
+                        serviceImplementation="org.jetbrains.kotlin.idea.base.psi.KtPsiMutationServiceImpl"/>
+    <focusModeProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinFocusModeProvider"/>
+    <importBlockRangeProvider implementation="org.jetbrains.kotlin.idea.KotlinImportBlockRangeProvider"/>
+    <lang.substitutor language="kotlin" order="last" implementationClass="org.jetbrains.kotlin.idea.KotlinLanguageSubstitutor"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij.jvm">
+    <declarationSearcher language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinDeclarationSearcher"/>
+  </extensions>
+</idea-plugin>

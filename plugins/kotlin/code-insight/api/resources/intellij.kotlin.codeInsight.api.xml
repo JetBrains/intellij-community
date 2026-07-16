@@ -4,9 +4,9 @@
     <module name="intellij.java.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService"/>
   </extensions>
   <extensionPoints>

@@ -8,14 +8,11 @@
     <module name="intellij.java.ui"/>
     <module name="intellij.kotlin.base.facet"/>
     <module name="intellij.kotlin.base.projectModel"/>
+    <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.base.resources"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.binaryExtension"
-            interface="org.jetbrains.kotlin.idea.base.projectStructure.KotlinBinaryExtension"
-            dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.binaryExtension"
             interface="org.jetbrains.kotlin.idea.base.projectStructure.KotlinBinaryExtension"

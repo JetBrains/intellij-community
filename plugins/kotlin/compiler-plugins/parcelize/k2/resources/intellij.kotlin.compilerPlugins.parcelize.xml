@@ -1,4 +1,13 @@
-<idea-plugin>
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.codeInsight.api"/>
+    <module name="kotlin.fir.frontend-independent"/>
+  </dependencies>
+  <!-- endregion -->
   <extensionPoints>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.availabilityProvider"
@@ -8,7 +17,7 @@
     />
   </extensionPoints>
 
-<!-- This flag is a temporary safety measure and should be removed later to always enable the default provider -->
+  <!-- This flag is a temporary safety measure and should be removed later to always enable the default provider -->
   <extensions defaultExtensionNs="com.intellij">
     <registryKey
             key="kotlin.parcelize.support.availabilityProvider.default.enabled"
@@ -23,5 +32,6 @@
             implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.ParcelizeAvailabilityProvider$Default"
             order="last"
     />
+    <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelizeK2QuickFixRegistrar"/>
   </extensions>
 </idea-plugin>

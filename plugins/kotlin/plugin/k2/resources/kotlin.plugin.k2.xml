@@ -14,7 +14,6 @@
   <xi:include href="jps.xml"/>
   <xi:include href="caches.xml"/>
   <xi:include href="kotlin-core.xml"/>
-  <xi:include href="parcelize.k2.xml"/>
   <xi:include href="scripting-v1.xml"/>
   <xi:include href="native.xml"/>
 
@@ -205,7 +204,7 @@
     <module name="intellij.kotlin.codeInsight.shared" loading="embedded"/>
     <module name="intellij.kotlin.codeInsight.overrideImplement" loading="embedded"/>
     <module name="intellij.kotlin.projectConfiguration" loading="embedded"/>
-    <module name="intellij.kotlin.compilerPlugins.parcelize.common" loading="embedded"/>
+    <module name="intellij.kotlin.compilerPlugins.parcelize" loading="embedded"/>
     <module name="intellij.kotlin.spellchecker" loading="embedded"/>
     <module name="intellij.kotlin.uast.base" loading="embedded"/>
     <module name="intellij.kotlin.uast.idea.base" loading="embedded"/>
@@ -218,6 +217,7 @@
     <module name="intellij.kotlin.jvm.debugger.base.util" loading="embedded"/>
     <module name="intellij.kotlin.jvm.debugger.coroutines" loading="embedded"/>
     <module name="intellij.kotlin.jvm.debugger.core" loading="embedded"/>
+    <module name="intellij.kotlin.base.psi" loading="embedded"/>
     <module name="intellij.kotlin.base.projectStructure" loading="embedded"/>
     <module name="intellij.kotlin.base.facet" loading="embedded"/>
     <module name="intellij.kotlin.ide" loading="embedded"/>

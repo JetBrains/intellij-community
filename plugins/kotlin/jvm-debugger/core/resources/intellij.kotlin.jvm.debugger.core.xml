@@ -14,9 +14,10 @@
     <module name="intellij.kotlin.base.codeInsight"/>
     <module name="intellij.kotlin.base.facet"/>
     <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.base.resources"/>
-    <module name="intellij.kotlin.jvm.debugger.base.util"/>
     <module name="intellij.kotlin.ide"/>
+    <module name="intellij.kotlin.jvm.debugger.base.util"/>
   </dependencies>
   <!-- endregion -->
   <actions>

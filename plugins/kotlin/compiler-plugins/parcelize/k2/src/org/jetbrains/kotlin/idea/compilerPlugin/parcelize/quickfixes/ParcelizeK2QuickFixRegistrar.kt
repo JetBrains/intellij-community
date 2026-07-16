@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.k2
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes
 
 import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -14,13 +14,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixRegistrar
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KtQuickFixesListBuilder
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
-import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.AnnotateWithParcelizeQuickFix
-import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelRemoveCustomCreatorProperty
-import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelRemoveCustomWriteToParcel
-import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelizeAddIgnoreOnParcelAnnotationQuickFix
-import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelizeAddPrimaryConstructorQuickFix
-import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelizeAddSupertypeQuickFix
-import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelizeRemoveDuplicatingTypeParcelerAnnotationQuickFix
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
 import org.jetbrains.kotlin.parcelize.fir.diagnostics.KtErrorsParcelize
 import org.jetbrains.kotlin.psi.KtClassOrObject

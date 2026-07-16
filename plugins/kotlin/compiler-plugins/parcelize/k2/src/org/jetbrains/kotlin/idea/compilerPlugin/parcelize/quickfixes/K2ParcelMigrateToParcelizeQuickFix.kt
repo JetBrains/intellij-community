@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.k2
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
@@ -29,9 +29,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
 import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.KotlinParcelizeBundle
-import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelMigrateToParcelizeQuickFixApplicator
-import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelMigrateToParcelizeResolver
-import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.factory
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtCallExpression

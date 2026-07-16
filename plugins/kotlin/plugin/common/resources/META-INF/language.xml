@@ -4,7 +4,5 @@
     <inspection.basicVisitor class="org.jetbrains.kotlin.psi.KtVisitorVoid"/>
     <inspection.basicVisitor class="org.jetbrains.kotlin.psi.KtVisitor"/>
 
-    <importBlockRangeProvider implementation="org.jetbrains.kotlin.idea.KotlinImportBlockRangeProvider"/>
-
   </extensions>
 </idea-plugin>

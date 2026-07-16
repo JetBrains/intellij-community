@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.quickFixesPsiBasedFactory
@@ -24,10 +23,6 @@ abstract class AbstractParcelizePsiOnlyQuickFix<T : KtElement>(element: T) : Kot
         val ktPsiFactory = KtPsiFactory(project, markGenerated = true)
         invoke(ktPsiFactory, clazz)
     }
-}
-
-fun KtElement.shortenReferences() {
-    ShortenReferencesFacility.getInstance().shorten(this)
 }
 
 inline fun <reified T : KtElement> factory(crossinline constructor: (T) -> QuickFixActionBase<*>?) = quickFixesPsiBasedFactory<PsiElement> {

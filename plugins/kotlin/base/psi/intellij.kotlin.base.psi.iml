@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.java.psi.impl" />
   </component>
 </module>

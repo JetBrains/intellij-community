@@ -13,6 +13,7 @@
     <module name="intellij.kotlin.base.codeInsight"/>
     <module name="intellij.kotlin.base.facet"/>
     <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.base.statistics"/>
     <module name="intellij.libraries.maven.resolver.provider"/>
   </dependencies>
@@ -77,10 +78,7 @@
       qualifiedName="org.jetbrains.kotlin.projectConfigurator"
       interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator"
       dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.projectConfigurator"
-            interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator"
-            dynamic="true"/>
+
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.projectPostConfigurator"
             interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectPostConfigurator"

@@ -1292,7 +1292,6 @@ plugins/kotlin/compiler-plugins/lombok/gradle
 plugins/kotlin/compiler-plugins/lombok/maven
 plugins/kotlin/compiler-plugins/noarg/gradle
 plugins/kotlin/compiler-plugins/noarg/maven
-plugins/kotlin/compiler-plugins/parcelize/common
 plugins/kotlin/compiler-plugins/parcelize/k2
 plugins/kotlin/compiler-plugins/parcelize/tests/k2
 plugins/kotlin/compiler-plugins/power-assert/gradle

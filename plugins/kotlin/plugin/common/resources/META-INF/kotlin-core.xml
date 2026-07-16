@@ -57,16 +57,9 @@
                     interface="org.jetbrains.kotlin.idea.fir.extensions.KotlinFirCompilerPluginConfigurationForIdeProvider"
                     dynamic="true"/>
 
-    <extensionPoint qualifiedName="org.jetbrains.kotlin.implementationDetailClassNameCheckerProvider"
-                    interface="org.jetbrains.kotlin.idea.base.psi.extensions.ImplementationDetailClassNameCheckerProvider"
-                    dynamic="true"/>
-
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="org.jetbrains.kotlin.psi.KtPsiMutationService"
-                        serviceImplementation="org.jetbrains.kotlin.idea.base.psi.KtPsiMutationServiceImpl"/>
-
     <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinAnalyzerVersionAboutPopupDescriptionProvider"/>
 
     <projectService
@@ -89,8 +82,6 @@
     <pathMacroExpandableProtocol protocol="kotlin-js-meta"/>
 
       <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.update.KotlinPluginUpdateCheckerStartActivity"/>
-
-    <focusModeProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinFocusModeProvider" />
 
     <lang.floatingToolbar language="kotlin"/>
 
@@ -242,10 +233,6 @@
       serviceInterface="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider"
       serviceImplementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProviderImpl"/>
     <projectFileScanner implementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProviderImpl$LibraryKindScanner"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="com.intellij.jvm">
-    <declarationSearcher language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinDeclarationSearcher"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

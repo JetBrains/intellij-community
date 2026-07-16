@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.java.debugger.impl"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.codeInsight.inspections"/>
     <module name="intellij.kotlin.codeInsight.shared"/>
     <module name="intellij.kotlin.jvm.debugger.base.util"/>

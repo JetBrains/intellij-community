@@ -13,6 +13,9 @@
 - name: lib/intellij.kotlin.base.projectStructure.jar
   contentModules:
   - name: intellij.kotlin.base.projectStructure
+- name: lib/intellij.kotlin.base.psi.jar
+  contentModules:
+  - name: intellij.kotlin.base.psi
 - name: lib/intellij.kotlin.base.resources.jar
   contentModules:
   - name: intellij.kotlin.base.resources
@@ -31,9 +34,9 @@
 - name: lib/intellij.kotlin.codeInsight.shared.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.shared
-- name: lib/intellij.kotlin.compilerPlugins.parcelize.common.jar
+- name: lib/intellij.kotlin.compilerPlugins.parcelize.jar
   contentModules:
-  - name: intellij.kotlin.compilerPlugins.parcelize.common
+  - name: intellij.kotlin.compilerPlugins.parcelize
 - name: lib/intellij.kotlin.formatter.jar
   contentModules:
   - name: intellij.kotlin.formatter
@@ -156,12 +159,10 @@
   - name: intellij.kotlin.base.indices
   - name: intellij.kotlin.base.compilerConfiguration
   - name: intellij.kotlin.base.plugin
-  - name: intellij.kotlin.base.psi
   - name: intellij.kotlin.base.kdoc
   - name: intellij.kotlin.base.platforms
   - name: intellij.kotlin.base.analysis.utils
   - name: intellij.kotlin.base.compilerConfiguration.ui
-  - name: intellij.kotlin.compilerPlugins.parcelize
   - name: intellij.kotlin.compilerPlugins.support
   - name: intellij.kotlin.completion.api
   - name: kotlin.completion.impl.shared

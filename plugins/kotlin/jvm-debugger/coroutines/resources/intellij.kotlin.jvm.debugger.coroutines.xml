@@ -8,6 +8,7 @@
     <module name="intellij.java.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.jvm.debugger.base.util"/>
     <module name="intellij.kotlin.jvm.debugger.core"/>
     <module name="intellij.libraries.maven.resolver.provider"/>

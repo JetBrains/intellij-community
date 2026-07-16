@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -244,7 +245,7 @@ class ParcelMigrateToParcelizeQuickFixApplicator<CONTEXT>(
 
             if (shouldAddParcelerSupertype) {
                 val entryText = "${ParcelizeNames.PARCELER_FQN.asString()}<$parcelerTypeArg>"
-                parcelerObject.addSuperTypeListEntry(ktPsiFactory.createSuperTypeEntry(entryText)).shortenReferences()
+                shortenReferences(parcelerObject.addSuperTypeListEntry(ktPsiFactory.createSuperTypeEntry(entryText)))
             }
 
             parcelerSupertypesToRemove.mapNotNull { it.element }.forEach { parcelerObject.removeSuperTypeListEntry(it) }
@@ -273,13 +274,13 @@ class ParcelMigrateToParcelizeQuickFixApplicator<CONTEXT>(
                     addParameter(ktPsiFactory.createParameter("$flagsParameterName : Int"))
                 }
 
-                parcelerObject.addDeclaration(newFunction).valueParameterList?.shortenReferences()
+                parcelerObject.addDeclaration(newFunction).valueParameterList?.let { shortenReferences(it) }
             } else if (parcelerWriteFunction == null) {
                 val writeFunction =
                     "fun $parcelerTypeArg.write(" +
                         "${ParcelizeNames.DEST_NAME.identifier}: ${ParcelizeNames.PARCEL_ID.asFqNameString()}, " +
                         "${ParcelizeNames.FLAGS_NAME.identifier}: Int) = TODO()"
-                parcelerObject.addDeclaration(ktPsiFactory.createFunction(writeFunction)).valueParameterList?.shortenReferences()
+                parcelerObject.addDeclaration(ktPsiFactory.createFunction(writeFunction)).valueParameterList?.let { shortenReferences(it) }
             }
 
             if (createFromParcelFunction != null) {
@@ -302,10 +303,10 @@ class ParcelMigrateToParcelizeQuickFixApplicator<CONTEXT>(
                     addParameter(ktPsiFactory.createParameter("$parcelParameterName : ${ParcelizeNames.PARCEL_ID.asFqNameString()}"))
                 }
 
-                parcelerObject.addDeclaration(newFunction).valueParameterList?.shortenReferences()
+                parcelerObject.addDeclaration(newFunction).valueParameterList?.let { shortenReferences(it) }
             } else if (parcelerCreateFunction == null) {
                 val createFunction = "override fun create(parcel: ${ParcelizeNames.PARCEL_ID.asFqNameString()}): $parcelerTypeArg = TODO()"
-                parcelerObject.addDeclaration(ktPsiFactory.createFunction(createFunction)).valueParameterList?.shortenReferences()
+                parcelerObject.addDeclaration(ktPsiFactory.createFunction(createFunction)).valueParameterList?.let { shortenReferences(it) }
             }
 
             // Always use the default newArray() implementation

@@ -4,6 +4,7 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.codeInsight"/>
     <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.platform.langInjection"/>
     <module name="kotlin.base.injection"/>
     <module name="kotlin.fir"/>
