@@ -3,6 +3,7 @@ package com.intellij.debugger
 
 import com.intellij.debugger.actions.DebuggerAction
 import com.intellij.debugger.actions.findJavaValue
+import com.intellij.debugger.engine.AsyncStacksUtils
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 object JvmDebuggerUtils {
   @JvmStatic
   fun isBreakpointInstrumentationSwitchedOn(): Boolean {
-    return Registry.`is`("debugger.breakpoint.instrumentation")
+    return Registry.`is`("debugger.breakpoint.instrumentation") && AsyncStacksUtils.isAgentEnabled()
   }
 
   @JvmStatic
