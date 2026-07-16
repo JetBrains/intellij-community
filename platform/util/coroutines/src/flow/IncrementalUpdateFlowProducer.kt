@@ -73,7 +73,7 @@ interface MutableStateWithIncrementalUpdates<U : Any> {
  * and then incremental updates to that state.
  */
 @ApiStatus.Internal
-class IncrementalUpdateFlowProducer<U : Any>(private val state: MutableStateWithIncrementalUpdates<U>) {
+class IncrementalUpdateFlowProducer<U : Any, S : MutableStateWithIncrementalUpdates<U>>(private val state: S) {
   private val updateVersion = AtomicLong()
   private val lock = Mutex()
   private var appliedVersion = 0L
@@ -164,6 +164,12 @@ class IncrementalUpdateFlowProducer<U : Any>(private val state: MutableStateWith
       if (update is VersionedUpdate<U> && update.version > initialStateVersion) {
         emit(update.update)
       }
+    }
+  }
+  
+  suspend fun <T> accessState(accessor: (S) -> T): T {
+    return lock.withLock { 
+      accessor(state)
     }
   }
 }

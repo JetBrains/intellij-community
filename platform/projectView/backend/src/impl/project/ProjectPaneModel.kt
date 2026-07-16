@@ -70,7 +70,7 @@ internal class ProjectPaneModel(project: Project) : TreeStructureBasedProjectVie
     updateSettings()
   }
 
-  private fun hasSeveralTopLevelModuleNodes(state: BackendProjectViewPaneStateAccessor<TreeStructureProjectViewNode>): Boolean {
+  private suspend fun hasSeveralTopLevelModuleNodes(state: BackendProjectViewPaneStateAccessor<TreeStructureProjectViewNode>): Boolean {
     val root = state.getChildren(null) ?: return false
     val topLevelNodes = state.getChildren(root.single()) ?: return false
     var topLevelModules = 0

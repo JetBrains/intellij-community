@@ -21,7 +21,7 @@ import com.intellij.platform.util.coroutines.flow.MutableStateWithIncrementalUpd
 import kotlinx.coroutines.flow.Flow
 
 internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
-  private val state = object : MutableStateWithIncrementalUpdates<ProjectViewPaneStateEvent> {
+  private class State : MutableStateWithIncrementalUpdates<ProjectViewPaneStateEvent> {
     private var actionState: ProjectViewPaneSettingsStateDTO? = null
     private val superRoot = Node(SuperRootModel as ProjectViewNodeModelImpl<*>)
     private val nodeById = hashMapOf<Long, Node>().also { it[SUPER_ROOT_ID] = superRoot }
@@ -142,17 +142,39 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
       }
     }
 
-    fun asBackendStateAccessor(): BackendProjectViewPaneStateAccessor<*> {
-      return BackendProjectViewPaneStateAccessorImpl<Any>(
-        nodeById,
-        nodeByUserObject
-      )
+    fun <T> asBackendStateAccessor(flowProducer: IncrementalUpdateFlowProducer<ProjectViewPaneStateEvent, State>): BackendProjectViewPaneStateAccessor<T> {
+      return BackendProjectViewPaneStateAccessorImpl(flowProducer)
     }
 
     fun asSettingsAccessor(): ProjectViewPaneSettingsAccessor {
       return ProjectViewPaneSettingsAccessorImpl { actionState }
     }
+
+    private class BackendProjectViewPaneStateAccessorImpl<T>(
+      private val flowProducer: IncrementalUpdateFlowProducer<ProjectViewPaneStateEvent, State>,
+    ) : BackendProjectViewPaneStateAccessor<T> {
+      @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
+      override suspend fun getNodeById(id: Long): BackendProjectViewNodeModel<T>? = withState { state ->
+        state.nodeById[id]?.model as BackendProjectViewNodeModel<T>?
+      }
+
+      @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
+      override suspend fun getNodeByUserObject(userObject: T): BackendProjectViewNodeModel<T>? = withState { state ->
+        state.nodeByUserObject[userObject as Any]?.model as BackendProjectViewNodeModel<T>?
+      }
+
+      @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
+      override suspend fun getChildren(parent: BackendProjectViewNodeModel<T>?): List<BackendProjectViewNodeModel<T>>? = withState { state ->
+        val parentId = parent?.id ?: SUPER_ROOT_ID
+        val parent = state.nodeById[parentId] ?: return@withState null
+        parent.children?.map { it.model as BackendProjectViewNodeModel<T> }
+      }
+
+      private suspend inline fun <T> withState(noinline accessor: (State) -> T): T = flowProducer.accessState(accessor)
+    }
   }
+  
+  private val state = State()
 
   private val flowProducer = IncrementalUpdateFlowProducer(state)
 
@@ -202,33 +224,11 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
 
   @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
   override fun <T> asBackendStateAccessor(): BackendProjectViewPaneStateAccessor<T> {
-    return state.asBackendStateAccessor() as BackendProjectViewPaneStateAccessor<T>
+    return state.asBackendStateAccessor(flowProducer)
   }
 
   override fun asSettingsAccessor(): ProjectViewPaneSettingsAccessor {
     return state.asSettingsAccessor()
-  }
-}
-
-private class BackendProjectViewPaneStateAccessorImpl<T>(
-  private val nodeById: HashMap<Long, Node>,
-  private val nodeByUserObject: HashMap<Any, Node>,
-) : BackendProjectViewPaneStateAccessor<T> {
-  @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
-  override fun getNodeById(id: Long): BackendProjectViewNodeModel<T>? {
-    return nodeById[id]?.model as BackendProjectViewNodeModel<T>?
-  }
-
-  @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
-  override fun getNodeByUserObject(userObject: T): BackendProjectViewNodeModel<T>? {
-    return nodeByUserObject[userObject as Any]?.model as BackendProjectViewNodeModel<T>?
-  }
-
-  @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
-  override fun getChildren(parent: BackendProjectViewNodeModel<T>?): List<BackendProjectViewNodeModel<T>>? {
-    val parentId = parent?.id ?: SUPER_ROOT_ID
-    val parent = nodeById[parentId] ?: return null
-    return parent.children?.map { it.model as BackendProjectViewNodeModel<T> }
   }
 }
 

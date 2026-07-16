@@ -3,11 +3,16 @@ package com.intellij.platform.projectView.impl
 
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.navigation.NavigationOptions
+import com.intellij.platform.ide.navigation.NavigationService
+import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneOptionImpl
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
+import com.intellij.pom.Navigatable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -39,6 +44,17 @@ abstract class TreeStructureBasedProjectViewPaneModel(project: Project) : TreeBa
       is ProjectViewPaneOption.ManualOrder -> false
       else -> true
     }
+  }
+
+  override suspend fun navigate(nodeId: Long, options: ProjectViewPaneNavigateOptions) {
+    val node = state?.getNodeById(nodeId) ?: return
+    val navigatable = node.userObject.elementDescriptor as? Navigatable? ?: return
+    val navigationRequest = readAction { navigatable.navigationRequest() } ?: return
+    NavigationService.getInstance(project).navigate(
+      request = navigationRequest,
+      options = NavigationOptions.defaultOptions()
+        .requestFocus(options.requestFocus),
+    )
   }
 }
 

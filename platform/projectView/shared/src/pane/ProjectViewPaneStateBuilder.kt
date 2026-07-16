@@ -22,7 +22,7 @@ sealed interface ProjectViewPaneStateBuilder {
 
 @ApiStatus.Experimental
 sealed interface BackendProjectViewPaneStateAccessor<T> {
-  fun getNodeById(id: Long): BackendProjectViewNodeModel<T>?
-  fun getNodeByUserObject(userObject: T): BackendProjectViewNodeModel<T>?
-  fun getChildren(parent: BackendProjectViewNodeModel<T>?): List<BackendProjectViewNodeModel<T>>?
+  suspend fun getNodeById(id: Long): BackendProjectViewNodeModel<T>?
+  suspend fun getNodeByUserObject(userObject: T): BackendProjectViewNodeModel<T>?
+  suspend fun getChildren(parent: BackendProjectViewNodeModel<T>?): List<BackendProjectViewNodeModel<T>>?
 }

@@ -6,6 +6,7 @@ package com.intellij.platform.projectView.impl
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
 import com.intellij.ide.projectView.impl.GroupByTypeComparator
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.ide.util.treeView.NodeDescriptor
@@ -18,10 +19,12 @@ import com.intellij.platform.projectView.pane.buildProjectViewNodeModel
 import com.intellij.platform.projectView.settings.ProjectViewPaneOptionImpl
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
 import com.intellij.platform.projectView.settings.toLegacySortKey
+import com.intellij.pom.Navigatable
 import com.intellij.ui.tree.LeafState
 import com.intellij.ui.tree.buildTreeNodeDescriptorPresentation
 import com.intellij.ui.treeStructure.TreeNodePresentationBuilder
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.jetbrains.annotations.ApiStatus
@@ -34,7 +37,25 @@ sealed interface TreeStructureProjectViewNode {
 private data class TreeStructureProjectViewNodeImpl(
   val element: Any,
   override val elementDescriptor: NodeDescriptor<*>,
-) : TreeStructureProjectViewNode
+) : TreeStructureProjectViewNode {
+  @RequiresReadLock
+  fun canNavigate(): Boolean {
+    return (elementDescriptor as? Navigatable)?.canNavigate() == true
+  }
+
+  @RequiresReadLock
+  fun canNavigateToSource(): Boolean {
+    return (elementDescriptor as? Navigatable)?.canNavigateToSource() == true
+  }
+
+  fun isIncludedInExpandAll(): Boolean {
+    return (elementDescriptor as? AbstractTreeNode<*>)?.isIncludedInExpandAll != false
+  }
+  
+  fun isDirectory(): Boolean {
+    return elementDescriptor is PsiDirectoryNode
+  }
+}
 
 @ApiStatus.Experimental
 class TreeStructureProjectViewNodeProvider(
@@ -81,6 +102,10 @@ class TreeStructureProjectViewNodeProvider(
         nodeBuilder.buildPresentation { presentationBuilder ->
           buildPresentation(presentationBuilder, node)
         }
+        nodeBuilder.setCanNavigate(node.canNavigate())
+        nodeBuilder.setCanNavigateToSource(node.canNavigateToSource())
+        nodeBuilder.setIncludedInExpandAll(node.isIncludedInExpandAll())
+        nodeBuilder.setIsDirectory(node.isDirectory())
       }
     }
   }

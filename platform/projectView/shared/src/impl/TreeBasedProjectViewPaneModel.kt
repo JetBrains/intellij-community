@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(ExperimentalAtomicApi::class)
+
 package com.intellij.platform.projectView.impl
 
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
@@ -16,7 +18,6 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenOptions
 import com.intellij.platform.projectView.pane.ProjectViewPaneModel
-import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions
 import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionOptions
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilder
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
@@ -31,6 +32,8 @@ import com.intellij.platform.projectView.settings.allProjectViewPaneOptions
 import com.intellij.platform.projectView.settings.allProjectViewPaneSortKeys
 import kotlinx.coroutines.channels.Channel
 import org.jetbrains.annotations.ApiStatus
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 @ApiStatus.Experimental
 interface ProjectViewTreeNodeProvider<T> {
@@ -41,6 +44,9 @@ interface ProjectViewTreeNodeProvider<T> {
 @ApiStatus.Experimental
 abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) : ProjectViewPaneModel {
   private val stateUpdateRequests = Channel<StateUpdateRequest>(capacity = Channel.BUFFERED)
+  private val currentState = AtomicReference<BackendProjectViewPaneStateAccessor<T>?>(null)
+  val state: BackendProjectViewPaneStateAccessor<T>?
+    get() = currentState.load()
 
   protected open suspend fun isDefault(): Boolean = false
 
@@ -60,22 +66,28 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
   protected abstract suspend fun createNodeProvider(settingsAccessor: ProjectViewPaneSettingsAccessor): ProjectViewTreeNodeProvider<T>
 
   override suspend fun manageState(builder: ProjectViewPaneStateBuilder) {
-    updateSettings(builder)
-    val nodeProvider = createNodeProvider(builder.asSettingsAccessor())
     val stateAccessor = builder.asBackendStateAccessor<T>()
-    val state = ProjectViewPaneTreeState(nodeProvider, builder, stateAccessor)
-    state.initialize()
-    onStateChanged(stateAccessor)
-    for (stateUpdateRequest in stateUpdateRequests) {
-      when (stateUpdateRequest) {
-        is LoadChildrenRequest -> {
-          state.updateChildren(stateUpdateRequest.parentId)
-        }
-        is UpdateSettingsRequest -> {
-          updateSettings(builder)
-        }
-      }
+    try {
+      currentState.store(stateAccessor)
+      updateSettings(builder)
+      val nodeProvider = createNodeProvider(builder.asSettingsAccessor())
+      val state = ProjectViewPaneTreeState(nodeProvider, builder, stateAccessor)
+      state.initialize()
       onStateChanged(stateAccessor)
+      for (stateUpdateRequest in stateUpdateRequests) {
+        when (stateUpdateRequest) {
+          is LoadChildrenRequest -> {
+            state.updateChildren(stateUpdateRequest.parentId)
+          }
+          is UpdateSettingsRequest -> {
+            updateSettings(builder)
+          }
+        }
+        onStateChanged(stateAccessor)
+      }
+    }
+    finally {
+      currentState.store(null)
     }
   }
 
@@ -136,9 +148,6 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
     options: ProjectViewPaneLoadChildrenOptions,
   ) {
     scheduleStateUpdate(LoadChildrenRequest(parentId))
-  }
-
-  override suspend fun navigate(nodeId: Long, options: ProjectViewPaneNavigateOptions) {
   }
 
   override suspend fun setOptionValue(option: ProjectViewPaneOption, newValue: Boolean) {
