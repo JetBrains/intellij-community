@@ -9,7 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
  */
 interface McpToolsProvider {
   companion object {
-    val EP: ExtensionPointName<McpToolsProvider> = ExtensionPointName.create<McpToolsProvider>("com.intellij.mcpServer.mcpToolsProvider")
+    val EP: ExtensionPointName<McpToolsProvider> = ExtensionPointName.create("com.intellij.mcpServer.mcpToolsProvider")
   }
 
   /**

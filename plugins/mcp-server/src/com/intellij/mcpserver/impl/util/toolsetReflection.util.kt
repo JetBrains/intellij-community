@@ -8,8 +8,12 @@ import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.annotations.McpToolHintValue
 import com.intellij.mcpserver.annotations.McpToolHints
 import com.intellij.mcpserver.impl.ReflectionCallableMcpTool
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import io.modelcontextprotocol.kotlin.sdk.types.ToolAnnotations
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.Nls
 import kotlin.reflect.KClass
@@ -76,15 +80,18 @@ fun <T : McpToolset> KClass<out T>.asTools(json: Json = McpServerJson, thisRef: 
     displayDescription = thisRef?.displayDescription(),
   )
   val presentableDescriptionProvider: ((String) -> @Nls String?)? = thisRef?.let { ts -> { toolName -> ts.displayDescription(toolName) } }
-  return this.functions.filter { m ->
-    m.getPreferredToolAnnotation() != null
-  }.map {
-    it.asTool(json = json,
-              thisRef = thisRef,
-              category = category,
-              fullyQualifiedName = this.qualifiedName + "." + it.name,
-              presentableDescriptionProvider = presentableDescriptionProvider,
-              additionalImplicitParameters = arrayOf(projectPathParameter))
+  return runBlockingMaybeCancellable {
+    this@asTools.functions.map {
+      async(Dispatchers.Default) {
+        if (it.getPreferredToolAnnotation() == null) return@async null
+        it.asTool(json = json,
+                  thisRef = thisRef,
+                  category = category,
+                  fullyQualifiedName = this@asTools.qualifiedName + "." + it.name,
+                  presentableDescriptionProvider = presentableDescriptionProvider,
+                  additionalImplicitParameters = arrayOf(projectPathParameter))
+      }
+    }.awaitAll().filterNotNull()
   }.apply {
     require(isNotEmpty()) { "No tools found in ${this@asTools}" }
   }
