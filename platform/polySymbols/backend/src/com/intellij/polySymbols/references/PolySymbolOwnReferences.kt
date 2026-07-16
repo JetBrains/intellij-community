@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.references
 
+import com.intellij.openapi.util.TextRange
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.references.impl.PolySymbolOwnReferencesBuilderImpl
@@ -11,30 +12,20 @@ import com.intellij.psi.PsiElement
  * instead of registering a `polySymbols.psiReferenceProvider` EP (which produces *external* references — see
  * [PsiPolySymbolReferenceProvider]'s doc for the distinction). Own references, once non-empty, take priority
  * over external ones for resolve/search/rename, so a host should use one mechanism or the other, not both.
+ *
+ * Own references support only simple kind-reference PolySymbol patterns but are lazily evaluated.
+ * If you want to use complex patterns, consider using [PsiPolySymbolReferenceProvider] instead
+ * and implement [com.intellij.model.psi.PsiExternalReferenceHost], which provide more flexibility through
+ * eager reference resolution.
  */
-class PolySymbolOwnReferences internal constructor(
-  val referencedSymbols: Map<Int, PolySymbol>,
-  val references: List<PolySymbolReference>,
-) {
+fun polySymbolOwnReferences(element: PsiElement, configure: PolySymbolOwnReferencesBuilder.() -> Unit): List<PolySymbolReference> =
+  PolySymbolOwnReferencesBuilderImpl(element).also { it.configure() }.build()
 
-  companion object {
-    @JvmStatic
-    fun build(element: PsiElement, configure: Builder.() -> Unit): PolySymbolOwnReferences {
-      val builder = PolySymbolOwnReferencesBuilderImpl(element)
-      builder.configure()
-      return builder.build()
-    }
-  }
-
-  interface Builder {
-    fun fromNameMatchQuery(kind: PolySymbolKind, name: String)
-    fun fromNameMatchQuery(kind: PolySymbolKind, name: String, filter: (PolySymbol) -> Boolean)
-    fun reference(symbol: PolySymbol)
-    fun reference(symbol: PolySymbol, offset: Int = 0, showProblems: Boolean = true)
-    fun references(offsetsToSymbols: Map<Int, PolySymbol>, showProblems: Boolean = true)
-  }
+interface PolySymbolOwnReferencesBuilder {
+  fun resolveFromNameMatchQuery(kind: PolySymbolKind, name: String)
+  fun resolveFromNameMatchQuery(kind: PolySymbolKind, name: String, filter: (PolySymbol) -> Boolean)
+  fun resolveFromNameMatchQuery(kind: PolySymbolKind, name: String, textRangeInElement: TextRange)
+  fun resolveFromNameMatchQuery(kind: PolySymbolKind, name: String, textRangeInElement: TextRange, filter: (PolySymbol) -> Boolean)
+  fun reference(textRangeInElement: TextRange, kind: PolySymbolKind, resolver: () -> List<PolySymbol>)
 }
-
-fun polySymbolOwnReferences(element: PsiElement, configure: PolySymbolOwnReferences.Builder.() -> Unit): PolySymbolOwnReferences =
-  PolySymbolOwnReferences.build(element, configure)
 

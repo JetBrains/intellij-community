@@ -34,7 +34,6 @@ import com.intellij.polySymbols.highlighting.PolySymbolHighlightingCustomizer
 import com.intellij.polySymbols.highlighting.newSilentAnnotationWithDebugInfo
 import com.intellij.polySymbols.impl.PolySymbolNameSegmentImpl
 import com.intellij.polySymbols.inspections.impl.PolySymbolInspectionToolMappingEP
-import com.intellij.polySymbols.references.PolySymbolOwnReferencesHost
 import com.intellij.polySymbols.references.PolySymbolReference
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem.ProblemKind
@@ -42,6 +41,7 @@ import com.intellij.polySymbols.references.impl.IJ_IGNORE_REFS
 import com.intellij.polySymbols.references.impl.PsiPolySymbolReferenceProviderImpl
 import com.intellij.polySymbols.search.PolySymbolReferenceHints
 import com.intellij.polySymbols.utils.applyIfNotNull
+import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.polySymbols.utils.hasOnlyExtensions
 import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
@@ -69,13 +69,18 @@ internal class PolySymbolHighlightingAnnotator : Annotator {
     // mode. The reference problems reported above are real diagnostics and must still run.
     if (holder.isBatchMode()) return
 
-    // For symbols contributed through PsiPolySymbolReferenceProvider, PolySymbolOwnReferencesHost, and
-    // PolySymbolDeclarationProvider, provide automatic symbol kind highlighting
-    val multiMap = if (element is PsiExternalReferenceHost)
+    val ownReferences = element.ownReferences
+    val multiMap = if (element is PsiExternalReferenceHost && ownReferences.isEmpty())
       symbolReferencesProvider.getSymbolOffsetsAndReferences(element, PolySymbolReferenceHints.NO_HINTS).first.copy()
     else
       MultiMap.createSet()
-    (element as? PolySymbolOwnReferencesHost)?.let { multiMap.putAllValues(it.getPolySymbolOwnReferences().referencedSymbols) }
+
+    ownReferences.forEach {
+      it.resolveReference().filterIsInstance<PolySymbol>().asSingleSymbol()
+        ?.let { symbol ->
+          multiMap.putValue(it.rangeInElement.startOffset, symbol)
+        }
+    }
 
     PolySymbolDeclarationProvider.getAllDeclarations(element, -1).forEach { declaration ->
       multiMap.putValue(declaration.rangeInDeclaringElement.startOffset, declaration.symbol)

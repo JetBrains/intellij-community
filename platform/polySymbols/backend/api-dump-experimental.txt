@@ -48,25 +48,14 @@
 - a:getQuickFixes(com.intellij.psi.PsiElement,com.intellij.polySymbols.PolySymbol,com.intellij.polySymbols.PolySymbolNameSegment,com.intellij.polySymbols.references.PolySymbolReferenceProblem$ProblemKind):java.util.List
 *f:com.intellij.polySymbols.inspections.PolySymbolProblemQuickFixProvider$Companion
 - f:getQuickFixes(com.intellij.psi.PsiElement,com.intellij.polySymbols.PolySymbol,com.intellij.polySymbols.PolySymbolNameSegment,com.intellij.polySymbols.references.PolySymbolReferenceProblem$ProblemKind):java.util.List
-*f:com.intellij.polySymbols.references.PolySymbolOwnReferences
-- *sf:Companion:com.intellij.polySymbols.references.PolySymbolOwnReferences$Companion
-- *sf:build(com.intellij.psi.PsiElement,kotlin.jvm.functions.Function1):com.intellij.polySymbols.references.PolySymbolOwnReferences
-- f:getReferencedSymbols():java.util.Map
-- f:getReferences():java.util.List
-*:com.intellij.polySymbols.references.PolySymbolOwnReferences$Builder
-- a:reference(com.intellij.polySymbols.PolySymbol,I,Z):V
-- bs:reference$default(com.intellij.polySymbols.references.PolySymbolOwnReferences$Builder,com.intellij.polySymbols.PolySymbol,I,Z,I,java.lang.Object):V
-- a:references(java.util.Map,Z):V
-- bs:references$default(com.intellij.polySymbols.references.PolySymbolOwnReferences$Builder,java.util.Map,Z,I,java.lang.Object):V
-*f:com.intellij.polySymbols.references.PolySymbolOwnReferences$Companion
-- f:build(com.intellij.psi.PsiElement,kotlin.jvm.functions.Function1):com.intellij.polySymbols.references.PolySymbolOwnReferences
-*:com.intellij.polySymbols.references.PolySymbolOwnReferencesHost
-- com.intellij.psi.PsiElement
-- a:buildOwnReferences(com.intellij.polySymbols.references.PolySymbolOwnReferences$Builder):V
-- getOwnReferences():java.util.Collection
-- F:getPolySymbolOwnReferences():com.intellij.polySymbols.references.PolySymbolOwnReferences
+*:com.intellij.polySymbols.references.PolySymbolOwnReferencesBuilder
+- a:reference(com.intellij.openapi.util.TextRange,com.intellij.polySymbols.PolySymbolKind,kotlin.jvm.functions.Function0):V
+- a:resolveFromNameMatchQuery(com.intellij.polySymbols.PolySymbolKind,java.lang.String):V
+- a:resolveFromNameMatchQuery(com.intellij.polySymbols.PolySymbolKind,java.lang.String,com.intellij.openapi.util.TextRange):V
+- a:resolveFromNameMatchQuery(com.intellij.polySymbols.PolySymbolKind,java.lang.String,com.intellij.openapi.util.TextRange,kotlin.jvm.functions.Function1):V
+- a:resolveFromNameMatchQuery(com.intellij.polySymbols.PolySymbolKind,java.lang.String,kotlin.jvm.functions.Function1):V
 *f:com.intellij.polySymbols.references.PolySymbolOwnReferencesKt
-- sf:polySymbolOwnReferences(com.intellij.psi.PsiElement,kotlin.jvm.functions.Function1):com.intellij.polySymbols.references.PolySymbolOwnReferences
+- sf:polySymbolOwnReferences(com.intellij.psi.PsiElement,kotlin.jvm.functions.Function1):java.util.List
 *f:com.intellij.polySymbols.search.PolySymbolUsageQueries
 - sf:INSTANCE:com.intellij.polySymbols.search.PolySymbolUsageQueries
 - f:buildPolySymbolUsagesQueries(com.intellij.polySymbols.PolySymbol,com.intellij.openapi.project.Project,com.intellij.psi.search.SearchScope):java.util.List
