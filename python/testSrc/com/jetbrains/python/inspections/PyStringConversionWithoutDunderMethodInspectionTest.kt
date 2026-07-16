@@ -10,6 +10,10 @@ class PyStringConversionWithoutDunderMethodInspectionTest : PyInspectionTestCase
 
   override fun getInspectionClass() = PyStringConversionWithoutDunderMethodInspection::class.java
 
+  fun `test None`() = doTestByText("""
+    f"{None}"  
+  """.trimIndent())
+
   fun `test generator`() = doTestByText("""
     f"{<weak_warning descr="Type 'Generator[int, Any, None]' doesn't define '__str__', '__repr__', or '__format__', so the result might not be useful">(_ for _ in range(10))</weak_warning>}"
   """.trimIndent())
