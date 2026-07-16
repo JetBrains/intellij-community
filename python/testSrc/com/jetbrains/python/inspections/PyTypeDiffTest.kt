@@ -21,6 +21,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -181,12 +182,12 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
   // renders a leading `[T: bound]` group so the differing bound is highlighted — the parameter lists alone are identical.
   @Test
   fun `override type-parameter bound mismatch is highlighted`() {
-    val tooltip = diffTableTooltip("""
+    val tooltip = diffTableTooltip<PyMethodOverridingInspection>("""
       class A:
           def f[T: str](self, t: T) -> None: ...
       class B(A):
           def f[T: int](self, t: T) -> None: ...
-    """, PyMethodOverridingInspection::class.java)
+    """)
     assertNotNull(tooltip, "expected an override signature diff")
     val diff = tooltip!!
     assertProvided(diff, "int")   // the override's bound `int` is red…
@@ -197,12 +198,12 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
   // EXPLICIT annotation, so the difference is highlighted — an unannotated `self`'s implicit receiver type stays hidden.
   @Test
   fun `override with an explicit self annotation shows the difference`() {
-    val tooltip = diffTableTooltip("""
+    val tooltip = diffTableTooltip<PyMethodOverridingInspection>("""
       class A:
           def f(self: int): ...
       class B(A):
           def f(self: str): ...
-    """, PyMethodOverridingInspection::class.java)
+    """)
     assertNotNull(tooltip, "expected an override diff")
     val diff = tooltip!!
     assertCodeLineContains(diff, "self")   // `self` is shown, not dropped…
@@ -215,12 +216,12 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
   // `self` must line up under the base's `self` — not float under its `: ` — even though only one row shows a `: type`.
   @Test
   fun `override with a bare self against an explicit base annotation is highlighted and aligned`() {
-    val tooltip = diffTableTooltip("""
+    val tooltip = diffTableTooltip<PyMethodOverridingInspection>("""
       class A:
           def f(self: int): ...
       class B(A):
           def f(self): ...
-    """, PyMethodOverridingInspection::class.java)
+    """)
     assertNotNull(tooltip, "expected an override diff")
     val diff = tooltip!!
     assertNotHighlighted(diff, "self")     // the name itself is never flagged…
@@ -251,11 +252,11 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
   // (while the matching `int` parameters stay unhighlighted), which only happens under the invariant comparison.
   @Test
   fun `assert_type mismatch shows the diff invariantly`() {
-    val tooltip = diffTableTooltip("""
+    val tooltip = diffTableTooltip<PyAssertTypeInspection>("""
       from typing import assert_type, Callable
       def f() -> Callable[[int], bool]: ...
       assert_type(f(), Callable[[int], int])
-    """, PyAssertTypeInspection::class.java)
+    """)
     assertNotNull(tooltip, "expected a callable diff in the assert_type warning")
     val diff = tooltip!!
     assertProvided(diff, "bool")   // the provided `bool` return is red…
@@ -265,35 +266,59 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
   // The diff (with the breakdown below it) is wired into the Protocol member-type check.
   @Test
   fun `protocol member type mismatch shows the diff`() {
-    val tooltip = diffTableTooltip("""
+    val tooltip = diffTableTooltip<PyProtocolInspection>("""
       from typing import Protocol, Callable
       class P(Protocol):
           f: Callable[[int], int]
       class C(P):
           f: Callable[[str], int]
-    """, PyProtocolInspection::class.java)
+    """)
     assertNotNull(tooltip, "expected a callable diff in the protocol member warning")
   }
 
   // ...and into the TypeVar default-vs-bound check.
   @Test
   fun `typevar default not matching bound shows the diff`() {
-    val tooltip = diffTableTooltip("""
+    val tooltip = diffTableTooltip<PyTypeHintsInspection>("""
       from typing import TypeVar, Callable
       T = TypeVar("T", bound=Callable[[int], int], default=Callable[[str], int])
-    """, PyTypeHintsInspection::class.java)
+    """)
     assertNotNull(tooltip, "expected a callable diff in the TypeVar bound warning")
   }
 
   // ...and into the __init__/__new__ signature-compatibility check.
   @Test
   fun `incompatible init and new signatures show the diff`() {
-    val tooltip = diffTableTooltip("""
+    val tooltip = diffTableTooltip<PyInitNewSignatureInspection>("""
       class C:
           def __new__(cls, x: int): ...
           def __init__(self, x: str): ...
-    """, PyInitNewSignatureInspection::class.java)
+    """)
     assertNotNull(tooltip, "expected a parameter diff in the __init__/__new__ warning")
+  }
+
+  // With more than one complementary signature (here both `__new__` and `__init__` are overloaded) there is no single
+  // signature to diff against — comparing to an arbitrary one would highlight irrelevant differences — so the
+  // structural diff is suppressed and the plain message shown. The incompatibility is still reported.
+  @TestFor(issues = ["PY-90555"])
+  @Test
+  fun `ambiguous overloaded init and new show no diff`() {
+    val code = """
+      from typing import overload
+      class C:
+          @overload
+          def __new__(cls, x: int): ...
+          @overload
+          def __new__(cls, x: str): ...
+          @overload
+          def __init__(self, y: bytes): ...
+          @overload
+          def __init__(self, y: bytearray): ...
+    """
+    assertTrue(warnings<PyInitNewSignatureInspection>(code).isNotEmpty(),
+               "expected an __init__/__new__ incompatibility warning")
+    assertNull(diffTableTooltip<PyInitNewSignatureInspection>(code),
+               "expected no structural diff when there is no single complementary signature")
   }
 
   // Like an editor diff, the provided value's incompatible parts are red and the expected type's are green, and
@@ -396,6 +421,22 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
     assertTrue(missingGap.containsMatchIn(tooltip), tooltip)
     // ...and the expected row still shows the required second `int` highlighted (green).
     assertExpected(tooltip, "int")
+  }
+
+  // The mirror of a missing parameter: a SURPLUS provided parameter (the expected signature has none at that
+  // position — `Callable[[], None]` vs the provided `(a: int)`) is the WHOLE incompatibility, so its NAME is
+  // highlighted red alongside its type — not just the type — while the expected row shows a gap.
+  @Test
+  fun `surplus provided parameter highlights its name and type`() {
+    val tooltip = tooltipFor("""
+      from typing import Callable
+      def f(a: int): ...
+      x: Callable[[], None] = f
+    """)
+    assertProvided(tooltip, "a: ")   // the surplus parameter's NAME is red…
+    assertProvided(tooltip, "int")   // …as well as its type
+    // ...and the expected row paints a gap where it has no parameter.
+    assertTrue(missingGap.containsMatchIn(tooltip), tooltip)
   }
 
   // The counts match but the provided parameter is anonymous (a `Callable`) while the expected one is named and
@@ -804,7 +845,7 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
   // The diff is also wired into the overload check: overload signature vs implementation.
   @Test
   fun `overload vs implementation diff`() {
-    val tooltip = diffTableTooltip("""
+    val tooltip = diffTableTooltip<PyOverloadsInspection>("""
       from typing import overload
       class C:
           @overload
@@ -812,14 +853,14 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
           @overload
           def f(self, a: str) -> str: ...
           def f(self, a: bytes) -> object: ...
-    """, PyOverloadsInspection::class.java)
+    """)
     assertNotNull(tooltip, "expected a callable diff in an overload-vs-implementation warning")
   }
 
   // ...and into overlapping overloads with an incompatible return type (the return is shown highlighted).
   @Test
   fun `overlapping overload return diff`() {
-    val tooltip = diffTableTooltip("""
+    val tooltip = diffTableTooltip<PyOverloadsInspection>("""
       from typing import overload, Any
       class Animal: ...
       class Dog(Animal): ...
@@ -829,7 +870,7 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
           @overload
           def feed(self, a: Animal) -> int: ...
           def feed(self, a: Any) -> Any: ...
-    """, PyOverloadsInspection::class.java)
+    """)
     assertNotNull(tooltip, "expected a callable diff in an overlapping-overload warning")
     assertExpected(tooltip!!, "int")
   }
@@ -838,20 +879,41 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
   // isn't truncated to an empty `()`), but only as the bare name — its implicit type (`Self@A` vs `Self@B`) differs by
   // design, so it stays hidden and `self` is never flagged; only the real parameter mismatch is highlighted.
   @Test
-  fun `method override diff keeps self but hides its implicit type`() {
-    val tooltip = diffTableTooltip("""
+  fun `method override diff drops an implicit self receiver`() {
+    val tooltip = diffTableTooltip<PyMethodOverridingInspection>("""
       class A:
           def f(self, x: int): ...
       class B(A):
           def f(self, x: str): ...
-    """, PyMethodOverridingInspection::class.java)
+    """)
     assertNotNull(tooltip, "expected a parameter diff in a method-override warning")
     // The real mismatch is shown (provided `str` red, expected `int` green)...
     assertProvided(tooltip!!, "str")
     assertExpected(tooltip, "int")
-    // ...`self` is shown as the bare name, but never highlighted (no implicit type is rendered to flag).
-    assertCodeLineContains(tooltip, "self")
-    assertNotHighlighted(tooltip, "self")
+    // ...and the receiver is gone: PyMethodOverridingInspection compares the two signatures with `self`/`cls` dropped
+    // unless the BASE declares an explicit receiver contract, so there is no implicit `Self@A` vs `Self@B` noise — and
+    // a `@staticmethod` override (which has no receiver at all) still lines its real parameters up column by column.
+    assertFalse(codeLineTexts(tooltip).any { "self" in it }, tooltip)
+  }
+
+  // A `@staticmethod` override has no receiver while the base has `self`; because the implicit receiver is dropped from
+  // BOTH sides, the real parameters still align instead of `self` being compared against the override's first argument.
+  @TestFor(issues = ["PY-90555"])
+  @Test
+  fun `staticmethod override aligns its parameters against the base without the receiver`() {
+    val tooltip = diffTableTooltip<PyMethodOverridingInspection>("""
+      class A:
+          def f(self, x: int): ...
+      class B(A):
+          @staticmethod
+          def f(x: str): ...
+    """)
+    assertNotNull(tooltip, "expected a parameter diff in a method-override warning")
+    assertFalse(codeLineTexts(tooltip!!).any { "self" in it }, tooltip)
+    // `x` is the only parameter on each row, so the mismatch is its type — not a shifted-by-one gap.
+    assertProvided(tooltip, "str")
+    assertExpected(tooltip, "int")
+    assertRowsAligned(tooltip)
   }
 
   // Generalizes beyond callables: a nested generic/tuple mismatch aligns the type arguments and highlights the
@@ -872,7 +934,7 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
   // The overload-call "no overload matches" report uses the same aligned, code-styled grid.
   @Test
   fun `overload call uses the code grid`() {
-    val tooltip = warningTooltips("""
+    val tooltip = warningTooltips<PyTypeCheckerInspection>("""
       from typing import overload
       @overload
       def f(a: bool) -> bool: ...
@@ -880,7 +942,7 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
       def f(a: str) -> str: ...
       def f(a): ...
       f(None)
-    """, PyTypeCheckerInspection::class.java).firstOrNull { "<code" in it }
+    """).firstOrNull { "<code" in it }
     assertNotNull(tooltip, "expected an aligned code grid in the no-overload-matches tooltip")
     assertTrue("Expected one of" in tooltip!!, tooltip)
     // The argument row and every candidate row are the same width, so the types line up under one another.
@@ -897,14 +959,14 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
     // Override the @BeforeEach-enabled flag on the same per-test disposable, which resets it after the test.
     Registry.get("python.type.checker.diff.tooltip").setValue(false, testDisposable)
 
-    val callableDiff = warnings("""
+    val callableDiff = warnings<PyTypeCheckerInspection>("""
       from typing import Callable
       def f(a: int) -> int: ...
       x: Callable[[int], str] = f
-    """, PyTypeCheckerInspection::class.java).firstNotNullOf { it.toolTip }
+    """).firstNotNullOf { it.toolTip }
     assertFalse(callableDiff.let { "Provided:" in it || "Expected:" in it }, callableDiff)
 
-    val overloadGrid = warningTooltips("""
+    val overloadGrid = warningTooltips<PyTypeCheckerInspection>("""
       from typing import overload
       @overload
       def f(a: bool) -> bool: ...
@@ -912,7 +974,7 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
       def f(a: str) -> str: ...
       def f(a): ...
       f(None)
-    """, PyTypeCheckerInspection::class.java)
+    """)
     assertTrue(overloadGrid.none { "Expected one of" in it && "<code" in it }, overloadGrid.toString())
   }
 
@@ -964,12 +1026,99 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
   // A compatible (widening) assignment must not produce any warning.
   @Test
   fun `compatible callable produces no warning`() {
-    val warnings = warnings("""
+    val warnings = warnings<PyTypeCheckerInspection>("""
       from typing import Callable
       def f(a: object) -> int: ...
       x: Callable[[int], object] = f
-    """, PyTypeCheckerInspection::class.java)
+    """)
     assertTrue(warnings.isEmpty(), "expected no warnings but got: ${warnings.map { it.description }}")
+  }
+
+  // The overload report shows each candidate's FULL parameter list, so a parameter the call omits because it is
+  // OPTIONAL is still shown (unhighlighted — it isn't why the overload fails), instead of being dropped.
+  @TestFor(issues = ["PY-90555"])
+  @Test
+  fun `overload report shows an omitted optional parameter`() {
+    val tooltip = warningTooltips<PyTypeCheckerInspection>("""
+      from typing import overload
+      @overload
+      def f(c: int, d: bool = ...) -> int: ...
+      @overload
+      def f(c: str) -> str: ...
+      f(None)
+    """).first { "<code" in it }
+    // The optional `d` is shown on the first candidate row…
+    assertCodeLineContains(tooltip, "d: bool")
+    // …but not highlighted (it isn't the incompatibility — `None` failing `c` is)…
+    assertNotHighlighted(tooltip, "d: ")
+    assertNotHighlighted(tooltip, "bool")
+    // …while the incompatible `c` types on both candidates are.
+    assertExpected(tooltip, "int")
+    assertExpected(tooltip, "str")
+  }
+
+  // An overloaded call where the only arity-complete overload has a type mismatch and the other is dropped for an
+  // arity issue used to collapse to a single "expected …, got …" message; now the report lists every overload, and a
+  // required parameter an overload leaves unfilled is shown as wholly missing (its name and type highlighted).
+  @TestFor(issues = ["PY-90555"])
+  @Test
+  fun `overload report lists every overload and flags a missing required parameter`() {
+    val tooltip = warningTooltips<PyTypeCheckerInspection>("""
+      from typing import overload
+      @overload
+      def f(c: int, d: bool) -> int: ...
+      @overload
+      def f(c: str) -> str: ...
+      f(1)
+    """).first { "<code" in it }
+    // Both overloads are listed…
+    val rows = codeLineTexts(tooltip).filter { it.startsWith("(") }
+    assertTrue(rows.any { "c: int" in it && "d: bool" in it }, tooltip)
+    assertTrue(rows.any { it.trim() == "(c: str)" || "c: str" in it }, tooltip)
+    // …the missing required `d` is highlighted whole — its NAME and its type…
+    assertExpected(tooltip, "d: ")
+    assertExpected(tooltip, "bool")
+    // …the other overload's real type mismatch (`1` vs `str`) is highlighted…
+    assertExpected(tooltip, "str")
+    // …and the matching argument `1` is NOT flagged (it satisfies the first overload's `c: int`).
+    assertNotHighlighted(tooltip, "1")
+  }
+
+  // A literal argument type is shown bare — `1`, not `Literal[1]` — in the overload report.
+  @TestFor(issues = ["PY-90555"])
+  @Test
+  fun `overload report shows a literal argument bare`() {
+    val tooltip = warningTooltips<PyTypeCheckerInspection>("""
+      from typing import overload
+      @overload
+      def f(c: int, d: bool) -> int: ...
+      @overload
+      def f(c: str) -> str: ...
+      f(1)
+    """).first { "<code" in it }
+    assertFalse("Literal" in tooltip, tooltip)
+    // The argument row shows the bare literal value `1` (the name cell is right-aligned, so it is padded from the `(`).
+    assertCodeLineContains(tooltip, "1")
+  }
+
+  // When a call leaves a required parameter unfilled on every overload (a pure arity error, reported by
+  // PyArgumentListInspection), the missing parameter is highlighted whole — its NAME as well as its type.
+  @TestFor(issues = ["PY-90555"])
+  @Test
+  fun `unfilled required parameter highlights its name and type`() {
+    val tooltip = diffTableTooltip<PyArgumentListInspection>("""
+      from typing import overload
+      @overload
+      def f(c: int, d: bool) -> int: ...
+      @overload
+      def f(c: str, d: str) -> str: ...
+      f(None)
+    """)
+    assertNotNull(tooltip, "expected an overload grid for the unfilled parameter")
+    // The missing `d` is highlighted whole on both candidate rows: its name `d: ` and its type.
+    assertExpected(tooltip!!, "d: ")
+    assertExpected(tooltip, "bool")
+    assertExpected(tooltip, "str")
   }
 
   // ---- assertion helpers ------------------------------------------------------------------------------------
@@ -1031,20 +1180,20 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
 
   /** The first warning tooltip (with [PyTypeCheckerInspection] enabled) that carries the aligned type diff. */
   private fun tooltipFor(@Language("python") text: String): String =
-    warnings(text, PyTypeCheckerInspection::class.java).firstNotNullOf { it.toolTip }
+    warnings<PyTypeCheckerInspection>(text).firstNotNullOf { it.toolTip }
 
   /** The first warning tooltip that carries an aligned callable diff (a `<code>` line), with [inspection] enabled. */
-  private fun diffTableTooltip(@Language("python") text: String, inspection: Class<out PyInspection>): String? =
-    warningTooltips(text, inspection).firstOrNull { "<code" in it }
+  private inline fun <reified InspectionClass : PyInspection> diffTableTooltip(@Language("python") text: String): String? =
+    warningTooltips<InspectionClass>(text).firstOrNull { "<code" in it }
 
-  private fun warningTooltips(@Language("python") text: String, inspection: Class<out PyInspection>): List<String> =
-    warnings(text, inspection).mapNotNull { it.toolTip }
+  private inline fun <reified InspectionClass : PyInspection> warningTooltips(@Language("python") text: String): List<String> =
+    warnings<InspectionClass>(text).mapNotNull { it.toolTip }
 
-  private fun warnings(@Language("python") text: String, inspectionClass: Class<out PyInspection>): List<HighlightInfo> {
+  private inline fun <reified InspectionClass: PyInspection> warnings(@Language("python") text: String): List<HighlightInfo> {
     myFixture.configureByText(PythonFileType.INSTANCE, text.trimIndent())
     // The fixture is shared across the tests of this class, so enable the inspection only for this highlighting
     // pass and disable it again afterwards instead of accumulating it on the shared profile.
-    val inspection = inspectionClass.getDeclaredConstructor().newInstance()
+    val inspection = InspectionClass::class.java.getDeclaredConstructor().newInstance()
     myFixture.enableInspections(inspection)
     try {
       return myFixture.doHighlighting().filter { it.severity >= HighlightSeverity.WARNING && it.description != null }

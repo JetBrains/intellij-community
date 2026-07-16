@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.psi.types.PyTypeRendererFeature
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyExpression
@@ -45,7 +46,13 @@ internal object PyMismatchTooltips {
     @NlsSafe val name: String,
     val pyType: PyType?,
     @NlsSafe val type: String,
+    /** The type name for the aligned grid tooltip: identical to [type] except that literals are shown bare (`1`, not
+     *  `Literal[1]`), which the diff prefers. The plain-text [text]/description keeps the full [type]. */
+    @NlsSafe val gridType: String,
     val matched: Boolean,
+    /** Whether the parameter NAME is highlighted too — set for a wholly missing (unfilled) parameter, where the
+     *  whole parameter is the incompatibility, not just its type (a plain type mismatch highlights only the type). */
+    val nameMismatch: Boolean = false,
   ) {
     /** The plain `name + type` text, for the Problems-view description. */
     @get:NlsSafe val text: String get() = name + type
@@ -56,36 +63,50 @@ internal object PyMismatchTooltips {
       @JvmStatic
       fun argument(argument: PyExpression, type: PyType?, context: TypeEvalContext, matched: Boolean): Slot {
         val name = (argument as? PyKeywordArgument)?.keyword?.let { "$it=" } ?: ""
-        return Slot(name, type, PythonDocumentationProvider.getTypeName(type, context), matched)
+        return Slot(name, type, typeName(type, context), bareTypeName(type, context), matched)
       }
 
       /** An expected parameter using its DECLARED type: an unannotated parameter (a null type) shows just its name,
-       *  with no `: type`. */
+       *  with no `: type`. [nameMismatch] highlights the name for a wholly missing parameter. */
       @JvmStatic
-      fun parameter(parameter: PyCallableParameter, context: TypeEvalContext, matched: Boolean): Slot {
+      @JvmOverloads
+      fun parameter(parameter: PyCallableParameter, context: TypeEvalContext, matched: Boolean, nameMismatch: Boolean = false): Slot {
         val type = parameter.getType(context)
-        return of(parameter, type, if (type.isUnknown) null else PythonDocumentationProvider.getTypeName(type, context), matched)
+        val render = !type.isUnknown
+        return of(parameter, type, if (render) typeName(type, context) else null,
+                  if (render) bareTypeName(type, context) else null, matched, nameMismatch)
       }
 
       /** An expected parameter shown with a specific [type] (e.g. one substituted at the call site) rather than its
        *  declared one — always rendered (`getTypeName` shows `Any` when unknown). The [type] is REQUIRED, so its
        *  colour and link are never dropped. */
       @JvmStatic
-      fun parameter(parameter: PyCallableParameter, type: PyType?, context: TypeEvalContext, matched: Boolean): Slot =
-        of(parameter, type, PythonDocumentationProvider.getTypeName(type, context), matched)
+      @JvmOverloads
+      fun parameter(parameter: PyCallableParameter, type: PyType?, context: TypeEvalContext, matched: Boolean, nameMismatch: Boolean = false): Slot =
+        of(parameter, type, typeName(type, context), bareTypeName(type, context), matched, nameMismatch)
 
       /** A bare type with no parameter name (an expected position whose parameter is unknown). */
       @JvmStatic
       fun ofType(type: PyType?, context: TypeEvalContext, matched: Boolean): Slot =
-        Slot("", type, PythonDocumentationProvider.getTypeName(type, context), matched)
+        Slot("", type, typeName(type, context), bareTypeName(type, context), matched)
+
+      @NlsSafe
+      private fun typeName(type: PyType?, context: TypeEvalContext): String =
+        PythonDocumentationProvider.getTypeName(type, context)
+
+      /** The grid's type name: literals shown bare (`1`, not `Literal[1]`). */
+      @NlsSafe
+      private fun bareTypeName(type: PyType?, context: TypeEvalContext): String =
+        PythonDocumentationProvider.getTypeName(type, context, PyTypeRendererFeature.BARE_LITERAL)
 
       /** Assembles a parameter slot: `name: typeName` when [typeName] is given (an explicit/declared type), or just
        *  the name when it is null (an unannotated parameter); always carries [type] for the grid to colour + link. */
-      private fun of(parameter: PyCallableParameter, type: PyType?, @NlsSafe typeName: String?, matched: Boolean): Slot {
+      private fun of(parameter: PyCallableParameter, type: PyType?, @NlsSafe typeName: String?, @NlsSafe bareTypeName: String?,
+                     matched: Boolean, nameMismatch: Boolean): Slot {
         val prefix = containerPrefix(parameter)
-        val name = parameter.name ?: return Slot("", type, typeName.orEmpty(), matched)
-        return if (typeName == null) Slot("$prefix$name", type, "", matched)
-               else Slot("$prefix$name: ", type, typeName, matched)
+        val name = parameter.name ?: return Slot("", type, typeName.orEmpty(), bareTypeName.orEmpty(), matched, nameMismatch)
+        return if (typeName == null) Slot("$prefix$name", type, "", "", matched, nameMismatch)
+               else Slot("$prefix$name: ", type, typeName, bareTypeName.orEmpty(), matched, nameMismatch)
       }
     }
   }
@@ -180,8 +201,8 @@ internal object PyMismatchTooltips {
         cells.add(PyTypeDiffGrid.delim(""))
       }
       else {
-        cells.add(PyTypeDiffGrid.value(slot.name, mismatch = false, alignRight = true))
-        cells.add(PyTypeDiffGrid.typeValue(slot.pyType, slot.type, mismatch = !slot.matched, suffix = suffix))
+        cells.add(PyTypeDiffGrid.value(slot.name, mismatch = slot.nameMismatch, alignRight = true))
+        cells.add(PyTypeDiffGrid.typeValue(slot.pyType, slot.gridType, mismatch = !slot.matched, suffix = suffix))
       }
     }
     cells.add(PyTypeDiffGrid.delim(")"))

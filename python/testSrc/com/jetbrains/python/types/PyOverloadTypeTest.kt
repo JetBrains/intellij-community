@@ -1109,7 +1109,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
 
     foo(5)
     foo("str", 5)
-    foo([5]) # WARNING Expected type 'int', got 'list[Literal[5]]' instead
+    foo([5]) # WARNING No overload of 'foo' matches the arguments. Argument types: (list[Literal[5]]). Expected one of: (p: int), (p: str, i: int)
 
     bar("str")
     bar(5)

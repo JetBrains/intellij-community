@@ -1042,7 +1042,9 @@ open class PyTypeCheckerInspection : PyInspection() {
         val analyzedCallees = analyzeOperatorCallees(callSite, resolvedOperators)
 
         if (reportStrictUnionOperatorArgumentMismatch(callSite, analyzedCallees)) return
-        reportIfNoCalleeMatches(callSite, analyzedCallees.orEmpty().map { it.mapping to it.calleeResults })
+        // Operator candidates are all arity-complete (see [analyzeOperatorCallees]), so there is no near miss to add.
+        reportIfNoCalleeMatches(callSite, analyzedCallees.orEmpty().map { it.mapping to it.calleeResults },
+                                analyzedCallees.orEmpty().map { it.mapping })
       }
       else {
         reportArgumentTypeMismatch(callSite, mapArguments(callSite, resolveContext))
@@ -1463,16 +1465,35 @@ open class PyTypeCheckerInspection : PyInspection() {
       }
     }
 
-    private fun reportIfNoCalleeMatches(callSite: PyCallSiteOwner, calleesResults: List<Pair<PyArgumentsMapping, AnalyzeCalleeResults>>): Boolean {
-      if (calleesResults.isNotEmpty() && calleesResults.none { (mapping, results) -> isMatched(results, mapping) }) {
-        PyTypeCheckerInspectionProblemRegistrar
-          .registerProblem(
-            holder, callSite, calleesResults.map { it.second }, myTypeEvalContext,
-            ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-          )
-        return true
-      }
-      return false
+    private fun reportIfNoCalleeMatches(
+      callSite: PyCallSiteOwner,
+      calleesResults: List<Pair<PyArgumentsMapping, AnalyzeCalleeResults>>,
+      allMappings: List<PyArgumentsMapping>,
+    ): Boolean {
+      if (calleesResults.isEmpty() || calleesResults.any { (mapping, results) -> isMatched(results, mapping) }) return false
+
+      // When there is only ONE arity-complete candidate — where the report would otherwise collapse to a single
+      // "expected …, got …" message that hides that the callee is overloaded — also list any NEAR-MISS overload:
+      // an incomplete one that merely lacks a required argument (so the reader sees the fuller overload the call
+      // was closest to). Near misses are rendered only, so they are analyzed with their type-check side effects
+      // suppressed (see [analyzeCallee]); candidates keep declaration order.
+      val reportResults =
+        if (calleesResults.size != 1) calleesResults.map { it.second }
+        else allMappings.mapNotNull { mapping ->
+          when {
+            mapping.isComplete -> calleesResults.single().takeIf { it.first === mapping }?.second
+            mapping.unmappedParameters.isNotEmpty() && mapping.unmappedArguments.isEmpty() ->
+              analyzeCallee(callSite, mapping, reportProblems = false)
+            else -> null
+          }
+        }
+
+      PyTypeCheckerInspectionProblemRegistrar
+        .registerProblem(
+          holder, callSite, reportResults, myTypeEvalContext,
+          ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+        )
+      return true
     }
 
     private fun reportArgumentTypeMismatch(callSite: PyCallSiteOwner, argumentsMappings: List<PyArgumentsMapping>): Boolean {
@@ -1480,7 +1501,7 @@ open class PyTypeCheckerInspection : PyInspection() {
 
       val shapeMatchesCalleesResults = shapeMatches.mapNotNull { mapping -> analyzeCallee(callSite, mapping)?.let { mapping to it } }
       if (shapeMatchesCalleesResults.isNotEmpty()) {
-        return reportIfNoCalleeMatches(callSite, shapeMatchesCalleesResults)
+        return reportIfNoCalleeMatches(callSite, shapeMatchesCalleesResults, argumentsMappings)
       }
 
       // We can only reliably report an argument type mismatch if there is a single callable candidate and we have extra arguments
@@ -1687,6 +1708,7 @@ open class PyTypeCheckerInspection : PyInspection() {
     private fun analyzeCallee(
       callSite: PyCallSiteOwner,
       mapping: PyArgumentsMapping,
+      reportProblems: Boolean = true,
     ): AnalyzeCalleeResults? {
       val callableType = mapping.callableType
       if (callableType == null) return null
@@ -1711,7 +1733,7 @@ open class PyTypeCheckerInspection : PyInspection() {
           val allArguments = callSite.getArguments(callableType.callable)
           analyzeParamSpec(
             expected, allArguments, substitutions, result, unexpectedArgumentForParamSpecs,
-            unfilledParameterFromParamSpecs
+            unfilledParameterFromParamSpecs, reportProblems
           )
           break
         }
@@ -1727,7 +1749,7 @@ open class PyTypeCheckerInspection : PyInspection() {
           }
           val argumentRightBound = min(firstExpectedTypes.size, nonStarCount)
           val firstArguments = allArguments.subList(0, argumentRightBound)
-          matchArgumentsAndTypes(firstArguments, firstExpectedTypes, substitutions, result)
+          matchArgumentsAndTypes(firstArguments, firstExpectedTypes, substitutions, result, reportProblems)
 
           val paramSpec = expected.paramSpec
           val restArguments = allArguments.subList(argumentRightBound, allArguments.size)
@@ -1746,7 +1768,7 @@ open class PyTypeCheckerInspection : PyInspection() {
             }
             analyzeParamSpec(
               paramSpec, restArguments, substitutions, result, unexpectedArgumentForParamSpecs,
-              unfilledParameterFromParamSpecs
+              unfilledParameterFromParamSpecs, reportProblems
             )
           }
 
@@ -1766,7 +1788,7 @@ open class PyTypeCheckerInspection : PyInspection() {
           }
           else {
             // promoted type differs: re-match against the original substitutions
-            matchParameterAndArgument(expected, actualPromoted, argument, substitutions)
+            matchParameterAndArgument(expected, actualPromoted, argument, substitutions, reportProblems)
           }
 
           val expectedSubstituted = substituteGenerics(expected, substitutions)
@@ -1794,15 +1816,15 @@ open class PyTypeCheckerInspection : PyInspection() {
         }
         analyzeParamSpec(
           paramSpecType, allArguments, substitutions, result, unexpectedArgumentForParamSpecs,
-          unfilledParameterFromParamSpecs
+          unfilledParameterFromParamSpecs, reportProblems
         )
       }
       else {
         if (positionalContainer != null) {
-          result.addAll(analyzeContainerMapping(positionalContainer, positionalArguments, substitutions))
+          result.addAll(analyzeContainerMapping(positionalContainer, positionalArguments, substitutions, reportProblems))
         }
         if (keywordContainer != null) {
-          result.addAll(analyzeContainerMapping(keywordContainer, keywordArguments, substitutions))
+          result.addAll(analyzeContainerMapping(keywordContainer, keywordArguments, substitutions, reportProblems))
         }
       }
 
@@ -1825,6 +1847,8 @@ open class PyTypeCheckerInspection : PyInspection() {
         unexpectedArgumentForParamSpecs,
         unfilledParameterFromParamSpecs,
         unfilledPositionalVarargs,
+        // The required parameters this call leaves unfilled (arity mismatch); optional ones are excluded by the mapping.
+        mapping.unmappedParameters,
       )
     }
 
@@ -1834,6 +1858,7 @@ open class PyTypeCheckerInspection : PyInspection() {
       result: MutableList<AnalyzeArgumentResult>,
       unexpectedArgumentForParamSpecs: MutableList<UnexpectedArgumentForParamSpec>,
       unfilledParameterFromParamSpecs: MutableList<UnfilledParameterFromParamSpec>,
+      reportProblems: Boolean,
     ) {
       val paramSpecSubst: PyCallableParameterListType? = getParamSpecSubstitution(paramSpec, substitutions)
       if (paramSpecSubst == null) {
@@ -1845,7 +1870,7 @@ open class PyTypeCheckerInspection : PyInspection() {
       for ((argument, parameter) in mapping.mappedParameters) {
         val argType = argument.getType(myTypeEvalContext)
         val paramType = parameter.getType(myTypeEvalContext)
-        val matched = matchParameterAndArgument(paramType, argType, argument.expression, substitutions)
+        val matched = matchParameterAndArgument(paramType, argType, argument.expression, substitutions, reportProblems)
         argument.expression?.let { argExpr ->
           result.add(AnalyzeArgumentResult(argExpr, parameter, paramType, substituteGenerics(paramType, substitutions), argType, matched))
         }
@@ -1902,13 +1927,14 @@ open class PyTypeCheckerInspection : PyInspection() {
       arguments: List<PyExpression>, types: List<PyType?>,
       substitutions: GenericSubstitutions,
       result: MutableList<AnalyzeArgumentResult>,
+      reportProblems: Boolean,
     ) {
       val size = min(arguments.size, types.size)
       for (i in 0..<size) {
         val expected = types[i]
         val argument = arguments[i]
         val actual = myTypeEvalContext.getType(argument)
-        val matched = matchParameterAndArgument(expected, actual, argument, substitutions)
+        val matched = matchParameterAndArgument(expected, actual, argument, substitutions, reportProblems)
         result.add(AnalyzeArgumentResult(argument, null, expected, substituteGenerics(expected, substitutions), actual, matched))
       }
     }
@@ -1917,6 +1943,7 @@ open class PyTypeCheckerInspection : PyInspection() {
       container: PyCallableParameter,
       arguments: List<PyExpression>,
       substitutions: GenericSubstitutions,
+      reportProblems: Boolean,
     ): List<AnalyzeArgumentResult> {
       val expected = container.getArgumentType(myTypeEvalContext)
 
@@ -1924,7 +1951,7 @@ open class PyTypeCheckerInspection : PyInspection() {
         val argumentTypes = PyUnpackedTupleTypeImpl.create(
           arguments.map { myTypeEvalContext.getType(it) }
         )
-        val matched = matchParameterAndArgument(expected, argumentTypes, null, substitutions)
+        val matched = matchParameterAndArgument(expected, argumentTypes, null, substitutions, reportProblems)
         return arguments.map { argument ->
           val expectedWithSubstitutions = substituteGenerics(expected, substitutions)
           AnalyzeArgumentResult(argument, container, expected, expectedWithSubstitutions, argumentTypes, matched)
@@ -1939,12 +1966,12 @@ open class PyTypeCheckerInspection : PyInspection() {
           val actualJoin = PyUnionType.unionOrUnknown(
             arguments.map { myTypeEvalContext.getType(it) }
           )
-          matchParameterAndArgument(expected, actualJoin, null, substitutions)
+          matchParameterAndArgument(expected, actualJoin, null, substitutions, reportProblems)
         }
         return arguments.map {
           // Then match each argument type against the expected type after these substitutions.
           val actual = myTypeEvalContext.getType(it)
-          val matched = matchParameterAndArgument(expected, actual, it, substitutions)
+          val matched = matchParameterAndArgument(expected, actual, it, substitutions, reportProblems)
           AnalyzeArgumentResult(it, container, expected, substituteGenerics(expected, substitutions), actual, matched)
         }
       }
@@ -1953,7 +1980,7 @@ open class PyTypeCheckerInspection : PyInspection() {
           val promotedToLiteral =
             promoteToLiteral(argument, expected, myTypeEvalContext, substitutions)
           val actual = promotedToLiteral.takeUnless { isUnknown(it, myTypeEvalContext) } ?: myTypeEvalContext.getType(argument)
-          val matched = matchParameterAndArgument(expected, actual, argument, substitutions)
+          val matched = matchParameterAndArgument(expected, actual, argument, substitutions, reportProblems)
           val expectedWithSubstitutions = substituteGenerics(expected, substitutions)
           AnalyzeArgumentResult(argument, container, expected, expectedWithSubstitutions, actual, matched)
         }
@@ -1974,6 +2001,9 @@ open class PyTypeCheckerInspection : PyInspection() {
       argumentType: PyType?,
       argument: PyExpression?,
       substitutions: GenericSubstitutions,
+      // When false (an incomplete overload analyzed only to render the report), the TypedDict sub-checks below skip
+      // their problem registration, so an overload that doesn't even apply can't add a spurious TypedDict warning.
+      reportProblems: Boolean = true,
     ): Boolean {
       val peeledArgument = peelArgument(argument)
       val expression = when (argument) {
@@ -1983,11 +2013,11 @@ open class PyTypeCheckerInspection : PyInspection() {
 
       if (expression != null) {
         if (isDictExpression(expression, myTypeEvalContext) && parameterType is PyTypedDictType) {
-          reportTypedDictProblems(parameterType, expression)
+          if (reportProblems) reportTypedDictProblems(parameterType, expression)
           return true
         }
         if (parameterType is PyUnpackedTypedDictType) {
-          reportUnpackedTypedDictProblems(parameterType, expression)
+          if (reportProblems) reportUnpackedTypedDictProblems(parameterType, expression)
           return true
         }
       }
@@ -2045,7 +2075,8 @@ open class PyTypeCheckerInspection : PyInspection() {
         return calleeResults.results.all { it.isMatched } &&
                calleeResults.unmatchedArguments.isEmpty() &&
                calleeResults.unmatchedParameters.isEmpty() &&
-               calleeResults.unfilledPositionalVarargs.isEmpty()
+               calleeResults.unfilledPositionalVarargs.isEmpty() &&
+               calleeResults.unfilledRegularParameters.isEmpty()
       }
 
       private fun hasExplicitType(node: PsiElement): Boolean {
@@ -2094,6 +2125,9 @@ open class PyTypeCheckerInspection : PyInspection() {
     val unmatchedArguments: List<UnexpectedArgumentForParamSpec>,
     val unmatchedParameters: List<UnfilledParameterFromParamSpec>,
     val unfilledPositionalVarargs: List<UnfilledPositionalVararg>,
+    /** The required parameters left unfilled by this call (arity mismatch), so the overload report can show them
+     *  as wholly missing. Empty for a complete mapping; optional (defaulted) parameters are never listed here. */
+    val unfilledRegularParameters: List<PyCallableParameter> = emptyList(),
   )
 
   internal class PyCalleeResults(

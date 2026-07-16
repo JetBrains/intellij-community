@@ -58,7 +58,9 @@ public final class PyInitNewSignatureInspection extends PyInspection {
                                        PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchingMethods(node, complementaryMethods.getFirst()));
       }
       else if (!complementaryMethods.isEmpty()) {
-        registerIncompatibilityProblem(node, complementaryMethods.getFirst(), null);
+        // More than one complementary signature (overloads): there is no single signature to diff against, so report
+        // the incompatibility without the structural diff rather than comparing to an arbitrary one.
+        registerIncompatibilityProblem(node, null, null);
       }
     }
 
@@ -73,10 +75,16 @@ public final class PyInitNewSignatureInspection extends PyInspection {
     }
 
 
-    private void registerIncompatibilityProblem(@NotNull PyFunction function, @NotNull PyFunction other, @Nullable LocalQuickFix quickFix) {
+    private void registerIncompatibilityProblem(@NotNull PyFunction function, @Nullable PyFunction other, @Nullable LocalQuickFix quickFix) {
       final PyParameterList parameterList = function.getParameterList();
       final String description = PyPsiBundle.message(PyUtil.isNewMethod(function) ? "INSP.new.incompatible.to.init"
                                                                                   : "INSP.init.incompatible.to.new");
+      // No single complementary signature to compare against: keep the plain message (no aligned diff or breakdown).
+      if (other == null) {
+        if (quickFix != null) registerProblem(parameterList, description, quickFix);
+        else registerProblem(parameterList, description);
+        return;
+      }
       final List<PyCallableParameter> functionParams = ParamHelper.dropSelf(function.getParameters(myTypeEvalContext));
       final List<PyCallableParameter> otherParams = ParamHelper.dropSelf(other.getParameters(myTypeEvalContext));
       // The aligned parameter diff with the assignability breakdown appended below it on-the-fly.

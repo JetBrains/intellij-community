@@ -844,7 +844,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
           name:str
       
       asdict(MyDataClass(name="Bob"))
-      asdict("Bob") # WARNING Expected type 'DataclassInstance', got 'Literal["Bob"]' instead
+      asdict("Bob") # WARNING No overload of 'asdict' matches the arguments. Argument types: (Literal["Bob"]). Expected one of: (obj: DataclassInstance), (obj: DataclassInstance, dict_factory: (list[tuple[str, Any]]) -> _T)
       """.trimIndent())
 
     @Test

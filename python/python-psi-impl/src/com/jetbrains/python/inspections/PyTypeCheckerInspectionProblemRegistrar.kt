@@ -171,9 +171,7 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
       PyMismatchTooltips.Slot.argument(argumentResult.argument, argumentResult.actualType, context,
                                        !argumentMatchesNoCallee(argumentResult.argument, calleesResults))
     }
-    val expectedRows = calleesResults.map { calleeResults ->
-      calleeResults.results.map { getExpectedParameterSlot(it, context, it.isMatched) }
-    }
+    val expectedRows = calleesResults.map { calleeResults -> expectedParameterRow(calleeResults, context) }
 
     val description = PyMismatchTooltips.description(header, argumentSlots, expectedRows)
     val highlightType = highlightOverride ?: ProblemHighlightType.GENERIC_ERROR_OR_WARNING
@@ -341,6 +339,32 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
       return type.getMemberNames(true, context)
     }
     return null
+  }
+
+  /**
+   * One candidate signature's "Expected one of" row, built from its FULL parameter list — not only the parameters
+   * an argument mapped to — so an optional parameter the call omits is still shown, and a required parameter it
+   * leaves unfilled is shown as wholly missing (name and type highlighted). A parameter an argument mapped to keeps
+   * its per-argument result (its type highlighted only on a real type mismatch).
+   */
+  private fun expectedParameterRow(
+    calleeResults: AnalyzeCalleeResults,
+    context: TypeEvalContext,
+  ): List<PyMismatchTooltips.Slot> {
+    val parameters = calleeResults.callableType.getParameters(context)
+                     ?: return calleeResults.results.map { getExpectedParameterSlot(it, context, it.isMatched) }
+    return parameters.mapNotNull { parameter ->
+      if (parameter.isPositionOnlySeparator || parameter.isKeywordOnlySeparator) return@mapNotNull null
+      val argumentResult = calleeResults.results.firstOrNull { it.parameter === parameter }
+      when {
+        argumentResult != null -> getExpectedParameterSlot(argumentResult, context, argumentResult.isMatched)
+        // A required parameter the call can't fill: the whole parameter is the incompatibility (name + type).
+        calleeResults.unfilledRegularParameters.any { it === parameter } ->
+          PyMismatchTooltips.Slot.parameter(parameter, context, matched = false, nameMismatch = true)
+        // An optional (or otherwise unmapped) parameter: shown for context, not flagged.
+        else -> PyMismatchTooltips.Slot.parameter(parameter, context, matched = true)
+      }
+    }
   }
 
   private fun getExpectedParameterSlot(

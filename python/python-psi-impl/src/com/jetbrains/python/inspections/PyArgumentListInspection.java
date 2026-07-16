@@ -404,8 +404,10 @@ public final class PyArgumentListInspection extends PyInspection {
       if (parameters != null) {
         for (PyCallableParameter parameter : parameters) {
           if (parameter.isPositionOnlySeparator() || parameter.isKeywordOnlySeparator()) continue;
-          final boolean matched = !containsIdentity(mapping.getUnmappedParameters(), parameter);
-          row.add(PyMismatchTooltips.Slot.parameter(parameter, context, matched));
+          // An unfilled parameter is wholly missing: highlight its name AND type, not just the type — the whole
+          // parameter is the incompatibility (mirrors the surplus/missing-parameter convention of the structural diff).
+          final boolean missing = containsIdentity(mapping.getUnmappedParameters(), parameter);
+          row.add(PyMismatchTooltips.Slot.parameter(parameter, context, !missing, missing));
         }
       }
       expectedRows.add(row);

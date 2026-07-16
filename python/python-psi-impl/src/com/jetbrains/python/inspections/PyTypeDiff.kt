@@ -12,6 +12,7 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ast.PyAstSingleStarParameter
 import com.jetbrains.python.ast.PyAstSlashParameter
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.psi.types.PyTypeRendererFeature
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.inspections.PyTypeDiff.columns
 import com.jetbrains.python.inspections.PyTypeDiff.diffTooltip
@@ -288,9 +289,15 @@ internal object PyTypeDiff {
     return null
   }
 
+  /** A type name for the diff, with literals shown bare (`1`, not `Literal[1]`) — the `Literal[…]` wrapper is
+   *  redundant noise in a structural diff, where the value alone is clearer. */
+  @NlsSafe
+  private fun bareTypeName(type: PyType?, context: TypeEvalContext): String =
+    PythonDocumentationProvider.getTypeName(type, context, PyTypeRendererFeature.BARE_LITERAL)
+
   private fun leafColumns(expected: PyType?, actual: PyType?, context: TypeEvalContext, variance: Variance = Variance.COVARIANT): List<Col> {
-    val actualName = PythonDocumentationProvider.getTypeName(actual, context)
-    val expectedName = PythonDocumentationProvider.getTypeName(expected, context)
+    val actualName = bareTypeName(actual, context)
+    val expectedName = bareTypeName(expected, context)
     val mismatch = typesMismatch(actual, expected, variance, context)
     // Either side may itself be a union: highlight only the members the other side doesn't match, not the whole
     // union — so `int | str` vs `int | float` greys the shared `int` and colours only `str`/`float`. A "source" side
@@ -362,7 +369,7 @@ internal object PyTypeDiff {
         // when it is the incompatible one.
         val member = slot.expected ?: slot.actual
         val onExpected = slot.expected != null
-        val name = PythonDocumentationProvider.getTypeName(member, context)
+        val name = bareTypeName(member, context)
         val cell = PyTypeDiffGrid.typeValue(member, name, oneSidedMemberBad(member, onExpected, isUnion, expected, actual, variance, context))
         val gap = PyTypeDiffGrid.value("", mismatch = false)
         columns.add(if (onExpected) Col(gap, cell) else Col(cell, gap))
@@ -431,7 +438,7 @@ internal object PyTypeDiff {
     val segments = mutableListOf<PyTypeDiffGrid.Segment>()
     members.forEachIndexed { i, m ->
       if (i > 0) segments.add(PyTypeDiffGrid.segmentDelim(" & "))
-      val name = PythonDocumentationProvider.getTypeName(m, context)
+      val name = bareTypeName(m, context)
       segments.add(PyTypeDiffGrid.typeSegment(m, name, isBad(m)))
     }
     return PyTypeDiffGrid.segmented(segments)
@@ -461,7 +468,7 @@ internal object PyTypeDiff {
     val segments = mutableListOf<PyTypeDiffGrid.Segment>()
     members.forEachIndexed { i, member ->
       if (i > 0) segments.add(PyTypeDiffGrid.segmentDelim(" | "))
-      val name = PythonDocumentationProvider.getTypeName(member, context)
+      val name = bareTypeName(member, context)
       segments.add(PyTypeDiffGrid.typeSegment(member, name, isBadMember(member)))
     }
     return PyTypeDiffGrid.segmented(segments, alignRight, suffix)
@@ -585,9 +592,9 @@ internal object PyTypeDiff {
     if (slot.hasActual && slot.hasExpected) return columns(slot.expected, slot.actual, context, slot.variance, depth)
     // A surplus argument on one side has no counterpart, so it is the incompatibility: shown red, while the side
     // that lacks it gets an empty mismatch cell the grid paints as a missing-position block across the column.
-    val actualCell = if (slot.hasActual) PyTypeDiffGrid.typeValue(slot.actual, PythonDocumentationProvider.getTypeName(slot.actual, context), mismatch = true)
+    val actualCell = if (slot.hasActual) PyTypeDiffGrid.typeValue(slot.actual, bareTypeName(slot.actual, context), mismatch = true)
                      else PyTypeDiffGrid.value("", mismatch = true)
-    val expectedCell = if (slot.hasExpected) PyTypeDiffGrid.typeValue(slot.expected, PythonDocumentationProvider.getTypeName(slot.expected, context), mismatch = true)
+    val expectedCell = if (slot.hasExpected) PyTypeDiffGrid.typeValue(slot.expected, bareTypeName(slot.expected, context), mismatch = true)
                        else PyTypeDiffGrid.value("", mismatch = true)
     return listOf(Col(actualCell, expectedCell))
   }
@@ -748,9 +755,12 @@ internal object PyTypeDiff {
   private fun renderSlot(slot: Slot, hideMatchedNames: Boolean, context: TypeEvalContext, variance: Variance, depth: Int): List<Col> {
     val actual = slot.actual
     val expected = slot.expected
-    // A name is the incompatibility when keyword-callable parameters disagree on it, or when one side can't be
-    // passed the way the other requires (a keyword-only vs. positional-only parameter — see [isKindMismatch]).
-    val nameMismatch = isNameMismatch(actual, expected) || isKindMismatch(actual, expected)
+    // A name is the incompatibility when keyword-callable parameters disagree on it, when one side can't be passed
+    // the way the other requires (a keyword-only vs. positional-only parameter — see [isKindMismatch]), or when this
+    // is a surplus/missing parameter — one side has it, the other doesn't: the WHOLE parameter is the mismatch, so
+    // its name is highlighted alongside its type (e.g. a provided `a: int` where no parameter is expected reds both).
+    val nameMismatch = isNameMismatch(actual, expected) || isKindMismatch(actual, expected) ||
+                       slot.actualMissing || slot.expectedMissing
     val defaultMismatch = isDefaultMismatch(actual, expected)
     val showName = !hideMatchedNames || slot.actualTypeMismatch || slot.expectedTypeMismatch || defaultMismatch || nameMismatch
     // Name part: right-aligned so the `: type` parts line up vertically across both rows — EXCEPT when one side is
@@ -925,7 +935,7 @@ internal object PyTypeDiff {
       // differs between base and override (`Self@A` vs `Self@B`) and would just be noise. Its real type is still kept
       // in [ParamColumn.matchType] so that an explicit annotation on the OTHER side is compared (see [isTypeMismatch]).
       val selfImplicit = parameter.isSelf && (parameter.parameter as? PyNamedParameter)?.annotation == null
-      val typeName = if (argumentType == null || selfImplicit) "" else PythonDocumentationProvider.getTypeName(argumentType, context)
+      val typeName = if (argumentType == null || selfImplicit) "" else bareTypeName(argumentType, context)
       val prefix = PyMismatchTooltips.containerPrefix(parameter)
       val name = parameter.name
 
