@@ -9,7 +9,6 @@ import com.intellij.analysis.problemsView.ProblemsListener
 import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.analysis.problemsView.toolWindow.SetUpdateState
 import com.intellij.analysis.problemsView.toolWindow.splitApi.HighlightingBaseProblem
-import com.intellij.analysis.problemsView.toolWindow.splitApi.MissingIdDiagnostics
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemEvent
 import com.intellij.build.FlowWithHistory
 import com.intellij.openapi.application.ApplicationManager
@@ -66,8 +65,6 @@ class ProjectErrorsCollector(val project: Project, coroutineScope: CoroutineScop
   }
 
   override fun problemAppeared(problem: Problem) {
-    MissingIdDiagnostics.trace("ProjectErrors", "problemAppeared:in", MissingIdDiagnostics.STEP_APPEARED, problem,
-                               "isDuplicate=${problem is HighlightingDuplicateProblem}")
     val ignored = isIgnored(problem.provider)
     notify(problem, when {
       ignored -> SetUpdateState.IGNORED
@@ -83,17 +80,11 @@ class ProjectErrorsCollector(val project: Project, coroutineScope: CoroutineScop
     if (!ignored && problem is FileProblem && problem is HighlightingBaseProblem) {
       synchronized(fileProblems) {
         fileProblems[problem.file]?.filterIsInstance<HighlightingDuplicateProblem>()
-      }?.forEach {
-        MissingIdDiagnostics.trace("ProjectErrors", "disappear-duplicate-because-real-appeared",
-                                   MissingIdDiagnostics.STEP_DISAPPEARED, it, "realProblemHash=${problem.hashCode()}")
-        problemDisappeared(it)
-      }
+      }?.forEach { problemDisappeared(it) }
     }
   }
 
   override fun problemDisappeared(problem: Problem) {
-    MissingIdDiagnostics.trace("ProjectErrors", "problemDisappeared:in", MissingIdDiagnostics.STEP_DISAPPEARED, problem,
-                               "isDuplicate=${problem is HighlightingDuplicateProblem}")
     notify(problem, when {
       isIgnored(problem.provider) -> SetUpdateState.IGNORED
       problem is FileProblem -> process(problem, false) { SetUpdateState.remove(problem, it) }
@@ -102,8 +93,6 @@ class ProjectErrorsCollector(val project: Project, coroutineScope: CoroutineScop
   }
 
   override fun problemUpdated(problem: Problem) {
-    MissingIdDiagnostics.trace("ProjectErrors", "problemUpdated:in", MissingIdDiagnostics.STEP_UPDATED, problem,
-                               "isDuplicate=${problem is HighlightingDuplicateProblem}")
     notify(problem, when {
       isIgnored(problem.provider) -> SetUpdateState.IGNORED
       problem is FileProblem -> process(problem, false) { SetUpdateState.update(problem, it) }
@@ -135,24 +124,20 @@ class ProjectErrorsCollector(val project: Project, coroutineScope: CoroutineScop
     }
     when (state) {
       SetUpdateState.ADDED -> {
-        MissingIdDiagnostics.trace("ProjectErrors", "set:ADDED", MissingIdDiagnostics.STEP_APPEARED, problem)
         project.messageBus.syncPublisher(ProblemsListener.TOPIC).problemAppeared(problem)
         emitProblemAppeared(problem)
         problemCount.getAndIncrement()
       }
       SetUpdateState.REMOVED -> {
-        MissingIdDiagnostics.trace("ProjectErrors", "set:REMOVED", MissingIdDiagnostics.STEP_DISAPPEARED, problem)
         project.messageBus.syncPublisher(ProblemsListener.TOPIC).problemDisappeared(problem)
         emitProblemDisappeared(problem)
         problemCount.decrementAndGet()
       }
       SetUpdateState.UPDATED -> {
-        MissingIdDiagnostics.trace("ProjectErrors", "set:UPDATED", MissingIdDiagnostics.STEP_UPDATED, problem)
         project.messageBus.syncPublisher(ProblemsListener.TOPIC).problemUpdated(problem)
         emitProblemUpdated(problem)
       }
       SetUpdateState.IGNORED -> {
-        MissingIdDiagnostics.trace("ProjectErrors", "set:IGNORED", MissingIdDiagnostics.STEP_UPDATED, problem)
       }
     }
   }
@@ -189,13 +174,8 @@ class ProjectErrorsCollector(val project: Project, coroutineScope: CoroutineScop
     private val otherProblems = mutableSetOf<Problem>()
 
     override fun getHistory(): List<ProblemEvent> {
-      val history = fileProblems.values.flatten().map { ProblemEvent.Appeared(it) } +
-                    otherProblems.map { ProblemEvent.Appeared(it) }
-      MissingIdDiagnostics.trace("ProjectErrors.flow",
-                                 "history-replay/re-subscription",
-                                 MissingIdDiagnostics.STEP_SUBSCRIPTION,
-                                 "historySize=${history.size}")
-      return history
+      return fileProblems.values.flatten().map { ProblemEvent.Appeared(it) } +
+             otherProblems.map { ProblemEvent.Appeared(it) }
     }
 
     fun problemAppeared(problem: Problem) =
