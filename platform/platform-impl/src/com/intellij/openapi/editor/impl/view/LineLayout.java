@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.FontFallbackIterator;
-import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.util.DocumentInternalUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -27,43 +26,23 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
 
   /**
    * Creates a layout for a fragment of text from editor.
+   * <p>
+   * Reads a logical line from the editor document, uses editor highlighting/attributes lazily, and can skip bidi analysis
    */
-  static @NotNull LineLayout create(@NotNull EditorView view, int line, boolean skipBidiLayout) {
-    List<LineBidiRun> runs = createFragments(view, line, skipBidiLayout);
+  static @NotNull LineLayout createForDocumentLine(@NotNull EditorView view, int line, boolean skipBidiLayout) {
+    List<LineBidiRun> runs = createRunsForDocumentLine(view, line, skipBidiLayout);
     return createLayout(view, runs, null, line);
   }
 
   /**
    * Creates a layout for an arbitrary piece of text (using a common font style).
+   * <p>
+   * Lays out supplied text eagerly with one font style, performs bidi independently of document highlighting, and precomputes width
    */
-  static @NotNull LineLayout create(@NotNull EditorView view, @NotNull CharSequence text, @FontStyle int fontStyle) {
-    List<LineBidiRun> runs = createFragments(view, text, fontStyle);
+  static @NotNull LineLayout createForStandaloneText(@NotNull EditorView view, @NotNull CharSequence text, @FontStyle int fontStyle) {
+    List<LineBidiRun> runs = createRunsForStandaloneText(view, text, fontStyle);
     LineLayout delegate = createLayout(view, runs, text, 0);
     return new LineLayoutWithSize(delegate);
-  }
-
-  static void addFragments(EditorView view, LineBidiRun run, LineChunk chunk, char[] text, int start, int end, @Nullable TabFragment tabFragment, boolean showSpecialChars, FontFallbackIterator it) {
-    assert start < end;
-    int last = start;
-    for (int i = start; i < end; i++) {
-      char c = text[i];
-      LineFragment specialFragment = null;
-      if (c == '\t') {
-        assert run.getLevel() == 0;
-        specialFragment = tabFragment;
-      }
-      else if (showSpecialChars) {
-        // only BMP special chars are supported currently, so there's no need to check for surrogate pairs
-        specialFragment = SpecialCharacterFragment.create(view, c, text, i);
-      }
-      if (specialFragment != null) {
-        addFragmentsNoTabs(run, chunk, text, last, i, it, view);
-        chunk.addFragment(specialFragment);
-        last = i + 1;
-      }
-    }
-    addFragmentsNoTabs(run, chunk, text, last, end, it, view);
-    assert chunk.fragmentCount() > 0;
   }
 
   abstract Stream<LineChunk> getChunksInLogicalOrder();
@@ -125,7 +104,45 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
     return new VisualOrderIterator(view, line, startX, startVisualColumn, startOffset, runs);
   }
 
-  private static LineLayout createLayout(@NotNull EditorView view, @NotNull List<LineBidiRun> runs, @Nullable CharSequence text, int line) {
+  private static List<LineBidiRun> createRunsForDocumentLine(@NotNull EditorView view, int line, boolean skipBidiLayout) {
+    Document document = view.getDocument();
+    int lineStartOffset = document.getLineStartOffset(line);
+    int lineEndOffset = document.getLineEndOffset(line);
+    if (lineEndOffset <= lineStartOffset) {
+      return Collections.emptyList();
+    }
+    if (skipBidiLayout) {
+      return Collections.singletonList(new LineBidiRun(lineEndOffset - lineStartOffset));
+    }
+    CharSequence text = document.getImmutableCharSequence().subSequence(lineStartOffset, lineEndOffset);
+    char[] chars = CharArrayUtil.fromSequence(text);
+    return BidiRunUtil.createRuns(view, chars, lineStartOffset);
+  }
+
+  private static List<LineBidiRun> createRunsForStandaloneText(@NotNull EditorView view, @NotNull CharSequence text, @FontStyle int fontStyle) {
+    if (text.isEmpty()) {
+      return Collections.emptyList();
+    }
+    FontFallbackIterator ffi = new FontFallbackIterator()
+      .setPreferredFonts(view.getEditor().getColorsScheme().getFontPreferences())
+      .setFontStyle(fontStyle)
+      .setFontRenderContext(view.getFontRenderContext());
+    char[] chars = CharArrayUtil.fromSequence(text);
+    List<LineBidiRun> runs = BidiRunUtil.createRuns(view, chars, -1);
+    for (LineBidiRun run : runs) {
+      for (LineChunk chunk : run.getChunks(text, 0)) {
+        chunk.addFragments(chars, run.getLevel(), run.isRtl(), ffi, view);
+      }
+    }
+    return runs;
+  }
+
+  private static @NotNull LineLayout createLayout(
+    @NotNull EditorView view,
+    @NotNull List<LineBidiRun> runs,
+    @Nullable CharSequence text, // if null, use line
+    int line
+  ) {
     if (runs.isEmpty()) {
       return new SingleChunkLayout(null);
     }
@@ -151,65 +168,6 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
     LineBidiRun[] runsInVisualOrder = runArray.length > 1 ? runArray.clone() : runArray;
     reorderRunsVisually(runsInVisualOrder);
     return new MultiChunkLayout(runArray, runsInVisualOrder);
-  }
-
-  private static List<LineBidiRun> createFragments(@NotNull EditorView view, int line, boolean skipBidiLayout) {
-    Document document = view.getDocument();
-    int lineStartOffset = document.getLineStartOffset(line);
-    int lineEndOffset = document.getLineEndOffset(line);
-    if (lineEndOffset <= lineStartOffset) {
-      return Collections.emptyList();
-    }
-    if (skipBidiLayout) {
-      return Collections.singletonList(new LineBidiRun(lineEndOffset - lineStartOffset));
-    }
-    CharSequence text = document.getImmutableCharSequence().subSequence(lineStartOffset, lineEndOffset);
-    char[] chars = CharArrayUtil.fromSequence(text);
-    return createRuns(view, chars, lineStartOffset);
-  }
-
-  private static List<LineBidiRun> createFragments(@NotNull EditorView view, @NotNull CharSequence text, @FontStyle int fontStyle) {
-    if (text.isEmpty()) {
-      return Collections.emptyList();
-    }
-    FontFallbackIterator ffi = new FontFallbackIterator()
-      .setPreferredFonts(view.getEditor().getColorsScheme().getFontPreferences())
-      .setFontStyle(fontStyle)
-      .setFontRenderContext(view.getFontRenderContext());
-    char[] chars = CharArrayUtil.fromSequence(text);
-    List<LineBidiRun> runs = createRuns(view, chars, -1);
-    for (LineBidiRun run : runs) {
-      for (LineChunk chunk : run.getChunks(text, 0)) {
-        chunk.initFragments();
-        addFragments(view, run, chunk, chars, chunk.getStartOffset(), chunk.getEndOffset(), null, false, ffi);
-      }
-    }
-    return runs;
-  }
-
-  private static List<LineBidiRun> createRuns(@NotNull EditorView view, char @NotNull [] text, int startOffsetInEditor) {
-    int textLength = text.length;
-    if (view.getEditor().myDisableRtl || !Bidi.requiresBidi(text, 0, textLength)) {
-      return Collections.singletonList(new LineBidiRun(textLength));
-    }
-    return LineLayoutBidiUtil.createRunsBidi(view, text, startOffsetInEditor, textLength);
-  }
-
-  private static void addFragmentsNoTabs(LineBidiRun run, LineChunk chunk, char[] text, int start, int end, FontFallbackIterator it, EditorView view) {
-    if (start < end) {
-      it.start(text, start, end);
-      while (!it.atEnd()) {
-        addTextFragmentIfNeeded(chunk, text, it.getStart(), it.getEnd(), it.getFontInfo(), run.isRtl(), view);
-        it.advance();
-      }
-    }
-  }
-
-  private static void addTextFragmentIfNeeded(LineChunk chunk, char[] chars, int from, int to, FontInfo fontInfo, boolean isRtl, EditorView view) {
-    if (to > from) {
-      assert fontInfo != null;
-      TextFragmentFactory.createTextFragments(chunk, chars, from, to, isRtl, fontInfo, view);
-    }
   }
 
   // runs are supposed to be in logical order initially

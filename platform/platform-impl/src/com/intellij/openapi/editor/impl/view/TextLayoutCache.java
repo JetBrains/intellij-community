@@ -47,7 +47,7 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     myView = view;
     myDocument = view.getDocument();
     myDocument.addDocumentListener(this, this);
-    myBidiNotRequiredMarker = LineLayout.create(view, "", Font.PLAIN);
+    myBidiNotRequiredMarker = LineLayout.createForStandaloneText(view, "", Font.PLAIN);
     Disposer.register(
       this,
       UiNotifyConnector.installOn(
@@ -68,7 +68,7 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     }
     LineLayout result = myLines.get(line);
     if (result == null || result == myBidiNotRequiredMarker) {
-      result = LineLayout.create(myView, line, result == myBidiNotRequiredMarker);
+      result = LineLayout.createForDocumentLine(myView, line, result == myBidiNotRequiredMarker);
       myLines.set(line, result);
     }
     return result;

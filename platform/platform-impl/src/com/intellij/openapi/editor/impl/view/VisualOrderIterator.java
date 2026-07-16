@@ -39,7 +39,7 @@ final class VisualOrderIterator implements Iterator<LineVisualFragment> {
     int chunkIndex = run.isRtl() ? (chunks.size() - myChunkIndex - 1) : myChunkIndex;
     LineChunk chunk = chunks.get(chunkIndex);
     if (myView != null) {
-      chunk.ensureLayout(myView, run, myLine);
+      chunk.ensureLayout(myView, myLine, run.getLevel(), run.isRtl());
     }
     return myFragmentIndex < chunk.fragmentCount();
   }

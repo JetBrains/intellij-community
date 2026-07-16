@@ -210,11 +210,20 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     int startOffset = myCurrentInlayIndex > 0 ? myInlays.get(myCurrentInlayIndex - 1).getOffset() : mySegmentStartOffset;
     int endOffset = myCurrentInlayIndex < myInlays.size() ? myInlays.get(myCurrentInlayIndex).getOffset() : mySegmentEndOffset;
     int lineStartOffset = myDocument.getLineStartOffset(myCurrentEndLogicalLine);
-    myFragmentIterator = myCurrentEndLogicalLine < myDocument.getLineCount() // handle empty document case
-                         ? myView.getTextLayoutCache().getLineLayout(myCurrentEndLogicalLine)
-                           .getFragmentsInVisualOrder(myView, myCurrentEndLogicalLine, myCurrentX, myCurrentVisualColumn,
-                                                      startOffset - lineStartOffset, endOffset - lineStartOffset, myQuickEvaluationListener)
-                         : Collections.emptyIterator();
+    if (myCurrentEndLogicalLine < myDocument.getLineCount()) { // handle empty document case
+      LineLayout lineLayout = myView.getTextLayoutCache().getLineLayout(myCurrentEndLogicalLine);
+      myFragmentIterator = lineLayout.getFragmentsInVisualOrder(
+        myView,
+        myCurrentEndLogicalLine,
+        myCurrentX,
+        myCurrentVisualColumn,
+        startOffset - lineStartOffset,
+        endOffset - lineStartOffset,
+        myQuickEvaluationListener
+      );
+    } else {
+      myFragmentIterator = Collections.emptyIterator();
+    }
   }
 
   private int getCurrentFoldRegionStartOffset() {

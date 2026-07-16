@@ -17,12 +17,21 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.Bidi;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-final class LineLayoutBidiUtil {
+final class BidiRunUtil {
   private static final String WHITESPACE_CHARS = " \t";
 
-  static @NotNull List<LineBidiRun> createRunsBidi(
+  static List<LineBidiRun> createRuns(@NotNull EditorView view, char @NotNull [] text, int startOffsetInEditor) {
+    int textLength = text.length;
+    if (view.getEditor().myDisableRtl || !Bidi.requiresBidi(text, 0, textLength)) {
+      return Collections.singletonList(new LineBidiRun(textLength));
+    }
+    return createRunsBidi(view, text, startOffsetInEditor, textLength);
+  }
+
+  private static @NotNull List<LineBidiRun> createRunsBidi(
     @NotNull EditorView view,
     char[] text,
     int startOffsetInEditor,

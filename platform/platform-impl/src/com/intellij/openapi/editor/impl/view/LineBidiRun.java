@@ -60,6 +60,14 @@ final class LineBidiRun {
     this.visualStartLogicalColumn = visualStartLogicalColumn;
   }
 
+  int getChunkCount() {
+    return (endOffset - startOffset + CHUNK_CHARACTERS - 1) / CHUNK_CHARACTERS;
+  }
+
+  Stream<LineChunk> chunkStream() {
+    return chunks == null ? Stream.empty() : chunks.stream();
+  }
+
   @NotNull List<LineChunk> getChunks(CharSequence text, int startOffsetInText) {
     List<LineChunk> c = chunks;
     if (c == null) {
@@ -78,14 +86,6 @@ final class LineBidiRun {
     return c;
   }
 
-  int getChunkCount() {
-    return (endOffset - startOffset + CHUNK_CHARACTERS - 1) / CHUNK_CHARACTERS;
-  }
-
-  Stream<LineChunk> chunkStream() {
-    return chunks == null ? Stream.empty() : chunks.stream();
-  }
-
   @NotNull LineBidiRun subRun(
     @NotNull EditorView view,
     int line,
@@ -93,14 +93,14 @@ final class LineBidiRun {
     int targetEndOffset,
     @Nullable Runnable quickEvaluationListener
   ) {
-    assert targetStartOffset < endOffset;
-    assert targetEndOffset > startOffset;
-    int start = Math.max(startOffset, targetStartOffset);
-    int end = Math.min(endOffset, targetEndOffset);
+    assert targetStartOffset < getEndOffset();
+    assert targetEndOffset > getStartOffset();
+    int start = Math.max(getStartOffset(), targetStartOffset);
+    int end = Math.min(getEndOffset(), targetEndOffset);
     List<LineChunk> subChunks = new SmartList<>();
     Document document = view.getDocument();
     List<LineChunk> chunks = getChunks(document.getImmutableCharSequence(), document.getLineStartOffset(line));
-    for (int i = (start - startOffset) / CHUNK_CHARACTERS; i < chunks.size(); i++) {
+    for (int i = (start - getStartOffset()) / CHUNK_CHARACTERS; i < chunks.size(); i++) {
       LineChunk chunk = chunks.get(i);
       if (chunk.getEndOffset() <= start) {
         continue;
@@ -108,13 +108,14 @@ final class LineBidiRun {
       if (chunk.getStartOffset() >= end) {
         break;
       }
-      LineChunk subChunk = chunk.subChunk(view, this, line, start, end, quickEvaluationListener);
+      LineChunk subChunk = chunk.subChunk(view, line, start, end, getLevel(), isRtl(), quickEvaluationListener);
       subChunks.add(subChunk);
     }
-    LineBidiRun subRun = new LineBidiRun(start, end, level, subChunks);
-    subRun.visualStartLogicalColumn = (subRun.isRtl() ? end == endOffset : start == startOffset)
-                                      ? visualStartLogicalColumn
-                                      : view.getLogicalPositionCache().offsetToLogicalColumn(line, subRun.isRtl() ? end : start);
+    LineBidiRun subRun = new LineBidiRun(start, end, getLevel(), subChunks);
+    int visualColumn = (subRun.isRtl() ? end == getEndOffset() : start == getStartOffset())
+                       ? getVisualStartLogicalColumn()
+                       : view.getLogicalPositionCache().offsetToLogicalColumn(line, subRun.isRtl() ? end : start);
+    subRun.setVisualStartLogicalColumn(visualColumn);
     return subRun;
   }
 

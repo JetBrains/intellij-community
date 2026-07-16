@@ -1076,7 +1076,7 @@ public final class EditorPainter implements TextDrawingCallback {
       myEditor.processLineExtensions(myDocument.getLineNumber(offset), (info) -> {
         List<LineExtensionData> list = myExtensionData.get(visualLine);
         if (list == null) myExtensionData.put(visualLine, list = new ArrayList<>());
-        list.add(new LineExtensionData(info, LineLayout.create(myView, info.getText(), info.getFontType())));
+        list.add(new LineExtensionData(info, LineLayout.createForStandaloneText(myView, info.getText(), info.getFontType())));
         return true;
       });
     }
