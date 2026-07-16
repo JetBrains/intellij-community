@@ -181,7 +181,7 @@ public final class JavaPsiSwitchUtil {
     for (PsiElement value : labels.values()) {
       if (value instanceof PsiExpression expression) {
         Object o = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
-        if (isRepresentativePrimitive(o)) return true;
+        if (isFloatingPointSpecial(o)) return true;
       }
     }
     return false;
@@ -195,7 +195,7 @@ public final class JavaPsiSwitchUtil {
    * @return true if the object is a Float or Double instance representing a special primitive case,
    *         otherwise false
    */
-  public static boolean isRepresentativePrimitive(@Nullable Object o) {
+  public static boolean isFloatingPointSpecial(@Nullable Object o) {
     if (o instanceof Float f && (f.isNaN() || f.equals(+0.0f) || f.equals(-0.0f))) return true;
     if (o instanceof Double d && (d.isNaN() || d.equals(+0.0) || d.equals(-0.0))) return true;
     return false;
