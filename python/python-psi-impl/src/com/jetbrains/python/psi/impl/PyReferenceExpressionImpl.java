@@ -591,15 +591,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         return pyType;
       }
     }
-    if (target instanceof PyTargetExpression) {
-      final String name = ((PyTargetExpression)target).getName();
-      if (PyNames.NONE.equals(name)) {
-        return Ref.create(PyBuiltinCache.getInstance(target).getNoneType());
-      }
-      if (PyNames.TRUE.equals(name) || PyNames.FALSE.equals(name)) {
-        return Ref.create(PyBuiltinCache.getInstance(target).getBoolType());
-      }
-    }
     if (target instanceof PyFile) {
       return Ref.create(new PyModuleType((PyFile)target));
     }
