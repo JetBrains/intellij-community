@@ -35,11 +35,14 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
+import org.jetbrains.plugins.terminal.session.impl.dto.KeyEventProcessingResultDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalBlocksModelStateDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalCommandBlockDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalOutputModelStateDto
 import org.jetbrains.plugins.terminal.session.impl.dto.toDto
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockIdImpl
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -213,6 +216,14 @@ internal class EchoingTerminalSession(
       alternateBufferState = TerminalOutputModelStateDto("", 0, 0, 0, 0, emptyList()),
       blocksModelState = TerminalBlocksModelStateDto(listOf(commandBlock), 1),
     )
+  }
+
+  override fun processMouseEvent(e: MouseEvent, x: Int, y: Int): ByteArray? {
+    return null
+  }
+
+  override fun processKeyEvent(e: KeyEvent): KeyEventProcessingResultDto {
+    return KeyEventProcessingResultDto.Unhandled
   }
 
   override suspend fun hasRunningCommands(): Boolean {
