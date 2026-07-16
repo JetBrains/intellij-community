@@ -378,7 +378,7 @@ com.intellij.openapi.projectRoots.ProjectRootListener
 - java.util.EventListener
 - a:rootsChanged():V
 com.intellij.openapi.projectRoots.Sdk
-- com.intellij.openapi.util.UserDataHolder
+- com.intellij.openapi.util.UserDataHolderEx
 - a:clone():com.intellij.openapi.projectRoots.Sdk
 - a:getHomeDirectory():com.intellij.openapi.vfs.VirtualFile
 - a:getHomePath():java.lang.String
