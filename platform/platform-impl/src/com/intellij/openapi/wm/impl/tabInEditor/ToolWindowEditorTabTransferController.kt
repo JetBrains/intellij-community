@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.getPreferredFocusedComponent
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.content.Content
@@ -23,8 +22,6 @@ import org.jetbrains.annotations.ApiStatus
 class ToolWindowEditorTabTransferController(
   private val project: Project,
 ) {
-  private val collector = KeyedExtensionCollector<ToolWindowEditorTabSupport, String>("com.intellij.toolWindowEditorTabSupport")
-
   fun canMoveContentToEditor(toolWindow: ToolWindow, content: Content): Boolean {
     if (!ToolWindowEditorTabSupportUtil.isEnabled()) return false
 
@@ -101,7 +98,7 @@ class ToolWindowEditorTabTransferController(
   }
 
   private fun getSupport(toolWindow: ToolWindow): ToolWindowEditorTabSupport? {
-    return collector.forKey(toolWindow.id).firstOrNull()
+    return ToolWindowEditorTabSupportUtil.getSupport(toolWindow.id)
   }
 
   private fun createToolWindowTabFile(

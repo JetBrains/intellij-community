@@ -11,5 +11,7 @@ internal object ToolWindowEditorTabSupportUtil {
 
   fun isEnabled(): Boolean = Registry.`is`(REGISTRY_KEY, false)
 
-  fun hasSupport(toolWindowId: String): Boolean = collector.forKey(toolWindowId).firstOrNull() != null
+  fun getSupport(toolWindowId: String): ToolWindowEditorTabSupport? = collector.forKey(toolWindowId).firstOrNull()
+
+  fun hasSupport(toolWindowId: String): Boolean = getSupport(toolWindowId) != null
 }
