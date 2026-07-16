@@ -1,4 +1,4 @@
-load("@rules_jvm//:wasmjs.bzl", "wasmjs_library")
+load("@rules_jvm//:wasmjs.bzl", "wasmjs_binary", "wasmjs_library")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtCompilerPluginInfo = "KtCompilerPluginInfo")
 
 # TODO: make it a symbolic macro if we manage to work around the usage of globs
@@ -31,4 +31,21 @@ def fleet_wasmjs_module(name, visibility, module_name, kotlinc_opts, deps = [], 
         runtime_deps = runtime_deps,
         plugins = plugins,
         kotlinc_opts = kotlinc_opts,
+    )
+
+def fleet_wasmjs_binary(name, visibility, module_name, kotlinc_opts, module = None, optimize = "auto"):
+    """Links (and optionally wasm-opt-optimizes) a fleet_wasmjs_module into a WasmJS application directory.
+
+    By default links the `:wasmjs_module_lib` target the fleet_wasmjs_module macro of the same
+    package creates (keep the `_lib` suffix in sync with fleet_wasmjs_module and
+    fleet/build/generator DependenciesGeneratorExtensions.kt).
+    """
+    wasmjs_binary(
+        name = name,
+        module = module or ":wasmjs_module_lib",
+        module_name = module_name,
+        ir_output_name = module_name,
+        kotlinc_opts = kotlinc_opts,
+        optimize = optimize,
+        visibility = visibility,
     )

@@ -5,6 +5,7 @@ module(
 
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "bazel_worker_api", version = "0.0.10")
+bazel_dep(name = "platforms", version = "1.1.0")
 bazel_dep(name = "llvm", version = "0.8.9")
 bazel_dep(name = "rules_apple", version = "4.3.3")  # added explicitly to fix `No 'swiftc' executable found in $PATH` error
 bazel_dep(name = "rules_java", version = "9.6.1")
@@ -82,6 +83,30 @@ single_version_override(
 )
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# Binaryen (wasm-opt) for optimizing Kotlin/Wasm production binaries (see rules/opt-wasmjs.bzl).
+# version_125 is what the Kotlin Gradle plugin 2.4.10-RC2 downloads; keep in sync with _KOTLIN_VERSION.
+BINARYEN_PLATFORMS = {
+    "arm64-macos": "28bab047c4ce845c5c1da111222ffee5fafcec0bbedd046ad8b3dcae0fd57076",
+    "x86_64-macos": "72a98df1bfb81dd1e241d2b022e15c72edbd49e29d84abc6a1129c7d083072dd",
+    "x86_64-linux": "7c3bc16599c8274a04d34a504fe4be2047884f900e0e2da2f6fb9cd667183be4",
+    "aarch64-linux": "d0382de3c189a7cbb9fdda93e2966f4557f6a00f201e2c4937c27ca01cead4fc",
+    "x86_64-windows": "7d20f9f22ee1d1a195aecccb21390f8c599b5025219520c7c9f04673b39d2c20",
+    "arm64-windows": "eebde647c9f24bcd3b8988891ef3f3ab404877aa1317c868a7c39824ccacca0d",
+}
+
+[
+    http_archive(
+        name = "binaryen_%s" % platform,
+        build_file = "//:BUILD.binaryen.bazel",
+        sha256 = hash,
+        strip_prefix = "binaryen-version_125",
+        url = "https://github.com/WebAssembly/binaryen/releases/download/version_125/binaryen-version_125-%s.tar.gz" % platform,
+    )
+    for platform, hash in BINARYEN_PLATFORMS.items()
+]
 
 # Loading-phase compilation-backend switch (JPS vs rules_kotlin/BTA); see backend_config.bzl.
 backend_config_repo = use_repo_rule("//:backend_config.bzl", "backend_config_repo")

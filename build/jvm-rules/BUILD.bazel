@@ -78,9 +78,91 @@ bool_flag(
     build_setting_default = False,
 )
 
+# --@rules_jvm//:wasm-source-maps
+# Emit source maps from the Kotlin WasmJS link action. CI disables this,
+# matching the Gradle web build which passes -source-map=false on TeamCity.
+bool_flag(
+    name = "wasm-source-maps",
+    build_setting_default = True,
+    visibility = ["//visibility:public"],
+)
+
+# --@rules_jvm//:wasm-opt-default
+# Default for wasmjs_binary targets with optimize = "auto": when True, `bazel build` of a
+# wasmjs_binary produces the binaryen-optimized output; when False, the plain linked output.
+# Off by default so local dev builds skip the slow wasm-opt pass; CI/dist enables it.
+bool_flag(
+    name = "wasm-opt-default",
+    build_setting_default = False,
+    visibility = ["//visibility:public"],
+)
+
 # used by _jvm_builder_launcher attribute in jvm_library rule
 exports_files(
     ["rules/impl/MemoryLauncher.java"],
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "macos_arm64",
+    constraint_values = [
+        "@platforms//os:macos",
+        "@platforms//cpu:arm64",
+    ],
+)
+
+config_setting(
+    name = "macos_x86_64",
+    constraint_values = [
+        "@platforms//os:macos",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+config_setting(
+    name = "linux_x86_64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+config_setting(
+    name = "linux_arm64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:arm64",
+    ],
+)
+
+config_setting(
+    name = "windows_x86_64",
+    constraint_values = [
+        "@platforms//os:windows",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+config_setting(
+    name = "windows_arm64",
+    constraint_values = [
+        "@platforms//os:windows",
+        "@platforms//cpu:arm64",
+    ],
+)
+
+# binaryen's wasm-opt for the current host, used by the wasm_opt_action fused into wasmjs_binary
+# (see rules/opt-wasmjs.bzl and rules/binary-wasmjs.bzl)
+alias(
+    name = "wasm-opt",
+    actual = select({
+        ":macos_arm64": "@binaryen_arm64-macos//:wasm-opt",
+        ":macos_x86_64": "@binaryen_x86_64-macos//:wasm-opt",
+        ":linux_x86_64": "@binaryen_x86_64-linux//:wasm-opt",
+        ":linux_arm64": "@binaryen_aarch64-linux//:wasm-opt",
+        ":windows_x86_64": "@binaryen_x86_64-windows//:wasm-opt",
+        ":windows_arm64": "@binaryen_arm64-windows//:wasm-opt",
+    }),
     visibility = ["//visibility:public"],
 )
 
