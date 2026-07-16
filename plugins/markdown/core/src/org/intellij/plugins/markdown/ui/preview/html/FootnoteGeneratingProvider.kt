@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.ui.preview.html
 
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
@@ -62,7 +63,12 @@ internal class FootnoteMap private constructor(
 
     private fun renderBodyMarkdown(body: String, baseUri: URI?, fullMap: FootnoteMap? = null): String {
       val content = if (body.endsWith('\n')) body else "$body\n"
-      val parsedTree = MarkdownParserManager.createMarkdownParser(MarkdownParserManager.FLAVOUR).buildMarkdownTreeFromString(content)
+      val parsedTree = MarkdownParserManager.createMarkdownParser(MarkdownParserManager.FLAVOUR)
+        .buildMarkdownTreeFromString(object : BombedCharSequence(content) {
+          override fun checkCanceled() {
+            ProgressManager.checkCanceled()
+          }
+        })
       val linkMap = LinkMap.buildLinkMap(parsedTree, content)
       val providers = MarkdownParserManager.FLAVOUR.createHtmlGeneratingProviders(linkMap, baseUri).toMutableMap()
       if (fullMap != null) {
@@ -220,7 +226,12 @@ internal class FootnoteMap private constructor(
           processed.add(label)
           val body = definitions[label]!!
           val content = if (body.endsWith('\n')) body else "$body\n"
-          val bodyTree = MarkdownParserManager.createMarkdownParser(MarkdownParserManager.FLAVOUR).buildMarkdownTreeFromString(content)
+          val bodyTree = MarkdownParserManager.createMarkdownParser(MarkdownParserManager.FLAVOUR)
+            .buildMarkdownTreeFromString(object : BombedCharSequence(content) {
+              override fun checkCanceled() {
+                ProgressManager.checkCanceled()
+              }
+            })
           val nestedDefs = mutableMapOf<String, String>()
           val nestedRefs = mutableListOf<String>()
           collectFromAst(bodyTree, content, nestedDefs, mutableSetOf(), nestedRefs)
