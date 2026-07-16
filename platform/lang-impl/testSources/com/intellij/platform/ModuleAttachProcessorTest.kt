@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform
 
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -19,6 +20,7 @@ import com.intellij.testFramework.createOrLoadProject
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.util.indexing.testEntities.TestModuleEntitySource
 import com.intellij.util.io.createDirectories
+import com.intellij.workspaceModel.ide.ProjectRootEntity
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.WEB_MODULE_ENTITY_TYPE_ID_NAME
 import kotlinx.coroutines.runBlocking
@@ -114,6 +116,21 @@ internal class ModuleAttachProcessorTest {
       val modules = newProject.workspaceModel.currentSnapshot.entities(ModuleEntity::class.java).toList()
       assertThat(modules).hasSize(1)
       assertThat(modules[0].name).isEqualTo(moduleName)
+    }
+  }
+
+  @Test
+  fun `test ProjectRootEntity migration`(): Unit = runBlocking {
+    WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
+    val attachedProjectPath = tempDirManager.newPath("attached_project", refreshVfs = false).also { it.createDirectories() }
+    ProjectManagerEx.getInstanceEx().openProjectAsync(attachedProjectPath, OpenProjectTask { projectRootDir = attachedProjectPath })!!.useProjectAsync(true) { project ->
+      assertThat(project.workspaceModel.currentSnapshot.entities(ProjectRootEntity::class.java).toList()).hasSize(1)
+    }
+
+    val newProjectPath = tempDirManager.newPath("new_project", refreshVfs = false).also { it.createDirectories() }
+    ProjectManagerEx.getInstanceEx().openProjectAsync(newProjectPath, OpenProjectTask { projectRootDir = newProjectPath })!!.useProjectAsync { newProject ->
+      assertThat(ModuleAttachProcessor().attachToProjectAsync(newProject, attachedProjectPath, null)).isTrue()
+      assertThat(newProject.workspaceModel.currentSnapshot.entities(ProjectRootEntity::class.java).toList()).hasSize(2)
     }
   }
 }

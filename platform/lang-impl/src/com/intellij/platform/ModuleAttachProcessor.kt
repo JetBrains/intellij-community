@@ -112,9 +112,10 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
     LifecycleUsageTriggerCollector.onProjectModuleAttached(project)
 
     if (imported) {
-      if (newModule != null)
-      withContext(Dispatchers.EDT) {
-        callback?.projectOpened(project, newModule)
+      if (newModule != null) {
+        withContext(Dispatchers.EDT) {
+          callback?.projectOpened(project, newModule)
+        }
       }
       return true
     }
