@@ -102,6 +102,35 @@ internal class SyntaxNodeDescriptorImpl private constructor(
       return if (offset == data.size) emptyList() else ChildrenList(data, offset)
     }
 
+  /**
+   * Replaces every node reachable from this node's payload (children and capture rules)
+   * according to [replacement]. Used by the builder to get rid of reference-descriptor
+   * indirections once the whole table is compiled.
+   */
+  internal fun replaceNodeReferences(replacement: (SyntaxNodeDescriptor) -> SyntaxNodeDescriptor) {
+    val childrenOffset = meta.countOneBits()
+    for (i in childrenOffset until data.size) {
+      data[i] = replacement(data[i] as SyntaxNodeDescriptor)
+    }
+    val capturesMask = meta shr CAPTURES_SHIFT
+    if (capturesMask != 0) {
+      val capturesOffset = (meta and ((1 shl CAPTURES_SHIFT) - 1)).countOneBits()
+      for (i in capturesOffset until childrenOffset) {
+        @Suppress("UNCHECKED_CAST")
+        val captures = data[i] as Array<TextMateCapture?>
+        for (group in captures.indices) {
+          val capture = captures[group]
+          if (capture is TextMateCapture.Rule) {
+            val replaced = replacement(capture.node)
+            if (replaced !== capture.node) {
+              captures[group] = TextMateCapture.Rule(replaced)
+            }
+          }
+        }
+      }
+    }
+  }
+
   override fun toString(): String {
     val name = getStringAttribute(Constants.StringKey.NAME)
     return if (name != null) "Syntax rule: $name" else super.toString()

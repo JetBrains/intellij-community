@@ -3,7 +3,7 @@ package org.jetbrains.plugins.textmate.language.syntax
 import org.jetbrains.plugins.textmate.Constants
 
 internal class SyntaxNodeReferenceDescriptor(
-  private val ruleId: Int,
+  internal val ruleId: Int,
   private val syntaxTable: TextMateSyntaxTableCore,
 ) : SyntaxNodeDescriptor {
   override val children: List<SyntaxNodeDescriptor>

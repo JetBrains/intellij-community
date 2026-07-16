@@ -54,7 +54,29 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
     ruleIdToReferenceRuleId.entries.forEach {
       rulesRepository[it.value] = compiledRules[it.key]
     }
-    syntaxTable.setRulesRepository(rulesRepository)
+
+    // At this point all the rules are compiled. Replace reference descriptors with direct references to the compiled nodes,
+    // so that the reference descriptors and the rules repository don't occupy the heap
+    var hasUnresolvedReferences = false
+    val resolveReference = fun(node: SyntaxNodeDescriptor): SyntaxNodeDescriptor {
+      var current = node
+      var chainLength = 0
+      while (current is SyntaxNodeReferenceDescriptor) {
+        val target = if (current.ruleId < rulesRepository.size) rulesRepository[current.ruleId] else null
+        if (target == null || chainLength++ > rulesRepository.size) {
+          hasUnresolvedReferences = true
+          return current
+        }
+        current = target
+      }
+      return current
+    }
+    compiledRules.values.forEach { node ->
+      (node as? SyntaxNodeDescriptorImpl)?.replaceNodeReferences(resolveReference)
+    }
+    if (hasUnresolvedReferences) {
+      syntaxTable.setRulesRepository(rulesRepository)
+    }
     return syntaxTable
   }
 
@@ -67,9 +89,9 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
       val rawInjections = plist.getPlistValue(Constants.INJECTIONS_KEY)?.plist?.entries()?.map { (key, value) ->
         key to loadRealNode(value.plist, rootSyntaxRawNode)
       } ?: emptyList()
-      return RawLanguageDescriptor(scopeName = interner.intern(scopeNameValue),
-                                   rootSyntaxRawNode = rootSyntaxRawNode,
-                                   rawInjections = rawInjections)
+      RawLanguageDescriptor(scopeName = interner.intern(scopeNameValue),
+                            rootSyntaxRawNode = rootSyntaxRawNode,
+                            rawInjections = rawInjections)
     }
     else {
       null
