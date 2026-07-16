@@ -39,6 +39,7 @@ import java.util.stream.Stream
 
 private val MAVEN_VERSIONS = listOf(
   "4.0.0-rc-5",
+  "3.10.0-rc-1",
   "3.9.16",
   "3.8.8",
   "3.6.3",
