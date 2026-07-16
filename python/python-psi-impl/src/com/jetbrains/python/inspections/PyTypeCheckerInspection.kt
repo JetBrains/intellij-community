@@ -854,7 +854,8 @@ open class PyTypeCheckerInspection : PyInspection() {
 
       // we use `PyTypingTypeProvider.getType` of the annotation directly, instead of `node.getType`,
       //  because otherwise `PyTypingTypeProvider` will inject the type of `None`
-      val expectedRef = PyTypingTypeProvider.getType(node.annotation!!.value!!, myTypeEvalContext)
+      val annotationValue = node.annotation?.value ?: return
+      val expectedRef = PyTypingTypeProvider.getType(annotationValue, myTypeEvalContext)
       if (expectedRef == null) return
       val expected = expectedRef.get()
       val actual = tryPromotingType(defaultValue, expected)
