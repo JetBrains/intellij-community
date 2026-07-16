@@ -343,12 +343,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         !isDisposed()) {
       final MySaveHistoryTask backgroundable =
         new MySaveHistoryTask(consoleProperties, root, (RunConfiguration)configuration, myHistoryFileName);
-      Disposer.register(parentDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          backgroundable.dispose();
-        }
-      });
+      Disposer.register(parentDisposable, backgroundable);
       ProgressManager.getInstance().run(backgroundable);
     }
   }
@@ -892,27 +887,35 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     LocalHistory.getInstance().putSystemLabel(project, name, color);
   }
 
-  private static class MySaveHistoryTask extends Task.Backgroundable {
+  private static class MySaveHistoryTask extends Task.Backgroundable implements Disposable {
 
     private final TestConsoleProperties myConsoleProperties;
-    private SMTestProxy.SMRootTestProxy myRoot;
-    private RunConfiguration myConfiguration;
-    private File myOutputFile;
-    MySaveHistoryTask(TestConsoleProperties consoleProperties,
-                      SMTestProxy.SMRootTestProxy root,
-                      RunConfiguration configuration, 
-                      String outputFile) {
+    private final SMTestProxy.SMRootTestProxy myRoot;
+    private final RunConfiguration myConfiguration;
+    private final File myOutputFile;
+    private volatile boolean myIsActive;
+
+    MySaveHistoryTask(@NotNull TestConsoleProperties consoleProperties,
+                      @NotNull SMTestProxy.SMRootTestProxy root,
+                      @NotNull RunConfiguration configuration,
+                      @NotNull String outputFile) {
       super(consoleProperties.getProject(), SmRunnerBundle.message("sm.test.runner.results.form.save.test.results.title"), true);
       myConsoleProperties = consoleProperties;
       myRoot = root;
       myConfiguration = configuration;
       myOutputFile = new File(TestStateStorage.getTestHistoryRoot(myProject), outputFile + ".xml");
+      myIsActive = true;
     }
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      writeState();
-      DaemonCodeAnalyzer.getInstance(getProject()).restart(this);
+      if (!isActiveTask()) {
+        LOG.info("run: Fast project termination: drop save procedure");
+        return;
+      }
+      writeState(indicator);
+      indicator.checkCanceled();
+      DaemonCodeAnalyzer.getInstance(myProject).restart(this);
       try {
         SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newDefaultInstance();
         TransformerHandler handler = transformerFactory.newTransformerHandler();
@@ -937,20 +940,25 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       }
     }
 
-    private void writeState() {
-      if (myRoot == null) return;
+    private void writeState(@NotNull ProgressIndicator indicator) {
       List<SMTestProxy> tests = myRoot.getAllTests();
       for (SMTestProxy proxy : tests) {
+        indicator.checkCanceled();
         String url = proxy.getLocationUrl();
         if (url != null && proxy.getLocator() != null) {
-          SMTestRunnerTestStateWriter.writeState(getProject(), proxy, url, myConfiguration, myConsoleProperties);
+          SMTestRunnerTestStateWriter.writeState(myProject, proxy, url, myConfiguration, myConsoleProperties);
         }
       }
     }
 
     @Override
+    public void onCancel() {
+      myIsActive = false;
+    }
+
+    @Override
     public void onSuccess() {
-      if (myOutputFile != null && myOutputFile.exists()) {
+      if (isActiveTask() && myOutputFile.exists()) {
         AbstractImportTestsAction.adjustHistory(myProject);
         TestHistoryConfiguration.getInstance(myProject).registerHistoryItem(myOutputFile.getName(),
                                                                             myConfiguration.getName(),
@@ -958,10 +966,13 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       }
     }
 
+    @Override
     public void dispose() {
-      myConfiguration = null;
-      myRoot = null;
-      myOutputFile = null;
+      myIsActive = false;
+    }
+
+    boolean isActiveTask() {
+      return myIsActive && myProject != null && !myProject.isDisposed();
     }
   }
 }
