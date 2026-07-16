@@ -41,8 +41,12 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
     val languageDescriptors = mutableMapOf<CharSequence, TextMateLanguageDescriptor>()
     val syntaxTable = TextMateSyntaxTableCore(languageDescriptors = languageDescriptors)
     val syntaxNodes = syntaxNodes.load()
+    val compileContext = SyntaxCompileContext(topLevelNodes = syntaxNodes,
+                                              compiledNodes = compiledRules,
+                                              ruleIdToReferenceRuleId = ruleIdToReferenceRuleId,
+                                              syntaxTable = syntaxTable)
     syntaxNodes.forEach { (scopeName, rawLanguageDescriptor) ->
-      rawLanguageDescriptor.compile(syntaxNodes, compiledRules, ruleIdToReferenceRuleId, syntaxTable)?.let { compiledNode ->
+      rawLanguageDescriptor.compile(compileContext)?.let { compiledNode ->
         languageDescriptors[scopeName] = compiledNode
       }
     }
@@ -130,7 +134,7 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
         }
         else {
           captureDict.getPlistValue(Constants.NAME_KEY)?.let { captureName ->
-             TextMateRawCapture.Name(interner.intern(captureName.string.orEmpty()))
+            TextMateRawCapture.Name(interner.intern(captureName.string.orEmpty()))
           }
         }
         maxGroupIndex = max(maxGroupIndex, index)
@@ -156,15 +160,10 @@ private class RawLanguageDescriptor(
   val rawInjections: List<Pair<String, SyntaxRawNode>>
 ) {
 
-  fun compile(
-    topLevelNodes: Map<CharSequence, RawLanguageDescriptor>,
-    compiledNodes: MutableMap<Int, SyntaxNodeDescriptor>,
-    ruleIdToReferenceRuleId: MutableMap<RuleId, ReferenceRuleId>,
-    syntaxTable: TextMateSyntaxTableCore,
-  ): TextMateLanguageDescriptor? {
-    return rootSyntaxRawNode.compile(topLevelNodes, compiledNodes, ruleIdToReferenceRuleId, syntaxTable)?.let { rootNode ->
+  fun compile(context: SyntaxCompileContext): TextMateLanguageDescriptor? {
+    return rootSyntaxRawNode.compile(context)?.let { rootNode ->
       val injections = rawInjections.mapNotNull { (selector, injection) ->
-        injection.compile(topLevelNodes, compiledNodes, ruleIdToReferenceRuleId, syntaxTable)?.let { compiledRule ->
+        injection.compile(context)?.let { compiledRule ->
           InjectionNodeDescriptor(selector, compiledRule)
         }
       }.compactList()
@@ -179,12 +178,7 @@ private interface SyntaxRawNode {
 
   fun findInRepository(scopeName: String, topLevelRules: Map<CharSequence, RawLanguageDescriptor>): SyntaxRawNode?
 
-  fun compile(
-    topLevelNodes: Map<CharSequence, RawLanguageDescriptor>,
-    compiledNodes: MutableMap<Int, SyntaxNodeDescriptor>,
-    ruleIdToReferenceRuleId: MutableMap<RuleId, ReferenceRuleId>,
-    syntaxTable: TextMateSyntaxTableCore,
-  ): SyntaxNodeDescriptor?
+  fun compile(context: SyntaxCompileContext): SyntaxNodeDescriptor?
 }
 
 private class SyntaxIncludeRawNode(
@@ -196,28 +190,23 @@ private class SyntaxIncludeRawNode(
     return resolveInclude(topLevelRules)?.findInRepository(scopeName, topLevelRules)
   }
 
-  override fun compile(
-    topLevelNodes: Map<CharSequence, RawLanguageDescriptor>,
-    compiledNodes: MutableMap<Int, SyntaxNodeDescriptor>,
-    ruleIdToReferenceRuleId: MutableMap<RuleId, ReferenceRuleId>,
-    syntaxTable: TextMateSyntaxTableCore,
-  ): SyntaxNodeDescriptor? {
-    val resolvedNode = resolveInclude(topLevelNodes)
+  override fun compile(context: SyntaxCompileContext): SyntaxNodeDescriptor? {
+    val resolvedNode = resolveInclude(context.topLevelNodes)
     return resolvedNode?.let { resolvedNode ->
-      val compiledNode = compiledNodes[resolvedNode.ruleId]
-      val referenceRuleId = ruleIdToReferenceRuleId[resolvedNode.ruleId]
+      val compiledNode = context.compiledNodes[resolvedNode.ruleId]
+      val referenceRuleId = context.ruleIdToReferenceRuleId[resolvedNode.ruleId]
       when {
         compiledNode != null -> {
           // an optimization, reference directly already compiled nodes to save on SyntaxNodeReferenceDescriptor object
           compiledNode
         }
         referenceRuleId != null -> {
-          SyntaxNodeReferenceDescriptor(referenceRuleId, syntaxTable)
+          SyntaxNodeReferenceDescriptor(referenceRuleId, context.syntaxTable)
         }
         else -> {
-          val referenceRuleId = ruleIdToReferenceRuleId.size
-          ruleIdToReferenceRuleId[resolvedNode.ruleId] = referenceRuleId
-          SyntaxNodeReferenceDescriptor(referenceRuleId, syntaxTable)
+          val referenceRuleId = context.ruleIdToReferenceRuleId.size
+          context.ruleIdToReferenceRuleId[resolvedNode.ruleId] = referenceRuleId
+          SyntaxNodeReferenceDescriptor(referenceRuleId, context.syntaxTable)
         }
       }
     }
@@ -275,32 +264,27 @@ private class SyntaxRawNodeImpl(
     repository[key] = descriptor
   }
 
-  override fun compile(
-    topLevelNodes: Map<CharSequence, RawLanguageDescriptor>,
-    compiledNodes: MutableMap<Int, SyntaxNodeDescriptor>,
-    ruleIdToReferenceRuleId: MutableMap<RuleId, ReferenceRuleId>,
-    syntaxTable: TextMateSyntaxTableCore,
-  ): SyntaxNodeDescriptor {
+  override fun compile(context: SyntaxCompileContext): SyntaxNodeDescriptor {
     repository.values.forEach { repositoryNode ->
-      repositoryNode.compile(topLevelNodes, compiledNodes, ruleIdToReferenceRuleId, syntaxTable)?.let {
-        compiledNodes[repositoryNode.ruleId] = it
+      repositoryNode.compile(context)?.let {
+        context.compiledNodes[repositoryNode.ruleId] = it
       }
     }
 
     val captures = if (rawCaptures.isNotEmpty()) {
       val array = arrayOfNulls<Array<TextMateCapture?>>(Constants.CaptureKey.entries.size)
       rawCaptures.forEach { (key, value) ->
-        array[key.ordinal] = value.map {
+        array[key.ordinal] = context.internCaptureArray(value.map {
           when (it) {
-            is TextMateRawCapture.Name -> TextMateCapture.Name(it.name)
+            is TextMateRawCapture.Name -> context.internCaptureName(it.name)
             is TextMateRawCapture.Rule -> {
-              it.node.compile(topLevelNodes, compiledNodes, ruleIdToReferenceRuleId, syntaxTable)?.let { compiledRule ->
+              it.node.compile(context)?.let { compiledRule ->
                 TextMateCapture.Rule(compiledRule)
               }
             }
             null -> null
           }
-        }.toTypedArray()
+        })
       }
       array
     }
@@ -318,13 +302,45 @@ private class SyntaxRawNodeImpl(
       null
     }
     val children = rawChildren.mapNotNull { child ->
-      child.compile(topLevelNodes, compiledNodes, ruleIdToReferenceRuleId, syntaxTable)
+      child.compile(context)
     }.compactList()
     val result = SyntaxNodeDescriptorImpl(children = children,
                                           captures = captures,
                                           stringAttributes = stringAttributes)
-    compiledNodes[ruleId] = result
+    context.compiledNodes[ruleId] = result
     return result
+  }
+}
+
+/**
+ * Shared mutable state of a single [TextMateSyntaxTableBuilder.build] call.
+ *
+ * Also interns capture names and capture arrays: the same capture declarations
+ * (e.g. `1 -> punctuation.definition.string.begin`) are repeated many times across grammars,
+ * there is no need to keep a separate copy per syntax node.
+ */
+private class SyntaxCompileContext(
+  val topLevelNodes: Map<CharSequence, RawLanguageDescriptor>,
+  val compiledNodes: MutableMap<RuleId, SyntaxNodeDescriptor>,
+  val ruleIdToReferenceRuleId: MutableMap<RuleId, ReferenceRuleId>,
+  val syntaxTable: TextMateSyntaxTableCore,
+) {
+  private val captureNames = mutableMapOf<CharSequence, TextMateCapture.Name>()
+  private val captureArrays = mutableMapOf<List<TextMateCapture?>, Array<TextMateCapture?>>()
+
+  fun internCaptureName(name: CharSequence): TextMateCapture.Name {
+    return captureNames.getOrPut(name) {
+      TextMateCapture.Name(name)
+    }
+  }
+
+  fun internCaptureArray(captures: List<TextMateCapture?>): Array<TextMateCapture?> {
+    // arrays with capture rules are unique by construction, and unlike name-only arrays,
+    // they can be mutated by the reference-resolution pass, so they must not be shared
+    if (captures.any { it is TextMateCapture.Rule }) {
+      return captures.toTypedArray()
+    }
+    return captureArrays.getOrPut(captures) { captures.toTypedArray() }
   }
 }
 
