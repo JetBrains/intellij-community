@@ -1,7 +1,6 @@
 package com.intellij.python.pyproject.model.api
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.guessModuleDir
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.model.internal.suggestSdkImpl
@@ -62,13 +61,13 @@ suspend fun Module.getModuleInfo(
   val suggestedByPyProjectToml = when (val suggestedSdk = suggestSdk()) {
     is SuggestedSdk.PyProjectIndependent -> {
       when (bestProposalFromTools?.createSdkInfo) {
-        is CreateSdkInfo.ExistingEnv -> bestProposalFromTools.asDTO(suggestedSdk.moduleDir)
+        is CreateSdkInfo.ExistingEnv -> ModuleCreateInfo.CreateSdkInfoWrapper(bestProposalFromTools)
         is CreateSdkInfo.WillCreateEnv, is CreateSdkInfo.WillInstallTool, null -> {
           configuratorsByTool
             .filter { it.key in suggestedSdk.preferTools }
             .firstNotNullOfOrNull { (toolId, extension) ->
               extension.asPyProjectTomlSdkConfigurationExtension()?.createSdkWithoutPyProjectTomlChecks(this, venvsInModule)?.let {
-                CreateSdkInfoWithTool(it, toolId).asDTO(suggestedSdk.moduleDir)
+                ModuleCreateInfo.CreateSdkInfoWrapper(it, toolId)
               }
             }
         }
@@ -83,18 +82,17 @@ suspend fun Module.getModuleInfo(
 
   // No tools or not pyproject.toml at all? Use EP as a fallback
   return bestProposalFromTools?.let {
-    CreateSdkInfoWithTool(it.createSdkInfo, it.toolId).asDTO(guessModuleDir()?.toNioPath())
+    ModuleCreateInfo.CreateSdkInfoWrapper(it.createSdkInfo, it.toolId)
   }
 }
 
 sealed interface ModuleCreateInfo {
-  data class CreateSdkInfoWrapper(val createSdkInfo: CreateSdkInfo, val toolId: ToolId, val moduleDir: Directory?) : ModuleCreateInfo
+  data class CreateSdkInfoWrapper(val createSdkInfo: CreateSdkInfo, val toolId: ToolId) : ModuleCreateInfo {
+    constructor(createSdkInfoWithTool: CreateSdkInfoWithTool) : this(createSdkInfoWithTool.createSdkInfo, createSdkInfoWithTool.toolId)
+  }
+
   data class SameAs(val parentModule: Module) : ModuleCreateInfo
 }
-
-private fun CreateSdkInfoWithTool.asDTO(moduleDir: Directory?): ModuleCreateInfo =
-  ModuleCreateInfo.CreateSdkInfoWrapper(createSdkInfo, toolId, moduleDir)
-
 
 /**
  * Auto-configures a Python SDK for the module if one doesn't already exist.
