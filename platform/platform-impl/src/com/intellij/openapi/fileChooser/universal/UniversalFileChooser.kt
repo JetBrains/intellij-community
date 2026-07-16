@@ -225,7 +225,8 @@ object UniversalFileChooser {
       preferredSize = Dimension(screenSize.width / 2, screenSize.height / 2)
       tabbedPane = JBTabbedPane()
       effectiveContributors = if (descriptor.isEnvironmentRestricted) {
-        projectContributor(project)?.let { listOf(it) } ?: contributors
+        val restricted = projectContributor(project) ?: localContributor(contributors)
+        restricted?.let { listOf(it) } ?: contributors
       }
       else {
         contributors
@@ -425,6 +426,11 @@ object UniversalFileChooser {
       if (project.isDefault) return null
       val basePath = project.basePath ?: project.projectFilePath ?: return null
       return UniversalFileChooserContributor.findOwner(Path.of(basePath))
+    }
+
+    private fun localContributor(contributors: Collection<UniversalFileChooserContributor>): UniversalFileChooserContributor? {
+      val localHome = runCatching { Path.of(SystemProperties.getUserHome()) }.getOrNull() ?: return null
+      return contributors.firstOrNull { it.ownsPath(localHome) }
     }
 
     private fun preselectProjectTab(project: Project) {
@@ -628,6 +634,7 @@ object UniversalFileChooser {
       val fileTree: NioFileSystemTree
       val roots: MutableList<String> = mutableListOf()
       private val environmentRestricted: Boolean = descriptor.isEnvironmentRestricted
+      private val hasExtensionFilter: Boolean = descriptor.extensionFilter != null
 
       var fileToSelect: Path? = null
       private val pathTextField: NioPathTextField = NioPathTextField(scope, descriptor.isChooseFiles)
@@ -864,7 +871,7 @@ object UniversalFileChooser {
       fun isOkEnabled(): Boolean {
         val selected = getSelectedFiles()
         return selected.isNotEmpty() && selected.all { file ->
-          file.parent != null
+          file.parent != null && !(hasExtensionFilter && Files.isDirectory(file))
         }
       }
 

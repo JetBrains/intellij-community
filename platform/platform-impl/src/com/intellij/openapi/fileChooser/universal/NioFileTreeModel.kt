@@ -185,6 +185,13 @@ class NioFileTreeModel(
         if (isHiddenFromAttrs(entry)) return false
       }
       if (!descriptor.isChooseFiles && !entry.isDirectory) return false
+      if (!entry.isDirectory) {
+        val extFilter = descriptor.extensionFilter
+        if (extFilter != null) {
+          val name = entry.path.fileName?.toString() ?: return false
+          if (!extFilter.second.any { StringUtil.endsWithIgnoreCase(name, ".$it") }) return false
+        }
+      }
       return true
     }
 
