@@ -225,43 +225,101 @@ External references (`PsiPolySymbolReferenceProvider`, above) are for a *differe
 layering a reference onto a host that doesn't know about it — e.g. a filename string literal
 referenced by unrelated framework support.
 
+`PsiElement.getOwnReferences(): Collection<PsiSymbolReference>` is a default method on `PsiElement`
+itself (`community/platform/core-api/src/com/intellij/psi/PsiElement.java`, defaults to empty) — every
+PSI element already has it; there is no marker interface to implement. Override it directly and build
+the result with the `polySymbolOwnReferences` DSL:
+
 ```kotlin
+fun polySymbolOwnReferences(element: PsiElement, configure: PolySymbolOwnReferencesBuilder.() -> Unit): List<PolySymbolReference>
+
 interface PolySymbolOwnReferencesBuilder {
-  fun reference(symbol: PolySymbol, offset: Int = 0, showProblems: Boolean = true)
-  fun references(offsetsToSymbols: Map<Int, PolySymbol>, showProblems: Boolean = true)
+  fun resolveFromNameMatchQuery(kind: PolySymbolKind, name: String)
+  fun resolveFromNameMatchQuery(kind: PolySymbolKind, name: String, filter: (PolySymbol) -> Boolean)
+  fun resolveFromNameMatchQuery(kind: PolySymbolKind, name: String, textRangeInElement: TextRange)
+  fun resolveFromNameMatchQuery(kind: PolySymbolKind, name: String, textRangeInElement: TextRange, filter: (PolySymbol) -> Boolean)
+  fun reference(textRangeInElement: TextRange, kind: PolySymbolKind, resolver: () -> List<PolySymbol>)
 }
-
-fun polySymbolOwnReferences(element: PsiElement, configure: PolySymbolOwnReferencesBuilder.() -> Unit): PolySymbolOwnReferences
 ```
-
 (`community/platform/polySymbols/backend/src/com/intellij/polySymbols/references/PolySymbolOwnReferences.kt`)
-Implement `PsiElement.getOwnReferences(): Collection<PsiSymbolReference>` directly on your PSI class
-and return `polySymbolOwnReferences(this) { ... }.references` — the builder reuses the same
-name-segment expansion (`MatchProblem`/deprecation reporting included) that
-`PsiPolySymbolReferenceProvider` uses internally, just without the EP/`getOffsetsToReferencedSymbols`
-indirection.
+`polySymbolOwnReferences(...)` returns the `List<PolySymbolReference>` directly — return it straight
+from your override:
+```kotlin
+override fun getOwnReferences(): Collection<PsiSymbolReference> =
+  polySymbolOwnReferences(this) {
+    resolveFromNameMatchQuery(MY_KIND, text)   // or the raw reference(range, kind) { ... } form
+  }
+```
+`resolveFromNameMatchQuery` is a convenience wrapper around
+`PolySymbolQueryExecutorFactory.create(element, true).nameMatchQuery(kind, name).run()`, optionally
+`.filter`ed; reach for the lower-level `reference(range, kind, resolver)` when the resolve logic is
+more than a single name-match query (multiple candidate kinds, special-cased tokens, etc. — see
+GDScript's `GdRefIdRefImpl`, which branches on the token text before falling back to a name-match
+query+filter, all inside one `reference(...)` call).
 
 **Do not implement both mechanisms for the same element.** Per
 `PsiSymbolReferenceServiceImpl.getReferences()`, own references — once non-empty — are used *instead
 of* external ones for resolve/search/rename, so a `PsiPolySymbolReferenceProvider` registered for a
-host that also overrides `getOwnReferences()` is dead code, not a supplement.
+host that also overrides `getOwnReferences()` is dead code, not a supplement. (An older `iteration`
+of this API had you implement a now-deleted `PolySymbolOwnReferencesHost` interface instead of
+overriding `getOwnReferences()` directly — if you see that name in old code/docs, it's stale;
+the direct-override form above is current.)
 
-**Preferred way to wire this up: `PolySymbolOwnReferencesHost`.** Implementing the raw builder above by
-hand still leaves you to write the `getOwnReferences()` override and your own caching. Instead, have
-your PSI class implement `PolySymbolOwnReferencesHost` and override its one abstract
-method:
-```kotlin
-interface PolySymbolOwnReferencesHost : PsiElement {
-  fun buildOwnReferences(builder: PolySymbolOwnReferencesBuilder)   // the only method you implement
-  fun getPolySymbolOwnReferences(): PolySymbolOwnReferences = ...   // cached per element, default-implemented
-  override fun getOwnReferences(): Collection<PsiSymbolReference> = getPolySymbolOwnReferences().references   // default-implemented
-}
-```
-It deliberately does **not** extend `PsiExternalReferenceHost` — an own-references host may not want
-external-reference support at all. `getPolySymbolOwnReferences()` is cached (`CachedValuesManager`,
-invalidated on PSI modification) and shared by both `getOwnReferences()` and
-`PolySymbolHighlightingAnnotator`'s symbol-kind highlighting (via `PolySymbolOwnReferencesHost`'s
-`referencedSymbols`).
+**Hard constraint: the resolved symbol's `name` must equal the referencing element's text at the
+given range, exactly.** `PolySymbolOwnReference.resolveReference()`/`getProblems()` asserts
+`symbol.name == text` and separately `.filter { it.name == text }` after
+`unwrapMatchedSymbols()` — own references only support "this exact text resolves to a symbol with
+this exact name," not an aliased/renamed match. This bites whenever a query is resolved *by* one
+piece of text to a symbol whose *own* declared name is different — e.g. resolving `ClassName.new(...)`'s
+`new` token to the class's `_init` constructor symbol, or resolving a resource-path string
+(`extends "res://base.gd"`) to the target file's differently-named `class_name`-declared class. Two
+ways this can go wrong, and the one that actually works:
+- **Wrong: `PolySymbol.withMatchedName(text)`.** This wraps the symbol in a `PolySymbolMatch`, and
+  `unwrapMatchedSymbols()` recurses *through* `PolySymbolMatch` wrapping down to the real, wrongly-named
+  leaf symbol — the alias name never survives to the final filter.
+- **Right: a `PolySymbolDelegate<T>` that overrides `name`.** A delegate is not a `PolySymbolMatch`, so
+  `unwrapMatchedSymbols()` treats it as a leaf and its overridden name survives. GDScript's
+  `GdAliasedNameSymbol<T : PolySymbol>(delegate: T, name: String)` is a small, reusable
+  implementation of this (`dotnet/Plugins/godot-support/gdscript/.../polySymbols/psi/GdAliasedNameSymbol.kt`)
+  — apply the wrapping *in the query scope* that resolves the mismatched name (e.g.
+  `GdPsiResourceClassesPolySymbolScope.getMatchingSymbols`), not in the reference/own-reference call
+  site, so every consumer of that scope (own references, completion, etc.) sees a consistently-named
+  symbol. `PolySymbolDelegate.unwrapAllDelegates()` recovers the real symbol for production code that
+  needs it (`GdSymbolResolverUtil.resolveSymbolReferences()` calls this centrally); test helpers that
+  call the platform's raw `resolveSymbolReference()`/`multiResolveSymbolReference()` do **not** unwrap
+  delegates automatically, so an assertion like `assertInstanceOf(resolved, RealSymbolClass::class.java)`
+  needs its own `.unwrapAllDelegates()` call first if the resolve target may be delegate-wrapped.
+
+**Unresolved matches are handled for you, correctly, by the builder** — if `resolver()`/the name-match
+query returns nothing, `getProblems()` synthesizes a `PolySymbolMatch` with `MatchProblem.UNKNOWN_SYMBOL`
+and, critically, `symbolKinds = setOf(kind)` set correctly. (The older, still-existing
+`PsiPolySymbolReferenceProvider.unresolvedSymbol(kind, name)` static helper — meant for hand-rolled
+*external*-reference unresolved matches — does **not** set `symbolKinds`, which silently defeats
+`polySymbols.inspectionToolMapping`-based suppression for anyone who copies its shape into an
+own-reference `resolver()`; don't hand-roll this for own references, let the builder's own fallback
+handle it.) This means: an own-reference-only host with no matches for some text is *not* silent —
+the platform's generic annotator reports a hardcoded `WARNING`-severity "Unrecognized {kind}" for it,
+independent of and *in addition to* any hand-written annotator your language already has for
+"reference not found." If your language has its own tolerant/hand-written diagnostic for this kind
+(GDScript's `GdRefIdAnnotator`, see below), register a `polySymbols.inspectionToolMapping` pointing at
+a disabled-by-default `LocalInspectionTool` to suppress the generic one — see GDScript's
+`GdUnrecognizedIdentifierInspection` for the worked example (one inert inspection + one
+`inspectionToolMapping` entry per symbol kind that needs it). Do this **per kind** — GDScript
+initially only mapped `qualifiable-symbol` (its `GdRefIdRef` kind) and missed `type-hint`
+(`GdTypeHintRef`'s kind), which surfaced as spurious "Unrecognized name" warnings on type hints in
+SDK-less test fixtures once the builder started stamping `symbolKinds` correctly. Conversely, if a
+kind has **no** existing tolerant diagnostic at all, the generic warning may be the *only* signal
+your language gives users for that mistake — consider whether suppressing it is actually wanted
+before mapping it away, versus updating test fixtures/gold files to expect the (now correctly
+surfaced) diagnostic.
+
+**Generic find-usages/rename (`PolySymbolUsageSearcher`) sees own references without any extra
+marker.** Own references are checked via plain `getReferences()`, which merges own+external
+regardless of host type — the searcher's word-search walk-up calls this whenever
+`element is PsiExternalReferenceHost || element.ownReferences.isNotEmpty()`, so an own-references-only
+host (no external provider at all) participates in generic find-usages/rename automatically. (Older
+guidance said to add the zero-method `PsiExternalReferenceHost` marker purely to satisfy this
+searcher; that workaround is no longer necessary — the searcher now checks own references directly.)
 
 **This does not mean "full automatic highlighting with no extra work," though — two corrections to a
 common misreading:** (1) `PolySymbolHighlightingAnnotator` picks up highlighting from **either**
@@ -273,8 +331,8 @@ color by itself. Confirmed by reading the annotator's attribute-lookup chain dir
 `symbol[TextAttributesKeyProperty]`, then `PolySymbolHighlightingCustomizer.getTextAttributesFor(kind)`
 — all three return `null` unless something registers a customizer or sets a per-symbol property. With
 nothing registered, a fully-working own/external reference resolves and is find-usages/rename-able,
-but renders with zero color. Implementing `PolySymbolOwnReferencesHost` gets you the *mechanism*
-(a hook the annotator will call into); a [`PolySymbolHighlightingCustomizer`](#polysymbolhighlightingcustomizer)
+but renders with zero color. Overriding `getOwnReferences()` gets you the *mechanism* (a hook the
+annotator will call into); a [`PolySymbolHighlightingCustomizer`](#polysymbolhighlightingcustomizer)
 is what actually supplies the colors.
 
 ## PolySymbolHighlightingCustomizer
