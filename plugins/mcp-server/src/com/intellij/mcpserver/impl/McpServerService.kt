@@ -104,6 +104,7 @@ open class McpServerService(val cs: CoroutineScope) {
 
   companion object {
     fun getInstance(): McpServerService = service()
+
     suspend fun getInstanceAsync(): McpServerService = serviceAsync()
 
     internal val callId = AtomicInteger(0)
