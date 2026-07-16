@@ -15,7 +15,6 @@ import com.intellij.analysis.problemsView.toolWindow.splitApi.actions.ProblemsVi
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiManager
@@ -67,9 +66,7 @@ suspend fun buildChangelistFromEventsBatch(
         if (problemId == null) {
           logMissingIdErrorWithDiagnostic(
             problem = event.problem,
-            lifetime = lifetime,
-            project = project,
-            eventsBatch = eventsBatch
+            lifetime = lifetime
           )
           return@mapNotNull null
         }
@@ -157,50 +154,24 @@ private suspend fun getQuickFixesOfProblem(problem: HighlightingProblem): List<I
   return@readAction intentionActionsWithOptions
 }
 
-private fun logMissingIdErrorWithDiagnostic(problem: Problem, lifetime: ProblemLifetime, project: Project, eventsBatch: List<ProblemEvent>){
+private fun logMissingIdErrorWithDiagnostic(problem: Problem, lifetime: ProblemLifetime){
   val message = buildString {
-    append("Problem ID not found for Disappeared event. ")
-    append("Problem: text='${problem.text.take(100)}${if (problem.text.length > 100) "..." else ""}', ")
-    append("hashCode=${problem.hashCode()}, ")
+    appendLine("Problem ID not found for Disappeared event.")
+
+    appendLine("Problem:")
+    appendLine("  type=${problem.javaClass.name}")
+    appendLine("  hashCode=${problem.hashCode()}")
+    appendLine("  text='${problem.text.take(100)}${if (problem.text.length > 100) "..." else ""}'")
     if (problem is FileProblem) {
-      append(", file='${problem.file.path}'")
-    }
-    append(", batchSize=${eventsBatch.size}, ")
-    append("lifetime.active=${lifetime.coroutineScope.isActive}")
-  }
-
-  if (!LOG.isDebugEnabled) {
-    LOG.error(message)
-    return
-  }
-
-  val stackTrace = Attachment("problem-ids-stacktrace.txt", Throwable("Call stack for missing problem ID"))
-
-  val problemDetails = buildString {
-    appendLine("Type: ${problem.javaClass.name}")
-    appendLine("Text: ${problem.text}")
-    appendLine("HashCode: ${problem.hashCode()}")
-    appendLine()
-    if (problem is FileProblem) {
-      appendLine("File Path: ${problem.file.path}")
-      appendLine("File Name: ${problem.file.name}")
-      appendLine("Line: ${problem.line}")
-      appendLine("Column: ${problem.column}")
+      appendLine("  file='${problem.file.path}', line=${problem.line}, column=${problem.column}")
     }
     if (problem is HighlightingProblem) {
-      appendLine("Highlighter HashCode: ${problem.highlighter.hashCode()}")
+      val info = problem.info
+      appendLine("  highlighterHash=${problem.highlighter.hashCode()}, highlighterValid=${problem.highlighter.isValid}")
+      appendLine("  infoPresent=${info != null}, descriptionNull=${info?.description == null}, severity=${problem.severity}")
     }
-
-    appendLine()
-    appendLine("Lifetime:")
-    appendLine("  Scope: ${lifetime.coroutineScope}")
-    appendLine("  Scope Active: ${lifetime.coroutineScope.isActive}")
-
+    appendLine("Lifetime: active=${lifetime.coroutineScope.isActive}, scope=${lifetime.coroutineScope}")
   }
-  val problemAttachment = Attachment("problem-details.txt", problemDetails)
 
-  val idManagerState = ProblemLifetimeManager.getInstance(project).getDiagnosticSnapshot()
-  val idManagerAttachment = Attachment("lifetime-manager-state.txt", idManagerState)
-
-  LOG.error(message, stackTrace, problemAttachment, idManagerAttachment)
+  LOG.debug(message)
 }

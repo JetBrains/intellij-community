@@ -73,24 +73,6 @@ internal class ProblemLifetimeManager {
   @TestOnly
   fun getProblemIdsSize(): Int = problemIds.getSize()
 
-  internal fun getDiagnosticSnapshot(): String = buildString {
-    appendLine("Problem IDs Count: ${problemIds.getSize()}")
-    appendLine("Intention IDs Count: ${intentionIds.getSize()}")
-    appendLine("Problem-to-Intentions Mappings: ${problemToIntentions.size}")
-    appendLine()
-
-    appendLine("Problem IDs (first 20):")
-    val problemSample = problemIds.getSample(20)
-    if (problemSample.isEmpty()) {
-      appendLine("  (empty)")
-    } else {
-      problemSample.forEach { (problem, id) ->
-        appendLine("  $id -> ${problem.text}(hash=${problem.hashCode()})")
-      }
-    }
-    appendLine()
-  }
-
   companion object{
     fun getInstance(project: Project): ProblemLifetimeManager = project.service()
   }
