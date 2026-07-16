@@ -43,6 +43,7 @@ import com.jetbrains.python.psi.types.PyNeverType;
 import com.jetbrains.python.psi.types.PyOverloadType;
 import com.jetbrains.python.psi.types.PyParamSpecType;
 import com.jetbrains.python.psi.types.PySelfType;
+import com.jetbrains.python.psi.types.PyTopType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParameterType;
@@ -416,6 +417,11 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   @Override
   public @NotNull HtmlChunk visitPyNeverType(@NotNull PyNeverType neverType) {
     return className(neverType.getName());
+  }
+
+  @Override
+  public @NotNull HtmlChunk visitPyTopType(@NotNull PyTopType topType) {
+    return className(isRenderingFqn() ? PyNames.FQN.OBJECT : topType.getName());
   }
 
   @Override

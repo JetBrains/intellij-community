@@ -123,6 +123,7 @@ public class PyUnionType extends PyCompositeTypeBase {
    * @param members a collection of types to union
    * @return a PyType representing the union, or null if no valid members
    */
+  // TODO: change the default to Never
   public static @Nullable PyType union(@NotNull Collection<@Nullable PyType> members) {
     return unionOrDefault(members, PyAnyType.getUnknown());
   }
