@@ -64,7 +64,7 @@ val assertTreeElementVersioningCompatibility: Boolean = System.getProperty("ide.
  * - `false` means that calls to `freezePsiVersion` will be routed to `runReadActionBlocking`
  */
 @get:ApiStatus.Internal
-val allowUsingFrozenPsi: Boolean = System.getProperty("ide.allow.using.frozen.psi", "true").toBoolean()
+val allowUsingFrozenPsi: Boolean = System.getProperty("ide.allow.using.frozen.psi", "false").toBoolean()
 
 
 /**
