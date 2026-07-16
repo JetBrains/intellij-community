@@ -331,14 +331,16 @@ abstract class PyCodeInsightTestCase {
     for ((filename, content) in otherFiles) {
       myFixture.createFile(filename, content.trimIndent())
     }
-    val currentFile = myFixture.configureByText(fileName, fileContent.trimIndent())
+    val originalText = fileContent.trimIndent()
+    val expectedAssertions = parseAssertions(originalText)
+    val currentFile = myFixture.configureByText(fileName, PyTestAssertionParser.maskAssertions(originalText, expectedAssertions))
 
     val testInspections = defaultInspections - options.disableInspections + options.enableInspections
     val inspectionInstances = testInspections.map { it.getDeclaredConstructor().newInstance() }.toTypedArray()
     myFixture.enableInspections(*inspectionInstances)
 
     try {
-      collectAndCheckHighlighting(options)
+      collectAndCheckHighlighting(options, originalText, expectedAssertions)
     }
     finally {
         myFixture.disableInspections(*inspectionInstances)
@@ -372,17 +374,14 @@ abstract class PyCodeInsightTestCase {
   }
 
 
-  private fun collectAndCheckHighlighting(options: TestOptions): Duration {
+  private fun collectAndCheckHighlighting(options: TestOptions, expectedText: String, expectedAssertions: List<PyTestAssertion>): Duration {
     val project = myFixture.project
     runInEdtAndWait { PsiDocumentManager.getInstance(project).commitAllDocuments() }
     val file = myFixture.file as? PsiFileImpl ?: error("Expected PsiFileImpl, got ${myFixture.file?.javaClass}")
     val document = file.fileDocument
-    val expectedText = document.text
 
     // to load AST for changed files before it's prohibited by "fileTreeAccessFilter"
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project)
-
-    val expectedAssertions = parseAssertions(expectedText)
 
     val (highlights, duration) = measureTimedValue {
       myFixture.doHighlighting()
@@ -881,6 +880,19 @@ private object PyTestAssertionInliner {
 
 object PyTestAssertionParser {
 
+  /**
+   * Blanks out every assertion's text with spaces so it isn't seen as a comment and doesn't affect parsing.
+   */
+  fun maskAssertions(code: String, assertions: List<PyTestAssertion>): String {
+    val chars = code.toCharArray()
+    for (assertion in assertions) {
+      for (i in assertion.assertionOffsetStart until assertion.assertionOffsetEnd) {
+        if (chars[i] != NEWLINE) chars[i] = ' '
+      }
+    }
+    return String(chars)
+  }
+
   fun parseAssertions(code: String): List<PyTestAssertion> {
     val lines = code.split(NEWLINE)
     val lineStartOffsets = computeLineStartOffsets(lines)
@@ -902,7 +914,7 @@ object PyTestAssertionParser {
         continue
       }
 
-      val payload = collectPayload(lines, lineIndex, parsedStart.initialPayload, lineStartOffsets)
+      val payload = collectPayload(lines, lineIndex, parsedStart.initialPayload, lineStartOffsets, parsedStart.assertionColumnStart)
       result += buildAssertion(parsedStart, payload)
 
       lineIndex = payload.nextLineIndex
@@ -1067,6 +1079,7 @@ object PyTestAssertionParser {
     assertionStartLineIndex: Int,
     initialPayload: String,
     lineStartOffsets: IntArray,
+    assertionColumnStart: Int,
   ): CollectedPayload {
     val contentBuilder = StringBuilder()
     val fixmeBuilder = StringBuilder()
@@ -1097,6 +1110,7 @@ object PyTestAssertionParser {
     while (lineIndex < lines.size) {
       val line = lines[lineIndex]
       if (!isCommentLine(line)) break
+      if (line.indexOf(COMMENT_CHAR) != assertionColumnStart) break
       if (isAssertionStartLine(lines, lineIndex)) break
 
       val continuationPayload = extractCommentPayload(line)
@@ -1196,7 +1210,7 @@ object PyTestAssertionParser {
   private fun findReferencedCodeLine(lines: List<String>, assertionLineIndex: Int): Int? {
     var i = assertionLineIndex - 1
     while (i >= 0) {
-      if (!isCommentLine(lines[i])) {
+      if (!isCommentLine(lines[i]) || !isAssertionStartLine(lines, i)) {
         return i
       }
       i--
@@ -1314,6 +1328,52 @@ class PyCodeInsightTestCaseAssertionParserAndInlinerTest {
     Assertions.assertEquals(2, assertions.size)
     Assertions.assertEquals("first line\ncontinuation", assertions[0].content)
     Assertions.assertEquals("second line", assertions[1].content)
+  }
+
+  @Test
+  fun `parser stops payload collection at differently aligned comment`() {
+    val code = """
+      value = call()
+      #       ^^^^^^ WARNING first line
+      # second line
+          # Not assertion
+      # Also not assertion
+    """.trimIndent()
+
+    val assertion = parseAssertions(code).single()
+    Assertions.assertEquals("first line\nsecond line", assertion.content)
+  }
+
+  @Test
+  fun `parser resolves stacked markers under a type comment to the type comment line`() {
+    val code = """
+      def f(x):
+          # type: (int) -> str
+      #           ^^^^^ WARNING first
+      #                    ^^^ WARNING second
+          pass
+    """.trimIndent()
+
+    val assertions = parseAssertions(code)
+    Assertions.assertEquals(2, assertions.size)
+    Assertions.assertTrue(assertions.all { it.codeLineStart == 1 })
+    Assertions.assertEquals(listOf("first", "second"), assertions.map { it.content })
+  }
+
+  @Test
+  fun `masking blanks a marker before a function type comment so it still types the function`() {
+    val code = """
+      def f(a: int) -> int:
+      #   ^ WARNING both
+          # type: (int) -> int
+          pass
+    """.trimIndent()
+
+    val masked = PyTestAssertionParser.maskAssertions(code, parseAssertions(code))
+
+    Assertions.assertEquals(code.length, masked.length) // offsets preserved
+    Assertions.assertFalse(masked.contains("WARNING")) // marker blanked
+    Assertions.assertTrue(masked.contains("# type: (int) -> int")) // type comment intact
   }
 
   @Test
