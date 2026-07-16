@@ -192,9 +192,8 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   private void trimChunkCache() {
     int limit = getChunkCacheSizeLimit();
     while (laidOutChunks.size() > limit) {
-      LineChunk chunk = laidOutChunks.removeLast();
       debug();
-      chunk.clearFragments();
+      laidOutChunks.removeLast().clearFragments();
     }
   }
 
