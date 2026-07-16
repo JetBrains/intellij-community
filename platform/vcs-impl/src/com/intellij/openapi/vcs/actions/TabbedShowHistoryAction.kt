@@ -35,6 +35,7 @@ open class TabbedShowHistoryAction : DumbAwareAction() {
 
     e.presentation.isEnabled = isEnabled
     e.presentation.isVisible = isVisible
+    e.presentation.text = ActionsBundle.message("action.Vcs.ShowTabbedFileHistory.text")
 
     if (isEnabled && isVisible && VcsContextUtil.selectedFilePathsIterable(context).isEmpty()) {
       getEditorFile(context)?.let { editorFile ->
