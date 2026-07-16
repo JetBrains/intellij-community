@@ -4,9 +4,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.codeInsight.controlflow.ConditionalInstruction;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -107,8 +105,6 @@ import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
  * Implements reference expression PSI.
  */
 public class PyReferenceExpressionImpl extends PyElementImpl implements PyReferenceExpression {
-
-  private static final Logger LOG = Logger.getInstance(PyReferenceExpressionImpl.class);
 
   // PY-89956: guards against re-entrant def-use chain warming (see warmEarlierDefinitionTypes).
   private static final ThreadLocal<Boolean> ourWarmingDefUseChain = ThreadLocal.withInitial(() -> Boolean.FALSE);
@@ -586,14 +582,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   private @Nullable PyType getTypeFromProviders(@NotNull TypeEvalContext context) {
     for (PyTypeProvider provider : PyTypeProvider.EP_NAME.getExtensionList()) {
-      try {
-        final PyType type = provider.getReferenceExpressionType(this, context);
-        if (type != null) {
-          return type;
-        }
-      }
-      catch (AbstractMethodError e) {
-        LOG.info(PluginException.createByClass("Failed to get expression type via " + provider.getClass(), e, provider.getClass()));
+      final PyType type = provider.getReferenceExpressionType(this, context);
+      if (type != null) {
+        return type;
       }
     }
     return PyAnyType.getUnknown();
