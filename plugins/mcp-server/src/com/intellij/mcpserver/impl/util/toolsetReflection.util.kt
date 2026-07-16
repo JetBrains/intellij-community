@@ -113,7 +113,8 @@ private fun <T : McpToolset> KClass<out T>.toolConversions(json: Json, thisRef: 
   val presentableDescriptionProvider: ((String) -> @Nls String?)? = thisRef?.let { ts -> { toolName -> ts.displayDescription(toolName) } }
   val isUserConfigurable = thisRef?.isUserConfigurable() ?: true
   val toolsetFqn = this.qualifiedName
-  return this.functions.filter { it.getPreferredToolAnnotation() != null }.map { function ->
+  return this.functions.mapNotNull { function ->
+    val includeProjectPath = function.getPreferredToolAnnotation()?.includeProjectPath ?: return@mapNotNull null
     {
       function.asToolWithUserConfigurability(
         json = json,
@@ -122,7 +123,7 @@ private fun <T : McpToolset> KClass<out T>.toolConversions(json: Json, thisRef: 
         fullyQualifiedName = toolsetFqn + "." + function.name,
         presentableDescriptionProvider = presentableDescriptionProvider,
         isUserConfigurable = isUserConfigurable,
-        additionalImplicitParameters = arrayOf(projectPathParameter),
+        additionalImplicitParameters = if (includeProjectPath) arrayOf(projectPathParameter) else emptyArray(),
       )
     }
   }
