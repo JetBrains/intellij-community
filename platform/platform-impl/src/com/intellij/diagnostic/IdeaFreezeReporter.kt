@@ -185,21 +185,23 @@ internal class IdeaFreezeReporter : PerformanceListener {
         return
       }
 
-      LOG.debug("UI freeze recorded")
+      LOG.debug("UI freeze recorded for $durationMs ms")
 
       if ((durationMs / 1000).toInt() <= FreezeReporterRegistry.durationThresholdSeconds() && !ApplicationManagerEx.isInIntegrationTest()) {
+        LOG.debug("Ignoring freeze, below duration threshold")
         telemetry.finishNotSent(FreezeNotSentReason.BELOW_DURATION_THRESHOLD, durationMs)
         return
       }
 
       if (stacktraceCommonPart.isNullOrEmpty()) {
+        LOG.debug("Ignoring freeze, no common stack found in dumps")
         telemetry.finishNotSent(FreezeNotSentReason.NO_COMMON_STACK, durationMs)
         return
       }
 
       val dumps = ArrayList(currentDumps) // defensive copy
       if (!dumpTask.isValid() || dumps.size < 2) {
-        LOG.debug("UI freeze recorded, but not enough dumps collected")
+        LOG.debug("Ignoring freeze, not enough dumps collected")
         telemetry.finishNotSent(FreezeNotSentReason.NOT_ENOUGH_DUMPS, durationMs)
         return
       }
@@ -252,6 +254,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
         return
       }
 
+      LOG.debug("Reporting freeze to MessagePool")
       reportToIndicator(loggingEvent) // always put freezes to MessagePool
 
       val isAutoReportEnabled = ExceptionAutoReportUtil.isAutoReportEnabled()
@@ -275,6 +278,8 @@ internal class IdeaFreezeReporter : PerformanceListener {
       }
 
       if (reportDir != null) {
+        LOG.debug("Reporting freeze to plugin notifications")
+
         for (notifier in FREEZE_NOTIFIER_EP.extensionList) {
           notifier.notifyFreeze(loggingEvent, dumps, reportDir, durationMs)
         }
