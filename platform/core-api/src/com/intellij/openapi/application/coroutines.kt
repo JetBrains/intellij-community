@@ -256,12 +256,9 @@ suspend fun <T> constrainedReadAndWriteAction(vararg constraints: ReadConstraint
 }
 
 /**
- * Runs given [action] under [write lock][com.intellij.openapi.application.Application.runWriteAction] using [Dispatchers.EDT].
+ * Runs given [action] under [write lock][com.intellij.openapi.application.Application.runWriteAction] on the UI thread.
  *
- * The [action] is dispatched by [Dispatchers.EDT] within the [context modality state][asContextElement].
- * If the calling coroutine is already executed by [Dispatchers.EDT], then no re-dispatch happens.
- * Acquiring the write-lock happens in a blocking manner, i.e. [runWriteAction][com.intellij.openapi.application.Application.runWriteAction]
- * call will block until all currently running read actions are finished.
+ * The [action] is dispatched onto the UI thread with the [context modality state][asContextElement].
  *
  * @see readAndEdtWriteAction
  * @see com.intellij.openapi.command.writeCommandAction
