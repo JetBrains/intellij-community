@@ -32,26 +32,20 @@ import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTes
 
 @TestDataPath("$CONTENT_ROOT/testData")
 public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
-  @NonNls private static final String BASE_PATH = "/refactoring/introduceConstant/";
+  private static final @NonNls String BASE_PATH = "/refactoring/introduceConstant/";
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return JAVA_21_ANNOTATED;
   }
 
-  @NotNull
   @Override
-  protected String getTestDataPath() {
+  protected @NotNull String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testInNonNls() {
-    doTest(false);
-  }
-
-  public void testChooseStaticContainer() {
-    doTest(false);
-  }
+  public void testInNonNls() { doTest(false); }
+  public void testChooseStaticContainer() { doTest(false); }
   
   public void testNonStaticContainerForCompileTimeConstant() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -67,7 +61,6 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testNonStaticContainerForCompileTimeConstant2() { doTest(); }
-
   public void testStaticFieldInAnonymous() { doTest(); }
   public void testStaticFieldInAnonymousJava8() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> doTest()); }
 
@@ -78,9 +71,7 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  public void testFromEnumConstantInitializer() {
-    doTest();
-  }
+  public void testFromEnumConstantInitializer() { doTest(); }
 
   public void testUnresolvedReferenceInEnum() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -88,9 +79,7 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  public void testFromEnumConstantInitializer1() {
-    doTest();
-  }
+  public void testFromEnumConstantInitializer1() { doTest(); }
 
   public void testFromEnumConstantInitializer2() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -99,24 +88,13 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testEnumConstant() {
-    doTest(true);    
+    doTest(true);
   }
 
-  public void testAnonymousClassWithThrownClause() {
-    doTest();
-  }
-
-  public void testAnnotationDescription() {
-    doTest();
-  }
-
-  public void testEnumConstantInAnnotationAttribute() {
-    doTestExtractingEnumConstantFromEnumAnnotationValue();
-  }
-
-  public void testEnumConstantInAnnotationDefaultValue() {
-    doTestExtractingEnumConstantFromEnumAnnotationValue();
-  }
+  public void testAnonymousClassWithThrownClause() { doTest(); }
+  public void testAnnotationDescription() { doTest(); }
+  public void testEnumConstantInAnnotationAttribute() { doTestExtractingEnumConstantFromEnumAnnotationValue(); }
+  public void testEnumConstantInAnnotationDefaultValue() { doTestExtractingEnumConstantFromEnumAnnotationValue(); }
 
   private void doTestExtractingEnumConstantFromEnumAnnotationValue() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -130,33 +108,13 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testReplaceAllSkipsEnumConstantsInAnnotationAttributes() {
-    doTest();
-  }
-
-  public void testReplaceAllSkipsEnumConstantsInAnnotationDefaultValues() {
-    doTest();
-  }
-
-  public void testNoExternalTypeAnnotations() {
-    doTest();
-  }
-
-  public void testTailingErrorUnacceptableWholeLineSelection() {
-    doTest();
-  }
-
-  public void testPartialStringLiteral() {
-    doTest();
-  }
-
-  public void testPartialStringLiteralConvertibleToInt() {
-    doTest();
-  }
-
-  public void testStringLiteralConvertibleToInt() {
-    doTest();
-  }
+  public void testReplaceAllSkipsEnumConstantsInAnnotationAttributes() { doTest(); }
+  public void testReplaceAllSkipsEnumConstantsInAnnotationDefaultValues() { doTest(); }
+  public void testNoExternalTypeAnnotations() { doTest(); }
+  public void testTailingErrorUnacceptableWholeLineSelection() { doTest(); }
+  public void testPartialStringLiteral() { doTest(); }
+  public void testPartialStringLiteralConvertibleToInt() { doTest(); }
+  public void testStringLiteralConvertibleToInt() { doTest(); }
 
   public void testPartialStringLiteralQualified() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -168,37 +126,14 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  public void testPartialStringLiteralAnchor() {
-    doTest();
-  }
-
-  public void testPartialStringLiteralAnchorFromAnnotation() {
-    doTest();
-  }
-
-  public void testIntroduceConstantFromThisCall() {
-    doTest();
-  }
-
-  public void testForwardReferences() {
-    doTest();
-  }
-
-  public void testArrayFromVarargs() {
-    doTest();
-  }
-
-  public void testWithMethodReferenceBySecondSearch() {
-    doTest();
-  }
-  
-  public void testShortenClassReferences() {
-    doTest();
-  }
-
-  public void testComments() {
-    doTestExpr();
-  }
+  public void testPartialStringLiteralAnchor() { doTest(); }
+  public void testPartialStringLiteralAnchorFromAnnotation() { doTest(); }
+  public void testIntroduceConstantFromThisCall() { doTest(); }
+  public void testForwardReferences() { doTest(); }
+  public void testArrayFromVarargs() { doTest(); }
+  public void testWithMethodReferenceBySecondSearch() { doTest(); }
+  public void testShortenClassReferences() { doTest(); }
+  public void testComments() { doTestExpr(); }
 
   private void doTestExpr() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -206,13 +141,8 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  public void testContainingClass() {
-    doTestExpr();
-  }
-
-  public void testConstantFromAnnotationOnFieldWithoutInitializer() {
-    doTestExpr();
-  }
+  public void testContainingClass() { doTestExpr(); }
+  public void testConstantFromAnnotationOnFieldWithoutInitializer() { doTestExpr(); }
 
   public void testEscalateVisibility() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -243,7 +173,7 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
     checkDefaultType("Test.C");
   }
 
-  private void checkDefaultType(final String expectedType) {
+  private void checkDefaultType(String expectedType) {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     new MockIntroduceConstantHandler(null){
       @Override

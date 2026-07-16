@@ -44,9 +44,8 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     return JAVA_21;
   }
 
-  @Nullable
   @Override
-  protected PsiExpression getExpressionFromEditor() {
+  protected @Nullable PsiExpression getExpressionFromEditor() {
     SelectionModel selectionModel = getEditor().getSelectionModel();
     if (selectionModel.hasSelection()) {
       return IntroduceVariableUtil.getSelectedExpression(getProject(), getFile(), selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
@@ -65,17 +64,17 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testFromExpression() {
-     doTest(introducer -> type("expr"));
+     doTest(_ -> type("expr"));
   }
 
   public void testFromSelection() {
-     doTest(introducer -> type("a"));
+     doTest(_ -> type("a"));
   }
 
   public void testConflictingInnerClassName() {
     final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
     settings.INSERT_INNER_CLASS_IMPORTS = true;
-    doTest(introducer -> type("constants"));
+    doTest(_ -> type("constants"));
   }
 
   public void testUnresolvedVariable() {
@@ -83,7 +82,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     Boolean oldValue = instance.INTRODUCE_LOCAL_CREATE_VAR_TYPE;
     instance.INTRODUCE_LOCAL_CREATE_VAR_TYPE = true;
     try {
-      doTest(introducer -> type("o"));
+      doTest(_ -> type("o"));
     }
     finally {
       instance.INTRODUCE_LOCAL_CREATE_VAR_TYPE = oldValue;
@@ -92,74 +91,74 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testInsideInjectedString() {
-    doTestInsideInjection(introducer -> type("expr"));
+    doTestInsideInjection(_ -> type("expr"));
   }
 
   public void testInjectedString() {
-    doTestInsideInjection(introducer -> {
+    doTestInsideInjection(_ -> {
      bringRealEditorBack();
      type("expr");
    });
   }
 
   public void testNoNameSuggested() {
-    doTest(introducer -> type("xyz"));
+    doTest(_ -> type("xyz"));
   }
 
   public void testPlaceInsideLoopAndRename() {
-    doTestReplaceChoice("Runnable: () -> {...}", introducer -> type("expr"));
+    doTestReplaceChoice("Runnable: () -> {...}", _ -> type("expr"));
   }
   
   public void testPlaceOutsideLoopAndRename() {
-    doTestReplaceChoice(JavaBundle.message("target.code.block.presentable.text"), introducer -> type("expr"));
+    doTestReplaceChoice(JavaBundle.message("target.code.block.presentable.text"), _ -> type("expr"));
   }
 
   public void testPlaceOutsideLambdaInIfWithoutBraces() {
-    doTestReplaceChoice(JavaBundle.message("target.code.block.presentable.text"), introducer -> type("expr"));
+    doTestReplaceChoice(JavaBundle.message("target.code.block.presentable.text"), _ -> type("expr"));
   }
 
   public void testPlaceOutsideLambdaInClass() {
-    doTestReplaceChoice(JavaBundle.message("target.code.block.presentable.text"), introducer -> type("expr"));
+    doTestReplaceChoice(JavaBundle.message("target.code.block.presentable.text"), _ -> type("expr"));
   }
 
   public void testPlaceInsideLambdaBody() {
-    doTestReplaceChoice("Runnable: () -> {...}", introducer -> type("expr"));
+    doTestReplaceChoice("Runnable: () -> {...}", _ -> type("expr"));
   }
 
   public void testPlaceInsideLambdaBody1() {
-    doTestReplaceChoice("Predicate<String>: s -> {...}", introducer -> type("first"));
+    doTestReplaceChoice("Predicate<String>: s -> {...}", _ -> type("first"));
   }
 
   public void testPlaceInsideLambdaBodyMultipleOccurrences1() {
-    doTestReplaceChoice("Replace all 0 occurrences", "Runnable: () -> {...}", introducer -> type("expr"), null);
+    doTestReplaceChoice("Replace all 0 occurrences", "Runnable: () -> {...}", _ -> type("expr"), null);
   }
 
   public void testReplaceAllOnDummyCodeWithSameNameAsGenerated() {
-    doTestReplaceChoice("Replace all 0 occurrences", introducer -> type("expr"));
+    doTestReplaceChoice("Replace all 0 occurrences", _ -> type("expr"));
   }
 
   public void testReplaceAllIntroduceFieldInLocalClass() {
-    doTestReplaceChoice("Replace all 0 occurrences", introducer -> type("smth"));
+    doTestReplaceChoice("Replace all 0 occurrences", _ -> type("smth"));
   }
 
   public void testReplaceAllWithScopeInvalidation() {
-    doTestReplaceChoice("Replace all 0 occurrences", introducer -> type("newType"));
+    doTestReplaceChoice("Replace all 0 occurrences", _ -> type("newType"));
   }
 
   public void testRanges() {
-     doTest(introducer -> type("expr"));
+     doTest(_ -> type("expr"));
   }
 
   public void testFromParenthesis() {
-     doTest(introducer -> type("expr"));
+     doTest(_ -> type("expr"));
   }
 
   public void testConflictWithField() {
-    doTest(introducer -> type("height"));
+    doTest(_ -> type("height"));
   }
 
   public void testConflictWithFieldNoCast() {
-    doTest(introducer -> type("weights"));
+    doTest(_ -> type("weights"));
   }
 
   public void testCast() {
@@ -171,14 +170,14 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testEscapePosition() {
-    doTestStopEditing(introducer -> {
+    doTestStopEditing(_ -> {
      invokeEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
      invokeEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
    });
   }
 
   public void testEscapePositionIfTyped() {
-    doTestStopEditing(introducer -> {
+    doTestStopEditing(_ -> {
      type("fooBar");
      invokeEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
    });
@@ -222,11 +221,11 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   public void testDuplicateInsideLiteral() { doTestReplaceChoice("Replace all 0 occurrences"); }
 
   public void testBrokenFormattingWithInValidation() {
-    doTest(introducer -> type("bool"));
+    doTest(_ -> type("bool"));
   }
 
   public void testStopEditing() {
-    doTestStopEditing(introducer -> {
+    doTestStopEditing(_ -> {
      invokeEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT);
      invokeEditorAction(IdeActions.ACTION_EDITOR_ENTER);
      invokeEditorAction(IdeActions.ACTION_EDITOR_ENTER);
@@ -320,7 +319,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testHeavilyBrokenFile10() {
-    doTestReplaceChoice("Replace all 0 occurrences", introducer -> type("xyz"));
+    doTestReplaceChoice("Replace all 0 occurrences", _ -> type("xyz"));
   }
 
   public void testHeavilyBrokenFile11() {
@@ -365,7 +364,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   public void testPatternUsedInSubsequentCondition() {
     doTest(null);
   }
-  
+
   public void testNoExternalTypeAnnotations() {
     doTest(null);
   }
@@ -373,7 +372,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   public void testNoIllegalArgumentException() {
     doTest(null);
   }
-  
+
   public void testVarWithCapture() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
       JavaRefactoringSettings instance = JavaRefactoringSettings.getInstance();
@@ -399,9 +398,9 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
       }
     });
   }
-  
+
   public void testSplitMutuallyExclusiveIf() { doTestReplaceChoice("Replace all 0 occurrences"); }
-  
+
   public void testDontSplitNotMutuallyExclusiveIf() { doTestReplaceChoice("Replace all 0 occurrences"); }
 
   private void doTestStopEditing(Consumer<? super AbstractInplaceIntroducer> pass) {
@@ -425,8 +424,8 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     }
   }
 
-  private void doTestTypeChange(final String newType) {
-    final Consumer<AbstractInplaceIntroducer> typeChanger = introducer -> type(newType);
+  private void doTestTypeChange(String newType) {
+    final Consumer<AbstractInplaceIntroducer> typeChanger = _ -> type(newType);
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
@@ -455,7 +454,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     doTestReplaceChoice(choiceText, null, pass, null);
   }
 
-  
+
   private void doTestReplaceChoice(String choiceText,
                                    String secondChoiceText,
                                    Consumer<AbstractInplaceIntroducer<?, ?>> pass,

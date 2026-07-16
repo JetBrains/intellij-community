@@ -36,9 +36,8 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
     doTest(introducer -> introducer.setReplaceAllOccurrences(true));
   }
 
-  @Nullable
   @Override
-  protected PsiExpression getExpressionFromEditor() {
+  protected @Nullable PsiExpression getExpressionFromEditor() {
     final PsiExpression expression = super.getExpressionFromEditor();
     if (expression != null) {
       return expression;
@@ -116,15 +115,15 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testCorrectFinalPosition() {
-    doTest(introducer -> type("SEC"));
+    doTest(_ -> type("SEC"));
   }
 
   public void testCorrectConstantPosition() {
-    doTest(introducer -> type("R"));
+    doTest(_ -> type("R"));
   }
 
   public void testConstantBeforeUsage() {
-    doTest(introducer -> type("R"));
+    doTest(_ -> type("R"));
   }
 
   public void testEscapePosition() {
