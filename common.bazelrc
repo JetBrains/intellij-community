@@ -197,6 +197,12 @@ test --test_output=streamed
 # https://bazel.build/reference/command-line-reference#flag--test_timeout
 test --test_timeout=60,300,900,14400
 
+# https://bazel.build/reference/command-line-reference#flag--cache_test_results
+test --nocache_test_results
+
+# Limit concurrent local test actions on CI to avoid OOM from multiple heavy test JVMs.
+test:ci --local_test_jobs=1
+
 # A workaround for https://github.com/bazelbuild/rules_kotlin/issues/1352
 common --repo_env=ANDROID_HOME=
 
