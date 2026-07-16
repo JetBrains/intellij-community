@@ -51,7 +51,7 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
 
   @JvmField
   val reportedTypes: MutableList<String> = mutableListOf(
-    "object", "types.FunctionType", "type"
+    PyNames.FQN.OBJECT, PyNames.FQN.FUNCTION_TYPE, PyNames.FQN.TYPE
   )
 
   override fun getOptionsPane(): OptPane {
@@ -148,23 +148,23 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
             registerProblem(type, requiredMethod)
           }
         }
-        type is PyFunctionType && "types.FunctionType" in inspection.reportedTypes -> {
+        type is PyFunctionType && PyNames.FQN.FUNCTION_TYPE in inspection.reportedTypes -> {
           registerProblem(this, PyPsiBundle.problemMessage("INSP.string.not.helpful", "FunctionType"),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                          RemoveFromReportedTypesQuickFix("types.FunctionType", "FunctionType"))
+                          RemoveFromReportedTypesQuickFix(PyNames.FQN.FUNCTION_TYPE, "FunctionType"))
         }
         type !is PyClassType -> return
-        PyNames.FQN.unqualifyBuiltinName(type.classQName) in inspection.reportedTypes -> {
+        type.classQName in inspection.reportedTypes -> {
           val classQName = PyNames.FQN.unqualifyBuiltinName(type.classQName) ?: return
           val typeName = type.name ?: return
           registerProblem(this, PyPsiBundle.problemMessage("INSP.string.not.helpful", CodifiedParam.ofReference(type.pyClass, typeName)),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                           RemoveFromReportedTypesQuickFix(classQName, typeName))
         }
-        type.isDefinition && "type" in inspection.reportedTypes -> {
+        type.isDefinition && PyNames.FQN.TYPE in inspection.reportedTypes -> {
           registerProblem(this, PyPsiBundle.problemMessage("INSP.string.not.helpful", "type"),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                          RemoveFromReportedTypesQuickFix("type", "type"))
+                          RemoveFromReportedTypesQuickFix(PyNames.FQN.TYPE, PyNames.TYPE))
         }
         type.shouldWarnForType(requiredMethod) -> registerProblem(type, requiredMethod)
       }
@@ -195,7 +195,7 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
     }
 
     private fun PyClassType.shouldWarnForType(requiredMethod: String): Boolean {
-      if (PyNames.FQN.unqualifyBuiltinName(classQName) in inspection.ignoredTypes) return false
+      if (classQName in inspection.ignoredTypes) return false
 
       // Check if any ancestor is in ignored types (e.g., class A(int) should be ignored
       // because int defines __str__ even though it's not in stubs)
@@ -221,6 +221,9 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
     private fun PyClassType.hasCustomStringMethod(
       methodName: String,
     ): Boolean {
+      // special case: no skeleton and no stubs
+      if (classQName in PyNames.FQN.NONES) return true
+
       val objectMethodQName = "${PyNames.FQN.OBJECT}.$methodName"
 
       val memberInStub = findMember(methodName, PyResolveContext.defaultContext(myTypeEvalContext))
