@@ -812,10 +812,12 @@ public final class EditorPainter implements TextDrawingCallback {
           CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
           if (customRenderer == null) continue;
           try (AccessToken ignore = SlowOperations.reportOnceIfViolatedFor(customRenderer)) {
+            PluginDescriptor descriptor = PluginManager.getPluginByClass(customRenderer.getClass());
             try {
-              customRenderer.paint(myEditor, highlighter, myGraphics);
+              EditorComponentImpl.withStoredDescriptor(descriptor, () -> {
+                customRenderer.paint(myEditor, highlighter, myGraphics);
+              });
             } catch (Exception e) {
-              PluginDescriptor descriptor =  PluginManager.getPluginByClass(customRenderer.getClass());
               LOG.error(new PluginException("Failed to perform custom painting", e, descriptor != null ? descriptor.getPluginId() : null));
             }
           }

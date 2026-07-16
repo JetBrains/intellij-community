@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
@@ -23,9 +24,11 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretActionListener;
 import com.intellij.openapi.editor.Document;
@@ -52,6 +55,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.EditorsSplittersKt;
 import com.intellij.openapi.project.Project;
@@ -77,6 +81,7 @@ import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMe
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,11 +133,14 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @DirtyUI
 public final class EditorComponentImpl extends JTextComponent implements Scrollable, UiCompatibleDataProvider, Queryable, TypingTarget, Accessible,
                                                                          UISettingsListener, UiInspectorPreciseContextProvider {
   private static final Logger LOG = Logger.getInstance(EditorComponentImpl.class);
+  private static final ThrottledLogger THROTTLED_LOGGER = new ThrottledLogger(LOG, TimeUnit.HOURS.toMillis(1));
+  private static final ThreadLocal<PluginDescriptor> currentDescriptor = ThreadLocal.withInitial(() -> null);
 
   private final EditorImpl editor;
 
@@ -352,18 +360,23 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
     AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.FLOOR);
 
-    // Wrap painting into RA to prevent the following error (IJPL-236335):
-    // Painting calls plugin ->
-    // plugin calls read action ->
-    // suvorov interception ->
-    // read action calls write action ->
-    // write action deletes virtual file ->
-    // editor tab is disposed ->
-    // editor is disposed ->
-    // plugin or editor gets disposed exception during painting
-    EditorThreading.read(() -> {
+    ApplicationManagerEx.getApplicationEx().withLocksSoftlyProhibited(
+      "The Read/Write lock is disallowed during paint. Usage of the R/W lock can lead to UI freezes.\n" +
+      "Consider using `PsiVersioningService.freezePsiVersion` for accessing PSI trees"
+      , t -> {
+        PluginDescriptor violatingDescriptor = currentDescriptor.get();
+        Throwable exception;
+        if (violatingDescriptor != null) {
+          exception = new PluginException(t, violatingDescriptor.getPluginId());
+        } else {
+          exception = t;
+        }
+        THROTTLED_LOGGER.error(exception);
+      }, () -> {
       editor.paint(gg);
+      return null;
     });
+
     if (origTx != null) {
       gg.setTransform(origTx);
     }
@@ -371,6 +384,17 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     Project project = editor.getProject();
     if (project != null) {
       EditorsSplittersKt.stopOpenFilesActivity(project);
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void withStoredDescriptor(@Nullable PluginDescriptor descriptor, @NotNull Runnable action) {
+    PluginDescriptor previousValue = currentDescriptor.get();
+    currentDescriptor.set(descriptor);
+    try {
+      action.run();
+    } finally {
+      currentDescriptor.set(previousValue);
     }
   }
 
