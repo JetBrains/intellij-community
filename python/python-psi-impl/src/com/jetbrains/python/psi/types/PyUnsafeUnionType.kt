@@ -81,7 +81,7 @@ class PyUnsafeUnionType private constructor(members: Collection<PyType?>) : PyCo
       .toTypedArray()
   }
 
-  override val name: @NlsSafe String = "UnsafeUnion[${members.joinToString() { it?.name ?: "Any" }}]"
+  override val name: @NlsSafe String = members.joinToString(separator = ", ", prefix = "UnsafeUnion[", postfix = "]") { it?.name ?: "Any" }
 
   override val isBuiltin: Boolean = members.all { it != null && it.isBuiltin }
 

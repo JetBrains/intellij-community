@@ -89,10 +89,6 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     return myRenderingFeatures.contains(PyTypeRendererFeature.TYPE_VAR_BOUNDS);
   }
 
-  protected final boolean isRenderingUnsafeUnion() {
-    return myRenderingFeatures.contains(PyTypeRendererFeature.UNSAFE_UNION);
-  }
-
   private PyTypeRenderer(@NotNull TypeEvalContext typeEvalContext, @NotNull EnumSet<PyTypeRendererFeature> features) {
     myTypeEvalContext = typeEvalContext;
     myRenderingFeatures = features;
@@ -466,15 +462,12 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   @Override
   public @NotNull HtmlChunk visitPyUnsafeUnionType(@NotNull PyUnsafeUnionType unsafeUnionType) {
-    if (isRenderingUnsafeUnion()) {
-      HtmlBuilder result = new HtmlBuilder();
-      result.append(escaped("UnsafeUnion")); //NON-NLS
-      result.append(styled("[", PyHighlighter.PY_BRACKETS));
-      result.append(renderList(ContainerUtil.map(unsafeUnionType.getMembers(), this::render)));
-      result.append(styled("]", PyHighlighter.PY_BRACKETS));
-      return result.toFragment();
-    }
-    return renderUnion(ContainerUtil.map(unsafeUnionType.getMembers(), this::render));
+    HtmlBuilder result = new HtmlBuilder();
+    result.append(escaped("UnsafeUnion")); //NON-NLS
+    result.append(styled("[", PyHighlighter.PY_BRACKETS));
+    result.append(renderList(ContainerUtil.map(unsafeUnionType.getMembers(), this::render)));
+    result.append(styled("]", PyHighlighter.PY_BRACKETS));
+    return result.toFragment();
   }
 
   private @NotNull HtmlChunk renderUnionOfLiterals(@NotNull List<PyLiteralType> literals) {

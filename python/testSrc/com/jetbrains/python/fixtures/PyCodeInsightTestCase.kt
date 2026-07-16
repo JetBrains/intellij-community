@@ -44,9 +44,7 @@ import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.sc
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.skipWhitespace
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.skipWhitespaceAndGuides
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionType
-import com.jetbrains.python.psi.types.PyTypeRendererFeature
 import com.jetbrains.python.documentation.PythonDocumentationProvider
-import com.jetbrains.python.fixtures.PyCodeInsightTestCase.Companion.myFixture
 import com.jetbrains.python.fixtures.PyTestAssertionInliner.findCounterparts
 import com.jetbrains.python.fixtures.PyTestAssertionParser.parseAssertions
 import com.jetbrains.python.inspections.PyAbstractClassInspection
@@ -537,7 +535,7 @@ abstract class PyCodeInsightTestCase {
     val containingFile = expr.containingFile
 
     fun renderType(context: TypeEvalContext) =
-      PythonDocumentationProvider.getTypeName(expr.getType(context), context, PyTypeRendererFeature.UNSAFE_UNION)
+      PythonDocumentationProvider.getTypeName(expr.getType(context), context)
 
     val actualTypeCA = renderType(codeAnalysis(project, containingFile).withTracing())
     val actualTypeUI = renderType(userInitiated(project, containingFile).withTracing())
