@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.proxy
 
-import org.gradle.tooling.Failure
 import org.gradle.tooling.events.BinaryPluginIdentifier
 import org.gradle.tooling.events.FailureResult
 import org.gradle.tooling.events.FinishEvent
@@ -13,7 +12,6 @@ import org.gradle.tooling.events.ScriptPluginIdentifier
 import org.gradle.tooling.events.StartEvent
 import org.gradle.tooling.events.StatusEvent
 import org.gradle.tooling.events.SuccessResult
-import org.gradle.tooling.events.problems.ProblemGroup
 import org.gradle.tooling.events.problems.ProblemSummary
 import org.gradle.tooling.events.problems.internal.DefaultProblemSummariesEvent
 import org.gradle.tooling.events.task.TaskExecutionResult
@@ -34,7 +32,6 @@ import org.gradle.tooling.events.test.TestOutputEvent
 import org.gradle.tooling.events.test.TestSkippedResult
 import org.gradle.tooling.events.test.TestStartEvent
 import org.gradle.tooling.events.test.TestSuccessResult
-import org.gradle.tooling.events.test.internal.source.DefaultMethodSource
 import org.gradle.tooling.events.test.internal.source.DefaultOtherSource
 import org.gradle.tooling.events.test.source.ClassSource
 import org.gradle.tooling.events.test.source.ClasspathResourceSource
@@ -42,10 +39,10 @@ import org.gradle.tooling.events.test.source.DirectorySource
 import org.gradle.tooling.events.test.source.FileSource
 import org.gradle.tooling.events.test.source.MethodSource
 import org.gradle.tooling.events.test.source.NoSource
-import org.gradle.tooling.events.test.source.OtherSource
 import org.gradle.tooling.events.test.source.TestSource
 import org.gradle.tooling.model.UnsupportedMethodException
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.InternalBinaryPluginIdentifier
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.InternalFailure
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.InternalFinishEvent
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.InternalOperationDescriptor
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.InternalOperationFailureResult
@@ -106,13 +103,19 @@ class ProgressEventConverter {
 
   private fun convert(summaries: List<ProblemSummary>?): List<ProblemSummary> {
     return summaries?.map { problem ->
-      val problemId = problem.problemId.let { id -> InternalProblemId(id.name, id.displayName, convert(id.group)) }
+      val problemId = problem.problemId.let { id ->
+        InternalProblemId(
+          id.name,
+          id.displayName,
+          InternalProblemGroup(
+            id.group.name,
+            id.group.displayName,
+            id.group.parent?.let { InternalProblemGroup(it) }
+          )
+        )
+      }
       InternalProblemSummary(problemId, problem.count)
     } ?: ArrayList()
-  }
-
-  private fun convert(group: ProblemGroup?): InternalProblemGroup? {
-    return group?.let { InternalProblemGroup(it.name, it.displayName, convert(it.parent)) }
   }
 
   private fun convert(result: TaskOperationResult?): TaskOperationResult? {
@@ -122,7 +125,7 @@ class ProgressEventConverter {
         InternalTaskSuccessResult(startTime, endTime, isUpToDate, isFromCache, taskExecutionDetails())
       }
       is TaskFailureResult -> return result.run {
-        InternalTaskFailureResult(startTime, endTime, failures?.map<Failure?, Failure?>(::toInternalFailure), taskExecutionDetails())
+        InternalTaskFailureResult(startTime, endTime, failures?.map { InternalFailure(it) }, taskExecutionDetails())
       }
       is TaskSkippedResult -> return result.run { InternalTaskSkippedResult(startTime, endTime, skipMessage) }
       else -> throw IllegalArgumentException("Unsupported task operation result ${result.javaClass}")
@@ -134,7 +137,7 @@ class ProgressEventConverter {
       null -> return null
       is TestSuccessResult -> return result.run { InternalTestSuccessResult(startTime, endTime) }
       is TestSkippedResult -> return result.run { InternalTestSkippedResult(startTime, endTime) }
-      is TestFailureResult -> return result.run { InternalTestFailureResult(startTime, endTime, failures?.map<Failure?, Failure?>(::toInternalFailure)) }
+      is TestFailureResult -> return result.run { InternalTestFailureResult(startTime, endTime, failures?.map { InternalFailure(it) }) }
       else -> throw IllegalArgumentException("Unsupported test operation result ${result.javaClass}")
     }
   }
@@ -144,7 +147,7 @@ class ProgressEventConverter {
       null -> return null
       is SuccessResult -> return result.run { InternalOperationSuccessResult(startTime, endTime) }
       is FailureResult -> return result.run {
-        InternalOperationFailureResult(startTime, endTime, failures?.map<Failure?, Failure?>(::toInternalFailure))
+        InternalOperationFailureResult(startTime, endTime, failures?.map { InternalFailure(it) })
       }
       else -> throw IllegalArgumentException("Unsupported operation result ${result.javaClass}")
     }
