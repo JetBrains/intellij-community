@@ -21,6 +21,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.util.coroutines.flow.mapStateIn
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalTitle
@@ -91,6 +92,7 @@ import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessi
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
+import org.jetbrains.plugins.terminal.util.convertNativePathToNioPath
 import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalCursorOffsetChangeEvent
@@ -117,6 +119,7 @@ import java.awt.event.ComponentEvent
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 import java.awt.event.KeyEvent
+import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.coroutines.cancellation.CancellationException
@@ -181,6 +184,8 @@ class TerminalViewImpl(
   override val keyEventsFlow: Flow<TerminalKeyEvent> = mutableKeyEventsFlow.asSharedFlow()
   private val inputInterceptors = ContainerUtil.createLockFreeCopyOnWriteList<TerminalInputInterceptor>()
 
+  override val workingDirectoryFlow: StateFlow<Path?>
+
   override val shellIntegrationDeferred: CompletableDeferred<TerminalShellIntegration> =
     CompletableDeferred(coroutineScope.coroutineContext.job)
   override val startupOptionsDeferred: CompletableDeferred<TerminalStartupOptions> =
@@ -191,6 +196,12 @@ class TerminalViewImpl(
 
   init {
     sessionModel = TerminalSessionModelImpl()
+    workingDirectoryFlow = sessionModel.terminalState.mapStateIn(coroutineScope.childScope("workingDirectoryFlow")) {
+      val directoryString = it.currentDirectory ?: return@mapStateIn null
+      val eelDescriptor = sessionDeferred.getNow()?.eelDescriptor ?: return@mapStateIn null
+      convertNativePathToNioPath(directoryString, eelDescriptor)
+    }
+
     encodingManager = TerminalKeyEncodingManager(sessionModel, coroutineScope.childScope("TerminalKeyEncodingManager"))
 
     terminalInput = TerminalInput(
@@ -750,7 +761,7 @@ class TerminalViewImpl(
 
   override fun toString(): String {
     val commandText = startupOptionsDeferred.getNow()?.let { "${it.shellCommand}" }
-    return "TerminalViewImpl(state=${sessionState.value}, command=$commandText, cwd=${getCurrentDirectory()})"
+    return "TerminalViewImpl(state=${sessionState.value}, command=$commandText, cwd=${workingDirectoryFlow.value})"
   }
 
   private inner class TerminalPanel(initialContent: Editor) : BorderLayoutPanel(), UiDataProvider, TerminalPanelMarker {

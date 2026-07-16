@@ -2,6 +2,7 @@ package com.intellij.terminal.frontend.view
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.platform.eel.annotations.NativePath
 import com.intellij.terminal.TerminalTitle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -16,6 +17,7 @@ import org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet
 import org.jetbrains.plugins.terminal.view.TerminalSendTextBuilder
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
 import java.awt.event.KeyEvent
+import java.nio.file.Path
 import javax.swing.JComponent
 
 @ApiStatus.Internal
@@ -99,6 +101,17 @@ interface TerminalView {
   val keyEventsFlow: Flow<TerminalKeyEvent>
 
   /**
+   * Absolute [Path] of the current working directory of the terminal process.
+   *
+   * When [TerminalShellIntegration] is available, it is used to track the working directory.
+   * Otherwise, the OS-specific heuristics and polling approach will be used.
+   *
+   * Can be null if process is not started yet.
+   * Or if shell integration is not available and OS-specific heuristics fail to determine the working directory of the process.
+   */
+  val workingDirectoryFlow: StateFlow<Path?>
+
+  /**
    * Can be used to get or await the shell integration initialization.
    *
    * Note that **it may never complete** because the shell integration may be not available
@@ -144,7 +157,8 @@ interface TerminalView {
    * Returns null if the shell process is not connected yet to the [TerminalView]
    * or if the initial value is not yet received from the backend.
    */
-  fun getCurrentDirectory(): String?
+  @Deprecated("Use workingDirectoryFlow instead.", ReplaceWith("workingDirectoryFlow.value"))
+  fun getCurrentDirectory(): @NativePath String?
 
   /**
    * A shortcut to schedule sending the specified text to the shell process
