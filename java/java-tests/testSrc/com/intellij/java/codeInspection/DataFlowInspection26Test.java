@@ -38,4 +38,6 @@ public class DataFlowInspection26Test extends DataFlowInspectionTestCase {
   public void testTrackRecordFields() {
     doTest();
   }
+
+  public void testMapGetOrDefaultNullability() { doTest(); }
 }
