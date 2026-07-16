@@ -568,6 +568,20 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
             b: dict[int, str] = {}
         """,
     )
+
+    @Test
+    fun `missing attribute in intersection member`() = test("""
+      class A:
+          ...
+
+      class B:
+          attr: int = 1
+
+      def f(p: B):
+          if isinstance(p, A):
+              expr = p.attr
+      #       └ TYPE int
+      """)
   }
 
   @Nested

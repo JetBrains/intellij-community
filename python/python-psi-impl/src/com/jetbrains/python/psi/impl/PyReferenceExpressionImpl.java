@@ -471,12 +471,12 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                                   @NotNull PyResolveContext resolveContext,
                                                   @Nullable List<ProblemMessage> errors) {
     if (type instanceof PyCompositeType compositeType) {
-      List<@Nullable PyType> types = ContainerUtil.map(compositeType.getMembers(),
-                                                         it -> getTypeOfMember(it, selfType, attrName, anchor, resolveContext, errors));
+      StreamEx<@Nullable PyType> types = StreamEx.of(compositeType.getMembers())
+        .map(it -> getTypeOfMember(it, selfType, attrName, anchor, resolveContext, errors));
       return switch (compositeType) {
-        case PyIntersectionType ignored -> PyIntersectionType.intersection(types);
-        case PyUnsafeUnionType ignored -> PyUnsafeUnionType.unsafeUnion(types);
-        default -> PyUnionType.union(types);
+        case PyIntersectionType ignored -> types.filter(t -> !isUnknown(t)).findFirst().orElse(PyAnyType.getUnknown());
+        case PyUnsafeUnionType ignored -> PyUnsafeUnionType.unsafeUnion(types.toList());
+        default -> PyUnionType.union(types.toList());
       };
     }
 
