@@ -24,7 +24,9 @@ internal class KotlinGoToImplementationCommandCompletionProvider : AbstractGoToI
         val originalClass = if (originalFile == file) {
             containingClass
         } else {
-            PsiTreeUtil.findSameElementInCopy(containingClass, originalFile) ?: return false
+            runCatching {
+                PsiTreeUtil.findSameElementInCopy(containingClass, originalFile)
+            }.getOrNull() ?: return false
         }
 
         if (DirectKotlinClassInheritorsSearch.search(originalClass, originalClass.useScope).findFirst() == null) {
