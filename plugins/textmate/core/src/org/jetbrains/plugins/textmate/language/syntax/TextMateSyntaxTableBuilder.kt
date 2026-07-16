@@ -304,9 +304,9 @@ private class SyntaxRawNodeImpl(
     val children = rawChildren.mapNotNull { child ->
       child.compile(context)
     }.compactList()
-    val result = SyntaxNodeDescriptorImpl(children = children,
-                                          captures = captures,
-                                          stringAttributes = stringAttributes)
+    val result = SyntaxNodeDescriptorImpl.create(children = children,
+                                                 captures = captures,
+                                                 stringAttributes = stringAttributes)
     context.compiledNodes[ruleId] = result
     return result
   }
