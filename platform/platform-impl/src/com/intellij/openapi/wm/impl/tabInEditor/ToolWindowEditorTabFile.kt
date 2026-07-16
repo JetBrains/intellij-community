@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.tabInEditor
 
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.OptionallyIncluded
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.project.Project
@@ -28,6 +29,10 @@ internal val SKIP_EDITOR_TAB_CLOSE_HANDLER: Key<Boolean?> = Key.create("tool.win
  * @param fileType The optional file type.
  * @param toolWindowId The ID of the tool window associated with this file.
  * @param component A UI component that was initially displayed in a tool window tab.
+ * @param preferredFocusedComponent The component that should receive focus when the editor tab is selected.
+ * @param persistInEditorHistory Whether this tab should be persisted in the editor history.
+ * @param content The tool window content represented by this editor tab.
+ * @param onEditorClosed A callback invoked when the editor tab is closed by the regular editor close flow.
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
@@ -41,6 +46,7 @@ open class ToolWindowEditorTabFile(
   internal val content: Content? = null,
   private val onEditorClosed: ((ToolWindowEditorTabFile) -> Unit)? = null,
 ) : LightVirtualFile(editorTitle, fileType, ""), OptionallyIncluded {
+  private val editorLifetime = Disposer.newDisposable("ToolWindowEditorTabFile: $editorTitle")
 
   init {
     putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
@@ -61,6 +67,16 @@ open class ToolWindowEditorTabFile(
       return
     }
     onEditorClosed?.invoke(this)
+  }
+
+  internal fun bindContentToEditorLifetime() {
+    content?.let {
+      Disposer.register(editorLifetime, it)
+    }
+  }
+
+  internal fun releaseEditorLifetime() {
+    Disposer.dispose(editorLifetime)
   }
 
   internal fun withSkippedCloseHandler(action: () -> Unit) {

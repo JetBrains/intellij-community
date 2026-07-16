@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.getPreferredFocusedComponent
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.toolWindow.InternalDecoratorImpl
@@ -42,20 +43,39 @@ class ToolWindowEditorTabTransferController(
     val support = getSupport(toolWindow) ?: return
     val descriptor = support.getEditorTabDescriptor(toolWindow, content) ?: return
 
-    removeContentFromContentManager(content, sourceDecorator)
+    // Keeps the content alive in the gap between disposing its current parent, the content manager,
+    // and creating its new disposing parent, editorLifetime in the ToolWindowEditorTabFile.
+    val transferLifetime = Disposer.newDisposable("ToolWindowContentTransfer:${toolWindow.id}")
+
+    if (sourceDecorator != null &&
+        (sourceDecorator.contentManager.isEmpty || // when the tab is dragging from the tool window to the editor, the manager is already empty
+         (sourceDecorator.contentManager.contentCount == 1 && sourceDecorator.contentManager.getIndexOfContent(content) != -1))) {
+      Disposer.register(transferLifetime, content)
+      sourceDecorator.unsplit(content)
+    }
 
     val file = createToolWindowTabFile(toolWindow, content, descriptor)
     FileEditorManagerEx.getInstanceEx(project).openFile(file, window, FileEditorOpenOptions(requestFocus = true))
+
     if (!FileEditorManager.getInstance(project).isFileOpen(file)) {
-      restoreContentToToolWindow(content, toolWindow, sourceDecorator?.contentManager)
+      restoreContentToToolWindow(content, toolWindow, sourceDecorator?.contentManager.takeIf { !it?.isDisposed!! })
+      file.releaseEditorLifetime()
       file.isValid = false
     }
+    else {
+      file.bindContentToEditorLifetime()
+      content.withTemporaryRemovedFlag {
+        content.manager?.removeContent(content, false)
+      }
+    }
+    Disposer.dispose(transferLifetime)
   }
 
   fun canMoveContentToToolWindow(toolWindow: ToolWindow, file: ToolWindowEditorTabFile): Boolean {
-    if (!ToolWindowEditorTabSupportUtil.isEnabled()) return false
-
-    return file.toolWindowId == toolWindow.id && file.content != null && getSupport(toolWindow) != null
+    return ToolWindowEditorTabSupportUtil.isEnabled() &&
+           file.toolWindowId == toolWindow.id &&
+           file.content != null &&
+           getSupport(toolWindow) != null
   }
 
   fun moveContentToToolWindow(
@@ -74,43 +94,10 @@ class ToolWindowEditorTabTransferController(
     EditorHistoryManager.getInstance(project).removeFile(file)
     project.messageBus.syncPublisher(IdeDocumentHistoryImpl.RecentFileHistoryOrderListener.TOPIC).recentFileRemoved(file)
 
-    file.isValid = false
-
     restoreContentToToolWindow(content, toolWindow, targetDecorator?.contentManager)
-  }
+    file.releaseEditorLifetime()
 
-  private fun removeContentFromContentManager(
-    content: Content,
-    sourceDecorator: InternalDecoratorImpl?,
-  ) {
-    if (sourceDecorator != null && (sourceDecorator.contentManager.isEmpty ||
-                                    (sourceDecorator.contentManager.contentCount == 1 &&
-                                     sourceDecorator.contentManager.getIndexOfContent(content) != -1))) {
-      val temporaryHostDecorator = sourceDecorator.findTemporaryHostDecorator()
-
-      content.withTemporaryRemovedFlag {
-        sourceDecorator.setSplitUnsplitInProgress(true)
-        try {
-          sourceDecorator.contentManager.removeContent(content, false)
-        }
-        finally {
-          sourceDecorator.setSplitUnsplitInProgress(false)
-        }
-      }
-
-      if (temporaryHostDecorator == null) return
-      val temporaryHostContentManager = temporaryHostDecorator.contentManager
-      temporaryHostContentManager.addContent(content, -1)
-      temporaryHostContentManager.setSelectedContent(content, false)
-
-      if (sourceDecorator.contentManager.isEmpty) {
-        sourceDecorator.unsplit(content)
-      }
-    }
-
-    content.withTemporaryRemovedFlag {
-      content.manager?.removeContent(content, false)
-    }
+    file.isValid = false
   }
 
   private fun getSupport(toolWindow: ToolWindow): ToolWindowEditorTabSupport? {
@@ -133,7 +120,7 @@ class ToolWindowEditorTabTransferController(
       content = content,
       onEditorClosed = { file ->
         file.isValid = false
-        content.release()
+        file.releaseEditorLifetime()
       },
     )
   }
@@ -143,7 +130,7 @@ class ToolWindowEditorTabTransferController(
     toolWindow: ToolWindow,
     targetContentManager: ContentManager?,
   ) {
-    content.withTemporaryRemovedFlag {
+    content.withTemporaryRemovedFlagCleared {
       val manager = targetContentManager ?: toolWindow.contentManager
       manager.addContent(content)
       manager.setSelectedContent(content, true)
@@ -151,22 +138,24 @@ class ToolWindowEditorTabTransferController(
   }
 }
 
-private fun InternalDecoratorImpl.findTemporaryHostDecorator(): InternalDecoratorImpl? {
-  val sourceDecorator = this
-
-  return InternalDecoratorImpl.findTopLevelDecorator(sourceDecorator)
-    ?.getOrderedCells()
-    ?.firstOrNull { decorator ->
-      decorator != sourceDecorator && !decorator.contentManager.isEmpty
-    }
-}
-
-private inline fun Content.withTemporaryRemovedFlag(action: () -> Unit) {
-  putUserData(Content.TEMPORARY_REMOVED_KEY, true)
+private inline fun Content.withTemporaryRemovedState(
+  value: Boolean?,
+  action: () -> Unit,
+) {
+  val initialState = getUserData(Content.TEMPORARY_REMOVED_KEY)
+  putUserData(Content.TEMPORARY_REMOVED_KEY, value)
   try {
     action()
   }
   finally {
-    putUserData(Content.TEMPORARY_REMOVED_KEY, null)
+    putUserData(Content.TEMPORARY_REMOVED_KEY, initialState)
   }
+}
+
+private inline fun Content.withTemporaryRemovedFlag(action: () -> Unit) {
+  withTemporaryRemovedState(true, action)
+}
+
+private inline fun Content.withTemporaryRemovedFlagCleared(action: () -> Unit) {
+  withTemporaryRemovedState(null, action)
 }

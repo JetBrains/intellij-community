@@ -41,6 +41,10 @@ internal class MoveToolWindowTabToEditorAction : DumbAwareAction() {
       ?: ToolWindowContextMenuActionBase.findNearestDecorator(e)
 
     project.service<ToolWindowEditorTabTransferController>().moveContentToEditor(toolWindow, content, e.getData(EditorWindow.DATA_KEY), sourceDecorator)
+
+    if (toolWindow.contentManager.contentsRecursively.isEmpty()) {
+      toolWindow.hide()
+    }
   }
 }
 

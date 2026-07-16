@@ -134,7 +134,7 @@ class ToolWindowEditorTabDockContainer private constructor(
     private const val INSTALLED_PROPERTY = "ToolWindowDockContainer.installed"
 
     /*
-     * Creates `ToolWindowEditorTabDockContainer` for a toolWindow
+     * Registers the editor dock container for the given tool window.
      */
     @JvmStatic
     fun install(project: Project, toolWindowId: String, decorator: InternalDecorator) {

@@ -198,18 +198,18 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
 
     val content = myDraggingTab!!.content
 
-    when (curLocation) {
+    val shouldUnsplitSourceIfEmpty = when (curLocation) {
       is DropLocation.ToolWindow -> {
         dropIntoToolWindow(content, sourceDecorator, curLocation.decorator)
+        true
       }
-      is DropLocation.Editor -> {
-        dropIntoEditor(content, sourceDecorator, curLocation.window)
-      }
+      is DropLocation.Editor -> dropIntoEditor(content, sourceDecorator, curLocation.window)
     }
 
-    if (sourceDecorator.contentManager.isEmpty) {
-      sourceDecorator.unsplit(content)
+    if (shouldUnsplitSourceIfEmpty) {
+      unsplitSourceIfEmpty(sourceDecorator, content)
     }
+
     val toolWindow = sourceDecorator.toolWindow
     if (toolWindow.contentManager.contentsRecursively.isEmpty()) {
       toolWindow.hide()
@@ -264,16 +264,23 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     }
   }
 
-  private fun dropIntoEditor(content: Content, sourceDecorator: InternalDecoratorImpl, editorWindow: EditorWindow) {
+  private fun dropIntoEditor(content: Content, sourceDecorator: InternalDecoratorImpl, editorWindow: EditorWindow): Boolean {
     if (ToolWindowEditorTabSupportUtil.isEnabled()) {
       val toolWindow = sourceDecorator.toolWindow
       toolWindow.project.service<ToolWindowEditorTabTransferController>().moveContentToEditor(toolWindow, content, editorWindow, sourceDecorator)
+      return false
     }
-    else {
-      val support = getEditorSupport(sourceDecorator) ?: return
-      // The support should extract the toolWindow-specific component from the content object and open it in the editor.
-      // The lifecycle of the passed content is also under the control of the support after this call.
-      support.openInEditor(content, editorWindow)
+
+    val support = getEditorSupport(sourceDecorator) ?: return false
+    // The support should extract the toolWindow-specific component from the content object and open it in the editor.
+    // The lifecycle of the passed content is also under the control of the support after this call.
+    support.openInEditor(content, editorWindow)
+    return true
+  }
+
+  private fun unsplitSourceIfEmpty(sourceDecorator: InternalDecoratorImpl, content: Content) {
+    if (sourceDecorator.contentManager.isEmpty) {
+      sourceDecorator.unsplit(content)
     }
   }
 
