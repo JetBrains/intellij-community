@@ -5043,6 +5043,7 @@ a:com.intellij.ui.SpeedSearchBase
 - getEnteredPrefix():java.lang.String
 - getSearchField():javax.swing.JTextField
 - hidePopup():V
+- p:isAutoSelectionBySpeedSearch():Z
 - isPopupActive():Z
 - p:onSearchFieldUpdated(java.lang.String):V
 - p:processKeyEvent(java.awt.event.KeyEvent):V
@@ -5209,6 +5210,7 @@ c:com.intellij.ui.TreeSpeedSearch
 - s:installOn(javax.swing.JTree):com.intellij.ui.TreeSpeedSearch
 - setCanExpand(Z):V
 - setupListeners():V
+- p:shouldAutoSelect():Z
 c:com.intellij.ui.TreeTableSpeedSearch
 - com.intellij.ui.SpeedSearchBase
 - s:installOn(com.intellij.ui.treeStructure.treetable.TreeTable):com.intellij.ui.TreeTableSpeedSearch

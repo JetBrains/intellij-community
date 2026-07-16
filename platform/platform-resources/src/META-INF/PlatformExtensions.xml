@@ -1508,6 +1508,9 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <registryKey key="project.view.show.file.indexability" defaultValue="false"
                  description="Shows if a file is indexable"/>
 
+    <registryKey key="ide.speed.search.tree.auto.select" defaultValue="true"
+                 description="When enabled, typing in tree speed search automatically selects the first match. When disabled, only highlights matches and navigation requires arrow keys."/>
+
     <editorFactoryDocumentListener implementation="com.intellij.openapi.command.impl.DocumentUndoProvider"/>
 
     <editorFactoryListener implementation="com.intellij.openapi.editor.impl.EditorLastActionTracker$MyEditorFactoryListener"/>
