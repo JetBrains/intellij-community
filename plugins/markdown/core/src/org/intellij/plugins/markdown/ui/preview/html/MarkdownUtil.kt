@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.Urls
 import com.intellij.util.io.DigestUtil
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.flavours.gfm.GFMElementTypes
@@ -17,23 +18,22 @@ import org.intellij.plugins.markdown.lang.parser.MarkdownParserManager
 import org.intellij.plugins.markdown.ui.preview.html.links.IntelliJImageGeneratingProvider
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import java.io.File
 import java.math.BigInteger
-import java.util.Objects
 
 object MarkdownUtil {
   @ApiStatus.Internal
   fun md5(buffer: String?, @NonNls key: String): String {
     val md5 = DigestUtil.md5()
-    Objects.requireNonNull(md5).update(buffer?.toByteArray(Charsets.UTF_8))
+    md5.update(buffer?.toByteArray(Charsets.UTF_8))
     val code = md5.digest(key.toByteArray(Charsets.UTF_8))
     val bi = BigInteger(code).abs()
     return bi.abs().toString(16)
   }
 
   fun generateMarkdownHtml(file: VirtualFile, text: String, project: Project?): String {
-    val parent = file.parent
-    val baseUri = if (parent != null) File(parent.path).toURI() else null
+    val baseUri = file.parent?.let {
+      Urls.toUriWithoutParameters(Urls.newFromVirtualFile(it))
+    }
 
     val parsedTree = MarkdownParserManager.createMarkdownParser(MarkdownParserManager.FLAVOUR)
       .buildMarkdownTreeFromString(object : BombedCharSequence(text) {
