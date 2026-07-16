@@ -4,7 +4,6 @@
 package org.jetbrains.kotlin.idea.jvm.k2.scratch
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.scratch.definition.KotlinScratchCompilationConfiguration
 import org.jetbrains.kotlin.idea.core.script.shared.definition.jdkSupplier
@@ -50,14 +49,10 @@ class KotlinScratchDefinitionSource(val project: Project) : ScriptDefinitionsSou
         hostConfiguration(defaultJvmScriptingHostConfiguration)
         ide.dependenciesSources(JvmDependency(KotlinArtifacts.kotlinStdlibSources))
         ide.jdkSupplier { virtualFile ->
-            getScriptJdk(virtualFile)
+            val jdkHome = scratchModuleSdkHome(project, virtualFile)
+                ?: ScratchFileOptionsByFile[project, virtualFile].selectedJdkHome
+                ?: defaultScratchJavaHome
+            jdkHome?.takeIf { it.isNotBlank() }?.let(::File)
         }
-    }
-
-    private fun getScriptJdk(virtualFile: VirtualFile): File? {
-        val jdkHome = scratchModuleSdkHome(project, virtualFile)
-            ?: ScratchFileOptionsByFile[project, virtualFile]?.selectedJdkHome
-            ?: defaultScratchJavaHome
-        return jdkHome?.takeIf { it.isNotBlank() }?.let(::File)
     }
 }

@@ -38,7 +38,7 @@ internal class KotlinDslBaseScriptSyncContributor : GradleSyncContributor {
         return GradleKotlinScriptEntityProvider.getInstance(context.project).getUpdatedStorage(
             storage.toBuilder(),
             entitySource,
-            emptyList<GradleScriptModel>(),
+            emptyList(),
             baseScriptDefinitions,
         )
     }
