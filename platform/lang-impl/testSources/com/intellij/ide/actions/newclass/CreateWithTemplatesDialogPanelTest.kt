@@ -17,6 +17,16 @@ class CreateWithTemplatesDialogPanelTest {
     assertEquals("XYZ", panel.enteredName)
   }
 
+  @Test
+  fun `test name field is not updated when user inserted text`() = runInEdtAndWait {
+    val panel = TestDialogPanel()
+    panel.setNameFieldToTemplateNameOnSelection()
+
+    panel.nameField.text = "MyClass"
+    panel.selectTemplate(1)
+    assertEquals("MyClass", panel.enteredName)
+  }
+
   private class TestDialogPanel : CreateWithTemplatesDialogPanel(
     null,
     listOf(
