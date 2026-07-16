@@ -71,11 +71,30 @@ class PyIntersectionType private constructor(members: Collection<PyType?>) : PyC
       return intersection(types.toList())
     }
 
+    /**
+     * Constructs an intersection of the given types.
+     *
+     * If the resulting intersection would be empty, returns [PyTopType], which is the natural colapse of an intersection.
+     */
     @JvmStatic
     fun intersection(types: Collection<PyType?>): PyType? {
+      return intersectionOrDefault(types, PyTopType)
+    }
+
+    /**
+     * Constructs an intersection of the given types, falling back to Unknown instead of [PyTopType].
+     *
+     * An intersection of no types is the type that constrains nothing, i.e. the top type.
+     */
+    @JvmStatic
+    fun intersectionOrUnknown(types: Collection<PyType?>): PyType? {
+      return intersectionOrDefault(types, PyAnyType.unknown)
+    }
+
+    private fun intersectionOrDefault(types: Collection<PyType?>, defaultResult: PyType?): PyType? {
       val newMembers = buildSet {
         for (member in types) {
-          if (member is PyNeverType) return@intersection member
+          if (member is PyNeverType) return member
           if (member is PyIntersectionType) {
             addAll(member.members)
           }
@@ -84,7 +103,11 @@ class PyIntersectionType private constructor(members: Collection<PyType?>) : PyC
           }
         }
       }
-      return if (newMembers.size > 1) PyIntersectionType(newMembers) else newMembers.firstOrNull()
+      return when {
+        newMembers.size > 1 -> PyIntersectionType(newMembers)
+        newMembers.isEmpty() -> defaultResult
+        else -> newMembers.single()
+      }
     }
   }
 }

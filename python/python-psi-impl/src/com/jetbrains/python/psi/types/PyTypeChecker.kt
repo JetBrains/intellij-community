@@ -320,6 +320,12 @@ object PyTypeChecker {
       }
     }
 
+    // `PyTopType` is the top type `object`: every type is assignable to it, just like `matchObject` accepts
+    // any `actual` when `expected` is the `object` class.
+    if (expected is PyTopType) {
+      return Optional.of(true)
+    }
+
     if (actual is PyNarrowedType && expected is PyNarrowedType) {
       return match(expected, actual, context)
     }

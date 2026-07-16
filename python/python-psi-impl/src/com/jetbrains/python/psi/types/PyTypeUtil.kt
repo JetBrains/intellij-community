@@ -388,8 +388,7 @@ object PyTypeUtil {
    */
   private fun PyType?.rebuildLike(members: List<PyType?>): PyType? =
     when (this) {
-      // TODO: use PyTopType when it is introduced PY-90942
-      is PyIntersectionType -> if (members.isEmpty()) PyAnyType.unknown else PyIntersectionType.intersection(members)
+      is PyIntersectionType -> PyIntersectionType.intersection(members)
       is PyUnsafeUnionType -> if (members.isEmpty()) PyNeverType.NEVER else PyUnsafeUnionType.unsafeUnion(members)
       else -> PyUnionType.unionOrNever(members)
     }
