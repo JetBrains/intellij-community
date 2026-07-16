@@ -6,6 +6,9 @@ import com.intellij.build.events.BuildEvent
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 
+/**
+ * Receives [BuildEvent]s and forwards them to [BuildProgressListener]s.
+ */
 @NonExtendable
 interface BuildOutputMulticaster {
 

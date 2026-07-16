@@ -3,8 +3,8 @@ package com.intellij.build.output
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.output.BuildOutputMulticaster.Companion.asMulticaster
-import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.util.NlsSafe
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.Closeable
@@ -14,33 +14,38 @@ import java.util.concurrent.CompletableFuture
 /**
  * @author Vladislav.Soroka
  */
+@Suppress("RAW_RUN_BLOCKING")
 open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
   buildId: Any,
-  parentEventId: Any,
+  private val parentEventId: Any,
   buildProgressListener: BuildProgressListener,
   parsers: List<BuildOutputParser>,
   pushBackBufferSize: Int = 50,
   channelBufferCapacity: Int = 64,
 ) : BuildOutputInstantReader, Closeable, Appendable {
 
-  private val dispatcher = BuildOutputParserDispatcherImpl(
-    parentEventId, parsers, buildProgressListener.asMulticaster(buildId), pushBackBufferSize, channelBufferCapacity
-  )
+  private val multicaster = buildProgressListener.asMulticaster(buildId)
+  private val dispatcher = BuildOutputParserDispatcherImpl(parentEventId, parsers, multicaster, channelBufferCapacity, pushBackBufferSize)
 
   override fun getParentEventId(): Any =
-    dispatcher.parentEventId
+    parentEventId
 
-  override fun append(csq: CharSequence): BuildOutputInstantReaderImpl =
-    apply { dispatcher.notifyTextAvailable(csq, ProcessOutputType.STDOUT) }
+  override fun append(csq: CharSequence): BuildOutputInstantReaderImpl = apply {
+    runBlocking {
+      dispatcher.notifyTextAvailable(csq)
+    }
+  }
 
   override fun append(csq: CharSequence, start: Int, end: Int): BuildOutputInstantReaderImpl =
-    apply { dispatcher.notifyTextAvailable(csq.subSequence(start, end), ProcessOutputType.STDOUT) }
+    append(csq.subSequence(start, end))
 
   override fun append(c: Char): BuildOutputInstantReaderImpl =
-    apply { dispatcher.notifyTextAvailable(c.toString(), ProcessOutputType.STDOUT) }
+    append(c.toString())
 
   override fun close() {
-    dispatcher.close()
+    runBlocking {
+      dispatcher.close()
+    }
   }
 
   @Deprecated("Use close() instead", ReplaceWith("close()"))
@@ -50,14 +55,15 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
   }
 
   override fun readLine(): @NlsSafe String? =
-    dispatcher.readLine()
+    runBlocking {
+      dispatcher.reader.readLine()
+    }
 
   override fun pushBack(): Unit =
-    dispatcher.pushBack(1)
+    dispatcher.reader.pushBack(1)
 
   override fun pushBack(numberOfLines: Int): Unit =
-    dispatcher.pushBack(numberOfLines)
-
+    dispatcher.reader.pushBack(numberOfLines)
 }
 
 @Internal
