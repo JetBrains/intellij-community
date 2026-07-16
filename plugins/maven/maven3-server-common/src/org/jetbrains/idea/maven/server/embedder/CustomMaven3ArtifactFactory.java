@@ -4,7 +4,9 @@ package org.jetbrains.idea.maven.server.embedder;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.DefaultArtifactFactory;
 import org.apache.maven.artifact.versioning.VersionRange;
+import org.eclipse.sisu.Priority;
 
+@Priority(Integer.MAX_VALUE)
 public class CustomMaven3ArtifactFactory extends DefaultArtifactFactory {
   private static final VersionRange UNKNOWN_VERSION_RANGE = VersionRange.createFromVersion("unknown");
 
