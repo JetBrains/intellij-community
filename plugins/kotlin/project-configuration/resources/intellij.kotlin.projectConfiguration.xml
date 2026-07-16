@@ -54,4 +54,36 @@
     <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
   </projectListeners>
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.buildSystemDependencyManager"
+                    interface="org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.compilerPluginConfigurator"
+            interface="org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator"
+            dynamic="true"/>
+    <!--
+   Core project configuration is also packaged into Kotlin Language Server, where VCS UI is intentionally absent.
+   This EP lets the full Kotlin plugin contribute the VCS-backed "view applied changes" dialog from a separate content module.
+     -->
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.configuratorChangesViewer"
+                    interface="org.jetbrains.kotlin.idea.configuration.KotlinConfiguratorChangesViewer"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.libraryVersionProvider"
+                    interface="org.jetbrains.kotlin.idea.configuration.KotlinLibraryVersionProvider"
+                    dynamic="true"/>
+    <extensionPoint
+      qualifiedName="org.jetbrains.kotlin.projectConfigurator"
+      interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator"
+      dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.projectConfigurator"
+            interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.projectPostConfigurator"
+            interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectPostConfigurator"
+            dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

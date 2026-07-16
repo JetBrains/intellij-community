@@ -17,7 +17,6 @@
   <xi:include href="parcelize.k2.xml"/>
   <xi:include href="scripting-v1.xml"/>
   <xi:include href="native.xml"/>
-  <xi:include href="extensions.xml"/>
 
   <xi:include href="ultimate-plugin.k2.xml">
     <xi:fallback/>
@@ -26,16 +25,6 @@
   <xi:include href="command-completion-k2.xml">
     <xi:fallback/>
   </xi:include>
-
-  <extensionPoints>
-    <!--
-      Core project configuration is also packaged into Kotlin Language Server, where VCS UI is intentionally absent.
-      This EP lets the full Kotlin plugin contribute the VCS-backed "view applied changes" dialog from a separate content module.
-    -->
-    <extensionPoint qualifiedName="org.jetbrains.kotlin.configuratorChangesViewer"
-                    interface="org.jetbrains.kotlin.idea.configuration.KotlinConfiguratorChangesViewer"
-                    dynamic="true"/>
-  </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <bundledFirCompilerPluginProvider
@@ -77,12 +66,6 @@
 
     <!-- -->
   </extensions>
-
-  <extensionPoints>
-    <extensionPoint qualifiedName="org.jetbrains.kotlin.resolveScopeEnlarger"
-                    interface="org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarger"/>
-  </extensionPoints>
-
 
   <extensions defaultExtensionNs="com.intellij">
     <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.JSLibraryType"/>

@@ -3,36 +3,12 @@
 
   <extensionPoints>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.idea.codeInsight.unambiguousImports"
-            interface="org.jetbrains.kotlin.idea.codeInsight.KotlinAutoImportsFilter"
-            dynamic="true"/>
-    <extensionPoint
-            qualifiedName="com.intellij.kotlin.autoImportCallableWeigher"
-            interface="org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinAutoImportCallableWeigher"
-            dynamic="true"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.pluginUpdateVerifier"
             interface="org.jetbrains.kotlin.idea.update.PluginUpdateVerifier"
             dynamic="true"/>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.projectConfigurator"
-            interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator"
-            dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.projectPostConfigurator"
-            interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectPostConfigurator"
-            dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.compilerPluginConfigurator"
-            interface="org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator"
-            dynamic="true"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.kotlinCompilerVersionProvider"
             interface="org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerVersionProvider"
-            dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.newFileHook"
-            interface="org.jetbrains.kotlin.idea.base.projectStructure.NewKotlinFileHook"
             dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.facetValidatorCreator"
@@ -72,13 +48,6 @@
             qualifiedName="org.jetbrains.kotlin.j2kPostprocessorExtension"
             interface="org.jetbrains.kotlin.j2k.J2kPostprocessorExtension"
             dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.kotlin.buildSystemDependencyManager"
-                    interface="org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager"
-                    area="IDEA_PROJECT"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.kotlin.libraryVersionProvider"
-                    interface="org.jetbrains.kotlin.idea.configuration.KotlinLibraryVersionProvider"
-                    dynamic="true"/>
 
     <extensionPoint qualifiedName="org.jetbrains.kotlin.bundledFirCompilerPluginProvider"
                     interface="org.jetbrains.kotlin.idea.fir.extensions.KotlinBundledFirCompilerPluginProvider"
@@ -92,21 +61,6 @@
                     interface="org.jetbrains.kotlin.idea.base.psi.extensions.ImplementationDetailClassNameCheckerProvider"
                     dynamic="true"/>
 
-    <extensionPoint qualifiedName="org.jetbrains.kotlin.forwardDeclarationPolicyProvider"
-                    interface="org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.ForwardDeclarationPolicyProvider"
-                    dynamic="true"/>
-
-    <extensionPoint qualifiedName="org.jetbrains.kotlin.kaDanglingFileResolutionModeProvider"
-                    interface="org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.KaDanglingFileResolutionModeProvider"
-                    dynamic="true"/>
-
-    <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.kotlinRunLineMarkerHider"
-                    interface="org.jetbrains.kotlin.idea.codeInsight.KotlinRunLineMarkerHider"
-                    dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.classImportFilter"
-            interface="org.jetbrains.kotlin.idea.util.ClassImportFilter"
-            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -142,33 +96,17 @@
 
     <stacktrace.fold substring="at kotlinx.coroutines."/>
 
-    <referenceImporter
-            id="KotlinReferenceImporter"
-            implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporter"/>
-
     <lang.elementManipulator
             forClass="org.jetbrains.kotlin.psi.KtStringTemplateExpression"
             implementationClass="org.jetbrains.kotlin.psi.psiUtil.KtStringTemplateExpressionManipulator"/>
 
     <annotationSupport language="kotlin" implementationClass="com.intellij.psi.impl.source.tree.java.JavaAnnotationSupport"/>
 
-
     <advancedSetting
             id="kotlin.enable.autoconfiguration"
             default="true"
             groupKey="advanced.settings.kotlin"
             bundle="messages.KotlinBundle"/>
-
-    <registryKey
-            key="kotlin.code-vision.usages"
-            description="Enable Code-Vision usages search"
-            defaultValue="false"
-            restartRequired="false"/>
-    <registryKey
-            key="kotlin.code-vision.inheritors"
-            description="Enable Code-Vision inheritors search"
-            defaultValue="false"
-            restartRequired="false"/>
     <registryKey
             key="kotlin.disable.auto.completion.inside.expression"
             description="Disables auto-completion inside expressions"
@@ -218,14 +156,8 @@
   </extensions>
 
   <!-- Templates -->
-  <extensions defaultExtensionNs="com.intellij">
-    <defaultTemplatePropertiesProvider
-            order="last"
-            implementation="org.jetbrains.kotlin.idea.actions.KotlinDefaultTemplatePropertiesProvider"
-    />
-  </extensions>
 
-    <extensions defaultExtensionNs="org.jetbrains.kotlin">
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <pluginUpdateVerifier implementation="org.jetbrains.kotlin.idea.update.GooglePluginUpdateVerifier"/>
 
     </extensions>

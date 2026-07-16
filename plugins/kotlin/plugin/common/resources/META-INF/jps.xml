@@ -5,9 +5,6 @@
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idePlatformKind"
             interface="org.jetbrains.kotlin.platform.IdePlatformKind"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.idePlatformKindTooling"
-            interface="org.jetbrains.kotlin.idea.base.codeInsight.tooling.IdePlatformKindTooling"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

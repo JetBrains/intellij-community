@@ -16,6 +16,21 @@
             qualifiedName="org.jetbrains.kotlin.binaryExtension"
             interface="org.jetbrains.kotlin.idea.base.projectStructure.KotlinBinaryExtension"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.binaryExtension"
+            interface="org.jetbrains.kotlin.idea.base.projectStructure.KotlinBinaryExtension"
+            dynamic="true"/>
+    <extensionPoint
+      qualifiedName="org.jetbrains.kotlin.idea.base.externalSystem.kotlinBuildSystemFacade"
+      interface="org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemFacade"
+      dynamic="true"
+      />
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.newFileHook"
+            interface="org.jetbrains.kotlin.idea.base.projectStructure.NewKotlinFileHook"
+            dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.resolveScopeEnlarger"
+                    interface="org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarger"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectStructure.sourceRootEditHandler implementation="org.jetbrains.kotlin.idea.roots.ui.KotlinModuleSourceRootEditHandler$TestResource"/>

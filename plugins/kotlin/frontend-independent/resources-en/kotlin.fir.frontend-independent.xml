@@ -18,4 +18,27 @@
     <module name="intellij.kotlin.refactorings.base"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.codeInsight.unambiguousImports"
+            interface="org.jetbrains.kotlin.idea.codeInsight.KotlinAutoImportsFilter"
+            dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.kotlinRunLineMarkerHider"
+                    interface="org.jetbrains.kotlin.idea.codeInsight.KotlinRunLineMarkerHider"
+                    dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <defaultTemplatePropertiesProvider
+            order="last"
+            implementation="org.jetbrains.kotlin.idea.actions.KotlinDefaultTemplatePropertiesProvider"
+    />
+    <defaultTemplatePropertiesProvider
+            order="last"
+            implementation="org.jetbrains.kotlin.idea.actions.KotlinDefaultTemplatePropertiesProvider"
+    />
+    <referenceImporter
+            id="KotlinReferenceImporter"
+            implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporter"/>
+  </extensions>
+
 </idea-plugin>
