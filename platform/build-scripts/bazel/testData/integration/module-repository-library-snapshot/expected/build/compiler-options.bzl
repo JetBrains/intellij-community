@@ -43,6 +43,7 @@ def create_kotlinc_options(
         x_skip_prerelease_check = False,
         x_strict_java_nullability_assertions = False,
         x_wasm_attach_js_exception = False,
+        x_wasm_generate_closed_world_multimodule = False,
         x_wasm_kclass_fqn = False,
         x_when_guards = False,
         x_x_language = ["+AllowEagerSupertypeAccessibilityChecks"]):
@@ -77,6 +78,7 @@ def create_kotlinc_options(
         x_skip_prerelease_check = x_skip_prerelease_check,
         x_strict_java_nullability_assertions = x_strict_java_nullability_assertions,
         x_wasm_attach_js_exception = x_wasm_attach_js_exception,
+        x_wasm_generate_closed_world_multimodule = x_wasm_generate_closed_world_multimodule,
         x_wasm_kclass_fqn = x_wasm_kclass_fqn,
         x_when_guards = x_when_guards,
         x_xlanguage = x_x_language,

@@ -8,6 +8,7 @@ create_kotlinc_options(
     x_context_parameters = True,
     x_jvm_default = "all-compatibility",
     x_lambdas = "class",
+    x_wasm_kclass_fqn = True,
 )
 
 jvm_provided_library(

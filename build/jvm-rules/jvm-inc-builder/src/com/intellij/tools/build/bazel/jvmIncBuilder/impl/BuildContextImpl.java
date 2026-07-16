@@ -262,6 +262,12 @@ public class BuildContextImpl implements BuildContext {
     if (CLFlags.X_WASM_ATTACH_JS_EXCEPTION.isFlagSet(flags)) {
       options.add("-Xwasm-attach-js-exception");
     }
+    if (CLFlags.X_WASM_GENERATE_CLOSED_WORLD_MULTIMODULE.isFlagSet(flags)) {
+      options.add("-Xwasm-generate-closed-world-multimodule");
+    }
+    if (CLFlags.X_WASM_KCLASS_FQN.isFlagSet(flags)) {
+      options.add("-Xwasm-kclass-fqn");
+    }
     for (String flag : CLFlags.X_XLANGUAGE.getValue(flags)) {
       options.add("-XXLanguage:" + flag);
     }

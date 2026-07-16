@@ -1289,6 +1289,14 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
   if (mergedCompilerArguments.errors?.unknownExtraFlags?.contains("-Xwasm-attach-js-exception") == true) {
     options.put("x_wasm_attach_js_exception", true)
   }
+  //x_wasm_generate_closed_world_multimodule
+  if (mergedCompilerArguments.errors?.unknownExtraFlags?.contains("-Xwasm-generate-closed-world-multimodule") == true) {
+    options.put("x_wasm_generate_closed_world_multimodule", true)
+  }
+  //x_wasm_kclass_fqn
+  if (mergedCompilerArguments.errors?.unknownExtraFlags?.contains("-Xwasm-kclass-fqn") == true) {
+    options.put("x_wasm_kclass_fqn", true)
+  }
   //x_when_guards
   handleArgument(K2JVMCompilerArguments::whenGuards) {
     if (it) {
@@ -1311,7 +1319,7 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
     mergedCompilerArguments,
     handledArguments = handledArguments + setOf("jvmTarget", "pluginClasspaths"),
     allowedInternalArguments = allowedInternalXXLanguage,
-    allowedUnknownExtraFlags = setOf("-Xallow-result-return-type", "-Xstrict-java-nullability-assertions", "-Xwasm-attach-js-exception", "-Xwasm-kclass-fqn"),
+    allowedUnknownExtraFlags = setOf("-Xallow-result-return-type", "-Xstrict-java-nullability-assertions", "-Xwasm-attach-js-exception", "-Xwasm-generate-closed-world-multimodule", "-Xwasm-kclass-fqn"),
   )
 
   if (options.isEmpty()) {
