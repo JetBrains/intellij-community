@@ -9,7 +9,7 @@
 # Limit the server memory usage as per:
 # https://youtrack.jetbrains.com/issue/IJI-3103#focus=Comments-27-12862178.0-0
 # https://youtrack.jetbrains.com/issue/MRI-4425/Check-Bazel-9.1.0-server-memory-consumption#focus=Comments-27-13796597.0-0
-startup --host_jvm_args=-Xmx10g
+startup --host_jvm_args=-Xmx12g
 
 # Disable implicit imports, remove when migrated to Bazel 9
 # see https://blog.bazel.build/2026/01/20/bazel-9.html
