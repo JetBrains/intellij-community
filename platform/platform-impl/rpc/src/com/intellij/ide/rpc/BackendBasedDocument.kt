@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import fleet.rpc.client.RpcClientDisconnectedException
 import fleet.util.UID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -95,6 +96,9 @@ private suspend fun Document.bindToBackend(
   var backendDocumentId: BackendDocumentId? = null
   try {
     backendDocumentId = backendDocumentIdProvider(frontendDocumentId)
+  }
+  catch (_: RpcClientDisconnectedException) {
+    // Binding can race with backend/frontend disconnect; the frontend id is unregistered below.
   }
   finally {
     if (backendDocumentId == null) {
