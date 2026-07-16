@@ -50,7 +50,7 @@ private val positionResolver = DebuggerPositionResolverImpl()
  * Tracks chain detection state per debug session as a shared re-computable flow (existence + traceability from the current execution position).
  */
 @Service(Service.Level.PROJECT)
-class ChainDetectionStateManager(private val project: Project, private val cs: CoroutineScope) {
+class ChainDetectionStateManager(private val cs: CoroutineScope) {
   private val sessionStates = ConcurrentHashMap<XDebugSession, SessionState>()
 
   fun chainStateFlow(session: XDebugSession): Flow<ChainDetectionState> = sessionState(session).status
@@ -74,7 +74,7 @@ class ChainDetectionStateManager(private val project: Project, private val cs: C
   }
 
   internal fun onProcessStopped(session: XDebugSession) {
-    sessionStates.remove(session)?.dispose()
+    sessionStates.remove(session)?.cancel()
   }
 
   private fun sessionState(session: XDebugSession): SessionState =
@@ -114,7 +114,7 @@ class ChainDetectionStateManager(private val project: Project, private val cs: C
       }
       .stateIn(scope, SharingStarted.WhileSubscribed(), ChainDetectionState(null, null, ChainStatus.Computing))
 
-    fun dispose() {
+    fun cancel() {
       scope.cancel()
     }
 
