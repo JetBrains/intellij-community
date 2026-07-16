@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
+import com.intellij.platform.backend.workspace.impl.VirtualFileUrlWithVirtualFile
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import org.jetbrains.annotations.ApiStatus
@@ -11,7 +12,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 @ApiStatus.Internal
 class VirtualFileUrlBridge(id: Int, manager: VirtualFileUrlManagerImpl) :
-  VirtualFileUrlImpl(id, manager), VirtualFilePointer {
+  VirtualFileUrlImpl(id, manager), VirtualFilePointer, VirtualFileUrlWithVirtualFile {
 
   private val cachedFile: AtomicReference<Pair<VirtualFile?, Long>> = AtomicReference(Pair(null, -1))
 
@@ -29,6 +30,10 @@ class VirtualFileUrlBridge(id: Int, manager: VirtualFileUrlManagerImpl) :
   }
 
   override fun hashCode(): Int = id
+
+  override fun cacheVirtualFile(file: VirtualFile) {
+    cachedFile.set(Pair(file, VirtualFileManager.getInstance().modificationCount))
+  }
 
   private fun findVirtualFile(): VirtualFile? {
     val fileManager = VirtualFileManager.getInstance()
