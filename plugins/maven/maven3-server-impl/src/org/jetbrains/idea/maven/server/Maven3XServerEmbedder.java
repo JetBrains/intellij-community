@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
+import com.google.inject.AbstractModule;
 import com.intellij.maven.server.telemetry.MavenServerOpenTelemetry;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -60,6 +61,9 @@ import org.apache.maven.settings.building.SettingsBuilder;
 import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.classworlds.ClassWorld;
+import org.codehaus.plexus.classworlds.realm.ClassRealm;
+import org.codehaus.plexus.classworlds.realm.DuplicateRealmException;
+import org.codehaus.plexus.classworlds.realm.NoSuchRealmException;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.logging.BaseLoggerManager;
 import org.codehaus.plexus.logging.Logger;
@@ -101,6 +105,8 @@ import org.jetbrains.idea.maven.server.utils.Maven3SettingsBuilder;
 import org.jetbrains.idea.maven.server.utils.Maven3XProjectResolver;
 
 import java.io.File;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -112,6 +118,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -135,6 +142,7 @@ import java.util.Set;
  * org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2 <-> org.apache.maven.model.interpolation.StringSearchModelInterpolator
  * org.jetbrains.idea.maven.server.embedder.CustomModelValidator <-> org.apache.maven.model.validation.ModelValidator
  */
+@SuppressWarnings("ClassOverriddenAtRuntime")
 public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   private final @NotNull DefaultPlexusContainer myContainer;
@@ -152,6 +160,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   protected final @NotNull Maven3ImporterSpy myImporterSpy;
 
   protected final @NotNull MavenEmbedderSettings myEmbedderSettings;
+
+  private static final String MAVEN_JSR330_VERSION = "3.10.0-rc-1";
+
+  private boolean myComponentsRegistered;
 
   public Maven3XServerEmbedder(MavenEmbedderSettings settings) {
     super(settings.getSettings());
@@ -425,13 +437,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   protected void customizeComponents(@Nullable MavenWorkspaceMap workspaceMap) {
     try {
-      // replace some plexus components
-      if (VersionComparatorUtil.compare("3.7.0-SNAPSHOT", getMavenVersion()) < 0) {
-        myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
-      }
-      myContainer.addComponent(getComponent(ArtifactResolver.class, "ide"), ArtifactResolver.ROLE);
-      myContainer.addComponent(getComponent(RepositoryMetadataManager.class, "ide"), RepositoryMetadataManager.class.getName());
-      myContainer.addComponent(getComponent(PluginDescriptorCache.class, "ide"), PluginDescriptorCache.class.getName());
+      registerCustomComponents();
       ModelInterpolator modelInterpolator = createAndPutInterpolator(myContainer);
 
       ModelValidator modelValidator;
@@ -473,6 +479,108 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     RepositoryMetadataManager repositoryMetadataManager = getComponent(RepositoryMetadataManager.class);
     if (repositoryMetadataManager instanceof CustomMaven3RepositoryMetadataManager) {
       ((CustomMaven3RepositoryMetadataManager)repositoryMetadataManager).reset();
+    }
+  }
+
+
+  private void registerCustomComponents() {
+    if (myComponentsRegistered) return;
+    myComponentsRegistered = true;
+
+    Map<Class<?>, Object> overridesByRole = new LinkedHashMap<>();
+    // replace some plexus components
+    if (VersionComparatorUtil.compare("3.7.0-SNAPSHOT", getMavenVersion()) < 0) {
+      overridesByRole.put(ArtifactFactory.class, getComponent(ArtifactFactory.class, "ide"));
+    }
+    overridesByRole.put(ArtifactResolver.class, getComponent(ArtifactResolver.class, "ide"));
+    overridesByRole.put(RepositoryMetadataManager.class, getComponent(RepositoryMetadataManager.class, "ide"));
+    overridesByRole.put(PluginDescriptorCache.class, getComponent(PluginDescriptorCache.class, "ide"));
+
+    registerComponents(overridesByRole);
+  }
+
+  private void registerComponents(@NotNull Map<Class<?>, Object> overridesByRole) {
+    if (overridesByRole.isEmpty()) return;
+
+    if (isJsr330Container()) {
+      registerRealmModule(overridesByRole);
+    }
+    else {
+      for (Map.Entry<Class<?>, Object> entry : overridesByRole.entrySet()) {
+        myContainer.addComponent(entry.getValue(), entry.getKey().getName());
+      }
+    }
+  }
+
+  private void registerRealmModule(@NotNull Map<Class<?>, Object> overridesByRole) {
+    Map<Class<?>, Object> sharedInjectorOverrides = new LinkedHashMap<>();
+    for (Map.Entry<Class<?>, Object> entry : overridesByRole.entrySet()) {
+      if (hasInjectedMembers(entry.getValue().getClass())) {
+        sharedInjectorOverrides.put(entry.getKey(), entry.getValue());
+      }
+      else {
+        myContainer.addComponent(entry.getValue(), entry.getKey().getName());
+      }
+    }
+
+    registerSharedInjectorOverrides("intellij-maven-ide-components", sharedInjectorOverrides);
+  }
+
+
+  protected void registerSharedInjectorOverrides(@NotNull String realmId, @NotNull Map<Class<?>, Object> overrides) {
+    if (overrides.isEmpty()) return;
+    ClassRealm realm = createComponentsRealm(realmId);
+    myContainer.discoverComponents(realm, new AbstractModule() {
+      @SuppressWarnings({"unchecked", "rawtypes"})
+      @Override
+      protected void configure() {
+        for (Map.Entry<Class<?>, Object> entry : overrides.entrySet()) {
+          bind((Class)entry.getKey()).toInstance(entry.getValue());
+        }
+      }
+    });
+  }
+
+  private static boolean hasInjectedMembers(@NotNull Class<?> type) {
+    for (Class<?> c = type; c != null && c != Object.class; c = c.getSuperclass()) {
+      for (Field field : c.getDeclaredFields()) {
+        if (isInjectAnnotated(field)) return true;
+      }
+      for (Method method : c.getDeclaredMethods()) {
+        if (isInjectAnnotated(method)) return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isInjectAnnotated(@NotNull AnnotatedElement element) {
+    for (Annotation annotation : element.getDeclaredAnnotations()) {
+      String name = annotation.annotationType().getName();
+      if (name.equals("javax.inject.Inject") ||
+          name.equals("jakarta.inject.Inject") ||
+          name.equals("com.google.inject.Inject")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  protected boolean isJsr330Container() {
+    return VersionComparatorUtil.compare(getMavenVersion(), MAVEN_JSR330_VERSION) >= 0;
+  }
+
+  @SuppressWarnings("ClassOverriddenAtRuntime")
+  private @NotNull ClassRealm createComponentsRealm(@NotNull String realmId) {
+    try {
+      return myContainer.getContainerRealm().createChildRealm(realmId);
+    }
+    catch (DuplicateRealmException e) {
+      try {
+        return myContainer.getClassWorld().getRealm(realmId);
+      }
+      catch (NoSuchRealmException ex) {
+        throw new RuntimeException(ex);
+      }
     }
   }
 

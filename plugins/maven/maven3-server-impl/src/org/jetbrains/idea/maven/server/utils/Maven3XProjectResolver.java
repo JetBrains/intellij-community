@@ -179,17 +179,13 @@ public class Maven3XProjectResolver {
     ArrayList<MavenServerExecutionResult> executionResults = new ArrayList<>();
     try {
       MavenSession mavenSession = myEmbedder.getComponent(LegacySupport.class).getSession();
-      RepositorySystemSession repositorySession = myEmbedder.getComponent(LegacySupport.class).getRepositorySession();
-      if (repositorySession instanceof DefaultRepositorySystemSession) {
-        DefaultRepositorySystemSession session = (DefaultRepositorySystemSession)repositorySession;
-        MavenServerConsoleIndicatorImpl indicator = myLongRunningTask.getIndicator();
-        myImporterSpy.setIndicator(indicator);
-        session.setTransferListener(new Maven3TransferListenerAdapter(indicator));
-
-        setupWorkspaceReader(session);
-
-        session.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true);
-        session.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
+      RepositorySystemSession rawSession = myEmbedder.getComponent(LegacySupport.class).getRepositorySession();
+      RepositorySystemSession repositorySession;
+      if (rawSession instanceof DefaultRepositorySystemSession) {
+        repositorySession = createRepositorySessionForMavenResolverV1((DefaultRepositorySystemSession)rawSession);
+      }
+      else {
+        repositorySession = createRepositorySessionForMavenResolverV2_x(request, rawSession);
       }
 
       List<ProjectBuildingResult> buildingResults = myTelemetry.callWithSpan("getProjectBuildingResults " + files.size(), () ->
@@ -266,6 +262,23 @@ public class Maven3XProjectResolver {
     return executionResults;
   }
 
+  private @NotNull RepositorySystemSession createRepositorySessionForMavenResolverV2_x(MavenExecutionRequest request, RepositorySystemSession rawSession) {
+    RepositorySystemSession repositorySession;
+    DefaultRepositorySystemSession session = new DefaultRepositorySystemSession(rawSession);
+    customizeRepositorySession(session);
+    request.getProjectBuildingRequest().setRepositorySession(session);
+    repositorySession = session;
+    return repositorySession;
+  }
+
+  private @NotNull RepositorySystemSession createRepositorySessionForMavenResolverV1(DefaultRepositorySystemSession rawSession) {
+    RepositorySystemSession repositorySession;
+    DefaultRepositorySystemSession session = rawSession;
+    customizeRepositorySession(session);
+    repositorySession = session;
+    return repositorySession;
+  }
+
   private boolean transitiveDependenciesChanged(@NotNull File pomFile,
                                                 String newDependencyHash,
                                                 Map<File, String> fileToNewDependencyHash) {
@@ -298,6 +311,17 @@ public class Maven3XProjectResolver {
         }
       ));
     return fileToNewDependencyHash;
+  }
+
+  private void customizeRepositorySession(@NotNull DefaultRepositorySystemSession session) {
+    MavenServerConsoleIndicatorImpl indicator = myLongRunningTask.getIndicator();
+    myImporterSpy.setIndicator(indicator);
+    session.setTransferListener(new Maven3TransferListenerAdapter(indicator));
+
+    setupWorkspaceReader(session);
+
+    session.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true);
+    session.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
   }
 
   protected void setupWorkspaceReader(DefaultRepositorySystemSession session) {
