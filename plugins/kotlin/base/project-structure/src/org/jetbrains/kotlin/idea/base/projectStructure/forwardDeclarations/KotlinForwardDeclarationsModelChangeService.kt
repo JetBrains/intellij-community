@@ -69,25 +69,24 @@ internal class KotlinForwardDeclarationsModelChangeService(private val project: 
         }
     }
 
-    private fun cleanUp(fwdDeclarationChanges: List<EntityChange<KotlinForwardDeclarationsWorkspaceEntity>>) {
+    private suspend fun cleanUp(fwdDeclarationChanges: List<EntityChange<KotlinForwardDeclarationsWorkspaceEntity>>) {
         val roots = fwdDeclarationChanges
             .flatMap { it.oldEntity?.forwardDeclarationRoots.orEmpty() }
-            .map { Path.of(it.presentableUrl) }
+            .mapNotNull { it.virtualFile }
         KotlinForwardDeclarationsFileGenerator.cleanUp(roots)
     }
 
-    private fun generateForwardDeclarationSourcesForKlibs(
+    private suspend fun generateForwardDeclarationSourcesForKlibs(
         workspaceModel: WorkspaceModel,
         nativeKlibs: Map<LibraryEntity, KLibRoot>,
     ): Map<LibraryEntity, VirtualFileUrl> {
         val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
-        return buildMap {
-            for ((libraryEntity, klib) in nativeKlibs) {
-                val path = KotlinForwardDeclarationsFileGenerator.generateForwardDeclarationFiles(klib)
-                val virtualFileUrl = path?.toVirtualFileUrl(virtualFileUrlManager) ?: continue
-                put(libraryEntity, virtualFileUrl)
-            }
+        val result = mutableMapOf<LibraryEntity, VirtualFileUrl>()
+        for ((libraryEntity, klib) in nativeKlibs) {
+            val path = KotlinForwardDeclarationsFileGenerator.generateForwardDeclarationFiles(klib) ?: continue
+            result[libraryEntity] = path.toVirtualFileUrl(virtualFileUrlManager)
         }
+        return result
     }
 
     private fun List<EntityChange<LibraryEntity>>.toNativeKLibs(): Map<LibraryEntity, KLibRoot> {
