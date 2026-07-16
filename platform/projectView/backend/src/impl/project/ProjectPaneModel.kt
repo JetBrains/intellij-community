@@ -12,6 +12,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.openapi.module.isQualifiedModuleNamesEnabled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.projectView.backend.ProjectViewBackendBundle
 import com.intellij.platform.projectView.impl.ProjectViewPaneViewSettings
 import com.intellij.platform.projectView.impl.TreeStructureBasedProjectViewPaneModel
 import com.intellij.platform.projectView.impl.TreeStructureProjectViewNode
