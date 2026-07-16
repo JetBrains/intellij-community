@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiVersioningService
 import com.intellij.psi.util.siblings
 import com.intellij.psi.util.startOffset
 import com.intellij.ui.LightweightHint
@@ -109,10 +110,10 @@ internal class VerticalBarPresentation(
     if (editor.isDisposed || boundsState == initialState) {
       return
     }
-    runReadAction {
+    PsiVersioningService.freezePsiVersion {
       SlowOperations.knownIssue("IJPL-162800").use {
         if (!row.isValid) {
-          return@runReadAction
+          return@freezePsiVersion
         }
       }
       graphics.useCopy { local ->
