@@ -30,7 +30,7 @@ internal class StreamDebuggerManager(project: Project) : XDebuggerManagerProxyLi
     sessionStates.remove(session.id)
   }
 
-  fun getChainStatus(id: XDebugSessionId): ChainStatus? {
+  fun getChainStatus(id: XDebugSessionId): ChainStatusDto? {
     return sessionStates[id]?.chainStatus
   }
 
@@ -40,7 +40,7 @@ internal class StreamDebuggerManager(project: Project) : XDebuggerManagerProxyLi
 }
 
 private class TraceDebuggerStateListener(cs: CoroutineScope, sessionId: XDebugSessionId) {
-  private val _state = MutableStateFlow(null as ChainStatus?)
+  private val _state = MutableStateFlow(null as ChainStatusDto?)
 
 
   init {
@@ -51,7 +51,7 @@ private class TraceDebuggerStateListener(cs: CoroutineScope, sessionId: XDebugSe
     }
   }
 
-  val chainStatus: ChainStatus?
+  val chainStatus: ChainStatusDto?
     get() = _state.value
 }
 

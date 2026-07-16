@@ -1,12 +1,12 @@
 package com.intellij.debugger.streams.core.action
 
+import com.intellij.debugger.streams.core.ChainStatus
+import com.intellij.debugger.streams.core.StreamChainWithLibrary
 import com.intellij.debugger.streams.core.StreamDebuggerBundle
-import com.intellij.debugger.streams.core.action.ChainResolver.StreamChainWithLibrary
+import com.intellij.debugger.streams.core.ChainDetectionStateManager
 import com.intellij.debugger.streams.core.diagnostic.ex.TraceCompilationException
 import com.intellij.debugger.streams.core.diagnostic.ex.TraceEvaluationException
 import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
-import com.intellij.debugger.streams.core.psi.DebuggerPositionResolver
-import com.intellij.debugger.streams.core.psi.impl.DebuggerPositionResolverImpl
 import com.intellij.debugger.streams.core.statistics.StreamDebuggerStatisticsCollector
 import com.intellij.debugger.streams.core.trace.StreamTracer
 import com.intellij.debugger.streams.core.trace.formatResolvedTrace
@@ -16,21 +16,17 @@ import com.intellij.debugger.streams.core.ui.ElementChooser
 import com.intellij.debugger.streams.core.ui.impl.ElementChooserImpl
 import com.intellij.debugger.streams.core.ui.impl.EvaluationAwareTraceWindow
 import com.intellij.debugger.streams.core.wrapper.StreamChain
-import com.intellij.debugger.streams.shared.ChainStatus
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiElement
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
@@ -39,8 +35,8 @@ import com.intellij.xdebugger.XDebugSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -51,26 +47,23 @@ import kotlin.coroutines.CoroutineContext
 
 @Service(Service.Level.PROJECT)
 class TraceStreamRunner(val cs: CoroutineScope) {
-  private val myPositionResolver: DebuggerPositionResolver = DebuggerPositionResolverImpl()
-
-  fun getChainStatus(session: XDebugSession?): ChainStatus {
-    val element = if (session == null) null else myPositionResolver.getNearestElementToBreakpoint(session)
-    if (element == null) {
-      return ChainStatus.NOT_FOUND
-    }
-    else {
-      return CHAIN_RESOLVER.tryFindChain(element)
-    }
-  }
-
   fun actionPerformed(session: XDebugSession?): Job = cs.launch(Dispatchers.Default) {
     if (session == null) {
       LOG.info("Session is null")
       return@launch
     }
 
-    val chains = getChains(session)
-    displayChains(session, chains)
+    val chainsState = withBackgroundProgress(session.project, StreamDebuggerBundle.message("action.calculating.chains.background.progress.title"), true) {
+      ChainDetectionStateManager
+        .getInstance(session.project)
+        .chainStateFlow(session)
+        .first { it.status !is ChainStatus.Computing }
+    }
+    if (chainsState.status !is ChainStatus.Found) {
+      LOG.error("Cannot build chains: $chainsState")
+      return@launch
+    }
+    displayChains(session, chainsState.status.chains)
   }
 
   private suspend fun displayChains(
@@ -105,40 +98,6 @@ class TraceStreamRunner(val cs: CoroutineScope) {
     }
   }
 
-  private suspend fun getChains(session: XDebugSession): List<StreamChainWithLibrary> {
-    val element = readAction { myPositionResolver.getNearestElementToBreakpoint(session) }
-    if (element == null) {
-      LOG.info("Element at cursor is not found")
-      return emptyList()
-    }
-    val chains = readAction {
-      runBlockingCancellable {
-        withBackgroundProgress(session.project, StreamDebuggerBundle.message("action.calculating.chains.background.progress.title")) {
-          CHAIN_RESOLVER.getChains(element)
-        }
-      }
-    }
-    // Keep only the chains that can still be traced from the current execution position.
-    // This depends on the exact runtime position, so it must run here, outside the position-independent ChainResolver cache.
-    return withBackgroundProgress(session.project, StreamDebuggerBundle.message("action.filtering.chains.background.progress.title")) {
-      filterTraceable(session, chains, element)
-    }
-  }
-
-  private suspend fun filterTraceable(
-    session: XDebugSession,
-    chains: List<StreamChainWithLibrary>,
-    contextElement: PsiElement,
-  ): List<StreamChainWithLibrary> {
-    if (chains.isEmpty()) return chains
-    return chains
-      .groupBy { it.provider }
-      .flatMap { (provider, group) ->
-        val traceable = provider.filterTraceableStreams(session, group.map { it.chain }, contextElement)
-        group.filter { it.chain in traceable }
-      }
-  }
-
   private class MyStreamChainChooser(editor: Editor) : ElementChooserImpl<StreamChainOption?>(editor)
 
   private class StreamChainOption(chain: StreamChainWithLibrary) : ChooserOption {
@@ -160,8 +119,6 @@ class TraceStreamRunner(val cs: CoroutineScope) {
     fun getInstance(project: Project): TraceStreamRunner = project.getService(TraceStreamRunner::class.java)
 
     private val LOG = Logger.getInstance(TraceStreamRunner::class.java)
-
-    private val CHAIN_RESOLVER = ChainResolver()
 
     @OptIn(AwaitCancellationAndInvoke::class)
     private suspend fun runTrace(chain: StreamChain, provider: LibrarySupportProvider, session: XDebugSession) = coroutineScope {

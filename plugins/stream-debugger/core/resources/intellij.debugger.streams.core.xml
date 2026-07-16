@@ -24,4 +24,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <statistics.counterUsagesCollector implementationClass="com.intellij.debugger.streams.core.statistics.StreamDebuggerStatisticsCollector"/>
   </extensions>
+  <projectListeners>
+    <listener class="com.intellij.debugger.streams.core.StreamDebuggerSessionLifecycleListener"
+              topic="com.intellij.xdebugger.XDebuggerManagerListener"/>
+  </projectListeners>
 </idea-plugin>

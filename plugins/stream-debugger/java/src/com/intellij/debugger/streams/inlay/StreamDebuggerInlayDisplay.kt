@@ -6,61 +6,80 @@ import com.intellij.codeInsight.hints.presentation.MouseButton
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.codeInsight.hints.presentation.mouseButton
+import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.streams.core.StreamDebuggerBundle
+import com.intellij.debugger.streams.core.StreamChainInlayState
+import com.intellij.debugger.streams.core.ChainDetectionStateManager
 import com.intellij.debugger.streams.core.action.TraceStreamRunner
-import com.intellij.debugger.streams.shared.ChainStatus
-import com.intellij.openapi.application.EDT
 import com.intellij.debugger.streams.shared.icons.DebuggerStreamsSharedIcons
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu.showByEvent
-import com.intellij.util.AwaitCancellationAndInvoke
-import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.openapi.util.Disposer
+import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
-import com.intellij.xdebugger.XDebugSessionListener
+import com.intellij.xdebugger.XDebuggerManagerListener
 import com.intellij.xdebugger.XSourcePosition
+import com.sun.jdi.event.ExceptionEvent
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.sun.jdi.event.ExceptionEvent
 import java.awt.Cursor
 import java.awt.Point
 import java.awt.event.MouseEvent
+import java.util.concurrent.ConcurrentHashMap
 
-internal class StreamDebuggerInlayDisplay(private val session: XDebugSession) : XDebugSessionListener {
-  private val project = session.project
+/**
+ * Renders the "Trace Current Stream Chain" inlay for JVM debug sessions by reactively consuming the shared, execution-aware
+ * chain state from [ChainDetectionStateManager]. One session-scoped collector per session shows at most one inlay.
+ */
+@Service(Service.Level.PROJECT)
+internal class StreamDebuggerInlayDisplay(private val project: Project, private val cs: CoroutineScope) {
+  private val jobs = ConcurrentHashMap<XDebugSession, Job>()
 
-  @OptIn(AwaitCancellationAndInvoke::class)
-  override fun sessionPaused() {
-    if (!isStreamDebuggerInlaysEnabled()) return
-    val topFramePosition = session.topFramePosition ?: return
-    val suspendContext = session.suspendContext ?: return
-    if ((suspendContext as? SuspendContextImpl)?.eventSet?.any { it is ExceptionEvent } == true) return
-    val cs = suspendContext.coroutineScope ?: return
-    cs.launch(Dispatchers.Default) {
-      val chainStatus = readAction { TraceStreamRunner.getInstance(project).getChainStatus(session) }
-      if (chainStatus == ChainStatus.FOUND) {
-        withContext(Dispatchers.EDT) {
-          val inlay = createInlay(topFramePosition)
-          if (inlay != null) {
-            cs.awaitCancellationAndInvoke(Dispatchers.EDT) {
-              Disposer.dispose(inlay)
-            }
-          }
-        }
+  fun start(session: XDebugSession) {
+    jobs.put(session, cs.launch(Dispatchers.Default) { collectInlayUpdates(session) })?.cancel()
+  }
+
+  fun stop(session: XDebugSession) {
+    jobs.remove(session)?.cancel()
+  }
+
+  /**
+   * Each new flow value cancels the previous [collectLatest] block (its `finally` disposes the previous inlay) before the
+   * next one runs, so there is always exactly 0 or 1 inlay; the last inlay is disposed when the session-scoped job is cancelled.
+   */
+  private suspend fun collectInlayUpdates(session: XDebugSession) {
+    ChainDetectionStateManager.getInstance(project).inlayStateFlow(session).collectLatest { state ->
+      val visible = state as? StreamChainInlayState.Visible ?: return@collectLatest
+      if (!isStreamDebuggerInlaysEnabled()) return@collectLatest
+      if ((visible.suspendContext as? SuspendContextImpl)?.eventSet?.any { it is ExceptionEvent } == true) return@collectLatest
+      val inlay = withContext(Dispatchers.EDT) { createInlay(session, visible.position) } ?: return@collectLatest
+      try {
+        awaitCancellation()
+      }
+      finally {
+        withContext(NonCancellable + Dispatchers.EDT) { Disposer.dispose(inlay) }
       }
     }
   }
 
-  private fun createInlay(position: XSourcePosition): Inlay<PresentationRenderer>? {
+  private fun createInlay(session: XDebugSession, position: XSourcePosition): Inlay<PresentationRenderer>? {
     val editor = getEditor(position) ?: return null
     val lineEnd = editor.document.getLineEndOffset(position.line)
     val message = StreamDebuggerBundle.message("action.trace.stream.inlay.text")
@@ -105,6 +124,24 @@ internal class StreamDebuggerInlayDisplay(private val session: XDebugSession) : 
 
     override fun onHoverFinished() {
       (editor as? EditorEx)?.setCustomCursor(HoverHandler::class.java, null)
+    }
+  }
+
+  companion object {
+    fun getInstance(project: Project): StreamDebuggerInlayDisplay = project.service()
+  }
+}
+
+internal class StreamDebuggerInlaySessionListener(private val project: Project) : XDebuggerManagerListener {
+  override fun processStarted(debugProcess: XDebugProcess) {
+    if (debugProcess is JavaDebugProcess) {
+      StreamDebuggerInlayDisplay.getInstance(project).start(debugProcess.session)
+    }
+  }
+
+  override fun processStopped(debugProcess: XDebugProcess) {
+    if (debugProcess is JavaDebugProcess) {
+      StreamDebuggerInlayDisplay.getInstance(project).stop(debugProcess.session)
     }
   }
 }

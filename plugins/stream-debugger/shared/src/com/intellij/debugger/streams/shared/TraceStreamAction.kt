@@ -21,13 +21,13 @@ open class TraceStreamAction : AnAction(), SplitDebuggerAction {
     val chainStatus = StreamDebuggerManager.getInstance(project).getChainStatus(sessionProxy.id)
     when (chainStatus) {
       null -> presentation.setEnabledAndVisible(false)
-      ChainStatus.LANGUAGE_NOT_SUPPORTED -> presentation.setEnabledAndVisible(false)
-      ChainStatus.COMPUTING -> {
+      ChainStatusDto.LANGUAGE_NOT_SUPPORTED -> presentation.setEnabledAndVisible(false)
+      ChainStatusDto.COMPUTING -> {
         presentation.setVisible(true)
         presentation.setEnabled(false)
       }
-      ChainStatus.FOUND -> presentation.setEnabledAndVisible(true)
-      ChainStatus.NOT_FOUND -> {
+      ChainStatusDto.FOUND -> presentation.setEnabledAndVisible(true)
+      ChainStatusDto.NOT_FOUND -> {
         presentation.setVisible(true)
         presentation.setEnabled(false)
       }
