@@ -6724,17 +6724,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps/jb-jdi-2.45.jar_copy",
-    src = "@org_jetbrains_intellij_deps-jb-jdi-2_45_http//file",
-    out = "org.jetbrains.intellij.deps/jb-jdi-2.45.jar",
+    name = "org.jetbrains.intellij.deps/jb-jdi-2.46.jar_copy",
+    src = "@org_jetbrains_intellij_deps-jb-jdi-2_46_http//file",
+    out = "org.jetbrains.intellij.deps/jb-jdi-2.46.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "java-debugger-libraries-jb-jdi-jb-jdi",
-    jar = "@org_jetbrains_intellij_deps-jb-jdi-2_45_http//file",
-    source_jar = "@org_jetbrains_intellij_deps-jb-jdi-2_45-sources_http//file",
+    jar = "@org_jetbrains_intellij_deps-jb-jdi-2_46_http//file",
+    source_jar = "@org_jetbrains_intellij_deps-jb-jdi-2_46-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
