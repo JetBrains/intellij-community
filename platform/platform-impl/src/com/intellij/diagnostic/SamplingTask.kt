@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.blockingDispatcher
 import com.sun.management.OperatingSystemMXBean
 import kotlinx.coroutines.CoroutineName
@@ -13,12 +14,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.lang.management.ManagementFactory
 import java.lang.management.ThreadInfo
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(DelicateCoroutinesApi::class)
 internal abstract class SamplingTask(@JvmField internal val dumpInterval: Int, private val maxDurationMs: Int, coroutineScope: CoroutineScope) {
   protected val job: Job
+  private val firstThreadDumpCompleted = CountDownLatch(1)
 
   private val startTime: Long = System.nanoTime()
   private var currentTime: Long = startTime
@@ -42,6 +45,7 @@ internal abstract class SamplingTask(@JvmField internal val dumpInterval: Int, p
     val delayDuration = dumpInterval.milliseconds
     while (true) {
       dumpThreads()
+      firstThreadDumpCompleted.countDown()
       if (totalTime + dumpInterval > maxDurationMs) {
         break
       }
@@ -61,10 +65,17 @@ internal abstract class SamplingTask(@JvmField internal val dumpInterval: Int, p
   abstract suspend fun processDumpedThreads(infos: Array<ThreadInfo>)
 
   open fun stop() {
+    if (Registry.`is`("performance.watcher.await.first.thread.dump")) {
+      firstThreadDumpCompleted.await()
+    }
     job.cancel()
   }
 
+  @Suppress("BlockingMethodInNonBlockingContext")
   open suspend fun stopAndWait() {
+    if (Registry.`is`("performance.watcher.await.first.thread.dump")) {
+      firstThreadDumpCompleted.await()
+    }
     job.cancelAndJoin()
   }
 }
