@@ -42,6 +42,7 @@ import com.intellij.openapi.client.ClientAwareComponentManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -1495,8 +1496,11 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  public <T> T withLocksSoftlyProhibited(@NotNull String advice, @NotNull Supplier<T> action) {
-    return getThreadingSupport().withLocksSoftlyProhibited(advice, () -> action.get());
+  public <T> T withLocksSoftlyProhibited(@NotNull String advice, @NotNull Consumer<@NotNull Throwable> logger, @NotNull Supplier<T> action) {
+    return getThreadingSupport().withLocksSoftlyProhibited(advice, (t) -> {
+      logger.accept(t);
+      return Unit.INSTANCE;
+      }, () -> action.get());
   }
 
   @Override

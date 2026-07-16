@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ThreadingSupport;
 import com.intellij.openapi.application.WriteActionListener;
 import com.intellij.openapi.application.WriteIntentReadActionListener;
 import com.intellij.openapi.application.WriteLockReacquisitionListener;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -263,7 +264,7 @@ public interface ApplicationEx extends Application {
   }
 
   @ApiStatus.Internal
-  default <T> T withLocksSoftlyProhibited(@NotNull @NlsSafe String advice, @NotNull Supplier<T> action) {
+  default <T> T withLocksSoftlyProhibited(@NotNull @NlsSafe String advice, @NotNull Consumer<@NotNull Throwable> logger, @NotNull Supplier<T> action) {
     return withLocksProhibited(advice, action);
   }
 

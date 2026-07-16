@@ -155,7 +155,13 @@ interface ThreadingSupport {
    * The reported exception will be logger as [error][com.intellij.openapi.diagnostic.Logger.error] with an instance of [LockAccessDisallowed].
    */
   @ApiStatus.Internal
-  fun <T> withLocksSoftlyProhibited(advice: String, action: () -> T): T = withLocksProhibited(advice, action)
+  fun <T> withLocksSoftlyProhibited(advice: String, logger: (Throwable) -> Unit, action: () -> T): T
+
+  /**
+   * Disables lock prohibition assertions in [action]
+   */
+  @ApiStatus.Internal
+  fun <T> withLockingProhibitionCleared(action: () -> T): T
 
   /**
    * If locking is prohibited for this thread (via [withLocksProhibited] or [withLocksSoftlyProhibited]),

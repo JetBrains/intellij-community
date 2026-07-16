@@ -840,10 +840,11 @@ class NestedLocksThreadingSupport : ThreadingSupport {
 
   private fun handleLockAccess(culprit: String) {
     val lockProhibition = myLockingProhibited.get() ?: return
-    val action = if (lockProhibition.reportOnly) "reported" else "prevented"
+    val logger = lockProhibition.logger
+    val action = if (logger != null) "reported" else "prevented"
     val exception = ThreadingSupport.LockAccessDisallowed("Attempt to take $culprit was $action\n${lockProhibition.advice}")
-    if (lockProhibition.reportOnly) {
-      logger.error(exception)
+    if (logger != null) {
+      logger(exception)
     }
     else {
       throw exception
@@ -1481,11 +1482,11 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   override fun <T> withLocksProhibited(advice: String, action: () -> T): T {
-    return withLockProhibition(LockingProhibition(advice, reportOnly = false), action)
+    return withLockProhibition(LockingProhibition(advice, null), action)
   }
 
-  override fun <T> withLocksSoftlyProhibited(advice: String, action: () -> T): T {
-    return withLockProhibition(LockingProhibition(advice, reportOnly = true), action)
+  override fun <T> withLocksSoftlyProhibited(advice: String, logger: (Throwable) -> Unit, action: () -> T): T {
+    return withLockProhibition(LockingProhibition(advice, logger), action)
   }
 
   private fun <T> withLockProhibition(lockingProhibition: LockingProhibition, action: () -> T): T {
@@ -1495,6 +1496,16 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       return action()
     }
     finally {
+      myLockingProhibited.set(currentValue)
+    }
+  }
+
+  override fun <T> withLockingProhibitionCleared(action: () -> T): T {
+    val currentValue = myLockingProhibited.get()
+    myLockingProhibited.set(null)
+    try {
+      return action()
+    } finally {
       myLockingProhibited.set(currentValue)
     }
   }
@@ -1829,7 +1840,7 @@ private class RunSuspend<T>(val job: Job?, val interceptor: PermitWaitingInterce
 
 private val logger = Logger.getInstance(NestedLocksThreadingSupport::class.java)
 
-private data class LockingProhibition(val advice: String, val reportOnly: Boolean)
+private data class LockingProhibition(val advice: String, val logger: ((Throwable) -> Unit)?)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 private fun <T> Deferred<T>.getOrThrow(): T {
