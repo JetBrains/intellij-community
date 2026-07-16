@@ -3,11 +3,15 @@ package com.intellij.platform
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.backgroundWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.project.stateStore
@@ -18,6 +22,7 @@ import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.createOrLoadProject
 import com.intellij.testFramework.useProjectAsync
+import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.testEntities.TestModuleEntitySource
 import com.intellij.util.io.createDirectories
 import com.intellij.workspaceModel.ide.ProjectRootEntity
@@ -132,5 +137,24 @@ internal class ModuleAttachProcessorTest {
       assertThat(ModuleAttachProcessor().attachToProjectAsync(newProject, attachedProjectPath, null)).isTrue()
       assertThat(newProject.workspaceModel.currentSnapshot.entities(ProjectRootEntity::class.java).toList()).hasSize(2)
     }
+  }
+
+  @Test
+  fun `test do not duplicate global entities`(): Unit = runBlocking {
+    WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
+    val attachedProjectPath = tempDirManager.newPath("attached_project", refreshVfs = false).also { it.createDirectories() }
+    ProjectManagerEx.getInstanceEx().openProjectAsync(attachedProjectPath)!!.useProjectAsync(true) { project ->
+      val sdk = SimpleJavaSdkType().createJdk("_other", SystemProperties.getJavaHome())
+      writeAction {
+        ProjectJdkTable.getInstance(project).addJdk(sdk, disposableRule.disposable)
+      }
+    }
+
+    val newProjectPath = tempDirManager.newPath("new_project", refreshVfs = false).also { it.createDirectories() }
+    ProjectManagerEx.getInstanceEx().openProjectAsync(newProjectPath, OpenProjectTask { projectRootDir = newProjectPath })!!
+      .useProjectAsync { newProject ->
+        assertThat(ModuleAttachProcessor().attachToProjectAsync(newProject, attachedProjectPath, null)).isTrue()
+        assertThat(newProject.workspaceModel.currentSnapshot.entities(SdkEntity::class.java).toList()).hasSize(1)
+      }
   }
 }
