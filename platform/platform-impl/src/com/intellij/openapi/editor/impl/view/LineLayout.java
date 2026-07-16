@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.function.Consumer;
 
 /**
  * Layout of a single line of document text. Consists of a series of BidiRuns, which, in turn, consist of TextFragments.
@@ -45,7 +45,7 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
     return new LineLayoutWithSize(delegate);
   }
 
-  abstract Stream<LineChunk> getChunksInLogicalOrder();
+  abstract void forEachChunk(@NotNull Consumer<? super LineChunk> action);
 
   abstract boolean isLtr();
 

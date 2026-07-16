@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.impl.view;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.stream.Stream;
+import java.util.function.Consumer;
 
 final class LineLayoutWithSize extends LineLayout {
   private final LineLayout myDelegate;
@@ -15,8 +15,8 @@ final class LineLayoutWithSize extends LineLayout {
   }
 
   @Override
-  Stream<LineChunk> getChunksInLogicalOrder() {
-    return myDelegate.getChunksInLogicalOrder();
+  void forEachChunk(@NotNull Consumer<? super LineChunk> action) {
+    myDelegate.forEachChunk(action);
   }
 
   @Override

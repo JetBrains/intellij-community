@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.stream.Stream;
+import java.util.function.Consumer;
 
 final class SingleChunkLayout extends LineLayout {
   private final @Nullable LineChunk chunk;
@@ -15,8 +15,11 @@ final class SingleChunkLayout extends LineLayout {
   }
 
   @Override
-  Stream<LineChunk> getChunksInLogicalOrder() {
-    return chunk == null ? Stream.empty() : Stream.of(chunk);
+  void forEachChunk(@NotNull Consumer<? super LineChunk> action) {
+    LineChunk chunk = this.chunk;
+    if (chunk != null) {
+      action.accept(chunk);
+    }
   }
 
   @Override

@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.impl.view;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.stream.Stream;
+import java.util.function.Consumer;
 
 final class MultiChunkLayout extends LineLayout {
   private final LineBidiRun[] runsInLogicalOrder;
@@ -15,8 +15,11 @@ final class MultiChunkLayout extends LineLayout {
   }
 
   @Override
-  Stream<LineChunk> getChunksInLogicalOrder() {
-    return Stream.of(runsInLogicalOrder).flatMap(LineBidiRun::chunkStream);
+  void forEachChunk(@NotNull Consumer<? super LineChunk> action) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < runsInLogicalOrder.length; i++) {
+      runsInLogicalOrder[i].forEachChunk(action);
+    }
   }
 
   @Override

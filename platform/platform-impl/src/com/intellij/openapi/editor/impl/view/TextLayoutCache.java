@@ -20,6 +20,7 @@ import java.text.Bidi;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Editor text layout storage. Layout is stored on a per-logical-line basis,
@@ -41,6 +42,7 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   private int myDocumentChangeOldEndLine;
 
   private final ObjectLinkedOpenHashSet<LineChunk> laidOutChunks = new ObjectLinkedOpenHashSet<>(MAX_CHUNKS_IN_ACTIVE_EDITOR);
+  private final Consumer<LineChunk> removeLaidOutChunk = laidOutChunks::remove;
 
   TextLayoutCache(EditorView view) {
     myView = view;
@@ -184,7 +186,7 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   }
 
   private void removeChunksFromCache(LineLayout layout) {
-    layout.getChunksInLogicalOrder().forEach(laidOutChunks::remove);
+    layout.forEachChunk(removeLaidOutChunk);
   }
 
   private void trimChunkCache() {

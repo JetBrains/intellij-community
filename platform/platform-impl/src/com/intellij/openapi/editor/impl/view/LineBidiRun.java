@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.function.Consumer;
 
 final class LineBidiRun {
   public static final LineBidiRun[] EMPTY_ARRAY = new LineBidiRun[0];
@@ -84,27 +84,32 @@ final class LineBidiRun {
     return chunks == null ? new LineChunk(0, endOffset) : chunks.getFirst();
   }
 
-  Stream<LineChunk> chunkStream() {
-    return chunks == null ? Stream.empty() : chunks.stream();
+  void forEachChunk(@NotNull Consumer<? super LineChunk> action) {
+    List<LineChunk> chunks = this.chunks;
+    if (chunks != null) {
+      for (int i = 0; i < chunks.size(); i++) {
+        action.accept(chunks.get(i));
+      }
+    }
   }
 
   // text == null && startOffsetInText == 0
   @NotNull List<LineChunk> getChunks(CharSequence text, int startOffsetInText) {
-    List<LineChunk> c = chunks;
-    if (c == null) {
+    List<LineChunk> chunks = this.chunks;
+    if (chunks == null) {
       int chunkCount = getChunkCount();
-      c = new ArrayList<>(chunkCount);
+      chunks = new ArrayList<>(chunkCount);
       for (int i = 0; i < chunkCount; i++) {
         int from = startOffset + i * CHUNK_CHARACTERS;
         int to = i == chunkCount - 1 ? endOffset : from + CHUNK_CHARACTERS;
         int chunkStart = alignToCodePointBoundary(text, from + startOffsetInText) - startOffsetInText;
         int chunkEnd = alignToCodePointBoundary(text, to + startOffsetInText) - startOffsetInText;
         LineChunk chunk = new LineChunk(chunkStart, chunkEnd);
-        c.add(chunk);
+        chunks.add(chunk);
       }
-      chunks = c;
+      this.chunks = chunks;
     }
-    return c;
+    return chunks;
   }
 
   @NotNull LineBidiRun subRun(
