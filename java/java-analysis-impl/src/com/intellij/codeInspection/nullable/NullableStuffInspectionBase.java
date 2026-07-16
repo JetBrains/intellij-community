@@ -654,10 +654,11 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
     if (typeParameters.length != typeArguments.length) return;
     PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+    Set<PsiTypeParameter> boundScope = ContainerUtil.newHashSet(PsiUtil.typeParametersIterable(psiClass));
     for (PsiTypeParameter subParameter : typeParameters) {
       PsiType actualType = substitutor.substitute(subParameter);
       if (actualType == null) continue;
-      for (PsiTypeParameter superParameter : collectTransitiveBoundParameters(subParameter, typeParameters)) {
+      for (PsiTypeParameter superParameter : collectTransitiveBoundParameters(subParameter, boundScope)) {
         if (checkNestedGenericClasses(holder, reference, substitutor.substitute(superParameter), actualType,
                                       ConflictNestedTypeProblem.TYPE_ARGUMENT_BOUND_PROBLEM)) {
           return;
@@ -667,7 +668,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   private static @NotNull Set<PsiTypeParameter> collectTransitiveBoundParameters(@NotNull PsiTypeParameter parameter,
-                                                                                 PsiTypeParameter @NotNull [] scope) {
+                                                                                 @NotNull Set<PsiTypeParameter> scope) {
     Set<PsiTypeParameter> result = new LinkedHashSet<>();
     List<PsiTypeParameter> worklist = new ArrayList<>();
     worklist.add(parameter);
@@ -675,7 +676,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       PsiTypeParameter current = worklist.removeLast();
       for (PsiType bound : current.getExtendsListTypes()) {
         if (PsiUtil.resolveClassInClassTypeOnly(bound) instanceof PsiTypeParameter boundParameter &&
-            ArrayUtil.contains(boundParameter, scope) && result.add(boundParameter)) {
+            scope.contains(boundParameter) && result.add(boundParameter)) {
           worklist.add(boundParameter);
         }
       }
