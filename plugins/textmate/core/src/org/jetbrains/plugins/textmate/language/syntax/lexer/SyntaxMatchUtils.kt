@@ -43,10 +43,13 @@ object SyntaxMatchUtils {
             groupIndex = groupIndex * 10 + digit
             digitIndex++
           }
-          if (hasGroupIndex && matchData.count() > groupIndex) {
-            val byteRange = matchData.byteRange(groupIndex)
-            val replacement = if (byteRange.isEmpty) "" else matchingString.subSequenceByByteRange(byteRange).toString()
-            append(BACK_REFERENCE_REPLACEMENT_REGEX.replace(replacement, "\\\\$0"))
+          if (hasGroupIndex) {
+            // references to non-existing groups are replaced with an empty string
+            if (matchData.count() > groupIndex) {
+              val byteRange = matchData.byteRange(groupIndex)
+              val replacement = if (byteRange.isEmpty) "" else matchingString.subSequenceByByteRange(byteRange).toString()
+              append(BACK_REFERENCE_REPLACEMENT_REGEX.replace(replacement, "\\\\$0"))
+            }
             charIndex = digitIndex
             continue
           }

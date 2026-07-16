@@ -21,6 +21,15 @@ class SyntaxMatchUtilsTest {
   }
 
   @Test
+  fun testReplaceGroupWithOutOfBoundsGroupReference() {
+    // vscode-textmate replaces references to non-existing groups with an empty string
+    // instead of keeping them as back-references in the resulting regex
+    val string = TextMateStringImpl.Companion.fromString("first-second")
+    val data = MatchData(matched = true, byteOffsets = intArrayOf(0, 12, 0, 5, 6, 12))
+    assertEquals("first++", SyntaxMatchUtils.replaceGroupsWithMatchDataInRegex("\\1+\\3+\\4", string, data))
+  }
+
+  @Test
   fun testReplaceWithDollarSign() {
     val string = TextMateStringImpl.Companion.fromString("first-$")
     val data = MatchData(matched = true, byteOffsets = intArrayOf(0, 7, 0, 5, 6, 7))
