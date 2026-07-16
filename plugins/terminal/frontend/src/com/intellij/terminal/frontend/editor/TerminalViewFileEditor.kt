@@ -14,10 +14,8 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.toolwindow.impl.updateFileNameOnTitleChange
-import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
@@ -25,19 +23,16 @@ import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 
-@OptIn(FlowPreview::class)
 internal class TerminalViewFileEditor(
   private val project: Project,
   private val file: TerminalViewVirtualFile,
 ) : FileEditor, UserDataHolderBase() {
-  private val terminalView: TerminalView
-    get() = file.terminalView
-
   init {
     val coroutineScope = terminalProjectScope(project).childScope("TerminalViewFileEditor")
     Disposer.register(this) { coroutineScope.cancel() }
 
-    if (file.closeOnProcessTermination) {
+    val terminalView = file.tab.view
+    if (file.tab.closeOnProcessTermination) {
       coroutineScope.launch {
         terminalView.sessionState.collect { state ->
           if (state == TerminalViewSessionState.Terminated) {
@@ -59,11 +54,11 @@ internal class TerminalViewFileEditor(
   }
 
   override fun getComponent(): JComponent {
-    return terminalView.component
+    return file.tab.content.component
   }
 
   override fun getPreferredFocusedComponent(): JComponent {
-    return terminalView.preferredFocusableComponent
+    return file.tab.content.preferredFocusableComponent
   }
 
   override fun getName(): @Nls(capitalization = Nls.Capitalization.Title) String {
@@ -84,7 +79,7 @@ internal class TerminalViewFileEditor(
 
   override fun dispose() {
     if (file.getUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN) != true) {
-      terminalView.coroutineScope.cancel()
+      Disposer.dispose(file.tab.content)
     }
   }
 

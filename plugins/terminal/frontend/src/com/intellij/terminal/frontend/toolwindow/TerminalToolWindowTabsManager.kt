@@ -39,29 +39,24 @@ interface TerminalToolWindowTabsManager {
   fun closeTab(tab: TerminalToolWindowTab)
 
   /**
-   * Close the given tool window tab but leave the underlying shell process running.
-   * So, the returned [TerminalView] can be able to be used in the other context (for example, to be opened as the editor tab).
+   * Close the given tool window tab but leave the underlying terminal process running.
+   * So, the [TerminalToolWindowTab] can be able to be used in the other context (for example, to be opened as the editor tab).
    */
   @RequiresEdt
-  fun detachTab(tab: TerminalToolWindowTab): TerminalView
+  fun detachTab(tab: TerminalToolWindowTab)
 
   /**
-   * Create a new tool window tab with the given [TerminalView].
-   * Note, that a shell process of the [TerminalView] should be already started
-   * because this method won't start it.
+   * Create a new tool window tab with the given [TerminalToolWindowTab].
    *
    * @param contentManager the tool window content manager to add the tab to.
    * Worth specifying when the terminal tool window is split to open the tab in the specific area.
    * If it is `null`, the tab will be opened in the top-left split area (or in the main area if there are no splits).
-   * @param closeOnProcessTermination whether to close the tool window tab if the underlying process terminates on its own.
    */
   @RequiresEdt
   fun attachTab(
-    view: TerminalView,
-    contentManager: ContentManager?,
-    closeOnProcessTermination: Boolean,
-    processOptions: TerminalRequestedProcessOptions,
-  ): TerminalToolWindowTab
+    tab: TerminalToolWindowTab,
+    contentManager: ContentManager? = null,
+  )
 
   @Deprecated("Use TerminalTabsManagerListener.TOPIC instead")
   fun addListener(parentDisposable: Disposable, listener: TerminalTabsManagerListener)
@@ -102,8 +97,6 @@ interface TerminalTabsManagerListener {
   /**
    * Called after the terminal tab is detached from the terminal tool window.
    * For example, when the terminal tab is moved to the editor tab.
-   *
-   * Note, that [TerminalToolWindowTab.content] is already disposed at this moment.
    */
   fun tabDetached(tab: TerminalToolWindowTab) {}
 

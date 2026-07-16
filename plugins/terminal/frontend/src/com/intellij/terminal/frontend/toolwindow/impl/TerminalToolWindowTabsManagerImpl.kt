@@ -8,8 +8,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
@@ -34,13 +32,14 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -56,7 +55,6 @@ import org.jetbrains.plugins.terminal.settings.impl.TerminalSessionPersistedTab
 import org.jetbrains.plugins.terminal.settings.impl.TerminalTabsStorage
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.createDefaultTabName
-import java.lang.ref.WeakReference
 import kotlin.time.Duration.Companion.seconds
 
 internal class TerminalToolWindowTabsManagerImpl(
@@ -89,18 +87,13 @@ internal class TerminalToolWindowTabsManagerImpl(
     manager.removeContent(/* content = */ tab.content, /* dispose = */ true, /* requestFocus = */ true, /* forcedFocus = */ true)
   }
 
-  override fun detachTab(tab: TerminalToolWindowTab): TerminalView {
+  override fun detachTab(tab: TerminalToolWindowTab) {
     var wasContentRemoved = false
     TerminalTabCloseListener.executeContentOperationSilently(tab.content) {
-      tab.content.putUserData(TAB_DETACHED_KEY, Unit)
       val contentManager = tab.content.manager
       if (contentManager != null) {
-        contentManager.removeContent(tab.content, true)
+        contentManager.removeContent(tab.content, false)
         wasContentRemoved = true
-      }
-      else {
-        // tabs created with TerminalToolWindowTabBuilder.shouldAddToToolWindow(false) don't have ContentManager
-        tab.content.release()
       }
     }
     // Prevent unnecessary tool window initialization if the tab wasn't added to it (shouldAddToToolWindow(false)).
@@ -112,18 +105,13 @@ internal class TerminalToolWindowTabsManagerImpl(
     }
 
     project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).tabDetached(tab)
-    return tab.view
   }
 
   override fun attachTab(
-    view: TerminalView,
+    tab: TerminalToolWindowTab,
     contentManager: ContentManager?,
-    closeOnProcessTermination: Boolean,
-    processOptions: TerminalRequestedProcessOptions,
-  ): TerminalToolWindowTab {
-    val tab = doCreateTab(view, closeOnProcessTermination, processOptions)
+  ) {
     addTabToToolWindow(tab, contentManager, true)
-    return tab
   }
 
   @Suppress("OVERRIDE_DEPRECATION")
@@ -149,13 +137,16 @@ internal class TerminalToolWindowTabsManagerImpl(
   }
 
   private fun createTab(builder: TerminalToolWindowTabBuilderImpl): TerminalToolWindowTab {
-    val terminal = createTerminalViewAndStartSession(builder)
+    val tabScope = coroutineScope.childScope("TerminalToolWindowTab")
+    val terminal = createTerminalViewAndStartSession(builder, tabScope.childScope("TerminalView"))
     project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).terminalViewCreated(terminal)
 
     val tab = doCreateTab(
+      project = project,
       terminal = terminal,
       closeOnProcessTermination = builder.closeOnProcessTermination,
-      processOptions = builder.getRequestedProcessOptions()
+      processOptions = builder.getRequestedProcessOptions(),
+      coroutineScope = tabScope,
     )
     if (builder.shouldAddToToolWindow) {
       addTabToToolWindow(tab, builder.contentManager, builder.requestFocus)
@@ -170,9 +161,11 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   @OptIn(AwaitCancellationAndInvoke::class)
   private fun doCreateTab(
+    project: Project,
     terminal: TerminalView,
     closeOnProcessTermination: Boolean,
     processOptions: TerminalRequestedProcessOptions,
+    coroutineScope: CoroutineScope,
   ): TerminalToolWindowTab {
     val panel = TerminalToolWindowPanel()
     panel.setContent(terminal.component)
@@ -180,28 +173,20 @@ internal class TerminalToolWindowTabsManagerImpl(
     content.setPreferredFocusedComponent { terminal.preferredFocusableComponent }
     TerminalTabCloseListenerImpl.install(content, project, parentDisposable = content)
 
-    val tabScope = coroutineScope.childScope("TerminalToolWindowTab")
     content.displayName = terminal.getTitleText()
-    updateTabNameOnTitleChange(terminal, content, tabScope.childScope("Tab name updating"))
+    updateTabNameOnTitleChange(terminal, content, coroutineScope.childScope("Tab name updating"))
 
-    // Terminate the session if the tab was closed.
-    // But if the tab was detached, leave the session alive.
-    Disposer.register(content) {
-      tabScope.cancel()
-      if (content.getUserData(TAB_DETACHED_KEY) == null) {
-        terminal.coroutineScope.cancel()
-      }
-    }
+    // Wire terminal tab scope lifetime to the Content lifetime.
+    // So, if Content is disposed, TerminalView and the process will be terminated.
+    coroutineScope.coroutineContext.job.cancelOnDispose(content)
 
     if (closeOnProcessTermination) {
-      tabScope.launch {
+      coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         terminal.sessionState.collect { state ->
           if (state == TerminalViewSessionState.Terminated) {
-            // Execute in the manager scope, because closing of the tab may dispose the content and cancel the current coroutine.
-            coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-              val tab = findTabByContent(content) ?: return@launch
-              closeTab(tab)
-            }
+            val manager = TerminalToolWindowTabsManager.getInstance(project)
+            val tab = manager.findTabByContent(content) ?: return@collect
+            manager.closeTab(tab)
           }
         }
       }
@@ -210,14 +195,8 @@ internal class TerminalToolWindowTabsManagerImpl(
     // In case of project closing there can be a race between terminal coroutine scope cancellation
     // and removing the content from the tool window.
     // If the terminal coroutine scope is canceled before the content is removed, the editor may be shown green for a moment.
-    // The ideal solution is to cancel the terminal scope only after the content is removed.
-    // However, the terminal component has a broader lifecycle than the tool window tab (to be able to detach it),
-    // so it can't be tied to the content removal directly.
-    // Let's try to hide the tool window tab right on terminal scope cancellation,
-    // but do not store strong reference to the content to avoid leaks.
-    val tabReference = WeakReference(content)
+    // Let's try to hide the tool window tab right on terminal scope cancellation.
     terminal.coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      val content = tabReference.get() ?: return@awaitCancellationAndInvoke
       val manager = content.manager ?: return@awaitCancellationAndInvoke
       manager.removeContent(content, true)
     }
@@ -250,7 +229,10 @@ internal class TerminalToolWindowTabsManagerImpl(
     project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).tabAdded(tab)
   }
 
-  private fun createTerminalViewAndStartSession(builder: TerminalToolWindowTabBuilderImpl): TerminalView {
+  private fun createTerminalViewAndStartSession(
+    builder: TerminalToolWindowTabBuilderImpl,
+    coroutineScope: CoroutineScope,
+  ): TerminalView {
     val viewOptions = TerminalViewBuilderOptions(
       processOptions = builder.getRequestedProcessOptions(),
       deferSessionStartUntilUiShown = builder.deferSessionStartUntilUiShown,
@@ -260,7 +242,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     val terminal = createTerminalView(
       project = project,
       options = viewOptions,
-      coroutineScope = coroutineScope.childScope("TerminalView")
+      coroutineScope = coroutineScope
     )
     terminal.title.change {
       if (builder.isUserDefinedName) {
@@ -466,9 +448,5 @@ internal class TerminalToolWindowTabsManagerImpl(
         processType = processType,
       )
     }
-  }
-
-  companion object {
-    val TAB_DETACHED_KEY = Key.create<Unit>("TerminalTabsManager.TabWasDetached")
   }
 }
