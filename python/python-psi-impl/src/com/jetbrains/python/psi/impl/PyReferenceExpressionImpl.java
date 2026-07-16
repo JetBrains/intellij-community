@@ -256,9 +256,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Override
   public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    final PyType providedType = getTypeFromProviders(context);
-    if (!isUnknown(providedType)) {
-      return providedType;
+    for (PyTypeProvider provider : PyTypeProvider.EP_NAME.getExtensionList()) {
+      final PyType type = provider.getReferenceExpressionType(this, context);
+      if (type != null) {
+        return type;
+      }
     }
 
     if (isQualified() && getImportParent() == null) {
@@ -578,16 +580,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                            (target.getAnnotationValue() != null || target.getTypeCommentAnnotation() != null) &&
                                            !PyTypingTypeProvider.isClassVar(target, context) &&
                                            !(PyTypingTypeProvider.isFinal(target, context) && target.hasAssignedValue()));
-  }
-
-  private @Nullable PyType getTypeFromProviders(@NotNull TypeEvalContext context) {
-    for (PyTypeProvider provider : PyTypeProvider.EP_NAME.getExtensionList()) {
-      final PyType type = provider.getReferenceExpressionType(this, context);
-      if (type != null) {
-        return type;
-      }
-    }
-    return PyAnyType.getUnknown();
   }
 
   private static @Nullable Ref<PyType> getTypeFromTarget(@NotNull PsiElement target,
