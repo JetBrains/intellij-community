@@ -20,6 +20,11 @@ public abstract class ProjectScopeBuilder {
   public abstract @NotNull GlobalSearchScope buildLibrariesScope();
 
   /**
+   * @return A scope containing files from 'binary' ('classes') roots of all libraries and SDKs added to the dependencies of the project.
+   */
+  public abstract @NotNull GlobalSearchScope buildLibraryClassesScope();
+
+  /**
    * @return Scope for all things inside the project: files in the project content plus files in libraries/library source
    */
   public abstract @NotNull GlobalSearchScope buildAllScope();

@@ -3091,6 +3091,7 @@ f:com.intellij.psi.search.ProjectScope
 - s:getContentScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
 - s:getEverythingScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
 - s:getLibrariesScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
+- s:getLibraryClassesScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
 - s:getProjectFilesScopeName():java.lang.String
 - s:getProjectScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
 com.intellij.psi.search.PsiElementProcessor
