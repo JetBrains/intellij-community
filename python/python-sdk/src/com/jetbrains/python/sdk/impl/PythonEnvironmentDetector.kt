@@ -2,13 +2,15 @@
 package com.jetbrains.python.sdk.impl
 
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
 import com.jetbrains.python.packaging.PyCondaPackageService
+import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
 import com.jetbrains.python.sdk.PythonEnvironment
 import com.jetbrains.python.sdk.impl.PySdkBundle.message
 import java.io.IOException
@@ -33,12 +35,15 @@ import kotlin.io.path.listDirectoryEntries
 @RequiresBackgroundThread
 internal fun PythonBinary.detectPythonEnvironmentImpl(): PyResult<PythonEnvironment> {
   if (!isExecutable()) return PyResult.localizedError(message("python.sdk.detect.binary.not.executable", this))
+  val validationInfo = runBlockingMaybeCancellable { validatePythonAndGetInfo() }
+
   val home = resolvePythonHome()
   val pyvenvCfg = home.resolve("pyvenv.cfg")
   if (pyvenvCfg.exists()) {
     val venvLibRoot = resolveVenvLibRoot(home)
                       ?: return PyResult.localizedError(message("python.sdk.detect.venv.lib.root.failed", home))
     return PythonEnvironment.Venv(
+      validationInfo = validationInfo,
       pythonBinaryPath = this,
       pythonHomePath = home,
       config = parsePyvenvCfg(pyvenvCfg),
@@ -52,6 +57,7 @@ internal fun PythonBinary.detectPythonEnvironmentImpl(): PyResult<PythonEnvironm
     val venvLibRoot = resolveVenvLibRoot(home)
                       ?: return PyResult.localizedError(message("python.sdk.detect.venv.lib.root.failed", home))
     return PythonEnvironment.Venv(
+      validationInfo = validationInfo,
       pythonBinaryPath = this,
       pythonHomePath = home,
       config = emptyMap(),
@@ -63,6 +69,7 @@ internal fun PythonBinary.detectPythonEnvironmentImpl(): PyResult<PythonEnvironm
   if (condaMeta.isDirectory()) {
     val isBase = home.resolve("condabin").isDirectory() || home.resolve("envs").isDirectory()
     return PythonEnvironment.Conda(
+      validationInfo = validationInfo,
       pythonBinaryPath = this,
       pythonHomePath = home,
       condaMetaPath = condaMeta,
@@ -74,7 +81,7 @@ internal fun PythonBinary.detectPythonEnvironmentImpl(): PyResult<PythonEnvironm
     ).let { PyResult.success(it) }
   }
 
-  return PythonEnvironment.SystemPython(this).let { PyResult.success(it) }
+  return PythonEnvironment.SystemPython(validationInfo, this).let { PyResult.success(it) }
 }
 
 private fun parsePyvenvCfg(path: Path): Map<String, String> {

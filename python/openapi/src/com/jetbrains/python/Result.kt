@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
 import com.intellij.openapi.diagnostic.Logger
@@ -135,7 +135,7 @@ sealed class Result<out SUCC, out ERR> {
  * .mapResult{ drinkIt(it) }
  * ```
  */
-fun <SUCC, NEW_S, ERR> Result<SUCC, ERR>.mapResult(map: (SUCC) -> Result<NEW_S, ERR>): Result<NEW_S, ERR> =
+inline fun <SUCC, NEW_S, ERR> Result<SUCC, ERR>.mapResult(map: (SUCC) -> Result<NEW_S, ERR>): Result<NEW_S, ERR> =
   when (this) {
     is Success -> map(result)
     is Failure -> this

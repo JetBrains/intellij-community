@@ -7,6 +7,9 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.frameActivationCache.CacheKeys
+import com.jetbrains.python.frameActivationCache.getOrComputeOnFrameActivation
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.impl.enrichLocalPythonSdkWithHomeInfo
 import com.jetbrains.python.sdk.impl.pythonEnvironmentCache
 import kotlinx.coroutines.Dispatchers
@@ -61,6 +64,21 @@ class PythonInterpreter internal constructor(
 }
 
 /**
+ * Python version.
+ * SDK is either invalid (`python --version` returned an error) or has a [LanguageLevel].
+ * Use `when` to check it.
+ */
+@ApiStatus.Internal
+suspend fun PythonInterpreter.getVersion(): PyResult<LanguageLevel> =
+  pythonEnvironment?.validationInfo?.version
+  ?:
+  // We should have used `pythonEnvironment`, but it doesn't work for remote machines (yet) and we still want to cache version
+  // So we cache it until the user activates IDE
+  sdk.getOrComputeOnFrameActivation(PY_SDK_LANG_LEVEL_CACHE_KEY) {
+    sdk.validatePythonAndGetInfo().version
+  }
+
+/**
  * A [PythonInterpreter] wrapping whatever [PythonEnvironment] detection has already cached for this SDK,
  * or `null` when nothing has ever been cached (early startup, non-Python / remote SDK).
  *
@@ -98,3 +116,5 @@ fun Sdk.pythonInterpreter(forceRefresh: Boolean = false): PythonInterpreter {
 suspend fun Sdk.pythonInterpreterAsync(forceRefresh: Boolean = false): PythonInterpreter = withContext(Dispatchers.IO) {
   this@pythonInterpreterAsync.pythonInterpreter(forceRefresh)
 }
+
+private val PY_SDK_LANG_LEVEL_CACHE_KEY = CacheKeys<PyResult<LanguageLevel>>("PythonSdkLang")

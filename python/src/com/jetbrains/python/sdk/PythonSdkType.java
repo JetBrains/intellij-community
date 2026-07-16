@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -443,7 +443,12 @@ public final class PythonSdkType extends SdkType {
     }
     return path;
   }
-
+  /**
+   * @deprecated use {@link PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
+   * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
+   * or {@link SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
+   */
+  @Deprecated(forRemoval = true)
   @Override
   public String getVersionString(@NotNull Sdk sdk) {
     SdkAdditionalData sdkAdditionalData = sdk.getSdkAdditionalData();
@@ -472,6 +477,12 @@ public final class PythonSdkType extends SdkType {
     }
   }
 
+  /**
+   * @deprecated use {@link PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
+   * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
+   * or {@link SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
+   */
+  @Deprecated(forRemoval = true)
   @Override
   public @Nullable String getVersionString(final @NotNull String sdkHome) {
     // Paths like \\wsl and ssh:// can't be used here
@@ -527,7 +538,9 @@ public final class PythonSdkType extends SdkType {
   }
 
   /**
-   * @deprecated use {@link PySdkUtil#getLanguageLevelForSdk(Sdk)} instead
+   * @deprecated use {@link PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
+   * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
+   * or {@link SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
    */
   @Deprecated(forRemoval = true)
   public static @NotNull LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {

@@ -22,6 +22,7 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.impl.PySdkBundle;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.terminal.Shell;
+import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -237,7 +238,12 @@ public final class PySdkUtil {
 
     return Collections.unmodifiableMap(ActivatableScriptExtKt.readPythonEnvironment(activateScript));
   }
-
+  /**
+   * @deprecated use {@link PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
+   * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
+   * or {@link SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
+   */
+  @Deprecated(forRemoval = true)
   public static @NotNull LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
     if (sdk != null && PythonSdkUtil.isPythonSdk(sdk)) {
       final PythonSdkFlavor<?> flavor = PythonSdkFlavor.getFlavor(sdk);
