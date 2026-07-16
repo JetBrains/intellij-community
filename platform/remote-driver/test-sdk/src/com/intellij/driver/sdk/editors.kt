@@ -178,6 +178,7 @@ interface FileEditor {
 @Remote("com.intellij.openapi.fileEditor.FileEditorManager")
 interface FileEditorManager {
   fun openFile(file: VirtualFile, focusEditor: Boolean, searchForOpen: Boolean): Array<FileEditor>
+  fun closeFile(file: VirtualFile)
   fun getSelectedTextEditor(): Editor?
   fun setSelectedEditor(editor: FileEditor)
   fun getAllEditors(): Array<FileEditor>

@@ -10,6 +10,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 
 @Service(Service.Level.PROJECT)
@@ -63,6 +64,14 @@ internal class ProblemLifetimeManager {
       intentions.clear()
     }
   }
+
+  /** Test-only: whether a problem id currently resolves in the store. */
+  @TestOnly
+  fun hasProblemId(id: String): Boolean = problemIds.findValueById(id) != null
+
+  /** Test-only: total number of problem ids currently in the store. */
+  @TestOnly
+  fun getProblemIdsSize(): Int = problemIds.getSize()
 
   internal fun getDiagnosticSnapshot(): String = buildString {
     appendLine("Problem IDs Count: ${problemIds.getSize()}")
