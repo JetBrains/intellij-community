@@ -57,6 +57,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -110,7 +111,15 @@ open class McpServerService(val cs: CoroutineScope) {
     internal val callId = AtomicInteger(0)
   }
 
-  internal val toolsStateProvider = McpToolsListProvider(cs)
+  private val toolsStateProviderDelegate = lazy {
+    McpToolsListProvider(cs)
+  }
+
+  internal val toolsStateProvider: McpToolsListProvider
+    get() = toolsStateProviderDelegate.value
+
+  @TestOnly
+  internal fun isToolsStateProviderInitialized(): Boolean = toolsStateProviderDelegate.isInitialized()
   
   private val server = MutableStateFlow(startGlobalServerIfEnabled())
 
