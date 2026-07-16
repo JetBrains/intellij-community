@@ -27,11 +27,13 @@ import kotlinx.coroutines.sync.withPermit
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-sealed interface TreeStructureProjectViewNode
+sealed interface TreeStructureProjectViewNode {
+  val elementDescriptor: NodeDescriptor<*>
+}
 
 private data class TreeStructureProjectViewNodeImpl(
   val element: Any,
-  val elementDescriptor: NodeDescriptor<*>,
+  override val elementDescriptor: NodeDescriptor<*>,
 ) : TreeStructureProjectViewNode
 
 @ApiStatus.Experimental

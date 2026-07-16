@@ -1,3 +1,18 @@
+*c:com.intellij.platform.projectView.impl.ProjectViewPaneViewSettings
+- com.intellij.ide.projectView.ViewSettings
+- <init>(com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor):V
+- isAbbreviatePackageNames():Z
+- isCompactDirectories():Z
+- isFlattenModules():Z
+- isFlattenPackages():Z
+- isFoldersAlwaysOnTop():Z
+- isHideEmptyMiddlePackages():Z
+- isShowLibraryContents():Z
+- isShowMembers():Z
+- isShowModules():Z
+- isShowScratchesAndConsoles():Z
+- isShowURL():Z
+- isStructureView():Z
 *:com.intellij.platform.projectView.impl.ProjectViewTreeNodeProvider
 - a:createNodeModel(J,java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
 - a:getChildren(java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
@@ -13,6 +28,7 @@
 - loadChildren(J,com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenOptions,kotlin.coroutines.Continuation):java.lang.Object
 - manageState(com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilder,kotlin.coroutines.Continuation):java.lang.Object
 - navigate(J,com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions,kotlin.coroutines.Continuation):java.lang.Object
+- p:onStateChanged(com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccessor,kotlin.coroutines.Continuation):java.lang.Object
 - pa:order(kotlin.coroutines.Continuation):java.lang.Object
 - pa:presentableName(kotlin.coroutines.Continuation):java.lang.Object
 - setFileNesting(com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue,kotlin.coroutines.Continuation):java.lang.Object
@@ -23,12 +39,16 @@
 - p:supportsFileNesting():Z
 - p:supportsOption(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V
+- pf:updateSettings(kotlin.coroutines.Continuation):java.lang.Object
 *a:com.intellij.platform.projectView.impl.TreeStructureBasedProjectViewPaneModel
 - com.intellij.platform.projectView.impl.TreeBasedProjectViewPaneModel
 - <init>(com.intellij.openapi.project.Project):V
 - p:createNodeProvider(com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor,kotlin.coroutines.Continuation):java.lang.Object
 - pa:createTreeStructure(com.intellij.ide.projectView.ViewSettings):com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
+- p:createTreeStructureViewSettings(com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor):com.intellij.platform.projectView.impl.ProjectViewPaneViewSettings
+- p:supportsOption(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
 *:com.intellij.platform.projectView.impl.TreeStructureProjectViewNode
+- a:getElementDescriptor():com.intellij.ide.util.treeView.NodeDescriptor
 *f:com.intellij.platform.projectView.impl.TreeStructureProjectViewNodeProvider
 - com.intellij.platform.projectView.impl.ProjectViewTreeNodeProvider
 - <init>(com.intellij.openapi.project.Project,com.intellij.ide.projectView.impl.AbstractProjectTreeStructure,com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor):V

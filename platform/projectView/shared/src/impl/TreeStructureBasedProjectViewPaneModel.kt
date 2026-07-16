@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneOptionImpl
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
 import org.jetbrains.annotations.ApiStatus
@@ -19,10 +20,30 @@ abstract class TreeStructureBasedProjectViewPaneModel(project: Project) : TreeBa
     )
   }
 
+  protected open fun createTreeStructureViewSettings(settingsAccessor: ProjectViewPaneSettingsAccessor): ProjectViewPaneViewSettings {
+    return ProjectViewPaneViewSettings(settingsAccessor)
+  }
+
   protected abstract fun createTreeStructure(viewSettings: ViewSettings): AbstractProjectTreeStructure
+
+  override fun supportsOption(option: ProjectViewPaneOption): Boolean {
+    // Because tree structure based panes are derived from the respective legacy implementations,
+    // the defaults here are also chosen to match AbstractProjectViewPane.
+    return when (option) {
+      is ProjectViewPaneOption.CompactDirectories -> false
+      is ProjectViewPaneOption.FlattenModules -> false
+      is ProjectViewPaneOption.ShowLibraryContents -> false
+      is ProjectViewPaneOption.ShowModules -> false
+      is ProjectViewPaneOption.ShowScratchesAndConsoles -> false
+      is ProjectViewPaneOption.ShowExcludedFiles -> false
+      is ProjectViewPaneOption.ManualOrder -> false
+      else -> true
+    }
+  }
 }
 
-private class ProjectViewPaneViewSettings(private val settingsAccessor: ProjectViewPaneSettingsAccessor) : ViewSettings {
+@ApiStatus.Experimental
+open class ProjectViewPaneViewSettings(private val settingsAccessor: ProjectViewPaneSettingsAccessor) : ViewSettings {
 
   override fun isStructureView(): Boolean = false
 

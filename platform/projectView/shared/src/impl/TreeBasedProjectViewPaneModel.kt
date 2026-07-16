@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
+import com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccessor
 import com.intellij.platform.projectView.pane.ProjectViewNodeModelImpl
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
@@ -59,20 +60,37 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
   protected abstract suspend fun createNodeProvider(settingsAccessor: ProjectViewPaneSettingsAccessor): ProjectViewTreeNodeProvider<T>
 
   override suspend fun manageState(builder: ProjectViewPaneStateBuilder) {
-    builder.updateSettingsState { settingsStateBuilder ->
-      buildSettingsState(settingsStateBuilder)
-    }
+    updateSettings(builder)
     val nodeProvider = createNodeProvider(builder.asSettingsAccessor())
-    val state = ProjectViewPaneTreeState(nodeProvider, builder)
+    val stateAccessor = builder.asBackendStateAccessor<T>()
+    val state = ProjectViewPaneTreeState(nodeProvider, builder, stateAccessor)
     state.initialize()
+    onStateChanged(stateAccessor)
     for (stateUpdateRequest in stateUpdateRequests) {
       when (stateUpdateRequest) {
         is LoadChildrenRequest -> {
           state.updateChildren(stateUpdateRequest.parentId)
         }
+        is UpdateSettingsRequest -> {
+          updateSettings(builder)
+        }
       }
+      onStateChanged(stateAccessor)
     }
   }
+
+  private suspend fun updateSettings(builder: ProjectViewPaneStateBuilder) {
+    builder.updateSettingsState { settingsStateBuilder ->
+      buildSettingsState(settingsStateBuilder)
+    }
+  }
+
+  protected suspend fun updateSettings() {
+    scheduleStateUpdate(UpdateSettingsRequest)
+  }
+
+  @ApiStatus.OverrideOnly
+  protected open suspend fun onStateChanged(state: BackendProjectViewPaneStateAccessor<T>) { }
 
   private fun buildSettingsState(settingsStateBuilder: ProjectViewPaneSettingsStateBuilder) {
     val settingsService = ProjectViewPaneSettingsService.getInstance(project)
@@ -143,12 +161,13 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
 
 private sealed class StateUpdateRequest
 private data class LoadChildrenRequest(val parentId: Long) : StateUpdateRequest()
+private data object UpdateSettingsRequest : StateUpdateRequest()
 
 private class ProjectViewPaneTreeState<T>(
   private val nodeProvider: ProjectViewTreeNodeProvider<T>,
   private val builder: ProjectViewPaneStateBuilder,
+  private val state: BackendProjectViewPaneStateAccessor<T>,
 ) {
-  private val state = builder.asBackendStateAccessor<T>()
   private var nextId = 1L
 
   suspend fun initialize() {
