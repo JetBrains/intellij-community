@@ -3,10 +3,13 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
+import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameterList;
@@ -51,11 +54,11 @@ public final class PyInitNewSignatureInspection extends PyInspection {
       }
 
       if (complementaryMethods.size() == 1) {
-        registerIncompatibilityProblem(node, PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchingMethods(
-          node, complementaryMethods.getFirst()));
+        registerIncompatibilityProblem(node, complementaryMethods.getFirst(),
+                                       PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchingMethods(node, complementaryMethods.getFirst()));
       }
       else if (!complementaryMethods.isEmpty()) {
-        registerIncompatibilityProblem(node, null);
+        registerIncompatibilityProblem(node, complementaryMethods.getFirst(), null);
       }
     }
 
@@ -70,16 +73,20 @@ public final class PyInitNewSignatureInspection extends PyInspection {
     }
 
 
-    private void registerIncompatibilityProblem(@NotNull PyFunction function, @Nullable LocalQuickFix quickFix) {
+    private void registerIncompatibilityProblem(@NotNull PyFunction function, @NotNull PyFunction other, @Nullable LocalQuickFix quickFix) {
       final PyParameterList parameterList = function.getParameterList();
-      final String message = PyPsiBundle.message(PyUtil.isNewMethod(function) ? "INSP.new.incompatible.to.init"
-                                                                              : "INSP.init.incompatible.to.new");
-      if (quickFix != null) {
-        registerProblem(parameterList, message, quickFix);
-      }
-      else {
-        registerProblem(parameterList, message);
-      }
+      final String description = PyPsiBundle.message(PyUtil.isNewMethod(function) ? "INSP.new.incompatible.to.init"
+                                                                                  : "INSP.init.incompatible.to.new");
+      final List<PyCallableParameter> functionParams = ParamHelper.dropSelf(function.getParameters(myTypeEvalContext));
+      final List<PyCallableParameter> otherParams = ParamHelper.dropSelf(other.getParameters(myTypeEvalContext));
+      // The aligned parameter diff with the assignability breakdown appended below it on-the-fly.
+      final String diff = PyTypeDiff.paramsDiffTooltip(otherParams, functionParams, HtmlChunk.text(description), myTypeEvalContext);
+      final ProblemMessage message = new ProblemMessage(description, diff);
+      final PyCallableParameterListTypeImpl otherSignature = new PyCallableParameterListTypeImpl(otherParams);
+      final PyCallableParameterListTypeImpl functionSignature = new PyCallableParameterListTypeImpl(functionParams);
+      final LocalQuickFix[] fixes = quickFix != null ? new LocalQuickFix[]{quickFix} : LocalQuickFix.EMPTY_ARRAY;
+      registerProblemWithTooltip(parameterList, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes,
+                                 () -> PyTypeCheckerInspectionProblemRegistrar.breakdownTooltip(message, otherSignature, functionSignature, myTypeEvalContext, parameterList));
     }
   }
 }

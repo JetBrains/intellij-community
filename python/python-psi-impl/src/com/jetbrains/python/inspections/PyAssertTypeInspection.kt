@@ -36,8 +36,11 @@ class PyAssertTypeInspection : PyInspection() {
             if (!isSame(actualType, expectedType, myTypeEvalContext)) {
               val expectedName = PythonDocumentationProvider.getVerboseTypeName(expectedType, myTypeEvalContext)
               val actualName = PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)
-              registerProblem(arguments[0],
-                              PyPsiBundle.problemMessage("INSP.assert.type.expected.type.got.type.instead", expectedName, actualName))
+              val message = PyPsiBundle.problemMessage("INSP.assert.type.expected.type.got.type.instead", expectedName, actualName)
+              // assert_type is an exact-match check, so the diff compares the types invariantly; it's shown alone (no
+              // assignability breakdown, which wouldn't apply to an equality check).
+              val diff = PyTypeDiff.diffTooltip(expectedType, actualType, myTypeEvalContext, exact = true)
+              registerProblem(arguments[0], if (diff != null) message.copy(tooltip = diff) else message)
             }
           }
         }

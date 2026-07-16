@@ -127,6 +127,16 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
     assertSyntaxColored(tooltip, "None")
   }
 
+  // Two fully-disjoint unions (here `None` matches neither `int` nor `str`) have nothing to align, so the aligned diff
+  // is suppressed — a grid of gaps is less useful than the plain message, which is shown instead.
+  @Test
+  fun `disjoint top-level unions show no diff`() {
+    val tooltip = tooltipFor("""
+      a: int | str = None
+    """)
+    assertTrue(codeLineTexts(tooltip).isEmpty(), "expected no aligned diff for fully-disjoint unions:\n$tooltip")
+  }
+
   // The overload-call report (`No overload matches`) shares the grid, so via the single `typeValue` factory it gets the
   // SAME rich rendering as the structural diff: a matched type name keeps its syntax colour and is a navigable link.
   @Test
@@ -167,6 +177,58 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
     assertTrue("color: $expectedColor; background-color:" in tooltip, tooltip)
   }
 
+  // A method override whose only difference is a type-parameter BOUND (base `def f[T: str]`, override `def f[T: int]`)
+  // renders a leading `[T: bound]` group so the differing bound is highlighted — the parameter lists alone are identical.
+  @Test
+  fun `override type-parameter bound mismatch is highlighted`() {
+    val tooltip = diffTableTooltip("""
+      class A:
+          def f[T: str](self, t: T) -> None: ...
+      class B(A):
+          def f[T: int](self, t: T) -> None: ...
+    """, PyMethodOverridingInspection::class.java)
+    assertNotNull(tooltip, "expected an override signature diff")
+    val diff = tooltip!!
+    assertProvided(diff, "int")   // the override's bound `int` is red…
+    assertExpected(diff, "str")   // …and the base's bound `str` green
+  }
+
+  // An override that re-annotates the receiver (`self: int` vs `self: str`) keeps `self` in the diff and compares its
+  // EXPLICIT annotation, so the difference is highlighted — an unannotated `self`'s implicit receiver type stays hidden.
+  @Test
+  fun `override with an explicit self annotation shows the difference`() {
+    val tooltip = diffTableTooltip("""
+      class A:
+          def f(self: int): ...
+      class B(A):
+          def f(self: str): ...
+    """, PyMethodOverridingInspection::class.java)
+    assertNotNull(tooltip, "expected an override diff")
+    val diff = tooltip!!
+    assertCodeLineContains(diff, "self")   // `self` is shown, not dropped…
+    assertProvided(diff, "str")            // …its provided annotation `str` is red…
+    assertExpected(diff, "int")            // …and its expected annotation `int` green
+  }
+
+  // When only the BASE annotates the receiver (`self: int`) and the override leaves it bare (`self`), the receiver is
+  // still compared: the base's `int` is highlighted (the override's implicit `Self@B` doesn't satisfy it). The bare
+  // `self` must line up under the base's `self` — not float under its `: ` — even though only one row shows a `: type`.
+  @Test
+  fun `override with a bare self against an explicit base annotation is highlighted and aligned`() {
+    val tooltip = diffTableTooltip("""
+      class A:
+          def f(self: int): ...
+      class B(A):
+          def f(self): ...
+    """, PyMethodOverridingInspection::class.java)
+    assertNotNull(tooltip, "expected an override diff")
+    val diff = tooltip!!
+    assertNotHighlighted(diff, "self")     // the name itself is never flagged…
+    assertExpected(diff, "int")            // …the base's explicit `int` is highlighted (the override doesn't match)…
+    assertRowsAligned(diff)                // …and the bare `self` lines up under the base's `self` (same start),
+    assertTrue(codeLineTexts(diff).all { it.startsWith("(self") }, diff)   // not shoved right under its `: `
+  }
+
   // An intersection type (here produced by narrowing `x: A` with `isinstance(x, B)`) is shown member by member too,
   // its parts joined by ` & `, instead of falling back to a plain message.
   @Test
@@ -181,6 +243,57 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
     assertTrue(" &amp; " in tooltip, tooltip)
     assertCodeLineContains(tooltip, "A")
     assertCodeLineContains(tooltip, "B")
+  }
+
+  // The diff is wired into assert_type, which is an EXACT-match check, so it compares the types INVARIANTLY: a
+  // difference a covariant comparison would accept is still flagged. Here the callable returns `bool` where `int` is
+  // expected — `bool` is a subtype of `int`, so a covariant return would NOT be a mismatch — yet the diff flags it
+  // (while the matching `int` parameters stay unhighlighted), which only happens under the invariant comparison.
+  @Test
+  fun `assert_type mismatch shows the diff invariantly`() {
+    val tooltip = diffTableTooltip("""
+      from typing import assert_type, Callable
+      def f() -> Callable[[int], bool]: ...
+      assert_type(f(), Callable[[int], int])
+    """, PyAssertTypeInspection::class.java)
+    assertNotNull(tooltip, "expected a callable diff in the assert_type warning")
+    val diff = tooltip!!
+    assertProvided(diff, "bool")   // the provided `bool` return is red…
+    assertExpected(diff, "int")    // …and the expected `int` return green — an exact mismatch a covariant return would accept
+  }
+
+  // The diff (with the breakdown below it) is wired into the Protocol member-type check.
+  @Test
+  fun `protocol member type mismatch shows the diff`() {
+    val tooltip = diffTableTooltip("""
+      from typing import Protocol, Callable
+      class P(Protocol):
+          f: Callable[[int], int]
+      class C(P):
+          f: Callable[[str], int]
+    """, PyProtocolInspection::class.java)
+    assertNotNull(tooltip, "expected a callable diff in the protocol member warning")
+  }
+
+  // ...and into the TypeVar default-vs-bound check.
+  @Test
+  fun `typevar default not matching bound shows the diff`() {
+    val tooltip = diffTableTooltip("""
+      from typing import TypeVar, Callable
+      T = TypeVar("T", bound=Callable[[int], int], default=Callable[[str], int])
+    """, PyTypeHintsInspection::class.java)
+    assertNotNull(tooltip, "expected a callable diff in the TypeVar bound warning")
+  }
+
+  // ...and into the __init__/__new__ signature-compatibility check.
+  @Test
+  fun `incompatible init and new signatures show the diff`() {
+    val tooltip = diffTableTooltip("""
+      class C:
+          def __new__(cls, x: int): ...
+          def __init__(self, x: str): ...
+    """, PyInitNewSignatureInspection::class.java)
+    assertNotNull(tooltip, "expected a parameter diff in the __init__/__new__ warning")
   }
 
   // Like an editor diff, the provided value's incompatible parts are red and the expected type's are green, and
@@ -721,11 +834,11 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
     assertExpected(tooltip!!, "int")
   }
 
-  // ...and into a method-override signature mismatch. The implicit `self`/`cls` receiver is not part of the
-  // overridable signature — its type differs between base and override by design (`Self@A` vs `Self@B`) — so the
-  // diff must drop it and show only the real parameter mismatch, never flagging `self`.
+  // ...and into a method-override signature mismatch. The implicit `self`/`cls` receiver IS shown (so the signature
+  // isn't truncated to an empty `()`), but only as the bare name — its implicit type (`Self@A` vs `Self@B`) differs by
+  // design, so it stays hidden and `self` is never flagged; only the real parameter mismatch is highlighted.
   @Test
-  fun `method override diff drops self`() {
+  fun `method override diff keeps self but hides its implicit type`() {
     val tooltip = diffTableTooltip("""
       class A:
           def f(self, x: int): ...
@@ -736,8 +849,9 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
     // The real mismatch is shown (provided `str` red, expected `int` green)...
     assertProvided(tooltip!!, "str")
     assertExpected(tooltip, "int")
-    // ...while `self` is dropped entirely, so it can't be (and isn't) highlighted as a mismatch.
-    assertFalse(codeLineTexts(tooltip).any { "self" in it }, tooltip)
+    // ...`self` is shown as the bare name, but never highlighted (no implicit type is rendered to flag).
+    assertCodeLineContains(tooltip, "self")
+    assertNotHighlighted(tooltip, "self")
   }
 
   // Generalizes beyond callables: a nested generic/tuple mismatch aligns the type arguments and highlights the
