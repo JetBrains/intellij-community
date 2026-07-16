@@ -103,7 +103,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.lang.JavaVersion;
@@ -198,6 +197,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.debugger.engine.DebuggerUtils.forEachSafe;
+import static com.intellij.debugger.engine.EvaluationUtilsKt.BREAKPOINT_CHECK_FN_KEY;
 import static com.intellij.debugger.engine.MethodInvokeUtilsKt.tryInvokeWithHelper;
 import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 
@@ -215,8 +215,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private final List<ProcessListener> myProcessListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final StringBuilder myTextBeforeStart = new StringBuilder();
-
-  protected Map<VirtualMachineProxyImpl, EnterAndExitEvaluationCheck> myBreakpointCheckFnMap = CollectionFactory.createWeakMap();
 
   protected enum State {INITIAL, ATTACHED, DETACHING, DETACHED}
 
@@ -3130,7 +3128,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @ApiStatus.Internal
   public void setIsUnderBreakpointCheckFn(@NotNull Method enterBreakpointCheckFn, @NotNull Method checkIsDoneFn) {
-    myBreakpointCheckFnMap.put(VirtualMachineProxyImpl.getCurrent(), new EnterAndExitEvaluationCheck(enterBreakpointCheckFn, checkIsDoneFn));
+    VirtualMachineProxyImpl.getCurrent()
+      .putUserData(BREAKPOINT_CHECK_FN_KEY, new EnterAndExitEvaluationCheck(enterBreakpointCheckFn, checkIsDoneFn));
+  }
+
+  protected @Nullable EnterAndExitEvaluationCheck getIsUnderBreakpointCheckFn(@NotNull VirtualMachineProxyImpl virtualMachineProxy) {
+    return virtualMachineProxy.getUserData(BREAKPOINT_CHECK_FN_KEY);
   }
 
   @ApiStatus.Internal

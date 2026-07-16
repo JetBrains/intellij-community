@@ -699,7 +699,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         final LocatableEventRequestor requestor = (LocatableEventRequestor)RequestManagerImpl.findRequestor(event.request());
 
         Method checkIsDoneFn = null;
-        EnterAndExitEvaluationCheck enterAndExitEvaluationCheck = myBreakpointCheckFnMap.get(suspendContext.getVirtualMachineProxy());
+        EnterAndExitEvaluationCheck enterAndExitEvaluationCheck = getIsUnderBreakpointCheckFn(suspendContext.getVirtualMachineProxy());
         if (enterAndExitEvaluationCheck != null && shouldCheckForSkipBreakpoint(event)) {
           Method enterBreakpointCheckFn = enterAndExitEvaluationCheck.enterBreakpointCheckFn;
 
