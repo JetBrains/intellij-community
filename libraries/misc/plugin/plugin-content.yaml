@@ -17,17 +17,13 @@
       jettison:
       - name: $MAVEN_REPOSITORY$/org/codehaus/jettison/jettison/1/jettison-1.jar
 - name: lib/modules/intellij.libraries.lucene.common.jar
-  projectLibraries:
-  - name: lucene-analysis-common
-    files:
-    - name: $MAVEN_REPOSITORY$/org/apache/lucene/lucene-analysis-common/10/lucene-analysis-common-10.jar
-    reason: <- intellij.libraries.lucene.common
-  - name: lucene-core
-    files:
-    - name: $MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/10/lucene-core-10.jar
-    reason: <- intellij.libraries.lucene.common
   contentModules:
   - name: intellij.libraries.lucene.common
+    libraries:
+      lucene-analysis-common:
+      - name: $MAVEN_REPOSITORY$/org/apache/lucene/lucene-analysis-common/10/lucene-analysis-common-10.jar
+      lucene-core:
+      - name: $MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/10/lucene-core-10.jar
 - name: lib/modules/intellij.libraries.opencsv.jar
   contentModules:
   - name: intellij.libraries.opencsv

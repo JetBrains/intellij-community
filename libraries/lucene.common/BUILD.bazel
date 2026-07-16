@@ -15,13 +15,13 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:lucene-analysis-common",
-        "@lib//:lucene-core",
+        "@lib//:libraries-lucene-common-lucene-analysis-common",
+        "@lib//:libraries-lucene-common-lucene-core",
     ],
     runtime_deps = [
         # do not sort,
-        "@lib//:lucene-analysis-common",
-        "@lib//:lucene-core",
+        "@lib//:libraries-lucene-common-lucene-analysis-common",
+        "@lib//:libraries-lucene-common-lucene-core",
     ],
 )
 
@@ -36,8 +36,8 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:lucene-analysis-common",
-        "@lib//:lucene-core",
+        "@lib//:libraries-lucene-common-lucene-analysis-common",
+        "@lib//:libraries-lucene-common-lucene-core",
     ],
     runtime_deps = [":lucene.common"],
 )

@@ -40,7 +40,6 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Pair
         overwrite = PatchOverwriteMode.TRUE
       )
     }
-    spec.withProjectLibrary("lucene-core")
     spec.withGeneratedResources { targetDir, buildContext ->
       val assetJar = targetDir.resolve("lib/help-$productLowerCase-assets.jar")
       buildResourcesForHelpPlugin(
@@ -148,5 +147,4 @@ private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: C
     }
   }
 }
-
 

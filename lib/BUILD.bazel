@@ -633,107 +633,107 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.apache.lucene/lucene-codecs-10.3.0.jar_copy",
-    src = "@org_apache_lucene-lucene-codecs-10_3_0_http//file",
-    out = "org.apache.lucene/lucene-codecs-10.3.0.jar",
+    name = "org.apache.lucene/lucene-codecs-10.5.0.jar_copy",
+    src = "@org_apache_lucene-lucene-codecs-10_5_0_http//file",
+    out = "org.apache.lucene/lucene-codecs-10.5.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "built_in_help-lucene-codecs",
-    jar = "@org_apache_lucene-lucene-codecs-10_3_0_http//file",
-    source_jar = "@org_apache_lucene-lucene-codecs-10_3_0-sources_http//file",
+    jar = "@org_apache_lucene-lucene-codecs-10_5_0_http//file",
+    source_jar = "@org_apache_lucene-lucene-codecs-10_5_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.lucene/lucene-highlighter-10.3.0.jar_copy",
-    src = "@org_apache_lucene-lucene-highlighter-10_3_0_http//file",
-    out = "org.apache.lucene/lucene-highlighter-10.3.0.jar",
+    name = "org.apache.lucene/lucene-highlighter-10.5.0.jar_copy",
+    src = "@org_apache_lucene-lucene-highlighter-10_5_0_http//file",
+    out = "org.apache.lucene/lucene-highlighter-10.5.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "built_in_help-lucene-highlighter",
-    jar = "@org_apache_lucene-lucene-highlighter-10_3_0_http//file",
-    source_jar = "@org_apache_lucene-lucene-highlighter-10_3_0-sources_http//file",
+    jar = "@org_apache_lucene-lucene-highlighter-10_5_0_http//file",
+    source_jar = "@org_apache_lucene-lucene-highlighter-10_5_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.lucene/lucene-memory-10.3.0.jar_copy",
-    src = "@org_apache_lucene-lucene-memory-10_3_0_http//file",
-    out = "org.apache.lucene/lucene-memory-10.3.0.jar",
+    name = "org.apache.lucene/lucene-memory-10.5.0.jar_copy",
+    src = "@org_apache_lucene-lucene-memory-10_5_0_http//file",
+    out = "org.apache.lucene/lucene-memory-10.5.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "built_in_help-lucene-memory",
-    jar = "@org_apache_lucene-lucene-memory-10_3_0_http//file",
-    source_jar = "@org_apache_lucene-lucene-memory-10_3_0-sources_http//file",
+    jar = "@org_apache_lucene-lucene-memory-10_5_0_http//file",
+    source_jar = "@org_apache_lucene-lucene-memory-10_5_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.lucene/lucene-queries-10.3.0.jar_copy",
-    src = "@org_apache_lucene-lucene-queries-10_3_0_http//file",
-    out = "org.apache.lucene/lucene-queries-10.3.0.jar",
+    name = "org.apache.lucene/lucene-queries-10.5.0.jar_copy",
+    src = "@org_apache_lucene-lucene-queries-10_5_0_http//file",
+    out = "org.apache.lucene/lucene-queries-10.5.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "built_in_help-lucene-queries",
-    jar = "@org_apache_lucene-lucene-queries-10_3_0_http//file",
-    source_jar = "@org_apache_lucene-lucene-queries-10_3_0-sources_http//file",
+    jar = "@org_apache_lucene-lucene-queries-10_5_0_http//file",
+    source_jar = "@org_apache_lucene-lucene-queries-10_5_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.lucene/lucene-queryparser-10.3.0.jar_copy",
-    src = "@org_apache_lucene-lucene-queryparser-10_3_0_http//file",
-    out = "org.apache.lucene/lucene-queryparser-10.3.0.jar",
+    name = "org.apache.lucene/lucene-queryparser-10.5.0.jar_copy",
+    src = "@org_apache_lucene-lucene-queryparser-10_5_0_http//file",
+    out = "org.apache.lucene/lucene-queryparser-10.5.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "built_in_help-lucene-queryparser",
-    jar = "@org_apache_lucene-lucene-queryparser-10_3_0_http//file",
-    source_jar = "@org_apache_lucene-lucene-queryparser-10_3_0-sources_http//file",
+    jar = "@org_apache_lucene-lucene-queryparser-10_5_0_http//file",
+    source_jar = "@org_apache_lucene-lucene-queryparser-10_5_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.lucene/lucene-sandbox-10.3.0.jar_copy",
-    src = "@org_apache_lucene-lucene-sandbox-10_3_0_http//file",
-    out = "org.apache.lucene/lucene-sandbox-10.3.0.jar",
+    name = "org.apache.lucene/lucene-sandbox-10.5.0.jar_copy",
+    src = "@org_apache_lucene-lucene-sandbox-10_5_0_http//file",
+    out = "org.apache.lucene/lucene-sandbox-10.5.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "built_in_help-lucene-sandbox",
-    jar = "@org_apache_lucene-lucene-sandbox-10_3_0_http//file",
-    source_jar = "@org_apache_lucene-lucene-sandbox-10_3_0-sources_http//file",
+    jar = "@org_apache_lucene-lucene-sandbox-10_5_0_http//file",
+    source_jar = "@org_apache_lucene-lucene-sandbox-10_5_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.lucene/lucene-suggest-10.3.0.jar_copy",
-    src = "@org_apache_lucene-lucene-suggest-10_3_0_http//file",
-    out = "org.apache.lucene/lucene-suggest-10.3.0.jar",
+    name = "org.apache.lucene/lucene-suggest-10.5.0.jar_copy",
+    src = "@org_apache_lucene-lucene-suggest-10_5_0_http//file",
+    out = "org.apache.lucene/lucene-suggest-10.5.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "built_in_help-lucene-suggest",
-    jar = "@org_apache_lucene-lucene-suggest-10_3_0_http//file",
-    source_jar = "@org_apache_lucene-lucene-suggest-10_3_0-sources_http//file",
+    jar = "@org_apache_lucene-lucene-suggest-10_5_0_http//file",
+    source_jar = "@org_apache_lucene-lucene-suggest-10_5_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -12865,6 +12865,36 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.apache.lucene/lucene-analysis-common-10.5.0.jar_copy",
+    src = "@org_apache_lucene-lucene-analysis-common-10_5_0_http//file",
+    out = "org.apache.lucene/lucene-analysis-common-10.5.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-lucene-common-lucene-analysis-common",
+    jar = "@org_apache_lucene-lucene-analysis-common-10_5_0_http//file",
+    source_jar = "@org_apache_lucene-lucene-analysis-common-10_5_0-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.apache.lucene/lucene-core-10.5.0.jar_copy",
+    src = "@org_apache_lucene-lucene-core-10_5_0_http//file",
+    out = "org.apache.lucene/lucene-core-10.5.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-lucene-common-lucene-core",
+    jar = "@org_apache_lucene-lucene-core-10_5_0_http//file",
+    source_jar = "@org_apache_lucene-lucene-core-10_5_0-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "at.yawk.lz4/lz4-java-1.11.0.jar_copy",
     src = "@at_yawk_lz4-lz4-java-1_11_0_http//file",
     out = "at.yawk.lz4/lz4-java-1.11.0.jar",
@@ -14449,36 +14479,6 @@ jvm_import(
     name = "log4_j",
     jar = "@org_slf4j-log4j-over-slf4j-1_7_36_http//file",
     source_jar = "@org_slf4j-log4j-over-slf4j-1_7_36-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.apache.lucene/lucene-analysis-common-10.3.0.jar_copy",
-    src = "@org_apache_lucene-lucene-analysis-common-10_3_0_http//file",
-    out = "org.apache.lucene/lucene-analysis-common-10.3.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "lucene-analysis-common",
-    jar = "@org_apache_lucene-lucene-analysis-common-10_3_0_http//file",
-    source_jar = "@org_apache_lucene-lucene-analysis-common-10_3_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.apache.lucene/lucene-core-10.3.0.jar_copy",
-    src = "@org_apache_lucene-lucene-core-10_3_0_http//file",
-    out = "org.apache.lucene/lucene-core-10.3.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "lucene-core",
-    jar = "@org_apache_lucene-lucene-core-10_3_0_http//file",
-    source_jar = "@org_apache_lucene-lucene-core-10_3_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
