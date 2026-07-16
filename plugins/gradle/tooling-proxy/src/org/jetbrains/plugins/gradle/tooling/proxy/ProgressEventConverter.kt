@@ -12,8 +12,10 @@ import org.gradle.tooling.events.ScriptPluginIdentifier
 import org.gradle.tooling.events.StartEvent
 import org.gradle.tooling.events.StatusEvent
 import org.gradle.tooling.events.SuccessResult
-import org.gradle.tooling.events.problems.ProblemSummary
-import org.gradle.tooling.events.problems.internal.DefaultProblemSummariesEvent
+import org.gradle.tooling.events.problems.ProblemAggregationEvent
+import org.gradle.tooling.events.problems.ProblemEvent
+import org.gradle.tooling.events.problems.ProblemSummariesEvent
+import org.gradle.tooling.events.problems.SingleProblemEvent
 import org.gradle.tooling.events.task.TaskExecutionResult
 import org.gradle.tooling.events.task.TaskFailureResult
 import org.gradle.tooling.events.task.TaskFinishEvent
@@ -47,13 +49,12 @@ import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.event
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.InternalOperationDescriptor
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.InternalOperationFailureResult
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.InternalOperationSuccessResult
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.InternalProblemAggregationEvent
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.InternalProblemSummariesEvent
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.InternalScriptPluginIdentifier
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.InternalSingleProblemEvent
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.InternalStartEvent
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.InternalStatusEvent
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem.InternalProblemGroup
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem.InternalProblemId
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem.InternalProblemSummary
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.task.InternalTaskExecutionDetails
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.task.InternalTaskFailureResult
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.task.InternalTaskFinishEvent
@@ -95,27 +96,15 @@ class ProgressEventConverter {
     is StatusEvent -> progressEvent.run { InternalStatusEvent(eventTime, displayName, convert(descriptor), total, progress, unit) }
     is StartEvent -> progressEvent.run { InternalStartEvent(eventTime, displayName, convert(descriptor)) }
     is FinishEvent -> progressEvent.run { InternalFinishEvent(eventTime, displayName, convert(descriptor), convert(result)) }
-    is DefaultProblemSummariesEvent -> progressEvent.run {
-      InternalProblemSummariesEvent(eventTime, displayName, convert(descriptor), convert(problemSummaries))
+    is ProblemEvent -> progressEvent.run {
+      when (progressEvent) {
+        is ProblemAggregationEvent -> InternalProblemAggregationEvent(progressEvent, convert(descriptor))
+        is ProblemSummariesEvent -> InternalProblemSummariesEvent(progressEvent, convert(descriptor))
+        is SingleProblemEvent -> InternalSingleProblemEvent(progressEvent, convert(descriptor))
+        else -> progressEvent
+      }
     }
     else -> progressEvent
-  }
-
-  private fun convert(summaries: List<ProblemSummary>?): List<ProblemSummary> {
-    return summaries?.map { problem ->
-      val problemId = problem.problemId.let { id ->
-        InternalProblemId(
-          id.name,
-          id.displayName,
-          InternalProblemGroup(
-            id.group.name,
-            id.group.displayName,
-            id.group.parent?.let { InternalProblemGroup(it) }
-          )
-        )
-      }
-      InternalProblemSummary(problemId, problem.count)
-    } ?: ArrayList()
   }
 
   private fun convert(result: TaskOperationResult?): TaskOperationResult? {
