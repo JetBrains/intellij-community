@@ -6,7 +6,6 @@ import com.jetbrains.python.allure.Subsystems
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
-import com.jetbrains.python.inspections.PyAssertTypeInspection
 import com.jetbrains.python.inspections.PyTypeHintsInspection
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Test
@@ -3985,166 +3984,406 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     """)
 
   @Test
-  fun `subscription parentheses flattening`() {
-    generateVariableTypeAssertions(
-      "list[((int))]" to "list[int]",
-      "list[((<warning descr=\"Passed type arguments do not match type parameters [_T] of class 'list'\">int, int</warning>))]" to null, // TODO: type: list[Unknown]
+  fun `subscription parentheses flattening`() = test("""
+    from typing import List, Set, Dict, Tuple, Union, Optional
 
-      "tuple[((int, int))]" to "tuple[int, int]",
-      "tuple[<error descr=\"Invalid type argument\">((int, int))</error>, int]" to "tuple[Unknown, int]",
+    class C1[T]: ...
+    class C2[T1, T2]: ...
 
-      "set[((int))]" to "set[int]",
-      "set[((<warning descr=\"Passed type arguments do not match type parameters [_T] of class 'set'\">int, int</warning>))]" to null, // TODO: type: set[Unknown]
+    a: list[((int))]
+    #\ TYPE list[int]
+    a: List[((int))]
+    #\ TYPE list[int]
 
-      "dict[((int)), (((str)))]" to "dict[int, str]",
-      "dict[((<warning descr=\"Passed type arguments do not match type parameters [_KT, _VT] of class 'dict'\">int</warning>))]" to null, // TODO: type: dict[Unknown, Unknown]
+    a: list[((int, int))]
+    #│        ^^^^^^^^ WARNING Passed type arguments do not match type parameters [_T] of class 'list'
+    #\ TYPE list[int, int] FIXME list[Unknown]
+    a: List[((int, int))]
+    #│        ^^^^^^^^ WARNING Passed type arguments do not match type parameters [_T] of class 'list'
+    #\ TYPE list[int, int] FIXME list[Unknown]
 
-      "List[((int))]" to "list[int]",
-      "List[((<warning descr=\"Passed type arguments do not match type parameters [_T] of class 'list'\">int, int</warning>))]" to null, // TODO: type: list[Unknown]
+    a: tuple[((int)), (((str)))]
+    #\ TYPE tuple[int, str]
+    a: Tuple[((int)), (((str)))]
+    #\ TYPE tuple[int, str]
 
-      "Tuple[((int)), (((str)))]" to "tuple[int, str]",
-      "Tuple[<error descr=\"Invalid type argument\">((int, int))</error>, int]" to "tuple[Unknown, int]",
+    a: tuple[((int, int))]
+    #\ TYPE tuple[int, int]
+    a: Tuple[((int, int))]
+    #\ TYPE tuple[int, int]
 
-      "Set[((int))]" to "set[int]",
-      "Set[((<warning descr=\"Passed type arguments do not match type parameters [_T] of class 'set'\">int, int</warning>))]" to null, // TODO: type: set[Unknown]
+    a: tuple[((int, int)), int]
+    #│       ^^^^^^^^^^^^ ERROR Invalid type argument
+    #\ TYPE tuple[Unknown, int]
+    a: Tuple[((int, int)), int]
+    #│       ^^^^^^^^^^^^ ERROR Invalid type argument
+    #\ TYPE tuple[Unknown, int]
 
-      "Dict[((int)), (((str)))]" to "dict[int, str]",
-      "Dict[((<warning descr=\"Passed type arguments do not match type parameters [_KT, _VT] of class 'dict'\">int</warning>))]" to null, // TODO: type: dict[Unknown, Unknown]
+    a: set[((int))]
+    #\ TYPE set[int]
+    a: Set[((int))]
+    #\ TYPE set[int]
 
-      "Union[((int, (((str)))))]" to "int | str",
-      "Union[<error descr=\"Invalid type argument\">((int, int))</error>, <error descr=\"Invalid type argument\">(int, int)</error>]" to "Unknown",
+    a: set[((int, int))]
+    #│       ^^^^^^^^ WARNING Passed type arguments do not match type parameters [_T] of class 'set'
+    #\ TYPE set[int, int] FIXME set[Unknown]
+    a: Set[((int, int))]
+    #│       ^^^^^^^^ WARNING Passed type arguments do not match type parameters [_T] of class 'set'
+    #\ TYPE set[int, int] FIXME set[Unknown]
 
-      "Optional[((int))]" to "int | None",
-      "Optional[((<error descr=\"'Optional' must have exactly one argument\">int, int</error>))]" to "Unknown",
+    a: dict[((int)), (((str)))]
+    #\ TYPE dict[int, str]
+    a: Dict[((int)), (((str)))]
+    #\ TYPE dict[int, str]
 
-      "tuple[((int)), ((...))]" to "tuple[int, ...]",
-      "tuple[((<error descr=\"'...' is allowed only as the second of two arguments\">...</error>)), ((int))]" to "Unknown",
-      "tuple[<error descr=\"Invalid type argument\">(int,)</error>, ...]" to "tuple[Unknown, ...]",
+    a: dict[((int))]
+    #│        ^^^ WARNING Passed type arguments do not match type parameters [_KT, _VT] of class 'dict'
+    #\ TYPE dict[int] FIXME dict[Unknown, Unknown]
+    a: Dict[((int))]
+    #│        ^^^ WARNING Passed type arguments do not match type parameters [_KT, _VT] of class 'dict'
+    #\ TYPE dict[int] FIXME dict[Unknown, Unknown]
 
-      "C[(((int)))]" to "C[int]",
-      "C2[(((int), (str)))]" to "C2[int, str]",
-    )
-  }
+    a: Union[((int, (((str)))))]
+    #\ TYPE int | str
 
-  @Test
-  fun `subscription empty parentheses`() {
-    generateVariableTypeAssertions(
-      "tuple[()]" to "tuple[()]",
-      "tuple[int, <error descr=\"Empty tuple is allowed only as a sole argument\">()</error>]" to "Unknown",
+    a: Union[((int, int)), (int, int)]
+    #│       │             ^^^^^^^^^^ ERROR Invalid type argument
+    #│       ^^^^^^^^^^^^ ERROR Invalid type argument
+    #\ TYPE Unknown
 
-      "tuple[<error descr=\"Empty tuple is allowed only as a sole argument\">()</error>, int]" to "Unknown",
-      "tuple[<error descr=\"Empty tuple is allowed only as a sole argument\">()</error>, ...]" to "tuple[Unknown, ...]",
-      "tuple[<error descr=\"Empty tuple is allowed only as a sole argument\">()</error>, <error descr=\"Empty tuple is allowed only as a sole argument\">()</error>]" to "Unknown",
+    a: Optional[((int))]
+    #\ TYPE int | None
 
-      "Tuple[()]" to "tuple[()]",
-      "Tuple[int, <error descr=\"Empty tuple is allowed only as a sole argument\">()</error>]" to "Unknown",
+    a: Optional[((int, int))]
+    #│            ^^^^^^^^ ERROR 'Optional' must have exactly one argument
+    #\ TYPE Unknown FIXME Unknown | None
 
-      "list[<warning descr=\"Passed type arguments do not match type parameters [_T] of class 'list'\">()</warning>]" to null, // TODO: type: list[Unknown]
-      "set[<warning descr=\"Passed type arguments do not match type parameters [_T] of class 'set'\">()</warning>]" to null, // TODO: type: set[Unknown]
-      "dict[<error descr=\"Invalid type argument\">()</error>, <error descr=\"Invalid type argument\">()</error>]" to null, // TODO: type: dict[Unknown, Unknown]
+    a: tuple[((int)), ((...))]
+    #\ TYPE tuple[int, ...]
+    a: Tuple[((int)), ((...))]
+    #\ TYPE tuple[int, ...]
 
-      "List[<warning descr=\"Passed type arguments do not match type parameters [_T] of class 'list'\">()</warning>]" to null, // TODO: type: list[Unknown]
-      "Set[<warning descr=\"Passed type arguments do not match type parameters [_T] of class 'set'\">()</warning>]" to null, // TODO: type: set[Unknown]
-      "Dict[<error descr=\"Invalid type argument\">()</error>, <error descr=\"Invalid type argument\">()</error>]" to null, // TODO: type: dict[Unknown, Unknown]
+    a: tuple[((...)), ((int))]
+    #│         ^^^ ERROR '...' is allowed only as the second of two arguments
+    #\ TYPE tuple[int, ...]
+    a: Tuple[((...)), ((int))]
+    #│         ^^^ ERROR '...' is allowed only as the second of two arguments
+    #\ TYPE tuple[int, ...]
 
-      "Union[()]" to "Never",
+    a: tuple[(int,), ...]
+    #│       ^^^^^^ ERROR Invalid type argument
+    #\ TYPE tuple[Unknown, ...]
+    a: Tuple[(int,), ...]
+    #│       ^^^^^^ ERROR Invalid type argument
+    #\ TYPE tuple[Unknown, ...]
 
-      "Optional[<error descr=\"'Optional' must have exactly one argument\">()</error>]" to "Unknown",
+    a: C1[(((int)))]
+    #\ TYPE C1[int]
 
-      "C[<warning descr=\"Passed type arguments do not match type parameters [T] of class 'C'\">()</warning>]" to null, // TODO: type: C[Unknown]
-    )
-  }
-
-  @Test
-  fun `subscription type form`() {
-    generateVariableTypeAssertions(
-      "list[((int,))]" to "list[int]",
-
-      "tuple[((int,))]" to "tuple[int]",
-      "tuple[<error descr=\"Invalid type argument\">(int,)</error>, int]" to "tuple[Unknown, int]",
-      "tuple[<error descr=\"Invalid type argument\">(int, str)</error>, <error descr=\"Invalid type argument\">(int, str)</error>]" to "tuple[Unknown, Unknown]",
-
-      "set[((int,))]" to "set[int]",
-
-      "dict[<error descr=\"Invalid type argument\">((int,))</error>, str]" to "dict[Unknown, str]",
-      "dict[int, <error descr=\"Invalid type argument\">(int, str)</error>]" to "dict[int, Unknown]",
-      "dict[((<warning descr=\"Passed type arguments do not match type parameters [_KT, _VT] of class 'dict'\">[int]</warning>))]" to null, // TODO: type: dict[Unknown, Unknown]
-
-      "List[((int,))]" to "list[int]",
-
-      "Tuple[((int,))]" to "tuple[int]",
-      "Tuple[<error descr=\"Invalid type argument\">(int,)</error>, int]" to "tuple[Unknown, int]",
-
-      "Set[((int,))]" to "set[int]",
-
-      "Dict[<error descr=\"Invalid type argument\">((int,))</error>, str]" to "dict[Unknown, str]",
-      "Dict[int, <error descr=\"Invalid type argument\">(int, str)</error>]" to "dict[int, Unknown]",
-      "Dict[((<error descr=\"Parameters to generic types must be types\">[int]</error>))]" to null,  // TODO: type: dict[Unknown, Unknown]
-
-      "tuple[Tuple[int, str]]" to "tuple[tuple[int, str]]",
-      "Tuple[tuple[int], ...]" to "tuple[tuple[int], ...]",
-      "tuple[*Tuple[*tuple[int]]]" to "tuple[int]",
-      "tuple[int, *Tuple[*Tuple[int, str]], str]" to "tuple[int, int, str, str]",
-      "tuple[*tuple[int], *Tuple[int]]" to "tuple[int, int]",
-
-      "Union[((int, int,))]" to "int",
-      "Union[<error descr=\"Invalid type argument\">(int, int,)</error>, int]" to "int | Unknown",
-
-      "Optional[<error descr=\"'Optional' must have exactly one argument\">int, int</error>]" to "Unknown",
-      "Optional[(int,)]" to "int | None",
-
-      "Callable[<error descr=\"'Callable' first parameter must be a parameter expression\">int</error>, int]" to "Unknown",
-      "Callable[[int], ((<error descr=\"Parameters to generic types must be types\">[int]</error>))]" to "Callable[[int], Unknown]",
-
-      "list[((<warning descr=\"Passed type arguments do not match type parameters [_T] of class 'list'\">[int]</warning>))]" to null, // TODO: type: list[Unknown]
-      "List[((<error descr=\"Parameters to generic types must be types\">[int]</error>))]" to null, // TODO: type: list[Unknown]
-
-      "C[int]" to "C[int]",
-      "C[int,]" to "C[int]",
-      "C[((int))]" to "C[int]",
-      "C[((int)),]" to "C[int]",
-      "C[((int,))]" to "C[int]",
-      "C[((((int)),))]" to "C[int]",
-
-      "C[(((<warning descr=\"Unbound type variable\">TV</warning>)))]" to null,
-      "list[((<warning descr=\"Unbound type variable\">TV</warning>))]" to null,
-      "<warning descr=\"'Generic' cannot be used as a type expression\">Generic</warning>[((<warning descr=\"Unbound type variable\">TV</warning>))]" to null,
-      "dict[((int)), (((<warning descr=\"Unbound type variable\">TV</warning>)))]" to null,
-      "Annotated[((str, dict[str, str]))]" to null,
-    )
-  }
+    a: C2[(((int), (str)))]
+    #\ TYPE C2[int, str]
+    """)
 
   @Test
-  fun `subscription ellipsis type form`() {
-    generateVariableTypeAssertions(
-      "tuple[int, ...]" to "tuple[int, ...]",
+  fun `subscription empty parentheses`() = test("""
+    from typing import List, Set, Dict, Tuple, Union, Optional
 
-      "tuple[<error descr=\"'...' is allowed only as the second of two arguments\">...</error>, int]" to "Unknown",
-      "tuple[int, int, <error descr=\"'...' is allowed only as the second of two arguments\">...</error>]" to "Unknown",
-      "tuple[int, <error descr=\"'...' is allowed only as the second of two arguments\">...</error>, int]" to "Unknown",
-      "tuple[<error descr=\"'...' is allowed only as the second of two arguments\">...</error>]" to "Unknown",
-      "tuple[<error descr=\"'...' is allowed only as the second of two arguments\">...</error>, ...]" to "Unknown",
+    class C1[T]: ...
 
-      "set[<error descr=\"Invalid type argument\">...</error>]" to "set[Unknown]",
-      "list[<error descr=\"Invalid type argument\">...</error>]" to "list[Unknown]",
-      "dict[<error descr=\"Invalid type argument\">...</error>]" to null,  // TODO: type: "dict[Unknown, Unknown]"
+    a: tuple[()]
+    #\ TYPE tuple[()]
+    a: Tuple[()]
+    #\ TYPE tuple[()]
 
-      "Union[int, <error descr=\"Invalid type argument\">...</error>]" to "int | Unknown",
-      "Optional[<error descr=\"Invalid type argument\">...</error>]" to "Unknown",
+    a: tuple[int, ()]
+    #│            ^^ ERROR Empty tuple is allowed only as a sole argument
+    #\ TYPE tuple[()] FIXME tuple[Unknown]
+    a: Tuple[int, ()]
+    #│            ^^ ERROR Empty tuple is allowed only as a sole argument
+    #\ TYPE tuple[()] FIXME tuple[Unknown]
 
-      "tuple[*tuple[str], <error descr=\"'...' cannot be used with an unpacked 'TypeVarTuple' or tuple\">...</error>]" to "Unknown",
-      "tuple[*tuple[str, ...], <error descr=\"'...' cannot be used with an unpacked 'TypeVarTuple' or tuple\">...</error>]" to "Unknown",
+    a: tuple[(), int]
+    #│       ^^ ERROR Empty tuple is allowed only as a sole argument
+    #\ TYPE tuple[()] FIXME tuple[Unknown]
+    a: Tuple[(), int]
+    #│       ^^ ERROR Empty tuple is allowed only as a sole argument
+    #\ TYPE tuple[()] FIXME tuple[Unknown]
 
-      "Set[<error descr=\"Invalid type argument\">...</error>]" to "set[Unknown]",
-      "List[<error descr=\"Invalid type argument\">...</error>]" to "list[Unknown]",
-      "Dict[<error descr=\"Invalid type argument\">...</error>]" to null,  // TODO: type: "dict[Unknown, Unknown]"
+    a: tuple[(), ...]
+    #│       ^^ ERROR Empty tuple is allowed only as a sole argument
+    #\ TYPE tuple[Unknown, ...]
+    a: Tuple[(), ...]
+    #│       ^^ ERROR Empty tuple is allowed only as a sole argument
+    #\ TYPE tuple[Unknown, ...]
 
-      "Tuple[int, ...]" to "tuple[int, ...]",
-      "Tuple[<error descr=\"'...' is allowed only as the second of two arguments\">...</error>]" to "Unknown",
+    a: tuple[(), ()]
+    #│       │   ^^ ERROR Empty tuple is allowed only as a sole argument
+    #│       ^^ ERROR Empty tuple is allowed only as a sole argument
+    #\ TYPE tuple[Unknown, ...] FIXME tuple[Unknown]
+    a: Tuple[(), ()]
+    #│       │   ^^ ERROR Empty tuple is allowed only as a sole argument
+    #│       ^^ ERROR Empty tuple is allowed only as a sole argument
+    #\ TYPE tuple[Unknown, ...] FIXME tuple[Unknown]
 
-      "C[<error descr=\"Invalid type argument\">...</error>]" to "C[Unknown]",
-    )
-  }
+    a: list[()]
+    #│      ^^ WARNING Passed type arguments do not match type parameters [_T] of class 'list'
+    #\ TYPE list FIXME list[Unknown]
+    a: List[()]
+    #│      ^^ WARNING Passed type arguments do not match type parameters [_T] of class 'list'
+    #\ TYPE list FIXME list[Unknown]
+
+    a: set[()]
+    #│     ^^ WARNING Passed type arguments do not match type parameters [_T] of class 'set'
+    #\ TYPE set FIXME set[Unknown]
+    a: Set[()]
+    #│     ^^ WARNING Passed type arguments do not match type parameters [_T] of class 'set'
+    #\ TYPE set FIXME set[Unknown]
+
+    a: dict[(), ()]
+    #│      │   ^^ ERROR Invalid type argument
+    #│      ^^ ERROR Invalid type argument
+    #\ TYPE dict[Unknown, Unknown]
+    a: Dict[(), ()]
+    #│      │   ^^ ERROR Invalid type argument
+    #│      ^^ ERROR Invalid type argument
+    #\ TYPE dict[Unknown, Unknown]
+
+    a: Union[()]
+    #\ TYPE Never
+
+    a: Optional[()]
+    #│          ^^ ERROR 'Optional' must have exactly one argument
+    #\ TYPE Unknown FIXME Unknown | None
+
+    a: C1[()]
+    #│    ^^ WARNING Passed type arguments do not match type parameters [T] of class 'C1'
+    #\ TYPE C1 FIXME C1[Unknown]
+    """)
+
+  @Test
+  fun `subscription type form`() = test("""
+    from typing import TypeVar, List, Set, Dict, Tuple, Union, Optional, Callable, Annotated
+
+    TV = TypeVar("TV")
+
+    class C1[T]: ...
+
+    a: list[((int,))]
+    #\ TYPE list[int]
+    a: List[((int,))]
+    #\ TYPE list[int]
+
+    a: tuple[((int,))]
+    #\ TYPE tuple[int]
+    a: Tuple[((int,))]
+    #\ TYPE tuple[int]
+
+    a: tuple[(int,), int]
+    #│       ^^^^^^ ERROR Invalid type argument
+    #\ TYPE tuple[Unknown, int]
+    a: Tuple[(int,), int]
+    #│       ^^^^^^ ERROR Invalid type argument
+    #\ TYPE tuple[Unknown, int]
+
+    a: tuple[(int, str), (int, str)]
+    #│       │           ^^^^^^^^^^ ERROR Invalid type argument
+    #│       ^^^^^^^^^^ ERROR Invalid type argument
+    #\ TYPE tuple[Unknown, Unknown]
+    a: Tuple[(int, str), (int, str)]
+    #│       │           ^^^^^^^^^^ ERROR Invalid type argument
+    #│       ^^^^^^^^^^ ERROR Invalid type argument
+    #\ TYPE tuple[Unknown, Unknown]
+
+    a: set[((int,))]
+    #\ TYPE set[int]
+    a: Set[((int,))]
+    #\ TYPE set[int]
+
+    a: dict[((int,)), str]
+    #│      ^^^^^^^^ ERROR Invalid type argument
+    #\ TYPE dict[Unknown, str]
+    a: Dict[((int,)), str]
+    #│      ^^^^^^^^ ERROR Invalid type argument
+    #\ TYPE dict[Unknown, str]
+
+    a: dict[int, (int, str)]
+    #│           ^^^^^^^^^^ ERROR Invalid type argument
+    #\ TYPE dict[int, Unknown]
+    a: Dict[int, (int, str)]
+    #│           ^^^^^^^^^^ ERROR Invalid type argument
+    #\ TYPE dict[int, Unknown]
+
+    a: dict[(([int]))]
+    #│        ^^^^^ WARNING Passed type arguments do not match type parameters [_KT, _VT] of class 'dict'
+    #\ TYPE dict[[int]] FIXME dict[Unknown, Unknown]
+    a: Dict[(([int]))]
+    #│        ^^^^^ ERROR Parameters to generic types must be types
+    #\ TYPE dict[[int]] FIXME dict[Unknown, Unknown]
+
+    a: tuple[Tuple[int, str]]
+    #\ TYPE tuple[tuple[int, str]]
+
+    a: Tuple[tuple[int], ...]
+    #\ TYPE tuple[tuple[int], ...]
+
+    a: tuple[*Tuple[*tuple[int]]]
+    #\ TYPE tuple[int]
+
+    a: tuple[int, *Tuple[*Tuple[int, str]], str]
+    #\ TYPE tuple[int, int, str, str]
+
+    a: tuple[*tuple[int], *Tuple[int]]
+    #\ TYPE tuple[int, int]
+
+    a: Union[((int, int,))]
+    #\ TYPE int
+
+    a: Union[(int, int,), int]
+    #│       ^^^^^^^^^^^ ERROR Invalid type argument
+    #\ TYPE int | Unknown
+
+    a: Optional[int, int]
+    #│          ^^^^^^^^ ERROR 'Optional' must have exactly one argument
+    #\ TYPE Unknown FIXME Unknown | None
+
+    a: Optional[(int,)]
+    #\ TYPE int | None
+
+    a: Callable[int, int]
+    #│          ^^^ ERROR 'Callable' first parameter must be a parameter expression
+    #\ TYPE int | None FIXME (Unknown) -> int
+
+    a: Callable[[int], (([int]))]
+    #│                   ^^^^^ ERROR Parameters to generic types must be types
+    #\ TYPE (int) -> Unknown
+
+    a: list[(([int]))]
+    #│        ^^^^^ WARNING Passed type arguments do not match type parameters [_T] of class 'list'
+    #\ TYPE list[[int]] FIXME list[Unknown]
+    a: List[(([int]))]
+    #│        ^^^^^ ERROR Parameters to generic types must be types
+    #\ TYPE list[[int]] FIXME list[Unknown]
+
+    a: C1[int]
+    #\ TYPE C1[int]
+
+    a: C1[int,]
+    #\ TYPE C1[int]
+
+    a: C1[((int))]
+    #\ TYPE C1[int]
+
+    a: C1[((int)),]
+    #\ TYPE C1[int]
+
+    a: C1[((int,))]
+    #\ TYPE C1[int]
+
+    a: C1[((((int)),))]
+    #\ TYPE C1[int]
+
+    a: C1[(((TV)))]
+    #│       ^^ WARNING Unbound type variable
+    #\ TYPE C1[TV] FIXME C1[Unknown]
+
+    a: list[((TV))]
+    #│        ^^ WARNING Unbound type variable
+    #\ TYPE list[TV] FIXME list[Unknown]
+
+    a: dict[((int)), (((TV)))]
+    #│                  ^^ WARNING Unbound type variable
+    #\ TYPE dict[int, TV] FIXME dict[int, Unknown]
+
+    a: Annotated[((str, dict[str, str]))]
+    """)
+
+  @Test
+  fun `subscription ellipsis type form`() = test("""
+    from typing import List, Set, Dict, Tuple, Union, Optional
+
+    class C1[T]: ...
+
+    a: tuple[int, ...]
+    #\ TYPE tuple[int, ...]
+    a: Tuple[int, ...]
+    #\ TYPE tuple[int, ...]
+
+    a: tuple[..., int]
+    #│       ^^^ ERROR '...' is allowed only as the second of two arguments
+    #\ TYPE tuple[int, ...]
+    a: Tuple[..., int]
+    #│       ^^^ ERROR '...' is allowed only as the second of two arguments
+    #\ TYPE tuple[int, ...]
+
+    a: tuple[int, int, ...]
+    #│                 ^^^ ERROR '...' is allowed only as the second of two arguments
+    #\ TYPE tuple[int, ...]
+    a: Tuple[int, int, ...]
+    #│                 ^^^ ERROR '...' is allowed only as the second of two arguments
+    #\ TYPE tuple[int, ...]
+
+    a: tuple[int, ..., int]
+    #│            ^^^ ERROR '...' is allowed only as the second of two arguments
+    #\ TYPE tuple[int, ...]
+    a: Tuple[int, ..., int]
+    #│            ^^^ ERROR '...' is allowed only as the second of two arguments
+    #\ TYPE tuple[int, ...]
+
+    a: tuple[...]
+    #│       ^^^ ERROR '...' is allowed only as the second of two arguments
+    #\ TYPE tuple[int, ...] FIXME tuple[Unknown]
+    a: Tuple[...]
+    #│       ^^^ ERROR '...' is allowed only as the second of two arguments
+    #\ TYPE tuple[int, ...] FIXME tuple[Unknown]
+
+    a: tuple[..., ...]
+    #│       ^^^ ERROR '...' is allowed only as the second of two arguments
+    #\ TYPE tuple[int, ...] FIXME tuple[Unknown]
+    a: Tuple[..., ...]
+    #│       ^^^ ERROR '...' is allowed only as the second of two arguments
+    #\ TYPE tuple[int, ...] FIXME tuple[Unknown]
+
+    a: list[...]
+    #│      ^^^ ERROR Invalid type argument
+    #\ TYPE list[Unknown]
+    a: List[...]
+    #│      ^^^ ERROR Invalid type argument
+    #\ TYPE list[Unknown]
+
+    a: set[...]
+    #│     ^^^ ERROR Invalid type argument
+    #\ TYPE set[Unknown]
+    a: Set[...]
+    #│     ^^^ ERROR Invalid type argument
+    #\ TYPE set[Unknown]
+
+    a: dict[...]
+    #│      ^^^ ERROR Invalid type argument
+    #\ TYPE dict[Unknown] FIXME dict[Unknown, Unknown]
+    a: Dict[...]
+    #│      ^^^ ERROR Invalid type argument
+    #\ TYPE dict[Unknown] FIXME dict[Unknown, Unknown]
+
+    a: Union[int, ...]
+    #│            ^^^ ERROR Invalid type argument
+    #\ TYPE int | Unknown
+
+    a: Optional[...]
+    #│          ^^^ ERROR Invalid type argument
+    #\ TYPE Unknown FIXME Unknown | None
+
+    a: tuple[*tuple[str], ...]
+    #│                    ^^^ ERROR '...' cannot be used with an unpacked 'TypeVarTuple' or tuple
+    #\ TYPE Unknown FIXME tuple[Unknown, ...]
+
+    a: tuple[*tuple[str, ...], ...]
+    #│                         ^^^ ERROR '...' cannot be used with an unpacked 'TypeVarTuple' or tuple
+    #\ TYPE Unknown FIXME tuple[Unknown, ...]
+
+    a: C1[...]
+    #│    ^^^ ERROR Invalid type argument
+    #\ TYPE C1[Unknown]
+    """)
 
   @Test
   @Timeout(value = 5, unit = TimeUnit.SECONDS)
@@ -4480,27 +4719,6 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     _: Literal[(1, "a")]
     #          ^^^^^^^^ WARNING 'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types
     """)
-
-  private fun generateVariableTypeAssertions(vararg cases: Pair<String, String?>) {
-    val header = """
-      from typing import assert_type, TypeVar, Generic, Any, Never, List, Set, Dict, Tuple, Union, Optional, Callable, Annotated
-
-      TV = TypeVar("TV")
-
-      class C[T]: ...
-      class C2[T1, T2]: ...
-    """.trimIndent()
-
-    val body = cases.withIndex().joinToString("\n") { (i, case) ->
-      val (annotation, expectedType) = case
-      val name = "variable_${i + 1}"
-      if (expectedType != null) "$name: $annotation\nassert_type($name, $expectedType)"
-      else "$name: $annotation"
-    }
-
-    myFixture.enableInspections(PyAssertTypeInspection::class.java)
-    doXmlHighlightingTest("$header\n\n$body")
-  }
 
   override val defaultInspections: Set<Class<out LocalInspectionTool>> = setOf(
     PyTypeHintsInspection::class.java,
