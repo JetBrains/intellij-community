@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
+import com.intellij.terminal.frontend.toolwindow.getTerminalTab
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.ContentManager
@@ -78,5 +79,5 @@ internal fun TerminalView.getRunningProcessCommandLine(): String? {
 
 @RequiresEdt
 internal fun ContentManager.getTerminalTabs(): List<TerminalToolWindowTab> {
-  return contentsRecursively.mapNotNull { it.getUserData(TerminalToolWindowTab.KEY) }
+  return contentsRecursively.mapNotNull { it.getTerminalTab() }
 }
