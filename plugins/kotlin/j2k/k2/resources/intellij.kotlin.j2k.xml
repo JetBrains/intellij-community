@@ -1,22 +1,79 @@
-<idea-plugin>
-
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <j2kConverterExtension implementation="org.jetbrains.kotlin.j2k.k2.K2J2KConverterExtension"/>
-    <j2kPreprocessorExtension implementation="org.jetbrains.kotlin.j2k.k2.preProcessings.K2TypeArgumentsExpander"/>
-  </extensions>
-
+<idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.impl"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.analysis"/>
     <module name="intellij.kotlin.base.codeInsight"/>
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.resources"/>
+    <module name="intellij.kotlin.base.statistics"/>
     <module name="intellij.kotlin.codeInsight.api"/>
     <module name="intellij.kotlin.codeInsight.fixes"/>
+    <module name="intellij.kotlin.projectConfiguration"/>
+    <module name="intellij.kotlin.refactorings"/>
     <module name="intellij.kotlin.refactorings.base"/>
     <module name="kotlin.fir.frontend-independent"/>
   </dependencies>
   <!-- endregion -->
+
+  <resource-bundle>messages.KotlinBundle</resource-bundle>
+
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.j2kConverterExtension"
+            interface="org.jetbrains.kotlin.j2k.J2kConverterExtension"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.j2kNullabilityInferenceExtension"
+            interface="org.jetbrains.kotlin.nj2k.J2KNullabilityInferenceExtension"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.j2kPostprocessorExtension"
+            interface="org.jetbrains.kotlin.j2k.J2kPostprocessorExtension"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.j2kPreprocessorExtension"
+            interface="org.jetbrains.kotlin.j2k.J2kPreprocessorExtension"
+            dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <j2kConverterExtension implementation="org.jetbrains.kotlin.j2k.k2.K2J2KConverterExtension"/>
+    <j2kPreprocessorExtension implementation="org.jetbrains.kotlin.j2k.k2.preProcessings.K2TypeArgumentsExpander"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <refactoring.inlineHandler
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.j2k.inline.JavaToKotlinInlineHandler"/>
+    <copyPastePostProcessor implementation="org.jetbrains.kotlin.j2k.copyPaste.ConvertJavaCopyPasteProcessor"/>
+    <copyPastePostProcessor implementation="org.jetbrains.kotlin.j2k.copyPaste.ConvertTextJavaCopyPasteProcessor"/>
+
+  </extensions>
+  <actions>
+    <action id="ConvertJavaToKotlin"
+            class="org.jetbrains.kotlin.idea.actions.JavaToKotlinAction"
+            icon="icons.KotlinBaseResourcesIcons.ConvertJavaToKotlin">
+      <keyboard-shortcut keymap="$default" first-keystroke="control alt shift K"/>
+      <add-to-group group-id="CodeMenu" anchor="last"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+    </action>
+    <group id="ConvertJavaToKotlinGroup"
+           class="org.jetbrains.kotlin.idea.actions.JavaToKotlinActionGroup"
+           icon="icons.KotlinBaseResourcesIcons.ConvertJavaToKotlin"
+           searchable="false"
+           popup="true">
+      <action id="ConvertJavaToKotlinInGroup"
+              class="org.jetbrains.kotlin.idea.actions.JavaToKotlinActionForGroup">
+        <override-text place="GoToAction"/>
+        <keyboard-shortcut keymap="$default" first-keystroke="control alt shift K"/>
+      </action>
+      <add-to-group group-id="CodeMenu" anchor="last"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+    </group>
+  </actions>
 
 </idea-plugin>

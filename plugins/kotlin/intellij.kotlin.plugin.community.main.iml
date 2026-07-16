@@ -83,7 +83,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.migration" exported="" />
     <orderEntry type="module" module-name="kotlin.inspections" exported="" />
-    <orderEntry type="module" module-name="kotlin.j2k.shared" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.j2k" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.i18n" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm.shared" exported="" />

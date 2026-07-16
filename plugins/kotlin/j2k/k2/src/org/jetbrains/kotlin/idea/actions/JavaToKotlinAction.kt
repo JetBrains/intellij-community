@@ -64,15 +64,13 @@ import org.jetbrains.kotlin.j2k.ConversionResult
 import org.jetbrains.kotlin.j2k.ExternalCodeProcessing
 import org.jetbrains.kotlin.j2k.J2KKotlinConfigurationService
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
-import org.jetbrains.kotlin.j2k.J2kPostprocessorExtension
-import org.jetbrains.kotlin.j2k.J2kPreprocessorExtension
-import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
+import org.jetbrains.kotlin.nj2k.KotlinJ2KK2Bundle
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.ExternalUsagesFixer
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.time.TimedValue
+import kotlin.collections.iterator
 import kotlin.time.measureTimedValue
 
 class JavaToKotlinActionGroup : DefaultActionGroup() {
@@ -197,7 +195,7 @@ object JavaToKotlinActionHandler {
     val title: String = KotlinBundle.message("action.j2k.name")
 
     @Nls
-    private val phaseDescription: String = KotlinNJ2KBundle.message("j2k.phase.converting")
+    private val phaseDescription: String = KotlinJ2KK2Bundle.message("j2k.phase.converting")
 
     suspend fun convertFiles(
         files: List<PsiJavaFile>,

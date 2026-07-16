@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k
 
@@ -8,9 +8,9 @@ import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.kotlin.util.AbstractKotlinBundle
 
 @NonNls
-private const val BUNDLE = "messages.KotlinNJ2KBundle"
+private const val BUNDLE = "messages.KotlinJ2KK2Bundle"
 
-object KotlinNJ2KBundle : AbstractKotlinBundle(BUNDLE) {
+object KotlinJ2KK2Bundle : AbstractKotlinBundle(BUNDLE) {
     @Nls
     @JvmStatic
     fun message(@NonNls @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)

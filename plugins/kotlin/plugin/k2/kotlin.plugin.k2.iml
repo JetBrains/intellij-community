@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="kotlin.plugin.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.plugin" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="kotlinc.analysis-api-k2" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.low-level-api-fir" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.symbol-light-classes" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis" scope="RUNTIME" />
@@ -59,7 +60,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.grazie" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.inspections" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.j2k.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.j2k" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.lombok" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.maven" scope="RUNTIME" />

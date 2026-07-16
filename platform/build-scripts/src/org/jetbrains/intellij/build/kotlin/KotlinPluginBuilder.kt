@@ -43,7 +43,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "kotlin.completion.impl.shared",
       "intellij.kotlin.native",
       "kotlin.scripting",
-      "kotlin.j2k.shared",
       "intellij.kotlin.plugin.updater",
       "intellij.kotlin.preferences",
       "intellij.kotlin.references",

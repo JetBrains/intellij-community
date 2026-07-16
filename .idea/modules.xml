@@ -2107,7 +2107,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared/kotlin.gradle.scripting.shared.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared/kotlin.gradle.scripting.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/idea/tests/kotlin.idea.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/idea/tests/kotlin.idea.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/inspections/kotlin.inspections.iml" filepath="$PROJECT_DIR$/plugins/kotlin/inspections/kotlin.inspections.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/shared/kotlin.j2k.shared.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/shared/kotlin.j2k.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/shared/tests/kotlin.j2k.shared.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/shared/tests/kotlin.j2k.shared.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jps/graphImplementationTests/kotlin.jps.graphImplementationTests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jps/graphImplementationTests/kotlin.jps.graphImplementationTests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jsr223/kotlin.jsr223.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jsr223/kotlin.jsr223.iml" />

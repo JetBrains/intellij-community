@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.j2k.copyPaste
 
 import com.intellij.openapi.application.ReadAction
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.j2k.ParseContext
 import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
+import org.jetbrains.kotlin.nj2k.KotlinJ2KK2Bundle
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
@@ -49,7 +49,7 @@ fun ElementAndTextList.convertCodeToKotlin(
     val inputElements = this.toList().filterIsInstance<PsiElement>()
     val (results, _, converterContext) = runWithModalProgressBlocking(
         project,
-        KotlinNJ2KBundle.message("copy.text.convert.java.to.kotlin.title")
+        KotlinJ2KK2Bundle.message("copy.text.convert.java.to.kotlin.title")
     ) {
             // A non-blocking read action is essential here 
             // to be able to show a modal progress window right away
@@ -144,7 +144,7 @@ fun runPostProcessing(
     converterContext: ConverterContext?
 ) {
     val postProcessor = J2kConverterExtension.extension().createPostProcessor()
-    runWithModalProgressBlocking(project, KotlinNJ2KBundle.message("copy.text.convert.java.to.kotlin.title")) {
+    runWithModalProgressBlocking(project, KotlinJ2KK2Bundle.message("copy.text.convert.java.to.kotlin.title")) {
         J2KPostProcessingRunner.run(postProcessor, file, converterContext, bounds)
     }
 }

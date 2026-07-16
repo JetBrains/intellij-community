@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.j2k.copyPaste
 
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
 import org.jetbrains.kotlin.name.FqNameUnsafe
-import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
+import org.jetbrains.kotlin.nj2k.KotlinJ2KK2Bundle
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationContainer
@@ -43,7 +43,7 @@ data class JavaContextDeclarationStubs(
  */
 object JavaContextDeclarationRenderer {
     fun render(contextElement: KtElement): JavaContextDeclarationStubs {
-        return runWithModalProgressBlocking(contextElement.project, KotlinNJ2KBundle.message("copy.text.rendering.declaration.stubs")) {
+        return runWithModalProgressBlocking(contextElement.project, KotlinJ2KK2Bundle.message("copy.text.rendering.declaration.stubs")) {
             readAction {
                 analyze(contextElement) {
                     val localDeclarations = getLocalDeclarations(contextElement)

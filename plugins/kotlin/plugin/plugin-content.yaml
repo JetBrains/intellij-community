@@ -168,7 +168,6 @@
   - name: kotlin.completion.impl.shared
   - name: intellij.kotlin.native
   - name: kotlin.scripting
-  - name: kotlin.j2k.shared
   - name: intellij.kotlin.plugin.updater
   - name: intellij.kotlin.preferences
   - name: intellij.kotlin.references

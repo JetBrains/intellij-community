@@ -1,15 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.k2.refactoring.inline
+package org.jetbrains.kotlin.j2k.inline
 
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Key
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiElement
@@ -28,11 +26,12 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
-import org.jetbrains.kotlin.idea.k2.refactoring.inline.J2KInlineCache.Companion.findOrCreateUsageReplacementStrategy
-import org.jetbrains.kotlin.idea.k2.refactoring.inline.J2KInlineCache.Companion.findUsageReplacementStrategy
+import org.jetbrains.kotlin.j2k.inline.J2KInlineCache.Companion.findOrCreateUsageReplacementStrategy
+import org.jetbrains.kotlin.j2k.inline.J2KInlineCache.Companion.findUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.CodeToInlineBuilder
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.PropertyUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.fullyExpandCall
+import org.jetbrains.kotlin.idea.k2.refactoring.inline.createUsageReplacementStrategyForFunction
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractCrossLanguageInlineHandler
 import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlineRefactoringFUSCollector
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy

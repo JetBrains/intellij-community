@@ -31,27 +31,10 @@
             qualifiedName="org.jetbrains.kotlin.supportAvailability"
             interface="org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability"
             dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.j2kConverterExtension"
-            interface="org.jetbrains.kotlin.j2k.J2kConverterExtension"
-            dynamic="true"/>
 
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.j2kNullabilityInferenceExtension"
-            interface="org.jetbrains.kotlin.nj2k.J2KNullabilityInferenceExtension"
-            dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.j2kPreprocessorExtension"
-            interface="org.jetbrains.kotlin.j2k.J2kPreprocessorExtension"
-            dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.j2kPostprocessorExtension"
-            interface="org.jetbrains.kotlin.j2k.J2kPostprocessorExtension"
-            dynamic="true"/>
-
-    <extensionPoint qualifiedName="org.jetbrains.kotlin.bundledFirCompilerPluginProvider"
-                    interface="org.jetbrains.kotlin.idea.fir.extensions.KotlinBundledFirCompilerPluginProvider"
-                    dynamic="true"/>
+      <extensionPoint qualifiedName="org.jetbrains.kotlin.bundledFirCompilerPluginProvider"
+                      interface="org.jetbrains.kotlin.idea.fir.extensions.KotlinBundledFirCompilerPluginProvider"
+                      dynamic="true"/>
 
     <extensionPoint qualifiedName="org.jetbrains.kotlin.firCompilerPluginConfigurationProvider"
                     interface="org.jetbrains.kotlin.idea.fir.extensions.KotlinFirCompilerPluginConfigurationForIdeProvider"
@@ -241,40 +224,14 @@
   </extensions>
 
   <!-- Copy-paste -->
-  <extensions defaultExtensionNs="com.intellij">
-    <copyPastePostProcessor implementation="org.jetbrains.kotlin.j2k.copyPaste.ConvertJavaCopyPasteProcessor"/>
-    <copyPastePostProcessor implementation="org.jetbrains.kotlin.j2k.copyPaste.ConvertTextJavaCopyPasteProcessor"/>
-  </extensions>
 
-  <actions>
+    <actions>
     <!-- Standalone action (shown when only 1 action) -->
-    <action id="ConvertJavaToKotlin"
-            class="org.jetbrains.kotlin.idea.actions.JavaToKotlinAction"
-            icon="icons.KotlinBaseResourcesIcons.ConvertJavaToKotlin">
-      <keyboard-shortcut keymap="$default" first-keystroke="control alt shift K"/>
-      <add-to-group group-id="CodeMenu" anchor="last"/>
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
-      <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
-    </action>
 
-    <!-- Group shown when more than 1 action -->
-    <group id="ConvertJavaToKotlinGroup"
-           class="org.jetbrains.kotlin.idea.actions.JavaToKotlinActionGroup"
-           icon="icons.KotlinBaseResourcesIcons.ConvertJavaToKotlin"
-           searchable="false"
-           popup="true">
-      <action id="ConvertJavaToKotlinInGroup"
-              class="org.jetbrains.kotlin.idea.actions.JavaToKotlinActionForGroup">
-        <override-text place="GoToAction"/>
-        <keyboard-shortcut keymap="$default" first-keystroke="control alt shift K"/>
-      </action>
-      <add-to-group group-id="CodeMenu" anchor="last"/>
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
-      <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
-    </group>
+        <!-- Group shown when more than 1 action -->
 
 
-    <action id="KotlinShellExecute" class="com.intellij.openapi.actionSystem.EmptyAction">
+        <action id="KotlinShellExecute" class="com.intellij.openapi.actionSystem.EmptyAction">
       <keyboard-shortcut first-keystroke="control ENTER" keymap="$default"/>
     </action>
   </actions>

@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.idea.configuration.getAbleToRunConfigurators
 import org.jetbrains.kotlin.idea.configuration.hasKotlinPluginEnabled
 import org.jetbrains.kotlin.idea.configuration.isModuleConfigured
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
+import org.jetbrains.kotlin.nj2k.KotlinJ2KK2Bundle
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import java.util.concurrent.atomic.AtomicReference
 
@@ -38,20 +38,20 @@ class J2KKotlinConfigurationService(val project: Project) {
         javaFiles: List<PsiJavaFile>,
         convertFunction: (List<PsiJavaFile>, Project, Module) -> Unit
     ) {
-        val title = KotlinNJ2KBundle.message("converter.kotlin.not.configured.title")
+        val title = KotlinJ2KK2Bundle.message("converter.kotlin.not.configured.title")
         if (isUnitTestMode() || Messages.showOkCancelDialog(
                 project,
-                KotlinNJ2KBundle.message("converter.kotlin.not.configured.message"),
+                KotlinJ2KK2Bundle.message("converter.kotlin.not.configured.message"),
                 title,
-                KotlinNJ2KBundle.message("converter.kotlin.not.configured.configure"),
-                KotlinNJ2KBundle.message("converter.kotlin.not.configured.cancel.conversion"),
+                KotlinJ2KK2Bundle.message("converter.kotlin.not.configured.configure"),
+                KotlinJ2KK2Bundle.message("converter.kotlin.not.configured.cancel.conversion"),
                 Messages.getWarningIcon()
             ) == Messages.OK
         ) {
             val configurators = getAbleToRunConfigurators(module).filter { it.targetPlatform.isJvm() }
             when {
                 configurators.isEmpty() -> {
-                    val message = KotlinNJ2KBundle.message("converter.kotlin.not.configured.no.configurators.available")
+                    val message = KotlinJ2KK2Bundle.message("converter.kotlin.not.configured.no.configurators.available")
                     Messages.showErrorDialog(message, title)
                     return
                 }
@@ -70,7 +70,7 @@ class J2KKotlinConfigurationService(val project: Project) {
                     @Suppress("DEPRECATION")
                     val resultIndex = Messages.showChooseDialog( //TODO a better dialog?
                         project,
-                        KotlinNJ2KBundle.message("converter.kotlin.not.configured.choose.configurator"),
+                        KotlinJ2KK2Bundle.message("converter.kotlin.not.configured.choose.configurator"),
                         title,
                         null,
                         configurators.map { it.presentableText }.toTypedArray(),
@@ -91,14 +91,14 @@ class J2KKotlinConfigurationService(val project: Project) {
     suspend fun ensureKotlinConfigured(module: Module): Boolean {
         if (isUnitTestMode() || checkKotlinIsConfigured(module)) return true
 
-        val title = KotlinNJ2KBundle.message("converter.kotlin.not.configured.title")
+        val title = KotlinJ2KK2Bundle.message("converter.kotlin.not.configured.title")
         val confirmed = withContext(Dispatchers.EDT) {
             isUnitTestMode() || Messages.showOkCancelDialog(
                 project,
-                KotlinNJ2KBundle.message("converter.kotlin.not.configured.message"),
+                KotlinJ2KK2Bundle.message("converter.kotlin.not.configured.message"),
                 title,
-                KotlinNJ2KBundle.message("converter.kotlin.not.configured.configure"),
-                KotlinNJ2KBundle.message("converter.kotlin.not.configured.cancel.conversion"),
+                KotlinJ2KK2Bundle.message("converter.kotlin.not.configured.configure"),
+                KotlinJ2KK2Bundle.message("converter.kotlin.not.configured.cancel.conversion"),
                 Messages.getWarningIcon()
             ) == Messages.OK
         }
@@ -109,7 +109,7 @@ class J2KKotlinConfigurationService(val project: Project) {
             when {
                 configurators.isEmpty() -> {
                     Messages.showErrorDialog(
-                        KotlinNJ2KBundle.message("converter.kotlin.not.configured.no.configurators.available"),
+                        KotlinJ2KK2Bundle.message("converter.kotlin.not.configured.no.configurators.available"),
                         title
                     )
                     null
@@ -121,7 +121,7 @@ class J2KKotlinConfigurationService(val project: Project) {
                     @Suppress("DEPRECATION")
                     val resultIndex = Messages.showChooseDialog(
                         project,
-                        KotlinNJ2KBundle.message("converter.kotlin.not.configured.choose.configurator"),
+                        KotlinJ2KK2Bundle.message("converter.kotlin.not.configured.choose.configurator"),
                         title,
                         null,
                         configurators.map { it.presentableText }.toTypedArray(),

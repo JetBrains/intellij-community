@@ -1347,7 +1347,6 @@ plugins/kotlin/intellij.kotlin.base.test
 plugins/kotlin/internal
 plugins/kotlin/j2k/k2
 plugins/kotlin/j2k/k2/tests
-plugins/kotlin/j2k/shared
 plugins/kotlin/j2k/shared/tests
 plugins/kotlin/jps/graphImplementationTests
 plugins/kotlin/jsr223

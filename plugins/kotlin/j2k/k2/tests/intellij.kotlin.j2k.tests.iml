@@ -35,13 +35,14 @@
     <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings.base" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.j2k.shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.j2k.shared.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.j2k" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />

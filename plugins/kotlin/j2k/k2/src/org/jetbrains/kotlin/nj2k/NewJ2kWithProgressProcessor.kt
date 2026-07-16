@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k
 
@@ -47,7 +47,7 @@ class NewJ2kWithProgressProcessor(
         progressIndicator?.fraction = resultFraction
 
         if (subPhaseCount > 1) {
-            progressIndicator?.text = KotlinNJ2KBundle.message(
+            progressIndicator?.text = KotlinJ2KK2Bundle.message(
                 "subphase.progress.text",
                 description,
                 subPhase,
@@ -56,7 +56,7 @@ class NewJ2kWithProgressProcessor(
                 phasesCount
             )
         } else {
-            progressIndicator?.text = KotlinNJ2KBundle.message("progress.text", description, phase + 1, phasesCount)
+            progressIndicator?.text = KotlinJ2KK2Bundle.message("progress.text", description, phase + 1, phasesCount)
         }
         progressIndicator?.text2 = when {
             !files.isNullOrEmpty() && fileIndex != null ->

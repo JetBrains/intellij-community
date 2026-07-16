@@ -54,7 +54,7 @@ jvm_library(
         "//plugins/performanceTesting/vcs",
         "@lib//:kotlinc-kotlin-compiler-common",
         "//plugins/kotlin/base/project-structure",
-        "//plugins/kotlin/j2k/shared",
+        "//plugins/kotlin/j2k/k2:kotlin-j2k",
     ],
 )
 
@@ -103,7 +103,7 @@ jvm_library(
         "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
         "//plugins/performanceTesting/vcs:vcs_test_lib",
         "//plugins/kotlin/base/project-structure:project-structure_test_lib",
-        "//plugins/kotlin/j2k/shared:shared_test_lib",
+        "//plugins/kotlin/j2k/k2:kotlin-j2k_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.performanceExtendedPlugin` end

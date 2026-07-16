@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.j2k.copyPaste;
 
@@ -10,7 +10,7 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions;
-import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle;
+import org.jetbrains.kotlin.nj2k.KotlinJ2KK2Bundle;
 
 import javax.swing.AbstractButton;
 import javax.swing.Action;
@@ -57,10 +57,10 @@ public class KotlinPasteFromJavaDialog extends DialogWrapper {
     }
     setModal(true);
     getRootPane().setDefaultButton(buttonOK);
-    setTitle(KotlinNJ2KBundle.message("copy.title.convert.code.from.java"));
+    setTitle(KotlinJ2KK2Bundle.message("copy.title.convert.code.from.java"));
     if (isPlainText) {
       questionLabel.setText(
-        KotlinNJ2KBundle.message("copy.text.clipboard.content.seems.to.be.java.code.do.you.want.to.convert.it.to.kotlin"));
+        KotlinJ2KK2Bundle.message("copy.text.clipboard.content.seems.to.be.java.code.do.you.want.to.convert.it.to.kotlin"));
       //TODO: should we also use different set of settings?
     }
     init();

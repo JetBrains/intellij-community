@@ -13,6 +13,7 @@
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.base.statistics"/>
+    <module name="intellij.kotlin.j2k"/>
     <module name="intellij.kotlin.jvm.debugger.base.util"/>
     <module name="intellij.kotlin.jvm.debugger.core"/>
     <module name="intellij.kotlin.jvm.debugger.coroutines"/>
