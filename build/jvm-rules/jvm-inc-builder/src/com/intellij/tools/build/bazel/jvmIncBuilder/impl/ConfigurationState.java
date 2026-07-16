@@ -50,7 +50,6 @@ public class ConfigurationState {
     CLFlags.KOTLIN_CRI_OUT,
 
     CLFlags.WARN,
-    CLFlags.X_WASM_ATTACH_JS_EXCEPTION,
     CLFlags.ADD_EXPORT,
     CLFlags.ADD_READS,
 
