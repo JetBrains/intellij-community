@@ -76,7 +76,7 @@ internal fun updateFileNameOnTitleChange(
   }
 }
 
-private fun TerminalView.titleStateFlow(): Flow<TitleData> {
+internal fun TerminalView.titleStateFlow(): Flow<TitleData> {
   val terminalView = this
 
   val titleStateFlow: Flow<TitleData> = title.stateFlow(

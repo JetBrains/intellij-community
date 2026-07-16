@@ -4,10 +4,12 @@ import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.ContentManager
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
@@ -72,4 +74,9 @@ internal fun TerminalView.getRunningProcessCommandLine(): String? {
     val currentBlock = shellIntegration.blocksModel.activeBlock as? TerminalCommandBlock ?: return null
     currentBlock.executedCommand ?: return null
   }
+}
+
+@RequiresEdt
+internal fun ContentManager.getTerminalTabs(): List<TerminalToolWindowTab> {
+  return contentsRecursively.mapNotNull { it.getUserData(TerminalToolWindowTab.KEY) }
 }
