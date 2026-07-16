@@ -2,8 +2,7 @@ package com.intellij.terminal.frontend.toolwindow.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
-import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
-import com.intellij.terminal.frontend.toolwindow.findTabByContent
+import com.intellij.terminal.frontend.toolwindow.getTerminalTab
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.ui.content.Content
@@ -17,7 +16,7 @@ internal class TerminalTabCloseListenerImpl private constructor(
   parentDisposable: Disposable,
 ) : TerminalTabCloseListener(content, project, parentDisposable) {
   override fun shouldConfirmClosing(content: Content): CloseCheckResult {
-    val terminalView = TerminalToolWindowTabsManager.getInstance(myProject).findTabByContent(content)?.view
+    val terminalView = content.getTerminalTab()?.view
                        ?: return CloseCheckResult.CAN_CLOSE_SILENTLY
     return runCloseCheckBlocking {
       shouldConfirmClosing(terminalView)

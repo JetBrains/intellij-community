@@ -7,18 +7,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.content.ToolWindowInEditorSupport
 import com.intellij.terminal.frontend.editor.TerminalViewVirtualFile
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
-import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
-import com.intellij.terminal.frontend.toolwindow.findTabByContent
+import com.intellij.terminal.frontend.toolwindow.getTerminalTab
 import com.intellij.ui.content.Content
 
 internal class TerminalInEditorSupport : ToolWindowInEditorSupport {
   override fun canOpenInEditor(project: Project, content: Content): Boolean {
-    return TerminalToolWindowTabsManager.getInstance(project).findTabByContent(content) != null
+    return content.getTerminalTab() != null
   }
 
   override fun openInEditor(content: Content, targetWindow: EditorWindow) {
-    val project = targetWindow.owner.manager.project
-    val terminalTab = TerminalToolWindowTabsManager.getInstance(project).findTabByContent(content) ?: return
+    val terminalTab = content.getTerminalTab() ?: return
     openReworkedTerminalInEditor(terminalTab, targetWindow)
   }
 

@@ -23,7 +23,7 @@ import com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabBuilder
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
-import com.intellij.terminal.frontend.toolwindow.findTabByContent
+import com.intellij.terminal.frontend.toolwindow.getTerminalTab
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.terminal.frontend.view.impl.TerminalViewBuilderOptions
@@ -184,9 +184,8 @@ internal class TerminalToolWindowTabsManagerImpl(
       coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         terminal.sessionState.collect { state ->
           if (state == TerminalViewSessionState.Terminated) {
-            val manager = TerminalToolWindowTabsManager.getInstance(project)
-            val tab = manager.findTabByContent(content) ?: return@collect
-            manager.closeTab(tab)
+            val tab = content.getTerminalTab() ?: return@collect
+            TerminalToolWindowTabsManager.getInstance(project).closeTab(tab)
           }
         }
       }

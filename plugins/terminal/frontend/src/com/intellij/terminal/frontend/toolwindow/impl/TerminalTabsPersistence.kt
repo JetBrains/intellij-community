@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
+import com.intellij.terminal.frontend.toolwindow.getTerminalTab
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
@@ -102,7 +103,7 @@ private fun listenTerminalTabChangeEvents(
   val contents = mutableListOf<ContentWithListenersScope>()
 
   fun addTerminalViewListeners(content: Content) {
-    val terminalView = content.getUserData(TerminalToolWindowTab.KEY)?.view ?: return  // not a terminal tab
+    val terminalView = content.getTerminalTab()?.view ?: return  // not a terminal tab
 
     val listenersScope = coroutineScope.childScope(terminalView.toString())
     listenersScope.launch {

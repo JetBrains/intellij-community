@@ -67,14 +67,9 @@ interface TerminalToolWindowTabsManager {
   }
 }
 
-/**
- * @param content the object that identifies the tool window tab.
- * @return the terminal tool window tab if provided [content] corresponds to Reworked Terminal tab in the Terminal Tool Window.
- */
 @ApiStatus.Experimental
-@RequiresEdt
-fun TerminalToolWindowTabsManager.findTabByContent(content: Content): TerminalToolWindowTab? {
-  return tabs.find { it.content == content }
+fun Content.getTerminalTab(): TerminalToolWindowTab? {
+  return getUserData(TerminalToolWindowTab.KEY)
 }
 
 @ApiStatus.Experimental
