@@ -116,6 +116,13 @@ final class EditorCoordinateMapper {
   /**
    * Safe without read action
    */
+  int offsetToLogicalColumn(int line, int intraLineOffset) {
+    return myView.getLogicalPositionCache().offsetToLogicalColumn(line, intraLineOffset);
+  }
+
+  /**
+   * Safe without read action
+   */
   int logicalPositionToOffset(@NotNull LogicalPosition pos) {
     return myView.getLogicalPositionCache().logicalPositionToOffset(pos);
   }

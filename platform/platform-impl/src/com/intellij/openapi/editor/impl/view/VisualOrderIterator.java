@@ -1,47 +1,63 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
 final class VisualOrderIterator implements Iterator<LineVisualFragment> {
-  private final EditorView myView;
-  private final CharSequence myText;
-  private final int myLine;
-  private final int myLineStartOffset;
-  private final LineBidiRun[] myRuns;
-  private final LineVisualFragment myFragment;
-  private int myRunIndex;
-  private int myChunkIndex;
-  private int myFragmentIndex;
-  private int myOffsetInsideRun;
+  // optional params
+  private final @Nullable EditorView view;
+  private final @Nullable CharSequence text;
+  private final int line;
+  private final int lineStartOffset;
 
-  VisualOrderIterator(EditorView view, int line, float startX, int startVisualColumn, int startOffset, LineBidiRun[] runsInVisualOrder) {
-    myView = view;
-    myText = view == null ? null : view.getDocument().getImmutableCharSequence();
-    myLine = line;
-    myLineStartOffset = view == null ? 0 : view.getDocument().getLineStartOffset(line);
-    myRuns = runsInVisualOrder;
-    myFragment = new LineVisualFragment(startOffset, startVisualColumn, startX);
+  // mandatory param
+  private final LineBidiRun[] runs;
+
+  private final LineVisualFragment current;
+  private int runIndex;
+  private int chunkIndex;
+  private int fragmentIndex;
+  private int offsetInsideRun;
+
+  VisualOrderIterator(
+    @Nullable EditorView view,
+    int line,
+    int startOffset,
+    int startVisualColumn,
+    float startX,
+    LineBidiRun @NotNull [] runsInVisualOrder
+  ) {
+    this.view = view;
+    this.text = view == null ? null : view.getDocument().getImmutableCharSequence();
+    this.line = line;
+    this.lineStartOffset = view == null ? 0 : view.getDocument().getLineStartOffset(line);
+    this.runs = runsInVisualOrder;
+    this.current = new LineVisualFragment(startOffset, startVisualColumn, startX);
   }
 
   @Override
   public boolean hasNext() {
-    if (myRunIndex >= myRuns.length) {
-      return false;
+    // run -> chunk -> fragment
+    if (runIndex < runs.length) {
+      LineBidiRun run = runs[runIndex];
+      List<LineChunk> chunks = run.getChunks(text, lineStartOffset);
+      if (chunkIndex < chunks.size()) {
+        int chunkIndexRtl = run.isRtl() ? (chunks.size() - chunkIndex - 1) : chunkIndex;
+        LineChunk chunk = chunks.get(chunkIndexRtl);
+        if (view != null) {
+          chunk.ensureLayout(view, line, run.getLevel());
+        }
+        if (fragmentIndex < chunk.fragmentCount()) {
+          return true;
+        }
+      }
     }
-    LineBidiRun run = myRuns[myRunIndex];
-    List<LineChunk> chunks = run.getChunks(myText, myLineStartOffset);
-    if (myChunkIndex >= chunks.size()) {
-      return false;
-    }
-    int chunkIndex = run.isRtl() ? (chunks.size() - myChunkIndex - 1) : myChunkIndex;
-    LineChunk chunk = chunks.get(chunkIndex);
-    if (myView != null) {
-      chunk.ensureLayout(myView, myLine, run.getLevel(), run.isRtl());
-    }
-    return myFragmentIndex < chunk.fragmentCount();
+    return false;
   }
 
   @Override
@@ -49,48 +65,50 @@ final class VisualOrderIterator implements Iterator<LineVisualFragment> {
     if (!hasNext()) {
       throw new NoSuchElementException();
     }
-    LineBidiRun run = myRuns[myRunIndex];
-    boolean isFirstRun = myRunIndex == 0 && myChunkIndex == 0 && myFragmentIndex == 0;
-    int startLogicalColumn;
-    int startVisualColumn;
-    float startX;
-    if (isFirstRun) {
-      startLogicalColumn = run.getVisualStartLogicalColumn();
-      startVisualColumn = myFragment.getStartVisualColumn();
-      startX = myFragment.getStartX();
-    } else {
-      startLogicalColumn = myChunkIndex == 0 && myFragmentIndex == 0
-                           ? run.getVisualStartLogicalColumn()
-                           : myFragment.getEndLogicalColumn();
-      startVisualColumn = myFragment.getEndVisualColumn();
-      startX = myFragment.getEndX();
+    LineBidiRun run = runs[runIndex];
+    List<LineChunk> chunks = run.getChunks(text, lineStartOffset);
+    int chunkIndexRtl = run.isRtl() ? (chunks.size() - chunkIndex - 1) : chunkIndex;
+    LineChunk chunk = chunks.get(chunkIndexRtl);
+    int fragmentIndexRtl = run.isRtl() ? (chunk.fragmentCount() - fragmentIndex - 1) : fragmentIndex;
+    LineFragment fragment = chunk.getFragment(fragmentIndexRtl);
+    setCurrentFragment(run, fragment);
+    offsetInsideRun += fragment.getLength();
+    fragmentIndex++;
+    if (fragmentIndex >= chunk.fragmentCount()) {
+      fragmentIndex = 0;
+      chunkIndex++;
+      if (chunkIndex >= chunks.size()) {
+        chunkIndex = 0;
+        offsetInsideRun = 0;
+        runIndex++;
+      }
     }
-    List<LineChunk> chunks = run.getChunks(myText, myLineStartOffset);
-    int chunkIndex = run.isRtl() ? chunks.size() - 1 - myChunkIndex : myChunkIndex;
-    LineChunk chunk = chunks.get(chunkIndex);
-    int fragmentIndex = run.isRtl() ? chunk.fragmentCount() - 1 - myFragmentIndex : myFragmentIndex;
-    LineFragment delegate = chunk.getFragment(fragmentIndex);
-    int startOffset = run.isRtl() ? run.getEndOffset() - myOffsetInsideRun : run.getStartOffset() + myOffsetInsideRun;
-    myFragment.setState(
-      delegate,
+    return current;
+  }
+
+  private void setCurrentFragment(@NotNull LineBidiRun run, @NotNull LineFragment fragment) {
+    boolean isFirstFragmentInRun = chunkIndex == 0 && fragmentIndex == 0;
+    boolean isFirstFragment = runIndex == 0 && isFirstFragmentInRun;
+    int startLogicalColumn = isFirstFragmentInRun
+                             ? run.getVisualStartLogicalColumn()
+                             : current.getEndLogicalColumn();
+    int startVisualColumn = isFirstFragment
+                            ? current.getStartVisualColumn()
+                            : current.getEndVisualColumn();
+    float startX = isFirstFragment
+                   ? current.getStartX()
+                   : current.getEndX();
+    int startOffset = run.isRtl()
+                      ? run.getEndOffset() - offsetInsideRun
+                      : run.getStartOffset() + offsetInsideRun;
+    current.setState(
+      fragment,
       startOffset,
       startLogicalColumn,
       startVisualColumn,
       startX,
       run.isRtl()
     );
-    myOffsetInsideRun += myFragment.getLength();
-    myFragmentIndex++;
-    if (myFragmentIndex >= chunk.fragmentCount()) {
-      myFragmentIndex = 0;
-      myChunkIndex++;
-      if (myChunkIndex >= chunks.size()) {
-        myChunkIndex = 0;
-        myOffsetInsideRun = 0;
-        myRunIndex++;
-      }
-    }
-    return myFragment;
   }
 
   @Override

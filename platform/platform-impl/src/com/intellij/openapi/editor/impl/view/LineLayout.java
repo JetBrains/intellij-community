@@ -53,16 +53,16 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
 
   abstract int findNearestDirectionBoundary(int offset, boolean lookForward);
 
-  abstract LineBidiRun[] getRunsInLogicalOrder();
+  abstract LineBidiRun @NotNull [] getRunsInLogicalOrder();
 
-  abstract LineBidiRun[] getRunsInVisualOrder();
+  abstract LineBidiRun @NotNull [] getRunsInVisualOrder();
 
   float getWidth() {
     throw new RuntimeException("This LineLayout instance doesn't have precalculated width");
   }
 
   Iterable<LineVisualFragment> getFragmentsInVisualOrder(float startX) {
-    return () -> new VisualOrderIterator(null, 0, startX, 0, 0, getRunsInVisualOrder());
+    return () -> new VisualOrderIterator(null, 0, 0, 0, startX, getRunsInVisualOrder());
   }
 
   /**
@@ -72,10 +72,10 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
   Iterator<LineVisualFragment> getFragmentsInVisualOrder(
     @NotNull EditorView view,
     int line,
-    float startX,
-    int startVisualColumn,
     int startOffset,
     int endOffset,
+    int startVisualColumn,
+    float startX,
     @Nullable Runnable quickEvaluationListener
   ) {
     view.getEditor().assertOrDumpState(startOffset <= endOffset, "startOffset must be less or equal to endOffset");
@@ -101,7 +101,7 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
       runs = runList.toArray(LineBidiRun.EMPTY_ARRAY);
     }
     reorderRunsVisually(runs);
-    return new VisualOrderIterator(view, line, startX, startVisualColumn, startOffset, runs);
+    return new VisualOrderIterator(view, line, startOffset, startVisualColumn, startX, runs);
   }
 
   private static List<LineBidiRun> createRunsForDocumentLine(@NotNull EditorView view, int line, boolean skipBidiLayout) {
@@ -131,7 +131,7 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
     List<LineBidiRun> runs = BidiRunUtil.createRuns(view, chars, -1);
     for (LineBidiRun run : runs) {
       for (LineChunk chunk : run.getChunks(text, 0)) {
-        chunk.addFragments(chars, run.getLevel(), run.isRtl(), ffi, view);
+        chunk.addFragments(chars, run.getLevel(), ffi, view);
       }
     }
     return runs;
@@ -148,7 +148,7 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
     }
     if (runs.size() == 1) {
       LineBidiRun run = runs.getFirst();
-      if (run.getLevel() == 0 && run.getChunkCount() == 1) {
+      if (run.isSingle()) {
         return new SingleChunkLayout(run.getFirstChunk());
       }
     }
@@ -159,7 +159,7 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
       assert i == 0 || run.getStartOffset() == runs.get(i - 1).getEndOffset();
       int startColumn = prevColumn;
       int endColumn = text == null
-                      ? view.getLogicalPositionCache().offsetToLogicalColumn(line, run.getEndOffset())
+                      ? view.offsetToLogicalColumn(line, run.getEndOffset())
                       : DocumentInternalUtil.calcLogicalColumn(text, run.getStartOffset(), prevColumn, run.getEndOffset(), view.getTabSize());
       run.setVisualStartLogicalColumn(run.isRtl() ? endColumn : startColumn);
       prevColumn = endColumn;

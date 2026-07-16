@@ -68,12 +68,12 @@ final class MultiChunkLayout extends LineLayout {
   }
 
   @Override
-  LineBidiRun[] getRunsInLogicalOrder() {
+  LineBidiRun @NotNull [] getRunsInLogicalOrder() {
     return runsInLogicalOrder;
   }
 
   @Override
-  LineBidiRun[] getRunsInVisualOrder() {
+  LineBidiRun @NotNull [] getRunsInVisualOrder() {
     return runsInVisualOrder;
   }
 }

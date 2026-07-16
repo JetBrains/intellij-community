@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontFallbackIterator;
 import com.intellij.openapi.editor.impl.FontInfo;
+import com.intellij.util.BitUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,7 @@ class LineChunk {
     this(startOffset, endOffset, null);
   }
 
-  LineChunk(int startOffset, int endOffset, List<LineFragment> fragments) {
+  LineChunk(int startOffset, int endOffset, @Nullable List<LineFragment> fragments) {
     this.startOffset = startOffset;
     this.endOffset = endOffset;
     this.fragments = fragments;
@@ -59,15 +60,14 @@ class LineChunk {
   void addFragments(
     char[] chars,
     byte level,
-    boolean isRtl,
     @NotNull FontFallbackIterator ffi,
     @NotNull EditorView view
   ) {
     fragments = new ArrayList<>();
-    addFragments(chars, getStartOffset(), getEndOffset(), level, isRtl, false, null, ffi, view);
+    addFragments(chars, getStartOffset(), getEndOffset(), level, false, null, ffi, view);
   }
 
-  void ensureLayout(@NotNull EditorView view, int line, byte level, boolean isRtl) {
+  void ensureLayout(@NotNull EditorView view, int line, byte level) {
     if (isReal()) {
       view.getTextLayoutCache().onChunkAccess(this);
     }
@@ -113,7 +113,6 @@ class LineChunk {
             currentStart - start,
             tokenStart - start,
             level,
-            isRtl,
             specialCharsEnabled,
             view.getTabFragment(),
             ffi,
@@ -133,7 +132,6 @@ class LineChunk {
         currentStart - start,
         end - start,
         level,
-        isRtl,
         specialCharsEnabled,
         view.getTabFragment(),
         ffi,
@@ -150,7 +148,6 @@ class LineChunk {
     int targetStartOffset,
     int targetEndOffset,
     byte level,
-    boolean isRtl,
     @Nullable Runnable quickEvaluationListener
   ) {
     assert isReal();
@@ -160,15 +157,15 @@ class LineChunk {
     int end = Math.min(getEndOffset(), targetEndOffset);
     if (quickEvaluationListener != null && fragments == null) {
       quickEvaluationListener.run();
-      int startColumn = view.getLogicalPositionCache().offsetToLogicalColumn(line, start);
-      int endColumn = view.getLogicalPositionCache().offsetToLogicalColumn(line, end);
+      int startColumn = view.offsetToLogicalColumn(line, start);
+      int endColumn = view.offsetToLogicalColumn(line, end);
       var approximationFragment = new ApproximationFragment(end - start, endColumn - startColumn, view.getMaxCharWidth());
       return new SyntheticLineChunk(start, end, Collections.singletonList(approximationFragment));
     }
     if (start == getStartOffset() && end == getEndOffset()) {
       return this;
     }
-    ensureLayout(view, line, level, isRtl);
+    ensureLayout(view, line, level);
     LineChunk chunk0 = new SyntheticLineChunk(start, end, new ArrayList<>());
     int offset = getStartOffset();
     for (LineFragment fragment : fragments) {
@@ -192,13 +189,13 @@ class LineChunk {
     int start,
     int end,
     byte level,
-    boolean isRtl,
     boolean showSpecialChars,
     @Nullable TabFragment tabFragment,
     @NotNull FontFallbackIterator ffi,
     @NotNull EditorView view
   ) {
     assert start < end;
+    boolean isRtl = BitUtil.isSet(level, 1);
     int last = start;
     for (int i = start; i < end; i++) {
       char c = text[i];

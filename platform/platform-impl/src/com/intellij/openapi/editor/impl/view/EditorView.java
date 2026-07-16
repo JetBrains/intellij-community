@@ -158,6 +158,10 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return myMapper.offsetToLogicalPosition(offset);
   }
 
+  public int offsetToLogicalColumn(int line, int intraLineOffset) {
+    return myMapper.offsetToLogicalColumn(line, intraLineOffset);
+  }
+
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
     return myMapper.logicalPositionToOffset(pos);
   }

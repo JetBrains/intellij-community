@@ -40,12 +40,12 @@ final class LineLayoutWithSize extends LineLayout {
   }
 
   @Override
-  LineBidiRun[] getRunsInLogicalOrder() {
+  LineBidiRun @NotNull [] getRunsInLogicalOrder() {
     return myDelegate.getRunsInLogicalOrder();
   }
 
   @Override
-  LineBidiRun[] getRunsInVisualOrder() {
+  LineBidiRun @NotNull [] getRunsInVisualOrder() {
     return myDelegate.getRunsInVisualOrder();
   }
 

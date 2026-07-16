@@ -23,17 +23,17 @@ import java.util.List;
 final class BidiRunUtil {
   private static final String WHITESPACE_CHARS = " \t";
 
-  static List<LineBidiRun> createRuns(@NotNull EditorView view, char @NotNull [] text, int startOffsetInEditor) {
-    int textLength = text.length;
-    if (view.getEditor().myDisableRtl || !Bidi.requiresBidi(text, 0, textLength)) {
+  static List<LineBidiRun> createRuns(@NotNull EditorView view, char @NotNull [] chars, int startOffsetInEditor) {
+    int textLength = chars.length;
+    if (view.getEditor().myDisableRtl || !Bidi.requiresBidi(chars, 0, textLength)) {
       return Collections.singletonList(new LineBidiRun(textLength));
     }
-    return createRunsBidi(view, text, startOffsetInEditor, textLength);
+    return createRunsBidi(view, chars, startOffsetInEditor, textLength);
   }
 
   private static @NotNull List<LineBidiRun> createRunsBidi(
     @NotNull EditorView view,
-    char[] text,
+    char[] chars,
     int startOffsetInEditor,
     int textLength
   ) {
@@ -41,52 +41,52 @@ final class BidiRunUtil {
 
     List<LineBidiRun> runs = new ArrayList<>();
     int flags = view.getBidiFlags();
-    if (startOffsetInEditor >= 0) {
+    if (startOffsetInEditor < 0) {
+      addRuns(runs, chars, 0, textLength, flags);
+    } else {
       // skipping indent
       int relLastOffset = 0;
-      while (relLastOffset < text.length && WHITESPACE_CHARS.indexOf(text[relLastOffset]) >= 0) {
+      while (relLastOffset < chars.length && WHITESPACE_CHARS.indexOf(chars[relLastOffset]) >= 0) {
         relLastOffset++;
       }
-      addRuns(runs, text, 0, relLastOffset, flags);
+      addRuns(runs, chars, 0, relLastOffset, flags);
       // running bidi algorithm separately for text fragments corresponding to different lexer tokens
       IElementType lastToken = null;
       HighlighterIterator iterator = view.getHighlighter().createIterator(startOffsetInEditor + relLastOffset);
       while (!iterator.atEnd() && iterator.getStart() - startOffsetInEditor < textLength) {
-        int iteratorRelStart = alignToCodePointBoundary(text, iterator.getStart() - startOffsetInEditor);
-        int iteratorRelEnd = alignToCodePointBoundary(text, iterator.getEnd() - startOffsetInEditor);
+        int iteratorRelStart = alignToCodePointBoundary(chars, iterator.getStart() - startOffsetInEditor);
+        int iteratorRelEnd = alignToCodePointBoundary(chars, iterator.getEnd() - startOffsetInEditor);
         int relStartOffset = Math.max(relLastOffset, iteratorRelStart);
         //noinspection MathClampMigration
         int relEndOffset = Math.min(textLength, Math.max(relStartOffset, iteratorRelEnd));
         IElementType currentToken = iterator.getTokenType();
-        int[] boundaries = getCommentPrefixAndOrSuffixBoundaries(text, relStartOffset, relEndOffset, currentToken);
+        int[] boundaries = getCommentPrefixAndOrSuffixBoundaries(chars, relStartOffset, relEndOffset, currentToken);
         if (boundaries != null) {
           // for comments, we process prefixes and suffixes separately from comment text
-          addRuns(runs, text, relLastOffset, relStartOffset, flags);
-          addRuns(runs, text, relStartOffset, boundaries[0], flags);
-          addRuns(runs, text, boundaries[0], boundaries[1], flags);
+          addRuns(runs, chars, relLastOffset, relStartOffset, flags);
+          addRuns(runs, chars, relStartOffset, boundaries[0], flags);
+          addRuns(runs, chars, boundaries[0], boundaries[1], flags);
           lastToken = null;
           relLastOffset = boundaries[1];
         } else if (distinctTokens(lastToken, currentToken)) {
-          addRuns(runs, text, relLastOffset, relStartOffset, flags);
+          addRuns(runs, chars, relLastOffset, relStartOffset, flags);
           lastToken = currentToken;
           relLastOffset = relStartOffset;
         }
         iterator.advance();
       }
-      addRuns(runs, text, relLastOffset, textLength, flags);
-    } else {
-      addRuns(runs, text, 0, textLength, flags);
+      addRuns(runs, chars, relLastOffset, textLength, flags);
     }
     for (LineBidiRun run : runs) {
-      assert !isInsideSurrogatePair(text, run.getStartOffset());
-      assert !isInsideSurrogatePair(text, run.getEndOffset());
+      assert !isInsideSurrogatePair(chars, run.getStartOffset());
+      assert !isInsideSurrogatePair(chars, run.getEndOffset());
     }
     return runs;
   }
 
   private static void addRuns(@NotNull List<LineBidiRun> runs, char[] text, int start, int end, int flags) {
     if (start < end && !Bidi.requiresBidi(text, start, end)) {
-      addOrMergeRun(runs, new LineBidiRun(start, end, (byte) 0, null));
+      addOrMergeRun(runs, new LineBidiRun(start, end, (byte) 0));
       return;
     }
     int afterLastTabPosition = start;
@@ -94,7 +94,7 @@ final class BidiRunUtil {
       if (text[i] == '\t') {
         addRunsNoTabs(runs, text, afterLastTabPosition, i, flags);
         afterLastTabPosition = i + 1;
-        addOrMergeRun(runs, new LineBidiRun(i, i + 1, (byte) 0, null));
+        addOrMergeRun(runs, new LineBidiRun(i, i + 1, (byte) 0));
       }
     }
     addRunsNoTabs(runs, text, afterLastTabPosition, end, flags);
@@ -110,22 +110,22 @@ final class BidiRunUtil {
       LineBidiRun run = new LineBidiRun(
         start + bidi.getRunStart(i),
         start + bidi.getRunLimit(i),
-        (byte) bidi.getRunLevel(i),
-        null
+        (byte) bidi.getRunLevel(i)
       );
       addOrMergeRun(runs, run);
     }
   }
 
   private static void addOrMergeRun(@NotNull List<LineBidiRun> runs, @NotNull LineBidiRun run) {
-    int size = runs.size();
-    if (size > 0 && runs.get(size - 1).getLevel() == 0 && run.getLevel() == 0) {
-      LineBidiRun lastRun = runs.remove(size - 1);
-      assert lastRun.getEndOffset() == run.getStartOffset();
-      runs.add(new LineBidiRun(lastRun.getStartOffset(), run.getEndOffset(), (byte)0, null));
-    } else {
-      runs.add(run);
+    if (!runs.isEmpty()) {
+      LineBidiRun lastRun = runs.getLast();
+      if (lastRun.canMergeWith(run)) {
+        runs.removeLast();
+        runs.add(lastRun.mergeWith(run));
+        return;
+      }
     }
+    runs.add(run);
   }
 
   private static int[] getCommentPrefixAndOrSuffixBoundaries(char[] text, int start, int end, @Nullable IElementType token) {
