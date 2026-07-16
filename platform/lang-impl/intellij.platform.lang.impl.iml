@@ -29,6 +29,7 @@
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
     </content>
     <orderEntry type="module" module-name="intellij.platform.boot" />
+    <orderEntry type="module" module-name="intellij.platform.rpc" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.core" />

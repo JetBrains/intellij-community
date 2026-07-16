@@ -20,6 +20,7 @@ jvm_library(
     exports = ["//platform/lang-impl"],
     deps = [
         # do not sort,
+        "//platform/kernel/rpc",
         "@lib//:jetbrains-annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
@@ -63,6 +64,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":searchEverywhere",
+        "//platform/kernel/rpc:rpc_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/project/shared:project_test_lib",

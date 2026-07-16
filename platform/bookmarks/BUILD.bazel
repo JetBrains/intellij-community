@@ -19,6 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//platform/kernel/rpc",
         "@lib//:kotlin-stdlib",
         "@lib//:jetbrains-annotations",
         "//platform/analysis-api:analysis",
@@ -60,6 +61,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":bookmarks",
+        "//platform/kernel/rpc:rpc_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/core-api:core_test_lib",

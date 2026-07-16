@@ -20,6 +20,7 @@ jvm_library(
     exports = ["//fleet/openmap"],
     deps = [
         # do not sort,
+        "//platform/kernel/rpc",
         "@lib//:kotlin-stdlib",
         "//platform/kernel/shared:kernel",
         "//platform/util",
@@ -49,6 +50,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":rpc-topics",
+        "//platform/kernel/rpc:rpc_test_lib",
         "//platform/kernel/shared:kernel_test_lib",
         "//platform/util:util_test_lib",
         "//platform/core-api:core_test_lib",

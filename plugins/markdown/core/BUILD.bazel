@@ -21,6 +21,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//platform/kernel/rpc",
         "//platform/analysis-api:analysis",
         "//platform/code-style-api:codeStyle",
         "//platform/util/concurrency",
@@ -93,6 +94,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":markdown",
+        "//platform/kernel/rpc:rpc_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
