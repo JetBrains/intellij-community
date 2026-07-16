@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.client.currentSession
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionAdditionalTabComponentManagerId
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionDataId
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
@@ -11,6 +12,7 @@ import com.intellij.platform.debugger.impl.rpc.XDebugTabLayouterId
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabEvent
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabDto
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabInfoCallback
+import com.intellij.util.application
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +24,7 @@ import kotlinx.coroutines.withContext
 internal class BackendXDebugSessionTabApi : XDebugSessionTabApi {
   override suspend fun sessionTabInfo(sessionDataId: XDebugSessionDataId): Flow<XDebuggerSessionTabDto> {
     val session = sessionDataId.findValue()?.session ?: return emptyFlow()
+    session.registerTabClient(application.currentSession)
     return session.tabInitDataFlow.map {
       XDebuggerSessionTabDto(it, session.getPausedEventsFlow().toRpc())
     }
@@ -53,4 +56,3 @@ internal class BackendXDebugSessionTabApi : XDebugSessionTabApi {
     return layouterModel.events
   }
 }
-

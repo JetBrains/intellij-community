@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.execution.Executor
+import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.execution.ui.RunContentWithExecutorListener
@@ -189,10 +190,10 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
       override fun contentRemoved(descriptor: RunContentDescriptor?, executor: Executor) {
         if (executor.toolWindowId != ToolWindowId.DEBUG) return
         if (descriptor == null) return
-        val sessionId = getSessionIdByContentDescriptor(descriptor) ?: return
+        val descriptorId = descriptor.id as? RunContentDescriptorIdImpl ?: return
         cs.launch {
           try {
-            XDebuggerManagerApi.getInstance().sessionTabClosed(sessionId)
+            XDebuggerManagerApi.getInstance().sessionTabClosed(descriptorId)
           }
           catch (_: RpcClientDisconnectedException) {
             // The backend may already be disconnected, so there is no tab to close remotely.

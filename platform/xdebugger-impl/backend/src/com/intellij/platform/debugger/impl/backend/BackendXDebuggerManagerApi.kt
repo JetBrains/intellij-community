@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.execution.RunContentDescriptorIdImpl
+import com.intellij.execution.findContentValue
 import com.intellij.execution.rpc.createProcessHandlerDto
 import com.intellij.ide.rpc.AnActionId
 import com.intellij.ide.rpc.rpcId
@@ -43,6 +44,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally
 import com.intellij.xdebugger.impl.rpc.toRpc
+import com.intellij.xdebugger.impl.util.disposeInEdt
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -195,11 +197,11 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     managerImpl.onSessionSelected(session)
   }
 
-  override suspend fun sessionTabClosed(sessionId: XDebugSessionId) {
-    val session = sessionId.findValue() ?: return
-    val managerImpl = XDebuggerManagerImpl.getInstance(session.project) as XDebuggerManagerImpl
-    managerImpl.removeSessionNoNotify(session)
+  override suspend fun sessionTabClosed(descriptorId: RunContentDescriptorIdImpl) {
+    val descriptor = descriptorId.findContentValue() ?: return
+    disposeInEdt(descriptor)
   }
+
   override suspend fun getBreakpoints(projectId: ProjectId): XBreakpointsSetDto {
     val project = projectId.findProjectOrNull()
                   ?: return XBreakpointsSetDto(emptySet(), emptyFlow<XBreakpointEvent>().toRpc())

@@ -6,10 +6,15 @@ import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-fun Disposable.onTermination(disposable: Disposable) = Disposer.register(this, disposable)
+fun Disposable.onTermination(disposable: Disposable) {
+  val isSuccess = Disposer.tryRegister(this, disposable)
+  if (!isSuccess) {
+    Disposer.dispose(disposable)
+  }
+}
 
 @ApiStatus.Internal
-fun Disposable.onTermination(action: () -> Unit) = Disposer.register(this) { action() }
+fun Disposable.onTermination(action: () -> Unit): Unit = onTermination(Disposable { action() })
 
 @ApiStatus.Internal
 fun disposeInEdt(disposable: Disposable): Unit = runInEdt { Disposer.dispose(disposable) }
@@ -17,10 +22,7 @@ fun disposeInEdt(disposable: Disposable): Unit = runInEdt { Disposer.dispose(dis
 @ApiStatus.Internal
 fun createEdtDisposable(parentDisposable: Disposable): Disposable {
   val result = Disposer.newDisposable()
-  val isSuccess = Disposer.tryRegister(parentDisposable) {
-    disposeInEdt(result)
-  }
-  if (!isSuccess) {
+  parentDisposable.onTermination {
     disposeInEdt(result)
   }
   return result
