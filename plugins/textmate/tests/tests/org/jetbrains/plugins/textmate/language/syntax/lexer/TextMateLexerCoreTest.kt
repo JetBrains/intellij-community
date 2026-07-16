@@ -49,4 +49,28 @@ class TextMateLexerCoreTest {
       "b" to "source.test block.test common.char"
     ), textmateTokenize("a-b", grammar).toList())
   }
+
+  @Test
+  fun `capture groups starting beyond the matched range are ignored`() {
+    val grammar = """
+      {
+        "scopeName": "source.test",
+        "patterns": [
+          {
+            "match": "(a)(?=.*(b))",
+            "name": "match.a",
+            "captures": {
+              "1": { "name": "cap.a" },
+              "2": { "name": "cap.b" }
+            }
+          }
+        ]
+      }
+    """.trimIndent()
+    assertEquals(listOf(
+      "a" to "source.test match.a cap.a",
+      "-b" to "source.test"
+    ), textmateTokenize("a-b", grammar).toList())
+  }
+
 }

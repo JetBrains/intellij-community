@@ -287,6 +287,7 @@ class TextMateLexerCore(
   ): Boolean {
     val captures = rule.getCaptureRules(captureKey) ?: return false
 
+    val matchByteEnd = matchData.byteRange().end
     val activeCaptureRanges = ArrayDeque<TextMateCharRange>()
     for (group in 0..<matchData.count()) {
       val capture = if (group < captures.size) captures[group] else null
@@ -297,6 +298,10 @@ class TextMateLexerCore(
       val byteRange = matchData.byteRange(group)
       if (byteRange.isEmpty) {
         continue
+      }
+      if (byteRange.start > matchByteEnd) {
+        // the group is captured beyond the consumed match, e.g. inside a lookahead
+        break
       }
 
       val captureRange = matchData.charRange(string, group)
