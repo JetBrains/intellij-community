@@ -35,9 +35,9 @@ import kotlin.time.Duration.Companion.milliseconds
 private const val DEFAULT_SPLIT_MODE_COMPATIBILITY_ANALYSIS_TIMEOUT_MILLISECONDS: Int = 5 * 60 * 1000
 
 class DevKitMcpToolset : McpToolset {
-  override fun displayName(): String = DevKitBundle.message("toolset.display.name.devkit")
+  override fun displayName(): String = DevKitMcpBundle.message("toolset.display.name.devkit")
 
-  override fun displayDescription(toolName: String): String? = DevKitBundle.message("tool.description.$toolName")
+  override fun displayDescription(toolName: String): String = DevKitMcpBundle.message("tool.description.$toolName")
 
   @McpTool
   @McpDescription(
