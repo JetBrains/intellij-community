@@ -223,9 +223,9 @@ class TextMateLexerCore(
             openScopeSelector(output, name, startPosition + lineStartOffset)
 
             parseCaptures(output, Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states,
-                          checkCancelledCallback)
-            parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states,
-                          checkCancelledCallback)
+                          checkCancelledCallback) ||
+              parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states,
+                            checkCancelledCallback)
 
             val contentName = getStringAttribute(Constants.StringKey.CONTENT_NAME, currentRule, string, currentMatch)
             openScopeSelector(output, contentName, endPosition + lineStartOffset)
