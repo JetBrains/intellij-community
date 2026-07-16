@@ -15,7 +15,8 @@ import com.sun.jdi.ClassType
 import com.sun.jdi.InvocationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.org.objectweb.asm.ClassReader
+import java.io.ByteArrayInputStream
+import java.io.DataInputStream
 import java.io.IOException
 import java.net.URLClassLoader
 import kotlin.io.path.Path
@@ -280,8 +281,9 @@ private fun defineClass(
 }
 
 private fun extractJavaVersion(bytes: ByteArray): JavaVersion? {
-  if (bytes.size < 7) return null
-  val major = ClassReader(bytes).readUnsignedShort(6)
+  if (bytes.size < 8) return null
+
+  val major = DataInputStream(ByteArrayInputStream(bytes, 6, 2)).use { it.readUnsignedShort() }
   if (major < 44) return null
   return JavaVersion.compose(major - 44) // 44 = 1.0, 45 = 1.1, 46 = 1.2 etc.
 }
