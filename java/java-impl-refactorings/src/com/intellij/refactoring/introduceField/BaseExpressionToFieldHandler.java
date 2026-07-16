@@ -235,14 +235,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     child = PsiTreeUtil.skipWhitespacesAndCommentsForward(child);
-    PsiElement anchor;
-    if (child != null) {
-      anchor = child;
-    }
-    else {
-      anchor = anchorElement;
-    }
-    return anchor;
+    return child != null ? child : anchorElement;
   }
 
   protected abstract String getHelpID();
@@ -422,9 +415,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     };
   }
 
-  @NlsContexts.DialogTitle
-  @NotNull
-  public String getRefactoringName() {
+  public @NlsContexts.DialogTitle @NotNull String getRefactoringName() {
     return myHelper.getRefactoringName();
   }
 

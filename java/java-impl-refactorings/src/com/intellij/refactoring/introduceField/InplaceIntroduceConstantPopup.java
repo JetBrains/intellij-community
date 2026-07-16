@@ -18,7 +18,6 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
@@ -47,10 +46,7 @@ import java.awt.event.ItemListener;
 public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceFieldPopup {
 
   private final String myInitializerText;
-
-
   private JCheckBox myReplaceAllCb;
-
   private JCheckBox myMoveToAnotherClassCb;
   @PsiModifier.ModifierConstant
   private String myVisibility;
@@ -122,8 +118,8 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
     return left;
   }
 
-
-  private @PsiModifier.ModifierConstant @NotNull String getSelectedVisibility() {
+  @PsiModifier.ModifierConstant
+  private @NotNull String getSelectedVisibility() {
     if (getParentClass() != null && getParentClass().isInterface()) {
       return PsiModifier.PUBLIC;
     }
@@ -139,7 +135,6 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
     }
     return initialVisibility;
   }
-
 
   @Override
   protected PsiVariable createFieldToStartTemplateOn(String[] names, PsiType psiType) {
@@ -238,18 +233,14 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
   }
 
   @Override
-  protected boolean startsOnTheSameElements(Editor editor,
-                                            RefactoringActionHandler handler,
-                                            PsiElement[] elements) {
+  protected boolean startsOnTheSameElements(Editor editor, RefactoringActionHandler handler, PsiElement[] elements) {
     if (elements.length == 0 && handler instanceof IntroduceConstantHandler) {
       PsiVariable variable = getVariable();
-      if (variable != null) {
-        PsiReference reference = TargetElementUtil.findReference(editor);
-        if (reference instanceof PsiReferenceExpression &&
-            reference.resolve() == null &&
-            Comparing.strEqual(variable.getName(), ((PsiReferenceExpression)reference).getReferenceName())) {
-          return true;
-        }
+      if (variable != null
+          && TargetElementUtil.findReference(editor) instanceof PsiReferenceExpression ref
+          && ref.resolve() == null
+          && Comparing.strEqual(variable.getName(), ref.getReferenceName())) {
+        return true;
       }
     }
     return elements.length == 1 && startsOnTheSameElement(handler, elements[0]);
@@ -279,9 +270,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
     myReplaceAllCb.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
-        WriteIntentReadAction.run(() ->
-          restartInplaceIntroduceTemplate()
-        );
+        WriteIntentReadAction.run(() -> restartInplaceIntroduceTemplate());
       }
     });
 
