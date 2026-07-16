@@ -40,6 +40,7 @@ jvm_library(
         "//platform/util",
         "//jps/model-serialization",
         "//platform/testFramework",
+        "//platform/bazel-runfiles",
     ],
 )
 
@@ -81,6 +82,7 @@ jvm_library(
         "//java/java-runtime:rt_test_lib",
         "//platform/runtime/repository",
         "//platform/runtime/repository:repository_test_lib",
+        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.testFramework.monorepo` end

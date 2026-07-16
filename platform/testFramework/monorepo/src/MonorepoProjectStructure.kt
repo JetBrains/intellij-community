@@ -4,6 +4,8 @@ package com.intellij.platform.testFramework.monorepo
 
 import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.openapi.application.PathManager
+import com.intellij.platform.bazel.runfiles.BazelLabel
+import com.intellij.platform.bazel.runfiles.BazelRunfiles
 import com.intellij.project.loadIntelliJProject
 import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.jps.model.JpsProject
@@ -12,6 +14,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -57,6 +60,19 @@ private fun <T> JpsModule.processOutput(forTests: Boolean, processor: (outputRoo
     }
   }
 }
+
+val JpsLibrary.compiledPaths: List<Path>
+  get() {
+    return if (BazelRunfiles.isRunningFromBazel) {
+      val moduleLibraryModuleName = (createReference().parentReference as? JpsModuleReference)?.moduleName
+      val libraryInfo = ArchivedCompilationContextUtil.findLibraryInfo(name, moduleLibraryModuleName)
+                        ?: error("Library $name not found in Bazel output")
+      libraryInfo.jarTargets.map { BazelRunfiles.getFileByLabel(BazelLabel.fromString(it)) }
+    }
+    else {
+      this.getPaths(JpsOrderRootType.COMPILED)
+    }
+  }
 
 val JpsModule.productionOutputPaths: List<Path>
   get() {

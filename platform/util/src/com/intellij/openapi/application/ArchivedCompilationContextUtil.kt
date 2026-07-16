@@ -35,6 +35,44 @@ object ArchivedCompilationContextUtil {
     return@lazy null
   }
 
+  @Internal
+  class LibraryInfo internal constructor(
+    val target: String,
+    val jars: List<String>,
+    val jarTargets: List<String>,
+    val sourceJars: List<String>,
+  )
+
+  @JvmStatic
+  fun findLibraryInfo(libraryName: String, moduleLibraryModuleName: String?): LibraryInfo? {
+    val targetsFile = archiveCompilationContextTargetsFile
+    val description = if (moduleLibraryModuleName == null) {
+      targetsFile.projectLibraries[libraryName]
+    }
+    else {
+      targetsFile.modules[moduleLibraryModuleName]?.moduleLibraries?.get(libraryName)
+    }
+    return description?.let {
+      LibraryInfo(
+        target = it.target,
+        jars = it.jars,
+        jarTargets = it.jarTargets,
+        sourceJars = it.sourceJars,
+      )
+    }
+  }
+
+  private val archiveCompilationContextTargetsFile: BazelTargetsInfo.TargetsFile by lazy {
+    val projectRoot = PathManager.getHomeDir()
+    val targetsJsonPath = getBazelTargetsJsonPath(projectRoot)
+    try {
+      BazelTargetsInfo.loadTargetsFile(targetsJsonPath)
+    }
+    catch (e: Exception) {
+      error("Failed to load targets info from $targetsJsonPath: " + e.stackTraceToString())
+    }
+  }
+
   @JvmStatic
   val archivedCompiledClassesMapping: Map<String, String>? by lazy(LazyThreadSafetyMode.PUBLICATION) {
     /**
@@ -172,13 +210,23 @@ private object BazelTargetsInfo {
   }
 
   @Serializable
+  data class LibraryDescription(
+    @JvmField val target: String,
+    @JvmField val jars: List<String>,
+    @JvmField val jarTargets: List<String>,
+    @JvmField val sourceJars: List<String>,
+  )
+
+  @Serializable
   data class TargetsFileModuleDescription(
     @JvmField val productionJars: List<String>,
     @JvmField val testJars: List<String>,
+    @JvmField val moduleLibraries: Map<String, LibraryDescription>,
   )
 
   @Serializable
   data class TargetsFile(
     @JvmField val modules: Map<String, TargetsFileModuleDescription>,
+    @JvmField val projectLibraries: Map<String, LibraryDescription>,
   )
 }
