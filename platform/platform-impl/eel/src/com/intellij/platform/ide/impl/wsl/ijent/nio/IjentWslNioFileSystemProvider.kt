@@ -6,14 +6,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.channels.EelDelicateApi
-import com.intellij.platform.eel.provider.utils.impl.localToIjent
 import com.intellij.platform.eel.provider.utils.EelPathTransfer
+import com.intellij.platform.eel.provider.utils.impl.localToIjent
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.platform.ijent.community.impl.nio.fs.getCachedFileAttributesAndWrapToDosAttributesAdapter
 import com.intellij.platform.ijent.community.impl.nio.fs.getFileAttributeViewUsingDosAttributesAdapter
 import com.intellij.platform.ijent.community.impl.nio.fs.readAttributesUsingDosAttributesAdapter
-import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -82,13 +80,11 @@ internal class IjentWslNioFileSystemProvider(
 
       isAbsolute ->
         fold(ijentFsProvider.getPath(ijentFsUri) as IjentNioPath, { nioPath, newPart ->
-          @OptIn(EelDelicateApi::class)
-          nioPath.resolve(localToIjent(newPart.toString ()))
+          nioPath.resolve(localToIjent(newPart.toString()))
         })
 
       else -> {
         val ijentNioFs = ijentFsProvider.getFileSystem(ijentFsUri)
-        @OptIn(EelDelicateApi::class)
         ijentNioFs.getPath(localToIjent(toString().replace("\\", ijentNioFs.separator))) as IjentNioPath
       }
     }
@@ -225,7 +221,9 @@ internal class IjentWslNioFileSystemProvider(
             val ijentPath = delegateIterator.next().toIjentPath()
             val originalPath = dir.resolve(ijentPath.fileName.toString())
 
-            return IjentWslNioPath(getFileSystem(wslId), originalPath.toOriginalPathWithSameNotation(), ijentPath.getCachedFileAttributesAndWrapToDosAttributesAdapter())
+            return IjentWslNioPath(getFileSystem(wslId),
+                                   originalPath.toOriginalPathWithSameNotation(),
+                                   ijentPath.getCachedFileAttributesAndWrapToDosAttributesAdapter())
           }
 
           override fun remove() {
@@ -261,7 +259,10 @@ internal class IjentWslNioFileSystemProvider(
       }
 
       else -> {
-        EelPathTransfer.walkingTransfer(source, target, removeSource = false, copyAttributes = StandardCopyOption.COPY_ATTRIBUTES in options)
+        EelPathTransfer.walkingTransfer(source,
+                                        target,
+                                        removeSource = false,
+                                        copyAttributes = StandardCopyOption.COPY_ATTRIBUTES in options)
       }
     }
   }
@@ -296,10 +297,7 @@ internal class IjentWslNioFileSystemProvider(
     }
 
     if (path2 !is IjentWslNioPath) {
-      return if (path.actualPath.fileSystem.provider() == path2.fileSystem.provider())
-        Files.isSameFile(path.actualPath, path2)
-      else
-        false
+      return path.actualPath.fileSystem.provider() == path2.fileSystem.provider() && Files.isSameFile(path.actualPath, path2)
     }
 
     if (path.actualPath == path.presentablePath && path2.actualPath == path2.presentablePath) {

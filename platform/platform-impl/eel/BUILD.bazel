@@ -1,6 +1,12 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.ide.impl.wsl` start
+create_kotlinc_options(
+    name = "custom_ide-impl-wsl",
+    opt_in = ["com.intellij.platform.eel.channels.EelDelicateApi"],
+)
+
 jvm_library(
     name = "ide-impl-wsl",
     srcs = glob(
@@ -11,6 +17,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_ide-impl-wsl",
     module_name = "intellij.platform.ide.impl.wsl",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -48,6 +55,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_ide-impl-wsl",
     module_name = "intellij.platform.ide.impl.wsl",
     visibility = ["//visibility:public"],
     runtime_deps = [

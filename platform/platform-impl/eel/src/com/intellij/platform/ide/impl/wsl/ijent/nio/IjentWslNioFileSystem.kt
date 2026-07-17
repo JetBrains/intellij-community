@@ -2,10 +2,8 @@
 package com.intellij.platform.ide.impl.wsl.ijent.nio
 
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.channels.EelDelicateApi
-import com.intellij.platform.eel.provider.utils.impl.ijentToLocal
 import com.intellij.platform.eel.provider.EelDescriptorOwner
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.platform.eel.provider.utils.impl.ijentToLocal
 import java.nio.file.FileStore
 import java.nio.file.FileSystem
 import java.nio.file.Path
@@ -60,7 +58,6 @@ internal class IjentWslNioFileSystem internal constructor(
       addAll(ijentFs.supportedFileAttributeViews())
     }
 
-  @OptIn(EelDelicateApi::class)
   override fun getPath(first: String, vararg more: String): Path =
     IjentWslNioPath(this, originalFs.getPath(ijentToLocal(first), *more.map { ijentToLocal(it) }.toTypedArray()), null)
 
