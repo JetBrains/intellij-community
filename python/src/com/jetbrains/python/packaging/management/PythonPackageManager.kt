@@ -412,7 +412,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
   @ApiStatus.Internal
   suspend fun getRootDependenciesFile(): PyDependenciesFile? {
-    val virtualFile = if (sdk.pySdkAdditionalData.requiredTxtPath != null) {
+    val virtualFile = if (sdk.pySdkAdditionalData.requirementsPath != null) {
       // An explicitly stored path wins over (and does not fall back to) the manager-specific defaults.
       PythonRequirementTxtSdkUtils.resolvePersistedRequirementsFile(sdk)
     }

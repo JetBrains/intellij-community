@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
@@ -31,6 +32,8 @@ import com.jetbrains.python.PythonMockSdk
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.sdk.flavors.PyFlavorAndData
+import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
@@ -308,7 +311,10 @@ internal class PySdkPathsTest {
           // Simulate an old SDK that had remote additional data from a previous IDE version that doesn't exist anymore
           // and one of non-local home paths
           homePath = remotePath
-          sdkAdditionalData = PythonSdkAdditionalData()
+          sdkAdditionalData = PythonSdkAdditionalData(
+            PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance()),
+            projectModel.projectRootDir
+          )
           commitChanges()
         }
       }

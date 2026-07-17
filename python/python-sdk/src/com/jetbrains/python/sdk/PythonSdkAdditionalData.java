@@ -7,7 +7,6 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.JDOMExternalizer;
@@ -33,6 +32,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -42,7 +42,7 @@ import java.util.UUID;
 // TODO: Use new annotation-based API to save data instead of legacy manual save
 public class PythonSdkAdditionalData implements SdkAdditionalData {
   private static final PyFlavorAndData<?, ?> UNKNOWN_DATA = new PyFlavorAndData<>(PyFlavorData.Empty.INSTANCE,
-                                                                                                          PythonSdkFlavor.UnknownFlavor.INSTANCE);
+                                                                                  PythonSdkFlavor.UnknownFlavor.INSTANCE);
   @ApiStatus.Internal
   public static final Path REQUIREMENT_TXT_DEFAULT = Path.of("requirements.txt");
 
@@ -54,10 +54,13 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   private static final @NonNls String PATH_TO_TRANSFER = "PATH_TO_TRANSFER";
   private static final @NonNls String ASSOCIATED_PROJECT_PATH = "ASSOCIATED_PROJECT_PATH";
   private static final @NonNls String ASSOCIATED_REQUIRED_TXT_PATH = "ASSOCIATED_REQUIRED_TXT_PATH";
+  private static final @NonNls String REQUIREMENTS_FILE = "REQUIREMENTS_FILE";
+  private static final @NonNls String WORKING_DIRECTORY = "WORKING_DIRECTORY";
   private static final @NonNls String SDK_UUID_FIELD_NAME = "SDK_UUID";
 
   private static final @NonNls String FLAVOR_ID = "FLAVOR_ID";
   private static final @NonNls String FLAVOR_DATA = "FLAVOR_DATA";
+  private static final Path EMPTY_WORKING_DIRECTORY = Path.of("");
 
   private final VirtualFilePointerContainer myAddedPaths;
   private final VirtualFilePointerContainer myExcludedPaths;
@@ -66,7 +69,9 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
 
   private PyFlavorAndData<?, ?> myFlavorAndData;
   private String myAssociatedModulePath;
-  private Path myRequiredTxtPath;
+  private String myRequirementsFile;
+  private Path myLegacyRequiredTxtPath;
+  private @NotNull Path myWorkingDirectory = EMPTY_WORKING_DIRECTORY;
 
   private final Gson myGson = new GsonBuilder().registerTypeAdapter(Path.class, new PathSerializer()).create();
 
@@ -93,6 +98,10 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     return flavor;
   }
 
+  /**
+   * @deprecated Use constructor with data and working directory, all SDKs without working directory are considered invalid.
+   */
+  @Deprecated(forRemoval = true)
   public PythonSdkAdditionalData(@Nullable PyFlavorAndData<?, ?> flavorAndData) {
     myFlavorAndData = (flavorAndData != null ? flavorAndData : UNKNOWN_DATA);
     myAddedPaths = VirtualFilePointerManager.getInstance().createContainer(PythonPluginDisposable.getInstance());
@@ -100,12 +109,19 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     myPathsToTransfer = VirtualFilePointerManager.getInstance().createContainer(PythonPluginDisposable.getInstance());
   }
 
+  public PythonSdkAdditionalData(@Nullable PyFlavorAndData<?, ?> flavorAndData, @NotNull Path workingDirectory) {
+    this(flavorAndData);
+    setWorkingDirectory(workingDirectory);
+  }
+
   protected PythonSdkAdditionalData(@NotNull PythonSdkAdditionalData from) {
     myAddedPaths = from.myAddedPaths.clone(PythonPluginDisposable.getInstance());
     myExcludedPaths = from.myExcludedPaths.clone(PythonPluginDisposable.getInstance());
     myPathsToTransfer = from.myPathsToTransfer.clone(PythonPluginDisposable.getInstance());
     myAssociatedModulePath = from.myAssociatedModulePath;
-    myRequiredTxtPath = from.myRequiredTxtPath;
+    myRequirementsFile = from.myRequirementsFile;
+    myLegacyRequiredTxtPath = from.myLegacyRequiredTxtPath;
+    myWorkingDirectory = from.myWorkingDirectory;
     myFlavorAndData = from.myFlavorAndData;
     myUUID = from.myUUID;
   }
@@ -160,23 +176,62 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
 
   /**
    * ONLY FOR INTERNAL USE!
-   * For external usage use {@link com.jetbrains.python.packaging.requirements.PyRequirementTxtUtils#findRequirementsTxt(Sdk)}
+   * For external usage use the requirements file SDK utilities.
    * Be sure to use {@link com.intellij.openapi.projectRoots.SdkModificator} to save changes
    */
   @ApiStatus.Internal
-  public final Path getRequiredTxtPath() {
-    return myRequiredTxtPath;
+  public final @Nullable String getRequirementsFile() {
+    return myRequirementsFile;
   }
 
   /**
    * ONLY FOR INTERNAL USE!
-   * For external usage use {@link com.jetbrains.python.packaging.requirements.PyRequirementTxtUtils#saveRequirementsTxtPath(Project, Sdk, Path)}
+   * For external usage use the requirements file SDK utilities.
    * Be sure to use {@link com.intellij.openapi.projectRoots.SdkModificator} to save changes
    */
   @ApiStatus.Internal
-  public final void setRequiredTxtPath(@Nullable Path requiredTxtPath) {
-    boolean isNotDefault = requiredTxtPath == null;
-    myRequiredTxtPath = isNotDefault ? null : requiredTxtPath;
+  public final void setRequirementsFile(@Nullable String requirementsFile) {
+    myRequirementsFile = requirementsFile;
+  }
+
+  @ApiStatus.Internal
+  public final @Nullable Path getRequirementsPath() {
+    return myRequirementsFile == null ? null : getWorkingDirectory().resolve(myRequirementsFile);
+  }
+
+  @ApiStatus.Internal
+  public final void setRequirementsPath(@Nullable Path requirementsPath) {
+    if (requirementsPath == null) {
+      setRequirementsFile(null);
+      return;
+    }
+
+    Path resolvedPath = requirementsPath.isAbsolute() ? requirementsPath : getWorkingDirectory().resolve(requirementsPath);
+    Path fileName = resolvedPath.getFileName();
+    if (fileName == null || fileName.toString().isBlank()) {
+      throw new IllegalArgumentException("Python SDK requirements file name must not be empty");
+    }
+    Path parent = resolvedPath.getParent();
+    if (parent != null) {
+      setWorkingDirectory(parent);
+    }
+    setRequirementsFile(fileName.toString());
+  }
+
+  @ApiStatus.Internal
+  public final @NotNull Path getWorkingDirectory() {
+    return myWorkingDirectory;
+  }
+
+  @ApiStatus.Internal
+  public final boolean hasValidWorkingDirectory() {
+    return !Objects.equals(myWorkingDirectory, EMPTY_WORKING_DIRECTORY);
+  }
+
+  @ApiStatus.Internal
+  public final void setWorkingDirectory(@NotNull Path workingDirectory) {
+    myWorkingDirectory = workingDirectory;
+    synchronizeFlavorWorkingDirectory();
   }
 
   public void save(final @NotNull Element rootElement) {
@@ -188,8 +243,15 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
       rootElement.setAttribute(ASSOCIATED_PROJECT_PATH, myAssociatedModulePath);
     }
 
-    if (myRequiredTxtPath != null) {
-      rootElement.setAttribute(ASSOCIATED_REQUIRED_TXT_PATH, myRequiredTxtPath.toString());
+    if (myRequirementsFile != null) {
+      rootElement.setAttribute(REQUIREMENTS_FILE, myRequirementsFile);
+    }
+    if (myLegacyRequiredTxtPath != null) {
+      rootElement.setAttribute(ASSOCIATED_REQUIRED_TXT_PATH, myLegacyRequiredTxtPath.toString());
+    }
+
+    if (hasValidWorkingDirectory()) {
+      rootElement.setAttribute(WORKING_DIRECTORY, myWorkingDirectory.toString());
     }
 
     rootElement.setAttribute(SDK_UUID_FIELD_NAME, myUUID.toString());
@@ -216,6 +278,38 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   }
 
   @ApiStatus.Internal
+  public final boolean migrateAdditionalData(@Nullable Path fallbackWorkingDirectory) {
+    FlavorMigrationResult flavorMigration = migrateFlavorData(myFlavorAndData);
+    boolean changed = flavorMigration.changed();
+
+    Path requirementsWorkingDirectory = null;
+    if (myRequirementsFile == null) {
+      Path legacyRequirementsPath = resolveLegacyRequirementsPath();
+      if (legacyRequirementsPath != null && legacyRequirementsPath.getFileName() != null) {
+        myRequirementsFile = legacyRequirementsPath.getFileName().toString();
+        requirementsWorkingDirectory = legacyRequirementsPath.getParent();
+        changed = true;
+      }
+    }
+
+    if (!hasValidWorkingDirectory()) {
+      Path workingDirectory = flavorMigration.workingDirectory();
+      if (workingDirectory == null) workingDirectory = requirementsWorkingDirectory;
+      if (workingDirectory == null) workingDirectory = fallbackWorkingDirectory;
+
+      if (workingDirectory != null && !workingDirectory.toString().isBlank()) {
+        setWorkingDirectory(workingDirectory);
+        changed = true;
+      }
+    }
+    if (hasValidWorkingDirectory()) {
+      changed |= synchronizeFlavorWorkingDirectory();
+    }
+
+    return changed;
+  }
+
+  @ApiStatus.Internal
 
   public static @NotNull PythonSdkAdditionalData loadFromElement(@Nullable Element element) {
     final PythonSdkAdditionalData data = new PythonSdkAdditionalData();
@@ -224,19 +318,20 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   }
 
   public void load(@Nullable Element element) {
+    myWorkingDirectory = EMPTY_WORKING_DIRECTORY;
     collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER), myAddedPaths);
     collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER), myExcludedPaths);
     collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_TO_TRANSFER_ROOT, PATH_TO_TRANSFER), myPathsToTransfer);
     if (element != null) {
       myAssociatedModulePath = element.getAttributeValue(ASSOCIATED_PROJECT_PATH);
 
-      String storedRequiredTxtPath = element.getAttributeValue(ASSOCIATED_REQUIRED_TXT_PATH);
-      if (storedRequiredTxtPath != null) {
-        myRequiredTxtPath = Path.of(storedRequiredTxtPath);
+      String storedWorkingDirectory = element.getAttributeValue(WORKING_DIRECTORY);
+      if (storedWorkingDirectory != null && !storedWorkingDirectory.isBlank()) {
+        myWorkingDirectory = Path.of(storedWorkingDirectory);
       }
-      else {
-        myRequiredTxtPath = null;
-      }
+      myRequirementsFile = element.getAttributeValue(REQUIREMENTS_FILE);
+      String legacyRequiredTxtPath = element.getAttributeValue(ASSOCIATED_REQUIRED_TXT_PATH);
+      myLegacyRequiredTxtPath = legacyRequiredTxtPath == null ? null : Path.of(legacyRequiredTxtPath);
 
       var uuidStr = element.getAttributeValue(SDK_UUID_FIELD_NAME);
       if (uuidStr != null) {
@@ -255,10 +350,48 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     }
   }
 
+  private @Nullable Path resolveLegacyRequirementsPath() {
+    if (myLegacyRequiredTxtPath == null) return null;
+    if (!myLegacyRequiredTxtPath.isAbsolute() && myAssociatedModulePath != null) {
+      return Path.of(myAssociatedModulePath).resolve(myLegacyRequiredTxtPath);
+    }
+    return myLegacyRequiredTxtPath;
+  }
+
   @SuppressWarnings({"rawtypes", "unchecked"})
   private void setFlavorFromConfig(@NotNull Element element, @NotNull PythonSdkFlavor<?> flavor) {
     var flavorData = myGson.fromJson(JDOMExternalizer.readString(element, FLAVOR_DATA), flavor.getFlavorDataClass());
     myFlavorAndData = new PyFlavorAndData(flavorData, flavor);
+  }
+
+  private <D extends PyFlavorData, F extends PythonSdkFlavor<D>> @NotNull FlavorMigrationResult migrateFlavorData(
+    @NotNull PyFlavorAndData<D, F> flavorAndData
+  ) {
+    PythonSdkFlavor.AdditionalDataMigration<D> migration =
+      flavorAndData.getFlavor().migrateAdditionalData(this, flavorAndData.getData());
+    boolean changed = !Objects.equals(migration.getFlavorData(), flavorAndData.getData());
+    if (changed) {
+      myFlavorAndData = new PyFlavorAndData<>(migration.getFlavorData(), flavorAndData.getFlavor());
+    }
+    return new FlavorMigrationResult(migration.getWorkingDirectory(), changed);
+  }
+
+  private boolean synchronizeFlavorWorkingDirectory() {
+    if (!hasValidWorkingDirectory()) return false;
+    return synchronizeFlavorWorkingDirectory(myFlavorAndData, myWorkingDirectory);
+  }
+
+  private <D extends PyFlavorData, F extends PythonSdkFlavor<D>> boolean synchronizeFlavorWorkingDirectory(
+    @NotNull PyFlavorAndData<D, F> flavorAndData,
+    @NotNull Path workingDirectory
+  ) {
+    D synchronizedData = flavorAndData.getFlavor().withWorkingDirectory(flavorAndData.getData(), workingDirectory);
+    if (Objects.equals(synchronizedData, flavorAndData.getData())) return false;
+    myFlavorAndData = new PyFlavorAndData<>(synchronizedData, flavorAndData.getFlavor());
+    return true;
+  }
+
+  private record FlavorMigrationResult(@Nullable Path workingDirectory, boolean changed) {
   }
 
   private static void collectPaths(@NotNull List<String> paths, VirtualFilePointerContainer container) {

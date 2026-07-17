@@ -35,7 +35,7 @@ interface PyEnvironment : AutoCloseable {
 
   suspend fun prepareSdk(): Sdk = withContext(Dispatchers.IO) {
     val vfsFile = VfsUtil.findFile(pythonPath, true) ?: error("Cannot find Python executable: ${pythonPath}")
-    val data = PythonSdkAdditionalData(osSpecificSdkFlavorAndData)
+    val data = PythonSdkAdditionalData(osSpecificSdkFlavorAndData, envPath)
     SdkConfigurationUtil.setupSdk(emptyArray(), vfsFile,
                                   SdkType.findByName(PyNames.PYTHON_SDK_ID_NAME)!!, data, null)
   }
