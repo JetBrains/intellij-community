@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +36,7 @@ import java.net.URI
 import java.nio.file.Path
 
 @ApiStatus.Internal
+@OptIn(LowLevelLocalMachineAccess::class)
 open class BrowserLauncherAppless : BrowserLauncher() {
   companion object {
     private val LOG = logger<BrowserLauncherAppless>()
