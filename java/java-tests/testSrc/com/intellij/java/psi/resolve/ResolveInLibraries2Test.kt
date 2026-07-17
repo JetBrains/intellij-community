@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.resolve
 
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -53,5 +51,36 @@ class ResolveInLibraries2Test : JavaCodeInsightFixtureTestCase() {
     val file1 = parsers[1].navigationElement.containingFile
     assertTrue(file1.virtualFile.path.startsWith (srcCopy.path))
     assertTrue(file1.findReferenceAt(file1.text.indexOf("Bar bar"))!!.resolve()!!.navigationElement.containingFile.virtualFile.path.startsWith(srcCopy.path))
+  }
+
+  fun `test choose source from libraries in stable order`() {
+    val libsDir = directoryContent {
+      zip("foo.jar") {
+        classFile("foo.Foo") {}
+      }
+      zip("z-src.zip") {
+        dir("foo") {
+          file("Foo.java", "package foo; public class Foo { int fromZ; }")
+        }
+      }
+      zip("a-src.zip") {
+        dir("foo") {
+          file("Foo.java", "package foo; public class Foo { int fromA; }")
+        }
+      }
+    }.generateInVirtualTempDir()
+
+    fun getJarRootUrls(path: String) = listOf(VfsUtil.getUrlForLibraryRoot(File(path)))
+
+    val classes = getJarRootUrls("${libsDir.path}/foo.jar")
+    ModuleRootModificationUtil.addModuleLibrary(module, "z-library", classes, getJarRootUrls("${libsDir.path}/z-src.zip"))
+    ModuleRootModificationUtil.addModuleLibrary(module, "a-library", classes, getJarRootUrls("${libsDir.path}/a-src.zip"))
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
+
+    val cls = requireNotNull(JavaPsiFacade.getInstance(project).findClass("foo.Foo", GlobalSearchScope.allScope(project)))
+
+    val source = cls.navigationElement.containingFile
+    assertTrue(source.virtualFile.path.startsWith("${libsDir.path}/a-src.zip"))
+    assertTrue(source.text.contains("fromA"))
   }
 }
