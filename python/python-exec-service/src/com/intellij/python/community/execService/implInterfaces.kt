@@ -7,4 +7,6 @@ internal sealed interface ExecOptionsBase {
   val env: Map<String, String>
   val processDescription: @Nls String?
   val tty: TtySize?
+  val uploadBeforeExecution: UploadConfig?
+  val downloadAfterExecution: DownloadConfig?
 }

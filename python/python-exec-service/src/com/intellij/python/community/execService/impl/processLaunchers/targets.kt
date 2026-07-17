@@ -4,9 +4,11 @@
 package com.intellij.python.community.execService.impl.processLaunchers
 
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.Platform
 import com.intellij.execution.process.LocalPtyOptions
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.target.TargetedCommandLineBuilder
@@ -22,6 +24,7 @@ import com.intellij.platform.eel.impl.base.bindProcessToScopeImpl
 import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.community.execService.DownloadConfig
 import com.intellij.python.community.execService.ExecuteGetProcessError
+import com.intellij.python.community.execService.UploadConfig
 import com.intellij.python.community.execService.impl.PyExecBundle
 import com.intellij.python.community.execService.impl.TargetEnvironmentRequestHandler
 import com.intellij.remoteServer.util.ServerRuntimeException
@@ -59,21 +62,21 @@ internal suspend fun createProcessLauncherOnTarget(
     }
   }
 
-  // Broken Targets API can only upload the whole directory
+  // Targets API maps local roots as directories; callers may still restrict which files are uploaded below.
+  val workingDir = binOnTarget.workingDir?.takeIf { it.pathString.isNotBlank() }
   val dirsToMap = buildSet {
     addAll(launchRequest.args.localFiles.map { it.parent })
-    binOnTarget.workingDir?.takeIf { it.pathString.isNotBlank() }?.also {
+    workingDir?.also {
       add(it)
     }
   }
-  val uploadRoots =
-    TargetEnvironmentRequestHandler.mapUploadRoots(request, dirsToMap, binOnTarget.workingDir?.takeIf { it.pathString.isNotBlank() })
+  val uploadRoots = TargetEnvironmentRequestHandler.mapUploadRoots(request, dirsToMap, workingDir)
   request.uploadVolumes.addAll(uploadRoots.map { it.value.root })
 
   // Setup download roots if download is requested
   val downloadConfig = launchRequest.downloadConfig
   if (downloadConfig != null) {
-    val localDirsToDownload = binOnTarget.workingDir?.takeIf { it.pathString.isNotBlank() }?.let { setOf(it) } ?: emptySet()
+    val localDirsToDownload = workingDir?.let { setOf(it) } ?: emptySet()
     val downloadRoots = mapDownloadRoots(request.uploadVolumes, localDirsToDownload)
     request.downloadVolumes.addAll(downloadRoots)
   }
@@ -89,10 +92,18 @@ internal suspend fun createProcessLauncherOnTarget(
     fileLogger().warn("Failed to start $target", e) // TODO: i18n
     return@withContext Result.failure(ExecuteGetProcessError.EnvironmentError(MessageError("Failed to start environment due to ${e.localizedMessage}")))
   }
+  val workingDirOnTarget = workingDir?.let { targetEnv.getTargetPaths(it.pathString).firstOrNull() ?: it.pathString }
+  val uploadConfig = launchRequest.uploadConfig
+  if (uploadConfig?.ensureWorkingDirectoryExists == true && workingDirOnTarget != null) {
+    ensureTargetDirectoryExists(targetEnv, request, workingDirOnTarget).getOr { failure ->
+      targetEnv.shutdown()
+      return@withContext failure
+    }
+  }
   for (volume in targetEnv.uploadVolumes.values) {
     val skipUploading = uploadRoots[volume.localRoot]?.uploadVolumeExplicitly == false
-    if (! skipUploading) { // Volume explicitly marked as non-uploadable, i.e.: helpers (they are uploaded by handlers)
-      volume.uploadMeasureTime(".", TargetProgressIndicator.EMPTY, "execService")
+    if (!skipUploading) { // Volume explicitly marked as non-uploadable, i.e.: helpers (they are uploaded by handlers)
+      uploadVolume(volume, workingDir, uploadConfig, launchRequest.args.localFiles)
     }
   }
 
@@ -105,9 +116,8 @@ internal suspend fun createProcessLauncherOnTarget(
     // exe path is always fixed (pre-presolved) promise. It can't be obtained directly because of Targets API limitation
     exePath = commandLineBuilder.exePath.localValue.blockingGet(1000) ?: error("Exe path not set: $binOnTarget is broken")
     // Map working directory through upload volumes if it's a local path
-    binOnTarget.workingDir?.takeIf { it.pathString.isNotBlank() }?.let { workingDir ->
+    if (workingDirOnTarget != null) {
       // Try to resolve through upload volumes (in case workingDir is a local path that needs mapping)
-      val workingDirOnTarget = targetEnv.getTargetPaths(workingDir.pathString).firstOrNull() ?: workingDir.pathString
       commandLineBuilder.setWorkingDirectory(workingDirOnTarget)
     }
     launchRequest.usePty?.let {
@@ -132,6 +142,74 @@ internal suspend fun createProcessLauncherOnTarget(
                                                                                             targetEnv,
                                                                                             cmdLine,
                                                                                             downloadConfig)))
+}
+
+private fun uploadVolume(
+  volume: TargetEnvironment.UploadableVolume,
+  workingDir: Path?,
+  uploadConfig: UploadConfig?,
+  localFiles: List<Path>,
+) {
+  if (uploadConfig != null && workingDir != null && volume.localRoot == workingDir) {
+    val localFileRelativePaths = localFiles
+      .filter { it.parent == workingDir }
+      .map { workingDir.relativize(it).pathString }
+    val pathsToUpload = (uploadConfig.relativePaths + localFileRelativePaths).distinct()
+    for (path in pathsToUpload) {
+      volume.uploadMeasureTime(path, TargetProgressIndicator.EMPTY, "execService")
+    }
+  }
+  else {
+    volume.uploadMeasureTime(".", TargetProgressIndicator.EMPTY, "execService")
+  }
+}
+
+private fun ensureTargetDirectoryExists(
+  targetEnv: TargetEnvironment,
+  request: TargetEnvironmentRequest,
+  directory: FullPathOnTarget,
+): Result<Unit, ExecuteGetProcessError.EnvironmentError> {
+  when (request.targetPlatform.platform) {
+    Platform.UNIX -> Unit
+    Platform.WINDOWS -> {
+      val error = MessageError(PyExecBundle.message("py.exec.target.working.directory.create.unsupported", directory))
+      return Result.failure(ExecuteGetProcessError.EnvironmentError(error))
+    }
+  }
+
+  val cmdLine = createMkdirCommandLine(request, directory)
+  val process = try {
+    targetEnv.createProcess(cmdLine)
+  }
+  catch (e: ExecutionException) {
+    val error = MessageError(PyExecBundle.message("py.exec.target.working.directory.create.error", directory, e.localizedMessage))
+    return Result.failure(ExecuteGetProcessError.EnvironmentError(error))
+  }
+
+  val exitCode = try {
+    process.waitFor()
+  }
+  catch (_: InterruptedException) {
+    process.destroyForcibly()
+    Thread.currentThread().interrupt()
+    val error = MessageError(PyExecBundle.message("py.exec.target.working.directory.create.interrupted", directory))
+    return Result.failure(ExecuteGetProcessError.EnvironmentError(error))
+  }
+
+  return if (exitCode == 0) {
+    Result.success(Unit)
+  }
+  else {
+    val error = MessageError(PyExecBundle.message("py.exec.target.working.directory.create.exitCode", directory, exitCode))
+    Result.failure(ExecuteGetProcessError.EnvironmentError(error))
+  }
+}
+
+private fun createMkdirCommandLine(request: TargetEnvironmentRequest, directory: FullPathOnTarget): TargetedCommandLine {
+  val commandLineBuilder = TargetedCommandLineBuilder(request)
+  commandLineBuilder.setExePath("/bin/mkdir")
+  commandLineBuilder.addParameters("-p", directory)
+  return commandLineBuilder.build()
 }
 
 private class TargetProcessCommands(

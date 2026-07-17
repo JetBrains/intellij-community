@@ -61,8 +61,16 @@ data class BinOnEel(val path: Path, internal val workDir: Path? = null) : Binary
  * Legacy Targets-based approach. Do not use it, unless you know what you are doing
  * if [target] "local" target is used
  */
-data class BinOnTarget(internal val configureTargetCmdLine: (TargetedCommandLineBuilder) -> Unit, val target: TargetEnvironmentConfiguration, val workingDir: Path? = null) : BinaryToExec {
-  constructor(exePath: FullPathOnTarget, target: TargetEnvironmentConfiguration, workingDir: Path? = null) : this({ it.setExePath(exePath) }, target, workingDir)
+data class BinOnTarget(
+  internal val configureTargetCmdLine: (TargetedCommandLineBuilder) -> Unit,
+  val target: TargetEnvironmentConfiguration,
+  val workingDir: Path? = null,
+) : BinaryToExec {
+  constructor(
+    exePath: FullPathOnTarget,
+    target: TargetEnvironmentConfiguration,
+    workingDir: Path? = null,
+  ) : this({ it.setExePath(exePath) }, target, workingDir)
 
   @RequiresBackgroundThread
   fun getLocalExePath(): Lazy<FullPathOnTarget> = lazy {
@@ -250,11 +258,25 @@ data class DownloadConfig(
 )
 
 /**
+ * Configuration for uploading files before command execution.
+ * Uses existing upload volume mappings (from web deployment).
+ *
+ * @param relativePaths Relative paths to upload from the working directory.
+ *                      Empty list means upload no files.
+ * @param ensureWorkingDirectoryExists Creates the target working directory before execution, even when no files are uploaded.
+ */
+data class UploadConfig(
+  val relativePaths: List<RelativePathOnTarget> = emptyList(),
+  val ensureWorkingDirectoryExists: Boolean = true,
+)
+
+/**
  * @property[env] Environment variables to be applied with the process run
  * @property[timeout] Process gets killed after this timeout
  * @property[processDescription] optional description to be displayed to user
  * @property[tty] Much like [com.intellij.platform.eel.EelExecApi.Pty]
  * @property[weight] use it to limit the number of concurrent processes not to exhaust user resources, see [ConcurrentProcessWeight]
+ * @property[uploadBeforeExecution] configuration for uploading files before command execution (Target-based execution only)
  * @property[downloadAfterExecution] configuration for downloading files after command execution (Target-based execution only)
  */
 data class ExecOptions(
@@ -263,7 +285,8 @@ data class ExecOptions(
   val timeout: Duration = 5.minutes,
   override val tty: TtySize? = null,
   val weight: ConcurrentProcessWeight = ConcurrentProcessWeight.LIGHT,
-  val downloadAfterExecution: DownloadConfig? = null,
+  override val uploadBeforeExecution: UploadConfig? = null,
+  override val downloadAfterExecution: DownloadConfig? = null,
 ) : ExecOptionsBase
 
 
@@ -275,6 +298,8 @@ data class ExecGetProcessOptions(
   override val env: Map<String, String> = emptyMap(),
   override val processDescription: @Nls String? = null,
   override val tty: TtySize? = null,
+  override val uploadBeforeExecution: UploadConfig? = null,
+  override val downloadAfterExecution: DownloadConfig? = null,
 ) : ExecOptionsBase
 
 data class TtySize(val rows: UShort, val cols: UShort)

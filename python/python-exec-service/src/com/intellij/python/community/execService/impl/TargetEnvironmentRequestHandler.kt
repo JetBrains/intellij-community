@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.execService.impl
 
+import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.python.community.execService.impl.TargetEnvironmentRequestHandler.Companion.mapUploadRoots
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -22,11 +22,10 @@ abstract class TargetEnvironmentRequestHandler<T : TargetEnvironmentRequest>(pri
   private suspend fun mapUploadRootsIfValid(
     request: TargetEnvironmentRequest,
     localDirs: Set<Path>,
-    workingDirToDownload: Path?,
   ): UploadInfo? =
     if (reqClass.isInstance(request)) {
       @Suppress("UNCHECKED_CAST") // Checked one line above
-      mapUploadRootsImpl(request as T, localDirs, workingDirToDownload)
+      mapUploadRootsImpl(request as T, localDirs)
     }
     else {
       null
@@ -38,7 +37,6 @@ abstract class TargetEnvironmentRequestHandler<T : TargetEnvironmentRequest>(pri
   protected abstract suspend fun mapUploadRootsImpl(
     request: T,
     localDirs: Set<Path>,
-    workingDirToDownload: Path?,
   ): UploadInfo
 
 
@@ -67,7 +65,7 @@ abstract class TargetEnvironmentRequestHandler<T : TargetEnvironmentRequest>(pri
       localDirs: Set<Path>,
       workingDirToDownload: Path?,
     ): Map<Path, UploadRootWithExplicitUploadInfo> = withContext(Dispatchers.IO) {
-      val uploadInfo = EP_NAME.extensionList.firstNotNullOfOrNull { it.mapUploadRootsIfValid(request, localDirs, workingDirToDownload) }
+      val uploadInfo = EP_NAME.extensionList.firstNotNullOfOrNull { it.mapUploadRootsIfValid(request, localDirs) }
                        ?: error("No implementation of [${TargetEnvironmentRequestHandler::class.java}] is found for $request, broken bundle? " +
                                 "If you are in tests, set `@TestApplicationWithEel(useLegacyTargets=true)`")
       val localToRemoteHelpersRoots = coroutineToIndicator {
@@ -86,10 +84,13 @@ abstract class TargetEnvironmentRequestHandler<T : TargetEnvironmentRequest>(pri
           )
         }
         else {
-          // Just a random temp path, but we try to preserve location of workDir (most probably projDir) is set.
+          // Either we have a persistent path mapping, or it's just a random temp path, but we try to preserve location of
+          // workDir (most probably projDir) is set.
+          val (targetPath, removeAtShutdown) = uploadInfo.persistentPaths[localPath]?.let { TargetEnvironment.TargetPath.Persistent(it) to false }
+                                               ?: (TargetEnvironment.TargetPath.Temporary(hint = workingDirToDownload?.pathString) to true)
           LocalPathToTargetResult(
-            targetPath = TargetEnvironment.TargetPath.Temporary(hint = workingDirToDownload?.pathString),
-            removeAtShutdown = true,
+            targetPath = targetPath,
+            removeAtShutdown = removeAtShutdown,
             uploadVolumeExplicitly = true
           )
         }
@@ -113,6 +114,7 @@ abstract class TargetEnvironmentRequestHandler<T : TargetEnvironmentRequest>(pri
      * Each inheritor provides it so we can access the helpers.
      */
     val helpersAware: HelpersAwareTargetEnvironmentRequest,
+    val persistentPaths: Map<Path, FullPathOnTarget> = emptyMap(),
   )
 
 
