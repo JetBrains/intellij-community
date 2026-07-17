@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.navigation
 
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.search.GlobalSearchScope
@@ -65,31 +64,26 @@ open class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclara
         val ktFile = declaration.containingKtFile
         if (!ktFile.isCompiled) return declaration
 
-        return if (DumbService.getInstance(ktFile.project).isDumb) {
-            DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
-                calculateNavigationElement(declaration)
-            })
-        } else {
-            CachedValuesManager.getProjectPsiDependentCache(declaration, ::calculateNavigationElement)
-        }
+        return CachedValuesManager.getProjectPsiDependentCache(declaration, ::calculateNavigationElement)
     }
 
-    private fun calculateNavigationElement(declaration: KtDeclaration): KtElement {
-        val ktFile = declaration.containingKtFile
-        val project = ktFile.project
-        return when (val module = ktFile.getKaModule(project, useSiteModule = null)) {
-            is KaLibraryModule -> {
-                val library = module.librarySources ?: return declaration
-                getCorrespondingDeclarationInLibrarySourceOrBinaryCounterpart(
-                    library,
-                    declaration,
-                    module
-                )
+    private fun calculateNavigationElement(declaration: KtDeclaration): KtElement =
+        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+            val ktFile = declaration.containingKtFile
+            val project = ktFile.project
+            when (val module = ktFile.getKaModule(project, useSiteModule = null)) {
+                is KaLibraryModule -> {
+                    val library = module.librarySources ?: return@ThrowableComputable declaration
+                    getCorrespondingDeclarationInLibrarySourceOrBinaryCounterpart(
+                        library,
+                        declaration,
+                        module
+                    )
+                }
+
+                else -> declaration
             }
-
-            else -> declaration
-        }
-    }
+        })
 
     override fun getOriginalElement(declaration: KtDeclaration): KtElement {
         val ktFile = declaration.containingKtFile
