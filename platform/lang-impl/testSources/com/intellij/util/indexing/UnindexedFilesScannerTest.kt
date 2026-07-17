@@ -38,6 +38,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
+import com.intellij.util.indexing.dependencies.FileIndexingStamp
 import com.intellij.util.indexing.events.FileIndexingRequest
 import com.intellij.util.indexing.mocks.ConfigurableFileIndexerBase
 import com.intellij.util.indexing.mocks.ConfigurableFiletypeSpecificFileIndexer
@@ -65,6 +66,7 @@ import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
 import java.util.concurrent.locks.LockSupport
+import java.util.function.BiPredicate
 
 @RunWith(JUnit4::class)
 class UnindexedFilesScannerTest {
@@ -196,6 +198,22 @@ class UnindexedFilesScannerTest {
 
     assertThat(dirtyFiles).isEmpty()
     assertEquals(0, scanningStat.numberOfFilesForIndexing)
+  }
+
+  @Test
+  fun `test forced reindexing bypasses indexing flag fast path`() {
+    val filesAndDirs = setupSimpleRepresentativeFolderForIndexing()
+    scanAndIndexFiles(filesAndDirs)
+
+    assertThat(scanFiles(filesAndDirs).second)
+      .withFailMessage("Indexed files should normally be skipped by scanning")
+      .isEmpty()
+
+    val (_, dirtyFiles) = scanFiles(filesAndDirs, BiPredicate { file, _ -> !file.file.isDirectory })
+
+    assertThat(dirtyFiles)
+      .withFailMessage("Forced reindexing must be checked before the IndexingFlag fast path")
+      .containsExactlyInAnyOrder(*getRegularFiles(filesAndDirs).toTypedArray())
   }
 
   @Test
@@ -494,8 +512,11 @@ class UnindexedFilesScannerTest {
     return regularFiles
   }
 
-  private fun scanFiles(filesAndDirs: SingleRootIndexableFilesIterator): Pair<JsonScanningStatistics, Collection<VirtualFile>> {
-    val history = scanFiles(filesAndDirs as IndexableFilesIterator)
+  private fun scanFiles(
+    filesAndDirs: SingleRootIndexableFilesIterator,
+    forceReindexingTrigger: BiPredicate<IndexedFile, FileIndexingStamp>? = null,
+  ): Pair<JsonScanningStatistics, Collection<VirtualFile>> {
+    val history = scanFiles(filesAndDirs as IndexableFilesIterator, forceReindexingTrigger)
 
     assertEquals(1, history.scanningStatistics.size)
     val scanningStat = history.scanningStatistics[0]
@@ -504,10 +525,14 @@ class UnindexedFilesScannerTest {
     return Pair(scanningStat, dirtyFiles)
   }
 
-  private fun scanFiles(filesAndDirs: IndexableFilesIterator): ProjectScanningHistory {
+  private fun scanFiles(
+    filesAndDirs: IndexableFilesIterator,
+    forceReindexingTrigger: BiPredicate<IndexedFile, FileIndexingStamp>? = null,
+  ): ProjectScanningHistory {
     return project.service<PerProjectIndexingQueue>().disableFlushingDuring {
       val parameters = CompletableDeferred(ScanningIterators("Test", listOf(filesAndDirs), null, ScanningType.PARTIAL))
-      val scanningTask = UnindexedFilesScanner(project, false, false, null, scanningParameters = parameters)
+      val scanningTask = UnindexedFilesScanner(project, false, false, null, scanningParameters = parameters,
+                                               forceReindexingTrigger = forceReindexingTrigger)
       scanningTask.queue().get()
     }
   }
