@@ -1,9 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiCapturedWildcardType;
@@ -15,8 +17,11 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.JavaTypeNullabilityUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,14 +62,14 @@ final class NullableStuffInspectionUtil {
     Context presentationContext = getPresentationContext(outerType, path, outerType instanceof PsiArrayType);
 
     String typeText = presentationContext.sb.toString();
-    String annotationText = getAnnotationText(context, side);
+    PsiAnnotation annotation = context.getAnnotation(side);
+    String annotationText = getAnnotationText(annotation);
     if (presentationContext.position == null || annotationText == null) return HtmlChunk.empty();
-    HtmlChunk result = generateHtmlChunk(typeText, "@" + annotationText, side, presentationContext.position);
+    HtmlChunk result = generateHtmlChunk(typeText, "@" + annotationText, annotation, side, presentationContext.position);
     return result;
   }
 
-  private static @Nullable String getAnnotationText(@NotNull JavaTypeNullabilityUtil.NullabilityConflictContext context, @NotNull JavaTypeNullabilityUtil.Side side) {
-    PsiAnnotation annotation = context.getAnnotation(side);
+  private static @Nullable String getAnnotationText(@Nullable PsiAnnotation annotation) {
     if (annotation == null) return null;
     PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
     if (ref == null) return null;
@@ -73,6 +78,7 @@ final class NullableStuffInspectionUtil {
 
   private static @NotNull HtmlChunk generateHtmlChunk(@NlsSafe String text,
                                                       @NlsSafe String annotationText,
+                                                      @NotNull PsiAnnotation annotation,
                                                       @NotNull JavaTypeNullabilityUtil.Side side,
                                                       int position) {
     return HtmlChunk.tag("tr")
@@ -86,11 +92,25 @@ final class NullableStuffInspectionUtil {
           ),
         HtmlChunk.tag("td").children(
           HtmlChunk.text(text.substring(0, position)),
-          HtmlChunk.tag("b").addText(annotationText),
+          getAnnotationChunk(annotation, annotationText),
           HtmlChunk.text(" "),
           HtmlChunk.text(text.substring(position))
         )
       );
+  }
+
+  private static @NotNull HtmlChunk getAnnotationChunk(@NotNull PsiAnnotation annotation,
+                                                        @NlsSafe String annotationText) {
+    VirtualFile file = PsiUtilCore.getVirtualFile(annotation);
+    HtmlChunk annotationChunk = file == null
+                                ? HtmlChunk.text(annotationText)
+                                : HtmlChunk.link("#navigation/" + FileUtil.toSystemIndependentName(file.getPath()) + ":" +
+                                                 annotation.getTextOffset(),
+                                                 annotationText)
+                                  .style("text-decoration: underline");
+    return HtmlChunk.tag("span")
+      .style("color: " + ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground()))
+      .children(annotationChunk);
   }
 
   private static @Nullable List<@NotNull Integer> computeTypeArgumentPath(@NotNull PsiTypeElement top, @NotNull PsiTypeElement target, int firstArrayDepth) {
