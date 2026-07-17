@@ -191,6 +191,13 @@ find-usages/rename:
   it only fires inside that synthetic file, closing the "element → symbol" loop the platform can't
   discover on its own because the file didn't exist until `getNavigationTargets` created it).
 
+Whichever path a symbol uses to declare itself, consumers reading its data afterward should still
+never cast down to the concrete class to get at it — see
+[SKILL.md#consumer-code-must-not-cast-to-a-concrete-symbol-class](../SKILL.md#consumer-code-must-not-cast-to-a-concrete-symbol-class).
+A `@PolySymbol.Property`-annotated member is the equivalent, cast-free way to expose exactly the
+kind/backing-specific data a declaration-construction detail like `textRangeInSourceElement` doesn't
+already cover generically.
+
 ## References — `PsiPolySymbolReferenceProvider`
 
 ```kotlin

@@ -33,6 +33,43 @@ Implementing a new integration typically means: build declaration/reference/comp
 on the platform side as usual, plus a handful of PolySymbols contributor classes — find-usages,
 documentation, and rename then work automatically through reference resolution to a `PolySymbol`.
 
+### Consumer code must not cast to a concrete symbol class
+
+**Code that *consumes* `PolySymbol`s (annotators, inspections, completion/line-marker/parameter-info
+providers — and a language integration's own customizers/scopes, not just downstream callers)
+should never cast a `PolySymbol` to a concrete implementation class to detect its kind or read its
+data.** This is explicitly documented in `PolySymbol.kt`'s own "## Properties" doc comment ("when you
+get results from a `PolySymbolQueryExecutor` query, you should avoid casting symbols to specialized
+interfaces... a query may return symbols of unexpected classes contributed by some 3rd party
+plugins") — it is a platform convention every consumer is expected to follow, not a one-off rule:
+
+- **Kind detection** → check the `kind` property (`symbol.kind == SomeKind`), which is always
+  available on the plain `PolySymbol` interface. Never `is ConcreteLeafSymbolClass`.
+- **Any other data** (a type, a signature, a navigable element, a boolean flag not expressible via
+  `kind`) → define a `PolySymbolProperty<T>` object and annotate the concrete class's real member
+  with `@PolySymbol.Property(TheProperty::class)`, then read it via `symbol[TheProperty]` (the
+  `PolySymbol.get` operator) — never `(symbol as? ConcreteLeafSymbolClass)?.someMember`.
+- **Package the property behind a `PolySymbol.xxx` extension**, so consumer call sites read
+  `symbol.xxx` and never see the property object or a cast at all — mirror
+  `plugins/JavaScriptLanguage/web-platform/src/com/intellij/polySymbols/js/JSSymbolUtils.kt`'s
+  `PolySymbol.jsType`/`jsKind`/`toPropertySignature`, the reference example cited in `PolySymbol.kt`
+  itself. Note `toPropertySignature`'s fallback branch (when the property is absent) builds its
+  result purely from other plain `PolySymbol` members (`name`, `modifiers`, `jsType`) — it never
+  casts, not even as a fallback.
+- A **shared, uniformly-implemented interface** across a framework's own symbol kinds (e.g.
+  GDScript's `GdClassSymbol`, exposing `directMemberScope`/`resolveSuperClassSymbol()` identically
+  from both PSI- and SDK-backed class symbols) is *not* what this rule targets — that's legitimate
+  polymorphic dispatch within a framework's own resolution machinery, not "cast down to read hidden,
+  kind/backing-specific data" in consumer code. The anti-pattern is casting to a *leaf* class
+  (`GdPsiMethodSymbol`, `GdSdkClassSymbol`) or a *backing-specific* base (`GdPsiPolySymbol` vs.
+  `GdSdkPolySymbol`) from outside the symbol-definition package.
+- **Reflection technique worth knowing**: a `@PolySymbol.Property`-annotated member declared once on
+  a shared *abstract base class* is found by every subclass automatically — `PolySymbolPropertyGetter`
+  walks superclasses/interfaces when building its per-concrete-class accessor map, and Java/Kotlin
+  generate a bridge method (matching the base class's erased signature) for any subclass override
+  with a covariant return type, which is exactly what `Method.invoke()` resolves against. So you
+  don't need to repeat the annotation on every leaf subclass when the member is inherited unchanged.
+
 ## Interface cheat sheet
 
 | Interface / class | Purpose |
