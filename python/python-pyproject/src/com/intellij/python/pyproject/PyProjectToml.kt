@@ -105,7 +105,22 @@ data class PyProjectToml(
     )
   }
 
+  /**
+   * Returns dependency group names: PEP 735 `[dependency-groups]` keys plus PEP 621
+   * `[project.optional-dependencies]` keys. Always includes "main" as the first entry
+   * (representing `[project.dependencies]`).
+   */
+  @Internal
+  fun getDependencyGroupNames(): List<String> {
+    val groupsTable = toml.getTable(PY_PROJECT_TOML_DEPENDENCY_GROUPS)
+    val extraGroups = groupsTable?.keySet()?.toList() ?: emptyList()
+    val optionalGroups = project?.dependencies?.optional?.keys?.toList() ?: emptyList()
+    return DEFAULT_GROUP_NAMES + extraGroups + optionalGroups
+  }
+
   companion object {
+    @Internal
+    val DEFAULT_GROUP_NAMES: List<String> = listOf("main")
     private val CACHE_KEY = Key.create<CachedValue<PyProjectToml>>("PyProjectTomlCache")
 
     /**

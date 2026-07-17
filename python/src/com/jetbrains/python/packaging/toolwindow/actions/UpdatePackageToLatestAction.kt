@@ -23,13 +23,19 @@ internal class UpdatePackageToLatestAction : ModifyPackagesActionBase() {
     }
 
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
-      val pyPackages = packages.mapNotNull { pkg ->
-        val versionString = pkg.nextVersion?.presentableText
-        val requirement = pyRequirement(pkg.name, versionString?.let { pyRequirementVersionSpec(it) })
-        pkg.repository?.findPackageSpecification(requirement)
+      val service = project.service<PyPackagingToolWindowService>()
+      val packagesByKey = packages.groupBy { Pair(it.workspaceMember, it.dependencyGroup) }
+      for ((key, group) in packagesByKey) {
+        val (workspaceMember, dependencyGroup) = key
+        val specs = group.mapNotNull { pkg ->
+          val versionString = pkg.nextVersion?.presentableText
+          val requirement = pyRequirement(pkg.name, versionString?.let { pyRequirementVersionSpec(it) })
+          pkg.repository?.findPackageSpecification(requirement)
+        }
+        if (specs.isEmpty()) continue
+        val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specs)
+        service.installPackage(installRequest, workspaceMember = workspaceMember, dependencyGroup = dependencyGroup)
       }
-      val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(pyPackages)
-      project.service<PyPackagingToolWindowService>().installPackage(installRequest)
     }
   }
 

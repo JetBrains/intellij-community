@@ -4,10 +4,9 @@ package com.jetbrains.python.sdk.poetry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.python.sdk.associatedModuleDir
-import com.intellij.python.pyproject.PyProjectTomlFile
-import com.jetbrains.python.PyBundle
+import com.intellij.python.pyproject.model.api.getPyProjectTomlFile
+import com.jetbrains.python.sdk.associatedModuleNioPath
+import com.jetbrains.python.sdk.findModuleForSdk
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.PyPackageName
@@ -16,7 +15,11 @@ import com.jetbrains.python.packaging.common.PyDependencyGroupName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
+import com.intellij.python.pyproject.model.spi.ProjectName
+import com.jetbrains.python.packaging.management.PythonManagerCliSpec
+import com.jetbrains.python.packaging.management.PythonWorkspaceSupport
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
@@ -29,14 +32,27 @@ import com.jetbrains.python.packaging.packageRequirements.collectAllNames
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.packaging.pyRequirement
 import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.pyproject.PyProjectToml
+import com.jetbrains.python.poetry.POETRY_LOCK
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.io.IOException
+import java.net.URI
+import java.net.URISyntaxException
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import kotlin.io.path.readText
 
 @ApiStatus.Internal
 internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
+  override val workspaceSupport: PythonWorkspaceSupport = PoetryWorkspaceSupport(project, sdk)
   override val installedPackagesIncludeTransitive: Boolean = true
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
+  override val cliSpecs: List<PythonManagerCliSpec> = listOf(
+    PythonManagerCliSpec("poetry", ::getPoetryExecutable)
+  )
   override val treeProvider = CachedDependencyTreeProvider {
     runPoetryWithSdk(sdk, "show", "--tree").getOrNull()
   }
@@ -65,25 +81,30 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
     return reloadPackages().mapSuccess { }
   }
 
-  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>, module: Module?): PyResult<Unit> =
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>, module: Module?, dependencyGroup: PyDependencyGroup?): PyResult<Unit> =
     when (installRequest) {
       is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications ->
         addPackages(installRequest.specifications, options)
-      is PythonPackageInstallRequest.ByLocation -> PyResult.localizedError(PyBundle.message("python.sdk.poetry.supports.installing.only.packages.from.repositories"))
+      is PythonPackageInstallRequest.ByLocation -> {
+        val isEditable = "-e" in options
+        val locationStr = installRequest.toPoetryArgument()
+        poetryInstallPackage(sdk, listOfNotNull("--editable".takeIf { isEditable }, locationStr), options.filter { it != "-e" }).mapSuccess { }
+      }
     }
 
   override suspend fun installPackageDetachedCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> =
     when (installRequest) {
       is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications ->
         installPackages(installRequest.specifications, options)
-      is PythonPackageInstallRequest.ByLocation -> PyResult.localizedError(PyBundle.message("python.sdk.poetry.supports.installing.only.packages.from.repositories"))
+      is PythonPackageInstallRequest.ByLocation ->
+        poetryInstallPackageDetached(sdk, listOf(installRequest.location.toString()), options).mapSuccess { }
     }
 
   override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
     return addPackages(specifications.toList(), emptyList())
   }
 
-  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?): PyResult<Unit> {
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?, dependencyGroup: PyDependencyGroup?): PyResult<Unit> {
     if (pythonPackages.isEmpty()) return PyResult.success(Unit)
 
     val (standalonePackages, declaredPackages) = categorizePackages(pythonPackages).getOr {
@@ -169,13 +190,33 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
 
   override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> {
     val (installed, _) = poetryListPackages(sdk).getOr { return it }
-
+    val editablePackages = editablePackagesFromLock()
     val packages = installed.map {
-      PythonPackage(it.name, it.version, false)
+      PythonPackage(it.name, it.version, it.name in editablePackages).also { pkg -> pkg.editableLocation = editablePackages[it.name] }
     }
-
     return PyResult.success(packages)
   }
+
+  private suspend fun editablePackagesFromLock(): Map<String, URI?> {
+    val projectPath = sdk.associatedModuleNioPath ?: return emptyMap()
+    val content = withContext(Dispatchers.IO) {
+      try { projectPath.resolve(POETRY_LOCK.value).readText() } catch (_: IOException) { null }
+    } ?: return emptyMap()
+    return parsePoetryLockEditablePackages(content).mapValues { (_, url) ->
+      url?.let { resolveEditableLocation(it, projectPath) }
+    }
+  }
+
+  // poetry.lock `source.url` entries may be bare relative/absolute paths rather than full URIs.
+  // Path-only strings are resolved against the project root; other tools use different lock formats.
+  private fun resolveEditableLocation(url: String, projectRoot: Path): URI? = try {
+    val uri = URI(url)
+    if (uri.scheme != null) return uri
+    val path = Path.of(url)
+    if (path.isAbsolute) path.toUri() else projectRoot.resolve(path).normalize().toUri()
+  }
+  catch (_: URISyntaxException) { null }
+  catch (_: InvalidPathException) { null }
 
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> = poetryShowOutdated(sdk).mapSuccess {
     it.values.toList()
@@ -235,10 +276,42 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
 }
 
 /**
+ * Returns Poetry dependency group names from `[tool.poetry.group.<name>.dependencies]` sections.
+ * Always includes "main" as the first entry (representing `[tool.poetry.dependencies]`).
+ */
+@ApiStatus.Internal
+private fun PyProjectToml.getPoetryGroupNames(): List<String> {
+  val toolTable = toml.getTable("tool") ?: return PyProjectToml.DEFAULT_GROUP_NAMES
+  val poetryTable = toolTable.getTable("poetry") ?: return PyProjectToml.DEFAULT_GROUP_NAMES
+  val groupTable = poetryTable.getTable("group") ?: return PyProjectToml.DEFAULT_GROUP_NAMES
+  return PyProjectToml.DEFAULT_GROUP_NAMES + groupTable.keySet().toList()
+}
+
+private class PoetryWorkspaceSupport(private val project: Project, private val sdk: Sdk) : PythonWorkspaceSupport {
+  override suspend fun getWorkspaceMembers(projectName: ProjectName): List<PyWorkspaceMember> = listOf(PyWorkspaceMember(projectName.name))
+
+  override suspend fun getDependencyGroups(projectName: ProjectName): Map<PyWorkspaceMember, List<PyDependencyGroup>> {
+    val pyprojectFile = project.findModuleForSdk(sdk)?.getPyProjectTomlFile() ?: return emptyMap()
+    val parsed = PyProjectToml.parseCached(project, pyprojectFile) ?: return emptyMap()
+    return mapOf(PyWorkspaceMember(projectName.name) to parsed.getPoetryGroupNames().map { PyDependencyGroup(it) })
+  }
+}
+
+/**
  * Parses the output of `poetry show` into a list of packages.
  */
 
 @TestOnly
 fun parsePoetryShowOutdatedTest(input: String): Map<String, PythonOutdatedPackage> {
   return parsePoetryShowOutdated(input)
+}
+
+/**
+ * Renders a [PythonPackageInstallRequest.ByLocation] target as a `poetry add` CLI argument:
+ * a plain filesystem path for `file://` URIs, the URL string for everything else (`https://`,
+ * `git+...`).
+ */
+private fun PythonPackageInstallRequest.ByLocation.toPoetryArgument(): String {
+  if (location.scheme != "file") return location.toString()
+  return location.path
 }

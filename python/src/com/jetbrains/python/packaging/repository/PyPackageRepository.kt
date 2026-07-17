@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.repository
 
 import com.google.gson.Gson
@@ -33,7 +33,7 @@ import java.nio.charset.StandardCharsets
 private val GSON = Gson()
 
 internal fun PyPackageRepository.buildPackageDetailsBySimpleDetailsProtocol(packageName: String): PyResult<PythonSimplePackageDetails> {
-  val repositoryUrl = repositoryUrl ?: return PyResult.failure(MessageError("There is no repository url for $name"))
+  val repositoryUrl = repositoryUrl.ifEmpty { return PyResult.failure(MessageError("There is no repository url for $name")) }
 
   val packageDetails = runCatching {
     val packageDetailsUrl = PyPIPackageUtil.buildDetailsUrl(repositoryUrl, packageName)
@@ -69,16 +69,18 @@ internal fun PyPackageRepository.buildPackageDetailsBySimpleDetailsProtocol(pack
 open class PyPackageRepository() {
   var name: String = ""
     internal set
-  var repositoryUrl: String? = null
+
+  var repositoryUrl: String = ""
     internal set
   var login: String? = null
     internal set
   var authorizationType: PyPackageRepositoryAuthenticationType = PyPackageRepositoryAuthenticationType.NONE
     internal set
+  open var enabled: Boolean = true
 
   constructor(name: String, repositoryUrl: String?, login: String?) : this() {
     this.name = name
-    this.repositoryUrl = repositoryUrl
+    this.repositoryUrl = repositoryUrl.orEmpty()
     this.login = login
   }
 
@@ -86,9 +88,9 @@ open class PyPackageRepository() {
 
   val urlForInstallation: URL?
     get() {
-      val baseUrl = repositoryUrl ?: return null
+      val baseUrl = repositoryUrl.ifEmpty { return null }
       val userLogin = login.takeUnless { it.isNullOrBlank() } ?: return URL(baseUrl)
-      val userPassword = getPassword() ?: return URL(baseUrl)
+      val userPassword = getPassword().ifEmpty { return URL(baseUrl) }
       return buildAuthenticatedUrl(baseUrl, userLogin, userPassword)
     }
 
@@ -96,7 +98,7 @@ open class PyPackageRepository() {
     URIBuilder(baseUrl).setUserInfo(login, password).build().toURL()
 
   @Transient
-  fun getPassword(): String? = cachedPassword.get()
+  fun getPassword(): String = cachedPassword.get().orEmpty()
 
   fun setPassword(pass: String?) = cachedPassword.set(Credentials(login, pass))
 
@@ -149,8 +151,7 @@ open class PyPackageRepository() {
    * case.
    */
   open fun getProjectUrl(packageName: String): ProjectUrl? {
-    val base = repositoryUrl?.trimEnd('/') ?: return null
-    if (base.isEmpty()) return null
+    val base = repositoryUrl.trimEnd('/').ifEmpty { return null }
     val encoded = URLEncoder.encode(packageName, StandardCharsets.UTF_8)
     val label = name.ifBlank { DEFAULT_PROJECT_URL_LABEL }
     return ProjectUrl(label, "$base/project/$encoded/")

@@ -23,7 +23,9 @@ import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.toPythonPackage
 import com.jetbrains.python.packaging.management.DependenciesExporter
+import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
+import com.jetbrains.python.packaging.management.PythonManagerCliSpec
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
@@ -45,6 +47,9 @@ import java.nio.file.Path
 @ApiStatus.Internal
 open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
+  override val cliSpecs: List<PythonManagerCliSpec> = listOf(
+    PythonManagerCliSpec("pip", { sdk.homePath?.let { Path.of(it) } }, runAsModule = true)
+  )
   private val engine = PipPackageManagerEngine(project, sdk)
 
   override val dependenciesExporter: DependenciesExporter?
@@ -61,6 +66,7 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
     installRequest: PythonPackageInstallRequest,
     options: List<String>,
     module: Module?,
+    dependencyGroup: PyDependencyGroup?,
   ): PyResult<Unit> = engine.installPackageCommand(installRequest, options)
 
   override suspend fun syncLockedCommand(): PyResult<Unit> {
@@ -84,7 +90,7 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
     vararg specifications: PythonRepositoryPackageSpecification,
   ): PyResult<Unit> = engine.updatePackageCommand(*specifications)
 
-  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?): PyResult<Unit> = engine.uninstallPackageCommand(*pythonPackages, workspaceMember = workspaceMember)
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?, dependencyGroup: PyDependencyGroup?): PyResult<Unit> = engine.uninstallPackageCommand(*pythonPackages, workspaceMember = workspaceMember, dependencyGroup = dependencyGroup)
 
   override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> = engine.loadPackagesCommand()
 

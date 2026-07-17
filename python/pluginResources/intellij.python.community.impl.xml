@@ -154,11 +154,14 @@
                             implementationClass="com.jetbrains.python.poetry.PoetryDependencyVersionCompletionContributor"/>
     <codeInsight.declarativeInlayProviderFactory
       implementation="com.jetbrains.python.requirements.inspections.tools.DependenciesInlayHintsProviderFactory"/>
+    <codeInsight.inlayProvider language="TOML"
+                               implementationClass="com.jetbrains.python.packaging.toolwindow.marker.PyDependencyGroupInlayHintsProvider"/>
 
     <pluginSuggestionProvider order="first" implementation="com.jetbrains.python.suggestions.PycharmProSuggestionProvider"/>
     <pluginSuggestionProvider implementation="com.jetbrains.python.suggestions.MarimoSuggestionProvider"/>
     <postStartupActivity implementation="com.jetbrains.python.poetry.PoetryPyProjectTomlPostStartupActivity"/>
     <postStartupActivity implementation="com.jetbrains.python.psi.resolve.PyPartialStubMarkersInvalidatorActivity"/>
+    <postStartupActivity implementation="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowDefaultAnchorMigration"/>
 
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.psi.PyLangLevelVirtualFileCustomDataProvider"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.run.features.PyRunToolUsageCollector"/>
@@ -178,6 +181,13 @@
     <projectSettings service="com.jetbrains.python.module.PySourceRootDetectionService"/>
     <applicationSettings service="com.jetbrains.python.packaging.repository.PyPackageRepositories"/>
     <projectSettings service="com.jetbrains.python.statistics.PyPackageUsageStatistics"/>
+
+    <projectConfigurable groupId="python.group.settings"
+                         instance="com.jetbrains.python.packaging.repository.PyPackageRepositoriesConfigurable"
+                         id="python.package.repositories"
+                         bundle="messages.PyBundle"
+                         key="python.packaging.repository.configurable.name"
+                         nonDefaultProject="true"/>
     <projectSettings service="com.jetbrains.python.sdk.PyVirtualEnvVcsSettings"/>
   </extensions>
 
@@ -300,6 +310,7 @@
     <registryKey key="python.test.autodetect.new.run.config" defaultValue="true" description="Python test autodetect configuration new UI"/>
     <registryKey key="python.run.doctest.via.pytest.configuration" defaultValue="true" description="Run doctest via pytest configuration"/>
     <registryKey key="run.with.py.tool" defaultValue="true" description="Run with Python tool"/>
+    <registryKey key="python.packaging.install.dialog.command.mode" defaultValue="false" description="Enable command mode in the Python Packages install dialog (type a CLI command like `pip ...` to execute it)"/>
 
     <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
     <configurationType implementation="com.jetbrains.python.testing.tox.PyToxConfigurationType"/>
@@ -616,6 +627,9 @@
     <registryKey defaultValue="false" description="Save preferences what type of data view will be used: the old data view or the new one."
                  restartRequired="false" key="python.data.view.allow.save.preferences.community.vs.powerful.data.view"/>
 
+    <registryKey defaultValue="64" description="Minimum scroll-bar distance (px) from the bottom that triggers loading the next page of search results in the Install Package dialog."
+                 restartRequired="false" key="python.packaging.install.dialog.results.list.load.more.threshold.px"/>
+
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
 
@@ -755,10 +769,11 @@
     <notificationGroup id="Python source root detection" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="python.source.root.detection.confirm.notification.group"/>
 
-    <toolWindow id="Python Packages" anchor="bottom"
+    <toolWindow id="Python Packages" anchor="right" secondary="true"
                 icon="com.jetbrains.python.icons.PythonIcons.Python.PythonPackages"
                 factoryClass="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowFactory"/>
     <toolWindowExtractorMode id="Python Packages" mode="mirror"/>
+    <toolWindowExtractor implementation="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowExtractor"/>
     <statistics.counterUsagesCollector
       implementationClass="com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector"/>
 
@@ -821,6 +836,9 @@
   </extensions>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.packageInstalledIconProvider"
+                    interface="com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PyPackageInstalledIconProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.jetbrains.python.console.runnerFactory"
                     interface="com.jetbrains.python.console.PythonConsoleRunnerFactory"
                     dynamic="true"/>
@@ -933,12 +951,14 @@
     <extensionPoint qualifiedName="com.jetbrains.python.inspections.dependencies.dependenciesInspectionProvider"
                     interface="com.jetbrains.python.inspections.dependencies.DependenciesPsiProvider"
                     dynamic="true"/>
+
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
     <pyRunToolProvider implementation="com.jetbrains.python.sdk.uv.run.UvRunToolProvider"/>
     <pythonDebugBackendRunner implementation="com.jetbrains.python.debugger.PydevdDebugBackendRunner"/>
     <pyRunToolProvider implementation="com.jetbrains.python.hatch.run.HatchRunToolProvider"/>
+
     <evoTreeElementProvider id="UvEvoProvider"
                             order="first"
                             implementation="com.jetbrains.python.uv.sdk.evolution.UvSelectSdkProvider"/>
@@ -1029,6 +1049,7 @@
 
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.pip.PipPackageManagerProvider" order="last"/>
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.conda.CondaPackageManagerProvider"/>
+    <packageInstalledIconProvider implementation="com.jetbrains.python.packaging.conda.CondaPackageInstalledIconProvider"/>
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.pipenv.PipEnvPackageManagerProvider"/>
 
     <pyDependenciesFileProvider implementation="com.jetbrains.python.sdk.pipenv.PipfileFileProvider"/>
@@ -1064,20 +1085,31 @@
   </extensions>
 
   <actions resource-bundle="messages.PyBundle">
-    <group id="PyPackageToolbarAdditional" icon="AllIcons.General.GearPlain" popup="true" compact="false">
-      <action id="PyInstallFromDiskPackage" class="com.jetbrains.python.packaging.toolwindow.actions.InstallFromDiskPackageAction"/>
-      <action id="InstallFromVcsPackageAction" class="com.jetbrains.python.packaging.toolwindow.actions.InstallFromVcsPackageAction"/>
+    <action id="PyInstallPackageAction"
+              class="com.jetbrains.python.packaging.toolwindow.actions.PyInstallPackageAction"
+            icon="AllIcons.ToolbarDecorator.Export">
+      <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift O"/>
+    </action>
+
+    <group id="PyPackageToolbarAdditional" icon="AllIcons.Actions.More" popup="true" compact="false">
+      <action id="PyReloadPackagesAction"
+              class="com.jetbrains.python.packaging.toolwindow.actions.PyReloadPackagesAction"
+              icon="AllIcons.Actions.Refresh"/>
       <separator/>
-      <action id="PyManageReposAction" class="com.jetbrains.python.packaging.toolwindow.actions.PyManageReposAction"/>
+      <separator key="separator.python.packaging.settings"/>
+      <action id="PyInterpretersAction"
+              class="com.jetbrains.python.packaging.toolwindow.actions.PyInterpretersAction"
+              icon="AllIcons.General.Settings"/>
+      <action id="PyRepositoriesAction"
+              class="com.jetbrains.python.packaging.toolwindow.actions.PyRepositoriesAction"
+              icon="com.jetbrains.python.packaging.toolwindow.PyPackageIcons.Repository"/>
     </group>
 
     <group id="PyPackageToolwindowContext">
       <action id="PyInstallPackage" class="com.jetbrains.python.packaging.toolwindow.actions.InstallPackageAction"/>
-      <action id="PyInstallWithOptionPackage" class="com.jetbrains.python.packaging.toolwindow.actions.InstallWithOptionsPackageAction"/>
-      <action id="PyChangeVersionPackage" class="com.jetbrains.python.packaging.toolwindow.actions.ChangeVersionPackageAction"/>
-      <action id="PyUpdateToLatestPackage" class="com.jetbrains.python.packaging.toolwindow.actions.UpdatePackageToLatestAction"/>
-      <separator/>
       <action id="PyDeletePackage" class="com.jetbrains.python.packaging.toolwindow.actions.DeletePackageAction"/>
+      <action id="PyChangeVersionPackage" class="com.jetbrains.python.packaging.toolwindow.actions.ChangeVersionPackageAction"/>
+      <action id="PyUpdatePackageToLatest" class="com.jetbrains.python.packaging.toolwindow.actions.UpdatePackageToLatestAction"/>
     </group>
   </actions>
 
@@ -1206,6 +1238,7 @@
       <!--suppress PluginXmlI18n -->
       <action id="PyUpdateProjectSdk" internal="true" class="com.jetbrains.python.sdk.PyUpdateProjectSdkAction"
               text="Update Python SDK" description="Forcibly update all configured Python SDKs in the project"/>
+      <!--suppress PluginXmlI18n -->
       <action id="PySetPropertyAction" internal="true" class="com.jetbrains.python.sdk.add.v2.PySetPropertyAction"
               text="Set PropertiesComponent Value" description="Set value in application-level PropertiesComponent"/>
       <add-to-group group-id="Internal"/>

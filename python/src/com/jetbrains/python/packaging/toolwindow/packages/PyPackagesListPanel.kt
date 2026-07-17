@@ -22,7 +22,10 @@ import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.ScrollPaneConstants
 
-internal class PyPackagesListController(val project: Project, val controller: PyPackagingToolWindowPanel) : Disposable {
+internal class PyPackagesListPanel(
+  val project: Project,
+  val controller: PyPackagingToolWindowPanel
+) : Disposable {
   private val packageListPanel = JPanel().apply {
     layout = BoxLayout(this, BoxLayout.Y_AXIS)
     alignmentX = LEFT_ALIGNMENT
@@ -43,6 +46,10 @@ internal class PyPackagesListController(val project: Project, val controller: Py
     emptyText.text = message("python.sdk.no.interpreter.selected")
   }
 
+  private val noPackagesPanel = JBPanelWithEmptyText().apply {
+    emptyText.text = message("python.toolwindow.packages.no.packages.installed")
+  }
+
   val component: JPanel = JPanel(BorderLayout())
   private var currentPanel: JComponent? = null
 
@@ -59,9 +66,9 @@ internal class PyPackagesListController(val project: Project, val controller: Py
   }
 
   @RequiresEdt
-  fun resetSearch(installed: List<DisplayablePackage>, repos: List<PyPackagesViewData>, currentSdk: Sdk?) {
+  fun resetSearch(installed: List<DisplayablePackage>, currentSdk: Sdk?) {
     showPackageList()
-    tablesView.resetSearch(installed, repos, currentSdk)
+    tablesView.resetSearch(installed, currentSdk)
   }
 
   fun selectPackage(name: String) {
@@ -88,6 +95,11 @@ internal class PyPackagesListController(val project: Project, val controller: Py
   @RequiresEdt
   internal fun showNoSdkMessage() {
     setContentPanel(noSdkPanel)
+  }
+
+  @RequiresEdt
+  internal fun showNoPackagesMessage() {
+    setContentPanel(noPackagesPanel)
   }
 
   private fun showPackageList() {

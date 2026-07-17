@@ -12,6 +12,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
@@ -31,11 +32,9 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
-import com.jetbrains.python.packaging.common.DEFAULT_PROJECT_URL_LABEL
 import com.jetbrains.python.packaging.common.ProjectUrl
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageMetadata
-import com.jetbrains.python.packaging.common.preferredProjectUrl
 import com.jetbrains.python.packaging.conda.CondaPackage
 import com.jetbrains.python.packaging.conda.CondaPackageRepository
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -46,8 +45,10 @@ import com.jetbrains.python.requirements.psi.NameReq
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.pathString
 
 /**
  * Quick Doc / Ctrl-hover for `requirements.txt` and Requirements injections in `pyproject.toml`.
@@ -68,16 +69,20 @@ class RequirementsDocumentationProvider : PsiDocumentationTargetProvider {
 
 internal class RequirementDocumentationTarget(
   internal val project: Project,
-  private val requirementsFile: RequirementsFile,
+  private val requirementsFile: RequirementsFile?,
   private val pyRequirement: PyRequirement,
-  anchor: PsiElement,
+  anchor: PsiElement?,
+  private val sdkOverride: Sdk? = null,
 ) : DocumentationTarget {
 
-  private val anchorPointer: SmartPsiElementPointer<PsiElement> = SmartPointerManager.createPointer(anchor)
+  private val anchorPointer: SmartPsiElementPointer<PsiElement>? = anchor?.let { SmartPointerManager.createPointer(it) }
 
-  override fun createPointer(): Pointer<out DocumentationTarget> = Pointer {
-    val anchor = anchorPointer.element ?: return@Pointer null
-    RequirementDocumentationTarget(project, requirementsFile, pyRequirement, anchor)
+  override fun createPointer(): Pointer<out DocumentationTarget> {
+    val anchorPointer = this.anchorPointer ?: return Pointer.hardPointer(this)
+    return Pointer {
+      val anchor = anchorPointer.element ?: return@Pointer null
+      RequirementDocumentationTarget(project, requirementsFile, pyRequirement, anchor, sdkOverride)
+    }
   }
 
   override fun computePresentation(): TargetPresentation =
@@ -86,33 +91,40 @@ internal class RequirementDocumentationTarget(
       .presentation()
 
   /**
-   * Per-hover, sync — only in-memory snapshots, no suspending lookups.
+   * Per-hover, sync — only in-memory snapshots, no suspending lookups. All the decision logic
+   * lives in [computeRequirementHint] (unit-tested); this method just wires the current SDK's
+   * snapshots and formats the chosen variant through [PyBundle].
    */
   override fun computeDocumentationHint(): @NlsContexts.HintText String {
-    val packageManager = getPythonSdk(requirementsFile)?.let { PythonPackageManager.forSdk(project, it) }
+    val sdk = sdkOverride ?: requirementsFile?.let { getPythonSdk(it) }
+    val packageManager = sdk?.let { PythonPackageManager.forSdk(project, it) }
     val packageName = pyRequirement.name
-    val packageEscapedName = packageName.escapeXml()
 
     val isLocal = ModuleManager.getInstance(project).modules.any { PyPackageName.from(it.name).name == packageName }
-
     val installed = packageManager?.listInstalledPackagesSnapshot()?.firstOrNull { it.name == packageName }
     val metadata = installed?.let { packageManager.listInstalledPackagesMetadataSnapshot()[PyPackageName.from(it.name)] }
-    val metadataSummary = metadata?.summary?.takeIf { it.isNotBlank() }
-    val destinationLabel = metadata?.preferredProjectUrl()?.label ?: DEFAULT_PROJECT_URL_LABEL
 
-    return when {
-      isLocal -> {
-        PyBundle.message("DOC.requirement.hint.local", packageEscapedName)
-      }
-      metadataSummary != null -> {
-        PyBundle.message("DOC.requirement.hint.installedWithMetadata", packageEscapedName, metadataSummary.escapeXml(), destinationLabel)
-      }
-      installed != null -> {
-        PyBundle.message("DOC.requirement.hint.installedWithVersion", packageEscapedName, installed.version.escapeXml(), destinationLabel)
-      }
-      else -> {
-        PyBundle.message("DOC.requirement.hint.notInstalled", packageEscapedName, destinationLabel)
-      }
+    return renderHint(computeRequirementHint(packageName, isLocal, installed, metadata))
+  }
+
+  /**
+   * `escapeXml` is required because the bundle values are HTML templates (`<b>{0}</b><br>...`).
+   * `hint.packageName` comes from user-authored `requirements.txt`; `hint.summary` / `hint.version`
+   * come from installed METADATA. Both are external, untrusted data — without escaping, a name
+   * like `<script>` or `<img onerror=…>` would inject markup into the JEditorPane hint (XSS).
+   * Escaping renders angle brackets as literal `&lt;` / `&gt;` text.
+   */
+  private fun renderHint(hint: RequirementHint): @NlsContexts.HintText String {
+    val escapedName = hint.packageName.escapeXml()
+    return when (hint) {
+      is RequirementHint.Local ->
+        PyBundle.message("DOC.requirement.hint.local", escapedName)
+      is RequirementHint.InstalledWithMetadata ->
+        PyBundle.message("DOC.requirement.hint.installedWithMetadata", escapedName, hint.summary.escapeXml(), hint.destinationLabel)
+      is RequirementHint.InstalledWithVersion ->
+        PyBundle.message("DOC.requirement.hint.installedWithVersion", escapedName, hint.version.escapeXml(), hint.destinationLabel)
+      is RequirementHint.NotInstalled ->
+        PyBundle.message("DOC.requirement.hint.notInstalled", escapedName, hint.destinationLabel)
     }
   }
 
@@ -120,7 +132,7 @@ internal class RequirementDocumentationTarget(
    * Async because findPackageSpecification suspends (cached-index walk, not network).
    */
   override fun computeDocumentation(): DocumentationResult = DocumentationResult.asyncDocumentation {
-    val sdk = readAction { getPythonSdk(requirementsFile) }
+    val sdk = sdkOverride ?: readAction { requirementsFile?.let { getPythonSdk(it) } }
     val packageManager = sdk?.let { PythonPackageManager.forSdk(project, it) }
     val packageName = pyRequirement.name
     val installed = packageManager?.listInstalledPackages()?.firstOrNull { it.name == packageName }
@@ -140,19 +152,32 @@ internal class RequirementDocumentationTarget(
     }
     else null
 
-    val html = renderHtml(installed, repository, localPackagePath, metadata)
+    // For not-installed names we still want a hover with a PyPI link, so synthesise a minimal
+    // [PythonPackage] from the requirement name — `installed` becomes the single source of truth
+    // for both the rendered text and the link lookup.
+    val pkg = installed ?: PythonPackage(name = packageName, version = "", isEditableMode = false)
+    val html = renderHtml(pkg, repository, localPackagePath, metadata)
     DocumentationResult.documentation(html)
   }
 
+  /**
+   * Composes the Quick Doc HTML for a requirement hover. External strings (package summary,
+   * license expression, requires-python spec, project-URL labels, link labels, editable-install
+   * path) go through [HtmlBuffer.text] which escapes them; layout tags and pre-safe URLs go
+   * through [HtmlBuffer.raw]. Keeping the two paths distinct at every call site is what Ilya's
+   * review asked for — double-escapes and missed-escapes both become visible mistakes instead
+   * of quiet XSS vectors in the JEditorPane popup.
+   */
   private fun renderHtml(
-    installed: PythonPackage?,
+    installed: PythonPackage,
     repository: PyPackageRepository,
     localPackagePath: Path?,
     metadata: PythonPackageMetadata?,
-  ): @NlsSafe String = buildString {
+  ): @NlsSafe String {
+    val buf = HtmlBuffer()
     // JEditorPane: <p> carries a ~14px bottom margin and body has its own padding, so we
     // render inline content with <br> separators and zero the body margins.
-    append("<html><body style=\"margin:0;padding:0\">")
+    buf.raw("<html><body style=\"margin:0;padding:0\">")
 
     val summary = metadata?.summary?.takeIf { it.isNotBlank() }
     // safeProjectUrls, not the raw map: unsafe-scheme URLs (e.g. javascript:) must never become a
@@ -161,72 +186,86 @@ internal class RequirementDocumentationTarget(
     val link = packageLink(installed, repository, localPackagePath)
 
     if (summary != null) {
-      append(summary.escapeXml())
-      append("<br><br>")
+      buf.text(summary).raw("<br><br>")
     }
 
     var first = true
     fun newRow() {
-      if (first) first = false else append("<br>")
+      if (first) first = false else buf.raw("<br>")
     }
 
     // <nobr> stops JEditorPane from breaking inside "Python: >=3.11" at the >= boundary.
-    val metaParts = listOfNotNull(
-      metadata?.license?.takeIf { it.isNotBlank() }?.let {
-        "<nobr>License: ${formatLicenseExpression(it).escapeXml()}</nobr>"
-      },
-      metadata?.requiresPython?.takeIf { it.isNotBlank() }?.let {
-        "<nobr>Python: ${it.escapeXml()}</nobr>"
-      },
-    )
-    if (metaParts.isNotEmpty()) {
+    val licenseLabel = metadata?.license?.takeIf { it.isNotBlank() }?.let(::formatLicenseExpression)
+    val pythonSpec = metadata?.requiresPython?.takeIf { it.isNotBlank() }
+    if (licenseLabel != null || pythonSpec != null) {
       newRow()
-      append(metaParts.joinToString(" · "))
+      if (licenseLabel != null) {
+        buf.raw("<nobr>License: ").text(licenseLabel).raw("</nobr>")
+      }
+      if (pythonSpec != null) {
+        if (licenseLabel != null) buf.raw(" · ")
+        buf.raw("<nobr>Python: ").text(pythonSpec).raw("</nobr>")
+      }
     }
 
     if (projectUrls.isNotEmpty()) {
       newRow()
       projectUrls.forEachIndexed { i, (label, url) ->
-        if (i > 0) append(" · ")
-        appendExternalLink(wrapBrowseUrl(url), label)
+        if (i > 0) buf.raw(" · ")
+        buf.appendExternalLink(wrapBrowseUrl(url), label)
       }
     }
 
     when {
       link == null -> {
         newRow()
-        append("Local package (editable install)")
+        buf.text("Local package (editable install)")
       }
       localPackagePath != null -> {
         newRow()
-        append("Local package ")
-        append("<a href=\"").append(link.url).append("\">").append(link.label.escapeXml()).append("</a>")
+        // link.url is our own `psi_element://py_doc_localdir/<url-encoded-path>` — safe to embed raw.
+        buf.text("Local package ").raw("<a href=\"").raw(link.url).raw("\">").text(link.label).raw("</a>")
       }
       // Skip the registry link when METADATA contributed upstream URLs above (more useful than the generic landing page).
       projectUrls.isEmpty() -> {
         newRow()
-        appendExternalLink(wrapBrowseUrl(link.url), link.label)
+        buf.appendExternalLink(wrapBrowseUrl(link.url), link.label)
       }
     }
-    append("</body></html>")
+    val editableLocation = installed.editableLocation
+    if (editableLocation != null) {
+      newRow()
+      val display = if (editableLocation.scheme == "file") {
+        try {
+          Paths.get(editableLocation).pathString
+        }
+        catch (_: InvalidPathException) {
+          editableLocation.toString()
+        }
+      }
+      else {
+        editableLocation.toString()
+      }
+      buf.text(display)
+    }
+    buf.raw("</body></html>")
+    return buf.toString()
   }
 
   // Icon must live inside the <a> so it inherits link styling and stays attached when the row wraps.
-  private fun StringBuilder.appendExternalLink(url: String, label: String) {
-    append("<a href=\"").append(url).append("\">")
-    append(label.escapeXml())
-    append(EXTERNAL_LINK_ICON)
-    append("</a>")
+  // `url` here is already the `psi_element://py_doc_browse/<url-encoded>` wrapper — safe to embed raw.
+  private fun HtmlBuffer.appendExternalLink(url: String, label: String) {
+    raw("<a href=\"").raw(url).raw("\">").text(label).raw(EXTERNAL_LINK_ICON).raw("</a>")
   }
 
   // Priority: local folder > editable-install-no-folder (null) > Conda > PyPI > custom repo > PyPI fallback.
-  private fun packageLink(installed: PythonPackage?, repository: PyPackageRepository, localFolder: Path?): ProjectUrl? {
+  private fun packageLink(installed: PythonPackage, repository: PyPackageRepository, localFolder: Path?): ProjectUrl? {
     if (localFolder != null) {
       val label = "${localFolder.fileName ?: localFolder}/"
       val url = LOCAL_FOLDER_PREFIX + URLEncoder.encode(localFolder.toString(), StandardCharsets.UTF_8)
       return ProjectUrl(label, url)
     }
-    if (installed?.isEditableMode == true) return null
+    if (installed.isEditableMode) return null
     // A Conda-installed package always points at Anaconda regardless of which repository the
     // spec lookup resolved (the package may have been installed by Conda but the cached spec
     // search returned a different repo for the same name).
@@ -243,6 +282,26 @@ internal class RequirementDocumentationTarget(
 
   private fun String.escapeXml(): String =
     replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+}
+
+/**
+ * HTML string builder with a compile-visible escape boundary — [text] escapes XML entities,
+ * [raw] appends verbatim. Splitting the two APIs stops the double-escape / missed-escape mistake
+ * Ilya's review flagged: at every call site you have to pick which one to invoke, so the
+ * escaping story is explicit at every point instead of relying on convention.
+ */
+private class HtmlBuffer {
+  private val buffer = StringBuilder()
+
+  fun text(value: String): HtmlBuffer {
+    buffer.append(value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+    return this
+  }
+
+  fun raw(value: String): HtmlBuffer {
+    buffer.append(value)
+    return this
+  }
 }
 
 /**

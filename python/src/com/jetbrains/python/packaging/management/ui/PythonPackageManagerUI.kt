@@ -17,6 +17,7 @@ import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -90,9 +91,10 @@ class PythonPackageManagerUI private constructor(
     installRequest: PythonPackageInstallRequest,
     options: List<String> = emptyList(),
     module: Module? = null,
+    dependencyGroup: PyDependencyGroup? = null,
   ): List<PythonPackage>? {
     return executeCommand(getProgressTitle(installRequest)) {
-      manager.installPackage(installRequest, options, module)
+      manager.installPackage(installRequest, options, module, dependencyGroup)
     }
   }
 
@@ -134,6 +136,7 @@ class PythonPackageManagerUI private constructor(
   suspend fun uninstallPackagesBackground(
     packages: List<String>,
     workspaceMember: PyWorkspaceMember? = null,
+    dependencyGroup: PyDependencyGroup? = null,
   ): List<PythonPackage>? {
     val progressTitle = if (packages.size > 1) {
       PyBundle.message("python.packaging.uninstall.packages")
@@ -144,7 +147,7 @@ class PythonPackageManagerUI private constructor(
 
     return executeCommand(progressTitle
     ) {
-      manager.uninstallPackage(*packages.toTypedArray(), workspaceMember = workspaceMember)
+      manager.uninstallPackage(*packages.toTypedArray(), workspaceMember = workspaceMember, dependencyGroup = dependencyGroup)
     }
   }
 

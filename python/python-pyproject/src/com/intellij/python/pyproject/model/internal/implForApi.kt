@@ -1,8 +1,12 @@
 package com.intellij.python.pyproject.model.internal
 
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.api.SuggestedSdk
 import com.intellij.python.pyproject.model.internal.workspaceBridge.pyProjectTomlEntity
 import com.intellij.workspaceModel.ide.legacyBridge.findModule
@@ -12,6 +16,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 internal val Module.isPyProjectTomlBasedImpl: Boolean get() = findModuleEntity()?.pyProjectTomlEntity != null
+
+internal suspend fun Module.getPyProjectTomlFileImpl(): VirtualFile? = readAction {
+  val entity = findModuleEntity()?.pyProjectTomlEntity ?: return@readAction null
+  val dir = entity.dirWithToml.virtualFile ?: return@readAction null
+  dir.findChild(PY_PROJECT_TOML)
+}
 
 internal suspend fun suggestSdkImpl(module: Module): SuggestedSdk? = withContext(Dispatchers.Default) {
   val entity = module.findModuleEntity()?.pyProjectTomlEntity ?: return@withContext null

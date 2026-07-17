@@ -12,6 +12,7 @@ import com.intellij.python.pyproject.model.spi.ProjectStructureInfo
 import com.intellij.python.pyproject.model.spi.PyProjectCreator
 import com.intellij.python.pyproject.model.spi.PyProjectManager
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
+import com.intellij.python.pyproject.model.spi.PySdkDependencyGroupSupport
 import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
 import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.intellij.python.uv.backend.UV_TOOL
@@ -55,6 +56,8 @@ internal class UvPyProjectManager : PyProjectManager, PyProjectCreator by ToolBa
   override val ui: PyToolUIInfo = UV_UI_INFO
 
   override val additionalDataType: Class<UvSdkAdditionalData> get() = UvSdkAdditionalData::class.java
+
+  override val dependencyGroupSupport: PySdkDependencyGroupSupport = UvDependencyGroupSupport
 
   override suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory> = emptySet()
 

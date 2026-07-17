@@ -11,7 +11,7 @@ fun Finder.pythonPackagesToolWindow(@Language("xpath") xpath: String? = null) =
 
 class PythonPackagesToolWindowUiComponent(data: ComponentData) : UiComponent(data) {
   val packagesTable
-    get() = x("//div[@class='JPanel'][div[@class='JPanel'][div[@class='JBLabel' and contains(@accessiblename, 'Installed')]]]", UiComponent::class.java)
+    get() = x("//div[@class='PyPackagesTree']", UiComponent::class.java)
 
   val searchField
     get() = x("//div[@class='PyPackageSearchTextField']", UiComponent::class.java)
