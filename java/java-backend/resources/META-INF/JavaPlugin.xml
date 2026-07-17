@@ -1350,7 +1350,6 @@
 
     <java.expressionTypeNullabilityPatcher implementation="com.intellij.psi.impl.StreamNullabilityPatcher"/>
     <java.expressionTypeNullabilityPatcher implementation="com.intellij.psi.impl.AssertNullabilityPatcher"/>
-    <java.expressionTypeNullabilityPatcher implementation="com.intellij.psi.impl.MapGetOrDefaultNullabilityPatcher"/>
 
     <!--from JavaAnalaysisPlugin.xml for java.analysis-->
     <metaLanguageProvider implementation="com.intellij.uast.UastMetaLanguage$Provider"/>

@@ -28,4 +28,9 @@ class MapGetOrDefaultNullability {
       System.out.println("mapped to null");
     }
   }
+
+  static void emptyMap() {
+    Map.<String, String>of().getOrDefault("key", null)
+      .<warning descr="Method invocation 'toString' will produce 'NullPointerException'">toString</warning>();
+  }
 }
