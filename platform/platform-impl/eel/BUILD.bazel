@@ -5,6 +5,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 create_kotlinc_options(
     name = "custom_ide-impl-wsl",
     opt_in = ["com.intellij.platform.eel.channels.EelDelicateApi"],
+    warn = "error",
 )
 
 jvm_library(
