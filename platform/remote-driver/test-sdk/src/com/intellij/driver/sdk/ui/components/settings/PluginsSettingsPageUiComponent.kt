@@ -24,7 +24,8 @@ import com.intellij.driver.sdk.ui.components.elements.dialog
 import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.components.elements.waitSelected
-import com.intellij.driver.sdk.ui.components.plugins.DependenciesLoadingDialogUI
+import com.intellij.driver.sdk.ui.UiText.Companion.asString
+import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.openapi.util.SystemInfo
@@ -219,8 +220,15 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     }
 
     fun checkErrorContainsText(errorText: String): ListPluginComponent {
-      step("[Check] The error  notice in the Plugins list contains text '$errorText'") {
-        errorComponent.waitContainsText(errorText)
+      step("[Check] The error notice in the Plugins list contains text '$errorText'") {
+        var actual = ""
+        errorComponent.should(
+          message = "error notice should contain '$errorText'",
+          errorMessage = { "\n    expected: '$errorText'\n    found: '$actual'" },
+        ) {
+          actual = getAllTexts().asString()
+          actual.contains(errorText)
+        }
       }
       return this
     }
