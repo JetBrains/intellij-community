@@ -30,16 +30,20 @@ import com.intellij.platform.testFramework.assertion.collectionAssertion.Collect
 import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
 import com.intellij.platform.workspace.jps.entities.DependencyScope
 import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.SdkDependency
 import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.testFramework.registerServiceInstance
+import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.delay
 import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
@@ -61,6 +65,7 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Dynamic.Companion.asSyncPhase
+import org.jetbrains.plugins.gradle.service.syncAction.impl.extensions.GradleDependencySyncExtension
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.entity.GradleTestBridgeEntitySource
@@ -71,6 +76,8 @@ import org.jetbrains.plugins.gradle.util.whenExternalSystemTaskFinished
 import org.jetbrains.plugins.gradle.util.whenExternalSystemTaskStarted
 import org.junit.Test
 import org.junit.jupiter.api.Assertions
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
@@ -716,6 +723,52 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         dependencyListByModuleNamePerPhase
       )
     }
+  }
+
+  @Test
+  fun `test module level library is copied and preserved across sync phases`() {
+    val syncStorage = MutableEntityStorage.create()
+    val projectStorage = MutableEntityStorage.create()
+
+    val context = mock<ProjectResolverContext> {
+      on { projectPath } doReturn "dummy-path"
+    }
+    val phase = GradleSyncPhase.ADDITIONAL_MODEL_PHASE
+
+    val moduleId = ModuleId("my-module")
+    val moduleLibraryId = LibraryId(
+      "buildConfigGeneratedClasses",
+      LibraryTableId.ModuleLibraryTableId(moduleId)
+    )
+
+    projectStorage.addEntity(ModuleEntity("my-module", listOf(LibraryDependency(moduleLibraryId, false, DependencyScope.COMPILE)), NonPersistentEntitySource))
+    projectStorage.addEntity(LibraryEntity(
+      "buildConfigGeneratedClasses",
+      LibraryTableId.ModuleLibraryTableId(moduleId),
+      emptyList(),
+      GradleTestEntitySource(context.projectPath, phase)
+    ))
+
+    val newModuleSource = GradleTestEntitySource("dummy-path", phase)
+    syncStorage.addEntity(ModuleEntity("my-module", emptyList(), newModuleSource))
+
+    val extension = GradleDependencySyncExtension()
+    extension.updateProjectModel(context, syncStorage, projectStorage, phase)
+
+    val updatedModule = requireNotNull(syncStorage.resolve(moduleId)) {
+      "Module should be updated in syncStorage"
+    }
+
+    val libraryDependency = requireNotNull(updatedModule.dependencies.filterIsInstance<LibraryDependency>().firstOrNull()) {
+      "Library dependency should be preserved in ModuleEntity"
+    }
+    Assertions.assertEquals(moduleLibraryId, libraryDependency.library)
+
+    val copiedLibrary = requireNotNull(syncStorage.resolve(moduleLibraryId)) {
+      "LibraryEntity should have been copied to syncStorage to prevent cascade deletion"
+    }
+
+    Assertions.assertEquals(newModuleSource, copiedLibrary.entitySource)
   }
 
   private fun `test phased Gradle sync cancellation by indicator`(cancellationPhase: GradleSyncPhase) {

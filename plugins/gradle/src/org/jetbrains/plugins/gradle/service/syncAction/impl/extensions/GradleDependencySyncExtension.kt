@@ -2,11 +2,13 @@
 package org.jetbrains.plugins.gradle.service.syncAction.impl.extensions
 
 import com.intellij.openapi.externalSystem.util.Order
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
 import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.SdkDependency
+import com.intellij.platform.workspace.jps.entities.modifyLibraryEntity
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.createEntityTreeCopy
@@ -67,6 +69,17 @@ class GradleDependencySyncExtension : GradleSyncExtension {
             existingProjectEntity?.let { syncStorage.addEntity(it.createEntityTreeCopy()) }
           }
       }
+
+      // Copy and override referenced LibraryEntities (module-level ones) from projectStorage to syncStorage to prevent cascade-delete.
+      syncStorage.resolve(moduleEntity.symbolicId)?.dependencies
+        ?.filterIsInstance<LibraryDependency>()
+        ?.filterNot { syncStorage.contains(it.library) }
+        ?.forEach {
+          val existingProjectEntity = projectStorage.resolve(it.library)
+          existingProjectEntity?.let {
+            syncStorage.addEntity(it.createEntityTreeCopy())
+          }
+        }
     }
   }
 
