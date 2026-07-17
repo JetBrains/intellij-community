@@ -97,7 +97,7 @@
                          id="smart-step-into-next"/>
     <editorActionHandler action="EditorEnter"
                          implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebugSmartStepIntoEnterHandler"
-                         order="first" id="smart-step-into-enter"/>
+                         order="first, before terminalEnter" id="smart-step-into-enter"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.xdebugger.impl.actions.handlers.EscHandler"
                          order="before hide-search" id="smart-step-into-escape"/>
 
