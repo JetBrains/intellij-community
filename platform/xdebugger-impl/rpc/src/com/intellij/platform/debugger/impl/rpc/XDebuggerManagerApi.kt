@@ -5,8 +5,8 @@ import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.Id
-import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.RpcFlow
@@ -32,7 +32,8 @@ interface XDebuggerManagerApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebuggerManagerApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<XDebuggerManagerApi>())
+      // TODO: IJPL-252054
+      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<XDebuggerManagerApi>())
     }
   }
 }

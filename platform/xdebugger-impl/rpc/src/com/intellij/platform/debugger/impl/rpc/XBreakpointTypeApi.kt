@@ -7,11 +7,11 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.Id
-import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
-import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
 import com.intellij.xdebugger.breakpoints.XBreakpointType
+import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.RpcFlow
@@ -51,7 +51,8 @@ interface XBreakpointTypeApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): XBreakpointTypeApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<XBreakpointTypeApi>())
+      // TODO: IJPL-252054
+      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<XBreakpointTypeApi>())
     }
   }
 }

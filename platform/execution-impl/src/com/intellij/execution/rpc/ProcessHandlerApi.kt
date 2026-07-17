@@ -5,8 +5,8 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.Id
-import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.DeferredSerializer
@@ -32,7 +32,8 @@ interface ProcessHandlerApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): ProcessHandlerApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<ProcessHandlerApi>())
+      // TODO: IJPL-252054
+      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<ProcessHandlerApi>())
     }
   }
 }

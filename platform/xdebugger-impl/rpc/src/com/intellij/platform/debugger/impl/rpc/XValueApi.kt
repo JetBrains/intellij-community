@@ -2,8 +2,8 @@
 package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.platform.rpc.Id
-import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import com.intellij.util.ThreeState
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -36,7 +36,8 @@ interface XValueApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): XValueApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<XValueApi>())
+      // TODO: IJPL-252054
+      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<XValueApi>())
     }
   }
 }

@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
 import com.intellij.xdebugger.evaluation.EvaluationMode
@@ -72,7 +72,8 @@ interface XBreakpointApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): XBreakpointApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<XBreakpointApi>())
+      // TODO: IJPL-252054
+      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<XBreakpointApi>())
     }
   }
 }
