@@ -4,7 +4,6 @@
                 factoryClass="org.jetbrains.plugins.terminal.TerminalToolWindowFactory"
                 secondary="false"
                 canCloseContents="true"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.terminal.DefaultTerminalRunnerFactory" open="true"/>
 
     <fileEditorProvider id="classic-terminal-session-editor"
                         implementation="org.jetbrains.plugins.terminal.vfs.ClassicTerminalSessionEditorProvider"/>
