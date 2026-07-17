@@ -3,6 +3,7 @@
   <technology name="activiti-bpm" class="org.activiti.engine.repository.Model"/>
   <technology name="akka-http" class="akka.http.scaladsl.Http"/>
   <technology name="akka-java" class="akka.actor.Actor"/>
+  <technology name="alibaba-sentinel" class="com.alibaba.csp.sentinel.SphU"/>
   <technology name="allure1" class="ru.yandex.qatools.allure.annotations.Step"/>
   <technology name="allure2" class="io.qameta.allure.Step"/>
   <technology name="apache-bval" class="org.apache.bval.jsr.ApacheValidationProvider"/>
@@ -15,7 +16,7 @@
   <technology name="apache-http" class="org.apache.http.HttpEntity"/>
   <technology name="apache-ignite" class="org.apache.ignite.Ignite"/>
   <technology name="apache-pulsar" class="org.apache.pulsar.client.api.PulsarClient"/>
-  <technology name="apache-rocketmq" class="org.apache.rocketmq.common.BrokerConfig"/>
+  <technology name="apache-rocketmq" class="org.apache.rocketmq.client.producer.DefaultMQProducer"/>
   <technology name="apache-shiro" class="org.apache.shiro.authc.AuthenticationInfo"/>
   <technology name="apache-spark" class="org.apache.spark.SparkConf"/>
   <technology name="apache-thrift" class="org.apache.thrift.transport.TTransport"/>
@@ -24,6 +25,7 @@
   <technology name="armeria" class="com.linecorp.armeria.server.Server"/>
   <technology name="arquillian" class="org.jboss.arquillian.container.test.api.Deployment"/>
   <technology name="arrowkt" class="arrow.core.Either"/>
+  <technology name="arthas" class="com.taobao.arthas.client.TelnetConsole"/>
   <technology name="aspectj" class="org.aspectj.lang.annotation.Aspect"/>
   <technology name="assertj" class="org.assertj.core.api.Assertions"/>
   <technology name="atlas" class="io.qameta.atlas.core.Atlas"/>
@@ -32,6 +34,7 @@
   <technology name="blade" class="com.blade.Blade"/>
   <technology name="breeze" class="breeze.linalg.DenseVector"/>
   <technology name="camunda-bpm" class="org.camunda.bpm.model.bpmn.Bpmn"/>
+  <technology name="canal" class="com.alibaba.otter.canal.client.CanalConnector"/>
   <technology name="cassandra" class="com.datastax.driver.core.Session"/>
   <technology name="cats" class="cats.Functor"/>
   <technology name="checkerframework" class="org.checkerframework.checker.nullness.qual.Nullable"/>
@@ -41,6 +44,7 @@
   <technology name="consul" class="com.ecwid.consul.v1.ConsulClient"/>
   <technology name="cplex" class="ilog.cplex.IloCplex"/>
   <technology name="cucumber" class="io.cucumber.java.Before"/>
+  <technology name="ctrip-apollo" class="com.ctrip.framework.apollo.ConfigService"/>
   <technology name="dagger" class="dagger.Provides"/>
   <technology name="datanucleus-jpa" class="org.datanucleus.api.jpa.PersistenceProviderImpl"/>
   <technology name="db2" class="com.ibm.db2.jcc.DB2Driver"/>
@@ -50,6 +54,8 @@
   <technology name="dozer" class="com.github.dozermapper.DozerBeanMapper"/>
   <technology name="drools" class="org.drools.core.spi.KnowledgeHelper"/>
   <technology name="dropwizard" class="io.dropwizard.Application"/>
+  <technology name="druid" class="com.alibaba.druid.pool.DruidDataSource"/>
+  <technology name="easyexcel" class="com.alibaba.excel.EasyExcel"/>
   <technology name="easymock" class="org.easymock.Mock"/>
   <technology name="eclipselink-jpa" class="org.eclipse.persistence.jpa.PersistenceProvider"/>
   <technology name="elasticsearch" class="co.elastic.clients.elasticsearch.ElasticsearchClient"/>
@@ -57,7 +63,7 @@
   <technology name="eureka" class="com.netflix.discovery.EurekaClient"/>
   <technology name="exposed" class="org.jetbrains.exposed.sql.Query"/>
   <technology name="exposed" class="org.jetbrains.exposed.v1.jdbc.Query"/>
-  <technology name="fastjson2" class="com.alibaba.fastjson2.JSONObject"/>
+  <technology name="fastjson2" class="com.alibaba.fastjson2.JSON"/>
   <technology name="fastutil" class="it.unimi.dsi.fastutil.Function"/>
   <technology name="finagle" class="com.twitter.finagle.Client"/>
   <technology name="flowable-bpm" class="org.flowable.engine.repository.Model"/>
@@ -94,6 +100,7 @@
   <technology name="htmlelements" class="ru.yandex.qatools.htmlelements.annotations.Name"/>
   <technology name="http4k" class="org.http4k.core.Uri"/>
   <technology name="http4s" class="org.http4s.Http"/>
+  <technology name="hutool" class="cn.hutool.core.util.StrUtil"/>
   <technology name="hystrix" class="com.netflix.hystrix.HystrixCommand"/>
   <technology name="intellij-api" class="com.intellij.openapi.actionSystem.AnAction"/>
   <technology name="jackson" class="com.fasterxml.jackson.core.JsonParser"/>
@@ -186,7 +193,9 @@
   <technology name="monix" class="monix.reactive.Observable"/>
   <technology name="munit" class="munit.FunSuite"/>
   <technology name="mybatis" class="org.apache.ibatis.annotations.Select"/>
+  <technology name="mybatis-plus" class="com.baomidou.mybatisplus.core.mapper.BaseMapper"/>
   <technology name="mysql" class="com.mysql.jdbc.Driver"/>
+  <technology name="nacos" class="com.alibaba.nacos.client.naming.NacosNamingService"/>
   <technology name="netty" class="io.netty.channel.AbstractChannel"/>
   <technology name="okhttp3" class="okhttp3.Request"/>
   <technology name="openai-java" class="com.openai.models.ChatModel"/>
@@ -216,6 +225,7 @@
   <technology name="robotframework" class="org.robotframework.javalib.annotation.RobotKeyword"/>
   <technology name="rsocket" class="io.rsocket.RSocket"/>
   <technology name="rsocket-java" class="io.rsocket.RSocket"/>
+  <technology name="sa-token" class="cn.dev33.satoken.stp.StpUtil"/>
   <technology name="rxjava" class="io.reactivex.Flowable"/>
   <technology name="rxjava3" class="io.reactivex.rxjava3.core.Flowable"/>
   <technology name="rxkotlin" class="io.reactivex.rxjava3.kotlin.Singles"/>
@@ -225,14 +235,18 @@
   <technology name="scalatest" class="org.scalatest.Assertions"/>
   <technology name="scalatra" class="org.scalatra.ScalatraServlet"/>
   <technology name="scalaz" class="scalaz.Scalaz$"/>
+  <technology name="seata" class="io.seata.core.context.RootContext"/>
   <technology name="selenide" class="com.codeborne.selenide.Selenide"/>
   <technology name="selenium" class="org.openqa.selenium.WebDriver"/>
   <technology name="serenity" class="net.thucydides.core.annotations.Step"/>
+  <technology name="shardingsphere" class="org.apache.shardingsphere.driver.ShardingSphereDriver"/>
   <technology name="shapeless" class="shapeless.HList"/>
+  <technology name="skywalking" class="org.apache.skywalking.apm.toolkit.trace.TraceContext"/>
   <technology name="slf4j" class="org.slf4j.Logger"/>
   <technology name="slick" class="slick.sql.SqlAction"/>
   <technology name="smallrye-mutiny" class="io.smallrye.mutiny.Uni"/>
   <technology name="snowflake" class="net.snowflake.client.jdbc.SnowflakeDriver"/>
+  <technology name="solon" class="org.noear.solon.Solon"/>
   <technology name="spark-java" class="spark.Spark"/>
   <technology name="specs2" class="org.specs2.Specification"/>
   <technology name="spek" class="org.jetbrains.spek.api.Spek"/>
@@ -240,12 +254,14 @@
   <technology name="spock" class="spock.mock.MockingApi"/>
   <technology name="spotbugs" class="edu.umd.cs.findbugs.annotations.Nullable"/>
   <technology name="spring-ai" class="org.springframework.ai.chat.client.ChatClient"/>
+  <technology name="spring-ai-alibaba" class="com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel"/>
   <technology name="spring-amqp" class="org.springframework.amqp.core.AbstractExchange"/>
   <technology name="spring-amqp" class="org.springframework.amqp.core.Message"/>
   <technology name="spring-batch" class="org.springframework.batch.core.Job"/>
   <technology name="spring-boot" class="org.springframework.boot.SpringApplication"/>
   <technology name="spring-boot-testjars" class="org.springframework.experimental.boot.test.context.DynamicProperty"/>
   <technology name="spring-cloud" class="org.springframework.cloud.client.SpringCloudApplication"/>
+  <technology name="spring-cloud-alibaba" class="com.alibaba.cloud.nacos.NacosDiscoveryProperties"/>
   <technology name="spring-cloud-gateway" class="org.springframework.cloud.gateway.route.RouteDefinition"/>
   <technology name="spring-cloud-kubernetes" class="org.springframework.cloud.kubernetes.commons.ConditionalOnKubernetesEnabled"/>
   <technology name="spring-cloud-openfeign" class="org.springframework.cloud.openfeign.FeignClient"/>
@@ -305,6 +321,7 @@
   <technology name="webtau-http" class="org.testingisdocumenting.webtau.http.Http"/>
   <technology name="weld" class="org.jboss.weld.Container"/>
   <technology name="wiremock" class="com.github.tomakehurst.wiremock.WireMockServer"/>
+  <technology name="xxl-job" class="com.xxl.job.core.executor.XxlJobExecutor"/>
   <technology name="zio" class="zio.ZIO"/>
   <technology name="zio-test" class="zio.test.Spec"/>
   <technology name="zipkin2" class="zipkin2.Span"/>
