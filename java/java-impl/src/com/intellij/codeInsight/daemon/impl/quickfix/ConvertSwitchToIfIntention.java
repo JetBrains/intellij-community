@@ -93,7 +93,7 @@ public class ConvertSwitchToIfIntention extends PsiUpdateModCommandAction<PsiSwi
   public static boolean isAvailable(@NotNull PsiSwitchStatement switchStatement) {
     final PsiCodeBlock body = switchStatement.getBody();
     return body != null && !body.isEmpty() && BreakConverter.from(switchStatement) != null && !mayFallThroughNonTerminalDefaultCase(body) &&
-           !JavaPsiSwitchUtil.containsRepresentativePrimitive(switchStatement);
+           !JavaPsiSwitchUtil.containsFloatingPointSpecial(switchStatement);
   }
 
   private static boolean mayFallThroughNonTerminalDefaultCase(PsiCodeBlock body) {
