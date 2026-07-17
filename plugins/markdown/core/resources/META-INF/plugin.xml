@@ -396,6 +396,7 @@
     <action id="Markdown.NewFile"
             class="org.intellij.plugins.markdown.fileActions.MarkdownCreateFileAction"
             icon="AllIcons.FileTypes.Markdown">
+      <synonym key="action.Markdown.NewFile.index"/>
       <add-to-group group-id="NewGroup"/>
     </action>
 

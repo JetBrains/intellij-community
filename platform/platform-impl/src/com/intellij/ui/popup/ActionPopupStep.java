@@ -351,8 +351,12 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @Override
-  public String getIndexedString(final PopupFactoryImpl.ActionItem value) {
-    return getTextFor(value);
+  public String getIndexedString(PopupFactoryImpl.ActionItem value) {
+    StringBuilder indexedString = new StringBuilder(getTextFor(value));
+    for (Supplier<String> synonym : value.getAction().getSynonyms()) {
+      indexedString.append(' ').append(synonym.get());
+    }
+    return indexedString.toString();
   }
 
   @Override
