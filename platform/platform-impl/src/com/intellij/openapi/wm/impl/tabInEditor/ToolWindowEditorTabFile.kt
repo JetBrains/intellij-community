@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
@@ -15,8 +14,6 @@ import com.intellij.ui.content.Content
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 import javax.swing.JComponent
-
-internal val SKIP_EDITOR_TAB_CLOSE_HANDLER: Key<Boolean?> = Key.create("tool.window.editor.tab.skip.close.handler")
 
 /**
  * Represents a virtual file specific to a tool window tab.
@@ -32,7 +29,6 @@ internal val SKIP_EDITOR_TAB_CLOSE_HANDLER: Key<Boolean?> = Key.create("tool.win
  * @param preferredFocusedComponent The component that should receive focus when the editor tab is selected.
  * @param persistInEditorHistory Whether this tab should be persisted in the editor history.
  * @param content The tool window content represented by this editor tab.
- * @param onEditorClosed A callback invoked when the editor tab is closed by the regular editor close flow.
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
@@ -44,8 +40,11 @@ open class ToolWindowEditorTabFile(
   private val preferredFocusedComponent: JComponent,
   private val persistInEditorHistory: Boolean = false,
   internal val content: Content? = null,
-  private val onEditorClosed: ((ToolWindowEditorTabFile) -> Unit)? = null,
 ) : LightVirtualFile(editorTitle, fileType, ""), OptionallyIncluded {
+
+  // Content normally belongs to its ContentManager's disposable tree.
+  // Once it is moved into an editor tab, re-parent it to the editorLifetime instead,
+  // because the original manager may be disposed.
   private val editorLifetime = Disposer.newDisposable("ToolWindowEditorTabFile: $editorTitle")
 
   init {
@@ -62,11 +61,9 @@ open class ToolWindowEditorTabFile(
   final override fun isWritable(): Boolean = true
 
   open fun onEditorClosed() {
-    if (getUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN) == true ||
-        getUserData(SKIP_EDITOR_TAB_CLOSE_HANDLER) == true) {
-      return
+    if (getUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN) != true) {
+      releaseEditorLifetime()
     }
-    onEditorClosed?.invoke(this)
   }
 
   internal fun bindContentToEditorLifetime() {
@@ -77,16 +74,6 @@ open class ToolWindowEditorTabFile(
 
   internal fun releaseEditorLifetime() {
     Disposer.dispose(editorLifetime)
-  }
-
-  internal fun withSkippedCloseHandler(action: () -> Unit) {
-    putUserData(SKIP_EDITOR_TAB_CLOSE_HANDLER, true)
-    try {
-      action()
-    }
-    finally {
-      putUserData(SKIP_EDITOR_TAB_CLOSE_HANDLER, null)
-    }
   }
 }
 

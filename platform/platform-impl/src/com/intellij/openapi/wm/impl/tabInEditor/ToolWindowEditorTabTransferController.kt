@@ -55,7 +55,7 @@ class ToolWindowEditorTabTransferController(
     FileEditorManagerEx.getInstanceEx(project).openFile(file, window, FileEditorOpenOptions(requestFocus = true))
 
     if (!FileEditorManager.getInstance(project).isFileOpen(file)) {
-      restoreContentToToolWindow(content, toolWindow, sourceDecorator?.contentManager.takeIf { !it?.isDisposed!! })
+      restoreContentToToolWindow(content, toolWindow, sourceDecorator?.contentManager?.takeIf { !it.isDisposed })
       file.releaseEditorLifetime()
       file.isValid = false
     }
@@ -84,10 +84,9 @@ class ToolWindowEditorTabTransferController(
 
     val content = file.content ?: return
 
-    file.withSkippedCloseHandler {
-      FileEditorManager.getInstance(project).closeFile(file)
-    }
+    FileEditorManager.getInstance(project).closeFile(file)
 
+    // explicitly remove the file from recent files
     EditorHistoryManager.getInstance(project).removeFile(file)
     project.messageBus.syncPublisher(IdeDocumentHistoryImpl.RecentFileHistoryOrderListener.TOPIC).recentFileRemoved(file)
 
@@ -115,10 +114,6 @@ class ToolWindowEditorTabTransferController(
       content.preferredFocusableComponent ?: component.getPreferredFocusedComponent() ?: component,
       persistInEditorHistory = descriptor.persistInEditorHistory,
       content = content,
-      onEditorClosed = { file ->
-        file.isValid = false
-        file.releaseEditorLifetime()
-      },
     )
   }
 
@@ -127,6 +122,9 @@ class ToolWindowEditorTabTransferController(
     toolWindow: ToolWindow,
     targetContentManager: ContentManager?,
   ) {
+    // This function may run while Content.TEMPORARY_REMOVED_KEY is set,
+    // for example in the rollback path of moveContentToEditor().
+    // Clear it here so addContent() uses the normal tool window restore path.
     content.withTemporaryRemovedFlagCleared {
       val manager = targetContentManager ?: toolWindow.contentManager
       manager.addContent(content)

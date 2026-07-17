@@ -54,7 +54,7 @@ class ToolWindowEditorTabDockContainer private constructor(
     }
   }
 
-  override fun getContainerComponent() = component
+  override fun getContainerComponent(): JComponent = component
 
   override fun add(content: DockableContent<*>, dropTarget: RelativePoint?) {
     if (dropTarget == null) return
@@ -66,7 +66,7 @@ class ToolWindowEditorTabDockContainer private constructor(
     project.service<ToolWindowEditorTabTransferController>().moveContentToToolWindow(toolWindow, file, targetDecorator)
   }
 
-  override fun isEmpty() = false
+  override fun isEmpty(): Boolean = false
 
   override fun isDisposeWhenEmpty(): Boolean = false
 
