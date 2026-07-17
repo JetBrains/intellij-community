@@ -126,6 +126,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected static final Key<Boolean> ADD_PROJECT_MAPPING = KeyWithDefaultValue.create("ADD_PROJECT_MAPPING", Boolean.TRUE);
   protected static final Key<Boolean> ONLY_DIRECTORIES = KeyWithDefaultValue.create("ONLY_DIRECTORIES", Boolean.FALSE);
   protected static final Key<Boolean> SORT_VALUES = KeyWithDefaultValue.create("SORT_VALUES", Boolean.TRUE);
+  protected static final Key<Boolean> ENVIRONMENT_RESTRICTED = KeyWithDefaultValue.create("ENVIRONMENT_RESTRICTED", Boolean.FALSE);
 
   protected final @NotNull Project myProject;
   protected final PerFileMappingsEx<T> myMappings;
@@ -258,7 +259,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     Object selectedTarget = row >= 0 ? myModel.data.get(myTable.convertRowIndexToModel(row)).first : null;
     VirtualFile toSelect = myFileToSelect != null ? myFileToSelect :
                            ObjectUtils.tryCast(selectedTarget, VirtualFile.class);
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(!param(ONLY_DIRECTORIES), true, true, true, true, true);
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(!param(ONLY_DIRECTORIES), true, true, true, true, true)
+      .withEnvironmentRestricted(param(ENVIRONMENT_RESTRICTED));
     FileChooser.chooseFiles(descriptor, myProject, myTable, toSelect, this::doAddFiles);
   }
 
@@ -545,7 +547,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
             newPath = panel.getTextField().getText();
           }
         });
-        panel.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleLocalFileDescriptor()));
+        panel.addBrowseFolderListener(new TextBrowseFolderListener(
+          FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withEnvironmentRestricted(param(ENVIRONMENT_RESTRICTED))));
         return panel;
       }
 
