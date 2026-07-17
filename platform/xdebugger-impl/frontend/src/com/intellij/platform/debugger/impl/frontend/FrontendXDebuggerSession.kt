@@ -207,7 +207,7 @@ class FrontendXDebuggerSession(
   override val processHandler: ProcessHandler = createFrontendProcessHandler(project, sessionDto.processHandlerDto)
 
   private val consoleViewDeferred: Deferred<ConsoleView?> = scope.async {
-    sessionDto.consoleViewData?.consoleView(processHandler)
+    sessionDto.consoleViewData?.consoleView(tabScope, processHandler)
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -448,11 +448,6 @@ class FrontendXDebuggerSession(
       executionEnvDto.executionEnvironment?.contentToReuse = runContentDescriptor
     }
 
-    tabScope.launch(Dispatchers.EDT) {
-      tabInfo.showTab.await()
-      tab.showTab(contentToReuse)
-    }
-
     // don't subscribe on additional tabs if we have [ExecutionEnvironment] (it means this is Monolith)
     val localEnvironment = tabInfo.executionEnvironmentProxyDto?.executionEnvironment
     if (localEnvironment == null) {
@@ -467,6 +462,8 @@ class FrontendXDebuggerSession(
     }
 
     tabScope.launch(Dispatchers.EDT) {
+      tabInfo.showTab.await()
+      tab.showTab(contentToReuse)
       pausedFlow.toFlow().collectLatest { paused ->
         tab.onPause(paused.pausedByUser, paused.topFrameIsAbsent)
       }
