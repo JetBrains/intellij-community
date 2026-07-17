@@ -68,7 +68,7 @@ abstract class KotlinWithGradleConfigurator : BaseKotlinProjectConfigurator() {
 
         val module = moduleSourceRootGroup.baseModule
         val (moduleBuildFile, topLevelBuildFile) = runReadAction {
-            module.getBuildScriptPsiFile() to module.project.getTopLevelBuildScriptPsiFile()
+            module.getBuildScriptPsiFile() to module.getTopLevelBuildScriptPsiFile()
         }
 
         if (moduleBuildFile == null && topLevelBuildFile == null || isKotlinNativeRuntimeInScope(moduleSourceRootGroup)) {
