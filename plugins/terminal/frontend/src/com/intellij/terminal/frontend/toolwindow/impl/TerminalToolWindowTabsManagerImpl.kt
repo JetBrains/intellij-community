@@ -4,6 +4,7 @@ import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -299,8 +300,12 @@ internal class TerminalToolWindowTabsManagerImpl(
         toolWindow.setTabActions(ActionManager.getInstance().getAction("TerminalToolwindowActionGroup"))
         toolWindow.setTabDoubleClickActions(listOf(TerminalRenameTabAction()))
 
-        TerminalDnDHandler.installHandler(toolWindow, manager.coroutineScope.childScope("Terminal DnD handler"))
-        TerminalDockContainer.install(toolWindow.project, toolWindow.decorator)
+        // Drag-and-drop and docking rely on the tool window decorator (real UI), which is absent in a headless environment.
+        // Skip them there so the tool window can still be initialized in tests.
+        if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+          TerminalDnDHandler.installHandler(toolWindow, manager.coroutineScope.childScope("Terminal DnD handler"))
+          TerminalDockContainer.install(toolWindow.project, toolWindow.decorator)
+        }
       }
     }
 
