@@ -35,19 +35,37 @@ Treat line counts as prompts to inspect complexity, not hard thresholds.
 
 Never add an interface, presenter, reducer, effect layer, event bus, global UI store, or framework merely to satisfy a pattern. Require every abstraction to remove concrete duplication, isolate a dependency, make ownership clear, or make important behavior testable.
 
+## Prefer composition and platform components
+
+Prefer existing IntelliJ Platform, JB UI, Kotlin UI DSL, or standard Swing components. Configure and compose them into a feature View instead of subclassing `JComponent`, `JPanel`, or another widget merely to provide layout, defaults, borders, or event wiring. A feature wrapper can own a root `JComponent` without being a Swing component itself. Subclass a Swing component only when the subtype has a genuine reusable widget contract or a platform integration point requires it.
+
+Before implementing a new reusable Swing widget or any custom painting, stop and ask the user for explicit approval. This gate covers reusable `JComponent` subclasses, overrides of `paint`, `paintComponent`, or `paintChildren`, `Painter` implementations, and direct `Graphics2D` rendering. Explain why existing platform or standard components, composition, icons, borders, renderers, or UI DSL are insufficient, propose the closest standard alternative, and wait for approval. Existing custom components may be reviewed or refactored without retrospective approval; ask when the change introduces a new custom widget or new custom painting.
+
+When a reusable custom widget is approved, give it a proper `ComponentUI` delegate. Keep reusable rendering, look-and-feel defaults, scaling and theme behavior, and UI-installed listeners in the delegate with symmetric `installUI` and `uninstallUI` lifecycle. Keep the widget's semantic state and public behavior in the `JComponent` subclass; do not put ad hoc painting into a feature View.
+
 ## Define the feature boundary
 
-Expose a small component API and keep implementation details private:
+Keep Swing types out of public or external APIs wherever possible. Exchange immutable state, domain values, stable IDs, and semantic callbacks. When Swing embedding is unavoidable, expose only the root `JComponent` at that integration seam and keep child widgets, models, renderers, painters, and raw Swing events private.
+
+Prefer a concrete feature wrapper over a Swing subclass or an interface that consumers do not need:
 
 ```kotlin
-interface SearchComponent {
-  val component: JComponent
-  fun focusSearch()
-  fun clear()
+internal class SearchComponent {
+  private val searchField = JBTextField()
+
+  val component: JComponent = JPanel(BorderLayout()).apply {
+    add(searchField)
+  }
+
+  fun focusSearch() = searchField.requestFocusInWindow()
+
+  fun clear() {
+    searchField.text = ""
+  }
 }
 ```
 
-Prefer a concrete component class when consumers do not need an interface. Do not expose buttons, lists, trees, text fields, models, or other internal widgets for outside manipulation.
+If an API must be public, keep UI construction behind an internal integration point and expose domain-oriented operations. Do not expose buttons, lists, trees, text fields, models, or other internal widgets for outside manipulation.
 
 Use the component or a nearby composition root to construct the View, Controller, services, and navigator. Prefer constructor injection. Restrict `ApplicationManager.getApplication().getService(...)` and similar lookups to composition roots or established platform integration points, never arbitrary View code.
 
@@ -195,7 +213,7 @@ Do not perform a large architectural rewrite when a small extraction resolves th
 Treat these as severity defaults and adjust for actual impact.
 
 - **Critical:** Blocking the EDT; accessing Swing from background threads; network, filesystem, database, or domain mutations in the View; domain layers depending on Swing.
-- **Major:** Exposed internal widgets; application state inferred from widgets; Controller-built layouts; uncancelled or stale async results; missing lifecycle cleanup; a god panel mixing UI, services, and workflows.
+- **Major:** Exposed internal widgets or unnecessary Swing types in public APIs; avoidable Swing inheritance; unnecessary custom widgets or painting; a reusable custom widget without a proper `ComponentUI`; application state inferred from widgets; Controller-built layouts; uncancelled or stale async results; missing lifecycle cleanup; a god panel mixing UI, services, and workflows.
 - **Minor:** Large anonymous listeners; unnecessary widget getters or interfaces; mixed construction and behavior that remains understandable; small duplication in imperative rendering.
 
 A panel over roughly 500 lines is a review signal, not an automatic defect. Judge responsibility count, coupling, asynchronous behavior, and change risk.
