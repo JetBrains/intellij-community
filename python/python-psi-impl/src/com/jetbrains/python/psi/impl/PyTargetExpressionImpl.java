@@ -29,11 +29,9 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.Property;
 import com.jetbrains.python.psi.PyAssignmentExpression;
 import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyComprehensionElement;
 import com.jetbrains.python.psi.PyComprehensionForComponent;
@@ -86,6 +84,7 @@ import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyNamedTupleType;
+import com.jetbrains.python.psi.types.PySyntheticCallHelper;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
@@ -104,7 +103,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
@@ -308,7 +306,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       }
       else {
         final PyType iterationType = assignedIterable != null
-                                     ? getIterationType(assignedType, assignedIterable, assignedIterable, false, context)
+                                     ? getIterationType(assignedType, assignedIterable, false, context)
                                      : getIterationType(assignedType, context);
         if (iterationType == null) {
           return null;
@@ -374,7 +372,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     final PyClass cls = withType.getPyClass();
     final PyFunction enter = cls.findMethodByName(isAsync ? PyNames.AENTER : PyNames.ENTER, true, context);
     if (enter != null) {
-      final PyType enterType = getContextSensitiveType(enter, context, withExpression);
+      final PyType enterType = PySyntheticCallHelper.getCallType(enter, withType, List.of(), context);
       if (enterType != null) {
         return isAsync ? Ref.deref(PyTypingTypeProvider.coroutineOrGeneratorElementType(enterType)) : enterType;
       }
@@ -457,7 +455,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     }
     if (source != null) {
       final PyType sourceType = context.getType(source);
-      final PyType type = getIterationType(sourceType, source, this, isAsync, context);
+      final PyType type = getIterationType(sourceType, this, isAsync, context);
       target = PyPsiUtils.flattenParens(target);
       if (type != null && (target instanceof PyTupleExpression || target instanceof PyListLiteralExpression)) {
         return getTargetTypeFromIterableUnpacking(this, (PySequenceExpression)target, null, type, context);
@@ -483,28 +481,28 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   }
 
   // TODO migrate this to matching against typing.Iterable protocol with PyTypeUtil.convertToType
-  public static @Nullable PyType getIterationType(@Nullable PyType iterableType, @Nullable PyExpression source, @NotNull PsiElement anchor,
+  public static @Nullable PyType getIterationType(@Nullable PyType iterableType, @NotNull PsiElement anchor,
                                                   boolean isAsync, @NotNull TypeEvalContext context) {
     if (iterableType instanceof PyTupleType tupleType) {
       return tupleType.getIteratedItemType();
     }
     if (iterableType instanceof PyUnionType) {
-      return ((PyUnionType)iterableType).map(member -> getIterationType(member, source, anchor, isAsync, context));
+      return ((PyUnionType)iterableType).map(member -> getIterationType(member, anchor, isAsync, context));
     }
     if (!isAsync) {
       if (!isUnknown(iterableType) && PyABCUtil.isSubtype(iterableType, PyNames.ITERABLE, context)) {
         final PyFunction iterateMethod = findMethodByName(iterableType, PyNames.ITER, context);
         if (iterateMethod != null) {
-          final PyType iterateReturnType = getContextSensitiveType(iterateMethod, context, source);
-          return getIteratedItemType(iterateReturnType, source, anchor, context, false);
+          final PyType iterateReturnType = PySyntheticCallHelper.getCallType(iterateMethod, iterableType, List.of(), context);
+          return getIteratedItemType(iterateReturnType, anchor, context, false);
         }
-        final Ref<PyType> nextMethodCallType = getNextMethodCallType(iterableType, source, anchor, context, false);
+        final Ref<PyType> nextMethodCallType = getNextMethodCallType(iterableType, anchor, context, false);
         if (nextMethodCallType != null) {
           return nextMethodCallType.get();
         }
         final PyFunction getItem = findMethodByName(iterableType, PyNames.GETITEM, context);
         if (getItem != null) {
-          return getContextSensitiveType(getItem, context, source);
+          return PySyntheticCallHelper.getCallType(getItem, iterableType, List.of(), context);
         }
       }
     }
@@ -512,8 +510,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       if (iterableType != null && PyABCUtil.isSubtype(iterableType, PyNames.ASYNC_ITERABLE, context)) {
         final PyFunction iterateMethod = findMethodByName(iterableType, PyNames.AITER, context);
         if (iterateMethod != null) {
-          final PyType iterateReturnType = getContextSensitiveType(iterateMethod, context, source);
-          return getIteratedItemType(iterateReturnType, source, anchor, context, true);
+          final PyType iterateReturnType = PySyntheticCallHelper.getCallType(iterateMethod, iterableType, List.of(), context);
+          return getIteratedItemType(iterateReturnType, anchor, context, true);
         }
       }
     }
@@ -521,11 +519,10 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   }
 
   private static @Nullable PyType getIteratedItemType(@Nullable PyType type,
-                                                      @Nullable PyExpression source,
                                                       @NotNull PsiElement anchor,
                                                       @NotNull TypeEvalContext context,
                                                       boolean async) {
-    final Ref<PyType> nextMethodCallType = getNextMethodCallType(type, source, anchor, context, async);
+    final Ref<PyType> nextMethodCallType = getNextMethodCallType(type, anchor, context, async);
     if (nextMethodCallType != null && !isUnknown(nextMethodCallType.get())) {
       if (async) {
         return PyTypeUtil.derefOrUnknown(PyTypingTypeProvider.unwrapCoroutineReturnType(nextMethodCallType.get()));
@@ -539,7 +536,6 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   }
 
   private static @Nullable Ref<PyType> getNextMethodCallType(@Nullable PyType type,
-                                                             @Nullable PyExpression source,
                                                              @NotNull PsiElement anchor,
                                                              @NotNull TypeEvalContext context,
                                                              boolean async) {
@@ -552,7 +548,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
                                     : PyNames.NEXT;
     final PyFunction next = findMethodByName(type, nextMethodName, context);
     if (next != null) {
-      return Ref.create(getContextSensitiveType(next, context, source));
+      return Ref.create(PySyntheticCallHelper.getCallType(next, type, List.of(), context));
     }
     return null;
   }
@@ -596,22 +592,6 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     // otherwise replace Self type with an actual instance type.
     PyTypeChecker.GenericSubstitutions substitutions = PyTypeChecker.unifyReceiver(receiverType, context);
     return PyTypeChecker.match(PyTypeChecker.substitute(selfParameterType, substitutions, context), receiverType, context);
-  }
-
-  public static @Nullable PyType getContextSensitiveType(@NotNull PyFunction function, @NotNull TypeEvalContext context,
-                                                         @Nullable PyExpression source) {
-    return function.getCallType(source, null, buildArgumentsToParametersMap(source, function, context), context);
-  }
-
-  private static @NotNull Map<PyExpression, PyCallableParameter> buildArgumentsToParametersMap(@Nullable PyExpression receiver,
-                                                                                               @NotNull PyCallable callable,
-                                                                                               @NotNull TypeEvalContext context) {
-    if (receiver == null) return Collections.emptyMap();
-
-    final PyCallableParameter firstParameter = ContainerUtil.getFirstItem(callable.getParameters(context));
-    if (firstParameter == null || !firstParameter.isSelf()) return Collections.emptyMap();
-
-    return Map.of(receiver, firstParameter);
   }
 
   private @Nullable PyType getTypeFromExcept() {

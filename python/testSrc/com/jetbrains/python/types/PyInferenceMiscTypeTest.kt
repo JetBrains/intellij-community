@@ -1924,6 +1924,19 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
+    @TestFor(issues = ["PY-91009"])
+    fun `generic context manager over union binds enter to each member`() = test("""
+      class CM[T]:
+          def __enter__(self) -> T: ...
+          def __exit__(self, *args): ...
+
+      def foo(cm: CM[int] | CM[str]):
+          with cm as x:
+              expr = x
+      #       └ TYPE int | str
+      """)
+
+    @Test
     @TestFor(issues = ["PY-59548"])
     fun `generic base class specified through alias`() = test("""
       from typing import Generic, TypeVar

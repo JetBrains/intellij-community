@@ -32,7 +32,7 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
       if (iterable == null) {
         return null;
       }
-      return PyTargetExpressionImpl.getIterationType(context.getType(iterable), iterable, starExpression, false, context);
+      return PyTargetExpressionImpl.getIterationType(context.getType(iterable), starExpression, false, context);
     }
     return context.getType(resultExpression);
   }

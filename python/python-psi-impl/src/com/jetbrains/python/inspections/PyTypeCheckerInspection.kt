@@ -207,7 +207,7 @@ open class PyTypeCheckerInspection : PyInspection() {
       val source = forPart.source ?: return
       val sourceType = myTypeEvalContext.getType(source) ?: return
       if (sourceType.containsAny(context = myTypeEvalContext)) return
-      val itemType = PyTargetExpressionImpl.getIterationType(sourceType, source, source, node.isAsync, myTypeEvalContext)
+      val itemType = PyTargetExpressionImpl.getIterationType(sourceType, source, node.isAsync, myTypeEvalContext)
       if (!itemType.isAnyOrUnknown && !itemType.containsAny(context = myTypeEvalContext) &&
           !isSubtype(itemType, PyNames.ITERABLE, myTypeEvalContext)) {
         registerProblem(target,

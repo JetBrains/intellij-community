@@ -360,7 +360,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       def f(a: A[LiteralString]):
           for x in a:
               expr = x
-      #       └ TYPE Unknown FIXME LiteralString # PY-91094
+      #       └ TYPE LiteralString
       """)
 
     @Test
