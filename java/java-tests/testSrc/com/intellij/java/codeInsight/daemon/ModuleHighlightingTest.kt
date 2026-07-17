@@ -72,7 +72,6 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.workspaceModel.updateProjectModel
-import com.intellij.util.ThrowableRunnable
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
@@ -962,8 +961,14 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
     runWriteActionAndWait { manifest.setBinaryContent("Manifest-Version: 1.0\n\n".toByteArray()) }
 
-    // Automatic-Module-Name removed; module name is now derived from the resource root name ("res_m6" -> "res.m6")
-    highlight("module-info.java", "module M { requires <error descr=\"Module not found: m6.bar\">m6.bar</error>; requires res.m6; }")
+    // Automatic-Module-Name removed; the manifest is inside a source root, not a real JAR, so it has no
+    // further effect on naming and the module falls back to its default name.
+    highlight("module-info.java", "module M { requires <error descr=\"Module not found: m6.bar\">m6.bar</error>; requires light.idea.test.m6; }")
+  }
+
+  fun testManifestWithoutAutoModuleNameDoesNotShadowSourceModuleName() {
+    addResourceFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\n\n", module = M6)
+    highlight("module-info.java", "module M { requires light.idea.test.m6; requires  <error descr=\"Module not found: res.m6\">res.m6</error>; }")
   }
 
   fun testAutoModuleNameChangesOnAutoModuleNameChanged() {

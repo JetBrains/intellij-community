@@ -32,7 +32,10 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.CachedValueImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +54,7 @@ import java.util.regex.Pattern;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public final class LightJavaModule extends LightElement implements PsiJavaModule {
-  private static final Key<String> CLAIMED_MODULE_NAME_KEY = Key.create("LightJavaModule.claimedModuleName");
+  private static final Key<CachedValue<String>> CLAIMED_MODULE_NAME_KEY = Key.create("LightJavaModule.claimedModuleName");
 
   private final LightJavaModuleReferenceElement myRefElement;
   private final VirtualFile myRoot;
@@ -297,18 +300,20 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
   }
 
   public static @Nullable String claimedModuleName(@NotNull VirtualFile manifest) {
-    String cached = manifest.getUserData(CLAIMED_MODULE_NAME_KEY);
-    if (cached != null) return cached.isEmpty() ? null : cached;
-    try (InputStream stream = manifest.getInputStream()) {
-      String result = new Manifest(stream).getMainAttributes().getValue(AUTO_MODULE_NAME);
-      manifest.putUserData(CLAIMED_MODULE_NAME_KEY, result != null ? result : "");
-      return result;
+    CachedValue<String> cached = manifest.getUserData(CLAIMED_MODULE_NAME_KEY);
+    if (cached == null) {
+      cached = new CachedValueImpl<>(() -> {
+        try (InputStream stream = manifest.getInputStream()) {
+          return CachedValueProvider.Result.create(new Manifest(stream).getMainAttributes().getValue(AUTO_MODULE_NAME), manifest);
+        }
+        catch (IOException e) {
+          Logger.getInstance(LightJavaModule.class).warn(manifest.getPath(), e);
+          return CachedValueProvider.Result.create(null, manifest);
+        }
+      });
+      manifest.putUserData(CLAIMED_MODULE_NAME_KEY, cached);
     }
-    catch (IOException e) {
-      Logger.getInstance(LightJavaModule.class).warn(manifest.getPath(), e);
-      manifest.putUserData(CLAIMED_MODULE_NAME_KEY, "");
-      return null;
-    }
+    return cached.getValue();
   }
 
   /**
