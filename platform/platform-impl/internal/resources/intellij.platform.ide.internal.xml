@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal">
+<idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.fastutil"/>
@@ -37,4 +37,238 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint name="completion.ml.model" interface="com.intellij.internal.ml.completion.RankingModelProvider" dynamic="true"/>
+
+    <extensionPoint name="retypeFileAssistant" interface="com.intellij.internal.retype.RetypeFileAssistant" dynamic="true"/>
+
+    <extensionPoint name="fileTypeStatisticProvider"
+                    interface="com.intellij.internal.statistic.fileTypes.FileTypeStatisticProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <backgroundPostStartupActivity implementation="com.intellij.featureStatistics.InternalFlagDetection"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.LatencyRecorder"
+                        serviceImplementation="com.intellij.internal.performance.LatencyRecorderImpl"/>
+
+    <applicationService serviceInterface="com.intellij.ide.StatisticsNotificationManager"
+                        serviceImplementation="com.intellij.internal.statistic.notification.StatisticsNotificationManagerImpl"/>
+
+    <editorActionHandler action="EditorDelete"
+                         implementationClass="com.intellij.internal.statistic.collectors.fus.DeleteSelectionLoggingHandler"
+                         id="delete.selection.logging"
+                         order="before delete.for.selection"/>
+    <editorActionHandler action="EditorBackSpace"
+                         implementationClass="com.intellij.internal.statistic.collectors.fus.BackspaceSelectionLoggingHandler"
+                         id="backspace.selection.logging"
+                         order="after backspace.lookup, before backspace.for.selection"/>
+
+    <applicationService serviceInterface="com.intellij.internal.statistic.eventLog.StatisticsRegionSettingsService"
+                        serviceImplementation="com.intellij.internal.statistic.StatisticsRegionSettingsServiceImpl" preload="notLightEdit"/>
+
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector$FacetTypeUtilValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector$RegistryUtilValidator"/>
+
+    <statistics.projectUsagesCollector
+      implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.ProjectStructureUsageCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.plugins.PluginsUsagesCollector"
+                                           allowOnStartup="true"/>
+    <statistics.applicationUsagesCollector
+      implementation="com.intellij.internal.statistic.collectors.fus.plugins.PluginRepositoriesUsagesCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.internal.statistic.collectors.fus.plugins.PluginSyncUsageCollector"/>
+    <statistics.applicationUsagesCollector
+      implementation="com.intellij.internal.statistic.collectors.fus.ui.EditorColorSchemesUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.FontSizeInfoUsageCollector"/>
+    <statistics.applicationUsagesCollector
+      implementation="com.intellij.internal.statistic.collectors.fus.os.LinuxWindowManagerUsageCollector" allowOnStartup="true"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.os.SystemRuntimeCollector"
+                                           allowOnStartup="true"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.UiInfoUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.LocalizationUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.UpdateManagerUsagesCollector"
+                                           allowOnStartup="true"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.settings.ProxySettingsCollector"/>
+    <statistics.applicationUsagesCollector
+      implementation="com.intellij.internal.statistic.collectors.fus.settings.SystemPropertiesFileCollector"/>
+    <statistics.applicationUsagesCollector
+      implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector"/>
+    <statistics.applicationUsagesCollector
+      implementation="com.intellij.internal.statistic.collectors.fus.ToolkitInfoCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.project.IndexableFilesCollector"/>
+    <statistics.projectUsagesCollector
+      implementation="com.intellij.internal.statistic.collectors.fus.project.IntelliJProjectUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.SpeculativeUndoStatCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.build.BuildToolsCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.environment.EditorsCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.psi.IElementTypeUsageCollector"/>
+
+    <fileTypeUsageSchemaDescriptor schema="DotBazelFile"
+                                   implementationClass="com.intellij.internal.statistic.collectors.fus.build.DotBazelFileTypeUsageSchemaDescriptor"/>
+    <fileTypeUsageSchemaDescriptor schema="BazelBuildFile"
+                                   implementationClass="com.intellij.internal.statistic.collectors.fus.build.BazelBuildFileTypeUsageSchemaDescriptor"/>
+    <fileTypeUsageSchemaDescriptor schema="BazelWorkspaceFile"
+                                   implementationClass="com.intellij.internal.statistic.collectors.fus.build.BazelWorkspaceFileTypeUsageSchemaDescriptor"/>
+    <fileTypeUsageSchemaDescriptor schema="BazelModuleFile"
+                                   implementationClass="com.intellij.internal.statistic.collectors.fus.build.BazelModuleFileTypeUsageSchemaDescriptor"/>
+
+    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.KeymapUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.KeymapChangesCollector"/>
+    <editorNotificationProvider implementation="com.intellij.internal.retype.RetypeEditorNotificationProvider"/>
+  </extensions>
+
+  <actions resource-bundle="messages.ActionsBundle">
+    <action id="IconsLoadTime" internal="true" class="com.intellij.internal.IconsLoadTime"/>
+    <action id="OpenLog" internal="true" class="com.intellij.internal.OpenLogAction">
+      <synonym key="action.OpenLog.Show.text"/>
+      <add-to-group group-id="HelpMenu"/>
+    </action>
+    <action id="LogFocusRequests" class="com.intellij.internal.focus.LogFocusRequestsAction"/>
+    <action id="PerformGC" internal="true" class="com.intellij.internal.PerformGCAction"/>
+
+    <action class="com.intellij.internal.ExceptionShowCaseAction" internal="true" description="Show exception" text="Show Exception">
+      <add-to-group group-id="Internal.Errors"/>
+    </action>
+    <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction">
+      <add-to-group group-id="Internal"/>
+    </action>
+    <action id="PrintModulesAndEntitySources" internal="true"
+            class="com.intellij.internal.PrintModulesAndEntitySources"
+            text="Print Modules and Entity Sources to Log">
+      <add-to-group group-id="Internal.WorkspaceModel"/>
+    </action>
+
+    <group id="Internal.Ex" internal="true">
+      <action id="ShowRegisteredRemoteApis" internal="true" class="com.intellij.internal.rpc.ShowRegisteredRemoteApisAction"/>
+      <action id="ShowEdtUtilizationChart" internal="true" class="com.intellij.internal.ShowEdtUtilizationChartAction"/>
+      <action id="ClearIDEStatistics"
+              class="com.intellij.internal.ClearIDEStatisticsAction"
+              text="Clear IDE Statistics"
+              description="Clear all IDE statistics"
+              internal="true"/>
+      <action internal="true" id="ShowMainMenu" class="com.intellij.internal.ui.ShowMainMenuAction"/>
+      <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction">
+        <synonym text="Exit Dumb Mode"/>
+        <synonym text="Enter Dumb Mode"/>
+      </action>
+      <action id="ShortDumbMode" internal="true" class="com.intellij.internal.RunShortDumbModeAction" text="Run Short Dumb Action"/>
+      <action id="ToggleIncompleteMode" internal="true" class="com.intellij.internal.ToggleIncompleteDependenciesModeAction">
+        <synonym text="Exit Incomplete Dependencies Mode"/>
+      </action>
+      <action id="DumbModeTremble" class="com.intellij.internal.DumbModeTrembleAction" internal="true">
+        <synonym text="Exit Tremble Dumb Mode"/>
+        <synonym text="Enter Tremble Dumb Mode"/>
+      </action>
+      <action id="IoFlooding" class="com.intellij.internal.IoFloodingAction" internal="true">
+        <synonym text="Stop IO Flooding"/>
+        <synonym text="Start IO Flooding"/>
+      </action>
+      <action id="ShowPoweredProgress" internal="true"
+              class="com.intellij.internal.ShowPoweredProgressAction"
+              text="Show Powered Progress"/>
+      <action id="SkipWindowDeactivationEvents" class="com.intellij.internal.SkipWindowDeactivationEventsAction" internal="true">
+        <synonym text="Disable ProcessCanceledException"/>
+      </action>
+      <action id="ResetGotItTooltips" internal="true" class="com.intellij.internal.ResetGotItTooltips"/>
+      <action id="ListPersistentStateComponents" internal="true"
+              class="com.intellij.internal.components.ListPersistentStateComponentsAction"/>
+
+      <group id="Internal.Performance" popup="true">
+        <action id="TurnOnOffCachedValueProfilerAction" internal="true"
+                class="com.intellij.internal.cachedValueProfiler.TurnOnOffCachedValueProfilerAction"/>
+        <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction"/>
+        <action id="TypingLatencyReport" class="com.intellij.internal.retype.TypingLatencyReportAction" internal="true"/>
+        <action id="RetypeFile" class="com.intellij.internal.retype.RetypeFileAction" internal="true"/>
+      </group>
+      <action id="ShowIconsNotPatchedForExpUi" class="com.intellij.internal.ui.ShowIconsNotPatchedForExpUi" internal="true"/>
+
+      <group id="TopAnomalies" internal="true" class="com.intellij.internal.anomalies.TopAnomaliesAction" popup="true"/>
+      <action id="ShowUpdateDialogAction" internal="true" class="com.intellij.internal.ShowUpdateInfoDialogAction"/>
+      <action id="KeymapToCsv" internal="true" class="com.intellij.internal.KeymapToCsvAction"/>
+      <action id="CompareKeymaps" internal="true" class="com.intellij.internal.CompareKeymapsAction"/>
+
+      <add-to-group group-id="Internal"/>
+    </group>
+
+    <action id="EditorRenderingBenchmarkAction" internal="true"
+            class="com.intellij.internal.performance.EditorRenderingBenchmarkAction">
+      <add-to-group group-id="Internal.Editor"/>
+    </action>
+
+    <group id="Internal.UI.Ex" internal="true">
+      <group id="Internal.UI.Demos" popup="true" internal="true">
+        <action id="LabelSizeDemoAction" internal="true" class="com.intellij.internal.LabelSizeDemoAction"/>
+        <action id="JEditorPaneDemoAction" internal="true" class="com.intellij.internal.ui.JEditorPaneDemoAction"/>
+        <action id="JBTabsDemo" internal="true" class="com.intellij.internal.JBTabsDemoAction"/>
+        <action id="JTabbedPaneDemo" internal="true" class="com.intellij.internal.JTabbedPaneDemoAction"/>
+        <action id="TestTooltipsAction" internal="true" class="com.intellij.internal.TestTooltipsAction"/>
+        <action id="ShowInlineBanner" internal="true" class="com.intellij.internal.ui.InlineBannerTestAction"/>
+        <action id="ToolbarDemo" internal="true" class="com.intellij.internal.ToolbarDemoAction"/>
+        <action id="TreeViewModelDemo" internal="true" class="com.intellij.internal.ui.TreeViewModelDemoAction"/>
+      </group>
+      <group id="Internal.UI.Animation" popup="true">
+        <action id="AnimationPanelTestAction" internal="true" class="com.intellij.internal.ui.AnimationPanelTestAction"/>
+        <action id="AnimatorTestAction" class="com.intellij.internal.ui.AnimatorTestAction"/>
+      </group>
+      <group id="Internal.UI.Focus" popup="true">
+        <action id="FocusDebugger" internal="true" class="com.intellij.internal.focus.FocusDebuggerAction"/>
+        <action id="FocusTracer" internal="true" class="com.intellij.internal.focus.FocusTracesAction"/>
+        <reference ref="LogFocusRequests"/>
+      </group>
+      <group id="Internal.UI.Icons" popup="true">
+        <action id="RoundedIconTestAction" internal="true" class="com.intellij.internal.ui.RoundedIconTestAction"/>
+        <action id="ProgressIconShowcaseAction" internal="true" class="com.intellij.internal.ui.ProgressIconShowcaseAction"/>
+        <action id="IconScaleTestAction" internal="true" class="com.intellij.internal.ui.ShowIconScaleTestAction"/>
+      </group>
+      <group id="Internal.UI.KotlinUiDsl" popup="true">
+        <action id="GridLayoutTestAction" internal="true" class="com.intellij.internal.ui.gridLayoutTestAction.GridLayoutTestAction"
+                text="Show GridLayout Test"/>
+      </group>
+      <action id="ComponentPanelTestAction" internal="true" class="com.intellij.internal.ui.ComponentPanelTestAction"/>
+      <action id="WrapLayoutTestAction" internal="true" class="com.intellij.internal.ui.WrapLayoutTestAction"/>
+      <action id="UIFreeze" internal="true" class="com.intellij.internal.UIFreezeAction"/>
+      <action id="PooledFreeze" internal="true" class="com.intellij.internal.PooledFreezeAction"/>
+      <action id="GrayFilterConfig" internal="true" class="com.intellij.internal.GrayFilterConfig"/>
+      <action id="TextGrayFilterConfig" internal="true" class="com.intellij.internal.TextGrayFilterConfig"/>
+      <action id="ValidationTest" internal="true" class="com.intellij.internal.validation.TestDialogWithValidationAction"/>
+      <action id="MacMessagesTest" internal="true" class="com.intellij.internal.validation.TestMacMessagesAction"/>
+      <action id="UnixInfoTest" internal="true" class="com.intellij.internal.ui.UnixInfoTestAction"/>
+      <action id="TreeExpandAll" internal="true" class="com.intellij.internal.tree.ExpandAll"/>
+      <action id="RulerGuide" internal="true" class="com.intellij.internal.rulerguide.RulerGuideAction"/>
+      <action id="WriteActionUnderProgress" internal="true" class="com.intellij.internal.TestWriteActionUnderProgress"/>
+      <action id="LongBackgroundWriteAction" internal="true" class="com.intellij.internal.LongBackgroundWriteAction"/>
+      <action id="FrequentBackgroundWriteAction" internal="true" class="com.intellij.internal.FrequentBackgroundWriteAction"/>
+      <action id="FrequentBackgroundReadAction" internal="true" class="com.intellij.internal.FrequentBackgroundReadAction"/>
+      <action id="TestProgressWindow" internal="true" class="com.intellij.internal.TestProgressWindow"/>
+      <action id="TestCoroutineProgress" internal="true" class="com.intellij.internal.TestCoroutineProgressAction"/>
+      <action id="TestDndAction" class="com.intellij.internal.validation.TestDnd"/>
+      <action id="PositionTrackerTestAction" internal="true" class="com.intellij.internal.ui.PositionTrackerTestAction"/>
+
+      <add-to-group group-id="Internal.UI"/>
+    </group>
+    <action id="HidpiInfo" class="com.intellij.internal.HidpiInfo"/>
+  </actions>
+
+  <applicationListeners>
+    <listener class="com.intellij.internal.statistic.EventLogApplicationLifecycleListener"
+              topic="com.intellij.ide.AppLifecycleListener"
+              activeInHeadlessMode="true"
+              activeInTestMode="false"/>
+    <listener class="com.intellij.internal.performance.LatenciometerListener"
+              topic="com.intellij.openapi.editor.actionSystem.LatencyListener"/>
+    <listener topic="com.intellij.ide.RegionSettings$RegionSettingsListener"
+              class="com.intellij.internal.statistic.StatisticsRegionSettingsListener"/>
+  </applicationListeners>
+
+  <projectListeners>
+    <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageServiceFileEditorManagerListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
 </idea-plugin>

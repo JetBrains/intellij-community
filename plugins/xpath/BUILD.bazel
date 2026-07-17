@@ -152,7 +152,11 @@ jvm_library(
     ),
     module_name = "intellij.xpath.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//xml/dom-impl"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/platform-impl/internal",
+        "//xml/dom-impl",
+    ],
 )
 
 jvm_library(
@@ -178,6 +182,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":xpath-tests",
+        "//platform/platform-impl/internal:internal_test_lib",
         "//platform/platform-impl/concurrency:concurrency_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//xml/dom-impl:dom-impl_test_lib",
@@ -185,6 +190,7 @@ jvm_library(
     ],
     deps = [
         # do not sort,
+        "//platform/platform-impl/internal",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/code-style-api:codeStyle",
