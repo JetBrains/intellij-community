@@ -6,11 +6,13 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
+import com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -32,12 +34,12 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
 
 // will import elements of type T which are referenced by elements of type R (e.g., will import PsiMethods referenced by PsiMethodCallExpression)
 @ApiStatus.Internal
@@ -83,18 +85,6 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
     return ProjectFileIndex.getInstance(psiFile.getProject()).isInContent(virtualFile);
   }
 
-  @NotNull
-  IntentionPreviewInfo generatePreview(@NotNull PsiFile psiFile, @NotNull BiConsumer<? super PsiElement, ? super T> consumer) {
-    PsiElement copy = PsiTreeUtil.findSameElementInCopy(getElement(), psiFile);
-    if (copy == null) return IntentionPreviewInfo.EMPTY;
-    if (candidates.isEmpty()) return IntentionPreviewInfo.EMPTY;
-    T element = candidates.getFirst();
-    PsiClass containingClass = element.getContainingClass();
-    if (containingClass == null) return IntentionPreviewInfo.EMPTY;
-    consumer.accept(copy, element);
-    return IntentionPreviewInfo.DIFF;
-  }
-
   protected abstract @NotNull @IntentionName String getBaseText();
 
   protected abstract @NotNull @NlsSafe String getMemberPresentableText(@NotNull T t);
@@ -121,14 +111,49 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
     return currentPsiModificationCount != myPsiModificationCount;
   }
 
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    R copy = PsiTreeUtil.findSameElementInCopy(getElement(), psiFile);
+    if (copy == null) return IntentionPreviewInfo.EMPTY;
+    if (candidates.isEmpty()) return IntentionPreviewInfo.EMPTY;
+    T element = candidates.getFirst();
+    PsiClass containingClass = element.getContainingClass();
+    if (containingClass == null) return IntentionPreviewInfo.EMPTY;
+    R ref = myReferencePointer.getElement();
+    if (ref == null) return IntentionPreviewInfo.EMPTY;
+    performImport(element, copy);
+    return IntentionPreviewInfo.DIFF;
+  }
+
   abstract @NotNull StaticMembersProcessor.MembersToImport<T> getMembersToImport(int maxResults);
 
   abstract boolean toAddStaticImports();
 
-  protected abstract @NotNull QuestionAction createQuestionAction(@NotNull List<? extends T> methodsToImport, @NotNull Project project, Editor editor);
+  protected abstract @Nls @NotNull String getSelectorTitle();
 
-  @Nullable
-  PsiElement getElement() {
+  @NotNull
+  private QuestionAction createQuestionAction(@NotNull List<? extends T> membersToImport, @NotNull Project project, Editor editor) {
+    return new StaticImportMemberQuestionAction<T>(project, editor, membersToImport, myReferencePointer, getSelectorTitle()) {
+      @Override
+      protected void doImport(@NotNull T toImport) {
+        R ref = myReferencePointer.getElement();
+        if (ref == null) return;
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(ref)) return;
+        Project project = toImport.getProject();
+        WriteCommandAction.runWriteCommandAction(project, getBaseText(), null, () -> performImport(toImport, ref));
+      }
+    };
+  }
+
+  /**
+   * @param toImport member to import
+   * @param ref reference
+   */
+  protected void performImport(@NotNull T toImport, @NotNull R ref) {
+    AddSingleMemberStaticImportAction.bindAllClassRefs(ref.getContainingFile(), toImport, toImport.getName(), toImport.getContainingClass());
+  }
+
+  @Nullable R getElement() {
     return myReferencePointer.getElement();
   }
 

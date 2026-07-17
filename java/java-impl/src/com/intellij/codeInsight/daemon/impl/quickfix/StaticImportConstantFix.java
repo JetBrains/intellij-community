@@ -2,13 +2,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -24,11 +19,11 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.List;
 
 @ApiStatus.Internal
 public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, PsiJavaCodeReferenceElement> implements HighPriorityAction {
@@ -54,11 +49,6 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, Psi
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
-    return generatePreview(psiFile, (_, field) -> AddSingleMemberStaticImportAction.bindAllClassRefs(psiFile, field, field.getName(), field.getContainingClass()));
-  }
-
-  @Override
   StaticMembersProcessor.@NotNull MembersToImport<PsiField> getMembersToImport(int maxResults) {
     PsiJavaCodeReferenceElement element = myReferencePointer.getElement();
     String name = element != null ? element.getReferenceName() : null;
@@ -81,13 +71,8 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, Psi
   }
 
   @Override
-  protected @NotNull QuestionAction createQuestionAction(@NotNull List<? extends PsiField> methodsToImport, @NotNull Project project, Editor editor) {
-    return new StaticImportMemberQuestionAction<PsiField>(project, editor, methodsToImport, myReferencePointer) {
-      @Override
-      protected @NotNull String getPopupTitle() {
-        return QuickFixBundle.message("field.to.import.chooser.title");
-      }
-    };
+  protected @Nls @NotNull String getSelectorTitle() {
+    return QuickFixBundle.message("field.to.import.chooser.title");
   }
 
   @Override
@@ -98,7 +83,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, Psi
 
   @Override
   protected @Nullable PsiElement resolveRef() {
-    PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)getElement();
+    PsiJavaCodeReferenceElement referenceElement = getElement();
     return referenceElement != null ? referenceElement.advancedResolve(true).getElement() : null;
   }
 
