@@ -296,7 +296,8 @@ private class DiffEditorModel(
 }
 
 private fun GitLabNoteLocation.toLineRange(locationToLine: (DiffLineLocation) -> Int?): LineRange? {
-  val start = locationToLine(startSide to startLineIdx) ?: return null
-  val end = locationToLine(side to lineIdx) ?: return null
-  return LineRange(start, end)
+  val endLine = locationToLine(side to lineIdx) ?: return null
+  // if the start line is not available or incorrect, let's return end one-line range to not lose the comment
+  val startLine = locationToLine(startSide to startLineIdx)?.coerceAtMost(endLine) ?: endLine
+  return LineRange(startLine, endLine)
 }
