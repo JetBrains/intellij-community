@@ -101,9 +101,7 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
   private fun loadRealNode(plist: Plist, parentBuilder: SyntaxRawNode?): SyntaxRawNodeImpl {
     val ruleId = currentRuleId.fetchAndIncrement()
     val result = SyntaxRawNodeImpl(ruleId, parentBuilder)
-    for (entry in plist.entries()) {
-      val pListValue: PListValue = entry.value
-      val key: String = entry.key
+    for ((key, pListValue) in plist.entries()) {
       val stringKey = Constants.StringKey.fromName(key)
       if (stringKey != null) {
         pListValue.string?.let { stringValue ->
@@ -326,13 +324,19 @@ private class SyntaxRawNodeImpl(
     val children = rawChildren.mapNotNull { child ->
       child.compile(context)
     }.compactList()
-    val result = SyntaxNodeDescriptorImpl.create(children = children,
-                                                 captures = captures,
-                                                 stringAttributes = stringAttributes)
+    val result = context.internNode(children = children,
+                                    captures = captures,
+                                    stringAttributes = stringAttributes)
     context.compiledNodes[ruleId] = result
     return result
   }
 }
+
+private data class NodeKey(
+  val stringAttributes: List<CharSequence?>?,
+  val captures: List<Array<TextMateCapture?>?>?,
+  val children: List<SyntaxNodeDescriptor>,
+)
 
 /**
  * Shared mutable state of a single [TextMateSyntaxTableBuilder.build] call.
@@ -349,10 +353,33 @@ private class SyntaxCompileContext(
 ) {
   private val captureNames = mutableMapOf<CharSequence, TextMateCapture.Name>()
   private val captureArrays = mutableMapOf<List<TextMateCapture?>, Array<TextMateCapture?>>()
+  private val nodes = mutableMapOf<NodeKey, SyntaxNodeDescriptorImpl>()
 
   fun internCaptureName(name: CharSequence): TextMateCapture.Name {
     return captureNames.getOrPut(name) {
       TextMateCapture.Name(name)
+    }
+  }
+
+  /**
+   * Deduplicates structurally identical nodes before packing them into a [SyntaxNodeDescriptorImpl].
+   *
+   * The key comparison relies on element identity: string attributes, capture names and capture arrays
+   * are interned, children are interned recursively (compilation is bottom-up). Nodes whose payload
+   * contains unresolved [SyntaxNodeReferenceDescriptor]s or capture rules never collide, because those
+   * objects are unique by construction; such nodes are kept as is, which also guarantees that the
+   * reference-resolution pass never mutates a shared payload.
+   */
+  fun internNode(
+    children: List<SyntaxNodeDescriptor>,
+    captures: Array<Array<TextMateCapture?>?>?,
+    stringAttributes: Array<CharSequence?>?,
+  ): SyntaxNodeDescriptorImpl {
+    val key = NodeKey(stringAttributes?.asList(), captures?.asList(), children)
+    return nodes.getOrPut(key) {
+      SyntaxNodeDescriptorImpl.create(children = children,
+                                      captures = captures,
+                                      stringAttributes = stringAttributes)
     }
   }
 
