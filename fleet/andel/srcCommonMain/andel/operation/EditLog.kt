@@ -29,7 +29,7 @@ import kotlinx.serialization.UseSerializers
 class EditLog(
   val operations: IBifurcanVector<Operation>,
   private val ids: IBifurcanVector<UID>,
-  private val identities: IBifurcanVector<UID>,
+  private val identities: IBifurcanVector<UID> = freshIdentities(operations.size()),
   val timestamp: Long = operations.size(),
   private val sumOfOperationSizes: Long = totalOperationSize(operations),
 ) {
@@ -190,3 +190,10 @@ private fun totalOpSize(op: Operation): Long {
   return op.ops.sumOf { maxOf(it.lenAfter, it.lenBefore) }
 }
 
+private fun freshIdentities(size: Long): IBifurcanVector<UID> {
+  var r = IBifurcanVector.empty<UID>().linear()
+  for (i in 0..size) {
+    r = r.pushLast(UID.random())
+  }
+  return r.forked()
+}
