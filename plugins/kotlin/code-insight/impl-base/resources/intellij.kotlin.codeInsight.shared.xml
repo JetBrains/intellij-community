@@ -21,12 +21,15 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
+    <!--suppress SplitModeXmlApiUsage -->
     <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinBlockIntoSingleStatementHandler"/>
+    <!--suppress SplitModeXmlApiUsage -->
     <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinInitializerAndIfToElvisHandler"/>
     <postFormatProcessor implementation="org.jetbrains.kotlin.idea.formatter.TrailingCommaPostFormatProcessor"/>
     <breadcrumbsInfoProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinBreadcrumbsInfoProvider"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings"/>
     <applicationSettings service="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings"/>
+    <!--suppress SplitModeXmlApiUsage -->
     <autoImportOptionsProvider instance="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightWorkspaceSettingsProvider"/>
     <packageDependencies.visitor
             language="kotlin"
