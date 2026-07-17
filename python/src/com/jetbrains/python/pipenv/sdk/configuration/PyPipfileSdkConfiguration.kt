@@ -109,7 +109,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
       val sdk = createSdk(
         PathHolder.Eel(file.toNioPath()),
-        PyPipEnvSdkAdditionalData(),
+        PyPipEnvSdkAdditionalData(Path.of(basePath)),
         suggestedSdkName(basePath)
       ).getOr { return@withBackgroundProgress it }
 

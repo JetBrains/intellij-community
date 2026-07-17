@@ -2,9 +2,12 @@
 package com.intellij.python.test.env.core
 
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 @ApiStatus.Internal
 interface PyEnvironmentFactory: AutoCloseable {
+
+  val workingDir: Path
 
   suspend fun createEnvironment(spec: PyEnvironmentSpec<*>): PyEnvironment {
     return createEnvironment(this, spec)

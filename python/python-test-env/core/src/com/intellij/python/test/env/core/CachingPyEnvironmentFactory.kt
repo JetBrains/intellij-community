@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class CachingPyEnvironmentFactory(
   private val wrapper: PyEnvironmentFactory,
-) : PyEnvironmentFactory {
+) : PyEnvironmentFactory by wrapper {
 
   private val cache = PyEnvironmentCache()
 

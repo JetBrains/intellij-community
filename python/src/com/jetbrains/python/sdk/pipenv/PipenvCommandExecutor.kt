@@ -84,7 +84,7 @@ internal suspend fun setupPipEnvSdkWithProgressReport(
 
   return createSdk(
     pythonBinaryPath = PathHolder.Eel(pythonExecutablePath),
-    sdkAdditionalData = PyPipEnvSdkAdditionalData()
+    sdkAdditionalData = PyPipEnvSdkAdditionalData(moduleBasePath)
   )
 }
 

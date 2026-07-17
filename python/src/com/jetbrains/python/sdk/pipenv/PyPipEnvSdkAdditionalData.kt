@@ -2,15 +2,17 @@
 package com.jetbrains.python.sdk.pipenv
 
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.flavors.PyFlavorAndData
+import com.jetbrains.python.sdk.flavors.PyFlavorData
 import org.jdom.Element
+import java.nio.file.Path
 
 /**
  * Additional Pipenv data associated with an SDK.
  *
  */
 class PyPipEnvSdkAdditionalData : PythonSdkAdditionalData {
-  constructor() : super(PyPipEnvSdkFlavor)
-  constructor(data: PythonSdkAdditionalData) : super(data)
+  constructor(workingDirectory: Path) : super(PyFlavorAndData(PyFlavorData.Empty, PyPipEnvSdkFlavor), workingDirectory)
 
   override fun save(element: Element) {
     super.save(element)
@@ -28,18 +30,11 @@ class PyPipEnvSdkAdditionalData : PythonSdkAdditionalData {
     fun load(element: Element): PyPipEnvSdkAdditionalData? =
       when {
         element.getAttributeValue(IS_PIPENV) == "true" -> {
-          PyPipEnvSdkAdditionalData().apply {
+          PyPipEnvSdkAdditionalData(Path.of("")).apply {
             load(element)
           }
         }
         else -> null
       }
-
-    /**
-     * Creates a new instance of data with copied fields.
-     */
-    @JvmStatic
-    fun copy(data: PythonSdkAdditionalData): PyPipEnvSdkAdditionalData =
-      PyPipEnvSdkAdditionalData(data)
   }
 }
