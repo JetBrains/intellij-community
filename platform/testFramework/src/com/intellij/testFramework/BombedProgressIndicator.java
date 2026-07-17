@@ -18,6 +18,7 @@ package com.intellij.testFramework;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.StandardProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.util.concurrency.Semaphore;
@@ -37,8 +38,11 @@ import java.util.function.Predicate;
  *   <li>Either N {@link #checkCanceled()} attempts, where N is specified in the constructor</li>
  *   <li>Or by condition on stack frames.</li>
  * </ol>
+ * <p>This indicator is a {@link StandardProgressIndicator} because synchronous NBRA may wrap the current indicator in
+ * {@code SensitiveProgressWrapper}. IJPL-198472 introduced the execution path that exposed this requirement here;
+ * IJPL-2966 made it observable from {@code ConcurrentIndexTest}.
  */
-public class BombedProgressIndicator extends AbstractProgressIndicatorBase {
+public class BombedProgressIndicator extends AbstractProgressIndicatorBase implements StandardProgressIndicator {
   private int remainingChecks;
   private final @Nullable Predicate<? super StackTraceElement[]> onlyThrowCancellationIfStackCondition;
 
