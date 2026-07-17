@@ -110,6 +110,7 @@ internal fun createBridgeComponentStyling(theme: ThemeDefinition): ComponentStyl
         defaultSlimButtonStyle = readDefaultSlimButtonStyle(defaultButtonStyle.colors),
         outlinedSlimButtonStyle = readOutlinedSlimButtonStyle(outlinedButtonStyle.colors),
         badgeStyle = readBadgeStyle(theme.isDark),
+        searchTextFieldStyle = readSearchTextFieldStyle(),
     )
 }
 

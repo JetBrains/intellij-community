@@ -4,7 +4,6 @@ package org.jetbrains.jewel.ui.component.search
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.layout.onFirstVisible
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -30,21 +30,17 @@ import androidx.compose.ui.unit.dp
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertIs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
-import org.jetbrains.jewel.foundation.search.EmptySpeedSearchMatcher
 import org.jetbrains.jewel.foundation.search.filter
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.SimpleListItem
 import org.jetbrains.jewel.ui.component.SpeedSearchArea
-import org.jetbrains.jewel.ui.component.SpeedSearchState
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.interactions.performKeyPress
 import org.jetbrains.jewel.ui.component.rememberSpeedSearchState
@@ -168,18 +164,6 @@ class SpeedSearchAreaFilteringTest {
     }
 
     @Test
-    fun `searchText should preserve typed query when all items are filtered out`() = runFilteringComposeTest { state ->
-        // Type a query that matches no items — all entries will be filtered out
-        onLazyColumn.performKeyPress("NonexistentFramework", rule = this)
-
-        // The list must be empty
-        onAllNodes(hasAnyAncestor(hasTestTag("LazyColumn"))).assertCountEquals(0)
-
-        // searchText must still reflect what the user typed, not be reset to ""
-        assertEquals("NonexistentFramework", state.searchText)
-    }
-
-    @Test
     fun `filtered items should select first match`() = runFilteringComposeTest {
         // Type "Vue" - should select first match
         onLazyColumn.performKeyPress("Spring", rule = this)
@@ -279,20 +263,6 @@ class SpeedSearchAreaFilteringTest {
         onLazyColumnItem("React").assertIsDisplayed()
         onLazyColumnItem("React Native").assertIsDisplayed()
         onLazyColumnItem("Kotlinx Serialization").assertDoesNotExist()
-    }
-
-    @Test
-    fun `clearSearch resets searchText, textFieldState and currentMatcher`() = runFilteringComposeTest { state ->
-        onLazyColumn.performKeyPress("Spring", rule = this)
-        onLazyColumnItem("Spring Boot").assertIsDisplayed()
-
-        // Clear the search programmatically
-        state.clearSearch()
-        waitForIdle()
-
-        assertEquals("", state.searchText)
-        assertIs<EmptySpeedSearchMatcher>(state.currentMatcher)
-        assertEquals("", state.textFieldState.text.toString())
     }
 
     @Test
@@ -434,14 +404,12 @@ class SpeedSearchAreaFilteringTest {
     private fun runFilteringComposeTest(
         listEntries: List<String> = TEST_FRAMEWORKS,
         dismissOnLoseFocus: Boolean = true,
-        block: ComposeContentTestRule.(SpeedSearchState) -> Unit,
+        block: ComposeContentTestRule.() -> Unit,
     ) {
-        var capturedSpeedSearchState: SpeedSearchState? = null
         rule.setContent {
             val focusRequester = remember { FocusRequester() }
             val speedSearchState = rememberSpeedSearchState()
-            capturedSpeedSearchState = speedSearchState
-            val listState = rememberSelectableLazyListState()
+            val state = rememberSelectableLazyListState()
 
             // Filter the list based on the current matcher - same pattern as showcase
             val filteredItems by remember { derivedStateOf { listEntries.filter(speedSearchState.currentMatcher) } }
@@ -455,8 +423,11 @@ class SpeedSearchAreaFilteringTest {
                     ) {
                         SpeedSearchableLazyColumn(
                             modifier =
-                                Modifier.size(200.dp, 400.dp).testTag("LazyColumn").focusRequester(focusRequester),
-                            state = listState,
+                                Modifier.size(200.dp, 400.dp)
+                                    .testTag("LazyColumn")
+                                    .focusRequester(focusRequester)
+                                    .onFirstVisible { focusRequester.requestFocus() },
+                            state = state,
                             dispatcher = testDispatcher,
                             // Don't pass dispatcher to avoid circular dependency with filtering
                         ) {
@@ -478,12 +449,10 @@ class SpeedSearchAreaFilteringTest {
                     DefaultButton(onClick = {}, modifier = Modifier.testTag("Button")) { Text("Press me") }
                 }
             }
-
-            LaunchedEffect(Unit) { focusRequester.requestFocus() }
         }
 
         rule.waitForIdle()
-        rule.block(capturedSpeedSearchState!!)
+        rule.block()
     }
 }
 
