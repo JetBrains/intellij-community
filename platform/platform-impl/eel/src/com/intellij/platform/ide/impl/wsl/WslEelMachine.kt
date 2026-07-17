@@ -67,13 +67,11 @@ class WslEelMachine internal constructor(val distribution: WSLDistribution) : Ee
 
     other as WslEelMachine
 
-    if (distribution != other.distribution) return false
-
-    return true
+    return distribution == other.distribution
   }
 
   override fun hashCode(): Int {
-    var result = distribution.hashCode()
+    val result = distribution.hashCode()
     return result
   }
 

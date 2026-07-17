@@ -1,10 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.impl.wsl.ijent.nio
 
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
 import com.intellij.platform.eel.provider.utils.EelPathUtils.getActualPath
 import com.intellij.platform.ijent.community.impl.nio.fs.IjentNioPosixFileAttributesWithDosAdapter
-import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -94,12 +93,12 @@ internal class IjentWslNioPath(
     return originalPath.toIjentWslPath()
   }
 
-  override fun register(watcher: WatchService, events: Array<out WatchEvent.Kind<*>?>?, vararg modifiers: WatchEvent.Modifier?): WatchKey {
+  override fun register(watcher: WatchService, events: Array<out WatchEvent.Kind<*>>, vararg modifiers: WatchEvent.Modifier?): WatchKey {
     val ijentPath: Path = fileSystem.provider().toIjentNioPath(this)
     @Suppress("UNCHECKED_CAST")
     return ijentPath.register(
       watcher,
-      (events ?: emptyArray()) as Array<out WatchEvent.Kind<*>>,
+      events,
       *modifiers.filterNotNull().toTypedArray()
     )
   }

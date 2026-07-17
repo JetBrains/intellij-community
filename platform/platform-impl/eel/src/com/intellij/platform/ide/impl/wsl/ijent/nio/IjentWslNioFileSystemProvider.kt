@@ -37,7 +37,6 @@ import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
-import kotlin.io.path.ExperimentalPathApi
 
 /**
  * A special wrapper for [com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider]
@@ -79,9 +78,9 @@ internal class IjentWslNioFileSystemProvider(
       this is IjentWslNioPath -> presentablePath.toIjentPath()
 
       isAbsolute ->
-        fold(ijentFsProvider.getPath(ijentFsUri) as IjentNioPath, { nioPath, newPart ->
+        fold(ijentFsProvider.getPath(ijentFsUri) as IjentNioPath) { nioPath, newPart ->
           nioPath.resolve(localToIjent(newPart.toString()))
-        })
+        }
 
       else -> {
         val ijentNioFs = ijentFsProvider.getFileSystem(ijentFsUri)
@@ -244,7 +243,6 @@ internal class IjentWslNioFileSystemProvider(
     ijentFsProvider.delete(path.toIjentPath())
   }
 
-  @OptIn(ExperimentalPathApi::class)
   override fun copy(source: Path, target: Path, vararg options: CopyOption) {
     val sourceWsl = WslPath.parseWindowsUncPath(source.root.toString())
     val targetWsl = WslPath.parseWindowsUncPath(target.root.toString())
