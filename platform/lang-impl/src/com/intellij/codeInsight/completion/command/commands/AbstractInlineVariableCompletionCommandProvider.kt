@@ -88,11 +88,10 @@ abstract class AbstractInlineVariableCompletionCommandProvider : CommandProvider
         readAction { findElementToInline(offset, psiFile, editor) }
       } ?: return
 
-      for (extension in InlineActionHandler.EP_NAME.extensionList) {
-        if (extension.canInlineElement(element)) {
-          extension.inlineElement(psiFile.project, editor, element)
-          return
-        }
+      InlineActionHandler.EP_NAME.computeSafeIfAny { extension ->
+        if (!extension.canInlineElement(element)) return@computeSafeIfAny null
+        extension.inlineElement(psiFile.project, editor, element)
+        return@computeSafeIfAny true
       }
     }
 
