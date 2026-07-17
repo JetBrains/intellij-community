@@ -12,6 +12,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.platform.ide.internal",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
