@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.tabInEditor
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorWindow
@@ -84,7 +85,26 @@ class ToolWindowEditorTabTransferController(
 
     val content = file.content ?: return
 
-    FileEditorManager.getInstance(project).closeFile(file)
+    val editorManager = FileEditorManagerEx.getInstanceEx(project)
+    val sourceWindow = editorManager.currentWindow?.takeIf { it.getComposite(file) != null }
+                       ?: editorManager.windows.firstOrNull { it.getComposite(file) != null }
+
+    file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, true)
+    try {
+      when (sourceWindow) {
+        // During drag-and-drop of the last file, the source window may already be empty,
+        // so use FileEditorManager.closeFile()
+        null -> FileEditorManager.getInstance(project).closeFile(file)
+        // Action "Return to Tool Window" closes the file in its original window.
+        // The generic close path (via FileEditorManager.closeFile()) may unsplit
+        // the editor and reselect a stale composite,
+        // which triggers the exception.
+        else -> editorManager.closeFile(file, sourceWindow)
+      }
+    }
+    finally {
+      file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, null)
+    }
 
     // explicitly remove the file from recent files
     EditorHistoryManager.getInstance(project).removeFile(file)
