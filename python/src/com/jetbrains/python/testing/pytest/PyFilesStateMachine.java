@@ -21,6 +21,7 @@ final class PyFilesStateMachine {
   private boolean myLookingForFile = true; // Looking for file if true , for line number if not
   private boolean myInProgress; // True if machine in progress, false if waits to start
   private boolean myWaitingForCharAfterSemicolon; // Semicolon entered, looking for next char
+  private boolean mySkippingUrlToken;
   private int myStart; // start position
   private final StringBuilder myFileName = new StringBuilder();
   private final StringBuilder myLineNumber = new StringBuilder();
@@ -42,6 +43,15 @@ final class PyFilesStateMachine {
    * @return see class doc
    */
   boolean addChar(final char charToCheck, final int charNumber) {
+    if (mySkippingUrlToken) {
+      if (charToCheck == ' ') {
+        mySkippingUrlToken = false;
+        myInProgress = true;
+        myStart = charNumber + 1;
+      }
+      return false;
+    }
+
     if (!myInProgress) {
       if ((charToCheck == '"' && myQuoteMode)) {
         myInProgress = true;
@@ -62,6 +72,9 @@ final class PyFilesStateMachine {
       if (Character.isDigit(charToCheck)) {
         if (isHttpUrlPrefix()) {
           resetState();
+          if (!myQuoteMode) {
+            mySkippingUrlToken = true;
+          }
           return false;
         }
         // Number? Line numbers started, file name found
@@ -142,6 +155,7 @@ final class PyFilesStateMachine {
     myInProgress = false;
     myLookingForFile = true;
     myWaitingForCharAfterSemicolon = false;
+    mySkippingUrlToken = false;
     myLineNumber.setLength(0);
     myFileName.setLength(0);
   }

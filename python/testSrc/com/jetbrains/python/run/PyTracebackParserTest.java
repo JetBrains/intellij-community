@@ -17,6 +17,7 @@ package com.jetbrains.python.run;
 
 import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.testing.pytest.PyTestTracebackParser;
 import com.jetbrains.python.traceBackParsers.LinkInTrace;
 import junit.framework.TestCase;
 import org.junit.Assert;
@@ -51,6 +52,15 @@ public class PyTracebackParserTest extends TestCase {
     Assert.assertEquals("Bad line number", 324, linkInTrace.getLineNumber());
     Assert.assertEquals("Bad start pos", 5, linkInTrace.getStartPos());
     Assert.assertEquals("Bad end pos", 62, linkInTrace.getEndPos());
+  }
+
+  public void testLinkAfterHttpUrl() {
+    final LinkInTrace linkInTrace = new PyTestTracebackParser().findLinkInTrace("http://localhost:8080 tests/foo.py:42");
+    Assert.assertNotNull("Failed to parse link after URL", linkInTrace);
+    Assert.assertEquals("Bad file name", "tests/foo.py", linkInTrace.getFileName());
+    Assert.assertEquals("Bad line number", 42, linkInTrace.getLineNumber());
+    Assert.assertEquals("Bad start pos", 22, linkInTrace.getStartPos());
+    Assert.assertEquals("Bad end pos", 37, linkInTrace.getEndPos());
   }
 
   /**
