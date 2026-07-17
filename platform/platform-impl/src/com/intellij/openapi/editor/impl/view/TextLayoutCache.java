@@ -9,10 +9,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.ElfCandidate;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ui.update.Activatable;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,24 +35,19 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
 
   private final EditorView myView;
   private final Document myDocument;
+  private final ComponentVisibilityTracker myVisibilityTracker;
   private ArrayList<LineLayout> myLines = new ArrayList<>();
   private int myDocumentChangeOldEndLine;
 
   private final ObjectLinkedOpenHashSet<LineChunk> laidOutChunks = new ObjectLinkedOpenHashSet<>(MAX_CHUNKS_IN_ACTIVE_EDITOR);
   private final Consumer<LineChunk> removeLaidOutChunk = laidOutChunks::remove;
 
-  TextLayoutCache(EditorView view) {
+  TextLayoutCache(EditorView view, ComponentVisibilityTracker visibilityTracker) {
     myView = view;
     myDocument = view.getDocument();
+    myVisibilityTracker = visibilityTracker;
     myDocument.addDocumentListener(this, this);
-    Disposer.register(
-      this,
-      UiNotifyConnector.installOn(
-        view.getEditor().getContentComponent(),
-        new Activatable() {
-          @Override public void hideNotify() { trimChunkCache(); }
-        })
-    );
+    myVisibilityTracker.runWhenHidden(this, this::trimChunkCache);
   }
 
   @NotNull LineLayout getLineLayout(int line) {
@@ -144,7 +136,7 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   }
 
   private int getChunkCacheSizeLimit() {
-    return myView.getEditor().getContentComponent().isShowing()
+    return myVisibilityTracker.isShowing()
            ? MAX_CHUNKS_IN_ACTIVE_EDITOR
            : MAX_CHUNKS_IN_INACTIVE_EDITOR;
   }
