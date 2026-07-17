@@ -181,6 +181,7 @@ Register child lifetimes with the IntelliJ `Disposer` where appropriate. Make re
 ## Use IntelliJ Platform facilities deliberately
 
 - Prefer Kotlin UI DSL and JB UI components for new IntelliJ UI when they improve consistency or maintenance.
+- Prefer Kotlin UI DSL's `listCellRenderer` or `textListCellRenderer` over renderers based on `SimpleColoredComponent` when the DSL supports the required presentation.
 - Do not rewrite working Swing into Kotlin UI DSL unless requested or the migration materially improves the change.
 - Use the Action System for IDE actions and MessageBus for appropriate platform-wide communication, not for private button-to-controller events.
 - Use localized message bundles for user-visible text.
