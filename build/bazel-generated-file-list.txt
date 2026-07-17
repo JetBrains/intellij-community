@@ -750,6 +750,7 @@ platform/kernel/klogger
 platform/kernel/pasta
 platform/kernel/rpc
 platform/kernel/rpc.backend
+platform/kernel/rpc.lite
 platform/kernel/shared
 platform/lang-api
 platform/lang-core
