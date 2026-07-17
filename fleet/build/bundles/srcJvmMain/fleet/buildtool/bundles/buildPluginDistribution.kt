@@ -41,7 +41,8 @@ fun buildPluginDistribution(
   pluginDescriptorFile: Path,
   pluginPartsFile: Path,
   resources: Set<Path>,
-  icons: Set<Path>,
+  defaultIcon: Path?,
+  darkIcon: Path?,
   thirdPartyLicenses: Set<Path>,
   distributionOutputDirectory: Path,
   logger: Logger,
@@ -93,9 +94,14 @@ fun buildPluginDistribution(
     jar
   }
 
-  val iconFiles = icons.flattenToFiles()
   val resourceFiles = resources.flattenToFiles()
   val thirdPartyLicensesJson = thirdPartyLicenses.flattenToFiles().singleOrNull()?.readText() ?: "[]"
+
+  val icons = listOf(
+    defaultIconMarketplaceFilepath to defaultIcon,
+    darkIconMarketplaceFilepath to darkIcon,
+  )
+    .filter { it.second != null }
 
   val zipFile = distributionOutputDirectory.resolve("${plugin.name.name}-${plugin.version.versionString}.zip")
   val entries: Sequence<Pair<String, InputStream>> =
@@ -105,8 +111,7 @@ fun buildPluginDistribution(
       "extension.json" to plugin.encodeToString().encodeToByteArray().inputStream(),
       "dependencies.json" to thirdPartyLicensesJson.toByteArray().inputStream(),
       partsJsonFilename to pluginPartsFile.inputStream(),
-    ) +
-    iconFiles.asSequence().map { icon -> icon.name to icon.inputStream() }
+    ) + icons.map { (filename, icon) -> filename to icon!!.inputStream() }
   zip(zipFile, entries)
   logger.info("Built plugin distribution at '$zipFile'")
   return zipFile
