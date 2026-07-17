@@ -33,6 +33,12 @@ private val PLATFORM_DEPENDENCY_PREFIXES: Set<String> = setOf(
   "com.jetbrains.intellij.platform:icons-",
 )
 
+private val JEWEL_STANDALONE_REQUIRED_ICONS_MODULES: Set<String> = setOf(
+  "intellij.platform.icons.api",
+  "intellij.platform.icons.api.rendering",
+  "intellij.platform.icons.impl",
+)
+
 private val CORE: PersistentMap<String, String> = persistentHashMapOf(
   "intellij.platform.jewel.foundation" to "jewel-foundation",
   "intellij.platform.jewel.markdown.core" to "jewel-markdown-core",
@@ -90,14 +96,11 @@ internal object JewelMavenArtifacts {
     module.name.startsWith("intellij.platform.jewel.") && module.name !in NOT_PUBLISHED
 
   /**
-   * Platform modules that are published to Maven Central as transitive dependencies of Jewel,
-   * see [PLATFORM_DEPENDENCY_PREFIXES]. The `intellij.platform.icons.` module-name prefix is the
-   * counterpart of the `icons-` artifactId prefix (the `platform` segment is dropped when the Maven
-   * coordinates are generated), and covers both `intellij.platform.icons.api` and
-   * `intellij.platform.icons.api.rendering`.
+   * The icons modules required in Jewel Standalone and published to Maven Central transitively through
+   * the published Jewel artifacts. Keep this allow-list aligned with [PLATFORM_DEPENDENCY_PREFIXES].
    */
   fun isPublishedPlatformDependency(module: JpsModule): Boolean =
-    module.name.startsWith("intellij.platform.icons.")
+    module.name in JEWEL_STANDALONE_REQUIRED_ICONS_MODULES
 
   fun patchCoordinates(module: JpsModule, coordinates: MavenCoordinates): MavenCoordinates {
     check(isPublishedJewelModule(module))
