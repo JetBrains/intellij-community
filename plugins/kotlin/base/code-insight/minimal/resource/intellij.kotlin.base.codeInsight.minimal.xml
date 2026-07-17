@@ -155,8 +155,5 @@
     <smartEnterProcessorFixer
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinValueArgumentListFixer"/>
-    <smartEnterProcessorFixer
-      language="kotlin"
-      implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinClassBodyFixer"/>
   </extensions>
 </idea-plugin>
