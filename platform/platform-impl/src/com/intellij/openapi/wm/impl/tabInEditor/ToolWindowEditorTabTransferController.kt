@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
@@ -111,6 +112,22 @@ class ToolWindowEditorTabTransferController(
 
     restoreContentToToolWindow(content, toolWindow, targetDecorator?.contentManager)
     file.invalidateEditorTabFile()
+  }
+
+  @RequiresEdt
+  fun updateEditorTabPresentation(
+    toolWindow: ToolWindow,
+    content: Content,
+    descriptor: ToolWindowEditorTabDescriptor,
+  ) {
+    val fileEditorManager = FileEditorManager.getInstance(project)
+    val file = fileEditorManager.openFiles
+                 .filterIsInstance<ToolWindowEditorTabFile>()
+                 .firstOrNull { it.toolWindowId == toolWindow.id && it.content === content }
+               ?: return
+
+    file.updatePresentation(descriptor)
+    fileEditorManager.updateFilePresentation(file)
   }
 
   private fun getSupport(toolWindow: ToolWindow): ToolWindowEditorTabSupport? {

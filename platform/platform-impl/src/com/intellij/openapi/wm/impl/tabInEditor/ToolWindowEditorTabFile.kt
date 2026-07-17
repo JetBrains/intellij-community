@@ -37,7 +37,7 @@ open class ToolWindowEditorTabFile(
   private val preferredFocusedComponent: JComponent,
   private val persistInEditorHistory: Boolean = false,
   internal val content: Content? = null,
-  internal val tabIcon: Icon? = null,
+  internal var tabIcon: Icon? = null,
 ) : LightVirtualFile(editorTitle, fileType, ""), OptionallyIncluded {
 
   // Content normally belongs to its ContentManager's disposable tree.
@@ -73,6 +73,13 @@ open class ToolWindowEditorTabFile(
   internal fun invalidateEditorTabFile() {
     releaseEditorLifetime()
     isValid = false // mark invalid, so file does not appear in the recent files
+  }
+
+  internal fun updatePresentation(descriptor: ToolWindowEditorTabDescriptor) {
+    if (name != descriptor.title) {
+      rename(null, descriptor.title)
+    }
+    tabIcon = descriptor.icon
   }
 
   private fun releaseEditorLifetime() {
