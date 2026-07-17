@@ -330,4 +330,50 @@ class TextMateLexerCoreTest {
       source.test outer: [3, 4], {z}
     """.trimIndent())
   }
+
+  @Test
+  fun `left injection wins the tie against the end pattern`() {
+    // "L:" injection matching at the same offset as the end pattern should
+    // win over it, so the rule is not closed while the injection consumes its end characters
+    val grammar = """
+      {
+        "scopeName": "source.test",
+        "injections": {
+          "L:source.test": { "patterns": [ { "match": "b", "name": "inj.b" } ] }
+        },
+        "patterns": [
+          { "name": "block", "begin": "a", "end": "b" }
+        ]
+      }
+    """.trimIndent()
+    assertTokenize(grammar, "abb\n", """
+      source.test block: [0, 1], {a}
+      source.test block inj.b: [1, 2], {b}
+      source.test block inj.b: [2, 3], {b}
+      source.test block: [3, 4], {
+      }
+    """.trimIndent())
+  }
+
+  @Test
+  fun `regular injection loses the tie against the end pattern`() {
+    val grammar = """
+      {
+        "scopeName": "source.test",
+        "injections": {
+          "source.test": { "patterns": [ { "match": "b", "name": "inj.b" } ] }
+        },
+        "patterns": [
+          { "name": "block", "begin": "a", "end": "b" }
+        ]
+      }
+    """.trimIndent()
+    assertTokenize(grammar, "abb\n", """
+      source.test block: [0, 1], {a}
+      source.test block: [1, 2], {b}
+      source.test inj.b: [2, 3], {b}
+      source.test: [3, 4], {
+      }
+    """.trimIndent())
+  }
 }

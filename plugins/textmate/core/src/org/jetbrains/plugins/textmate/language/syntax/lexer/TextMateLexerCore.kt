@@ -184,7 +184,7 @@ class TextMateLexerCore(
         // `applyEndPatternLast` inverts this tie-break so that the nested patterns are applied first
         // and the `end` pattern is applied only when it matches strictly before the nested match.
         val applyEndPatternLast = isApplyEndPatternLast(lastRule)
-        if (endMatch.matched && (!currentMatch.matched || endWinsOverCurrent(applyEndPatternLast, currentMatch, endMatch) || lastState == currentState)) {
+        if (endMatch.matched && (!currentMatch.matched || endWinsOverCurrent(applyEndPatternLast, currentState, endMatch) || lastState == currentState)) {
           val poppedState = stackFrames.last().state
           //if (poppedState.matchData.matched && !poppedState.matchedEOL) {
           //   if begin hasn't matched EOL, it was performed on the same line; we need to use its anchor
@@ -444,14 +444,17 @@ class TextMateLexerCore(
     /**
      * Decides whether the `end` match should be applied instead of the nested (current) match.
      * Both matches are expected to be matched. With [applyEndPatternLast] the `end` pattern wins only
-     * when it matches strictly before the nested pattern; otherwise it also wins the ties.
+     * when it matches strictly before the nested pattern; otherwise it also wins the ties,
+     * unless the nested match comes from a left-injection (`L:`) whose priority beats the `end`
+     * pattern on ties.
      */
-    private fun endWinsOverCurrent(applyEndPatternLast: Boolean, currentMatch: MatchData, endMatch: MatchData): Boolean {
-      return if (applyEndPatternLast) {
-        currentMatch.byteRange().start > endMatch.byteRange().start
-      }
-      else {
-        currentMatch.byteRange().start >= endMatch.byteRange().start
+    private fun endWinsOverCurrent(applyEndPatternLast: Boolean, currentState: TextMateLexerState, endMatch: MatchData): Boolean {
+      val currentStart = currentState.matchData.byteRange().start
+      val endStart = endMatch.byteRange().start
+      return when {
+        currentStart != endStart -> currentStart > endStart
+        currentState.priorityMatch > TextMateWeigh.Priority.NORMAL -> false
+        else -> !applyEndPatternLast
       }
     }
 
