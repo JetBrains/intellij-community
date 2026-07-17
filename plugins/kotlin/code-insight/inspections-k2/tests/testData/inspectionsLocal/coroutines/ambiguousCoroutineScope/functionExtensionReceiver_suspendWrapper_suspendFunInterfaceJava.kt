@@ -8,7 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 fun CoroutineScope.doStuff() {}
 
 suspend fun CoroutineScope.test() {
-    Main.suspendWrapper {
+    Main.javaStaticWrapper {
         <caret>doStuff()
     }
 }

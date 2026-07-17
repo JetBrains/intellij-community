@@ -5,11 +5,11 @@ package test
 
 import kotlinx.coroutines.CoroutineScope
 
-fun interface CustomSuspendLambda {
+fun interface CustomSuspendAction {
     suspend fun customInvoke(): Unit
 }
 
-private suspend fun suspendWrapper(action: CustomSuspendLambda) {
+private suspend fun suspendWrapper(action: CustomSuspendAction) {
     action.customInvoke()
 }
 
