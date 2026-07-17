@@ -34,5 +34,8 @@ class SystemRuntimeCollectorTest : BareTestFixtureTestCase() {
       val osVm = metric("os.vm")
       assertThat(osVm["name"]).isNotNull.isNotIn("other", "unknown")
     }
+
+    val neo = metric("hardware.macbook.neo")
+    assertThat(neo["value"]).isIn(true, false)
   }
 }
