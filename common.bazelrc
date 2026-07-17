@@ -198,7 +198,7 @@ test --test_output=streamed
 test --test_timeout=60,300,900,14400
 
 # https://bazel.build/reference/command-line-reference#flag--cache_test_results
-test --nocache_test_results
+test --cache_test_results=auto
 
 # Limit concurrent local test actions on CI to avoid OOM from multiple heavy test JVMs.
 test:ci --local_test_jobs=1
