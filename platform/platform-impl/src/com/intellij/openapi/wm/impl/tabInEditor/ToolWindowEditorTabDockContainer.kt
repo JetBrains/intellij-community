@@ -27,7 +27,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.awaitCancellation
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Image
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
@@ -40,8 +39,7 @@ import javax.swing.SwingUtilities
  * A dock container that allows dragging a [ToolWindowEditorTabFile] from the editor
  * back into its original tool window.
  */
-@ApiStatus.Internal
-class ToolWindowEditorTabDockContainer private constructor(
+internal class ToolWindowEditorTabDockContainer private constructor(
   private val project: Project,
   private val toolWindowId: String,
   private val component: JComponent,

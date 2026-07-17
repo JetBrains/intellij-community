@@ -16,7 +16,7 @@ internal class ToolWindowEditorTabFileEditor(
 ) : UserDataHolderBase(), FileEditor {
   override fun getComponent(): JComponent = file.component
 
-  override fun getPreferredFocusedComponent(): JComponent = file.getPreferredFocusedComponent()
+  override fun getPreferredFocusedComponent(): JComponent = file.preferredFocusedComponent
 
   override fun getName(): @NlsSafe String = file.name
 

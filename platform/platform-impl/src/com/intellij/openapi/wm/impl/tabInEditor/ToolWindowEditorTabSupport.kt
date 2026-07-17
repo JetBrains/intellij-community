@@ -28,7 +28,7 @@ interface ToolWindowEditorTabSupport {
       .filterIsInstance<ToolWindowEditorTabFile>()
       .filter { file -> file.toolWindowId == toolWindow.id }
       .forEach { file ->
-        val content = file.content ?: return@forEach
+        val content = file.content
         updateEditorTabPresentation(project, toolWindow, content)
       }
   }

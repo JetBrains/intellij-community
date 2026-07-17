@@ -207,7 +207,7 @@ class TerminalToolWindowTabsManagerImpl(
       manager.removeContent(content, true)
     }
 
-    return TerminalToolWindowTabImpl(terminal, content, closeOnProcessTermination).also { tab ->
+    return TerminalToolWindowTabImpl(terminal, content, closeOnProcessTermination, processOptions).also { tab ->
       content.putUserData(TerminalEditorTabSupportUtil.TERMINAL_EDITOR_TAB_INFO_KEY, object : TerminalEditorTabInfo {
         override fun getEditorTabTitle(): String = tab.view.getTitleText()
       })

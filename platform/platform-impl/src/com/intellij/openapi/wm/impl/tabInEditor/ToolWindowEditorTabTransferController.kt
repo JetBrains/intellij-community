@@ -17,11 +17,9 @@ import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
-@ApiStatus.Internal
-class ToolWindowEditorTabTransferController(
+internal class ToolWindowEditorTabTransferController(
   private val project: Project,
 ) {
   fun canMoveContentToEditor(toolWindow: ToolWindow, content: Content): Boolean {
@@ -70,10 +68,7 @@ class ToolWindowEditorTabTransferController(
   }
 
   fun canMoveContentToToolWindow(toolWindow: ToolWindow, file: ToolWindowEditorTabFile): Boolean {
-    return ToolWindowEditorTabSupportUtil.isEnabled() &&
-           file.toolWindowId == toolWindow.id &&
-           file.content != null &&
-           getSupport(toolWindow) != null
+    return ToolWindowEditorTabSupportUtil.isEnabled() && file.toolWindowId == toolWindow.id && getSupport(toolWindow) != null
   }
 
   fun moveContentToToolWindow(
@@ -82,8 +77,6 @@ class ToolWindowEditorTabTransferController(
     targetDecorator: InternalDecoratorImpl? = null,
   ) {
     if (!canMoveContentToToolWindow(toolWindow, file)) return
-
-    val content = file.content ?: return
 
     val editorManager = FileEditorManagerEx.getInstanceEx(project)
     val sourceWindow = editorManager.currentWindow?.takeIf { it.getComposite(file) != null }
@@ -110,7 +103,7 @@ class ToolWindowEditorTabTransferController(
     EditorHistoryManager.getInstance(project).removeFile(file)
     project.messageBus.syncPublisher(IdeDocumentHistoryImpl.RecentFileHistoryOrderListener.TOPIC).recentFileRemoved(file)
 
-    restoreContentToToolWindow(content, toolWindow, targetDecorator?.contentManager)
+    restoreContentToToolWindow(file.content, toolWindow, targetDecorator?.contentManager)
     file.invalidateEditorTabFile()
   }
 
@@ -144,7 +137,7 @@ class ToolWindowEditorTabTransferController(
       editorTitle = descriptor.title,
       toolWindowId = toolWindow.id,
       component = component,
-      content.preferredFocusableComponent ?: component.getPreferredFocusedComponent() ?: component,
+      preferredFocusedComponent = content.preferredFocusableComponent ?: component.getPreferredFocusedComponent() ?: component,
       persistInEditorHistory = descriptor.persistInEditorHistory,
       content = content,
       tabIcon = descriptor.icon,
