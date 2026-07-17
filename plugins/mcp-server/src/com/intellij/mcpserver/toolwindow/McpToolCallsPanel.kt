@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mcpserver.toolwindow
 
 import com.intellij.icons.AllIcons
@@ -336,15 +337,15 @@ private class ToolCallDetailPanel : JPanel(BorderLayout()), Disposable {
   }
 
   override fun dispose() {
-    request.dispose()
-    response.dispose()
+    Disposer.dispose(request)
+    Disposer.dispose(response)
   }
 }
 
 /**
  * A titled read-only editor with its own highlighting-language dropdown.
  */
-private class EditorSection(@Nls private val title: String, private val languageKey: String) {
+private class EditorSection(@Nls private val title: String, private val languageKey: String) : Disposable {
   private val editor: EditorEx = createViewerEditor()
   val panel: JPanel = createPanel()
 
@@ -353,7 +354,7 @@ private class EditorSection(@Nls private val title: String, private val language
     editor.scrollingModel.scrollTo(LogicalPosition(0, 0), ScrollType.MAKE_VISIBLE)
   }
 
-  fun dispose() {
+  override fun dispose() {
     EditorFactory.getInstance().releaseEditor(editor)
   }
 
