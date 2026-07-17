@@ -1,20 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.hatch.cli
 
+import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.pytools.runtime.PyToolRuntime
-import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
-import java.nio.file.Path
 
 @Suppress("unused")
 @Serializable
@@ -114,7 +114,7 @@ const val ENV_TYPE_VIRTUAL: String = "virtual"
 /**
  * Manage project environments
  */
-class HatchEnv(runtime: PyToolRuntime) : HatchCommand("env", runtime) {
+class HatchEnv<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("env", runtime) {
   companion object {
     private val SHOW_RESPONSE_REGEX = """^\s*Standalone\s*\n((?:[+|].*[+|]\n)+)(?:\s+Matrices\s*\n((?:[+|].*[+|]\n)+))?$""".toRegex()
   }
@@ -148,11 +148,11 @@ class HatchEnv(runtime: PyToolRuntime) : HatchCommand("env", runtime) {
    *
    * @return path to environment
    */
-  suspend fun find(envName: String? = null): PyResult<PythonHomePath?> {
+  suspend fun find(envName: String? = null): PyResult<FullPathOnTarget?> {
     val arguments = if (envName == null) emptyArray() else arrayOf(envName)
     return executeAndHandleErrors("find", *arguments) {
       when (it.exitCode) {
-        0 -> Result.success(Path.of(it.stdoutString.trim()))
+        0 -> Result.success(it.stdoutString.trim())
         else -> {
           if (it.stderrString.startsWith("Environment `${envName ?: DEFAULT_ENV_NAME}` is not defined by project config")) {
             Result.success(null)

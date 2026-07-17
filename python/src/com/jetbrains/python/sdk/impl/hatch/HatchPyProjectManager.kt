@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
 import com.intellij.python.hatch.impl.HATCH_UI_INFO
+import com.intellij.python.hatch.cli.new
 import com.intellij.python.hatch.runtime.createHatchRuntime
 import com.intellij.python.hatch.runtime.hatchCli
 import com.intellij.python.pyproject.model.spi.ProjectName
@@ -20,6 +21,7 @@ import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.HatchSdkAdditionalData
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.impl.ToolBasedProjectCreator
 import com.jetbrains.python.venvReader.Directory
 import org.apache.tuweni.toml.TomlTable
@@ -39,7 +41,7 @@ internal class HatchPyProjectManager : PyProjectManager, PyProjectCreator by Too
     ): PyResult<*> {
       val projectName = name ?: where.fileName.pathString
       val initExistingProject = name == null
-      return runtime.hatchCli().new(projectName, initExistingProject = initExistingProject)
+      return runtime.hatchCli<PathHolder.Eel>().new(projectName, initExistingProject = initExistingProject)
     }
   }
 ) {

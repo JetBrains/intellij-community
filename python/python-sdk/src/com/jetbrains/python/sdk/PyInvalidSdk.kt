@@ -2,7 +2,11 @@
 package com.jetbrains.python.sdk
 
 import com.jetbrains.python.PyInternalExecApi
+import com.jetbrains.python.sdk.flavors.PyFlavorAndData
+import com.jetbrains.python.sdk.flavors.PyFlavorData
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 /**
  * Marker for SDKs whose additional data could not be loaded (e.g., stale remote interpreters).
@@ -11,4 +15,6 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 @PyInternalExecApi
-class PyInvalidSdk : PythonSdkAdditionalData()
+class PyInvalidSdk : PythonSdkAdditionalData(
+  PyFlavorAndData(PyFlavorData.Empty, PythonSdkFlavor.UnknownFlavor.INSTANCE), Path.of(""),
+)

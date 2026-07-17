@@ -4,15 +4,16 @@ package com.jetbrains.python.sdk.add.v2.hatch
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.hatch.HatchConfiguration
 import com.intellij.python.hatch.PythonVirtualEnvironment
 import com.intellij.python.hatch.resolveHatchWorkingDirectory
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.platform.util.progress.withProgressText
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.createSdk
+import com.jetbrains.python.isSuccess
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.ModuleOrProject
@@ -24,7 +25,6 @@ import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
 import com.jetbrains.python.sdk.add.v2.toStatisticsField
 import com.jetbrains.python.sdk.destructured
-import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
@@ -57,12 +57,14 @@ internal class HatchExistingEnvironmentSelector<P : PathHolder>(
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
     val environment = model.hatchViewModel.selectedEnvFromExisting.get()
-    val existingHatchVenv = environment?.pythonVirtualEnvironment as? PythonVirtualEnvironment.Existing
+    val existingHatchVenv = environment?.pythonVirtualEnvironment as? PythonVirtualEnvironment.Existing<P>
                             ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
 
     val venvPythonBinaryPathString = withContext(Dispatchers.IO) {
-      existingHatchVenv.pythonHomePath.resolvePythonBinary().toString()
-    }
+      model.fileSystem.resolvePythonBinary(existingHatchVenv.pythonHomePath)
+        ?.takeIf { model.fileSystem.validateExecutable(it).isSuccess }
+        ?.toString()
+    } ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
 
     val existingSdk = PythonSdkUtil.getAllSdks().find { it.homePath == venvPythonBinaryPathString }
     val result = when {
@@ -71,7 +73,11 @@ internal class HatchExistingEnvironmentSelector<P : PathHolder>(
         val (project, module) = moduleOrProject.destructured
         val workingDirectory = resolveHatchWorkingDirectory(project, module).getOr { return it }
         withProgressText(message("python.sdk.progress.hatch.configuring")) {
-          environment.createSdk(workingDirectory)
+          environment.createSdk(
+            workingDirectoryPath = workingDirectory,
+            fileSystem = model.fileSystem,
+            targetPanelExtension = model.state.targetPanelExtension.get(),
+          )
         }
       }
     }.onSuccess {

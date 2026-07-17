@@ -75,33 +75,15 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
 
   private final Gson myGson = new GsonBuilder().registerTypeAdapter(Path.class, new PathSerializer()).create();
 
-
-  public PythonSdkAdditionalData() {
-    this((PyFlavorAndData<?, ?>)null);
-  }
-
-  /**
-   * @deprecated Use constructor with data. This ctor only supports flavours with empty data
-   */
-  @SuppressWarnings({"rawtypes", "unchecked"})
-  @Deprecated(forRemoval = true)
-  public PythonSdkAdditionalData(@Nullable PythonSdkFlavor<?> flavor) {
-    this(flavor == null
-         ? UNKNOWN_DATA
-         : new PyFlavorAndData(PyFlavorData.Empty.INSTANCE, ensureSupportsEmptyData(flavor)));
-  }
-
-  private static @NotNull PythonSdkFlavor<?> ensureSupportsEmptyData(@NotNull PythonSdkFlavor<?> flavor) {
-    if (!flavor.supportsEmptyData()) {
-      throw new IllegalArgumentException(flavor.getName() + " can't be created without additional data");
-    }
-    return flavor;
+  private PythonSdkAdditionalData() {
+    this(null);
   }
 
   /**
    * @deprecated Use constructor with data and working directory, all SDKs without working directory are considered invalid.
    */
   @Deprecated(forRemoval = true)
+  @ApiStatus.Internal
   public PythonSdkAdditionalData(@Nullable PyFlavorAndData<?, ?> flavorAndData) {
     myFlavorAndData = (flavorAndData != null ? flavorAndData : UNKNOWN_DATA);
     myAddedPaths = VirtualFilePointerManager.getInstance().createContainer(PythonPluginDisposable.getInstance());
@@ -114,28 +96,12 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     setWorkingDirectory(workingDirectory);
   }
 
-  protected PythonSdkAdditionalData(@NotNull PythonSdkAdditionalData from) {
-    myAddedPaths = from.myAddedPaths.clone(PythonPluginDisposable.getInstance());
-    myExcludedPaths = from.myExcludedPaths.clone(PythonPluginDisposable.getInstance());
-    myPathsToTransfer = from.myPathsToTransfer.clone(PythonPluginDisposable.getInstance());
-    myAssociatedModulePath = from.myAssociatedModulePath;
-    myRequirementsFile = from.myRequirementsFile;
-    myLegacyRequiredTxtPath = from.myLegacyRequiredTxtPath;
-    myWorkingDirectory = from.myWorkingDirectory;
-    myFlavorAndData = from.myFlavorAndData;
-    myUUID = from.myUUID;
-  }
-
   /**
    * Persistent UUID of SDK.  Could be used to point to "this particular" SDK.
    */
   @ApiStatus.Internal
   public final @NotNull UUID getUUID() {
     return myUUID;
-  }
-
-  public @NotNull PythonSdkAdditionalData copy() {
-    return new PythonSdkAdditionalData(this);
   }
 
   public final void setAddedPathsFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {

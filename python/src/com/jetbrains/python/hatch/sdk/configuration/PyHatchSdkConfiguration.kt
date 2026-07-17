@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.python.community.common.tools.ToolId
+import com.intellij.python.hatch.HatchConfiguration
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.PythonVirtualEnvironment
 import com.intellij.python.hatch.cli.HatchEnvironment
@@ -76,7 +77,11 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
     project = module.project,
     msg = PyBundle.message("sdk.set.up.hatch.environment")
   ) {
-    val hatchService = module.getHatchService(localEel.toFileSystem()).getOr { return@runWithModalBlockingOrInBackground it }
+    val fileSystem = localEel.toFileSystem()
+    val hatchExecutablePath = HatchConfiguration.getOrDetectHatchExecutablePath(fileSystem).getOr {
+      return@runWithModalBlockingOrInBackground it
+    }
+    val hatchService = module.getHatchService(fileSystem, hatchExecutablePath.path).getOr { return@runWithModalBlockingOrInBackground it }
 
     val environment = if (envExists) {
       val defaultEnv = hatchService.findDefaultVirtualEnvironmentOrNull()
@@ -93,11 +98,14 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
       hatchService.createVirtualEnvironment().getOr { return@runWithModalBlockingOrInBackground it }
     }
 
-      val hatchVenv = HatchVirtualEnvironment(HatchEnvironment.DEFAULT, environment)
-      val sdk = hatchVenv.createSdk(hatchService.getWorkingDirectoryPath()).onSuccess { sdk ->
-          sdk.setAssociationToModule(module)
-      }
-      sdk
+    val hatchVenv = HatchVirtualEnvironment(HatchEnvironment.DEFAULT, environment)
+    val sdk = hatchVenv.createSdk(
+      workingDirectoryPath = hatchService.getWorkingDirectoryPath(),
+      fileSystem = fileSystem,
+    ).onSuccess { sdk ->
+      sdk.setAssociationToModule(module)
+    }
+    sdk
   }
 
 }

@@ -47,7 +47,7 @@ private suspend fun findEnvironments(module: Module, fileSystem: FileSystem<Path
   val environments = hatchService.findVirtualEnvironments().getOr { return it }
   val evoSdks = environments.map { env ->
     buildEvoSdk(
-      env.pythonVirtualEnvironment?.pythonHomePath?.resolvePythonExecutable(),
+      env.pythonVirtualEnvironment?.pythonHomePath?.path?.resolvePythonExecutable(),
       env.hatchEnvironment.name
     )
   }

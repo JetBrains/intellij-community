@@ -4,6 +4,7 @@ package com.intellij.python.hatch.cli
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.add.v2.PathHolder
 
 enum class Scope(val options: Array<String>) {
   All(emptyArray()),
@@ -14,7 +15,7 @@ enum class Scope(val options: Array<String>) {
 /**
  * Manage environment dependencies
  */
-class HatchDep(runtime: PyToolRuntime) : HatchCommand("dep", runtime) {
+class HatchDep<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("dep", runtime) {
   /**
    *  Output a hash of the currently defined dependencies
    **/
@@ -25,13 +26,13 @@ class HatchDep(runtime: PyToolRuntime) : HatchCommand("dep", runtime) {
   /**
    * Display dependencies in various formats
    */
-  fun show(): HatchDepShow = HatchDepShow(runtime)
+  fun show(): HatchDepShow<P> = HatchDepShow(runtime)
 }
 
 /**
  * Manage environment dependencies
  */
-class HatchDepShow(runtime: PyToolRuntime) : HatchCommand(arrayOf("dep", "show"), runtime) {
+class HatchDepShow<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>(arrayOf("dep", "show"), runtime) {
   /**
    * Enumerate dependencies as a list of requirements.
    *

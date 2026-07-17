@@ -1,10 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run.features
 
+import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.eel.provider.localEel
+import com.jetbrains.python.PyInternalExecApi
+import com.jetbrains.python.sdk.add.v2.FileSystem
+import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.add.v2.TargetFileSystem
+import com.jetbrains.python.sdk.add.v2.toFileSystem
+import com.jetbrains.python.sdk.flavors.PyFlavorAndData
+import com.jetbrains.python.sdk.flavors.PyFlavorData
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.pySdkAdditionalData
+import com.jetbrains.python.sdk.sdkFlavor
+import com.jetbrains.python.target.PyTargetAwareAdditionalData
+import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -98,20 +111,32 @@ interface PyRunToolProvider {
 }
 
 /**
- * Base class for [PyRunToolProvider] implementations that are bound to a specific [SdkAdditionalData] subtype.
+ * Base class for [PyRunToolProvider] implementations that are bound to a specific [PyFlavorData] subtype.
  */
 @ApiStatus.Internal
-abstract class PySdkRunToolProvider<T : SdkAdditionalData>(
-  private val additionalDataClass: Class<T>,
+@PyInternalExecApi
+abstract class PySdkRunToolProvider<T : PyFlavorData, U : PythonSdkFlavor<T>>(
+  private val flavorClass: Class<U>,
 ) : PyRunToolProvider {
+  override fun isAvailable(sdk: Sdk): Boolean = flavorClass.isInstance(sdk.sdkFlavor)
 
-  final override fun isAvailable(sdk: Sdk): Boolean =
-    additionalDataClass.isInstance(sdk.sdkAdditionalData)
+  override suspend fun getRunToolParameters(sdk: Sdk): PyRunToolParameters {
+    val additionalData = sdk.pySdkAdditionalData
+    val fileSystem = when (additionalData) {
+      is PyTargetAwareAdditionalData -> additionalData.targetEnvironmentConfiguration?.let {
+        TargetFileSystem(it, PythonLanguageRuntimeConfiguration())
+      } ?: localEel.toFileSystem()
+      else -> localEel.toFileSystem()
+    }
 
-  final override suspend fun getRunToolParameters(sdk: Sdk): PyRunToolParameters {
-    @Suppress("UNCHECKED_CAST") // Checked by isAvailable
-    return getRunToolParameters(sdk.sdkAdditionalData as T)
+    @Suppress("UNCHECKED_CAST") // Checked by isAvailable and the flavor's data contract
+    val flavorAndData = additionalData.flavorAndData as PyFlavorAndData<T, U>
+    return getRunToolParameters(requireNotNull(sdk.homePath), flavorAndData.data, fileSystem)
   }
 
-  protected abstract suspend fun getRunToolParameters(data: T): PyRunToolParameters
+  protected abstract suspend fun <P : PathHolder> getRunToolParameters(
+    sdkHome: FullPathOnTarget,
+    flavorData: T,
+    fileSystem: FileSystem<P>,
+  ): PyRunToolParameters
 }

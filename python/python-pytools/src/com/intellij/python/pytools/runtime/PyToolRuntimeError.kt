@@ -8,19 +8,11 @@ import java.nio.file.Path
 
 /**
  * Base error type for failures raised by [PyToolRuntime] helpers.
- * Tool-specific error hierarchies (e.g. `HatchError`) may extend this
- * to interop with the generic runtime API.
  */
 sealed class PyToolRuntimeError(message: @NlsSafe String) : MessageError(message)
 
 class WorkingDirectoryNotFoundError(pathString: String?) : PyToolRuntimeError(
   PyToolsBundle.message("python.tool.runtime.error.working.directory.not.found", pathString.toString())
-) {
-  constructor(path: Path?) : this(path?.toString())
-}
-
-class BasePythonExecutableNotFoundError(pathString: String?) : PyToolRuntimeError(
-  PyToolsBundle.message("python.tool.runtime.error.base.python.executable.not.found", pathString.toString())
 ) {
   constructor(path: Path?) : this(path?.toString())
 }

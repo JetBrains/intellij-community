@@ -8,21 +8,29 @@ import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+import kotlin.io.path.pathString
 
 @ApiStatus.Internal
 @PyInternalExecApi
-class HatchSdkAdditionalData(
-  val hatchWorkingDirectory: Path?,
-  val hatchEnvironmentName: String?,
-) : PythonSdkAdditionalData(PyFlavorAndData(data = HatchSdkFlavorData, flavor = HatchSdkFlavor)) {
+class HatchSdkAdditionalData : PythonSdkAdditionalData {
+  constructor(hatchWorkingDirectory: Path, hatchEnvironmentName: String?) : this(
+    HatchSdkFlavorData(hatchEnvironmentName),
+    hatchWorkingDirectory,
+  )
+
+  private constructor(flavorData: HatchSdkFlavorData, hatchWorkingDirectory: Path) : super(
+    PyFlavorAndData(data = flavorData, flavor = HatchSdkFlavor), hatchWorkingDirectory,
+  )
 
   override fun save(element: Element) {
     super.save(element)
     element.setAttribute(IS_HATCH, "true")
-    hatchWorkingDirectory?.let {
-      element.setAttribute(HATCH_WORKING_DIRECTORY, it.toString())
+    val data = flavorAndData.data as HatchSdkFlavorData
+    val persistedWorkingDirectory = workingDirectory.takeIf { hasValidWorkingDirectory() }
+    if (persistedWorkingDirectory != null) {
+      element.setAttribute(HATCH_WORKING_DIRECTORY, persistedWorkingDirectory.pathString)
     }
-    hatchEnvironmentName?.let {
+    data.hatchEnvironmentName?.let {
       element.setAttribute(HATCH_ENVIRONMENT_NAME, it)
     }
   }
@@ -35,10 +43,10 @@ class HatchSdkAdditionalData(
     fun createIfHatch(element: Element): HatchSdkAdditionalData? {
       if (element.getAttributeValue(IS_HATCH) != "true") return null
 
-      val data = HatchSdkAdditionalData(
-        hatchWorkingDirectory = element.getAttributeValue(HATCH_WORKING_DIRECTORY)?.let { Path.of(it) },
-        hatchEnvironmentName = element.getAttributeValue(HATCH_ENVIRONMENT_NAME)
-      ).apply {
+      val workingDirectory = element.getAttributeValue(HATCH_WORKING_DIRECTORY)?.takeIf { it.isNotBlank() }?.let { Path.of(it) }
+                             ?: Path.of("")
+      val flavorData = HatchSdkFlavorData(element.getAttributeValue(HATCH_ENVIRONMENT_NAME))
+      val data = HatchSdkAdditionalData(flavorData, workingDirectory).apply {
         load(element)
       }
 

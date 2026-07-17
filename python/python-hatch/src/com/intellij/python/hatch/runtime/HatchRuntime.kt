@@ -1,31 +1,32 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.hatch.runtime
 
-import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecOptions
+import com.intellij.python.community.execService.UploadConfig
 import com.intellij.python.hatch.HatchConfiguration
+import com.intellij.python.hatch.WorkingDirectoryNotFoundHatchError
 import com.intellij.python.hatch.cli.HatchCli
 import com.intellij.python.pytools.runtime.PyToolRuntime
-import com.intellij.python.pytools.runtime.WorkingDirectoryNotFoundError
 import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.errorProcessing.PyError
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 
-fun PyToolRuntime.hatchCli(): HatchCli = HatchCli(this)
+fun <P : PathHolder> PyToolRuntime.hatchCli(): HatchCli<P> = HatchCli(this)
 
-suspend fun createHatchRuntime(
-  fileSystem: FileSystem<PathHolder.Eel>,
-  hatchExecutablePath: Path?,
+suspend fun <P : PathHolder> createHatchRuntime(
+  fileSystem: FileSystem<P>,
+  hatchExecutablePath: P?,
   workingDirectoryPath: Path?,
   envVars: Map<String, String> = emptyMap(),
+  uploadBeforeExecution: UploadConfig? = null,
 ): Result<PyToolRuntime, PyError> {
   val actualHatchExecutable = hatchExecutablePath
-                              ?: HatchConfiguration.getOrDetectHatchExecutablePath(fileSystem).getOr { return it }.path
+                              ?: HatchConfiguration.getOrDetectHatchExecutablePath(fileSystem).getOr { return it }
   if (workingDirectoryPath?.isDirectory() != true) {
-    return Result.failure(WorkingDirectoryNotFoundError(workingDirectoryPath))
+    return Result.failure(WorkingDirectoryNotFoundHatchError(workingDirectoryPath))
   }
 
   val defaultVariables = mapOf(
@@ -39,9 +40,10 @@ suspend fun createHatchRuntime(
   val actualEnvVars = defaultVariables + envVars
 
   val runtime = PyToolRuntime(
-    binary = BinOnEel(actualHatchExecutable, workingDirectoryPath),
+    binary = fileSystem.getBinaryToExec(actualHatchExecutable, workingDirectoryPath),
     execOptions = ExecOptions(
       env = actualEnvVars,
+      uploadBeforeExecution = uploadBeforeExecution,
     )
   )
   return Result.success(runtime)

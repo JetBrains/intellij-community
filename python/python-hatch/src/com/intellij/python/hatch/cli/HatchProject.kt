@@ -5,6 +5,7 @@ import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -57,7 +58,7 @@ data class Metadata(
 /**
  * Manage environment dependencies
  */
-class HatchProject(runtime: PyToolRuntime) : HatchCommand("project", runtime) {
+class HatchProject<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("project", runtime) {
 
   /**
    * Display project metadata

@@ -4,11 +4,12 @@ package com.intellij.python.hatch.cli
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.add.v2.PathHolder
 
 /**
  * Manage environment dependencies
  */
-class HatchConfig(runtime: PyToolRuntime) : HatchCommand("config", runtime) {
+class HatchConfig<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("config", runtime) {
   /**
    * Open the config location in your file manager
    */
