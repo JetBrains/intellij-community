@@ -12,7 +12,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.CommonProcessors
 import org.jetbrains.kotlin.idea.base.util.isGradleModule
 import org.jetbrains.kotlin.idea.configuration.AbstractKotlinCompilerProjectPostConfigurator
 import org.jetbrains.kotlin.idea.configuration.ChangedConfiguratorFiles
@@ -180,8 +183,8 @@ internal fun PsiFile.configureKaptForLombokIfNeeded(sourceModule: Module, change
 }
 
 internal fun PsiFile.configureKotlinLombokConfigIfNeeded(sourceModule: Module, changedFiles: ChangedConfiguratorFiles) {
-    val configFile = sourceModule.findLombokConfigFile(this) ?: return
     val parentDirectory = (virtualFile ?: originalFile.virtualFile )?.parent ?: return
+    val configFile = sourceModule.findLombokConfigFile(parentDirectory) ?: return
     val relativePath = VfsUtilCore.getRelativePath(configFile, parentDirectory, '/') ?: return
 
     GradleBuildScriptSupport.getManipulator(this).configurePluginOptions(
@@ -191,10 +194,18 @@ internal fun PsiFile.configureKotlinLombokConfigIfNeeded(sourceModule: Module, c
     )
 }
 
-private fun Module.findLombokConfigFile(buildScript: PsiFile): VirtualFile? {
-    val virtualFile = buildScript.virtualFile ?: buildScript.originalFile.virtualFile
-    return virtualFile?.parent?.findChild("lombok.config")
-        ?: project.getTopLevelBuildScriptPsiFile()?.virtualFile?.parent?.findChild("lombok.config")
+private fun Module.findLombokConfigFile(parentDirectory: VirtualFile): VirtualFile? {
+    val configName = "lombok.config"
+    val processor = CommonProcessors.FindFirstProcessor<VirtualFile>()
+    FilenameIndex.processFilesByNames(
+        setOf(configName),
+        false,
+        GlobalSearchScopes.directoryScope(project, parentDirectory, true),
+        null,
+        processor
+    )
+    processor.foundValue?.let { return it }
+    return project.getTopLevelBuildScriptPsiFile()?.virtualFile?.parent?.findChild(configName)
 }
 
 private fun String.isLombokProcessorPath(): Boolean =
