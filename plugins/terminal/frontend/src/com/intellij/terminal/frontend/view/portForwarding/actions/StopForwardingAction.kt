@@ -20,7 +20,7 @@ internal class StopForwardingAction : DumbAwareAction(TerminalBundle.messagePoin
     val manager = e.getData(TerminalPortForwardingManager.DATA_KEY) ?: return
     e.coroutineScope.launch {
       val eelMachine = model.eelDescriptor.resolveEelMachine()
-      TerminalPortForwardingPersistenceService.getInstance(project).deletePersistedPort(item.remotePort)
+      TerminalPortForwardingPersistenceService.getInstanceOrNull(project)?.deletePersistedPort(item.remotePort)
       manager.stopForwarding(eelMachine, item.remotePort)
     }
   }

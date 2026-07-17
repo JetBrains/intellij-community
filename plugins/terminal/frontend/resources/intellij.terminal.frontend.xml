@@ -50,10 +50,6 @@
     <applicationService
       serviceInterface="org.jetbrains.plugins.terminal.fus.FrontendLatencyService"
       serviceImplementation="com.intellij.terminal.frontend.fus.FrontendLatencyServiceImpl"/>
-    <projectService
-      serviceInterface="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingPersistenceService"
-      serviceImplementation="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingNoOpPersistenceService"
-      open="true"/>
     <inline.completion.editorInsertHandler
       implementation="com.intellij.terminal.frontend.view.inlineCompletion.TerminalInlineCompletionEditorInsertHandler"
       order="first"/>

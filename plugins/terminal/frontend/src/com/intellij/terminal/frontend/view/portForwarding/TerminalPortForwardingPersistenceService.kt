@@ -2,6 +2,7 @@
 package com.intellij.terminal.frontend.view.portForwarding
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
@@ -22,12 +23,6 @@ interface TerminalPortForwardingPersistenceService {
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): TerminalPortForwardingPersistenceService = project.service()
+    fun getInstanceOrNull(project: Project): TerminalPortForwardingPersistenceService? = project.serviceOrNull()
   }
-}
-
-/** Default no-op implementation. There is no place for persisting forwarded ports in the Monolith mode yet. */
-internal class TerminalPortForwardingNoOpPersistenceService : TerminalPortForwardingPersistenceService {
-  override suspend fun persistPort(remotePort: Int) = Unit
-  override suspend fun deletePersistedPort(remotePort: Int) = Unit
 }
