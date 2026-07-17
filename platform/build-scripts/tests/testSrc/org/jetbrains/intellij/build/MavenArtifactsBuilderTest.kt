@@ -43,4 +43,27 @@ class MavenArtifactsBuilderTest {
     Assert.assertEquals("Incorrect groupId generated for $moduleName", expectedGroupId, coordinates.groupId)
     Assert.assertEquals("Incorrect artifactId generated for $moduleName", expectedArtifactId, coordinates.artifactId)
   }
+
+  /**
+   * The platform icons modules are published to Maven Central transitively as dependencies of the Jewel
+   * `jewel-ui` artifact, and Sonatype requires `-javadoc.jar` for them too. Keep the local Maven Central
+   * validation in sync so missing Javadocs fail before the real publication step.
+   */
+  @Test
+  fun `icons platform dependencies require javadocs`() {
+    val context = runBlocking {
+      createBuildContext(
+        projectHome = ULTIMATE_HOME,
+        productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
+        setupTracer = false,
+      )
+    }
+    val isJavadocJarRequired = context.productProperties.mavenArtifacts.isJavadocJarRequired
+    val validateForMavenCentralPublication = context.productProperties.mavenArtifacts.validateForMavenCentralPublication
+    for (moduleName in listOf("intellij.platform.icons.api", "intellij.platform.icons.api.rendering", "intellij.platform.icons.impl")) {
+      val module = context.outputProvider.findRequiredModule(moduleName)
+      Assert.assertTrue("POM for $moduleName is not validated for Maven Central publication", validateForMavenCentralPublication(module))
+      Assert.assertTrue("Javadocs are not required for $moduleName", isJavadocJarRequired(module))
+    }
+  }
 }
