@@ -39,6 +39,7 @@
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
+    <spellchecker.support language="IgnoreLang" implementationClass="com.intellij.grazie.ide.language.ignore.IgnoreSpellcheckingStrategy"/>
     <typedHandler implementation="com.intellij.grazie.ide.inspection.auto.GrazieTypedHandler"/>
     <projectConfigurable parentId="proofread" instance="com.intellij.grazie.spellcheck.settings.SpellCheckerConfigurable"
                          id="reference.settings.ide.settings.spelling"
@@ -160,6 +161,7 @@
   <extensions defaultExtensionNs="com.intellij.grazie">
     <cloudConnector implementation="com.intellij.grazie.cloud.DefaultGrazieCloudConnector" order="last"/>
     <textExtractor language="TEXT" implementationClass="com.intellij.grazie.text.PlainTextExtractor"/>
+    <textExtractor language="IgnoreLang" implementationClass="com.intellij.grazie.ide.language.ignore.IgnoreTextExtractor"/>
 
     <problemFilter language="" implementationClass="com.intellij.grazie.text.CodeProblemFilter"/>
     <problemFilter language="" implementationClass="com.intellij.grazie.text.CommitProblemFilter"/>
