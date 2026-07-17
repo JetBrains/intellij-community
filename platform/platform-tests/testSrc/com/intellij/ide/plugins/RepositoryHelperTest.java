@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
+import com.intellij.ide.plugins.newui.PluginDtoModelBuilderFactory;
+import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
@@ -174,6 +176,33 @@ public class RepositoryHelperTest {
       "</plugin-repository>", BuildNumber.fromString(next + ".100"));
     assertEquals(1, list.size());
     assertEquals("0.2", list.get(0).getVersion());
+  }
+
+  @Test
+  public void testListFilteringWithPluginDtoModelBuilder() throws IOException {
+    @Language("XML") String data = """
+      <plugins>
+        <plugin id="com.jetbrains.test.plugin" url="plugin-253.zip" version="1.0.0-253">
+          <idea-version since-build="253" until-build="253.*"/>
+        </plugin>
+        <plugin id="com.jetbrains.test.plugin" url="plugin-261.zip" version="1.0.0-261">
+          <idea-version since-build="261" until-build="261.*"/>
+        </plugin>
+        <plugin id="com.jetbrains.test.plugin" url="plugin-262.zip" version="1.0.0-262">
+          <idea-version since-build="262" until-build="262.*"/>
+        </plugin>
+      </plugins>""";
+    File tempFile = tempDir.newFile("repo.xml");
+    FileUtil.writeToFile(tempFile, data);
+    String url = tempFile.toURI().toURL().toString();
+    List<PluginUiModel> list = RepositoryHelper.loadPluginModels(
+      url,
+      BuildNumber.fromString("261.100"),
+      null,
+      PluginDtoModelBuilderFactory.INSTANCE
+    );
+    assertEquals(1, list.size());
+    assertEquals("1.0.0-261", list.getFirst().getVersion());
   }
 
   private @NotNull List<PluginNode> loadPlugins(@Language("XML") @NotNull String data) throws IOException {
