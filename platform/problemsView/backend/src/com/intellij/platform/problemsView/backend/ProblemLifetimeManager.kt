@@ -10,12 +10,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 
 @Service(Service.Level.PROJECT)
-@ApiStatus.Internal
 internal class ProblemLifetimeManager {
 
   private val problemIds = IdValueStore<Problem>()
@@ -74,24 +72,6 @@ internal class ProblemLifetimeManager {
   /** Test-only: total number of problem ids currently in the store. */
   @TestOnly
   fun getProblemIdsSize(): Int = problemIds.getSize()
-
-  internal fun getDiagnosticSnapshot(): String = buildString {
-    appendLine("Problem IDs Count: ${problemIds.getSize()}")
-    appendLine("Intention IDs Count: ${intentionIds.getSize()}")
-    appendLine("Problem-to-Intentions Mappings: ${problemToIntentions.size}")
-    appendLine()
-
-    appendLine("Problem IDs (first 20):")
-    val problemSample = problemIds.getSample(20)
-    if (problemSample.isEmpty()) {
-      appendLine("  (empty)")
-    } else {
-      problemSample.forEach { (problem, id) ->
-        appendLine("  $id -> ${problem.text}(hash=${problem.hashCode()})")
-      }
-    }
-    appendLine()
-  }
 
   companion object{
     fun getInstance(project: Project): ProblemLifetimeManager = project.service()

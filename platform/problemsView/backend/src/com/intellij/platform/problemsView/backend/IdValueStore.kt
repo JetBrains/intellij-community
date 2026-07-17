@@ -36,10 +36,4 @@ class IdValueStore<T : Any> {
   }
 
   fun getSize(): Int = valueToId.size
-
-  fun getSample(count: Int): List<Pair<T, String>> {
-    return valueToId.entries
-      .take(count)
-      .map { (value, id) -> value to id }
-  }
 }
