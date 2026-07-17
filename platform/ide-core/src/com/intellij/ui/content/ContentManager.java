@@ -36,6 +36,11 @@ public interface ContentManager extends Disposable, BusyObject {
 
   boolean removeContent(@NotNull Content content, boolean dispose);
 
+  /**
+   * @param dispose whether to dispose the removed Content. Note that if `false` specified,
+   *                client is now responsible for controlling the lifecycle of the Content.
+   *                It won't be disposed on the ContentManager disposal.
+   */
   @NotNull ActionCallback removeContent(@NotNull Content content, boolean dispose, boolean requestFocus, boolean forcedFocus);
 
   void setSelectedContent(@NotNull Content content);
@@ -76,6 +81,11 @@ public interface ContentManager extends Disposable, BusyObject {
 
   Content @NotNull [] getSelectedContents();
 
+  /**
+   * @param dispose whether to dispose removed Contents. Note that if `false` specified,
+   *                client is now responsible for controlling the lifecycle of the Contents.
+   *                They won't be disposed on the ContentManager disposal.
+   */
   void removeAllContents(boolean dispose);
 
   int getContentCount();

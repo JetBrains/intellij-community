@@ -240,8 +240,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
         requestFocus(content, true);
       }
     }
-
-    Disposer.register(this, content);
   }
 
   @Override
@@ -757,7 +755,14 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     if (myDisposed) return;
     myDisposed = true;
 
+    // Create the snapshot of the contents list to protect from possible ConcurrentModificationException
+    // when iterating and disposing Contents (their `dispose` may potentially call `content.manager.removeContent(content)`)
+    List<Content> snapshot = new ArrayList<>(contents);
+    for (Content content : snapshot) {
+      Disposer.dispose(content);
+    }
     contents.clear();
+
     myNestedManagers.clear();
     mySelection.clear();
     myContentWithChangedComponent.clear();

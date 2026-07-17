@@ -381,6 +381,10 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
     Disposer.register(mainContent, mainView);
     Disposer.register(mainContent, mainView.getModel());
+    // `mainContent` is a persistent content that is toggled in/out of the content manager
+    // but its lifetime is closely connected with the ContentManager even if it was removed from it.
+    // So, register it as a child explicitly.
+    Disposer.register(contentManager, mainContent);
 
     contentManager.addContent(mainContent);
     mainView.getModel().addModelListener(() -> {
