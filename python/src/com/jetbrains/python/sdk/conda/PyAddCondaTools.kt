@@ -7,6 +7,7 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinOnTarget
@@ -71,8 +72,9 @@ internal val condaSupportedLanguages: List<LanguageLevel>
 suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(
   condaIdentity: PyCondaEnvIdentity,
   existingSdks: List<Sdk>,
-  @Suppress("unused", "UNUSED_PARAMETER") project: Project? = null,
-): Sdk = createCondaSdkFromExistingEnvironment(condaIdentity, existingSdks).getOrThrow()
+  project: Project? = null,
+): Sdk =
+  createCondaSdkFromExistingEnvironment(condaIdentity, existingSdks, project?.basePath?.toNioPathOrNull() ?: Path.of("")).getOrThrow()
 
 
 /**
@@ -81,6 +83,7 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(
 internal suspend fun PyCondaCommand.createCondaSdkFromExistingEnvironment(
   condaIdentity: PyCondaEnvIdentity,
   existingSdks: List<Sdk>,
+  workingDirectory: Path,
 ): PyResult<Sdk> {
   val condaEnv = PyCondaEnv(condaIdentity, fullCondaPathOnTarget)
   val flavorAndData = PyFlavorAndData(PyCondaFlavorData(condaEnv), CondaEnvSdkFlavor)
@@ -88,7 +91,7 @@ internal suspend fun PyCondaCommand.createCondaSdkFromExistingEnvironment(
 
   val targetConfig = targetConfig
   val creationRequest = if (targetConfig == null) {
-    SdkCreationRequest.EelSdk(Path(interpreterPath), PythonSdkAdditionalData(flavorAndData))
+    SdkCreationRequest.EelSdk(Path(interpreterPath), PythonSdkAdditionalData(flavorAndData, workingDirectory))
   }
   else {
     val addData = PyTargetAwareAdditionalData(flavorAndData, targetConfig).also {
@@ -133,11 +136,13 @@ private suspend fun getCondaPythonBinaryPath(
 internal suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(
   newCondaEnvInfo: NewCondaEnvRequest,
   existingSdks: List<Sdk>,
+  workingDirectory: Path,
 ): PyResult<Sdk> {
   PyCondaEnv.createEnv(this, newCondaEnvInfo).getOr { return it }
   val sdk = createCondaSdkFromExistingEnvironment(
     condaIdentity = newCondaEnvInfo.toIdentity(),
     existingSdks = existingSdks,
+    workingDirectory = workingDirectory,
   ).getOr { return it }
   if (targetConfig == null) {
     saveLocalPythonCondaPath(Path.of(this@createCondaSdkAlongWithNewEnv.fullCondaPathOnTarget))

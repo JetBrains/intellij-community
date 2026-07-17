@@ -25,6 +25,7 @@ import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.baseDir
@@ -49,6 +50,7 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.setAssociationToModule
+import com.jetbrains.python.sdk.workingDirectory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -122,7 +124,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     else {
       val environmentYml = getEnvironmentYml(module)
                            ?: return PyResult.localizedError(PyBundle.message("sdk.cannot.create.conda.environment.yml.not.found"))
-      createCondaEnv(module.project, condaExecutable, environmentYml).also {
+      createCondaEnv(module, condaExecutable, environmentYml).also {
         PySdkConfigurationCollector.logCondaEnv(module.project, CondaEnvResult.CREATED)
       }
     }.getOr { return it }
@@ -142,10 +144,14 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
   }
 
   private suspend fun useExistingCondaEnv(module: Module, condaExecutable: PathHolder.Eel): PyResult<Sdk> {
+    val condaIdentity = getCondaEnvIdentity(module, condaExecutable)
+                        ?: return PyResult.localizedError(PyBundle.message("sdk.cannot.use.existing.conda.environment"))
+    val workingDirectory = ModuleOrProject.ModuleAndProject(module).workingDirectory
+                           ?: return PyResult.localizedError(PyBundle.message("python.sdk.project.working.directory.not.found"))
     return PyCondaCommand(condaExecutable.path.pathString, null).createCondaSdkFromExistingEnvironment(
-      getCondaEnvIdentity(module, condaExecutable)
-      ?: return PyResult.localizedError(PyBundle.message("sdk.cannot.use.existing.conda.environment")),
+      condaIdentity,
       PythonSdkUtil.getAllSdks(),
+      workingDirectory,
     )
   }
 
@@ -169,14 +175,17 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     }?.envIdentity
   }
 
-  private suspend fun createCondaEnv(project: Project, condaExecutable: PathHolder.Eel, environmentYml: VirtualFile): PyResult<Sdk> {
+  private suspend fun createCondaEnv(module: Module, condaExecutable: PathHolder.Eel, environmentYml: VirtualFile): PyResult<Sdk> {
+    val project = module.project
     val binaryToExec = BinOnEel(condaExecutable.path)
     val existingEnvs = PyCondaEnv.getEnvs(binaryToExec, forceRefresh = true).getOrNull() ?: emptyList()
 
     val existingSdks = PythonSdkUtil.getAllSdks()
     val newCondaEnvInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(environmentYml.toNioPath(), existingEnvs)
+    val workingDirectory = ModuleOrProject.ModuleAndProject(module).workingDirectory
+                           ?: return PyResult.localizedError(PyBundle.message("python.sdk.project.working.directory.not.found"))
     val sdk = PyCondaCommand(condaExecutable.path.pathString, null)
-      .createCondaSdkAlongWithNewEnv(newCondaEnvInfo, existingSdks.toList()).getOr {
+      .createCondaSdkAlongWithNewEnv(newCondaEnvInfo, existingSdks.toList(), workingDirectory).getOr {
         PySdkConfigurationCollector.logCondaEnv(project, CondaEnvResult.CREATION_FAILURE)
         thisLogger().warn("Exception during creating conda environment $it")
         return it

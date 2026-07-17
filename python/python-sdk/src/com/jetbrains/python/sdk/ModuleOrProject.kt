@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 /**
  * Lots of actions might be run on the project level or module level.
@@ -42,6 +43,11 @@ val ModuleOrProject.moduleIfExists: Module?
     is ModuleOrProject.ModuleAndProject -> module
     is ModuleOrProject.ProjectOnly -> null
   }
+
+@get:ApiStatus.Internal
+val ModuleOrProject.workingDirectory: Path?
+  get() = moduleIfExists?.baseDir?.path?.let { Path.of(it) }
+          ?: project.basePath?.let { Path.of(it) }
 
 val ModuleOrProject.destructured: Pair<Project, Module?>
   get() = when (this) {

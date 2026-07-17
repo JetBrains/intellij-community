@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
@@ -44,7 +45,6 @@ import com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder.Companion
 import com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder.Companion.SOME_REQUIREMENTS_FROM_BASE_FILES_WERE_NOT_UPDATED
 import com.jetbrains.python.util.runWithModalBlockingOrInBackground
 import org.jetbrains.annotations.ApiStatus
-import kotlin.io.path.Path
 
 private val PYTHON_EXTENSIONS = listOf("py", "ipynb")
 
@@ -226,11 +226,9 @@ private fun showSyncSettingsDialog(project: Project, settings: PyPackageRequirem
       row(PyBundle.message("form.integrated.tools.package.requirements.file")) {
         textFieldWithBrowseButton(fileChooserDescriptor = descriptor)
           .bindText({
-                      sdkAdditionalData.requiredTxtPath?.toString() ?: ""
+                      sdkAdditionalData.requirementsPath?.toString() ?: ""
                     }, { stringPath ->
-                      sdkAdditionalData.requiredTxtPath = runCatching {
-                        stringPath.ifBlank { null }?.let { Path(it) }
-                      }.getOrNull()
+                      sdkAdditionalData.requirementsPath = stringPath.ifBlank { null }?.toNioPathOrNull()
                     })
           .align(AlignX.FILL)
           .focused()

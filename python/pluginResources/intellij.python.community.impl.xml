@@ -582,6 +582,7 @@
 
     <postStartupActivity implementation="com.jetbrains.python.sdk.PythonHeadlessSdkUpdater"/>
     <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkUpdateProjectActivity"/>
+    <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkAdditionalDataMigrationActivity"/>
 
     <directoryProjectConfigurator implementation="com.jetbrains.python.configuration.PyDefaultProjectAwareServiceConfigurator"
                                   id="integratedTools" order="after sdk"/>

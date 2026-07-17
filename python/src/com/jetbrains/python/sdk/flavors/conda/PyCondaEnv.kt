@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Internal
@@ -45,8 +46,8 @@ data class PyCondaEnv(
     }
   }
 
-  suspend fun createSdkFromThisEnv(targetConfig: TargetEnvironmentConfiguration?, existingSdk: List<Sdk>): PyResult<Sdk> =
-    PyCondaCommand(fullCondaPathOnTarget, targetConfig).createCondaSdkFromExistingEnvironment(envIdentity, existingSdk)
+  suspend fun createSdkFromThisEnv(targetConfig: TargetEnvironmentConfiguration?, existingSdk: List<Sdk>, workingDirectory: Path): PyResult<Sdk> =
+    PyCondaCommand(fullCondaPathOnTarget, targetConfig).createCondaSdkFromExistingEnvironment(envIdentity, existingSdk, workingDirectory)
 
 
   /**

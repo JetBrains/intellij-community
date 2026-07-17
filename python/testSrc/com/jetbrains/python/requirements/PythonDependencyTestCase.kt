@@ -6,7 +6,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.jetbrains.env.python.testing.PythonNoseTestingTest
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonMockSdk
 import com.jetbrains.python.PythonTestUtil
@@ -75,7 +74,7 @@ abstract class PythonDependencyTestCase : BasePlatformTestCase() {
                                             "${PythonTestUtil.getTestDataPath()}/MockSdk", PythonSdkType.getInstance(), languageLevel,
                                             *additionalRoots)
         sdk.sdkModificator.let {
-          it.sdkAdditionalData = sdkAdditionalData ?: PythonSdkAdditionalData()
+          it.sdkAdditionalData = sdkAdditionalData ?: it.sdkAdditionalData
           ApplicationManager.getApplication().runWriteAction {
             it.commitChanges()
           }
