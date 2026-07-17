@@ -25,6 +25,7 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <projectPostConfigurator
             id="LombokCompilerPluginPostConfigurator"
+            order="after SpringCompilerPluginPostConfigurator"
             implementation="org.jetbrains.kotlin.idea.lombok.configuration.LombokCompilerPluginProjectPostConfigurator"/>
   </extensions>
 </idea-plugin>
