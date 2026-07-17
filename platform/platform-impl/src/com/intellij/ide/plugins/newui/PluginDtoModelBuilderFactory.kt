@@ -56,12 +56,12 @@ class PluginDtoModelBuilder(pluginId: PluginId) : PluginUiModelBuilder {
   }
 
   override fun setSinceBuild(sinceBuild: String?): PluginUiModelBuilder {
-    // PluginDto doesn't have direct sinceBuild field
+    resultDto.sinceBuild = sinceBuild
     return this
   }
 
   override fun setUntilBuild(untilBuild: String?): PluginUiModelBuilder {
-    // PluginDto doesn't have direct untilBuild field
+    resultDto.untilBuild = untilBuild
     return this
   }
 
