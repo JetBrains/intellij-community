@@ -94,7 +94,7 @@ internal suspend fun PyCondaCommand.createCondaSdkFromExistingEnvironment(
     SdkCreationRequest.EelSdk(Path(interpreterPath), PythonSdkAdditionalData(flavorAndData, workingDirectory))
   }
   else {
-    val addData = PyTargetAwareAdditionalData(flavorAndData, targetConfig).also {
+    val addData = PyTargetAwareAdditionalData(flavorAndData, workingDirectory, targetConfig).also {
       it.interpreterPath = interpreterPath
     }
     SdkCreationRequest.TargetSdk(interpreterPath, addData)
