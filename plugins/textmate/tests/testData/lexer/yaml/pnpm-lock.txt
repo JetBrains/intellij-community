@@ -3,1376 +3,1299 @@ source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;i
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [16, 17], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [17, 23], {'9.0'
 }
-source.yaml: [23, 24], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [23, 24], {
 }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [24, 32], {settings}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [32, 33], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [33, 34], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [34, 36], {  }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [34, 36], {  }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [36, 52], {autoInstallPeers}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [52, 53], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [53, 54], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;constant.language.boolean.yaml: [54, 58], {true}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [58, 59], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [59, 61], {  }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [59, 61], {  }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [61, 85], {excludeLinksFromLockfile}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [85, 86], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [86, 87], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;constant.language.boolean.yaml: [87, 92], {false}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [92, 93], {
 }
-source.yaml: [93, 94], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [93, 94], {
 }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [94, 103], {overrides}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [103, 104], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [104, 105], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [105, 107], {  }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [105, 107], {  }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [107, 123], {prosemirror-view}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [123, 124], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [124, 125], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [125, 132], {1.42.1
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [132, 134], {  }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [132, 134], {  }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [134, 151], {prosemirror-model}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [151, 152], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [152, 153], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [153, 161], {1.25.11
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [161, 163], {  }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [163, 164], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [164, 197], {@radix-ui/react-dismissable-layer}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [197, 198], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [198, 199], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [199, 200], { }
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [200, 206], {1.1.15}
-source.yaml;meta.stream.yaml;meta.document.yaml: [206, 207], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [161, 163], {  }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [163, 198], {'@radix-ui/react-dismissable-layer'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [198, 199], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [199, 200], { }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [200, 207], {1.1.15
 }
-source.yaml: [207, 208], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [207, 208], {
 }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [208, 217], {importers}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [217, 218], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [218, 219], {
 }
-source.yaml: [219, 220], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [219, 220], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [220, 222], {  }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [220, 222], {  }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [222, 223], {.}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [223, 224], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [224, 225], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [225, 229], {    }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [225, 229], {    }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [229, 244], {devDependencies}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [244, 245], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [245, 246], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [246, 252], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [246, 252], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [252, 257], {husky}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [257, 258], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [258, 259], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [259, 267], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [259, 267], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [267, 276], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [276, 277], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [277, 278], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [278, 284], {9.1.7
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [284, 292], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [284, 292], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [292, 299], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [299, 300], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [300, 301], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [301, 307], {9.1.7
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [307, 313], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [307, 313], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [313, 324], {lint-staged}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [324, 325], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [325, 326], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [326, 334], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [326, 334], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [334, 343], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [343, 344], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [344, 345], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [345, 352], {17.0.8
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [352, 360], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [352, 360], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [360, 367], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [367, 368], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [368, 369], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [369, 376], {17.0.8
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [376, 382], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [376, 382], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [382, 386], {node}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [386, 387], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [387, 388], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [388, 396], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [388, 396], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [396, 405], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [405, 406], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [406, 407], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [407, 419], {runtime:^24
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [419, 427], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [419, 427], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [427, 434], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [434, 435], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [435, 436], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [436, 452], {runtime:24.16.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [452, 458], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [452, 458], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [458, 470], {postcss-scss}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [470, 471], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [471, 472], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [472, 480], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [472, 480], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [480, 489], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [489, 490], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [490, 491], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [491, 497], {4.0.9
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [497, 505], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [497, 505], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [505, 512], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [512, 513], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [513, 514], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [514, 536], {4.0.9(postcss@8.5.19)
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [536, 542], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [536, 542], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [542, 550], {prettier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [550, 551], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [551, 552], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [552, 560], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [552, 560], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [560, 569], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [569, 570], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [570, 571], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [571, 577], {3.9.5
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [577, 585], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [577, 585], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [585, 592], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [592, 593], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [593, 594], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [594, 600], {3.9.5
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [600, 606], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [600, 606], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [606, 612], {rimraf}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [612, 613], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [613, 614], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [614, 622], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [614, 622], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [622, 631], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [631, 632], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [632, 633], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [633, 639], {6.1.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [639, 647], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [639, 647], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [647, 654], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [654, 655], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [655, 656], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [656, 662], {6.1.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [662, 668], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [662, 668], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [668, 676], {syncpack}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [676, 677], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [677, 678], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [678, 686], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [678, 686], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [686, 695], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [695, 696], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [696, 697], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [697, 704], {15.3.2
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [704, 712], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [704, 712], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [712, 719], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [719, 720], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [720, 721], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [721, 728], {15.3.2
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [728, 734], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [728, 734], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [734, 739], {turbo}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [739, 740], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [740, 741], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [741, 749], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [741, 749], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [749, 758], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [758, 759], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [759, 760], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [760, 767], {2.10.5
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [767, 775], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [767, 775], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [775, 782], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [782, 783], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [783, 784], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [784, 791], {2.10.5
 }
-source.yaml: [791, 792], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [791, 792], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [792, 794], {  }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [792, 794], {  }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [794, 805], {automations}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [805, 806], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [806, 807], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [807, 811], {    }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [807, 811], {    }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [811, 826], {devDependencies}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [826, 827], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [827, 828], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [828, 834], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [828, 834], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [834, 840], {rimraf}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [840, 841], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [841, 842], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [842, 850], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [842, 850], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [850, 859], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [859, 860], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [860, 861], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [861, 867], {6.1.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [867, 875], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [867, 875], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [875, 882], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [882, 883], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [883, 884], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [884, 890], {6.1.3
 }
-source.yaml: [890, 891], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [890, 891], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [891, 893], {  }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [891, 893], {  }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [893, 917], {automations/apps/backend}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [917, 918], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [918, 919], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [919, 923], {    }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [919, 923], {    }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [923, 935], {dependencies}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [935, 936], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [936, 937], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [937, 943], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [943, 944], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [944, 962], {@bufbuild/protobuf}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [962, 963], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [963, 964], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [964, 965], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [937, 943], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [943, 963], {'@bufbuild/protobuf'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [963, 964], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [964, 965], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [965, 973], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [965, 973], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [973, 982], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [982, 983], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [983, 984], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [984, 990], {2.2.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [990, 998], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [990, 998], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [998, 1005], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1005, 1006], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1006, 1007], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1007, 1013], {2.2.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1013, 1019], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [1019, 1020], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [1020, 1043], {@concierge/nestjs-authn}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [1043, 1044], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [1044, 1045], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [1045, 1046], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1013, 1019], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1019, 1044], {'@concierge/nestjs-authn'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1044, 1045], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1045, 1046], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1046, 1054], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1046, 1054], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1054, 1063], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1063, 1064], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1064, 1065], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1065, 1077], {workspace:*
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1077, 1085], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1077, 1085], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1085, 1092], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1092, 1093], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1093, 1094], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1094, 1127], {link:../../packages/nestjs-authn
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1127, 1133], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [1133, 1134], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [1134, 1165], {@concierge/nestjs-feature-flags}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [1165, 1166], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [1166, 1167], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [1167, 1168], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1127, 1133], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1133, 1166], {'@concierge/nestjs-feature-flags'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1166, 1167], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1167, 1168], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1168, 1176], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1168, 1176], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1176, 1185], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1185, 1186], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1186, 1187], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1187, 1199], {workspace:*
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1199, 1207], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1199, 1207], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1207, 1214], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1214, 1215], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1215, 1216], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1216, 1257], {link:../../packages/nestjs-feature-flags
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1257, 1263], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [1263, 1264], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [1264, 1287], {@concierge/nestjs-kafka}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [1287, 1288], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [1288, 1289], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [1289, 1290], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1257, 1263], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1263, 1288], {'@concierge/nestjs-kafka'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1288, 1289], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1289, 1290], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1290, 1298], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1290, 1298], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1298, 1307], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1307, 1308], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1308, 1309], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1309, 1321], {workspace:*
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1321, 1329], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1321, 1329], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1329, 1336], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1336, 1337], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1337, 1338], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1338, 1371], {link:../../packages/nestjs-kafka
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1371, 1377], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [1377, 1378], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [1378, 1400], {@concierge/nestjs-otel}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [1400, 1401], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [1401, 1402], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [1402, 1403], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1371, 1377], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1377, 1401], {'@concierge/nestjs-otel'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1401, 1402], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1402, 1403], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1403, 1411], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1403, 1411], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1411, 1420], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1420, 1421], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1421, 1422], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1422, 1434], {workspace:*
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1434, 1442], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1434, 1442], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1442, 1449], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1449, 1450], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1450, 1451], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1451, 1483], {link:../../packages/nestjs-otel
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1483, 1489], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [1489, 1490], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [1490, 1521], {@concierge/notifications-client}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [1521, 1522], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [1522, 1523], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [1523, 1524], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1483, 1489], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1489, 1522], {'@concierge/notifications-client'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1522, 1523], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1523, 1524], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1524, 1532], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1524, 1532], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1532, 1541], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1541, 1542], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1542, 1543], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1543, 1555], {workspace:*
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1555, 1563], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1555, 1563], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1563, 1570], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1570, 1571], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1571, 1572], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1572, 1613], {link:../../packages/notifications-client
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1613, 1619], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [1619, 1620], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [1620, 1637], {@concierge/shared}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [1637, 1638], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [1638, 1639], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [1639, 1640], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1613, 1619], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1619, 1638], {'@concierge/shared'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1638, 1639], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1639, 1640], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1640, 1648], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1640, 1648], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1648, 1657], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1657, 1658], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1658, 1659], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1659, 1671], {workspace:*
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1671, 1679], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1671, 1679], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1679, 1686], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1686, 1687], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1687, 1688], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1688, 1715], {link:../../packages/shared
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1715, 1721], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [1721, 1722], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [1722, 1737], {@fastify/static}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [1737, 1738], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [1738, 1739], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [1739, 1740], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1715, 1721], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1721, 1738], {'@fastify/static'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1738, 1739], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1739, 1740], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1740, 1748], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1740, 1748], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1748, 1757], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1757, 1758], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1758, 1759], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1759, 1765], {9.0.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1765, 1773], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1765, 1773], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1773, 1780], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1780, 1781], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1781, 1782], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1782, 1788], {9.0.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1788, 1794], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [1794, 1795], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [1795, 1812], {@jcp/can-i-client}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [1812, 1813], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [1813, 1814], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [1814, 1815], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1788, 1794], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1794, 1813], {'@jcp/can-i-client'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1813, 1814], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1814, 1815], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1815, 1823], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1815, 1823], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1823, 1832], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1832, 1833], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1833, 1834], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1834, 1840], {1.3.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1840, 1848], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1840, 1848], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1848, 1855], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1855, 1856], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1856, 1857], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1857, 1863], {1.3.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1863, 1869], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [1869, 1870], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [1870, 1912], {@jcp/jcp-agent-spawner-sessions-api-client}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [1912, 1913], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [1913, 1914], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [1914, 1915], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1863, 1869], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1869, 1913], {'@jcp/jcp-agent-spawner-sessions-api-client'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1913, 1914], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1914, 1915], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1915, 1923], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1915, 1923], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1923, 1932], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1932, 1933], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1933, 1934], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1934, 1940], {0.2.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1940, 1948], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1940, 1948], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1948, 1955], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [1955, 1956], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1956, 1957], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1957, 1963], {0.2.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [1963, 1969], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [1969, 1970], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [1970, 2002], {@jcp/jcp-org-entities-api-client}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [2002, 2003], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [2003, 2004], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [2004, 2005], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [1963, 1969], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [1969, 2003], {'@jcp/jcp-org-entities-api-client'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2003, 2004], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2004, 2005], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2005, 2013], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2005, 2013], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2013, 2022], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2022, 2023], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2023, 2024], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2024, 2030], {2.7.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2030, 2038], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2030, 2038], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2038, 2045], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2045, 2046], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2046, 2047], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2047, 2053], {2.7.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2053, 2059], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [2059, 2060], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [2060, 2087], {@jcp/jcp-org-jwt-api-client}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [2087, 2088], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [2088, 2089], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [2089, 2090], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2053, 2059], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2059, 2088], {'@jcp/jcp-org-jwt-api-client'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2088, 2089], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2089, 2090], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2090, 2098], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2090, 2098], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2098, 2107], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2107, 2108], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2108, 2109], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2109, 2115], {1.1.2
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2115, 2123], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2115, 2123], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2123, 2130], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2130, 2131], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2131, 2132], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2132, 2138], {1.1.2
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2138, 2144], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [2144, 2145], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [2145, 2180], {@jcp/jcp-secrets-manager-api-client}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [2180, 2181], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [2181, 2182], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [2182, 2183], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2138, 2144], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2144, 2181], {'@jcp/jcp-secrets-manager-api-client'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2181, 2182], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2182, 2183], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2183, 2191], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2183, 2191], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2191, 2200], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2200, 2201], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2201, 2202], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2202, 2208], {1.2.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2208, 2216], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2208, 2216], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2216, 2223], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2223, 2224], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2224, 2225], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2225, 2231], {1.2.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2231, 2237], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [2237, 2238], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [2238, 2256], {@jcp/manage-client}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [2256, 2257], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [2257, 2258], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [2258, 2259], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2231, 2237], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2237, 2257], {'@jcp/manage-client'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2257, 2258], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2258, 2259], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2259, 2267], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2259, 2267], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2267, 2276], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2276, 2277], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2277, 2278], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2278, 2284], {0.6.4
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2284, 2292], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2284, 2292], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2292, 2299], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2299, 2300], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2300, 2301], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2301, 2307], {0.6.4
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2307, 2313], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [2313, 2314], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [2314, 2328], {@nestjs/common}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [2328, 2329], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [2329, 2330], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [2330, 2331], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2307, 2313], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2313, 2329], {'@nestjs/common'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2329, 2330], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2330, 2331], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2331, 2339], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2331, 2339], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2339, 2348], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2348, 2349], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2349, 2350], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2350, 2358], {11.1.19
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2358, 2366], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2358, 2366], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2366, 2373], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2373, 2374], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2374, 2375], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2375, 2444], {11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2444, 2450], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [2450, 2451], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [2451, 2465], {@nestjs/config}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [2465, 2466], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [2466, 2467], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [2467, 2468], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2444, 2450], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2450, 2466], {'@nestjs/config'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2466, 2467], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2467, 2468], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2468, 2476], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2468, 2476], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2476, 2485], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2485, 2486], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2486, 2487], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2487, 2493], {4.0.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2493, 2501], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2493, 2501], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2501, 2508], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2508, 2509], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2509, 2510], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2510, 2613], {4.0.3(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2)
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2613, 2619], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [2619, 2620], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [2620, 2632], {@nestjs/core}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [2632, 2633], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [2633, 2634], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [2634, 2635], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2613, 2619], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2619, 2633], {'@nestjs/core'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2633, 2634], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2634, 2635], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2635, 2643], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2635, 2643], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2643, 2652], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2652, 2653], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2653, 2654], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2654, 2662], {11.1.19
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2662, 2670], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2662, 2670], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2670, 2677], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2677, 2678], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2678, 2679], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2679, 2808], {11.1.19(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2808, 2814], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [2814, 2815], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [2815, 2839], {@nestjs/platform-fastify}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [2839, 2840], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [2840, 2841], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [2841, 2842], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2808, 2814], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2814, 2840], {'@nestjs/platform-fastify'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2840, 2841], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2841, 2842], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2842, 2850], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2842, 2850], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2850, 2859], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2859, 2860], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2860, 2861], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2861, 2869], {11.1.19
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [2869, 2877], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2869, 2877], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2877, 2884], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [2884, 2885], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [2885, 2886], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [2886, 3145], {11.1.19(@fastify/static@9.0.0)(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [3145, 3151], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [3151, 3152], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [3152, 3167], {@nestjs/swagger}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [3167, 3168], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [3168, 3169], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [3169, 3170], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3145, 3151], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3151, 3168], {'@nestjs/swagger'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [3168, 3169], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3169, 3170], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [3170, 3178], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3170, 3178], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3178, 3187], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [3187, 3188], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3188, 3189], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3189, 3196], {11.2.6
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [3196, 3204], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3196, 3204], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3204, 3211], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [3211, 3212], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3212, 3213], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3213, 3520], {11.2.6(@fastify/static@9.0.0)(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(class-transformer@0.5.1)(reflect-metadata@0.2.2)
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [3520, 3526], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [3526, 3527], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [3527, 3545], {@opentelemetry/api}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [3545, 3546], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [3546, 3547], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [3547, 3548], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3520, 3526], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3526, 3546], {'@opentelemetry/api'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [3546, 3547], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3547, 3548], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [3548, 3556], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3548, 3556], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3556, 3565], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [3565, 3566], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3566, 3567], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3567, 3573], {1.9.1
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [3573, 3581], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3573, 3581], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3581, 3588], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [3588, 3589], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3589, 3590], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3590, 3596], {1.9.1
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [3596, 3602], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [3602, 3603], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [3603, 3621], {@prisma/adapter-pg}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [3621, 3622], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [3622, 3623], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [3623, 3624], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3596, 3602], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3602, 3622], {'@prisma/adapter-pg'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [3622, 3623], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3623, 3624], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [3624, 3632], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3624, 3632], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3632, 3641], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [3641, 3642], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3642, 3643], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3643, 3649], {7.7.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [3649, 3657], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3649, 3657], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3657, 3664], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [3664, 3665], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3665, 3666], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3666, 3672], {7.7.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [3672, 3678], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [3678, 3679], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [3679, 3693], {@prisma/client}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [3693, 3694], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [3694, 3695], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [3695, 3696], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3672, 3678], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3678, 3694], {'@prisma/client'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [3694, 3695], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3695, 3696], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [3696, 3704], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3696, 3704], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3704, 3713], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [3713, 3714], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3714, 3715], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3715, 3721], {7.7.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [3721, 3729], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3721, 3729], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3729, 3736], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [3736, 3737], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3737, 3738], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3738, 3909], {7.7.0(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@5.9.3))(typescript@5.9.3)
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [3909, 3915], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3909, 3915], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3915, 3921], {dotenv}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [3921, 3922], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3922, 3923], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [3923, 3931], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3923, 3931], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3931, 3940], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [3940, 3941], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3941, 3942], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3942, 3949], {17.4.2
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [3949, 3957], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3949, 3957], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3957, 3964], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [3964, 3965], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3965, 3966], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3966, 3973], {17.4.2
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [3973, 3979], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3973, 3979], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3979, 3992], {dotenv-expand}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [3992, 3993], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [3993, 3994], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [3994, 4002], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [3994, 4002], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4002, 4011], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [4011, 4012], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [4012, 4013], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4013, 4020], {12.0.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [4020, 4028], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [4020, 4028], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4028, 4035], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [4035, 4036], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [4036, 4037], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4037, 4044], {12.0.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [4044, 4050], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [4044, 4050], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4050, 4060], {nestjs-cls}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [4060, 4061], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4061, 4062], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [4062, 4070], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [4062, 4070], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4070, 4079], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [4079, 4080], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [4080, 4081], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4081, 4087], {5.4.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [4087, 4095], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [4087, 4095], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4095, 4102], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [4102, 4103], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [4103, 4104], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4104, 4374], {5.4.3(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [4374, 4380], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [4374, 4380], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4380, 4391], {nestjs-pino}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [4391, 4392], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4392, 4393], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [4393, 4401], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [4393, 4401], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4401, 4410], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [4410, 4411], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [4411, 4412], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4412, 4418], {4.6.1
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [4418, 4426], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [4418, 4426], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4426, 4433], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [4433, 4434], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [4434, 4435], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4435, 4569], {4.6.1(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(pino-http@11.0.0)(pino@10.1.0)(rxjs@7.8.2)
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [4569, 4575], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [4569, 4575], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4575, 4585], {nestjs-zod}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [4585, 4586], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4586, 4587], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [4587, 4595], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [4587, 4595], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4595, 4604], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [4604, 4605], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [4605, 4606], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4606, 4612], {5.2.1
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [4612, 4620], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [4612, 4620], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4620, 4627], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [4627, 4628], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [4628, 4629], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [4629, 5067], {5.2.1(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/swagger@11.2.6(@fastify/static@9.0.0)(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(class-transformer@0.5.1)(reflect-metadata@0.2.2))(rxjs@7.8.2)(zod@4.4.3)
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5067, 5073], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5067, 5073], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5073, 5075], {pg}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5075, 5076], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5076, 5077], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5077, 5085], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5077, 5085], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5085, 5094], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5094, 5095], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5095, 5096], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5096, 5103], {8.13.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5103, 5111], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5103, 5111], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5111, 5118], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5118, 5119], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5119, 5120], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5120, 5127], {8.13.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5127, 5133], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5127, 5133], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5133, 5139], {prisma}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5139, 5140], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5140, 5141], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5141, 5149], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5141, 5149], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5149, 5158], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5158, 5159], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5159, 5160], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5160, 5166], {7.7.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5166, 5174], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5166, 5174], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5174, 5181], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5181, 5182], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5182, 5183], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5183, 5322], {7.7.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@5.9.3)
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5322, 5328], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5322, 5328], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5328, 5344], {reflect-metadata}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5344, 5345], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5345, 5346], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5346, 5354], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5346, 5354], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5354, 5363], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5363, 5364], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5364, 5365], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5365, 5371], {0.2.2
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5371, 5379], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5371, 5379], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5379, 5386], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5386, 5387], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5387, 5388], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5388, 5394], {0.2.2
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5394, 5400], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5394, 5400], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5400, 5404], {rxjs}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5404, 5405], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5405, 5406], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5406, 5414], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5406, 5414], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5414, 5423], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5423, 5424], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5424, 5425], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5425, 5431], {7.8.2
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5431, 5439], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5431, 5439], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5439, 5446], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5446, 5447], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5447, 5448], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5448, 5454], {7.8.2
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5454, 5460], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5454, 5460], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5460, 5464], {uuid}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5464, 5465], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5465, 5466], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5466, 5474], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5466, 5474], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5474, 5483], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5483, 5484], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5484, 5485], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5485, 5492], {13.0.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5492, 5500], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5492, 5500], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5500, 5507], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5507, 5508], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5508, 5509], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5509, 5516], {13.0.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5516, 5522], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5516, 5522], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5522, 5526], {yaml}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5526, 5527], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5527, 5528], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5528, 5536], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5528, 5536], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5536, 5545], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5545, 5546], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5546, 5547], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5547, 5553], {2.8.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5553, 5561], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5553, 5561], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5561, 5568], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5568, 5569], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5569, 5570], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5570, 5576], {2.8.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5576, 5582], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5576, 5582], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5582, 5585], {zod}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5585, 5586], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5586, 5587], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5587, 5595], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5587, 5595], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5595, 5604], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5604, 5605], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5605, 5606], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5606, 5612], {4.4.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5612, 5620], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5612, 5620], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5620, 5627], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5627, 5628], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5628, 5629], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5629, 5635], {4.4.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5635, 5639], {    }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5635, 5639], {    }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5639, 5654], {devDependencies}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5654, 5655], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5655, 5656], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5656, 5662], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [5662, 5663], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [5663, 5676], {@bufbuild/buf}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [5676, 5677], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [5677, 5678], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [5678, 5679], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5656, 5662], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5662, 5677], {'@bufbuild/buf'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5677, 5678], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5678, 5679], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5679, 5687], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5679, 5687], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5687, 5696], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5696, 5697], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5697, 5698], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5698, 5705], {1.46.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5705, 5713], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5705, 5713], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5713, 5720], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5720, 5721], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5721, 5722], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5722, 5729], {1.46.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5729, 5735], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [5735, 5736], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [5736, 5759], {@bufbuild/protoc-gen-es}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [5759, 5760], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [5760, 5761], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [5761, 5762], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5729, 5735], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5735, 5760], {'@bufbuild/protoc-gen-es'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5760, 5761], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5761, 5762], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5762, 5770], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5762, 5770], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5770, 5779], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5779, 5780], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5780, 5781], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5781, 5787], {2.2.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5787, 5795], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5787, 5795], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5795, 5802], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5802, 5803], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5803, 5804], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5804, 5836], {2.2.3(@bufbuild/protobuf@2.2.3)
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5836, 5842], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [5842, 5843], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [5843, 5859], {@concierge/authn}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [5859, 5860], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [5860, 5861], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [5861, 5862], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5836, 5842], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5842, 5860], {'@concierge/authn'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5860, 5861], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5861, 5862], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5862, 5870], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5862, 5870], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5870, 5879], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5879, 5880], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5880, 5881], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5881, 5893], {workspace:*
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5893, 5901], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5893, 5901], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5901, 5908], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5908, 5909], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5909, 5910], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5910, 5936], {link:../../packages/authn
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5936, 5942], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [5942, 5943], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [5943, 5967], {@concierge/eslint-config}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [5967, 5968], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [5968, 5969], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [5969, 5970], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5936, 5942], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5942, 5968], {'@concierge/eslint-config'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5968, 5969], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5969, 5970], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [5970, 5978], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5970, 5978], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5978, 5987], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [5987, 5988], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [5988, 5989], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [5989, 6001], {workspace:*
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6001, 6009], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6001, 6009], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6009, 6016], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6016, 6017], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6017, 6018], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6018, 6052], {link:../../packages/eslint-config
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6052, 6058], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [6058, 6059], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [6059, 6087], {@concierge/openapi-generator}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [6087, 6088], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [6088, 6089], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [6089, 6090], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6052, 6058], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6058, 6088], {'@concierge/openapi-generator'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6088, 6089], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6089, 6090], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6090, 6098], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6090, 6098], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6098, 6107], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6107, 6108], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6108, 6109], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6109, 6121], {workspace:*
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6121, 6129], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6121, 6129], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6129, 6136], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6136, 6137], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6137, 6138], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6138, 6176], {link:../../packages/openapi-generator
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6176, 6182], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [6182, 6183], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [6183, 6211], {@concierge/typescript-config}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [6211, 6212], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [6212, 6213], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [6213, 6214], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6176, 6182], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6182, 6212], {'@concierge/typescript-config'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6212, 6213], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6213, 6214], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6214, 6222], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6214, 6222], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6222, 6231], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6231, 6232], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6232, 6233], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6233, 6245], {workspace:*
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6245, 6253], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6245, 6253], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6253, 6260], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6260, 6261], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6261, 6262], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6262, 6300], {link:../../packages/typescript-config
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6300, 6306], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [6306, 6307], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [6307, 6323], {@eslint/eslintrc}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [6323, 6324], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [6324, 6325], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [6325, 6326], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6300, 6306], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6306, 6324], {'@eslint/eslintrc'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6324, 6325], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6325, 6326], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6326, 6334], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6326, 6334], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6334, 6343], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6343, 6344], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6344, 6345], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6345, 6351], {3.3.5
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6351, 6359], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6351, 6359], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6359, 6366], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6366, 6367], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6367, 6368], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6368, 6374], {3.3.5
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6374, 6380], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [6380, 6381], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [6381, 6391], {@eslint/js}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [6391, 6392], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [6392, 6393], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [6393, 6394], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6374, 6380], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6380, 6392], {'@eslint/js'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6392, 6393], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6393, 6394], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6394, 6402], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6394, 6402], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6402, 6411], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6411, 6412], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6412, 6413], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6413, 6420], {10.0.1
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6420, 6428], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6420, 6428], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6428, 6435], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6435, 6436], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6436, 6437], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6437, 6471], {10.0.1(eslint@10.7.0(jiti@2.6.1))
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6471, 6477], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [6477, 6478], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [6478, 6489], {@nestjs/cli}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [6489, 6490], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [6490, 6491], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [6491, 6492], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6471, 6477], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6477, 6490], {'@nestjs/cli'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6490, 6491], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6491, 6492], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6492, 6500], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6492, 6500], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6500, 6509], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6509, 6510], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6510, 6511], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6511, 6519], {11.0.21
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6519, 6527], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6519, 6527], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6527, 6534], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6534, 6535], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6535, 6536], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6536, 6635], {11.0.21(@swc/cli@0.8.1(@swc/core@1.15.21))(@swc/core@1.15.21)(@types/node@24.13.2)(esbuild@0.28.0)
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6635, 6641], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [6641, 6642], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [6642, 6660], {@nestjs/schematics}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [6660, 6661], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [6661, 6662], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [6662, 6663], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6635, 6641], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6641, 6661], {'@nestjs/schematics'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6661, 6662], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6662, 6663], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6663, 6671], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6663, 6671], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6671, 6680], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6680, 6681], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6681, 6682], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6682, 6690], {11.0.10
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6690, 6698], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6690, 6698], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6698, 6705], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6705, 6706], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6706, 6707], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6707, 6749], {11.0.10(chokidar@4.0.3)(typescript@5.9.3)
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6749, 6755], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [6755, 6756], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [6756, 6771], {@nestjs/testing}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [6771, 6772], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [6772, 6773], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [6773, 6774], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6749, 6755], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6755, 6772], {'@nestjs/testing'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6772, 6773], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6773, 6774], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6774, 6782], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6774, 6782], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6782, 6791], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6791, 6792], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6792, 6793], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6793, 6801], {11.1.19
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [6801, 6809], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6801, 6809], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6809, 6816], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [6816, 6817], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [6817, 6818], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [6818, 7054], {11.1.19(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7054, 7060], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [7060, 7061], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [7061, 7069], {@swc/cli}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [7069, 7070], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [7070, 7071], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [7071, 7072], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7054, 7060], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7060, 7070], {'@swc/cli'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7070, 7071], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7071, 7072], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7072, 7080], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7072, 7080], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7080, 7089], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7089, 7090], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7090, 7091], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7091, 7097], {0.8.1
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7097, 7105], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7097, 7105], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7105, 7112], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7112, 7113], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7113, 7114], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7114, 7155], {0.8.1(@swc/core@1.15.21)(chokidar@4.0.3)
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7155, 7161], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [7161, 7162], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [7162, 7171], {@swc/core}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [7171, 7172], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [7172, 7173], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [7173, 7174], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7155, 7161], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7161, 7172], {'@swc/core'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7172, 7173], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7173, 7174], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7174, 7182], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7174, 7182], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7182, 7191], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7191, 7192], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7192, 7193], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7193, 7201], {1.15.21
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7201, 7209], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7201, 7209], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7209, 7216], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7216, 7217], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7217, 7218], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7218, 7226], {1.15.21
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7226, 7232], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [7232, 7233], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [7233, 7244], {@types/node}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [7244, 7245], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [7245, 7246], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [7246, 7247], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7226, 7232], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7232, 7245], {'@types/node'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7245, 7246], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7246, 7247], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7247, 7255], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7247, 7255], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7255, 7264], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7264, 7265], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7265, 7266], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7266, 7274], {24.13.2
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7274, 7282], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7274, 7282], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7282, 7289], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7289, 7290], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7290, 7291], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7291, 7299], {24.13.2
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7299, 7305], {      }
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.begin.yaml: [7305, 7306], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml: [7306, 7322], {@types/supertest}
-source.yaml;meta.stream.yaml;meta.document.yaml;string.quoted.single.yaml;punctuation.definition.string.end.yaml: [7322, 7323], {'}
-source.yaml;meta.stream.yaml;meta.document.yaml;invalid.illegal.unrecognized.yaml: [7323, 7324], {:}
-source.yaml;meta.stream.yaml;meta.document.yaml: [7324, 7325], {
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7299, 7305], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7305, 7323], {'@types/supertest'}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7323, 7324], {:}
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7324, 7325], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7325, 7333], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7325, 7333], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7333, 7342], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7342, 7343], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7343, 7344], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7344, 7350], {7.2.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7350, 7358], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7350, 7358], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7358, 7365], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7365, 7366], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7366, 7367], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7367, 7373], {7.2.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7373, 7379], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7373, 7379], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7379, 7397], {allure-commandline}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7397, 7398], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7398, 7399], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7399, 7407], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7399, 7407], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7407, 7416], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7416, 7417], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7417, 7418], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7418, 7425], {2.38.1
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7425, 7433], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7425, 7433], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7433, 7440], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7440, 7441], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7441, 7442], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7442, 7449], {2.38.1
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7449, 7455], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7449, 7455], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7455, 7468], {allure-vitest}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7468, 7469], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7469, 7470], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7470, 7478], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7470, 7478], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7478, 7487], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7487, 7488], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7488, 7489], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7489, 7495], {3.6.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7495, 7503], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7495, 7503], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7503, 7510], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7510, 7511], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7511, 7512], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7512, 7556], {3.6.0(@vitest/runner@4.1.10)(vitest@4.1.10)
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7556, 7562], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7556, 7562], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7562, 7568], {eslint}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7568, 7569], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7569, 7570], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7570, 7578], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7570, 7578], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7578, 7587], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7587, 7588], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7588, 7589], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7589, 7596], {10.7.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7596, 7604], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7596, 7604], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7604, 7611], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7611, 7612], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7612, 7613], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7613, 7632], {10.7.0(jiti@2.6.1)
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7632, 7638], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7632, 7638], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7638, 7645], {globals}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7645, 7646], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7646, 7647], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7647, 7655], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7647, 7655], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7655, 7664], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7664, 7665], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7665, 7666], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7666, 7673], {17.7.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7673, 7681], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7673, 7681], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7681, 7688], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7688, 7689], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7689, 7690], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7690, 7697], {17.7.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7697, 7703], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7697, 7703], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7703, 7714], {pino-pretty}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7714, 7715], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7715, 7716], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7716, 7724], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7716, 7724], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7724, 7733], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7733, 7734], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7734, 7735], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7735, 7743], {^13.1.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7743, 7751], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7743, 7751], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7751, 7758], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7758, 7759], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7759, 7760], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7760, 7767], {13.1.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7767, 7773], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7767, 7773], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7773, 7779], {rimraf}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7779, 7780], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7780, 7781], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7781, 7789], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7781, 7789], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7789, 7798], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7798, 7799], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7799, 7800], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7800, 7806], {6.1.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7806, 7814], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7806, 7814], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7814, 7821], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7821, 7822], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7822, 7823], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7823, 7829], {6.1.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7829, 7835], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7829, 7835], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7835, 7853], {source-map-support}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7853, 7854], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7854, 7855], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7855, 7863], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7855, 7863], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7863, 7872], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7872, 7873], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7873, 7874], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7874, 7881], {0.5.21
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7881, 7889], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7881, 7889], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7889, 7896], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7896, 7897], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7897, 7898], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7898, 7905], {0.5.21
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7905, 7911], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7905, 7911], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7911, 7920], {supertest}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7920, 7921], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7921, 7922], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7922, 7930], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7922, 7930], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7930, 7939], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7939, 7940], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7940, 7941], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7941, 7947], {7.2.2
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7947, 7955], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7947, 7955], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7955, 7962], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7962, 7963], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7963, 7964], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7964, 7970], {7.2.2
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7970, 7976], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7970, 7976], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7976, 7985], {ts-loader}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [7985, 7986], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7986, 7987], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [7987, 7995], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [7987, 7995], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [7995, 8004], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [8004, 8005], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8005, 8006], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8006, 8012], {9.5.7
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [8012, 8020], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8012, 8020], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8020, 8027], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [8027, 8028], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8028, 8029], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8029, 8105], {9.5.7(typescript@5.9.3)(webpack@5.106.0(@swc/core@1.15.21)(esbuild@0.28.0))
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [8105, 8111], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8105, 8111], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8111, 8118], {ts-node}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [8118, 8119], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8119, 8120], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [8120, 8128], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8120, 8128], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8128, 8137], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [8137, 8138], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8138, 8139], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8139, 8146], {10.9.2
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [8146, 8154], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8146, 8154], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8154, 8161], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [8161, 8162], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8162, 8163], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8163, 8228], {10.9.2(@swc/core@1.15.21)(@types/node@24.13.2)(typescript@5.9.3)
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [8228, 8234], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8228, 8234], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8234, 8248], {tsconfig-paths}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [8248, 8249], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8249, 8250], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [8250, 8258], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8250, 8258], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8258, 8267], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [8267, 8268], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8268, 8269], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8269, 8275], {4.2.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [8275, 8283], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8275, 8283], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8283, 8290], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [8290, 8291], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8291, 8292], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8292, 8298], {4.2.0
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [8298, 8304], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8298, 8304], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8304, 8314], {typescript}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [8314, 8315], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8315, 8316], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [8316, 8324], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8316, 8324], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8324, 8333], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [8333, 8334], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8334, 8335], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8335, 8341], {5.9.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [8341, 8349], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8341, 8349], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8349, 8356], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [8356, 8357], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8357, 8358], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8358, 8364], {5.9.3
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [8364, 8370], {      }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8364, 8370], {      }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8370, 8376], {vitest}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [8376, 8377], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8377, 8378], {
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [8378, 8386], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8378, 8386], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8386, 8395], {specifier}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [8395, 8396], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8396, 8397], { }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8397, 8404], {4.1.10
 }
-source.yaml;meta.stream.yaml;meta.document.yaml;punctuation.whitespace.separator.yaml: [8404, 8412], {        }
+source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8404, 8412], {        }
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml: [8412, 8419], {version}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;invalid.illegal.multiline-key.yaml: [8419, 8420], {:}
 source.yaml;meta.stream.yaml;meta.document.yaml;string.unquoted.plain.out.yaml;punctuation.whitespace.separator.yaml: [8420, 8421], { }

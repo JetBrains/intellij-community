@@ -2,6 +2,7 @@ package org.jetbrains.plugins.textmate.language.syntax.lexer
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Runnable
 import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor
@@ -120,37 +121,32 @@ class TextMateLexerCore(
 
     return mySyntaxMatcher.matchingString(line) { string ->
       if (checkWhileConditions) {
-        // Check the while-conditions of the rules currently on the stack. When a while-condition fails, its rule
-        // together with every rule nested inside it is discarded from the stack.
-        var whileStates = states
-        while (!whileStates.isEmpty()) {
-          val whileState = whileStates.last()
-          whileStates = whileStates.removingAt(whileStates.size - 1)
-          if (whileState.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null) {
+        // Check the while-conditions of the rules currently on the stack from the outermost to the innermost rule.
+        // When a while-condition fails, its rule together with every rule
+        // nested inside it is discarded from the stack, and the conditions of the nested rules are not checked.
+        for ((index, state) in states.withIndex()) {
+          if (state.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null) {
             val matchWhile = mySyntaxMatcher.matchStringRegex(keyName = Constants.StringKey.WHILE,
                                                               string = string,
                                                               byteOffset = lineByteOffset,
                                                               matchBeginPosition = anchorByteOffset == lineByteOffset,
                                                               matchBeginString = matchBeginString,
-                                                              lexerState = whileState,
+                                                              lexerState = state,
                                                               checkCancelledCallback = checkCancelledCallback)
             if (matchWhile.matched) {
               // todo: support whileCaptures
-              if (anchorByteOffset.offset == -1) {
-                anchorByteOffset = matchWhile.byteRange().end
-              }
+              anchorByteOffset = matchWhile.byteRange().end
             }
             else {
-              // The while-condition failed: discard this rule together with every rule nested inside it
-              // (everything above `whileStates` on the stack). Each discarded rule opened a name and a
-              // content-name selector, so close two selectors per rule. Closing only a fixed pair here used to
-              // leave the outer rules' scopes leaked onto the following tokens.
-              repeat(states.size - whileStates.size) {
-                closeScopeSelector(output, linePosition + lineStartOffset)
-                closeScopeSelector(output, linePosition + lineStartOffset)
+              // The while-condition failed: discard this rule together with every rule nested inside it.
+              // Each discarded rule opened a name and a content-name selector, so close two selectors per rule,
+              // the innermost rule first.
+              repeat(states.size - index) {
+                closeScopeSelector(output, linePosition + lineStartOffset) // closing content scope
+                closeScopeSelector(output, linePosition + lineStartOffset) // closing basic scope
               }
-              states = whileStates
-              anchorByteOffset = (-1).byteOffset()
+              states = states.subList(0, index).toPersistentList()
+              break
             }
           }
         }

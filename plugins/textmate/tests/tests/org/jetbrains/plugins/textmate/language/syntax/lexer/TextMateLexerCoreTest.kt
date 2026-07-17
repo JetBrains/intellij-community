@@ -152,4 +152,39 @@ class TextMateLexerCoreTest {
       source.aeptest meta.block: [4, 6], {b}}
     """.trimIndent())
   }
+
+  @Test
+  fun `failed while condition pops all nested rules and their scopes`() {
+    val grammar = """
+      {
+        "scopeName": "source.test",
+        "patterns": [
+          {
+            "name": "outer.block",
+            "begin": "^A",
+            "while": "^a",
+            "patterns": [
+              {
+                "name": "inner.block",
+                "begin": "B",
+                "while": "b"
+              }
+            ]
+          }
+        ]
+      }
+    """.trimIndent()
+    // on the second line the outer while fails while the inner one would match;
+    // both rules must be popped and both scopes closed
+    assertTokenize(grammar, "AB\nbx\nx\n", """
+      source.test outer.block: [0, 1], {A}
+      source.test outer.block inner.block: [1, 2], {B}
+      source.test outer.block inner.block: [2, 3], {
+      }
+      source.test: [3, 6], {bx
+      }
+      source.test: [6, 8], {x
+      }
+    """.trimIndent())
+  }
 }
