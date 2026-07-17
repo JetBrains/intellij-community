@@ -668,7 +668,6 @@ c:com.intellij.codeInsight.actions.RearrangeCodeProcessor
 c:com.intellij.codeInsight.actions.ReformatCodeAction
 - s:convertToPsiFiles(com.intellij.openapi.vfs.VirtualFile[],com.intellij.openapi.project.Project):com.intellij.psi.PsiFile[]
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getRequiredPermissions():java.util.Collection
 - s:reformatDirectory(com.intellij.openapi.project.Project,com.intellij.psi.PsiDirectory,com.intellij.codeInsight.actions.DirectoryFormattingOptions):V
 - s:registerFileMaskFilter(com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor,java.lang.String):V
 - s:registerScopeFilter(com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor,com.intellij.psi.search.SearchScope):V

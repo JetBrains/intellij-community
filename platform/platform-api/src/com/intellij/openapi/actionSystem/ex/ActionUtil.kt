@@ -26,9 +26,6 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ShortcutSet
-import com.intellij.openapi.actionSystem.ex.ActionUtil.SHOW_TEXT_IN_TOOLBAR
-import com.intellij.openapi.actionSystem.ex.ActionUtil.performAction
-import com.intellij.openapi.actionSystem.ex.ActionUtil.updateAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
@@ -49,10 +46,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.ide.core.permissions.Permission
-import com.intellij.platform.ide.core.permissions.PermissionDeniedException
-import com.intellij.platform.ide.core.permissions.RequiresPermissions
-import com.intellij.platform.ide.core.permissions.checkPermissionsGranted
 import com.intellij.ui.ClientProperty
 import com.intellij.util.ObjectUtils
 import com.intellij.util.SlowOperationCanceledException
@@ -190,10 +183,6 @@ object ActionUtil {
 
   @ApiStatus.Internal
   @JvmField
-  val UNSATISFIED_PERMISSIONS: Key<List<Permission>> = Key.create("UNSATISFIED_PERMISSIONS")
-
-  @ApiStatus.Internal
-  @JvmField
   val SKIP_ACTION_EXECUTION: Key<Boolean> = Key.create("SKIP_ACTION_EXECUTION")
 
   @JvmStatic
@@ -305,9 +294,6 @@ object ActionUtil {
       if (!allowed) {
         presentation.putClientProperty(TOOLTIP_TEXT, IdeBundle.message("ide.action.waits.for.analysis.message", presentation.text))
       }
-      if (presentation.isEnabled && action is RequiresPermissions) {
-        checkPermissionsGranted(*action.getRequiredPermissions().toTypedArray())
-      }
     }
     catch (@Suppress("IncorrectCancellationExceptionHandling") ex: SlowOperationCanceledException) {
       return AnActionResult.failed(ex)
@@ -320,14 +306,6 @@ object ActionUtil {
         return AnActionResult.failed(ex)
       }
       throw ex
-    }
-    catch (pde: PermissionDeniedException) {
-      if (Registry.`is`("ide.permissions.api.enabled")) {
-        presentation.putClientProperty(UNSATISFIED_PERMISSIONS, pde.permissions)
-      }
-      else {
-        LOG.error(Throwable("PDE must not be thrown when `ide.permissions.api.enabled=false`", pde))
-      }
     }
     finally {
       if (!isPerformed) {
@@ -442,9 +420,6 @@ object ActionUtil {
     e: AnActionEvent,
     popupShow: Consumer<in JBPopup>?,
   ) {
-    if (action is RequiresPermissions) {
-      checkPermissionsGranted(*action.getRequiredPermissions().toTypedArray())
-    }
     if (action is ActionGroup && !e.presentation.isPerformGroup) {
       val dataContext = e.dataContext
       val place = ActionPlaces.getActionGroupPopupPlace(e.place)

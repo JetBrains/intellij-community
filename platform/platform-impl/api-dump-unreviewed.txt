@@ -887,7 +887,6 @@ f:com.intellij.ide.actions.CopyUrlAction
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.actions.CutAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getRequiredPermissions():java.util.Collection
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.actions.DeleteAction
 - <init>(java.lang.String,java.lang.String,javax.swing.Icon):V
@@ -933,7 +932,6 @@ c:com.intellij.ide.actions.OpenProjectFileChooserDescriptor
 - <init>(Z,Z):V
 c:com.intellij.ide.actions.PasteAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getRequiredPermissions():java.util.Collection
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.actions.PreviousOccurenceAction
 - p:getDescription(com.intellij.ide.OccurenceNavigator):java.lang.String

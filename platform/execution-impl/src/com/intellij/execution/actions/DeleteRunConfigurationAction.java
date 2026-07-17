@@ -7,17 +7,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.platform.ide.core.permissions.Permission;
-import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.ui.ExperimentalUI;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.List;
-
-import static com.intellij.openapi.vfs.FilePermissionsKt.getProjectFilesWrite;
-
-final class DeleteRunConfigurationAction extends RunConfigurationSpecificActionBase implements RequiresPermissions, DumbAware {
+final class DeleteRunConfigurationAction extends RunConfigurationSpecificActionBase implements DumbAware {
 
   @Override
   protected void doUpdate(@NotNull AnActionEvent e,
@@ -32,10 +25,5 @@ final class DeleteRunConfigurationAction extends RunConfigurationSpecificActionB
   protected void doActionPerformed(@NotNull Project project,
                                    @NotNull RunnerAndConfigurationSettings configuration) {
     ChooseRunConfigurationManager.deleteConfiguration(project, configuration, null);
-  }
-
-  @Override
-  public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
-    return List.of(getProjectFilesWrite());
   }
 }

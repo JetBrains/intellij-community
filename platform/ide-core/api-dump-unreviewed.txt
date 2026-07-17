@@ -1039,7 +1039,6 @@ c:com.intellij.openapi.vcs.UrlFilePath
 - <init>(java.lang.String,Z):V
 - p:findFile(java.lang.String):com.intellij.openapi.vfs.VirtualFile
 - p:getPath(com.intellij.openapi.vfs.VirtualFile):java.lang.String
-f:com.intellij.openapi.vfs.FilePermissionsKt
 a:com.intellij.openapi.vfs.JarFileSystem
 - sf:JAR_SEPARATOR:java.lang.String
 - sf:PROTOCOL:java.lang.String
@@ -1176,7 +1175,6 @@ a:com.intellij.openapi.wm.WindowManager
 - a:requestUserAttention(com.intellij.openapi.wm.IdeFrame,Z):V
 - a:setAlphaModeEnabled(java.awt.Window,Z):V
 - a:setAlphaModeRatio(java.awt.Window,F):V
-f:com.intellij.platform.ide.core.permissions.PermissionsKt
 c:com.intellij.projectImport.ProjectAttachProcessor
 - sf:Companion:com.intellij.projectImport.ProjectAttachProcessor$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName

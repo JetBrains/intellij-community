@@ -32,8 +32,6 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.ide.core.permissions.Permission;
-import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiDocumentManager;
@@ -49,14 +47,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.PatternSyntaxException;
 
-import static com.intellij.openapi.vfs.FilePermissionsKt.getProjectFilesWrite;
 
-public class ReformatCodeAction extends AnAction implements DumbAware, LightEditCompatible, RequiresPermissions, ActionRemoteBehaviorSpecification {
+public class ReformatCodeAction extends AnAction implements DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification {
   private static final Logger LOG = Logger.getInstance(ReformatCodeAction.class);
 
   private static ReformatFilesOptions myTestOptions;
@@ -192,11 +187,6 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
 
     currentRunOptions.setProcessingScope(processingScope);
     new FileInEditorProcessor(file, editor, currentRunOptions).processCode();
-  }
-
-  @Override
-  public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
-    return Collections.singletonList(getProjectFilesWrite());
   }
 
   private static @Nullable DirectoryFormattingOptions getDirectoryFormattingOptions(@NotNull Project project, @NotNull PsiDirectory dir) {

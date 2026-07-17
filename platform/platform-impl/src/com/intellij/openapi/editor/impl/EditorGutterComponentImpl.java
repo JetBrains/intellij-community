@@ -115,8 +115,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
-import com.intellij.platform.ide.core.permissions.Permission;
-import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.AnimatedIcon;
@@ -2713,8 +2711,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     updateSize();
   }
 
-  private final class CloseAnnotationsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.BackendOnly,
-                                                                                RequiresPermissions {
+  private final class CloseAnnotationsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.BackendOnly {
     CloseAnnotationsAction() {
       super(EditorBundle.messagePointer("close.editor.annotations.action.name"));
     }
@@ -2722,11 +2719,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       closeAllAnnotations();
-    }
-
-    @Override
-    public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
-      return List.of();
     }
   }
 

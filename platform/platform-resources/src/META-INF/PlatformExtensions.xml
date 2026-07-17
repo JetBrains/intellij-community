@@ -2077,14 +2077,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <applicationService serviceInterface="com.intellij.openapi.vfs.FileIdAdapter" open="true"
                         serviceImplementation="com.intellij.openapi.vfs.impl.FileIdAdapterImpl"
                         preload="notHeadless"/>
-    <applicationService serviceImplementation="com.intellij.openapi.vfs.impl.FilePermissionManagerImpl"
-                        serviceInterface="com.intellij.openapi.vfs.impl.FilePermissionManager"
-                        client="all"/>
-
-    <applicationService serviceImplementation="com.intellij.platform.ide.core.impl.permissions.NoopPermissionManager"
-                        serviceInterface="com.intellij.platform.ide.core.permissions.impl.IdePermissionManager"
-                        open="true"
-                        client="owner"/>
 
     <applicationService serviceImplementation="com.intellij.ide.impl.UndoRemoteBehaviorService" open="true"/>
 

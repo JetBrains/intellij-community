@@ -30,8 +30,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.platform.ide.core.permissions.Permission;
-import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IconUtil;
@@ -47,15 +45,12 @@ import java.awt.Component;
 import java.awt.event.InputEvent;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.execution.PermissionsKt.getFullRunAccess;
 import static com.intellij.execution.StoppableRunDescriptorsKt.getStoppableDescriptors;
 
-public class StopAction extends DumbAwareAction implements RequiresPermissions,
-                                                           ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+public class StopAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
 
   private WeakReference<JBPopup> myActivePopupRef = null;
 
@@ -311,11 +306,6 @@ public class StopAction extends DumbAwareAction implements RequiresPermissions,
     return processHandler != null && !processHandler.isProcessTerminated()
            && (!processHandler.isProcessTerminating()
                || processHandler instanceof KillableProcess && ((KillableProcess)processHandler).canKillProcess());
-  }
-
-  @Override
-  public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
-    return List.of(getFullRunAccess());
   }
 
   abstract static class HandlerItem {
