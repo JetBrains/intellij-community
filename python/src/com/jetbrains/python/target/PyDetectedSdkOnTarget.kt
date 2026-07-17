@@ -7,8 +7,11 @@ import com.intellij.execution.target.saveTargetConfiguration
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.flavors.PyFlavorAndData
+import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import org.jdom.Element
+import java.nio.file.Path
 
 /**
  * Allows passing SDK with such additional data [com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote] check.
@@ -16,9 +19,9 @@ import org.jdom.Element
  * This class is meant for use in UI and should be used with caution.
  */
 internal class PyDetectedSdkAdditionalData(override var targetEnvironmentConfiguration: TargetEnvironmentConfiguration?,
-                                  flavor: PythonSdkFlavor<*>?) : PythonSdkAdditionalData(flavor),
-                                                                 TargetBasedSdkAdditionalData,
-                                                                 PyRemoteSdkAdditionalDataMarker {
+                                   flavor: PythonSdkFlavor<*>?) : PythonSdkAdditionalData(createFlavorAndData(flavor), Path.of("")),
+                                                                  TargetBasedSdkAdditionalData,
+                                                                  PyRemoteSdkAdditionalDataMarker {
 
   override fun save(rootElement: Element) {
     super.save(rootElement)
@@ -29,6 +32,16 @@ internal class PyDetectedSdkAdditionalData(override var targetEnvironmentConfigu
   companion object {
     const val PY_DETECTED_SDK_MARKER = "IS_DETECTED"
   }
+}
+
+private fun createFlavorAndData(flavor: PythonSdkFlavor<*>?): PyFlavorAndData<*, *> {
+  val actualFlavor = flavor ?: PythonSdkFlavor.UnknownFlavor.INSTANCE
+  if (!actualFlavor.supportsEmptyData()) {
+    throw IllegalArgumentException(actualFlavor.name + " can't be created without additional data")
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  return PyFlavorAndData(PyFlavorData.Empty, actualFlavor as PythonSdkFlavor<PyFlavorData.Empty>)
 }
 
 @Deprecated("Will be dropped soon along with PyDetectedSDK, do not use")
