@@ -126,11 +126,11 @@ class ToolWindowEditorTabTransferController(
     return ToolWindowEditorTabFile(
       editorTitle = descriptor.title,
       toolWindowId = toolWindow.id,
-      fileType = descriptor.toFileType(),
       component = component,
       content.preferredFocusableComponent ?: component.getPreferredFocusedComponent() ?: component,
       persistInEditorHistory = descriptor.persistInEditorHistory,
       content = content,
+      tabIcon = descriptor.icon,
     )
   }
 

@@ -1,6 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.tabInEditor
 
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.recordActionInvoked
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
@@ -21,6 +30,7 @@ import kotlinx.coroutines.awaitCancellation
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Image
 import java.awt.Rectangle
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.SwingConstants
@@ -63,6 +73,7 @@ class ToolWindowEditorTabDockContainer private constructor(
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId) ?: return
     val targetDecorator = findTargetDecorator(dropTarget)
 
+    recordMoveToToolWindowByDrag(file, toolWindow.id)
     project.service<ToolWindowEditorTabTransferController>().moveContentToToolWindow(toolWindow, file, targetDecorator)
   }
 
@@ -129,6 +140,25 @@ class ToolWindowEditorTabDockContainer private constructor(
 
   private fun DockableContent<*>.getToolWindowTabFile(): ToolWindowEditorTabFile? =
     getKey() as? ToolWindowEditorTabFile
+
+  private fun recordMoveToToolWindowByDrag(file: ToolWindowEditorTabFile, targetToolWindowId: String) {
+    val action = ActionManager.getInstance().getAction("MoveToolWindowTabFromEditorToToolWindowAction") ?: return
+    val targetToolWindow = ToolWindowManager.getInstance(project).getToolWindow(targetToolWindowId) ?: return
+    val dataContext = SimpleDataContext.builder()
+      .setParent(DataContext.EMPTY_CONTEXT)
+      .add(CommonDataKeys.VIRTUAL_FILE, file)
+      .add(PlatformDataKeys.TOOL_WINDOW, targetToolWindow)
+      .build()
+    val event = AnActionEvent.createEvent(
+      action,
+      dataContext,
+      null,
+      ActionPlaces.EDITOR_TAB,
+      ActionUiKind.NONE,
+      MouseEvent(component, MouseEvent.MOUSE_DRAGGED, System.currentTimeMillis(), 0, 0, 0, 0, false, MouseEvent.BUTTON1),
+    )
+    recordActionInvoked(project, action, event) { }
+  }
 
   companion object {
     private const val INSTALLED_PROPERTY = "ToolWindowDockContainer.installed"

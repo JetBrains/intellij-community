@@ -3,7 +3,15 @@ package com.intellij.toolWindow
 
 import com.intellij.ide.DataManager
 import com.intellij.idea.AppMode
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.recordActionInvoked
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.invokeLater
@@ -270,7 +278,9 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     val editorWindow = target.resolveWindow() ?: return false
     if (ToolWindowEditorTabSupportUtil.isEnabled()) {
       val toolWindow = sourceDecorator.toolWindow
-      toolWindow.project.service<ToolWindowEditorTabTransferController>().moveContentToEditor(toolWindow, content, editorWindow, sourceDecorator)
+      recordMoveToEditorByDrag(sourceDecorator)
+      toolWindow.project.service<ToolWindowEditorTabTransferController>()
+        .moveContentToEditor(toolWindow, content, editorWindow, sourceDecorator)
       return false
     }
 
@@ -279,6 +289,24 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     // The lifecycle of the passed content is also under the control of the support after this call.
     support.openInEditor(content, editorWindow)
     return true
+  }
+
+  private fun recordMoveToEditorByDrag(sourceDecorator: InternalDecoratorImpl) {
+    val action = ActionManager.getInstance().getAction("MoveToolWindowTabToEditorAction") ?: return
+    val toolWindow = sourceDecorator.toolWindow
+    val dataContext = SimpleDataContext.builder()
+      .setParent(DataContext.EMPTY_CONTEXT)
+      .add(PlatformDataKeys.TOOL_WINDOW, toolWindow)
+      .build()
+    val event = AnActionEvent.createEvent(
+      action,
+      dataContext,
+      null,
+      ActionPlaces.TOOLWINDOW_CONTENT,
+      ActionUiKind.NONE,
+      MouseEvent(sourceDecorator, MouseEvent.MOUSE_DRAGGED, System.currentTimeMillis(), 0, 0, 0, 0, false, MouseEvent.BUTTON1),
+    )
+    recordActionInvoked(toolWindow.project, action, event) { }
   }
 
   private fun unsplitSourceIfEmpty(sourceDecorator: InternalDecoratorImpl, content: Content) {

@@ -5,10 +5,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.OptionallyIncluded
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.content.Content
 import org.jetbrains.annotations.ApiStatus
@@ -35,11 +32,12 @@ import javax.swing.JComponent
 open class ToolWindowEditorTabFile(
   editorTitle: String,
   val toolWindowId: String,
-  fileType: FileType?,
+  fileType: FileType? = ToolWindowEditorTabFileType, // todo: keep one file type ToolWindowEditorTabFileType for all ToolWindowEditorTabFile
   val component: JComponent,
   private val preferredFocusedComponent: JComponent,
   private val persistInEditorHistory: Boolean = false,
   internal val content: Content? = null,
+  internal val tabIcon: Icon? = null,
 ) : LightVirtualFile(editorTitle, fileType, ""), OptionallyIncluded {
 
   // Content normally belongs to its ContentManager's disposable tree.
@@ -80,21 +78,4 @@ open class ToolWindowEditorTabFile(
   private fun releaseEditorLifetime() {
     Disposer.dispose(editorLifetime)
   }
-}
-
-internal fun ToolWindowEditorTabDescriptor.toFileType(): FileType {
-  return ToolWindowEditorTabFileType(icon)
-}
-
-private class ToolWindowEditorTabFileType(
-  private val presentationIcon: Icon?,
-) : FakeFileType() {
-  override fun getName(): String = "ToolWindowEditorTab"
-
-  @NlsSafe
-  override fun getDescription(): String = name
-
-  override fun getIcon(): Icon? = presentationIcon
-
-  override fun isMyFileType(file: VirtualFile): Boolean = file is ToolWindowEditorTabFile
 }
