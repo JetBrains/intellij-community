@@ -6,8 +6,6 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.platform.eel.EelOsFamily
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.TerminalBundle
-import org.jetbrains.plugins.terminal.TerminalIcons
 import javax.swing.Icon
 
 const val TERMINAL_AI_AGENTS_REGISTRY_KEY: String = "terminal.agent.predefined.actions.enabled"
@@ -15,7 +13,6 @@ private val DEFAULT_WINDOWS_EXECUTABLE_EXTENSIONS: List<String> = listOf("exe", 
 
 @ApiStatus.Internal
 interface TerminalAgent {
-
   @Serializable
   @JvmInline
   value class AgentKey(val key: String)
@@ -100,84 +97,4 @@ interface TerminalAgentProvider {
       "org.jetbrains.plugins.terminal.terminalAgentProvider"
     )
   }
-}
-
-@ApiStatus.Internal
-class DefaultTerminalAgentProvider : TerminalAgentProvider {
-  override fun getTerminalAgents(): List<TerminalAgent> {
-    return listOf(JunieTerminalAgent, ClaudeCodeTerminalAgent, CodexTerminalAgent)
-  }
-}
-
-private abstract class BundledTerminalAgent(
-  override val agentKey: TerminalAgent.AgentKey,
-  override val displayName: @NlsActions.ActionText String,
-  override val binaryName: String,
-  override val posixKnownLocationCandidates: List<String>,
-  override val windowsKnownLocationCandidates: List<String>,
-  override val windowsExecutableExtensions: List<String> = DEFAULT_WINDOWS_EXECUTABLE_EXTENSIONS,
-  override val icon: Icon,
-) : TerminalAgent
-
-private object ClaudeCodeTerminalAgent : BundledTerminalAgent(
-  agentKey = TerminalAgent.AgentKey("claude_code"),
-  displayName = TerminalBundle.message("terminal.aiAgents.claudeCode.displayName"),
-  binaryName = "claude",
-  posixKnownLocationCandidates = listOf(
-    $$"$HOME/.local/bin",
-    "/usr/local/bin"
-  ),
-  windowsKnownLocationCandidates = listOf(
-    $$"$HOME\\AppData\\Roaming\\npm",
-    $$"$HOME\\.local\\bin"
-  ),
-  icon = TerminalIcons.Agents.ClaudeCode,
-) {
-  override val showIconInTab: Boolean = false // Claude Code shows its own icon as a text symbol
-}
-
-private object CodexTerminalAgent : BundledTerminalAgent(
-  agentKey = TerminalAgent.AgentKey("codex"),
-  displayName = TerminalBundle.message("terminal.aiAgents.codex.displayName"),
-  binaryName = "codex",
-  posixKnownLocationCandidates = listOf(
-    $$"$HOME/.local/bin",
-    "/usr/local/bin"
-  ),
-  windowsKnownLocationCandidates = listOf(
-    $$"$HOME\\AppData\\Roaming\\npm"
-  ),
-  icon = TerminalIcons.Agents.Codex,
-)
-
-private object JunieTerminalAgent : BundledTerminalAgent(
-  agentKey = TerminalAgent.AgentKey("junie"),
-  displayName = TerminalBundle.message("terminal.aiAgents.junie.displayName"),
-  binaryName = "junie",
-  posixKnownLocationCandidates = listOf($$"$HOME/.local/bin"),
-  windowsKnownLocationCandidates = listOf($$"$HOME\\.local\\bin"),
-  windowsExecutableExtensions = listOf("bat"),
-  icon = TerminalIcons.Agents.Junie,
-) {
-  override val installActionText: String
-    get() = TerminalBundle.message("terminal.aiAgents.junie.installActionText")
-
-  override val secondaryText: String
-    get() = TerminalBundle.message("terminal.aiAgents.junie.secondaryText")
-
-  override val showsNewBadge: Boolean
-    get() = true
-
-  override val installCommandUnix: List<String> = listOf(
-    "/bin/bash", "-c",
-    $$"curl -fsSL https://junie.jetbrains.com/install.sh | /bin/bash && exec \"$HOME/.local/bin/junie\"",
-  )
-
-  override val installCommandWindows: List<String> = listOf(
-    "powershell.exe",
-    "-NoProfile",
-    "-ExecutionPolicy", "Bypass",
-    "-Command",
-    $$"iex (irm 'https://junie.jetbrains.com/install.ps1'); & \"$HOME\\.local\\bin\\junie.bat\"",
-  )
 }

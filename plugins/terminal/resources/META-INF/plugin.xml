@@ -50,6 +50,7 @@
     <module name="intellij.terminal.frontend.split"/>
     <module name="intellij.terminal.cloud"/>
     <module name="intellij.terminal.sh"/>
+    <module name="intellij.terminal.agentsProvider"/>
   </content>
 
   <resource-bundle>messages.TerminalBundle</resource-bundle>
