@@ -3,6 +3,7 @@ package com.intellij.platform.ijent.spi
 
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentSession
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -17,6 +18,14 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.OverrideOnly
 interface IjentDeployingStrategy {
+  @ApiStatus.Internal
+  enum class DeployEvent { DEPLOY_STARTED, DEPLOY_FINISHED, CONNECT_STARTED, CONNECT_FINISHED }
+
+  companion object {
+    @ApiStatus.Internal
+    val deployEvents: MutableSharedFlow<DeployEvent> = MutableSharedFlow()
+  }
+
   /**
    * Creates a new IJent session in the target environment.
    * This method should be called exactly once.

@@ -5,6 +5,8 @@ import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.ijent.IjentExecFileProvider
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.IjentUnavailableException
+import com.intellij.platform.ijent.spi.IjentDeployingStrategy.Companion.deployEvents
+import com.intellij.platform.ijent.spi.IjentDeployingStrategy.DeployEvent
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy.CHECK_CODE
 import java.nio.file.Path
@@ -88,16 +90,21 @@ abstract class IjentControlledEnvironmentDeployingStrategy : IjentDeployingStrat
 
   override suspend fun createIjentSession(provider: IjentSessionProvider): IjentSession.Posix =
     try {
+      deployEvents.emit(DeployEvent.DEPLOY_STARTED)
       val targetPlatform = getTargetPlatform()
       val remotePathToBinary = copyFile(ijentExecFileProvider.getIjentBinary(targetPlatform))
       val mediator = createProcess(remotePathToBinary)
       val connectionStrategy = getConnectionStrategy()
+      deployEvents.emit(DeployEvent.DEPLOY_FINISHED)
 
-      provider.connect(IjentConnectionContext(
+      deployEvents.emit(DeployEvent.CONNECT_STARTED)
+      val ijentSession = provider.connect(IjentConnectionContext(
         mediator = mediator,
         targetPlatform = targetPlatform,
         connectionStrategy = connectionStrategy,
-      )) as IjentSession.Posix
+      ))
+      deployEvents.emit(DeployEvent.CONNECT_FINISHED)
+      ijentSession as IjentSession.Posix
     }
     finally {
       close()
