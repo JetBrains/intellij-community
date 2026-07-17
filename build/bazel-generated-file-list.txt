@@ -746,6 +746,7 @@ platform/jewel/ui
 platform/jewel/ui-tests
 platform/kernel/backend
 platform/kernel/intellij.platform.kernel.impl
+platform/kernel/klogger
 platform/kernel/pasta
 platform/kernel/rpc
 platform/kernel/rpc.backend
