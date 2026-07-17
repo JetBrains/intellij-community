@@ -49,12 +49,6 @@ internal class FindRemoteApiImpl : FindRemoteApi {
 
       val isReplaceState = findModel.isReplaceState
 
-      // Per-thread "previous result" for merging adjacent matches (the consumer runs concurrently on several
-      // threads). A search-scoped map, NOT a ThreadLocal: on pooled dispatcher threads a ThreadLocal would
-      // outlive the search and pin the last adapter -> FindManager -> a disposed project.
-      // Cleared in `finally`, and being a local it leaves no `thread -> adapter` reference behind.
-      val previousResults = ConcurrentHashMap<Thread, UsageInfo2UsageAdapter>()
-
       val project = projectId.findProjectOrNull()
       if (project == null) {
         LOG.warn("Project not found for id ${projectId}")
@@ -70,62 +64,63 @@ internal class FindRemoteApiImpl : FindRemoteApi {
         "isCustomScope=${findModel.isCustomScope} customScopeId=${findModel.customScopeId} projectScope=${findModel.isProjectScope} " +
         "directory=${findModel.directoryName} module=${findModel.moduleName} filesToScanInitially=${filesToScanInitially.size} maxUsages=$maxUsagesCount"
       }
-      try {
-        coroutineToIndicator {
-          FindInProjectUtil.findUsages(findModel, project, presentation, filesToScanInitially) { usageInfo ->
-            val virtualFile = usageInfo.virtualFile
-            if (virtualFile == null)
-              return@findUsages true
 
-            if (sentItems.get() >= maxUsagesCount) {
-              return@findUsages false
-            }
+      coroutineToIndicator {
+        // Per-thread "previous result" for merging adjacent matches (the consumer runs concurrently on several
+        // threads). A search-scoped map, NOT a ThreadLocal: on pooled dispatcher threads a ThreadLocal would
+        // outlive the search and pin the last adapter -> FindManager -> a disposed project.
+        val previousResults = ConcurrentHashMap<Thread, UsageInfo2UsageAdapter>()
 
-            val adapter = UsageInfo2UsageAdapter(usageInfo)
-            val previousItem: UsageInfo2UsageAdapter? = previousResults[Thread.currentThread()]
-            if (!isReplaceState && previousItem != null) adapter.merge(previousItem)
-            previousResults[Thread.currentThread()] = adapter
-            adapter.updateCachedPresentation()
-            val textChunks = adapter.text.map {
-              it.toSerializableTextChunk()
-            }
-            val bgColor = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile)?.rpcId()
-            val presentablePath = getPresentableFilePath(project, scope, virtualFile)
+        FindInProjectUtil.findUsages(findModel, project, presentation, filesToScanInitially) { usageInfo ->
+          val virtualFile = usageInfo.virtualFile
+          if (virtualFile == null)
+            return@findUsages true
 
-            val result = FindInFilesResult(
-              presentation = textChunks,
-              line = adapter.line,
-              navigationOffset = adapter.navigationOffset,
-              mergedOffsets = adapter.mergedInfos.map { it.navigationOffset },
-              length = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset,
-              fileId = virtualFile.rpcId(),
-              presentablePath =
-                if (virtualFile.parent == null) FindPopupPanel.getPresentablePath(project, virtualFile) ?: virtualFile.presentableUrl
-                else FindPopupPanel.getPresentablePath(project, virtualFile.parent) + File.separator + virtualFile.name,
-              shortenPresentablePath = presentablePath,
-              backgroundColor = bgColor,
-              tooltipText = adapter.tooltipText,
-              iconId = adapter.icon?.rpcId(),
-              fileLength = virtualFile.length.toInt(),
-              usageInfos = adapter.mergedInfos.toList()
-            )
-
-            val sent = trySend(result)
-            if (sent.isSuccess) {
-              sentItems.incrementAndGet()
-            }
-            else {
-              LOG.debug { "FiF-backend: send failed (channel closed=${sent.isClosed}); stopping search for query='${findModel.stringToFind}'" }
-            }
-
-            sentItems.get() <= maxUsagesCount
+          if (sentItems.get() >= maxUsagesCount) {
+            return@findUsages false
           }
+
+          val adapter = UsageInfo2UsageAdapter(usageInfo)
+          val previousItem: UsageInfo2UsageAdapter? = previousResults[Thread.currentThread()]
+          if (!isReplaceState && previousItem != null) adapter.merge(previousItem)
+          previousResults[Thread.currentThread()] = adapter
+          adapter.updateCachedPresentation()
+          val textChunks = adapter.text.map {
+            it.toSerializableTextChunk()
+          }
+          val bgColor = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile)?.rpcId()
+          val presentablePath = getPresentableFilePath(project, scope, virtualFile)
+
+          val result = FindInFilesResult(
+            presentation = textChunks,
+            line = adapter.line,
+            navigationOffset = adapter.navigationOffset,
+            mergedOffsets = adapter.mergedInfos.map { it.navigationOffset },
+            length = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset,
+            fileId = virtualFile.rpcId(),
+            presentablePath =
+              if (virtualFile.parent == null) FindPopupPanel.getPresentablePath(project, virtualFile) ?: virtualFile.presentableUrl
+              else FindPopupPanel.getPresentablePath(project, virtualFile.parent) + File.separator + virtualFile.name,
+            shortenPresentablePath = presentablePath,
+            backgroundColor = bgColor,
+            tooltipText = adapter.tooltipText,
+            iconId = adapter.icon?.rpcId(),
+            fileLength = virtualFile.length.toInt(),
+            usageInfos = adapter.mergedInfos.toList()
+          )
+
+          val sent = trySend(result)
+          if (sent.isSuccess) {
+            sentItems.incrementAndGet()
+          }
+          else {
+            LOG.debug { "FiF-backend: send failed (channel closed=${sent.isClosed}); stopping search for query='${findModel.stringToFind}'" }
+          }
+
+          sentItems.get() <= maxUsagesCount
         }
       }
-      finally {
-        // Drop every worker thread's "previous" at once
-        previousResults.clear()
-      }
+
       LOG.debug { "FiF-backend: findByModel finished query='${findModel.stringToFind}' produced=${sentItems.get()}" }
     }.buffer(capacity = maxUsagesCount)
   }
