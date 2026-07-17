@@ -119,6 +119,7 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
     @NotNull IdeModifiableModelsProvider modelsProvider
   ) {
     Library library = entry.getLibrary();
+    if (library == null) return null;
     VirtualFile[] libraryFiles = library.getFiles(OrderRootType.CLASSES);
     Set<String> moduleLibraryKey = new HashSet<>(libraryFiles.length);
     for (VirtualFile file : libraryFiles) {
