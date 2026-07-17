@@ -310,7 +310,7 @@ private fun preprocessArgs(rawArgs: Array<String>): List<String> {
       printVersion()
       exitProcess(0)
     }
-    firstArg != null && firstArg.startsWith('-') -> {
+    firstArg != null && firstArg.startsWith('-') && firstArg !in setOf("--temp-project", "--wait", "--line", "--column") -> {
       println("unrecognized option: ${firstArg}")
       exitProcess(1)
     }
