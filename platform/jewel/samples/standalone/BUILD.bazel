@@ -41,6 +41,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "@lib//:slf4j-api",
         "@lib//:platform-jewel-samples-standalone-org-lwjgl-lwjgl-tinyfd",
         "@lib//:platform-jewel-samples-standalone-org-nibor-autolink-autolink",
         "@lib//:jna",
