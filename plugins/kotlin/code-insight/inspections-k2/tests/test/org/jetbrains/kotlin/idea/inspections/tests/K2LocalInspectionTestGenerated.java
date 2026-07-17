@@ -17870,6 +17870,49 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/protectedInFinal")
+        public static class ProtectedInFinal extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("dataClass.kt")
+            public void testDataClass() throws Exception {
+                runTest("testData/inspectionsLocal/protectedInFinal/dataClass.kt");
+            }
+
+            @TestMetadata("enumClass.kt")
+            public void testEnumClass() throws Exception {
+                runTest("testData/inspectionsLocal/protectedInFinal/enumClass.kt");
+            }
+
+            @TestMetadata("finalClassMakeOpen.kt")
+            public void testFinalClassMakeOpen() throws Exception {
+                runTest("testData/inspectionsLocal/protectedInFinal/finalClassMakeOpen.kt");
+            }
+
+            @TestMetadata("finalClassMakePrivate.kt")
+            public void testFinalClassMakePrivate() throws Exception {
+                runTest("testData/inspectionsLocal/protectedInFinal/finalClassMakePrivate.kt");
+            }
+
+            @TestMetadata("finalClassWithCompanionObjectMakeOpen.kt")
+            public void testFinalClassWithCompanionObjectMakeOpen() throws Exception {
+                runTest("testData/inspectionsLocal/protectedInFinal/finalClassWithCompanionObjectMakeOpen.kt");
+            }
+
+            @TestMetadata("finalClassWithCompanionObjectMakePrivate.kt")
+            public void testFinalClassWithCompanionObjectMakePrivate() throws Exception {
+                runTest("testData/inspectionsLocal/protectedInFinal/finalClassWithCompanionObjectMakePrivate.kt");
+            }
+
+            @TestMetadata("valueClass.kt")
+            public void testValueClass() throws Exception {
+                runTest("testData/inspectionsLocal/protectedInFinal/valueClass.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/recursivePropertyAccessor")
         public static class RecursivePropertyAccessor extends AbstractK2LocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {

@@ -13,7 +13,7 @@ import java.util.EnumSet
 
 internal class ProtectedInFinalInspection : ProtectedInFinalInspectionBase() {
     override fun isApplicable(parentClass: KtClass, declaration: KtDeclaration): Boolean =
-        !parentClass.isInheritable() && !declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD) && !parentClass.isEnum() &&
+        !parentClass.isInheritable() && !declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD) &&
             analyze(declaration) {
                 parentClass.symbol.modality !in inheritableModalities // compiler plugins might affect modality, the PSI check is not enough
                         && !declaration.isFinalizeMethod()
