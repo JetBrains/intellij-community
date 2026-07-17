@@ -8,11 +8,12 @@ import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.add.v2.PathHolder
 
 /**
  * Manage environment dependencies
  */
-class HatchSelf(runtime: PyToolRuntime) : HatchCommand("self", runtime) {
+class HatchSelf<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("self", runtime) {
 
   /**
    * Generate a pre-populated GitHub issue.

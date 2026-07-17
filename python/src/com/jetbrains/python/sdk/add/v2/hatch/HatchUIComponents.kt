@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.PythonVirtualEnvironment
+import com.intellij.python.pytools.Version
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.ActionLink
@@ -37,20 +38,20 @@ import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.ValidatedPathField
-import com.intellij.python.pytools.Version
-import com.jetbrains.python.sdk.add.v2.withAdjustedWidth
 import com.jetbrains.python.sdk.add.v2.pythonInterpreterComboBox
 import com.jetbrains.python.sdk.add.v2.validatablePathField
+import com.jetbrains.python.sdk.add.v2.withAdjustedWidth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.plus
+import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import javax.swing.JList
 
-internal sealed class HatchUIError(message: String) : MessageError(message) {
+internal sealed class HatchUIError(message: @Nls String) : MessageError(message) {
   class HatchEnvironmentIsNotSelected : HatchUIError(
     message("sdk.create.custom.hatch.error.environment.is.not.selected")
   )
@@ -58,6 +59,10 @@ internal sealed class HatchUIError(message: String) : MessageError(message) {
   class HatchExecutablePathIsNotValid(hatchExecutablePath: String?) : HatchUIError(
     message("sdk.create.custom.hatch.error.hatch.executable.path.is.not.valid",
             hatchExecutablePath)
+  )
+
+  class BasePythonExecutableIsNotAvailable : HatchUIError(
+    message("sdk.create.custom.hatch.error.base.python.executable.is.not.available")
   )
 
 }
@@ -69,8 +74,15 @@ internal fun String.toPath(): PyResult<Path> {
   }
 }
 
-private class HatchEnvComboBoxListCellRenderer(val contentFlow: StateFlow<PyResult<List<*>>?>) : ColoredListCellRenderer<HatchVirtualEnvironment>() {
-  override fun customizeCellRenderer(list: JList<out HatchVirtualEnvironment?>, value: HatchVirtualEnvironment?, index: Int, selected: Boolean, hasFocus: Boolean) {
+private class HatchEnvComboBoxListCellRenderer<P : PathHolder>(val contentFlow: StateFlow<PyResult<List<*>>?>) :
+  ColoredListCellRenderer<HatchVirtualEnvironment<P>>() {
+  override fun customizeCellRenderer(
+    list: JList<out HatchVirtualEnvironment<P>?>,
+    value: HatchVirtualEnvironment<P>?,
+    index: Int,
+    selected: Boolean,
+    hasFocus: Boolean,
+  ) {
     when (val result = contentFlow.value) {
       null -> {
         icon = AllIcons.Process.Step_1
@@ -102,7 +114,7 @@ private class HatchEnvComboBoxListCellRenderer(val contentFlow: StateFlow<PyResu
 
 internal class HatchEnvironmentComboBox<P : PathHolder>(
   model: PythonAddInterpreterModel<P>,
-) : ComboBox<HatchVirtualEnvironment?>() {
+) : ComboBox<HatchVirtualEnvironment<P>?>() {
   init {
     renderer = HatchEnvComboBoxListCellRenderer(model.hatchViewModel.availableEnvironments)
     editor = FixedComboBoxEditor()
@@ -110,7 +122,7 @@ internal class HatchEnvironmentComboBox<P : PathHolder>(
 
   @Synchronized
   internal fun syncWithEnvs(
-    environmentsResult: PyResult<List<HatchVirtualEnvironment>>,
+    environmentsResult: PyResult<List<HatchVirtualEnvironment<P>>>,
     isFilterOnlyExisting: Boolean = false,
   ) {
     removeAllItems()
@@ -186,9 +198,13 @@ private fun <P : PathHolder> Panel.addExecutableSelector(
     pathValidator = model.hatchViewModel.toolValidator,
     validationRequestor = validationRequestor,
     labelText = message("sdk.create.custom.venv.executable.path", "hatch"),
-    missingExecutableText = message("sdk.create.custom.venv.missing.text", "hatch"),
+    missingExecutableText = message("sdk.create.custom.tool.not.detected", "hatch"),
     installAction = installHatchActionLink,
   )
+  if (!model.fileSystem.toolPathCanBePersisted) {
+    executablePath.textField.isEditable = false
+    executablePath.setButtonVisible(false)
+  }
 
   return executablePath
 }
@@ -260,4 +276,3 @@ internal fun <P : PathHolder> Panel.buildHatchFormFields(
 
   return HatchFormFields(environmentComboBox, basePythonComboBox, executablePath)
 }
-

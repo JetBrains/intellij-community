@@ -9,6 +9,7 @@ import com.intellij.python.hatch.cli.HatchPython.PythonInstallResponse.AbortReas
 import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import java.nio.file.Path
 
 /**
@@ -19,7 +20,7 @@ val ALL_NAMES: Array<String> = arrayOf("all")
 /**
  * Manage environment dependencies
  */
-class HatchPython(runtime: PyToolRuntime) : HatchCommand("python", runtime) {
+class HatchPython<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("python", runtime) {
   /**
    * Locate Python binaries
    *

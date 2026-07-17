@@ -58,10 +58,10 @@ class UvCliTest {
     this.projectName = testInfo.projectName()
     this.projectRootPath = realTempDir.resolve(this.projectName)
 
-    val tempDirUvCli = uvContext.globalRuntime.withWorkingDirectory(realTempDir).getOrThrow().uvCli()
+    val tempDirUvCli = uvContext.globalRuntime.withWorkingDirectory(realTempDir).uvCli()
     timeoutRunBlocking { tempDirUvCli.init(projectName) }.getOrThrow()
 
-    this.myRuntime = uvContext.globalRuntime.withWorkingDirectory(projectRootPath).getOrThrow()
+    this.myRuntime = uvContext.globalRuntime.withWorkingDirectory(projectRootPath)
     assertTrue(projectRootPath.exists())
     assertTrue(projectRootPath.resolve(PY_PROJECT_TOML).exists())
   }
