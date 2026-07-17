@@ -66,10 +66,11 @@ internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
       getVirtualEnv(venvsInModule)?.refreshAndFindVirtualFile()
     } ?: return PyResult.failure(MessageError(PyBundle.message("sdk.cannot.find.venv.for.module")))
 
+    val additionalData = createVenvAdditionalData(module).getOr { return it }
     val sdk = withContext(Dispatchers.IO) {
       createSdk(
         PathHolder.Eel(pythonBinary.toNioPath()),
-        createVenvAdditionalData(),
+        additionalData,
         null,
       )
     }.getOr { return it }

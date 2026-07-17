@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -53,17 +54,17 @@ import com.jetbrains.python.sdk.poetry.PyPoetrySdkAdditionalData
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import kotlinx.coroutines.withContext
-import java.nio.file.Path as NioPath
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.copyToRecursively
 import kotlin.time.Duration.Companion.minutes
+import java.nio.file.Path as NioPath
 
 /**
  * Inspection tests for [com.jetbrains.python.inspections.dependencies.DependenciesPsiProvider] (migrated from JUnit3).
@@ -221,13 +222,13 @@ internal class DependenciesPsiProviderTest {
   fun legacyPoetryDependencies() =
     genericProviderTest(
       requirementsProviderType = RequirementsProviderType.PYPROJECT_TOML,
-      additionalData = PyPoetrySdkAdditionalData(null)
+      additionalData = { module -> PyPoetrySdkAdditionalData(createVenvAdditionalData(module).getOrThrow().workingDirectory) }
     )
 
   private fun runTest(
     requirementsProviderType: RequirementsProviderType,
     packageManagerProvider: TestPackageManagerProvider = TestPackageManagerProvider(),
-    additionalData: PythonSdkAdditionalData = createVenvAdditionalData(),
+    additionalData: (Module) -> PythonSdkAdditionalData = { createVenvAdditionalData(it).getOrThrow() },
     beforePackageManager: () -> Unit = {},
     body: suspend () -> Unit,
   ) {
@@ -243,7 +244,7 @@ internal class DependenciesPsiProviderTest {
         val module = moduleFixture.get()
         val venvDir = tempPathFixture.get().resolve(".venv")
         val venvPython = createVenv(env.pythonPath, venvDir).getOrThrow()
-        createSdk(PathHolder.Eel(venvPython), additionalData)
+        createSdk(PathHolder.Eel(venvPython), additionalData(module))
           .orThrow()
           .also {
             module.pythonSdk = it
@@ -272,7 +273,7 @@ internal class DependenciesPsiProviderTest {
 
   private fun genericProviderTest(
     requirementsProviderType: RequirementsProviderType,
-    additionalData: PythonSdkAdditionalData = createVenvAdditionalData(),
+    additionalData: (Module) -> PythonSdkAdditionalData = { createVenvAdditionalData(it).getOrThrow() },
   ) =
     runTest(
       requirementsProviderType = requirementsProviderType,

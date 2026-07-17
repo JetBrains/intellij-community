@@ -16,8 +16,11 @@ import java.nio.file.Path
 @ApiStatus.Internal
 @PyInternalExecApi
 class PyPoetrySdkAdditionalData : PythonSdkAdditionalData {
-  constructor(associatedModulePath: Path?) : super(PyFlavorAndData(PyFlavorData.Empty, PyPoetrySdkFlavor)) {
-    this.associatedModulePath = associatedModulePath?.toString()
+  constructor(workingDirectory: Path) : super(
+    PyFlavorAndData(PyFlavorData.Empty, PyPoetrySdkFlavor),
+    workingDirectory,
+  ) {
+    associatedModulePath = workingDirectory.toString()
   }
 
   override fun save(element: Element) {
@@ -36,7 +39,7 @@ class PyPoetrySdkAdditionalData : PythonSdkAdditionalData {
     fun load(element: Element): PyPoetrySdkAdditionalData? =
       when {
         element.getAttributeValue(IS_POETRY) == "true" -> {
-          PyPoetrySdkAdditionalData(null).apply {
+          PyPoetrySdkAdditionalData(Path.of("")).apply {
             load(element)
           }
         }

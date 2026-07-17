@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.python.pyproject.PyProjectToml
@@ -40,7 +41,7 @@ abstract class AddPyProjectPresenterTestBase protected constructor(
   private val toolName: @NlsSafe String,
   private val additionalChecks: AdditionalChecks?,
   // For poetry bug workaround https://github.com/python-poetry/poetry/issues/10974
-  private val spacesInProjectNamesLeadToBug: Boolean = false
+  private val spacesInProjectNamesLeadToBug: Boolean = false,
 ) {
   private val sdkFixture by pySdkFixture()
   private val pathFixture = tempPathFixture()
@@ -56,7 +57,7 @@ abstract class AddPyProjectPresenterTestBase protected constructor(
   fun testPyProject(projectName: @NlsSafe String?): Unit = timeoutRunBlocking {
 
     val sdk = sdkFixture.sdk
-    val additionalData = additionalChecks?.additionalData
+    val additionalData = additionalChecks?.additionalData?.invoke(module)
     additionalData?.let { additionalDataToSet ->
       writeAction {
         val m = sdk.sdkModificator
@@ -109,5 +110,8 @@ abstract class AddPyProjectPresenterTestBase protected constructor(
     return event.projectCreationPresenter(forNewProject)!!
   }
 
-  protected data class AdditionalChecks(val additionalData: PythonSdkAdditionalData, val fileNames: Set<String>)
+  protected data class AdditionalChecks(
+    val additionalData: (Module) -> PythonSdkAdditionalData,
+    val fileNames: Set<String>,
+  )
 }

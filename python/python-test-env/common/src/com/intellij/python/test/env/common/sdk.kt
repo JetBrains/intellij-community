@@ -33,8 +33,7 @@ suspend fun PyEnvironmentFactory.createSdk(request: SdkCreationRequest): Pair<Sd
       Pair(sdk, environment)
     }
     is SdkCreationRequest.RemotePython -> {
-      val targetData = PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, UnixPythonSdkFlavor.getInstance()),
-                                                   request.targetConfig).apply {
+      val targetData = PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, UnixPythonSdkFlavor.getInstance()), workingDir, request.targetConfig).apply {
         interpreterPath = PYTHON_PATH_ON_TARGET
       }
       try {

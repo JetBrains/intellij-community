@@ -10,7 +10,13 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-// TODO PY-87712 Move to a separate storage
+/**
+ * TODO PY-87712 Should drop as a whole
+ * uvWorkingDirectory - workingDirectory in PythonSdkAdditionalData
+ * usePip - can be deduced based on requirementsFile in PythonSdkAdditionalData
+ * venvPath - sdkHome
+ * uvPath - stored as a setting for local EELs, for targets we can use detection only
+ */
 @ApiStatus.Internal
 data class UvSdkFlavorData(
   val uvWorkingDirectory: Path?,
@@ -25,9 +31,12 @@ data class UvSdkFlavorData(
       throw IllegalArgumentException("Sdk ${sdk} doesn't have interpreter path set")
     }
     targetCommandLineBuilder.setExePath(interpreterPath)
-    targetCommandLineBuilder.addEnvironmentVariable("UV_PROJECT_ENVIRONMENT", venvPath)
+    val separator = targetCommandLineBuilder.request.targetPlatform.platform.fileSeparator
+    targetCommandLineBuilder.addEnvironmentVariable("UV_PROJECT_ENVIRONMENT", interpreterPath.parentPath(separator).parentPath(separator))
     if (!PythonSdkUtil.isRemote(sdk)) {
       PySdkUtil.activateVirtualEnv(sdk)
     }
   }
+
+  private fun String.parentPath(separator: Char): String = removeSuffix(separator.toString()).substringBeforeLast(separator)
 }

@@ -3,6 +3,7 @@ package com.intellij.python.venv
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.module.Module
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecOptions
@@ -17,17 +18,21 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.getOr
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.jetbrains.python.sdk.workingDirectory
 import com.jetbrains.python.venvReader.Directory
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CheckReturnValue
+import java.nio.file.Path
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.minutes
 
@@ -99,8 +104,18 @@ const val VIRTUALENV_ZIPAPP_NAME: HelperName = "virtualenv-py3.pyz"
 val MINIMUM_SUPPORTED_VENV_PYTHON_VERSION: LanguageLevel = LanguageLevel.PYTHON38
 
 /**
- * Creates [PythonSdkAdditionalData] for virtual env
+ * Creates [PythonSdkAdditionalData] for virtual env using working directory
  */
 @Internal
-fun createVenvAdditionalData(): PythonSdkAdditionalData =
-  PythonSdkAdditionalData(PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance()))
+fun createVenvAdditionalData(workingDirectory: Path): PythonSdkAdditionalData =
+  PythonSdkAdditionalData(PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance()), workingDirectory)
+
+/**
+ * Creates [PythonSdkAdditionalData] for virtual env using module baseDir as working directory
+ */
+@Internal
+fun createVenvAdditionalData(module: Module): PyResult<PythonSdkAdditionalData> {
+  return ModuleOrProject.ModuleAndProject(module).workingDirectory?.let {
+    PyResult.success(createVenvAdditionalData(it))
+  } ?: PyResult.localizedError(PySdkBundle.message("python.sdk.cannot.create.working.directory.empty"))
+}

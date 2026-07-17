@@ -25,7 +25,8 @@ class PyVenvCreationManuallyShowCaseTest {
   @Test
   fun createVenvTest(@PythonBinaryPath python: PythonBinary, @TempDir venvDir: Directory): Unit = timeoutRunBlocking(5.minutes) {
     val venvPython = createVenv(python, venvDir).getOrThrow()
-    val sdk = createSdk(PathHolder.Eel(venvPython), createVenvAdditionalData()).getOrThrow()
+    val additionalData = createVenvAdditionalData(venvDir.parent)
+    val sdk = createSdk(PathHolder.Eel(venvPython), additionalData).getOrThrow()
     val flavorAndData = sdk.pySdkAdditionalData.flavorAndData
     assertTrue(flavorAndData.sdkSeemsValid(sdk, null),
                "Sdk not valid after creation")

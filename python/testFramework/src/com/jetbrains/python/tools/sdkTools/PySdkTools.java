@@ -57,15 +57,17 @@ public final class PySdkTools {
    * @return sdk
    */
   public static @NotNull Sdk createTempSdk(final @NotNull VirtualFile sdkHome,
-                                  final @NotNull SdkCreationType sdkCreationType,
-                                  final @Nullable Module module,
-                                  @Nullable Disposable parentDisposable
+                                           final @NotNull SdkCreationType sdkCreationType,
+                                           final @Nullable Module module,
+                                           @Nullable Disposable parentDisposable
   )
     throws InvalidSdkException {
     final Ref<Sdk> ref = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       // sdkHome guarantees SDK name uniqueness. SdkUtil can't do that since no current SDK are provided.
-      var additionalData = createVenvAdditionalData();
+      var additionalData = module != null
+                           ? createVenvAdditionalData(module).getSuccessOrNull()
+                           : createVenvAdditionalData(sdkHome.toNioPath().getParent());
       final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, PythonSdkType.getInstance(), additionalData, sdkHome.getPath());
       Assert.assertNotNull("Failed to create SDK on " + sdkHome, sdk);
 

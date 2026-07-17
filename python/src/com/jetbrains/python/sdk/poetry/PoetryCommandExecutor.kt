@@ -29,8 +29,8 @@ import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.toEelFileSystem
-import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.pythonInterpreterAsync
 import com.jetbrains.python.sdk.runTool
 import com.jetbrains.python.venvReader.VirtualEnvReader
@@ -40,7 +40,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.tuweni.toml.Toml
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import kotlin.io.path.name
 import kotlin.io.path.pathString
@@ -48,7 +47,6 @@ import kotlin.io.path.pathString
 /**
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
  */
-private val poetryNotFoundException: @Nls String = PyBundle.message("python.sdk.poetry.execution.exception.no.poetry.message")
 private val VERSION_2 = "2.0.0".toVersion()
 
 
@@ -103,8 +101,7 @@ internal suspend fun getPoetryExecutable(eel: EelApi = localEel): Path? =
  */
 @Internal
 internal suspend fun runPoetryWithSdk(sdk: Sdk, vararg args: String): PyResult<String> {
-  val projectPath = sdk.associatedModulePath?.let { Path.of(it) }
-                    ?: return PyResult.localizedError(poetryNotFoundException) // Choose a correct sdk
+  val projectPath = sdk.pySdkAdditionalData.workingDirectory
   val pythonHomePath = sdk.pythonInterpreterAsync().pythonHomePath
                        ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", sdk.name))
   val env = buildMap {

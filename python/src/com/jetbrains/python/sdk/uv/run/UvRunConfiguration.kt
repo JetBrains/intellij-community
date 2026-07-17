@@ -15,10 +15,10 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.sdk.uv.uvFlavorData
 import com.jetbrains.python.venvReader.tryResolvePath
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -39,14 +39,14 @@ data class UvRunConfigurationOptions(
   var checkSync: Boolean = true,
   var uvSdkKey: String? = null,
   var uvArgs: List<String> = listOf(),
-  var debugJustMyCode: Boolean = false
+  var debugJustMyCode: Boolean = false,
 ) {
   val uvSdk: Sdk?
-    get() = uvSdkKey?.let { PythonSdkUtil.findSdkByKey(it)}
+    get() = uvSdkKey?.let { PythonSdkUtil.findSdkByKey(it) }
 
   val workingDirectory: Path?
-    get() = uvSdk?.uvFlavorData?.uvWorkingDirectory
-      ?: tryResolvePath(uvSdk?.associatedModulePath)
+    get() = uvSdk?.pySdkAdditionalData?.workingDirectory
+            ?: tryResolvePath(uvSdk?.associatedModulePath)
 }
 
 @ApiStatus.Internal

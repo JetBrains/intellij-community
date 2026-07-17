@@ -11,7 +11,7 @@ import java.nio.file.Path
  * matching one.
  */
 class DefaultPyEnvironmentFactory(
-  private val workingDir: Path,
+  override val workingDir: Path,
   private val providers: List<Pair<(PyEnvironmentSpec<*>) -> Boolean, PyEnvironmentProvider<*>>>
 ): PyEnvironmentFactory {
 

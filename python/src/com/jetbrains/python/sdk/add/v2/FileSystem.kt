@@ -109,6 +109,7 @@ data class EelFileSystem(
   override val isBrowsable: Boolean = true
   override val isReadOnly: Boolean = false
   override val isLocal: Boolean = eelApi == localEel
+  override val toolPathCanBePersisted: Boolean = isLocal
   override val userReadableName: @NonNls String = eelApi.descriptor.name
   override val platformAndRoot: PlatformAndRoot = eelApi.getPlatformAndRoot()
 
@@ -143,6 +144,7 @@ data class EelFileSystem(
     targetPanelExtension: TargetPanelExtension?,
     suggestedSdkName: String?,
   ): PyResult<Sdk> {
+    require(sdkAdditionalData.hasValidWorkingDirectory()) { "Python SDK working directory must be initialized before setup" }
     return createSdk(pythonBinaryPath, sdkAdditionalData, suggestedSdkName)
   }
 
@@ -279,8 +281,8 @@ data class EelFileSystem(
     return pythonHome.path.resolvePythonBinary()?.let { PathHolder.Eel(it) }
   }
 
-  override fun resolvePythonHome(pythonBinary: PathHolder.Eel): PathHolder.Eel {
-    return PathHolder.Eel(pythonBinary.path.resolvePythonHome())
+  override fun resolvePythonHome(pythonHomeOrBinary: PathHolder.Eel): PathHolder.Eel {
+    return PathHolder.Eel(pythonHomeOrBinary.path.resolvePythonHome())
   }
 
   override fun getVenvName(pythonHome: PathHolder.Eel): String? {
@@ -382,6 +384,7 @@ data class TargetFileSystem(
   override val isBrowsable: Boolean
     get() = targetEnvironmentConfiguration.getTargetType() is BrowsableTargetEnvironmentType
   override val isLocal: Boolean = false
+  override val toolPathCanBePersisted: Boolean = false
   override val userReadableName: @NonNls String = targetEnvironmentConfiguration.displayName
   override val platformAndRoot: PlatformAndRoot = targetEnvironmentConfiguration.getPlatformAndRoot()
 
@@ -435,11 +438,11 @@ data class TargetFileSystem(
     targetPanelExtension: TargetPanelExtension?,
     suggestedSdkName: String?,
   ): PyResult<Sdk> {
+    require(sdkAdditionalData.hasValidWorkingDirectory()) { "Python SDK working directory must be initialized before setup" }
     val languageLevel = getBinaryToExec(pythonBinaryPath).validatePythonAndGetInfo().getOr { return it }.languageLevel
 
     val (additionalData, customSdkSuggestedName) = run {
-      val flavorAndData = sdkAdditionalData.flavorAndData
-      val data = PyTargetAwareAdditionalData(flavorAndData).also {
+      val data = PyTargetAwareAdditionalData(sdkAdditionalData, targetEnvironmentConfiguration).also {
         it.interpreterPath = pythonBinaryPath.toString()
         it.targetEnvironmentConfiguration = targetEnvironmentConfiguration
       }
@@ -566,8 +569,17 @@ data class TargetFileSystem(
     return PathHolder.Target(VirtualEnvReader().findPythonInPythonRootForTarget(pythonHomeString, platform))
   }
 
-  override fun resolvePythonHome(pythonBinary: PathHolder.Target): PathHolder.Target {
-    return PathHolder.Target(pythonBinary.pathString.substringBeforeLast("/bin/"))
+  override fun resolvePythonHome(pythonHomeOrBinary: PathHolder.Target): PathHolder.Target {
+    val separator = targetEnvironmentConfiguration.getPlatformAndRoot().platform.fileSeparator
+    val path = pythonHomeOrBinary.pathString.removeSuffix(separator.toString())
+    val fileName = path.substringAfterLast(separator).lowercase()
+    val binaryDirectory = path.substringBeforeLast(separator)
+    val binaryDirectoryName = binaryDirectory.substringAfterLast(separator)
+    if (!fileName.startsWith("python") ||
+        !(binaryDirectoryName.equals("bin", ignoreCase = true) || binaryDirectoryName.equals("scripts", ignoreCase = true))) {
+      return pythonHomeOrBinary
+    }
+    return PathHolder.Target(binaryDirectory.substringBeforeLast(separator))
   }
 
   override fun getVenvName(pythonHome: PathHolder.Target): String? {
