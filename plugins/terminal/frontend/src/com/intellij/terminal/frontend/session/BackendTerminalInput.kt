@@ -56,7 +56,7 @@ private suspend fun handleInputEvent(event: TerminalInputEvent, services: JediTe
 
   val terminalStarter = services.terminalStarter
 
-  TerminalActivityTracker.getInstance().registerActivity()
+  TerminalActivityTracker.EP_NAME.forEachExtensionSafe { it.registerActivity() }
 
   when (event) {
     is TerminalWriteBytesEvent -> {

@@ -1,6 +1,6 @@
 package com.intellij.terminal.frontend.session
 
-import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -12,13 +12,7 @@ interface TerminalActivityTracker {
   fun registerActivity()
 
   companion object {
-    fun getInstance(): TerminalActivityTracker = service()
+    internal val EP_NAME =
+      ExtensionPointName.create<TerminalActivityTracker>("org.jetbrains.plugins.terminal.activityTracker")
   }
-}
-
-/**
- * Default implementation of the [TerminalActivityTracker] that just does nothing on user activity.
- */
-internal class TerminalNoOpActivityTracker : TerminalActivityTracker {
-  override fun registerActivity() {}
 }
