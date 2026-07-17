@@ -62,7 +62,7 @@ open class ToolWindowEditorTabFile(
 
   open fun onEditorClosed() {
     if (getUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN) != true) {
-      releaseEditorLifetime()
+      invalidateEditorTabFile()
     }
   }
 
@@ -72,7 +72,12 @@ open class ToolWindowEditorTabFile(
     }
   }
 
-  internal fun releaseEditorLifetime() {
+  internal fun invalidateEditorTabFile() {
+    releaseEditorLifetime()
+    isValid = false // mark invalid, so file does not appear in the recent files
+  }
+
+  private fun releaseEditorLifetime() {
     Disposer.dispose(editorLifetime)
   }
 }

@@ -57,8 +57,7 @@ class ToolWindowEditorTabTransferController(
 
     if (!FileEditorManager.getInstance(project).isFileOpen(file)) {
       restoreContentToToolWindow(content, toolWindow, sourceDecorator?.contentManager?.takeIf { !it.isDisposed })
-      file.releaseEditorLifetime()
-      file.isValid = false
+      file.invalidateEditorTabFile()
     }
     else {
       file.bindContentToEditorLifetime()
@@ -111,9 +110,7 @@ class ToolWindowEditorTabTransferController(
     project.messageBus.syncPublisher(IdeDocumentHistoryImpl.RecentFileHistoryOrderListener.TOPIC).recentFileRemoved(file)
 
     restoreContentToToolWindow(content, toolWindow, targetDecorator?.contentManager)
-    file.releaseEditorLifetime()
-
-    file.isValid = false
+    file.invalidateEditorTabFile()
   }
 
   private fun getSupport(toolWindow: ToolWindow): ToolWindowEditorTabSupport? {
