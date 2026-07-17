@@ -461,7 +461,7 @@ object CoreModuleSets {
 
     // Base RPC and kernel modules (backend modules are in rpc(), not here)
     embeddedModule("intellij.platform.klogger")
-    embeddedModule("intellij.platform.rpc")
+    module("intellij.platform.rpc")
     embeddedModule("intellij.platform.rpc.lite")
     embeddedModule("intellij.platform.kernel")
   }

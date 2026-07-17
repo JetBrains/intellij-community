@@ -207,11 +207,8 @@ class ProductPluginInitContext(
         check(replaced == null) { "${moduleId.displayName} is already registered as environment-configured module" }
       }
 
-      val frontend = PluginModuleId("intellij.platform.frontend", PluginModuleId.JETBRAINS_NAMESPACE)
-      setModuleAvailability(frontend, productMode.hasFrontend)
-
-      val backend = PluginModuleId("intellij.platform.backend", PluginModuleId.JETBRAINS_NAMESPACE)
-      setModuleAvailability(backend, productMode.hasBackend)
+      setModuleAvailability(FRONTEND_MODULE_ID, productMode.hasFrontend)
+      setModuleAvailability(BACKEND_MODULE_ID, productMode.hasBackend)
 
       val backendSplit = PluginModuleId("intellij.platform.backend.split", PluginModuleId.JETBRAINS_NAMESPACE)
       setModuleAvailability(backendSplit, productMode == ProductModes.BACKEND || productMode == ProductModes.MONOLITH)
@@ -264,6 +261,11 @@ class ProductPluginInitContext(
         if (descriptor is PluginModuleDescriptor && descriptor.pluginId != CORE_ID && isExternalNonBundledPlugin(descriptor)) {
           for (dependencyRef in externalNonBundledPluginCompatibilityDependencies) {
             yieldIfResolves(dependencyRef)
+          }
+
+          if (doesDependOnModule(descriptor, BACKEND_MODULE_ID) ||
+              doesDependOnModule(descriptor, FRONTEND_MODULE_ID)) {
+            yieldIfResolves(DependencyRef.of(RPC_MODULE_ID))
           }
         }
 
@@ -392,8 +394,12 @@ class PluginHasExpiredLicense : IntellijImposedModuleExclusionReason
 class ThirdPartyPrivacyNoticeIsNotAccepted : IntellijImposedModuleExclusionReason
 
 // alias in most cases points to Core plugin, so we cannot use computed dependencies to check
-private fun doesDependOnPluginAlias(plugin: IdeaPluginDescriptorImpl, @Suppress("SameParameterValue") aliasId: PluginId): Boolean {
+private fun doesDependOnPluginAlias(plugin: IdeaPluginDescriptorImpl, aliasId: PluginId): Boolean {
   return plugin.dependencies.any { it.pluginId == aliasId } || plugin.moduleDependencies.plugins.any { it == aliasId }
+}
+
+private fun doesDependOnModule(plugin: IdeaPluginDescriptorImpl, moduleId: PluginModuleId): Boolean {
+  return plugin.moduleDependencies.modules.any { it == moduleId }
 }
 
 private fun isExternalNonBundledPlugin(plugin: IdeaPluginDescriptorImpl): Boolean {
@@ -449,6 +455,10 @@ private val vcsApiContentModules = arrayOf(
 ).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
 
 private val COLLABORATION_TOOLS_MODULE_ID = PluginModuleId("intellij.platform.collaborationTools", PluginModuleId.JETBRAINS_NAMESPACE)
+
+private val BACKEND_MODULE_ID = PluginModuleId("intellij.platform.backend", PluginModuleId.JETBRAINS_NAMESPACE)
+private val FRONTEND_MODULE_ID = PluginModuleId("intellij.platform.frontend", PluginModuleId.JETBRAINS_NAMESPACE)
+private val RPC_MODULE_ID = PluginModuleId("intellij.platform.rpc", PluginModuleId.JETBRAINS_NAMESPACE)
 
 /**
  * Specifies the list of content modules which was recently extracted from the main module of the core plugin and may have external usages.
