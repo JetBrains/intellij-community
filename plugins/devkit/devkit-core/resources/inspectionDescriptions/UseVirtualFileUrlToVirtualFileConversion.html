@@ -1,0 +1,11 @@
+<html>
+<body>
+Reports VFS lookups whose URL comes from a <code>VirtualFileUrl</code>.
+<p>
+  Calling <code>VirtualFileManager.findFileByUrl(virtualFileUrl.getUrl())</code> bypasses the cached association maintained
+  by the workspace model URL API. Use <code>virtualFileUrl.virtualFile</code> in Kotlin or
+  <code>VirtualFileUrls.getVirtualFile(virtualFileUrl)</code> in Java. These APIs reuse a cached <code>VirtualFile</code>
+  when one is available and retain the existing VFS lookup as a fallback.
+</p>
+</body>
+</html>

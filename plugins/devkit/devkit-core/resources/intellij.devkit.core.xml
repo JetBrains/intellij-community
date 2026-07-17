@@ -333,6 +333,18 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UseHtmlChunkToolTipInspection"
                      key="inspection.use.html.chunk.tooltip.display.name"/>
+    <localInspection language="UAST" shortName="UseVirtualFileToVirtualFileUrlConversion"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UseVirtualFileToVirtualFileUrlConversionInspection"
+                     key="inspection.use.virtual.file.to.virtual.file.url.conversion.display.name"/>
+    <localInspection language="UAST" shortName="UseVirtualFileUrlToVirtualFileConversion"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UseVirtualFileUrlToVirtualFileConversionInspection"
+                     key="inspection.use.virtual.file.url.to.virtual.file.conversion.display.name"/>
     <localInspection language="UAST" shortName="UseDPIAwareInsets"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"

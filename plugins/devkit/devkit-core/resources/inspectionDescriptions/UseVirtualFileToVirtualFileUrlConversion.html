@@ -1,0 +1,11 @@
+<html>
+<body>
+Reports conversions from <code>VirtualFile</code> to <code>VirtualFileUrl</code> which bypass the caching conversion API.
+<p>
+  Calling <code>VirtualFileUrlManager.getOrCreateFromUrl(virtualFile.getUrl())</code> loses the already available
+  <code>VirtualFile</code>. Use <code>virtualFile.toVirtualFileUrl(virtualFileUrlManager)</code> in Kotlin or
+  <code>VirtualFileUrls.toVirtualFileUrl(virtualFile, virtualFileUrlManager)</code> in Java. These APIs preserve the
+  association so that a later conversion back to <code>VirtualFile</code> can avoid a VFS lookup.
+</p>
+</body>
+</html>
