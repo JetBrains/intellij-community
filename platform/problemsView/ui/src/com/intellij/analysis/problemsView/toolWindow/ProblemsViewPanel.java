@@ -446,7 +446,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
     return Arrays.stream(selectionPaths)
       .map(ProblemsViewPanel::getNode)
       .filter(Objects::nonNull)
-      .toList().toArray(new Node[0]);
+      .toArray(Node[]::new);
   }
 
   private static @Nullable VirtualFile getSelectedFile(@Nullable Node node) {
