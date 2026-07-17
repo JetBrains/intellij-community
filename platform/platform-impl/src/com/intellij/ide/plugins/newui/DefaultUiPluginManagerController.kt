@@ -269,7 +269,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       val pluginsToInstall = listOf(descriptor.getDescriptor())
       val disabledPlugins = PluginManagerMain.getDisabledPlugins(pluginEnabler, pluginsToInstall, updateDescriptor != null)
       val disabledDependantPlugins = PluginManagerMain.getDisabledDependants(pluginEnabler, pluginsToInstall)
-      PluginManagerMain.enablePlugins(enableRequiredPlugins, disabledPlugins, disabledDependantPlugins, pluginEnabler)
+      enablePluginsForInstallation(session, enableRequiredPlugins, disabledPlugins, disabledDependantPlugins, pluginEnabler)
     }
 
     val installPluginRequest = InstallPluginRequest(sessionId,
@@ -281,6 +281,39 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     )
 
     return performInstallOperation(installPluginRequest, parentComponent, modalityState, pluginEnabler, customPlugins)
+  }
+
+  private fun enablePluginsForInstallation(
+    session: PluginManagerSession,
+    enableRequiredPlugins: Boolean,
+    disabledPlugins: Set<IdeaPluginDescriptor>,
+    disabledDependantPlugins: Set<IdeaPluginDescriptor>,
+    pluginEnabler: PluginEnabler,
+  ) {
+    if (pluginEnabler !is SessionStatePluginEnabler) {
+      PluginManagerMain.enablePlugins(enableRequiredPlugins, disabledPlugins, disabledDependantPlugins, pluginEnabler)
+      return
+    }
+
+    val descriptorsToEnable = LinkedHashSet<IdeaPluginDescriptor>()
+    if (enableRequiredPlugins) {
+      descriptorsToEnable.addAll(disabledPlugins)
+      descriptorsToEnable.addAll(disabledDependantPlugins)
+    }
+    else if (disabledPlugins.isNotEmpty()) {
+      descriptorsToEnable.addAll(disabledPlugins)
+    }
+
+    if (descriptorsToEnable.isEmpty()) {
+      return
+    }
+
+    val result = enableDependencies(session,
+                                    descriptorsToEnable.toList(),
+                                    PluginEnableDisableAction.ENABLE_GLOBALLY,
+                                    buildPluginIdMap(),
+                                    getPluginSet().buildContentModuleIdMap())
+    pluginEnabler.pluginsToEnable.addAll(result.changedStates.filterValues { it }.keys)
   }
 
   private suspend fun loadDetails(descriptor: PluginUiModel): PluginUiModel? {
