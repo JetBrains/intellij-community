@@ -5,7 +5,6 @@ import com.intellij.compiler.CompilerConfiguration
 import com.intellij.java.library.JavaLibraryUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -17,17 +16,18 @@ import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.CommonProcessors
 import org.jetbrains.kotlin.idea.base.util.isGradleModule
+import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.configuration.AbstractKotlinCompilerProjectPostConfigurator
 import org.jetbrains.kotlin.idea.configuration.ChangedConfiguratorFiles
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.getBuildScriptPsiFile
-import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.getTopLevelBuildScriptPsiFile
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtScriptInitializer
+import kotlin.io.path.relativeTo
 
 private const val KAPT_PLUGIN_ID = "kapt"
 private const val KAPT_GRADLE_PLUGIN_NAME = "kotlin.kapt"
@@ -185,7 +185,9 @@ internal fun PsiFile.configureKaptForLombokIfNeeded(sourceModule: Module, change
 internal fun PsiFile.configureKotlinLombokConfigIfNeeded(sourceModule: Module, changedFiles: ChangedConfiguratorFiles) {
     val parentDirectory = (virtualFile ?: originalFile.virtualFile )?.parent ?: return
     val configFile = sourceModule.findLombokConfigFile(parentDirectory) ?: return
-    val relativePath = VfsUtilCore.getRelativePath(configFile, parentDirectory, '/') ?: return
+    val configFilePath = configFile.toNioPath()
+    val parentPath = parentDirectory.toNioPath()
+    val relativePath = configFilePath.relativeTo(parentPath)
 
     GradleBuildScriptSupport.getManipulator(this).configurePluginOptions(
         "kotlinLombok",
@@ -195,17 +197,18 @@ internal fun PsiFile.configureKotlinLombokConfigIfNeeded(sourceModule: Module, c
 }
 
 private fun Module.findLombokConfigFile(parentDirectory: VirtualFile): VirtualFile? {
-    val configName = "lombok.config"
     val processor = CommonProcessors.FindFirstProcessor<VirtualFile>()
-    FilenameIndex.processFilesByNames(
-        setOf(configName),
-        false,
-        GlobalSearchScopes.directoryScope(project, parentDirectory, true),
-        null,
-        processor
-    )
-    processor.foundValue?.let { return it }
-    return project.getTopLevelBuildScriptPsiFile()?.virtualFile?.parent?.findChild(configName)
+    for (scope in arrayOf(GlobalSearchScopes.directoryScope(project, parentDirectory, true), project.projectScope())) {
+        FilenameIndex.processFilesByNames(
+            setOf("lombok.config"),
+            false,
+            scope,
+            null,
+            processor
+        )
+        processor.foundValue?.let { return it }
+    }
+    return null
 }
 
 private fun String.isLombokProcessorPath(): Boolean =

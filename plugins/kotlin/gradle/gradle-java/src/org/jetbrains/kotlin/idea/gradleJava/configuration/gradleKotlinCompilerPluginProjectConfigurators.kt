@@ -32,12 +32,14 @@ import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractGradleKotlinCompilerPluginProjectConfigurator : KotlinCompilerPluginProjectConfigurator {
-    override fun isApplicable(module: Module): Boolean =
-        module.project.getTopLevelBuildScriptPsiFile() != null
+    override fun isApplicable(module: Module): Boolean {
+        val topLevelBuildScriptPsiFile = module.getTopLevelBuildScriptPsiFile()
+        return topLevelBuildScriptPsiFile != null
+    }
 
     override fun configureModule(module: Module, configurationResultBuilder: ConfigurationResultBuilder) {
         val project = module.project
-        val topLevelFile = project.getTopLevelBuildScriptPsiFile() ?: return
+        val topLevelFile = module.getTopLevelBuildScriptPsiFile() ?: return
         val moduleFile = module.getBuildScriptPsiFile().takeIf { it != topLevelFile }
 
         project.executeWriteCommand(KotlinIdeaGradleBundle.message("command.name.configure.0", topLevelFile.name), null) {
@@ -67,8 +69,7 @@ abstract class AbstractGradleKotlinCompilerPluginProjectConfigurator : KotlinCom
     }
 
     override fun configureModuleModCommand(module: Module): ModCommand {
-        val project = module.project
-        val topLevelFile = project.getTopLevelBuildScriptPsiFile() ?: return ModCommand.nop()
+        val topLevelFile = module.getTopLevelBuildScriptPsiFile() ?: return ModCommand.nop()
 
         val actionContext = ActionContext.from(null, topLevelFile)
         return ModCommand.psiUpdate(actionContext) { updater ->
