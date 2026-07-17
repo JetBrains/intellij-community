@@ -29,4 +29,13 @@ internal class LombokKotlinGradleTest : AbstractGradleMultiFileQuickFixTest() {
         )
     }
 
+    @Test
+    @TargetVersions("8.0.0+")
+    @TestMetadata("addKotlinLombokCompilerPluginWithConfigInSubfolder")
+    fun testAddKotlinLombokCompilerPluginWithConfigInSubfolder() {
+        doMultiFileQuickFixTest(
+            ignoreChangesInBuildScriptFiles = false,
+        )
+    }
+
 }
