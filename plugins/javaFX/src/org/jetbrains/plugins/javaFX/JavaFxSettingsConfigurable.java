@@ -62,7 +62,8 @@ public final class JavaFxSettingsConfigurable implements SearchableConfigurable,
   }
 
   public static FileChooserDescriptor createSceneBuilderDescriptor() {
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor();
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()
+      .withEnvironmentRestricted(true);
     descriptor.setTitle(JavaFXBundle.message("javafx.settings.configurable.scene.builder.configuration.title"));
     descriptor.setDescription(JavaFXBundle.message("javafx.settings.configurable.scene.builder.configuration.description"));
     return descriptor;
