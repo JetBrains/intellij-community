@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
-import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
@@ -92,20 +91,16 @@ import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.PyAnyType;
-import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
+import com.jetbrains.python.psi.types.PySyntheticCallHelper;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.Maybe;
-import kotlin.jvm.functions.Function1;
-import kotlin.jvm.functions.Function2;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1048,33 +1043,25 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
 
     @Override
-    public @Nullable PyType getType(@Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
+    public @Nullable PyType getType(@NotNull PyClassType receiverType, @NotNull TypeEvalContext context) {
       if (mySite instanceof PyTargetExpressionImpl) {
         final PyType targetDocStringType = ((PyTargetExpressionImpl)mySite).getTypeFromDocString();
         if (targetDocStringType != null) {
           return targetDocStringType;
         }
       }
-      final PyCallable callable = myGetter.valueOrNull();
+      if (!myGetter.isDefined()) {
+        return PyAnyType.getAny();
+      }
+      final PyCallable callable = myGetter.value();
       if (callable != null) {
         // Ignore return types of non stub-based elements if we are not allowed to use AST
         if (!(callable instanceof StubBasedPsiElement) && !context.maySwitchToAST(callable)) {
-          return null;
+          return PyAnyType.getAny();
         }
-        return callable.getCallType(receiver, null, buildArgumentsToParametersMap(receiver, callable, context), context);
+        return PySyntheticCallHelper.getCallType(callable, receiverType, List.of(), context);
       }
-      return null;
-    }
-
-    private static @NotNull Map<PyExpression, PyCallableParameter> buildArgumentsToParametersMap(@Nullable PyExpression receiver,
-                                                                                                 @NotNull PyCallable callable,
-                                                                                                 @NotNull TypeEvalContext context) {
-      if (receiver == null) return Collections.emptyMap();
-
-      final PyCallableParameter firstParameter = ContainerUtil.getFirstItem(callable.getParameters(context));
-      if (firstParameter == null || !firstParameter.isSelf()) return Collections.emptyMap();
-
-      return ImmutableMap.of(receiver, firstParameter);
+      return PyAnyType.getUnknown();
     }
 
     @Override

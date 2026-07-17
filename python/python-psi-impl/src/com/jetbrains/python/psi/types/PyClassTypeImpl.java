@@ -667,10 +667,11 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   public @NotNull List<@NotNull PyTypeMember> getAllMembers(@NotNull PyResolveContext resolveContext) {
     List<@NotNull PyTypeMember> result = new ArrayList<>();
     Set<String> visited = new HashSet<>();
+    TypeEvalContext context = resolveContext.getTypeEvalContext();
     for (Map.Entry<String, Property> entry : myClass.getProperties().entrySet()) {
       visited.add(entry.getKey());
       Property property = entry.getValue();
-      PyType type = property.getType(null, resolveContext.getTypeEvalContext());
+      PyType type = property.getType(this, context);
       result.add(new PyTypeMember(property, type));
     }
 
@@ -679,19 +680,19 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
         if (visited.add(namedElement.getName())) {
           PyType type = null;
           if (element instanceof PyTypedElement typedElement) {
-            type = resolveContext.getTypeEvalContext().getType(typedElement);
+            type = context.getType(typedElement);
           }
 
           boolean isClassVar = false;
           if (element instanceof PyAnnotationOwner && element instanceof PyTypeCommentOwner) {
             isClassVar =
-              PyTypingTypeProvider.isClassVar((PyAnnotationOwner & PyTypeCommentOwner)element, resolveContext.getTypeEvalContext());
+              PyTypingTypeProvider.isClassVar((PyAnnotationOwner & PyTypeCommentOwner)element, context);
           }
           result.add(new PyTypeMember(element, type, isClassVar));
         }
       }
       return true;
-    }, false, resolveContext.getTypeEvalContext());
+    }, false, context);
 
     processProvidedMembers(
       member -> {
@@ -702,7 +703,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
         return true;
       },
       null,
-      resolveContext.getTypeEvalContext()
+      context
     );
 
     return result;
@@ -712,7 +713,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   public @NotNull List<@NotNull PyTypeMember> findMember(@NotNull String name, @NotNull PyResolveContext resolveContext) {
     Property property = myClass.findProperty(name, true, resolveContext.getTypeEvalContext());
     if (property != null) {
-      PyType type = property.getType(null, resolveContext.getTypeEvalContext());
+      PyType type = property.getType(this, resolveContext.getTypeEvalContext());
       return List.of(new PyTypeMember(property, type));
     }
     List<PyTypeMember> customMembers = new ArrayList<>();

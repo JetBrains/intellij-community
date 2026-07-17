@@ -72,7 +72,6 @@ import com.jetbrains.python.psi.types.PyNarrowedType;
 import com.jetbrains.python.psi.types.PyOverloadType;
 import com.jetbrains.python.psi.types.PySyntheticCallHelper;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeParameterType;
 import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyTypeUtilKt;
 import com.jetbrains.python.psi.types.PyTypeVarType;
@@ -283,9 +282,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       qualifierType = context.getType(qualifier);
     }
 
-    final Ref<PyType> typeOfProperty = getTypeOfProperty(refExpr, qualifierType, attrName, context);
-    if (typeOfProperty != null) {
-      return typeOfProperty.get();
+    PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
+
+    // Skip type narrowing for properties.
+    if (resolvesToProperty(qualifierType, attrName, context)) {
+      return getTypeOfMember(qualifierType, null, attrName, refExpr, resolveContext, errors);
     }
 
     // This code performs a backwards traversal through the Control Flow Graph to analyze assignments.
@@ -314,7 +315,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (!isUnknown(typeByControlFlow)) {
       if (controlFlowResult.foundPrefixCall()) {
         // A call with prefix as receiver/argument may or may not mutate it, so return UnsafeUnion of narrowed and declared types (PY-88265)
-        PyType declaredType = getTypeOfMember(qualifierType, null, attrName, refExpr, PyResolveContext.noProperties(context), errors);
+        PyType declaredType = getTypeOfMember(qualifierType, null, attrName, refExpr, resolveContext, errors);
         if (isNoneType(declaredType)) {
           declaredType = PyAnyType.getUnknown();
         }
@@ -323,7 +324,20 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return typeByControlFlow;
     }
 
-    return getTypeOfMember(qualifierType, null, attrName, refExpr, PyResolveContext.noProperties(context), errors);
+    return getTypeOfMember(qualifierType, null, attrName, refExpr, resolveContext, errors);
+  }
+
+  private static boolean resolvesToProperty(@Nullable PyType type,
+                                            @NotNull String name,
+                                            @NotNull TypeEvalContext context) {
+    return switch (type) {
+      case PyCompositeType compositeType ->
+        ContainerUtil.exists(compositeType.getMembers(), member -> resolvesToProperty(member, name, context));
+      case PyTypeVarType typeVarType ->
+        typeVarType.getEffectiveBound() != null && resolvesToProperty(typeVarType.getEffectiveBound(), name, context);
+      case PyClassType classType -> findProperty(classType, name, context) != null;
+      case null, default -> false;
+    };
   }
 
   private @Nullable Ref<PyType> getTypeFromTargets(@NotNull TypeEvalContext context) {
@@ -383,80 +397,25 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return new ControlFlowTypeResult(PyAnyType.getUnknown(), false);
   }
 
-  private static @Nullable Ref<PyType> getTypeOfProperty(@NotNull PyReferenceExpression refExpr,
-                                                         @Nullable PyType qualifierType,
-                                                         @NotNull String name,
-                                                         @NotNull TypeEvalContext context) {
-    if (qualifierType instanceof PyClassType classType) {
-      final PyClass pyClass = classType.getPyClass();
-
-      // TODO PY-90645: This special-casing should be revisited and possibly removed once we handle data descriptors generically.
-      // on a class object, a property defined on the metaclass is a data descriptor and takes
-      // precedence over a member of the same name on the class itself. The class is an instance of its
-      // metaclass, so the metaclass property's getter is invoked with the class object as the receiver.
-      if (classType.isDefinition() && AccessDirection.of(refExpr) == AccessDirection.READ) {
-        final Ref<PyType> metaClassProperty = getMetaclassPropertyTypeForClassAccess(refExpr, classType, name, context);
-        if (metaClassProperty != null) {
-          return metaClassProperty;
-        }
-      }
-
-      final Property property = pyClass.findProperty(name, true, context);
-
-      if (property != null) {
-        if (classType.isDefinition()) {
-          return Ref.create(PyBuiltinCache.getInstance(pyClass).getObjectType(PyNames.PROPERTY));
-        }
-        if (AccessDirection.of(refExpr) == AccessDirection.READ) {
-          final PyType type = property.getType(refExpr.getQualifier(), context);
-          if (type != null) {
-            return Ref.create(type);
-          }
-        }
-        return Ref.create();
+  private static @Nullable PropertyResolveResult findProperty(@NotNull PyClassType classType,
+                                                              @NotNull String name,
+                                                              @NotNull TypeEvalContext context) {
+    // TODO PY-90645: This special-casing should be revisited and possibly removed once we handle data descriptors generically.
+    // on a class object, a property defined on the metaclass is a data descriptor and takes
+    // precedence over a member of the same name on the class itself. The class is an instance of its
+    // metaclass, so the metaclass property's getter is invoked with the class object as the receiver.
+    if (classType.isDefinition()
+        && classType.getMetaClassType(context, true) instanceof PyClassType metaClassType) {
+      final Property metaProperty = metaClassType.getPyClass().findProperty(name, true, context);
+      if (metaProperty != null) {
+        return new PropertyResolveResult(metaProperty, classType, true);
       }
     }
-    else if (qualifierType instanceof PyUnionType unionType) {
-      for (PyType type : unionType.getMembers()) {
-        final Ref<PyType> result = getTypeOfProperty(refExpr, type, name, context);
-        if (result != null) {
-          return result;
-        }
-      }
-    }
-    else if (qualifierType instanceof PyUnsafeUnionType unionType) {
-      for (PyType type : unionType.getMembers()) {
-        final Ref<PyType> result = getTypeOfProperty(refExpr, type, name, context);
-        if (result != null) {
-          return result;
-        }
-      }
-    }
-    else if (qualifierType instanceof PyTypeParameterType typeParameterType) {
-      final PyType effectiveBound = typeParameterType.getEffectiveBound();
-      if (effectiveBound != null && effectiveBound != qualifierType) {
-        return getTypeOfProperty(refExpr, effectiveBound, name, context);
-      }
-    }
-
-    return null;
+    final Property property = classType.getPyClass().findProperty(name, true, context);
+    return property != null ? new PropertyResolveResult(property, classType, false) : null;
   }
 
-  private static @Nullable Ref<PyType> getMetaclassPropertyTypeForClassAccess(@NotNull PyReferenceExpression refExpr,
-                                                                              @NotNull PyClassType classType,
-                                                                              @NotNull String name,
-                                                                              @NotNull TypeEvalContext context) {
-    final PyClassLikeType metaClassType = classType.getMetaClassType(context, true);
-    if (!(metaClassType instanceof PyClassType metaPyClassType)) {
-      return null;
-    }
-    final Property metaProperty = metaPyClassType.getPyClass().findProperty(name, true, context);
-    if (metaProperty == null) {
-      return null;
-    }
-    final PyType type = metaProperty.getType(refExpr.getQualifier(), context);
-    return Ref.create(type);
-  }
+  private record PropertyResolveResult(@NotNull Property property, @NotNull PyClassType selfType, boolean onMetaclass) {}
 
   /**
    * Resolves `attrName` on `type` and binds the result to `selfType`,
@@ -529,7 +488,19 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                                        @Nullable List<ProblemMessage> errors) {
     TypeEvalContext context = resolveContext.getTypeEvalContext();
 
-    List<? extends RatedResolveResult> resolveResults = classType.resolveMember(name, null, AccessDirection.READ, resolveContext);
+    final PropertyResolveResult propertyResult = findProperty(classType, name, context);
+    if (propertyResult != null) {
+      if (AccessDirection.of(anchor) != AccessDirection.READ) {
+        return PyAnyType.getUnknown();
+      }
+      if (!classType.isDefinition() || propertyResult.onMetaclass()) {
+        return propertyResult.property().getType(propertyResult.selfType(), context);
+      }
+      return PyBuiltinCache.getInstance(anchor).getObjectType(PyNames.PROPERTY);
+    }
+
+    List<? extends RatedResolveResult> resolveResults =
+      classType.resolveMember(name, null, AccessDirection.READ, resolveContext.withoutProperties());
     if (resolveResults == null || resolveResults.isEmpty()) {
       PyType nameArg = Optional.<PyType>ofNullable(PyLiteralType.stringLiteral(anchor, name)).orElse(PyAnyType.getUnknown());
       return PySyntheticCallHelper.getCallTypeByFunctionName(PyNames.GETATTR, classType, Collections.singletonList(nameArg), context);

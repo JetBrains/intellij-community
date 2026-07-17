@@ -407,7 +407,7 @@ public final class PyResolveUtil {
     if (type instanceof PyClassType classType) {
       Property property = classType.getPyClass().findProperty(name, true, context);
       if (property != null) {
-        PyType propertyType = property.getType(null, context);
+        PyType propertyType = property.getType(classType, context);
         return List.of(new PyTypeMember(property, propertyType));
       }
 

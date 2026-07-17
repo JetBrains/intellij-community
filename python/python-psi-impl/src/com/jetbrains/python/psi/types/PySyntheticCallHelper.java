@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.types;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -36,7 +37,7 @@ public final class PySyntheticCallHelper {
    * @param context       TypeEvalContext
    * @return The resulting type of the function call.
    */
-  public static @Nullable PyType getCallType(@NotNull PyFunction function,
+  public static @Nullable PyType getCallType(@NotNull PyCallable function,
                                    @Nullable PyType receiverType,
                                    @NotNull List<PyType> argumentTypes,
                                    @NotNull TypeEvalContext context) {
@@ -65,7 +66,7 @@ public final class PySyntheticCallHelper {
       .collect(PyTypeUtil.toUnion());
   }
 
-  private static @Nullable PyType getCallTypeOnTypesOnly(@NotNull PyFunction function,
+  private static @Nullable PyType getCallTypeOnTypesOnly(@NotNull PyCallable function,
                                                          @Nullable PyType receiverType,
                                                          @NotNull List<PyType> arguments,
                                                          @NotNull TypeEvalContext context) {
@@ -177,7 +178,7 @@ public final class PySyntheticCallHelper {
     return PyTypeChecker.unifyGenericCallOnArgumentTypes(receiverType, fullMapping.getMappedParameters(), context) != null;
   }
 
-  private static @Nullable PyCallableType getFunctionType(@NotNull PyFunction function,
+  private static @Nullable PyCallableType getFunctionType(@NotNull PyCallable function,
                                                           @Nullable PyType receiverType,
                                                           @NotNull TypeEvalContext context) {
     PyType type = context.getType(function);

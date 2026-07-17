@@ -15,9 +15,11 @@
  */
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,6 +71,7 @@ public interface Property {
   /**
    * Get the return type of the property getter.
    */
+  @ApiStatus.Internal
   @Nullable
-  PyType getType(@Nullable PyExpression receiver, @NotNull TypeEvalContext context);
+  PyType getType(@NotNull PyClassType receiverType, @NotNull TypeEvalContext context);
 }
