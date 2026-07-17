@@ -1,12 +1,13 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.backend"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="fleet.rpc.server"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.rpc"/>
-    <!-- endregion -->
+    <module name="intellij.platform.rpc.lite"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.platform.rpc.backend.remoteApiProvider"
@@ -25,5 +26,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.platform.rpc.RemoteApiProviderService"
                         serviceImplementation="com.intellij.platform.rpc.backend.impl.RemoteApiRegistry"/>
+    <applicationService serviceInterface="com.intellij.platform.rpc.lite.LiteRemoteApiProviderService"
+                        serviceImplementation="com.intellij.platform.rpc.backend.impl.LiteRemoteApiRegistry"/>
   </extensions>
 </idea-plugin>

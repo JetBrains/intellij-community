@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.rpc.backend.impl
 
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -9,6 +11,7 @@ import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.rpc.backend.RemoteApiProvider.Companion.EP_NAME
 import com.intellij.platform.rpc.backend.RemoteApiRegistration
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import com.intellij.util.containers.ContainerUtil
 import fleet.rpc.RemoteApi
 import fleet.rpc.RemoteApiDescriptor
@@ -114,6 +117,11 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
     unregisterRemoteApi(descriptor = remoteApiDescriptorOf(registration.loadApiInterface()))
   }
 
+  fun <T : RemoteApi<Unit>> tryResolve(descriptor: RemoteApiDescriptor<T>): T? {
+    @Suppress("UNCHECKED_CAST")
+    return remoteApis[descriptor.getApiFqn()]?.instance as? T
+  }
+
   override suspend fun <T : RemoteApi<Unit>> resolve(descriptor: RemoteApiDescriptor<T>): T {
     @Suppress("UNCHECKED_CAST")
     return remoteApis[descriptor.getApiFqn()]?.instance as? T
@@ -139,5 +147,20 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
 
   companion object {
     private val LOG = logger<RemoteApiRegistry>()
+  }
+}
+
+internal class LiteRemoteApiRegistry : LiteRemoteApiProviderService {
+  override fun isConnected(): Boolean {
+    return true
+  }
+
+  override fun <T : RemoteApi<Unit>> tryResolve(descriptor: RemoteApiDescriptor<T>): T? {
+    val service = service<RemoteApiProviderService>() as RemoteApiRegistry
+    return service.tryResolve(descriptor)
+  }
+
+  override suspend fun <T : RemoteApi<Unit>> awaitConnectionAndResolve(descriptor: RemoteApiDescriptor<T>): T {
+    return serviceAsync<RemoteApiProviderService>().resolve(descriptor)
   }
 }
