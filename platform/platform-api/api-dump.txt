@@ -843,7 +843,7 @@ e:com.intellij.ide.browsers.BrowserFamily
 a:com.intellij.ide.browsers.BrowserLauncher
 - sf:Companion:com.intellij.ide.browsers.BrowserLauncher$Companion
 - <init>():V
-- a:browse(java.io.File):V
+- browse(java.io.File):V
 - f:browse(java.lang.String,com.intellij.ide.browsers.WebBrowser):V
 - a:browse(java.lang.String,com.intellij.ide.browsers.WebBrowser,com.intellij.openapi.project.Project):V
 - f:browse(java.net.URI):V

@@ -1,9 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.Path
 
@@ -16,15 +15,15 @@ abstract class BrowserLauncher {
 
   abstract fun open(url: String)
 
-  /** Prefer `browse(Path)`. */
-  @ApiStatus.Obsolete
-  abstract fun browse(file: java.io.File)
+  @Deprecated(message = "Use browse(Path) instead", level = DeprecationLevel.ERROR)
+  @Suppress("IO_FILE_USAGE", "DeprecatedCallableAddReplaceWith")
+  open fun browse(file: java.io.File): Unit = browse(file.toPath())
 
   abstract fun browse(file: Path)
 
-  fun browse(uri: URI): Unit = browse(uri.toString(), null, null)
+  fun browse(uri: URI): Unit = browse(uri.toString(), browser = null)
 
-  fun browse(url: String, browser: WebBrowser?): Unit = browse(url, browser, null)
+  fun browse(url: String, browser: WebBrowser?): Unit = browse(url, browser, project = null)
 
   abstract fun browse(url: String, browser: WebBrowser? = null, project: Project? = null)
 }

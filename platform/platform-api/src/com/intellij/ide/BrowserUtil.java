@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.diagnostic.LoadingState;
@@ -13,7 +13,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.system.OS;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,11 +58,11 @@ public final class BrowserUtil {
     browse(file.getUrl(), null);
   }
 
-  /** Prefer {@link #browse(Path)} */
-  @ApiStatus.Obsolete
-  @SuppressWarnings({"UnnecessaryFullyQualifiedName", "IO_FILE_USAGE", "UsagesOfObsoleteApi"})
+  /** @deprecated use {@link #browse(Path)} instead. */
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings({"UnnecessaryFullyQualifiedName", "IO_FILE_USAGE"})
   public static void browse(@NotNull java.io.File file) {
-    getBrowserLauncher().browse(file);
+    browse(file.toPath());
   }
 
   public static void browse(@NotNull Path file) {
