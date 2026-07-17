@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @ApiStatus.Internal
@@ -209,9 +210,8 @@ class PythonPathEditor extends SdkPathEditor {
 
     private @NotNull SdkAdditionalData collectSdkAdditionalData(@NotNull SdkModificator sdkModificator) {
       PythonSdkAdditionalData data = (PythonSdkAdditionalData)sdkModificator.getSdkAdditionalData();
-      if (data == null) {
-        data = new PythonSdkAdditionalData();
-      }
+      // We can't have sdk without additional data in python
+      Objects.requireNonNull(data);
       data.setAddedPathsFromVirtualFiles(myAdded);
       data.setExcludedPathsFromVirtualFiles(myExcluded);
       return data;

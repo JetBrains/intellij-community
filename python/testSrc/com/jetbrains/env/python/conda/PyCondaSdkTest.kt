@@ -9,6 +9,7 @@ import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -107,6 +108,7 @@ internal class PyCondaSdkTest {
       val condaSdk = condaRule.condaCommand.createCondaSdkFromExistingEnvironment(
         condaIdentity = condaEnv.envIdentity,
         existingSdks = emptyList(),
+        workingDirectory = projectRule.project.basePath?.toNioPathOrNull()!!,
       ).getOrThrow()
       val request = LocalTargetEnvironmentRequest()
       val targetEnvironment = LocalTargetEnvironment(request)
@@ -136,6 +138,7 @@ internal class PyCondaSdkTest {
     val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnvironment(
       condaIdentity = condaEnv.envIdentity,
       existingSdks = emptyList(),
+      workingDirectory = projectRule.project.basePath?.toNioPathOrNull()!!,
     ).getOrThrow()
     val request = LocalTargetEnvironmentRequest()
 
@@ -148,7 +151,10 @@ internal class PyCondaSdkTest {
   @Test
   fun createSdkByFile() =  timeoutRunBlocking(120.seconds) {
     val newCondaInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(yamlRule.yamlFilePath, emptyList())
-    val sdk = condaRule.condaCommand.createCondaSdkAlongWithNewEnv(newCondaInfo, emptyList()
+    val sdk = condaRule.condaCommand.createCondaSdkAlongWithNewEnv(
+      newCondaInfo,
+      emptyList(),
+      projectRule.project.basePath?.toNioPathOrNull()!!,
     ).getOrThrow()
     val env = (sdk.pySdkAdditionalData.flavorAndData.data as PyCondaFlavorData).env
     val namedEnv = env.envIdentity as PyCondaEnvIdentity.NamedEnv
@@ -162,6 +168,7 @@ internal class PyCondaSdkTest {
     val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnvironment(
       condaIdentity = env.envIdentity,
       existingSdks = emptyList(),
+      workingDirectory = projectRule.project.basePath?.toNioPathOrNull()!!,
     ).getOrThrow()
 
     Assert.assertEquals(CondaEnvSdkFlavor, sdk.pySdkAdditionalData.flavor)
