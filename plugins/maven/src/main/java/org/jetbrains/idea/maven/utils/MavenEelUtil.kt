@@ -402,15 +402,28 @@ object MavenEelUtil {
     ApplicationManager.getApplication().invokeLater {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(
         {
-          var needReset = false
+          // The JDK now configured for the maven importer. If it cannot be resolved, fall back to the
+          // conservative behavior and restart every connector of the project.
+          val importerJdk = try {
+            MavenUtil.getJdkForImporter(project)
+          }
+          catch (e: Exception) {
+            MavenLog.LOG.warn("Cannot resolve JDK for importer, restarting all maven connectors of $project", e)
+            null
+          }
 
-          MavenServerManager.getInstance().getAllConnectors().forEach {
-            if (it.project == project) {
-              needReset = true
-              MavenServerManager.getInstance().shutdownConnector(it, true)
+          var hadProjectConnector = false
+          MavenServerManager.getInstance().getAllConnectors().forEach { connector ->
+            if (connector.project != project) return@forEach
+            hadProjectConnector = true
+            // Only restart a connector whose JDK actually differs from the one now configured for the
+            // importer. A connector already bound to the correct JDK must not be torn down: shutting it
+            // down races with an in-flight startup and kills the server mid-handshake.
+            if (importerJdk == null || connector.jdk.name != importerJdk.name) {
+              MavenServerManager.getInstance().shutdownConnector(connector, true)
             }
           }
-          if (!needReset) {
+          if (!hadProjectConnector) {
             MavenProjectsManager.getInstance(project).embeddersManager.reset()
           }
 
