@@ -71,7 +71,7 @@
                        enabledByDefault="true"
                        implementationClass="com.intellij.markdown.backend.inspections.MarkdownLinkDestinationWithSpacesInspection"/>
 
-      <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.lang.references.CommonLinkDestinationReferenceContributor"/>
+      <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.link.CommonLinkDestinationReferenceContributor"/>
       <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.link.AutoLinkWebReferenceContributor"/>
       <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.backtick.BacktickReferenceContributor"/>
       <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.github.GithubWikiLocalReferenceContributor"/>
@@ -79,5 +79,15 @@
 
       <stubIndex implementation="com.intellij.markdown.backend.index.HeaderTextIndex"/>
       <stubIndex implementation="com.intellij.markdown.backend.index.HeaderAnchorIndex"/>
+
+      <pathReferenceProvider implementation="com.intellij.markdown.backend.reference.paths.RelativeFileWithoutExtensionReferenceProvider"/>
+      <anchorReferenceProvider implementation="com.intellij.markdown.backend.reference.paths.LineNumberPathReferenceProvider"/>
+
+      <renameHandler implementation="com.intellij.markdown.backend.rename.MarkdownFileRenameHandler"/>
+      <automaticRenamerFactory implementation="com.intellij.markdown.backend.rename.MarkdownRenamerFactory"/>
+
+      <codeInsight.lineMarkerProvider
+        language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.markers.MarkdownAlertLineMarkerProvider"/>
+
     </extensions>
 </idea-plugin>

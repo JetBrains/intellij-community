@@ -139,12 +139,10 @@
     </intentionAction>
 
     <typedHandler implementation="org.intellij.plugins.markdown.editor.headers.HeaderLevelInferenceTypedHandler"/>
+    <typedHandler implementation="org.intellij.plugins.markdown.editor.headers.HeaderAnchorCompletionPopupTypedHandler"/>
 
     <codeInsight.fillParagraph language="Markdown"
                                implementationClass="org.intellij.plugins.markdown.editor.MarkdownParagraphFillHandler"/>
-
-    <renameHandler implementation="org.intellij.plugins.markdown.ui.projectTree.MarkdownFileRenameHandler"/>
-    <automaticRenamerFactory implementation="org.intellij.plugins.markdown.ui.projectTree.MarkdownRenamerFactory"/>
 
     <fileType name="Markdown" extensions="markdown;md" language="Markdown"
               implementationClass="org.intellij.plugins.markdown.lang.MarkdownFileType" fieldName="INSTANCE"/>
@@ -226,15 +224,12 @@
 
     <lang.foldingBuilder language="Markdown" implementationClass="org.intellij.plugins.markdown.folding.MarkdownFoldingBuilder"/>
 
-    <pathReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.RelativeFileWithoutExtensionReferenceProvider"/>
-    <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.LineNumberPathReferenceProvider"/>
-
     <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownAutoLink"
                              implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownAutoLink$Manipulator"/>
     <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan"
                              implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan$Manipulator"/>
     <referencesSearch implementation="org.intellij.plugins.markdown.lang.references.backtick.BacktickReferenceSearcher"/>
-    <useScopeEnlarger implementation="org.intellij.plugins.markdown.lang.references.backtick.MarkdownReferenceUseScopeEnlarger"/>
+    <useScopeEnlarger implementation="org.intellij.plugins.markdown.lang.references.MarkdownReferenceUseScopeEnlarger"/>
     <usageViewElementsListener implementation="org.intellij.plugins.markdown.lang.references.backtick.BacktickUsageViewElementsListener"/>
 
     <todoIndexer filetype="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownTodoIndexer"/>
@@ -274,9 +269,6 @@
     <lang.lineWrapStrategy language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy"/>
 
     <lang.commenter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.MarkdownCommenter"/>
-
-    <codeInsight.lineMarkerProvider language="Markdown"
-                                    implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownAlertLineMarkerProvider"/>
 
     <codeInsight.lineMarkerProvider language="Markdown"
                                     implementationClass="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceDownloadLineMarkerProvider"/>

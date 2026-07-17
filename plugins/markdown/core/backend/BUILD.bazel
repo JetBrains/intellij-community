@@ -44,6 +44,8 @@ jvm_library(
         "//fleet/rhizomedb",
         "//platform/lang-impl",
         "//platform/editor-ui-api:editor-ui",
+        "//platform/refactoring",
+        "//platform/util:util-ui",
     ],
 )
 
@@ -87,6 +89,8 @@ jvm_library(
         "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/refactoring:refactoring_test_lib",
+        "//platform/util:util-ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.markdown.backend` end

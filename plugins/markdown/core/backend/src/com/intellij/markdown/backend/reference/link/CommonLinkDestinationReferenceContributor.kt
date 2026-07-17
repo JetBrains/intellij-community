@@ -1,4 +1,4 @@
-package com.intellij.markdown.backend.lang.references
+package com.intellij.markdown.backend.reference.link
 
 import com.intellij.openapi.paths.PathReferenceManager
 import com.intellij.psi.PsiElement

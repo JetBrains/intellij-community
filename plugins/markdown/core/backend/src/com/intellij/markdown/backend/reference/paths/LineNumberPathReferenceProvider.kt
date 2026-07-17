@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.intellij.plugins.markdown.lang.references.paths
+package com.intellij.markdown.backend.reference.paths
 
 import com.intellij.openapi.paths.PathReference
 import com.intellij.openapi.paths.PathReferenceProviderBase
@@ -15,6 +15,7 @@ import com.intellij.psi.impl.FakePsiElement
 import org.intellij.plugins.markdown.lang.isMarkdownType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination
 import org.intellij.plugins.markdown.lang.references.ReferenceUtil
+import org.intellij.plugins.markdown.lang.references.paths.FileWithoutExtensionReference
 import org.intellij.plugins.markdown.util.MarkdownLinkFragmentUtil
 
 internal class LineNumberPathReferenceProvider: PathReferenceProviderBase() {
