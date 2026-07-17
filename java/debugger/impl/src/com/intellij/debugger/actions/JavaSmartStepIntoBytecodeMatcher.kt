@@ -7,6 +7,8 @@ import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.MethodBytecodeUtil
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.util.PsiTreeUtil
 import com.sun.jdi.Location
 import com.sun.jdi.Method
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
@@ -148,7 +150,11 @@ class JavaSmartStepIntoBytecodeMatcher(
         else {
           targetOffsets.put(methodTarget, bytecodeOffset)
           if (bytecodeOffset < currentBytecodeOffset) {
-            alreadyExecutedTargets.add(methodTarget)
+            val call = PsiTreeUtil.getParentOfType(methodTarget.highlightElement, PsiCallExpression::class.java)
+            targets.filterTo(alreadyExecutedTargets) { target ->
+              val targetElement = target.highlightElement
+              targetElement != null && PsiTreeUtil.isAncestor(call, targetElement, false)
+            }
           }
           if (bytecodeOffset > endOfBasicBlock) {
             // This is the legacy approximation used when precise CFG analysis below is unavailable.

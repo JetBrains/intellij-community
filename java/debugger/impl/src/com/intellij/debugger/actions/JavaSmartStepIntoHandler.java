@@ -482,7 +482,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       ArrayList<SmartStepTarget> removed = new ArrayList<>(all);
       removed.removeAll(targets);
       for (SmartStepTarget m : removed) {
-        MethodSmartStepTarget target = (MethodSmartStepTarget)m;
+        if (!(m instanceof MethodSmartStepTarget target)) continue;
         existingMethodCalls(all, target.getMethod())
           .forEach(t -> {
             int ordinal = t.getOrdinal();
